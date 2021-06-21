@@ -22,6 +22,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/config/adb_config.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -29,47 +30,51 @@ namespace cuttlefish {
 
 namespace {
 
-std::string GetAdbConnectorTcpArg(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  return std::string{"0.0.0.0:"} + std::to_string(instance.adb_host_port());
-}
+class AdbHelper {
+ public:
+  INJECT(AdbHelper(const CuttlefishConfig::InstanceSpecific& instance,
+                   const AdbConfig& config))
+      : instance_(instance), config_(config) {}
 
-std::string GetAdbConnectorVsockArg(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  return std::string{"vsock:"} + std::to_string(instance.vsock_guest_cid()) +
-         std::string{":5555"};
-}
+  bool ModeEnabled(const AdbMode& mode) const {
+    return config_.adb_mode().count(mode) > 0;
+  }
 
-bool AdbModeEnabled(const CuttlefishConfig& config, AdbMode mode) {
-  return config.adb_mode().count(mode) > 0;
-}
+  std::string ConnectorTcpArg() const {
+    return "0.0.0.0:" + std::to_string(instance_.adb_host_port());
+  }
 
-bool AdbVsockTunnelEnabled(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  return instance.vsock_guest_cid() > 2 &&
-         AdbModeEnabled(config, AdbMode::VsockTunnel);
-}
+  std::string ConnectorVsockArg() const {
+    return "vsock:" + std::to_string(instance_.vsock_guest_cid()) + ":5555";
+  }
 
-bool AdbVsockHalfTunnelEnabled(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  return instance.vsock_guest_cid() > 2 &&
-         AdbModeEnabled(config, AdbMode::VsockHalfTunnel);
-}
+  bool VsockTunnelEnabled() const {
+    return instance_.vsock_guest_cid() > 2 && ModeEnabled(AdbMode::VsockTunnel);
+  }
 
-bool AdbTcpConnectorEnabled(const CuttlefishConfig& config) {
-  bool vsock_tunnel = AdbVsockTunnelEnabled(config);
-  bool vsock_half_tunnel = AdbVsockHalfTunnelEnabled(config);
-  return config.run_adb_connector() && (vsock_tunnel || vsock_half_tunnel);
-}
+  bool VsockHalfTunnelEnabled() const {
+    return instance_.vsock_guest_cid() > 2 &&
+           ModeEnabled(AdbMode::VsockHalfTunnel);
+  }
 
-bool AdbVsockConnectorEnabled(const CuttlefishConfig& config) {
-  return config.run_adb_connector() &&
-         AdbModeEnabled(config, AdbMode::NativeVsock);
-}
+  bool TcpConnectorEnabled() const {
+    bool vsock_tunnel = VsockTunnelEnabled();
+    bool vsock_half_tunnel = VsockHalfTunnelEnabled();
+    return config_.run_adb_connector() && (vsock_tunnel || vsock_half_tunnel);
+  }
+
+  bool VsockConnectorEnabled() const {
+    return config_.run_adb_connector() && ModeEnabled(AdbMode::NativeVsock);
+  }
+
+ private:
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  const AdbConfig& config_;
+};
 
 class AdbConnector : public CommandSource {
  public:
-  INJECT(AdbConnector(const CuttlefishConfig& config)) : config_(config) {}
+  INJECT(AdbConnector(const AdbHelper& helper)) : helper_(helper) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -77,11 +82,11 @@ class AdbConnector : public CommandSource {
     Command adb_connector(AdbConnectorBinary());
     std::set<std::string> addresses;
 
-    if (AdbTcpConnectorEnabled(config_)) {
-      addresses.insert(GetAdbConnectorTcpArg(config_));
+    if (helper_.TcpConnectorEnabled()) {
+      addresses.insert(helper_.ConnectorTcpArg());
     }
-    if (AdbVsockConnectorEnabled(config_)) {
-      addresses.insert(GetAdbConnectorVsockArg(config_));
+    if (helper_.VsockConnectorEnabled()) {
+      addresses.insert(helper_.ConnectorVsockArg());
     }
 
     if (addresses.size() == 0) {
@@ -100,7 +105,7 @@ class AdbConnector : public CommandSource {
 
   // Feature
   bool Enabled() const override {
-    return AdbTcpConnectorEnabled(config_) || AdbVsockConnectorEnabled(config_);
+    return helper_.TcpConnectorEnabled() || helper_.VsockConnectorEnabled();
   }
   std::string Name() const override { return "AdbConnector"; }
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
@@ -109,22 +114,22 @@ class AdbConnector : public CommandSource {
   bool Setup() override { return true; }
 
  private:
-  const CuttlefishConfig& config_;
+  const AdbHelper& helper_;
 };
 
 class SocketVsockProxy : public CommandSource {
  public:
-  INJECT(SocketVsockProxy(const CuttlefishConfig& config,
+  INJECT(SocketVsockProxy(const AdbHelper& helper,
                           const CuttlefishConfig::InstanceSpecific& instance,
                           KernelLogPipeProvider& log_pipe_provider))
-      : config_(config),
+      : helper_(helper),
         instance_(instance),
         log_pipe_provider_(log_pipe_provider) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
     std::vector<Command> commands;
-    if (AdbVsockTunnelEnabled(config_)) {
+    if (helper_.VsockTunnelEnabled()) {
       Command adb_tunnel(SocketVsockProxyBinary());
       adb_tunnel.AddParameter("-adbd_events_fd=", kernel_log_pipe_);
       /**
@@ -147,7 +152,7 @@ class SocketVsockProxy : public CommandSource {
       adb_tunnel.AddParameter("--vsock_cid=", instance_.vsock_guest_cid());
       commands.emplace_back(std::move(adb_tunnel));
     }
-    if (AdbVsockHalfTunnelEnabled(config_)) {
+    if (helper_.VsockHalfTunnelEnabled()) {
       Command adb_tunnel(SocketVsockProxyBinary());
       adb_tunnel.AddParameter("-adbd_events_fd=", kernel_log_pipe_);
       /*
@@ -171,7 +176,7 @@ class SocketVsockProxy : public CommandSource {
 
   // Feature
   bool Enabled() const override {
-    return AdbVsockTunnelEnabled(config_) || AdbVsockHalfTunnelEnabled(config_);
+    return helper_.VsockTunnelEnabled() || helper_.VsockHalfTunnelEnabled();
   }
   std::string Name() const override { return "SocketVsockProxy"; }
   std::unordered_set<Feature*> Dependencies() const override {
@@ -192,7 +197,7 @@ class SocketVsockProxy : public CommandSource {
   }
 
  private:
-  const CuttlefishConfig& config_;
+  const AdbHelper& helper_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   KernelLogPipeProvider& log_pipe_provider_;
   SharedFD kernel_log_pipe_;

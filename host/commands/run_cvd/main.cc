@@ -40,6 +40,8 @@
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/commands/run_cvd/validate.h"
+#include "host/libs/config/adb_config.h"
+#include "host/libs/config/config_fragment.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -105,6 +107,7 @@ fruit::Component<ServerLoop> runCvdComponent(
       .addMultibinding<Feature, CuttlefishEnvironment>()
       .bindInstance(*config)
       .bindInstance(*instance)
+      .install(AdbConfigComponent)
       .install(bootStateMachineComponent)
       .install(launchAdbComponent)
       .install(launchComponent)
@@ -198,6 +201,10 @@ int RunCvdMain(int argc, char** argv) {
   CHECK(ChdirIntoRuntimeDir(instance)) << "Could not enter runtime dir";
 
   fruit::Injector<ServerLoop> injector(runCvdComponent, config, &instance);
+
+  for (auto& fragment : injector.getMultibindings<ConfigFragment>()) {
+    CHECK(config->LoadFragment(*fragment)) << "Failed to load config fragment";
+  }
 
   // One of the setup features can consume most output, so print this early.
   DiagnosticInformation::PrintAll(
