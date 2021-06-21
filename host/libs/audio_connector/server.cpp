@@ -244,7 +244,22 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       executor.StopStream(cmd);
       return CmdReply(cmd.status());
     }
-    case AudioCommandType::VIRTIO_SND_R_CHMAP_INFO:
+    case AudioCommandType::VIRTIO_SND_R_CHMAP_INFO: {
+      if (recv_size < sizeof(virtio_snd_query_info)) {
+        LOG(ERROR) << "Received QUERY_INFO message is too small: " << recv_size;
+        return false;
+      }
+      auto query_info = reinterpret_cast<const virtio_snd_query_info*>(cmd_hdr);
+      auto info_count = query_info->count.as_uint32_t();
+      auto start_id = query_info->start_id.as_uint32_t();
+      std::unique_ptr<virtio_snd_chmap_info[]> reply(
+          new virtio_snd_chmap_info[info_count]);
+      ChmapInfoCommand cmd(start_id, info_count, reply.get());
+
+      executor.ChmapsInfo(cmd);
+      return CmdReply(cmd.status(), reply.get(),
+                      info_count * sizeof(reply[0]));
+    }
     case AudioCommandType::VIRTIO_SND_R_JACK_INFO:
     case AudioCommandType::VIRTIO_SND_R_JACK_REMAP:
       LOG(ERROR) << "Unsupported command type: " << cmd_hdr->code.as_uint32_t();
