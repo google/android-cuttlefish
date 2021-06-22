@@ -25,6 +25,25 @@
 namespace cuttlefish {
 namespace {
 
+const virtio_snd_chmap_info CHMAPS[] = {{
+    .hdr = { .hda_fn_nid = Le32(0), },
+    .direction = (uint8_t) AudioStreamDirection::VIRTIO_SND_D_OUTPUT,
+    .channels = 2,
+    .positions = {
+        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FL,
+        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FR
+    },
+}, {
+    .hdr = { .hda_fn_nid = Le32(0), },
+    .direction = (uint8_t) AudioStreamDirection::VIRTIO_SND_D_INPUT,
+    .channels = 2,
+    .positions = {
+        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FL,
+        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FR
+    },
+}};
+constexpr uint32_t NUM_CHMAPS = sizeof(CHMAPS) / sizeof(CHMAPS[0]);
+
 const virtio_snd_pcm_info STREAMS[] = {{
     .hdr =
         {
@@ -360,6 +379,17 @@ void AudioHandler::StopStream(StreamControlCommand& cmd) {
   }
   stream_descs_[cmd.stream_id()].active = false;
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
+}
+
+void AudioHandler::ChmapsInfo(ChmapInfoCommand& cmd) {
+  if (cmd.start_id() >= NUM_CHMAPS ||
+      cmd.start_id() + cmd.count() > NUM_CHMAPS) {
+    cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG, {});
+    return;
+  }
+  std::vector<virtio_snd_chmap_info> chmap_info(
+      &CHMAPS[cmd.start_id()], &CHMAPS[cmd.start_id()] + cmd.count());
+  cmd.Reply(AudioStatus::VIRTIO_SND_S_OK, chmap_info);
 }
 
 void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
