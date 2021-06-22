@@ -577,21 +577,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.memtrack-service.example
 
-# GKI APEX
-# Keep in sync with BOARD_KERNEL_MODULE_INTERFACE_VERSIONS
-ifneq (,$(TARGET_KERNEL_USE))
-  ifneq (,$(filter 5.4, $(TARGET_KERNEL_USE)))
-    PRODUCT_PACKAGES += com.android.gki.kmi_5_4_android12_unstable
-  else
-    PRODUCT_PACKAGES += com.android.gki.kmi_$(subst .,_,$(TARGET_KERNEL_USE))_android12_unstable
-  endif
-endif
-
-# Prevent GKI and boot image downgrades
-PRODUCT_PRODUCT_PROPERTIES += \
-    ro.build.ab_update.gki.prevent_downgrade_version=true \
-    ro.build.ab_update.gki.prevent_downgrade_spl=true \
-
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
     external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
