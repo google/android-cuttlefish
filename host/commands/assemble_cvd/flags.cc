@@ -670,8 +670,9 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
     instance.set_uuid(FLAGS_uuid);
 
+    instance.set_modem_simulator_host_id(1000 + num);  // Must be 4 digits
     instance.set_vnc_server_port(6444 + num - 1);
-    instance.set_host_port(6520 + num - 1);
+    instance.set_adb_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
     instance.set_vehicle_hal_server_port(9210 + num - 1);
