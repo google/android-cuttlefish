@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
   // remote call, remote sms from other cuttlefish instance
   std::string monitor_socket_name = "modem_simulator";
   std::stringstream ss;
-  ss << instance.host_port();
+  ss << instance.modem_simulator_host_id();
   monitor_socket_name.append(ss.str());
 
   auto monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
