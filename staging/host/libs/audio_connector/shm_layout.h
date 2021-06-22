@@ -51,7 +51,7 @@ enum class AudioStatus : uint32_t {
   NOT_SET = static_cast<uint32_t>(-1),
 };
 
-enum class AudioStreamDirection : uint32_t {
+enum class AudioStreamDirection : uint8_t {
   VIRTIO_SND_D_OUTPUT = 0,
   VIRTIO_SND_D_INPUT
 };
@@ -104,6 +104,47 @@ enum AudioStreamRate : uint8_t {
   VIRTIO_SND_PCM_RATE_384000
 };
 
+/* standard channel position definition */
+enum AudioChannelMap : uint8_t {
+  VIRTIO_SND_CHMAP_NONE = 0,  /* undefined */
+  VIRTIO_SND_CHMAP_NA,        /* silent */
+  VIRTIO_SND_CHMAP_MONO,      /* mono stream */
+  VIRTIO_SND_CHMAP_FL,        /* front left */
+  VIRTIO_SND_CHMAP_FR,        /* front right */
+  VIRTIO_SND_CHMAP_RL,        /* rear left */
+  VIRTIO_SND_CHMAP_RR,        /* rear right */
+  VIRTIO_SND_CHMAP_FC,        /* front center */
+  VIRTIO_SND_CHMAP_LFE,       /* low frequency (LFE) */
+  VIRTIO_SND_CHMAP_SL,        /* side left */
+  VIRTIO_SND_CHMAP_SR,        /* side right */
+  VIRTIO_SND_CHMAP_RC,        /* rear center */
+  VIRTIO_SND_CHMAP_FLC,       /* front left center */
+  VIRTIO_SND_CHMAP_FRC,       /* front right center */
+  VIRTIO_SND_CHMAP_RLC,       /* rear left center */
+  VIRTIO_SND_CHMAP_RRC,       /* rear right center */
+  VIRTIO_SND_CHMAP_FLW,       /* front left wide */
+  VIRTIO_SND_CHMAP_FRW,       /* front right wide */
+  VIRTIO_SND_CHMAP_FLH,       /* front left high */
+  VIRTIO_SND_CHMAP_FCH,       /* front center high */
+  VIRTIO_SND_CHMAP_FRH,       /* front right high */
+  VIRTIO_SND_CHMAP_TC,        /* top center */
+  VIRTIO_SND_CHMAP_TFL,       /* top front left */
+  VIRTIO_SND_CHMAP_TFR,       /* top front right */
+  VIRTIO_SND_CHMAP_TFC,       /* top front center */
+  VIRTIO_SND_CHMAP_TRL,       /* top rear left */
+  VIRTIO_SND_CHMAP_TRR,       /* top rear right */
+  VIRTIO_SND_CHMAP_TRC,       /* top rear center */
+  VIRTIO_SND_CHMAP_TFLC,      /* top front left center */
+  VIRTIO_SND_CHMAP_TFRC,      /* top front right center */
+  VIRTIO_SND_CHMAP_TSL,       /* top side left */
+  VIRTIO_SND_CHMAP_TSR,       /* top side right */
+  VIRTIO_SND_CHMAP_LLFE,      /* left LFE */
+  VIRTIO_SND_CHMAP_RLFE,      /* right LFE */
+  VIRTIO_SND_CHMAP_BC,        /* bottom center */
+  VIRTIO_SND_CHMAP_BLC,       /* bottom left center */
+  VIRTIO_SND_CHMAP_BRC        /* bottom right center */
+};
+
 struct virtio_snd_hdr {
   Le32 code;
 };
@@ -117,6 +158,14 @@ struct virtio_snd_query_info {
 
 struct virtio_snd_info {
   Le32 hda_fn_nid;
+};
+
+constexpr uint8_t VIRTIO_SND_CHMAP_MAX_SIZE = 18;
+struct virtio_snd_chmap_info {
+  struct virtio_snd_info hdr;
+  uint8_t direction;
+  uint8_t channels;
+  uint8_t positions[VIRTIO_SND_CHMAP_MAX_SIZE];
 };
 
 struct virtio_snd_pcm_info {
@@ -182,6 +231,7 @@ struct IoStatusMsg {
 #define ASSERT_VALID_MSG_TYPE(T, size) \
   static_assert(sizeof(T) == (size), #T " has the wrong size")
 ASSERT_VALID_MSG_TYPE(virtio_snd_query_info, 16);
+ASSERT_VALID_MSG_TYPE(virtio_snd_chmap_info, 24);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_info, 32);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_set_params, 24);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_hdr, 8);
