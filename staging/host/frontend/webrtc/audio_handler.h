@@ -63,6 +63,7 @@ class AudioHandler : public AudioServerExecutor {
   void ReleaseStream(StreamControlCommand& cmd) override;
   void StartStream(StreamControlCommand& cmd) override;
   void StopStream(StreamControlCommand& cmd) override;
+  void ChmapsInfo(ChmapInfoCommand& cmd) override;
 
   void OnPlaybackBuffer(TxBuffer buffer) override;
   void OnCaptureBuffer(RxBuffer buffer) override;
