@@ -273,11 +273,6 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
            : " " + android::base::StringReplace(bootconfig, "\n", " ", true) +
                  " " + android::base::Join(bootconfig_args, " "));
   if (!bootconfig_supported) {
-    // "androidboot.hardware" kernel parameter has changed to "hardware" in
-    // bootconfig and needs to be replaced before being used in the kernel
-    // cmdline.
-    kernel_cmdline = android::base::StringReplace(
-        kernel_cmdline, " hardware=", " androidboot.hardware=", true);
     // TODO(b/182417593): Until we pass the module parameters through
     // modules.options, we pass them through bootconfig using
     // 'kernel.<key>=<value>' But if we don't support bootconfig, we need to
