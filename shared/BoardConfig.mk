@@ -259,16 +259,6 @@ else
 endif
 BOARD_MOVE_GSI_AVB_KEYS_TO_VENDOR_BOOT := true
 
-# TARGET_KERNEL_USE is defined in kernel.mk, if not defined in the environment variable.
-# Keep in sync with GKI APEX in device.mk
-ifneq (,$(TARGET_KERNEL_USE))
-  ifneq (,$(filter 5.4, $(TARGET_KERNEL_USE)))
-    BOARD_KERNEL_MODULE_INTERFACE_VERSIONS := 5.4-android12-0
-  else
-    BOARD_KERNEL_MODULE_INTERFACE_VERSIONS := $(TARGET_KERNEL_USE)-android12-unstable
-  endif
-endif
-
 BOARD_GENERIC_RAMDISK_KERNEL_MODULES_LOAD := dm-user.ko
 
 BOARD_HAVE_BLUETOOTH := true
