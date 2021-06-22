@@ -29,10 +29,10 @@
 
 namespace cuttlefish {
 
-static bool StopModemSimulator(int host_port) {
-  std::string socket_name = "modem_simulator" + std::to_string(host_port);
+static bool StopModemSimulator(int id) {
+  std::string socket_name = "modem_simulator" + std::to_string(id);
   auto monitor_sock =
-      SharedFD::SocketLocalClient(socket_name.c_str(), true, SOCK_STREAM);
+      SharedFD::SocketLocalClient(socket_name, true, SOCK_STREAM);
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to modem simulator is closed";
     return false;
@@ -67,7 +67,7 @@ class ModemSimulator : public CommandSource {
   // CommandSource
   std::vector<Command> Commands() override {
     Command cmd(ModemSimulatorBinary(), [this](Subprocess* proc) {
-      auto stopped = StopModemSimulator(instance_.host_port());
+      auto stopped = StopModemSimulator(instance_.modem_simulator_host_id());
       if (stopped) {
         return true;
       }
