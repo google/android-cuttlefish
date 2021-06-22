@@ -60,6 +60,15 @@ class InfoCommand : public AudioCommand {
   R* info_reply_;
 };
 
+class ChmapInfoCommand : public InfoCommand<virtio_snd_chmap_info> {
+ public:
+  ChmapInfoCommand(uint32_t start_id, size_t count,
+                   virtio_snd_chmap_info* chmap_info);
+
+  void Reply(AudioStatus status,
+             const std::vector<virtio_snd_chmap_info>& reply);
+};
+
 class StreamInfoCommand : public InfoCommand<virtio_snd_pcm_info> {
  public:
   StreamInfoCommand(uint32_t start_id, size_t count,

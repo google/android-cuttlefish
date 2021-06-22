@@ -41,6 +41,7 @@ class AudioServerExecutor {
   virtual void ReleaseStream(StreamControlCommand& cmd) = 0;
   virtual void StartStream(StreamControlCommand& cmd) = 0;
   virtual void StopStream(StreamControlCommand& cmd) = 0;
+  virtual void ChmapsInfo(ChmapInfoCommand& cmd) = 0;
 
   // Implementations must call buffer.SendStatus() before destroying the buffer
   // to notify the other side of the release of the buffer. Failure to do so
