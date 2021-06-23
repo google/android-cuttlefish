@@ -45,7 +45,7 @@ void Client::SendCommandResponse(std::string response) const {
   if (response.back() != '\r') {
     response += '\r';
   }
-  LOG(VERBOSE) << " AT< " << response;
+  LOG(DEBUG) << " AT< " << response;
 
   std::lock_guard<std::mutex> autolock(const_cast<Client*>(this)->write_mutex);
   client_fd->Write(response.data(), response.size());
@@ -153,7 +153,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
     if (r_pos != std::string::npos) {
       auto command = commands.substr(pos, r_pos - pos);
       if (command.size() > 0) {  // "\r\r" ?
-        LOG(VERBOSE) << "AT> " << command;
+        LOG(DEBUG) << "AT> " << command;
         modem_->DispatchCommand(client, command);
       }
       pos = r_pos + 1;  // Skip '\r'
