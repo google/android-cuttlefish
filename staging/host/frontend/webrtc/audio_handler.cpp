@@ -290,7 +290,7 @@ void AudioHandler::Start() {
 [[noreturn]] void AudioHandler::Loop() {
   for (;;) {
     auto audio_client = audio_server_->AcceptClient(
-        NUM_STREAMS, 0 /* num_jacks, */, 0 /* num_chmaps, */,
+        NUM_STREAMS, 0 /* num_jacks, */, NUM_CHMAPS,
         262144 /* tx_shm_len */, 262144 /* rx_shm_len */);
     CHECK(audio_client) << "Failed to create audio client connection instance";
 
