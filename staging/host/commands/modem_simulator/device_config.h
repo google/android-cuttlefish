@@ -26,7 +26,7 @@ namespace modem {
 
 class DeviceConfig {
  public:
-  static int host_port();
+  static int host_id();
   static std::string PerInstancePath(const char* file_name);
   static std::string DefaultHostArtifactsPath(const std::string& file);
   static std::string ril_address_and_prefix();
