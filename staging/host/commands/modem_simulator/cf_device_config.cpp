@@ -22,7 +22,7 @@
 namespace cuttlefish {
 namespace modem {
 
-int DeviceConfig::host_port() {
+int DeviceConfig::host_id() {
   if (!cuttlefish::CuttlefishConfig::Get()) {
     return 1000;
   }
