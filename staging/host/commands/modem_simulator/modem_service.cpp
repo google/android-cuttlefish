@@ -137,8 +137,8 @@ void ModemService::CloseRemoteConnection(cuttlefish::SharedFD remote_client) {
   }
 }
 
-std::string ModemService::GetHostPort() {
-  return std::to_string(cuttlefish::modem::DeviceConfig::host_port());
+std::string ModemService::GetHostId() {
+  return std::to_string(cuttlefish::modem::DeviceConfig::host_id());
 }
 
 }  // namespace cuttlefish

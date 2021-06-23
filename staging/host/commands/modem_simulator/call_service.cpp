@@ -194,7 +194,7 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
       client.SendCommandResponse(kCmeErrorNoNetworkService);
       return;
     }
-    auto local_host_port = GetHostPort();
+    auto local_host_port = GetHostId();
     if (local_host_port == remote_port) {
       client.SendCommandResponse(kCmeErrorOperationNotAllowed);
       return;
@@ -249,11 +249,9 @@ void CallService::SendCallStatusToRemote(CallStatus& call,
                                          CallStatus::CallState state) {
   if (call.is_remote_call && call.remote_client != std::nullopt) {
     std::stringstream ss;
-    ss << "AT+REMOTECALL=" << state << ","
-                           << call.is_voice_mode << ","
-                           << call.is_multi_party << ",\""
-                           << GetHostPort() << "\","
-                           << call.is_international;
+    ss << "AT+REMOTECALL=" << state << "," << call.is_voice_mode << ","
+       << call.is_multi_party << ",\"" << GetHostId() << "\","
+       << call.is_international;
 
     SendCommandToRemote(*(call.remote_client), ss.str());
     if (state == CallStatus::CALL_STATE_HANGUP) {
