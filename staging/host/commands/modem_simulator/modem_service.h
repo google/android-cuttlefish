@@ -104,7 +104,7 @@ class ModemService {
   void SendCommandToRemote(cuttlefish::SharedFD remote_client,
                            std::string response);
   void CloseRemoteConnection(cuttlefish::SharedFD remote_client);
-  static std::string GetHostPort();
+  static std::string GetHostId();
 
   int32_t service_id_;
   const std::vector<CommandHandler> command_handlers_;
