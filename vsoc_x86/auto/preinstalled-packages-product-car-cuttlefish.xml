@@ -91,7 +91,7 @@
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
     <!-- Required when using Camera2 extensions -->
-    <install-in-user-type package="com.android.camera">
+    <install-in-user-type package="com.android.cameraextensions">
         <install-in user-type="SYSTEM" />
         <install-in user-type="FULL" />
     </install-in-user-type>
