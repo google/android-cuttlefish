@@ -16,7 +16,6 @@
 
 #include <unistd.h>
 #include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -31,7 +30,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/network.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
@@ -40,14 +38,13 @@
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
+#include "host/commands/run_cvd/validate.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/host_configuration.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
 using vm_manager::GetVmManager;
-using vm_manager::ValidateHostConfiguration;
 
 namespace {
 
@@ -101,11 +98,12 @@ configComponent() {
 fruit::Component<> runCvdComponent() {
   return fruit::createComponent()
       .install(bootStateMachineComponent)
+      .install(configComponent)
+      .install(launchAdbComponent)
       .install(launchComponent)
       .install(launchModemComponent)
-      .install(launchAdbComponent)
       .install(launchStreamerComponent)
-      .install(configComponent);
+      .install(validationComponent);
 }
 
 }  // namespace
@@ -176,34 +174,7 @@ int RunCvdMain(int argc, char** argv) {
     return RunnerExitCodes::kInstanceDirCreationError;
   }
 
-  auto used_tap_devices = TapInterfacesInUse();
-  if (used_tap_devices.count(instance.wifi_tap_name())) {
-    LOG(ERROR) << "Wifi TAP device already in use";
-    return RunnerExitCodes::kTapDeviceInUse;
-  } else if (used_tap_devices.count(instance.mobile_tap_name())) {
-    LOG(ERROR) << "Mobile TAP device already in use";
-    return RunnerExitCodes::kTapDeviceInUse;
-  } else if (config->ethernet() &&
-             used_tap_devices.count(instance.ethernet_tap_name())) {
-    LOG(ERROR) << "Ethernet TAP device already in use";
-  }
-
   auto vm_manager = GetVmManager(config->vm_manager(), config->target_arch());
-
-#ifndef __ANDROID__
-  // Check host configuration
-  std::vector<std::string> config_commands;
-  if (!ValidateHostConfiguration(&config_commands)) {
-    LOG(ERROR) << "Validation of user configuration failed";
-    std::cout << "Execute the following to correctly configure:" << std::endl;
-    for (auto& command : config_commands) {
-      std::cout << "  " << command << std::endl;
-    }
-    std::cout << "You may need to logout for the changes to take effect"
-              << std::endl;
-    return RunnerExitCodes::kInvalidHostConfiguration;
-  }
-#endif
 
   if (!WriteCuttlefishEnvironment(*config)) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
