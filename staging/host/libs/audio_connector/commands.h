@@ -69,6 +69,15 @@ class ChmapInfoCommand : public InfoCommand<virtio_snd_chmap_info> {
              const std::vector<virtio_snd_chmap_info>& reply);
 };
 
+class JackInfoCommand : public InfoCommand<virtio_snd_jack_info> {
+ public:
+  JackInfoCommand(uint32_t start_id, size_t count,
+                   virtio_snd_jack_info* jack_info);
+
+  void Reply(AudioStatus status,
+             const std::vector<virtio_snd_jack_info>& reply);
+};
+
 class StreamInfoCommand : public InfoCommand<virtio_snd_pcm_info> {
  public:
   StreamInfoCommand(uint32_t start_id, size_t count,

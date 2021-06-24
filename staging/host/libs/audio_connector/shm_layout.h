@@ -160,6 +160,21 @@ struct virtio_snd_info {
   Le32 hda_fn_nid;
 };
 
+/* supported jack features */
+enum AudioJackFeatures: uint8_t {
+  VIRTIO_SND_JACK_F_REMAP = 0
+};
+
+struct virtio_snd_jack_info {
+  struct virtio_snd_info hdr;
+  Le32 features; /* 1 << VIRTIO_SND_JACK_F_XXX */
+  Le32 hda_reg_defconf;
+  Le32 hda_reg_caps;
+  uint8_t connected;
+
+  uint8_t padding[7];
+};
+
 constexpr uint8_t VIRTIO_SND_CHMAP_MAX_SIZE = 18;
 struct virtio_snd_chmap_info {
   struct virtio_snd_info hdr;
@@ -231,6 +246,7 @@ struct IoStatusMsg {
 #define ASSERT_VALID_MSG_TYPE(T, size) \
   static_assert(sizeof(T) == (size), #T " has the wrong size")
 ASSERT_VALID_MSG_TYPE(virtio_snd_query_info, 16);
+ASSERT_VALID_MSG_TYPE(virtio_snd_jack_info, 24);
 ASSERT_VALID_MSG_TYPE(virtio_snd_chmap_info, 24);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_info, 32);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_set_params, 24);
