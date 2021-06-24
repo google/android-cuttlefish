@@ -28,6 +28,7 @@ cc_binary {
         "main.cc",
         "process_monitor.cc",
         "server_loop.cpp",
+        "validate.cpp",
     ],
     shared_libs: [
         "libcuttlefish_fs",
