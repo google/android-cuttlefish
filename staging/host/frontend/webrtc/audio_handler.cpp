@@ -25,6 +25,9 @@
 namespace cuttlefish {
 namespace {
 
+const virtio_snd_jack_info JACKS[] = {};
+constexpr uint32_t NUM_JACKS = sizeof(JACKS) / sizeof(JACKS[0]);
+
 const virtio_snd_chmap_info CHMAPS[] = {{
     .hdr = { .hda_fn_nid = Le32(0), },
     .direction = (uint8_t) AudioStreamDirection::VIRTIO_SND_D_OUTPUT,
@@ -290,7 +293,7 @@ void AudioHandler::Start() {
 [[noreturn]] void AudioHandler::Loop() {
   for (;;) {
     auto audio_client = audio_server_->AcceptClient(
-        NUM_STREAMS, 0 /* num_jacks, */, NUM_CHMAPS,
+        NUM_STREAMS, NUM_JACKS, NUM_CHMAPS,
         262144 /* tx_shm_len */, 262144 /* rx_shm_len */);
     CHECK(audio_client) << "Failed to create audio client connection instance";
 
@@ -390,6 +393,17 @@ void AudioHandler::ChmapsInfo(ChmapInfoCommand& cmd) {
   std::vector<virtio_snd_chmap_info> chmap_info(
       &CHMAPS[cmd.start_id()], &CHMAPS[cmd.start_id()] + cmd.count());
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK, chmap_info);
+}
+
+void AudioHandler::JacksInfo(JackInfoCommand& cmd) {
+  if (cmd.start_id() >= NUM_JACKS ||
+      cmd.start_id() + cmd.count() > NUM_JACKS) {
+    cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG, {});
+    return;
+  }
+  std::vector<virtio_snd_jack_info> jack_info(
+      &JACKS[cmd.start_id()], &JACKS[cmd.start_id()] + cmd.count());
+  cmd.Reply(AudioStatus::VIRTIO_SND_S_OK, jack_info);
 }
 
 void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {

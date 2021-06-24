@@ -29,6 +29,25 @@ AudioCommand::~AudioCommand() {
       << " went out of scope without reply";
 }
 
+JackInfoCommand::JackInfoCommand(uint32_t start_id, size_t count,
+                                 virtio_snd_jack_info* jack_info)
+    : InfoCommand(AudioCommandType::VIRTIO_SND_R_CHMAP_INFO, start_id, count,
+                  jack_info) {}
+
+void JackInfoCommand::Reply(AudioStatus status,
+                            const std::vector<virtio_snd_jack_info>& reply) {
+  MarkReplied(status);
+  if (status != AudioStatus::VIRTIO_SND_S_OK) {
+    return;
+  }
+  CHECK(reply.size() == count())
+      << "Returned unmatching info count: " << reply.size() << " vs "
+      << count();
+  for (int i = 0; i < reply.size(); ++i) {
+    info_reply()[i] = reply[i];
+  }
+}
+
 ChmapInfoCommand::ChmapInfoCommand(uint32_t start_id, size_t count,
                                    virtio_snd_chmap_info* chmap_info)
     : InfoCommand(AudioCommandType::VIRTIO_SND_R_CHMAP_INFO, start_id, count,
