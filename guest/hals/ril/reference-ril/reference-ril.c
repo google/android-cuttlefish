@@ -4923,9 +4923,15 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
                             phoneCapability, sizeof(RIL_PhoneCapability));
             break;
         }
-        case RIL_REQUEST_CONFIG_SET_MODEM_CONFIG:
-            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+        case RIL_REQUEST_CONFIG_SET_MODEM_CONFIG: {
+            RIL_ModemConfig *mdConfig = (RIL_ModemConfig*)(data);
+            if (mdConfig == NULL || mdConfig->numOfLiveModems != 1) {
+                RIL_onRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
+            } else {
+                RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            }
             break;
+        }
         case RIL_REQUEST_CONFIG_GET_MODEM_CONFIG: {
             RIL_ModemConfig mdConfig;
             mdConfig.numOfLiveModems = 1;
