@@ -187,8 +187,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libEGL_angle \
     libGLESv1_CM_angle \
-    libGLESv2_angle \
-    libfeature_support_angle.so
+    libGLESv2_angle
 
 # GL implementation for virgl
 PRODUCT_PACKAGES += \
