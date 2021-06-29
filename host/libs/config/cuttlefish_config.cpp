@@ -87,6 +87,31 @@ std::string DefaultEnvironmentPath(const char* environment_key,
   return StringFromEnv(environment_key, default_value) + "/" + subpath;
 }
 
+ConfigFragment::~ConfigFragment() = default;
+
+static constexpr char kFragments[] = "fragments";
+bool CuttlefishConfig::LoadFragment(ConfigFragment& fragment) const {
+  if (!dictionary_->isMember(kFragments)) {
+    LOG(ERROR) << "Fragments member was missing";
+    return false;
+  }
+  const Json::Value& json_fragments = (*dictionary_)[kFragments];
+  if (!json_fragments.isMember(fragment.Name())) {
+    LOG(ERROR) << "Could not find a fragment called " << fragment.Name();
+    return false;
+  }
+  return fragment.Deserialize(json_fragments[fragment.Name()]);
+}
+bool CuttlefishConfig::SaveFragment(const ConfigFragment& fragment) {
+  Json::Value& json_fragments = (*dictionary_)[kFragments];
+  if (json_fragments.isMember(fragment.Name())) {
+    LOG(ERROR) << "Already have a fragment called " << fragment.Name();
+    return false;
+  }
+  json_fragments[fragment.Name()] = fragment.Serialize();
+  return true;
+}
+
 static constexpr char kAssemblyDir[] = "assembly_dir";
 std::string CuttlefishConfig::assembly_dir() const {
   return (*dictionary_)[kAssemblyDir].asString();
