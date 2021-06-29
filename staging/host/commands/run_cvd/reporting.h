@@ -17,21 +17,17 @@
 #pragma once
 
 #include <fruit/fruit.h>
-
-#include "common/libs/fs/shared_fd.h"
-#include "host/commands/run_cvd/process_monitor.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include <string>
+#include <vector>
 
 namespace cuttlefish {
 
-class ServerLoop {
+class DiagnosticInformation {
  public:
-  virtual ~ServerLoop();
-  virtual void Run(ProcessMonitor& process_monitor) = 0;
+  virtual ~DiagnosticInformation();
+  virtual std::vector<std::string> Diagnostics() const = 0;
+
+  static void PrintAll(const std::vector<DiagnosticInformation*>&);
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 ServerLoop>
-serverLoopComponent();
-}
+}  // namespace cuttlefish

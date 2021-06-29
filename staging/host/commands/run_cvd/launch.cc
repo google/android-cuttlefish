@@ -24,6 +24,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/run_cvd/process_monitor.h"
+#include "host/commands/run_cvd/reporting.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -45,10 +46,17 @@ CommandSource::~CommandSource() = default;
 
 KernelLogPipeProvider::~KernelLogPipeProvider() = default;
 
-class KernelLogMonitor : public CommandSource, public KernelLogPipeProvider {
+class KernelLogMonitor : public CommandSource,
+                         public KernelLogPipeProvider,
+                         public DiagnosticInformation {
  public:
   INJECT(KernelLogMonitor(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
+
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    return {"Kernel log: " + instance_.PerInstancePath("kernel.log")};
+  }
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -165,10 +173,14 @@ class RootCanal : public CommandSource {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class LogcatReceiver : public CommandSource {
+class LogcatReceiver : public CommandSource, public DiagnosticInformation {
  public:
   INJECT(LogcatReceiver(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    return {"Logcat output: " + instance_.logcat_path()};
+  }
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -553,11 +565,19 @@ class VehicleHalServer : public CommandSource {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class ConsoleForwarder : public CommandSource {
+class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
  public:
   INJECT(ConsoleForwarder(const CuttlefishConfig& config,
                           const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    if (Enabled()) {
+      return {"To access the console run: screen " + instance_.console_path()};
+    } else {
+      return {"Serial console is disabled; use -console=true to enable it."};
+    }
+  }
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -637,6 +657,9 @@ launchComponent() {
       .addMultibinding<CommandSource, SecureEnvironment>()
       .addMultibinding<CommandSource, TombstoneReceiver>()
       .addMultibinding<CommandSource, VehicleHalServer>()
+      .addMultibinding<DiagnosticInformation, ConsoleForwarder>()
+      .addMultibinding<DiagnosticInformation, KernelLogMonitor>()
+      .addMultibinding<DiagnosticInformation, LogcatReceiver>()
       .addMultibinding<Feature, BluetoothConnector>()
       .addMultibinding<Feature, ConfigServer>()
       .addMultibinding<Feature, ConsoleForwarder>()
