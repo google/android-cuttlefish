@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "common/libs/utils/environment.h"
+#include "host/libs/config/config_fragment.h"
 #include "host/libs/config/custom_actions.h"
 
 namespace Json {
@@ -81,6 +82,9 @@ class CuttlefishConfig {
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
   bool SaveToFile(const std::string& file) const;
+
+  bool SaveFragment(const ConfigFragment&);
+  bool LoadFragment(ConfigFragment&) const;
 
   std::string assembly_dir() const;
   void set_assembly_dir(const std::string& assembly_dir);
