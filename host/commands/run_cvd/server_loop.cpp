@@ -16,6 +16,7 @@
 
 #include "host/commands/run_cvd/server_loop.h"
 
+#include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <unistd.h>
 #include <string>
@@ -26,6 +27,7 @@
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
@@ -47,167 +49,195 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
   return true;
 }
 
-void DeleteFifos(const CuttlefishConfig::InstanceSpecific& instance) {
-  // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
-  std::vector<std::string> pipes = {
-      instance.kernel_log_pipe_name(),
-      instance.console_in_pipe_name(),
-      instance.console_out_pipe_name(),
-      instance.logcat_pipe_name(),
-      instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
-      instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
-      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
-      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
-      instance.PerInstanceInternalPath("bt_fifo_vm.in"),
-      instance.PerInstanceInternalPath("bt_fifo_vm.out"),
-  };
-  for (const auto& pipe : pipes) {
-    unlink(pipe.c_str());
-  }
-}
+class ServerLoopImpl : public ServerLoop, public Feature {
+ public:
+  INJECT(ServerLoopImpl(const CuttlefishConfig& config,
+                        const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
 
-bool PowerwashFiles() {
-  auto config = CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Could not load the config.";
-    return false;
-  }
-  auto instance = config->ForDefaultInstance();
-
-  DeleteFifos(instance);
-
-  // TODO(schuffelen): Clean up duplication with assemble_cvd
-  auto kregistry_path = instance.access_kregistry_path();
-  unlink(kregistry_path.c_str());
-  CreateBlankImage(kregistry_path, 2 /* mb */, "none");
-
-  auto pstore_path = instance.pstore_path();
-  unlink(pstore_path.c_str());
-  CreateBlankImage(pstore_path, 2 /* mb */, "none");
-
-  auto sdcard_path = instance.sdcard_path();
-  auto sdcard_size = FileSize(sdcard_path);
-  unlink(sdcard_path.c_str());
-  // round up
-  auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
-  LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
-  CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
-
-  auto overlay_path = instance.PerInstancePath("overlay.img");
-  unlink(overlay_path.c_str());
-  if (!CreateQcowOverlay(config->crosvm_binary(),
-                         config->os_composite_disk_path(), overlay_path)) {
-    LOG(ERROR) << "CreateQcowOverlay failed";
-    return false;
-  }
-  return true;
-}
-
-void RestartRunCvd(const CuttlefishConfig& config, int notification_fd) {
-  auto config_path = config.AssemblyPath("cuttlefish_config.json");
-  auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
-  WriteAll(followup_stdin, config_path + "\n");
-  followup_stdin->LSeek(0, SEEK_SET);
-  followup_stdin->UNMANAGED_Dup2(0);
-
-  auto argv_vec = gflags::GetArgvs();
-  char** argv = new char*[argv_vec.size() + 2];
-  for (size_t i = 0; i < argv_vec.size(); i++) {
-    argv[i] = argv_vec[i].data();
-  }
-  // Will take precedence over any earlier arguments.
-  std::string reboot_notification =
-      "-reboot_notification_fd=" + std::to_string(notification_fd);
-  argv[argv_vec.size()] = reboot_notification.data();
-  argv[argv_vec.size() + 1] = nullptr;
-
-  execv("/proc/self/exe", argv);
-  // execve should not return, so something went wrong.
-  PLOG(ERROR) << "execv returned: ";
-}
-
-}  // namespace
-
-void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
-  while (true) {
-    // TODO: use select to handle simultaneous connections.
-    auto client = SharedFD::Accept(*server);
-    LauncherAction action;
-    while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
-      switch (action) {
-        case LauncherAction::kStop:
-          if (process_monitor->StopMonitoredProcesses()) {
+  // ServerLoop
+  void Run(ProcessMonitor& process_monitor) override {
+    while (true) {
+      // TODO: use select to handle simultaneous connections.
+      auto client = SharedFD::Accept(*server_);
+      LauncherAction action;
+      while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
+        switch (action) {
+          case LauncherAction::kStop:
+            if (process_monitor.StopMonitoredProcesses()) {
+              auto response = LauncherResponse::kSuccess;
+              client->Write(&response, sizeof(response));
+              std::exit(0);
+            } else {
+              auto response = LauncherResponse::kError;
+              client->Write(&response, sizeof(response));
+            }
+            break;
+          case LauncherAction::kStatus: {
+            // TODO(schuffelen): Return more information on a side channel
             auto response = LauncherResponse::kSuccess;
             client->Write(&response, sizeof(response));
-            std::exit(0);
-          } else {
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-          }
-          break;
-        case LauncherAction::kStatus: {
-          // TODO(schuffelen): Return more information on a side channel
-          auto response = LauncherResponse::kSuccess;
-          client->Write(&response, sizeof(response));
-          break;
-        }
-        case LauncherAction::kPowerwash: {
-          LOG(INFO) << "Received a Powerwash request from the monitor socket";
-          if (!process_monitor->StopMonitoredProcesses()) {
-            LOG(ERROR) << "Stopping processes failed.";
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
             break;
           }
-          if (!PowerwashFiles()) {
-            LOG(ERROR) << "Powerwashing files failed.";
-            auto response = LauncherResponse::kError;
+          case LauncherAction::kPowerwash: {
+            LOG(INFO) << "Received a Powerwash request from the monitor socket";
+            if (!process_monitor.StopMonitoredProcesses()) {
+              LOG(ERROR) << "Stopping processes failed.";
+              auto response = LauncherResponse::kError;
+              client->Write(&response, sizeof(response));
+              break;
+            }
+            if (!PowerwashFiles()) {
+              LOG(ERROR) << "Powerwashing files failed.";
+              auto response = LauncherResponse::kError;
+              client->Write(&response, sizeof(response));
+              break;
+            }
+            auto response = LauncherResponse::kSuccess;
             client->Write(&response, sizeof(response));
+
+            RestartRunCvd(client->UNMANAGED_Dup());
+            // RestartRunCvd should not return, so something went wrong.
+            response = LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+            LOG(FATAL) << "run_cvd in a bad state";
             break;
           }
-          auto response = LauncherResponse::kSuccess;
-          client->Write(&response, sizeof(response));
+          case LauncherAction::kRestart: {
+            if (!process_monitor.StopMonitoredProcesses()) {
+              LOG(ERROR) << "Stopping processes failed.";
+              auto response = LauncherResponse::kError;
+              client->Write(&response, sizeof(response));
+              break;
+            }
+            DeleteFifos();
 
-          auto config = CuttlefishConfig::Get();
-          CHECK(config) << "Could not load config";
-          RestartRunCvd(*config, client->UNMANAGED_Dup());
-          // RestartRunCvd should not return, so something went wrong.
-          response = LauncherResponse::kError;
-          client->Write(&response, sizeof(response));
-          LOG(FATAL) << "run_cvd in a bad state";
-          break;
-        }
-        case LauncherAction::kRestart: {
-          if (!process_monitor->StopMonitoredProcesses()) {
-            LOG(ERROR) << "Stopping processes failed.";
-            auto response = LauncherResponse::kError;
+            auto response = LauncherResponse::kSuccess;
             client->Write(&response, sizeof(response));
+            RestartRunCvd(client->UNMANAGED_Dup());
+            // RestartRunCvd should not return, so something went wrong.
+            response = LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+            LOG(FATAL) << "run_cvd in a bad state";
             break;
           }
-
-          auto config = CuttlefishConfig::Get();
-          CHECK(config) << "Could not load config";
-          auto instance = config->ForDefaultInstance();
-          DeleteFifos(instance);
-
-          auto response = LauncherResponse::kSuccess;
-          client->Write(&response, sizeof(response));
-          CHECK(config) << "Could not load config";
-          RestartRunCvd(*config, client->UNMANAGED_Dup());
-          // RestartRunCvd should not return, so something went wrong.
-          response = LauncherResponse::kError;
-          client->Write(&response, sizeof(response));
-          LOG(FATAL) << "run_cvd in a bad state";
-          break;
+          default:
+            LOG(ERROR) << "Unrecognized launcher action: "
+                       << static_cast<char>(action);
+            auto response = LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
         }
-        default:
-          LOG(ERROR) << "Unrecognized launcher action: "
-                     << static_cast<char>(action);
-          auto response = LauncherResponse::kError;
-          client->Write(&response, sizeof(response));
       }
     }
   }
+
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "ServerLoop"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() {
+    auto launcher_monitor_path = instance_.launcher_monitor_socket_path();
+    server_ = SharedFD::SocketLocalServer(launcher_monitor_path.c_str(), false,
+                                          SOCK_STREAM, 0666);
+    if (!server_->IsOpen()) {
+      LOG(ERROR) << "Error when opening launcher server: "
+                 << server_->StrError();
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  void DeleteFifos() {
+    // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
+    std::vector<std::string> pipes = {
+        instance_.kernel_log_pipe_name(),
+        instance_.console_in_pipe_name(),
+        instance_.console_out_pipe_name(),
+        instance_.logcat_pipe_name(),
+        instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
+    };
+    for (const auto& pipe : pipes) {
+      unlink(pipe.c_str());
+    }
+  }
+
+  bool PowerwashFiles() {
+    DeleteFifos();
+
+    // TODO(schuffelen): Clean up duplication with assemble_cvd
+    auto kregistry_path = instance_.access_kregistry_path();
+    unlink(kregistry_path.c_str());
+    CreateBlankImage(kregistry_path, 2 /* mb */, "none");
+
+    auto pstore_path = instance_.pstore_path();
+    unlink(pstore_path.c_str());
+    CreateBlankImage(pstore_path, 2 /* mb */, "none");
+
+    auto sdcard_path = instance_.sdcard_path();
+    auto sdcard_size = FileSize(sdcard_path);
+    unlink(sdcard_path.c_str());
+    // round up
+    auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
+    LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
+    CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
+
+    auto overlay_path = instance_.PerInstancePath("overlay.img");
+    unlink(overlay_path.c_str());
+    if (!CreateQcowOverlay(config_.crosvm_binary(),
+                           config_.os_composite_disk_path(), overlay_path)) {
+      LOG(ERROR) << "CreateQcowOverlay failed";
+      return false;
+    }
+    return true;
+  }
+
+  void RestartRunCvd(int notification_fd) {
+    auto config_path = config_.AssemblyPath("cuttlefish_config.json");
+    auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
+    WriteAll(followup_stdin, config_path + "\n");
+    followup_stdin->LSeek(0, SEEK_SET);
+    followup_stdin->UNMANAGED_Dup2(0);
+
+    auto argv_vec = gflags::GetArgvs();
+    char** argv = new char*[argv_vec.size() + 2];
+    for (size_t i = 0; i < argv_vec.size(); i++) {
+      argv[i] = argv_vec[i].data();
+    }
+    // Will take precedence over any earlier arguments.
+    std::string reboot_notification =
+        "-reboot_notification_fd=" + std::to_string(notification_fd);
+    argv[argv_vec.size()] = reboot_notification.data();
+    argv[argv_vec.size() + 1] = nullptr;
+
+    execv("/proc/self/exe", argv);
+    // execve should not return, so something went wrong.
+    PLOG(ERROR) << "execv returned: ";
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD server_;
+};
+
+}  // namespace
+
+ServerLoop::~ServerLoop() = default;
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 ServerLoop>
+serverLoopComponent() {
+  return fruit::createComponent()
+      .bind<ServerLoop, ServerLoopImpl>()
+      .addMultibinding<Feature, ServerLoopImpl>();
 }
 
 }  // namespace cuttlefish
