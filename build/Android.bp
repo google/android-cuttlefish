@@ -72,7 +72,6 @@ cvd_host_tools = [
     "secure_env",
     "socket_vsock_proxy",
     "stop_cvd",
-    "tapsetiff",
     "tombstone_receiver",
     "toybox",
     "unpack_bootimg",
