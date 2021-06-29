@@ -35,9 +35,6 @@ class Value;
 namespace cuttlefish {
 constexpr char kLogcatSerialMode[] = "serial";
 constexpr char kLogcatVsockMode[] = "vsock";
-}
-
-namespace cuttlefish {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
@@ -55,6 +52,7 @@ constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
+constexpr char kKernelLoadedMessage[] = "] Linux version";
 
 enum class AdbMode {
   VsockTunnel,
@@ -88,6 +86,8 @@ class CuttlefishConfig {
   void set_assembly_dir(const std::string& assembly_dir);
 
   std::string AssemblyPath(const std::string&) const;
+
+  std::string os_composite_disk_path() const;
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
@@ -362,7 +362,9 @@ class CuttlefishConfig {
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
-    int host_port() const;
+    int adb_host_port() const;
+    // Device-specific ID to distinguish modem simulators. Must be 4 digits.
+    int modem_simulator_host_id() const;
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
     std::string adb_ip_and_port() const;
@@ -430,13 +432,9 @@ class CuttlefishConfig {
 
     std::string sdcard_path() const;
 
-    std::string os_composite_disk_path() const;
-
     std::string persistent_composite_disk_path() const;
 
     std::string uboot_env_image_path() const;
-
-    std::string vendor_boot_image_path() const;
 
     std::string audio_server_path() const;
 
@@ -480,7 +478,8 @@ class CuttlefishConfig {
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
-    void set_host_port(int host_port);
+    void set_adb_host_port(int adb_host_port);
+    void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
     void set_rootcanal_hci_port(int rootcanal_hci_port);
     void set_rootcanal_link_port(int rootcanal_link_port);
