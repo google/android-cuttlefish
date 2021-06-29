@@ -97,21 +97,15 @@ class CuttlefishEnvironment : public Feature, public DiagnosticInformation {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-fruit::Component<const CuttlefishConfig,
-                 const CuttlefishConfig::InstanceSpecific>
-configComponent() {
-  static auto config = CuttlefishConfig::Get();
-  CHECK(config) << "Could not load config.";
-  static auto instance = config->ForDefaultInstance();
-  return fruit::createComponent().bindInstance(*config).bindInstance(instance);
-}
-
-fruit::Component<ServerLoop> runCvdComponent() {
+fruit::Component<ServerLoop> runCvdComponent(
+    const CuttlefishConfig* config,
+    const CuttlefishConfig::InstanceSpecific* instance) {
   return fruit::createComponent()
       .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
       .addMultibinding<Feature, CuttlefishEnvironment>()
+      .bindInstance(*config)
+      .bindInstance(*instance)
       .install(bootStateMachineComponent)
-      .install(configComponent)
       .install(launchAdbComponent)
       .install(launchComponent)
       .install(launchModemComponent)
@@ -203,7 +197,7 @@ int RunCvdMain(int argc, char** argv) {
   ConfigureLogs(*config, instance);
   CHECK(ChdirIntoRuntimeDir(instance)) << "Could not enter runtime dir";
 
-  fruit::Injector<ServerLoop> injector(runCvdComponent);
+  fruit::Injector<ServerLoop> injector(runCvdComponent, config, &instance);
 
   // One of the setup features can consume most output, so print this early.
   DiagnosticInformation::PrintAll(
