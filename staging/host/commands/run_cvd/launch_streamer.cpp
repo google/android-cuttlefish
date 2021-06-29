@@ -16,12 +16,14 @@
 #include "host/commands/run_cvd/launch.h"
 
 #include <android-base/logging.h>
+#include <sstream>
 #include <string>
 #include <utility>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/run_cvd/reporting.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -154,12 +156,23 @@ class StreamerSockets : public virtual Feature {
   SharedFD audio_server_;
 };
 
-class VncServer : public virtual CommandSource {
+class VncServer : public virtual CommandSource, public DiagnosticInformation {
  public:
   INJECT(VncServer(const CuttlefishConfig& config,
                    const CuttlefishConfig::InstanceSpecific& instance,
                    StreamerSockets& sockets))
       : config_(config), instance_(instance), sockets_(sockets) {}
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    if (!Enabled()) {
+      return {};
+    }
+    std::ostringstream out;
+    out << "VNC server started on port "
+        << config_.ForDefaultInstance().vnc_server_port();
+    return {out.str()};
+  }
+
   // CommandSource
   std::vector<Command> Commands() override {
     Command vnc_server(VncServerBinary());
@@ -187,7 +200,8 @@ class VncServer : public virtual CommandSource {
   StreamerSockets& sockets_;
 };
 
-class WebRtcServer : public virtual CommandSource {
+class WebRtcServer : public virtual CommandSource,
+                     public DiagnosticInformation {
  public:
   INJECT(WebRtcServer(const CuttlefishConfig& config,
                       const CuttlefishConfig::InstanceSpecific& instance,
@@ -197,6 +211,20 @@ class WebRtcServer : public virtual CommandSource {
         instance_(instance),
         sockets_(sockets),
         log_pipe_provider_(log_pipe_provider) {}
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    if (!Enabled() || !config_.ForDefaultInstance().start_webrtc_sig_server()) {
+      // When WebRTC is enabled but an operator other than the one launched by
+      // run_cvd is used there is no way to know the url to which to point the
+      // browser to.
+      return {};
+    }
+    std::ostringstream out;
+    out << "Point your browser to https://" << config_.sig_server_address()
+        << ":" << config_.sig_server_port() << " to interact with the device.";
+    return {out.str()};
+  }
+
   // CommandSource
   std::vector<Command> Commands() override {
     std::vector<Command> commands;
@@ -305,6 +333,8 @@ launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
       .addMultibinding<CommandSource, VncServer>()
+      .addMultibinding<DiagnosticInformation, WebRtcServer>()
+      .addMultibinding<DiagnosticInformation, VncServer>()
       .addMultibinding<Feature, StreamerSockets>()
       .addMultibinding<Feature, WebRtcServer>()
       .addMultibinding<Feature, VncServer>();
