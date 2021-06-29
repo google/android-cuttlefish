@@ -26,6 +26,7 @@ cc_binary {
         "launch_modem.cpp",
         "launch_streamer.cpp",
         "main.cc",
+        "reporting.cpp",
         "process_monitor.cc",
         "server_loop.cpp",
         "validate.cpp",
