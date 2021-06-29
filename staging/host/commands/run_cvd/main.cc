@@ -36,6 +36,7 @@
 #include "host/commands/run_cvd/boot_state_machine.h"
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/process_monitor.h"
+#include "host/commands/run_cvd/reporting.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/commands/run_cvd/validate.h"
@@ -48,43 +49,53 @@ using vm_manager::GetVmManager;
 
 namespace {
 
-constexpr char kGreenColor[] = "\033[1;32m";
-constexpr char kResetColor[] = "\033[0m";
+class CuttlefishEnvironment : public Feature, public DiagnosticInformation {
+ public:
+  INJECT(
+      CuttlefishEnvironment(const CuttlefishConfig& config,
+                            const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
 
-bool WriteCuttlefishEnvironment(const CuttlefishConfig& config) {
-  auto env = SharedFD::Open(config.cuttlefish_env_path().c_str(),
-                            O_CREAT | O_RDWR, 0755);
-  if (!env->IsOpen()) {
-    LOG(ERROR) << "Unable to create cuttlefish.env file";
-    return false;
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    auto config_path = instance_.PerInstancePath("cuttlefish_config.json");
+    return {
+        "Launcher log: " + instance_.launcher_log_path(),
+        "Instance configuration: " + config_path,
+        "Instance environment: " + config_.cuttlefish_env_path(),
+    };
   }
-  auto instance = config.ForDefaultInstance();
-  std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
-                           instance.PerInstancePath(".") + "\"\n";
-  config_env += "export ANDROID_SERIAL=" + instance.adb_ip_and_port() + "\n";
-  env->Write(config_env.c_str(), config_env.size());
-  return true;
-}
 
-std::string GetConfigFilePath(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  return instance.PerInstancePath("cuttlefish_config.json");
-}
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "CuttlefishEnvironment"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
-void PrintStreamingInformation(const CuttlefishConfig& config) {
-  if (config.ForDefaultInstance().start_webrtc_sig_server()) {
-    // TODO (jemoreira): Change this when webrtc is moved to the debian package.
-    LOG(INFO) << kGreenColor << "Point your browser to https://"
-              << config.sig_server_address() << ":" << config.sig_server_port()
-              << " to interact with the device." << kResetColor;
-  } else if (config.enable_vnc_server()) {
-    LOG(INFO) << kGreenColor << "VNC server started on port "
-              << config.ForDefaultInstance().vnc_server_port() << kResetColor;
+ protected:
+  bool Setup() override {
+    auto env =
+        SharedFD::Open(config_.cuttlefish_env_path(), O_CREAT | O_RDWR, 0755);
+    if (!env->IsOpen()) {
+      LOG(ERROR) << "Unable to create cuttlefish.env file";
+      return false;
+    }
+    std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
+                             instance_.PerInstancePath(".") + "\"\n";
+    config_env += "export ANDROID_SERIAL=" + instance_.adb_ip_and_port() + "\n";
+    auto written = WriteAll(env, config_env);
+    if (written != config_env.size()) {
+      LOG(ERROR) << "Failed to write all of \"" << config_env << "\", "
+                 << "only wrote " << written << " bytes. Error was "
+                 << env->StrError();
+      return false;
+    }
+    return true;
   }
-  // When WebRTC is enabled but an operator other than the one launched by
-  // run_cvd is used there is no way to know the url to which to point the
-  // browser to.
-}
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
 
 fruit::Component<const CuttlefishConfig,
                  const CuttlefishConfig::InstanceSpecific>
@@ -95,43 +106,47 @@ configComponent() {
   return fruit::createComponent().bindInstance(*config).bindInstance(instance);
 }
 
-fruit::Component<> runCvdComponent() {
+fruit::Component<ServerLoop> runCvdComponent() {
   return fruit::createComponent()
+      .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
+      .addMultibinding<Feature, CuttlefishEnvironment>()
       .install(bootStateMachineComponent)
       .install(configComponent)
       .install(launchAdbComponent)
       .install(launchComponent)
       .install(launchModemComponent)
       .install(launchStreamerComponent)
+      .install(serverLoopComponent)
       .install(validationComponent);
 }
 
-}  // namespace
-
-int RunCvdMain(int argc, char** argv) {
-  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, false);
-
+bool IsStdinValid() {
   if (isatty(0)) {
-    LOG(FATAL) << "stdin was a tty, expected to be passed the output of a previous stage. "
+    LOG(ERROR) << "stdin was a tty, expected to be passed the output of a "
+                  "previous stage. "
                << "Did you mean to run launch_cvd?";
-    return RunnerExitCodes::kInvalidHostConfiguration;
+    return false;
   } else {
     int error_num = errno;
     if (error_num == EBADF) {
-      LOG(FATAL) << "stdin was not a valid file descriptor, expected to be passed the output "
+      LOG(ERROR) << "stdin was not a valid file descriptor, expected to be "
+                    "passed the output "
                  << "of assemble_cvd. Did you mean to run launch_cvd?";
-      return RunnerExitCodes::kInvalidHostConfiguration;
+      return false;
     }
   }
+  return true;
+}
 
+const CuttlefishConfig* FindConfigFromStdin() {
   std::string input_files_str;
   {
     auto input_fd = SharedFD::Dup(0);
     auto bytes_read = ReadAll(input_fd, &input_files_str);
     if (bytes_read < 0) {
-      LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
+      LOG(ERROR) << "Failed to read input files. Error was \""
+                 << input_fd->StrError() << "\"";
+      return nullptr;
     }
   }
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
@@ -142,89 +157,63 @@ int RunCvdMain(int argc, char** argv) {
       setenv(kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
     }
   }
-  if (!found_config) {
-    return RunnerExitCodes::kCuttlefishConfigurationInitError;
-  }
+  return CuttlefishConfig::Get();
+}
 
-  auto config = CuttlefishConfig::Get();
-  auto instance = config->ForDefaultInstance();
-
+void ConfigureLogs(const CuttlefishConfig& config,
+                   const CuttlefishConfig::InstanceSpecific& instance) {
   auto log_path = instance.launcher_log_path();
 
-  {
-    std::ofstream launcher_log_ofstream(log_path.c_str());
-    auto assembly_path = config->AssemblyPath("assemble_cvd.log");
-    std::ifstream assembly_log_ifstream(assembly_path);
-    if (assembly_log_ifstream) {
-      auto assemble_log = ReadFile(assembly_path);
-      launcher_log_ofstream << assemble_log;
-    }
+  std::ofstream launcher_log_ofstream(log_path.c_str());
+  auto assembly_path = config.AssemblyPath("assemble_cvd.log");
+  std::ifstream assembly_log_ifstream(assembly_path);
+  if (assembly_log_ifstream) {
+    auto assemble_log = ReadFile(assembly_path);
+    launcher_log_ofstream << assemble_log;
   }
   ::android::base::SetLogger(LogToStderrAndFiles({log_path}));
+}
 
+bool ChdirIntoRuntimeDir(const CuttlefishConfig::InstanceSpecific& instance) {
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
   // find the running processes when it can't establish a communication with the
   // launcher.
   auto chdir_ret = chdir(instance.instance_dir().c_str());
   if (chdir_ret != 0) {
-    auto error = errno;
-    LOG(ERROR) << "Unable to change dir into instance directory ("
-               << instance.instance_dir() << "): " << strerror(error);
-    return RunnerExitCodes::kInstanceDirCreationError;
+    PLOG(ERROR) << "Unable to change dir into instance directory ("
+                << instance.instance_dir() << "): ";
+    return false;
   }
+  return true;
+}
 
-  auto vm_manager = GetVmManager(config->vm_manager(), config->target_arch());
+}  // namespace
 
-  if (!WriteCuttlefishEnvironment(*config)) {
-    LOG(ERROR) << "Unable to write cuttlefish environment file";
-  }
+int RunCvdMain(int argc, char** argv) {
+  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  google::ParseCommandLineFlags(&argc, &argv, false);
 
-  PrintStreamingInformation(*config);
+  CHECK(IsStdinValid()) << "Invalid stdin";
+  auto config = FindConfigFromStdin();
+  CHECK(config) << "Could not find config";
+  auto instance = config->ForDefaultInstance();
 
-  if (config->console()) {
-    LOG(INFO) << kGreenColor << "To access the console run: screen "
-              << instance.console_path() << kResetColor;
-  } else {
-    LOG(INFO) << kGreenColor
-              << "Serial console is disabled; use -console=true to enable it"
-              << kResetColor;
-  }
+  ConfigureLogs(*config, instance);
+  CHECK(ChdirIntoRuntimeDir(instance)) << "Could not enter runtime dir";
 
-  LOG(INFO) << kGreenColor
-            << "The following files contain useful debugging information:"
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Launcher log: " << instance.launcher_log_path()
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Android's logcat output: " << instance.logcat_path()
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Kernel log: " << instance.PerInstancePath("kernel.log")
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Instance configuration: " << GetConfigFilePath(*config)
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Instance environment: " << config->cuttlefish_env_path()
-            << kResetColor;
+  fruit::Injector<ServerLoop> injector(runCvdComponent);
 
-  auto launcher_monitor_path = instance.launcher_monitor_socket_path();
-  auto launcher_monitor_socket = SharedFD::SocketLocalServer(
-      launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
-  if (!launcher_monitor_socket->IsOpen()) {
-    LOG(ERROR) << "Error when opening launcher server: "
-               << launcher_monitor_socket->StrError();
-    return RunnerExitCodes::kMonitorCreationFailed;
-  }
+  // One of the setup features can consume most output, so print this early.
+  DiagnosticInformation::PrintAll(
+      injector.getMultibindings<DiagnosticInformation>());
+
+  const auto& features = injector.getMultibindings<Feature>();
+  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
 
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
-
-  fruit::Injector<> injector(runCvdComponent);
-  const auto& features = injector.getMultibindings<Feature>();
-  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
 
   for (auto& command_source : injector.getMultibindings<CommandSource>()) {
     if (command_source->Enabled()) {
@@ -236,12 +225,13 @@ int RunCvdMain(int argc, char** argv) {
   // sockets (input devices, vsock frame server) when using crosvm.
 
   // Start the guest VM
+  auto vm_manager = GetVmManager(config->vm_manager(), config->target_arch());
   process_monitor.AddCommands(vm_manager->StartCommands(*config));
 
   CHECK(process_monitor.StartAndMonitorProcesses())
       << "Could not start subprocesses";
 
-  ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
+  injector.get<ServerLoop&>().Run(process_monitor);  // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
 
   return RunnerExitCodes::kServerError;
