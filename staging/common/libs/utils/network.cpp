@@ -36,12 +36,6 @@
 namespace cuttlefish {
 namespace {
 
-static std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-          "/") +
-         file_name;
-}
-
 // This should be the size of virtio_net_hdr_v1, from linux/virtio_net.h, but
 // the version of that header that ships with android in Pie does not include
 // that struct (it was added in Q).
@@ -96,42 +90,28 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
     return tap_fd;
   }
 
-  if (HostArch() == Arch::Arm64) {
-    auto tapsetiff_path = DefaultHostArtifactsPath("bin/tapsetiff");
-    Command cmd(tapsetiff_path);
-    cmd.AddParameter(tap_fd);
-    cmd.AddParameter(interface_name.c_str());
-    int ret = cmd.Start().Wait();
-    if (ret != 0) {
-      LOG(ERROR) << "Unable to run tapsetiff.py. Exited with status " << ret;
-      tap_fd->Close();
-      return SharedFD();
-    }
-  } else {
-    struct ifreq ifr;
-    memset(&ifr, 0, sizeof(ifr));
-    ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
-    strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
+  struct ifreq ifr;
+  memset(&ifr, 0, sizeof(ifr));
+  ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
+  strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
 
-    int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
-    if (err < 0) {
-      LOG(ERROR) << "Unable to connect to " << interface_name
-                 << " tap interface: " << tap_fd->StrError();
-      tap_fd->Close();
-      return SharedFD();
-    }
-
-    // The interface's configuration may have been modified or just not set
-    // correctly on creation. While qemu checks this and enforces the right
-    // configuration, crosvm does not, so it needs to be set before it's passed to
-    // it.
-    tap_fd->Ioctl(TUNSETOFFLOAD,
-                  reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
-                                        TUN_F_TSO6));
-    int len = SIZE_OF_VIRTIO_NET_HDR_V1;
-    tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
+  int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
+  if (err < 0) {
+    LOG(ERROR) << "Unable to connect to " << interface_name
+               << " tap interface: " << tap_fd->StrError();
+    tap_fd->Close();
+    return SharedFD();
   }
 
+  // The interface's configuration may have been modified or just not set
+  // correctly on creation. While qemu checks this and enforces the right
+  // configuration, crosvm does not, so it needs to be set before it's passed to
+  // it.
+  tap_fd->Ioctl(TUNSETOFFLOAD,
+                reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
+                                        TUN_F_TSO6));
+  int len = SIZE_OF_VIRTIO_NET_HDR_V1;
+  tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
   return tap_fd;
 }
 
