@@ -23,6 +23,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
+#include "host/libs/config/adb_config.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -483,8 +484,13 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_gdb_port(FLAGS_gdb_port);
 
-  std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
-  tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
+  {
+    AdbConfig adb_config;
+    std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
+    adb_config.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
+    adb_config.set_run_adb_connector(FLAGS_run_adb_connector);
+    CHECK(tmp_config_obj.SaveFragment(adb_config)) << "Failed to save adb info";
+  }
 
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
@@ -533,7 +539,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
           FLAGS_webrtc_enable_adb_websocket);
 
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
-  tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
