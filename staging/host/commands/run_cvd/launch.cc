@@ -274,7 +274,7 @@ class TombstoneReceiver : public CommandSource {
 
  protected:
   bool Setup() override {
-    std::string tombstone_dir_ = instance_.PerInstancePath("tombstones");
+    tombstone_dir_ = instance_.PerInstancePath("tombstones");
     if (!DirectoryExists(tombstone_dir_.c_str())) {
       LOG(DEBUG) << "Setting up " << tombstone_dir_;
       if (mkdir(tombstone_dir_.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
