@@ -4939,10 +4939,15 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             RIL_onRequestComplete(t, RIL_E_SUCCESS, &mdConfig, sizeof(RIL_ModemConfig));
             break;
         }
-        case RIL_REQUEST_CONFIG_SET_PREFER_DATA_MODEM:
-            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+        case RIL_REQUEST_CONFIG_SET_PREFER_DATA_MODEM: {
+            int *modemId = (int*)(data);
+            if (modemId == NULL || *modemId != 0) {
+                RIL_onRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
+            } else {
+                RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            }
             break;
-
+        }
         case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
