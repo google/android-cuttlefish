@@ -220,35 +220,6 @@ std::string CuttlefishConfig::cuttlefish_env_path() const {
   return (*dictionary_)[kCuttlefishEnvPath].asString();
 }
 
-static AdbMode stringToAdbMode(std::string mode) {
-  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  if (mode == "vsock_tunnel") {
-    return AdbMode::VsockTunnel;
-  } else if (mode == "vsock_half_tunnel") {
-    return AdbMode::VsockHalfTunnel;
-  } else if (mode == "native_vsock") {
-    return AdbMode::NativeVsock;
-  } else {
-    return AdbMode::Unknown;
-  }
-}
-
-static constexpr char kAdbMode[] = "adb_mode";
-std::set<AdbMode> CuttlefishConfig::adb_mode() const {
-  std::set<AdbMode> args_set;
-  for (auto& mode : (*dictionary_)[kAdbMode]) {
-    args_set.insert(stringToAdbMode(mode.asString()));
-  }
-  return args_set;
-}
-void CuttlefishConfig::set_adb_mode(const std::set<std::string>& mode) {
-  Json::Value mode_json_obj(Json::arrayValue);
-  for (const auto& arg : mode) {
-    mode_json_obj.append(arg);
-  }
-  (*dictionary_)[kAdbMode] = mode_json_obj;
-}
-
 static SecureHal StringToSecureHal(std::string mode) {
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
   if (mode == "keymint") {
@@ -407,14 +378,6 @@ bool CuttlefishConfig::restart_subprocesses() const {
 }
 void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
   (*dictionary_)[kRestartSubprocesses] = restart_subprocesses;
-}
-
-static constexpr char kRunAdbConnector[] = "run_adb_connector";
-bool CuttlefishConfig::run_adb_connector() const {
-  return (*dictionary_)[kRunAdbConnector].asBool();
-}
-void CuttlefishConfig::set_run_adb_connector(bool run_adb_connector) {
-  (*dictionary_)[kRunAdbConnector] = run_adb_connector;
 }
 
 static constexpr char kRunAsDaemon[] = "run_as_daemon";
