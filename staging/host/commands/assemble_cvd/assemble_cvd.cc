@@ -27,6 +27,7 @@
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/flags.h"
+#include "host/libs/config/adb_config.h"
 #include "host/libs/config/fetcher_config.h"
 
 using cuttlefish::StringFromEnv;
@@ -90,7 +91,9 @@ bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 }
 
 void ValidateAdbModeFlag(const CuttlefishConfig& config) {
-  auto adb_modes = config.adb_mode();
+  AdbConfig adb_config;
+  CHECK(config.LoadFragment(adb_config)) << "No adb fragment";
+  auto adb_modes = adb_config.adb_mode();
   adb_modes.erase(AdbMode::Unknown);
   if (adb_modes.size() < 1) {
     LOG(INFO) << "ADB not enabled";
