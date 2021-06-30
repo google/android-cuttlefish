@@ -37,6 +37,7 @@ cc_binary {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
+        "libfruit",
         "libjsoncpp",
         "libnl",
         "libprotobuf-cpp-full",
