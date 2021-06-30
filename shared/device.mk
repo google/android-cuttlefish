@@ -214,7 +214,8 @@ PRODUCT_PACKAGES += \
     libEGL_emulation \
     libGLESv2_enc \
     libGLESv2_emulation \
-    libGLESv1_enc
+    libGLESv1_enc \
+    libGoldfishProfiler \
 
 #
 # Packages for testing
