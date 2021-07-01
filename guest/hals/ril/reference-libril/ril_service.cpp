@@ -12506,6 +12506,22 @@ int radio_1_6::reportPhysicalChannelConfigs(int slotId, int indicationType,
           ->mRadioIndicationV1_4->currentPhysicalChannelConfigs_1_4(
               RadioIndicationType::UNSOLICITED, physChanConfig);
       radioService[slotId]->checkReturnStatus(retStatus);
+      {
+          // just send the link estimate along with physical channel
+          // config, as it has at least the downlink bandwidth.
+          // Note: the bandwidth is just some hardcoded
+          // value, as there is not way to get that reliably on
+          // virtual devices, as of now.
+          V1_2::LinkCapacityEstimate lce = {
+            .downlinkCapacityKbps = static_cast<uint32_t>(configs[1]),
+            .uplinkCapacityKbps = static_cast<uint32_t>(configs[1])
+          };
+        RLOGD("reporting link capacity estimate download: %d upload: %d",
+                        lce.downlinkCapacityKbps, lce.uplinkCapacityKbps );
+        Return<void> retStatus = radioService[slotId]->mRadioIndicationV1_4->
+            currentLinkCapacityEstimate(RadioIndicationType::UNSOLICITED, lce);
+        radioService[slotId]->checkReturnStatus(retStatus);
+      }
     } else {
       RLOGE(
           "reportPhysicalChannelConfigs: radioService[%d]->mRadioIndicationV1_4 "
