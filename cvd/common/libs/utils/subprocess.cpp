@@ -143,7 +143,7 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
   return retval;
 }
 
-bool KillSubprocess(Subprocess* subprocess) {
+StopperResult KillSubprocess(Subprocess* subprocess) {
   auto pid = subprocess->pid();
   if (pid > 0) {
     auto pgid = getpgid(pid);
@@ -155,13 +155,15 @@ bool KillSubprocess(Subprocess* subprocess) {
       // to the process and not a (non-existent) group
     }
     bool is_group_head = pid == pgid;
-    if (is_group_head) {
-      return killpg(pid, SIGKILL) == 0;
-    } else {
-      return kill(pid, SIGKILL) == 0;
+    auto kill_ret = (is_group_head ? killpg : kill)(pid, SIGKILL);
+    if (kill_ret == 0) {
+      return StopperResult::kStopSuccess;
     }
+    auto kill_cmd = is_group_head ? "killpg(" : "kill(";
+    PLOG(ERROR) << kill_cmd << pid << ", SIGKILL) failed: ";
+    return StopperResult::kStopFailure;
   }
-  return true;
+  return StopperResult::kStopSuccess;
 }
 
 Command::~Command() {
