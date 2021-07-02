@@ -35,77 +35,81 @@
 #include <string>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/tee_logging.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
-DEFINE_int32(wait_for_launcher, 5,
-             "How many seconds to wait for the launcher to respond to the status "
-             "command. A value of zero means wait indefinetly");
+namespace cuttlefish {
 
-int main(int argc, char** argv) {
+int CvdStatusMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, true);
+  ::android::base::SetLogger(LogToStderrAndFiles({}));
 
-  auto config = cuttlefish::CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Failed to obtain config object";
-    return 1;
-  }
+  std::vector<Flag> flags;
+
+  std::int32_t wait_for_launcher;
+  flags.emplace_back(
+      GflagsCompatFlag("wait_for_launcher", wait_for_launcher)
+          .Help("How many seconds to wait for the launcher to respond to the "
+                "status command. A value of zero means wait indefinitely"));
+
+  flags.emplace_back(HelpFlag(flags));
+  flags.emplace_back(UnexpectedArgumentGuard());
+
+  std::vector<std::string> args =
+      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  CHECK(ParseFlags(flags, args)) << "Could not process command line flags.";
+
+  auto config = CuttlefishConfig::Get();
+  CHECK(config) << "Failed to obtain config object";
 
   auto instance = config->ForDefaultInstance();
   auto monitor_path = instance.launcher_monitor_socket_path();
-  if (monitor_path.empty()) {
-    LOG(ERROR) << "No path to launcher monitor found";
-    return 2;
-  }
-  auto monitor_socket = cuttlefish::SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM, FLAGS_wait_for_launcher);
-  if (!monitor_socket->IsOpen()) {
-    LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
-               << ": " << monitor_socket->StrError();
-    return 3;
-  }
-  auto request = cuttlefish::LauncherAction::kStatus;
+  CHECK(!monitor_path.empty()) << "No path to launcher monitor found";
+
+  auto monitor_socket = SharedFD::SocketLocalClient(
+      monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
+  CHECK(monitor_socket->IsOpen())
+      << "Unable to connect to launcher monitor at " << monitor_path << ": "
+      << monitor_socket->StrError();
+
+  auto request = LauncherAction::kStatus;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
-  if (bytes_sent < 0) {
-    LOG(ERROR) << "Error sending launcher monitor the status command: "
-               << monitor_socket->StrError();
-    return 4;
-  }
+  CHECK(bytes_sent > 0) << "Error sending launcher monitor the status command: "
+                        << monitor_socket->StrError();
+
   // Perform a select with a timeout to guard against launcher hanging
-  cuttlefish::SharedFDSet read_set;
+  SharedFDSet read_set;
   read_set.Set(monitor_socket);
-  struct timeval timeout = {FLAGS_wait_for_launcher, 0};
-  int selected = cuttlefish::Select(&read_set, nullptr, nullptr,
-                             FLAGS_wait_for_launcher <= 0 ? nullptr : &timeout);
-  if (selected < 0){
-    LOG(ERROR) << "Failed communication with the launcher monitor: "
-               << strerror(errno);
-    return 5;
-  }
-  if (selected == 0) {
-    LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
-    return 6;
-  }
-  cuttlefish::LauncherResponse response;
+  struct timeval timeout = {wait_for_launcher, 0};
+  int selected = Select(&read_set, nullptr, nullptr,
+                        wait_for_launcher <= 0 ? nullptr : &timeout);
+  CHECK(selected >= 0) << "Failed communication with the launcher monitor: "
+                       << strerror(errno);
+  CHECK(selected > 0)
+      << "Timeout expired waiting for launcher monitor to respond";
+
+  LauncherResponse response;
   auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
-  if (bytes_recv < 0) {
-    LOG(ERROR) << "Error receiving response from launcher monitor: "
-               << monitor_socket->StrError();
-    return 7;
-  }
-  if (response != cuttlefish::LauncherResponse::kSuccess) {
-    LOG(ERROR) << "Received '" << static_cast<char>(response)
-               << "' response from launcher monitor";
-    return 8;
-  }
+  CHECK(bytes_recv > 0) << "Error receiving response from launcher monitor: "
+                        << monitor_socket->StrError();
+  CHECK(response == LauncherResponse::kSuccess)
+      << "Received '" << static_cast<char>(response)
+      << "' response from launcher monitor";
+
   LOG(INFO) << "run_cvd is active.";
   return 0;
+}
+
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::CvdStatusMain(argc, argv);
 }
