@@ -53,7 +53,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_NAME := aosp_cf_x86_only_phone
 PRODUCT_DEVICE := vsoc_x86_only
 PRODUCT_MANUFACTURER := Google
-PRODUCT_MODEL := Cuttlefish x86 phone (32-bit kernel)
+PRODUCT_MODEL := Cuttlefish x86 phone 32-bit kernel
 
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
