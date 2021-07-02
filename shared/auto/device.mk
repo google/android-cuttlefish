@@ -53,7 +53,7 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 # vehicle HAL
 ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
-    LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@2.0-service
+    LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@2.0-emulator-service
     BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/vhal
 endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
