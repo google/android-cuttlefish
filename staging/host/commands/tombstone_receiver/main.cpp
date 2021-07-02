@@ -22,23 +22,21 @@
 #include <iomanip>
 #include <sstream>
 
-#include "host/libs/config/logging.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/shared_fd_flag.h"
+#include "host/libs/config/logging.h"
 
-DEFINE_int32(
-    server_fd, -1,
-    "File descriptor to an already created vsock server. If negative a new "
-    "server will be created at the port specified on the config file");
-DEFINE_string(tombstone_dir, "", "directory to write out tombstones in");
+namespace cuttlefish {
 
 static uint num_tombstones_in_last_second = 0;
 static std::string last_tombstone_name = "";
 
-static std::string next_tombstone_path() {
+static std::string next_tombstone_path(const std::string& tombstone_dir) {
   auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::stringstream ss;
-  ss << FLAGS_tombstone_dir << "/tombstone_" <<
-    std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H%M%S");
+  ss << tombstone_dir << "/tombstone_"
+     << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H%M%S");
   auto retval = ss.str();
 
   // Gives tombstones unique names
@@ -54,23 +52,38 @@ static std::string next_tombstone_path() {
   return retval;
 }
 
-#define CHUNK_RECV_MAX_LEN (1024)
-int main(int argc, char** argv) {
-  cuttlefish::DefaultSubprocessLogging(argv);
-  google::ParseCommandLineFlags(&argc, &argv, true);
+static constexpr size_t CHUNK_RECV_MAX_LEN = 1024;
 
-  cuttlefish::SharedFD server_fd = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
-  close(FLAGS_server_fd);
+int TombstoneReceiverMain(int argc, char** argv) {
+  DefaultSubprocessLogging(argv);
 
-  CHECK(server_fd->IsOpen()) << "Error inheriting tombstone server: "
-                             << server_fd->StrError();
+  std::vector<Flag> flags;
+
+  std::string tombstone_dir;
+  flags.emplace_back(GflagsCompatFlag("tombstone_dir", tombstone_dir)
+                         .Help("directory to write out tombstones in"));
+
+  SharedFD server_fd;
+  flags.emplace_back(
+      SharedFDFlag("server_fd", server_fd)
+          .Help("File descriptor to an already created vsock server"));
+
+  flags.emplace_back(HelpFlag(flags));
+  flags.emplace_back(UnexpectedArgumentGuard());
+
+  std::vector<std::string> args =
+      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  CHECK(ParseFlags(flags, args)) << "Could not process command line flags.";
+
+  CHECK(server_fd->IsOpen()) << "Did not receive a server fd";
+
   LOG(DEBUG) << "Host is starting server on port "
              << server_fd->VsockServerPort();
 
   // Server loop
   while (true) {
-    auto conn = cuttlefish::SharedFD::Accept(*server_fd);
-    std::ofstream file(next_tombstone_path(),
+    auto conn = SharedFD::Accept(*server_fd);
+    std::ofstream file(next_tombstone_path(tombstone_dir),
                        std::ofstream::out | std::ofstream::binary);
 
     while (file.is_open()) {
@@ -86,4 +99,10 @@ int main(int argc, char** argv) {
   }
 
   return 0;
+}
+
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::TombstoneReceiverMain(argc, argv);
 }
