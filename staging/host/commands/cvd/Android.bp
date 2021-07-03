@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,29 +17,26 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "launch_cvd",
+cc_binary_host {
+    name: "cvd",
     srcs: [
-        "filesystem_explorer.cc",
-        "flag_forwarder.cc",
-        "launch_cvd.cc",
+        "main.cc",
     ],
     shared_libs: [
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
         "libbase",
+        "libcuttlefish_utils",
         "libjsoncpp",
-        "libnl",
-        "libxml2",
-        "libz",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libcuttlefish_vm_manager",
-        "libgflags",
     ],
     required: [
-        "mkenvimage",
+        "cvd_internal_start",
+        "cvd_internal_stop",
     ],
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    symlinks: [
+        "launch_cvd",
+        "stop_cvd",
+    ],
+    defaults: ["cuttlefish_host"],
 }
