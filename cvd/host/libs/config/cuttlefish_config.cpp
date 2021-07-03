@@ -331,14 +331,6 @@ bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
   return (*dictionary_)[kEnableVehicleHalServer].asBool();
 }
 
-static constexpr char kVehicleHalServerBinary[] = "vehicle_hal_server_binary";
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
-}
-
 static constexpr char kCustomActions[] = "custom_actions";
 void CuttlefishConfig::set_custom_actions(const std::vector<CustomActionConfig>& actions) {
   Json::Value actions_array(Json::arrayValue);
