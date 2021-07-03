@@ -23,12 +23,11 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/launch/filesystem_explorer.h"
+#include "host/commands/start/filesystem_explorer.h"
+#include "host/commands/start/flag_forwarder.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/fetcher_config.h"
-
-#include "flag_forwarder.h"
 
 /**
  * If stdin is a tty, that means a user is invoking launch_cvd on the command

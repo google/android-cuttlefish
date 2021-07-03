@@ -18,7 +18,7 @@ package {
 }
 
 cc_binary {
-    name: "stop_cvd",
+    name: "cvd_internal_stop",
     srcs: [
         "main.cc",
     ],
