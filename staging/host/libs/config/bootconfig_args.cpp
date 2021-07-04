@@ -24,6 +24,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -120,7 +121,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
 
   if (config.enable_vehicle_hal_grpc_server() &&
       instance.vehicle_hal_server_port() &&
-      FileExists(config.vehicle_hal_grpc_server_binary())) {
+      FileExists(VehicleHalGrpcServerBinary())) {
     constexpr int vehicle_hal_server_cid = 2;
     bootconfig_args.push_back(concat(
         "androidboot.vendor.vehiclehal.server.cid=", vehicle_hal_server_cid));

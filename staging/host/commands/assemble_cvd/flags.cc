@@ -547,9 +547,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
 
-  tmp_config_obj.set_enable_vehicle_hal_grpc_server(FLAGS_enable_vehicle_hal_grpc_server);
-  tmp_config_obj.set_vehicle_hal_grpc_server_binary(
-      HostBinaryPath("android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"));
+  tmp_config_obj.set_enable_vehicle_hal_grpc_server(
+      FLAGS_enable_vehicle_hal_grpc_server);
 
   std::string custom_action_config;
   if (!FLAGS_custom_action_config.empty()) {
