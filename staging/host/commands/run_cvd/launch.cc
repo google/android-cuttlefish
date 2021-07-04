@@ -532,7 +532,7 @@ class VehicleHalServer : public CommandSource {
 
   // CommandSource
   std::vector<Command> Commands() override {
-    Command grpc_server(config_.vehicle_hal_grpc_server_binary());
+    Command grpc_server(VehicleHalGrpcServerBinary());
 
     const unsigned vhal_server_cid = 2;
     const unsigned vhal_server_port = instance_.vehicle_hal_server_port();
@@ -553,7 +553,7 @@ class VehicleHalServer : public CommandSource {
   // Feature
   bool Enabled() const override {
     return config_.enable_vehicle_hal_grpc_server() &&
-           FileExists(config_.vehicle_hal_grpc_server_binary());
+           FileExists(VehicleHalGrpcServerBinary());
   }
   std::string Name() const override { return "VehicleHalServer"; }
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
