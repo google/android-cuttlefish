@@ -64,16 +64,19 @@ std::string TombstoneReceiverBinary() {
   return HostBinaryPath("tombstone_receiver");
 }
 
+std::string VehicleHalGrpcServerBinary() {
+  return HostBinaryPath(
+      "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server");
+}
+
+std::string VncServerBinary() { return HostBinaryPath("vnc_server"); }
+
 std::string WebRtcBinary() {
   return HostBinaryPath("webRTC");
 }
 
 std::string WebRtcSigServerBinary() {
   return HostBinaryPath("webrtc_operator");
-}
-
-std::string VncServerBinary() {
-  return HostBinaryPath("vnc_server");
 }
 
 } // namespace cuttlefish
