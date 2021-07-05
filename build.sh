@@ -49,7 +49,7 @@ function calc_oem() {
   local -n ref_oem=$1
   ref_oem=
   if [[ ${FLAGS_detect_gpu} -eq ${FLAGS_TRUE} ]]; then
-    if is_debian_distro; then
+    if is_debian_series; then
       ref_oem=$(detect_gpu)
     else
       echo "Warning: --detect_gpu works only on Debian-based systems"
