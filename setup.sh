@@ -390,12 +390,13 @@ function cvd_docker_create {
 
         echo "Starting container ${name} (id ${cf_instance}) from image cuttlefish.";
 	    docker run -d ${as_host_x[@]} \
+		        --cgroupns=host \
 		        --name "${name}" -h "${name}" \
                 -l "cf_instance=${cf_instance}" \
                 -l "n_cf_instances=${n_cf_instances}" \
                 -l "vsock_guest_cid=${vsock_guest_cid}" \
 		        --privileged \
-		        -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
+		        -v /sys/fs/cgroup:/sys/fs/cgroup:rw ${volumes[@]} \
 		        cuttlefish
 
 	    echo "Waiting for ${name} to boot."
