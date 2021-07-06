@@ -24,6 +24,7 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/hkdf.h>
+#include <openssl/rand.h>
 
 #include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_hmac.h"
@@ -34,7 +35,7 @@ using namespace cppcose;
 TpmRemoteProvisioningContext::TpmRemoteProvisioningContext(
     TpmResourceManager& resource_manager)
     : resource_manager_(resource_manager) {
-  std::tie(devicePrivKey_, bcc_) = GenerateBcc();
+  std::tie(devicePrivKey_, bcc_) = GenerateBcc(/*testMode=*/false);
 }
 
 std::vector<uint8_t> TpmRemoteProvisioningContext::DeriveBytesFromHbk(
@@ -67,12 +68,18 @@ std::unique_ptr<cppbor::Map> TpmRemoteProvisioningContext::CreateDeviceInfo()
 }
 
 std::pair<std::vector<uint8_t> /* privKey */, cppbor::Array /* BCC */>
-TpmRemoteProvisioningContext::GenerateBcc() const {
+TpmRemoteProvisioningContext::GenerateBcc(bool testMode) const {
   std::vector<uint8_t> privKey(ED25519_PRIVATE_KEY_LEN);
   std::vector<uint8_t> pubKey(ED25519_PUBLIC_KEY_LEN);
 
   // Length is hard-coded in the BoringCrypto API without a constant
-  auto seed = DeriveBytesFromHbk("Device Key Seed", 32);
+  std::vector<uint8_t> seed;
+  if (testMode) {
+    seed.resize(32);
+    RAND_bytes(seed.data(), seed.size());
+  } else {
+    seed = DeriveBytesFromHbk("Device Key Seed", 32);
+  }
   ED25519_keypair_from_seed(pubKey.data(), privKey.data(), seed.data());
 
   auto coseKey = cppbor::Map()
