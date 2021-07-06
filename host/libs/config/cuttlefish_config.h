@@ -403,8 +403,7 @@ class CuttlefishConfig {
     std::string switches_socket_path() const;
     std::string frames_socket_path() const;
 
-    // mock hal guest socket that will be vsock/virtio later on
-    std::string confui_hal_guest_socket_path() const;
+    int confui_host_vsock_port() const;
 
     std::string access_kregistry_path() const;
 
@@ -481,6 +480,7 @@ class CuttlefishConfig {
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
+    void set_confui_host_vsock_port(int confui_host_port);
     void set_rootcanal_hci_port(int rootcanal_hci_port);
     void set_rootcanal_link_port(int rootcanal_link_port);
     void set_rootcanal_test_port(int rootcanal_test_port);
