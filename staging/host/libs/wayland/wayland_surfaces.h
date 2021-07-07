@@ -39,8 +39,6 @@ class Surfaces {
   Surfaces(Surfaces&& rhs) = delete;
   Surfaces& operator=(Surfaces&& rhs) = delete;
 
-  Surface* GetOrCreateSurface(std::uint32_t id);
-
   using FrameCallback =
       std::function<void(std::uint32_t /*display_number*/,      //
                          std::uint32_t /*frame_width*/,         //
@@ -57,9 +55,6 @@ class Surfaces {
                           std::uint32_t frame_height,        //
                           std::uint32_t frame_stride_bytes,  //
                           std::uint8_t* frame_bytes);
-
-  std::mutex surfaces_mutex_;
-  std::unordered_map<std::uint32_t, std::unique_ptr<Surface>> surfaces_;
 
   std::mutex callback_mutex_;
   std::optional<FrameCallback> callback_;
