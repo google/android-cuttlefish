@@ -28,6 +28,7 @@ cc_library_static {
         "wayland_subcompositor.cpp",
         "wayland_surface.cpp",
         "wayland_surfaces.cpp",
+        "wayland_virtio_gpu_metadata.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -37,6 +38,7 @@ cc_library_static {
     static_libs: [
         "libdrm",
         "libffi",
+        "libwayland_crosvm_gpu_display_extension_server_protocols",
         "libwayland_server",
         "libwayland_extension_server_protocols",
     ],

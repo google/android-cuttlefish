@@ -23,18 +23,6 @@
 
 namespace wayland {
 
-Surface* Surfaces::GetOrCreateSurface(std::uint32_t id) {
-  std::unique_lock<std::mutex> lock(surfaces_mutex_);
-
-  auto [it, inserted] = surfaces_.try_emplace(id, nullptr);
-
-  std::unique_ptr<Surface>& surface_ptr = it->second;
-  if (inserted) {
-    surface_ptr.reset(new Surface(id, *this));
-  }
-  return surface_ptr.get();
-}
-
 void Surfaces::SetFrameCallback(FrameCallback callback) {
   std::unique_lock<std::mutex> lock(callback_mutex_);
   callback_.emplace(std::move(callback));

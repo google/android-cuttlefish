@@ -28,6 +28,7 @@
 #include "host/libs/wayland/wayland_subcompositor.h"
 #include "host/libs/wayland/wayland_surface.h"
 #include "host/libs/wayland/wayland_utils.h"
+#include "host/libs/wayland/wayland_virtio_gpu_metadata.h"
 
 namespace wayland {
 namespace internal {
@@ -79,6 +80,8 @@ void WaylandServer::ServerLoop(int fd) {
   wl_display_init_shm(server_state_->display_);
 
   BindCompositorInterface(server_state_->display_, &server_state_->surfaces_);
+  BindVirtioGpuMetadataInterface(server_state_->display_,
+                                 &server_state_->surfaces_);
   BindDmabufInterface(server_state_->display_);
   BindSubcompositorInterface(server_state_->display_);
   BindSeatInterface(server_state_->display_);
