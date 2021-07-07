@@ -421,10 +421,14 @@ std::vector<Command> QemuManager::StartCommands(
                         "max-bytes=1024,period=2000");
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-mouse-pci");
+  qemu_cmd.AddParameter("virtio-mouse-pci,disable-legacy=on");
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-keyboard-pci");
+  qemu_cmd.AddParameter("virtio-keyboard-pci,disable-legacy=on");
+
+  // device padding for unsupported "switches" input
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-keyboard-pci,disable-legacy=on");
 
   auto vhost_net = config.vhost_net() ? ",vhost=on" : "";
 
