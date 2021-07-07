@@ -101,7 +101,11 @@ class StreamerSockets : public virtual Feature {
   }
 
   // Feature
-  bool Enabled() const override { return true; }
+  bool Enabled() const override {
+    bool is_qemu = config_.vm_manager() == vm_manager::QemuManager::name();
+    bool is_accelerated = config_.gpu_mode() != kGpuModeGuestSwiftshader;
+    return !(is_qemu && is_accelerated);
+  }
   std::string Name() const override { return "StreamerSockets"; }
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
@@ -185,7 +189,9 @@ class VncServer : public virtual CommandSource, public DiagnosticInformation {
   }
 
   // Feature
-  bool Enabled() const override { return config_.enable_vnc_server(); }
+  bool Enabled() const override {
+    return sockets_.Enabled() && config_.enable_vnc_server();
+  }
   std::string Name() const override { return "VncServer"; }
   std::unordered_set<Feature*> Dependencies() const override {
     return {static_cast<Feature*>(&sockets_)};
@@ -282,7 +288,9 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   // Feature
-  bool Enabled() const override { return config_.enable_webrtc(); }
+  bool Enabled() const override {
+    return sockets_.Enabled() && config_.enable_webrtc();
+  }
   std::string Name() const override { return "WebRtcServer"; }
   std::unordered_set<Feature*> Dependencies() const override {
     return {static_cast<Feature*>(&sockets_),
