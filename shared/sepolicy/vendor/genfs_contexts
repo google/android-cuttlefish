@@ -30,7 +30,7 @@ dnl')dnl
 dnl
 # crosvm (x86)
 cf_pci_block_device(/devices/pci0000:00, 0x6, 5)
-cf_pci_gpu_device(/devices/pci0000:00, 0x11)
+cf_pci_gpu_device(/devices/pci0000:00, 0x13)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
