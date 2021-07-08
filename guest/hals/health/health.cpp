@@ -15,12 +15,14 @@
  */
 #define LOG_TAG "android.hardware.health@2.1-service.cuttlefish"
 
+#include <fcntl.h>
 #include <memory>
 #include <string_view>
 
 #include <android-base/logging.h>
 #include <health/utils.h>
 #include <health2impl/Health.h>
+#include <utils/Log.h>
 
 using ::android::sp;
 using ::android::hardware::Return;
@@ -50,21 +52,102 @@ class HealthImpl : public Health {
     Return<void> getCurrentNow(getCurrentNow_cb _hidl_cb) override;
     Return<void> getCapacity(getCapacity_cb _hidl_cb) override;
     Return<void> getChargeStatus(getChargeStatus_cb _hidl_cb) override;
+
  protected:
   void UpdateHealthInfo(HealthInfo* health_info) override;
+
+ private:
+  std::string getValue(const char* path);
+  bool getBool(const char* path);
+  int getInt(const char* path);
+  V1_0::BatteryStatus getBatteryStatus(const char* path);
+  V1_0::BatteryHealth getBatteryHealth(const char* path);
 };
+
+std::string HealthImpl::getValue(const char* path) {
+  int fd = open(path, O_RDONLY | O_NONBLOCK);
+  if (fd < 0) {
+    ALOGE("Failed to open %s (%s)", path, strerror(errno));
+    return std::string();
+  }
+
+  char buf[256];
+  ssize_t n = read(fd, buf, sizeof(buf));
+  if (n < 0) {
+    ALOGE("Failed to read %s (%s)", path, strerror(errno));
+    return std::string();
+  }
+  close(fd);
+
+  for (int i = 0; i < 256; i++) {
+    if (buf[i] == '\n') {
+      buf[i] = '\0';
+    }
+  }
+  return std::string(buf);
+}
+
+bool HealthImpl::getBool(const char* path) {
+  auto val = getValue(path);
+  if (val.empty()) return false;
+  return (val[0] == '1');
+}
+
+int HealthImpl::getInt(const char* path) {
+  auto val = getValue(path);
+  if (val.empty()) return 0;
+  return std::stoi(val);
+}
+
+V1_0::BatteryStatus HealthImpl::getBatteryStatus(const char* path) {
+  auto status = getValue(path);
+  if (status == "Charging") return V1_0::BatteryStatus::CHARGING;
+  if (status == "Discharging") return V1_0::BatteryStatus::DISCHARGING;
+  if (status == "Not charging") return V1_0::BatteryStatus::NOT_CHARGING;
+  if (status == "Full") return V1_0::BatteryStatus::FULL;
+  return V1_0::BatteryStatus::UNKNOWN;
+}
+
+V1_0::BatteryHealth HealthImpl::getBatteryHealth(const char* path) {
+  auto health = getValue(path);
+  if (health == "Good") return V1_0::BatteryHealth::GOOD;
+  if (health == "Overheat") return V1_0::BatteryHealth::OVERHEAT;
+  if (health == "Dead") return V1_0::BatteryHealth::DEAD;
+  if (health == "Over voltage") return V1_0::BatteryHealth::OVER_VOLTAGE;
+  if (health == "Unspecified failure")
+    return V1_0::BatteryHealth::UNSPECIFIED_FAILURE;
+  if (health == "Cold") return V1_0::BatteryHealth::COLD;
+  if (health == "Warm") return V1_0::BatteryHealth::GOOD;
+  if (health == "Cool") return V1_0::BatteryHealth::GOOD;
+  if (health == "Hot") return V1_0::BatteryHealth::OVERHEAT;
+  return V1_0::BatteryHealth::UNKNOWN;
+}
+
+// Process updated health property values. This function is called when
+// the kernel sends updated battery status via a uevent from the power_supply
+// subsystem, or when updated values are polled by healthd, as for periodic
+// poll of battery state.
+//
+// health_info contains properties read from the kernel. These values may
+// be modified in this call, prior to sending the modified values to the
+// Android runtime.
 
 void HealthImpl::UpdateHealthInfo(HealthInfo* health_info) {
   auto* battery_props = &health_info->legacy.legacy;
-  battery_props->chargerAcOnline = true;
-  battery_props->chargerUsbOnline = true;
+  battery_props->chargerAcOnline = getBool("/sys/class/power_supply/ac/online");
+  battery_props->chargerUsbOnline =
+      getBool("/sys/class/power_supply/ac/online");
   battery_props->chargerWirelessOnline = false;
   battery_props->maxChargingCurrent = 500000;
   battery_props->maxChargingVoltage = 5000000;
-  battery_props->batteryStatus = V1_0::BatteryStatus::CHARGING;
-  battery_props->batteryHealth = V1_0::BatteryHealth::GOOD;
-  battery_props->batteryPresent = true;
-  battery_props->batteryLevel = 85;
+  battery_props->batteryStatus =
+      getBatteryStatus("/sys/class/power_supply/battery/status");
+  battery_props->batteryHealth =
+      getBatteryHealth("/sys/class/power_supply/battery/health");
+  battery_props->batteryPresent =
+      getBool("/sys/class/power_supply/battery/present");
+  battery_props->batteryLevel =
+      getInt("/sys/class/power_supply/battery/capacity");
   battery_props->batteryVoltage = 3600;
   battery_props->batteryTemperature = 350;
   battery_props->batteryCurrent = 400000;
@@ -85,12 +168,13 @@ Return<void> HealthImpl::getCurrentNow(getCurrentNow_cb _hidl_cb) {
 }
 
 Return<void> HealthImpl::getCapacity(getCapacity_cb _hidl_cb) {
-  _hidl_cb(Result::SUCCESS, 85);
+  _hidl_cb(Result::SUCCESS, getInt("/sys/class/power_supply/battery/capacity"));
   return Void();
 }
 
 Return<void> HealthImpl::getChargeStatus(getChargeStatus_cb _hidl_cb) {
-  _hidl_cb(Result::SUCCESS, BatteryStatus::CHARGING);
+  _hidl_cb(Result::SUCCESS,
+           getBatteryStatus("/sys/class/power_supply/battery/status"));
   return Void();
 }
 
