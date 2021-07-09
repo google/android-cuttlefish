@@ -753,9 +753,12 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     if (modem_simulator_count > 0) {
       std::stringstream modem_ports;
       for (auto index {0}; index < modem_simulator_count - 1; index++) {
-        modem_ports << calc_vsock_port(9200) << ",";
+        auto port = 9200 + (modem_simulator_count * (num - 1)) + index;
+        modem_ports << calc_vsock_port(port) << ",";
       }
-      modem_ports << calc_vsock_port(9200);
+      auto port = 9200 + (modem_simulator_count * (num - 1)) +
+                  modem_simulator_count - 1;
+      modem_ports << calc_vsock_port(port);
       instance.set_modem_simulator_ports(modem_ports.str());
     } else {
       instance.set_modem_simulator_ports("");
