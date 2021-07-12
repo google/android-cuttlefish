@@ -85,13 +85,14 @@ body {
 
 /* Control panel buttons and device screen(s). */
 
-#controls-and-screens {
+#controls-and-displays {
   height: calc(100% - 84px);
 
   /* Items inside this use a row Flexbox.*/
   display: flex;
 }
-#controls-and-screens div {
+
+#controls-and-displays > div {
   margin-left: 5px;
   margin-right: 5px;
 }
@@ -163,15 +164,29 @@ body {
   background-color: #5f6368; /* Google grey 700 */
 }
 
-#screens {
+#device-displays {
   /* Take up the remaining width of the window.*/
   flex-grow: 1;
   /* Don't grow taller than the window.*/
   max-height: 100vh;
+  /* Allows child elements to be positioned relative to this element. */
+  position: relative;
 }
 
-#device-screen {
+/*
+ * Container <div> used to wrap each display's <video> element which is used for
+ * maintaining each display's width and height while the display is potentially
+ * rotating.
+ */
+.device-display {
+  /* Prevents #device-displays from using this element when computing flex size. */
+  position: absolute;
+}
+
+/* The actual <video> element for each display. */
+.device-display-video {
+  position: absolute;
+  left:  0px;
   touch-action: none;
-  transform-origin: top right;
   object-fit: cover;
 }
