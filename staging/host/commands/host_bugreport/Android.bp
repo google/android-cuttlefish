@@ -18,7 +18,7 @@ package {
 }
 
 cc_binary {
-    name: "cvd_host_bugreport",
+    name: "cvd_internal_host_bugreport",
     srcs: [
         "main.cc",
     ],
