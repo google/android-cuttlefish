@@ -47,7 +47,6 @@ function ConnectToDevice(device_id) {
     }
   }, intervalMs);
 
-  let display_label;
   let buttons = {};
   let mouseIsDown = false;
   let deviceConnection;
@@ -190,7 +189,6 @@ function ConnectToDevice(device_id) {
 
       let stream_id = deviceDisplayDescription.stream_id;
       devConn.getStream(stream_id).then(stream => {
-        display_label = stream_id;
         deviceDisplayVideo.srcObject = stream;
       }).catch(e => console.error('Unable to get display stream: ', e));
     }
@@ -728,6 +726,7 @@ function ConnectToDevice(device_id) {
     console.assert(deviceConnection, 'Can\'t send mouse update without device');
     var eventType = e.type.substring(0, 5);
 
+    // The <video> element:
     const deviceDisplay = e.target;
 
     // Before the first video frame arrives there is no way to know width and
@@ -865,6 +864,8 @@ function ConnectToDevice(device_id) {
 
     // NOTE: Rotation is handled automatically because the CSS rotation through
     // transforms also rotates the coordinates of events on the object.
+
+    const display_label = deviceDisplay.id;
 
     deviceConnection.sendMultiTouch(
     {idArr, xArr, yArr, down, slotArr, display_label});
