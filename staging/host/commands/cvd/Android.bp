@@ -31,10 +31,14 @@ cc_binary_host {
         "libcuttlefish_host_config",
     ],
     required: [
+        "cvd_internal_host_bugreport",
         "cvd_internal_start",
+        "cvd_internal_status",
         "cvd_internal_stop",
     ],
     symlinks: [
+        "cvd_host_bugreport",
+        "cvd_status",
         "launch_cvd",
         "stop_cvd",
     ],

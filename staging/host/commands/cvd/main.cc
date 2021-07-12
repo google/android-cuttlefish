@@ -29,8 +29,11 @@
 namespace cuttlefish {
 namespace {
 
-std::string kStartBin = HostBinaryPath("cvd_internal_start");
-std::string kStopBin = HostBinaryPath("cvd_internal_stop");
+const std::string kHostBugreportBin =
+    HostBinaryPath("cvd_internal_host_bugreport");
+const std::string kStartBin = HostBinaryPath("cvd_internal_start");
+const std::string kStatusBin = HostBinaryPath("cvd_internal_status");
+const std::string kStopBin = HostBinaryPath("cvd_internal_stop");
 
 constexpr char kHelpBin[] = "help_placeholder";  // Unused, prints kHelpMessage.
 constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
@@ -42,12 +45,18 @@ Commands:
   help <command>      Print help for a command.
   start               Start a device.
   stop                Stop a running device.
+  status              Check and print the state of a running instance.
+  host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
 )";
 
 const std::map<std::string, std::string> CommandToBinaryMap = {
     {"help", kHelpBin},
+    {"host_bugreport", kHostBugreportBin},
+    {"cvd_host_bugreport", kHostBugreportBin},
     {"start", kStartBin},
     {"launch_cvd", kStartBin},
+    {"status", kStatusBin},
+    {"cvd_status", kStatusBin},
     {"stop", kStopBin},
     {"stop_cvd", kStopBin}};
 

@@ -18,9 +18,9 @@ package {
 }
 
 cc_binary {
-    name: "cvd_status",
+    name: "cvd_internal_status",
     srcs: [
-        "cvd_status.cc",
+        "main.cc",
     ],
     shared_libs: [
         "libbase",
