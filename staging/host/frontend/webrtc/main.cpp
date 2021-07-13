@@ -35,6 +35,7 @@
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/streamer.h"
+#include "host/frontend/webrtc/lib/video_sink.h"
 #include "host/libs/audio_connector/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
@@ -63,6 +64,7 @@ using cuttlefish::KernelLogEventsHandler;
 using cuttlefish::webrtc_streaming::LocalRecorder;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
+using cuttlefish::webrtc_streaming::VideoSink;
 
 class CfOperatorObserver
     : public cuttlefish::webrtc_streaming::OperatorObserver {
@@ -213,11 +215,21 @@ int main(int argc, char** argv) {
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";
 
-  auto display_0 = streamer->AddDisplay(
-      "display_0", screen_connector.ScreenWidth(0),
-      screen_connector.ScreenHeight(0), cvd_config->dpi(), true);
-  auto display_handler = std::shared_ptr<DisplayHandler>(
-      new DisplayHandler(display_0, screen_connector));
+  uint32_t display_index = 0;
+  std::vector<std::shared_ptr<VideoSink>> displays;
+  for (const auto& display_config : cvd_config->display_configs()) {
+    const std::string display_id = "display_" + std::to_string(display_index);
+
+    auto display =
+        streamer->AddDisplay(display_id, display_config.width,
+                             display_config.height, cvd_config->dpi(), true);
+    displays.push_back(display);
+
+    ++display_index;
+  }
+
+  auto display_handler =
+      std::make_shared<DisplayHandler>(std::move(displays), screen_connector);
 
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
   if (cvd_config->record_screen()) {
