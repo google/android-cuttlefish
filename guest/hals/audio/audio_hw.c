@@ -1339,6 +1339,11 @@ static int adev_set_voice_volume(struct audio_hw_device *dev, float volume)
     return 0;
 }
 
+static int adev_set_audio_port_config(struct audio_hw_device *dev,
+                                      const struct audio_port_config *config) {
+  return 0;
+}
+
 static int adev_set_master_volume(struct audio_hw_device *dev, float volume)
 {
     return -ENOSYS;
@@ -1783,6 +1788,7 @@ static int adev_open(const hw_module_t* module, const char* name,
     adev->device.set_parameters = adev_set_parameters;       // no op
     adev->device.get_parameters = adev_get_parameters;       // no op
     adev->device.get_audio_port = adev_get_audio_port;       // no op
+    adev->device.set_audio_port_config = adev_set_audio_port_config;  // no op
     adev->device.get_input_buffer_size = adev_get_input_buffer_size;
     adev->device.open_output_stream = adev_open_output_stream;
     adev->device.close_output_stream = adev_close_output_stream;
