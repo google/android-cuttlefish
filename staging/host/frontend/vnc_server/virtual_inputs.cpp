@@ -16,8 +16,9 @@
 
 #include "host/frontend/vnc_server/virtual_inputs.h"
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gflags/gflags.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
 
@@ -33,8 +34,8 @@
 
 using cuttlefish::vnc::VirtualInputs;
 
-DEFINE_int32(touch_fd, -1,
-             "A fd for a socket where to accept touch connections");
+DEFINE_string(touch_fds, "",
+              "A list of fds for sockets where to accept touch connections");
 
 DEFINE_int32(keyboard_fd, -1,
              "A fd for a socket where to accept keyboard connections");
@@ -315,9 +316,10 @@ class SocketVirtualInputs : public VirtualInputs {
   }
 
   void ClientConnectorLoop() {
-    auto touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
-    close(FLAGS_touch_fd);
-    FLAGS_touch_fd = -1;
+    auto touch_fd =
+        std::stoi(android::base::Split(FLAGS_touch_fds, ",").front());
+    auto touch_server = cuttlefish::SharedFD::Dup(touch_fd);
+    close(touch_fd);
 
     auto keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
     close(FLAGS_keyboard_fd);
