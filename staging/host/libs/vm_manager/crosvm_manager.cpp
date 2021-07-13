@@ -153,10 +153,12 @@ std::vector<Command> CrosvmManager::StartCommands(
   Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
-      return true;
+      return StopperResult::kStopSuccess;
     }
     LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
-    return KillSubprocess(proc);
+    return KillSubprocess(proc) == StopperResult::kStopSuccess
+               ? StopperResult::kStopCrash
+               : StopperResult::kStopFailure;
   });
 
   int hvc_num = 0;
