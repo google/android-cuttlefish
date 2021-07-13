@@ -140,11 +140,13 @@ std::vector<Command> QemuManager::StartCommands(
   auto stop = [](Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
-      return true;
+      return StopperResult::kStopSuccess;
     }
     LOG(WARNING) << "Failed to stop VMM nicely, "
                   << "attempting to KILL";
-    return KillSubprocess(proc);
+    return KillSubprocess(proc) == StopperResult::kStopSuccess
+               ? StopperResult::kStopCrash
+               : StopperResult::kStopFailure;
   };
   std::string qemu_binary = config.qemu_binary_dir();
   switch (arch_) {
