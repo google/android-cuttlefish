@@ -257,12 +257,14 @@ class WebRtcServer : public virtual CommandSource,
       int read_ret = host_socket->Read(response, sizeof(response));
       if (read_ret != 0) {
         LOG(ERROR) << "Failed to read response from webrtc";
+        return KillSubprocess(proc);
       }
-      cuttlefish::KillSubprocess(proc);
-      return true;
+      return KillSubprocess(proc) == StopperResult::kStopSuccess
+                 ? StopperResult::kStopCrash
+                 : StopperResult::kStopFailure;
     };
 
-    Command webrtc(WebRtcBinary(), SubprocessStopper(stopper));
+    Command webrtc(WebRtcBinary(), stopper);
     webrtc.UnsetFromEnvironment({"http_proxy"});
     sockets_.AppendCommandArguments(webrtc);
     if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
