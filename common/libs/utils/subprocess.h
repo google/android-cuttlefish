@@ -29,12 +29,19 @@
 #include <common/libs/fs/shared_fd.h>
 
 namespace cuttlefish {
+
+enum class StopperResult {
+  kStopFailure, /* Failed to stop the subprocess. */
+  kStopCrash,   /* Attempted to stop the subprocess cleanly, but that failed. */
+  kStopSuccess, /* The subprocess exited in the expected way. */
+};
+
 class Command;
 class Subprocess;
 class SubprocessOptions;
-using SubprocessStopper = std::function<bool(Subprocess*)>;
+using SubprocessStopper = std::function<StopperResult(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
-bool KillSubprocess(Subprocess* subprocess);
+StopperResult KillSubprocess(Subprocess* subprocess);
 
 // Keeps track of a running (sub)process. Allows to wait for its completion.
 // It's an error to wait twice for the same subprocess.
@@ -65,7 +72,7 @@ class Subprocess {
   // completion of the command, that's what Wait is for.
   bool Started() const { return started_; }
   pid_t pid() const { return pid_; }
-  bool Stop() { return stopper_(this); }
+  StopperResult Stop() { return stopper_(this); }
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
