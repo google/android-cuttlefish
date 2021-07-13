@@ -35,7 +35,6 @@ import com.android.compatibility.common.util.PropertyUtil;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -141,8 +140,6 @@ public class RilE2eTests {
         Assert.assertSame(TelephonyManager.DATA_CONNECTED, mTeleManager.getDataState());
     }
 
-    // See b/74256305
-    @Ignore
     @Test
     public void testSignalLevels() throws Exception {
         CellInfoGsm cellinfogsm = (CellInfoGsm)mTeleManager.getAllCellInfo().get(0);
