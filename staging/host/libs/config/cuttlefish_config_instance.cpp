@@ -430,8 +430,10 @@ bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
   return (*Dictionary())[kStartSigServer].asBool();
 }
 
-std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
-  return PerInstanceInternalPath("touch.sock");
+std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
+    int screen_idx) const {
+  return PerInstanceInternalPath(
+      ("touch_" + std::to_string(screen_idx) + ".sock").c_str());
 }
 
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {

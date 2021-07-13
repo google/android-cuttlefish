@@ -386,7 +386,7 @@ class CuttlefishConfig {
 
     std::string instance_internal_dir() const;
 
-    std::string touch_socket_path() const;
+    std::string touch_socket_path(int screen_idx) const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
     std::string frames_socket_path() const;
