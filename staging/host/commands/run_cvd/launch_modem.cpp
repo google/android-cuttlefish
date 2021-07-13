@@ -69,11 +69,13 @@ class ModemSimulator : public CommandSource {
     Command cmd(ModemSimulatorBinary(), [this](Subprocess* proc) {
       auto stopped = StopModemSimulator(instance_.modem_simulator_host_id());
       if (stopped) {
-        return true;
+        return StopperResult::kStopSuccess;
       }
       LOG(WARNING) << "Failed to stop modem simulator nicely, "
                    << "attempting to KILL";
-      return KillSubprocess(proc);
+      return KillSubprocess(proc) == StopperResult::kStopSuccess
+                 ? StopperResult::kStopCrash
+                 : StopperResult::kStopFailure;
     });
 
     auto sim_type = config_.modem_simulator_sim_type();
