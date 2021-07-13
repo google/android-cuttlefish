@@ -28,8 +28,14 @@
 namespace cuttlefish {
 
 struct InputSockets {
-  SharedFD touch_server;
-  SharedFD touch_client;
+  SharedFD GetTouchClientByLabel(const std::string& label) {
+    return touch_clients[label];
+  }
+
+  // TODO (b/186773052): Finding strings in a map for every input event may
+  // introduce unwanted latency.
+  std::map<std::string, SharedFD> touch_servers;
+  std::map<std::string, SharedFD> touch_clients;
   SharedFD keyboard_server;
   SharedFD keyboard_client;
   SharedFD switches_server;

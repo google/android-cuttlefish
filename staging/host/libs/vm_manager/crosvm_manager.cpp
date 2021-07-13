@@ -258,11 +258,14 @@ std::vector<Command> CrosvmManager::StartCommands(
 
     auto display_configs = config.display_configs();
     CHECK_GE(display_configs.size(), 1);
-    auto display_config = display_configs[0];
 
-    crosvm_cmd.AddParameter(touch_type_parameter, instance.touch_socket_path(),
-                            ":", display_config.width, ":",
-                            display_config.height);
+    for (int i = 0; i < display_configs.size(); ++i) {
+      auto display_config = display_configs[i];
+
+      crosvm_cmd.AddParameter(touch_type_parameter,
+                              instance.touch_socket_path(i), ":",
+                              display_config.width, ":", display_config.height);
+    }
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
   if (config.enable_webrtc()) {
