@@ -16,6 +16,7 @@
 #pragma once
 
 #include <android-base/logging.h>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -47,6 +48,26 @@ class Feature : public virtual FeatureSuperclass<Feature> {
 
  protected:
   virtual bool Setup() = 0;
+};
+
+class FlagFeature : public FeatureSuperclass<FlagFeature> {
+ public:
+  static bool ProcessFlags(const std::vector<FlagFeature*>& features,
+                           std::vector<std::string>& flags);
+  static bool WriteGflagsHelpXml(const std::vector<FlagFeature*>& features,
+                                 std::ostream& out);
+
+ protected:
+  // Must be executed in dependency order following Dependencies(). Expected to
+  // mutate the `flags` argument to remove handled flags, and possibly introduce
+  // new flag values (e.g. from a file).
+  virtual bool Process(std::vector<std::string>& flags) = 0;
+
+  // TODO(schuffelen): Migrate the xml help to human-readable help output after
+  // the gflags migration is done.
+
+  // Write an xml fragment that is compatible with gflags' `--helpxml` format.
+  virtual bool WriteGflagsCompatHelpXml(std::ostream& out) const = 0;
 };
 
 template <typename Subclass>
