@@ -37,6 +37,12 @@ genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
 cf_rtc_wakeup_alarmtimer(/devices/platform/rtc_cmos, 0, 0)
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup5 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup6 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/GFSH0001:00/power_supply u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/platform/GFSH0001:00/power_supply/ac/wakeup3 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/GFSH0001:00/power_supply/battery/wakeup4 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/GFSH0001:00/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 
 # crosvm (arm64)
 cf_pci_block_device(/devices/platform/10000.pci, 0x6, 4)
