@@ -95,7 +95,7 @@ std::vector<Command> LaunchModemSimulatorIfEnabled(
   cmd.AddParameter("-server_fds=");
   for (int i = 0; i < instance_number; ++i) {
     auto pos = ports.find(',');
-    auto temp = (pos != std::string::npos) ? ports.substr(0, pos - 1) : ports;
+    auto temp = (pos != std::string::npos) ? ports.substr(0, pos) : ports;
     auto port = std::stoi(temp);
     ports = ports.substr(pos + 1);
 
