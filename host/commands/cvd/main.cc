@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#include <stdlib.h>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "common/libs/utils/files.h"
@@ -29,11 +31,10 @@
 namespace cuttlefish {
 namespace {
 
-const std::string kHostBugreportBin =
-    HostBinaryPath("cvd_internal_host_bugreport");
-const std::string kStartBin = HostBinaryPath("cvd_internal_start");
-const std::string kStatusBin = HostBinaryPath("cvd_internal_status");
-const std::string kStopBin = HostBinaryPath("cvd_internal_stop");
+constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
+constexpr char kStartBin[] = "cvd_internal_start";
+constexpr char kStatusBin[] = "cvd_internal_status";
+constexpr char kStopBin[] = "cvd_internal_stop";
 
 constexpr char kHelpBin[] = "help_placeholder";  // Unused, prints kHelpMessage.
 constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
@@ -111,7 +112,11 @@ int CvdMain(int argc, char** argv) {
     args = {"--help"};
   }
 
-  Command command(bin);
+  setenv(
+      "ANDROID_SOONG_HOST_OUT",
+      android::base::Dirname(android::base::GetExecutableDirectory()).c_str(),
+      /*overwrite=*/true);
+  Command command(HostBinaryPath(bin));
   for (const std::string& arg : args) {
     command.AddParameter(arg);
   }
