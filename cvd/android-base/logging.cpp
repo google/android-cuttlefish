@@ -62,11 +62,9 @@ namespace android {
 namespace base {
 
 // BSD-based systems like Android/macOS have getprogname(). Others need us to provide one.
-#if defined(__GLIBC__) || defined(_WIN32)
+#if !defined(__APPLE__) && !defined(__BIONIC__)
 static const char* getprogname() {
-#if defined(__GLIBC__)
-  return program_invocation_short_name;
-#elif defined(_WIN32)
+#ifdef _WIN32
   static bool first = true;
   static char progname[MAX_PATH] = {};
 
@@ -77,6 +75,8 @@ static const char* getprogname() {
   }
 
   return progname;
+#else
+  return program_invocation_short_name;
 #endif
 }
 #endif
