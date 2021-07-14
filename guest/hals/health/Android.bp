@@ -46,6 +46,7 @@ cc_library_shared {
         "libcutils",
         "libhidlbase",
         "libutils",
+        "liblog",
         "android.hardware.health@2.0",
         "android.hardware.health@2.1",
     ],
