@@ -462,6 +462,40 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
 
+  std::vector<CuttlefishConfig::DisplayConfig> display_configs;
+
+  auto display0 = ParseDisplayConfig(FLAGS_display0);
+  if (display0) {
+    display_configs.push_back(*display0);
+  }
+  auto display1 = ParseDisplayConfig(FLAGS_display1);
+  if (display1) {
+    display_configs.push_back(*display1);
+  }
+  auto display2 = ParseDisplayConfig(FLAGS_display2);
+  if (display2) {
+    display_configs.push_back(*display2);
+  }
+  auto display3 = ParseDisplayConfig(FLAGS_display3);
+  if (display3) {
+    display_configs.push_back(*display3);
+  }
+
+  if (FLAGS_x_res > 0 && FLAGS_y_res > 0) {
+    if (display_configs.empty()) {
+      display_configs.push_back({
+          .width = FLAGS_x_res,
+          .height = FLAGS_y_res,
+      });
+    } else {
+      LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
+    }
+  }
+
+  tmp_config_obj.set_display_configs(display_configs);
+  tmp_config_obj.set_dpi(FLAGS_dpi);
+  tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
+
   const GraphicsAvailability graphics_availability =
     GetGraphicsAvailabilityWithSubprocessCheck();
 
@@ -476,9 +510,15 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     LOG(FATAL) << "Invalid gpu_mode: " << FLAGS_gpu_mode;
   }
   if (tmp_config_obj.gpu_mode() == kGpuModeAuto) {
-    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
-        LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                     "rendering support.";
+    // TODO(b/171305898): remove this branch once HostComposer can send
+    // multiple displays.
+    if (tmp_config_obj.display_configs().size() > 1) {
+      LOG(INFO) << "Enabling --gpu_mode=guest_swiftshader due to "
+                   "multi-display.";
+      tmp_config_obj.set_gpu_mode(kGpuModeGuestSwiftshader);
+    } else if (ShouldEnableAcceleratedRendering(graphics_availability)) {
+      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
+                   "rendering support.";
       if (FLAGS_vm_manager == QemuManager::name()) {
         LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
         tmp_config_obj.set_gpu_mode(kGpuModeDrmVirgl);
@@ -522,40 +562,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
-
-  std::vector<CuttlefishConfig::DisplayConfig> display_configs;
-
-  auto display0 = ParseDisplayConfig(FLAGS_display0);
-  if (display0) {
-    display_configs.push_back(*display0);
-  }
-  auto display1 = ParseDisplayConfig(FLAGS_display1);
-  if (display1) {
-    display_configs.push_back(*display1);
-  }
-  auto display2 = ParseDisplayConfig(FLAGS_display2);
-  if (display2) {
-    display_configs.push_back(*display2);
-  }
-  auto display3 = ParseDisplayConfig(FLAGS_display3);
-  if (display3) {
-    display_configs.push_back(*display3);
-  }
-
-  if (FLAGS_x_res > 0 && FLAGS_y_res > 0) {
-    if (display_configs.empty()) {
-      display_configs.push_back({
-          .width = FLAGS_x_res,
-          .height = FLAGS_y_res,
-      });
-    } else {
-      LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
-    }
-  }
-
-  tmp_config_obj.set_display_configs(display_configs);
-  tmp_config_obj.set_dpi(FLAGS_dpi);
-  tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
 
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(
