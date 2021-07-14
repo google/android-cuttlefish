@@ -53,6 +53,7 @@ cvd_host_tools = [
     "extract-vmlinux",
     "fsck.f2fs",
     "gnss_grpc_proxy",
+    "health",
     "kernel_log_monitor",
     "launch_cvd",
     "libgrpc++",
