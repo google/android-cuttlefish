@@ -63,12 +63,12 @@
 /vendor/bin/hostapd_nohidl   u:object_r:hostapd_nohidl_exec:s0
 /vendor/bin/ip               u:object_r:cuttlefish_ip_exec:s0
 /vendor/bin/iw               u:object_r:cuttlefish_iw_exec:s0
+/vendor/bin/mac80211_create_radios u:object_r:mac80211_create_radios_exec:s0
 /vendor/bin/netmgr           u:object_r:netmgr_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/suspend_blocker  u:object_r:suspend_blocker_exec:s0
-/vendor/bin/wifi_forwarder   u:object_r:wifi_forwarder_exec:s0
 /vendor/bin/hw/libcuttlefish-rild  u:object_r:libcuttlefish_rild_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google u:object_r:hal_camera_default_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google-lazy u:object_r:hal_camera_default_exec:s0

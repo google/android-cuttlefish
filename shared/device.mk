@@ -624,11 +624,11 @@ PRODUCT_PACKAGES += \
     execns \
     hostapd_nohidl \
     netmgr \
-    wifi_forwarder \
-    createns
+    createns \
+    mac80211_create_radios
 
 PRODUCT_COPY_FILES += \
-    device/generic/goldfish/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
+    device/google/cuttlefish/guest/services/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
     device/generic/goldfish/wifi/simulated_hostapd.conf:$(TARGET_COPY_OUT_VENDOR)/etc/simulated_hostapd.conf
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish
