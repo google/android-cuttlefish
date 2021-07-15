@@ -157,9 +157,6 @@ class CuttlefishConfig {
   void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
   bool enable_vehicle_hal_grpc_server() const;
 
-  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
-  std::string vehicle_hal_grpc_server_binary() const;
-
   void set_custom_actions(const std::vector<CustomActionConfig>& actions);
   std::vector<CustomActionConfig> custom_actions() const;
 
@@ -389,7 +386,7 @@ class CuttlefishConfig {
 
     std::string instance_internal_dir() const;
 
-    std::string touch_socket_path() const;
+    std::string touch_socket_path(int screen_idx) const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
     std::string frames_socket_path() const;
