@@ -44,3 +44,25 @@ cc_library_static {
     ],
     defaults: ["cuttlefish_host"],
 }
+
+cc_test_host {
+    name: "libcuttlefish_host_config_test",
+    srcs: [
+        "adb_config_test.cpp",
+    ],
+    static_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_host_config",
+        "libcuttlefish_utils",
+    ],
+    shared_libs: [
+        "libfruit",
+        "libjsoncpp",
+        "liblog",
+    ],
+    defaults: ["cuttlefish_host"],
+    test_options: {
+        unit_test: true,
+    },
+}
