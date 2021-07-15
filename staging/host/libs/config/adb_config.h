@@ -34,6 +34,7 @@ class AdbConfig : public ConfigFragment {
   INJECT(AdbConfig());
 
   void set_adb_mode(const std::set<std::string>& modes);
+  void set_adb_mode(const std::set<AdbMode>& modes);
   std::set<AdbMode> adb_mode() const;
 
   void set_run_adb_connector(bool run_adb_connector);
