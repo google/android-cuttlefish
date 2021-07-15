@@ -16,59 +16,9 @@
 
 #include "host/libs/config/feature.h"
 
-#include <android-base/logging.h>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace cuttlefish {
-
-namespace {
-
-bool TopologicalVisit(const std::unordered_set<Feature*>& features,
-                      const std::function<bool(Feature*)>& callback) {
-  enum class Status { UNVISITED, VISITING, VISITED };
-  std::unordered_map<Feature*, Status> features_status;
-  for (const auto& feature : features) {
-    features_status[feature] = Status::UNVISITED;
-  }
-  std::function<bool(Feature*)> visit;
-  visit = [&callback, &features_status, &visit](Feature* feature) -> bool {
-    if (features_status.count(feature) == 0) {
-      LOG(ERROR) << "Dependency edge to " << feature->Name() << " but it is not"
-                 << " part of the feature graph. This feature is either "
-                 << "disabled or not correctly registered.";
-      return false;
-    } else if (features_status[feature] == Status::VISITED) {
-      return true;
-    } else if (features_status[feature] == Status::VISITING) {
-      LOG(ERROR) << "Cycle detected while visiting " << feature->Name();
-      return false;
-    }
-    features_status[feature] = Status::VISITING;
-    for (const auto& dependency : feature->Dependencies()) {
-      CHECK(dependency != nullptr)
-          << "Feature " << feature->Name() << " has a null dependency.";
-      if (!visit(dependency)) {
-        LOG(ERROR) << "Error detected while visiting " << feature->Name();
-        return false;
-      }
-    }
-    features_status[feature] = Status::VISITED;
-    if (!callback(feature)) {
-      LOG(ERROR) << "Callback error on " << feature->Name();
-      return false;
-    }
-    return true;
-  };
-  for (const auto& feature : features) {
-    if (!visit(feature)) {  // `visit` will log the error chain.
-      return false;
-    }
-  }
-  return true;
-}
-
-}  // namespace
 
 Feature::~Feature() {}
 
@@ -86,7 +36,7 @@ Feature::~Feature() {}
     ordered_features.push_back(feature);
     return true;
   };
-  if (!TopologicalVisit(enabled, add_feature)) {
+  if (!FeatureSuperclass<Feature>::TopologicalVisit(enabled, add_feature)) {
     LOG(ERROR) << "Dependency issue detected, not performing any setup.";
     return false;
   }
