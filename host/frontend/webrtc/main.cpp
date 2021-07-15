@@ -35,6 +35,7 @@
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/streamer.h"
+#include "host/frontend/webrtc/lib/video_sink.h"
 #include "host/libs/audio_connector/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
@@ -42,7 +43,8 @@
 #include "host/libs/confui/host_server.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
-DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
+DEFINE_string(touch_fds, "",
+              "A list of fds to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(switches_fd, -1, "An fd to listen on for switch connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
@@ -63,6 +65,7 @@ using cuttlefish::KernelLogEventsHandler;
 using cuttlefish::webrtc_streaming::LocalRecorder;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
+using cuttlefish::webrtc_streaming::VideoSink;
 
 class CfOperatorObserver
     : public cuttlefish::webrtc_streaming::OperatorObserver {
@@ -132,11 +135,16 @@ int main(int argc, char** argv) {
 
   cuttlefish::InputSockets input_sockets;
 
-  input_sockets.touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
+  auto counter = 0;
+  for (const auto& touch_fd_str : android::base::Split(FLAGS_touch_fds, ",")) {
+    auto touch_fd = std::stoi(touch_fd_str);
+    input_sockets.touch_servers["display_" + std::to_string(counter++)] =
+        cuttlefish::SharedFD::Dup(touch_fd);
+    close(touch_fd);
+  }
   input_sockets.keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
   input_sockets.switches_server = cuttlefish::SharedFD::Dup(FLAGS_switches_fd);
   auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
-  close(FLAGS_touch_fd);
   close(FLAGS_keyboard_fd);
   close(FLAGS_switches_fd);
   close(FLAGS_command_fd);
@@ -145,19 +153,25 @@ int main(int argc, char** argv) {
   // devices have been initialized. That's OK though, because without those
   // devices there is no meaningful interaction the user can have with the
   // device.
-  input_sockets.touch_client =
-      cuttlefish::SharedFD::Accept(*input_sockets.touch_server);
+  for (const auto& touch_entry : input_sockets.touch_servers) {
+    input_sockets.touch_clients[touch_entry.first] =
+        cuttlefish::SharedFD::Accept(*touch_entry.second);
+  }
   input_sockets.keyboard_client =
       cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
   input_sockets.switches_client =
       cuttlefish::SharedFD::Accept(*input_sockets.switches_server);
 
-  std::thread touch_accepter([&input_sockets]() {
-    for (;;) {
-      input_sockets.touch_client =
-          cuttlefish::SharedFD::Accept(*input_sockets.touch_server);
-    }
-  });
+  std::vector<std::thread> touch_accepters;
+  for (const auto& touch : input_sockets.touch_servers) {
+    auto label = touch.first;
+    touch_accepters.emplace_back([label, &input_sockets]() {
+      for (;;) {
+        input_sockets.touch_clients[label] =
+            cuttlefish::SharedFD::Accept(*input_sockets.touch_servers[label]);
+      }
+    });
+  }
   std::thread keyboard_accepter([&input_sockets]() {
     for (;;) {
       input_sockets.keyboard_client =
@@ -213,11 +227,21 @@ int main(int argc, char** argv) {
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";
 
-  auto display_0 = streamer->AddDisplay(
-      "display_0", screen_connector.ScreenWidth(0),
-      screen_connector.ScreenHeight(0), cvd_config->dpi(), true);
-  auto display_handler = std::shared_ptr<DisplayHandler>(
-      new DisplayHandler(display_0, screen_connector));
+  uint32_t display_index = 0;
+  std::vector<std::shared_ptr<VideoSink>> displays;
+  for (const auto& display_config : cvd_config->display_configs()) {
+    const std::string display_id = "display_" + std::to_string(display_index);
+
+    auto display =
+        streamer->AddDisplay(display_id, display_config.width,
+                             display_config.height, cvd_config->dpi(), true);
+    displays.push_back(display);
+
+    ++display_index;
+  }
+
+  auto display_handler =
+      std::make_shared<DisplayHandler>(std::move(displays), screen_connector);
 
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
   if (cvd_config->record_screen()) {

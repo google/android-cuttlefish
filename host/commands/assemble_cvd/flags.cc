@@ -1,6 +1,7 @@
 #include "host/commands/assemble_cvd/flags.h"
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <json/json.h>
@@ -16,6 +17,7 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
@@ -54,6 +56,20 @@ DEFINE_int32(gdb_port, 0,
              "kernel must have been built with CONFIG_RANDOMIZE_BASE "
              "disabled.");
 
+constexpr const char kDisplayHelp[] =
+    "Comma separated key-value pairs of display properties. Example usage: "
+    "--display0=width=1280,height=720 "
+    "--display1=width=1440,height=900 ";
+
+// TODO(b/192495477): combine these into a single repeatable '--display' flag
+// when assemble_cvd switches to using the new flag parsing library.
+DEFINE_string(display0, "", kDisplayHelp);
+DEFINE_string(display1, "", kDisplayHelp);
+DEFINE_string(display2, "", kDisplayHelp);
+DEFINE_string(display3, "", kDisplayHelp);
+
+// TODO(b/171305898): mark these as deprecated after multi-display is fully
+// enabled.
 DEFINE_int32(x_res, 0, "Width of the screen in pixels");
 DEFINE_int32(y_res, 0, "Height of the screen in pixels");
 DEFINE_int32(dpi, 0, "Pixels per inch for the screen");
@@ -337,6 +353,43 @@ std::string StrForInstance(const std::string& prefix, int num) {
   return stream.str();
 }
 
+std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
+    const std::string& flag) {
+  if (flag.empty()) {
+    return std::nullopt;
+  }
+
+  std::unordered_map<std::string, std::string> props;
+
+  const std::vector<std::string> pairs = android::base::Split(flag, ",");
+  for (const std::string& pair : pairs) {
+    const std::vector<std::string> keyvalue = android::base::Split(pair, "=");
+    CHECK_EQ(2, keyvalue.size()) << "Invalid display: " << flag;
+
+    const std::string& prop_key = keyvalue[0];
+    const std::string& prop_val = keyvalue[1];
+    props[prop_key] = prop_val;
+  }
+
+  CHECK(props.find("width") != props.end())
+      << "Display configuration missing 'width' in " << flag;
+  CHECK(props.find("height") != props.end())
+      << "Display configuration missing 'height' in " << flag;
+
+  int display_width;
+  CHECK(android::base::ParseInt(props["width"], &display_width))
+      << "Display configuration invalid 'width' in " << flag;
+
+  int display_height;
+  CHECK(android::base::ParseInt(props["height"], &display_height))
+      << "Display configuration invalid 'height' in " << flag;
+
+  return CuttlefishConfig::DisplayConfig{
+      .width = display_width,
+      .height = display_height,
+  };
+}
+
 #ifdef __ANDROID__
 void ReadKernelConfig(KernelConfig* kernel_config) {
   // QEMU isn't on Android, so always follow host arch
@@ -408,6 +461,40 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
 
+  std::vector<CuttlefishConfig::DisplayConfig> display_configs;
+
+  auto display0 = ParseDisplayConfig(FLAGS_display0);
+  if (display0) {
+    display_configs.push_back(*display0);
+  }
+  auto display1 = ParseDisplayConfig(FLAGS_display1);
+  if (display1) {
+    display_configs.push_back(*display1);
+  }
+  auto display2 = ParseDisplayConfig(FLAGS_display2);
+  if (display2) {
+    display_configs.push_back(*display2);
+  }
+  auto display3 = ParseDisplayConfig(FLAGS_display3);
+  if (display3) {
+    display_configs.push_back(*display3);
+  }
+
+  if (FLAGS_x_res > 0 && FLAGS_y_res > 0) {
+    if (display_configs.empty()) {
+      display_configs.push_back({
+          .width = FLAGS_x_res,
+          .height = FLAGS_y_res,
+      });
+    } else {
+      LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
+    }
+  }
+
+  tmp_config_obj.set_display_configs(display_configs);
+  tmp_config_obj.set_dpi(FLAGS_dpi);
+  tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
+
   const GraphicsAvailability graphics_availability =
     GetGraphicsAvailabilityWithSubprocessCheck();
 
@@ -422,9 +509,15 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     LOG(FATAL) << "Invalid gpu_mode: " << FLAGS_gpu_mode;
   }
   if (tmp_config_obj.gpu_mode() == kGpuModeAuto) {
-    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
-        LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                     "rendering support.";
+    // TODO(b/171305898): remove this branch once HostComposer can send
+    // multiple displays.
+    if (tmp_config_obj.display_configs().size() > 1) {
+      LOG(INFO) << "Enabling --gpu_mode=guest_swiftshader due to "
+                   "multi-display.";
+      tmp_config_obj.set_gpu_mode(kGpuModeGuestSwiftshader);
+    } else if (ShouldEnableAcceleratedRendering(graphics_availability)) {
+      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
+                   "rendering support.";
       if (FLAGS_vm_manager == QemuManager::name()) {
         LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
         tmp_config_obj.set_gpu_mode(kGpuModeDrmVirgl);
@@ -468,14 +561,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
-
-  std::vector<cuttlefish::CuttlefishConfig::DisplayConfig> display_configs = {{
-    .width = FLAGS_x_res,
-    .height = FLAGS_y_res,
-  }};
-  tmp_config_obj.set_display_configs(display_configs);
-  tmp_config_obj.set_dpi(FLAGS_dpi);
-  tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
 
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(

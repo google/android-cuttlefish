@@ -220,23 +220,20 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--gdb=", config.gdb_port());
   }
 
-  auto display_configs = config.display_configs();
-  CHECK_GE(display_configs.size(), 1);
-  auto display_config = display_configs[0];
-
   auto gpu_mode = config.gpu_mode();
-
   if (gpu_mode == kGpuModeGuestSwiftshader) {
-    crosvm_cmd.AddParameter("--gpu=2D,",
-                            "width=", display_config.width, ",",
-                            "height=", display_config.height);
+    crosvm_cmd.AddParameter("--gpu=2D");
   } else if (gpu_mode == kGpuModeDrmVirgl || gpu_mode == kGpuModeGfxStream) {
     crosvm_cmd.AddParameter(gpu_mode == kGpuModeGfxStream ?
                                 "--gpu=gfxstream," : "--gpu=",
-                            "width=", display_config.width, ",",
-                            "height=", display_config.height, ",",
                             "egl=true,surfaceless=true,glx=false,gles=true");
   }
+
+  for (const auto& display_config : config.display_configs()) {
+    crosvm_cmd.AddParameter("--gpu-display=", "width=", display_config.width,
+                            ",", "height=", display_config.height);
+  }
+
   crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
 
   // crosvm_cmd.AddParameter("--null-audio");
@@ -256,9 +253,17 @@ std::vector<Command> CrosvmManager::StartCommands(
   if (config.enable_vnc_server() || config.enable_webrtc()) {
     auto touch_type_parameter =
         config.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
-    crosvm_cmd.AddParameter(touch_type_parameter, instance.touch_socket_path(),
-                            ":", display_config.width, ":",
-                            display_config.height);
+
+    auto display_configs = config.display_configs();
+    CHECK_GE(display_configs.size(), 1);
+
+    for (int i = 0; i < display_configs.size(); ++i) {
+      auto display_config = display_configs[i];
+
+      crosvm_cmd.AddParameter(touch_type_parameter,
+                              instance.touch_socket_path(i), ":",
+                              display_config.width, ":", display_config.height);
+    }
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
   if (config.enable_webrtc()) {

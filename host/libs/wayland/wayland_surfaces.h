@@ -39,27 +39,25 @@ class Surfaces {
   Surfaces(Surfaces&& rhs) = delete;
   Surfaces& operator=(Surfaces&& rhs) = delete;
 
-  Surface* GetOrCreateSurface(std::uint32_t id);
+  using FrameCallback =
+      std::function<void(std::uint32_t /*display_number*/,      //
+                         std::uint32_t /*frame_width*/,         //
+                         std::uint32_t /*frame_height*/,        //
+                         std::uint32_t /*frame_stride_bytes*/,  //
+                         std::uint8_t* /*frame_bytes*/)>;
 
-  using FrameCallback = std::function<void(std::uint32_t /*display_number*/,
-                                           std::uint8_t* /*frame_pixels*/)>;
-
-  // Blocking
-  void OnNextFrame(const FrameCallback& callback);
+  void SetFrameCallback(FrameCallback callback);
 
  private:
   friend class Surface;
-  void HandleSurfaceFrame(std::uint32_t display_number,
+  void HandleSurfaceFrame(std::uint32_t display_number,      //
+                          std::uint32_t frame_width,         //
+                          std::uint32_t frame_height,        //
+                          std::uint32_t frame_stride_bytes,  //
                           std::uint8_t* frame_bytes);
 
-  std::mutex surfaces_mutex_;
-  std::unordered_map<std::uint32_t, std::unique_ptr<Surface>> surfaces_;
-
-  using FrameCallbackPackaged = std::packaged_task<void(
-      std::uint32_t /*display_number*/, std::uint8_t* /*frame_bytes*/)>;
-
   std::mutex callback_mutex_;
-  std::optional<FrameCallbackPackaged*> callback_;
+  std::optional<FrameCallback> callback_;
 };
 
 }  // namespace wayland

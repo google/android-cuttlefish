@@ -63,11 +63,10 @@ WebSocketServer::WebSocketServer(
   };
 
   struct lws_context_creation_info info;
-  headers_ = {NULL, NULL,
-    "content-security-policy:",
-      "default-src 'self'; "
-      "style-src 'self' https://fonts.googleapis.com/; "
-      "font-src  https://fonts.gstatic.com/; "};
+  headers_ = {NULL, NULL, "content-security-policy:",
+              "default-src 'self' https://ajax.googleapis.com; "
+              "style-src 'self' https://fonts.googleapis.com/; "
+              "font-src  https://fonts.gstatic.com/; "};
 
   memset(&info, 0, sizeof info);
   info.port = server_port;

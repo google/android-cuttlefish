@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,15 @@
 
 #pragma once
 
-#include "host/libs/screen_connector/screen_connector_common.h"
+#include <stdint.h>
 
-#include <memory>
+#include <wayland-server-core.h>
 
-#include "host/libs/wayland/wayland_server.h"
+#include "host/libs/wayland/wayland_surfaces.h"
 
-namespace cuttlefish {
+namespace wayland {
 
-class WaylandScreenConnector : public ScreenConnectorSource {
- public:
-  WaylandScreenConnector(int frames_fd);
+// Binds the virtio gpu metadata interface to the given wayland server.
+void BindVirtioGpuMetadataInterface(wl_display* display, Surfaces* surfaces);
 
-  void SetFrameCallback(
-      GenerateProcessedFrameCallbackImpl frame_callback) override;
-
- private:
-  std::unique_ptr<wayland::WaylandServer> server_;
-};
-
-}
+}  // namespace wayland

@@ -23,42 +23,20 @@
 
 namespace wayland {
 
-Surface* Surfaces::GetOrCreateSurface(std::uint32_t id) {
-  std::unique_lock<std::mutex> lock(surfaces_mutex_);
-
-  auto [it, inserted] = surfaces_.try_emplace(id, nullptr);
-
-  std::unique_ptr<Surface>& surface_ptr = it->second;
-  if (inserted) {
-    surface_ptr.reset(new Surface(id, *this));
-  }
-  return surface_ptr.get();
-}
-
-void Surfaces::OnNextFrame(const FrameCallback& frame_callback) {
-  // Wraps the given callback in a std::package_task that can be waited upon
-  // for completion.
-  Surfaces::FrameCallbackPackaged frame_callback_packaged(
-      [&frame_callback](std::uint32_t display_number,
-                        std::uint8_t* frame_pixels) {
-        frame_callback(display_number, frame_pixels);
-      });
-
-  {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    callback_.emplace(&frame_callback_packaged);
-  }
-
-  // Blocks until the frame_callback_packaged was called.
-  frame_callback_packaged.get_future().get();
+void Surfaces::SetFrameCallback(FrameCallback callback) {
+  std::unique_lock<std::mutex> lock(callback_mutex_);
+  callback_.emplace(std::move(callback));
 }
 
 void Surfaces::HandleSurfaceFrame(std::uint32_t display_number,
+                                  std::uint32_t frame_width,
+                                  std::uint32_t frame_height,
+                                  std::uint32_t frame_stride_bytes,
                                   std::uint8_t* frame_bytes) {
   std::unique_lock<std::mutex> lock(callback_mutex_);
   if (callback_) {
-    (*callback_.value())(display_number, frame_bytes);
-    callback_.reset();
+    (callback_.value())(display_number, frame_width, frame_height,
+                        frame_stride_bytes, frame_bytes);
   }
 }
 

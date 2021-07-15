@@ -23,8 +23,8 @@ function ConnectToDevice(device_id) {
   const micCaptureCtrl = document.getElementById('mic-capture-control');
   createToggleControl(micCaptureCtrl, "mic", onMicCaptureToggle);
 
-  const deviceScreen = document.getElementById('device-screen');
   const deviceAudio = document.getElementById('device-audio');
+  const deviceDisplays = document.getElementById('device-displays');
   const statusMessage = document.getElementById('status-message');
 
   let connectionAttemptDuration = 0;
@@ -47,23 +47,6 @@ function ConnectToDevice(device_id) {
     }
   }, intervalMs);
 
-  deviceScreen.addEventListener('loadeddata', (evt) => {
-    clearInterval(animateDeviceStatusMessage);
-    statusMessage.textContent = 'Awaiting adb connection...';
-    resizeDeviceView();
-    deviceScreen.style.visibility = 'visible';
-    // Enable the buttons after the screen is visible.
-    for (const [_, button] of Object.entries(buttons)) {
-      if (!button.adb) {
-        button.button.disabled = false;
-      }
-    }
-    // Start the adb connection if it is not already started.
-    initializeAdb();
-  });
-
-  let videoStream;
-  let display_label;
   let buttons = {};
   let mouseIsDown = false;
   let deviceConnection;
@@ -107,6 +90,7 @@ function ConnectToDevice(device_id) {
 
   let currentRotation = 0;
   let currentDisplayDetails;
+  let currentDisplayDescriptions;
   function onControlMessage(message) {
     let message_data = JSON.parse(message.data);
     console.log(message_data)
@@ -120,11 +104,19 @@ function ConnectToDevice(device_id) {
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
       if (metadata.rotation != currentRotation) {
         // Animate the screen rotation.
-        deviceScreen.style.transition = 'transform 1s';
-      } else {
-        // Don't animate screen resizes, since these appear as odd sliding
-        // animations if the screen is rotated due to the translateY.
-        deviceScreen.style.transition = '';
+        const targetRotation = metadata.rotation == 0 ? 0 : -90;
+
+        $(deviceDisplays).animate(
+          {
+            textIndent: targetRotation,
+          },
+          {
+            duration: 1000,
+            step: function(now, tween) {
+              resizeDeviceDisplays();
+            },
+          }
+        );
       }
 
       currentRotation = metadata.rotation;
@@ -133,33 +125,162 @@ function ConnectToDevice(device_id) {
         x_res: metadata.width,
         y_res: metadata.height
       });
-
-      resizeDeviceView();
     }
   }
 
-  const screensDiv = document.getElementById('screens');
-  function resizeDeviceView() {
+  function getTransformRotation(element) {
+    if (!element.style.textIndent) {
+      return 0;
+    }
+    // Remove 'px' and convert to float.
+    return parseFloat(element.style.textIndent.slice(0, -2));
+  }
+
+  let anyDeviceDisplayLoaded = false;
+  function onDeviceDisplayLoaded() {
+    if (anyDeviceDisplayLoaded) {
+      return;
+    }
+    anyDeviceDisplayLoaded = true;
+
+    clearInterval(animateDeviceStatusMessage);
+    statusMessage.textContent = 'Awaiting bootup and adb connection. Please wait...';
+    resizeDeviceDisplays();
+
+    let deviceDisplayList =
+      document.getElementsByClassName("device-display");
+    for (const deviceDisplay of deviceDisplayList) {
+      deviceDisplay.style.visibility = 'visible';
+    }
+
+    // Enable the buttons after the screen is visible.
+    for (const [_, button] of Object.entries(buttons)) {
+      if (!button.adb) {
+        button.button.disabled = false;
+      }
+    }
+    // Start the adb connection if it is not already started.
+    initializeAdb();
+  }
+
+  // Creates a <video> element and a <div> container element for each display.
+  // The extra <div> container elements are used to maintain the width and
+  // height of the device as the CSS 'transform' property used on the <video>
+  // element for rotating the device only affects the visuals of the element
+  // and not its layout.
+  function createDeviceDisplays(devConn) {
+    for (const deviceDisplayDescription of currentDisplayDescriptions) {
+      let deviceDisplay = document.createElement("div");
+      deviceDisplay.classList.add("device-display");
+      // Start the screen as hidden. Only show when data is ready.
+      deviceDisplay.style.visibility = 'hidden';
+
+      let deviceDisplayVideo = document.createElement("video");
+      deviceDisplayVideo.autoplay = true;
+      deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
+      deviceDisplayVideo.classList.add("device-display-video");
+
+      deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
+        onDeviceDisplayLoaded();
+      });
+
+      deviceDisplay.appendChild(deviceDisplayVideo);
+      deviceDisplays.appendChild(deviceDisplay);
+
+      let stream_id = deviceDisplayDescription.stream_id;
+      devConn.getStream(stream_id).then(stream => {
+        deviceDisplayVideo.srcObject = stream;
+      }).catch(e => console.error('Unable to get display stream: ', e));
+    }
+  }
+
+  function resizeDeviceDisplays() {
+    const deviceDisplayPadding = 10;
+
+    let deviceDisplayList =
+      document.getElementsByClassName("device-display");
+    let deviceDisplayVideoList =
+      document.getElementsByClassName("device-display-video");
+
+    const rotationDegrees = getTransformRotation(deviceDisplays);
+    const rotationRadians = rotationDegrees * Math.PI / 180;
+
     // Auto-scale the screen based on window size.
-    // Max window width of 70%, allowing space for the control panel.
-    let ww = screensDiv.offsetWidth * 0.7;
-    let wh = screensDiv.offsetHeight;
-    let vw = currentDisplayDetails.x_res;
-    let vh = currentDisplayDetails.y_res;
-    let scaling = vw * wh > vh * ww ? ww / vw : wh / vh;
-    if (currentRotation == 0) {
-      deviceScreen.style.transform = null;
-      deviceScreen.style.width = vw * scaling;
-      deviceScreen.style.height = vh * scaling;
-    } else if (currentRotation == 1) {
-      deviceScreen.style.transform =
-          `rotateZ(-90deg) translateY(-${vh * scaling}px)`;
-      // When rotated, w and h are swapped.
-      deviceScreen.style.width = vh * scaling;
-      deviceScreen.style.height = vw * scaling;
+    let availableWidth = deviceDisplays.clientWidth;
+    let availableHeight = deviceDisplays.clientHeight;
+
+    // Reserve space for padding between the displays.
+    availableWidth = availableWidth -
+      (currentDisplayDescriptions.length * deviceDisplayPadding);
+
+    // Loop once over all of the displays to compute the total space needed.
+    let neededWidth = 0;
+    let neededHeight = 0;
+    for (let i = 0; i < deviceDisplayList.length; i++) {
+      let deviceDisplayDescription = currentDisplayDescriptions[i];
+      let deviceDisplayVideo = deviceDisplayVideoList[i];
+
+      const originalDisplayWidth = deviceDisplayDescription.x_res;
+      const originalDisplayHeight = deviceDisplayDescription.y_res;
+
+      const neededBoundingBoxWidth =
+        Math.abs(Math.cos(rotationRadians) * originalDisplayWidth) +
+        Math.abs(Math.sin(rotationRadians) * originalDisplayHeight);
+      const neededBoundingBoxHeight =
+        Math.abs(Math.sin(rotationRadians) * originalDisplayWidth) +
+        Math.abs(Math.cos(rotationRadians) * originalDisplayHeight);
+
+      neededWidth = neededWidth + neededBoundingBoxWidth;
+      neededHeight = Math.max(neededHeight, neededBoundingBoxHeight);
+    }
+
+    const scaling = Math.min(availableWidth / neededWidth,
+                             availableHeight / neededHeight);
+
+    // Loop again over all of the displays to set the sizes and positions.
+    let deviceDisplayLeftOffset = 0;
+    for (let i = 0; i < deviceDisplayList.length; i++) {
+      let deviceDisplay = deviceDisplayList[i];
+      let deviceDisplayVideo = deviceDisplayVideoList[i];
+      let deviceDisplayDescription = currentDisplayDescriptions[i];
+
+      const originalDisplayWidth = deviceDisplayDescription.x_res;
+      const originalDisplayHeight = deviceDisplayDescription.y_res;
+
+      const scaledDisplayWidth = originalDisplayWidth * scaling;
+      const scaledDisplayHeight = originalDisplayHeight * scaling;
+
+      const neededBoundingBoxWidth =
+        Math.abs(Math.cos(rotationRadians) * originalDisplayWidth) +
+        Math.abs(Math.sin(rotationRadians) * originalDisplayHeight);
+      const neededBoundingBoxHeight =
+        Math.abs(Math.sin(rotationRadians) * originalDisplayWidth) +
+        Math.abs(Math.cos(rotationRadians) * originalDisplayHeight);
+
+      const scaledBoundingBoxWidth = neededBoundingBoxWidth * scaling;
+      const scaledBoundingBoxHeight = neededBoundingBoxHeight * scaling;
+
+      const offsetX = (scaledBoundingBoxWidth - scaledDisplayWidth) / 2;
+      const offsetY = (scaledBoundingBoxHeight - scaledDisplayHeight) / 2;
+
+      deviceDisplayVideo.style.width = scaledDisplayWidth;
+      deviceDisplayVideo.style.height = scaledDisplayHeight;
+      deviceDisplayVideo.style.transform =
+        `translateX(${offsetX}px) ` +
+        `translateY(${offsetY}px) ` +
+        `rotateZ(${rotationDegrees}deg) `;
+
+      deviceDisplay.style.left = `${deviceDisplayLeftOffset}px`;
+      deviceDisplay.style.width = scaledBoundingBoxWidth;
+      deviceDisplay.style.height = scaledBoundingBoxHeight;
+
+      deviceDisplayLeftOffset =
+        deviceDisplayLeftOffset +
+        deviceDisplayPadding +
+        scaledBoundingBoxWidth;
     }
   }
-  window.onresize = resizeDeviceView;
+  window.onresize = resizeDeviceDisplays;
 
   function createControlPanelButton(command, title, icon_name,
       listener=onControlPanelButton,
@@ -268,7 +389,7 @@ function ConnectToDevice(device_id) {
     statusMessage.textContent = 'No connection to the guest device. ' +
         'Please ensure the WebRTC process on the host machine is active.';
     statusMessage.style.visibility = 'visible';
-    deviceScreen.style.display = 'none';
+    deviceDisplays.style.display = 'none';
     for (const [_, button] of Object.entries(buttons)) {
       button.button.disabled = true;
     }
@@ -278,15 +399,12 @@ function ConnectToDevice(device_id) {
     .then(webrtcModule => webrtcModule.Connect(device_id, options))
     .then(devConn => {
       deviceConnection = devConn;
-      // TODO(b/143667633): get multiple display configuration from the
-      // description object
+
       console.log(deviceConnection.description);
-      let stream_id = devConn.description.displays[0].stream_id;
-      devConn.getStream(stream_id).then(stream => {
-        videoStream = stream;
-        display_label = stream_id;
-        deviceScreen.srcObject = videoStream;
-      }).catch(e => console.error('Unable to get display stream: ', e));
+
+      currentDisplayDescriptions = devConn.description.displays;
+
+      createDeviceDisplays(devConn);
       for (const audio_desc of devConn.description.audio_streams) {
         let stream_id = audio_desc.stream_id;
         devConn.getStream(stream_id).then(stream => {
@@ -326,8 +444,6 @@ function ConnectToDevice(device_id) {
         }
       }
       deviceConnection.onControlMessage(msg => onControlMessage(msg));
-      // Start the screen as hidden. Only show when data is ready.
-      deviceScreen.style.visibility = 'hidden';
       // Show the error message and disable buttons when the WebRTC connection fails.
       deviceConnection.onConnectionStateChange(state => {
         if (state == 'disconnected' || state == 'failed') {
@@ -523,34 +639,48 @@ function ConnectToDevice(device_id) {
   }
 
   function startMouseTracking() {
+    let deviceDisplayList = document.getElementsByClassName("device-display");
     if (window.PointerEvent) {
-      deviceScreen.addEventListener('pointerdown', onStartDrag);
-      deviceScreen.addEventListener('pointermove', onContinueDrag);
-      deviceScreen.addEventListener('pointerup', onEndDrag);
+      for (const deviceDisplay of deviceDisplayList) {
+        deviceDisplay.addEventListener('pointerdown', onStartDrag);
+        deviceDisplay.addEventListener('pointermove', onContinueDrag);
+        deviceDisplay.addEventListener('pointerup', onEndDrag);
+      }
     } else if (window.TouchEvent) {
-      deviceScreen.addEventListener('touchstart', onStartDrag);
-      deviceScreen.addEventListener('touchmove', onContinueDrag);
-      deviceScreen.addEventListener('touchend', onEndDrag);
+      for (const deviceDisplay of deviceDisplayList) {
+        deviceDisplay.addEventListener('touchstart', onStartDrag);
+        deviceDisplay.addEventListener('touchmove', onContinueDrag);
+        deviceDisplay.addEventListener('touchend', onEndDrag);
+      }
     } else if (window.MouseEvent) {
-      deviceScreen.addEventListener('mousedown', onStartDrag);
-      deviceScreen.addEventListener('mousemove', onContinueDrag);
-      deviceScreen.addEventListener('mouseup', onEndDrag);
+      for (const deviceDisplay of deviceDisplayList) {
+        deviceDisplay.addEventListener('mousedown', onStartDrag);
+        deviceDisplay.addEventListener('mousemove', onContinueDrag);
+        deviceDisplay.addEventListener('mouseup', onEndDrag);
+      }
     }
   }
 
   function stopMouseTracking() {
+    let deviceDisplayList = document.getElementsByClassName("device-display");
     if (window.PointerEvent) {
-      deviceScreen.removeEventListener('pointerdown', onStartDrag);
-      deviceScreen.removeEventListener('pointermove', onContinueDrag);
-      deviceScreen.removeEventListener('pointerup', onEndDrag);
+      for (const deviceDisplay of deviceDisplayList) {
+        deviceDisplay.removeEventListener('pointerdown', onStartDrag);
+        deviceDisplay.removeEventListener('pointermove', onContinueDrag);
+        deviceDisplay.removeEventListener('pointerup', onEndDrag);
+      }
     } else if (window.TouchEvent) {
-      deviceScreen.removeEventListener('touchstart', onStartDrag);
-      deviceScreen.removeEventListener('touchmove', onContinueDrag);
-      deviceScreen.removeEventListener('touchend', onEndDrag);
+      for (const deviceDisplay of deviceDisplayList) {
+        deviceDisplay.removeEventListener('touchstart', onStartDrag);
+        deviceDisplay.removeEventListener('touchmove', onContinueDrag);
+        deviceDisplay.removeEventListener('touchend', onEndDrag);
+      }
     } else if (window.MouseEvent) {
-      deviceScreen.removeEventListener('mousedown', onStartDrag);
-      deviceScreen.removeEventListener('mousemove', onContinueDrag);
-      deviceScreen.removeEventListener('mouseup', onEndDrag);
+      for (const deviceDisplay of deviceDisplayList) {
+        deviceDisplay.removeEventListener('mousedown', onStartDrag);
+        deviceDisplay.removeEventListener('mousemove', onContinueDrag);
+        deviceDisplay.removeEventListener('mouseup', onEndDrag);
+      }
     }
   }
 
@@ -596,14 +726,17 @@ function ConnectToDevice(device_id) {
     console.assert(deviceConnection, 'Can\'t send mouse update without device');
     var eventType = e.type.substring(0, 5);
 
+    // The <video> element:
+    const deviceDisplay = e.target;
+
     // Before the first video frame arrives there is no way to know width and
     // height of the device's screen, so turn every click into a click at 0x0.
     // A click at that position is not more dangerous than anywhere else since
     // the user is clicking blind anyways.
-    const videoWidth = deviceScreen.videoWidth? deviceScreen.videoWidth: 1;
-    const videoHeight = deviceScreen.videoHeight? deviceScreen.videoHeight: 1;
-    const elementWidth = deviceScreen.offsetWidth? deviceScreen.offsetWidth: 1;
-    const elementHeight = deviceScreen.offsetHeight? deviceScreen.offsetHeight: 1;
+    const videoWidth = deviceDisplay.videoWidth? deviceDisplay.videoWidth: 1;
+    const videoHeight = deviceDisplay.videoHeight? deviceDisplay.videoHeight: 1;
+    const elementWidth = deviceDisplay.offsetWidth? deviceDisplay.offsetWidth: 1;
+    const elementHeight = deviceDisplay.offsetHeight? deviceDisplay.offsetHeight: 1;
 
     // vh*ew > eh*vw? then scale h instead of w
     const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
@@ -731,6 +864,8 @@ function ConnectToDevice(device_id) {
 
     // NOTE: Rotation is handled automatically because the CSS rotation through
     // transforms also rotates the coordinates of events on the object.
+
+    const display_label = deviceDisplay.id;
 
     deviceConnection.sendMultiTouch(
     {idArr, xArr, yArr, down, slotArr, display_label});
