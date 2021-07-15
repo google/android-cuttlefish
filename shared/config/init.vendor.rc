@@ -161,7 +161,7 @@ service emu_hostapd /vendor/bin/execns router /vendor/bin/hostapd_nohidl /data/v
     group root wifi net_raw net_admin
     disabled
 
-service netmgr /vendor/bin/execns router /vendor/bin/netmgr --if-prefix wlan1 --bridge eth0,radio0-peer
+service netmgr /vendor/bin/execns router /vendor/bin/netmgr --if-prefix wlan1 --bridge eth0
     user root
     group root wifi
     disabled
@@ -171,11 +171,6 @@ service create_router_ns /vendor/bin/createns router
     group root
     disabled
     oneshot
-
-service wifi_forwarder /vendor/bin/wifi_forwarder
-    user root
-    group root wifi
-    disabled
 
 service bugreport /system/bin/dumpstate -d -p -z
     class main
