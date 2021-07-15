@@ -798,14 +798,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_virtual_disk_paths(virtual_disk_paths);
     }
 
-    std::array<unsigned char, 6> mac_address;
-    mac_address[0] = 1 << 6; // locally administered
-    // TODO(schuffelen): Randomize these and preserve the state.
-    for (int i = 1; i < 5; i++) {
-      mac_address[i] = i;
-    }
-    mac_address[5] = num;
-    instance.set_wifi_mac_address(mac_address);
+    instance.set_wifi_mac_prefix(5554 + (num - 1) * 2);
 
     instance.set_start_webrtc_signaling_server(false);
 
