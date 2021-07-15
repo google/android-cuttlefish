@@ -115,15 +115,15 @@ class Command {
  private:
   template <typename T>
   // For every type other than SharedFD (for which there is a specialisation)
-  bool BuildParameter(std::stringstream* stream, T t) {
+  void BuildParameter(std::stringstream* stream, T t) {
     *stream << t;
-    return true;
   }
   // Special treatment for SharedFD
-  bool BuildParameter(std::stringstream* stream, SharedFD shared_fd);
+  void BuildParameter(std::stringstream* stream, SharedFD shared_fd);
   template <typename T, typename... Args>
-  bool BuildParameter(std::stringstream* stream, T t, Args... args) {
-    return BuildParameter(stream, t) && BuildParameter(stream, args...);
+  void BuildParameter(std::stringstream* stream, T t, Args... args) {
+    BuildParameter(stream, t);
+    BuildParameter(stream, args...);
   }
 
  public:
@@ -163,33 +163,24 @@ class Command {
   // object is destroyed. To add multiple parameters to the command the function
   // must be called multiple times, one per parameter.
   template <typename... Args>
-  bool AddParameter(Args... args) {
+  void AddParameter(Args... args) {
     std::stringstream ss;
-    if (BuildParameter(&ss, args...)) {
-      command_.push_back(ss.str());
-      return true;
-    }
-    return false;
+    BuildParameter(&ss, args...);
+    command_.push_back(ss.str());
   }
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
   template <typename... Args>
-  bool AppendToLastParameter(Args... args) {
-    if (command_.empty()) {
-      LOG(ERROR) << "There is no parameter to append to.";
-      return false;
-    }
+  void AppendToLastParameter(Args... args) {
+    CHECK(!command_.empty()) << "There is no parameter to append to.";
     std::stringstream ss;
-    if (BuildParameter(&ss, args...)) {
-      command_[command_.size()-1] += ss.str();
-      return true;
-    }
-    return false;
+    BuildParameter(&ss, args...);
+    command_[command_.size() - 1] += ss.str();
   }
 
   // Redirects the standard IO of the command.
-  bool RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);
-  bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+  void RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);
+  void RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                      Subprocess::StdIOChannel parent_channel);
 
   // Starts execution of the command. This method can be called multiple times,
