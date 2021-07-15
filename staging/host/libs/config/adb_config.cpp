@@ -59,6 +59,9 @@ void AdbConfig::set_adb_mode(const std::set<std::string>& modes) {
     adb_mode_.insert(StringToAdbMode(mode));
   }
 }
+void AdbConfig::set_adb_mode(const std::set<AdbMode>& modes) {
+  adb_mode_ = modes;
+}
 std::set<AdbMode> AdbConfig::adb_mode() const { return adb_mode_; }
 
 void AdbConfig::set_run_adb_connector(bool run_adb_connector) {
