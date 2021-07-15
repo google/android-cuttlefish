@@ -32,17 +32,15 @@
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
 
-DEFINE_string(mac_address, "", "mac address to use for wlan0");
+DEFINE_string(mac_prefix, "", "mac prefix to use for wlan0");
 
-static std::array<unsigned char, 6> str_to_mac(const std::string& mac_str) {
+static std::array<unsigned char, 6> prefix_to_mac(
+    const std::string& mac_prefix) {
   std::array<unsigned char, 6> mac;
-  std::istringstream stream(mac_str);
-  for (int i = 0; i < 6; i++) {
-    int num;
-    stream >> std::hex >> num;
-    mac[i] = num;
-    stream.get();
-  }
+  int macPrefix = stoi(mac_prefix);
+  mac[0] = 0x02;
+  mac[1] = (macPrefix >> CHAR_BIT) & 0xFF;
+  mac[2] = macPrefix & 0xFF;
   return mac;
 }
 
@@ -51,7 +49,8 @@ int CreateWifiWrapper(const std::string& source,
   auto factory = cuttlefish::NetlinkClientFactory::Default();
   std::unique_ptr<cuttlefish::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
 
-  LOG(INFO) << "Setting " << source << " mac address to " << FLAGS_mac_address;
+  LOG(INFO) << "Setting " << source << " mac address based on "
+            << FLAGS_mac_prefix;
   int32_t index = if_nametoindex(source.c_str());
   // Setting the address is available in RTM_SETLINK, but not RTM_NEWLINK.
   // https://elixir.bootlin.com/linux/v5.4.44/source/net/core/rtnetlink.c#L2785
@@ -64,7 +63,7 @@ int CreateWifiWrapper(const std::string& source,
     .ifi_index = index,
     .ifi_change = 0xFFFFFFFF,
   });
-  fix_mac_request.AddMacAddress(str_to_mac(FLAGS_mac_address));
+  fix_mac_request.AddMacAddress(prefix_to_mac(FLAGS_mac_prefix));
   bool fix_mac = nl->Send(fix_mac_request);
   if (!fix_mac) {
     LOG(ERROR) << "setup_network: could not fix mac address";
@@ -131,10 +130,10 @@ int RenameNetwork(const std::string& name, const std::string& new_name) {
 }
 
 int main(int argc, char** argv) {
-  char wifi_address[PROPERTY_VALUE_MAX + 1];
-  property_get("ro.boot.wifi_mac_address", wifi_address, "");
+  char wifi_mac_prefix[PROPERTY_VALUE_MAX + 1];
+  property_get("ro.boot.wifi_mac_prefix", wifi_mac_prefix, "");
 
-  SetCommandLineOptionWithMode("mac_address", wifi_address,
+  SetCommandLineOptionWithMode("mac_prefix", wifi_mac_prefix,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);

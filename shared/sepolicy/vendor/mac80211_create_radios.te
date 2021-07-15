@@ -1,0 +1,2 @@
+type mac80211_create_radios, domain;
+type mac80211_create_radios_exec, exec_type, vendor_file_type, file_type;
