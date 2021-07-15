@@ -14,9 +14,13 @@ allow init_wifi_sh vendor_shell_exec:file { rx_file_perms };
 #============= init_wifi_sh ==============
 allow init_wifi_sh cuttlefish_ip_exec:file execute_no_trans;
 allow init_wifi_sh cuttlefish_iw_exec:file execute_no_trans;
+allow init_wifi_sh mac80211_create_radios_exec:file execute_no_trans;
 
 # Set system properties to start services
 set_prop(init_wifi_sh, ctl_default_prop);
+
+vendor_internal_prop(vendor_wifi_mac_prefix);
+get_prop(init_wifi_sh, vendor_wifi_mac_prefix);
 
 # Set up WiFi
 allow init_wifi_sh self:netlink_route_socket { create nlmsg_write setopt bind getattr read write nlmsg_read };
