@@ -80,9 +80,6 @@ genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.1/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.2/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /bus/iio/devices u:object_r:sysfs_iio_devices:s0
-
-# /proc/<pid>/ns
-genfscon nsfs / u:object_r:nsfs:s0
 dnl
 popdef(`cf_pci_block_device')dnl
 popdef(`cf_pci_gpu_device')dnl
