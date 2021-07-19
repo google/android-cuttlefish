@@ -25,10 +25,10 @@
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/clean.h"
-#include "host/commands/assemble_cvd/config.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/libs/config/adb_config.h"
+#include "host/libs/config/config_flag.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -946,7 +946,9 @@ void SetDefaultFlagsForCrosvm() {
 }
 
 fruit::Component<> FlagsComponent() {
-  return fruit::createComponent().install(GflagsComponent);
+  return fruit::createComponent()
+      .install(GflagsComponent)
+      .install(ConfigFlagComponent);
 }
 
 bool ParseCommandLineFlags(std::vector<std::string>& args,
@@ -977,8 +979,6 @@ bool ParseCommandLineFlags(std::vector<std::string>& args,
     LOG(ERROR) << "Failed to parse flags.";
     return false;
   }
-
-  SetDefaultFlagsFromConfigPreset();
 
   if (help || help_str != "") {
     LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";

@@ -22,6 +22,7 @@ cc_library_static {
     srcs: [
         "adb_config.cpp",
         "bootconfig_args.cpp",
+        "config_flag.cpp",
         "custom_actions.cpp",
         "cuttlefish_config.cpp",
         "cuttlefish_config_instance.cpp",
