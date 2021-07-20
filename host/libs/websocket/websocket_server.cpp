@@ -26,11 +26,23 @@
 #include <host/libs/websocket/websocket_handler.h>
 
 namespace cuttlefish {
-WebSocketServer::WebSocketServer(
-    const char* protocol_name,
-    const std::string &certs_dir,
-    const std::string &assets_dir,
-    int server_port) {
+WebSocketServer::WebSocketServer(const char* protocol_name,
+                                 const std::string& assets_dir,
+                                 int server_port) {
+  InitializeLwsObjects(protocol_name, "", assets_dir, server_port);
+}
+
+WebSocketServer::WebSocketServer(const char* protocol_name,
+                                 const std::string& certs_dir,
+                                 const std::string& assets_dir,
+                                 int server_port) {
+  InitializeLwsObjects(protocol_name, certs_dir, assets_dir, server_port);
+}
+
+void WebSocketServer::InitializeLwsObjects(const char* protocol_name,
+                                           const std::string& certs_dir,
+                                           const std::string& assets_dir,
+                                           int server_port) {
   std::string cert_file = certs_dir + "/server.crt";
   std::string key_file = certs_dir + "/server.key";
   std::string ca_file = certs_dir + "/CA.crt";
@@ -77,13 +89,17 @@ WebSocketServer::WebSocketServer(
   info.vhost_name = "localhost";
   info.ws_ping_pong_interval = 10;
   info.headers = &headers_;
-  info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-  info.ssl_cert_filepath = cert_file.c_str();
-  info.ssl_private_key_filepath = key_file.c_str();
-  if (FileExists(ca_file)) {
-    info.ssl_ca_filepath = ca_file.c_str();
-  }
   info.retry_and_idle_policy = &retry_;
+
+  if (!certs_dir.empty()) {
+    LOG(INFO) << "using tls indeed =============================" << certs_dir;
+    info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+    info.ssl_cert_filepath = cert_file.c_str();
+    info.ssl_private_key_filepath = key_file.c_str();
+    if (FileExists(ca_file)) {
+      info.ssl_ca_filepath = ca_file.c_str();
+    }
+  }
 
   context_ = lws_create_context(&info);
   if (!context_) {

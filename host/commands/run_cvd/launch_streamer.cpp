@@ -246,6 +246,9 @@ class WebRtcServer : public virtual CommandSource,
     if (instance_.start_webrtc_sig_server()) {
       Command sig_server(WebRtcSigServerBinary());
       sig_server.AddParameter("-assets_dir=", config_.webrtc_assets_dir());
+      sig_server.AddParameter(
+          "-use_secure_http=",
+          config_.sig_server_secure() ? "true" : "false");
       if (!config_.webrtc_certs_dir().empty()) {
         sig_server.AddParameter("-certs_dir=", config_.webrtc_certs_dir());
       }
