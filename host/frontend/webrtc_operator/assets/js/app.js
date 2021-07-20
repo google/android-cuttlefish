@@ -133,6 +133,27 @@ function ConnectToDevice(device_id) {
         takePhoto();
       }
     }
+    if (message_data.event == 'VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED') {
+      updateDisplayVisibility(metadata.display, metadata.mode);
+    }
+  }
+
+  function updateDisplayVisibility(displayId, powerMode) {
+    const display = document.getElementById('display_' + displayId);
+    if (display == null) {
+      console.error('Unknown display id: ' + displayId);
+      return;
+    }
+    switch (powerMode) {
+      case 'On':
+        display.style.visibility = 'visible';
+        break;
+      case 'Off':
+        display.style.visibility = 'hidden';
+        break;
+      default:
+        console.error('Display ' + displayId + ' has unknown display power mode: ' + powerMode);
+    }
   }
 
   function getTransformRotation(element) {

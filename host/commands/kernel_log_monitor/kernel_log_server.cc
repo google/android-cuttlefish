@@ -41,10 +41,13 @@ static const std::map<std::string, monitor::Event> kStageToEventMap = {
     {cuttlefish::kMobileNetworkConnectedMessage,
      monitor::Event::MobileNetworkConnected},
     {cuttlefish::kWifiConnectedMessage, monitor::Event::WifiNetworkConnected},
-    {cuttlefish::kEthernetConnectedMessage, monitor::Event::EthernetNetworkConnected},
+    {cuttlefish::kEthernetConnectedMessage,
+     monitor::Event::EthernetNetworkConnected},
     // TODO(b/131864854): Replace this with a string less likely to change
     {"init: starting service 'adbd'...", monitor::Event::AdbdStarted},
     {cuttlefish::kScreenChangedMessage, monitor::Event::ScreenChanged},
+    {cuttlefish::kDisplayPowerModeChangedMessage,
+     monitor::Event::DisplayPowerModeChanged},
 };
 
 void ProcessSubscriptions(
