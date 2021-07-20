@@ -3,6 +3,8 @@ vndbinder_use(hal_graphics_composer_default)
 
 allow hal_graphics_composer_default self:netlink_kobject_uevent_socket { bind create read };
 
+allow hal_graphics_composer_default kmsg_device:chr_file w_file_perms;
+
 # Supress warnings for drm_hwcomposer trying to read some vendor.hwc.*
 # properties as Cuttlefish never configures these properties.
 dontaudit hal_graphics_composer_default default_prop:file read;
