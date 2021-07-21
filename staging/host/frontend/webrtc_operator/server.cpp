@@ -52,8 +52,13 @@ int main(int argc, char** argv) {
   cuttlefish::DeviceRegistry device_registry;
   cuttlefish::ServerConfig server_config({FLAGS_stun_server});
 
-  cuttlefish::WebSocketServer wss(
-        "webrtc-operator", FLAGS_certs_dir, FLAGS_assets_dir, FLAGS_http_server_port);
+  cuttlefish::WebSocketServer wss =
+      FLAGS_use_secure_http
+          ? cuttlefish::WebSocketServer("webrtc-operator", FLAGS_certs_dir,
+                                        FLAGS_assets_dir,
+                                        FLAGS_http_server_port)
+          : cuttlefish::WebSocketServer("webrtc-operator", FLAGS_assets_dir,
+                                        FLAGS_http_server_port);
 
   auto device_handler_factory_p =
       std::unique_ptr<cuttlefish::WebSocketHandlerFactory>(
