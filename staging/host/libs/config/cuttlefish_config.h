@@ -287,6 +287,9 @@ class CuttlefishConfig {
   void set_vhost_net(bool vhost_net);
   bool vhost_net() const;
 
+  void set_vhost_user_mac80211_hwsim(const std::string& path);
+  std::string vhost_user_mac80211_hwsim() const;
+
   void set_ethernet(bool ethernet);
   bool ethernet() const;
 

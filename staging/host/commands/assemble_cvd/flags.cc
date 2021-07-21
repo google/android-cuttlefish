@@ -281,6 +281,9 @@ DEFINE_bool(console, false, "Enable the serial console");
 
 DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
 
+DEFINE_string(vhost_user_mac80211_hwsim, "",
+              "Unix socket path for vhost-user of mac80211_hwsim");
+
 DEFINE_bool(record_screen, false, "Enable screen recording. "
                                   "Requires --start_webrtc");
 
@@ -698,6 +701,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_minimal_mode(FLAGS_enable_minimal_mode);
 
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
+
+  tmp_config_obj.set_vhost_user_mac80211_hwsim(FLAGS_vhost_user_mac80211_hwsim);
 
   tmp_config_obj.set_record_screen(FLAGS_record_screen);
 
