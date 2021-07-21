@@ -86,6 +86,9 @@ class Flag {
   bool Parse(std::vector<std::string>& flags) const;
   bool Parse(std::vector<std::string>&& flags) const;
 
+  /* Write gflags `--helpxml` style output for a string-type flag. */
+  bool WriteGflagsCompatXml(std::ostream&) const;
+
  private:
   /* Reports whether `Process` wants to consume zero, one, or two arguments. */
   enum class FlagProcessResult {
@@ -96,13 +99,15 @@ class Flag {
     kFlagConsumedWithFollowing, /* Flag processed; consume 2 arguments. */
   };
 
-  static void ValidateAlias(const FlagAlias& alias);
+  void ValidateAlias(const FlagAlias& alias);
   Flag& UnvalidatedAlias(const FlagAlias& alias) &;
   Flag UnvalidatedAlias(const FlagAlias& alias) &&;
 
   /* Attempt to match a single argument. */
   FlagProcessResult Process(const std::string& argument,
                             const std::optional<std::string>& next_arg) const;
+
+  bool HasAlias(const FlagAlias&) const;
 
   friend std::ostream& operator<<(std::ostream&, const Flag&);
   friend Flag InvalidFlagGuard();
@@ -123,6 +128,8 @@ std::vector<std::string> ArgsToVec(int argc, char** argv);
  * unmatched arguments. */
 bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>& args);
 bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>&&);
+
+bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
 /* If any of these are used, they should be evaluated after all other flags, and
  * in the order defined here (help before invalid flags, invalid flags before
