@@ -210,10 +210,15 @@ int main(int argc, char** argv) {
   streamer_config.operator_server.addr = cvd_config->sig_server_address();
   streamer_config.operator_server.port = cvd_config->sig_server_port();
   streamer_config.operator_server.path = cvd_config->sig_server_path();
-  streamer_config.operator_server.security =
-      cvd_config->sig_server_strict()
-          ? WsConnection::Security::kStrict
-          : WsConnection::Security::kAllowSelfSigned;
+  if (cvd_config->sig_server_secure()) {
+    streamer_config.operator_server.security =
+        cvd_config->sig_server_strict()
+            ? WsConnection::Security::kStrict
+            : WsConnection::Security::kAllowSelfSigned;
+  } else {
+    streamer_config.operator_server.security =
+        WsConnection::Security::kInsecure;
+  }
 
   if (!cvd_config->sig_server_headers_path().empty()) {
     streamer_config.operator_server.http_headers =

@@ -27,11 +27,12 @@
 namespace cuttlefish {
 class WebSocketServer {
  public:
-  WebSocketServer(
-    const char* protocol_name,
-    const std::string &certs_dir,
-    const std::string &assets_dir,
-    int port);
+  // Uses HTTP and WS
+  WebSocketServer(const char* protocol_name, const std::string& assets_dir,
+                  int port);
+  // Uses HTTPS and WSS when a certificates directory is provided
+  WebSocketServer(const char* protocol_name, const std::string& certs_dir,
+                  const std::string& assets_dir, int port);
   ~WebSocketServer() = default;
 
   void RegisterHandlerFactory(
@@ -50,6 +51,10 @@ class WebSocketServer {
                             void* user, void* in, size_t len);
   static std::shared_ptr<WebSocketHandler> InstantiateHandler(
       const std::string& uri_path, struct lws* wsi);
+
+  void InitializeLwsObjects(const char* protocol_name,
+                            const std::string& certs_dir,
+                            const std::string& assets_dir, int server_port);
 
   struct lws_context* context_;
   struct lws_http_mount mount_;
