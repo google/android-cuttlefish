@@ -683,6 +683,14 @@ bool CuttlefishConfig::vhost_net() const {
   return (*dictionary_)[kVhostNet].asBool();
 }
 
+static constexpr char kVhostUserMac80211Hwsim[] = "vhost_user_mac80211_hwsim";
+void CuttlefishConfig::set_vhost_user_mac80211_hwsim(const std::string& path) {
+  (*dictionary_)[kVhostUserMac80211Hwsim] = path;
+}
+std::string CuttlefishConfig::vhost_user_mac80211_hwsim() const {
+  return (*dictionary_)[kVhostUserMac80211Hwsim].asString();
+}
+
 static constexpr char kEthernet[] = "ethernet";
 void CuttlefishConfig::set_ethernet(bool ethernet) {
   (*dictionary_)[kEthernet] = ethernet;
