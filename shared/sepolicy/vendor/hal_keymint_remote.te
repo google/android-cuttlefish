@@ -10,3 +10,5 @@ allow hal_keymint_remote keymaster_device:chr_file rw_file_perms;
 # Write to kernel log (/dev/kmsg)
 allow hal_keymint_remote kmsg_device:chr_file w_file_perms;
 allow hal_keymint_remote kmsg_device:chr_file getattr;
+
+get_prop(hal_keymint_remote, vendor_security_patch_level_prop)
