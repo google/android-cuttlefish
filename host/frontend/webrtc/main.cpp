@@ -236,7 +236,7 @@ int main(int argc, char** argv) {
 
     auto display =
         streamer->AddDisplay(display_id, display_config.width,
-                             display_config.height, cvd_config->dpi(), true);
+                             display_config.height, display_config.dpi, true);
     displays.push_back(display);
 
     ++display_index;

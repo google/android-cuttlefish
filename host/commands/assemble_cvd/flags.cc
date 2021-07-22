@@ -57,9 +57,15 @@ DEFINE_int32(gdb_port, 0,
              "disabled.");
 
 constexpr const char kDisplayHelp[] =
-    "Comma separated key-value pairs of display properties. Example usage: "
-    "--display0=width=1280,height=720 "
-    "--display1=width=1440,height=900 ";
+    "Comma separated key=value pairs of display properties. Supported "
+    "properties:\n"
+    " 'width': required, width of the display in pixels\n"
+    " 'height': required, height of the display in pixels\n"
+    " 'dpi': optional, default 320, density of the display\n"
+    " 'refresh_rate_hz': optional, default 60, display refresh rate in Hertz\n"
+    ". Example usage: \n"
+    "--display0=width=1280,height=720\n"
+    "--display1=width=1440,height=900,dpi=480,refresh_rate_hz=30\n";
 
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
 // when assemble_cvd switches to using the new flag parsing library.
@@ -384,9 +390,26 @@ std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
   CHECK(android::base::ParseInt(props["height"], &display_height))
       << "Display configuration invalid 'height' in " << flag;
 
+  int display_dpi = 320;
+  auto display_dpi_it = props.find("dpi");
+  if (display_dpi_it != props.end()) {
+    CHECK(android::base::ParseInt(display_dpi_it->second, &display_dpi))
+        << "Display configuration invalid 'dpi' in " << flag;
+  }
+
+  int display_refresh_rate_hz = 60;
+  auto display_refresh_rate_hz_it = props.find("refresh_rate_hz");
+  if (display_refresh_rate_hz_it != props.end()) {
+    CHECK(android::base::ParseInt(display_refresh_rate_hz_it->second,
+                                  &display_refresh_rate_hz))
+        << "Display configuration invalid 'refresh_rate_hz' in " << flag;
+  }
+
   return CuttlefishConfig::DisplayConfig{
       .width = display_width,
       .height = display_height,
+      .dpi = display_dpi,
+      .refresh_rate_hz = display_refresh_rate_hz,
   };
 }
 
@@ -485,6 +508,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       display_configs.push_back({
           .width = FLAGS_x_res,
           .height = FLAGS_y_res,
+          .dpi = FLAGS_dpi,
+          .refresh_rate_hz = FLAGS_refresh_rate_hz,
       });
     } else {
       LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
@@ -492,8 +517,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_display_configs(display_configs);
-  tmp_config_obj.set_dpi(FLAGS_dpi);
-  tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
 
   const GraphicsAvailability graphics_availability =
     GetGraphicsAvailabilityWithSubprocessCheck();
