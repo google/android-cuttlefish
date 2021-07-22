@@ -98,15 +98,11 @@ class CuttlefishConfig {
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
-  int dpi() const;
-  void set_dpi(int dpi);
-
-  int refresh_rate_hz() const;
-  void set_refresh_rate_hz(int refresh_rate_hz);
-
   struct DisplayConfig {
     int width;
     int height;
+    int dpi;
+    int refresh_rate_hz;
   };
 
   std::vector<DisplayConfig> display_configs() const;
@@ -240,11 +236,6 @@ class CuttlefishConfig {
   void set_sig_server_path(const std::string& path);
   std::string sig_server_path() const;
 
-  // Whether the webrtc process should use a secure connection (WSS) to the
-  // signaling server.
-  void set_sig_server_secure(bool secure);
-  bool sig_server_secure() const;
-
   // Whether the webrtc process should attempt to verify the authenticity of the
   // signaling server (reject self signed certificates)
   void set_sig_server_strict(bool strict);
@@ -286,15 +277,6 @@ class CuttlefishConfig {
 
   void set_vhost_net(bool vhost_net);
   bool vhost_net() const;
-
-  void set_vhost_user_mac80211_hwsim(const std::string& path);
-  std::string vhost_user_mac80211_hwsim() const;
-
-  void set_ap_rootfs_image(const std::string& path);
-  std::string ap_rootfs_image() const;
-
-  void set_ap_kernel_image(const std::string& path);
-  std::string ap_kernel_image() const;
 
   void set_ethernet(bool ethernet);
   bool ethernet() const;
