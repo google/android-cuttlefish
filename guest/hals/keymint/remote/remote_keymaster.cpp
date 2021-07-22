@@ -67,6 +67,28 @@ bool RemoteKeymaster::Initialize() {
     return false;
   }
 
+  // Set the vendor patchlevel to value retrieved from system property (which
+  // requires SELinux permission).
+  ConfigureVendorPatchlevelRequest vendor_req(message_version());
+  vendor_req.vendor_patchlevel = GetVendorPatchlevel();
+  ConfigureVendorPatchlevelResponse vendor_rsp =
+      ConfigureVendorPatchlevel(vendor_req);
+  if (vendor_rsp.error != KM_ERROR_OK) {
+    LOG(ERROR) << "Failed to configure keymaster vendor patchlevel: "
+               << vendor_rsp.error;
+    return false;
+  }
+
+  // Set the boot patchlevel to zero for Cuttlefish.
+  ConfigureBootPatchlevelRequest boot_req(message_version());
+  boot_req.boot_patchlevel = 0;
+  ConfigureBootPatchlevelResponse boot_rsp = ConfigureBootPatchlevel(boot_req);
+  if (boot_rsp.error != KM_ERROR_OK) {
+    LOG(ERROR) << "Failed to configure keymaster boot patchlevel: "
+               << boot_rsp.error;
+    return false;
+  }
+
   return true;
 }
 
@@ -246,6 +268,20 @@ void RemoteKeymaster::GenerateTimestampToken(
     GenerateTimestampTokenResponse* response) {
   // TODO(aosp/1641315): Send a message to the host.
   ForwardCommand(GENERATE_TIMESTAMP_TOKEN, request, response);
+}
+
+ConfigureVendorPatchlevelResponse RemoteKeymaster::ConfigureVendorPatchlevel(
+    const ConfigureVendorPatchlevelRequest& request) {
+  ConfigureVendorPatchlevelResponse response(message_version());
+  ForwardCommand(CONFIGURE_VENDOR_PATCHLEVEL, request, &response);
+  return response;
+}
+
+ConfigureBootPatchlevelResponse RemoteKeymaster::ConfigureBootPatchlevel(
+    const ConfigureBootPatchlevelRequest& request) {
+  ConfigureBootPatchlevelResponse response(message_version());
+  ForwardCommand(CONFIGURE_BOOT_PATCHLEVEL, request, &response);
+  return response;
 }
 
 }  // namespace keymaster
