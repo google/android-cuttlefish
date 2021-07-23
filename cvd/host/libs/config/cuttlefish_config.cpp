@@ -478,6 +478,14 @@ std::string CuttlefishConfig::sig_server_path() const {
   return (*dictionary_)[kSigServerPath].asString();
 }
 
+static constexpr char kSigServerSecure[] = "webrtc_sig_server_secure";
+void CuttlefishConfig::set_sig_server_secure(bool secure) {
+  (*dictionary_)[kSigServerSecure] = secure;
+}
+bool CuttlefishConfig::sig_server_secure() const {
+  return (*dictionary_)[kSigServerSecure].asBool();
+}
+
 static constexpr char kSigServerStrict[] = "webrtc_sig_server_strict";
 void CuttlefishConfig::set_sig_server_strict(bool strict) {
   (*dictionary_)[kSigServerStrict] = strict;
@@ -668,6 +676,30 @@ void CuttlefishConfig::set_vhost_net(bool vhost_net) {
 }
 bool CuttlefishConfig::vhost_net() const {
   return (*dictionary_)[kVhostNet].asBool();
+}
+
+static constexpr char kVhostUserMac80211Hwsim[] = "vhost_user_mac80211_hwsim";
+void CuttlefishConfig::set_vhost_user_mac80211_hwsim(const std::string& path) {
+  (*dictionary_)[kVhostUserMac80211Hwsim] = path;
+}
+std::string CuttlefishConfig::vhost_user_mac80211_hwsim() const {
+  return (*dictionary_)[kVhostUserMac80211Hwsim].asString();
+}
+
+static constexpr char kApRootfsImage[] = "ap_rootfs_image";
+std::string CuttlefishConfig::ap_rootfs_image() const {
+  return (*dictionary_)[kApRootfsImage].asString();
+}
+void CuttlefishConfig::set_ap_rootfs_image(const std::string& ap_rootfs_image) {
+  (*dictionary_)[kApRootfsImage] = ap_rootfs_image;
+}
+
+static constexpr char kApKernelImage[] = "ap_kernel_image";
+std::string CuttlefishConfig::ap_kernel_image() const {
+  return (*dictionary_)[kApKernelImage].asString();
+}
+void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
+  (*dictionary_)[kApKernelImage] = ap_kernel_image;
 }
 
 static constexpr char kEthernet[] = "ethernet";
