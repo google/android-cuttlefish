@@ -17,6 +17,7 @@
 'use strict';
 
 function showDeviceListUI() {
+  document.getElementById('error-message').style.display = 'none';
   // Hide the device control screen
   document.getElementById('device-connection').style.visibility = 'none';
   // Show the device selection screen
@@ -24,6 +25,7 @@ function showDeviceListUI() {
 }
 
 function showDeviceControlUI() {
+  document.getElementById('error-message').style.display = 'none';
   // Hide the device selection screen
   document.getElementById('device-selector').style.display = 'none';
   // Show the device control screen
@@ -35,13 +37,54 @@ function websocketUrl(path) {
       '/' + path;
 }
 
+async function ConnectDevice(deviceId) {
+  console.log('Connect: ' + deviceId);
+  // Prepare messages in case of connection failure
+  let connectionAttemptDuration = 0;
+  const intervalMs = 15000;
+  let connectionInterval = setInterval(() => {
+    connectionAttemptDuration += intervalMs;
+    if (connectionAttemptDuration > 30000) {
+      showError(
+          'Connection should have occurred by now. ' +
+          'Please attempt to restart the guest device.');
+      clearInterval(connectionInterval);
+    } else if (connectionAttemptDuration > 15000) {
+      showWarning('Connection is taking longer than expected');
+    }
+  }, intervalMs);
+
+  let options = {
+    wsUrl: websocketUrl('connect_client'),
+  };
+
+  let module = await import('./cf_webrtc.js');
+  let deviceConnection = await module.Connect(deviceId, options);
+  clearInterval(connectionInterval);
+  return deviceConnection;
+}
+
+function showWarning(msg) {
+  let element = document.getElementById('error-message');
+  element.className = 'warning';
+  element.textContent = msg;
+  element.style.visibility = 'visible';
+}
+
+function showError(msg) {
+  let element = document.getElementById('error-message');
+  element.className = 'error';
+  element.textContent = msg;
+  element.style.visibility = 'visible';
+}
+
 class DeviceListApp {
   #websocketUrl;
-  #deviceConnectCb;
+  #selectDeviceCb;
 
-  constructor({websocketUrl, deviceConnectCb}) {
+  constructor({websocketUrl, selectDeviceCb}) {
     this.#websocketUrl = websocketUrl;
-    this.#deviceConnectCb = deviceConnectCb;
+    this.#selectDeviceCb = selectDeviceCb;
   }
 
   start() {
@@ -72,14 +115,21 @@ class DeviceListApp {
     for (const dev_id of device_ids) {
       const button_id = 'connect_' + count++;
       ul.innerHTML +=
-          ('<li class="device_entry" title="Connect to ' + dev_id + '">' +
-           dev_id + '<button id="' + button_id + '" >Connect</button></li>');
+          ('<li class="device_entry" title="Connect to ' + dev_id +
+           '"><div><span>' + dev_id + '</span><button id="' + button_id +
+           '" >Connect</button></div></li>');
       device_to_button_map[dev_id] = button_id;
     }
 
     for (const [dev_id, button_id] of Object.entries(device_to_button_map)) {
-      document.getElementById(button_id).addEventListener(
-          'click', evt => this.#deviceConnectCb(dev_id));
+      let button = document.getElementById(button_id);
+      button.addEventListener('click', evt => {
+        let button = $(evt.target);
+        let div = button.parent();
+        button.remove();
+        div.append('<span class="spinner material-icons">sync</span>');
+        this.#selectDeviceCb(dev_id);
+      });
     }
   }
 }  // DeviceListApp
@@ -121,68 +171,28 @@ class DeviceControlApp {
   #deviceConnection = {};
   #currentRotation = 0;
   #displayDescriptions = [];
-  #animateDeviceStatusMessage = {};
   #buttons = {};
 
-  constructor() {}
+  constructor(deviceConnection) {
+    this.#deviceConnection = deviceConnection;
+  }
 
-  async ConnectDevice(device_id) {
-    console.log('Connect: ' + device_id);
+  start() {
+    console.log('Device description: ', this.#deviceConnection.description);
+    this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
     let keyboardCaptureCtrl = createToggleControl(
         document.getElementById('keyboard-capture-control'), 'keyboard');
     let micCaptureCtrl = createToggleControl(
         document.getElementById('mic-capture-control'), 'mic');
-    const cameraCtrl = document.getElementById('camera-control');
+    let cameraCtrl = createToggleControl(
+        document.getElementById('camera-control'), 'videocam');
+
     keyboardCaptureCtrl.OnClick(
         enabled => this.#onKeyboardCaptureToggle(enabled));
     micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
-    createToggleControl(
-        cameraCtrl, 'videocam', enabled => this.onVideoCaptureToggle(enabled));
+    cameraCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
 
-    // Hide the device selection screen
-    document.getElementById('device-selector').style.display = 'none';
-    // Show the device control screen
-    document.getElementById('device-connection').style.visibility = 'visible';
-
-    // Prepare messages in case of connection failure
-    let connectionAttemptDuration = 0;
-    const intervalMs = 500;
-    let deviceStatusEllipsisCount = 0;
-    this.#animateDeviceStatusMessage = setInterval(function() {
-      connectionAttemptDuration += intervalMs;
-      if (connectionAttemptDuration > 30000) {
-        document.getElementById('status-message').className = 'error';
-        document.getElementById('status-message').textContent =
-            'Connection should have occurred by now. ' +
-            'Please attempt to restart the guest device.';
-      } else {
-        if (connectionAttemptDuration > 15000) {
-          document.getElementById('status-message').textContent =
-              'Connection is taking longer than expected';
-        } else {
-          document.getElementById('status-message').textContent =
-              'Connecting to device';
-        }
-        deviceStatusEllipsisCount = (deviceStatusEllipsisCount + 1) % 4;
-        document.getElementById('status-message').textContent +=
-            '.'.repeat(deviceStatusEllipsisCount);
-      }
-    }, intervalMs);
-
-    let options = {
-      wsUrl: websocketUrl('connect_client'),
-    };
-
-    try {
-      let webrtcModule = await import('./cf_webrtc.js');
-      this.#deviceConnection = await webrtcModule.Connect(device_id, options);
-      console.log('Device description: ', this.#deviceConnection.description);
-      this.#UIChangesOnConnected();
-      this.#deviceConnection.onControlMessage(e => this.#onControlMessage(e));
-    } catch (e) {
-      console.error('Unable to connect: ', e);
-      this.#showWebrtcError();
-    }
+    this.#UIChangesOnConnected();
   }
 
   #UIChangesOnConnected() {
@@ -603,7 +613,6 @@ class DeviceControlApp {
   }
 
   #onDeviceDisplayLoaded() {
-    clearInterval(this.#animateDeviceStatusMessage);
     document.getElementById('status-message').textContent =
         'Awaiting bootup and adb connection. Please wait...';
     this.#resizeDeviceDisplays();
@@ -876,7 +885,7 @@ class DeviceControlApp {
   }
 
   #onVideoCaptureToggle(enabled) {
-    deviceConnection.useVideo(enabled);
+    this.#deviceConnection.useVideo(enabled);
   }
 
   #onCustomShellButton(shell_command, e) {
@@ -893,11 +902,20 @@ class DeviceControlApp {
 // The app starts by showing the device list
 showDeviceListUI();
 let listDevicesUrl = websocketUrl('list_devices');
-let deviceConnectCb = dev_id => {
-  showDeviceControlUI();
-  let deviceControlApp = new DeviceControlApp();
-  deviceControlApp.ConnectDevice(dev_id);
+let selectDeviceCb = deviceId => {
+  ConnectDevice(deviceId).then(
+      deviceConnection => {
+        let deviceControlApp = new DeviceControlApp(deviceConnection);
+        deviceControlApp.start();
+        showDeviceControlUI();
+      },
+      err => {
+        console.error('Unable to connect: ', err);
+        showError(
+            'No connection to the guest device. ' +
+            'Please ensure the WebRTC process on the host machine is active.');
+      });
 };
 let deviceListApp =
-    new DeviceListApp({websocketUrl: listDevicesUrl, deviceConnectCb});
+    new DeviceListApp({websocketUrl: listDevicesUrl, selectDeviceCb});
 deviceListApp.start();
