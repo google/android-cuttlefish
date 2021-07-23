@@ -163,8 +163,9 @@ void InitializeScreenConfiguration(const CuttlefishConfig& cuttlefish_config,
 
     device_display_config->set_width(cuttlefish_display_config.width);
     device_display_config->set_height(cuttlefish_display_config.height);
-    device_display_config->set_dpi(cuttlefish_config.dpi());
-    device_display_config->set_refresh_rate_hz(cuttlefish_config.refresh_rate_hz());
+    device_display_config->set_dpi(cuttlefish_display_config.dpi);
+    device_display_config->set_refresh_rate_hz(
+        cuttlefish_display_config.refresh_rate_hz);
   }
 }
 
