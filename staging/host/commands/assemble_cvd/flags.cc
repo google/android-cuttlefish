@@ -283,6 +283,8 @@ DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
 
 DEFINE_string(vhost_user_mac80211_hwsim, "",
               "Unix socket path for vhost-user of mac80211_hwsim");
+DEFINE_string(ap_rootfs_image, "", "rootfs image for AP instance");
+DEFINE_string(ap_kernel_image, "", "kernel image for AP instance");
 
 DEFINE_bool(record_screen, false, "Enable screen recording. "
                                   "Requires --start_webrtc");
@@ -703,6 +705,18 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
 
   tmp_config_obj.set_vhost_user_mac80211_hwsim(FLAGS_vhost_user_mac80211_hwsim);
+
+  if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
+    LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
+                  "set or neither should be set.";
+  } else if (FLAGS_vhost_user_mac80211_hwsim.empty() &&
+             !FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty()) {
+    LOG(FATAL) << "To use external AP instance, vhost_user_mac80211_hwsim must "
+                  "be set.";
+  }
+
+  tmp_config_obj.set_ap_rootfs_image(FLAGS_ap_rootfs_image);
+  tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
   tmp_config_obj.set_record_screen(FLAGS_record_screen);
 

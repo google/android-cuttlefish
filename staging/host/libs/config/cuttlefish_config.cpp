@@ -691,6 +691,22 @@ std::string CuttlefishConfig::vhost_user_mac80211_hwsim() const {
   return (*dictionary_)[kVhostUserMac80211Hwsim].asString();
 }
 
+static constexpr char kApRootfsImage[] = "ap_rootfs_image";
+std::string CuttlefishConfig::ap_rootfs_image() const {
+  return (*dictionary_)[kApRootfsImage].asString();
+}
+void CuttlefishConfig::set_ap_rootfs_image(const std::string& ap_rootfs_image) {
+  (*dictionary_)[kApRootfsImage] = ap_rootfs_image;
+}
+
+static constexpr char kApKernelImage[] = "ap_kernel_image";
+std::string CuttlefishConfig::ap_kernel_image() const {
+  return (*dictionary_)[kApKernelImage].asString();
+}
+void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
+  (*dictionary_)[kApKernelImage] = ap_kernel_image;
+}
+
 static constexpr char kEthernet[] = "ethernet";
 void CuttlefishConfig::set_ethernet(bool ethernet) {
   (*dictionary_)[kEthernet] = ethernet;
