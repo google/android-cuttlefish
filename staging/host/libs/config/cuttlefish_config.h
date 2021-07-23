@@ -290,6 +290,12 @@ class CuttlefishConfig {
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
 
+  void set_ap_rootfs_image(const std::string& path);
+  std::string ap_rootfs_image() const;
+
+  void set_ap_kernel_image(const std::string& path);
+  std::string ap_kernel_image() const;
+
   void set_ethernet(bool ethernet);
   bool ethernet() const;
 
