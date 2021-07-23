@@ -98,15 +98,11 @@ class CuttlefishConfig {
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
-  int dpi() const;
-  void set_dpi(int dpi);
-
-  int refresh_rate_hz() const;
-  void set_refresh_rate_hz(int refresh_rate_hz);
-
   struct DisplayConfig {
     int width;
     int height;
+    int dpi;
+    int refresh_rate_hz;
   };
 
   std::vector<DisplayConfig> display_configs() const;
