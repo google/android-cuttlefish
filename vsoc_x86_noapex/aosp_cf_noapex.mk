@@ -25,7 +25,3 @@ PRODUCT_NAME := aosp_cf_x86_phone_noapex
 PRODUCT_DEVICE := vsoc_x86_noapex
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86 phone without APEX support
-
-PRODUCT_VENDOR_PROPERTIES += \
-    ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
-    ro.soc.model=$(PRODUCT_DEVICE)
