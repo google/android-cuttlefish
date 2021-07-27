@@ -455,12 +455,14 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
   if (vsock->Bind(casted_addr, sizeof(addr)) == -1) {
-    LOG(ERROR) << "Bind failed (" << vsock->StrError() << ")";
+    LOG(ERROR) << "Port " << port << " Bind failed (" << vsock->StrError()
+               << ")";
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     if (vsock->Listen(4) < 0) {
-      LOG(ERROR) << "Listen failed (" << vsock->StrError() << ")";
+      LOG(ERROR) << "Port" << port << " Listen failed (" << vsock->StrError()
+                 << ")";
       return SharedFD::ErrorFD(vsock->GetErrno());
     }
   }
