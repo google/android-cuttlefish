@@ -370,6 +370,8 @@ class CuttlefishConfig {
     int rootcanal_hci_port() const;
     int rootcanal_link_port() const;
     int rootcanal_test_port() const;
+    // Port number to connect to the camera hal on the guest
+    int camera_server_port() const;
     std::string rootcanal_config_file() const;
     std::string rootcanal_default_commands_file() const;
 
@@ -485,6 +487,7 @@ class CuttlefishConfig {
     void set_rootcanal_hci_port(int rootcanal_hci_port);
     void set_rootcanal_link_port(int rootcanal_link_port);
     void set_rootcanal_test_port(int rootcanal_test_port);
+    void set_camera_server_port(int camera_server_port);
     void set_rootcanal_config_file(const std::string& rootcanal_config_file);
     void set_rootcanal_default_commands_file(
         const std::string& rootcanal_default_commands_file);
