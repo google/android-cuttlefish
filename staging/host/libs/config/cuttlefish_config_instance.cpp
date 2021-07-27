@@ -390,6 +390,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_test_port(
   (*Dictionary())[kRootcanalTestPort] = rootcanal_test_port;
 }
 
+static constexpr char kCameraServerPort[] = "camera_server_port";
+int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
+  return (*Dictionary())[kCameraServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_camera_server_port(
+    int camera_server_port) {
+  (*Dictionary())[kCameraServerPort] = camera_server_port;
+}
+
 static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
 std::string CuttlefishConfig::InstanceSpecific::rootcanal_config_file() const {
   return (*Dictionary())[kRootcanalConfigFile].asString();
