@@ -22,6 +22,8 @@ function ConnectToDevice(device_id) {
   createToggleControl(keyboardCaptureCtrl, "keyboard", onKeyboardCaptureToggle);
   const micCaptureCtrl = document.getElementById('mic-capture-control');
   createToggleControl(micCaptureCtrl, "mic", onMicCaptureToggle);
+  const cameraCtrl = document.getElementById('camera-control');
+  createToggleControl(cameraCtrl, "videocam", onVideoCaptureToggle);
 
   const deviceAudio = document.getElementById('device-audio');
   const deviceDisplays = document.getElementById('device-displays');
@@ -126,6 +128,11 @@ function ConnectToDevice(device_id) {
         y_res: metadata.height
       });
     }
+    if (message_data.event == 'VIRTUAL_DEVICE_CAPTURE_IMAGE') {
+      if (deviceConnection.cameraEnabled) {
+        takePhoto();
+      }
+    }
   }
 
   function getTransformRotation(element) {
@@ -191,6 +198,20 @@ function ConnectToDevice(device_id) {
       devConn.getStream(stream_id).then(stream => {
         deviceDisplayVideo.srcObject = stream;
       }).catch(e => console.error('Unable to get display stream: ', e));
+    }
+  }
+
+  function takePhoto() {
+    const imageCapture = deviceConnection.imageCapture;
+    if (imageCapture) {
+      const photoSettings = {
+        imageWidth: deviceConnection.cameraWidth,
+        imageHeight: deviceConnection.cameraHeight
+      }
+      imageCapture.takePhoto(photoSettings)
+        .then(blob => blob.arrayBuffer())
+        .then(buffer => deviceConnection.sendOrQueueCameraData(buffer))
+        .catch(error => console.log(error));
     }
   }
 
@@ -510,6 +531,10 @@ function ConnectToDevice(device_id) {
 
   function onMicCaptureToggle(enabled) {
     deviceConnection.useMic(enabled);
+  }
+
+  function onVideoCaptureToggle(enabled) {
+    deviceConnection.useVideo(enabled);
   }
 
   function cmdConsole(consoleViewName, consoleInputName) {

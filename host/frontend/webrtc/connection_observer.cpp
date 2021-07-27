@@ -35,6 +35,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "host/frontend/webrtc/adb_handler.h"
 #include "host/frontend/webrtc/bluetooth_handler.h"
+#include "host/frontend/webrtc/lib/camera_controller.h"
 #include "host/frontend/webrtc/lib/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -103,11 +104,13 @@ class ConnectionObserverForAndroid
       cuttlefish::KernelLogEventsHandler *kernel_log_events_handler,
       std::map<std::string, cuttlefish::SharedFD>
           commands_to_custom_action_servers,
-      std::weak_ptr<DisplayHandler> display_handler)
+      std::weak_ptr<DisplayHandler> display_handler,
+      CameraController *camera_controller)
       : input_sockets_(input_sockets),
         kernel_log_events_handler_(kernel_log_events_handler),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
-        weak_display_handler_(display_handler) {}
+        weak_display_handler_(display_handler),
+        camera_controller_(camera_controller) {}
   virtual ~ConnectionObserverForAndroid() {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
@@ -242,6 +245,9 @@ class ConnectionObserverForAndroid
   void OnControlChannelOpen(std::function<bool(const Json::Value)>
                             control_message_sender) override {
     LOG(VERBOSE) << "Control Channel open";
+    if (camera_controller_) {
+      camera_controller_->SetMessageSender(control_message_sender);
+    }
     kernel_log_subscription_id_ =
         kernel_log_events_handler_->AddSubscriber(control_message_sender);
   }
@@ -281,6 +287,10 @@ class ConnectionObserverForAndroid
         // TODO(b/181157794) Propagate hinge angle sensor data using a custom
         // Sensor HAL.
       }
+      return;
+    } else if (command.rfind("camera_", 0) == 0 && camera_controller_) {
+      // Handle commands starting with "camera_" by camera controller
+      camera_controller_->HandleMessage(evt);
       return;
     }
 
@@ -328,6 +338,12 @@ class ConnectionObserverForAndroid
     bluetooth_handler_->handleMessage(msg, size);
   }
 
+  void OnCameraData(const std::vector<char> &data) override {
+    if (camera_controller_) {
+      camera_controller_->HandleMessage(data);
+    }
+  }
+
  private:
   cuttlefish::InputSockets& input_sockets_;
   cuttlefish::KernelLogEventsHandler* kernel_log_events_handler_;
@@ -338,6 +354,7 @@ class ConnectionObserverForAndroid
   std::map<std::string, cuttlefish::SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   std::set<int32_t> active_touch_slots_;
+  cuttlefish::CameraController *camera_controller_;
 };
 
 class ConnectionObserverDemuxer
@@ -350,10 +367,12 @@ class ConnectionObserverDemuxer
       std::map<std::string, cuttlefish::SharedFD>
           commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
+      CameraController *camera_controller,
       /* params for this class */
       cuttlefish::confui::HostVirtualInput &confui_input)
       : android_input_(input_sockets, kernel_log_events_handler,
-                       commands_to_custom_action_servers, display_handler),
+                       commands_to_custom_action_servers, display_handler,
+                       camera_controller),
         confui_input_{confui_input} {}
   virtual ~ConnectionObserverDemuxer() = default;
 
@@ -431,6 +450,10 @@ class ConnectionObserverDemuxer
     android_input_.OnBluetoothMessage(msg, size);
   }
 
+  void OnCameraData(const std::vector<char> &data) override {
+    android_input_.OnCameraData(data);
+  }
+
  private:
   ConnectionObserverForAndroid android_input_;
   cuttlefish::confui::HostVirtualInput &confui_input_;
@@ -449,7 +472,8 @@ CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
       new ConnectionObserverDemuxer(input_sockets_, kernel_log_events_handler_,
                                     commands_to_custom_action_servers_,
-                                    weak_display_handler_, confui_input_));
+                                    weak_display_handler_, camera_controller_,
+                                    confui_input_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(
@@ -464,5 +488,10 @@ void CfConnectionObserverFactory::AddCustomActionServer(
 void CfConnectionObserverFactory::SetDisplayHandler(
     std::weak_ptr<DisplayHandler> display_handler) {
   weak_display_handler_ = display_handler;
+}
+
+void CfConnectionObserverFactory::SetCameraHandler(
+    CameraController *controller) {
+  camera_controller_ = controller;
 }
 }  // namespace cuttlefish
