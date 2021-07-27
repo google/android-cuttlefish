@@ -444,7 +444,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
   return rval;
 }
 
-SharedFD SharedFD::VsockServer(unsigned int port, int type) {
+SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
   auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
@@ -452,7 +452,7 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type) {
   sockaddr_vm addr{};
   addr.svm_family = AF_VSOCK;
   addr.svm_port = port;
-  addr.svm_cid = VMADDR_CID_ANY;
+  addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
   if (vsock->Bind(casted_addr, sizeof(addr)) == -1) {
     LOG(ERROR) << "Port " << port << " Bind failed (" << vsock->StrError()

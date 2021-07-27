@@ -21,6 +21,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <json/json.h>
@@ -37,6 +38,7 @@ class InputChannelHandler;
 class AdbChannelHandler;
 class ControlChannelHandler;
 class BluetoothChannelHandler;
+class CameraChannelHandler;
 
 class ClientHandler : public webrtc::PeerConnectionObserver,
                       public std::enable_shared_from_this<ClientHandler> {
@@ -44,7 +46,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   static std::shared_ptr<ClientHandler> Create(
       int client_id, std::shared_ptr<ConnectionObserver> observer,
       std::function<void(const Json::Value&)> send_client_cb,
-      std::function<void()> on_connection_closed_cb);
+      std::function<void(bool)> on_connection_changed_cb);
   ~ClientHandler() override;
 
   bool SetPeerConnection(
@@ -55,6 +57,8 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
 
   bool AddAudio(rtc::scoped_refptr<webrtc::AudioTrackInterface> track,
                   const std::string& label);
+
+  webrtc::VideoTrackInterface* GetCameraStream() const;
 
   void HandleMessage(const Json::Value& client_message);
 
@@ -107,7 +111,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   };
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
                 std::function<void(const Json::Value&)> send_client_cb,
-                std::function<void()> on_connection_closed_cb);
+                std::function<void(bool)> on_connection_changed_cb);
 
   // Intentionally private, disconnect the client by destroying the object.
   void Close();
@@ -118,13 +122,14 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   State state_ = State::kNew;
   std::shared_ptr<ConnectionObserver> observer_;
   std::function<void(const Json::Value&)> send_to_client_;
-  std::function<void()> on_connection_closed_cb_;
+  std::function<void(bool)> on_connection_changed_cb_;
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   std::vector<rtc::scoped_refptr<webrtc::DataChannelInterface>> data_channels_;
   std::unique_ptr<InputChannelHandler> input_handler_;
   std::unique_ptr<AdbChannelHandler> adb_handler_;
   std::unique_ptr<ControlChannelHandler> control_handler_;
   std::unique_ptr<BluetoothChannelHandler> bluetooth_handler_;
+  std::unique_ptr<CameraChannelHandler> camera_data_handler_;
 };
 
 }  // namespace webrtc_streaming
