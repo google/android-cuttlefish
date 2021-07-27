@@ -625,18 +625,10 @@ endif
 # wifi
 ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += \
-    sh_vendor \
-    emulatorip \
-    iw_vendor \
-    execns \
-    hostapd_nohidl \
-    netmgr \
-    createns \
     mac80211_create_radios
 
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/guest/services/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
-    device/generic/goldfish/wifi/simulated_hostapd.conf:$(TARGET_COPY_OUT_VENDOR)/etc/simulated_hostapd.conf
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish
 
