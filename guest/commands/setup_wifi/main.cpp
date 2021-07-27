@@ -138,9 +138,9 @@ int main(int argc, char** argv) {
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  int renamed_eth0 = RenameNetwork("eth0", "buried_eth0");
-  if (renamed_eth0 != 0) {
-    return renamed_eth0;
+  int renamed_eth1 = RenameNetwork("eth1", "buried_eth0");
+  if (renamed_eth1 != 0) {
+    return renamed_eth1;
   }
   return CreateWifiWrapper("buried_eth0", "wlan0");
 }
