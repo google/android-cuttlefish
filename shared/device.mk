@@ -610,7 +610,9 @@ endif
 # wifi
 ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += \
-    mac80211_create_radios
+    mac80211_create_radios \
+    hostapd \
+    android.hardware.wifi@1.0-service
 
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/guest/services/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
