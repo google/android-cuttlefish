@@ -25,7 +25,6 @@ cc_library {
         "environment.cpp",
         "flag_parser.cpp",
         "shared_fd_flag.cpp",
-        "size_utils.cpp",
         "files.cpp",
         "users.cpp",
         "network.cpp",
