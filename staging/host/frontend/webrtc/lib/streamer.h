@@ -28,6 +28,7 @@
 
 #include "host/frontend/webrtc/lib/audio_sink.h"
 #include "host/frontend/webrtc/lib/audio_source.h"
+#include "host/frontend/webrtc/lib/camera_controller.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/video_sink.h"
@@ -97,6 +98,8 @@ class Streamer {
   // are several clients) the audio will be mixed and provided as a single
   // stream here.
   std::shared_ptr<AudioSource> GetAudioSource();
+
+  CameraController* AddCamera(unsigned int port, unsigned int cid);
 
   // Add a custom button to the control panel.
   void AddCustomControlPanelButton(const std::string& command,

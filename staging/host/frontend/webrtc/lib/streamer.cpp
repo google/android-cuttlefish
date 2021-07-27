@@ -34,6 +34,7 @@
 
 #include "host/frontend/webrtc/lib/audio_device.h"
 #include "host/frontend/webrtc/lib/audio_track_source_impl.h"
+#include "host/frontend/webrtc/lib/camera_streamer.h"
 #include "host/frontend/webrtc/lib/client_handler.h"
 #include "host/frontend/webrtc/lib/port_range_socket_factory.h"
 #include "host/frontend/webrtc/lib/video_track_source_impl.h"
@@ -141,6 +142,7 @@ class Streamer::Impl : public WsConnectionObserver {
 
   void SendMessageToClient(int client_id, const Json::Value& msg);
   void DestroyClientHandler(int client_id);
+  void SetupCameraForClient(int client_id);
 
   // WsObserver
   void OnOpen() override;
@@ -170,6 +172,7 @@ class Streamer::Impl : public WsConnectionObserver {
   std::map<std::string, std::string> hardware_;
   std::vector<ControlPanelButtonDescriptor> custom_control_panel_buttons_;
   std::shared_ptr<AudioDeviceModuleWrapper> audio_device_module_;
+  std::unique_ptr<CameraStreamer> camera_streamer_;
 };
 
 Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
@@ -261,6 +264,11 @@ std::shared_ptr<AudioSink> Streamer::AddAudioStream(const std::string& label) {
 
 std::shared_ptr<AudioSource> Streamer::GetAudioSource() {
   return impl_->audio_device_module_;
+}
+
+CameraController* Streamer::AddCamera(unsigned int port, unsigned int cid) {
+  impl_->camera_streamer_ = std::make_unique<CameraStreamer>(port, cid);
+  return impl_->camera_streamer_.get();
 }
 
 void Streamer::SetHardwareSpec(std::string key, std::string value) {
@@ -566,7 +574,13 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
       [this, client_id](const Json::Value& msg) {
         SendMessageToClient(client_id, msg);
       },
-      [this, client_id] { DestroyClientHandler(client_id); });
+      [this, client_id](bool isOpen) {
+        if (isOpen) {
+          SetupCameraForClient(client_id);
+        } else {
+          DestroyClientHandler(client_id);
+        }
+      });
 
   webrtc::PeerConnectionInterface::RTCConfiguration config;
   config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
@@ -639,6 +653,20 @@ void Streamer::Impl::DestroyClientHandler(int client_id) {
     // deadlock.
     clients_.erase(client_id);
   });
+}
+
+void Streamer::Impl::SetupCameraForClient(int client_id) {
+  if (!camera_streamer_) {
+    return;
+  }
+  auto client_handler = clients_[client_id];
+  if (client_handler) {
+    auto camera_track = client_handler->GetCameraStream();
+    if (camera_track) {
+      camera_track->AddOrUpdateSink(camera_streamer_.get(),
+                                    rtc::VideoSinkWants());
+    }
+  }
 }
 
 }  // namespace webrtc_streaming
