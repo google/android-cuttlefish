@@ -299,10 +299,10 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--switches=", instance.switches_socket_path());
   }
 
+  AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
+
   auto wifi_tap = AddTapFdParameter(use_ap_instance ? &ap_cmd : &crosvm_cmd,
                                     instance.wifi_tap_name());
-
-  AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
   if (FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.AddParameter("--rw-pmem-device=",
