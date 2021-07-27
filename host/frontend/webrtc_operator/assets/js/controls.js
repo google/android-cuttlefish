@@ -15,22 +15,22 @@
  */
 
 function createToggleControl(elm, iconName, onChangeCb) {
-  let icon = document.createElement("span");
-  icon.classList.add("toggle-control-icon");
-  icon.classList.add("material-icons-outlined");
+  let icon = document.createElement('span');
+  icon.classList.add('toggle-control-icon');
+  icon.classList.add('material-icons-outlined');
   if (iconName) {
     icon.appendChild(document.createTextNode(iconName));
   }
   elm.appendChild(icon);
-  let toggle = document.createElement("label");
-  toggle.classList.add("toggle-control-switch");
-  let input = document.createElement("input");
-  input.type = "checkbox";
+  let toggle = document.createElement('label');
+  toggle.classList.add('toggle-control-switch');
+  let input = document.createElement('input');
+  input.type = 'checkbox';
   toggle.appendChild(input);
-  let slider = document.createElement("span");
-  slider.classList.add("toggle-control-slider");
+  let slider = document.createElement('span');
+  slider.classList.add('toggle-control-slider');
   toggle.appendChild(slider);
-  elm.classList.add("toggle-control");
+  elm.classList.add('toggle-control');
   elm.appendChild(toggle);
   if (onChangeCb) {
     input.onchange = e => onChangeCb(e.target.checked);
