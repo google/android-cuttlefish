@@ -98,15 +98,11 @@ class CuttlefishConfig {
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
-  int dpi() const;
-  void set_dpi(int dpi);
-
-  int refresh_rate_hz() const;
-  void set_refresh_rate_hz(int refresh_rate_hz);
-
   struct DisplayConfig {
     int width;
     int height;
+    int dpi;
+    int refresh_rate_hz;
   };
 
   std::vector<DisplayConfig> display_configs() const;
@@ -289,6 +285,12 @@ class CuttlefishConfig {
 
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
+
+  void set_ap_rootfs_image(const std::string& path);
+  std::string ap_rootfs_image() const;
+
+  void set_ap_kernel_image(const std::string& path);
+  std::string ap_kernel_image() const;
 
   void set_ethernet(bool ethernet);
   bool ethernet() const;
