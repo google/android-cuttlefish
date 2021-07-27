@@ -141,7 +141,8 @@ class SharedFD {
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
-  static SharedFD VsockServer(unsigned int port, int type);
+  static SharedFD VsockServer(unsigned int port, int type,
+                              unsigned int cid = VMADDR_CID_ANY);
   static SharedFD VsockServer(int type);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
 

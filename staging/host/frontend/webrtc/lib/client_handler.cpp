@@ -39,6 +39,8 @@ namespace {
 static constexpr auto kInputChannelLabel = "input-channel";
 static constexpr auto kAdbChannelLabel = "adb-channel";
 static constexpr auto kBluetoothChannelLabel = "bluetooth-channel";
+static constexpr auto kCameraDataChannelLabel = "camera-data-channel";
+static constexpr auto kCameraDataEof = "EOF";
 
 class CvdCreateSessionDescriptionObserver
     : public webrtc::CreateSessionDescriptionObserver {
@@ -164,6 +166,22 @@ class BluetoothChannelHandler : public webrtc::DataChannelObserver {
   rtc::scoped_refptr<webrtc::DataChannelInterface> bluetooth_channel_;
   std::shared_ptr<ConnectionObserver> observer_;
   bool channel_open_reported_ = false;
+};
+
+class CameraChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  CameraChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> bluetooth_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~CameraChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> camera_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+  std::vector<char> receive_buffer_;
 };
 
 InputChannelHandler::InputChannelHandler(
@@ -375,22 +393,53 @@ void BluetoothChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   observer_->OnBluetoothMessage(msg.data.cdata(), msg.size());
 }
 
+CameraChannelHandler::CameraChannelHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> camera_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : camera_channel_(camera_channel), observer_(observer) {
+  camera_channel_->RegisterObserver(this);
+}
+
+CameraChannelHandler::~CameraChannelHandler() {
+  camera_channel_->UnregisterObserver();
+}
+
+void CameraChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "Camera channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      camera_channel_->state());
+}
+
+void CameraChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  auto msg_data = msg.data.cdata<char>();
+  if (msg.size() == strlen(kCameraDataEof) &&
+      !strncmp(msg_data, kCameraDataEof, msg.size())) {
+    // Send complete buffer to observer on EOF marker
+    observer_->OnCameraData(receive_buffer_);
+    receive_buffer_.clear();
+    return;
+  }
+  // Otherwise buffer up data
+  receive_buffer_.insert(receive_buffer_.end(), msg_data,
+                         msg_data + msg.size());
+}
+
 std::shared_ptr<ClientHandler> ClientHandler::Create(
     int client_id, std::shared_ptr<ConnectionObserver> observer,
     std::function<void(const Json::Value &)> send_to_client_cb,
-    std::function<void()> on_connection_closed_cb) {
+    std::function<void(bool)> on_connection_changed_cb) {
   return std::shared_ptr<ClientHandler>(new ClientHandler(
-      client_id, observer, send_to_client_cb, on_connection_closed_cb));
+      client_id, observer, send_to_client_cb, on_connection_changed_cb));
 }
 
 ClientHandler::ClientHandler(
     int client_id, std::shared_ptr<ConnectionObserver> observer,
     std::function<void(const Json::Value &)> send_to_client_cb,
-    std::function<void()> on_connection_closed_cb)
+    std::function<void(bool)> on_connection_changed_cb)
     : client_id_(client_id),
       observer_(observer),
       send_to_client_(send_to_client_cb),
-      on_connection_closed_cb_(on_connection_closed_cb) {}
+      on_connection_changed_cb_(on_connection_changed_cb) {}
 
 ClientHandler::~ClientHandler() {
   for (auto &data_channel : data_channels_) {
@@ -448,6 +497,17 @@ bool ClientHandler::AddAudio(
     return false;
   }
   return true;
+}
+
+webrtc::VideoTrackInterface *ClientHandler::GetCameraStream() const {
+  for (const auto &tranceiver : peer_connection_->GetTransceivers()) {
+    auto track = tranceiver->receiver()->track();
+    if (track &&
+        track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+      return static_cast<webrtc::VideoTrackInterface *>(track.get());
+    }
+  }
+  return nullptr;
 }
 
 void ClientHandler::LogAndReplyError(const std::string &error_msg) const {
@@ -607,7 +667,7 @@ void ClientHandler::Close() {
   // will then wait for the callback to return -> deadlock). Destroying the
   // peer_connection_ has the same effect. The only alternative is to postpone
   // that operation until after the callback returns.
-  on_connection_closed_cb_();
+  on_connection_changed_cb_(false);
 }
 
 void ClientHandler::OnConnectionChange(
@@ -625,6 +685,7 @@ void ClientHandler::OnConnectionChange(
             control_handler_->Send(msg, size, binary);
             return true;
           });
+      on_connection_changed_cb_(true);
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": Connection disconnected";
@@ -667,6 +728,9 @@ void ClientHandler::OnDataChannel(
   } else if (label == kBluetoothChannelLabel) {
     bluetooth_handler_.reset(
         new BluetoothChannelHandler(data_channel, observer_));
+  } else if (label == kCameraDataChannelLabel) {
+    camera_data_handler_.reset(
+        new CameraChannelHandler(data_channel, observer_));
   } else {
     LOG(VERBOSE) << "Data channel connected: " << label;
     data_channels_.push_back(data_channel);
