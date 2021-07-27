@@ -1,4 +1,2 @@
 vendor_restricted_prop(vendor_cuttlefish_config_server_port_prop)
 vendor_internal_prop(vendor_modem_simulator_ports_prop)
-vendor_restricted_prop(vendor_netns_prop)
-vendor_restricted_prop(vendor_net_bridged)

@@ -37,7 +37,6 @@
 #############################
 # data files
 /data/vendor/mediadrm(/.*)?  u:object_r:mediadrm_vendor_data_file:s0
-/data/vendor/var/run(/.*)?   u:object_r:varrun_file:s0
 
 #############################
 # var files
@@ -57,14 +56,8 @@
 #############################
 # Vendor files
 #
-/vendor/bin/createns         u:object_r:createns_exec:s0
 /vendor/bin/cuttlefish_sensor_injection   u:object_r:cuttlefish_sensor_injection_exec:s0
-/vendor/bin/execns           u:object_r:execns_exec:s0
-/vendor/bin/hostapd_nohidl   u:object_r:hostapd_nohidl_exec:s0
-/vendor/bin/ip               u:object_r:cuttlefish_ip_exec:s0
-/vendor/bin/iw               u:object_r:cuttlefish_iw_exec:s0
 /vendor/bin/mac80211_create_radios u:object_r:mac80211_create_radios_exec:s0
-/vendor/bin/netmgr           u:object_r:netmgr_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
