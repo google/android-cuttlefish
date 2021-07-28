@@ -38,7 +38,7 @@ cc_binary {
     ],
 
     shared_libs: [
-        "android.hardware.health.storage-V1-ndk_platform",
+        "android.hardware.health.storage-V1-ndk",
         "libbase",
         "libbinder_ndk",
         "libutils",
