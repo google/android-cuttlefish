@@ -90,14 +90,14 @@ class DeviceConnection {
     this.useMic(false);
     this.useVideo(false);
     this._cameraDataChannel = pc.createDataChannel('camera-data-channel');
-    this._cameraDataChannel.binaryType = 'arraybuffer'
+    this._cameraDataChannel.binaryType = 'arraybuffer';
     this._cameraInputQueue = new Array();
     var self = this;
     this._cameraDataChannel.onbufferedamountlow = () => {
       if (self._cameraInputQueue.length > 0) {
         self.sendCameraData(self._cameraInputQueue.shift());
       }
-    }
+    };
     this._inputChannel = createDataChannel(pc, 'input-channel');
     this._adbChannel = createDataChannel(pc, 'adb-channel', (msg) => {
       if (this._onAdbMessage) {
@@ -113,13 +113,14 @@ class DeviceConnection {
         console.error('Received unexpected Control message');
       }
     });
-    this._bluetoothChannel = createDataChannel(pc, 'bluetooth-channel', (msg) => {
-      if (this._onBluetoothMessage) {
-        this._onBluetoothMessage(msg.data);
-      } else {
-        console.error('Received unexpected Bluetooth message');
-      }
-    });
+    this._bluetoothChannel =
+        createDataChannel(pc, 'bluetooth-channel', (msg) => {
+          if (this._onBluetoothMessage) {
+            this._onBluetoothMessage(msg.data);
+          } else {
+            console.error('Received unexpected Bluetooth message');
+          }
+        });
     this.sendCameraResolution();
     this._streams = {};
     this._streamPromiseResolvers = {};
@@ -148,7 +149,7 @@ class DeviceConnection {
 
   get imageCapture() {
     if (this._media_stream) {
-      const track = this._media_stream.getVideoTracks()[0]
+      const track = this._media_stream.getVideoTracks()[0];
       return new ImageCapture(track);
     }
     return undefined;
@@ -234,13 +235,15 @@ class DeviceConnection {
 
   useMic(in_use) {
     if (this._media_stream) {
-      this._media_stream.getAudioTracks().forEach(track => track.enabled = in_use);
+      this._media_stream.getAudioTracks().forEach(
+          track => track.enabled = in_use);
     }
   }
 
   useVideo(in_use) {
     if (this._media_stream) {
-      this._media_stream.getVideoTracks().forEach(track => track.enabled = in_use);
+      this._media_stream.getVideoTracks().forEach(
+          track => track.enabled = in_use);
     }
   }
 
@@ -263,7 +266,8 @@ class DeviceConnection {
   }
 
   sendOrQueueCameraData(data) {
-    if (this._cameraDataChannel.bufferedAmount > 0 || this._cameraInputQueue.length > 0) {
+    if (this._cameraDataChannel.bufferedAmount > 0 ||
+        this._cameraInputQueue.length > 0) {
       this._cameraInputQueue.push(data);
     } else {
       this.sendCameraData(data);
@@ -296,8 +300,7 @@ class DeviceConnection {
   // Provide a callback to receive connectionstatechange states.
   onConnectionStateChange(cb) {
     this._pc.addEventListener(
-      'connectionstatechange',
-      evt => cb(this._pc.connectionState));
+        'connectionstatechange', evt => cb(this._pc.connectionState));
   }
 }
 
@@ -362,7 +365,8 @@ class WebRTCControl {
         break;
       default:
         console.error('Unrecognized message type from server: ', type);
-        this._on_connection_failed('Unrecognized message type from server: ' + type);
+        this._on_connection_failed(
+            'Unrecognized message type from server: ' + type);
         console.error(message);
     }
   }
@@ -489,7 +493,7 @@ export async function Connect(deviceId, options) {
       pc.addTrack(track, mediaStream);
     });
   } catch (e) {
-    console.error("Failed to open audio device: ", e);
+    console.error('Failed to open audio device: ', e);
   }
 
   let deviceConnection = new DeviceConnection(pc, control, mediaStream);
