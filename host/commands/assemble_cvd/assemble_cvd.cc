@@ -31,6 +31,7 @@
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/adb/adb.h"
 #include "host/libs/config/config_flag.h"
+#include "host/libs/config/custom_actions.h"
 #include "host/libs/config/fetcher_config.h"
 
 using cuttlefish::StringFromEnv;
@@ -222,7 +223,8 @@ fruit::Component<> FlagsComponent() {
       .install(AdbConfigFlagComponent)
       .install(AdbConfigFragmentComponent)
       .install(GflagsComponent)
-      .install(ConfigFlagComponent);
+      .install(ConfigFlagComponent)
+      .install(CustomActionsComponent);
 }
 
 } // namespace

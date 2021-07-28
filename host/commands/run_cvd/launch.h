@@ -22,6 +22,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
+#include "host/libs/config/custom_actions.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/kernel_log_pipe_provider.h"
@@ -38,7 +39,8 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
 launchModemComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 const CustomActionConfigProvider>>
 launchStreamerComponent();
 
 } // namespace cuttlefish
