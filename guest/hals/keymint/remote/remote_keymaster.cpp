@@ -266,7 +266,6 @@ EarlyBootEndedResponse RemoteKeymaster::EarlyBootEnded() {
 void RemoteKeymaster::GenerateTimestampToken(
     GenerateTimestampTokenRequest& request,
     GenerateTimestampTokenResponse* response) {
-  // TODO(aosp/1641315): Send a message to the host.
   ForwardCommand(GENERATE_TIMESTAMP_TOKEN, request, response);
 }
 
