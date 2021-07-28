@@ -19,12 +19,12 @@
 function rootCanalCalculateMessageSize(name, args) {
   let result = 0;
 
-  result += 1 + name.length; // length of name + it's data
-  result += 1; // count of args
+  result += 1 + name.length;  // length of name + it's data
+  result += 1;                // count of args
 
-  for(let i = 0; i < args.length; i++) {
-    result += 1; // length of args[i]
-    result += args[i].length; // data of args[i]
+  for (let i = 0; i < args.length; i++) {
+    result += 1;               // length of args[i]
+    result += args[i].length;  // data of args[i]
   }
 
   return result;
@@ -59,7 +59,7 @@ function createRootcanalMessage(command, args) {
   pos = rootCanalAddString(array, pos, command);
   pos = rootCanalAddU8(array, pos, args.length);
 
-  for(let i = 0; i < args.length; i++) {
+  for (let i = 0; i < args.length; i++) {
     pos = rootCanalAddString(array, pos, args[i]);
   }
 
