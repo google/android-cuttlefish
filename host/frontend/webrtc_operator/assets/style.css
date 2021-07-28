@@ -40,6 +40,15 @@ body {
 }
 
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1.4s linear infinite;
+}
+
 /* Top header row. */
 
 #header {
@@ -61,6 +70,23 @@ body {
   height: 44px;
 }
 
+#error-message-div {
+  flex-grow: 1;
+}
+#error-message {
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  padding: 10px;
+  margin: 10px;
+}
+#error-message.warning {
+  /* dark red */
+  background-color: #927836;
+}
+#error-message.error {
+  /* dark red */
+  background-color: #900000;
+}
 #status-div {
   flex-grow: 1;
 }
