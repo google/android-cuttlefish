@@ -165,6 +165,12 @@ cvd_host_seccomp_policy_arm64 = [
     "xhci.policy_aarch64",
 ]
 
+cvd_host_qemu_bootloader = [
+    "bootloader_qemu_x86_64",
+    "bootloader_qemu_aarch64",
+    "bootloader_qemu_arm",
+]
+
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
@@ -173,6 +179,7 @@ cvd_host_package_customization {
         common: {
             deps: cvd_host_webrtc_assets +
                 cvd_host_model_simulator_files +
+                cvd_host_qemu_bootloader +
                 cvd_bluetooth_config_files,
         },
     },
