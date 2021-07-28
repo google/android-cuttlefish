@@ -49,6 +49,9 @@ public:
   keymaster::VerifyAuthorizationResponse VerifyAuthorization(
       const keymaster::VerifyAuthorizationRequest& request) override;
 
+  keymaster_error_t GenerateTimestampToken(
+      keymaster::TimestampToken* token) override;
+
   bool CreateKeyId(
       const keymaster_key_blob_t& key_blob,
       keymaster::km_id_t* keyid) const override;
