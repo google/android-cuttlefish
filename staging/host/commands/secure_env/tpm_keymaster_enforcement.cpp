@@ -294,6 +294,36 @@ VerifyAuthorizationResponse TpmKeymasterEnforcement::VerifyAuthorization(
   return response;
 }
 
+keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
+    keymaster::TimestampToken* token) {
+  token->timestamp = get_current_time_ms();
+  token->security_level = SecurityLevel();
+  token->mac = KeymasterBlob();
+
+  auto signing_key_builder = PrimaryKeyBuilder();
+  signing_key_builder.SigningKey();
+  signing_key_builder.UniqueData("timestamp_token");
+  auto signing_key = signing_key_builder.CreateKey(resource_manager_);
+  if (!signing_key) {
+    LOG(ERROR) << "Could not make signing key for verifying authorization";
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+  std::vector<uint8_t> token_buf_to_sign(token->SerializedSize(), 0);
+  auto hmac =
+      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
+              token_buf_to_sign.data(), token_buf_to_sign.size());
+  if (!hmac) {
+    LOG(ERROR) << "Could not calculate timestamp token hmac";
+    return KM_ERROR_UNKNOWN_ERROR;
+  } else if (hmac->size == 0) {
+    LOG(ERROR) << "hmac was too short";
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+  token->mac = KeymasterBlob(hmac->buffer, hmac->size);
+
+  return KM_ERROR_OK;
+}
+
 bool TpmKeymasterEnforcement::CreateKeyId(
     const keymaster_key_blob_t& key_blob, km_id_t* keyid) const {
   keymaster::AuthorizationSet hw_enforced;
