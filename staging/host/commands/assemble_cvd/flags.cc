@@ -918,9 +918,7 @@ void SetDefaultFlagsForCrosvm() {
     SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
   }
 
-  // TODO(b/182484563): Re-enable autodetection when we fix the crosvm crashes
-  bool default_enable_sandbox = false;
-
+  bool default_enable_sandbox = HostArch() != Arch::Arm64;
   SetCommandLineOptionWithMode("enable_sandbox",
                                (default_enable_sandbox ? "true" : "false"),
                                SET_FLAGS_DEFAULT);
