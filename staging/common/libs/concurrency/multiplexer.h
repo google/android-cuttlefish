@@ -63,7 +63,7 @@ class Multiplexer {
   T Pop() {
     auto default_selector = [this]() -> int {
       for (int i = 0; i < queues_.size(); i++) {
-        if (queues_[i]->IsEmpty()) {
+        if (!queues_[i]->IsEmpty()) {
           return i;
         }
       }
