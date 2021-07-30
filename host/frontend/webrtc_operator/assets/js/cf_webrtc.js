@@ -486,7 +486,7 @@ export async function Connect(deviceId, options) {
   let mediaStream;
   try {
     mediaStream =
-        await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        await navigator.mediaDevices.getUserMedia({audio: true});
     const tracks = mediaStream.getTracks();
     tracks.forEach(track => {
       console.info(`Using ${track.kind} device: ${track.label}`);
