@@ -15,7 +15,7 @@
  */
 
 function createDataChannel(pc, label, onMessage) {
-  console.log('creating data channel: ' + label);
+  console.debug('creating data channel: ' + label);
   let dataChannel = pc.createDataChannel(label);
   // Return an object with a send function like that of the dataChannel, but
   // that only actually sends over the data channel once it has connected.
@@ -25,11 +25,11 @@ function createDataChannel(pc, label, onMessage) {
         resolve(dataChannel);
       };
       dataChannel.onclose = () => {
-        console.log(
+        console.debug(
             'Data channel=' + label + ' state=' + dataChannel.readyState);
       };
       dataChannel.onmessage = onMessage ? onMessage : (msg) => {
-        console.log('Data channel=' + label + ' data="' + msg.data + '"');
+        console.debug('Data channel=' + label + ' data="' + msg.data + '"');
       };
       dataChannel.onerror = err => {
         reject(err);
@@ -45,7 +45,7 @@ function createDataChannel(pc, label, onMessage) {
 }
 
 function awaitDataChannel(pc, label, onMessage) {
-  console.log('expecting data channel: ' + label);
+  console.debug('expecting data channel: ' + label);
   // Return an object with a send function like that of the dataChannel, but
   // that only actually sends over the data channel once it has connected.
   return {
@@ -58,11 +58,11 @@ function awaitDataChannel(pc, label, onMessage) {
             resolve(dataChannel);
           };
           dataChannel.onclose = () => {
-            console.log(
+            console.debug(
                 'Data channel=' + label + ' state=' + dataChannel.readyState);
           };
           dataChannel.onmessage = onMessage ? onMessage : (msg) => {
-            console.log('Data channel=' + label + ' data="' + msg.data + '"');
+            console.debug('Data channel=' + label + ' data="' + msg.data + '"');
           };
           dataChannel.onerror = err => {
             reject(err);
@@ -126,7 +126,7 @@ class DeviceConnection {
     this._streamPromiseResolvers = {};
 
     pc.addEventListener('track', e => {
-      console.log('Got remote stream: ', e);
+      console.debug('Got remote stream: ', e);
       for (const stream of e.streams) {
         this._streams[stream.id] = stream;
         if (this._streamPromiseResolvers[stream.id]) {
@@ -325,7 +325,7 @@ class WebRTCControl {
     this._wsPromise = new Promise((resolve, reject) => {
       let ws = new WebSocket(wsUrl);
       ws.onopen = () => {
-        console.info(`Connected to ${wsUrl}`);
+        console.debug(`Connected to ${wsUrl}`);
         resolve(ws);
       };
       ws.onerror = evt => {
@@ -428,7 +428,7 @@ class WebRTCControl {
   }
 
   ConnectDevice() {
-    console.log('ConnectDevice');
+    console.debug('ConnectDevice');
     this._sendToDevice({type: 'request-offer'});
   }
 
@@ -436,7 +436,7 @@ class WebRTCControl {
    * Sends a remote description to the device.
    */
   async sendClientDescription(desc) {
-    console.log('sendClientDescription');
+    console.debug('sendClientDescription');
     this._sendToDevice({type: 'answer', sdp: desc.sdp});
   }
 
@@ -456,15 +456,15 @@ function createPeerConnection(infra_config) {
   let pc = new RTCPeerConnection(pc_config);
 
   pc.addEventListener('icecandidate', evt => {
-    console.log('Local ICE Candidate: ', evt.candidate);
+    console.debug('Local ICE Candidate: ', evt.candidate);
   });
   pc.addEventListener('iceconnectionstatechange', evt => {
-    console.log(`ICE State Change: ${pc.iceConnectionState}`);
+    console.debug(`ICE State Change: ${pc.iceConnectionState}`);
   });
   pc.addEventListener(
       'connectionstatechange',
-      evt =>
-          console.log(`WebRTC Connection State Change: ${pc.connectionState}`));
+      evt => console.debug(
+          `WebRTC Connection State Change: ${pc.connectionState}`));
   return pc;
 }
 
@@ -473,8 +473,8 @@ export async function Connect(deviceId, options) {
   let requestRet = await control.requestDevice(deviceId);
   let deviceInfo = requestRet.deviceInfo;
   let infraConfig = requestRet.infraConfig;
-  console.log('Device available:');
-  console.log(deviceInfo);
+  console.debug('Device available:');
+  console.debug(deviceInfo);
   let pc_config = {iceServers: []};
   if (infraConfig.ice_servers && infraConfig.ice_servers.length > 0) {
     for (const server of infraConfig.ice_servers) {
@@ -489,11 +489,11 @@ export async function Connect(deviceId, options) {
         await navigator.mediaDevices.getUserMedia({video: true, audio: true});
     const tracks = mediaStream.getTracks();
     tracks.forEach(track => {
-      console.log(`Using ${track.kind} device: ${track.label}`);
+      console.info(`Using ${track.kind} device: ${track.label}`);
       pc.addTrack(track, mediaStream);
     });
   } catch (e) {
-    console.error('Failed to open audio device: ', e);
+    console.error('Failed to open device: ', e);
   }
 
   let deviceConnection = new DeviceConnection(pc, control, mediaStream);
@@ -502,7 +502,7 @@ export async function Connect(deviceId, options) {
     try {
       await pc.setRemoteDescription(offer);
       let answer = await pc.createAnswer();
-      console.log('Answer: ', answer);
+      console.debug('Answer: ', answer);
       await pc.setLocalDescription(answer);
       await control.sendClientDescription(answer);
     } catch (e) {
@@ -511,11 +511,11 @@ export async function Connect(deviceId, options) {
     }
   }
   control.onOffer(desc => {
-    console.log('Offer: ', desc);
+    console.debug('Offer: ', desc);
     acceptOfferAndReplyAnswer(desc);
   });
   control.onIceCandidate(iceCandidate => {
-    console.log(`Remote ICE Candidate: `, iceCandidate);
+    console.debug(`Remote ICE Candidate: `, iceCandidate);
     pc.addIceCandidate(iceCandidate);
   });
 
