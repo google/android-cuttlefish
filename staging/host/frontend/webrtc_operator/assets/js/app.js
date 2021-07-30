@@ -38,7 +38,7 @@ function websocketUrl(path) {
 }
 
 async function ConnectDevice(deviceId) {
-  console.log('Connect: ' + deviceId);
+  console.debug('Connect: ' + deviceId);
   // Prepare messages in case of connection failure
   let connectionAttemptDuration = 0;
   const intervalMs = 15000;
@@ -60,6 +60,7 @@ async function ConnectDevice(deviceId) {
 
   let module = await import('./cf_webrtc.js');
   let deviceConnection = await module.Connect(deviceId, options);
+  console.info('Connected to ' + deviceId);
   clearInterval(connectionInterval);
   return deviceConnection;
 }
@@ -178,7 +179,7 @@ class DeviceControlApp {
   }
 
   start() {
-    console.log('Device description: ', this.#deviceConnection.description);
+    console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
     let keyboardCaptureCtrl = createToggleControl(
         document.getElementById('keyboard-capture-control'), 'keyboard');
@@ -192,10 +193,10 @@ class DeviceControlApp {
     micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
     cameraCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
 
-    this.#UIChangesOnConnected();
+    this.#showDeviceUI();
   }
 
-  #UIChangesOnConnected() {
+  #showDeviceUI() {
     window.onresize = evt => this.#resizeDeviceDisplays();
     // Set up control panel buttons
     this.#buttons = {};
@@ -330,7 +331,7 @@ class DeviceControlApp {
       imageCapture.takePhoto(photoSettings)
           .then(blob => blob.arrayBuffer())
           .then(buffer => this.#deviceConnection.sendOrQueueCameraData(buffer))
-          .catch(error => console.log(error));
+          .catch(error => console.error(error));
     }
   }
 
@@ -347,7 +348,7 @@ class DeviceControlApp {
           ...states[index],
         };
         this.#deviceConnection.sendControlMessage(JSON.stringify(message));
-        console.log(JSON.stringify(message));
+        console.debug('Control message sent: ', JSON.stringify(message));
         let lidSwitchOpen = null;
         if ('lid_switch_open' in states[index]) {
           lidSwitchOpen = states[index].lid_switch_open;
@@ -463,7 +464,7 @@ class DeviceControlApp {
 
   #onControlMessage(message) {
     let message_data = JSON.parse(message.data);
-    console.log(message_data)
+    console.debug('Control message received: ', message_data)
     let metadata = message_data.metadata;
     if (message_data.event == 'VIRTUAL_DEVICE_BOOT_STARTED') {
       // Start the adb connection after receiving the BOOT_STARTED message.
@@ -546,12 +547,12 @@ class DeviceControlApp {
   // element for rotating the device only affects the visuals of the element
   // and not its layout.
   #createDeviceDisplays() {
-    console.log('description: ', this.#deviceConnection.description.displays);
+    console.debug(
+        'Display descriptions: ', this.#deviceConnection.description.displays);
     this.#displayDescriptions = this.#deviceConnection.description.displays;
     let anyDisplayLoaded = false;
     const deviceDisplays = document.getElementById('device-displays');
     for (const deviceDisplayDescription of this.#displayDescriptions) {
-      console.log('description: ', deviceDisplayDescription);
       let deviceDisplay = document.createElement('div');
       deviceDisplay.classList.add('device-display');
       // Start the screen as hidden. Only show when data is ready.
@@ -582,17 +583,9 @@ class DeviceControlApp {
   }
 
   #initializeAdb() {
-    init_adb(this.#deviceConnection, () => this.#showAdbConnected(), () => {
-      document.getElementById('status-message').className = 'error';
-      document.getElementById('status-message').textContent =
-          'adb connection failed.';
-      document.getElementById('status-message').style.visibility = 'visible';
-      for (const [_, button] of Object.entries(this.#buttons)) {
-        if (button.adb) {
-          button.disabled = true;
-        }
-      }
-    });
+    init_adb(
+        this.#deviceConnection, () => this.#showAdbConnected(),
+        () => this.#showAdbError());
   }
 
   #showAdbConnected() {
@@ -608,6 +601,18 @@ class DeviceControlApp {
     for (const [_, button] of Object.entries(this.#buttons)) {
       if (button.adb) {
         button.disabled = false;
+      }
+    }
+  }
+
+  #showAdbError() {
+    document.getElementById('status-message').className = 'error';
+    document.getElementById('status-message').textContent =
+        'adb connection failed.';
+    document.getElementById('status-message').style.visibility = 'visible';
+    for (const [_, button] of Object.entries(this.#buttons)) {
+      if (button.adb) {
+        button.disabled = true;
       }
     }
   }
@@ -680,7 +685,7 @@ class DeviceControlApp {
     function onStartDrag(e) {
       e.preventDefault();
 
-      // console.log("mousedown at " + e.pageX + " / " + e.pageY);
+      // console.debug("mousedown at " + e.pageX + " / " + e.pageY);
       mouseCtx.down = true;
 
       $this.#sendEventUpdate(mouseCtx, e);
@@ -689,7 +694,7 @@ class DeviceControlApp {
     function onEndDrag(e) {
       e.preventDefault();
 
-      // console.log("mouseup at " + e.pageX + " / " + e.pageY);
+      // console.debug("mouseup at " + e.pageX + " / " + e.pageY);
       mouseCtx.down = false;
 
       $this.#sendEventUpdate(mouseCtx, e);
@@ -698,7 +703,7 @@ class DeviceControlApp {
     function onContinueDrag(e) {
       e.preventDefault();
 
-      // console.log("mousemove at " + e.pageX + " / " + e.pageY + ", down=" +
+      // console.debug("mousemove at " + e.pageX + " / " + e.pageY + ", down=" +
       // mouseIsDown);
       if (mouseCtx.down) {
         $this.#sendEventUpdate(mouseCtx, e);

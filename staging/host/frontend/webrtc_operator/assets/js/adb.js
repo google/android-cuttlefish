@@ -125,7 +125,7 @@ function connected() {
 }
 
 function adbOnMessage(arrayBuffer) {
-  // console.log("adb_ws: onmessage (" + arrayBuffer.byteLength + " bytes)");
+  // console.debug("adb_ws: onmessage (" + arrayBuffer.byteLength + " bytes)");
   array = JoinArrays(array, new Uint8Array(arrayBuffer));
 
   while (array.length > 0) {
@@ -138,8 +138,8 @@ function adbOnMessage(arrayBuffer) {
     let magic = getU32LE(array, 20);
 
     if (command != ((magic ^ 0xffffffff) >>> 0)) {
-      console.log('command = ' + command + ', magic = ' + magic);
-      console.log('adb message command vs magic failed.');
+      console.error('adb message command vs magic failed.');
+      console.error('command = ' + command + ', magic = ' + magic);
       return;
     }
 
@@ -154,21 +154,21 @@ function adbOnMessage(arrayBuffer) {
     let checksum = computeChecksum(array.slice(24));
 
     if (payloadChecksum != checksum) {
-      console.log('adb message checksum mismatch.');
+      console.error('adb message checksum mismatch.');
       // This can happen if a shell command executes while another
       // channel is receiving data.
     }
 
     switch (command) {
       case A_CNXN: {
-        console.log('WebRTC adb connected.');
+        console.info('WebRTC adb connected.');
         connected();
         break;
       }
 
       case A_OKAY: {
         let remoteId = getU32LE(array, 4);
-        console.log('WebRTC adb channel created w/ remoteId ' + remoteId);
+        console.debug('WebRTC adb channel created w/ remoteId ' + remoteId);
         connected();
         break;
       }
