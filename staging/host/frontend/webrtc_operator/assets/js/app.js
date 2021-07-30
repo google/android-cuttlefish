@@ -185,13 +185,10 @@ class DeviceControlApp {
         document.getElementById('keyboard-capture-control'), 'keyboard');
     let micCaptureCtrl = createToggleControl(
         document.getElementById('mic-capture-control'), 'mic');
-    let cameraCtrl = createToggleControl(
-        document.getElementById('camera-control'), 'videocam');
 
     keyboardCaptureCtrl.OnClick(
         enabled => this.#onKeyboardCaptureToggle(enabled));
     micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
-    cameraCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
 
     this.#showDeviceUI();
   }
