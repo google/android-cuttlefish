@@ -15,14 +15,18 @@
  */
 package com.android.cuttlefish.tests;
 
+import static org.junit.Assert.assertTrue;
+
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
+import com.android.tradefed.device.internal.DeviceResetHandler;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import java.io.File;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
 
 /**
  * Test powerwash function.
@@ -48,14 +52,18 @@ public class PowerwashTest extends BaseHostJUnit4Test {
         if (file == null) {
             Assert.fail("Setup failed: tmp file failed to persist after device reboot.");
         }
-
+        boolean success = false;
         if (getDevice() instanceof RemoteAndroidVirtualDevice) {
-            ((RemoteAndroidVirtualDevice) getDevice()).powerwashGce();
+            success = ((RemoteAndroidVirtualDevice) getDevice()).powerwashGce();
         } else {
-            Assert.fail("This test only supports running in test lab setup.");
+            // We don't usually expect tests to use our feature server, but in this case we are
+            // validating the feature itself so it's fine
+            DeviceResetHandler handler = new DeviceResetHandler(getInvocationContext());
+            success = handler.resetDevice(getDevice());
         }
+        assertTrue("Powerwash reset failed", success);
 
-        // Verify that the device is back online and pre-xisting file is gone.
+        // Verify that the device is back online and pre-existing file is gone.
         file = getDevice().pullFile(tmpFile);
         if (file != null) {
             Assert.fail("Powerwash failed: pre-existing file still exists.");
