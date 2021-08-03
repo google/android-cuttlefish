@@ -17,10 +17,26 @@
 #include <common/libs/utils/flag_parser.h>
 
 #include <gtest/gtest.h>
+#include <libxml/tree.h>
+#include <map>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
 namespace cuttlefish {
+
+TEST(FlagParser, DuplicateAlias) {
+  FlagAlias alias = {FlagAliasMode::kFlagExact, "--flag"};
+  ASSERT_DEATH({ Flag().Alias(alias).Alias(alias); }, "Duplicate flag alias");
+}
+
+TEST(FlagParser, ConflictingAlias) {
+  FlagAlias exact_alias = {FlagAliasMode::kFlagExact, "--flag"};
+  FlagAlias following_alias = {FlagAliasMode::kFlagConsumesFollowing, "--flag"};
+  ASSERT_DEATH({ Flag().Alias(exact_alias).Alias(following_alias); },
+               "Overlapping flag aliases");
+}
 
 TEST(FlagParser, StringFlag) {
   std::string value;
@@ -35,6 +51,54 @@ TEST(FlagParser, StringFlag) {
   ASSERT_EQ(value, "d");
   ASSERT_TRUE(flag.Parse({"--myflag="}));
   ASSERT_EQ(value, "");
+}
+
+std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
+  std::stringstream xml_stream;
+  if (!f.WriteGflagsCompatXml(xml_stream)) {
+    return {};
+  }
+  auto xml = xml_stream.str();
+  // Holds all memory for the parsed structure.
+  std::unique_ptr<xmlDoc, xmlFreeFunc> doc(
+      xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFree);
+  if (!doc) {
+    return {};
+  }
+  xmlNodePtr root_element = xmlDocGetRootElement(doc.get());
+  std::map<std::string, std::string> elements_map;
+  for (auto elem = root_element->children; elem != nullptr; elem = elem->next) {
+    if (elem->type != xmlElementType::XML_ELEMENT_NODE) {
+      continue;
+    }
+    elements_map[(char*)elem->name] = "";
+    if (elem->children == nullptr) {
+      continue;
+    }
+    if (elem->children->type != XML_TEXT_NODE) {
+      continue;
+    }
+    elements_map[(char*)elem->name] = (char*)elem->children->content;
+  }
+  return elements_map;
+}
+
+TEST(FlagParser, GflagsIncompatibleFlag) {
+  auto flag = Flag().Alias({FlagAliasMode::kFlagExact, "--flag"});
+  ASSERT_FALSE(flagXml(flag));
+}
+
+TEST(FlagParser, StringFlagXml) {
+  std::string value = "somedefault";
+  auto flag = GflagsCompatFlag("myflag", value).Help("somehelp");
+  auto xml = flagXml(flag);
+  ASSERT_TRUE(xml);
+  ASSERT_NE((*xml)["file"], "");
+  ASSERT_EQ((*xml)["name"], "myflag");
+  ASSERT_EQ((*xml)["meaning"], "somehelp");
+  ASSERT_EQ((*xml)["default"], "somedefault");
+  ASSERT_EQ((*xml)["current"], "somedefault");
+  ASSERT_EQ((*xml)["type"], "string");
 }
 
 TEST(FlagParser, RepeatedStringFlag) {
@@ -81,6 +145,19 @@ TEST(FlagParser, IntFlag) {
   ASSERT_EQ(value, 8);
 }
 
+TEST(FlagParser, IntFlagXml) {
+  int value = 5;
+  auto flag = GflagsCompatFlag("myflag", value).Help("somehelp");
+  auto xml = flagXml(flag);
+  ASSERT_TRUE(xml);
+  ASSERT_NE((*xml)["file"], "");
+  ASSERT_EQ((*xml)["name"], "myflag");
+  ASSERT_EQ((*xml)["meaning"], "somehelp");
+  ASSERT_EQ((*xml)["default"], "5");
+  ASSERT_EQ((*xml)["current"], "5");
+  ASSERT_EQ((*xml)["type"], "string");
+}
+
 TEST(FlagParser, BoolFlag) {
   bool value = false;
   auto flag = GflagsCompatFlag("myflag", value);
@@ -116,6 +193,19 @@ TEST(FlagParser, BoolFlag) {
   ASSERT_FALSE(value);
 
   ASSERT_FALSE(flag.Parse({"--myflag=nonsense"}));
+}
+
+TEST(FlagParser, BoolFlagXml) {
+  bool value = true;
+  auto flag = GflagsCompatFlag("myflag", value).Help("somehelp");
+  auto xml = flagXml(flag);
+  ASSERT_TRUE(xml);
+  ASSERT_NE((*xml)["file"], "");
+  ASSERT_EQ((*xml)["name"], "myflag");
+  ASSERT_EQ((*xml)["meaning"], "somehelp");
+  ASSERT_EQ((*xml)["default"], "true");
+  ASSERT_EQ((*xml)["current"], "true");
+  ASSERT_EQ((*xml)["type"], "bool");
 }
 
 TEST(FlagParser, StringIntFlag) {
