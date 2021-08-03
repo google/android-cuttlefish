@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <unordered_set>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -55,6 +56,15 @@ void Flag::ValidateAlias(const FlagAlias& alias) {
   CHECK(StartsWith(alias.name, "-")) << "Flags should start with \"-\"";
   if (alias.mode == FlagAliasMode::kFlagPrefix) {
     CHECK(EndsWith(alias.name, "=")) << "Prefix flags shold end with \"=\"";
+  }
+
+  CHECK(!HasAlias(alias)) << "Duplicate flag alias: " << alias.name;
+  if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
+    CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
+        << "Overlapping flag aliases for " << alias.name;
+  } else if (alias.mode == FlagAliasMode::kFlagExact) {
+    CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
+        << "Overlapping flag aliases for " << alias.name;
   }
 }
 
@@ -173,6 +183,77 @@ bool Flag::Parse(std::vector<std::string>&& arguments) const {
   return Parse(static_cast<std::vector<std::string>&>(arguments));
 }
 
+bool Flag::HasAlias(const FlagAlias& test) const {
+  for (const auto& alias : aliases_) {
+    if (alias.mode == test.mode && alias.name == test.name) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static std::string XmlEscape(const std::string& s) {
+  using android::base::StringReplace;
+  return StringReplace(StringReplace(s, "<", "&lt;", true), ">", "&gt;", true);
+}
+
+bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
+  std::unordered_set<std::string> name_guesses;
+  for (const auto& alias : aliases_) {
+    std::string_view name = alias.name;
+    if (!android::base::ConsumePrefix(&name, "-")) {
+      continue;
+    }
+    android::base::ConsumePrefix(&name, "-");
+    if (alias.mode == FlagAliasMode::kFlagExact) {
+      android::base::ConsumePrefix(&name, "no");
+      name_guesses.insert(std::string{name});
+    } else if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
+      name_guesses.insert(std::string{name});
+    } else if (alias.mode == FlagAliasMode::kFlagPrefix) {
+      if (!android::base::ConsumeSuffix(&name, "=")) {
+        continue;
+      }
+      name_guesses.insert(std::string{name});
+    }
+  }
+  bool found_alias = false;
+  for (const auto& name : name_guesses) {
+    bool has_bool_aliases =
+        HasAlias({FlagAliasMode::kFlagPrefix, "-" + name + "="}) &&
+        HasAlias({FlagAliasMode::kFlagPrefix, "--" + name + "="}) &&
+        HasAlias({FlagAliasMode::kFlagExact, "-" + name}) &&
+        HasAlias({FlagAliasMode::kFlagExact, "--" + name}) &&
+        HasAlias({FlagAliasMode::kFlagExact, "-no" + name}) &&
+        HasAlias({FlagAliasMode::kFlagExact, "--no" + name});
+    bool has_other_aliases =
+        HasAlias({FlagAliasMode::kFlagPrefix, "-" + name + "="}) &&
+        HasAlias({FlagAliasMode::kFlagPrefix, "--" + name + "="}) &&
+        HasAlias({FlagAliasMode::kFlagConsumesFollowing, "-" + name}) &&
+        HasAlias({FlagAliasMode::kFlagConsumesFollowing, "--" + name});
+    if (has_bool_aliases && has_other_aliases) {
+      LOG(ERROR) << "Expected exactly one of has_bool_aliases and "
+                 << "has_other_aliases, got both for \"" << name << "\".";
+      return false;
+    } else if (!has_bool_aliases && !has_other_aliases) {
+      continue;
+    }
+    found_alias = true;
+    // Lifted from external/gflags/src/gflags_reporting.cc:DescribeOneFlagInXML
+    out << "<flag>\n";
+    out << "  <file>file.cc</file>\n";
+    out << "  <name>" << XmlEscape(name) << "</name>\n";
+    auto help = help_ ? XmlEscape(*help_) : std::string{""};
+    out << "  <meaning>" << help << "</meaning>\n";
+    auto value = getter_ ? XmlEscape((*getter_)()) : std::string{""};
+    out << "  <default>" << value << "</default>\n";
+    out << "  <current>" << value << "</current>\n";
+    out << "  <type>" << (has_bool_aliases ? "bool" : "string") << "</type>\n";
+    out << "</flag>\n";
+  }
+  return found_alias;
+}
+
 std::ostream& operator<<(std::ostream& out, const Flag& flag) {
   out << "[";
   for (auto it = flag.aliases_.begin(); it != flag.aliases_.end(); it++) {
@@ -213,6 +294,15 @@ bool ParseFlags(const std::vector<Flag>& flags,
                 std::vector<std::string>&& args) {
   for (const auto& flag : flags) {
     if (!flag.Parse(args)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
+  for (const auto& flag : flags) {
+    if (!flag.WriteGflagsCompatXml(out)) {
       return false;
     }
   }
