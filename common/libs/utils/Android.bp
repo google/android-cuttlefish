@@ -67,6 +67,7 @@ cc_test_host {
     shared_libs: [
         "libcrypto",
         "liblog",
+        "libxml2",
     ],
     test_options: {
         unit_test: true,
