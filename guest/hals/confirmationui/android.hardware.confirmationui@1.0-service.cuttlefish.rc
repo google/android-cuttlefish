@@ -1,0 +1,5 @@
+service confirmationui-1-0 /vendor/bin/hw/android.hardware.confirmationui@1.0-service.cuttlefish
+    interface android.hardware.confirmationui@1.0::IConfirmationUI default
+    class hal
+    user system
+    group drmrpc input system
