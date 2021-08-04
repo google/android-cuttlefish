@@ -90,12 +90,16 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_RESET_SINCE_ID_ROTATION:
         break;
 
+      // strongbox-only tags
+      case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
+        LOG(ERROR) << "Strongbox-only tag: " << entry.tag;
+        return KM_ERROR_UNSUPPORTED_TAG;
+
       // These are nominally HW tags, but we don't actually support HW key
       // attestation yet.
       case KM_TAG_ROLLBACK_RESISTANCE:
       case KM_TAG_ROLLBACK_RESISTANT:
       case KM_TAG_ALLOW_WHILE_ON_BODY:
-      case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
       case KM_TAG_EXPORTABLE:
       case KM_TAG_IDENTITY_CREDENTIAL_KEY:
       case KM_TAG_STORAGE_KEY:
