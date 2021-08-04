@@ -46,15 +46,10 @@ keymaster_security_level_t TpmAttestationRecordContext::GetSecurityLevel() const
 }
 
 keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
-    const AuthorizationSet& attestation_params,
-    AuthorizationSet* attestation) const {
+    const AuthorizationSet& /*attestation_params*/,
+    AuthorizationSet* /*attestation*/) const {
   LOG(DEBUG) << "TODO(schuffelen): Implement VerifyAndCopyDeviceIds";
-  attestation->Difference(attestation_params);
-  attestation->Union(attestation_params);
-  if (int index = attestation->find(keymaster::TAG_ATTESTATION_APPLICATION_ID)) {
-    attestation->erase(index);
-  }
-  return KM_ERROR_OK;
+  return KM_ERROR_UNIMPLEMENTED;
 }
 
 keymaster::Buffer TpmAttestationRecordContext::GenerateUniqueId(
