@@ -897,7 +897,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
-void SetDefaultFlagsForQemu() {
+void SetDefaultFlagsForQemu(Arch target_arch) {
   // for now, we don't set non-default options for QEMU
   if (FLAGS_gpu_mode == kGpuModeGuestSwiftshader && NumStreamers() == 0) {
     // This makes WebRTC the default streamer unless the user requests
@@ -905,7 +905,16 @@ void SetDefaultFlagsForQemu() {
     // possible to run without any streamer by setting --start_webrtc=false.
     SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
   }
-  std::string default_bootloader = FLAGS_system_image_dir + "/bootloader.qemu";
+  std::string default_bootloader =
+      DefaultHostArtifactsPath("etc/bootloader_");
+  if(target_arch == Arch::Arm) {
+      default_bootloader += "arm";
+  } else if (target_arch == Arch::Arm64) {
+      default_bootloader += "aarch64";
+  } else {
+      default_bootloader += "x86_64";
+  }
+  default_bootloader += "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
 }
@@ -958,7 +967,7 @@ bool ParseCommandLineFlags(int* argc, char*** argv, KernelConfig* kernel_config)
   }
 
   if (FLAGS_vm_manager == QemuManager::name()) {
-    SetDefaultFlagsForQemu();
+    SetDefaultFlagsForQemu(kernel_config->target_arch);
   } else if (FLAGS_vm_manager == CrosvmManager::name()) {
     SetDefaultFlagsForCrosvm();
   } else {
