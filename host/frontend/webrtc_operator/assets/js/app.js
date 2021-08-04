@@ -143,7 +143,7 @@ class DeviceDetailsUpdater {
   }
 
   setHardwareDetailsText(text) {
-    this.#element.dataset.HardwareDetailsText = text;
+    this.#element.dataset.hardwareDetailsText = text;
     return this;
   }
 
