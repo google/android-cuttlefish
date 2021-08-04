@@ -18,5 +18,3 @@ TARGET_NO_BOOTLOADER := false
 # FIXME: Copying the QEMU bootloader for now, but this should be updated..
 BOARD_PREBUILT_BOOTLOADER := \
     device/google/cuttlefish_prebuilts/bootloader/qemu_arm/u-boot.bin
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish_prebuilts/bootloader/qemu_arm/u-boot.bin:bootloader.qemu
