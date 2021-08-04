@@ -17,5 +17,3 @@
 TARGET_NO_BOOTLOADER := false
 BOARD_PREBUILT_BOOTLOADER := \
     device/google/cuttlefish_prebuilts/bootloader/crosvm_x86_64/u-boot.rom
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish_prebuilts/bootloader/qemu_x86_64/u-boot.rom:bootloader.qemu
