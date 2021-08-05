@@ -97,10 +97,15 @@ static keymaster_error_t SplitEnforcedProperties(
         LOG(ERROR) << "Strongbox-only tag: " << entry.tag;
         return KM_ERROR_UNSUPPORTED_TAG;
 
+      case KM_TAG_ROLLBACK_RESISTANT:
+        return KM_ERROR_UNSUPPORTED_TAG;
+
+      case KM_TAG_ROLLBACK_RESISTANCE:
+        LOG(ERROR) << "Rollback resistance is not implemented.";
+        return KM_ERROR_ROLLBACK_RESISTANCE_UNAVAILABLE;
+
       // These are nominally HW tags, but we don't actually support HW key
       // attestation yet.
-      case KM_TAG_ROLLBACK_RESISTANCE:
-      case KM_TAG_ROLLBACK_RESISTANT:
       case KM_TAG_ALLOW_WHILE_ON_BODY:
       case KM_TAG_EXPORTABLE:
       case KM_TAG_IDENTITY_CREDENTIAL_KEY:
