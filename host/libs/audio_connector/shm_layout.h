@@ -221,7 +221,7 @@ struct virtio_snd_pcm_status {
 };
 
 // Update this value when the msg layouts change
-const uint32_t VIOS_VERSION = 1;
+const uint32_t VIOS_VERSION = 2;
 
 struct VioSConfig {
   uint32_t version;
