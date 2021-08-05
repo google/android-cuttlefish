@@ -470,9 +470,10 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     RepackAllBootImages(config);
 
     for (const auto& instance : config->Instances()) {
-      if (!FileExists(instance.access_kregistry_path())) {
-        CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
-      }
+      // TODO(162770965) Re-enable once QEMU on GCE supports virtio pci pmem devices
+      // if (!FileExists(instance.access_kregistry_path())) {
+      //  CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
+      // }
 
       if (!FileExists(instance.pstore_path())) {
         CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
@@ -545,9 +546,10 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                   << "old session files and starting a new session for device "
                   << instance.serial_number();
       }
-      if (FileExists(instance.access_kregistry_path())) {
-        CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
-      }
+      // TODO(162770965) Re-enable once QEMU on GCE supports virtio pci pmem devices
+      // if (FileExists(instance.access_kregistry_path())) {
+      //   CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
+      // }
       if (FileExists(instance.pstore_path())) {
         CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
       }
