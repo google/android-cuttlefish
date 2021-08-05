@@ -301,8 +301,12 @@ std::vector<Command> CrosvmManager::StartCommands(
 
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
-  auto wifi_tap = AddTapFdParameter(use_ap_instance ? &ap_cmd : &crosvm_cmd,
-                                    instance.wifi_tap_name());
+  SharedFD wifi_tap;
+  if (config.vhost_user_mac80211_hwsim().empty()) {
+    wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
+  } else if (use_ap_instance) {
+    wifi_tap = AddTapFdParameter(&ap_cmd, instance.wifi_tap_name());
+  }
 
   if (FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.AddParameter("--rw-pmem-device=",
@@ -437,7 +441,8 @@ std::vector<Command> CrosvmManager::StartCommands(
   // Only run the leases workaround if we are not using the new network
   // bridge architecture - in that case, we have a wider DHCP address
   // space and stale leases should be much less of an issue
-  if (!FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases")) {
+  if (!FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases") &&
+      (config.vhost_user_mac80211_hwsim().empty() || use_ap_instance)) {
     // TODO(schuffelen): QEMU also needs this and this is not the best place for
     // this code. Find a better place to put it.
     auto lease_file =
