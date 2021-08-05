@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
 
@@ -332,18 +333,12 @@ bool AudioClientConnection::CmdReply(AudioStatus status, const void* data,
   virtio_snd_hdr vio_status = {
       .code = Le32(static_cast<uint32_t>(status)),
   };
-  auto status_sent = control_socket_->Send(&vio_status, sizeof(vio_status), 0);
-  if (status_sent < sizeof(vio_status)) {
+  std::vector<uint8_t> buffer(sizeof(vio_status) + size, 0);
+  std::memcpy(buffer.data(), &vio_status, sizeof(vio_status));
+  std::memcpy(buffer.data() + sizeof(vio_status), data, size);
+  auto status_sent = control_socket_->Send(buffer.data(), buffer.size(), 0);
+  if (status_sent < sizeof(vio_status) + size) {
     LOG(ERROR) << "Failed to send entire command status: "
-               << control_socket_->StrError();
-    return false;
-  }
-  if (status != AudioStatus::VIRTIO_SND_S_OK || size == 0) {
-    return true;
-  }
-  auto payload_sent = control_socket_->Send(data, size, 0);
-  if (payload_sent < size) {
-    LOG(ERROR) << "Failed to send entire command response payload: "
                << control_socket_->StrError();
     return false;
   }
