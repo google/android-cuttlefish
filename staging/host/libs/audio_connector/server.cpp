@@ -335,7 +335,9 @@ bool AudioClientConnection::CmdReply(AudioStatus status, const void* data,
   };
   std::vector<uint8_t> buffer(sizeof(vio_status) + size, 0);
   std::memcpy(buffer.data(), &vio_status, sizeof(vio_status));
-  std::memcpy(buffer.data() + sizeof(vio_status), data, size);
+  if (data) {
+    std::memcpy(buffer.data() + sizeof(vio_status), data, size);
+  }
   auto status_sent = control_socket_->Send(buffer.data(), buffer.size(), 0);
   if (status_sent < sizeof(vio_status) + size) {
     LOG(ERROR) << "Failed to send entire command status: "
