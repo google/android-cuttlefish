@@ -192,11 +192,11 @@ std::unique_ptr<Session> HostServer::ComputeCurrentSession(
     const bool is_user_input = (cmd == ConfUiCmd::kUserInputEvent);
     std::string src = is_user_input ? "input" : "hal";
 
-    ConfUiLog(DEBUG) << "In Session" << GetCurrentSessionId() << ","
-                     << "in state" << GetCurrentState() << ","
-                     << "received input from" << src << "cmd =" << cmd_str
-                     << "and additional_info =" << additional_info
-                     << "going to session" << session_id;
+    ConfUiLog(DEBUG) << "In Session" << GetCurrentSessionId() << ", "
+                     << "in state" << GetCurrentState() << ", "
+                     << "received input from " << src << " cmd =" << cmd_str
+                     << " and additional_info =" << additional_info
+                     << " going to session " << session_id;
 
     FsmInput fsm_input = ToFsmInput(input);
 
