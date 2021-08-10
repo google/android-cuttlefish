@@ -927,17 +927,11 @@ void SetDefaultFlagsForCrosvm() {
     SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
   }
 
-  bool default_enable_sandbox = false;
   std::set<Arch> supported_archs{Arch::X86_64};
-  if (supported_archs.find(HostArch()) != supported_archs.end()) {
-    if (DirectoryExists(kCrosvmVarEmptyDir)) {
-      default_enable_sandbox = IsDirectoryEmpty(kCrosvmVarEmptyDir);
-    } else if (FileExists(kCrosvmVarEmptyDir)) {
-      default_enable_sandbox = false;
-    } else {
-      default_enable_sandbox = EnsureDirectoryExists(kCrosvmVarEmptyDir);
-    }
-  }
+  bool default_enable_sandbox =
+      supported_archs.find(HostArch()) != supported_archs.end() &&
+      EnsureDirectoryExists(kCrosvmVarEmptyDir) &&
+      IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
   SetCommandLineOptionWithMode("enable_sandbox",
                                (default_enable_sandbox ? "true" : "false"),
                                SET_FLAGS_DEFAULT);
