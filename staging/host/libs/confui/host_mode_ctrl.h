@@ -76,14 +76,14 @@ class HostModeCtrl {
 
   void SetMode(const ModeType mode) {
     ConfUiLog(DEBUG) << cuttlefish::confui::thread::GetName()
-                     << "tries to acquire the lock in SetMode";
+                     << " tries to acquire the lock in SetMode";
     std::lock_guard<std::mutex> lock(mode_mtx_);
     ConfUiLog(DEBUG) << cuttlefish::confui::thread::GetName()
-                     << "acquired the lock in SetMode";
+                     << " acquired the lock in SetMode";
     atomic_mode_ = mode;
     if (atomic_mode_ == ModeType::kAndroidMode) {
       ConfUiLog(DEBUG) << cuttlefish::confui::thread::GetName()
-                       << "signals kAndroidMode in SetMode";
+                       << " signals kAndroidMode in SetMode";
       and_mode_cv_.notify_all();
       return;
     }
