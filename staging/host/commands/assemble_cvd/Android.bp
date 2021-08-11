@@ -28,6 +28,7 @@ cc_binary {
         "config.cpp",
         "disk_flags.cc",
         "flags.cc",
+        "flag_feature.cpp",
         "misc_info.cc",
         "super_image_mixer.cc",
     ],

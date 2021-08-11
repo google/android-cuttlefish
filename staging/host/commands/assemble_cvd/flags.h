@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
+#include <vector>
 
 #include "common/libs/utils/environment.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -14,7 +16,7 @@ struct KernelConfig {
   bool bootconfig_supported;
 };
 
-bool ParseCommandLineFlags(int* argc, char*** argv,
+bool ParseCommandLineFlags(std::vector<std::string>& flags,
                            KernelConfig* kernel_config);
 // Must be called after ParseCommandLineFlags.
 CuttlefishConfig InitializeCuttlefishConfiguration(
