@@ -18,7 +18,17 @@
 #include <android-base/logging.h>
 #include <libwebsockets.h>
 
+#include "host/libs/websocket/websocket_server.h"
+
 namespace cuttlefish {
+
+namespace {
+void AppendData(const char* data, size_t len, std::string& buffer) {
+  auto ptr = reinterpret_cast<const uint8_t*>(data);
+  buffer.reserve(buffer.size() + len);
+  buffer.insert(buffer.end(), ptr, ptr + len);
+}
+}  // namespace
 
 WebSocketHandler::WebSocketHandler(struct lws* wsi) : wsi_(wsi) {}
 
@@ -44,7 +54,7 @@ void WebSocketHandler::WriteWsBuffer(WebSocketHandler::WsBuffer& ws_buffer) {
   if (res < 0) {
     // This shouldn't happen since this function is called in response to a
     // LWS_CALLBACK_SERVER_WRITEABLE call.
-    LOG(FATAL) << "Failed to write data on the websocket";
+    LOG(ERROR) << "Failed to write data on the websocket";
   }
 }
 
@@ -67,4 +77,24 @@ void WebSocketHandler::Close() {
   lws_callback_on_writable(wsi_);
 }
 
+DynHandler::DynHandler(struct lws* wsi) : wsi_(wsi), out_buffer_(LWS_PRE, 0) {}
+
+void DynHandler::AppendDataOut(const std::string& data) {
+  AppendData(data.c_str(), data.size(), out_buffer_);
+}
+
+void DynHandler::AppendDataIn(void* data, size_t len) {
+  AppendData(reinterpret_cast<char*>(data), len, in_buffer_);
+}
+
+void DynHandler::OnWritable() {
+  auto len = out_buffer_.size() - LWS_PRE;
+  auto res = lws_write(wsi_, reinterpret_cast<uint8_t*>(&out_buffer_[LWS_PRE]),
+                       len, LWS_WRITE_HTTP_FINAL);
+  if (res != len) {
+    // This shouldn't happen since this function is called in response to a
+    // LWS_CALLBACK_SERVER_WRITEABLE call.
+    LOG(ERROR) << "Failed to write HTTP response";
+  }
+}
 }  // namespace cuttlefish
