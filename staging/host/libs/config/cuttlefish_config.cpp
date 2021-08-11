@@ -758,6 +758,16 @@ void CuttlefishConfig::set_bootconfig_supported(bool bootconfig_supported) {
   (*dictionary_)[kBootconfigSupported] = bootconfig_supported;
 }
 
+static constexpr char kFsFormats[] = "fs_format";
+std::string CuttlefishConfig::fs_format() const {
+  return (*dictionary_)[kFsFormats].asString();
+}
+void CuttlefishConfig::set_fs_format(const std::string& fs_format) {
+  auto fmt = fs_format;
+  std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
+  (*dictionary_)[kFsFormats] = fmt;
+}
+
 // Creates the (initially empty) config object and populates it with values from
 // the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
 // Returns nullptr if there was an error loading from file
