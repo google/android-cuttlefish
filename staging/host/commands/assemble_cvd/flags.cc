@@ -105,6 +105,7 @@ DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process. "
                                      "The VNC server runs at port 6443 + i for "
                                      "the vsoc-i user or CUTTLEFISH_INSTANCE=i, "
                                      "starting from 1.");
+
 DEFINE_bool(use_allocd, false,
             "Acquire static resources from the resource allocator daemon.");
 DEFINE_bool(enable_minimal_mode, false,
@@ -803,6 +804,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_vnc_server_port(6444 + num - 1);
     instance.set_adb_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
+    instance.set_confui_host_vsock_port(7700 + num - 1);
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
     instance.set_vehicle_hal_server_port(9210 + num - 1);
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
