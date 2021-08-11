@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "common/libs/utils/environment.h"
-#include "host/libs/config/config_fragment.h"
 #include "host/libs/config/custom_actions.h"
 
 namespace Json {
@@ -36,6 +35,9 @@ class Value;
 namespace cuttlefish {
 constexpr char kLogcatSerialMode[] = "serial";
 constexpr char kLogcatVsockMode[] = "vsock";
+}
+
+namespace cuttlefish {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
@@ -53,7 +55,13 @@ constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
-constexpr char kKernelLoadedMessage[] = "] Linux version";
+
+enum class AdbMode {
+  VsockTunnel,
+  VsockHalfTunnel,
+  NativeVsock,
+  Unknown,
+};
 
 enum class SecureHal {
   Unknown,
@@ -76,15 +84,10 @@ class CuttlefishConfig {
   // processes by passing the --config_file option.
   bool SaveToFile(const std::string& file) const;
 
-  bool SaveFragment(const ConfigFragment&);
-  bool LoadFragment(ConfigFragment&) const;
-
   std::string assembly_dir() const;
   void set_assembly_dir(const std::string& assembly_dir);
 
   std::string AssemblyPath(const std::string&) const;
-
-  std::string os_composite_disk_path() const;
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
@@ -98,11 +101,15 @@ class CuttlefishConfig {
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
+  int dpi() const;
+  void set_dpi(int dpi);
+
+  int refresh_rate_hz() const;
+  void set_refresh_rate_hz(int refresh_rate_hz);
+
   struct DisplayConfig {
     int width;
     int height;
-    int dpi;
-    int refresh_rate_hz;
   };
 
   std::vector<DisplayConfig> display_configs() const;
@@ -116,6 +123,9 @@ class CuttlefishConfig {
 
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
+
+  void set_adb_mode(const std::set<std::string>& modes);
+  std::set<AdbMode> adb_mode() const;
 
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
@@ -153,11 +163,17 @@ class CuttlefishConfig {
   void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
   bool enable_vehicle_hal_grpc_server() const;
 
+  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
+  std::string vehicle_hal_grpc_server_binary() const;
+
   void set_custom_actions(const std::vector<CustomActionConfig>& actions);
   std::vector<CustomActionConfig> custom_actions() const;
 
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
+
+  void set_run_adb_connector(bool run_adb_connector);
+  bool run_adb_connector() const;
 
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
@@ -236,11 +252,6 @@ class CuttlefishConfig {
   void set_sig_server_path(const std::string& path);
   std::string sig_server_path() const;
 
-  // Whether the webrtc process should use a secure connection (WSS) to the
-  // signaling server.
-  void set_sig_server_secure(bool secure);
-  bool sig_server_secure() const;
-
   // Whether the webrtc process should attempt to verify the authenticity of the
   // signaling server (reject self signed certificates)
   void set_sig_server_strict(bool strict);
@@ -282,15 +293,6 @@ class CuttlefishConfig {
 
   void set_vhost_net(bool vhost_net);
   bool vhost_net() const;
-
-  void set_vhost_user_mac80211_hwsim(const std::string& path);
-  std::string vhost_user_mac80211_hwsim() const;
-
-  void set_ap_rootfs_image(const std::string& path);
-  std::string ap_rootfs_image() const;
-
-  void set_ap_kernel_image(const std::string& path);
-  std::string ap_kernel_image() const;
 
   void set_ethernet(bool ethernet);
   bool ethernet() const;
@@ -360,9 +362,7 @@ class CuttlefishConfig {
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
-    int adb_host_port() const;
-    // Device-specific ID to distinguish modem simulators. Must be 4 digits.
-    int modem_simulator_host_id() const;
+    int host_port() const;
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
     std::string adb_ip_and_port() const;
@@ -432,9 +432,13 @@ class CuttlefishConfig {
 
     std::string sdcard_path() const;
 
+    std::string os_composite_disk_path() const;
+
     std::string persistent_composite_disk_path() const;
 
     std::string uboot_env_image_path() const;
+
+    std::string vendor_boot_image_path() const;
 
     std::string audio_server_path() const;
 
@@ -449,7 +453,7 @@ class CuttlefishConfig {
     bool start_webrtc_sig_server() const;
 
     // Wifi MAC address inside the guest
-    int wifi_mac_prefix() const;
+    std::array<unsigned char, 6> wifi_mac_address() const;
 
     std::string factory_reset_protected_path() const;
 
@@ -478,8 +482,7 @@ class CuttlefishConfig {
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
-    void set_adb_host_port(int adb_host_port);
-    void set_modem_simulator_host_id(int modem_simulator_id);
+    void set_host_port(int host_port);
     void set_adb_ip_and_port(const std::string& ip_port);
     void set_rootcanal_hci_port(int rootcanal_hci_port);
     void set_rootcanal_link_port(int rootcanal_link_port);
@@ -504,7 +507,7 @@ class CuttlefishConfig {
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
     // Wifi MAC address inside the guest
-    void set_wifi_mac_prefix(const int wifi_mac_prefix);
+    void set_wifi_mac_address(const std::array<unsigned char, 6>&);
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
     // Gnss grpc proxy local file path
