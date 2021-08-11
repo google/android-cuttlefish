@@ -313,6 +313,9 @@ class CuttlefishConfig {
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
 
+  void set_fs_format(const std::string& fs_format);
+  std::string fs_format() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
