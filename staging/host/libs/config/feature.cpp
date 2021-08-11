@@ -51,4 +51,43 @@ Feature::~Feature() {}
   return true;
 }
 
+bool FlagFeature::ProcessFlags(const std::vector<FlagFeature*>& features,
+                               std::vector<std::string>& flags) {
+  std::unordered_set<FlagFeature*> features_set(features.begin(),
+                                                features.end());
+  if (features_set.count(nullptr)) {
+    LOG(ERROR) << "Received null feature";
+    return false;
+  }
+  auto handle = [&flags](FlagFeature* feature) -> bool {
+    return feature->Process(flags);
+  };
+  if (!FeatureSuperclass<FlagFeature>::TopologicalVisit(features_set, handle)) {
+    LOG(ERROR) << "Unable to parse flags.";
+    return false;
+  }
+  return true;
+}
+
+bool FlagFeature::WriteGflagsHelpXml(const std::vector<FlagFeature*>& features,
+                                     std::ostream& out) {
+  // Lifted from external/gflags/src/gflags_reporting.cc:ShowXMLOfFlags
+  out << "<?xml version=\"1.0\"?>\n";
+  out << "<AllFlags>\n";
+  out << "  <program>program</program>\n";
+  out << "  <usage>usage</usage>\n";
+  for (const auto& feature : features) {
+    if (!feature) {
+      LOG(ERROR) << "Received null feature";
+      return false;
+    }
+    if (!feature->WriteGflagsCompatHelpXml(out)) {
+      LOG(ERROR) << "Failure to write xml";
+      return false;
+    }
+  }
+  out << "</AllFlags>";
+  return true;
+}
+
 }  // namespace cuttlefish
