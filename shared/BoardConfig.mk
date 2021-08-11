@@ -230,14 +230,6 @@ BOARD_BOOTCONFIG += kernel.mac80211_hwsim.radios=0
 BOARD_BOOTCONFIG += \
     kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size=16384
 
-ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
-BOARD_BOOTCONFIG += androidboot.fstab_suffix=f2fs
-endif
-
-ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),ext4)
-BOARD_BOOTCONFIG += androidboot.fstab_suffix=ext4
-endif
-
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_BOOT_HEADER_VERSION := 4
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
