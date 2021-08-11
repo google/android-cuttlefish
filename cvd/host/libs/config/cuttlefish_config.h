@@ -66,6 +66,8 @@ enum class SecureHal {
 class CuttlefishConfig {
  public:
   static const CuttlefishConfig* Get();
+  static std::unique_ptr<const CuttlefishConfig> GetFromFile(
+      const std::string& path);
   static bool ConfigExists();
 
   CuttlefishConfig();
@@ -521,7 +523,7 @@ class CuttlefishConfig {
 
   void SetPath(const std::string& key, const std::string& path);
   bool LoadFromFile(const char* file);
-  static CuttlefishConfig* BuildConfigImpl();
+  static CuttlefishConfig* BuildConfigImpl(const std::string& path);
 
   CuttlefishConfig(const CuttlefishConfig&) = delete;
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;

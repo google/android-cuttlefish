@@ -762,15 +762,11 @@ void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
   (*dictionary_)[kUserdataFormat] = fmt;
 }
 
-// Creates the (initially empty) config object and populates it with values from
-// the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
-// Returns nullptr if there was an error loading from file
-/*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
-  auto config_file_path = StringFromEnv(kCuttlefishConfigEnvVarName,
-                                        GetGlobalConfigFileLink());
+/*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
+    const std::string& path) {
   auto ret = new CuttlefishConfig();
   if (ret) {
-    auto loaded = ret->LoadFromFile(config_file_path.c_str());
+    auto loaded = ret->LoadFromFile(path.c_str());
     if (!loaded) {
       delete ret;
       return nullptr;
@@ -779,8 +775,19 @@ void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
   return ret;
 }
 
+/*static*/ std::unique_ptr<const CuttlefishConfig>
+CuttlefishConfig::GetFromFile(const std::string& path) {
+  return std::unique_ptr<const CuttlefishConfig>(BuildConfigImpl(path));
+}
+
+// Creates the (initially empty) config object and populates it with values from
+// the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
+// Returns nullptr if there was an error loading from file
 /*static*/ const CuttlefishConfig* CuttlefishConfig::Get() {
-  static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
+  auto config_file_path =
+      StringFromEnv(kCuttlefishConfigEnvVarName, GetGlobalConfigFileLink());
+  static std::shared_ptr<CuttlefishConfig> config(
+      BuildConfigImpl(config_file_path));
   return config.get();
 }
 
