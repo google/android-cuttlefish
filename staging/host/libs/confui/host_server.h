@@ -154,7 +154,7 @@ class HostServer : public HostVirtualInput {
   ConfUiRenderer renderer_;
 
   std::string input_socket_path_;
-  std::string hal_socket_path_;
+  int hal_vsock_port_;
 
   // session id to Session object map, for those that are suspended
   std::unordered_map<std::string, std::unique_ptr<Session>> session_map_;
