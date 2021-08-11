@@ -27,6 +27,24 @@
 
 namespace cuttlefish {
 namespace {
+
+std::string GetPath(struct lws* wsi) {
+  auto len = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI);
+  std::string path(len + 1, '\0');
+  auto ret = lws_hdr_copy(wsi, path.data(), path.size(), WSI_TOKEN_GET_URI);
+  if (ret <= 0) {
+    len = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_COLON_PATH);
+    path.resize(len + 1, '\0');
+    ret =
+        lws_hdr_copy(wsi, path.data(), path.size(), WSI_TOKEN_HTTP_COLON_PATH);
+  }
+  if (ret < 0) {
+    LOG(FATAL) << "Something went wrong getting the path";
+  }
+  path.resize(len);
+  return path;
+}
+
 bool WriteCommonHttpHeaders(int status, const char* mime_type,
                             struct lws* wsi) {
   constexpr size_t BUFF_SIZE = 2048;
@@ -45,6 +63,7 @@ bool WriteCommonHttpHeaders(int status, const char* mime_type,
   }
   return true;
 }
+
 }  // namespace
 WebSocketServer::WebSocketServer(const char* protocol_name,
                                  const std::string& assets_dir, int server_port)
@@ -71,20 +90,20 @@ void WebSocketServer::InitializeLwsObjects() {
   struct lws_protocols protocols[] =  //
       {{
            .name = protocol_name_.c_str(),
-           .callback = ServerCallback,
+           .callback = WebsocketCallback,
            .per_session_data_size = 0,
            .rx_buffer_size = 0,
            .id = 0,
-           .user = nullptr,
+           .user = this,
            .tx_packet_size = 0,
        },
        {
            .name = "__http_polling__",
-           .callback = DynServerCallback,
+           .callback = DynHttpCallback,
            .per_session_data_size = 0,
            .rx_buffer_size = 0,
            .id = 0,
-           .user = nullptr,
+           .user = this,
            .tx_packet_size = 0,
        },
        {
@@ -199,30 +218,29 @@ void WebSocketServer::Serve() {
   lws_context_destroy(context_);
 }
 
-std::unordered_map<struct lws*, std::shared_ptr<WebSocketHandler>>
-    WebSocketServer::handlers_ = {};
-std::unordered_map<std::string, std::unique_ptr<WebSocketHandlerFactory>>
-    WebSocketServer::handler_factories_ = {};
-std::unordered_map<struct lws*, std::unique_ptr<DynHandler>>
-    WebSocketServer::dyn_handlers_ = {};
-std::unordered_map<std::string, std::unique_ptr<DynHandlerFactory>>
-    WebSocketServer::dyn_handler_factories_ = {};
+int WebSocketServer::WebsocketCallback(struct lws* wsi,
+                                       enum lws_callback_reasons reason,
+                                       void* user, void* in, size_t len) {
+  auto protocol = lws_get_protocol(wsi);
+  if (!protocol) {
+    // Some callback reasons are always handled by the first protocol, before a
+    // wsi struct is even created.
+    return lws_callback_http_dummy(wsi, reason, user, in, len);
+  }
+  return reinterpret_cast<WebSocketServer*>(protocol->user)
+      ->ServerCallback(wsi, reason, user, in, len);
+}
 
-std::string WebSocketServer::GetPath(struct lws* wsi) {
-  auto len = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI);
-  std::string path(len + 1, '\0');
-  auto ret = lws_hdr_copy(wsi, path.data(), path.size(), WSI_TOKEN_GET_URI);
-  if (ret <= 0) {
-    len = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_COLON_PATH);
-    path.resize(len + 1, '\0');
-    ret =
-        lws_hdr_copy(wsi, path.data(), path.size(), WSI_TOKEN_HTTP_COLON_PATH);
+int WebSocketServer::DynHttpCallback(struct lws* wsi,
+                                     enum lws_callback_reasons reason,
+                                     void* user, void* in, size_t len) {
+  auto protocol = lws_get_protocol(wsi);
+  if (!protocol) {
+    LOG(ERROR) << "No protocol associated with connection";
+    return 1;
   }
-  if (ret < 0) {
-    LOG(FATAL) << "Something went wrong getting the path";
-  }
-  path.resize(len);
-  return path;
+  return reinterpret_cast<WebSocketServer*>(protocol->user)
+      ->DynServerCallback(wsi, reason, user, in, len);
 }
 
 int WebSocketServer::DynServerCallback(struct lws* wsi,
