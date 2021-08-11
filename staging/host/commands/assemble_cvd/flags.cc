@@ -21,11 +21,13 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/config.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
+#include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/libs/config/adb_config.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
@@ -941,10 +943,55 @@ void SetDefaultFlagsForCrosvm() {
                                SET_FLAGS_DEFAULT);
 }
 
-bool ParseCommandLineFlags(int* argc, char*** argv, KernelConfig* kernel_config) {
-  google::ParseCommandLineNonHelpFlags(argc, argv, true);
+fruit::Component<> FlagsComponent() {
+  return fruit::createComponent().install(GflagsComponent);
+}
+
+bool ParseCommandLineFlags(std::vector<std::string>& args,
+                           KernelConfig* kernel_config) {
+  bool help = false;
+  std::string help_str;
+  bool helpxml = false;
+
+  std::vector<Flag> help_flags = {
+      GflagsCompatFlag("help", help),
+      GflagsCompatFlag("helpfull", help),
+      GflagsCompatFlag("helpshort", help),
+      GflagsCompatFlag("helpmatch", help_str),
+      GflagsCompatFlag("helpon", help_str),
+      GflagsCompatFlag("helppackage", help_str),
+      GflagsCompatFlag("helpxml", helpxml),
+  };
+  for (const auto& help_flag : help_flags) {
+    if (!help_flag.Parse(args)) {
+      LOG(ERROR) << "Failed to process help flag.";
+      return false;
+    }
+  }
+
+  fruit::Injector<> injector(FlagsComponent);
+  auto flag_features = injector.getMultibindings<FlagFeature>();
+  if (!FlagFeature::ProcessFlags(flag_features, args)) {
+    LOG(ERROR) << "Failed to parse flags.";
+    return false;
+  }
+
   SetDefaultFlagsFromConfigPreset();
-  google::HandleCommandLineHelpFlags();
+
+  if (help || help_str != "") {
+    LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
+    LOG(WARNING) << "In the meantime, call `launch_cvd --help`";
+    return false;
+  } else if (helpxml) {
+    if (!FlagFeature::WriteGflagsHelpXml(flag_features, std::cout)) {
+      LOG(ERROR) << "Failure in writing gflags helpxml output";
+    }
+    std::exit(1);  // For parity with gflags
+  }
+  // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
+  // gflags either consumes all arguments that start with - or leaves all of
+  // them in place, and either errors out on unknown flags or accepts any flags.
+
   bool invalid_manager = false;
 
   if (!ResolveInstanceFiles()) {
