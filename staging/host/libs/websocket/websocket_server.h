@@ -51,29 +51,33 @@ class WebSocketServer {
   void Serve();
 
  private:
-  static std::unordered_map<struct lws*, std::shared_ptr<WebSocketHandler>>
-      handlers_;
-  static std::unordered_map<std::string,
-                            std::unique_ptr<WebSocketHandlerFactory>>
-      handler_factories_;
-  static std::unordered_map<struct lws*, std::unique_ptr<DynHandler>>
-      dyn_handlers_;
-  static std::unordered_map<std::string, std::unique_ptr<DynHandlerFactory>>
-      dyn_handler_factories_;
-
-  static std::string GetPath(struct lws* wsi);
-  static int ServerCallback(struct lws* wsi, enum lws_callback_reasons reason,
-                            void* user, void* in, size_t len);
-  static int DynServerCallback(struct lws* wsi,
+  static int WebsocketCallback(struct lws* wsi,
                                enum lws_callback_reasons reason, void* user,
                                void* in, size_t len);
-  static std::shared_ptr<WebSocketHandler> InstantiateHandler(
+
+  static int DynHttpCallback(struct lws* wsi, enum lws_callback_reasons reason,
+                             void* user, void* in, size_t len);
+
+  int ServerCallback(struct lws* wsi, enum lws_callback_reasons reason,
+                            void* user, void* in, size_t len);
+  int DynServerCallback(struct lws* wsi,
+                               enum lws_callback_reasons reason, void* user,
+                               void* in, size_t len);
+  std::shared_ptr<WebSocketHandler> InstantiateHandler(
       const std::string& uri_path, struct lws* wsi);
-  static std::unique_ptr<DynHandler> InstantiateDynHandler(
+  std::unique_ptr<DynHandler> InstantiateDynHandler(
       const std::string& uri_path, struct lws* wsi);
 
   void InitializeLwsObjects();
 
+  std::unordered_map<struct lws*, std::shared_ptr<WebSocketHandler>> handlers_ =
+      {};
+  std::unordered_map<std::string, std::unique_ptr<WebSocketHandlerFactory>>
+      handler_factories_ = {};
+  std::unordered_map<struct lws*, std::unique_ptr<DynHandler>> dyn_handlers_ =
+      {};
+  std::unordered_map<std::string, std::unique_ptr<DynHandlerFactory>>
+      dyn_handler_factories_ = {};
   std::string protocol_name_;
   std::string assets_dir_;
   std::string certs_dir_;
