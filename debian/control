@@ -11,6 +11,7 @@ Architecture: any
 Depends: binfmt-support [arm64],
          bridge-utils,
          dnsmasq-base,
+         e2fsprogs,
          f2fs-tools,
          grub-efi-arm64-bin [arm64],
          grub-efi-ia32-bin [!arm64],
