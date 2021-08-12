@@ -142,9 +142,6 @@ PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
 # DRM service opt-in
 PRODUCT_VENDOR_PROPERTIES += drm.service.enabled=true
 
-# Call deleteAllKeys if vold detects a factory reset
-PRODUCT_VENDOR_PROPERTIES += ro.crypto.metadata_init_delete_all_keys.enabled=true
-
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 
