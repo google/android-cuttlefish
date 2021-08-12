@@ -143,6 +143,14 @@ class Command {
   Command& operator=(const Command&) = delete;
   ~Command();
 
+  const std::string& Executable() const { return command_[0]; }
+
+  void SetExecutable(const std::string& executable) {
+    command_[0] = executable;
+  }
+
+  void SetStopper(SubprocessStopper stopper) { subprocess_stopper_ = stopper; }
+
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
   void SetEnvironment(const std::vector<std::string>& env) {
