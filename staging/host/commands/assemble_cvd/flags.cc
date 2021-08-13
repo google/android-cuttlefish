@@ -331,8 +331,6 @@ DEFINE_bool(enable_audio, cuttlefish::HostArch() != cuttlefish::Arch::Arm64,
 
 DEFINE_uint32(camera_server_port, 0, "camera vsock port");
 
-DEFINE_string(fs_format, "f2fs", "Set the userdata filesystem format");
-
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -749,8 +747,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth);
 
   tmp_config_obj.set_protected_vm(FLAGS_protected_vm);
-
-  tmp_config_obj.set_fs_format(FLAGS_fs_format);
 
   std::vector<int> num_instances;
   for (int i = 0; i < FLAGS_num_instances; i++) {
