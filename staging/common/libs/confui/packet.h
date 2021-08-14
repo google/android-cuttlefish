@@ -55,6 +55,9 @@ using Payload = std::tuple<PayloadHeader, std::string>;
 ConfUiMessage PayloadToConfUiMessage(const std::string& str_to_parse);
 
 std::optional<ConfUiMessage> RecvConfUiMsg(SharedFD fd);
+std::optional<std::tuple<bool, std::string>> RecvAck(
+    SharedFD fd, const std::string& session_id);
+
 bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
              const std::string& additional_info);
 bool SendResponse(SharedFD fd, const std::string& session_id,
