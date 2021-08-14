@@ -1,0 +1,37 @@
+<device-state-config>
+  <device-state>
+    <identifier>0</identifier>
+    <name>CLOSED</name>
+    <conditions>
+      <lid-switch>
+        <open>false</open>
+      </lid-switch>
+    </conditions>
+  </device-state>
+  <device-state>
+    <identifier>1</identifier>
+    <name>HALF_OPENED</name>
+    <conditions>
+      <lid-switch>
+        <open>true</open>
+      </lid-switch>
+      <sensor>
+        <type>android.sensor.hinge_angle</type>
+        <name>Hinge Angle Sensor</name>
+        <value>
+          <min>0</min>
+          <max>180</max>
+        </value>
+      </sensor>
+    </conditions>
+  </device-state>
+  <device-state>
+    <identifier>2</identifier>
+    <name>OPENED</name>
+    <conditions>
+      <lid-switch>
+        <open>true</open>
+      </lid-switch>
+    </conditions>
+  </device-state>
+</device-state-config>

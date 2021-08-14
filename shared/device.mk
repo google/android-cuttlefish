@@ -43,6 +43,7 @@ PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
 
+PRODUCT_FS_COMPRESSION := 1
 TARGET_RO_FILE_SYSTEM_TYPE ?= ext4
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
 TARGET_USERDATAIMAGE_PARTITION_SIZE ?= 6442450944
@@ -105,6 +106,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.rebootescrow.device=/dev/block/pmem0 \
     ro.incremental.enable=1 \
     debug.c2.use_dmabufheaps=1 \
+    ro.camerax.extensions.enabled=true \
 
 # Below is a list of properties we probably should get rid of.
 PRODUCT_VENDOR_PROPERTIES += \
@@ -120,7 +122,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     debug.stagefright.c2inputsurface=-1
 
 # Enforce privapp permissions control.
-PRODUCT_VENDOR_PROPERTIES += ro.control_privapp_permissions=enforce
+PRODUCT_VENDOR_PROPERTIES += ro.control_privapp_permissions?=enforce
 
 # aes-256-heh default is not supported in standard kernels.
 PRODUCT_VENDOR_PROPERTIES += ro.crypto.volume.filenames_mode=aes-256-cts
@@ -143,6 +145,9 @@ AB_OTA_POSTINSTALL_CONFIG += \
 # Userdata Checkpointing OTA GC
 PRODUCT_PACKAGES += \
     checkpoint_gc
+
+# Enable CameraX extension sample
+PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
 
 # DRM service opt-in
 PRODUCT_VENDOR_PROPERTIES += drm.service.enabled=true
@@ -172,7 +177,6 @@ SOONG_CONFIG_NAMESPACES += cvd
 SOONG_CONFIG_cvd += launch_configs
 SOONG_CONFIG_cvd_launch_configs += \
     cvd_config_auto.json \
-    cvd_config_foldable.json \
     cvd_config_phone.json \
     cvd_config_tablet.json \
     cvd_config_tv.json \
@@ -299,6 +303,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
+    frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml \
     frameworks/native/data/etc/android.software.ipsec_tunnels.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.ipsec_tunnels.xml \
     frameworks/native/data/etc/android.software.sip.voip.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/android.software.verified_boot.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.verified_boot.xml \
@@ -423,29 +428,41 @@ PRODUCT_COPY_FILES += $(LOCAL_AUDIO_PRODUCT_COPY_FILES)
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS)
 
 #
-# BiometricsFace HAL
+# BiometricsFace HAL (HIDL)
 #
 PRODUCT_PACKAGES += \
     android.hardware.biometrics.face@1.0-service.example
 
 #
-# BiometricsFingerprint HAL
+# BiometricsFingerprint HAL (HIDL)
 #
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint@2.1-service
+    android.hardware.biometrics.fingerprint@2.2-service.example
+
+#
+# BiometricsFace HAL (AIDL)
+#
+PRODUCT_PACKAGES += \
+    android.hardware.biometrics.face-service.example
+
+#
+# BiometricsFingerprint HAL (AIDL)
+#
+PRODUCT_PACKAGES += \
+    android.hardware.biometrics.fingerprint-service.example
 
 #
 # Contexthub HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.contexthub@1.1-service.mock
+    android.hardware.contexthub@1.2-service.mock
 
 #
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.3-service.clearkey \
-    android.hardware.drm@1.3-service.widevine
+    android.hardware.drm@1.4-service.clearkey \
+    android.hardware.drm@1.4-service.widevine
 
 #
 # Dumpstate HAL
@@ -460,15 +477,15 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 #
 ifeq ($(TARGET_USE_VSOCK_CAMERA_HAL_IMPL),true)
 PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.6-external-vsock-service \
-    android.hardware.camera.provider@2.6-impl-cuttlefish
+    android.hardware.camera.provider@2.7-external-vsock-service \
+    android.hardware.camera.provider@2.7-impl-cuttlefish
 DEVICE_MANIFEST_FILE += \
     device/google/cuttlefish/guest/hals/camera/manifest.xml
 else
 PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.6-service-google \
+    android.hardware.camera.provider@2.7-service-google \
     libgooglecamerahwl_impl \
-    android.hardware.camera.provider@2.6-impl-google \
+    android.hardware.camera.provider@2.7-impl-google \
 
 endif
 #
@@ -484,7 +501,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@2.1-service
+    android.hardware.gnss-service.example
 
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
@@ -643,10 +660,26 @@ PRODUCT_EXTRA_VNDK_VERSIONS := 28 29 30
 
 PRODUCT_SOONG_NAMESPACES += external/mesa3d
 
+#for Confirmation UI
+PRODUCT_SOONG_NAMESPACES += vendor/google_devices/common/proprietary/confirmatioui_hal
+
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
 PRODUCT_VENDOR_PROPERTIES += \
     ro.surface_flinger.running_without_sync_framework=true
+
+# Set support one-handed mode
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.support_one_handed_mode=true
+
+# Set one_handed_mode screen translate offset percentage
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.debug.one_handed_offset_percentage=50
+
+# Set one_handed_mode translate animation duration milliseconds
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.debug.one_handed_translate_animation_duration=300
+
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \
    dlkm_loader

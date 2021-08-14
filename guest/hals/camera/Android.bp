@@ -3,15 +3,15 @@ package {
 }
 
 cc_binary {
-    name: "android.hardware.camera.provider@2.6-external-vsock-service",
+    name: "android.hardware.camera.provider@2.7-external-vsock-service",
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: ["external-service.cpp"],
     compile_multilib: "first",
-    init_rc: ["android.hardware.camera.provider@2.6-external-vsock-service.rc"],
+    init_rc: ["android.hardware.camera.provider@2.7-external-vsock-service.rc"],
     shared_libs: [
-        "android.hardware.camera.provider@2.6",
+        "android.hardware.camera.provider@2.7",
         "libbinder",
         "libhidlbase",
         "liblog",
@@ -20,12 +20,12 @@ cc_binary {
 }
 
 cc_library_shared {
-    name: "android.hardware.camera.provider@2.6-impl-cuttlefish",
+    name: "android.hardware.camera.provider@2.7-impl-cuttlefish",
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
     srcs: [
-        "vsock_camera_provider_2_6.cpp",
+        "vsock_camera_provider_2_7.cpp",
         "vsock_camera_device_3_4.cpp",
         "vsock_camera_device_session_3_4.cpp",
         "vsock_camera_metadata.cpp",
@@ -44,6 +44,7 @@ cc_library_shared {
         "android.hardware.camera.provider@2.4",
         "android.hardware.camera.provider@2.5",
         "android.hardware.camera.provider@2.6",
+        "android.hardware.camera.provider@2.7",
         "android.hardware.camera.provider@2.4-external",
         "android.hardware.camera.provider@2.4-legacy",
         "android.hardware.graphics.mapper@2.0",
