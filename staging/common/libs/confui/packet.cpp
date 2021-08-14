@@ -117,8 +117,8 @@ bool SendCmd(SharedFD fd, const std::string& session_id, ConfUiCmd cmd,
 
 bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
              const std::string& additional_info) {
-  return WritePayload(fd, ConfUiCmd::kCliAck, session_id,
-                      ToCliAckMessage(is_success, additional_info));
+  return SendCmd(fd, session_id, ConfUiCmd::kCliAck,
+                 ToCliAckMessage(is_success, additional_info));
 }
 
 bool SendResponse(SharedFD fd, const std::string& session_id,
