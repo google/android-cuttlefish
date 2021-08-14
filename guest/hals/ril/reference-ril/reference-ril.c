@@ -4235,6 +4235,16 @@ void getConfigSlotStatus(RIL_SimSlotStatus_V1_2 *pSimSlotStatus) {
     pSimSlotStatus->eid = "";
 }
 
+void sendUnsolNetworkScanResult() {
+    RIL_NetworkScanResult scanr;
+    memset(&scanr, 0, sizeof(scanr));
+    scanr.status = COMPLETE;
+    scanr.error = RIL_E_SUCCESS;
+    scanr.network_infos = NULL;
+    scanr.network_infos_length = 0;
+    RIL_onUnsolicitedResponse(RIL_UNSOL_NETWORK_SCAN_RESULT, &scanr, sizeof(scanr));
+}
+
 void onIccSlotStatus(RIL_Token t) {
     RIL_SimSlotStatus_V1_2 *pSimSlotStatusList =
         (RIL_SimSlotStatus_V1_2 *)calloc(SIM_COUNT, sizeof(RIL_SimSlotStatus_V1_2));
@@ -4857,6 +4867,8 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         // New requests after P.
         case RIL_REQUEST_START_NETWORK_SCAN:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            // send unsol network scan results after a short while
+            RIL_requestTimedCallback (sendUnsolNetworkScanResult, NULL, &TIMEVAL_SIMPOLL);
             break;
         case RIL_REQUEST_GET_MODEM_STACK_STATUS:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
