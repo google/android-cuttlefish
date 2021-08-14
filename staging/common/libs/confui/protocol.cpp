@@ -50,6 +50,9 @@ std::string ToDebugString(const ConfUiCmd& cmd, const bool is_debug) {
 }
 
 std::string ToString(const ConfUiCmd& cmd) { return ToDebugString(cmd, false); }
+std::string ToString(const ConfUiMessage& msg) {
+  return "[" + msg.session_id_ + ", " + msg.type_ + ", " + msg.msg_ + "]";
+}
 
 ConfUiCmd ToCmd(std::uint32_t i) {
   std::vector<ConfUiCmd> all_cmds{
@@ -80,6 +83,24 @@ ConfUiCmd ToCmd(const std::string& cmd_str) {
     return cmds[cmd_str];
   }
   return ConfUiCmd::kUnknown;
+}
+
+std::optional<std::tuple<bool, std::string>> FromCliAckCmd(
+    const std::string& message) {
+  auto colon_pos = message.find_first_of(":");
+  if (colon_pos == std::string::npos) {
+    ConfUiLog(ERROR) << "Received message, \"" << message
+                     << "\" is ill-formatted ";
+    return std::nullopt;
+  }
+  std::string header = message.substr(0, colon_pos);
+  std::string msg = message.substr(colon_pos + 1);
+  if (header != "error" && header != "success") {
+    ConfUiLog(ERROR) << "Received message, \"" << message
+                     << "\" has a wrong header";
+    return std::nullopt;
+  }
+  return {std::tuple{(header == "success"), msg}};
 }
 
 std::string ToCliAckMessage(const bool is_success, const std::string& message) {
