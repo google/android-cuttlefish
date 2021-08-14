@@ -16,7 +16,9 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <tuple>
 
 namespace cuttlefish {
 namespace confui {
@@ -49,6 +51,9 @@ struct UserResponse {
 // invalid/ignored session id
 constexpr char SESSION_ANY[] = "";
 
+std::optional<std::tuple<bool, std::string>> FromCliAckCmd(
+    const std::string& message);
+
 std::string ToCliAckMessage(const bool is_success, const std::string& message);
 std::string ToCliAckErrorMsg(const std::string& message);
 std::string ToCliAckSuccessMsg(const std::string& message);
@@ -58,6 +63,7 @@ struct ConfUiMessage {
   std::string type_;  // cmd, which cmd? ack, response, etc
   std::string msg_;
 };
+std::string ToString(const ConfUiMessage& msg);
 
 }  // end of namespace confui
 }  // end of namespace cuttlefish

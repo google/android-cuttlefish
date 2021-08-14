@@ -110,6 +110,26 @@ std::optional<ConfUiMessage> RecvConfUiMsg(SharedFD fd) {
   return ReadPayload(fd);
 }
 
+std::optional<std::tuple<bool, std::string>> RecvAck(
+    SharedFD fd, const std::string& session_id) {
+  auto conf_ui_msg = RecvConfUiMsg(fd);
+  if (!conf_ui_msg) {
+    ConfUiLog(ERROR) << "Received Ack failed due to communication.";
+    return std::nullopt;
+  }
+  auto [recv_session_id, type, contents] = conf_ui_msg.value();
+  if (session_id != recv_session_id) {
+    ConfUiLog(ERROR) << "Received Session ID is not the expected one,"
+                     << session_id;
+    return std::nullopt;
+  }
+  if (ToCmd(type) != ConfUiCmd::kCliAck) {
+    ConfUiLog(ERROR) << "Received cmd is not ack but " << type;
+    return std::nullopt;
+  }
+  return FromCliAckCmd(contents);
+}
+
 bool SendCmd(SharedFD fd, const std::string& session_id, ConfUiCmd cmd,
              const std::string& additional_info) {
   return WritePayload(fd, cmd, session_id, additional_info);
