@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2020 The Android Open Source Project
+// cOpyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 #include "hmac_serializable.h"
 
 #include <android-base/logging.h>
+#include <optional>
+#include <vector>
 
 #include "host/commands/secure_env/tpm_auth.h"
 #include "host/commands/secure_env/tpm_hmac.h"
@@ -23,13 +25,12 @@
 HmacSerializable::HmacSerializable(
     TpmResourceManager& resource_manager,
     std::function<TpmObjectSlot(TpmResourceManager&)> signing_key_fn,
-    uint32_t digest_size,
-    Serializable* wrapped) :
-    resource_manager_(resource_manager),
-    signing_key_fn_(signing_key_fn),
-    digest_size_(digest_size),
-    wrapped_(wrapped) {
-}
+    uint32_t digest_size, Serializable* wrapped, const Serializable* aad)
+    : resource_manager_(resource_manager),
+      signing_key_fn_(signing_key_fn),
+      digest_size_(digest_size),
+      wrapped_(wrapped),
+      aad_(aad) {}
 
 size_t HmacSerializable::SerializedSize() const {
   auto digest_size = sizeof(uint32_t) + digest_size_;
@@ -51,13 +52,13 @@ uint8_t* HmacSerializable::Serialize(uint8_t* buf, const uint8_t* end) const {
     LOG(ERROR) << "Could not retrieve key";
     return buf;
   }
+  auto maced_data = AppendAad(signed_data, wrapped_size);
+  if (!maced_data) {
+    return buf;
+  }
   auto hmac_data =
-    TpmHmac(
-        resource_manager_,
-        key->get(),
-        TpmAuth(ESYS_TR_PASSWORD),
-        signed_data,
-        wrapped_size);
+      TpmHmac(resource_manager_, key->get(), TpmAuth(ESYS_TR_PASSWORD),
+              maced_data->data(), maced_data->size());
   if (!hmac_data) {
     LOG(ERROR) << "Failed to produce hmac";
     return buf;
@@ -99,13 +100,13 @@ bool HmacSerializable::Deserialize(const uint8_t** buf_ptr, const uint8_t* end) 
     LOG(ERROR) << "Could not retrieve key";
     return false;
   }
+  auto maced_data = AppendAad(signed_data.get(), signed_data_size);
+  if (!maced_data) {
+    return false;
+  }
   auto hmac_check =
-    TpmHmac(
-        resource_manager_,
-        key->get(),
-        TpmAuth(ESYS_TR_PASSWORD),
-        signed_data.get(),
-        signed_data_size);
+      TpmHmac(resource_manager_, key->get(), TpmAuth(ESYS_TR_PASSWORD),
+              maced_data->data(), maced_data->size());
   if (!hmac_check) {
     LOG(ERROR) << "Unable to calculate signature check";
     return false;
@@ -124,4 +125,23 @@ bool HmacSerializable::Deserialize(const uint8_t** buf_ptr, const uint8_t* end) 
   auto inner_buf_end = inner_buf + signed_data_size;
   return wrapped_->Deserialize(
       const_cast<const uint8_t**>(&inner_buf), inner_buf_end);
+}
+
+std::optional<std::vector<uint8_t>> HmacSerializable::AppendAad(
+    const uint8_t* sensitive, size_t sensitive_size) const {
+  if (!aad_) {
+    return std::vector<uint8_t>(sensitive, sensitive + sensitive_size);
+  }
+  std::vector<uint8_t> output(sensitive_size + aad_->SerializedSize());
+  std::copy(sensitive, sensitive + sensitive_size, output.begin());
+
+  const uint8_t* actual_output_end =
+      aad_->Serialize(&output[sensitive_size], output.data() + output.size());
+  const ptrdiff_t actual_aad_size = actual_output_end - output.data();
+  if (actual_aad_size != output.size()) {
+    LOG(ERROR) << "Serialized aad did not match expected size. Expected: "
+               << output.size() << ", actual: " << actual_aad_size;
+    return std::nullopt;
+  }
+  return output;
 }
