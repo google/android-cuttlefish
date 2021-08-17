@@ -17,7 +17,7 @@
 
 #include <mutex>
 
-#include <android/hardware/camera/provider/2.6/ICameraProvider.h>
+#include <android/hardware/camera/provider/2.7/ICameraProvider.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <json/json.h>
@@ -26,7 +26,7 @@
 #include "vsock_camera_server.h"
 #include "vsock_connection.h"
 
-namespace android::hardware::camera::provider::V2_6::implementation {
+namespace android::hardware::camera::provider::V2_7::implementation {
 
 using ::android::sp;
 using ::android::hardware::hidl_string;
@@ -38,8 +38,7 @@ using ::android::hardware::camera::device::V3_4::implementation::
     VsockCameraDevice;
 using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
 using ::android::hardware::camera::provider::V2_5::DeviceState;
-using ::android::hardware::camera::provider::V2_6::CameraIdAndStreamCombination;
-using ::android::hardware::camera::provider::V2_6::ICameraProvider;
+using ::android::hardware::camera::provider::V2_7::ICameraProvider;
 
 class VsockCameraProvider : public ICameraProvider {
  public:
@@ -63,8 +62,11 @@ class VsockCameraProvider : public ICameraProvider {
   Return<void> getConcurrentStreamingCameraIds(
       getConcurrentStreamingCameraIds_cb _hidl_cb) override;
   Return<void> isConcurrentStreamCombinationSupported(
-      const hidl_vec<CameraIdAndStreamCombination>& configs,
+      const hidl_vec<::android::hardware::camera::provider::V2_6::CameraIdAndStreamCombination>& configs,
       isConcurrentStreamCombinationSupported_cb _hidl_cb) override;
+  Return<void> isConcurrentStreamCombinationSupported_2_7(
+      const hidl_vec<::android::hardware::camera::provider::V2_7::CameraIdAndStreamCombination>& configs,
+      isConcurrentStreamCombinationSupported_2_7_cb _hidl_cb) override;
 
  private:
   void deviceRemoved(const char* name);
@@ -76,4 +78,4 @@ class VsockCameraProvider : public ICameraProvider {
   VsockCameraServer* server_;
 };
 
-}  // namespace android::hardware::camera::provider::V2_6::implementation
+}  // namespace android::hardware::camera::provider::V2_7::implementation
