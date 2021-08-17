@@ -495,7 +495,7 @@ class DeviceControlApp {
           {dpi: metadata.dpi, x_res: metadata.width, y_res: metadata.height});
     }
     if (message_data.event == 'VIRTUAL_DEVICE_CAPTURE_IMAGE') {
-      if (this.$deviceConnection.cameraEnabled) {
+      if (this.#deviceConnection.cameraEnabled) {
         this.#takePhoto();
       }
     }
