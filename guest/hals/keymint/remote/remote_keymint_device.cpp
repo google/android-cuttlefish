@@ -45,7 +45,7 @@ vector<KeyCharacteristics> convertKeyCharacteristics(
   if (keyMintSecurityLevel != SecurityLevel::SOFTWARE) {
     // We're pretending to be TRUSTED_ENVIRONMENT or STRONGBOX.
     keyMintEnforced.authorizations = kmParamSet2Aidl(hw_enforced);
-    if (include_keystore_enforced) {
+    if (include_keystore_enforced && !sw_enforced.empty()) {
       return {std::move(keyMintEnforced),
               {SecurityLevel::KEYSTORE, kmParamSet2Aidl(sw_enforced)}};
     }
