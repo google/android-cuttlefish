@@ -112,7 +112,7 @@ fruit::Component<ServerLoop> runCvdComponent(
       .install(AdbConfigFragmentComponent)
       .install(bootStateMachineComponent)
       .install(ConfigFlagPlaceholder)
-      .install(launchAdbComponent)
+      .install(LaunchAdbComponent)
       .install(launchComponent)
       .install(launchModemComponent)
       .install(launchStreamerComponent)

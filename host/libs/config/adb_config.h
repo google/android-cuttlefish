@@ -19,9 +19,12 @@
 #include <set>
 
 #include "common/libs/utils/flag_parser.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/config_fragment.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
+#include "host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 
@@ -51,5 +54,8 @@ fruit::Component<fruit::Required<AdbConfig, ConfigFlag>, AdbConfigFlag>
 AdbConfigFlagComponent();
 fruit::Component<fruit::Required<AdbConfig>, AdbConfigFragment>
 AdbConfigFragmentComponent();
+fruit::Component<fruit::Required<KernelLogPipeProvider, const AdbConfig,
+                                 const CuttlefishConfig::InstanceSpecific>>
+LaunchAdbComponent();
 
 }  // namespace cuttlefish

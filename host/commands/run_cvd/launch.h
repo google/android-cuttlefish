@@ -22,22 +22,12 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/adb_config.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
+#include "host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
-
-class CommandSource : public virtual Feature {
- public:
-  virtual ~CommandSource();
-  virtual std::vector<Command> Commands() = 0;
-};
-
-class KernelLogPipeProvider : public virtual Feature {
- public:
-  virtual ~KernelLogPipeProvider();
-  virtual SharedFD KernelLogPipe() = 0;
-};
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>,
@@ -47,11 +37,6 @@ launchComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 launchModemComponent();
-
-fruit::Component<
-    fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                    const CuttlefishConfig::InstanceSpecific, const AdbConfig>>
-launchAdbComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                                  const CuttlefishConfig::InstanceSpecific>>
