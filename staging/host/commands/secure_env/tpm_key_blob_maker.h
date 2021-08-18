@@ -43,6 +43,7 @@ public:
       const keymaster::KeymasterKeyBlob& key_material,
       const keymaster::AuthorizationSet& hw_enforced,
       const keymaster::AuthorizationSet& sw_enforced,
+      const keymaster::AuthorizationSet& hidden,
       keymaster::KeymasterKeyBlob* blob) const;
 
   /**
@@ -60,6 +61,7 @@ public:
       const keymaster_key_blob_t& blob,
       keymaster::AuthorizationSet* hw_enforced,
       keymaster::AuthorizationSet* sw_enforced,
+      const keymaster::AuthorizationSet& hidden,
       keymaster::KeymasterKeyBlob* key_material) const;
 
   keymaster_error_t SetSystemVersion(uint32_t os_version, uint32_t os_patchlevel);

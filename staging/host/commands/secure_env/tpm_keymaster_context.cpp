@@ -32,10 +32,28 @@
 #include "host/commands/secure_env/tpm_random_source.h"
 #include "host/commands/secure_env/tpm_remote_provisioning_context.h"
 
+namespace {
 using keymaster::AuthorizationSet;
 using keymaster::KeymasterKeyBlob;
 using keymaster::KeyFactory;
 using keymaster::OperationFactory;
+
+keymaster::AuthorizationSet GetHiddenTags(
+    const AuthorizationSet& authorizations) {
+  keymaster::AuthorizationSet output;
+  keymaster_blob_t entry;
+  if (authorizations.GetTagValue(keymaster::TAG_APPLICATION_ID, &entry)) {
+    output.push_back(keymaster::TAG_APPLICATION_ID, entry.data,
+                     entry.data_length);
+  }
+  if (authorizations.GetTagValue(keymaster::TAG_APPLICATION_DATA, &entry)) {
+    output.push_back(keymaster::TAG_APPLICATION_DATA, entry.data,
+                     entry.data_length);
+  }
+  return output;
+}
+
+}  // namespace
 
 TpmKeymasterContext::TpmKeymasterContext(
     TpmResourceManager& resource_manager,
@@ -190,7 +208,7 @@ keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
 
   return key_blob_maker_->UnvalidatedCreateKeyBlob(
       key->key_material(), key->hw_enforced(), key->sw_enforced(),
-      upgraded_key);
+      GetHiddenTags(upgrade_params), upgraded_key);
 }
 
 keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
@@ -201,12 +219,10 @@ keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
   keymaster::AuthorizationSet sw_enforced;
   keymaster::KeymasterKeyBlob key_material;
 
-  auto rc =
-      key_blob_maker_->UnwrapKeyBlob(
-          blob,
-          &hw_enforced,
-          &sw_enforced,
-          &key_material);
+  keymaster::AuthorizationSet hidden = GetHiddenTags(additional_params);
+
+  auto rc = key_blob_maker_->UnwrapKeyBlob(blob, &hw_enforced, &sw_enforced,
+                                           hidden, &key_material);
   if (rc != KM_ERROR_OK) {
     LOG(ERROR) << "Failed to unwrap key: " << rc;
     return rc;
