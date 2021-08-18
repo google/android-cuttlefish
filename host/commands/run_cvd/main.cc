@@ -109,6 +109,7 @@ fruit::Component<ServerLoop> runCvdComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(AdbConfigComponent)
+      .install(AdbConfigFragmentComponent)
       .install(bootStateMachineComponent)
       .install(ConfigFlagPlaceholder)
       .install(launchAdbComponent)

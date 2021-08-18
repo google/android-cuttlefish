@@ -219,6 +219,8 @@ static void ExtractKernelParamsFromFetcherConfig(
 fruit::Component<> FlagsComponent() {
   return fruit::createComponent()
       .install(AdbConfigComponent)
+      .install(AdbConfigFlagComponent)
+      .install(AdbConfigFragmentComponent)
       .install(GflagsComponent)
       .install(ConfigFlagComponent);
 }

@@ -32,12 +32,24 @@ enum class AdbMode {
   Unknown,
 };
 
-class AdbConfig : public ConfigFragment, public FlagFeature {
+class AdbConfig {
  public:
-  virtual std::set<AdbMode> adb_mode() const = 0;
-  virtual bool run_adb_connector() const = 0;
+  virtual ~AdbConfig() = default;
+  virtual const std::set<AdbMode>& Modes() const = 0;
+  virtual bool SetModes(const std::set<AdbMode>&) = 0;
+  virtual bool SetModes(std::set<AdbMode>&&) = 0;
+
+  virtual bool RunConnector() const = 0;
+  virtual bool SetRunConnector(bool) = 0;
 };
 
-fruit::Component<fruit::Required<ConfigFlag>, AdbConfig> AdbConfigComponent();
+class AdbConfigFragment : public ConfigFragment {};
+class AdbConfigFlag : public FlagFeature {};
+
+fruit::Component<AdbConfig> AdbConfigComponent();
+fruit::Component<fruit::Required<AdbConfig, ConfigFlag>, AdbConfigFlag>
+AdbConfigFlagComponent();
+fruit::Component<fruit::Required<AdbConfig>, AdbConfigFragment>
+AdbConfigFragmentComponent();
 
 }  // namespace cuttlefish

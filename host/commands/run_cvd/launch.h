@@ -50,7 +50,7 @@ launchModemComponent();
 
 fruit::Component<
     fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                    const CuttlefishConfig::InstanceSpecific, AdbConfig>>
+                    const CuttlefishConfig::InstanceSpecific, const AdbConfig>>
 launchAdbComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,

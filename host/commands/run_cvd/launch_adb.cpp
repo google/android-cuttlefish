@@ -37,7 +37,7 @@ class AdbHelper {
       : instance_(instance), config_(config) {}
 
   bool ModeEnabled(const AdbMode& mode) const {
-    return config_.adb_mode().count(mode) > 0;
+    return config_.Modes().count(mode) > 0;
   }
 
   std::string ConnectorTcpArg() const {
@@ -60,11 +60,11 @@ class AdbHelper {
   bool TcpConnectorEnabled() const {
     bool vsock_tunnel = VsockTunnelEnabled();
     bool vsock_half_tunnel = VsockHalfTunnelEnabled();
-    return config_.run_adb_connector() && (vsock_tunnel || vsock_half_tunnel);
+    return config_.RunConnector() && (vsock_tunnel || vsock_half_tunnel);
   }
 
   bool VsockConnectorEnabled() const {
-    return config_.run_adb_connector() && ModeEnabled(AdbMode::NativeVsock);
+    return config_.RunConnector() && ModeEnabled(AdbMode::NativeVsock);
   }
 
  private:
@@ -208,7 +208,7 @@ class SocketVsockProxy : public CommandSource {
 
 fruit::Component<
     fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                    const CuttlefishConfig::InstanceSpecific, AdbConfig>>
+                    const CuttlefishConfig::InstanceSpecific, const AdbConfig>>
 launchAdbComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, AdbConnector>()

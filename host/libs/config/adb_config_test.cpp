@@ -14,66 +14,62 @@
  * limitations under the License.
  */
 
-#include <host/libs/config/adb_config.h>
-
 #include <fruit/fruit.h>
 #include <gtest/gtest.h>
+#include <host/libs/config/adb_config.h>
+
 #include <string>
 
 #include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
-class TestInjector {
- public:
-  TestInjector() : injector_(TestComponent) {}
+struct TestData {
+  INJECT(TestData(AdbConfig& config, AdbConfigFragment& fragment))
+      : config(config), fragment(fragment) {}
 
-  AdbConfig& Config() { return injector_.get<AdbConfig&>(); }
-
-  bool ParseArguments(std::vector<std::string>& args) {
-    auto flags = injector_.getMultibindings<FlagFeature>();
-    return FlagFeature::ProcessFlags(flags, args);
-  }
-
- private:
-  static fruit::Component<AdbConfig> TestComponent() {
-    return fruit::createComponent()
-        .install(ConfigFlagPlaceholder)
-        .install(AdbConfigComponent);
-  }
-
-  fruit::Injector<AdbConfig> injector_;
+  AdbConfig& config;
+  AdbConfigFragment& fragment;
 };
 
+fruit::Component<TestData> TestComponent() {
+  return fruit::createComponent()
+      .install(AdbConfigComponent)
+      .install(AdbConfigFlagComponent)
+      .install(AdbConfigFragmentComponent)
+      .install(ConfigFlagPlaceholder);
+}
+
 TEST(AdbConfigTest, SetFromFlags) {
-  TestInjector env;
+  fruit::Injector<TestData> injector(TestComponent);
+  TestData& data = injector.get<TestData&>();
   std::vector<std::string> args = {
       "--adb_mode=vsock_tunnel,vsock_half_tunnel,native_vsock,unknown",
       "--run_adb_connector=false",
   };
-  ASSERT_TRUE(env.ParseArguments(args));
+  auto flags = injector.getMultibindings<FlagFeature>();
+  ASSERT_TRUE(FlagFeature::ProcessFlags(flags, args));
   ASSERT_TRUE(args.empty());
 
   std::set<AdbMode> modes = {AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
                              AdbMode::NativeVsock, AdbMode::Unknown};
-  ASSERT_EQ(env.Config().adb_mode(), modes);
-  ASSERT_FALSE(env.Config().run_adb_connector());
+  ASSERT_EQ(data.config.Modes(), modes);
+  ASSERT_FALSE(data.config.RunConnector());
 }
 
 TEST(AdbConfigTest, SerializeDeserialize) {
-  TestInjector env;
-  std::vector<std::string> args = {
-      "--adb_mode=vsock_tunnel,vsock_half_tunnel,native_vsock,unknown",
-      "--run_adb_connector=false",
-  };
-  ASSERT_TRUE(env.ParseArguments(args));
-  ASSERT_TRUE(args.empty());
+  fruit::Injector<TestData> injector1(TestComponent);
+  TestData& data1 = injector1.get<TestData&>();
+  ASSERT_TRUE(
+      data1.config.SetModes({AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
+                             AdbMode::NativeVsock, AdbMode::Unknown}));
+  ASSERT_TRUE(data1.config.SetRunConnector(false));
 
-  TestInjector env2;
-  ASSERT_TRUE(env2.Config().Deserialize(env.Config().Serialize()));
-  ASSERT_EQ(env.Config().adb_mode(), env2.Config().adb_mode());
-  ASSERT_EQ(env.Config().run_adb_connector(),
-            env2.Config().run_adb_connector());
+  fruit::Injector<TestData> injector2(TestComponent);
+  TestData& data2 = injector2.get<TestData&>();
+  ASSERT_TRUE(data2.fragment.Deserialize(data1.fragment.Serialize()));
+  ASSERT_EQ(data1.config.Modes(), data2.config.Modes());
+  ASSERT_EQ(data1.config.RunConnector(), data2.config.RunConnector());
 }
 
 }  // namespace cuttlefish

@@ -26,8 +26,34 @@
 #include "host/libs/config/config_fragment.h"
 
 namespace cuttlefish {
+namespace {
 
-static AdbMode StringToAdbMode(std::string mode) {
+class AdbConfigImpl : public AdbConfig {
+ public:
+  INJECT(AdbConfigImpl()) {}
+
+  const std::set<AdbMode>& Modes() const override { return modes_; }
+  bool SetModes(const std::set<AdbMode>& modes) override {
+    modes_ = modes;
+    return true;
+  }
+  bool SetModes(std::set<AdbMode>&& modes) override {
+    modes_ = std::move(modes);
+    return true;
+  }
+
+  bool RunConnector() const override { return run_connector_; }
+  bool SetRunConnector(bool run) override {
+    run_connector_ = run;
+    return true;
+  }
+
+ private:
+  std::set<AdbMode> modes_;
+  bool run_connector_;
+};
+
+AdbMode StringToAdbMode(std::string mode) {
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
   if (mode == "vsock_tunnel") {
     return AdbMode::VsockTunnel;
@@ -40,7 +66,7 @@ static AdbMode StringToAdbMode(std::string mode) {
   }
 }
 
-static std::string AdbModeToString(AdbMode mode) {
+std::string AdbModeToString(AdbMode mode) {
   switch (mode) {
     case AdbMode::VsockTunnel:
       return "vsock_tunnel";
@@ -54,52 +80,19 @@ static std::string AdbModeToString(AdbMode mode) {
   }
 }
 
-class AdbConfigImpl : public AdbConfig {
+class AdbConfigFragmentImpl : public AdbConfigFragment {
  public:
-  INJECT(AdbConfigImpl(ConfigFlag& config_flag)) : config_flag_(config_flag) {
-    Flag run_adb_connector =
-        GflagsCompatFlag("run_adb_connector", run_adb_connector_);
-    run_adb_connector.Help(
-        "Maintain adb connection by sending 'adb connect' commands to the "
-        "server. Only relevant with -adb_mode=tunnel or vsock_tunnel.");
-    Flag adb_mode = GflagsCompatFlag("adb_mode");
-    adb_mode.Help(
-        "Mode for ADB connection."
-        "'vsock_tunnel' for a TCP connection tunneled through vsock, "
-        "'native_vsock' for a  direct connection to the guest ADB over "
-        "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
-        "the guest ADB server, or a comma separated list of types as in "
-        "'native_vsock,vsock_half_tunnel'");
-    adb_mode.Getter([this]() {
-      std::stringstream modes;
-      for (const auto& mode : adb_mode_) {
-        modes << "," << AdbModeToString(mode);
-      }
-      return modes.str().substr(1);  // First comma
-    });
-    adb_mode.Setter([this](const FlagMatch& match) {
-      // TODO(schuffelen): Error on unknown types?
-      adb_mode_.clear();
-      for (auto& mode : android::base::Split(match.value, ",")) {
-        adb_mode_.insert(StringToAdbMode(mode));
-      }
-      return true;
-    });
-    flags_ = {run_adb_connector, adb_mode};
-  }
+  INJECT(AdbConfigFragmentImpl(AdbConfig& config)) : config_(config) {}
 
-  std::set<AdbMode> adb_mode() const override { return adb_mode_; }
-  bool run_adb_connector() const override { return run_adb_connector_; }
-
-  std::string Name() const override { return "AdbConfig"; }
+  std::string Name() const override { return "AdbConfigFragmentImpl"; }
 
   Json::Value Serialize() const override {
     Json::Value json;
     json[kMode] = Json::Value(Json::arrayValue);
-    for (const auto& mode : adb_mode_) {
+    for (const auto& mode : config_.Modes()) {
       json[kMode].append(AdbModeToString(mode));
     }
-    json[kConnectorEnabled] = run_adb_connector_;
+    json[kConnectorEnabled] = config_.RunConnector();
     return json;
   }
   bool Deserialize(const Json::Value& json) override {
@@ -107,61 +100,122 @@ class AdbConfigImpl : public AdbConfig {
       LOG(ERROR) << "Invalid value for " << kMode;
       return false;
     }
-    adb_mode_.clear();
+    std::set<AdbMode> modes;
     for (auto& mode : json[kMode]) {
       if (mode.type() != Json::stringValue) {
         LOG(ERROR) << "Invalid mode type" << mode;
         return false;
       }
-      adb_mode_.insert(StringToAdbMode(mode.asString()));
+      modes.insert(StringToAdbMode(mode.asString()));
     }
+    if (!config_.SetModes(std::move(modes))) {
+      LOG(ERROR) << "Failed to set adb modes";
+      return false;
+    }
+
     if (!json.isMember(kConnectorEnabled) ||
         json[kConnectorEnabled].type() != Json::booleanValue) {
       LOG(ERROR) << "Invalid value for " << kConnectorEnabled;
       return false;
     }
-    run_adb_connector_ = json[kConnectorEnabled].asBool();
-    return true;
-  }
-
-  std::unordered_set<FlagFeature*> Dependencies() const override {
-    return {static_cast<FlagFeature*>(&config_flag_)};
-  }
-
- protected:
-  bool Process(std::vector<std::string>& args) override {
-    // Defaults
-    run_adb_connector_ = !IsRunningInContainer();
-    adb_mode_ = {AdbMode::VsockHalfTunnel};
-    bool success = ParseFlags(flags_, args);
-
-    auto adb_modes_check = adb_mode_;
-    adb_modes_check.erase(AdbMode::Unknown);
-    if (adb_modes_check.size() < 1) {
-      LOG(INFO) << "ADB not enabled";
+    if (!config_.SetRunConnector(json[kConnectorEnabled].asBool())) {
+      LOG(ERROR) << "Failed to set whether to run the adb connector";
     }
-
-    return success;
-  }
-  bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
-    return WriteGflagsCompatXml(flags_, out);
+    return true;
   }
 
  private:
   static constexpr char kMode[] = "mode";
   static constexpr char kConnectorEnabled[] = "connector_enabled";
-
-  ConfigFlag& config_flag_;
-  std::set<AdbMode> adb_mode_;
-  bool run_adb_connector_;
-  std::vector<Flag> flags_;
+  AdbConfig& config_;
 };
 
-fruit::Component<fruit::Required<ConfigFlag>, AdbConfig> AdbConfigComponent() {
+class AdbConfigFlagImpl : public AdbConfigFlag {
+ public:
+  INJECT(AdbConfigFlagImpl(AdbConfig& config, ConfigFlag& config_flag))
+      : config_(config), config_flag_(config_flag) {
+    mode_flag_ = GflagsCompatFlag("adb_mode").Help(mode_help);
+    mode_flag_.Getter([this]() {
+      std::stringstream modes;
+      for (const auto& mode : config_.Modes()) {
+        modes << "," << AdbModeToString(mode);
+      }
+      return modes.str().substr(1);  // First comma
+    });
+    mode_flag_.Setter([this](const FlagMatch& match) {
+      // TODO(schuffelen): Error on unknown types?
+      std::set<AdbMode> modes;
+      for (auto& mode : android::base::Split(match.value, ",")) {
+        modes.insert(StringToAdbMode(mode));
+      }
+      return config_.SetModes(modes);
+    });
+  }
+
+  std::string Name() const override { return "AdbConfigFlagImpl"; }
+
+  std::unordered_set<FlagFeature*> Dependencies() const override {
+    return {static_cast<FlagFeature*>(&config_flag_)};
+  }
+
+  bool Process(std::vector<std::string>& args) override {
+    // Defaults
+    config_.SetModes({AdbMode::VsockHalfTunnel});
+    bool run_adb_connector = !IsRunningInContainer();
+    Flag run_flag = GflagsCompatFlag("run_adb_connector", run_adb_connector);
+    if (!ParseFlags({run_flag, mode_flag_}, args)) {
+      LOG(ERROR) << "Failed to parse adb config flags";
+      return false;
+    }
+    config_.SetRunConnector(run_adb_connector);
+
+    auto adb_modes_check = config_.Modes();
+    adb_modes_check.erase(AdbMode::Unknown);
+    if (adb_modes_check.size() < 1) {
+      LOG(INFO) << "ADB not enabled";
+    }
+
+    return true;
+  }
+  bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
+    bool run = config_.RunConnector();
+    Flag run_flag = GflagsCompatFlag("run_adb_connector", run).Help(run_help);
+    return WriteGflagsCompatXml({run_flag, mode_flag_}, out);
+  }
+
+ private:
+  static constexpr char run_help[] =
+      "Maintain adb connection by sending 'adb connect' commands to the "
+      "server. Only relevant with -adb_mode=tunnel or vsock_tunnel.";
+  static constexpr char mode_help[] =
+      "Mode for ADB connection."
+      "'vsock_tunnel' for a TCP connection tunneled through vsock, "
+      "'native_vsock' for a  direct connection to the guest ADB over "
+      "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
+      "the guest ADB server, or a comma separated list of types as in "
+      "'native_vsock,vsock_half_tunnel'";
+
+  AdbConfig& config_;
+  ConfigFlag& config_flag_;
+  Flag mode_flag_;
+};
+
+}  // namespace
+
+fruit::Component<AdbConfig> AdbConfigComponent() {
+  return fruit::createComponent().bind<AdbConfig, AdbConfigImpl>();
+}
+fruit::Component<fruit::Required<AdbConfig, ConfigFlag>, AdbConfigFlag>
+AdbConfigFlagComponent() {
   return fruit::createComponent()
-      .bind<AdbConfig, AdbConfigImpl>()
-      .addMultibinding<ConfigFragment, AdbConfig>()
-      .addMultibinding<FlagFeature, AdbConfig>();
+      .bind<AdbConfigFlag, AdbConfigFlagImpl>()
+      .addMultibinding<FlagFeature, AdbConfigFlag>();
+}
+fruit::Component<fruit::Required<AdbConfig>, AdbConfigFragment>
+AdbConfigFragmentComponent() {
+  return fruit::createComponent()
+      .bind<AdbConfigFragment, AdbConfigFragmentImpl>()
+      .addMultibinding<ConfigFragment, AdbConfigFragment>();
 }
 
 }  // namespace cuttlefish
