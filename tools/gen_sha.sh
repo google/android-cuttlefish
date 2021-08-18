@@ -14,17 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
+set -e
+set -u
+
+source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
 
 DEFINE_string kernel \
-  "" "Path to kernel build dir" "k"
+  "" "Path to kernel repo checkout" "k"
+DEFINE_string uboot \
+  "" "Path to u-boot repo checkout" "u"
 
 FLAGS_HELP="USAGE: $0 [flags]"
 
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
 
-if [ -z ${FLAGS_kernel} ]; then
+if [ -z ${FLAGS_kernel} -o -z ${FLAGS_uboot} ]; then
 	flags_help
 	exit 1
 fi
@@ -32,13 +37,14 @@ fi
 cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish"
 Sha=`git rev-parse HEAD`
 cd - >/dev/null
-cd "${ANDROID_BUILD_TOP}/external/u-boot"
+# cd "${FLAGS_uboot}/u-boot"
+cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts"
 Sha="$Sha,`git rev-parse HEAD`"
 cd - >/dev/null
-cd "${ANDROID_BUILD_TOP}/external/arm-trusted-firmware"
+cd "${FLAGS_uboot}/external/arm-trusted-firmware"
 Sha="$Sha,`git rev-parse HEAD`"
 cd - >/dev/null
-cd "${FLAGS_kernel}"
+cd "${FLAGS_kernel}/common"
 Sha="$Sha,`git rev-parse HEAD`"
 cd - >/dev/null
 echo $Sha
