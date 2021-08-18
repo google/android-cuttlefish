@@ -40,7 +40,7 @@
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/commands/run_cvd/validate.h"
-#include "host/libs/config/adb_config.h"
+#include "host/libs/config/adb/adb.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/cuttlefish_config.h"

@@ -16,7 +16,7 @@
 
 #include <fruit/fruit.h>
 #include <gtest/gtest.h>
-#include <host/libs/config/adb_config.h>
+#include <host/libs/config/adb/adb.h>
 
 #include <string>
 

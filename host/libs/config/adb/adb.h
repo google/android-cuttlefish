@@ -18,7 +18,6 @@
 #include <fruit/fruit.h>
 #include <set>
 
-#include "common/libs/utils/flag_parser.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/config_fragment.h"
@@ -34,6 +33,9 @@ enum class AdbMode {
   NativeVsock,
   Unknown,
 };
+
+AdbMode StringToAdbMode(const std::string& mode);
+std::string AdbModeToString(AdbMode mode);
 
 class AdbConfig {
  public:

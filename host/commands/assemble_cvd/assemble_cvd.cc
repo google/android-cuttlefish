@@ -29,7 +29,7 @@
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/commands/assemble_cvd/flags.h"
-#include "host/libs/config/adb_config.h"
+#include "host/libs/config/adb/adb.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/fetcher_config.h"
 
