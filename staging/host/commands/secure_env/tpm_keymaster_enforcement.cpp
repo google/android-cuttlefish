@@ -326,16 +326,6 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
 
 bool TpmKeymasterEnforcement::CreateKeyId(
     const keymaster_key_blob_t& key_blob, km_id_t* keyid) const {
-  keymaster::AuthorizationSet hw_enforced;
-  keymaster::AuthorizationSet sw_enforced;
-  keymaster::KeymasterKeyBlob key_material;
-  auto rc =
-      TpmKeyBlobMaker(resource_manager_)
-          .UnwrapKeyBlob(key_blob, &hw_enforced, &sw_enforced, &key_material);
-  if (rc != KM_ERROR_OK) {
-    LOG(ERROR) << "Could not unwrap key: " << rc;
-    return false;
-  }
   auto signing_key_builder = PrimaryKeyBuilder();
   signing_key_builder.SigningKey();
   signing_key_builder.UniqueData("key_id");
@@ -344,12 +334,9 @@ bool TpmKeymasterEnforcement::CreateKeyId(
     LOG(ERROR) << "Could not make signing key for key id";
     return false;
   }
-  auto hmac = TpmHmac(
-      resource_manager_,
-      signing_key->get(),
-      TpmAuth(ESYS_TR_PASSWORD),
-      key_material.key_material,
-      key_material.key_material_size);
+  auto hmac =
+      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
+              key_blob.key_material, key_blob.key_material_size);
   if (!hmac) {
     LOG(ERROR) << "Failed to make a signature for a key id";
     return false;

@@ -89,8 +89,9 @@ bool WriteProtectedJsonToFile(
   EncryptedSerializable encryption(
       resource_manager, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
-  HmacSerializable sign_check(
-      resource_manager, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
+  HmacSerializable sign_check(resource_manager, signing_key_fn,
+                              TPM2_SHA256_DIGEST_SIZE, &encryption,
+                              /*aad=*/nullptr);
 
   auto size = sign_check.SerializedSize();
   LOG(INFO) << "size : " << size;
@@ -139,8 +140,9 @@ Json::Value ReadProtectedJsonFromFile(
   EncryptedSerializable encryption(
       resource_manager, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
-  HmacSerializable sign_check(
-      resource_manager, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
+  HmacSerializable sign_check(resource_manager, signing_key_fn,
+                              TPM2_SHA256_DIGEST_SIZE, &encryption,
+                              /*aad=*/nullptr);
 
   auto buf = reinterpret_cast<const uint8_t*>(buffer.data());
   auto buf_end = buf + buffer.size();
