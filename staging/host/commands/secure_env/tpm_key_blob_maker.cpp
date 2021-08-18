@@ -41,7 +41,8 @@ static constexpr char kUniqueKey[] = "TpmKeyBlobMaker";
 static keymaster_error_t SplitEnforcedProperties(
     const keymaster::AuthorizationSet& key_description,
     keymaster::AuthorizationSet* hw_enforced,
-    keymaster::AuthorizationSet* sw_enforced) {
+    keymaster::AuthorizationSet* sw_enforced,
+    keymaster::AuthorizationSet* hidden) {
   for (auto& entry : key_description) {
     switch (entry.tag) {
       // These cannot be specified by the client.
@@ -57,6 +58,7 @@ static keymaster_error_t SplitEnforcedProperties(
       // These are hidden
       case KM_TAG_APPLICATION_DATA:
       case KM_TAG_APPLICATION_ID:
+        hidden->push_back(entry);
         break;
 
       // These should not be in key descriptions because they're for operation
@@ -90,12 +92,21 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_RESET_SINCE_ID_ROTATION:
         break;
 
+      // strongbox-only tags
+      case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
+        LOG(ERROR) << "Strongbox-only tag: " << entry.tag;
+        return KM_ERROR_UNSUPPORTED_TAG;
+
+      case KM_TAG_ROLLBACK_RESISTANT:
+        return KM_ERROR_UNSUPPORTED_TAG;
+
+      case KM_TAG_ROLLBACK_RESISTANCE:
+        LOG(ERROR) << "Rollback resistance is not implemented.";
+        return KM_ERROR_ROLLBACK_RESISTANCE_UNAVAILABLE;
+
       // These are nominally HW tags, but we don't actually support HW key
       // attestation yet.
-      case KM_TAG_ROLLBACK_RESISTANCE:
-      case KM_TAG_ROLLBACK_RESISTANT:
       case KM_TAG_ALLOW_WHILE_ON_BODY:
-      case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
       case KM_TAG_EXPORTABLE:
       case KM_TAG_IDENTITY_CREDENTIAL_KEY:
       case KM_TAG_STORAGE_KEY:
@@ -173,8 +184,9 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
     KeymasterKeyBlob* blob,
     AuthorizationSet* hw_enforced,
     AuthorizationSet* sw_enforced) const {
-  auto rc =
-      SplitEnforcedProperties(key_description, hw_enforced, sw_enforced);
+  AuthorizationSet hidden;
+  auto rc = SplitEnforcedProperties(key_description, hw_enforced, sw_enforced,
+                                    &hidden);
   if (rc != KM_ERROR_OK) {
     return rc;
   }
@@ -185,12 +197,13 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
   hw_enforced->push_back(keymaster::TAG_OS_PATCHLEVEL, os_patchlevel_);
 
   return UnvalidatedCreateKeyBlob(key_material, *hw_enforced, *sw_enforced,
-                                  blob);
+                                  hidden, blob);
 }
 
 keymaster_error_t TpmKeyBlobMaker::UnvalidatedCreateKeyBlob(
     const KeymasterKeyBlob& key_material, const AuthorizationSet& hw_enforced,
-    const AuthorizationSet& sw_enforced, KeymasterKeyBlob* blob) const {
+    const AuthorizationSet& sw_enforced, const AuthorizationSet& hidden,
+    KeymasterKeyBlob* blob) const {
   keymaster::Buffer key_material_buffer(
       key_material.key_material, key_material.key_material_size);
   AuthorizationSet hw_enforced_mutable = hw_enforced;
@@ -201,8 +214,12 @@ keymaster_error_t TpmKeyBlobMaker::UnvalidatedCreateKeyBlob(
   EncryptedSerializable encryption(
       resource_manager_, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
-  HmacSerializable sign_check(
-      resource_manager_, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
+  // TODO(b/154956668) The "hidden" tags should also be mixed into the TPM ACL
+  // so that the TPM requires them to be presented to unwrap the key. This is
+  // necessary to meet the requirement that full breach of KeyMint means an
+  // attacker cannot unwrap keys w/o the application id/data.
+  HmacSerializable sign_check(resource_manager_, signing_key_fn,
+                              TPM2_SHA256_DIGEST_SIZE, &encryption, &hidden);
   auto generated_blob = SerializableToKeyBlob(sign_check);
   LOG(VERBOSE) << "Keymaster key size: " << generated_blob.key_material_size;
   if (generated_blob.key_material_size != 0) {
@@ -214,9 +231,8 @@ keymaster_error_t TpmKeyBlobMaker::UnvalidatedCreateKeyBlob(
 }
 
 keymaster_error_t TpmKeyBlobMaker::UnwrapKeyBlob(
-    const keymaster_key_blob_t& blob,
-    AuthorizationSet* hw_enforced,
-    AuthorizationSet* sw_enforced,
+    const keymaster_key_blob_t& blob, AuthorizationSet* hw_enforced,
+    AuthorizationSet* sw_enforced, const AuthorizationSet& hidden,
     KeymasterKeyBlob* key_material) const {
   keymaster::Buffer key_material_buffer(blob.key_material_size);
   CompositeSerializable sensitive_material(
@@ -225,17 +241,17 @@ keymaster_error_t TpmKeyBlobMaker::UnwrapKeyBlob(
   EncryptedSerializable encryption(
       resource_manager_, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
-  HmacSerializable sign_check(
-      resource_manager_, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
+  HmacSerializable sign_check(resource_manager_, signing_key_fn,
+                              TPM2_SHA256_DIGEST_SIZE, &encryption, &hidden);
   auto buf = blob.key_material;
   auto buf_end = buf + blob.key_material_size;
   if (!sign_check.Deserialize(&buf, buf_end)) {
     LOG(ERROR) << "Failed to deserialize key.";
-    return KM_ERROR_UNKNOWN_ERROR;
+    return KM_ERROR_INVALID_KEY_BLOB;
   }
   if (key_material_buffer.available_read() == 0) {
     LOG(ERROR) << "Key material was corrupted and the size was too large";
-    return KM_ERROR_UNKNOWN_ERROR;
+    return KM_ERROR_INVALID_KEY_BLOB;
   }
   *key_material = KeymasterKeyBlob(
       key_material_buffer.peek_read(), key_material_buffer.available_read());
