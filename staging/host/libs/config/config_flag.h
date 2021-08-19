@@ -15,8 +15,23 @@
  */
 #pragma once
 
+#include <fruit/fruit.h>
+#include <string>
+
+#include "host/libs/config/feature.h"
+
 namespace cuttlefish {
 
-void SetDefaultFlagsFromConfigPreset();
+// TODO(schuffelen): Move this to a more central location?
+class SystemImageDirFlag : public FlagFeature {
+ public:
+  virtual const std::string& Path() = 0;
+};
 
-}
+class ConfigFlag : public FlagFeature {};
+
+fruit::Component<SystemImageDirFlag, ConfigFlag> ConfigFlagComponent();
+
+fruit::Component<ConfigFlag> ConfigFlagPlaceholder();
+
+}  // namespace cuttlefish
