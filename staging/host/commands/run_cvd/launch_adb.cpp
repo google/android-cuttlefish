@@ -206,8 +206,9 @@ class SocketVsockProxy : public CommandSource {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                    const CuttlefishConfig::InstanceSpecific, AdbConfig>>
 launchAdbComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, AdbConnector>()

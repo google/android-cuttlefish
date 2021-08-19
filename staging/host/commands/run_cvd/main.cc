@@ -41,6 +41,7 @@
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/commands/run_cvd/validate.h"
 #include "host/libs/config/adb_config.h"
+#include "host/libs/config/config_flag.h"
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -109,6 +110,7 @@ fruit::Component<ServerLoop> runCvdComponent(
       .bindInstance(*instance)
       .install(AdbConfigComponent)
       .install(bootStateMachineComponent)
+      .install(ConfigFlagPlaceholder)
       .install(launchAdbComponent)
       .install(launchComponent)
       .install(launchModemComponent)

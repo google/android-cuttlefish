@@ -19,16 +19,17 @@
 #include <sstream>
 #include <unordered_map>
 
+#include <fruit/fruit.h>
+
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/clean.h"
-#include "host/commands/assemble_cvd/config.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/libs/config/adb_config.h"
+#include "host/libs/config/config_flag.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -219,17 +220,6 @@ DEFINE_string(
     "The for the device to register with the signaling server. Every "
     "appearance of the substring '{num}' in the device id will be substituted "
     "with the instance number to support multiple instances");
-
-DEFINE_string(adb_mode, "vsock_half_tunnel",
-              "Mode for ADB connection."
-              "'vsock_tunnel' for a TCP connection tunneled through vsock, "
-              "'native_vsock' for a  direct connection to the guest ADB over "
-              "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
-              "the guest ADB server, or a comma separated list of types as in "
-              "'native_vsock,vsock_half_tunnel'");
-DEFINE_bool(run_adb_connector, !cuttlefish::IsRunningInContainer(),
-            "Maintain adb connection by sending 'adb connect' commands to the "
-            "server. Only relevant with -adb_mode=tunnel or vsock_tunnel");
 
 DEFINE_string(uuid, cuttlefish::ForCurrentInstance(cuttlefish::kDefaultUuidPrefix),
               "UUID to use for the device. Random if not specified");
@@ -476,11 +466,17 @@ void ReadKernelConfig(KernelConfig* kernel_config) {
 
 CuttlefishConfig InitializeCuttlefishConfiguration(
     const std::string& instance_dir, int modem_simulator_count,
-    KernelConfig kernel_config) {
+    KernelConfig kernel_config, fruit::Injector<>& injector) {
   // At most one streamer can be started.
   CHECK(NumStreamers() <= 1);
 
   CuttlefishConfig tmp_config_obj;
+
+  for (const auto& fragment : injector.getMultibindings<ConfigFragment>()) {
+    CHECK(tmp_config_obj.SaveFragment(*fragment))
+        << "Failed to save fragment " << fragment->Name();
+  }
+
   tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
   tmp_config_obj.set_target_arch(kernel_config.target_arch);
   tmp_config_obj.set_bootconfig_supported(kernel_config.bootconfig_supported);
@@ -590,14 +586,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       std::set<std::string>(secure_hals.begin(), secure_hals.end()));
 
   tmp_config_obj.set_gdb_port(FLAGS_gdb_port);
-
-  {
-    AdbConfig adb_config;
-    std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
-    adb_config.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
-    adb_config.set_run_adb_connector(FLAGS_run_adb_connector);
-    CHECK(tmp_config_obj.SaveFragment(adb_config)) << "Failed to save adb info";
-  }
 
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
@@ -945,55 +933,7 @@ void SetDefaultFlagsForCrosvm() {
                                SET_FLAGS_DEFAULT);
 }
 
-fruit::Component<> FlagsComponent() {
-  return fruit::createComponent().install(GflagsComponent);
-}
-
-bool ParseCommandLineFlags(std::vector<std::string>& args,
-                           KernelConfig* kernel_config) {
-  bool help = false;
-  std::string help_str;
-  bool helpxml = false;
-
-  std::vector<Flag> help_flags = {
-      GflagsCompatFlag("help", help),
-      GflagsCompatFlag("helpfull", help),
-      GflagsCompatFlag("helpshort", help),
-      GflagsCompatFlag("helpmatch", help_str),
-      GflagsCompatFlag("helpon", help_str),
-      GflagsCompatFlag("helppackage", help_str),
-      GflagsCompatFlag("helpxml", helpxml),
-  };
-  for (const auto& help_flag : help_flags) {
-    if (!help_flag.Parse(args)) {
-      LOG(ERROR) << "Failed to process help flag.";
-      return false;
-    }
-  }
-
-  fruit::Injector<> injector(FlagsComponent);
-  auto flag_features = injector.getMultibindings<FlagFeature>();
-  if (!FlagFeature::ProcessFlags(flag_features, args)) {
-    LOG(ERROR) << "Failed to parse flags.";
-    return false;
-  }
-
-  SetDefaultFlagsFromConfigPreset();
-
-  if (help || help_str != "") {
-    LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
-    LOG(WARNING) << "In the meantime, call `launch_cvd --help`";
-    return false;
-  } else if (helpxml) {
-    if (!FlagFeature::WriteGflagsHelpXml(flag_features, std::cout)) {
-      LOG(ERROR) << "Failure in writing gflags helpxml output";
-    }
-    std::exit(1);  // For parity with gflags
-  }
-  // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
-  // gflags either consumes all arguments that start with - or leaves all of
-  // them in place, and either errors out on unknown flags or accepts any flags.
-
+bool GetKernelConfigAndSetDefaults(KernelConfig* kernel_config) {
   bool invalid_manager = false;
 
   if (!ResolveInstanceFiles()) {
