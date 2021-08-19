@@ -16,32 +16,64 @@
 
 #include <host/libs/config/adb_config.h>
 
+#include <fruit/fruit.h>
 #include <gtest/gtest.h>
 #include <string>
 
+#include "host/libs/config/feature.h"
+
 namespace cuttlefish {
 
-TEST(AdbConfigTest, SaveRetrieve) {
-  AdbConfig config;
+class TestInjector {
+ public:
+  TestInjector() : injector_(TestComponent) {}
+
+  AdbConfig& Config() { return injector_.get<AdbConfig&>(); }
+
+  bool ParseArguments(std::vector<std::string>& args) {
+    auto flags = injector_.getMultibindings<FlagFeature>();
+    return FlagFeature::ProcessFlags(flags, args);
+  }
+
+ private:
+  static fruit::Component<AdbConfig> TestComponent() {
+    return fruit::createComponent()
+        .install(ConfigFlagPlaceholder)
+        .install(AdbConfigComponent);
+  }
+
+  fruit::Injector<AdbConfig> injector_;
+};
+
+TEST(AdbConfigTest, SetFromFlags) {
+  TestInjector env;
+  std::vector<std::string> args = {
+      "--adb_mode=vsock_tunnel,vsock_half_tunnel,native_vsock,unknown",
+      "--run_adb_connector=false",
+  };
+  ASSERT_TRUE(env.ParseArguments(args));
+  ASSERT_TRUE(args.empty());
+
   std::set<AdbMode> modes = {AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
                              AdbMode::NativeVsock, AdbMode::Unknown};
-  config.set_adb_mode(modes);
-  config.set_run_adb_connector(true);
-
-  ASSERT_EQ(config.adb_mode(), modes);
-  ASSERT_TRUE(config.run_adb_connector());
+  ASSERT_EQ(env.Config().adb_mode(), modes);
+  ASSERT_FALSE(env.Config().run_adb_connector());
 }
 
 TEST(AdbConfigTest, SerializeDeserialize) {
-  AdbConfig config;
-  config.set_adb_mode({AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
-                       AdbMode::NativeVsock, AdbMode::Unknown});
-  config.set_run_adb_connector(true);
+  TestInjector env;
+  std::vector<std::string> args = {
+      "--adb_mode=vsock_tunnel,vsock_half_tunnel,native_vsock,unknown",
+      "--run_adb_connector=false",
+  };
+  ASSERT_TRUE(env.ParseArguments(args));
+  ASSERT_TRUE(args.empty());
 
-  AdbConfig config2;
-  ASSERT_TRUE(config2.Deserialize(config.Serialize()));
-  ASSERT_EQ(config.adb_mode(), config2.adb_mode());
-  ASSERT_EQ(config.run_adb_connector(), config2.run_adb_connector());
+  TestInjector env2;
+  ASSERT_TRUE(env2.Config().Deserialize(env.Config().Serialize()));
+  ASSERT_EQ(env.Config().adb_mode(), env2.Config().adb_mode());
+  ASSERT_EQ(env.Config().run_adb_connector(),
+            env2.Config().run_adb_connector());
 }
 
 }  // namespace cuttlefish
