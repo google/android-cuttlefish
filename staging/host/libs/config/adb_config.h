@@ -18,7 +18,10 @@
 #include <fruit/fruit.h>
 #include <set>
 
+#include "common/libs/utils/flag_parser.h"
+#include "host/libs/config/config_flag.h"
 #include "host/libs/config/config_fragment.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
@@ -29,27 +32,12 @@ enum class AdbMode {
   Unknown,
 };
 
-class AdbConfig : public ConfigFragment {
+class AdbConfig : public ConfigFragment, public FlagFeature {
  public:
-  INJECT(AdbConfig());
-
-  void set_adb_mode(const std::set<std::string>& modes);
-  void set_adb_mode(const std::set<AdbMode>& modes);
-  std::set<AdbMode> adb_mode() const;
-
-  void set_run_adb_connector(bool run_adb_connector);
-  bool run_adb_connector() const;
-
-  // ConfigFragment
-  std::string Name() const override;
-  Json::Value Serialize() const override;
-  bool Deserialize(const Json::Value&) override;
-
- private:
-  std::set<AdbMode> adb_mode_;
-  bool run_adb_connector_;
+  virtual std::set<AdbMode> adb_mode() const = 0;
+  virtual bool run_adb_connector() const = 0;
 };
 
-fruit::Component<AdbConfig> AdbConfigComponent();
+fruit::Component<fruit::Required<ConfigFlag>, AdbConfig> AdbConfigComponent();
 
 }  // namespace cuttlefish

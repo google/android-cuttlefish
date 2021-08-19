@@ -41,8 +41,7 @@
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
 #define VBMETA_MAX_SIZE 65536ul
 
-DEFINE_string(system_image_dir, cuttlefish::DefaultGuestImagePath(""),
-              "Location of the system partition images.");
+DECLARE_string(system_image_dir);
 
 DEFINE_string(boot_image, "",
               "Location of cuttlefish boot image. If empty it is assumed to be "

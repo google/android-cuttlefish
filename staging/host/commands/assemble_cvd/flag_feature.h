@@ -17,13 +17,13 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/assemble_cvd/config.h"
+#include "host/libs/config/config_flag.h"
 #include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
 class ParseGflags : public FlagFeature {};
 
-fruit::Component<ParseGflags> GflagsComponent();
+fruit::Component<fruit::Required<ConfigFlag>, ParseGflags> GflagsComponent();
 
 }  // namespace cuttlefish
