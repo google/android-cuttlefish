@@ -34,10 +34,12 @@ static std::string XmlEscape(const std::string& s) {
 
 class ParseGflagsImpl : public ParseGflags {
  public:
-  INJECT(ParseGflagsImpl()) {}
+  INJECT(ParseGflagsImpl(ConfigFlag& config)) : config_(config) {}
 
   std::string Name() const override { return "ParseGflags"; }
-  std::unordered_set<FlagFeature*> Dependencies() const override { return {}; }
+  std::unordered_set<FlagFeature*> Dependencies() const override {
+    return {static_cast<FlagFeature*>(&config_)};
+  }
   bool Process(std::vector<std::string>& args) override {
     std::string process_name = "assemble_cvd";
     std::vector<char*> pseudo_argv = {process_name.data()};
@@ -68,9 +70,12 @@ class ParseGflagsImpl : public ParseGflags {
     }
     return true;
   }
+
+ private:
+  ConfigFlag& config_;
 };
 
-fruit::Component<ParseGflags> GflagsComponent() {
+fruit::Component<fruit::Required<ConfigFlag>, ParseGflags> GflagsComponent() {
   return fruit::createComponent()
       .bind<ParseGflags, ParseGflagsImpl>()
       .addMultibinding<FlagFeature, ParseGflags>();
