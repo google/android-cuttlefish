@@ -300,6 +300,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   }
 
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
+  AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
 
   SharedFD wifi_tap;
   if (config.vhost_user_mac80211_hwsim().empty()) {
@@ -420,12 +421,6 @@ std::vector<Command> CrosvmManager::StartCommands(
   if (config.enable_audio()) {
     crosvm_cmd.AddParameter("--sound=",
                             config.ForDefaultInstance().audio_server_path());
-  }
-
-  // TODO(b/172286896): This is temporarily optional, but should be made
-  // unconditional and moved up to the other network devices area
-  if (config.ethernet()) {
-    AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
   }
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
