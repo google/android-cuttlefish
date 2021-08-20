@@ -438,18 +438,25 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("virtio-balloon-pci,id=balloon0");
 
   qemu_cmd.AddParameter("-netdev");
-  qemu_cmd.AddParameter("tap,id=hostnet0,ifname=", instance.wifi_tap_name(),
+  qemu_cmd.AddParameter("tap,id=hostnet0,ifname=", instance.mobile_tap_name(),
                         ",script=no,downscript=no", vhost_net);
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-net-pci,netdev=hostnet0,id=net0");
 
   qemu_cmd.AddParameter("-netdev");
-  qemu_cmd.AddParameter("tap,id=hostnet1,ifname=", instance.mobile_tap_name(),
+  qemu_cmd.AddParameter("tap,id=hostnet1,ifname=", instance.ethernet_tap_name(),
                         ",script=no,downscript=no", vhost_net);
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-net-pci,netdev=hostnet1,id=net1");
+
+  qemu_cmd.AddParameter("-netdev");
+  qemu_cmd.AddParameter("tap,id=hostnet2,ifname=", instance.wifi_tap_name(),
+                        ",script=no,downscript=no", vhost_net);
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-net-pci,netdev=hostnet2,id=net2");
 
   auto display_configs = config.display_configs();
   CHECK_GE(display_configs.size(), 1);
@@ -471,17 +478,6 @@ std::vector<Command> QemuManager::StartCommands(
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("AC97");
-
-  // TODO(b/172286896): This is temporarily optional, but should be made
-  // unconditional and moved up to the other network devices area
-  if (config.ethernet()) {
-    qemu_cmd.AddParameter("-netdev");
-    qemu_cmd.AddParameter("tap,id=hostnet2,ifname=", instance.ethernet_tap_name(),
-                          ",script=no,downscript=no", vhost_net);
-
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtio-net-pci,netdev=hostnet2,id=net2");
-  }
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("qemu-xhci,id=xhci");

@@ -30,9 +30,8 @@ using vm_manager::ValidateHostConfiguration;
 
 class ValidateTapDevices : public Feature {
  public:
-  INJECT(ValidateTapDevices(const CuttlefishConfig& config,
-                            const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+  INJECT(ValidateTapDevices(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   bool Enabled() const override { return true; }
   std::string Name() const override { return "ValidateTapDevices"; }
@@ -47,8 +46,7 @@ class ValidateTapDevices : public Feature {
     } else if (used_tap_devices.count(instance_.mobile_tap_name())) {
       LOG(ERROR) << "Mobile TAP device already in use";
       return false;
-    } else if (config_.ethernet() &&
-               used_tap_devices.count(instance_.ethernet_tap_name())) {
+    } else if (used_tap_devices.count(instance_.ethernet_tap_name())) {
       LOG(ERROR) << "Ethernet TAP device already in use";
       return false;
     }
@@ -56,7 +54,6 @@ class ValidateTapDevices : public Feature {
   }
 
  private:
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
@@ -94,8 +91,7 @@ class ValidateHostConfigurationFeature : public Feature {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 validationComponent() {
   return fruit::createComponent()
       .addMultibinding<Feature, ValidateHostConfigurationFeature>()
