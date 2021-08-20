@@ -695,14 +695,6 @@ bool CuttlefishConfig::vhost_net() const {
   return (*dictionary_)[kVhostNet].asBool();
 }
 
-static constexpr char kEthernet[] = "ethernet";
-void CuttlefishConfig::set_ethernet(bool ethernet) {
-  (*dictionary_)[kEthernet] = ethernet;
-}
-bool CuttlefishConfig::ethernet() const {
-  return (*dictionary_)[kEthernet].asBool();
-}
-
 static constexpr char kRecordScreen[] = "record_screen";
 void CuttlefishConfig::set_record_screen(bool record_screen) {
   (*dictionary_)[kRecordScreen] = record_screen;

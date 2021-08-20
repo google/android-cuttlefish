@@ -49,7 +49,7 @@ on fs
 
     start setup_wifi
     # works around framework netiface enumeration issue
-    start rename_eth1
+    start rename_eth0
 
     start bt_vhci_forwarder
 
@@ -87,7 +87,7 @@ service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=/dev
 service setup_wifi /vendor/bin/setup_wifi
     oneshot
 
-service rename_eth1 /vendor/bin/rename_netiface eth1 rmnet0
+service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
     oneshot
 
 on property:sys.boot_completed=1
