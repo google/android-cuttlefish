@@ -45,3 +45,7 @@ DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/phone/overlay
 # These flags are important for the GSI, but break auto
 # These are used by aosp_cf_x86_go_phone targets
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
+
+# Storage: for factory reset protection feature
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.frp.pst=/dev/block/by-name/frp
