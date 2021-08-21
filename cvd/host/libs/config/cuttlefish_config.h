@@ -292,6 +292,9 @@ class CuttlefishConfig {
   void set_ap_kernel_image(const std::string& path);
   std::string ap_kernel_image() const;
 
+  void set_ethernet(bool ethernet);
+  bool ethernet() const;
+
   void set_record_screen(bool record_screen);
   bool record_screen() const;
 
