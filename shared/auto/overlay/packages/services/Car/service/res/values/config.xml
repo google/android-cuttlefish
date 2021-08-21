@@ -23,16 +23,6 @@
 -->
 <resources>
     <bool name="audioUseDynamicRouting">true</bool>
-    <!--  Configuration to enable muting of individual volume groups. If this is set to
-          false, muting of individual volume groups is disabled, instead muting will toggle master
-          mute. If this is set to true, car volume group muting is enabled and each individual
-          volume group can be muted separately. -->
-    <bool name="audioUseCarVolumeGroupMuting">false</bool>
-    <!--  Configuration to enable IAudioControl#onDevicesToDuckChange API to inform HAL when to
-      duck. If this is set to true, the API will receive signals indicating which output devices
-      to duck as well as what usages are currently holding focus. If set to false, the API will
-      not be called. -->
-    <bool name="audioUseHalDuckingSignals">false</bool>
 
     <!--
     Lists all occupant (= driver + passenger) zones available in the car.
