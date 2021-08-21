@@ -22,6 +22,16 @@
 
 namespace cuttlefish {
 
+namespace {
+bool writeJsonEventMessage(
+    std::shared_ptr<cuttlefish::VsockConnection> connection,
+    const std::string& message) {
+  Json::Value json_message;
+  json_message["event"] = message;
+  return connection && connection->WriteMessage(json_message);
+}
+}  // namespace
+
 VsockFrameProvider::~VsockFrameProvider() { stop(); }
 
 void VsockFrameProvider::start(
@@ -30,6 +40,7 @@ void VsockFrameProvider::start(
   stop();
   running_ = true;
   connection_ = connection;
+  writeJsonEventMessage(connection, "VIRTUAL_DEVICE_START_CAMERA_SESSION");
   reader_thread_ =
       std::thread([this, width, height] { VsockReadLoop(width, height); });
 }
@@ -40,6 +51,7 @@ void VsockFrameProvider::stop() {
   if (reader_thread_.joinable()) {
     reader_thread_.join();
   }
+  writeJsonEventMessage(connection_, "VIRTUAL_DEVICE_STOP_CAMERA_SESSION");
   connection_ = nullptr;
 }
 
@@ -53,11 +65,7 @@ bool VsockFrameProvider::waitYUVFrame(unsigned int max_wait_ms) {
 
 void VsockFrameProvider::requestJpeg() {
   jpeg_pending_ = true;
-  Json::Value message;
-  message["event"] = "VIRTUAL_DEVICE_CAPTURE_IMAGE";
-  if (connection_) {
-    connection_->WriteMessage(message);
-  }
+  writeJsonEventMessage(connection_, "VIRTUAL_DEVICE_CAPTURE_IMAGE");
 }
 
 void VsockFrameProvider::cancelJpegRequest() { jpeg_pending_ = false; }
