@@ -62,6 +62,9 @@ constexpr auto kControlPanelButtonLidSwitchOpen = "lid_switch_open";
 constexpr auto kControlPanelButtonHingeAngleValue = "hinge_angle_value";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 
+constexpr int kRegistrationRetries = 3;
+constexpr int kRetryFirstIntervalMs = 1000;
+
 void SendJson(WsConnection* ws_conn, const Json::Value& data) {
   Json::StreamWriterBuilder factory;
   auto data_str = Json::writeString(factory, data);
@@ -173,6 +176,8 @@ class Streamer::Impl : public WsConnectionObserver {
   std::vector<ControlPanelButtonDescriptor> custom_control_panel_buttons_;
   std::shared_ptr<AudioDeviceModuleWrapper> audio_device_module_;
   std::unique_ptr<CameraStreamer> camera_streamer_;
+  int registration_retries_left_ = kRegistrationRetries;
+  int retry_interval_ms_ = kRetryFirstIntervalMs;
 };
 
 Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
@@ -434,13 +439,23 @@ void Streamer::Impl::OnClose() {
 
 void Streamer::Impl::OnError(const std::string& error) {
   // Called from websocket thread.
-  LOG(ERROR) << "Error on connection with the operator: " << error;
-  signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
-    auto observer = operator_observer_.lock();
-    if (observer) {
-      observer->OnError();
-    }
-  });
+  if (registration_retries_left_) {
+    LOG(WARNING) << "Connection to operator failed (" << error << "), "
+                 << registration_retries_left_ << " retries left";
+    --registration_retries_left_;
+    signal_thread_->PostDelayedTask(
+        RTC_FROM_HERE, [this]() { server_connection_->Connect(); },
+        retry_interval_ms_);
+    retry_interval_ms_ *= 2;
+  } else {
+    LOG(ERROR) << "Error on connection with the operator: " << error;
+    signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
+      auto observer = operator_observer_.lock();
+      if (observer) {
+        observer->OnError();
+      }
+    });
+  }
 }
 
 void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
