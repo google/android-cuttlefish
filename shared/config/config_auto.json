@@ -1,6 +1,6 @@
 {
-	"x_res" : 1280,
-	"y_res" : 800,
-	"dpi" : 160,
+	"display0": "width=1280,height=800,dpi=160",
+	"display1": "width=1024,height=768,dpi=120",
+	"display2": "width=1024,height=768,dpi=120",
 	"memory_mb" : 4096
 }
