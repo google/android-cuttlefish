@@ -67,6 +67,7 @@ class CameraStreamer : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   unsigned int cid_;
   unsigned int port_;
   std::thread reader_thread_;
+  std::atomic<bool> camera_session_active_;
 };
 
 }  // namespace webrtc_streaming

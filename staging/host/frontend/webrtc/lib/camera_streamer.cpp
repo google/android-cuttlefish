@@ -23,7 +23,7 @@ namespace cuttlefish {
 namespace webrtc_streaming {
 
 CameraStreamer::CameraStreamer(unsigned int port, unsigned int cid)
-    : cid_(cid), port_(port) {}
+    : cid_(cid), port_(port), camera_session_active_(false) {}
 
 CameraStreamer::~CameraStreamer() { Disconnect(); }
 
@@ -47,9 +47,10 @@ void CameraStreamer::OnFrame(const webrtc::VideoFrame& client_frame) {
     LOG(INFO) << "Connected!";
   }
   auto resolution = resolution_.load();
-  if (resolution.height <= 0 || resolution.width <= 0) {
-    // We don't have a valid resolution that is necessary for
-    // potential frame scaling
+  if (resolution.height <= 0 || resolution.width <= 0 ||
+      !camera_session_active_.load()) {
+    // Nobody is receiving frames or we don't have a valid resolution that is
+    // necessary for potential frame scaling
     return;
   }
   auto frame = client_frame.video_frame_buffer()->ToI420().get();
@@ -142,7 +143,16 @@ void CameraStreamer::StartReadLoop() {
   }
   reader_thread_ = std::thread([this] {
     while (cvd_connection_.IsConnected()) {
+      static constexpr auto kEventKey = "event";
+      static constexpr auto kMessageStart =
+          "VIRTUAL_DEVICE_START_CAMERA_SESSION";
+      static constexpr auto kMessageStop = "VIRTUAL_DEVICE_STOP_CAMERA_SESSION";
       auto json_value = cvd_connection_.ReadJsonMessage();
+      if (json_value[kEventKey] == kMessageStart) {
+        camera_session_active_ = true;
+      } else if (json_value[kEventKey] == kMessageStop) {
+        camera_session_active_ = false;
+      }
       if (!json_value.empty()) {
         SendMessage(json_value);
       }
