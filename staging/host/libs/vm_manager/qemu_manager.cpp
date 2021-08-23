@@ -338,10 +338,6 @@ std::vector<Command> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
-  if (config.enable_gnss_grpc_proxy()) {
-    add_serial_console(instance.gnss_pipe_prefix());
-  }
-
   // Serial port for logcat, redirected to a pipe
   add_hvc_ro(instance.logcat_pipe_name());
 
@@ -349,6 +345,12 @@ std::vector<Command> QemuManager::StartCommands(
   add_hvc(instance.PerInstanceInternalPath("gatekeeper_fifo_vm"));
   if (config.enable_host_bluetooth()) {
     add_hvc(instance.PerInstanceInternalPath("bt_fifo_vm"));
+  } else {
+    add_hvc_sink();
+  }
+
+  if (config.enable_gnss_grpc_proxy()) {
+    add_hvc(instance.PerInstanceInternalPath("gnsshvc_fifo_vm"));
   } else {
     add_hvc_sink();
   }
