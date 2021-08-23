@@ -62,5 +62,13 @@ cc_binary {
     ],
     required: [
         "RemoteProvisioner",
+        "android.hardware.hardware_keystore.remote-keymint.xml",
     ],
+}
+
+prebuilt_etc {
+    name: "android.hardware.hardware_keystore.remote-keymint.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.hardware_keystore.remote-keymint.xml",
 }
