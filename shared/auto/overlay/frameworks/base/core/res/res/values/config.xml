@@ -16,15 +16,26 @@
 ** limitations under the License.
 */
 -->
+
+<!--
+  Overlay resources to configure car service based on each OEM's preference.
+  See also packages/services/Car/service/res/values/config.xml
+-->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <!-- Enable multi-user. -->
-  <bool name="config_enableMultiUserUI" translatable="false">true</bool>
-  <!-- If true, all guest users created on the device will be ephemeral. -->
-  <bool name="config_guestUserEphemeral" translatable="false">true</bool>
-  <!--  Maximum number of users allowed on the device. -->
-  <integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
-  <!-- Restricting eth2 -->
-  <string-array translatable="false" name="config_ethernet_interfaces">
-    <item>eth2;11,12,14;;</item>
-  </string-array>
+    <!-- Enable multi-user. -->
+    <bool name="config_enableMultiUserUI" translatable="false">true</bool>
+    <!-- If true, all guest users created on the device will be ephemeral. -->
+    <bool name="config_guestUserEphemeral" translatable="false">true</bool>
+    <!--  Maximum number of users allowed on the device. -->
+    <integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
+    <!-- Restricting eth2 -->
+    <string-array translatable="false" name="config_ethernet_interfaces">
+        <item>eth2;11,12,14;;</item>
+    </string-array>
+    <!-- Car uses hardware amplifier for volume. -->
+    <bool name="config_useFixedVolume">true</bool>
+    <!--
+      Handle volume keys directly in CarAudioService without passing them to the foreground app
+    -->
+    <bool name="config_handleVolumeKeysInWindowManager">true</bool>
 </resources>
