@@ -127,7 +127,7 @@ bool ResizeImage(const CuttlefishConfig& config,
 }
 } // namespace
 
-void CreateBlankImage(
+bool CreateBlankImage(
     const std::string& image, int num_mb, const std::string& image_fmt) {
   LOG(DEBUG) << "Creating " << image;
 
@@ -139,23 +139,29 @@ void CreateBlankImage(
     if (fd->Truncate(image_size_bytes) != 0) {
       LOG(ERROR) << "`truncate --size=" << num_mb << "M " << image
                  << "` failed:" << fd->StrError();
-      return;
+      return false;
     }
   }
 
   if (image_fmt == "ext4") {
-    execute({"/sbin/mkfs.ext4", image});
+    if (execute({"/sbin/mkfs.ext4", image}) != 0) {
+      return false;
+    }
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = cuttlefish::HostBinaryPath("make_f2fs");
-    execute({make_f2fs_path, "-t", image_fmt, image, "-C", "utf8", "-O",
-             "compression,extra_attr,prjquota", "-g", "android"});
+    if (execute({make_f2fs_path, "-t", image_fmt, image, "-C", "utf8", "-O",
+             "compression,extra_attr,project_quota", "-g", "android"}) != 0) {
+      return false;
+    }
   } else if (image_fmt == "sdcard") {
     // Reserve 1MB in the image for the MBR and padding, to simulate what
     // other OSes do by default when partitioning a drive
     off_t offset_size_bytes = 1 << 20;
     image_size_bytes -= offset_size_bytes;
-    CHECK(NewfsMsdos(image, num_mb, 1) == true)
-        << "Failed to create SD-Card filesystem";
+    if (!NewfsMsdos(image, num_mb, 1)) {
+      LOG(ERROR) << "Failed to create SD-Card filesystem";
+      return false;
+    }
     // Write the MBR after the filesystem is formatted, as the formatting tools
     // don't consistently preserve the image contents
     MasterBootRecord mbr = {
@@ -169,12 +175,13 @@ void CreateBlankImage(
     auto fd = SharedFD::Open(image, O_RDWR);
     if (WriteAllBinary(fd, &mbr) != sizeof(MasterBootRecord)) {
       LOG(ERROR) << "Writing MBR to " << image << " failed:" << fd->StrError();
-      return;
+      return false;
     }
   } else if (image_fmt != "none") {
     LOG(WARNING) << "Unknown image format '" << image_fmt
                  << "' for " << image << ", treating as 'none'.";
   }
+  return true;
 }
 
 std::string GetFsType(const std::string& path) {
@@ -267,7 +274,10 @@ DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
       LOG(ERROR) << "-blank_data_image_mb is required to create data image";
       return DataImageResult::Error;
     }
-    CreateBlankImage(data_image.c_str(), file_mb, config.userdata_format());
+    if (!CreateBlankImage(data_image.c_str(), file_mb,
+                          config.userdata_format())) {
+      return DataImageResult::Error;
+    }
     return DataImageResult::FileUpdated;
   } else if (resize) {
     if (!data_exists) {
@@ -291,7 +301,9 @@ bool InitializeMiscImage(const std::string& misc_image) {
   }
 
   LOG(DEBUG) << "misc partition image: creating empty";
-  CreateBlankImage(misc_image, 1 /* mb */, "none");
+  if (!CreateBlankImage(misc_image, 1 /* mb */, "none")) {
+    return false;
+  }
   return true;
 }
 
