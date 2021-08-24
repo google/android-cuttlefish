@@ -163,8 +163,6 @@ class ServerLoopImpl : public ServerLoop, public Feature {
         instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
         instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
         instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
-        instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
     };
     for (const auto& pipe : pipes) {
       unlink(pipe.c_str());
