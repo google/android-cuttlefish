@@ -9,6 +9,8 @@
 
 #include "host/libs/config/mbr.h"
 
+#include "blkid.h"
+
 namespace cuttlefish {
 
 namespace {
@@ -175,12 +177,51 @@ void CreateBlankImage(
   }
 }
 
+std::string GetFsType(const std::string& path) {
+  std::string fs_type;
+  blkid_cache cache;
+  if (blkid_get_cache(&cache, NULL) < 0) {
+    LOG(INFO) << "blkid_get_cache failed";
+    return fs_type;
+  }
+  blkid_dev dev = blkid_get_dev(cache, path.c_str(), BLKID_DEV_NORMAL);
+  if (!dev) {
+    LOG(INFO) << "blkid_get_dev failed";
+    blkid_put_cache(cache);
+    return fs_type;
+  }
+
+  const char *type, *value;
+  blkid_tag_iterate iter = blkid_tag_iterate_begin(dev);
+  while (blkid_tag_next(iter, &type, &value) == 0) {
+    if (!strcmp(type, "TYPE")) {
+      fs_type = value;
+    }
+  }
+  blkid_tag_iterate_end(iter);
+  blkid_put_cache(cache);
+  return fs_type;
+}
+
 DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
                                      const std::string& data_image) {
   bool data_exists = FileHasContent(data_image.c_str());
   bool remove{};
   bool create{};
   bool resize{};
+  bool change_format{};
+  std::string fs_type;
+  int file_mb = config.blank_data_image_mb();
+
+  if (data_exists) {
+    fs_type = GetFsType(data_image);
+    if (fs_type != config.userdata_format()) {
+      change_format = true;
+      if (file_mb <= 0) {
+        file_mb = FileSize(data_image) >> 20;
+      }
+    }
+  }
 
   if (config.data_policy() == kDataPolicyUseExisting) {
     if (!data_exists) {
@@ -204,6 +245,11 @@ DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
     remove = false;
     resize = false;
   } else if (config.data_policy() == kDataPolicyResizeUpTo) {
+    if (change_format) {
+      LOG(ERROR) << "You should NOT change the fs format with -data_policy="
+                 << kDataPolicyResizeUpTo;
+      return DataImageResult::Error;
+    }
     create = false;
     remove = false;
     resize = true;
@@ -216,20 +262,19 @@ DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
     RemoveFile(data_image.c_str());
   }
 
-  if (create) {
-    if (config.blank_data_image_mb() <= 0) {
+  if (create || change_format) {
+    if (file_mb <= 0) {
       LOG(ERROR) << "-blank_data_image_mb is required to create data image";
       return DataImageResult::Error;
     }
-    CreateBlankImage(data_image.c_str(), config.blank_data_image_mb(),
-                     config.userdata_format());
+    CreateBlankImage(data_image.c_str(), file_mb, config.userdata_format());
     return DataImageResult::FileUpdated;
   } else if (resize) {
     if (!data_exists) {
       LOG(ERROR) << data_image << " does not exist, but resizing was requested";
       return DataImageResult::Error;
     }
-    bool success = ResizeImage(config, data_image.c_str(), config.blank_data_image_mb());
+    bool success = ResizeImage(config, data_image.c_str(), file_mb);
     return success ? DataImageResult::FileUpdated : DataImageResult::Error;
   } else {
     LOG(DEBUG) << data_image << " exists. Not creating it.";

@@ -23,6 +23,7 @@ cc_binary_host {
         "main.cc",
     ],
     shared_libs: [
+        "libext2_blkid",
         "libbase",
         "libcuttlefish_utils",
         "libjsoncpp",
