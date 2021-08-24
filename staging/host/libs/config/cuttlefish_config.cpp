@@ -391,14 +391,6 @@ void CuttlefishConfig::set_blank_data_image_mb(int blank_data_image_mb) {
   (*dictionary_)[kBlankDataImageMb] = blank_data_image_mb;
 }
 
-static constexpr char kBlankDataImageFmt[] = "blank_data_image_fmt";
-std::string CuttlefishConfig::blank_data_image_fmt() const {
-  return (*dictionary_)[kBlankDataImageFmt].asString();
-}
-void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
-  (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
-}
-
 static constexpr char kBootloader[] = "bootloader";
 std::string CuttlefishConfig::bootloader() const {
   return (*dictionary_)[kBootloader].asString();
@@ -748,6 +740,16 @@ bool CuttlefishConfig::bootconfig_supported() const {
 }
 void CuttlefishConfig::set_bootconfig_supported(bool bootconfig_supported) {
   (*dictionary_)[kBootconfigSupported] = bootconfig_supported;
+}
+
+static constexpr char kUserdataFormat[] = "userdata_format";
+std::string CuttlefishConfig::userdata_format() const {
+  return (*dictionary_)[kUserdataFormat].asString();
+}
+void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
+  auto fmt = userdata_format;
+  std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
+  (*dictionary_)[kUserdataFormat] = fmt;
 }
 
 // Creates the (initially empty) config object and populates it with values from
