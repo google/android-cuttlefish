@@ -27,10 +27,6 @@
 
 /dev/vhci  u:object_r:bt_device:s0
 
-# gnss hal can also read/write from hvc6
-# /dev/hvc6  u:object_r:serial_device:s0
-/dev/hvc6  u:object_r:gnss_device:s0
-
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
 
