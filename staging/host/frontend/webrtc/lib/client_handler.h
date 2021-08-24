@@ -40,6 +40,9 @@ class ControlChannelHandler;
 class BluetoothChannelHandler;
 class CameraChannelHandler;
 
+class ClientVideoTrackInterface;
+class ClientVideoTrackImpl;
+
 class ClientHandler : public webrtc::PeerConnectionObserver,
                       public std::enable_shared_from_this<ClientHandler> {
  public:
@@ -58,7 +61,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   bool AddAudio(rtc::scoped_refptr<webrtc::AudioTrackInterface> track,
                   const std::string& label);
 
-  webrtc::VideoTrackInterface* GetCameraStream() const;
+  ClientVideoTrackInterface* GetCameraStream();
 
   void HandleMessage(const Json::Value& client_message);
 
@@ -130,6 +133,15 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::unique_ptr<ControlChannelHandler> control_handler_;
   std::unique_ptr<BluetoothChannelHandler> bluetooth_handler_;
   std::unique_ptr<CameraChannelHandler> camera_data_handler_;
+  std::unique_ptr<ClientVideoTrackImpl> camera_track_;
+};
+
+class ClientVideoTrackInterface {
+ public:
+  virtual ~ClientVideoTrackInterface() = default;
+  virtual void AddOrUpdateSink(
+      rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
+      const rtc::VideoSinkWants& wants) = 0;
 };
 
 }  // namespace webrtc_streaming

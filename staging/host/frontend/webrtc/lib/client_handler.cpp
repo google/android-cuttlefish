@@ -103,6 +103,39 @@ class CvdOnSetRemoteDescription
 
 }  // namespace
 
+// Video streams initiating in the client may be added and removed at unexpected
+// times, causing the webrtc objects to be destroyed and created every time.
+// This class hides away that complexity and allows to set up sinks only once.
+class ClientVideoTrackImpl : public ClientVideoTrackInterface {
+ public:
+  void AddOrUpdateSink(rtc::VideoSinkInterface<webrtc::VideoFrame> *sink,
+                       const rtc::VideoSinkWants &wants) override {
+    sink_ = sink;
+    wants_ = wants;
+    if (video_track_) {
+      video_track_->AddOrUpdateSink(sink, wants);
+    }
+  }
+
+  void SetVideoTrack(webrtc::VideoTrackInterface *track) {
+    video_track_ = track;
+    if (sink_) {
+      video_track_->AddOrUpdateSink(sink_, wants_);
+    }
+  }
+
+  void UnsetVideoTrack(webrtc::VideoTrackInterface *track) {
+    if (track == video_track_) {
+      video_track_ = nullptr;
+    }
+  }
+
+ private:
+  webrtc::VideoTrackInterface* video_track_;
+  rtc::VideoSinkInterface<webrtc::VideoFrame> *sink_ = nullptr;
+  rtc::VideoSinkWants wants_ = {};
+};
+
 class InputChannelHandler : public webrtc::DataChannelObserver {
  public:
   InputChannelHandler(
@@ -439,7 +472,8 @@ ClientHandler::ClientHandler(
     : client_id_(client_id),
       observer_(observer),
       send_to_client_(send_to_client_cb),
-      on_connection_changed_cb_(on_connection_changed_cb) {}
+      on_connection_changed_cb_(on_connection_changed_cb),
+      camera_track_(new ClientVideoTrackImpl()) {}
 
 ClientHandler::~ClientHandler() {
   for (auto &data_channel : data_channels_) {
@@ -499,15 +533,8 @@ bool ClientHandler::AddAudio(
   return true;
 }
 
-webrtc::VideoTrackInterface *ClientHandler::GetCameraStream() const {
-  for (const auto &tranceiver : peer_connection_->GetTransceivers()) {
-    auto track = tranceiver->receiver()->track();
-    if (track &&
-        track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-      return static_cast<webrtc::VideoTrackInterface *>(track.get());
-    }
-  }
-  return nullptr;
+ClientVideoTrackInterface* ClientHandler::GetCameraStream() {
+  return camera_track_.get();
 }
 
 void ClientHandler::LogAndReplyError(const std::string &error_msg) const {
@@ -522,6 +549,7 @@ void ClientHandler::OnCreateSDPSuccess(
     webrtc::SessionDescriptionInterface *desc) {
   std::string offer_str;
   desc->ToString(&offer_str);
+  std::string sdp_type = desc->type();
   peer_connection_->SetLocalDescription(
       // The peer connection wraps this raw pointer with a scoped_refptr, so
       // it's guaranteed to be deleted at some point
@@ -533,7 +561,7 @@ void ClientHandler::OnCreateSDPSuccess(
   desc = nullptr;
 
   Json::Value reply;
-  reply["type"] = "offer";
+  reply["type"] = sdp_type;
   reply["sdp"] = offer_str;
 
   state_ = State::kAwaitingAnswer;
@@ -582,6 +610,40 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
         webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
     // The created offer wil be sent to the client on
     // OnSuccess(webrtc::SessionDescriptionInterface* desc)
+  } else if (type == "offer") {
+    auto result = ValidationResult::ValidateJsonObject(
+        message, type, {{"sdp", Json::ValueType::stringValue}});
+    if (!result.ok()) {
+      LogAndReplyError(result.error());
+      return;
+    }
+    auto remote_desc_str = message["sdp"].asString();
+    auto remote_desc = webrtc::CreateSessionDescription(
+        webrtc::SdpType::kOffer, remote_desc_str, nullptr /*error*/);
+    if (!remote_desc) {
+      LogAndReplyError("Failed to parse answer.");
+      return;
+    }
+
+    rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
+        new rtc::RefCountedObject<
+            CvdOnSetRemoteDescription>([this](webrtc::RTCError error) {
+          if (!error.ok()) {
+            LogAndReplyError(error.message());
+            // The remote description was rejected, this client can't be
+            // trusted anymore.
+            Close();
+            return;
+          }
+          peer_connection_->CreateAnswer(
+              // No memory leak here because this is a ref counted objects and
+              // the peer connection immediately wraps it with a scoped_refptr
+              new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
+                  weak_from_this()),
+              webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+        }));
+    peer_connection_->SetRemoteDescription(std::move(remote_desc), observer);
+    state_ = State::kConnecting;
   } else if (type == "answer") {
     if (state_ != State::kAwaitingAnswer) {
       LogAndReplyError("Received unexpected SDP answer");
@@ -820,11 +882,22 @@ void ClientHandler::OnIceCandidatesRemoved(
 }
 void ClientHandler::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
-  // ignore
+  auto track = transceiver->receiver()->track();
+  if (track && track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+    // It's ok to take the raw pointer here because we make sure to unset it
+    // when the track is removed
+    camera_track_->SetVideoTrack(
+        static_cast<webrtc::VideoTrackInterface *>(track.get()));
+  }
 }
 void ClientHandler::OnRemoveTrack(
     rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
-  // ignore
+  auto track = receiver->track();
+  if (track && track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+    // this only unsets if the track matches the one already in store
+    camera_track_->UnsetVideoTrack(
+        reinterpret_cast<webrtc::VideoTrackInterface *>(track.get()));
+  }
 }
 
 }  // namespace webrtc_streaming
