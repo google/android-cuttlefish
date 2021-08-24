@@ -48,8 +48,6 @@ DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
             "'always_create'.");
 DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
-DEFINE_string(blank_data_image_fmt, "f2fs",
-              "The fs format for the blank data image. Used with mkfs.");
 DEFINE_int32(gdb_port, 0,
              "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
              "kernel must have been built with CONFIG_RANDOMIZE_BASE "
@@ -318,6 +316,8 @@ DEFINE_bool(enable_audio, cuttlefish::HostArch() != cuttlefish::Arch::Arm64,
             "Whether to play or capture audio");
 
 DEFINE_uint32(camera_server_port, 0, "camera vsock port");
+
+DEFINE_string(userdata_format, "f2fs", "The userdata filesystem format");
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -637,7 +637,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
-  tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
 
   tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
 
@@ -731,6 +730,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth);
 
   tmp_config_obj.set_protected_vm(FLAGS_protected_vm);
+
+  tmp_config_obj.set_userdata_format(FLAGS_userdata_format);
 
   std::vector<int> num_instances;
   for (int i = 0; i < FLAGS_num_instances; i++) {

@@ -211,7 +211,7 @@ DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
       return DataImageResult::Error;
     }
     CreateBlankImage(data_image.c_str(), config.blank_data_image_mb(),
-                     config.blank_data_image_fmt());
+                     config.userdata_format());
     return DataImageResult::FileUpdated;
   } else if (resize) {
     if (!data_exists) {
