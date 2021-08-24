@@ -260,7 +260,8 @@ int WebSocketServer::DynServerCallback(struct lws* wsi,
       switch (method) {
         case LWSHUMETH_GET: {
           auto status = dyn_handlers_[wsi]->DoGet();
-          if (!WriteCommonHttpHeaders(status, "application/json", wsi)) {
+          if (!WriteCommonHttpHeaders(static_cast<int>(status),
+                                      "application/json", wsi)) {
             return 1;
           }
           // Write the response later, when the server is ready
@@ -288,7 +289,8 @@ int WebSocketServer::DynServerCallback(struct lws* wsi,
     case LWS_CALLBACK_HTTP_BODY_COMPLETION: {
       auto handler = dyn_handlers_[wsi].get();
       auto status = handler->DoPost();
-      if (!WriteCommonHttpHeaders(status, "application/json", wsi)) {
+      if (!WriteCommonHttpHeaders(static_cast<int>(status), "application/json",
+                                  wsi)) {
         return 1;
       }
       lws_callback_on_writable(wsi);
