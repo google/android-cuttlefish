@@ -35,11 +35,16 @@ const std::pair<std::string, std::string> kGrubBlobTable[] = {
     {"/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi", kBootPathAA64},
 };
 
-bool ForceFsckImage(const char* data_image) {
-  auto fsck_path = HostBinaryPath("fsck.f2fs");
+bool ForceFsckImage(const CuttlefishConfig& config, const char* data_image) {
+  std::string fsck_path;
+  if (config.userdata_format() == "f2fs") {
+    fsck_path = HostBinaryPath("fsck.f2fs");
+  } else if (config.userdata_format() == "ext4") {
+    fsck_path = "/sbin/e2fsck";
+  }
   int fsck_status = execute({fsck_path, "-y", "-f", data_image});
   if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
-    LOG(ERROR) << "`fsck.f2fs -y -f " << data_image << "` failed with code "
+    LOG(ERROR) << "`" << fsck_path << " -y -f " << data_image << "` failed with code "
                << fsck_status;
     return false;
   }
@@ -77,7 +82,8 @@ bool NewfsMsdos(const std::string& data_image, int data_image_mb,
                          data_image}) == 0;
 }
 
-bool ResizeImage(const char* data_image, int data_image_mb) {
+bool ResizeImage(const CuttlefishConfig& config,
+                 const char* data_image, int data_image_mb) {
   auto file_mb = FileSize(data_image) >> 20;
   if (file_mb > data_image_mb) {
     LOG(ERROR) << data_image << " is already " << file_mb << " MB, will not "
@@ -94,18 +100,23 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
                   << data_image << "` failed:" << fd->StrError();
       return false;
     }
-    bool fsck_success = ForceFsckImage(data_image);
+    bool fsck_success = ForceFsckImage(config, data_image);
     if (!fsck_success) {
       return false;
     }
-    auto resize_path = HostBinaryPath("resize.f2fs");
+    std::string resize_path;
+    if (config.userdata_format() == "f2fs") {
+      resize_path = HostBinaryPath("resize.f2fs");
+    } else if (config.userdata_format() == "ext4") {
+      resize_path = "/sbin/resize2fs";
+    }
     int resize_status = execute({resize_path, data_image});
     if (resize_status != 0) {
-      LOG(ERROR) << "`resize.f2fs " << data_image << "` failed with code "
+      LOG(ERROR) << "`" << resize_path << " " << data_image << "` failed with code "
                  << resize_status;
       return false;
     }
-    fsck_success = ForceFsckImage(data_image);
+    fsck_success = ForceFsckImage(config, data_image);
     if (!fsck_success) {
       return false;
     }
@@ -218,7 +229,7 @@ DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
       LOG(ERROR) << data_image << " does not exist, but resizing was requested";
       return DataImageResult::Error;
     }
-    bool success = ResizeImage(data_image.c_str(), config.blank_data_image_mb());
+    bool success = ResizeImage(config, data_image.c_str(), config.blank_data_image_mb());
     return success ? DataImageResult::FileUpdated : DataImageResult::Error;
   } else {
     LOG(DEBUG) << data_image << " exists. Not creating it.";
