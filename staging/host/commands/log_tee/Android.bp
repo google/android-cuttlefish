@@ -23,6 +23,7 @@ cc_binary {
         "log_tee.cpp",
     ],
     shared_libs: [
+        "libext2_blkid",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",

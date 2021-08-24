@@ -29,6 +29,7 @@ cc_binary {
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
+        "libext2_blkid",
     ],
     target: {
         host: {

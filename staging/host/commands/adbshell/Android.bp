@@ -26,6 +26,7 @@ cc_binary_host {
         "-D_XOPEN_SOURCE",
     ],
     shared_libs: [
+        "libext2_blkid",
         "libbase",
         "libcuttlefish_utils",
     ],
