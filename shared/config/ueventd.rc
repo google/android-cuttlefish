@@ -26,8 +26,6 @@
 /dev/hvc5 0660 bluetooth bluetooth
 /dev/vhci 0660 bluetooth bluetooth
 
-# gnss hal can access hvc6 in addition to gnss0
-/dev/hvc6 0666 system system
 /dev/gnss0 0666 system system
 
 # Factory Reset Protection
