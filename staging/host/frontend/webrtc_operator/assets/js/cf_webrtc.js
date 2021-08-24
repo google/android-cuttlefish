@@ -88,7 +88,6 @@ class DeviceConnection {
     this._media_stream = media_stream;
     // Disable the microphone by default
     this.useMic(false);
-    this.useVideo(false);
     this._cameraDataChannel = pc.createDataChannel('camera-data-channel');
     this._cameraDataChannel.binaryType = 'arraybuffer';
     this._cameraInputQueue = new Array();
@@ -121,7 +120,6 @@ class DeviceConnection {
             console.error('Received unexpected Bluetooth message');
           }
         });
-    this.sendCameraResolution();
     this._streams = {};
     this._streamPromiseResolvers = {};
 
@@ -148,8 +146,8 @@ class DeviceConnection {
   }
 
   get imageCapture() {
-    if (this._media_stream) {
-      const track = this._media_stream.getVideoTracks()[0];
+    if (this._cameraSenders && this._cameraSenders.length > 0) {
+      let track = this._cameraSenders[0].track;
       return new ImageCapture(track);
     }
     return undefined;
@@ -164,9 +162,7 @@ class DeviceConnection {
   }
 
   get cameraEnabled() {
-    if (this._media_stream) {
-      return this._media_stream.getVideoTracks().some(track => track.enabled);
-    }
+    return this._cameraSenders && this._cameraSenders.length > 0;
   }
 
   getStream(stream_id) {
@@ -240,28 +236,53 @@ class DeviceConnection {
     }
   }
 
-  useVideo(in_use) {
-    if (this._media_stream) {
-      this._media_stream.getVideoTracks().forEach(
-          track => track.enabled = in_use);
+  async useVideo(in_use) {
+    if (in_use) {
+      if (this._cameraSenders) {
+        console.warning('Video is already in use');
+        return;
+      }
+      this._cameraSenders = [];
+      try {
+        let videoStream = await navigator.mediaDevices.getUserMedia(
+            {video: true, audio: false});
+        this.sendCameraResolution(videoStream);
+        videoStream.getTracks().forEach(track => {
+          console.info(`Using ${track.kind} device: ${track.label}`);
+          this._cameraSenders.push(this._pc.addTrack(track));
+        });
+      } catch (e) {
+        console.error('Failed to add video stream to peer connection: ', e);
+      }
+    } else {
+      if (!this._cameraSenders) {
+        return;
+      }
+      for (const sender of this._cameraSenders) {
+        console.info(
+            `Removing ${sender.track.kind} device: ${sender.track.label}`);
+        let track = sender.track;
+        track.stop();
+        this._pc.removeTrack(sender);
+      }
+      delete this._cameraSenders;
     }
+    this._control.renegotiateConnection();
   }
 
-  sendCameraResolution() {
-    if (this._media_stream) {
-      const cameraTracks = this._media_stream.getVideoTracks();
-      if (cameraTracks.length > 0) {
-        const settings = cameraTracks[0].getSettings();
-        this._x_res = settings.width;
-        this._y_res = settings.height;
-        this.sendControlMessage(JSON.stringify({
-          command: 'camera_settings',
-          width: settings.width,
-          height: settings.height,
-          frame_rate: settings.frameRate,
-          facing: settings.facingMode
-        }));
-      }
+  sendCameraResolution(stream) {
+    const cameraTracks = stream.getVideoTracks();
+    if (cameraTracks.length > 0) {
+      const settings = cameraTracks[0].getSettings();
+      this._x_res = settings.width;
+      this._y_res = settings.height;
+      this.sendControlMessage(JSON.stringify({
+        command: 'camera_settings',
+        width: settings.width,
+        height: settings.height,
+        frame_rate: settings.frameRate,
+        facing: settings.facingMode
+      }));
     }
   }
 
@@ -315,9 +336,7 @@ class WebRTCControl {
      * _wsPromise: promises the underlying websocket, should resolve when the
      *             socket passes to OPEN state, will be rejecte/replaced by a
      *             rejected promise if an error is detected on the socket.
-     *
-     * _onOffer
-     * _onIceCandidate
+     * _pc: The webrtc peer connection.
      */
 
     this._promiseResolvers = {};
@@ -375,22 +394,17 @@ class WebRTCControl {
     let type = message.type;
     switch (type) {
       case 'offer':
-        if (this._onOffer) {
-          this._onOffer({type: 'offer', sdp: message.sdp});
-        } else {
-          console.error('Receive offer, but nothing is wating for it');
-        }
+        this._onOffer({type: 'offer', sdp: message.sdp});
+        break;
+      case 'answer':
+        this._onAnswer({type: 'answer', sdp: message.sdp});
         break;
       case 'ice-candidate':
-        if (this._onIceCandidate) {
           this._onIceCandidate(new RTCIceCandidate({
             sdpMid: message.mid,
             sdpMLineIndex: message.mLineIndex,
             candidate: message.candidate
           }));
-        } else {
-          console.error('Received ice candidate but nothing is waiting for it');
-        }
         break;
       default:
         console.error('Unrecognized message type from device: ', type);
@@ -402,15 +416,45 @@ class WebRTCControl {
     return ws.send(JSON.stringify(obj));
   }
   async _sendToDevice(payload) {
-    this._wsSendJson({message_type: 'forward', payload});
+    return this._wsSendJson({message_type: 'forward', payload});
   }
 
-  onOffer(cb) {
-    this._onOffer = cb;
+  async _sendClientDescription(desc) {
+    console.debug('sendClientDescription');
+    return this._sendToDevice({type: 'answer', sdp: desc.sdp});
   }
 
-  onIceCandidate(cb) {
-    this._onIceCandidate = cb;
+  async _sendIceCandidate(candidate) {
+    return this._sendToDevice({type: 'ice-candidate', candidate});
+  }
+
+  async _onOffer(desc) {
+    console.debug('Remote description (offer): ', desc);
+    try {
+      await this._pc.setRemoteDescription(desc);
+      let answer = await this._pc.createAnswer();
+      console.debug('Answer: ', answer);
+      await this._pc.setLocalDescription(answer);
+      await this._sendClientDescription(answer);
+    } catch (e) {
+      console.error('Error processing remote description (offer)', e)
+      throw e;
+    }
+  }
+
+  async _onAnswer(answer) {
+    console.debug('Remote description (answer): ', answer);
+    try {
+      await this._pc.setRemoteDescription(answer);
+    } catch (e) {
+      console.error('Error processing remote description (answer)', e)
+      throw e;
+    }
+  }
+
+  _onIceCandidate(iceCandidate) {
+    console.debug(`Remote ICE Candidate: `, iceCandidate);
+    this._pc.addIceCandidate(iceCandidate);
   }
 
   async requestDevice(device_id) {
@@ -427,24 +471,25 @@ class WebRTCControl {
     });
   }
 
-  ConnectDevice() {
+  ConnectDevice(pc) {
+    this._pc = pc;
     console.debug('ConnectDevice');
+    // ICE candidates will be generated when we add the offer. Adding it here
+    // instead of in _onOffer because this function is called once per peer
+    // connection, while _onOffer may be called more than once due to
+    // renegotiations.
+    this._pc.addEventListener('icecandidate', evt => {
+      if (evt.candidate) this._sendIceCandidate(evt.candidate);
+    });
     this._sendToDevice({type: 'request-offer'});
   }
 
-  /**
-   * Sends a remote description to the device.
-   */
-  async sendClientDescription(desc) {
-    console.debug('sendClientDescription');
-    this._sendToDevice({type: 'answer', sdp: desc.sdp});
-  }
-
-  /**
-   * Sends an ICE candidate to the device
-   */
-  async sendIceCandidate(candidate) {
-    this._sendToDevice({type: 'ice-candidate', candidate});
+  async renegotiateConnection() {
+    console.debug('Re-negotiating connection');
+    let offer = await this._pc.createOffer();
+    console.debug('Local description (offer): ', offer);
+    await this._pc.setLocalDescription(offer);
+    this._sendToDevice({type: 'offer', sdp: offer.sdp});
   }
 }
 
@@ -481,12 +526,12 @@ export async function Connect(deviceId, options) {
       pc_config.iceServers.push(server);
     }
   }
-  let pc = createPeerConnection(infraConfig, control);
+  let pc = createPeerConnection(infraConfig);
 
   let mediaStream;
   try {
     mediaStream =
-        await navigator.mediaDevices.getUserMedia({audio: true});
+        await navigator.mediaDevices.getUserMedia({video: false, audio: true});
     const tracks = mediaStream.getTracks();
     tracks.forEach(track => {
       console.info(`Using ${track.kind} device: ${track.label}`);
@@ -498,30 +543,7 @@ export async function Connect(deviceId, options) {
 
   let deviceConnection = new DeviceConnection(pc, control, mediaStream);
   deviceConnection.description = deviceInfo;
-  async function acceptOfferAndReplyAnswer(offer) {
-    try {
-      await pc.setRemoteDescription(offer);
-      let answer = await pc.createAnswer();
-      console.debug('Answer: ', answer);
-      await pc.setLocalDescription(answer);
-      await control.sendClientDescription(answer);
-    } catch (e) {
-      console.error('Error establishing WebRTC connection: ', e)
-      throw e;
-    }
-  }
-  control.onOffer(desc => {
-    console.debug('Offer: ', desc);
-    acceptOfferAndReplyAnswer(desc);
-  });
-  control.onIceCandidate(iceCandidate => {
-    console.debug(`Remote ICE Candidate: `, iceCandidate);
-    pc.addIceCandidate(iceCandidate);
-  });
 
-  pc.addEventListener('icecandidate', evt => {
-    if (evt.candidate) control.sendIceCandidate(evt.candidate);
-  });
   let connected_promise = new Promise((resolve, reject) => {
     pc.addEventListener('connectionstatechange', evt => {
       let state = pc.connectionState;
@@ -532,7 +554,8 @@ export async function Connect(deviceId, options) {
       }
     });
   });
-  control.ConnectDevice();
+
+  control.ConnectDevice(pc);
 
   return connected_promise;
 }
