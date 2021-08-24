@@ -32,6 +32,7 @@ cc_binary {
         "validate.cpp",
     ],
     shared_libs: [
+        "libext2_blkid",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libcuttlefish_kernel_log_monitor_utils",

@@ -47,6 +47,7 @@ cc_binary_host {
         "tpm_serialize.cpp",
     ],
     shared_libs: [
+        "libext2_blkid",
         "libbase",
         "libcppbor_external",
         "libcppcose_rkp",
