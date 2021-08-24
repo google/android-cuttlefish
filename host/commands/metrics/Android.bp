@@ -23,6 +23,7 @@ cc_binary {
         "metrics.cc",
     ],
     shared_libs: [
+        "libext2_blkid",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
