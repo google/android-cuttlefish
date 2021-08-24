@@ -18,7 +18,7 @@ bool InitializeMiscImage(const std::string& misc_image);
 bool InitializeEspImage(const std::string& esp_image,
                         const std::string& kernel_path,
                         const std::string& initramfs_path);
-void CreateBlankImage(
+bool CreateBlankImage(
     const std::string& image, int num_mb, const std::string& image_fmt);
 
 } // namespace cuttlefish
