@@ -58,6 +58,10 @@ body {
   align-items: center;
 }
 
+#camera-control {
+  display: none !important;
+}
+
 #app-controls {
   margin-left: 10px;
 }
