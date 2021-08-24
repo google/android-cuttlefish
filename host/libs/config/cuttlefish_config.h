@@ -171,9 +171,6 @@ class CuttlefishConfig {
   void set_blank_data_image_mb(int blank_data_image_mb);
   int blank_data_image_mb() const;
 
-  void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
-  std::string blank_data_image_fmt() const;
-
   void set_bootloader(const std::string& bootloader_path);
   std::string bootloader() const;
 
@@ -309,6 +306,9 @@ class CuttlefishConfig {
 
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
+
+  void set_userdata_format(const std::string& userdata_format);
+  std::string userdata_format() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
