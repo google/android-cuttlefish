@@ -185,10 +185,13 @@ class DeviceControlApp {
         document.getElementById('keyboard-capture-control'), 'keyboard');
     let micCaptureCtrl = createToggleControl(
         document.getElementById('mic-capture-control'), 'mic');
+    let cameraCtrl = createToggleControl(
+        document.getElementById('camera-control'), 'videocam');
 
     keyboardCaptureCtrl.OnClick(
         enabled => this.#onKeyboardCaptureToggle(enabled));
     micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
+    cameraCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
 
     this.#showDeviceUI();
   }
@@ -492,7 +495,7 @@ class DeviceControlApp {
           {dpi: metadata.dpi, x_res: metadata.width, y_res: metadata.height});
     }
     if (message_data.event == 'VIRTUAL_DEVICE_CAPTURE_IMAGE') {
-      if (this.$deviceConnection.cameraEnabled) {
+      if (this.#deviceConnection.cameraEnabled) {
         this.#takePhoto();
       }
     }
