@@ -359,28 +359,38 @@ class GnssGrpcProxyServer : public CommandSource {
 
  protected:
   bool Setup() override {
-
-    std::vector<SharedFD> fifos;
-    std::vector<std::string> fifo_paths = {
-        instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
-    };
-    for (const auto& path : fifo_paths) {
-      unlink(path.c_str());
-      if (mkfifo(path.c_str(), 0660) < 0) {
-        PLOG(ERROR) << "Could not create " << path;
-        return false;
-      }
-      auto fd = SharedFD::Open(path, O_RDWR);
-      if (!fd->IsOpen()) {
-        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-        return false;
-      }
-      fifos.push_back(fd);
+    auto gnss_in_pipe_name = instance_.gnss_in_pipe_name();
+    if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
+                 << strerror(error);
+      return false;
     }
 
-    gnss_grpc_proxy_in_wr_ = fifos[0];
-    gnss_grpc_proxy_out_rd_ = fifos[1];
+    auto gnss_out_pipe_name = instance_.gnss_out_pipe_name();
+    if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
+                 << strerror(error);
+      return false;
+    }
+
+    // These fds will only be read from or written to, but open them with
+    // read and write access to keep them open in case the subprocesses exit
+    gnss_grpc_proxy_in_wr_ = SharedFD::Open(gnss_in_pipe_name.c_str(), O_RDWR);
+    if (!gnss_grpc_proxy_in_wr_->IsOpen()) {
+      LOG(ERROR) << "Failed to open gnss_grpc_proxy input fifo for writes: "
+                 << gnss_grpc_proxy_in_wr_->StrError();
+      return false;
+    }
+
+    gnss_grpc_proxy_out_rd_ =
+        SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
+    if (!gnss_grpc_proxy_out_rd_->IsOpen()) {
+      LOG(ERROR) << "Failed to open gnss_grpc_proxy output fifo for reads: "
+                 << gnss_grpc_proxy_out_rd_->StrError();
+      return false;
+    }
     return true;
   }
 
