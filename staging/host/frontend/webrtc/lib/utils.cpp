@@ -28,6 +28,9 @@ namespace {
 std::string ValidateField(const Json::Value &obj, const std::string &type,
                           const std::string &field_name,
                           const Json::ValueType &field_type, bool required) {
+  if (!obj.isObject()) {
+    return "Expected object with name-value pairs";
+  }
   if (!obj.isMember(field_name) && !required) {
     return "";
   }
