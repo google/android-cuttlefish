@@ -66,6 +66,11 @@ class WebSocketHandlerFactory {
 
 class WebSocketServer;
 
+enum class HttpStatusCode : int {
+  Ok = 200,
+  NotFound = 404,
+};
+
 class DynHandler {
  public:
   DynHandler(struct lws* wsi);
@@ -73,10 +78,10 @@ class DynHandler {
   virtual ~DynHandler() = default;
   // TODO (jemoreira): Allow more than just JSON replies
   // TODO (jemoreira): Receive request parameters
-  // Handle a GET request. Returns the status code of the request.
-  virtual int DoGet() = 0;
-  // Handle a POST request. Returns the status code of the request.
-  virtual int DoPost() = 0;
+  // Handle a GET request.
+  virtual HttpStatusCode DoGet() = 0;
+  // Handle a POST request.
+  virtual HttpStatusCode DoPost() = 0;
 
  protected:
   void AppendDataOut(const std::string& data);
