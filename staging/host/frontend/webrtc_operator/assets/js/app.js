@@ -33,8 +33,12 @@ function showDeviceControlUI() {
 }
 
 function websocketUrl(path) {
-  return ((location.protocol == 'http:') ? 'ws:' : 'wss:') + location.host +
+  return ((location.protocol == 'http:') ? 'ws://' : 'wss://') + location.host +
       '/' + path;
+}
+
+function httpUrl(path) {
+  return location.protocol + '//' + location.host + '/' + path;
 }
 
 async function ConnectDevice(deviceId) {
@@ -80,11 +84,11 @@ function showError(msg) {
 }
 
 class DeviceListApp {
-  #websocketUrl;
+  #url;
   #selectDeviceCb;
 
-  constructor({websocketUrl, selectDeviceCb}) {
-    this.#websocketUrl = websocketUrl;
+  constructor({url, selectDeviceCb}) {
+    this.#url = url;
     this.#selectDeviceCb = selectDeviceCb;
   }
 
@@ -98,14 +102,15 @@ class DeviceListApp {
   }
 
   #UpdateDeviceList() {
-    let ws = new WebSocket(this.#websocketUrl);
-    ws.onopen = () => {
-      ws.send('give me those device ids');
-    };
-    ws.onmessage = msg => {
-      let device_ids = JSON.parse(msg.data);
-      this.#ShowNewDeviceList(device_ids);
-    };
+    $.ajax(this.#url, {
+      method: 'GET',
+      success: device_ids => {
+        this.#ShowNewDeviceList(device_ids);
+      },
+      error: e => {
+        console.error('Error getting list of device ids: ', e);
+      },
+    });
   }
 
   #ShowNewDeviceList(device_ids) {
@@ -906,7 +911,7 @@ class DeviceControlApp {
 
 // The app starts by showing the device list
 showDeviceListUI();
-let listDevicesUrl = websocketUrl('list_devices');
+let listDevicesUrl = httpUrl('list_devices');
 let selectDeviceCb = deviceId => {
   ConnectDevice(deviceId).then(
       deviceConnection => {
@@ -922,5 +927,5 @@ let selectDeviceCb = deviceId => {
       });
 };
 let deviceListApp =
-    new DeviceListApp({websocketUrl: listDevicesUrl, selectDeviceCb});
+    new DeviceListApp({url: listDevicesUrl, selectDeviceCb});
 deviceListApp.start();
