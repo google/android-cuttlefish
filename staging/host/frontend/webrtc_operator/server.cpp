@@ -69,9 +69,9 @@ int main(int argc, char** argv) {
           new cuttlefish::ClientHandlerFactory(&device_registry, server_config));
   wss.RegisterHandlerFactory(kConnectClientUriPath, std::move(client_handler_factory_p));
   auto device_list_handler_factory_p =
-      std::unique_ptr<cuttlefish::WebSocketHandlerFactory>(
+      std::unique_ptr<cuttlefish::DynHandlerFactory>(
           new cuttlefish::DeviceListHandlerFactory(device_registry));
-  wss.RegisterHandlerFactory(kListDevicesUriPath, std::move(device_list_handler_factory_p));
+  wss.RegisterDynHandlerFactory(kListDevicesUriPath, std::move(device_list_handler_factory_p));
 
   wss.Serve();
   return 0;
