@@ -21,6 +21,8 @@
 #include "host/commands/secure_env/gatekeeper_storage.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /**
  * See method descriptions for this class in
  * system/gatekeeper/include/gatekeeper/gatekeeper.h
@@ -81,3 +83,5 @@ private:
   GatekeeperStorage& secure_storage_;
   GatekeeperStorage& insecure_storage_;
 };
+
+}  // namespace cuttlefish
