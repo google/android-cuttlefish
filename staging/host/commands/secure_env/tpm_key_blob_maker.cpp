@@ -52,7 +52,7 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_OS_VERSION:
       case KM_TAG_ROOT_OF_TRUST:
       case KM_TAG_VENDOR_PATCHLEVEL:
-        LOG(ERROR) << "Root of trust and origin tags may not be specified";
+        LOG(DEBUG) << "Root of trust and origin tags may not be specified";
         return KM_ERROR_INVALID_TAG;
 
       // These are hidden
@@ -69,7 +69,7 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_INVALID:
       case KM_TAG_MAC_LENGTH:
       case KM_TAG_NONCE:
-        LOG(ERROR) << "Tag " << entry.tag
+        LOG(DEBUG) << "Tag " << entry.tag
                    << " not allowed in key generation/import";
         break;
 
@@ -94,14 +94,14 @@ static keymaster_error_t SplitEnforcedProperties(
 
       // strongbox-only tags
       case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
-        LOG(ERROR) << "Strongbox-only tag: " << entry.tag;
+        LOG(DEBUG) << "Strongbox-only tag: " << entry.tag;
         return KM_ERROR_UNSUPPORTED_TAG;
 
       case KM_TAG_ROLLBACK_RESISTANT:
         return KM_ERROR_UNSUPPORTED_TAG;
 
       case KM_TAG_ROLLBACK_RESISTANCE:
-        LOG(ERROR) << "Rollback resistance is not implemented.";
+        LOG(DEBUG) << "Rollback resistance is not implemented.";
         return KM_ERROR_ROLLBACK_RESISTANCE_UNAVAILABLE;
 
       // These are nominally HW tags, but we don't actually support HW key
