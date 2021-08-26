@@ -284,8 +284,6 @@ DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
 DEFINE_bool(record_screen, false, "Enable screen recording. "
                                   "Requires --start_webrtc");
 
-DEFINE_bool(ethernet, false, "Enable Ethernet network interface");
-
 DEFINE_bool(smt, false, "Enable simultaneous multithreading (SMT/HT)");
 
 DEFINE_int32(vsock_guest_cid,
@@ -702,8 +700,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
 
   tmp_config_obj.set_record_screen(FLAGS_record_screen);
-
-  tmp_config_obj.set_ethernet(FLAGS_ethernet);
 
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth);
 

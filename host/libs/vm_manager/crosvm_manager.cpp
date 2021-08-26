@@ -270,8 +270,9 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--switches=", instance.switches_socket_path());
   }
 
-  auto wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
+  AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
+  auto wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
 
   if (FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.AddParameter("--rw-pmem-device=",
@@ -383,12 +384,6 @@ std::vector<Command> CrosvmManager::StartCommands(
   if (config.enable_audio()) {
     crosvm_cmd.AddParameter("--ac97=backend=vios,server=" +
                             config.ForDefaultInstance().audio_server_path());
-  }
-
-  // TODO(b/172286896): This is temporarily optional, but should be made
-  // unconditional and moved up to the other network devices area
-  if (config.ethernet()) {
-    AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
   }
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
