@@ -31,6 +31,7 @@ cc_library {
         "base64.cpp",
         "tcp_socket.cpp",
         "tee_logging.cpp",
+        "unix_sockets.cpp",
         "vsock_connection.cpp",
     ],
     shared: {
@@ -58,6 +59,7 @@ cc_test_host {
     name: "libcuttlefish_utils_test",
     srcs: [
         "flag_parser_test.cpp",
+        "unix_sockets_test.cpp",
     ],
     static_libs: [
         "libbase",
