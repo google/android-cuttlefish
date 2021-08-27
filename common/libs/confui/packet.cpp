@@ -15,83 +15,27 @@
 
 #include "common/libs/confui/packet.h"
 
-#include <algorithm>
-#include <iostream>
-
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-
-#include "common/libs/confui/protocol.h"
-#include "common/libs/confui/utils.h"
-#include "common/libs/fs/shared_buf.h"
-
 namespace cuttlefish {
 namespace confui {
 namespace packet {
-ConfUiMessage PayloadToConfUiMessage(const std::string& str_to_parse) {
-  auto tokens = android::base::Split(str_to_parse, ":");
-  ConfUiCheck(tokens.size() >= 3)
-      << "PayloadToConfUiMessage takes \"" + str_to_parse + "\""
-      << "and does not have 3 tokens";
-  std::string msg;
-  std::for_each(tokens.begin() + 2, tokens.end() - 1,
-                [&msg](auto& token) { msg.append(token + ":"); });
-  msg.append(*tokens.rbegin());
-  return {tokens[0], tokens[1], msg};
-}
-
-// Use only this function to make a packet to send over the confirmation
-// ui packet layer
-template <typename... Args>
-static Payload ToPayload(const ConfUiCmd cmd, const std::string& session_id,
-                         Args&&... args) {
-  std::string cmd_str = ToString(cmd);
-  std::string msg =
-      ArgsToString(session_id, ":", cmd_str, ":", std::forward<Args>(args)...);
-  PayloadHeader header;
-  header.payload_length_ = msg.size();
-  return {header, msg};
-}
-
-template <typename... Args>
-static bool WritePayload(SharedFD d, const ConfUiCmd cmd,
-                         const std::string& session_id, Args&&... args) {
-  if (!d->IsOpen()) {
-    LOG(ERROR) << "file, socket, etc, is not open to write";
-    return false;
-  }
-  auto [payload, msg] = ToPayload(cmd, session_id, std::forward<Args>(args)...);
-
-  auto nwrite =
-      WriteAll(d, reinterpret_cast<const char*>(&payload), sizeof(payload));
-  if (nwrite != sizeof(payload)) {
-    return false;
-  }
-  nwrite = cuttlefish::WriteAll(d, msg.c_str(), msg.size());
-  if (nwrite != msg.size()) {
-    return false;
-  }
-  return true;
-}
-
-static std::optional<ConfUiMessage> ReadPayload(SharedFD s) {
+std::optional<std::string> ReadPayload(SharedFD s) {
   if (!s->IsOpen()) {
     LOG(ERROR) << "file, socket, etc, is not open to read";
     return std::nullopt;
   }
-  PayloadHeader p;
+  packet::PayloadHeader p;
   auto nread = ReadExactBinary(s, &p);
 
   if (nread != sizeof(p)) {
     return std::nullopt;
   }
-
   if (p.payload_length_ == 0) {
-    return {{SESSION_ANY, ToString(ConfUiCmd::kUnknown), std::string{""}}};
+    return {""};
   }
 
-  if (p.payload_length_ >= kMaxPayloadLength) {
-    LOG(ERROR) << "Payload length must be less than " << kMaxPayloadLength;
+  if (p.payload_length_ >= packet::kMaxPayloadLength) {
+    LOG(ERROR) << "Payload length must be less than "
+               << packet::kMaxPayloadLength;
     return std::nullopt;
   }
 
@@ -99,53 +43,12 @@ static std::optional<ConfUiMessage> ReadPayload(SharedFD s) {
   nread = ReadExact(s, buf.get(), p.payload_length_);
   buf[p.payload_length_] = 0;
   if (nread != p.payload_length_) {
+    ConfUiLog(ERROR) << "The length ReadPayload read does not match.";
     return std::nullopt;
   }
-  std::string msg_to_parse{buf.get()};
-  auto [session_id, type, contents] = PayloadToConfUiMessage(msg_to_parse);
-  return {{session_id, type, contents}};
+  std::string result{buf.get()};
+  return {result};
 }
-
-std::optional<ConfUiMessage> RecvConfUiMsg(SharedFD fd) {
-  return ReadPayload(fd);
-}
-
-std::optional<std::tuple<bool, std::string>> RecvAck(
-    SharedFD fd, const std::string& session_id) {
-  auto conf_ui_msg = RecvConfUiMsg(fd);
-  if (!conf_ui_msg) {
-    ConfUiLog(ERROR) << "Received Ack failed due to communication.";
-    return std::nullopt;
-  }
-  auto [recv_session_id, type, contents] = conf_ui_msg.value();
-  if (session_id != recv_session_id) {
-    ConfUiLog(ERROR) << "Received Session ID is not the expected one,"
-                     << session_id;
-    return std::nullopt;
-  }
-  if (ToCmd(type) != ConfUiCmd::kCliAck) {
-    ConfUiLog(ERROR) << "Received cmd is not ack but " << type;
-    return std::nullopt;
-  }
-  return FromCliAckCmd(contents);
-}
-
-bool SendCmd(SharedFD fd, const std::string& session_id, ConfUiCmd cmd,
-             const std::string& additional_info) {
-  return WritePayload(fd, cmd, session_id, additional_info);
-}
-
-bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
-             const std::string& additional_info) {
-  return SendCmd(fd, session_id, ConfUiCmd::kCliAck,
-                 ToCliAckMessage(is_success, additional_info));
-}
-
-bool SendResponse(SharedFD fd, const std::string& session_id,
-                  const std::string& additional_info) {
-  return WritePayload(fd, ConfUiCmd::kCliRespond, session_id, additional_info);
-}
-
 }  // end of namespace packet
 }  // end of namespace confui
 }  // end of namespace cuttlefish
