@@ -23,15 +23,5 @@
  * header file(s)
  *
  */
-#include "common/libs/confui/packet.h"
 #include "common/libs/confui/protocol.h"
 #include "common/libs/confui/utils.h"
-
-namespace cuttlefish {
-namespace confui {
-using packet::RecvConfUiMsg;
-using packet::SendAck;
-using packet::SendCmd;
-using packet::SendResponse;
-}  // end of namespace confui
-}  // end of namespace cuttlefish
