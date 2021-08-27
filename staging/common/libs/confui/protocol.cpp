@@ -23,6 +23,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/confui/utils.h"
+#include "common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -117,6 +118,79 @@ std::string ToCliAckSuccessMsg(const std::string& message) {
 
 std::string ToCliAckErrorMsg(const std::string& message) {
   return ToCliAckMessage(false, message);
+}
+
+template <typename... Args>
+bool WritePayload(SharedFD fd, const ConfUiCmd cmd,
+                  const std::string& session_id, Args&&... args) {
+  return packet::WritePayload(fd, session_id, ToString(cmd), session_id,
+                              std::forward<Args>(args)...);
+}
+
+ConfUiMessage PayloadToConfUiMessage(const std::string& str_to_parse) {
+  auto tokens = android::base::Split(str_to_parse, ":");
+  ConfUiCheck(tokens.size() >= 3)
+      << "PayloadToConfUiMessage takes \"" + str_to_parse + "\""
+      << "and does not have 3 tokens";
+  std::string msg;
+  std::for_each(tokens.begin() + 2, tokens.end() - 1,
+                [&msg](auto& token) { msg.append(token + ":"); });
+  msg.append(*tokens.rbegin());
+  return {tokens[0], tokens[1], msg};
+}
+
+static std::optional<ConfUiMessage> ReadPayload(SharedFD s) {
+  if (!s->IsOpen()) {
+    ConfUiLog(ERROR) << "file, socket, etc, is not open to read";
+    return std::nullopt;
+  }
+  auto payload_read = packet::ReadPayload(s);
+  if (!payload_read) {
+    return std::nullopt;
+  }
+  auto msg_to_parse = payload_read.value();
+  auto [session_id, type, contents] = PayloadToConfUiMessage(msg_to_parse);
+  return {{session_id, type, contents}};
+}
+
+std::optional<ConfUiMessage> RecvConfUiMsg(SharedFD fd) {
+  return ReadPayload(fd);
+}
+
+std::optional<std::tuple<bool, std::string>> RecvAck(
+    SharedFD fd, const std::string& session_id) {
+  auto conf_ui_msg = RecvConfUiMsg(fd);
+  if (!conf_ui_msg) {
+    ConfUiLog(ERROR) << "Received Ack failed due to communication.";
+    return std::nullopt;
+  }
+  auto [recv_session_id, type, contents] = conf_ui_msg.value();
+  if (session_id != recv_session_id) {
+    ConfUiLog(ERROR) << "Received Session ID is not the expected one,"
+                     << session_id;
+    return std::nullopt;
+  }
+  if (ToCmd(type) != ConfUiCmd::kCliAck) {
+    ConfUiLog(ERROR) << "Received cmd is not ack but " << type;
+    return std::nullopt;
+  }
+  return FromCliAckCmd(contents);
+}
+
+bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
+             const std::string& additional_info) {
+  return SendCmd(fd, session_id, ConfUiCmd::kCliAck,
+                 ToCliAckMessage(is_success, additional_info));
+}
+
+bool SendResponse(SharedFD fd, const std::string& session_id,
+                  const std::string& additional_info) {
+  return WritePayload(fd, ConfUiCmd::kCliRespond, session_id, additional_info);
+}
+
+bool SendCmd(SharedFD fd, const std::string& session_id, ConfUiCmd cmd,
+             const std::string& additional_info) {
+  return WritePayload(fd, cmd, session_id, additional_info);
 }
 
 }  // end of namespace confui
