@@ -20,6 +20,9 @@
 #include <string>
 #include <tuple>
 
+#include "common/libs/confui/packet.h"
+#include "common/libs/fs/shared_fd.h"
+
 namespace cuttlefish {
 namespace confui {
 // When you update this, please update all the utility functions
@@ -64,6 +67,23 @@ struct ConfUiMessage {
   std::string msg_;
 };
 std::string ToString(const ConfUiMessage& msg);
+
+// msg will look like "334522:start:Hello I am Here!"
+// this function returns 334522, start, "Hello I am Here!"
+// if no session id is given, it is regarded as SESSION_ANY
+ConfUiMessage PayloadToConfUiMessage(const std::string& str_to_parse);
+
+std::optional<ConfUiMessage> RecvConfUiMsg(SharedFD fd);
+std::optional<std::tuple<bool, std::string>> RecvAck(
+    SharedFD fd, const std::string& session_id);
+
+bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
+             const std::string& additional_info);
+bool SendResponse(SharedFD fd, const std::string& session_id,
+                  const std::string& additional_info);
+// for HAL
+bool SendCmd(SharedFD fd, const std::string& session_id, ConfUiCmd cmd,
+             const std::string& additional_info);
 
 }  // end of namespace confui
 }  // end of namespace cuttlefish
