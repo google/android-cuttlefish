@@ -652,6 +652,10 @@ PRODUCT_PACKAGES += setup_wifi
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
 endif
 
+# UWB HAL
+PRODUCT_PACKAGES += \
+    android.hardware.uwb-service
+
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
 

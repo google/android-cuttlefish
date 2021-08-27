@@ -144,9 +144,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // This version needs to be implemented (b/190505425)
     {"android.system.keystore2.", 2},
-
-    // TODO(b/195992658): Need a UWB implementation on cuttlefish.
-    {"android.hardware.uwb.", 1},
 };
 
 // AOSP packages which are never considered
