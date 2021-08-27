@@ -16,12 +16,15 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <optional>
 #include <string>
 #include <tuple>
 
-#include "common/libs/confui/protocol.h"
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+
+#include "common/libs/confui/utils.h"
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
@@ -49,25 +52,44 @@ struct PayloadHeader {
 // PayloadHeader + the message actually being sent
 using Payload = std::tuple<PayloadHeader, std::string>;
 
-// msg will look like "334522:start:Hello I am Here!"
-// this function returns 334522, start, "Hello I am Here!"
-// if no session id is given, it is regarded as SESSION_ANY
-ConfUiMessage PayloadToConfUiMessage(const std::string& str_to_parse);
-
-std::optional<ConfUiMessage> RecvConfUiMsg(SharedFD fd);
-std::optional<std::tuple<bool, std::string>> RecvAck(
-    SharedFD fd, const std::string& session_id);
-
-bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
-             const std::string& additional_info);
-bool SendResponse(SharedFD fd, const std::string& session_id,
-                  const std::string& additional_info);
-// for HAL
-bool SendCmd(SharedFD fd, const std::string& session_id, ConfUiCmd cmd,
-             const std::string& additional_info);
-
 // this is for short messages
 constexpr const ssize_t kMaxPayloadLength = 1000;
+
+std::optional<std::string> ReadPayload(SharedFD s);
+
+// Use only this function to make a packet to send over the confirmation
+// ui packet layer
+template <typename... Args>
+Payload ToPayload(const std::string& cmd_str, const std::string& session_id,
+                  Args&&... args) {
+  std::string msg =
+      ArgsToString(session_id, ":", cmd_str, ":", std::forward<Args>(args)...);
+  PayloadHeader header;
+  header.payload_length_ = msg.size();
+  return {header, msg};
+}
+
+template <typename... Args>
+bool WritePayload(SharedFD d, const std::string& cmd_str,
+                  const std::string& session_id, Args&&... args) {
+  if (!d->IsOpen()) {
+    LOG(ERROR) << "file, socket, etc, is not open to write";
+    return false;
+  }
+  auto [payload, msg] =
+      ToPayload(cmd_str, session_id, std::forward<Args>(args)...);
+
+  auto nwrite =
+      WriteAll(d, reinterpret_cast<const char*>(&payload), sizeof(payload));
+  if (nwrite != sizeof(payload)) {
+    return false;
+  }
+  nwrite = cuttlefish::WriteAll(d, msg.c_str(), msg.size());
+  if (nwrite != msg.size()) {
+    return false;
+  }
+  return true;
+}
 
 }  // end of namespace packet
 }  // end of namespace confui
