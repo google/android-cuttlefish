@@ -175,6 +175,8 @@ class ServerLoopImpl : public ServerLoop, public Feature {
     DeleteFifos();
 
     // TODO(schuffelen): Clean up duplication with assemble_cvd
+    unlink(instance_.PerInstancePath("NVChip").c_str());
+
     auto kregistry_path = instance_.access_kregistry_path();
     unlink(kregistry_path.c_str());
     CreateBlankImage(kregistry_path, 2 /* mb */, "none");
