@@ -17,8 +17,35 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_defaults {
-    name: "secure_env_defaults",
+cc_binary_host {
+    name: "secure_env",
+    srcs: [
+        "composite_serialization.cpp",
+        "device_tpm.cpp",
+        "encrypted_serializable.cpp",
+        "fragile_tpm_storage.cpp",
+        "gatekeeper_responder.cpp",
+        "hmac_serializable.cpp",
+        "in_process_tpm.cpp",
+        "insecure_fallback_storage.cpp",
+        "json_serializable.cpp",
+        "keymaster_responder.cpp",
+        "primary_key_builder.cpp",
+        "secure_env.cpp",
+        "tpm_attestation_record.cpp",
+        "tpm_auth.cpp",
+        "tpm_commands.cpp",
+        "tpm_encrypt_decrypt.cpp",
+        "tpm_gatekeeper.cpp",
+        "tpm_hmac.cpp",
+        "tpm_key_blob_maker.cpp",
+        "tpm_keymaster_context.cpp",
+        "tpm_keymaster_enforcement.cpp",
+        "tpm_random_source.cpp",
+        "tpm_remote_provisioning_context.cpp",
+        "tpm_resource_manager.cpp",
+        "tpm_serialize.cpp",
+    ],
     shared_libs: [
         "libext2_blkid",
         "libbase",
@@ -48,65 +75,8 @@ cc_defaults {
         "libgflags",
         "libscrypt_static",
     ],
+    defaults: ["cuttlefish_buildhost_only"],
     cflags: [
         "-fno-rtti", // Required for libkeymaster_portable
     ],
-}
-
-cc_library_host_static {
-    name: "libsecure_env",
-    srcs: [
-        "composite_serialization.cpp",
-        "device_tpm.cpp",
-        "encrypted_serializable.cpp",
-        "fragile_tpm_storage.cpp",
-        "gatekeeper_responder.cpp",
-        "hmac_serializable.cpp",
-        "in_process_tpm.cpp",
-        "insecure_fallback_storage.cpp",
-        "json_serializable.cpp",
-        "keymaster_responder.cpp",
-        "primary_key_builder.cpp",
-        "secure_env.cpp",
-        "tpm_attestation_record.cpp",
-        "tpm_auth.cpp",
-        "tpm_commands.cpp",
-        "tpm_encrypt_decrypt.cpp",
-        "tpm_gatekeeper.cpp",
-        "tpm_hmac.cpp",
-        "tpm_key_blob_maker.cpp",
-        "tpm_keymaster_context.cpp",
-        "tpm_keymaster_enforcement.cpp",
-        "tpm_random_source.cpp",
-        "tpm_remote_provisioning_context.cpp",
-        "tpm_resource_manager.cpp",
-        "tpm_serialize.cpp",
-    ],
-    defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
-}
-
-cc_binary_host {
-    name: "secure_env",
-    srcs: [
-        "secure_env.cpp",
-    ],
-    static_libs: [
-        "libsecure_env",
-    ],
-    defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
-}
-
-cc_test_host {
-    name: "libsecure_env_test",
-    srcs: [
-        "test_tpm.cpp",
-        "encrypted_serializable_test.cpp",
-    ],
-    static_libs: [
-        "libsecure_env",
-    ],
-    defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
-    test_options: {
-        unit_test: true,
-    },
 }
