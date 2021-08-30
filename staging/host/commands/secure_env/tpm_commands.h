@@ -19,4 +19,8 @@
 #include <cstddef>
 #include <string>
 
+namespace cuttlefish {
+
 std::string TpmCommandName(std::uint32_t command_num);
+
+}

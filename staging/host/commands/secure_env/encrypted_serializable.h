@@ -19,6 +19,8 @@
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /**
  * A keymaster::Serializable that wraps another keymaster::Serializable,
  * encrypting the data with a TPM to ensure privacy.
@@ -57,3 +59,5 @@ private:
   std::function<TpmObjectSlot(TpmResourceManager&)> parent_key_fn_;
   keymaster::Serializable& wrapped_;
 };
+
+}  // namespace cuttlefish

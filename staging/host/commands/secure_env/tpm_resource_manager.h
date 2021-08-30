@@ -21,6 +21,8 @@
 
 #include <tss2/tss2_esys.h>
 
+namespace cuttlefish {
+
 /**
  * Object slot manager for TPM memory. The TPM can only hold a fixed number of
  * objects at once. Some TPM operations are defined to consume slots either
@@ -60,3 +62,5 @@ private:
 };
 
 using TpmObjectSlot = std::shared_ptr<TpmResourceManager::ObjectSlot>;
+
+}  // namespace cuttlefish

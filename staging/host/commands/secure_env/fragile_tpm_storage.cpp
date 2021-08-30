@@ -23,6 +23,8 @@
 #include "host/commands/secure_env/json_serializable.h"
 #include "host/commands/secure_env/tpm_random_source.h"
 
+namespace cuttlefish {
+
 static constexpr char kEntries[] = "entries";
 static constexpr char kKey[] = "key";
 static constexpr char kHandle[] = "handle";
@@ -238,3 +240,5 @@ bool FragileTpmStorage::Write(
   }
   return true;
 }
+
+}  // namespace cuttlefish

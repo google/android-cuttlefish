@@ -19,6 +19,8 @@
 
 #include <keymaster/attestation_context.h>
 
+namespace cuttlefish {
+
 class TpmAttestationRecordContext : public keymaster::AttestationContext {
 public:
  TpmAttestationRecordContext();
@@ -39,3 +41,5 @@ public:
 private:
  VerifiedBootParams vb_params_;
 };
+
+}  // namespace cuttlefish

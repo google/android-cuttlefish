@@ -19,6 +19,8 @@
 #include "tss2/tss2_esys.h"
 #include "tss2/tss2_rc.h"
 
+namespace cuttlefish {
+
 TpmRandomSource::TpmRandomSource(ESYS_CONTEXT* esys) : esys_(esys) {
 }
 
@@ -102,3 +104,5 @@ keymaster_error_t TpmRandomSource::AddRngEntropy(
   }
   return KM_ERROR_OK;
 }
+
+}  // namespace cuttlefish

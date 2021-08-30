@@ -32,6 +32,8 @@
 
 using namespace cppcose;
 
+namespace cuttlefish {
+
 TpmRemoteProvisioningContext::TpmRemoteProvisioningContext(
     TpmResourceManager& resource_manager)
     : resource_manager_(resource_manager) {
@@ -139,3 +141,5 @@ TpmRemoteProvisioningContext::GenerateHmacSha256(
             hmac.begin());
   return hmac;
 }
+
+}  // namespace cuttlefish

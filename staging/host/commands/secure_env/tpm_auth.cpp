@@ -17,6 +17,8 @@
 
 #include <tuple>
 
+namespace cuttlefish {
+
 TpmAuth::TpmAuth(ESYS_TR auth): TpmAuth(auth, ESYS_TR_NONE, ESYS_TR_NONE) {}
 TpmAuth::TpmAuth(ESYS_TR auth1, ESYS_TR auth2)
     : TpmAuth(auth1, auth2, ESYS_TR_NONE) {}
@@ -41,3 +43,5 @@ ESYS_TR TpmAuth::auth2() const {
 ESYS_TR TpmAuth::auth3() const {
   return auth3_;
 }
+
+}  // namespace cuttlefish
