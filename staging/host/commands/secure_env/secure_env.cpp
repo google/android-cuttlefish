@@ -41,9 +41,6 @@
 #include "host/commands/secure_env/tpm_resource_manager.h"
 #include "host/libs/config/logging.h"
 
-// Copied from AndroidKeymaster4Device
-constexpr size_t kOperationTableSize = 16;
-
 DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
 DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
@@ -64,12 +61,16 @@ DEFINE_string(keymint_impl, "tpm",
 DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
 
+namespace cuttlefish {
 namespace {
 
+// Copied from AndroidKeymaster4Device
+constexpr size_t kOperationTableSize = 16;
+
 // Dup a command line file descriptor into a SharedFD.
-cuttlefish::SharedFD DupFdFlag(gflags::int32 fd) {
+SharedFD DupFdFlag(gflags::int32 fd) {
   CHECK(fd != -1);
-  cuttlefish::SharedFD duped = cuttlefish::SharedFD::Dup(fd);
+  SharedFD duped = SharedFD::Dup(fd);
   CHECK(duped->IsOpen()) << "Could not dup output fd: " << duped->StrError();
   // The original FD is intentionally kept open so that we can re-exec this
   // process without having to do a bunch of argv book-keeping.
@@ -94,7 +95,7 @@ cuttlefish::SharedFD DupFdFlag(gflags::int32 fd) {
 
 // Spin up a thread that monitors for a kernel loaded event, then re-execs
 // this process. This way, secure_env's boot tracking matches up with the guest.
-std::thread StartKernelEventMonitor(cuttlefish::SharedFD kernel_events_fd) {
+std::thread StartKernelEventMonitor(SharedFD kernel_events_fd) {
   return std::thread([kernel_events_fd]() {
     while (kernel_events_fd->IsOpen()) {
       auto read_result = monitor::ReadEvent(kernel_events_fd);
@@ -109,8 +110,8 @@ std::thread StartKernelEventMonitor(cuttlefish::SharedFD kernel_events_fd) {
 
 }  // namespace
 
-int main(int argc, char** argv) {
-  cuttlefish::DefaultSubprocessLogging(argv);
+int SecureEnvMain(int argc, char** argv) {
+  DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::SoftKeymasterLogger km_logger;
 
@@ -190,8 +191,7 @@ int main(int argc, char** argv) {
 
   threads.emplace_back([keymaster_in, keymaster_out, &keymaster]() {
     while (true) {
-      cuttlefish::KeymasterChannel keymaster_channel(
-          keymaster_in, keymaster_out);
+      KeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
 
       KeymasterResponder keymaster_responder(keymaster_channel, keymaster);
 
@@ -202,8 +202,7 @@ int main(int argc, char** argv) {
 
   threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
     while (true) {
-      cuttlefish::GatekeeperChannel gatekeeper_channel(
-          gatekeeper_in, gatekeeper_out);
+      GatekeeperChannel gatekeeper_channel(gatekeeper_in, gatekeeper_out);
 
       GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 
@@ -217,4 +216,12 @@ int main(int argc, char** argv) {
   for (auto& t : threads) {
     t.join();
   }
+
+  return 0;
+}
+
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::SecureEnvMain(argc, argv);
 }

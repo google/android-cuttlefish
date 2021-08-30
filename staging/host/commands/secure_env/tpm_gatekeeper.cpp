@@ -29,6 +29,8 @@
 #include "host/commands/secure_env/tpm_hmac.h"
 #include "host/commands/secure_env/tpm_random_source.h"
 
+namespace cuttlefish {
+
 TpmGatekeeper::TpmGatekeeper(
     TpmResourceManager& resource_manager,
     GatekeeperStorage& secure_storage,
@@ -240,3 +242,4 @@ bool TpmGatekeeper::IsHardwareBacked() const {
   return true;
 }
 
+}  // namespace cuttlefish

@@ -20,6 +20,8 @@
 #include <json/json.h>
 #include <tss2/tss2_tpm2_types.h>
 
+namespace cuttlefish {
+
 /**
  * Data storage tailored to Gatekeeper's storage needs: storing binary blobs
  * that can be destroyed without a trace or corrupted with an obvious trace, but
@@ -40,3 +42,5 @@ public:
   virtual bool Write(const Json::Value& key, const TPM2B_MAX_NV_BUFFER& data)
       = 0;
 };
+
+}  // namespace cuttlefish
