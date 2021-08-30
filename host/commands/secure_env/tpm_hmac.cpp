@@ -20,6 +20,8 @@
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /* For data large enough to fit in a single TPM2_HMAC call. */
 static UniqueEsysPtr<TPM2B_DIGEST> OneshotHmac(
     TpmResourceManager& resource_manager,
@@ -153,3 +155,5 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
   auto fn = data_size > TPM2_MAX_DIGEST_BUFFER ? SegmentedHmac : OneshotHmac;
   return fn(resource_manager, key_handle, auth, data, data_size);
 }
+
+}  // namespace cuttlefish

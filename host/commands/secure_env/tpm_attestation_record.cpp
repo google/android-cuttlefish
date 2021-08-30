@@ -19,6 +19,8 @@
 
 #include <android-base/logging.h>
 
+namespace cuttlefish {
+
 namespace {
 using VerifiedBootParams = keymaster::AttestationContext::VerifiedBootParams;
 using keymaster::AuthorizationSet;
@@ -77,3 +79,5 @@ TpmAttestationRecordContext::GetAttestationChain(keymaster_algorithm_t algorithm
                                                  keymaster_error_t* error) const {
   return keymaster::getAttestationChain(algorithm, error);
 }
+
+}  // namespace cuttlefish

@@ -20,6 +20,8 @@
 
 #include "host/commands/secure_env/tpm_auth.h"
 
+namespace cuttlefish {
+
 /**
  * Encrypt `data_in` to `data_out`, which are both buffers of size `data_size`.
  *
@@ -48,3 +50,5 @@ bool TpmDecrypt(
     uint8_t* data_in,
     uint8_t* data_out,
     size_t data_size);
+
+}  // namespace cuttlefish
