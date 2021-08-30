@@ -22,6 +22,8 @@
 #include <android-base/logging.h>
 #include <tss2/tss2_rc.h>
 
+namespace cuttlefish {
+
 using keymaster::KeymasterBlob;
 
 static bool TpmEncryptDecrypt(
@@ -98,3 +100,5 @@ bool TpmDecrypt(
   return TpmEncryptDecrypt(
       esys, key_handle, auth, data_in, data_out, data_size, true);
 }
+
+}  // namespace cuttlefish
