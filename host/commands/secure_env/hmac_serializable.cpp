@@ -22,6 +22,8 @@
 #include "host/commands/secure_env/tpm_auth.h"
 #include "host/commands/secure_env/tpm_hmac.h"
 
+namespace cuttlefish {
+
 HmacSerializable::HmacSerializable(
     TpmResourceManager& resource_manager,
     std::function<TpmObjectSlot(TpmResourceManager&)> signing_key_fn,
@@ -145,3 +147,5 @@ std::optional<std::vector<uint8_t>> HmacSerializable::AppendAad(
   }
   return output;
 }
+
+}  // namespace cuttlefish
