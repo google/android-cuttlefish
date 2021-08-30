@@ -20,6 +20,8 @@
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /**
  * Implementation of keymaster::KeymasterEnforcement that depends on having a
  * TPM available. See the definitions in
@@ -62,3 +64,5 @@ private:
   bool have_saved_params_ = false;
   keymaster::HmacSharingParameters saved_params_;
 };
+
+}  // namespace cuttlefish

@@ -23,6 +23,8 @@
 #include "host/commands/secure_env/tpm_encrypt_decrypt.h"
 #include "host/commands/secure_env/tpm_serialize.h"
 
+namespace cuttlefish {
+
 EncryptedSerializable::EncryptedSerializable(
     TpmResourceManager& resource_manager,
     std::function<TpmObjectSlot(TpmResourceManager&)> parent_key_fn,
@@ -298,3 +300,5 @@ bool EncryptedSerializable::Deserialize(
   }
   return true;
 }
+
+}  // namespace cuttlefish

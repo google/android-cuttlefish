@@ -17,9 +17,13 @@
 
 #include <tss2/tss2_tcti.h>
 
+namespace cuttlefish {
+
 class Tpm {
 public:
   virtual ~Tpm() = default;
 
   virtual TSS2_TCTI_CONTEXT* TctiContext() = 0;
 };
+
+}  // namespace cuttlefish

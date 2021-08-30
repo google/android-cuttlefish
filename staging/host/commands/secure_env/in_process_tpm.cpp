@@ -37,6 +37,8 @@ typedef int SOCKET;
 
 #include <android-base/logging.h>
 
+namespace cuttlefish {
+
 struct __attribute__((__packed__)) tpm_message_header {
   uint16_t tag;
   uint32_t length;
@@ -154,3 +156,5 @@ InProcessTpm::~InProcessTpm() {
 TSS2_TCTI_CONTEXT* InProcessTpm::TctiContext() {
   return reinterpret_cast<TSS2_TCTI_CONTEXT*>(&impl_->tcti_context_);
 }
+
+}  // namespace cuttlefish

@@ -23,6 +23,8 @@
 
 #include "tpm_attestation_record.h"
 
+namespace cuttlefish {
+
 class TpmAttestationRecordContext;
 class TpmResourceManager;
 class TpmKeyBlobMaker;
@@ -139,3 +141,5 @@ private:
     return boot_patchlevel_;
   }
 };
+
+}  // namespace cuttlefish

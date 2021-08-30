@@ -24,6 +24,8 @@
 #include "host/commands/secure_env/hmac_serializable.h"
 #include "host/commands/secure_env/primary_key_builder.h"
 
+namespace cuttlefish {
+
 static constexpr char kUniqueKey[] = "JsonSerializable";
 
 class JsonSerializable : public keymaster::Serializable {
@@ -153,3 +155,5 @@ Json::Value ReadProtectedJsonFromFile(
 
   return json;
 }
+
+}  // namespace cuttlefish
