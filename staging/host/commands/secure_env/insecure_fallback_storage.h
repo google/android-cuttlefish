@@ -23,6 +23,8 @@
 #include "host/commands/secure_env/gatekeeper_storage.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /**
  * A GatekeeperStorage fallback implementation that is less secure. It uses an
  * index file that is signed and encrypted by the TPM and the sensitive data
@@ -54,3 +56,5 @@ private:
   std::string index_file_;
   Json::Value index_;
 };
+
+}  // namespace cuttlefish

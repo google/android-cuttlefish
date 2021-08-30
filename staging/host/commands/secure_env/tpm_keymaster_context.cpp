@@ -32,6 +32,8 @@
 #include "host/commands/secure_env/tpm_random_source.h"
 #include "host/commands/secure_env/tpm_remote_provisioning_context.h"
 
+namespace cuttlefish {
+
 namespace {
 using keymaster::AuthorizationSet;
 using keymaster::KeymasterKeyBlob;
@@ -353,3 +355,5 @@ keymaster::RemoteProvisioningContext*
 TpmKeymasterContext::GetRemoteProvisioningContext() const {
   return remote_provisioning_context_.get();
 }
+
+}  // namespace cuttlefish

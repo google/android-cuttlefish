@@ -19,6 +19,8 @@
 
 #include "keymaster/serializable.h"
 
+namespace cuttlefish {
+
 /**
  * A keymaster::Serializable type that refers to multiple other
  * keymaster::Serializable instances by pointer. When data is serialized or
@@ -37,3 +39,5 @@ public:
 private:
   std::vector<keymaster::Serializable*> members_;
 };
+
+}  // namespace cuttlefish

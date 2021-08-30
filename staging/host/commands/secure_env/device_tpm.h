@@ -21,6 +21,8 @@
 
 #include "host/commands/secure_env/tpm.h"
 
+namespace cuttlefish {
+
 /*
  * Exposes a TSS2_TCTI_CONTEXT for interacting with a TPM device node.
  */
@@ -33,3 +35,5 @@ public:
 private:
   std::unique_ptr<TSS2_TCTI_CONTEXT, void(*)(TSS2_TCTI_CONTEXT*)> tpm_;
 };
+
+}  // namespace cuttlefish

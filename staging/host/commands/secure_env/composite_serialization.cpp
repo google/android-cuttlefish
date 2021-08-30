@@ -17,6 +17,8 @@
 
 using keymaster::Serializable;
 
+namespace cuttlefish {
+
 CompositeSerializable::CompositeSerializable(
     const std::vector<Serializable*>& members) : members_(members) {
 }
@@ -46,3 +48,5 @@ bool CompositeSerializable::Deserialize(
   }
   return true;
 }
+
+}  // namespace cuttlefish

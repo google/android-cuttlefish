@@ -25,6 +25,8 @@
 #include "host/commands/secure_env/tpm_key_blob_maker.h"
 #include "host/commands/secure_env/tpm_random_source.h"
 
+namespace cuttlefish {
+
 using keymaster::km_id_t;
 using keymaster::HmacSharingParameters;
 using keymaster::HmacSharingParametersArray;
@@ -349,3 +351,5 @@ bool TpmKeymasterEnforcement::CreateKeyId(
   memcpy(keyid, hmac->buffer, sizeof(km_id_t));
   return true;
 }
+
+}  // namespace cuttlefish

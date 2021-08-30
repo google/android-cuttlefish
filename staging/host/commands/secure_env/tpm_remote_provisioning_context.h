@@ -21,6 +21,8 @@
 #include "host/commands/secure_env/tpm_resource_manager.h"
 #include "keymaster/cppcose/cppcose.h"
 
+namespace cuttlefish {
+
 /**
  * TPM-backed implementation of the provisioning context.
  */
@@ -40,3 +42,5 @@ class TpmRemoteProvisioningContext
  private:
   TpmResourceManager& resource_manager_;
 };
+
+}  // namespace cuttlefish

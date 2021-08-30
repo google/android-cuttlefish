@@ -26,6 +26,8 @@
 #include "host/commands/secure_env/hmac_serializable.h"
 #include "host/commands/secure_env/primary_key_builder.h"
 
+namespace cuttlefish {
+
 using keymaster::AuthorizationSet;
 using keymaster::KeymasterKeyBlob;
 using keymaster::Serializable;
@@ -265,3 +267,5 @@ keymaster_error_t TpmKeyBlobMaker::SetSystemVersion(
   os_patchlevel_ = os_patchlevel;
   return KM_ERROR_OK;
 }
+
+}  // namespace cuttlefish

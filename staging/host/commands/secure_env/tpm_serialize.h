@@ -24,6 +24,8 @@
 
 #include <android-base/logging.h>
 
+namespace cuttlefish {
+
 /**
  * An implementation of a keymaster::Serializable type that refers to a TPM type
  * by an unmanaged pointer. When the TpmSerializable serializes or deserializes
@@ -50,3 +52,5 @@ private:
 
 using SerializeTpmKeyPrivate = TpmSerializable<TPM2B_PRIVATE>;
 using SerializeTpmKeyPublic = TpmSerializable<TPM2B_PUBLIC>;
+
+}  // namespace cuttlefish
