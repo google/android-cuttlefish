@@ -22,6 +22,8 @@
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /**
  * A keymaster::Serializable that wraps another keymaster::Serializable,
  * protecting it from tampering while it is stored elsewhere. This stores
@@ -59,3 +61,5 @@ private:
   std::optional<std::vector<uint8_t>> AppendAad(const uint8_t* sensitive,
                                                 size_t sensitive_size) const;
 };
+
+}  // namespace cuttlefish

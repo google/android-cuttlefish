@@ -22,6 +22,8 @@
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 class PrimaryKeyBuilder {
 public:
   PrimaryKeyBuilder();
@@ -40,3 +42,5 @@ SigningKeyCreator(const std::string& unique);
 
 std::function<TpmObjectSlot(TpmResourceManager&)>
 ParentKeyCreator(const std::string& unique);
+
+}  // namespace cuttlefish

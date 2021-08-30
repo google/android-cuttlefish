@@ -18,6 +18,8 @@
 #include <android-base/logging.h>
 #include <keymaster/android_keymaster_messages.h>
 
+namespace cuttlefish {
+
 KeymasterResponder::KeymasterResponder(
     cuttlefish::KeymasterChannel& channel, keymaster::AndroidKeymaster& keymaster)
     : channel_(channel), keymaster_(keymaster) {
@@ -112,3 +114,5 @@ bool KeymasterResponder::ProcessMessage() {
       return false;
   }
 }
+
+}  // namespace cuttlefish

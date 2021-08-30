@@ -21,6 +21,8 @@
 
 #include "host/commands/secure_env/tpm_auth.h"
 
+namespace cuttlefish {
+
 class TpmResourceManager;
 
 struct EsysDeleter {
@@ -49,3 +51,5 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     TpmAuth auth,
     const uint8_t* data,
     size_t data_size);
+
+}  // namespace cuttlefish

@@ -18,6 +18,8 @@
 #include <android-base/logging.h>
 #include <gatekeeper/gatekeeper_messages.h>
 
+namespace cuttlefish {
+
 GatekeeperResponder::GatekeeperResponder(
     cuttlefish::GatekeeperChannel& channel, gatekeeper::GateKeeper& gatekeeper)
     : channel_(channel), gatekeeper_(gatekeeper) {
@@ -60,3 +62,5 @@ bool GatekeeperResponder::ProcessMessage() {
       return false;
   }
 }
+
+}  // namespace cuttlefish

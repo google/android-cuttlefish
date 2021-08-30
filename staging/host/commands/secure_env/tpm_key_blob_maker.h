@@ -19,6 +19,8 @@
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 /**
  * Encrypts key data using a TPM-resident key and signs it with a TPM-resident
  * key for privacy and integrity.
@@ -70,3 +72,5 @@ private:
   uint32_t os_version_;
   uint32_t os_patchlevel_;
 };
+
+}  // namespace cuttlefish

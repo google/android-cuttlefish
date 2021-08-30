@@ -19,6 +19,8 @@
 
 #include "common/libs/security/gatekeeper_channel.h"
 
+namespace cuttlefish {
+
 class GatekeeperResponder {
 private:
   cuttlefish::GatekeeperChannel& channel_;
@@ -29,3 +31,5 @@ public:
 
   bool ProcessMessage();
 };
+
+}  // namespace cuttlefish

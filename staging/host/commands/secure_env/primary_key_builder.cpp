@@ -19,6 +19,8 @@
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_rc.h>
 
+namespace cuttlefish {
+
 PrimaryKeyBuilder::PrimaryKeyBuilder() : public_area_({}) {
   public_area_.nameAlg = TPM2_ALG_SHA256;
 };
@@ -133,3 +135,5 @@ ParentKeyCreator(const std::string& unique) {
     return key_builder.CreateKey(resource_manager);
   };
 }
+
+}  // namespace cuttlefish

@@ -19,7 +19,11 @@
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
+namespace cuttlefish {
+
 bool WriteProtectedJsonToFile(
     TpmResourceManager&, const std::string& filename, Json::Value);
 Json::Value ReadProtectedJsonFromFile(
     TpmResourceManager&, const std::string& filename);
+
+}  // namespace cuttlefish
