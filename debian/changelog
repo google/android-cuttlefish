@@ -1,4 +1,14 @@
-cuttlefish-common (0.9.18) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.19) stable; urgency=medium
+
+  [ Ram Muthiah ]
+  * Rev'ng version number to account for bump to debian 11
+
+  [ Tristan Muntsinger ]
+  * Add e2fsprogs package to control file (#93)
+  
+ -- Ram Muthiah <rammuthiah@google.com>  Mon, 30 Aug 2021 13:43:05 -0700
+
+cuttlefish-common (0.9.18) stable; urgency=medium
 
   [ Kyoungwon Stephen Kim ]
   * Added vsock_guest_cid option and separated port forwarding logic (#80)
