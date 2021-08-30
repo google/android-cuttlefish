@@ -27,6 +27,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/userspace_reboot.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_ramdisk.mk)
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
+PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio and wifi
 
 PRODUCT_SHIPPING_API_LEVEL := 31
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
@@ -402,16 +403,17 @@ PRODUCT_PACKAGES += android.hardware.bluetooth.audio@2.1-impl
 # Audio HAL
 #
 LOCAL_AUDIO_PRODUCT_PACKAGE ?= \
-    audio.primary.cutf \
-    audio.r_submix.default \
-    android.hardware.audio@6.0-impl \
+    android.hardware.audio.service \
+    android.hardware.audio@6.0-impl.ranchu \
     android.hardware.audio.effect@6.0-impl \
-    android.hardware.audio@2.0-service
 
 LOCAL_AUDIO_PRODUCT_COPY_FILES ?= \
-    device/google/cuttlefish/shared/config/audio_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy.conf \
-    frameworks/av/services/audiopolicy/config/audio_policy_configuration_generic.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
-    frameworks/av/services/audiopolicy/config/primary_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/primary_audio_policy_configuration.xml
+    device/generic/goldfish/audio/policy/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    device/generic/goldfish/audio/policy/primary_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/primary_audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
+    frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
+    frameworks/av/media/libeffects/data/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
 
 LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS ?=
 
