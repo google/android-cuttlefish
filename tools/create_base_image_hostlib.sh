@@ -22,7 +22,7 @@ DEFINE_string dest_project "$(gcloud config get-value project)" \
   "Project to use for the new image" "p"
 DEFINE_string launch_instance "" \
   "Name of the instance to launch with the new image" "l"
-DEFINE_string source_image_family "debian-10" \
+DEFINE_string source_image_family "debian-11" \
   "Image familty to use as the base" "s"
 DEFINE_string source_image_project debian-cloud \
   "Project holding the base image" "m"
@@ -143,6 +143,7 @@ main() {
       --scopes storage-ro \
       --accelerator="type=${gpu_type},count=1" \
       --maintenance-policy=TERMINATE \
+      --boot-disk-size=200GiB \
       "${FLAGS_launch_instance}"
   fi
   cat <<EOF
