@@ -37,6 +37,8 @@ typedef int SOCKET;
 
 #include <android-base/logging.h>
 
+#include <mutex>
+
 namespace cuttlefish {
 
 struct __attribute__((__packed__)) tpm_message_header {
@@ -45,7 +47,8 @@ struct __attribute__((__packed__)) tpm_message_header {
   uint32_t ordinal;
 };
 
-struct InProcessTpm::Impl {
+class InProcessTpm::Impl {
+ public:
   static Impl* FromContext(TSS2_TCTI_CONTEXT* context) {
     auto offset = offsetof(Impl, tcti_context_);
     char* context_char = reinterpret_cast<char*>(context);
@@ -96,65 +99,88 @@ struct InProcessTpm::Impl {
     return TSS2_RC_SUCCESS;
   }
 
+  Impl() {
+    {
+      std::lock_guard<std::mutex> lock(global_mutex);
+      // This is a limitation of ms-tpm-20-ref
+      CHECK(!global_instance) << "InProcessTpm internally uses global data, so "
+                              << "only one can exist.";
+      global_instance = this;
+    }
+
+    tcti_context_.v1.magic = 0xFAD;
+    tcti_context_.v1.version = 1;
+    tcti_context_.v1.transmit = Impl::Transmit;
+    tcti_context_.v1.receive = Impl::Receive;
+    _plat__NVEnable(NULL);
+    if (_plat__NVNeedsManufacture()) {
+      // Can't use android logging here due to a macro conflict with TPM
+      // internals
+      LOG(DEBUG) << "Manufacturing TPM state";
+      if (TPM_Manufacture(1)) {
+        LOG(FATAL) << "Failed to manufacture TPM state";
+      }
+    }
+    _rpc__Signal_PowerOn(false);
+    _rpc__Signal_NvOn();
+
+    ESYS_CONTEXT* esys = nullptr;
+    auto rc = Esys_Initialize(&esys, TctiContext(), nullptr);
+    if (rc != TPM2_RC_SUCCESS) {
+      LOG(FATAL) << "Could not initialize esys: " << Tss2_RC_Decode(rc) << " ("
+                 << rc << ")";
+    }
+
+    rc = Esys_Startup(esys, TPM2_SU_CLEAR);
+    if (rc != TPM2_RC_SUCCESS) {
+      LOG(FATAL) << "TPM2_Startup failed: " << Tss2_RC_Decode(rc) << " (" << rc
+                 << ")";
+    }
+
+    TPM2B_AUTH auth = {};
+    Esys_TR_SetAuth(esys, ESYS_TR_RH_LOCKOUT, &auth);
+
+    rc = Esys_DictionaryAttackLockReset(
+        /* esysContext */ esys,
+        /* lockHandle */ ESYS_TR_RH_LOCKOUT,
+        /* shandle1 */ ESYS_TR_PASSWORD,
+        /* shandle2 */ ESYS_TR_NONE,
+        /* shandle3 */ ESYS_TR_NONE);
+
+    if (rc != TPM2_RC_SUCCESS) {
+      LOG(FATAL) << "Could not reset TPM lockout: " << Tss2_RC_Decode(rc)
+                 << " (" << rc << ")";
+    }
+
+    Esys_Finalize(&esys);
+  }
+
+  ~Impl() {
+    _rpc__Signal_NvOff();
+    _rpc__Signal_PowerOff();
+    std::lock_guard<std::mutex> lock(global_mutex);
+    global_instance = nullptr;
+  }
+
+  TSS2_TCTI_CONTEXT* TctiContext() {
+    return reinterpret_cast<TSS2_TCTI_CONTEXT*>(&tcti_context_);
+  }
+
+ private:
+  static std::mutex global_mutex;
+  static Impl* global_instance;
   TSS2_TCTI_CONTEXT_COMMON_CURRENT tcti_context_;
   std::list<std::vector<uint8_t>> command_queue_;
   std::mutex queue_mutex_;
 };
 
-InProcessTpm::InProcessTpm() : impl_(new Impl()) {
-  impl_->tcti_context_.v1.magic = 0xFAD;
-  impl_->tcti_context_.v1.version = 1;
-  impl_->tcti_context_.v1.transmit = Impl::Transmit;
-  impl_->tcti_context_.v1.receive = Impl::Receive;
-  _plat__NVEnable(NULL);
-  if (_plat__NVNeedsManufacture()) {
-    // Can't use android logging here due to a macro conflict with TPM internals
-    LOG(DEBUG) << "Manufacturing TPM state";
-    if (TPM_Manufacture(1)) {
-      LOG(FATAL) << "Failed to manufacture TPM state";
-    }
-  }
-  _rpc__Signal_PowerOn(false);
-  _rpc__Signal_NvOn();
+std::mutex InProcessTpm::Impl::global_mutex;
+InProcessTpm::Impl* InProcessTpm::Impl::global_instance;
 
-  ESYS_CONTEXT* esys = nullptr;
-  auto rc = Esys_Initialize(&esys, TctiContext(), nullptr);
-  if (rc != TPM2_RC_SUCCESS) {
-    LOG(FATAL) << "Could not initialize esys: " << Tss2_RC_Decode(rc)
-               << " (" << rc << ")";
-  }
+InProcessTpm::InProcessTpm() : impl_(new Impl()) {}
 
-  rc = Esys_Startup(esys, TPM2_SU_CLEAR);
-  if (rc != TPM2_RC_SUCCESS) {
-    LOG(FATAL) << "TPM2_Startup failed: " << Tss2_RC_Decode(rc)
-               << " (" << rc << ")";
-  }
+InProcessTpm::~InProcessTpm() = default;
 
-  TPM2B_AUTH auth = {};
-  Esys_TR_SetAuth(esys, ESYS_TR_RH_LOCKOUT, &auth);
-
-  rc = Esys_DictionaryAttackLockReset(
-    /* esysContext */ esys,
-    /* lockHandle */ ESYS_TR_RH_LOCKOUT,
-    /* shandle1 */ ESYS_TR_PASSWORD,
-    /* shandle2 */ ESYS_TR_NONE,
-    /* shandle3 */ ESYS_TR_NONE);
-
-  if (rc != TPM2_RC_SUCCESS) {
-    LOG(FATAL) << "Could not reset TPM lockout: " << Tss2_RC_Decode(rc)
-               << " (" << rc << ")";
-  }
-
-  Esys_Finalize(&esys);
-}
-
-InProcessTpm::~InProcessTpm() {
-  _rpc__Signal_NvOff();
-  _rpc__Signal_PowerOff();
-}
-
-TSS2_TCTI_CONTEXT* InProcessTpm::TctiContext() {
-  return reinterpret_cast<TSS2_TCTI_CONTEXT*>(&impl_->tcti_context_);
-}
+TSS2_TCTI_CONTEXT* InProcessTpm::TctiContext() { return impl_->TctiContext(); }
 
 }  // namespace cuttlefish
