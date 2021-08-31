@@ -43,9 +43,9 @@ public:
 
   TSS2_TCTI_CONTEXT* TctiContext() override;
 private:
- class Impl;
+  struct Impl;
 
- std::unique_ptr<Impl> impl_;
+  std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace cuttlefish
