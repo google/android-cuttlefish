@@ -37,7 +37,7 @@
 //
 // void test() {
 //   auto q = safe_divide(10, 0);
-//   if (q) { printf("%f\n", q.value()); }
+//   if (q.ok()) { printf("%f\n", q.value()); }
 //   else { printf("%s\n", q.error().c_str()); }
 // }
 //
