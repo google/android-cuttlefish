@@ -90,7 +90,8 @@ class DynHandler {
  private:
   friend WebSocketServer;
   void AppendDataIn(void* data, size_t len);
-  void OnWritable();
+  int OnWritable();
+  size_t content_len() const;
 
   struct lws* wsi_;
   std::string in_buffer_ = {};

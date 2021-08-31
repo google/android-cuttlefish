@@ -44,6 +44,8 @@ void WebSocketHandler::EnqueueMessage(const uint8_t* data, size_t len,
 // updating the buffer.
 void WebSocketHandler::WriteWsBuffer(WebSocketHandler::WsBuffer& ws_buffer) {
   auto len = ws_buffer.data.size() - LWS_PRE;
+  // For http2 there must be LWS_PRE bytes at the end as well.
+  ws_buffer.data.resize(ws_buffer.data.size() + LWS_PRE);
   auto flags = lws_write_ws_flags(
       ws_buffer.binary ? LWS_WRITE_BINARY : LWS_WRITE_TEXT, true, true);
   auto res = lws_write(wsi_, &ws_buffer.data[LWS_PRE], len,
@@ -87,8 +89,10 @@ void DynHandler::AppendDataIn(void* data, size_t len) {
   AppendData(reinterpret_cast<char*>(data), len, in_buffer_);
 }
 
-void DynHandler::OnWritable() {
+int DynHandler::OnWritable() {
   auto len = out_buffer_.size() - LWS_PRE;
+  // For http2 there must be LWS_PRE bytes at the end as well.
+  out_buffer_.resize(out_buffer_.size() + LWS_PRE);
   auto res = lws_write(wsi_, reinterpret_cast<uint8_t*>(&out_buffer_[LWS_PRE]),
                        len, LWS_WRITE_HTTP_FINAL);
   if (res != len) {
@@ -96,5 +100,7 @@ void DynHandler::OnWritable() {
     // LWS_CALLBACK_SERVER_WRITEABLE call.
     LOG(ERROR) << "Failed to write HTTP response";
   }
+  return lws_http_transaction_completed(wsi_);
 }
+size_t DynHandler::content_len() const { return out_buffer_.size() - LWS_PRE; }
 }  // namespace cuttlefish
