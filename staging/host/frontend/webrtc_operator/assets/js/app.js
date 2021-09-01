@@ -60,6 +60,10 @@ async function ConnectDevice(deviceId) {
 
   let options = {
     wsUrl: websocketUrl('connect_client'),
+    pollConfigUrl: httpUrl('infra_config'),
+    pollConnectUrl: httpUrl('connect'),
+    pollForwardUrl: httpUrl('forward'),
+    pollMessagesUrl: httpUrl('poll_messages'),
   };
 
   let module = await import('./cf_webrtc.js');
@@ -101,16 +105,17 @@ class DeviceListApp {
         .addEventListener('click', evt => this.#UpdateDeviceList());
   }
 
-  #UpdateDeviceList() {
-    $.ajax(this.#url, {
-      method: 'GET',
-      success: device_ids => {
-        this.#ShowNewDeviceList(device_ids);
-      },
-      error: e => {
-        console.error('Error getting list of device ids: ', e);
-      },
-    });
+  async #UpdateDeviceList() {
+    try {
+      const device_ids = await fetch(this.#url, {
+        method: 'GET',
+        cache: 'no-cache',
+        redirect: 'follow',
+      });
+      this.#ShowNewDeviceList(await device_ids.json());
+    } catch (e) {
+      console.error('Error getting list of device ids: ', e);
+    }
   }
 
   #ShowNewDeviceList(device_ids) {
@@ -911,7 +916,7 @@ class DeviceControlApp {
 
 // The app starts by showing the device list
 showDeviceListUI();
-let listDevicesUrl = httpUrl('list_devices');
+let listDevicesUrl = httpUrl('devices');
 let selectDeviceCb = deviceId => {
   ConnectDevice(deviceId).then(
       deviceConnection => {

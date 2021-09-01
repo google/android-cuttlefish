@@ -205,8 +205,8 @@ void WebSocketServer::RegisterHandlerFactory(
 
 void WebSocketServer::RegisterDynHandlerFactory(
     const std::string& path,
-    std::unique_ptr<DynHandlerFactory> handler_factory_p) {
-  dyn_handler_factories_[path] = std::move(handler_factory_p);
+    DynHandlerFactory handler_factory) {
+  dyn_handler_factories_[path] = std::move(handler_factory);
 }
 
 void WebSocketServer::Serve() {
@@ -397,7 +397,7 @@ std::unique_ptr<DynHandler> WebSocketServer::InstantiateDynHandler(
     return nullptr;
   } else {
     LOG(VERBOSE) << "Creating handler for " << uri_path;
-    return it->second->Build(wsi);
+    return it->second(wsi);
   }
 }
 

@@ -120,6 +120,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   void Close();
 
   void LogAndReplyError(const std::string& error_msg) const;
+  void AddPendingIceCandidates();
 
   int client_id_;
   State state_ = State::kNew;
@@ -134,6 +135,9 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::unique_ptr<BluetoothChannelHandler> bluetooth_handler_;
   std::unique_ptr<CameraChannelHandler> camera_data_handler_;
   std::unique_ptr<ClientVideoTrackImpl> camera_track_;
+  bool remote_description_added_ = false;
+  std::vector<std::unique_ptr<webrtc::IceCandidateInterface>>
+      pending_ice_candidates_;
 };
 
 class ClientVideoTrackInterface {

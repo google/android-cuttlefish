@@ -44,9 +44,8 @@ class WebSocketServer {
 
   // Register a handler factory for dynamic HTTP requests. A new handler will be
   // created for each HTTP request.
-  void RegisterDynHandlerFactory(
-      const std::string& path,
-      std::unique_ptr<DynHandlerFactory> handler_factory_p);
+  void RegisterDynHandlerFactory(const std::string& path,
+                                 DynHandlerFactory handler_factory);
 
   void Serve();
 
@@ -76,8 +75,8 @@ class WebSocketServer {
       handler_factories_ = {};
   std::unordered_map<struct lws*, std::unique_ptr<DynHandler>> dyn_handlers_ =
       {};
-  std::unordered_map<std::string, std::unique_ptr<DynHandlerFactory>>
-      dyn_handler_factories_ = {};
+  std::unordered_map<std::string, DynHandlerFactory> dyn_handler_factories_ =
+      {};
   std::string protocol_name_;
   std::string assets_dir_;
   std::string certs_dir_;
