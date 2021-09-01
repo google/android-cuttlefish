@@ -36,13 +36,4 @@ class DeviceListHandler : public DynHandler {
   DeviceRegistry& registry_;
 };
 
-class DeviceListHandlerFactory : public DynHandlerFactory {
- public:
-  DeviceListHandlerFactory(DeviceRegistry& registry);
-
-  std::unique_ptr<DynHandler> Build(struct lws* wsi) override;
-
- private:
-  DeviceRegistry& registry_;
-};
 }  // namespace cuttlefish
