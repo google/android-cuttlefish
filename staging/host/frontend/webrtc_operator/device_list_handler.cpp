@@ -36,12 +36,4 @@ HttpStatusCode DeviceListHandler::DoPost() {
   return HttpStatusCode::NotFound;
 }
 
-DeviceListHandlerFactory::DeviceListHandlerFactory(
-    DeviceRegistry& registry)
-    : registry_(registry) {}
-
-std::unique_ptr<DynHandler> DeviceListHandlerFactory::Build(
-    struct lws* wsi) {
-  return std::unique_ptr<DynHandler>(new DeviceListHandler(wsi, registry_));
-}
 }  // namespace cuttlefish

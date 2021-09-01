@@ -67,8 +67,13 @@ class WebSocketHandlerFactory {
 class WebSocketServer;
 
 enum class HttpStatusCode : int {
+  // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
   Ok = 200,
+  BadRequest = 400,
+  Unauthorized = 401,
   NotFound = 404,
+  MethodNotAllowed = 405,
+  Conflict = 409,
 };
 
 class DynHandler {
@@ -98,11 +103,6 @@ class DynHandler {
   std::string out_buffer_ = {};
 };
 
-class DynHandlerFactory {
- public:
-  virtual ~DynHandlerFactory() = default;
-  // A new Handler will be created for each connection
-  virtual std::unique_ptr<DynHandler> Build(struct lws* wsi) = 0;
-};
-
+using DynHandlerFactory =
+    std::function<std::unique_ptr<DynHandler>(struct lws*)>;
 }  // namespace cuttlefish
