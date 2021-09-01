@@ -545,6 +545,19 @@ void ClientHandler::LogAndReplyError(const std::string &error_msg) const {
   send_to_client_(reply);
 }
 
+void ClientHandler::AddPendingIceCandidates() {
+  // Add any ice candidates that arrived before the remote description
+  for (auto& candidate: pending_ice_candidates_) {
+    peer_connection_->AddIceCandidate(std::move(candidate),
+                                      [this](webrtc::RTCError error) {
+                                        if (!error.ok()) {
+                                          LogAndReplyError(error.message());
+                                        }
+                                      });
+  }
+  pending_ice_candidates_.clear();
+}
+
 void ClientHandler::OnCreateSDPSuccess(
     webrtc::SessionDescriptionInterface *desc) {
   std::string offer_str;
@@ -635,6 +648,8 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
             Close();
             return;
           }
+          remote_description_added_ = true;
+          AddPendingIceCandidates();
           peer_connection_->CreateAnswer(
               // No memory leak here because this is a ref counted objects and
               // the peer connection immediately wraps it with a scoped_refptr
@@ -673,6 +688,8 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
               }
             }));
     peer_connection_->SetRemoteDescription(std::move(remote_desc), observer);
+    remote_description_added_ = true;
+    AddPendingIceCandidates();
     state_ = State::kConnecting;
 
   } else if (type == "ice-candidate") {
@@ -710,12 +727,21 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
       LogAndReplyError("Failed to parse ICE candidate");
       return;
     }
-    peer_connection_->AddIceCandidate(std::move(candidate),
-                                      [this](webrtc::RTCError error) {
-                                        if (!error.ok()) {
-                                          LogAndReplyError(error.message());
-                                        }
-                                      });
+    if (remote_description_added_) {
+      peer_connection_->AddIceCandidate(std::move(candidate),
+                                        [this](webrtc::RTCError error) {
+                                          if (!error.ok()) {
+                                            LogAndReplyError(error.message());
+                                          }
+                                        });
+    } else {
+      // Store the ice candidate to be added later if it arrives before the
+      // remote description. This could happen if the client uses polling
+      // instead of websockets because the candidates are generated immediately
+      // after the remote (offer) description is set and the events and the ajax
+      // calls are asynchronous.
+      pending_ice_candidates_.push_back(std::move(candidate));
+    }
   } else {
     LogAndReplyError("Unknown client message type: " + type);
     return;
