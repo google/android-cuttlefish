@@ -256,6 +256,13 @@ int WebSocketServer::DynServerCallback(struct lws* wsi,
       }
       std::string path(path_raw, path_len);
       auto handler = InstantiateDynHandler(path, wsi);
+      if (!handler) {
+        if (!WriteCommonHttpHeaders(static_cast<int>(HttpStatusCode::NotFound),
+                                    "application/json", 0, wsi)) {
+          return 1;
+        }
+        return lws_http_transaction_completed(wsi);
+      }
       dyn_handlers_[wsi] = std::move(handler);
       switch (method) {
         case LWSHUMETH_GET: {
