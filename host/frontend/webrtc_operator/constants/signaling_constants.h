@@ -24,6 +24,7 @@ constexpr auto kDeviceIdField = "device_id";
 constexpr auto kClientIdField = "client_id";
 constexpr auto kPayloadField = "payload";
 constexpr auto kServersField = "ice_servers";
+constexpr auto kClientSecretField = "connection_id";
 // These are defined in the IceServer dictionary
 constexpr auto kUrlsField = "urls";
 constexpr auto kUsernameField = "username";
@@ -38,6 +39,7 @@ constexpr auto kDeviceInfoType = "device_info";
 constexpr auto kClientMessageType = "client_msg";
 constexpr auto kClientDisconnectType = "client_disconnected";
 constexpr auto kDeviceMessageType = "device_msg";
+constexpr auto kPollType = "client_poll";
 
 }  // namespace webrtc_signaling
 }  // namespace cuttlefish
