@@ -81,6 +81,17 @@ function awaitDataChannel(pc, label, onMessage) {
   };
 }
 
+async function ajaxPostJson(url, data) {
+  const response = await fetch(url, {
+    method: 'POST',
+    cache: 'no-cache',
+    headers: {'Content-Type': 'application/json'},
+    redirect: 'follow',
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
 class DeviceConnection {
   constructor(pc, control, media_stream) {
     this._pc = pc;
@@ -239,7 +250,7 @@ class DeviceConnection {
   async useVideo(in_use) {
     if (in_use) {
       if (this._cameraSenders) {
-        console.warning('Video is already in use');
+        console.warn('Video is already in use');
         return;
       }
       this._cameraSenders = [];
@@ -325,42 +336,112 @@ class DeviceConnection {
   }
 }
 
+class Controller {
+  #pc;
 
-class WebRTCControl {
-  constructor({
-    wsUrl = '',
-  }) {
-    /*
-     * Private attributes:
-     *
-     * _wsPromise: promises the underlying websocket, should resolve when the
-     *             socket passes to OPEN state, will be rejecte/replaced by a
-     *             rejected promise if an error is detected on the socket.
-     * _pc: The webrtc peer connection.
-     */
+  constructor() {}
 
-    this._promiseResolvers = {};
-
-    this._wsPromise = new Promise((resolve, reject) => {
-      let ws = new WebSocket(wsUrl);
-      ws.onopen = () => {
-        console.debug(`Connected to ${wsUrl}`);
-        resolve(ws);
-      };
-      ws.onerror = evt => {
-        console.error('WebSocket error:', evt);
-        reject(evt);
-        // If the promise was already resolved the previous line has no effect
-        this._wsPromise = Promise.reject(new Error(evt));
-      };
-      ws.onmessage = e => {
-        let data = JSON.parse(e.data);
-        this._onWebsocketMessage(data);
-      };
-    });
+  _onDeviceMessage(message) {
+    let type = message.type;
+    switch (type) {
+      case 'offer':
+        this.#onOffer({type: 'offer', sdp: message.sdp});
+        break;
+      case 'answer':
+        this.#onAnswer({type: 'answer', sdp: message.sdp});
+        break;
+      case 'ice-candidate':
+          this.#onIceCandidate(new RTCIceCandidate({
+            sdpMid: message.mid,
+            sdpMLineIndex: message.mLineIndex,
+            candidate: message.candidate
+          }));
+        break;
+      case 'error':
+        console.error('Device responded with error message: ', message.error);
+        break;
+      default:
+        console.error('Unrecognized message type from device: ', type);
+    }
   }
 
-  _onWebsocketMessage(message) {
+  async #sendClientDescription(desc) {
+    console.debug('sendClientDescription');
+    return this._sendToDevice({type: 'answer', sdp: desc.sdp});
+  }
+
+  async #sendIceCandidate(candidate) {
+    return this._sendToDevice({type: 'ice-candidate', candidate});
+  }
+
+  async #onOffer(desc) {
+    console.debug('Remote description (offer): ', desc);
+    try {
+      await this.#pc.setRemoteDescription(desc);
+      let answer = await this.#pc.createAnswer();
+      console.debug('Answer: ', answer);
+      await this.#pc.setLocalDescription(answer);
+      await this.#sendClientDescription(answer);
+    } catch (e) {
+      console.error('Error processing remote description (offer)', e)
+      throw e;
+    }
+  }
+
+  async #onAnswer(answer) {
+    console.debug('Remote description (answer): ', answer);
+    try {
+      await this.#pc.setRemoteDescription(answer);
+    } catch (e) {
+      console.error('Error processing remote description (answer)', e)
+      throw e;
+    }
+  }
+
+  #onIceCandidate(iceCandidate) {
+    console.debug(`Remote ICE Candidate: `, iceCandidate);
+    this.#pc.addIceCandidate(iceCandidate);
+  }
+
+  ConnectDevice(pc) {
+    this.#pc = pc;
+    console.debug('ConnectDevice');
+    // ICE candidates will be generated when we add the offer. Adding it here
+    // instead of in _onOffer because this function is called once per peer
+    // connection, while _onOffer may be called more than once due to
+    // renegotiations.
+    this.#pc.addEventListener('icecandidate', evt => {
+      if (evt.candidate) this.#sendIceCandidate(evt.candidate);
+    });
+    this._sendToDevice({type: 'request-offer'});
+  }
+
+  async renegotiateConnection() {
+    console.debug('Re-negotiating connection');
+    let offer = await this.#pc.createOffer();
+    console.debug('Local description (offer): ', offer);
+    await this.#pc.setLocalDescription(offer);
+    this._sendToDevice({type: 'offer', sdp: offer.sdp});
+  }
+}
+
+class WebsocketController extends Controller {
+  #promiseResolvers;
+  #websocket;
+
+  constructor(websocket) {
+    super();
+
+    websocket.onmessage = e => {
+      let data = JSON.parse(e.data);
+      this.#onWebsocketMessage(data);
+    };
+    this.#websocket = websocket;
+
+    this.#promiseResolvers = {};
+  }
+
+  #onWebsocketMessage(message) {
     const type = message.message_type;
     if (message.error) {
       console.error(message.error);
@@ -390,71 +471,12 @@ class WebRTCControl {
     }
   }
 
-  _onDeviceMessage(message) {
-    let type = message.type;
-    switch (type) {
-      case 'offer':
-        this._onOffer({type: 'offer', sdp: message.sdp});
-        break;
-      case 'answer':
-        this._onAnswer({type: 'answer', sdp: message.sdp});
-        break;
-      case 'ice-candidate':
-          this._onIceCandidate(new RTCIceCandidate({
-            sdpMid: message.mid,
-            sdpMLineIndex: message.mLineIndex,
-            candidate: message.candidate
-          }));
-        break;
-      default:
-        console.error('Unrecognized message type from device: ', type);
-    }
+  async #wsSendJson(obj) {
+    return this.#websocket.send(JSON.stringify(obj));
   }
 
-  async _wsSendJson(obj) {
-    let ws = await this._wsPromise;
-    return ws.send(JSON.stringify(obj));
-  }
   async _sendToDevice(payload) {
-    return this._wsSendJson({message_type: 'forward', payload});
-  }
-
-  async _sendClientDescription(desc) {
-    console.debug('sendClientDescription');
-    return this._sendToDevice({type: 'answer', sdp: desc.sdp});
-  }
-
-  async _sendIceCandidate(candidate) {
-    return this._sendToDevice({type: 'ice-candidate', candidate});
-  }
-
-  async _onOffer(desc) {
-    console.debug('Remote description (offer): ', desc);
-    try {
-      await this._pc.setRemoteDescription(desc);
-      let answer = await this._pc.createAnswer();
-      console.debug('Answer: ', answer);
-      await this._pc.setLocalDescription(answer);
-      await this._sendClientDescription(answer);
-    } catch (e) {
-      console.error('Error processing remote description (offer)', e)
-      throw e;
-    }
-  }
-
-  async _onAnswer(answer) {
-    console.debug('Remote description (answer): ', answer);
-    try {
-      await this._pc.setRemoteDescription(answer);
-    } catch (e) {
-      console.error('Error processing remote description (answer)', e)
-      throw e;
-    }
-  }
-
-  _onIceCandidate(iceCandidate) {
-    console.debug(`Remote ICE Candidate: `, iceCandidate);
-    this._pc.addIceCandidate(iceCandidate);
+    return this.#wsSendJson({message_type: 'forward', payload});
   }
 
   async requestDevice(device_id) {
@@ -464,33 +486,106 @@ class WebRTCControl {
         infraConfig: this._infra_config,
       });
       this._on_connection_failed = (error) => reject(error);
-      this._wsSendJson({
+      this.#wsSendJson({
         message_type: 'connect',
         device_id,
       });
     });
   }
+}
 
-  ConnectDevice(pc) {
-    this._pc = pc;
-    console.debug('ConnectDevice');
-    // ICE candidates will be generated when we add the offer. Adding it here
-    // instead of in _onOffer because this function is called once per peer
-    // connection, while _onOffer may be called more than once due to
-    // renegotiations.
-    this._pc.addEventListener('icecandidate', evt => {
-      if (evt.candidate) this._sendIceCandidate(evt.candidate);
+class PollingController extends Controller {
+  #connectUrl;
+  #forwardUrl;
+  #pollUrl;
+  #connection_id;
+  #infraConfig;
+  #pollerSchedule;
+
+  constructor(connectUrl, forwardUrl, pollUrl, infra_config) {
+    super();
+
+    this.#connectUrl = connectUrl;
+    this.#forwardUrl = forwardUrl;
+    this.#pollUrl = pollUrl;
+    this.#infraConfig = infra_config;
+  }
+
+  #startPolling() {
+    if (this.#pollerSchedule !== undefined) {
+      return;
+    }
+
+    let currentPollDelay = 1000;
+    let pollerRoutine = async () => {
+      let messages = await ajaxPostJson(this.#pollUrl, {
+        connection_id: this.#connection_id,
+      });
+      // Do exponential backoff on the polling up to 60 seconds
+      currentPollDelay = Math.min(60000, 2 * currentPollDelay);
+      for (const message of messages) {
+        this._onDeviceMessage(message);
+        // There is at least one message, poll sooner
+        currentPollDelay = 1000;
+      }
+      this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
+    };
+
+    this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
+  }
+
+  async _sendToDevice(obj) {
+    // Forward messages act like polling messages as well
+    let device_messages = await ajaxPostJson(this.#forwardUrl, {
+      connection_id: this.#connection_id,
+      payload: obj,
     });
-    this._sendToDevice({type: 'request-offer'});
+    for (const message of device_messages) {
+      this._onDeviceMessage(message);
+    }
   }
 
-  async renegotiateConnection() {
-    console.debug('Re-negotiating connection');
-    let offer = await this._pc.createOffer();
-    console.debug('Local description (offer): ', offer);
-    await this._pc.setLocalDescription(offer);
-    this._sendToDevice({type: 'offer', sdp: offer.sdp});
+  async requestDevice(device_id) {
+    let response = await ajaxPostJson(this.#connectUrl, {
+             device_id
+           });
+    this.#connection_id = response.connection_id;
+
+    // Start polling after we get a connection id
+    this.#startPolling();
+
+    return {
+      deviceInfo: response.device_info,
+      infraConfig: this.#infraConfig,
+    };
   }
+}
+
+async function createController(options) {
+  try {
+    let ws = await new Promise((resolve, reject) => {
+      let ws = new WebSocket(options.wsUrl);
+      ws.onopen = () => {
+        console.debug(`Connected to ${options.wsUrl}`);
+        resolve(ws);
+      };
+      ws.onerror = evt => {
+        console.error('WebSocket error:', evt);
+        reject(evt);
+      };
+    });
+    return new WebsocketController(ws);
+  } catch (e) {
+    console.warn('Failed to connect websocket, trying polling instead');
+  }
+
+  const config = (await fetch(options.pollConfigUrl, {
+                   method: 'GET',
+                   redirect: 'follow',
+                 })).json();
+  return new PollingController(
+      options.pollConnectUrl, options.pollForwardUrl, options.pollMessagesUrl,
+      await config);
 }
 
 function createPeerConnection(infra_config) {
@@ -514,7 +609,8 @@ function createPeerConnection(infra_config) {
 }
 
 export async function Connect(deviceId, options) {
-  let control = new WebRTCControl(options);
+  let control = await createController(options);
+
   let requestRet = await control.requestDevice(deviceId);
   let deviceInfo = requestRet.deviceInfo;
   let infraConfig = requestRet.infraConfig;

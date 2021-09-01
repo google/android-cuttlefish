@@ -41,7 +41,11 @@ namespace {
 
 constexpr auto kRegisterDeviceUriPath = "/register_device";
 constexpr auto kConnectClientUriPath = "/connect_client";
-constexpr auto kListDevicesUriPath = "/list_devices";
+constexpr auto kListDevicesUriPath = "/devices";
+const constexpr auto kInfraConfigPath = "/infra_config";
+const constexpr auto kConnectPath = "/connect";
+const constexpr auto kForwardPath = "/forward";
+const constexpr auto kPollPath = "/poll_messages";
 
 }  // namespace
 
@@ -50,6 +54,7 @@ int main(int argc, char** argv) {
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   cuttlefish::DeviceRegistry device_registry;
+  cuttlefish::PollConnectionStore poll_store;
   cuttlefish::ServerConfig server_config({FLAGS_stun_server});
 
   cuttlefish::WebSocketServer wss =
@@ -60,18 +65,48 @@ int main(int argc, char** argv) {
           : cuttlefish::WebSocketServer("webrtc-operator", FLAGS_assets_dir,
                                         FLAGS_http_server_port);
 
+  // Device list endpoint
+  wss.RegisterDynHandlerFactory(
+      kListDevicesUriPath, [&device_registry](struct lws* wsi) {
+        return std::unique_ptr<cuttlefish::DynHandler>(
+            new cuttlefish::DeviceListHandler(wsi, device_registry));
+      });
+
+  // Websocket signaling endpoints
   auto device_handler_factory_p =
       std::unique_ptr<cuttlefish::WebSocketHandlerFactory>(
-          new cuttlefish::DeviceHandlerFactory(&device_registry, server_config));
-  wss.RegisterHandlerFactory(kRegisterDeviceUriPath, std::move(device_handler_factory_p));
+          new cuttlefish::DeviceHandlerFactory(&device_registry,
+                                               server_config));
+  wss.RegisterHandlerFactory(kRegisterDeviceUriPath,
+                             std::move(device_handler_factory_p));
   auto client_handler_factory_p =
       std::unique_ptr<cuttlefish::WebSocketHandlerFactory>(
-          new cuttlefish::ClientHandlerFactory(&device_registry, server_config));
-  wss.RegisterHandlerFactory(kConnectClientUriPath, std::move(client_handler_factory_p));
-  auto device_list_handler_factory_p =
-      std::unique_ptr<cuttlefish::DynHandlerFactory>(
-          new cuttlefish::DeviceListHandlerFactory(device_registry));
-  wss.RegisterDynHandlerFactory(kListDevicesUriPath, std::move(device_list_handler_factory_p));
+          new cuttlefish::ClientWSHandlerFactory(&device_registry,
+                                                 server_config));
+  wss.RegisterHandlerFactory(kConnectClientUriPath,
+                             std::move(client_handler_factory_p));
+
+  // Polling signaling endpoints
+  wss.RegisterDynHandlerFactory(
+      kInfraConfigPath, [&server_config](struct lws* wsi) {
+        return std::unique_ptr<cuttlefish::DynHandler>(
+            new cuttlefish::ConfigHandler(wsi, server_config));
+      });
+  wss.RegisterDynHandlerFactory(
+      kConnectPath, [&device_registry, &poll_store](struct lws* wsi) {
+        return std::unique_ptr<cuttlefish::DynHandler>(
+            new cuttlefish::ConnectHandler(wsi, &device_registry, &poll_store));
+      });
+  wss.RegisterDynHandlerFactory(
+      kForwardPath, [&poll_store](struct lws* wsi) {
+        return std::unique_ptr<cuttlefish::DynHandler>(
+            new cuttlefish::ForwardHandler(wsi, &poll_store));
+      });
+  wss.RegisterDynHandlerFactory(
+      kPollPath, [&poll_store](struct lws* wsi) {
+        return std::unique_ptr<cuttlefish::DynHandler>(
+            new cuttlefish::PollHandler(wsi, &poll_store));
+      });
 
   wss.Serve();
   return 0;
