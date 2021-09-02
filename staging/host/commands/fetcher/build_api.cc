@@ -80,8 +80,8 @@ DirectoryBuild::DirectoryBuild(const std::vector<std::string>& paths,
   product = StringFromEnv("TARGET_PRODUCT", "");
 }
 
-BuildApi::BuildApi(std::unique_ptr<CredentialSource> credential_source)
-    : credential_source(std::move(credential_source)) {}
+BuildApi::BuildApi(CurlWrapper& curl, CredentialSource* credential_source)
+    : curl(curl), credential_source(credential_source) {}
 
 std::vector<std::string> BuildApi::Headers() {
   std::vector<std::string> headers;
