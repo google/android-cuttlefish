@@ -29,18 +29,18 @@ public:
 };
 
 class GceMetadataCredentialSource : public CredentialSource {
-  CurlWrapper curl;
+  CurlWrapper& curl;
   std::string latest_credential;
   std::chrono::steady_clock::time_point expiration;
 
   void RefreshCredential();
 public:
-  GceMetadataCredentialSource();
-  GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
+ GceMetadataCredentialSource(CurlWrapper&);
+ GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
 
-  virtual std::string Credential();
+ virtual std::string Credential();
 
-  static std::unique_ptr<CredentialSource> make();
+ static std::unique_ptr<CredentialSource> make(CurlWrapper&);
 };
 
 class FixedCredentialSource : public CredentialSource {
