@@ -20,6 +20,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <thread>
 
 #include <android-base/logging.h>
 #include <curl/curl.h>
@@ -160,10 +161,66 @@ class CurlWrapperImpl : public CurlWrapper {
   std::mutex mutex_;
 };
 
+class CurlServerErrorRetryingWrapper : public CurlWrapper {
+ public:
+  CurlServerErrorRetryingWrapper(CurlWrapper& inner, int retry_attempts,
+                                 std::chrono::milliseconds retry_delay)
+      : inner_curl_(inner),
+        retry_attempts_(retry_attempts),
+        retry_delay_(retry_delay) {}
+
+  CurlResponse<std::string> DownloadToFile(
+      const std::string& url, const std::string& path,
+      const std::vector<std::string>& headers) {
+    return RetryImpl<std::string>(
+        [&, this]() { return inner_curl_.DownloadToFile(url, path, headers); });
+  }
+
+  CurlResponse<std::string> DownloadToString(
+      const std::string& url, const std::vector<std::string>& headers) {
+    return RetryImpl<std::string>(
+        [&, this]() { return inner_curl_.DownloadToString(url, headers); });
+  }
+
+  CurlResponse<Json::Value> DownloadToJson(
+      const std::string& url, const std::vector<std::string>& headers) {
+    return RetryImpl<Json::Value>(
+        [&, this]() { return inner_curl_.DownloadToJson(url, headers); });
+  }
+
+ private:
+  template <typename T>
+  CurlResponse<T> RetryImpl(std::function<CurlResponse<T>()> attempt_fn) {
+    CurlResponse<T> response;
+    for (int attempt = 0; attempt != retry_attempts_; ++attempt) {
+      if (attempt != 0) {
+        std::this_thread::sleep_for(retry_delay_);
+      }
+      response = attempt_fn();
+      if (!response.HttpServerError()) {
+        return response;
+      }
+    }
+    return response;
+  }
+
+ private:
+  CurlWrapper& inner_curl_;
+  int retry_attempts_;
+  std::chrono::milliseconds retry_delay_;
+};
+
 }  // namespace
 
 /* static */ std::unique_ptr<CurlWrapper> CurlWrapper::Create() {
   return std::unique_ptr<CurlWrapper>(new CurlWrapperImpl());
+}
+
+/* static */ std::unique_ptr<CurlWrapper> CurlWrapper::WithServerErrorRetry(
+    CurlWrapper& inner, int retry_attempts,
+    std::chrono::milliseconds retry_delay) {
+  return std::unique_ptr<CurlWrapper>(
+      new CurlServerErrorRetryingWrapper(inner, retry_attempts, retry_delay));
 }
 
 CurlWrapper::~CurlWrapper() = default;
