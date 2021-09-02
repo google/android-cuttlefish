@@ -63,16 +63,18 @@ CurlWrapper::~CurlWrapper() {
   curl_easy_cleanup(curl);
 }
 
-bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path) {
+CurlResponse<std::string> CurlWrapper::DownloadToFile(const std::string& url,
+                                                      const std::string& path) {
   return CurlWrapper::DownloadToFile(url, path, {});
 }
 
-bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path,
-                                 const std::vector<std::string>& headers) {
+CurlResponse<std::string> CurlWrapper::DownloadToFile(
+    const std::string& url, const std::string& path,
+    const std::vector<std::string>& headers) {
   LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
   if (!curl) {
     LOG(ERROR) << "curl was not initialized\n";
-    return false;
+    return {"", -1};
   }
   curl_slist* curl_headers = build_slist(headers);
   curl_easy_reset(curl);
@@ -85,7 +87,7 @@ bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path
   FILE* file = fopen(path.c_str(), "w");
   if (!file) {
     LOG(ERROR) << "could not open file " << path;
-    return false;
+    return {"", -1};
   }
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) file);
   CURLcode res = curl_easy_perform(curl);
@@ -98,21 +100,24 @@ bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path
         << "Code was \"" << res << "\". "
         << "Strerror was \"" << curl_easy_strerror(res) << "\". "
         << "Error buffer was \"" << error_buf << "\".";
-    return false;
+    return {"", -1};
   }
-  return true;
+  long http_code = 0;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+  return {path, http_code};
 }
 
-std::string CurlWrapper::DownloadToString(const std::string& url) {
+CurlResponse<std::string> CurlWrapper::DownloadToString(
+    const std::string& url) {
   return DownloadToString(url, {});
 }
 
-std::string CurlWrapper::DownloadToString(const std::string& url,
-                                          const std::vector<std::string>& headers) {
+CurlResponse<std::string> CurlWrapper::DownloadToString(
+    const std::string& url, const std::vector<std::string>& headers) {
   LOG(INFO) << "Attempting to download \"" << url << "\"";
   if (!curl) {
     LOG(ERROR) << "curl was not initialized\n";
-    return "";
+    return {"", -1};
   }
   curl_slist* curl_headers = build_slist(headers);
   curl_easy_reset(curl);
@@ -134,18 +139,21 @@ std::string CurlWrapper::DownloadToString(const std::string& url,
         << "Code was \"" << res << "\". "
         << "Strerror was \"" << curl_easy_strerror(res) << "\". "
         << "Error buffer was \"" << error_buf << "\".";
-    return "";
+    return {"", -1};
   }
-  return data.str();
+  long http_code = 0;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+  return {data.str(), http_code};
 }
 
-Json::Value CurlWrapper::DownloadToJson(const std::string& url) {
+CurlResponse<Json::Value> CurlWrapper::DownloadToJson(const std::string& url) {
   return DownloadToJson(url, {});
 }
 
-Json::Value CurlWrapper::DownloadToJson(const std::string& url,
-                                        const std::vector<std::string>& headers) {
-  std::string contents = DownloadToString(url, headers);
+CurlResponse<Json::Value> CurlWrapper::DownloadToJson(
+    const std::string& url, const std::vector<std::string>& headers) {
+  CurlResponse<std::string> response = DownloadToString(url, headers);
+  const std::string& contents = response.data;
   Json::CharReaderBuilder builder;
   std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   Json::Value json;
@@ -155,7 +163,6 @@ Json::Value CurlWrapper::DownloadToJson(const std::string& url,
     json["error"] = "Failed to parse json.";
     json["response"] = contents;
   }
-  return json;
+  return {json, response.http_code};
 }
-
 }
