@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "curl_wrapper.h"
+#include "host/commands/fetcher/curl_wrapper.h"
 
-#include <sstream>
-#include <string>
 #include <stdio.h>
 
-#include <android-base/logging.h>
+#include <mutex>
+#include <sstream>
+#include <string>
 
+#include <android-base/logging.h>
 #include <curl/curl.h>
 #include <json/json.h>
 
@@ -52,16 +53,14 @@ curl_slist* build_slist(const std::vector<std::string>& strings) {
 } // namespace
 
 CurlWrapper::CurlWrapper() {
-  curl = curl_easy_init();
-  if (!curl) {
+  curl_ = curl_easy_init();
+  if (!curl_) {
     LOG(ERROR) << "failed to initialize curl";
     return;
   }
 }
 
-CurlWrapper::~CurlWrapper() {
-  curl_easy_cleanup(curl);
-}
+CurlWrapper::~CurlWrapper() { curl_easy_cleanup(curl_); }
 
 CurlResponse<std::string> CurlWrapper::DownloadToFile(const std::string& url,
                                                       const std::string& path) {
@@ -71,26 +70,27 @@ CurlResponse<std::string> CurlWrapper::DownloadToFile(const std::string& url,
 CurlResponse<std::string> CurlWrapper::DownloadToFile(
     const std::string& url, const std::string& path,
     const std::vector<std::string>& headers) {
+  std::lock_guard<std::mutex> lock(mutex_);
   LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
-  if (!curl) {
-    LOG(ERROR) << "curl was not initialized\n";
+  if (!curl_) {
+    LOG(ERROR) << "curl_ was not initialized\n";
     return {"", -1};
   }
   curl_slist* curl_headers = build_slist(headers);
-  curl_easy_reset(curl);
-  curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_headers);
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_reset(curl_);
+  curl_easy_setopt(curl_, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
+  curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+  curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
   char error_buf[CURL_ERROR_SIZE];
-  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
-  curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+  curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
+  curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
   FILE* file = fopen(path.c_str(), "w");
   if (!file) {
     LOG(ERROR) << "could not open file " << path;
     return {"", -1};
   }
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) file);
-  CURLcode res = curl_easy_perform(curl);
+  curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)file);
+  CURLcode res = curl_easy_perform(curl_);
   if (curl_headers) {
     curl_slist_free_all(curl_headers);
   }
@@ -103,7 +103,7 @@ CurlResponse<std::string> CurlWrapper::DownloadToFile(
     return {"", -1};
   }
   long http_code = 0;
-  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+  curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
   return {path, http_code};
 }
 
@@ -114,23 +114,24 @@ CurlResponse<std::string> CurlWrapper::DownloadToString(
 
 CurlResponse<std::string> CurlWrapper::DownloadToString(
     const std::string& url, const std::vector<std::string>& headers) {
+  std::lock_guard<std::mutex> lock(mutex_);
   LOG(INFO) << "Attempting to download \"" << url << "\"";
-  if (!curl) {
+  if (!curl_) {
     LOG(ERROR) << "curl was not initialized\n";
     return {"", -1};
   }
   curl_slist* curl_headers = build_slist(headers);
-  curl_easy_reset(curl);
-  curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_headers);
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_reset(curl_);
+  curl_easy_setopt(curl_, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
+  curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+  curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
   std::stringstream data;
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, file_write_callback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+  curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
+  curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data);
   char error_buf[CURL_ERROR_SIZE];
-  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
-  curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-  CURLcode res = curl_easy_perform(curl);
+  curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
+  curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
+  CURLcode res = curl_easy_perform(curl_);
   if (curl_headers) {
     curl_slist_free_all(curl_headers);
   }
@@ -142,7 +143,7 @@ CurlResponse<std::string> CurlWrapper::DownloadToString(
     return {"", -1};
   }
   long http_code = 0;
-  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+  curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
   return {data.str(), http_code};
 }
 
