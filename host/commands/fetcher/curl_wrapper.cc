@@ -50,120 +50,121 @@ curl_slist* build_slist(const std::vector<std::string>& strings) {
   return curl_headers;
 }
 
-} // namespace
-
-CurlWrapper::CurlWrapper() {
-  curl_ = curl_easy_init();
-  if (!curl_) {
-    LOG(ERROR) << "failed to initialize curl";
-    return;
+class CurlWrapperImpl : public CurlWrapper {
+ public:
+  CurlWrapperImpl() {
+    curl_ = curl_easy_init();
+    if (!curl_) {
+      LOG(ERROR) << "failed to initialize curl";
+      return;
+    }
   }
+  ~CurlWrapperImpl() { curl_easy_cleanup(curl_); }
+
+  CurlResponse<std::string> DownloadToFile(
+      const std::string& url, const std::string& path,
+      const std::vector<std::string>& headers) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
+    if (!curl_) {
+      LOG(ERROR) << "curl was not initialized\n";
+      return {"", -1};
+    }
+    curl_slist* curl_headers = build_slist(headers);
+    curl_easy_reset(curl_);
+    curl_easy_setopt(curl_, CURLOPT_CAINFO,
+                     "/etc/ssl/certs/ca-certificates.crt");
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
+    char error_buf[CURL_ERROR_SIZE];
+    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
+    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
+    FILE* file = fopen(path.c_str(), "w");
+    if (!file) {
+      LOG(ERROR) << "could not open file " << path;
+      return {"", -1};
+    }
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)file);
+    CURLcode res = curl_easy_perform(curl_);
+    if (curl_headers) {
+      curl_slist_free_all(curl_headers);
+    }
+    fclose(file);
+    if (res != CURLE_OK) {
+      LOG(ERROR) << "curl_easy_perform() failed. "
+                 << "Code was \"" << res << "\". "
+                 << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                 << "Error buffer was \"" << error_buf << "\".";
+      return {{}, -1};
+    }
+    long http_code = 0;
+    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
+    return {path, http_code};
+  }
+
+  CurlResponse<std::string> DownloadToString(
+      const std::string& url, const std::vector<std::string>& headers) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG(INFO) << "Attempting to download \"" << url << "\"";
+    if (!curl_) {
+      LOG(ERROR) << "curl was not initialized\n";
+      return {"", -1};
+    }
+    curl_slist* curl_headers = build_slist(headers);
+    curl_easy_reset(curl_);
+    curl_easy_setopt(curl_, CURLOPT_CAINFO,
+                     "/etc/ssl/certs/ca-certificates.crt");
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
+    std::stringstream data;
+    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data);
+    char error_buf[CURL_ERROR_SIZE];
+    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
+    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
+    CURLcode res = curl_easy_perform(curl_);
+    if (curl_headers) {
+      curl_slist_free_all(curl_headers);
+    }
+    if (res != CURLE_OK) {
+      LOG(ERROR) << "curl_easy_perform() failed. "
+                 << "Code was \"" << res << "\". "
+                 << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                 << "Error buffer was \"" << error_buf << "\".";
+      return {"", -1};
+    }
+    long http_code = 0;
+    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
+    return {data.str(), http_code};
+  }
+
+  CurlResponse<Json::Value> DownloadToJson(
+      const std::string& url, const std::vector<std::string>& headers) {
+    CurlResponse<std::string> response = DownloadToString(url, headers);
+    const std::string& contents = response.data;
+    Json::CharReaderBuilder builder;
+    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    Json::Value json;
+    std::string errorMessage;
+    if (!reader->parse(&*contents.begin(), &*contents.end(), &json,
+                       &errorMessage)) {
+      LOG(ERROR) << "Could not parse json: " << errorMessage;
+      json["error"] = "Failed to parse json.";
+      json["response"] = contents;
+    }
+    return {json, response.http_code};
+  }
+
+ private:
+  CURL* curl_;
+  std::mutex mutex_;
+};
+
+}  // namespace
+
+/* static */ std::unique_ptr<CurlWrapper> CurlWrapper::Create() {
+  return std::unique_ptr<CurlWrapper>(new CurlWrapperImpl());
 }
 
-CurlWrapper::~CurlWrapper() { curl_easy_cleanup(curl_); }
-
-CurlResponse<std::string> CurlWrapper::DownloadToFile(const std::string& url,
-                                                      const std::string& path) {
-  return CurlWrapper::DownloadToFile(url, path, {});
-}
-
-CurlResponse<std::string> CurlWrapper::DownloadToFile(
-    const std::string& url, const std::string& path,
-    const std::vector<std::string>& headers) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
-  if (!curl_) {
-    LOG(ERROR) << "curl_ was not initialized\n";
-    return {"", -1};
-  }
-  curl_slist* curl_headers = build_slist(headers);
-  curl_easy_reset(curl_);
-  curl_easy_setopt(curl_, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
-  curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
-  curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-  char error_buf[CURL_ERROR_SIZE];
-  curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-  curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-  FILE* file = fopen(path.c_str(), "w");
-  if (!file) {
-    LOG(ERROR) << "could not open file " << path;
-    return {"", -1};
-  }
-  curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)file);
-  CURLcode res = curl_easy_perform(curl_);
-  if (curl_headers) {
-    curl_slist_free_all(curl_headers);
-  }
-  fclose(file);
-  if (res != CURLE_OK) {
-    LOG(ERROR) << "curl_easy_perform() failed. "
-        << "Code was \"" << res << "\". "
-        << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-        << "Error buffer was \"" << error_buf << "\".";
-    return {"", -1};
-  }
-  long http_code = 0;
-  curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-  return {path, http_code};
-}
-
-CurlResponse<std::string> CurlWrapper::DownloadToString(
-    const std::string& url) {
-  return DownloadToString(url, {});
-}
-
-CurlResponse<std::string> CurlWrapper::DownloadToString(
-    const std::string& url, const std::vector<std::string>& headers) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  LOG(INFO) << "Attempting to download \"" << url << "\"";
-  if (!curl_) {
-    LOG(ERROR) << "curl was not initialized\n";
-    return {"", -1};
-  }
-  curl_slist* curl_headers = build_slist(headers);
-  curl_easy_reset(curl_);
-  curl_easy_setopt(curl_, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
-  curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
-  curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-  std::stringstream data;
-  curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
-  curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data);
-  char error_buf[CURL_ERROR_SIZE];
-  curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-  curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-  CURLcode res = curl_easy_perform(curl_);
-  if (curl_headers) {
-    curl_slist_free_all(curl_headers);
-  }
-  if (res != CURLE_OK) {
-    LOG(ERROR) << "curl_easy_perform() failed. "
-        << "Code was \"" << res << "\". "
-        << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-        << "Error buffer was \"" << error_buf << "\".";
-    return {"", -1};
-  }
-  long http_code = 0;
-  curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-  return {data.str(), http_code};
-}
-
-CurlResponse<Json::Value> CurlWrapper::DownloadToJson(const std::string& url) {
-  return DownloadToJson(url, {});
-}
-
-CurlResponse<Json::Value> CurlWrapper::DownloadToJson(
-    const std::string& url, const std::vector<std::string>& headers) {
-  CurlResponse<std::string> response = DownloadToString(url, headers);
-  const std::string& contents = response.data;
-  Json::CharReaderBuilder builder;
-  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  Json::Value json;
-  std::string errorMessage;
-  if (!reader->parse(&*contents.begin(), &*contents.end(), &json, &errorMessage)) {
-    LOG(ERROR) << "Could not parse json: " << errorMessage;
-    json["error"] = "Failed to parse json.";
-    json["response"] = contents;
-  }
-  return {json, response.http_code};
-}
+CurlWrapper::~CurlWrapper() = default;
 }
