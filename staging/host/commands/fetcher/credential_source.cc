@@ -27,7 +27,8 @@ std::string REFRESH_URL = "http://metadata.google.internal/computeMetadata/"
 
 } // namespace
 
-GceMetadataCredentialSource::GceMetadataCredentialSource() {
+GceMetadataCredentialSource::GceMetadataCredentialSource(CurlWrapper& curl)
+    : curl(curl) {
   latest_credential = "";
   expiration = std::chrono::steady_clock::now();
 }
@@ -63,8 +64,10 @@ void GceMetadataCredentialSource::RefreshCredential() {
   latest_credential = json["access_token"].asString();
 }
 
-std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make() {
-  return std::unique_ptr<CredentialSource>(new GceMetadataCredentialSource());
+std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make(
+    CurlWrapper& curl) {
+  return std::unique_ptr<CredentialSource>(
+      new GceMetadataCredentialSource(curl));
 }
 
 FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
