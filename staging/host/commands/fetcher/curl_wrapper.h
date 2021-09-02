@@ -18,7 +18,6 @@
 #include <mutex>
 #include <string>
 
-#include <curl/curl.h>
 #include <json/json.h>
 
 namespace cuttlefish {
@@ -36,28 +35,17 @@ struct CurlResponse {
 };
 
 class CurlWrapper {
-public:
-  CurlWrapper();
-  ~CurlWrapper();
-  CurlWrapper(const CurlWrapper&) = delete;
-  CurlWrapper& operator=(const CurlWrapper*) = delete;
-  CurlWrapper(CurlWrapper&&) = default;
+ public:
+  static std::unique_ptr<CurlWrapper> Create();
+  virtual ~CurlWrapper();
 
-  CurlResponse<std::string> DownloadToFile(const std::string& url,
-                                           const std::string& path);
-  CurlResponse<std::string> DownloadToFile(
+  virtual CurlResponse<std::string> DownloadToFile(
       const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers);
-  CurlResponse<std::string> DownloadToString(const std::string& url);
-  CurlResponse<std::string> DownloadToString(
-      const std::string& url, const std::vector<std::string>& headers);
-  CurlResponse<Json::Value> DownloadToJson(const std::string& url);
-  CurlResponse<Json::Value> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers);
-
- private:
-  CURL* curl_;
-  std::mutex mutex_;
+      const std::vector<std::string>& headers = {}) = 0;
+  virtual CurlResponse<std::string> DownloadToString(
+      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
+  virtual CurlResponse<Json::Value> DownloadToJson(
+      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
 };
 
 }
