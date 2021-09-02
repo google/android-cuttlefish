@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <mutex>
 #include <string>
 
@@ -37,6 +38,8 @@ struct CurlResponse {
 class CurlWrapper {
  public:
   static std::unique_ptr<CurlWrapper> Create();
+  static std::unique_ptr<CurlWrapper> WithServerErrorRetry(
+      CurlWrapper&, int retry_attempts, std::chrono::milliseconds retry_delay);
   virtual ~CurlWrapper();
 
   virtual CurlResponse<std::string> DownloadToFile(
