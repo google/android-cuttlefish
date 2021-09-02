@@ -96,35 +96,57 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
   std::string url = BUILD_API + "/builds?branch=" + branch
       + "&buildAttemptStatus=complete"
       + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
-  auto response = curl.DownloadToJson(url, Headers());
-  CHECK(!response.isMember("error")) << "Error fetching the latest build of \""
-      << target << "\" on \"" << branch << "\". Response was " << response;
+  auto curl_response = curl.DownloadToJson(url, Headers());
+  const auto& json = curl_response.data;
+  if (!curl_response.HttpSuccess()) {
+    LOG(FATAL) << "Error fetching the latest build of \"" << target
+               << "\" on \"" << branch << "\". The server response was \""
+               << json << "\", and code was " << curl_response.http_code;
+  }
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
 
-  if (!response.isMember("builds") || response["builds"].size() != 1) {
+  if (!json.isMember("builds") || json["builds"].size() != 1) {
     LOG(WARNING) << "expected to receive 1 build for \"" << target << "\" on \""
-        << branch << "\", but received " << response["builds"].size()
-        << ". Full response was " << response;
+                 << branch << "\", but received " << json["builds"].size()
+                 << ". Full response was " << json;
     return "";
   }
-  return response["builds"][0]["buildId"].asString();
+  return json["builds"][0]["buildId"].asString();
 }
 
 std::string BuildApi::BuildStatus(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
-  auto response_json = curl.DownloadToJson(url, Headers());
-  CHECK(!response_json.isMember("error")) << "Error fetching the status of "
-      << "build " << build << ". Response was " << response_json;
+  auto curl_response = curl.DownloadToJson(url, Headers());
+  const auto& json = curl_response.data;
+  if (!curl_response.HttpSuccess()) {
+    LOG(FATAL) << "Error fetching the status of \"" << build
+               << "\". The server response was \"" << json
+               << "\", and code was " << curl_response.http_code;
+  }
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
 
-  return response_json["buildAttemptStatus"].asString();
+  return json["buildAttemptStatus"].asString();
 }
 
 std::string BuildApi::ProductName(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
-  auto response_json = curl.DownloadToJson(url, Headers());
-  CHECK(!response_json.isMember("error")) << "Error fetching the status of "
-      << "build " << build << ". Response was " << response_json;
-  CHECK(response_json.isMember("target")) << "Build was missing target field.";
-  return response_json["target"]["product"].asString();
+  auto curl_response = curl.DownloadToJson(url, Headers());
+  const auto& json = curl_response.data;
+  if (!curl_response.HttpSuccess()) {
+    LOG(FATAL) << "Error fetching the product name of \"" << build
+               << "\". The server response was \"" << json
+               << "\", and code was " << curl_response.http_code;
+  }
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
+
+  CHECK(json.isMember("target")) << "Build was missing target field.";
+  return json["target"]["product"].asString();
 }
 
 std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
@@ -136,16 +158,22 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
     if (page_token != "") {
       url += "&pageToken=" + page_token;
     }
-    auto artifacts_json = curl.DownloadToJson(url, Headers());
-    CHECK(!artifacts_json.isMember("error"))
-        << "Error fetching the artifacts of " << build << ". Response was "
-        << artifacts_json;
-    if (artifacts_json.isMember("nextPageToken")) {
-      page_token = artifacts_json["nextPageToken"].asString();
+    auto curl_response = curl.DownloadToJson(url, Headers());
+    const auto& json = curl_response.data;
+    if (!curl_response.HttpSuccess()) {
+      LOG(FATAL) << "Error fetching the artifacts of \"" << build
+                 << "\". The server response was \"" << json
+                 << "\", and code was " << curl_response.http_code;
+    }
+    CHECK(!json.isMember("error"))
+        << "Response had \"error\" but had http success status. Received \""
+        << json << "\"";
+    if (json.isMember("nextPageToken")) {
+      page_token = json["nextPageToken"].asString();
     } else {
       page_token = "";
     }
-    for (const auto& artifact_json : artifacts_json["artifacts"]) {
+    for (const auto& artifact_json : json["artifacts"]) {
       artifacts.emplace_back(artifact_json);
     }
   } while (page_token != "");
@@ -178,14 +206,22 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
   std::string download_url_endpoint =
       BUILD_API + "/builds/" + build.id + "/" + build.target +
       "/attempts/latest/artifacts/" + artifact + "/url";
-  auto download_url_json =
-      curl.DownloadToJson(download_url_endpoint, Headers());
-  if (!download_url_json.isMember("signedUrl")) {
-    LOG(ERROR) << "URL endpoint did not have json path: " << download_url_json;
+  auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
+  const auto& json = curl_response.data;
+  if (!(curl_response.HttpSuccess() || curl_response.HttpRedirect())) {
+    LOG(FATAL) << "Error fetching the url of \"" << artifact << "\" for \""
+               << build << "\". The server response was \"" << json
+               << "\", and code was " << curl_response.http_code;
+  }
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
+  if (!json.isMember("signedUrl")) {
+    LOG(ERROR) << "URL endpoint did not have json path: " << json;
     return false;
   }
-  std::string url = download_url_json["signedUrl"].asString();
-  return curl.DownloadToFile(url, path);
+  std::string url = json["signedUrl"].asString();
+  return curl.DownloadToFile(url, path).HttpSuccess();
 }
 
 bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
