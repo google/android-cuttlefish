@@ -22,8 +22,19 @@
 
 namespace cuttlefish {
 
+template <typename T>
+struct CurlResponse {
+  bool HttpInfo() { return http_code >= 100 && http_code <= 199; }
+  bool HttpSuccess() { return http_code >= 200 && http_code <= 299; }
+  bool HttpRedirect() { return http_code >= 300 && http_code <= 399; }
+  bool HttpClientError() { return http_code >= 400 && http_code <= 499; }
+  bool HttpServerError() { return http_code >= 500 && http_code <= 599; }
+
+  T data;
+  long http_code;
+};
+
 class CurlWrapper {
-  CURL* curl;
 public:
   CurlWrapper();
   ~CurlWrapper();
@@ -31,15 +42,20 @@ public:
   CurlWrapper& operator=(const CurlWrapper*) = delete;
   CurlWrapper(CurlWrapper&&) = default;
 
-  bool DownloadToFile(const std::string& url, const std::string& path);
-  bool DownloadToFile(const std::string& url, const std::string& path,
-                      const std::vector<std::string>& headers);
-  std::string DownloadToString(const std::string& url);
-  std::string DownloadToString(const std::string& url,
-                               const std::vector<std::string>& headers);
-  Json::Value DownloadToJson(const std::string& url);
-  Json::Value DownloadToJson(const std::string& url,
-                             const std::vector<std::string>& headers);
+  CurlResponse<std::string> DownloadToFile(const std::string& url,
+                                           const std::string& path);
+  CurlResponse<std::string> DownloadToFile(
+      const std::string& url, const std::string& path,
+      const std::vector<std::string>& headers);
+  CurlResponse<std::string> DownloadToString(const std::string& url);
+  CurlResponse<std::string> DownloadToString(
+      const std::string& url, const std::vector<std::string>& headers);
+  CurlResponse<Json::Value> DownloadToJson(const std::string& url);
+  CurlResponse<Json::Value> DownloadToJson(
+      const std::string& url, const std::vector<std::string>& headers);
+
+ private:
+  CURL* curl;
 };
 
 }
