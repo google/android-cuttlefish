@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 
 #include <curl/curl.h>
@@ -55,7 +56,8 @@ public:
       const std::string& url, const std::vector<std::string>& headers);
 
  private:
-  CURL* curl;
+  CURL* curl_;
+  std::mutex mutex_;
 };
 
 }
