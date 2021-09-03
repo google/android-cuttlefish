@@ -93,12 +93,9 @@ async function ajaxPostJson(url, data) {
 }
 
 class DeviceConnection {
-  constructor(pc, control, media_stream) {
+  constructor(pc, control) {
     this._pc = pc;
     this._control = control;
-    this._media_stream = media_stream;
-    // Disable the microphone by default
-    this.useMic(false);
     this._cameraDataChannel = pc.createDataChannel('camera-data-channel');
     this._cameraDataChannel.binaryType = 'arraybuffer';
     this._cameraInputQueue = new Array();
@@ -240,11 +237,37 @@ class DeviceConnection {
     this._controlChannel.send(msg);
   }
 
-  useMic(in_use) {
-    if (this._media_stream) {
-      this._media_stream.getAudioTracks().forEach(
-          track => track.enabled = in_use);
+  async useMic(in_use) {
+    if (in_use) {
+      if (this._micSenders) {
+        console.warn('Microphone is already in use');
+        return;
+      }
+      this._micSenders = [];
+      try {
+        let audioStream = await navigator.mediaDevices.getUserMedia(
+            {video: false, audio: true});
+        audioStream.getTracks().forEach(track => {
+          console.info(`Using ${track.kind} device: ${track.label}`);
+          this._micSenders.push(this._pc.addTrack(track));
+        });
+      } catch (e) {
+        console.error('Failed to add audio stream to peer connection: ', e);
+      }
+    } else {
+      if (!this._micSenders) {
+        return;
+      }
+      for (const sender of this._micSenders) {
+        console.info(
+            `Removing ${sender.track.kind} device: ${sender.track.label}`);
+        let track = sender.track;
+        track.stop();
+        this._pc.removeTrack(sender);
+      }
+      delete this._micSenders;
     }
+    this._control.renegotiateConnection();
   }
 
   async useVideo(in_use) {
@@ -624,20 +647,7 @@ export async function Connect(deviceId, options) {
   }
   let pc = createPeerConnection(infraConfig);
 
-  let mediaStream;
-  try {
-    mediaStream =
-        await navigator.mediaDevices.getUserMedia({video: false, audio: true});
-    const tracks = mediaStream.getTracks();
-    tracks.forEach(track => {
-      console.info(`Using ${track.kind} device: ${track.label}`);
-      pc.addTrack(track, mediaStream);
-    });
-  } catch (e) {
-    console.error('Failed to open device: ', e);
-  }
-
-  let deviceConnection = new DeviceConnection(pc, control, mediaStream);
+  let deviceConnection = new DeviceConnection(pc, control);
   deviceConnection.description = deviceInfo;
 
   let connected_promise = new Promise((resolve, reject) => {
