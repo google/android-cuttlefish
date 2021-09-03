@@ -334,10 +334,6 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
-  if (cuttlefish::HostArch() != cuttlefish::Arch::Arm64) {
-    crosvm_cmd.AddParameter("--battery");
-  }
-
   // Use a virtio-console instance for the main kernel console. All
   // messages will switch from earlycon to virtio-console after the driver
   // is loaded, and crosvm will append to the kernel log automatically
@@ -462,3 +458,4 @@ std::vector<Command> CrosvmManager::StartCommands(
 
 } // namespace vm_manager
 } // namespace cuttlefish
+
