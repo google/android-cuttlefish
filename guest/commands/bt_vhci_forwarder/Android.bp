@@ -6,7 +6,6 @@ cc_binary {
     name: "bt_vhci_forwarder",
     srcs: [
         "main.cpp",
-        ":H4PacketizerSources",
     ],
     shared_libs: [
         "libbase",
@@ -14,13 +13,8 @@ cc_binary {
         "liblog",
     ],
     static_libs: [
+        "h4_packetizer_lib",
         "libgflags",
-    ],
-    include_dirs: [
-        "system/bt/vendor_libs/test_vendor_lib/include",
-        "system/bt/vendor_libs/test_vendor_lib",
-        "system/bt",
-        "system/bt/gd",
     ],
     defaults: ["cuttlefish_guest_only"]
 }
