@@ -145,10 +145,12 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // This version needs to be implemented (b/190505425)
     {"android.system.keystore2.", 2},
 
+    // This version needs to be implemented (b/198331776)
+    {"android.hardware.radio.", 1},
+
     // No implementations on cuttlefish for wifi aidl hal
     {"android.hardware.wifi.hostapd.", 1},
 };
-
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
     {"android.hardware.wifi.hostapd.", 1},
