@@ -124,7 +124,6 @@ cvd_host_model_simulator_files = [
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
     "balloon_device.policy_x86_64",
-    "battery.policy_x86_64",
     "block_device.policy_x86_64",
     "cras_audio_device.policy_x86_64",
     "fs_device.policy_x86_64",
@@ -148,7 +147,6 @@ cvd_host_seccomp_policy_x86_64 = [
 cvd_host_seccomp_policy_arm64 = [
     "9p_device.policy_aarch64",
     "balloon_device.policy_aarch64",
-    "battery.policy_aarch64",
     "block_device.policy_aarch64",
     "cras_audio_device.policy_aarch64",
     "fs_device.policy_aarch64",
