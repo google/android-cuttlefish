@@ -144,6 +144,14 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // This version needs to be implemented (b/190505425)
     {"android.system.keystore2.", 2},
+
+    // No implementations on cuttlefish for wifi aidl hal
+    {"android.hardware.wifi.hostapd.", 1},
+};
+
+
+static const std::set<VersionedAidlPackage> kComingSoonAidl = {
+    {"android.hardware.wifi.hostapd.", 1},
 };
 
 // AOSP packages which are never considered
@@ -307,6 +315,7 @@ struct AidlPackageCheck {
 TEST(Hal, AidlInterfacesImplemented) {
   std::set<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
   std::set<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
+  std::set<VersionedAidlPackage> comingSoon = kComingSoonAidl;
 
   for (const auto& treePackage : AidlInterfaceMetadata::all()) {
     ASSERT_FALSE(treePackage.types.empty()) << treePackage.name;
@@ -371,8 +380,11 @@ TEST(Hal, AidlInterfacesImplemented) {
   }
 
   for (const auto& package : thoughtMissing) {
-    ADD_FAILURE() << "Interface in missing list and cannot find it anywhere: "
-                  << package.name << " V" << package.version;
+    // TODO: b/194806512 : Remove after Wifi hostapd AIDL interface lands on aosp
+    if (comingSoon.erase(package) == 0) {
+      ADD_FAILURE() << "Interface in missing list and cannot find it anywhere: "
+                    << package.name << " V" << package.version;
+    }
   }
 
   for (const auto& package : manifest) {
