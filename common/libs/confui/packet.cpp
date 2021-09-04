@@ -137,30 +137,7 @@ static std::optional<ParsedPacket> ParseRawData(
   return {result};
 }
 
-/**
- * TODO(kwstephenkim): remove this function, and fix protocol library to use
- * ParsedPacket
- */
-static std::string BackToString(const ParsedPacket& parsed_packet) {
-  const auto session_id = parsed_packet.session_id_;
-  const auto type = parsed_packet.type_;
-  const int n = parsed_packet.additional_info_.size();
-  std::vector<int> lengths;
-  for (const auto& v : parsed_packet.additional_info_) {
-    lengths.emplace_back(v.size());
-  }
-  std::stringstream ss;
-  ss << session_id << ":" << type << ":" << n << ":";
-  for (const auto len : lengths) {
-    ss << len << ":";
-  }
-  for (const auto& v : parsed_packet.additional_info_) {
-    ss << std::string(std::cbegin(v), std::cend(v));
-  }
-  return ss.str();
-}
-
-static std::optional<ParsedPacket> ReadPayloadImpl(SharedFD s) {
+std::optional<ParsedPacket> ReadPayload(SharedFD s) {
   auto raw_data = ReadRawData(s);
   if (!raw_data) {
     ConfUiLog(ERROR) << "raw data returned std::nullopt";
@@ -173,16 +150,6 @@ static std::optional<ParsedPacket> ReadPayloadImpl(SharedFD s) {
   }
   return parsed_result;
 }
-
-// TODO(kwstephenkim): change the protocol libraries to take ParsedPacket
-std::optional<std::string> ReadPayload(SharedFD s) {
-  auto payload_opt = ReadPayloadImpl(s);
-  if (!payload_opt) {
-    return std::nullopt;
-  }
-  return {BackToString(payload_opt.value())};
-}
-
 }  // end of namespace packet
 }  // end of namespace confui
 }  // end of namespace cuttlefish

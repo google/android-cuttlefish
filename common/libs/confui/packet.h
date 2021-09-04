@@ -104,7 +104,7 @@ Payload ToPayload(const std::string& cmd_str, const std::string& session_id,
 /*
  * start of public methods
  */
-std::optional<std::string> ReadPayload(SharedFD s);
+std::optional<ParsedPacket> ReadPayload(SharedFD s);
 
 template <typename... Args>
 bool WritePayload(SharedFD d, const std::string& cmd_str,
