@@ -289,6 +289,9 @@ class CuttlefishConfig {
   void set_ap_kernel_image(const std::string& path);
   std::string ap_kernel_image() const;
 
+  void set_wmediumd_config(const std::string& path);
+  std::string wmediumd_config() const;
+
   void set_record_screen(bool record_screen);
   bool record_screen() const;
 
@@ -444,6 +447,9 @@ class CuttlefishConfig {
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
 
+    // Whether this instance should start the wmediumd process
+    bool start_wmediumd() const;
+
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
 
@@ -500,6 +506,7 @@ class CuttlefishConfig {
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
+    void set_start_wmediumd(bool start);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
