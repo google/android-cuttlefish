@@ -88,6 +88,8 @@ cvd_host_tools = [
     "vnc_server",
     "webRTC",
     "webrtc_operator",
+    "wmediumd",
+    "wmediumd_gen_config",
 ]
 
 cvd_bluetooth_config_files = [
