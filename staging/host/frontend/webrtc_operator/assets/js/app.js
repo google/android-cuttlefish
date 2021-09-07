@@ -896,11 +896,11 @@ class DeviceControlApp {
   }
 
   #onMicCaptureToggle(enabled) {
-    this.#deviceConnection.useMic(enabled);
+    return this.#deviceConnection.useMic(enabled);
   }
 
   #onVideoCaptureToggle(enabled) {
-    this.#deviceConnection.useVideo(enabled);
+    return this.#deviceConnection.useVideo(enabled);
   }
 
   #onCustomShellButton(shell_command, e) {
