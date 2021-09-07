@@ -106,8 +106,8 @@ class DeviceConnection {
 
   #streams;
   #streamPromiseResolvers;
-  #micSenders;
-  #cameraSenders;
+  #micSenders = [];
+  #cameraSenders = [];
   #camera_res_x;
   #camera_res_y;
 
@@ -259,71 +259,51 @@ class DeviceConnection {
     this.#controlChannel.send(msg);
   }
 
-  async useMic(in_use) {
+  async #useDevice(in_use, senders_arr, device_opt) {
+    // An empty array means no tracks are currently in use
+    if (senders_arr.length > 0 === !!in_use) {
+      console.warn('Device is already ' + (in_use ? '' : 'not ') + 'in use');
+      return in_use;
+    }
+    let renegotiation_needed = false;
     if (in_use) {
-      if (this.#micSenders) {
-        console.warn('Microphone is already in use');
-        return;
-      }
-      this.#micSenders = [];
       try {
-        let audioStream = await navigator.mediaDevices.getUserMedia(
-            {video: false, audio: true});
-        audioStream.getTracks().forEach(track => {
+        let stream = await navigator.mediaDevices.getUserMedia(device_opt);
+        stream.getTracks().forEach(track => {
           console.info(`Using ${track.kind} device: ${track.label}`);
-          this.#micSenders.push(this.#pc.addTrack(track));
+          senders_arr.push(this.#pc.addTrack(track));
+          renegotiation_needed = true;
         });
       } catch (e) {
-        console.error('Failed to add audio stream to peer connection: ', e);
+        console.error('Failed to add stream to peer connection: ', e);
+        // Don't return yet, if there were errors some tracks may have been
+        // added so the connection should be renegotiated again.
       }
     } else {
-      if (!this.#micSenders) {
-        return;
-      }
-      for (const sender of this.#micSenders) {
+      for (const sender of senders_arr) {
         console.info(
             `Removing ${sender.track.kind} device: ${sender.track.label}`);
         let track = sender.track;
         track.stop();
         this.#pc.removeTrack(sender);
+        renegotiation_needed = true;
       }
-      this.#micSenders = undefined;
+      // Empty the array passed by reference, just assigning [] won't do that.
+      senders_arr.length = 0;
     }
-    this.#control.renegotiateConnection();
+    if (renegotiation_needed) {
+      this.#control.renegotiateConnection();
+    }
+    // Return the new state
+    return senders_arr.length > 0;
+  }
+
+  async useMic(in_use) {
+    return this.#useDevice(in_use, this.#micSenders, {audio: true, video: false});
   }
 
   async useVideo(in_use) {
-    if (in_use) {
-      if (this.#cameraSenders) {
-        console.warn('Video is already in use');
-        return;
-      }
-      this.#cameraSenders = [];
-      try {
-        let videoStream = await navigator.mediaDevices.getUserMedia(
-            {video: true, audio: false});
-        this.sendCameraResolution(videoStream);
-        videoStream.getTracks().forEach(track => {
-          console.info(`Using ${track.kind} device: ${track.label}`);
-          this.#cameraSenders.push(this.#pc.addTrack(track));
-        });
-      } catch (e) {
-        console.error('Failed to add video stream to peer connection: ', e);
-      }
-    } else {
-      if (!this.#cameraSenders) {
-        return;
-      }
-      for (const sender of this.#cameraSenders) {
-        console.info(
-            `Removing ${sender.track.kind} device: ${sender.track.label}`);
-        let track = sender.track;
-        track.stop();
-        this.#pc.removeTrack(sender);
-      }
-      this.#cameraSenders = undefined;
-    }
-    this.#control.renegotiateConnection();
+    return this.#useDevice(in_use, this.#micSenders, {audio: false, video: true});
   }
 
   sendCameraResolution(stream) {
