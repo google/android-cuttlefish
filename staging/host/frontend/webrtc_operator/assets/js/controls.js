@@ -35,8 +35,14 @@ function createToggleControl(elm, iconName, onChangeCb) {
   return {
     // A callback can later be associated with the toggle element by calling
     // .OnClick(onChangeCb) on the returned object. The callback should accept a
-    // boolean parameter indicating whether the toggle is in ON position.
-    OnClick: cb => input.onchange = e => cb(e.target.checked),
+    // boolean parameter indicating whether the toggle is in ON position and
+    // return a promise of the new position.
+    OnClick: cb => input.onchange =
+        e => {
+          cb(e.target.checked).then(checked => {
+            e.target.checked = !!checked;
+          });
+        },
   };
 }
 
