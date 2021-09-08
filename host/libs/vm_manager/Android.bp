@@ -17,6 +17,28 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+soong_config_module_type {
+    name: "cf_cc_defaults",
+    module_type: "cc_defaults",
+    config_namespace: "cvd_host",
+    bool_variables: ["enforce_mac80211_hwsim"],
+    properties: ["cflags"],
+}
+
+// This is the customization layer driven by soong config variables.
+cf_cc_defaults {
+    name: "cvd_cc_defaults",
+    soong_config_variables: {
+        // PRODUCT_ENFORCE_MAC80211_HWSIM sets this
+        enforce_mac80211_hwsim: {
+            cflags: ["-DENFORCE_MAC80211_HWSIM=true"],
+            conditions_default: {
+                cflags: [],
+            }
+        },
+    }
+}
+
 cc_library_static {
     name: "libcuttlefish_vm_manager",
     srcs: [
@@ -37,5 +59,9 @@ cc_library_static {
     static_libs: [
         "libcuttlefish_host_config",
     ],
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: [
+        "cuttlefish_host",
+        "cuttlefish_libicuuc",
+        "cvd_cc_defaults",
+    ],
 }

@@ -647,6 +647,11 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/guest/services/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
 
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
+
+SOONG_CONFIG_NAMESPACES += cvd_host
+SOONG_CONFIG_cvd_host += enforce_mac80211_hwsim
+SOONG_CONFIG_cvd_host_enforce_mac80211_hwsim += true
+
 else
 PRODUCT_PACKAGES += setup_wifi
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
