@@ -297,11 +297,15 @@ std::vector<Command> CrosvmManager::StartCommands(
   AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
 
   SharedFD wifi_tap;
-  if (config.vhost_user_mac80211_hwsim().empty()) {
-    wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
-  } else if (use_ap_instance) {
+  // TODO(b/199103204): remove this as well when PRODUCT_ENFORCE_MAC80211_HWSIM
+  // is removed
+#ifdef ENFORCE_MAC80211_HWSIM
+  if (use_ap_instance) {
     wifi_tap = AddTapFdParameter(&ap_cmd, instance.wifi_tap_name());
   }
+#else
+  wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
+#endif
 
   if (FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.AddParameter("--rw-pmem-device=",
@@ -434,7 +438,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   // bridge architecture - in that case, we have a wider DHCP address
   // space and stale leases should be much less of an issue
   if (!FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases") &&
-      (config.vhost_user_mac80211_hwsim().empty() || use_ap_instance)) {
+      wifi_tap->IsOpen()) {
     // TODO(schuffelen): QEMU also needs this and this is not the best place for
     // this code. Find a better place to put it.
     auto lease_file =
