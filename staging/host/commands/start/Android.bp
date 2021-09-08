@@ -40,7 +40,9 @@ cc_binary {
         "libgflags",
     ],
     required: [
+        "assemble_cvd",
         "mkenvimage",
+        "run_cvd",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }
