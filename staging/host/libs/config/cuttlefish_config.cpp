@@ -694,6 +694,14 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
   (*dictionary_)[kApKernelImage] = ap_kernel_image;
 }
 
+static constexpr char kWmediumdConfig[] = "wmediumd_config";
+void CuttlefishConfig::set_wmediumd_config(const std::string& config) {
+  (*dictionary_)[kWmediumdConfig] = config;
+}
+std::string CuttlefishConfig::wmediumd_config() const {
+  return (*dictionary_)[kWmediumdConfig].asString();
+}
+
 static constexpr char kRecordScreen[] = "record_screen";
 void CuttlefishConfig::set_record_screen(bool record_screen) {
   (*dictionary_)[kRecordScreen] = record_screen;

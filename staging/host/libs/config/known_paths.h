@@ -34,5 +34,7 @@ std::string VehicleHalGrpcServerBinary();
 std::string VncServerBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
+std::string WmediumdBinary();
+std::string WmediumdGenConfigBinary();
 
 } // namespace cuttlefish
