@@ -378,6 +378,9 @@ static int s_cid = 0;
 static bool s_stkServiceRunning = false;
 static char *s_stkUnsolResponse = NULL;
 
+// Next available handle for keep alive session
+static uint32_t s_session_handle = 1;
+
 typedef enum {
     STK_UNSOL_EVENT_UNKNOWN,
     STK_UNSOL_EVENT_NOTIFY,
@@ -4213,6 +4216,13 @@ error:
     RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
 }
 
+static void requestStartKeepalive(RIL_Token t) {
+    RIL_KeepaliveStatus resp;
+    resp.sessionHandle = s_session_handle++;
+    resp.code = KEEPALIVE_ACTIVE;
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, &resp, sizeof(resp));
+}
+
 void getConfigSlotStatus(RIL_SimSlotStatus_V1_2 *pSimSlotStatus) {
     if (pSimSlotStatus == NULL) {
         return;
@@ -4986,6 +4996,12 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
         case RIL_REQUEST_SET_DATA_THROTTLING:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
+        case RIL_REQUEST_START_KEEPALIVE:
+            requestStartKeepalive(t);
+            break;
+        case RIL_REQUEST_STOP_KEEPALIVE:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
         default:
