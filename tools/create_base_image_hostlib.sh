@@ -2,9 +2,6 @@
 
 # Common code to build a host image on GCE
 
-# INTERNAL_extra_source may be set to a directory containing the source for
-# extra package to build.
-
 # INTERNAL_IP can be set to --internal-ip run on a GCE instance
 # The instance will need --scope compute-rw
 
@@ -79,9 +76,6 @@ main() {
     "${ANDROID_BUILD_TOP}/device/google/cuttlefish/tools/create_base_image_gce.sh"
     ${scratch_dir}/*
   )
-  if [[ -n "${INTERNAL_extra_source}" ]]; then
-    source_files+=("${INTERNAL_extra_source}"/*)
-  fi
 
   delete_instances=("${FLAGS_build_instance}" "${FLAGS_dest_image}")
   if [[ -n "${FLAGS_launch_instance}" ]]; then
