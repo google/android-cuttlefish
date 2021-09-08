@@ -79,4 +79,10 @@ std::string WebRtcSigServerBinary() {
   return HostBinaryPath("webrtc_operator");
 }
 
+std::string WmediumdBinary() { return HostBinaryPath("wmediumd"); }
+
+std::string WmediumdGenConfigBinary() {
+  return HostBinaryPath("wmediumd_gen_config");
+}
+
 } // namespace cuttlefish
