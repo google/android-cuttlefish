@@ -631,6 +631,54 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
   SharedFD console_forwarder_out_rd_;
 };
 
+class WmediumdServer : public CommandSource {
+ public:
+  INJECT(WmediumdServer(const CuttlefishConfig& config,
+                        const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // CommandSource
+  std::vector<Command> Commands() override {
+    Command cmd(WmediumdBinary());
+    cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
+    cmd.AddParameter("-c", config_path_);
+    return single_element_emplace(std::move(cmd));
+  }
+
+  // Feature
+  bool Enabled() const override { return instance_.start_wmediumd(); }
+  std::string Name() const override { return "WmediumdServer"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    // If wmediumd configuration is given, use it
+    if (!config_.wmediumd_config().empty()) {
+      config_path_ = config_.wmediumd_config();
+      return true;
+    }
+    // Otherwise, generate wmediumd configuration using the current wifi mac
+    // prefix before start
+    config_path_ = instance_.PerInstanceInternalPath("wmediumd.cfg");
+    Command gen_config_cmd(WmediumdGenConfigBinary());
+    gen_config_cmd.AddParameter("-o", config_path_);
+    gen_config_cmd.AddParameter("-p", instance_.wifi_mac_prefix());
+
+    int success = gen_config_cmd.Start().Wait();
+    if (success != 0) {
+      LOG(ERROR) << "Unable to run " << gen_config_cmd.Executable()
+                 << ". Exited with status " << success;
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  std::string config_path_;
+};
+
 using PublicDeps = fruit::Required<const CuttlefishConfig,
                                    const CuttlefishConfig::InstanceSpecific>;
 fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
@@ -651,7 +699,8 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(Bases::Impls<RootCanal>)
       .install(Bases::Impls<SecureEnvironment>)
       .install(Bases::Impls<TombstoneReceiver>)
-      .install(Bases::Impls<VehicleHalServer>);
+      .install(Bases::Impls<VehicleHalServer>)
+      .install(Bases::Impls<WmediumdServer>);
 }
 
 } // namespace cuttlefish
