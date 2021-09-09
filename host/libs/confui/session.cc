@@ -65,19 +65,19 @@ bool Session::IsSuspended() const {
 
 MainLoopState Session::Transition(const bool is_user_input, SharedFD& hal_cli,
                                   const FsmInput fsm_input,
-                                  const std::string& additional_info) {
+                                  const ConfUiMessage& conf_ui_message) {
   switch (state_) {
     case MainLoopState::kInit: {
-      HandleInit(is_user_input, hal_cli, fsm_input, additional_info);
+      HandleInit(is_user_input, hal_cli, fsm_input, conf_ui_message);
     } break;
     case MainLoopState::kInSession: {
       HandleInSession(is_user_input, hal_cli, fsm_input);
     } break;
     case MainLoopState::kWaitStop: {
       if (is_user_input) {
-        ConfUiLog(DEBUG) << "User input ignored " << ToString(fsm_input)
-                         << " : " << additional_info << " at the state "
-                         << ToString(state_);
+        ConfUiLog(VERBOSE) << "User input ignored " << ToString(fsm_input)
+                           << " : " << ToString(conf_ui_message)
+                           << " at the state " << ToString(state_);
       }
       HandleWaitStop(is_user_input, hal_cli, fsm_input);
     } break;
@@ -174,8 +174,7 @@ bool Session::Abort(SharedFD hal_cli) { return Kill(hal_cli, "aborted"); }
 
 void Session::HandleInit(const bool is_user_input, SharedFD hal_cli,
                          const FsmInput fsm_input,
-                         const std::string& additional_info) {
-  using namespace cuttlefish::confui::packet;
+                         const ConfUiMessage& conf_ui_message) {
   if (is_user_input) {
     // ignore user input
     state_ = MainLoopState::kInit;
@@ -195,7 +194,10 @@ void Session::HandleInit(const bool is_user_input, SharedFD hal_cli,
   ConfUiLog(DEBUG) << "Sending ack to hal_cli: "
                    << Enum2Base(ConfUiCmd::kCliAck);
   host_mode_ctrl_.SetMode(HostModeCtrl::ModeType::kConfUI_Mode);
-  auto confirmation_msg = additional_info;
+
+  auto start_cmd_msg = static_cast<const ConfUiStartMessage&>(conf_ui_message);
+  const auto& confirmation_msg = start_cmd_msg.GetPromptText();
+
   if (!RenderDialog(confirmation_msg, locale_)) {
     // the confirmation UI is driven by a user app, not running from the start
     // automatically so that means webRTC/vnc should have been set up
@@ -241,7 +243,8 @@ void Session::HandleInSession(const bool is_user_input, SharedFD hal_cli,
   if (fsm_input == FsmInput::kUserCancel) {
     selection = UserResponse::kCancel;
   }
-  if (!SendResponse(hal_cli, session_id_, selection)) {
+  std::vector<std::uint8_t> empty;
+  if (!SendResponse(hal_cli, session_id_, selection, empty, empty)) {
     ConfUiLog(FATAL) << "I/O error in sending user response to HAL";
   }
   state_ = MainLoopState::kWaitStop;
