@@ -139,6 +139,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // This version needs to be implemented (b/190505425)
     {"android.system.keystore2.", 2},
+
+    // This version needs to be implemented (b/198331776)
+    {"android.hardware.radio.", 1},
 };
 
 // AOSP packages which are never considered
