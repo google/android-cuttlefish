@@ -835,7 +835,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_virtual_disk_paths(virtual_disk_paths);
     }
 
-    instance.set_wifi_mac_prefix(5554 + (num - 1) * 2);
+    // We'd like to set mac prefix to be 5554, 5555, 5556, ... in normal cases.
+    // When --base_instance_num=3, this might be 5556, 5557, 5558, ... (skipping
+    // first two)
+    instance.set_wifi_mac_prefix(5554 + (num - 1));
 
     instance.set_start_webrtc_signaling_server(false);
 
