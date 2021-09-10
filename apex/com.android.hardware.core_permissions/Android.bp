@@ -1,0 +1,38 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+override_apex {
+    name: "com.google.aosp_cf_x86_64_phone.hardware.core_permissions",
+    base: "com.android.hardware.core_permissions",
+    prebuilts: [
+        "android.hardware.audio.low_latency.prebuilt.xml",
+        "android.hardware.bluetooth_le.prebuilt.xml",
+        "android.hardware.bluetooth.prebuilt.xml",
+        "android.hardware.camera.concurrent.prebuilt.xml",
+        "android.hardware.camera.flash-autofocus.prebuilt.xml",
+        "android.hardware.camera.front.prebuilt.xml",
+        "android.hardware.camera.full.prebuilt.xml",
+        "android.hardware.camera.raw.prebuilt.xml",
+        "android.hardware.ethernet.prebuilt.xml",
+        "android.hardware.faketouch.prebuilt.xml",
+        "android.hardware.location.gps.prebuilt.xml",
+        "android.hardware.reboot_escrow.prebuilt.xml",
+        "android.hardware.telephony.gsm.prebuilt.xml",
+        "android.hardware.telephony.ims.prebuilt.xml",
+        "android.hardware.usb.accessory.prebuilt.xml",
+        "android.hardware.usb.host.prebuilt.xml",
+        "android.hardware.vulkan.level-0.prebuilt.xml",
+        "android.hardware.vulkan.version-1_0_3.prebuilt.xml",
+        "android.hardware.wifi.prebuilt.xml",
+        "android.software.device_id_attestation.prebuilt.xml",
+        "android.software.ipsec_tunnels.prebuilt.xml",
+        "android.software.opengles.deqp.level-2021-03-01.prebuilt.xml",
+        "android.software.sip.voip.prebuilt.xml",
+        "android.software.verified_boot.prebuilt.xml",
+        "android.software.vulkan.deqp.level-2021-03-01.prebuilt.xml",
+        "aosp_excluded_hardware.prebuilt.xml",
+        "cuttlefish_excluded_hardware.prebuilt.xml",
+        "handheld_core_hardware.prebuilt.xml",
+    ],
+}
