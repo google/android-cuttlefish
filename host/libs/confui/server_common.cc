@@ -17,6 +17,12 @@
 #include "host/libs/confui/server_common.h"
 namespace cuttlefish {
 namespace confui {
+std::unique_ptr<ConfUiMessage> CreateFromUserSelection(
+    const std::string& session_id, const UserResponse::type user_selection) {
+  return std::make_unique<ConfUiUserSelectionMessage>(session_id,
+                                                      user_selection);
+}
+
 static FsmInput UserEvtToFsmInput(UserResponse::type user_response) {
   if (user_response == UserResponse::kConfirm) {
     return FsmInput::kUserUnknown;
@@ -28,9 +34,12 @@ static FsmInput UserEvtToFsmInput(UserResponse::type user_response) {
 }
 
 FsmInput ToFsmInput(const ConfUiMessage& confui_msg) {
-  ConfUiCmd cmd = ToCmd(confui_msg.type_);
+  ConfUiCmd cmd = confui_msg.GetType();
   if (cmd == ConfUiCmd::kUserInputEvent) {
-    return UserEvtToFsmInput(confui_msg.msg_);
+    const auto& user_input =
+        static_cast<const ConfUiUserSelectionMessage&>(confui_msg);
+    const auto& response = user_input.GetResponse();
+    return UserEvtToFsmInput(response);
   }
   const auto hal_cmd = cmd;
   switch (hal_cmd) {
