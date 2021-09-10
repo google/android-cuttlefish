@@ -54,10 +54,11 @@ HostServer::HostServer(
       renderer_(display_num_),
       hal_vsock_port_(HalHostVsockPort()) {
   const size_t max_elements = 20;
-  auto ignore_new = [](ThreadSafeQueue<ConfUiMessage>::QueueImpl*) {
-    // no op, so the queue is still full, and the new item will be discarded
-    return;
-  };
+  auto ignore_new =
+      [](ThreadSafeQueue<std::unique_ptr<ConfUiMessage>>::QueueImpl*) {
+        // no op, so the queue is still full, and the new item will be discarded
+        return;
+      };
   hal_cmd_q_id_ = input_multiplexer_.RegisterQueue(
       HostServer::Multiplexer::CreateQueue(max_elements, ignore_new));
   user_input_evt_q_id_ = input_multiplexer_.RegisterQueue(
@@ -89,13 +90,12 @@ void HostServer::HalCmdFetcherLoop() {
     return;
   }
   while (true) {
-    auto opted_msg = RecvConfUiMsg(hal_cli_socket_);
-    if (!opted_msg) {
+    auto msg = RecvConfUiMsg(hal_cli_socket_);
+    if (!msg) {
       ConfUiLog(ERROR) << "Error in RecvConfUiMsg from HAL";
       continue;
     }
-    auto input = std::move(opted_msg.value());
-    input_multiplexer_.Push(hal_cmd_q_id_, std::move(input));
+    input_multiplexer_.Push(hal_cmd_q_id_, std::move(msg));
   }
 }
 
@@ -117,9 +117,7 @@ bool HostServer::SendUserSelection(UserResponse::type selection) {
     return false;  // not reaching here
   }
 
-  ConfUiMessage input{GetCurrentSessionId(),
-                      ToString(ConfUiCmd::kUserInputEvent), selection};
-
+  auto input = CreateFromUserSelection(GetCurrentSessionId(), selection);
   input_multiplexer_.Push(user_input_evt_q_id_, std::move(input));
   return true;
 }
@@ -185,18 +183,19 @@ std::unique_ptr<Session> HostServer::ComputeCurrentSession(
     // this gets one input from either queue:
     // from HAL or from all webrtc/vnc clients
     // if no input, sleep until there is
-    const auto input = input_multiplexer_.Pop();
-    const auto& [session_id, cmd_str, additional_info] = input;
+    auto input_ptr = input_multiplexer_.Pop();
+    auto& input = *(input_ptr.get());
+    const auto session_id = input.GetSessionId();
+    const auto cmd = input.GetType();
+    const std::string cmd_str(ToString(cmd));
 
     // take input for the Finite States Machine below
-    const ConfUiCmd cmd = ToCmd(cmd_str);
     const bool is_user_input = (cmd == ConfUiCmd::kUserInputEvent);
     std::string src = is_user_input ? "input" : "hal";
 
     ConfUiLog(DEBUG) << "In Session" << GetCurrentSessionId() << ", "
                      << "in state" << GetCurrentState() << ", "
                      << "received input from " << src << " cmd =" << cmd_str
-                     << " and additional_info =" << additional_info
                      << " going to session " << session_id;
 
     FsmInput fsm_input = ToFsmInput(input);
@@ -226,7 +225,7 @@ std::unique_ptr<Session> HostServer::ComputeCurrentSession(
 
     if (is_user_input) {
       curr_session_->Transition(is_user_input, hal_cli_socket_, fsm_input,
-                                additional_info);
+                                input);
     } else {
       ConfUiCmd cmd = ToCmd(cmd_str);
       switch (cmd) {
@@ -241,7 +240,7 @@ std::unique_ptr<Session> HostServer::ComputeCurrentSession(
           break;
         default:
           curr_session_->Transition(is_user_input, hal_cli_socket_, fsm_input,
-                                    additional_info);
+                                    input);
           break;
       }
     }
