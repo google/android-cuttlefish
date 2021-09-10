@@ -20,13 +20,16 @@ package {
 cc_library_static {
     name: "libcuttlefish_confui",
     srcs: [
+        "packet_types.cpp",
         "packet.cpp",
+        "protocol_types.cpp",
         "protocol.cpp",
     ],
     static: {
         static_libs: [
             "libbase",
             "libcuttlefish_fs",
+	    "libteeui",
         ],
         shared_libs: [
           "libcrypto", // libcrypto_static is not accessible from all targets

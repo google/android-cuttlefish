@@ -22,7 +22,6 @@
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/server_common.h"
-#include "host/libs/confui/session.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
@@ -50,7 +49,7 @@ class Session {
 
   MainLoopState Transition(const bool is_user_input, SharedFD& hal_cli,
                            const FsmInput fsm_input,
-                           const std::string& additional_info);
+                           const ConfUiMessage& additional_info);
 
   /**
    * this make a transition from kWaitStop or kInSession to kSuspend
@@ -78,7 +77,8 @@ class Session {
   // transition actions on each state per input
   // the new state will be save to the state_ at the end of each call
   void HandleInit(const bool is_user_input, SharedFD hal_cli,
-                  const FsmInput fsm_input, const std::string& additional_info);
+                  const FsmInput fsm_input,
+                  const ConfUiMessage& additional_info);
 
   void HandleWaitStop(const bool is_user_input, SharedFD hal_cli,
                       const FsmInput fsm_input);
