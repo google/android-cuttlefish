@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "common/libs/confui/confui.h"
@@ -36,7 +37,7 @@ using TeeUiFrame = std::vector<std::uint32_t>;
 
 // FSM input to Session FSM
 enum class FsmInput : std::uint32_t {
-  kUserConfirm,
+  kUserConfirm = 1,
   kUserCancel,
   kUserUnknown,
   kHalStart,
@@ -52,5 +53,7 @@ std::string ToString(const MainLoopState& state);
 
 FsmInput ToFsmInput(const ConfUiMessage& confui_msg);
 
+std::unique_ptr<ConfUiMessage> CreateFromUserSelection(
+    const std::string& session_id, const UserResponse::type user_selection);
 }  // end of namespace confui
 }  // end of namespace cuttlefish
