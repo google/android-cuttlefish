@@ -167,7 +167,9 @@ class HostServer : public HostVirtualInput {
   std::mutex input_socket_mtx_;
 
   using Multiplexer =
-      Multiplexer<ConfUiMessage, ThreadSafeQueue<ConfUiMessage>>;
+      Multiplexer<std::unique_ptr<ConfUiMessage>,
+                  ThreadSafeQueue<std::unique_ptr<ConfUiMessage>>>;
+
   /*
    * Multiplexer has N queues. When pop(), it is going to sleep until
    * there's at least one item in at least one queue. The lower the Q
