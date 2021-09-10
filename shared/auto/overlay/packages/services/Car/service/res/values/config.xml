@@ -68,4 +68,13 @@
         <item>displayPort=0,displayType=MAIN,occupantZoneId=0</item>
         <item>displayPort=1,displayType=INSTRUMENT_CLUSTER,occupantZoneId=0</item>
     </string-array>
+
+    <!-- A name of a camera device that provides the rearview through EVS service -->
+    <string translatable="false" name="config_evsRearviewCameraId">/dev/video10</string>
+
+    <!-- The camera Activity name for EVS, if defined, the Activity will be launched by
+         CarEvsService. -->
+    <string name="config_evsCameraActivity" translatable="false">
+        com.google.android.car.evs/com.google.android.car.evs.CarEvsCameraPreviewActivity
+    </string>
 </resources>
