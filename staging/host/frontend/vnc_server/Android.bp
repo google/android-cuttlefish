@@ -31,6 +31,8 @@ cc_binary {
     ],
     shared_libs: [
         "libext2_blkid",
+        "android.hardware.keymaster@4.0",
+        "libcrypto",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",

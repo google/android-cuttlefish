@@ -129,6 +129,7 @@ cc_binary_host {
     ],
     shared_libs: [
         "libext2_blkid",
+        "android.hardware.keymaster@4.0",
         "libbase",
         "libcrypto",
         "libcuttlefish_fs",
