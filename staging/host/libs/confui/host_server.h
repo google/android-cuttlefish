@@ -50,11 +50,12 @@ class HostServer : public HostVirtualInput {
       cuttlefish::ScreenConnectorFrameRenderer& screen_connector);
 
   void Start();  // start this server itself
-  virtual ~HostServer() = default;
+  virtual ~HostServer() {}
 
   // implement input interfaces. called by webRTC & vnc
   void PressConfirmButton(const bool is_down) override;
   void PressCancelButton(const bool is_down) override;
+  void UserAbortEvent() override;
   bool IsConfUiActive() override;
 
  private:
@@ -115,21 +116,8 @@ class HostServer : public HostVirtualInput {
 
   SharedFD EstablishHalConnection();
 
-  // failed to start dialog, etc
-  // basically, will reset the session, so start from the beginning in the same
-  // session
-  void ResetOnCommandFailure();
-
-  // note: the picked session will be removed from session_map_
-  std::unique_ptr<Session> GetSession(const std::string& session_id) {
-    if (session_map_.find(session_id) == session_map_.end()) {
-      return nullptr;
-    }
-    std::unique_ptr<Session> temp = std::move(session_map_[session_id]);
-    session_map_.erase(session_id);
-    return temp;
-  }
-
+  std::unique_ptr<Session> CreateSession(const std::string& session_name);
+  void Transition(std::unique_ptr<ConfUiMessage>& input_ptr);
   std::string GetCurrentSessionId() {
     if (curr_session_) {
       return curr_session_->GetId();
@@ -143,7 +131,6 @@ class HostServer : public HostVirtualInput {
     }
     return ToString(curr_session_->GetState());
   }
-  std::unique_ptr<Session> ComputeCurrentSession(const std::string& session_id);
   bool SendUserSelection(UserResponse::type selection);
 
   const std::uint32_t display_num_;
@@ -156,8 +143,6 @@ class HostServer : public HostVirtualInput {
   std::string input_socket_path_;
   int hal_vsock_port_;
 
-  // session id to Session object map, for those that are suspended
-  std::unordered_map<std::string, std::unique_ptr<Session>> session_map_;
   // curr_session_ doesn't belong to session_map_
   std::unique_ptr<Session> curr_session_;
 
@@ -169,7 +154,6 @@ class HostServer : public HostVirtualInput {
   using Multiplexer =
       Multiplexer<std::unique_ptr<ConfUiMessage>,
                   ThreadSafeQueue<std::unique_ptr<ConfUiMessage>>>;
-
   /*
    * Multiplexer has N queues. When pop(), it is going to sleep until
    * there's at least one item in at least one queue. The lower the Q
@@ -184,6 +168,10 @@ class HostServer : public HostVirtualInput {
 
   std::thread main_loop_thread_;
   std::thread hal_input_fetcher_thread_;
+
+  std::mutex socket_flag_mtx_;
+  std::condition_variable socket_flag_cv_;
+  bool is_socket_ok_;
 };
 
 }  // end of namespace confui
