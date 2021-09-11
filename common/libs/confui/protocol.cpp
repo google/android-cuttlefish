@@ -66,10 +66,6 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage(
       return ToConfUiMessage<ConfUiCmd::kAbort>(confui_packet);
     case ConfUiCmd::kStop:
       return ToConfUiMessage<ConfUiCmd::kStop>(confui_packet);
-    case ConfUiCmd::kSuspend:
-      return ToConfUiMessage<ConfUiCmd::kSuspend>(confui_packet);
-    case ConfUiCmd::kRestore:
-      return ToConfUiMessage<ConfUiCmd::kRestore>(confui_packet);
       // these are errors
     case ConfUiCmd::kUnknown:
     default:
