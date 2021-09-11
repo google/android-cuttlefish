@@ -23,6 +23,7 @@
 #include <teeui/msg_formatting.h>
 
 #include "common/libs/confui/confui.h"
+#include "host/libs/confui/cbor.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/server_common.h"
@@ -118,6 +119,8 @@ class Session {
   // the second argument for resultCB of promptUserConfirmation
   std::vector<std::uint8_t> signed_confirmation_;
   std::vector<std::uint8_t> message_;
+
+  std::unique_ptr<Cbor> cbor_;
 
   // effectively, this variables are shared with vnc, webRTC thread
   // the input demuxer will check the confirmation UI mode based on this
