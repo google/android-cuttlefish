@@ -38,8 +38,6 @@ std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose) {
       {ConfUiCmd::kCliAck, "kCliAck"},
       {ConfUiCmd::kCliRespond, "kCliRespond"},
       {ConfUiCmd::kAbort, "kAbort"},
-      {ConfUiCmd::kSuspend, "kSuspend"},
-      {ConfUiCmd::kRestore, "kRestore"},
       {ConfUiCmd::kUserInputEvent, "kUserInputEvent"}};
   if (look_up_tab.find(cmd) != look_up_tab.end()) {
     return look_up_tab[cmd] + suffix;
@@ -51,9 +49,9 @@ std::string ToString(const ConfUiCmd& cmd) { return ToDebugString(cmd, false); }
 
 ConfUiCmd ToCmd(std::uint32_t i) {
   std::vector<ConfUiCmd> all_cmds{
-      ConfUiCmd::kStart,      ConfUiCmd::kStop,           ConfUiCmd::kCliAck,
-      ConfUiCmd::kCliRespond, ConfUiCmd::kAbort,          ConfUiCmd::kSuspend,
-      ConfUiCmd::kRestore,    ConfUiCmd::kUserInputEvent, ConfUiCmd::kUnknown};
+      ConfUiCmd::kStart,      ConfUiCmd::kStop,  ConfUiCmd::kCliAck,
+      ConfUiCmd::kCliRespond, ConfUiCmd::kAbort, ConfUiCmd::kUserInputEvent,
+      ConfUiCmd::kUnknown};
 
   for (auto& cmd : all_cmds) {
     if (i == Enum2Base(cmd)) {
@@ -70,8 +68,6 @@ ConfUiCmd ToCmd(const std::string& cmd_str) {
       {"kCliAck", ConfUiCmd::kCliAck},
       {"kCliRespond", ConfUiCmd::kCliRespond},
       {"kAbort", ConfUiCmd::kAbort},
-      {"kSuspend", ConfUiCmd::kSuspend},
-      {"kRestore", ConfUiCmd::kRestore},
       {"kUserInputEvent", ConfUiCmd::kUserInputEvent},
   };
   if (cmds.find(cmd_str) != cmds.end()) {
