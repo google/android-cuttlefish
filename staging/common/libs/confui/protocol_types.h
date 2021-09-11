@@ -38,10 +38,11 @@ enum class ConfUiCmd : std::uint32_t {
   kCliAck = 113,  // client acknowledged. "error:err_msg" or "success:command"
   kCliRespond = 114,  //  with "confirm" or "cancel" or "abort"
   kAbort = 115,       // to abort the current session
-  kSuspend = 116,     // to suspend, so do save the context
-  kRestore = 117,
   kUserInputEvent = 200
 };
+
+// this is for short messages
+constexpr const ssize_t kMaxMessageLength = packet::kMaxPayloadLength;
 
 std::string ToString(const ConfUiCmd& cmd);
 std::string ToDebugString(const ConfUiCmd& cmd, const bool is_debug);
@@ -54,7 +55,8 @@ std::optional<teeui::UIOption> ToUiOption(const std::string&);
 struct HostError {
   static constexpr char kSystemError[] = "system_error";
   static constexpr char kUIError[] = "ui_error";
-  static constexpr char kMessageTooLongError[] = "ui_msg_too_long_error";
+  static constexpr char kMessageTooLongError[] = "msg_too_long_error";
+  static constexpr char kIncorrectUTF8[] = "msg_incorrect_utf8";
 };
 
 struct UserResponse {

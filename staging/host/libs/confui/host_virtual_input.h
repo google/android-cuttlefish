@@ -30,6 +30,7 @@ class HostVirtualInput {
  public:
   virtual void PressConfirmButton(const bool is_down) = 0;
   virtual void PressCancelButton(const bool is_down) = 0;
+  virtual void UserAbortEvent() = 0;
   virtual ~HostVirtualInput() = default;
   // guarantees that if this returns true, it is confirmation UI mode
   virtual bool IsConfUiActive() = 0;
