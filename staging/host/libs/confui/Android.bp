@@ -32,6 +32,7 @@ cc_library_headers {
 cc_library_static {
     name: "libcuttlefish_confui_host",
     srcs: [
+        "cbor.cc",
         "host_renderer.cc",
         "host_server.cc",
         "host_utils.cc",
@@ -44,6 +45,8 @@ cc_library_static {
         "libbase",
         "libjsoncpp",
         "liblog",
+        "libcrypto",
+        "android.hardware.keymaster@4.0",
     ],
     header_libs: [
         "libcuttlefish_confui_host_headers",

@@ -158,6 +158,21 @@ bool Session::HandleInit(const bool is_user_input, SharedFD hal_cli,
   extra_data_ = start_cmd_msg.GetExtraData();
   ui_options_ = start_cmd_msg.GetUiOpts();
 
+  // cbor_ can be correctly created after the session received kStart cmd
+  // at runtime
+  cbor_ = std::make_unique<Cbor>(prompt_text_, extra_data_);
+  if (cbor_->IsMessageTooLong()) {
+    ConfUiLog(ERROR) << "The prompt text and extra_data are too long to be "
+                     << "properly encoded.";
+    ReportErrorToHal(hal_cli, HostError::kMessageTooLongError);
+    return false;
+  }
+  if (cbor_->IsMalformedUtf8()) {
+    ConfUiLog(ERROR) << "The prompt text appears to have incorrect UTF8 format";
+    ReportErrorToHal(hal_cli, HostError::kIncorrectUTF8);
+    return false;
+  }
+
   if (!RenderDialog()) {
     // the confirmation UI is driven by a user app, not running from the start
     // automatically so that means webRTC/vnc should have been set up
@@ -194,9 +209,14 @@ bool Session::HandleInSession(const bool is_user_input, SharedFD hal_cli,
         SendResponse(hal_cli, session_id_, UserResponse::kCancel,
                      std::vector<std::uint8_t>{}, std::vector<std::uint8_t>{});
   } else {
-    // TODO(kwstephenkim): sign using cuttlefish host encryptor
-    signed_confirmation_ = {};
-    message_ = {};
+    // TODO(kwstephenkim): sign using cuttlefish host secure_env
+    message_ = std::move(cbor_->GetMessage());
+    auto message_opt = sign(message_);
+    if (!message_opt) {
+      ReportErrorToHal(hal_cli, HostError::kSystemError);
+      return false;
+    }
+    signed_confirmation_ = message_opt.value();
     is_success = SendResponse(hal_cli, session_id_, UserResponse::kConfirm,
                               signed_confirmation_, message_);
   }
