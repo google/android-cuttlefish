@@ -25,19 +25,22 @@ std::unique_ptr<ConfUiMessage> CreateFromUserSelection(
 
 static FsmInput UserEvtToFsmInput(UserResponse::type user_response) {
   if (user_response == UserResponse::kConfirm) {
-    return FsmInput::kUserUnknown;
+    return FsmInput::kUserConfirm;
   }
   if (user_response == UserResponse::kCancel) {
     return FsmInput::kUserCancel;
   }
+  if (user_response == UserResponse::kUserAbort) {
+    return FsmInput::kUserAbort;
+  }
   return FsmInput::kUserUnknown;
 }
 
-FsmInput ToFsmInput(const ConfUiMessage& confui_msg) {
-  ConfUiCmd cmd = confui_msg.GetType();
+FsmInput ToFsmInput(const ConfUiMessage& msg) {
+  const auto cmd = msg.GetType();
   if (cmd == ConfUiCmd::kUserInputEvent) {
     const auto& user_input =
-        static_cast<const ConfUiUserSelectionMessage&>(confui_msg);
+        static_cast<const ConfUiUserSelectionMessage&>(msg);
     const auto& response = user_input.GetResponse();
     return UserEvtToFsmInput(response);
   }
@@ -49,17 +52,14 @@ FsmInput ToFsmInput(const ConfUiMessage& confui_msg) {
       return FsmInput::kHalStart;
     case ConfUiCmd::kStop:
       return FsmInput::kHalStop;
-    case ConfUiCmd::kSuspend:
-      return FsmInput::kHalSuspend;
-    case ConfUiCmd::kRestore:
-      return FsmInput::kHalRestore;
     case ConfUiCmd::kAbort:
       return FsmInput::kHalAbort;
     case ConfUiCmd::kCliAck:
     case ConfUiCmd::kCliRespond:
     default:
       ConfUiLog(FATAL) << "The" << ToString(hal_cmd)
-                       << "is not handled by Session";
+                       << "is not handled by the Session FSM but "
+                       << "directly calls Abort()";
   }
   return FsmInput::kHalUnknown;
 }
@@ -70,16 +70,14 @@ std::string ToString(FsmInput input) {
       return {"kUserConfirm"};
     case FsmInput::kUserCancel:
       return {"kUserCancel"};
+    case FsmInput::kUserAbort:
+      return {"kUserAbort"};
     case FsmInput::kUserUnknown:
       return {"kUserUnknown"};
     case FsmInput::kHalStart:
       return {"kHalStart"};
     case FsmInput::kHalStop:
       return {"kHalStop"};
-    case FsmInput::kHalSuspend:
-      return {"kHalSuspend"};
-    case FsmInput::kHalRestore:
-      return {"kHalRestore"};
     case FsmInput::kHalAbort:
       return {"kHalAbort"};
     case FsmInput::kHalUnknown:
@@ -97,10 +95,10 @@ std::string ToString(const MainLoopState& state) {
       return "kInSession";
     case MainLoopState::kWaitStop:
       return "kWaitStop";
-    case MainLoopState::kSuspended:
-      return "kSuspended";
     case MainLoopState::kAwaitCleanup:
       return "kAwaitCleanup";
+    case MainLoopState::kTerminated:
+      return "kTerminated";
     default:
       return "kInvalid";
   }
