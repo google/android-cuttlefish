@@ -101,7 +101,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
     auto first_msg = std::move(clean_up_and_get_first());
 
     cuttlefish::confui::ConfUiAckMessage& start_ack_msg =
-        static_cast<cuttlefish::confui::ConfUiAckMessage&>(*(first_msg.get()));
+        static_cast<cuttlefish::confui::ConfUiAckMessage&>(*first_msg);
     if (!start_ack_msg.IsSuccess()) {
         // handle errors: MALFORMED_UTF8 or Message too long
         const std::string error_msg = start_ack_msg.GetStatusMessage();
@@ -177,7 +177,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
         return {ResponseCode::Aborted, {}, {}};
     }
     if (user_or_abort->GetType() == cuttlefish::confui::ConfUiCmd::kCliAck) {
-        auto& ack_msg = static_cast<cuttlefish::confui::ConfUiAckMessage&>(*(user_or_abort.get()));
+        auto& ack_msg = static_cast<cuttlefish::confui::ConfUiAckMessage&>(*user_or_abort);
         if (ack_msg.IsSuccess()) {
             ConfUiLog(ERROR) << "When host failed, it is supposed to send "
                              << "kCliAck with fail, but this is kCliAck with success";
@@ -186,7 +186,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
         return error;
     }
     cuttlefish::confui::ConfUiCliResponseMessage& user_response =
-        static_cast<cuttlefish::confui::ConfUiCliResponseMessage&>(*(user_or_abort.get()));
+        static_cast<cuttlefish::confui::ConfUiCliResponseMessage&>(*user_or_abort);
 
     // pick, see if it is response, abort cmd
     // handle abort or error response here
@@ -254,10 +254,8 @@ Return<void> GuestSession::Abort() {
             if (host_fd_->IsOpen()) {
                 SerializedSend(cuttlefish::confui::SendAbortCmd, host_fd_, GetSessionId());
             }
-            using cuttlefish::confui::ConfUiGenericMessage;
-            auto local_abort_cmd =
-                std::make_unique<ConfUiGenericMessage<cuttlefish::confui::ConfUiCmd::kAbort>>(
-                    GetSessionId());
+            using cuttlefish::confui::ConfUiAbortMessage;
+            auto local_abort_cmd = std::make_unique<ConfUiAbortMessage>(GetSessionId());
             incoming_msg_queue_.Push(std::move(local_abort_cmd));
         }
     }
