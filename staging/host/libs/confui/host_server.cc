@@ -53,6 +53,8 @@ HostServer::HostServer(
       screen_connector_{screen_connector},
       renderer_(display_num_),
       hal_vsock_port_(HalHostVsockPort()) {
+  ConfUiLog(DEBUG) << "Confirmation UI Host session is listening on: "
+                   << hal_vsock_port_;
   const size_t max_elements = 20;
   auto ignore_new =
       [](ThreadSafeQueue<std::unique_ptr<ConfUiMessage>>::QueueImpl*) {
