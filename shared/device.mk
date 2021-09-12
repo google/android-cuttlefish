@@ -470,6 +470,12 @@ PRODUCT_PACKAGES += \
     android.hardware.drm@1.4-service.widevine
 
 #
+# Confirmation UI HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.confirmationui@1.0-service.cuttlefish
+
+#
 # Dumpstate HAL
 #
 ifeq ($(LOCAL_DUMPSTATE_PRODUCT_PACKAGE),)
