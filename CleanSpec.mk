@@ -58,6 +58,9 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.he
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.keymaster@4.0-service)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.keymaster@4.0-service.rc)
 
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.confirmationui@1.0-service)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.confirmationui@1.0-service.rc)
+
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.power@1.0-service.rc)
 
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.dumpstate@1.1-service.cuttlefish)

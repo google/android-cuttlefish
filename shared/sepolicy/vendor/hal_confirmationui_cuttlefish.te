@@ -1,0 +1,14 @@
+type hal_confirmationui_cuttlefish, domain;
+hal_server_domain(hal_confirmationui_cuttlefish, hal_confirmationui)
+
+type hal_confirmationui_cuttlefish_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_confirmationui_cuttlefish)
+
+vendor_internal_prop(vendor_vsock_confirmationui_port_prop)
+get_prop(hal_confirmationui_cuttlefish, vendor_vsock_confirmationui_port_prop)
+
+allow hal_confirmationui_cuttlefish self:{ vsock_socket } { create getopt read write connect shutdown };
+
+# Write to kernel log (/dev/kmsg)
+allow hal_confirmationui_cuttlefish kmsg_device:chr_file w_file_perms;
+allow hal_confirmationui_cuttlefish kmsg_device:chr_file getattr;
