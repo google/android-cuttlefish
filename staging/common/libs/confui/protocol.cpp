@@ -111,18 +111,18 @@ std::unique_ptr<ConfUiMessage> RecvConfUiMsg(const std::string& session_id,
 
 bool SendAbortCmd(SharedFD fd, const std::string& session_id) {
   ConfUiGenericMessage<ConfUiCmd::kAbort> confui_msg{session_id};
-  return confui_msg.Send(fd);
+  return confui_msg.SendOver(fd);
 }
 
 bool SendStopCmd(SharedFD fd, const std::string& session_id) {
   ConfUiGenericMessage<ConfUiCmd::kStop> confui_msg{session_id};
-  return confui_msg.Send(fd);
+  return confui_msg.SendOver(fd);
 }
 
 bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
              const std::string& status_message) {
   ConfUiAckMessage confui_msg{session_id, is_success, status_message};
-  return confui_msg.Send(fd);
+  return confui_msg.SendOver(fd);
 }
 
 bool SendResponse(SharedFD fd, const std::string& session_id,
@@ -131,7 +131,7 @@ bool SendResponse(SharedFD fd, const std::string& session_id,
                   const std::vector<std::uint8_t>& message) {
   ConfUiCliResponseMessage confui_msg{session_id, plain_selection,
                                       signed_response, message};
-  return confui_msg.Send(fd);
+  return confui_msg.SendOver(fd);
 }
 
 bool SendStartCmd(SharedFD fd, const std::string& session_id,
@@ -141,14 +141,14 @@ bool SendStartCmd(SharedFD fd, const std::string& session_id,
                   const std::vector<teeui::UIOption>& ui_opts) {
   ConfUiStartMessage confui_msg{session_id, prompt_text, extra_data, locale,
                                 ui_opts};
-  return confui_msg.Send(fd);
+  return confui_msg.SendOver(fd);
 }
 
 // this is only for deliverSecureInputEvent
 bool SendUserSelection(SharedFD fd, const std::string& session_id,
                        const UserResponse::type& confirm_cancel) {
   ConfUiUserSelectionMessage confui_msg{session_id, confirm_cancel};
-  return confui_msg.Send(fd);
+  return confui_msg.SendOver(fd);
 }
 
 // specialized ToConfUiMessage()
