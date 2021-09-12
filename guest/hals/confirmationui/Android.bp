@@ -36,6 +36,7 @@ cc_binary {
         "libutils",
     ],
     static_libs: [
+        "libcutils",
         "libcuttlefish_confui",
     ],
 
@@ -76,8 +77,9 @@ cc_library {
         "guest_session.cpp",
     ],
     static_libs: [
-        "libcuttlefish_fs",
+        "libcutils",
         "libcuttlefish_confui",
+        "libcuttlefish_fs",
     ],
     cflags: [
         "-Wall",
