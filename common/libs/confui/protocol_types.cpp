@@ -99,7 +99,7 @@ std::string ConfUiAckMessage::ToString() const {
                       (is_success_ ? "success" : "fail"), status_message_);
 }
 
-bool ConfUiAckMessage::Send(SharedFD fd) {
+bool ConfUiAckMessage::SendOver(SharedFD fd) {
   return Send_(fd, GetType(), session_id_,
                std::string(is_success_ ? "success" : "fail"), status_message_);
 }
@@ -109,7 +109,7 @@ std::string ConfUiCliResponseMessage::ToString() const {
                       ByteVecToString(sign_), ByteVecToString(message_));
 }
 
-bool ConfUiCliResponseMessage::Send(SharedFD fd) {
+bool ConfUiCliResponseMessage::SendOver(SharedFD fd) {
   return Send_(fd, GetType(), session_id_, response_, sign_, message_);
 }
 
@@ -132,7 +132,7 @@ std::string ConfUiStartMessage::ToString() const {
       std::string(extra_data_.begin(), extra_data_.end()), ui_opts_str);
 }
 
-bool ConfUiStartMessage::Send(SharedFD fd) {
+bool ConfUiStartMessage::SendOver(SharedFD fd) {
   return Send_(fd, GetType(), session_id_, prompt_text_, extra_data_, locale_,
                UiOptsToString());
 }
@@ -141,7 +141,7 @@ std::string ConfUiUserSelectionMessage::ToString() const {
   return CreateString(session_id_, confui::ToString(GetType()), response_);
 }
 
-bool ConfUiUserSelectionMessage::Send(SharedFD fd) {
+bool ConfUiUserSelectionMessage::SendOver(SharedFD fd) {
   return Send_(fd, GetType(), session_id_, response_);
 }
 
