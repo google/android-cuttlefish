@@ -17,6 +17,8 @@
 
 #include "TrustyConfirmationUI.h"
 
+#include <cutils/properties.h>
+
 namespace android {
 namespace hardware {
 namespace confirmationui {
@@ -70,7 +72,10 @@ cuttlefish::SharedFD TrustyConfirmationUI::ConnectToHost() {
 
 TrustyConfirmationUI::TrustyConfirmationUI()
     : listener_state_(ListenerState::None),
-      prompt_result_(ResponseCode::Ignored), host_vsock_port_{7700}, current_session_id_{10} {
+      prompt_result_(ResponseCode::Ignored), host_vsock_port_{static_cast<int>(property_get_int64(
+                                                 "ro.boot.vsock_confirmationui_port", 7700))},
+      current_session_id_{10} {
+    ConfUiLog(INFO) << "Connecting to Confirmation UI host listening on port " << host_vsock_port_;
     host_fd_ = ConnectToHost();
     auto fetching_cmd = [this]() { HostMessageFetcherLoop(); };
     if (host_fd_->IsOpen()) {
