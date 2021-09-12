@@ -30,11 +30,13 @@ cc_binary {
     vendor: true,
     shared_libs: [
         "android.hardware.confirmationui@1.0",
-        "android.hardware.confirmationui.not-so-secure-input",
         "android.hardware.confirmationui@1.0-lib.cuttlefish",
         "libbase",
         "libhidlbase",
         "libutils",
+    ],
+    static_libs: [
+        "libcuttlefish_confui",
     ],
 
     init_rc: ["android.hardware.confirmationui@1.0-service.cuttlefish.rc"],
@@ -70,8 +72,8 @@ cc_library {
     export_include_dirs: ["include"],
 
     srcs: [
-        "TrustyApp.cpp",
         "TrustyConfirmationUI.cpp",
+        "guest_session.cpp",
     ],
     static_libs: [
         "libcuttlefish_fs",

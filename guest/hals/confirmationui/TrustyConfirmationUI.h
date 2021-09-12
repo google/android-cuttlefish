@@ -17,18 +17,22 @@
 #ifndef ANDROID_HARDWARE_CONFIRMATIONUI_V1_0_TRUSTY_CONFIRMATIONUI_H
 #define ANDROID_HARDWARE_CONFIRMATIONUI_V1_0_TRUSTY_CONFIRMATIONUI_H
 
+#include <atomic>
+#include <condition_variable>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <thread>
+
 #include <android/hardware/confirmationui/1.0/IConfirmationUI.h>
 #include <android/hardware/keymaster/4.0/types.h>
 #include <hidl/Status.h>
-
-#include <atomic>
-#include <condition_variable>
-#include <memory>
-#include <mutex>
 #include <teeui/generic_messages.h>
-#include <thread>
 
-#include "TrustyApp.h"
+#include "common/libs/concurrency/thread_safe_queue.h"
+#include "common/libs/confui/confui.h"
+#include "common/libs/fs/shared_fd.h"
+#include "guest_session.h"
 
 namespace android {
 namespace hardware {
@@ -43,10 +47,12 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 
-using ::android::trusty::confirmationui::TrustyApp;
-
 class TrustyConfirmationUI : public IConfirmationUI {
   public:
+    using ConfUiMessage = cuttlefish::confui::ConfUiMessage;
+    using ConfUiAckMessage = cuttlefish::confui::ConfUiAckMessage;
+    using ListenerState = GuestSession::ListenerState;
+
     TrustyConfirmationUI();
     virtual ~TrustyConfirmationUI();
     // Methods from ::android::hardware::confirmationui::V1_0::IConfirmationUI
@@ -58,41 +64,60 @@ class TrustyConfirmationUI : public IConfirmationUI {
                                                 const hidl_vec<UIOption>& uiOptions) override;
     Return<ResponseCode> deliverSecureInputEvent(
         const ::android::hardware::keymaster::V4_0::HardwareAuthToken& secureInputToken) override;
+
     Return<void> abort() override;
 
   private:
-    std::weak_ptr<TrustyApp> app_;
+    /*
+     * Note for implementation
+     *
+     * The TEE UI session cannot be pre-emptied normally. The session will have an
+     * exclusive control for the input and the screen. Only when something goes
+     * wrong, it can be aborted by abort().
+     *
+     * Another thing is that promptUserConfirmation() may return without waiting
+     * for the resultCB is completed. When it returns early, it still returns
+     * ResponseCode::OK. In that case, the promptUserConfirmation() could actually
+     * fail -- e.g. the input device is broken down afterwards, the user never
+     * gave an input until timeout, etc. Then, the resultCB would be called with
+     * an appropriate error code. However, even in that case, most of the time
+     * promptUserConfirmation() returns OK. Only when the initial set up for
+     * confirmation UI fails, promptUserConfirmation() may return non-OK.
+     *
+     * So, the implementation is roughly:
+     *   1. If there's another session going on, return with ResponseCode::Ignored
+     *      and the return is immediate
+     *   2. If there's a zombie, collect the zombie and go to 3
+     *   3. If there's nothing, start a new session in a new thread, and return
+     *      the promptUserConfirmation() call as early as possible
+     *
+     * Another issue is to maintain/define the ownership of vsock. For now,
+     * a message fetcher (from the host) will see if the vsock is ok, and
+     * reconnect if not. But, eventually, the new session should establish a
+     * new connection/client vsock, and the new session should own the fetcher
+     * thread.
+     */
     std::thread callback_thread_;
-
-    enum class ListenerState : uint32_t {
-        None,
-        Starting,
-        SetupDone,
-        Interactive,
-        Terminating,
-    };
-
-    /*
-     * listener_state is protected by listener_state_lock. It makes transitions between phases
-     * of the confirmation operation atomic.
-     * (See TrustyConfirmationUI.cpp#promptUserConfirmation_ for details about operation phases)
-     */
     ListenerState listener_state_;
-    /*
-     * abort_called_ is also protected by listener_state_lock_ and indicates that the HAL user
-     * called abort.
-     */
-    bool abort_called_;
+
     std::mutex listener_state_lock_;
     std::condition_variable listener_state_condv_;
     ResponseCode prompt_result_;
-    bool secureInputDelivered_;
 
-    std::tuple<teeui::ResponseCode, teeui::MsgVector<uint8_t>, teeui::MsgVector<uint8_t>>
-    promptUserConfirmation_(const teeui::MsgString& promptText,
-                            const teeui::MsgVector<uint8_t>& extraData,
-                            const teeui::MsgString& locale,
-                            const teeui::MsgVector<teeui::UIOption>& uiOptions);
+    // client socket to the host
+    int host_vsock_port_;
+    cuttlefish::SharedFD host_fd_;
+
+    // ack, response, command from the host, and the abort command from the guest
+    std::atomic<std::uint32_t> current_session_id_;
+    std::mutex current_session_lock_;
+    std::unique_ptr<GuestSession> current_session_;
+    std::thread host_cmd_fetcher_thread_;
+
+    cuttlefish::SharedFD ConnectToHost();
+    void HostMessageFetcherLoop();
+    void RunSession(sp<IConfirmationResultCallback> resultCB, hidl_string promptText,
+                    hidl_vec<uint8_t> extraData, hidl_string locale, hidl_vec<UIOption> uiOptions);
 };
 
 }  // namespace implementation
