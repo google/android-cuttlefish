@@ -77,7 +77,7 @@ class ConfUiMessage {
   void SetSessionId(const std::string session_id) { session_id_ = session_id; }
   std::string GetSessionId() const { return session_id_; }
   virtual ConfUiCmd GetType() const = 0;
-  virtual bool Send(SharedFD fd) = 0;
+  virtual bool SendOver(SharedFD fd) = 0;
 
  protected:
   std::string session_id_;
@@ -103,7 +103,9 @@ class ConfUiGenericMessage : public ConfUiMessage {
     return CreateString(session_id_, confui::ToString(GetType()));
   }
   ConfUiCmd GetType() const override { return cmd; }
-  bool Send(SharedFD fd) override { return Send_(fd, GetType(), session_id_); }
+  bool SendOver(SharedFD fd) override {
+    return Send_(fd, GetType(), session_id_);
+  }
 };
 
 class ConfUiAckMessage : public ConfUiMessage {
@@ -116,7 +118,7 @@ class ConfUiAckMessage : public ConfUiMessage {
   virtual ~ConfUiAckMessage() = default;
   std::string ToString() const override;
   ConfUiCmd GetType() const override { return ConfUiCmd::kCliAck; }
-  bool Send(SharedFD fd) override;
+  bool SendOver(SharedFD fd) override;
   bool IsSuccess() const { return is_success_; }
   std::string GetStatusMessage() const { return status_message_; }
 
@@ -142,7 +144,7 @@ class ConfUiCliResponseMessage : public ConfUiMessage {
   auto GetResponse() const { return response_; }
   auto GetMessage() const { return message_; }
   auto GetSign() const { return sign_; }
-  bool Send(SharedFD fd) override;
+  bool SendOver(SharedFD fd) override;
 
  private:
   UserResponse::type response_;     // plain format
@@ -170,7 +172,7 @@ class ConfUiStartMessage : public ConfUiMessage {
   std::vector<std::uint8_t> GetExtraData() const { return extra_data_; }
   std::string GetLocale() const { return locale_; }
   std::vector<teeui::UIOption> GetUiOpts() const { return ui_opts_; }
-  bool Send(SharedFD fd) override;
+  bool SendOver(SharedFD fd) override;
 
  private:
   std::string prompt_text_;
@@ -191,11 +193,14 @@ class ConfUiUserSelectionMessage : public ConfUiMessage {
   std::string ToString() const override;
   ConfUiCmd GetType() const override { return ConfUiCmd::kUserInputEvent; }
   auto GetResponse() const { return response_; }
-  bool Send(SharedFD fd) override;
+  bool SendOver(SharedFD fd) override;
 
  private:
   UserResponse::type response_;
 };
+
+using ConfUiAbortMessage = ConfUiGenericMessage<ConfUiCmd::kAbort>;
+using ConfUiStopMessage = ConfUiGenericMessage<ConfUiCmd::kStop>;
 
 }  // end of namespace confui
 }  // end of namespace cuttlefish
