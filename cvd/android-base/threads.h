@@ -24,7 +24,7 @@ uint64_t GetThreadId();
 }
 }  // namespace android
 
-#if defined(__GLIBC__)
-// bionic has this Linux-specifix call, but glibc doesn't.
+#if defined(__GLIBC__) || defined(ANDROID_HOST_MUSL)
+// bionic has this Linux-specifix call, but glibc and musl don't.
 extern "C" int tgkill(int tgid, int tid, int sig);
 #endif

@@ -47,7 +47,7 @@ uint64_t GetThreadId() {
 }  // namespace base
 }  // namespace android
 
-#if defined(__GLIBC__)
+#if defined(__GLIBC__) || defined(ANDROID_HOST_MUSL)
 int tgkill(int tgid, int tid, int sig) {
   return syscall(__NR_tgkill, tgid, tid, sig);
 }
