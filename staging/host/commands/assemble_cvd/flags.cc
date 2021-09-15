@@ -28,7 +28,6 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/libs/config/adb_config.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
@@ -238,17 +237,6 @@ DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
             "emulation gRPC server on the host");
-DEFINE_string(custom_action_config, "",
-              "Path to a custom action config JSON. Defaults to the file provided by "
-              "build variable CVD_CUSTOM_ACTION_CONFIG. If this build variable "
-              "is empty then the custom action config will be empty as well.");
-DEFINE_string(custom_actions, "",
-              "Serialized JSON of an array of custom action objects (in the "
-              "same format as custom action config JSON files). For use "
-              "within --config preset config files; prefer "
-              "--custom_action_config to specify a custom config file on the "
-              "command line. Actions in this flag are combined with actions "
-              "in --custom_action_config.");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
              "the slot will be chosen based on the misc partition if using a "
@@ -648,58 +636,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(
       FLAGS_enable_vehicle_hal_grpc_server);
-
-  std::string custom_action_config;
-  if (!FLAGS_custom_action_config.empty()) {
-    custom_action_config = FLAGS_custom_action_config;
-  } else {
-    std::string custom_action_config_dir =
-        DefaultHostArtifactsPath("etc/cvd_custom_action_config");
-    if (DirectoryExists(custom_action_config_dir)) {
-      auto custom_action_configs = DirectoryContents(custom_action_config_dir);
-      // Two entries are always . and ..
-      if (custom_action_configs.size() > 3) {
-        LOG(ERROR) << "Expected at most one custom action config in "
-                   << custom_action_config_dir << ". Please delete extras.";
-      } else if (custom_action_configs.size() == 3) {
-        for (const auto& config : custom_action_configs) {
-          if (android::base::EndsWithIgnoreCase(config, ".json")) {
-            custom_action_config = custom_action_config_dir + "/" + config;
-          }
-        }
-      }
-    }
-  }
-  std::vector<CustomActionConfig> custom_actions;
-  Json::CharReaderBuilder builder;
-  Json::Value custom_action_array(Json::arrayValue);
-  if (custom_action_config != "") {
-    // Load the custom action config JSON.
-    std::ifstream ifs(custom_action_config);
-    std::string errorMessage;
-    if (!Json::parseFromStream(builder, ifs, &custom_action_array, &errorMessage)) {
-      LOG(FATAL) << "Could not read custom actions config file "
-                 << custom_action_config << ": "
-                 << errorMessage;
-    }
-    for (const auto& custom_action : custom_action_array) {
-      custom_actions.push_back(CustomActionConfig(custom_action));
-    }
-  }
-  if (FLAGS_custom_actions != "") {
-    // Load the custom action from the --config preset file.
-    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    std::string errorMessage;
-    if (!reader->parse(&*FLAGS_custom_actions.begin(), &*FLAGS_custom_actions.end(),
-                       &custom_action_array, &errorMessage)) {
-      LOG(FATAL) << "Could not read custom actions config flag: "
-                 << errorMessage;
-    }
-    for (const auto& custom_action : custom_action_array) {
-      custom_actions.push_back(CustomActionConfig(custom_action));
-    }
-  }
-  tmp_config_obj.set_custom_actions(custom_actions);
 
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
