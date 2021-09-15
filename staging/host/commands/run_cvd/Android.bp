@@ -22,7 +22,6 @@ cc_binary {
     srcs: [
         "boot_state_machine.cc",
         "launch.cc",
-        "launch_adb.cpp",
         "launch_modem.cpp",
         "launch_streamer.cpp",
         "main.cc",
@@ -43,6 +42,7 @@ cc_binary {
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libcuttlefish_host_config_adb",
         "libcuttlefish_vm_manager",
         "libgflags",
     ],

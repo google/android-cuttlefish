@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,49 +17,48 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "assemble_cvd",
+cc_library_static {
+    name: "libcuttlefish_host_config_adb",
     srcs: [
-        "alloc.cc",
-        "assemble_cvd.cc",
-        "boot_config.cc",
-        "boot_image_utils.cc",
-        "clean.cc",
-        "disk_flags.cc",
-        "flags.cc",
-        "flag_feature.cpp",
-        "misc_info.cc",
-        "super_image_mixer.cc",
-    ],
-    header_libs: [
-        "bootimg_headers",
+        "config.cpp",
+        "data.cpp",
+        "flags.cpp",
+        "launch.cpp",
+        "strings.cpp",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
         "libfruit",
+        "libgflags",
         "libjsoncpp",
-        "libnl",
-        "libprotobuf-cpp-full",
-        "libziparchive",
         "libz",
-        "libcuttlefish_allocd_utils",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "libcuttlefish_host_config_adb_test",
+    srcs: [
+        "test.cpp",
     ],
     static_libs: [
-        "libcdisk_spec",
-        "libext2_uuid",
-        "libimage_aggregator",
-        "libsparse",
-        "libcuttlefish_graphics_detector",
+        "libbase",
+        "libcuttlefish_fs",
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
-        "libcuttlefish_vm_manager",
+        "libcuttlefish_utils",
+    ],
+    shared_libs: [
+        "libext2_blkid",
         "libgflags",
+        "libfruit",
+        "libjsoncpp",
+        "liblog",
     ],
-    required: [
-        "lz4",
-    ],
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
+    test_options: {
+        unit_test: true,
+    },
 }
