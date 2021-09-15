@@ -15,10 +15,8 @@
 
 #include "host/commands/secure_env/tpm_keymaster_enforcement.h"
 
+#include <android-base/endian.h>
 #include <android-base/logging.h>
-#if defined(__BIONIC__)
-#include <sys/endian.h> // for be64toh
-#endif
 
 #include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_hmac.h"

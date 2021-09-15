@@ -54,8 +54,13 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   char buf[4096];
   struct iovec iov = { buf, sizeof(buf) };
   struct sockaddr_nl sa;
-  struct msghdr msg = { &sa, sizeof(sa), &iov, 1, NULL, 0, 0 };
+  struct msghdr msg {};
   struct nlmsghdr *nh;
+
+  msg.msg_name = &sa;
+  msg.msg_namelen = sizeof(sa);
+  msg.msg_iov = &iov;
+  msg.msg_iovlen = 1;
 
   int result = netlink_fd_->RecvMsg(&msg, 0);
   if (result  < 0) {
