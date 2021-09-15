@@ -326,22 +326,6 @@ bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
   return (*dictionary_)[kEnableVehicleHalServer].asBool();
 }
 
-static constexpr char kCustomActions[] = "custom_actions";
-void CuttlefishConfig::set_custom_actions(const std::vector<CustomActionConfig>& actions) {
-  Json::Value actions_array(Json::arrayValue);
-  for (const auto& action : actions) {
-    actions_array.append(action.ToJson());
-  }
-  (*dictionary_)[kCustomActions] = actions_array;
-}
-std::vector<CustomActionConfig> CuttlefishConfig::custom_actions() const {
-  std::vector<CustomActionConfig> result;
-  for (Json::Value custom_action : (*dictionary_)[kCustomActions]) {
-    result.push_back(CustomActionConfig(custom_action));
-  }
-  return result;
-}
-
 static constexpr char kWebRTCAssetsDir[] = "webrtc_assets_dir";
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
   (*dictionary_)[kWebRTCAssetsDir] = webrtc_assets_dir;

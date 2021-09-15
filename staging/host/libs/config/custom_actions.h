@@ -15,11 +15,14 @@
  */
 #pragma once
 
-#include <json/json.h>
-
+#include <fruit/fruit.h>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "host/libs/config/config_flag.h"
+#include "host/libs/config/config_fragment.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
@@ -35,13 +38,18 @@ struct DeviceState {
 };
 
 struct CustomActionConfig {
-  CustomActionConfig(const Json::Value&);
-  Json::Value ToJson() const;
-
   std::vector<ControlPanelButton> buttons;
   std::optional<std::string> shell_command;
   std::optional<std::string> server;
   std::vector<DeviceState> device_states;
 };
+
+class CustomActionConfigProvider : public FlagFeature, public ConfigFragment {
+ public:
+  virtual const std::vector<CustomActionConfig>& CustomActions() const = 0;
+};
+
+fruit::Component<fruit::Required<ConfigFlag>, CustomActionConfigProvider>
+CustomActionsComponent();
 
 }  // namespace cuttlefish

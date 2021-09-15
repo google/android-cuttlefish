@@ -131,6 +131,12 @@ std::unique_ptr<cuttlefish::AudioServer> CreateAudioServer() {
   return std::make_unique<cuttlefish::AudioServer>(audio_server_fd);
 }
 
+fruit::Component<cuttlefish::CustomActionConfigProvider> WebRtcComponent() {
+  return fruit::createComponent()
+      .install(cuttlefish::ConfigFlagPlaceholder)
+      .install(cuttlefish::CustomActionsComponent);
+};
+
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -315,7 +321,17 @@ int main(int argc, char** argv) {
     action_server_fds[server] = fd;
   }
 
-  for (const auto& custom_action : cvd_config->custom_actions()) {
+  fruit::Injector<cuttlefish::CustomActionConfigProvider> injector(
+      WebRtcComponent);
+  for (auto& fragment :
+       injector.getMultibindings<cuttlefish::ConfigFragment>()) {
+    CHECK(cvd_config->LoadFragment(*fragment))
+        << "Failed to load config fragment";
+  }
+
+  const auto& actions_provider =
+      injector.get<cuttlefish::CustomActionConfigProvider&>();
+  for (const auto& custom_action : actions_provider.CustomActions()) {
     if (custom_action.shell_command) {
       if (custom_action.buttons.size() != 1) {
         LOG(FATAL) << "Expected exactly one button for custom action command: "
