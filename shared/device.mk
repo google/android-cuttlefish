@@ -102,6 +102,12 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.incremental.enable=1 \
     debug.c2.use_dmabufheaps=1 \
 
+LOCAL_BT_PROPERTIES ?= \
+ vendor.ser.bt-uart?=/dev/hvc5 \
+
+PRODUCT_VENDOR_PROPERTIES += \
+	 ${LOCAL_BT_PROPERTIES} \
+
 # Below is a list of properties we probably should get rid of.
 PRODUCT_VENDOR_PROPERTIES += \
     wlan.driver.status=ok
