@@ -39,7 +39,7 @@ for i in "${debs[@]}"; do
 done
 
 # Now install the packages on the disk
-sudo mkdir /mnt/image
+sudo mkdir -p /mnt/image
 sudo mount /dev/sdb1 /mnt/image
 cp "${debs[@]}" /mnt/image/tmp
 sudo mount -t sysfs none /mnt/image/sys
