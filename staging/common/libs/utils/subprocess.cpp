@@ -281,8 +281,8 @@ public:
   }
 };
 
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
-                        std::string* stdout, std::string* stderr,
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
+                        std::string* stdout_str, std::string* stderr_str,
                         SubprocessOptions options) {
   /*
    * The order of these declarations is necessary for safety. If the function
@@ -299,7 +299,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
   ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
   Command cmd = std::move(cmd_tmp);
   bool io_error = false;
-  if (stdin != nullptr) {
+  if (stdin_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to write the stdin of \""
@@ -307,15 +307,15 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
       return -1;
     }
     cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
-    stdin_thread = std::thread([pipe_write, stdin, &io_error]() {
-      int written = WriteAll(pipe_write, *stdin);
+    stdin_thread = std::thread([pipe_write, stdin_str, &io_error]() {
+      int written = WriteAll(pipe_write, *stdin_str);
       if (written < 0) {
         io_error = true;
         LOG(ERROR) << "Error in writing stdin to process";
       }
     });
   }
-  if (stdout != nullptr) {
+  if (stdout_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stdout of \""
@@ -323,15 +323,15 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
       return -1;
     }
     cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
-    stdout_thread = std::thread([pipe_read, stdout, &io_error]() {
-      int read = ReadAll(pipe_read, stdout);
+    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
+      int read = ReadAll(pipe_read, stdout_str);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stdout from process";
       }
     });
   }
-  if (stderr != nullptr) {
+  if (stderr_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stderr of \""
@@ -339,8 +339,8 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
       return -1;
     }
     cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
-    stderr_thread = std::thread([pipe_read, stderr, &io_error]() {
-      int read = ReadAll(pipe_read, stderr);
+    stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
+      int read = ReadAll(pipe_read, stderr_str);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stderr from process";
