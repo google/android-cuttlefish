@@ -1,0 +1,4 @@
+blueprint_go_binary {
+    name: "create_base_image",
+    srcs: ["create_base_image.go"],
+}
