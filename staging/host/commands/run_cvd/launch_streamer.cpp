@@ -43,11 +43,12 @@ SharedFD CreateUnixInputServer(const std::string& path) {
   return server;
 }
 
-std::vector<Command> LaunchCustomActionServers(Command& webrtc_cmd,
-                                               const CuttlefishConfig& config) {
+std::vector<Command> LaunchCustomActionServers(
+    Command& webrtc_cmd,
+    const std::vector<CustomActionConfig>& custom_actions) {
   bool first = true;
   std::vector<Command> commands;
-  for (const auto& custom_action : config.custom_actions()) {
+  for (const auto& custom_action : custom_actions) {
     if (custom_action.server) {
       // Create a socket pair that will be used for communication between
       // WebRTC and the action server.
@@ -221,11 +222,13 @@ class WebRtcServer : public virtual CommandSource,
   INJECT(WebRtcServer(const CuttlefishConfig& config,
                       const CuttlefishConfig::InstanceSpecific& instance,
                       StreamerSockets& sockets,
-                      KernelLogPipeProvider& log_pipe_provider))
+                      KernelLogPipeProvider& log_pipe_provider,
+                      const CustomActionConfigProvider& custom_action_config))
       : config_(config),
         instance_(instance),
         sockets_(sockets),
-        log_pipe_provider_(log_pipe_provider) {}
+        log_pipe_provider_(log_pipe_provider),
+        custom_action_config_(custom_action_config) {}
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
     if (!Enabled() || !config_.ForDefaultInstance().start_webrtc_sig_server()) {
@@ -293,7 +296,8 @@ class WebRtcServer : public virtual CommandSource,
     webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
 
     // TODO get from launcher params
-    for (auto& action : LaunchCustomActionServers(webrtc, config_)) {
+    const auto& actions = custom_action_config_.CustomActions();
+    for (auto& action : LaunchCustomActionServers(webrtc, actions)) {
       commands.emplace_back(std::move(action));
     }
     commands.emplace_back(std::move(webrtc));
@@ -341,6 +345,7 @@ class WebRtcServer : public virtual CommandSource,
   const CuttlefishConfig::InstanceSpecific& instance_;
   StreamerSockets& sockets_;
   KernelLogPipeProvider& log_pipe_provider_;
+  const CustomActionConfigProvider& custom_action_config_;
   SharedFD kernel_log_events_pipe_;
   SharedFD client_socket_;
   SharedFD host_socket_;
@@ -350,7 +355,8 @@ class WebRtcServer : public virtual CommandSource,
 }  // namespace
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 const CustomActionConfigProvider>>
 launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
