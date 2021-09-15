@@ -17,14 +17,18 @@
 #include "common/libs/utils/network.h"
 
 #include <arpa/inet.h>
-#include <linux/if.h>
-#include <linux/if_tun.h>
-#include <linux/types.h>
-#include <linux/if_packet.h>
+#include <net/if.h>
+#include <netinet/ether.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
-#include <netinet/ether.h>
 #include <string.h>
+
+// Kernel headers don't mix well with userspace headers, but there is no
+// userspace header that provides the if_tun.h #defines.  Include the kernel
+// header, but move conflicting definitions out of the way using macros.
+#define ethhdr __kernel_ethhdr
+#include <linux/if_tun.h>
+#undef ethdhr
 
 #include <android-base/strings.h>
 #include "android-base/logging.h"
@@ -119,9 +123,9 @@ std::set<std::string> TapInterfacesInUse() {
   Command cmd("/bin/bash");
   cmd.AddParameter("-c");
   cmd.AddParameter("egrep -h -e \"^iff:.*\" /proc/*/fdinfo/*");
-  std::string stdin, stdout, stderr;
-  RunWithManagedStdio(std::move(cmd), &stdin, &stdout, &stderr);
-  auto lines = android::base::Split(stdout, "\n");
+  std::string stdin_str, stdout_str, stderr_str;
+  RunWithManagedStdio(std::move(cmd), &stdin_str, &stdout_str, &stderr_str);
+  auto lines = android::base::Split(stdout_str, "\n");
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
     if (line == "") {
