@@ -20,7 +20,6 @@ package {
 cc_library_static {
     name: "libcuttlefish_host_config",
     srcs: [
-        "adb_config.cpp",
         "bootconfig_args.cpp",
         "config_flag.cpp",
         "custom_actions.cpp",
@@ -45,28 +44,4 @@ cc_library_static {
         "libz",
     ],
     defaults: ["cuttlefish_host"],
-}
-
-cc_test_host {
-    name: "libcuttlefish_host_config_test",
-    srcs: [
-        "adb_config_test.cpp",
-    ],
-    static_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_host_config",
-        "libcuttlefish_utils",
-    ],
-    shared_libs: [
-        "libext2_blkid",
-        "libgflags",
-        "libfruit",
-        "libjsoncpp",
-        "liblog",
-    ],
-    defaults: ["cuttlefish_host"],
-    test_options: {
-        unit_test: true,
-    },
 }

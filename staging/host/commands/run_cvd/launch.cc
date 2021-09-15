@@ -43,10 +43,6 @@ std::vector<T> single_element_emplace(T&& element) {
 
 }  // namespace
 
-CommandSource::~CommandSource() = default;
-
-KernelLogPipeProvider::~KernelLogPipeProvider() = default;
-
 class KernelLogMonitor : public CommandSource,
                          public KernelLogPipeProvider,
                          public DiagnosticInformation {
