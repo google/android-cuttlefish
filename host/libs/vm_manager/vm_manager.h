@@ -26,9 +26,6 @@ namespace vm_manager {
 
 // Superclass of every guest VM manager.
 class VmManager {
- protected:
-  const Arch arch_;
-
  public:
   // This is the number of HVC virtual console ports that should be configured
   // by the VmManager. Because crosvm currently allocates these ports as the
@@ -58,7 +55,6 @@ class VmManager {
   // the persistent disk
   static const int kDefaultNumBootDevices = 2;
 
-  VmManager(Arch arch) : arch_(arch) {}
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;

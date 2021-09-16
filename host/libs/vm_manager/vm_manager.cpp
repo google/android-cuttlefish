@@ -34,7 +34,7 @@ std::unique_ptr<VmManager> GetVmManager(const std::string& name, Arch arch) {
   if (name == QemuManager::name()) {
     vmm.reset(new QemuManager(arch));
   } else if (name == CrosvmManager::name()) {
-    vmm.reset(new CrosvmManager(arch));
+    vmm.reset(new CrosvmManager());
   }
   if (!vmm) {
     LOG(ERROR) << "Invalid VM manager: " << name;
