@@ -247,9 +247,12 @@ PRODUCT_PACKAGES += \
     hidl_lazy_cb_test_server
 
 # Runtime Resource Overlays
+ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += \
     cuttlefish_overlay_frameworks_base_core \
     cuttlefish_overlay_settings_provider \
+
+endif
 
 # PRODUCT_AAPT_CONFIG and PRODUCT_AAPT_PREF_CONFIG are intentionally not set to
 # pick up every density resources.
