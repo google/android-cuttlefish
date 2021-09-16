@@ -16,6 +16,7 @@
 #include "host/commands/run_cvd/launch.h"
 
 #include <android-base/logging.h>
+
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -29,6 +30,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
@@ -675,6 +677,37 @@ class WmediumdServer : public CommandSource {
   std::string config_path_;
 };
 
+class VmmCommands : public CommandSource {
+ public:
+  INJECT(VmmCommands(const CuttlefishConfig& config)) : config_(config) {}
+
+  // CommandSource
+  std::vector<Command> Commands() override {
+    return vmm_->StartCommands(config_);
+  }
+
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "VirtualMachineManager"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    vmm_ =
+        vm_manager::GetVmManager(config_.vm_manager(), config_.target_arch());
+    if (!vmm_) {
+      LOG(ERROR) << "Invalid VMM/Arch: \"" << config_.vm_manager() << "\""
+                 << (int)config_.target_arch() << "\"";
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  std::unique_ptr<vm_manager::VmManager> vmm_;
+};
+
 using PublicDeps = fruit::Required<const CuttlefishConfig,
                                    const CuttlefishConfig::InstanceSpecific>;
 fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
@@ -696,6 +729,7 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(Bases::Impls<SecureEnvironment>)
       .install(Bases::Impls<TombstoneReceiver>)
       .install(Bases::Impls<VehicleHalServer>)
+      .install(Bases::Impls<VmmCommands>)
       .install(Bases::Impls<WmediumdServer>);
 }
 
