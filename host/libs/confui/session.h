@@ -27,7 +27,7 @@
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/server_common.h"
-
+#include "host/libs/confui/sign.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
