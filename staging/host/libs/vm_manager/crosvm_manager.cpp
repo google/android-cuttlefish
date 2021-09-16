@@ -16,23 +16,23 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <vulkan/vulkan.h>
 
 #include <cassert>
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
-#include <android-base/logging.h>
-#include <vulkan/vulkan.h>
-
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/vm_manager/crosvm_builder.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
@@ -40,22 +40,10 @@ namespace vm_manager {
 
 namespace {
 
-std::string GetControlSocketPath(const CuttlefishConfig& config,
-                                 const std::string& socket_name) {
-  return config.ForDefaultInstance().PerInstanceInternalPath(
-      socket_name.c_str());
-}
-
-SharedFD AddTapFdParameter(Command* crosvm_cmd,
-                                const std::string& tap_name) {
-  auto tap_fd = OpenTapInterface(tap_name);
-  if (tap_fd->IsOpen()) {
-    crosvm_cmd->AddParameter("--tap-fd=", tap_fd);
-  } else {
-    LOG(ERROR) << "Unable to connect to " << tap_name << ": "
-               << tap_fd->StrError();
-  }
-  return tap_fd;
+std::string GetControlSocketPath(
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::string& socket_name) {
+  return instance.PerInstanceInternalPath(socket_name.c_str());
 }
 
 bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd) {
@@ -76,17 +64,6 @@ bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd) {
     }
   }
   return success;
-}
-
-bool Stop(const std::string& socket_name) {
-  auto config = CuttlefishConfig::Get();
-  Command command(config->crosvm_binary());
-  command.AddParameter("stop");
-  command.AddParameter(GetControlSocketPath(*config, socket_name));
-
-  auto process = command.Start();
-
-  return process.Wait() == 0;
 }
 
 }  // namespace
@@ -154,124 +131,71 @@ constexpr auto crosvm_for_ap_socket = "crosvm_for_ap_control.sock";
 std::vector<Command> CrosvmManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
-    auto stopped = Stop(crosvm_socket);
-    if (stopped) {
-      return StopperResult::kStopSuccess;
-    }
-    LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  });
+  CrosvmBuilder crosvm_cmd;
+  crosvm_cmd.SetBinary(config.crosvm_binary());
+  crosvm_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_socket));
+
   bool use_ap_instance =
       !config.ap_rootfs_image().empty() && !config.ap_kernel_image().empty();
 
-  Command ap_cmd(config.crosvm_binary(), [](Subprocess* proc) {
-    auto stopped = Stop(crosvm_for_ap_socket);
-    if (stopped) {
-      return StopperResult::kStopSuccess;
-    }
-    LOG(WARNING) << "Failed to stop VMM for AP nicely, attempting to KILL";
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
-  });
-  int hvc_num = 0;
-  int serial_num = 0;
-  auto add_hvc_sink = [&crosvm_cmd, &hvc_num]() {
-    crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num,
-                            ",type=sink");
-  };
-  auto add_serial_sink = [&crosvm_cmd, &serial_num]() {
-    crosvm_cmd.AddParameter("--serial=hardware=serial,num=", ++serial_num,
-                            ",type=sink");
-  };
-  auto add_hvc_console = [&crosvm_cmd, &hvc_num](const std::string& output) {
-    crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num,
-                            ",type=file,path=", output, ",console=true");
-  };
-  auto add_serial_console_ro = [&crosvm_cmd,
-                                &serial_num](const std::string& output) {
-    crosvm_cmd.AddParameter("--serial=hardware=serial,num=", ++serial_num,
-                            ",type=file,path=", output, ",earlycon=true");
-  };
-  auto add_serial_console = [&crosvm_cmd, &serial_num](
-                                const std::string& output,
-                                const std::string& input) {
-    crosvm_cmd.AddParameter("--serial=hardware=serial,num=", ++serial_num,
-                            ",type=file,path=", output, ",input=", input,
-                            ",earlycon=true");
-  };
-  auto add_hvc_ro = [&crosvm_cmd, &hvc_num](const std::string& output) {
-    crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num,
-                            ",type=file,path=", output);
-  };
-  auto add_hvc = [&crosvm_cmd, &hvc_num](const std::string& output,
-                                         const std::string& input) {
-    crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num,
-                            ",type=file,path=", output, ",input=", input);
-  };
-
-  crosvm_cmd.AddParameter("run");
-  ap_cmd.AddParameter("run");
+  CrosvmBuilder ap_cmd;
+  ap_cmd.SetBinary(config.crosvm_binary());
+  ap_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_for_ap_socket));
 
   if (!config.smt()) {
-    crosvm_cmd.AddParameter("--no-smt");
+    crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
 
   if (config.vhost_net()) {
-    crosvm_cmd.AddParameter("--vhost-net");
+    crosvm_cmd.Cmd().AddParameter("--vhost-net");
   }
 
   if (!config.vhost_user_mac80211_hwsim().empty()) {
-    crosvm_cmd.AddParameter("--vhost-user-mac80211-hwsim=",
-                            config.vhost_user_mac80211_hwsim());
-    ap_cmd.AddParameter("--vhost-user-mac80211-hwsim=",
-                        config.vhost_user_mac80211_hwsim());
+    crosvm_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
+                                  config.vhost_user_mac80211_hwsim());
+    ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
+                              config.vhost_user_mac80211_hwsim());
   }
 
   if (config.protected_vm()) {
-    crosvm_cmd.AddParameter("--protected-vm");
+    crosvm_cmd.Cmd().AddParameter("--protected-vm");
   }
 
   if (config.gdb_port() > 0) {
     CHECK(config.cpus() == 1) << "CPUs must be 1 for crosvm gdb mode";
-    crosvm_cmd.AddParameter("--gdb=", config.gdb_port());
+    crosvm_cmd.Cmd().AddParameter("--gdb=", config.gdb_port());
   }
 
   auto gpu_mode = config.gpu_mode();
   if (gpu_mode == kGpuModeGuestSwiftshader) {
-    crosvm_cmd.AddParameter("--gpu=2D");
+    crosvm_cmd.Cmd().AddParameter("--gpu=2D");
   } else if (gpu_mode == kGpuModeDrmVirgl || gpu_mode == kGpuModeGfxStream) {
-    crosvm_cmd.AddParameter(gpu_mode == kGpuModeGfxStream ?
-                                "--gpu=gfxstream," : "--gpu=",
-                            "egl=true,surfaceless=true,glx=false,gles=true");
+    crosvm_cmd.Cmd().AddParameter(
+        gpu_mode == kGpuModeGfxStream ? "--gpu=gfxstream," : "--gpu=",
+        "egl=true,surfaceless=true,glx=false,gles=true");
   }
 
   for (const auto& display_config : config.display_configs()) {
-    crosvm_cmd.AddParameter("--gpu-display=", "width=", display_config.width,
-                            ",", "height=", display_config.height);
+    crosvm_cmd.Cmd().AddParameter(
+        "--gpu-display=", "width=", display_config.width, ",",
+        "height=", display_config.height);
   }
 
-  crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
+  crosvm_cmd.Cmd().AddParameter("--wayland-sock=",
+                                instance.frames_socket_path());
 
-  // crosvm_cmd.AddParameter("--null-audio");
-  crosvm_cmd.AddParameter("--mem=", config.memory_mb());
-  crosvm_cmd.AddParameter("--cpus=", config.cpus());
+  // crosvm_cmd.Cmd().AddParameter("--null-audio");
+  crosvm_cmd.Cmd().AddParameter("--mem=", config.memory_mb());
+  crosvm_cmd.Cmd().AddParameter("--cpus=", config.cpus());
 
   auto disk_num = instance.virtual_disk_paths().size();
   CHECK_GE(VmManager::kMaxDisks, disk_num)
       << "Provided too many disks (" << disk_num << "), maximum "
       << VmManager::kMaxDisks << "supported";
   for (const auto& disk : instance.virtual_disk_paths()) {
-    crosvm_cmd.AddParameter(config.protected_vm() ? "--disk=" :
-                                                    "--rwdisk=", disk);
+    crosvm_cmd.Cmd().AddParameter(
+        config.protected_vm() ? "--disk=" : "--rwdisk=", disk);
   }
-  crosvm_cmd.AddParameter("--socket=",
-                          GetControlSocketPath(config, crosvm_socket));
-  ap_cmd.AddParameter("--socket=",
-                      GetControlSocketPath(config, crosvm_for_ap_socket));
 
   if (config.enable_vnc_server() || config.enable_webrtc()) {
     auto touch_type_parameter =
@@ -283,38 +207,40 @@ std::vector<Command> CrosvmManager::StartCommands(
     for (int i = 0; i < display_configs.size(); ++i) {
       auto display_config = display_configs[i];
 
-      crosvm_cmd.AddParameter(touch_type_parameter,
-                              instance.touch_socket_path(i), ":",
-                              display_config.width, ":", display_config.height);
+      crosvm_cmd.Cmd().AddParameter(
+          touch_type_parameter, instance.touch_socket_path(i), ":",
+          display_config.width, ":", display_config.height);
     }
-    crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
+    crosvm_cmd.Cmd().AddParameter("--keyboard=",
+                                  instance.keyboard_socket_path());
   }
   if (config.enable_webrtc()) {
-    crosvm_cmd.AddParameter("--switches=", instance.switches_socket_path());
+    crosvm_cmd.Cmd().AddParameter("--switches=",
+                                  instance.switches_socket_path());
   }
 
-  AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
-  AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
+  crosvm_cmd.AddTap(instance.mobile_tap_name());
+  crosvm_cmd.AddTap(instance.ethernet_tap_name());
 
   SharedFD wifi_tap;
   // TODO(b/199103204): remove this as well when PRODUCT_ENFORCE_MAC80211_HWSIM
   // is removed
 #ifdef ENFORCE_MAC80211_HWSIM
   if (use_ap_instance) {
-    wifi_tap = AddTapFdParameter(&ap_cmd, instance.wifi_tap_name());
+    wifi_tap = ap_cmd.AddTap(instance.wifi_tap_name());
   }
 #else
-  wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
+  wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
 #endif
 
   if (FileExists(instance.access_kregistry_path())) {
-    crosvm_cmd.AddParameter("--rw-pmem-device=",
-                            instance.access_kregistry_path());
+    crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
+                                  instance.access_kregistry_path());
   }
 
   if (FileExists(instance.pstore_path())) {
-    crosvm_cmd.AddParameter("--pstore=path=", instance.pstore_path(),
-                            ",size=", FileSize(instance.pstore_path()));
+    crosvm_cmd.Cmd().AddParameter("--pstore=path=", instance.pstore_path(),
+                                  ",size=", FileSize(instance.pstore_path()));
   }
 
   if (config.enable_sandbox()) {
@@ -327,21 +253,23 @@ std::vector<Command> CrosvmManager::StartCommands(
                  << " does not exist " << std::endl;
       return {};
     }
-    crosvm_cmd.AddParameter("--seccomp-policy-dir=", config.seccomp_policy_dir());
-    ap_cmd.AddParameter("--seccomp-policy-dir=", config.seccomp_policy_dir());
+    crosvm_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
+                                  config.seccomp_policy_dir());
+    ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
+                              config.seccomp_policy_dir());
   } else {
-    crosvm_cmd.AddParameter("--disable-sandbox");
-    ap_cmd.AddParameter("--disable-sandbox");
+    crosvm_cmd.Cmd().AddParameter("--disable-sandbox");
+    ap_cmd.Cmd().AddParameter("--disable-sandbox");
   }
 
   if (instance.vsock_guest_cid() >= 2) {
-    crosvm_cmd.AddParameter("--cid=", instance.vsock_guest_cid());
+    crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
   // Use a virtio-console instance for the main kernel console. All
   // messages will switch from earlycon to virtio-console after the driver
   // is loaded, and crosvm will append to the kernel log automatically
-  add_hvc_console(instance.kernel_log_pipe_name());
+  crosvm_cmd.AddHvcConsoleReadOnly(instance.kernel_log_pipe_name());
 
   if (config.console()) {
     // stdin is the only currently supported way to write data to a serial port in
@@ -349,18 +277,18 @@ std::vector<Command> CrosvmManager::StartCommands(
     // the serial port output is received by the console forwarder as crosvm may
     // print other messages to stdout.
     if (config.kgdb() || config.use_bootloader()) {
-      add_serial_console(instance.console_out_pipe_name(),
-                         instance.console_in_pipe_name());
+      crosvm_cmd.AddSerialConsoleReadWrite(instance.console_out_pipe_name(),
+                                           instance.console_in_pipe_name());
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
       // allocated to Android's serial console, and redirect it to a sink. This
       // ensures that that the PCI device assignments (and thus sepolicy) don't
       // have to change
-      add_hvc_sink();
+      crosvm_cmd.AddHvcSink();
     } else {
-      add_serial_sink();
-      add_hvc(instance.console_out_pipe_name(),
-              instance.console_in_pipe_name());
+      crosvm_cmd.AddSerialSink();
+      crosvm_cmd.AddHvcReadWrite(instance.console_out_pipe_name(),
+                                 instance.console_in_pipe_name());
     }
   } else {
     // Use an 8250 UART (ISA or platform device) for earlycon, as the
@@ -368,13 +296,13 @@ std::vector<Command> CrosvmManager::StartCommands(
     // In kgdb mode, earlycon is an interactive console, and so early
     // dmesg will go there instead of the kernel.log
     if (config.kgdb() || config.use_bootloader()) {
-      add_serial_console_ro(instance.kernel_log_pipe_name());
+      crosvm_cmd.AddSerialConsoleReadOnly(instance.kernel_log_pipe_name());
     }
 
     // as above, create a fake virtio-console 'sink' port when the serial
     // console is disabled, so the PCI device ID assignments don't move
     // around
-    add_hvc_sink();
+    crosvm_cmd.AddHvcSink();
   }
 
   SharedFD log_out_rd, log_out_wr;
@@ -383,56 +311,62 @@ std::vector<Command> CrosvmManager::StartCommands(
                << log_out_rd->StrError();
     return {};
   }
-  crosvm_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, log_out_wr);
-  crosvm_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, log_out_wr);
+  crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut, log_out_wr);
+  crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr, log_out_wr);
 
   Command log_tee_cmd(HostBinaryPath("log_tee"));
   log_tee_cmd.AddParameter("--process_name=crosvm");
   log_tee_cmd.AddParameter("--log_fd_in=", log_out_rd);
 
   // Serial port for logcat, redirected to a pipe
-  add_hvc_ro(instance.logcat_pipe_name());
+  crosvm_cmd.AddHvcReadOnly(instance.logcat_pipe_name());
 
-  add_hvc(instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
-          instance.PerInstanceInternalPath("keymaster_fifo_vm.in"));
-  add_hvc(instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
-          instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"));
+  crosvm_cmd.AddHvcReadWrite(
+      instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+      instance.PerInstanceInternalPath("keymaster_fifo_vm.in"));
+  crosvm_cmd.AddHvcReadWrite(
+      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"));
 
   if (config.enable_host_bluetooth()) {
-    add_hvc(instance.PerInstanceInternalPath("bt_fifo_vm.out"),
-            instance.PerInstanceInternalPath("bt_fifo_vm.in"));
+    crosvm_cmd.AddHvcReadWrite(
+        instance.PerInstanceInternalPath("bt_fifo_vm.out"),
+        instance.PerInstanceInternalPath("bt_fifo_vm.in"));
   } else {
-    add_hvc_sink();
+    crosvm_cmd.AddHvcSink();
   }
   if (config.enable_gnss_grpc_proxy()) {
-    add_hvc(instance.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
-            instance.PerInstanceInternalPath("gnsshvc_fifo_vm.in"));
+    crosvm_cmd.AddHvcReadWrite(
+        instance.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
+        instance.PerInstanceInternalPath("gnsshvc_fifo_vm.in"));
   } else {
-    add_hvc_sink();
+    crosvm_cmd.AddHvcSink();
   }
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
-    add_hvc_sink();
+    crosvm_cmd.AddHvcSink();
   }
-  CHECK(hvc_num + disk_num == VmManager::kMaxDisks + VmManager::kDefaultNumHvcs)
-      << "HVC count (" << hvc_num << ") + disk count (" << disk_num << ") "
-      << "is not the expected total of "
+  CHECK(crosvm_cmd.HvcNum() + disk_num ==
+        VmManager::kMaxDisks + VmManager::kDefaultNumHvcs)
+      << "HVC count (" << crosvm_cmd.HvcNum() << ") + disk count (" << disk_num
+      << ") is not the expected total of "
       << VmManager::kMaxDisks + VmManager::kDefaultNumHvcs << " devices";
 
   if (config.enable_audio()) {
-    crosvm_cmd.AddParameter("--sound=",
-                            config.ForDefaultInstance().audio_server_path());
+    crosvm_cmd.Cmd().AddParameter(
+        "--sound=", config.ForDefaultInstance().audio_server_path());
   }
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
   if (config.enable_sandbox()) {
     // Set up directory shared with virtiofs
-    crosvm_cmd.AddParameter("--shared-dir=", instance.PerInstancePath(kSharedDirName),
-                            ":shared:type=fs");
+    crosvm_cmd.Cmd().AddParameter(
+        "--shared-dir=", instance.PerInstancePath(kSharedDirName),
+        ":shared:type=fs");
   }
 
   // This needs to be the last parameter
-  crosvm_cmd.AddParameter("--bios=", config.bootloader());
+  crosvm_cmd.Cmd().AddParameter("--bios=", config.bootloader());
 
   // Only run the leases workaround if we are not using the new network
   // bridge architecture - in that case, we have a wider DHCP address
@@ -448,13 +382,13 @@ std::vector<Command> CrosvmManager::StartCommands(
                  << "network may not work.";
     }
   }
-  ap_cmd.AddParameter("--root=", config.ap_rootfs_image());
-  ap_cmd.AddParameter(config.ap_kernel_image());
+  ap_cmd.Cmd().AddParameter("--root=", config.ap_rootfs_image());
+  ap_cmd.Cmd().AddParameter(config.ap_kernel_image());
 
   std::vector<Command> ret;
-  ret.push_back(std::move(crosvm_cmd));
+  ret.push_back(std::move(crosvm_cmd.Cmd()));
   if (use_ap_instance) {
-    ret.push_back(std::move(ap_cmd));
+    ret.push_back(std::move(ap_cmd.Cmd()));
   }
   ret.push_back(std::move(log_tee_cmd));
   return ret;
