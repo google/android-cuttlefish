@@ -16,18 +16,11 @@
 
 #pragma once
 
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
-
-#include <array>
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <android/hardware/keymaster/4.0/types.h>
-
-#include "host/libs/confui/cbor_utils.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -102,10 +95,5 @@ class Cbor {
   bool WriteBytes(uint64_t value, uint8_t size);
   Error CheckUTF8Copy(const std::string& text);
 };
-
-// TODO(kwstephenkim): replace this with signing using secure env host services
-std::optional<std::vector<std::uint8_t>> sign(
-    const std::vector<std::uint8_t>& message);
-
 }  // namespace confui
 }  // end of namespace cuttlefish
