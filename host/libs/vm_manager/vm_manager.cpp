@@ -17,6 +17,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 #include <android-base/logging.h>
+#include <fruit/fruit.h>
 
 #include <iomanip>
 #include <memory>
@@ -59,6 +60,17 @@ std::string ConfigureMultipleBootDevices(const std::string& pci_path,
   }
   boot_devices_prop.pop_back();
   return {boot_devices_prop};
+}
+
+fruit::Component<fruit::Required<const CuttlefishConfig>, VmManager>
+VmManagerComponent() {
+  return fruit::createComponent().registerProvider(
+      [](const CuttlefishConfig& config) {
+        auto vmm = GetVmManager(config.vm_manager(), config.target_arch());
+        CHECK(vmm) << "Invalid VMM/Arch: \"" << config.vm_manager() << "\""
+                   << (int)config.target_arch() << "\"";
+        return vmm.release();  // fruit takes ownership of raw pointers
+      });
 }
 
 } // namespace vm_manager

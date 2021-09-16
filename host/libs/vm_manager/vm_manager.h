@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 #pragma once
+#include <common/libs/utils/subprocess.h>
+#include <fruit/fruit.h>
+#include <host/libs/config/cuttlefish_config.h>
 
 #include <string>
 #include <vector>
-
-#include <common/libs/utils/subprocess.h>
-#include <host/libs/config/cuttlefish_config.h>
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -72,6 +72,9 @@ class VmManager {
   virtual std::vector<cuttlefish::Command> StartCommands(
       const CuttlefishConfig& config) = 0;
 };
+
+fruit::Component<fruit::Required<const CuttlefishConfig>, VmManager>
+VmManagerComponent();
 
 std::unique_ptr<VmManager> GetVmManager(const std::string&, Arch arch);
 
