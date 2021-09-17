@@ -20,7 +20,7 @@ package {
 soong_config_module_type {
     name: "cf_cc_defaults",
     module_type: "cc_defaults",
-    config_namespace: "cvd_host",
+    config_namespace: "cvdhost",
     bool_variables: ["enforce_mac80211_hwsim"],
     properties: ["cflags"],
 }
