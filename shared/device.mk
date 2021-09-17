@@ -673,9 +673,9 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
 
-SOONG_CONFIG_NAMESPACES += cvd_host
-SOONG_CONFIG_cvd_host += enforce_mac80211_hwsim
-SOONG_CONFIG_cvd_host_enforce_mac80211_hwsim += true
+SOONG_CONFIG_NAMESPACES += cvdhost
+SOONG_CONFIG_cvdhost += enforce_mac80211_hwsim
+SOONG_CONFIG_cvdhost_enforce_mac80211_hwsim += true
 
 else
 PRODUCT_PACKAGES += setup_wifi
