@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#include <iostream>
+#include <chrono>
+#include <ctime>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -28,11 +30,13 @@
 #include <chrono>
 #include <deque>
 #include <mutex>
+#include <sstream>
 #include <thread>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gflags/gflags.h>
 
 #include <common/libs/fs/shared_fd.h>
 #include <common/libs/fs/shared_buf.h>
@@ -63,6 +67,9 @@ DEFINE_string(gnss_file_path,
               "NMEA file path for gnss grpc");
 
 constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
+constexpr char CMD_GET_RAWMEASUREMENT[] = "CMD_GET_RAWMEASUREMENT";
+constexpr char END_OF_MSG_MARK[] = "\n\n\n\n";
+
 constexpr uint32_t GNSS_SERIAL_BUFFER_SIZE = 4096;
 // Logic and data behind the server's behavior.
 class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
@@ -73,7 +80,6 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     Status SendNmea(ServerContext* context, const SendNmeaRequest* request,
                     SendNmeaReply* reply) override {
       reply->set_reply("Received nmea record.");
-
       auto buffer = request->nmea();
       std::lock_guard<std::mutex> lock(cached_nmea_mutex);
       cached_nmea = request->nmea();
@@ -81,11 +87,35 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     }
 
     void sendToSerial() {
-      LOG(DEBUG) << "Send NMEA to serial:" << cached_nmea;
       std::lock_guard<std::mutex> lock(cached_nmea_mutex);
-      ssize_t bytes_written = cuttlefish::WriteAll(gnss_in_, cached_nmea);
+      if (!isNMEA(cached_nmea)) {
+        return;
+      }
+      ssize_t bytes_written =
+          cuttlefish::WriteAll(gnss_in_, cached_nmea + END_OF_MSG_MARK);
       if (bytes_written < 0) {
           LOG(ERROR) << "Error writing to fd: " << gnss_in_->StrError();
+      }
+    }
+
+    void sendGnssRawToSerial() {
+      std::lock_guard<std::mutex> lock(cached_gnss_raw_mutex);
+      if (!isGnssRawMeasurement(cached_gnss_raw)) {
+        return;
+      }
+      if (previous_cached_gnss_raw == cached_gnss_raw) {
+        // Skip for same record
+        return;
+      } else {
+        // Update cached data
+        LOG(DEBUG) << "Skip same record";
+        previous_cached_gnss_raw = cached_gnss_raw;
+      }
+      ssize_t bytes_written =
+          cuttlefish::WriteAll(gnss_in_, cached_gnss_raw + END_OF_MSG_MARK);
+      LOG(DEBUG) << "Send Gnss Raw to serial: bytes_written: " << bytes_written;
+      if (bytes_written < 0) {
+        LOG(ERROR) << "Error writing to fd: " << gnss_in_->StrError();
       }
     }
 
@@ -95,10 +125,16 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
       read_thread_ = std::thread([this]() { ReadLoop(); });
     }
 
-    void StartReadFileThread() {
-      // Create a new thread to handle writes to the gnss and to the any client
-      // connected to the socket.
-      file_read_thread_ = std::thread([this]() { ReadNmeaFromLocalFile(); });
+    void StartReadNmeaFileThread() {
+      // Create a new thread to read nmea data.
+      nmea_file_read_thread_ =
+          std::thread([this]() { ReadNmeaFromLocalFile(); });
+    }
+
+    void StartReadGnssRawMeasurementFileThread() {
+      // Create a new thread to read raw measurement data.
+      measurement_file_read_thread_ =
+          std::thread([this]() { ReadGnssRawMeasurement(); });
     }
 
     void ReadNmeaFromLocalFile() {
@@ -134,6 +170,70 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
         return;
       }
     }
+
+    void ReadGnssRawMeasurement() {
+      std::ifstream file(FLAGS_gnss_file_path);
+
+      if (file.is_open()) {
+        std::string line;
+        std::string cached_line = "";
+        std::string header = "";
+
+        while (!cached_line.empty() || std::getline(file, line)) {
+          if (!cached_line.empty()) {
+            line = cached_line;
+            cached_line = "";
+          }
+
+          // Get data header.
+          if (header.empty() && android::base::StartsWith(line, "# Raw")) {
+            header = line;
+            LOG(DEBUG) << "Header: " << header;
+            continue;
+          }
+
+          // Ignore not raw measurement data.
+          if (!android::base::StartsWith(line, "Raw")) {
+            continue;
+          }
+
+          {
+            std::lock_guard<std::mutex> lock(cached_gnss_raw_mutex);
+            cached_gnss_raw = header + "\n" + line;
+
+            std::string new_line = "";
+            while (std::getline(file, new_line)) {
+              // Group raw data by TimeNanos.
+              if (getTimeNanosFromLine(new_line) ==
+                  getTimeNanosFromLine(line)) {
+                cached_gnss_raw += "\n" + new_line;
+              } else {
+                cached_line = new_line;
+                break;
+              }
+            }
+          }
+          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+        file.close();
+      } else {
+        LOG(ERROR) << "Can not open GNSS Raw file: " << FLAGS_gnss_file_path;
+        return;
+      }
+    }
+
+    ~GnssGrpcProxyServiceImpl() {
+      if (nmea_file_read_thread_.joinable()) {
+        nmea_file_read_thread_.join();
+      }
+      if (measurement_file_read_thread_.joinable()) {
+        measurement_file_read_thread_.join();
+      }
+      if (read_thread_.joinable()) {
+        read_thread_.join();
+      }
+    }
+
   private:
     [[noreturn]] void ReadLoop() {
       cuttlefish::SharedFDSet read_set;
@@ -159,6 +259,12 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
             gnss_cmd_str = "";
             total_read = 0;
           }
+
+          if (gnss_cmd_str.find(CMD_GET_RAWMEASUREMENT) != std::string::npos) {
+            sendGnssRawToSerial();
+            gnss_cmd_str = "";
+            total_read = 0;
+          }
         } else {
           if (gnss_out_->GetErrno() == EAGAIN|| gnss_out_->GetErrno() == EWOULDBLOCK) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -171,12 +277,35 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
       }
     }
 
+    std::string getTimeNanosFromLine(const std::string& line) {
+      // TimeNanos is in column #3.
+      std::vector<std::string> vals = android::base::Split(line, ",");
+      return vals.size() >= 3 ? vals[2] : "-1";
+    }
+
+    bool isGnssRawMeasurement(const std::string& inputStr) {
+      // TODO: add more logic check to by pass invalid data.
+      return !inputStr.empty() && android::base::StartsWith(inputStr, "# Raw");
+    }
+
+    bool isNMEA(const std::string& inputStr) {
+      return !inputStr.empty() &&
+             (android::base::StartsWith(inputStr, "$GPRMC") ||
+              android::base::StartsWith(inputStr, "$GPRMA"));
+    }
+
     cuttlefish::SharedFD gnss_in_;
     cuttlefish::SharedFD gnss_out_;
     std::thread read_thread_;
-    std::thread file_read_thread_;
+    std::thread nmea_file_read_thread_;
+    std::thread measurement_file_read_thread_;
+
     std::string cached_nmea;
     std::mutex cached_nmea_mutex;
+
+    std::string cached_gnss_raw;
+    std::string previous_cached_gnss_raw;
+    std::mutex cached_gnss_raw_mutex;
 };
 
 void RunServer() {
@@ -200,7 +329,10 @@ void RunServer() {
   GnssGrpcProxyServiceImpl service(gnss_in, gnss_out);
   service.StartServer();
   if (!FLAGS_gnss_file_path.empty()) {
-    service.StartReadFileThread();
+    // TODO: On-demand start the read file threads according to data type.
+    service.StartReadNmeaFileThread();
+    service.StartReadGnssRawMeasurementFileThread();
+
     // In the local mode, we are not start a grpc server, use a infinite loop instead
     while(true) {
       std::this_thread::sleep_for(std::chrono::milliseconds(2000));
