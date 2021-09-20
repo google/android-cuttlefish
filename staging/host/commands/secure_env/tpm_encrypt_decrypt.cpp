@@ -26,21 +26,19 @@ namespace cuttlefish {
 
 using keymaster::KeymasterBlob;
 
-static bool TpmEncryptDecrypt(
-    ESYS_CONTEXT* esys,
-    ESYS_TR key_handle,
-    TpmAuth auth,
-    uint8_t* data_in,
-    uint8_t* data_out,
-    size_t data_size,
-    bool decrypt) {
+static bool TpmEncryptDecrypt(  //
+    ESYS_CONTEXT* esys, ESYS_TR key_handle, TpmAuth auth, const TPM2B_IV& iv,
+    uint8_t* data_in, uint8_t* data_out, size_t data_size, bool decrypt) {
+  if (iv.size != sizeof(iv.buffer)) {
+    LOG(ERROR) << "Input IV had wrong size: " << iv.size;
+    return false;
+  }
   // TODO(schuffelen): Pipeline this for performance. Will require reevaluating
   // the initialization vector logic.
   std::vector<unsigned char> converted(data_size);
   // malloc for parity with Esys_EncryptDecrypt2
   TPM2B_IV* init_vector_in = (TPM2B_IV*) malloc(sizeof(TPM2B_IV));
-  *init_vector_in = {};
-  init_vector_in->size = 16;
+  *init_vector_in = iv;
   for (auto processed = 0; processed < data_size;) {
     TPM2B_MAX_BUFFER in_data;
     in_data.size =
@@ -79,26 +77,18 @@ static bool TpmEncryptDecrypt(
   return true;
 }
 
-bool TpmEncrypt(
-    ESYS_CONTEXT* esys,
-    ESYS_TR key_handle,
-    TpmAuth auth,
-    uint8_t* data_in,
-    uint8_t* data_out,
-    size_t data_size) {
-  return TpmEncryptDecrypt(
-      esys, key_handle, auth, data_in, data_out, data_size, false);
+bool TpmEncrypt(ESYS_CONTEXT* esys, ESYS_TR key_handle, TpmAuth auth,
+                const TPM2B_IV& iv, uint8_t* data_in, uint8_t* data_out,
+                size_t data_size) {
+  return TpmEncryptDecrypt(  //
+      esys, key_handle, auth, iv, data_in, data_out, data_size, false);
 }
 
-bool TpmDecrypt(
-    ESYS_CONTEXT* esys,
-    ESYS_TR key_handle,
-    TpmAuth auth,
-    uint8_t* data_in,
-    uint8_t* data_out,
-    size_t data_size) {
-  return TpmEncryptDecrypt(
-      esys, key_handle, auth, data_in, data_out, data_size, true);
+bool TpmDecrypt(ESYS_CONTEXT* esys, ESYS_TR key_handle, TpmAuth auth,
+                const TPM2B_IV& iv, uint8_t* data_in, uint8_t* data_out,
+                size_t data_size) {
+  return TpmEncryptDecrypt(  //
+      esys, key_handle, auth, iv, data_in, data_out, data_size, true);
 }
 
 }  // namespace cuttlefish
