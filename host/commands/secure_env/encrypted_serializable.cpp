@@ -16,11 +16,12 @@
 #include "encrypted_serializable.h"
 
 #include <vector>
-
+//
 #include <android-base/logging.h>
 
 #include "host/commands/secure_env/tpm_auth.h"
 #include "host/commands/secure_env/tpm_encrypt_decrypt.h"
+#include "host/commands/secure_env/tpm_random_source.h"
 #include "host/commands/secure_env/tpm_serialize.h"
 
 namespace cuttlefish {
@@ -174,11 +175,14 @@ size_t EncryptedSerializable::SerializedSize() const {
   SerializeTpmKeyPublic serialize_public(&key_public);
   SerializeTpmKeyPrivate serialize_private(&key_private);
   auto encrypted_size = RoundUpToBlockSize(wrapped_.SerializedSize());
-  return serialize_public.SerializedSize()
-    + serialize_private.SerializedSize()
-    + sizeof(uint32_t)
-    + sizeof(uint32_t)
-    + encrypted_size;
+  size_t size = serialize_public.SerializedSize();  // tpm key public part
+  size += serialize_private.SerializedSize();       // tpm key private part
+  size += sizeof(uint32_t);                         // block size
+  size += sizeof(uint32_t);         // initialization vector length
+  size += sizeof(((TPM2B_IV*)nullptr)->buffer);  // initialization vector
+  size += sizeof(uint32_t);         // wrapped size
+  size += encrypted_size;           // encrypted data
+  return size;
 }
 
 uint8_t* EncryptedSerializable::Serialize(
@@ -197,6 +201,15 @@ uint8_t* EncryptedSerializable::Serialize(
     return buf;
   }
 
+  TPM2B_IV iv;
+  iv.size = sizeof(iv.buffer);
+  auto rc = TpmRandomSource(resource_manager_.Esys())
+                .GenerateRandom(iv.buffer, sizeof(iv.buffer));
+  if (rc != KM_ERROR_OK) {
+    LOG(ERROR) << "Failed to get random data";
+    return buf;
+  }
+
   auto wrapped_size = wrapped_.SerializedSize();
   auto encrypted_size = RoundUpToBlockSize(wrapped_size);
   std::vector<uint8_t> unencrypted(encrypted_size + 1, 0);
@@ -208,13 +221,9 @@ uint8_t* EncryptedSerializable::Serialize(
     return buf;
   }
   std::vector<uint8_t> encrypted(encrypted_size, 0);
-  if (!TpmEncrypt(
-      resource_manager_.Esys(),
-      key_slot->get(),
-      TpmAuth(ESYS_TR_PASSWORD),
-      unencrypted.data(),
-      encrypted.data(),
-      encrypted_size)) {
+  if (!TpmEncrypt(  //
+          resource_manager_.Esys(), key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
+          iv, unencrypted.data(), encrypted.data(), encrypted_size)) {
     LOG(ERROR) << "Encryption failed";
     return buf;
   }
@@ -224,6 +233,8 @@ uint8_t* EncryptedSerializable::Serialize(
   buf = serialize_public.Serialize(buf, end);
   buf = serialize_private.Serialize(buf, end);
   buf = keymaster::append_uint32_to_buf(buf, end, BLOCK_SIZE);
+  buf = keymaster::append_uint32_to_buf(buf, end, iv.size);
+  buf = keymaster::append_to_buf(buf, end, iv.buffer, iv.size);
   buf = keymaster::append_uint32_to_buf(buf, end, wrapped_size);
   buf = keymaster::append_to_buf(buf, end, encrypted.data(), encrypted_size);
   return buf;
@@ -264,6 +275,22 @@ bool EncryptedSerializable::Deserialize(
                << ", expected " << BLOCK_SIZE;
     return false;
   }
+  uint32_t iv_size = 0;
+  if (!keymaster::copy_uint32_from_buf(buf_ptr, end, &iv_size)) {
+    LOG(ERROR) << "Failed to read iv size";
+    return false;
+  }
+  TPM2B_IV iv;
+  if (iv_size != sizeof(iv.buffer)) {
+    LOG(ERROR) << "iv size mismatch: received " << iv_size << ", expected "
+               << sizeof(iv.buffer);
+    return false;
+  }
+  iv.size = sizeof(iv.buffer);
+  if (!keymaster::copy_from_buf(buf_ptr, end, iv.buffer, sizeof(iv.buffer))) {
+    LOG(ERROR) << "Failed to read wrapped size";
+    return false;
+  }
   uint32_t wrapped_size = 0;
   if (!keymaster::copy_uint32_from_buf(buf_ptr, end, &wrapped_size)) {
     LOG(ERROR) << "Failed to read wrapped size";
@@ -277,13 +304,9 @@ bool EncryptedSerializable::Deserialize(
     return false;
   }
   std::vector<uint8_t> decrypted_data(encrypted_size, 0);
-  if (!TpmDecrypt(
-      resource_manager_.Esys(),
-      key_slot->get(),
-      TpmAuth(ESYS_TR_PASSWORD),
-      encrypted_data.data(),
-      decrypted_data.data(),
-      encrypted_size)) {
+  if (!TpmDecrypt(  //
+          resource_manager_.Esys(), key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
+          iv, encrypted_data.data(), decrypted_data.data(), encrypted_size)) {
     LOG(ERROR) << "Failed to decrypt encrypted data";
     return false;
   }
