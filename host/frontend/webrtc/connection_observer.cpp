@@ -115,9 +115,6 @@ class ConnectionObserverImpl
         confui_input_(confui_input) {}
   virtual ~ConnectionObserverImpl() {
     auto display_handler = weak_display_handler_.lock();
-    if (display_handler) {
-      display_handler->DecClientCount();
-    }
     if (kernel_log_subscription_id_ != -1) {
       kernel_log_events_handler_->Unsubscribe(kernel_log_subscription_id_);
     }
@@ -127,7 +124,6 @@ class ConnectionObserverImpl
                    /*ctrl_msg_sender*/) override {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
-      display_handler->IncClientCount();
       std::thread th([this]() {
         // The encoder in libwebrtc won't drop 5 consecutive frames due to frame
         // size, so we make sure at least 5 frames are sent every time a client
