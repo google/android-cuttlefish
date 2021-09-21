@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<display-settings>
+    <config identifier="0" />
+    <!-- Allow rotation of fixed-orientation activities on the inner screen. -->
+    <display
+        name="local:4619827259835644672"
+        ignoreOrientationRequest="true"/>
+</display-settings>
