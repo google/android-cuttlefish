@@ -136,6 +136,14 @@ void CuttlefishConfig::set_gpu_mode(const std::string& name) {
   (*dictionary_)[kGpuMode] = name;
 }
 
+static constexpr char kGpuCaptureBinary[] = "gpu_capture_binary";
+std::string CuttlefishConfig::gpu_capture_binary() const {
+  return (*dictionary_)[kGpuCaptureBinary].asString();
+}
+void CuttlefishConfig::set_gpu_capture_binary(const std::string& name) {
+  (*dictionary_)[kGpuCaptureBinary] = name;
+}
+
 static constexpr char kCpus[] = "cpus";
 int CuttlefishConfig::cpus() const { return (*dictionary_)[kCpus].asInt(); }
 void CuttlefishConfig::set_cpus(int cpus) { (*dictionary_)[kCpus] = cpus; }
