@@ -18,9 +18,9 @@
 
 #include <cstdint>
 #include <functional>
-#include <type_traits>
 
 #include <android-base/logging.h>
+
 #include "common/libs/utils/size_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -40,17 +40,6 @@ using GenerateProcessedFrameCallbackImpl =
                        std::uint32_t /*frame_height*/,        //
                        std::uint32_t /*frame_stride_bytes*/,  //
                        std::uint8_t* /*frame_pixels*/)>;
-
-class ScreenConnectorSource {
- public:
-  virtual ~ScreenConnectorSource() = default;
-  // Runs the given callback on the next available frame after the given
-  // frame number and returns true if successful.
-  virtual void SetFrameCallback(
-      GenerateProcessedFrameCallbackImpl frame_callback) = 0;
-  virtual void ReportClientsConnected(bool /*have_clients*/) { /* ignore by default */ }
-  ScreenConnectorSource() = default;
-};
 
 struct ScreenConnectorInfo {
   // functions are intended to be inlined

@@ -26,10 +26,10 @@
 #include <type_traits>
 
 #include <android-base/logging.h>
+
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/size_utils.h"
-
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_utils.h"
@@ -55,13 +55,9 @@ class ScreenConnector : public ScreenConnectorInfo,
    * This is the type of the callback function WebRTC/VNC is supposed to provide
    * ScreenConnector with.
    *
-   * The callback function should be defined so that the two parameters are
-   * given by the callback function caller (e.g. ScreenConnectorSource) and used
-   * to fill out the ProcessedFrameType object, msg.
+   * The callback function is how a raw bytes frame should be processed for
+   * WebRTC/VNC
    *
-   * The ProcessedFrameType object is internally created by ScreenConnector,
-   * filled out by the ScreenConnectorSource, and returned via OnNextFrame()
-   * call.
    */
   using GenerateProcessedFrameCallback = std::function<void(
       std::uint32_t /*display_number*/, std::uint32_t /*frame_width*/,
@@ -88,9 +84,9 @@ class ScreenConnector : public ScreenConnectorInfo,
   virtual ~ScreenConnector() = default;
 
   /**
-   * set the callback function to be eventually used by Wayland/Socket-Based Connectors
+   * set the callback function to be eventually used by Wayland-Based
+   * Connector
    *
-   * @param[in] To tell how ScreenConnectorSource caches the frame & meta info
    */
   void SetCallback(GenerateProcessedFrameCallback&& frame_callback) {
     std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
@@ -172,10 +168,8 @@ class ScreenConnector : public ScreenConnectorInfo,
   }
 
  protected:
-  template <typename T,
-            typename = std::enable_if_t<
-                std::is_base_of<ScreenConnectorSource, T>::value, void>>
-  ScreenConnector(std::unique_ptr<T>&& impl, HostModeCtrl& host_mode_ctrl)
+  ScreenConnector(std::unique_ptr<WaylandScreenConnector>&& impl,
+                  HostModeCtrl& host_mode_ctrl)
       : sc_android_src_{std::move(impl)},
         host_mode_ctrl_{host_mode_ctrl},
         on_next_frame_cnt_{0},
@@ -184,8 +178,7 @@ class ScreenConnector : public ScreenConnectorInfo,
   ScreenConnector() = delete;
 
  private:
-  // either socket_based or wayland
-  std::unique_ptr<ScreenConnectorSource> sc_android_src_;
+  std::unique_ptr<WaylandScreenConnector> sc_android_src_;
   HostModeCtrl& host_mode_ctrl_;
   unsigned long long int on_next_frame_cnt_;
   unsigned long long int render_confui_cnt_;
