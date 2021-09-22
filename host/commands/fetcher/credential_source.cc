@@ -15,7 +15,7 @@
 
 #include "credential_source.h"
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 namespace {
 
