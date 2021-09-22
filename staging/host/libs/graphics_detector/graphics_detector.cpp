@@ -31,7 +31,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr const char kEglLib[] = "libEGL.so";
+constexpr const char kEglLib[] = "libEGL.so.1";
 constexpr const char kGlLib[] = "libOpenGL.so.0";
 constexpr const char kGles1Lib[] = "libGLESv1_CM.so.1";
 constexpr const char kGles2Lib[] = "libGLESv2.so.2";
