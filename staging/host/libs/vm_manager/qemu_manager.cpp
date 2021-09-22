@@ -87,6 +87,8 @@ bool Stop() {
 
 }  // namespace
 
+QemuManager::QemuManager(Arch arch) : arch_(arch) {}
+
 bool QemuManager::IsSupported() {
   return HostSupportsQemuCli();
 }

@@ -28,6 +28,7 @@ cc_binary {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libcuttlefish_allocd_utils",
+        "libfruit",
         "libjsoncpp",
     ],
     static_libs: [
