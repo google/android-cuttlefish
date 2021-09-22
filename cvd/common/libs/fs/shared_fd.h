@@ -38,7 +38,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include <android-base/cmsg.h>
 
 #include "vm_sockets.h"
 
@@ -61,7 +64,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cvd {
+namespace cuttlefish {
 
 class FileInstance;
 
@@ -109,6 +112,8 @@ class FileInstance;
  * reported with a new, closed FileInstance with the errno set.
  */
 class SharedFD {
+  // Give WeakFD access to the underlying shared_ptr.
+  friend class WeakFD;
  public:
   inline SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
@@ -124,11 +129,14 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
+  static SharedFD Mkstemp(std::string* path);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type);
+  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
+                                    int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
@@ -151,14 +159,55 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const cvd::FileInstance& operator*() const { return *value_; }
+  const FileInstance& operator*() const { return *value_; }
 
-  cvd::FileInstance& operator*() { return *value_; }
+  FileInstance& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);
 
   std::shared_ptr<FileInstance> value_;
+};
+
+/**
+ * A non-owning reference to a FileInstance. The referenced FileInstance needs
+ * to be managed by a SharedFD. A WeakFD needs to be converted to a SharedFD to
+ * access the underlying FileInstance.
+ */
+class WeakFD {
+ public:
+  WeakFD(SharedFD shared_fd) : value_(shared_fd.value_) {}
+
+  // Creates a new SharedFD object that shares ownership of the underlying fd.
+  // Callers need to check that the returned SharedFD is open before using it.
+  SharedFD lock() const;
+
+ private:
+  std::weak_ptr<FileInstance> value_;
+};
+
+// Provides RAII semantics for memory mappings, preventing memory leaks. It does
+// not however prevent use-after-free errors since the underlying pointer can be
+// extracted and could survive this object.
+class ScopedMMap {
+ public:
+  ScopedMMap();
+  ScopedMMap(void* ptr, size_t size);
+  ScopedMMap(const ScopedMMap& other) = delete;
+  ScopedMMap& operator=(const ScopedMMap& other) = delete;
+  ScopedMMap(ScopedMMap&& other);
+
+  ~ScopedMMap();
+
+  void* get() { return ptr_; }
+  const void* get() const { return ptr_; }
+  size_t len() const { return len_; }
+
+  operator bool() const { return ptr_ != MAP_FAILED; }
+
+ private:
+  void* ptr_ = MAP_FAILED;
+  size_t len_;
 };
 
 /**
@@ -199,6 +248,9 @@ class FileInstance {
     errno_ = errno;
     return rval;
   }
+
+  int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
+                         struct timeval* timeout);
 
   void Close();
 
@@ -315,6 +367,13 @@ class FileInstance {
     return rval;
   }
 
+  int EventfdRead(eventfd_t* value) {
+    errno = 0;
+    auto rval = eventfd_read(fd_, value);
+    errno_ = errno;
+    return rval;
+  }
+
   ssize_t Send(const void* buf, size_t len, int flags) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
@@ -329,6 +388,16 @@ class FileInstance {
     return rval;
   }
 
+  template <typename... Args>
+  ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {
+    std::vector<int> fds;
+    android::base::Append(fds, std::forward<int>(sent_fds->fd_)...);
+    errno = 0;
+    auto ret = android::base::SendFileDescriptorVector(fd_, buf, len, fds);
+    errno_ = errno;
+    return ret;
+  }
+
   int Shutdown(int how) {
     errno = 0;
     int rval = shutdown(fd_, how);
@@ -341,6 +410,27 @@ class FileInstance {
   int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen) {
     errno = 0;
     int rval = setsockopt(fd_, level, optname, optval, optlen);
+    errno_ = errno;
+    return rval;
+  }
+
+  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
+    errno = 0;
+    int rval = getsockopt(fd_, level, optname, optval, optlen);
+    errno_ = errno;
+    return rval;
+  }
+
+  int SetTerminalRaw() {
+    errno = 0;
+    termios terminal_settings;
+    int rval = tcgetattr(fd_, &terminal_settings);
+    errno_ = errno;
+    if (rval < 0) {
+      return rval;
+    }
+    cfmakeraw(&terminal_settings);
+    rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
     errno_ = errno;
     return rval;
   }
@@ -361,6 +451,14 @@ class FileInstance {
     return strerror_buf_;
   }
 
+  ScopedMMap MMap(void* addr, size_t length, int prot, int flags,
+                  off_t offset) {
+    errno = 0;
+    auto ptr = mmap(addr, length, prot, flags, fd_, offset);
+    errno_ = errno;
+    return ScopedMMap(ptr, length);
+  }
+
   ssize_t Truncate(off_t length) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
@@ -371,6 +469,20 @@ class FileInstance {
   ssize_t Write(const void* buf, size_t count) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
+    errno_ = errno;
+    return rval;
+  }
+
+  int EventfdWrite(eventfd_t value) {
+    errno = 0;
+    int rval = eventfd_write(fd_, value);
+    errno_ = errno;
+    return rval;
+  }
+
+  bool IsATTY() {
+    errno = 0;
+    int rval = isatty(fd_);
     errno_ = errno;
     return rval;
   }
@@ -405,6 +517,6 @@ class FileInstance {
 
 inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace cvd
+}  // namespace cuttlefish
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
