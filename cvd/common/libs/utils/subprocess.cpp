@@ -143,7 +143,7 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
   return retval;
 }
 
-bool KillSubprocess(Subprocess* subprocess) {
+StopperResult KillSubprocess(Subprocess* subprocess) {
   auto pid = subprocess->pid();
   if (pid > 0) {
     auto pgid = getpgid(pid);
@@ -155,13 +155,15 @@ bool KillSubprocess(Subprocess* subprocess) {
       // to the process and not a (non-existent) group
     }
     bool is_group_head = pid == pgid;
-    if (is_group_head) {
-      return killpg(pid, SIGKILL) == 0;
-    } else {
-      return kill(pid, SIGKILL) == 0;
+    auto kill_ret = (is_group_head ? killpg : kill)(pid, SIGKILL);
+    if (kill_ret == 0) {
+      return StopperResult::kStopSuccess;
     }
+    auto kill_cmd = is_group_head ? "killpg(" : "kill(";
+    PLOG(ERROR) << kill_cmd << pid << ", SIGKILL) failed: ";
+    return StopperResult::kStopFailure;
   }
-  return true;
+  return StopperResult::kStopSuccess;
 }
 
 Command::~Command() {
@@ -175,41 +177,30 @@ Command::~Command() {
   }
 }
 
-bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
+void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   int fd;
   if (inherited_fds_.count(shared_fd)) {
     fd = inherited_fds_[shared_fd];
   } else {
     fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
-    if (fd < 0) {
-      LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
-      return false;
-    }
+    CHECK(fd >= 0) << "Could not acquire a new file descriptor: "
+                   << shared_fd->StrError();
     inherited_fds_[shared_fd] = fd;
   }
   *stream << fd;
-  return true;
 }
 
-bool Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+void Command::RedirectStdIO(Subprocess::StdIOChannel channel,
                             SharedFD shared_fd) {
-  if (!shared_fd->IsOpen()) {
-    return false;
-  }
-  if (redirects_.count(channel)) {
-    LOG(ERROR) << "Attempted multiple redirections of fd: "
-               << static_cast<int>(channel);
-    return false;
-  }
+  CHECK(shared_fd->IsOpen());
+  CHECK(redirects_.count(channel) == 0)
+      << "Attempted multiple redirections of fd: " << static_cast<int>(channel);
   auto dup_fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
-  if (dup_fd < 0) {
-    LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
-    return false;
-  }
+  CHECK(dup_fd >= 0) << "Could not acquire a new file descriptor: "
+                     << shared_fd->StrError();
   redirects_[channel] = dup_fd;
-  return true;
 }
-bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+void Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                             Subprocess::StdIOChannel parent_channel) {
   return RedirectStdIO(subprocess_channel,
                        SharedFD::Dup(static_cast<int>(parent_channel)));
@@ -290,8 +281,8 @@ public:
   }
 };
 
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
-                        std::string* stdout, std::string* stderr,
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
+                        std::string* stdout_str, std::string* stderr_str,
                         SubprocessOptions options) {
   /*
    * The order of these declarations is necessary for safety. If the function
@@ -308,60 +299,48 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
   ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
   Command cmd = std::move(cmd_tmp);
   bool io_error = false;
-  if (stdin != nullptr) {
+  if (stdin_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to write the stdin of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read)) {
-      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
-                << "\", was already set.";
-      return -1;
-    }
-    stdin_thread = std::thread([pipe_write, stdin, &io_error]() {
-      int written = WriteAll(pipe_write, *stdin);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
+    stdin_thread = std::thread([pipe_write, stdin_str, &io_error]() {
+      int written = WriteAll(pipe_write, *stdin_str);
       if (written < 0) {
         io_error = true;
         LOG(ERROR) << "Error in writing stdin to process";
       }
     });
   }
-  if (stdout != nullptr) {
+  if (stdout_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stdout of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write)) {
-      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
-                << "\", was already set.";
-      return -1;
-    }
-    stdout_thread = std::thread([pipe_read, stdout, &io_error]() {
-      int read = ReadAll(pipe_read, stdout);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
+    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
+      int read = ReadAll(pipe_read, stdout_str);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stdout from process";
       }
     });
   }
-  if (stderr != nullptr) {
+  if (stderr_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stderr of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write)) {
-      LOG(ERROR) << "Could not set stderr of \"" << cmd.GetShortName()
-                << "\", was already set.";
-      return -1;
-    }
-    stderr_thread = std::thread([pipe_read, stderr, &io_error]() {
-      int read = ReadAll(pipe_read, stderr);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
+    stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
+      int read = ReadAll(pipe_read, stderr_str);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stderr from process";
