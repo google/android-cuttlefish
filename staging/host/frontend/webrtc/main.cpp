@@ -276,7 +276,6 @@ int main(int argc, char** argv) {
     CHECK(local_recorder) << "Could not create local recorder";
 
     streamer->RecordDisplays(*local_recorder);
-    display_handler->IncClientCount();
   }
 
   observer_factory->SetDisplayHandler(display_handler);
