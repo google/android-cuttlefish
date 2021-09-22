@@ -40,6 +40,8 @@
 DEFINE_bool(run_file_discovery, true,
             "Whether to run file discovery or get input files from stdin.");
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
+DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE,"
+                                 "DEBUG,INFO,WARNING,ERROR");
 
 namespace {
 
@@ -95,6 +97,8 @@ int main(int argc, char** argv) {
   forwarder.UpdateFlagDefaults();
 
   gflags::HandleCommandLineHelpFlags();
+
+  setenv("CF_CONSOLE_SEVERITY", FLAGS_verbosity.c_str(), /* replace */ false);
 
   cvd::SharedFD assembler_stdout, assembler_stdout_capture;
   cvd::SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
