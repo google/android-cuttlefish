@@ -324,6 +324,12 @@ int main(int argc, char** argv) {
   auto instance = config->ForDefaultInstance();
 
   auto log_path = instance.launcher_log_path();
+
+  {
+    std::ofstream launcher_log_ofstream(log_path.c_str());
+    auto assemble_log = cvd::ReadFile(config->AssemblyPath("assemble_cvd.log"));
+    launcher_log_ofstream << assemble_log;
+  }
   ::android::base::SetLogger(cvd::LogToStderrAndFiles({log_path}));
 
   // Change working directory to the instance directory as early as possible to
