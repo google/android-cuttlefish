@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "host/libs/config/logging.h"
 #include "common/libs/fs/shared_fd.h"
 
 DEFINE_int32(
@@ -55,7 +56,7 @@ static std::string next_tombstone_path() {
 
 #define CHUNK_RECV_MAX_LEN (1024)
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cvd::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   cvd::SharedFD server_fd = cvd::SharedFD::Dup(FLAGS_server_fd);

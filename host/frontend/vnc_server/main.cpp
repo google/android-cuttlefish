@@ -19,18 +19,17 @@
 
 #include <gflags/gflags.h>
 
-#include "android-base/logging.h"
 #include "host/frontend/vnc_server/vnc_server.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/logging.h"
 
 DEFINE_bool(agressive, false, "Whether to use agressive server");
 DEFINE_int32(port, 6444, "Port where to listen for connections");
 
 int main(int argc, char* argv[]) {
-  using ::android::base::ERROR;
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
+  cvd::DefaultSubprocessLogging(argv);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+
   cvd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
   vnc_server.MainLoop();
 }
