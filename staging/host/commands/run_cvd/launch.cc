@@ -34,6 +34,8 @@
 
 namespace cuttlefish {
 
+using vm_manager::VmManager;
+
 namespace {
 
 template <typename T>
@@ -679,11 +681,12 @@ class WmediumdServer : public CommandSource {
 
 class VmmCommands : public CommandSource {
  public:
-  INJECT(VmmCommands(const CuttlefishConfig& config)) : config_(config) {}
+  INJECT(VmmCommands(const CuttlefishConfig& config, VmManager& vmm))
+      : config_(config), vmm_(vmm) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
-    return vmm_->StartCommands(config_);
+    return vmm_.StartCommands(config_);
   }
 
   // Feature
@@ -692,26 +695,17 @@ class VmmCommands : public CommandSource {
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
  protected:
-  bool Setup() override {
-    vmm_ =
-        vm_manager::GetVmManager(config_.vm_manager(), config_.target_arch());
-    if (!vmm_) {
-      LOG(ERROR) << "Invalid VMM/Arch: \"" << config_.vm_manager() << "\""
-                 << (int)config_.target_arch() << "\"";
-      return false;
-    }
-    return true;
-  }
+  bool Setup() override { return true; }
 
  private:
   const CuttlefishConfig& config_;
-  std::unique_ptr<vm_manager::VmManager> vmm_;
+  VmManager& vmm_;
 };
 
-using PublicDeps = fruit::Required<const CuttlefishConfig,
+using PublicDeps = fruit::Required<const CuttlefishConfig, VmManager,
                                    const CuttlefishConfig::InstanceSpecific>;
 fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
-  using InternalDeps = fruit::Required<const CuttlefishConfig,
+  using InternalDeps = fruit::Required<const CuttlefishConfig, VmManager,
                                        const CuttlefishConfig::InstanceSpecific,
                                        KernelLogPipeProvider>;
   using Multi = Multibindings<InternalDeps>;
