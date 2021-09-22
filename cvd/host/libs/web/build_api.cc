@@ -26,8 +26,10 @@
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 
+namespace cuttlefish {
 namespace {
 
 const std::string BUILD_API =
@@ -72,6 +74,12 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
   return out;
 }
 
+DirectoryBuild::DirectoryBuild(const std::vector<std::string>& paths,
+                               const std::string& target)
+    : paths(paths), target(target), id("eng") {
+  product = StringFromEnv("TARGET_PRODUCT", "");
+}
+
 BuildApi::BuildApi(std::unique_ptr<CredentialSource> credential_source)
     : credential_source(std::move(credential_source)) {}
 
@@ -110,17 +118,37 @@ std::string BuildApi::BuildStatus(const DeviceBuild& build) {
   return response_json["buildAttemptStatus"].asString();
 }
 
-std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
-  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
-      + "/attempts/latest/artifacts?maxResults=1000";
-  auto artifacts_json = curl.DownloadToJson(url, Headers());
-  CHECK(!artifacts_json.isMember("error")) << "Error fetching the artifacts of "
-      << build << ". Response was " << artifacts_json;
+std::string BuildApi::ProductName(const DeviceBuild& build) {
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
+  auto response_json = curl.DownloadToJson(url, Headers());
+  CHECK(!response_json.isMember("error")) << "Error fetching the status of "
+      << "build " << build << ". Response was " << response_json;
+  CHECK(response_json.isMember("target")) << "Build was missing target field.";
+  return response_json["target"]["product"].asString();
+}
 
+std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
+  std::string page_token = "";
   std::vector<Artifact> artifacts;
-  for (const auto& artifact_json : artifacts_json["artifacts"]) {
-    artifacts.emplace_back(artifact_json);
-  }
+  do {
+    std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target +
+                      "/attempts/latest/artifacts?maxResults=1000";
+    if (page_token != "") {
+      url += "&pageToken=" + page_token;
+    }
+    auto artifacts_json = curl.DownloadToJson(url, Headers());
+    CHECK(!artifacts_json.isMember("error"))
+        << "Error fetching the artifacts of " << build << ". Response was "
+        << artifacts_json;
+    if (artifacts_json.isMember("nextPageToken")) {
+      page_token = artifacts_json["nextPageToken"].asString();
+    } else {
+      page_token = "";
+    }
+    for (const auto& artifact_json : artifacts_json["artifacts"]) {
+      artifacts.emplace_back(artifact_json);
+    }
+  } while (page_token != "");
   return artifacts;
 }
 
@@ -147,9 +175,17 @@ std::vector<Artifact> BuildApi::Artifacts(const DirectoryBuild& build) {
 bool BuildApi::ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path) {
-  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
-      + "/attempts/latest/artifacts/" + artifact + "?alt=media";
-  return curl.DownloadToFile(url, path, Headers());
+  std::string download_url_endpoint =
+      BUILD_API + "/builds/" + build.id + "/" + build.target +
+      "/attempts/latest/artifacts/" + artifact + "/url";
+  auto download_url_json =
+      curl.DownloadToJson(download_url_endpoint, Headers());
+  if (!download_url_json.isMember("signedUrl")) {
+    LOG(ERROR) << "URL endpoint did not have json path: " << download_url_json;
+    return false;
+  }
+  std::string url = download_url_json["signedUrl"].asString();
+  return curl.DownloadToFile(url, path);
 }
 
 bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
@@ -157,7 +193,7 @@ bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
                               const std::string& destination) {
   for (const auto& path : build.paths) {
     auto source = path + "/" + artifact;
-    if (!cvd::FileExists(source)) {
+    if (!FileExists(source)) {
       continue;
     }
     unlink(destination.c_str());
@@ -213,5 +249,8 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
     status = build_api->BuildStatus(proposed_build);
   }
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
+  proposed_build.product = build_api->ProductName(proposed_build);
   return proposed_build;
 }
+
+} // namespace cuttlefish

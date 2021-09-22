@@ -27,6 +27,7 @@
 
 #include <android-base/logging.h>
 
+namespace cuttlefish {
 namespace {
 gid_t GroupIdFromName(const std::string& group_name) {
   struct group grp{};
@@ -45,7 +46,7 @@ gid_t GroupIdFromName(const std::string& group_name) {
     if (grp_p != nullptr) {
       return grp.gr_gid;
     } else {
-      LOG(ERROR) << "Group " << group_name << " does not exist";
+      // Caller may be checking with non-existent group name
       return -1;
     }
   } else {
@@ -73,7 +74,7 @@ std::vector<gid_t> GetSuplementaryGroups() {
 }
 }  // namespace
 
-bool cvd::InGroup(const std::string& group) {
+bool InGroup(const std::string& group) {
   auto gid = GroupIdFromName(group);
   if (gid == static_cast<gid_t>(-1)) {
     return false;
@@ -90,3 +91,5 @@ bool cvd::InGroup(const std::string& group) {
   }
   return false;
 }
+
+} // namespace cuttlefish
