@@ -22,12 +22,12 @@
 
 using android::base::SetLogger;
 
-namespace cuttlefish {
+namespace cvd {
 
 void DefaultSubprocessLogging(char* argv[]) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  auto config = CuttlefishConfig::Get();
+  auto config = vsoc::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 
@@ -40,4 +40,4 @@ void DefaultSubprocessLogging(char* argv[]) {
   }
 }
 
-} // namespace cuttlefish
+} // namespace cvd

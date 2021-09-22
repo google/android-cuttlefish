@@ -38,10 +38,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
-
-#include <android-base/cmsg.h>
 
 #include "vm_sockets.h"
 
@@ -64,7 +61,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cuttlefish {
+namespace cvd {
 
 class FileInstance;
 
@@ -112,8 +109,6 @@ class FileInstance;
  * reported with a new, closed FileInstance with the errno set.
  */
 class SharedFD {
-  // Give WeakFD access to the underlying shared_ptr.
-  friend class WeakFD;
  public:
   inline SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
@@ -129,20 +124,16 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
-  static SharedFD Mkstemp(std::string* path);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type);
-  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
-                                    int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
-  static SharedFD VsockServer(unsigned int port, int type,
-                              unsigned int cid = VMADDR_CID_ANY);
+  static SharedFD VsockServer(unsigned int port, int type);
   static SharedFD VsockServer(int type);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
 
@@ -160,55 +151,14 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const FileInstance& operator*() const { return *value_; }
+  const cvd::FileInstance& operator*() const { return *value_; }
 
-  FileInstance& operator*() { return *value_; }
+  cvd::FileInstance& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);
 
   std::shared_ptr<FileInstance> value_;
-};
-
-/**
- * A non-owning reference to a FileInstance. The referenced FileInstance needs
- * to be managed by a SharedFD. A WeakFD needs to be converted to a SharedFD to
- * access the underlying FileInstance.
- */
-class WeakFD {
- public:
-  WeakFD(SharedFD shared_fd) : value_(shared_fd.value_) {}
-
-  // Creates a new SharedFD object that shares ownership of the underlying fd.
-  // Callers need to check that the returned SharedFD is open before using it.
-  SharedFD lock() const;
-
- private:
-  std::weak_ptr<FileInstance> value_;
-};
-
-// Provides RAII semantics for memory mappings, preventing memory leaks. It does
-// not however prevent use-after-free errors since the underlying pointer can be
-// extracted and could survive this object.
-class ScopedMMap {
- public:
-  ScopedMMap();
-  ScopedMMap(void* ptr, size_t size);
-  ScopedMMap(const ScopedMMap& other) = delete;
-  ScopedMMap& operator=(const ScopedMMap& other) = delete;
-  ScopedMMap(ScopedMMap&& other);
-
-  ~ScopedMMap();
-
-  void* get() { return ptr_; }
-  const void* get() const { return ptr_; }
-  size_t len() const { return len_; }
-
-  operator bool() const { return ptr_ != MAP_FAILED; }
-
- private:
-  void* ptr_ = MAP_FAILED;
-  size_t len_;
 };
 
 /**
@@ -232,12 +182,24 @@ class FileInstance {
   virtual ~FileInstance() { Close(); }
 
   // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static std::shared_ptr<FileInstance> ClosedInstance();
+  static std::shared_ptr<FileInstance> ClosedInstance() {
+    return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
+  }
 
-  int Bind(const struct sockaddr* addr, socklen_t addrlen);
-  int Connect(const struct sockaddr* addr, socklen_t addrlen);
-  int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
-                         struct timeval* timeout);
+  int Bind(const struct sockaddr* addr, socklen_t addrlen) {
+    errno = 0;
+    int rval = bind(fd_, addr, addrlen);
+    errno_ = errno;
+    return rval;
+  }
+
+  int Connect(const struct sockaddr* addr, socklen_t addrlen) {
+    errno = 0;
+    int rval = connect(fd_, addr, addrlen);
+    errno_ = errno;
+    return rval;
+  }
+
   void Close();
 
   // Returns true if the entire input was copied.
@@ -246,16 +208,52 @@ class FileInstance {
   // reference type.
   bool CopyFrom(FileInstance& in, size_t length);
 
-  int UNMANAGED_Dup();
-  int UNMANAGED_Dup2(int newfd);
-  int Fcntl(int command, int value);
+  int UNMANAGED_Dup() {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(dup(fd_));
+    errno_ = errno;
+    return rval;
+  }
+
+  int UNMANAGED_Dup2(int newfd) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(dup2(fd_, newfd));
+    errno_ = errno;
+    return rval;
+  }
+
+  int Fcntl(int command, int value) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
+    errno_ = errno;
+    return rval;
+  }
 
   int GetErrno() const { return errno_; }
-  int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
 
-  unsigned int VsockServerPort();
+  int GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
+    if (rval == -1) {
+      errno_ = errno;
+    }
+    return rval;
+  }
 
-  int Ioctl(int request, void* val = nullptr);
+  unsigned int VsockServerPort() {
+    struct sockaddr_vm vm_socket;
+    socklen_t length = sizeof(vm_socket);
+    GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
+    return vm_socket.svm_port;
+  }
+
+  int Ioctl(int request, void* val = nullptr) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
+    errno_ = errno;
+    return rval;
+  }
+
   bool IsOpen() const { return fd_ != -1; }
 
   // in probably isn't modified, but the API spec doesn't have const.
@@ -270,46 +268,136 @@ class FileInstance {
    * Using this on a file opened with O_TMPFILE can link it into the filesystem.
    */
   // Used with O_TMPFILE files to attach them to the filesystem.
-  int LinkAtCwd(const std::string& path);
-  int Listen(int backlog);
-  static void Log(const char* message);
-  off_t LSeek(off_t offset, int whence);
-  ssize_t Recv(void* buf, size_t len, int flags);
-  ssize_t RecvMsg(struct msghdr* msg, int flags);
-  ssize_t Read(void* buf, size_t count);
-  int EventfdRead(eventfd_t* value);
-  ssize_t Send(const void* buf, size_t len, int flags);
-  ssize_t SendMsg(const struct msghdr* msg, int flags);
-
-  template <typename... Args>
-  ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {
-    std::vector<int> fds;
-    android::base::Append(fds, std::forward<int>(sent_fds->fd_)...);
+  int LinkAtCwd(const std::string& path) {
+    std::string name = "/proc/self/fd/";
+    name += std::to_string(fd_);
     errno = 0;
-    auto ret = android::base::SendFileDescriptorVector(fd_, buf, len, fds);
+    int rval = linkat(
+        -1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
     errno_ = errno;
-    return ret;
+    return rval;
   }
 
-  int Shutdown(int how);
+  int Listen(int backlog) {
+    errno = 0;
+    int rval = listen(fd_, backlog);
+    errno_ = errno;
+    return rval;
+  }
+
+  static void Log(const char* message);
+
+  off_t LSeek(off_t offset, int whence) {
+    errno = 0;
+    off_t rval = TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t Recv(void* buf, size_t len, int flags) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t RecvMsg(struct msghdr* msg, int flags) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t Read(void* buf, size_t count) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(read(fd_, buf, count));
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t Send(const void* buf, size_t len, int flags) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t SendMsg(const struct msghdr* msg, int flags) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
+    errno_ = errno;
+    return rval;
+  }
+
+  int Shutdown(int how) {
+    errno = 0;
+    int rval = shutdown(fd_, how);
+    errno_ = errno;
+    return rval;
+  }
+
   void Set(fd_set* dest, int* max_index) const;
-  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen);
-  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen);
-  int SetTerminalRaw();
-  std::string StrError() const;
-  ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
-  ssize_t Truncate(off_t length);
-  ssize_t Write(const void* buf, size_t count);
-  int EventfdWrite(eventfd_t value);
-  bool IsATTY();
+
+  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen) {
+    errno = 0;
+    int rval = setsockopt(fd_, level, optname, optval, optlen);
+    errno_ = errno;
+    return rval;
+  }
+
+  const char* StrError() const {
+    errno = 0;
+    FileInstance* s = const_cast<FileInstance*>(this);
+    char* out = strerror_r(errno_, s->strerror_buf_, sizeof(strerror_buf_));
+
+    // From man page:
+    //  strerror_r() returns a pointer to a string containing the error message.
+    //  This may be either a pointer to a string that the function stores in
+    //  buf, or a pointer to some (immutable) static string (in which case buf
+    //  is unused).
+    if (out != s->strerror_buf_) {
+      strncpy(s->strerror_buf_, out, sizeof(strerror_buf_));
+    }
+    return strerror_buf_;
+  }
+
+  ssize_t Truncate(off_t length) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t Write(const void* buf, size_t count) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
+    errno_ = errno;
+    return rval;
+  }
 
  private:
-  FileInstance(int fd, int in_errno);
-  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
+  FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
+    // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
+    // flag
+    TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
+    std::stringstream identity;
+    identity << "fd=" << fd << " @" << this;
+    identity_ = identity.str();
+  }
+
+  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const {
+    int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
+    if (fd == -1) {
+      return new FileInstance(fd, errno);
+    } else {
+      return new FileInstance(fd, 0);
+    }
+  }
 
   int fd_;
   int errno_;
   std::string identity_;
+  char strerror_buf_[160];
 };
 
 /* Methods that need both a fully defined SharedFD and a fully defined
@@ -317,6 +405,6 @@ class FileInstance {
 
 inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace cuttlefish
+}  // namespace cvd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_

@@ -15,8 +15,8 @@
 
 #pragma once
 
-namespace cuttlefish {
+namespace cvd {
 
 void DefaultSubprocessLogging(char* argv[]);
 
-} // namespace cuttlefish
+} // namespace cvd
