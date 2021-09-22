@@ -30,6 +30,7 @@ cc_binary {
         "libcuttlefish_utils",
         "libbase",
         "libjsoncpp",
+        "libfruit",
         "libnl",
         "libxml2",
         "libz",
