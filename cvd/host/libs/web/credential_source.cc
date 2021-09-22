@@ -17,7 +17,6 @@
 
 #include <android-base/logging.h>
 
-namespace cuttlefish {
 namespace {
 
 std::chrono::steady_clock::duration REFRESH_WINDOW =
@@ -25,10 +24,9 @@ std::chrono::steady_clock::duration REFRESH_WINDOW =
 std::string REFRESH_URL = "http://metadata.google.internal/computeMetadata/"
     "v1/instance/service-accounts/default/token";
 
-} // namespace
+}
 
-GceMetadataCredentialSource::GceMetadataCredentialSource(CurlWrapper& curl)
-    : curl(curl) {
+GceMetadataCredentialSource::GceMetadataCredentialSource() {
   latest_credential = "";
   expiration = std::chrono::steady_clock::now();
 }
@@ -41,33 +39,25 @@ std::string GceMetadataCredentialSource::Credential() {
 }
 
 void GceMetadataCredentialSource::RefreshCredential() {
-  auto curl_response =
+  Json::Value credential_json =
       curl.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"});
-  const auto& json = curl_response.data;
-  if (!curl_response.HttpSuccess()) {
-    LOG(FATAL) << "Error fetching credentials. The server response was \""
-               << json << "\", and code was " << curl_response.http_code;
-  }
-  CHECK(!json.isMember("error"))
-      << "Response had \"error\" but had http success status. Received \""
-      << json << "\"";
 
-  bool has_access_token = json.isMember("access_token");
-  bool has_expires_in = json.isMember("expires_in");
+  CHECK(!credential_json.isMember("error")) << "Error fetching credentials. " <<
+      "Response was " << credential_json;
+  bool has_access_token = credential_json.isMember("access_token");
+  bool has_expires_in = credential_json.isMember("expires_in");
   if (!has_access_token || !has_expires_in) {
     LOG(FATAL) << "GCE credential was missing access_token or expires_in. "
-               << "Full response was " << json << "";
+        << "Full response was " << credential_json << "";
   }
 
-  expiration = std::chrono::steady_clock::now() +
-               std::chrono::seconds(json["expires_in"].asInt());
-  latest_credential = json["access_token"].asString();
+  expiration = std::chrono::steady_clock::now()
+      + std::chrono::seconds(credential_json["expires_in"].asInt());
+  latest_credential = credential_json["access_token"].asString();
 }
 
-std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make(
-    CurlWrapper& curl) {
-  return std::unique_ptr<CredentialSource>(
-      new GceMetadataCredentialSource(curl));
+std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make() {
+  return std::unique_ptr<CredentialSource>(new GceMetadataCredentialSource());
 }
 
 FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
@@ -82,5 +72,3 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::make(
     const std::string& credential) {
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
-
-} // namespace cuttlefish
