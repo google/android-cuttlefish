@@ -31,7 +31,6 @@ namespace vm_manager {
 class CrosvmManager : public VmManager {
  public:
   static std::string name() { return "crosvm"; }
-  CrosvmManager(Arch arch) : VmManager(arch) {}
   virtual ~CrosvmManager() = default;
 
   bool IsSupported() override;

@@ -28,6 +28,6 @@ namespace cuttlefish {
 bool ResolveInstanceFiles();
 bool ShouldCreateOsCompositeDisk(const CuttlefishConfig& config);
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                            const CuttlefishConfig* config);
+                            const CuttlefishConfig& config);
 
 } // namespace cuttlefish
