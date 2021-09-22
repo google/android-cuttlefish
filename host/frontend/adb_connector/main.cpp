@@ -21,7 +21,7 @@
 #include <thread>
 #include <vector>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <gflags/gflags.h>
 
 #include <unistd.h>

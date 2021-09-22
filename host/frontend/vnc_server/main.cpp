@@ -19,7 +19,7 @@
 
 #include <gflags/gflags.h>
 
-#include "common/libs/glog/logging.h"
+#include "android-base/logging.h"
 #include "host/frontend/vnc_server/vnc_server.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/config/cuttlefish_config.h"

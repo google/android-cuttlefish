@@ -28,5 +28,5 @@ using ::android::base::FATAL;
 
 #endif  // CUTTLEFISH_HOST
 #else  // DEBIAN_HOST (by elimination)
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #endif

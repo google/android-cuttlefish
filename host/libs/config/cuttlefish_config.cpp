@@ -28,7 +28,7 @@
 #include <time.h>
 
 #include <android-base/strings.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <json/json.h>
 
 #include "common/libs/utils/environment.h"

@@ -13,7 +13,7 @@
 
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"

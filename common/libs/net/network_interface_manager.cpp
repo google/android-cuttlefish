@@ -24,7 +24,7 @@
 
 #include <memory>
 
-#include "common/libs/glog/logging.h"
+#include "android-base/logging.h"
 #include "common/libs/net/network_interface.h"
 
 namespace cvd {
