@@ -91,13 +91,4 @@ void DisplayHandler::SendLastFrame() {
     display_sinks_[buffer_display]->OnFrame(buffer, time_stamp);
   }
 }
-
-void DisplayHandler::IncClientCount() {
-  client_count_++;
-}
-
-void DisplayHandler::DecClientCount() {
-  client_count_--;
-}
-
 }  // namespace cuttlefish

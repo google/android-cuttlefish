@@ -60,9 +60,6 @@ class DisplayHandler {
   [[noreturn]] void Loop();
   void SendLastFrame();
 
-  void IncClientCount();
-  void DecClientCount();
-
  private:
   GenerateProcessedFrameCallback GetScreenConnectorCallback();
   std::vector<std::shared_ptr<webrtc_streaming::VideoSink>> display_sinks_;
@@ -71,6 +68,5 @@ class DisplayHandler {
   std::uint32_t last_buffer_display_ = 0;
   std::mutex last_buffer_mutex_;
   std::mutex next_frame_mutex_;
-  int client_count_ = 0;
 };
 }  // namespace cuttlefish
