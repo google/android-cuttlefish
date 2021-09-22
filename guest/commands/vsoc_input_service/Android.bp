@@ -33,8 +33,5 @@ cc_binary {
         "libbase",
         "liblog",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     defaults: ["cuttlefish_guest_only"]
 }
