@@ -19,28 +19,25 @@
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "common/libs/utils/tee_logging.h"
+#include "host/libs/config/logging.h"
 
 DEFINE_int32(
     server_fd, -1,
     "File descriptor to an already created vsock server. Must be specified.");
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cvd::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  CHECK(vsoc::CuttlefishConfig::Get()) << "Could not open config";
+  auto device_config = cvd::DeviceConfig::Get();
+
+  CHECK(device_config) << "Could not open device config";
 
   cvd::SharedFD server_fd = cvd::SharedFD::Dup(FLAGS_server_fd);
 
   CHECK(server_fd->IsOpen()) << "Inheriting logcat server: "
                              << server_fd->StrError();
-
-  auto device_config = cvd::DeviceConfig::Get();
-  if (!device_config) {
-    LOG(ERROR) << "Failed to obtain device configuration";
-    return -1;
-  }
 
   // Server loop
   while (true) {
