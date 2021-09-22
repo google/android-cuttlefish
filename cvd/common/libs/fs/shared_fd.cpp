@@ -32,9 +32,8 @@
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
-namespace cuttlefish {
-
 namespace {
+using cvd::SharedFDSet;
 
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
@@ -85,6 +84,8 @@ int memfd_create_wrapper(const char* name, unsigned int flags) {
 
 }  // namespace
 
+namespace cvd {
+
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   std::vector<char> buffer(8192);
   while (length > 0) {
@@ -120,52 +121,6 @@ void FileInstance::Close() {
     }
   }
   fd_ = -1;
-}
-
-int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
-                                     socklen_t addrlen,
-                                     struct timeval* timeout) {
-  int original_flags = Fcntl(F_GETFL, 0);
-  if (original_flags == -1) {
-    LOG(ERROR) << "Could not get current file descriptor flags: " << StrError();
-    return -1;
-  }
-  if (Fcntl(F_SETFL, original_flags | O_NONBLOCK) == -1) {
-    LOG(ERROR) << "Failed to set O_NONBLOCK: " << StrError();
-    return -1;
-  }
-  Connect(addr, addrlen);  // This will return immediately because of O_NONBLOCK
-
-  fd_set fdset;
-  FD_ZERO(&fdset);
-  FD_SET(fd_, &fdset);
-
-  int select_res = select(fd_ + 1, nullptr, &fdset, nullptr, timeout);
-
-  if (Fcntl(F_SETFL, original_flags) == -1) {
-    LOG(ERROR) << "Failed to restore original flags: " << StrError();
-    return -1;
-  }
-
-  if (select_res != 1) {
-    LOG(ERROR) << "Did not connect within the timeout";
-    return -1;
-  }
-
-  int so_error;
-  socklen_t len = sizeof(so_error);
-  if (GetSockOpt(SOL_SOCKET, SO_ERROR, &so_error, &len) == -1) {
-    LOG(ERROR) << "Failed to get socket options: " << StrError();
-    return -1;
-  }
-
-  if (so_error != 0) {
-    LOG(ERROR) << "Failure in opening socket: " << so_error;
-    errno_ = so_error;
-    return -1;
-  }
-  errno_ = 0;
-  return 0;
 }
 
 bool FileInstance::IsSet(fd_set* in) const {
@@ -319,26 +274,12 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   }
 }
 
-SharedFD SharedFD::Mkstemp(std::string* path) {
-  int fd = mkstemp(path->data());
-  if (fd == -1) {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
 SharedFD SharedFD::ErrorFD(int error) {
   return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(-1, error)));
 }
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type) {
-  return SocketLocalClient(name, abstract, in_type, 0);
-}
-
-SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
-                                     int in_type, int timeout_seconds) {
   struct sockaddr_un addr;
   socklen_t addrlen;
   MakeAddress(name.c_str(), abstract, &addr, &addrlen);
@@ -346,9 +287,7 @@ SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  struct timeval timeout = {timeout_seconds, 0};
-  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (rval->ConnectWithTimeout(casted_addr, addrlen, &timeout) == -1) {
+  if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
@@ -358,7 +297,7 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if (!rval->IsOpen()) {
     return rval;
@@ -375,7 +314,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if(!rval->IsOpen()) {
     return rval;
@@ -389,7 +328,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD::ErrorFD(rval->GetErrno());
   }
-  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
+  if (type == SOCK_STREAM) {
     if (rval->Listen(4) < 0) {
       LOG(ERROR) << "Listen failed " << rval->StrError();
       return SharedFD::ErrorFD(rval->GetErrno());
@@ -424,10 +363,9 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 
   /* Only the bottom bits are really the socket type; there are flags too. */
   constexpr int SOCK_TYPE_MASK = 0xf;
-  auto socket_type = in_type & SOCK_TYPE_MASK;
 
   // Connection oriented sockets: start listening.
-  if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
+  if ((in_type & SOCK_TYPE_MASK) == SOCK_STREAM) {
     // Follows the default from socket_local_server
     if (rval->Listen(1) == -1) {
       LOG(ERROR) << "Listen failed: " << rval->StrError();
@@ -444,25 +382,23 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
   return rval;
 }
 
-SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
-  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
+SharedFD SharedFD::VsockServer(unsigned int port, int type) {
+  auto vsock = cvd::SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
   }
   sockaddr_vm addr{};
   addr.svm_family = AF_VSOCK;
   addr.svm_port = port;
-  addr.svm_cid = cid;
+  addr.svm_cid = VMADDR_CID_ANY;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
   if (vsock->Bind(casted_addr, sizeof(addr)) == -1) {
-    LOG(ERROR) << "Port " << port << " Bind failed (" << vsock->StrError()
-               << ")";
+    LOG(ERROR) << "Bind failed (" << vsock->StrError() << ")";
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
-  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
+  if (type == SOCK_STREAM) {
     if (vsock->Listen(4) < 0) {
-      LOG(ERROR) << "Port" << port << " Listen failed (" << vsock->StrError()
-                 << ")";
+      LOG(ERROR) << "Listen failed (" << vsock->StrError() << ")";
       return SharedFD::ErrorFD(vsock->GetErrno());
     }
   }
@@ -474,7 +410,7 @@ SharedFD SharedFD::VsockServer(int type) {
 }
 
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
-  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
+  auto vsock = cvd::SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
   }
@@ -489,253 +425,4 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   return vsock;
 }
 
-SharedFD WeakFD::lock() const {
-  auto locked_file_instance = value_.lock();
-  if (locked_file_instance) {
-    return SharedFD(locked_file_instance);
-  }
-  return SharedFD();
-}
-
-ScopedMMap::ScopedMMap(void* ptr, size_t len) : ptr_(ptr), len_(len) {}
-
-ScopedMMap::ScopedMMap() : ptr_(MAP_FAILED), len_(0) {}
-
-ScopedMMap::ScopedMMap(ScopedMMap&& other)
-    : ptr_(other.ptr_), len_(other.len_) {
-  other.ptr_ = MAP_FAILED;
-  other.len_ = 0;
-}
-
-ScopedMMap::~ScopedMMap() {
-  if (ptr_ != MAP_FAILED) {
-    munmap(ptr_, len_);
-  }
-}
-
-/* static */ std::shared_ptr<FileInstance> FileInstance::ClosedInstance() {
-  return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
-}
-
-int FileInstance::Bind(const struct sockaddr* addr, socklen_t addrlen) {
-  errno = 0;
-  int rval = bind(fd_, addr, addrlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Connect(const struct sockaddr* addr, socklen_t addrlen) {
-  errno = 0;
-  int rval = connect(fd_, addr, addrlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::UNMANAGED_Dup() {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(dup(fd_));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::UNMANAGED_Dup2(int newfd) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(dup2(fd_, newfd));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Fcntl(int command, int value) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
-  if (rval == -1) {
-    errno_ = errno;
-  }
-  return rval;
-}
-
-unsigned int FileInstance::VsockServerPort() {
-  struct sockaddr_vm vm_socket;
-  socklen_t length = sizeof(vm_socket);
-  GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
-  return vm_socket.svm_port;
-}
-
-int FileInstance::Ioctl(int request, void* val) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::LinkAtCwd(const std::string& path) {
-  std::string name = "/proc/self/fd/";
-  name += std::to_string(fd_);
-  errno = 0;
-  int rval =
-      linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Listen(int backlog) {
-  errno = 0;
-  int rval = listen(fd_, backlog);
-  errno_ = errno;
-  return rval;
-}
-
-off_t FileInstance::LSeek(off_t offset, int whence) {
-  errno = 0;
-  off_t rval = TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Recv(void* buf, size_t len, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::RecvMsg(struct msghdr* msg, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Read(void* buf, size_t count) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(read(fd_, buf, count));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::EventfdRead(eventfd_t* value) {
-  errno = 0;
-  auto rval = eventfd_read(fd_, value);
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Send(const void* buf, size_t len, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::SendMsg(const struct msghdr* msg, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Shutdown(int how) {
-  errno = 0;
-  int rval = shutdown(fd_, how);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::SetSockOpt(int level, int optname, const void* optval,
-                             socklen_t optlen) {
-  errno = 0;
-  int rval = setsockopt(fd_, level, optname, optval, optlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::GetSockOpt(int level, int optname, void* optval,
-                             socklen_t* optlen) {
-  errno = 0;
-  int rval = getsockopt(fd_, level, optname, optval, optlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::SetTerminalRaw() {
-  errno = 0;
-  termios terminal_settings;
-  int rval = tcgetattr(fd_, &terminal_settings);
-  errno_ = errno;
-  if (rval < 0) {
-    return rval;
-  }
-  cfmakeraw(&terminal_settings);
-  rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
-  errno_ = errno;
-  return rval;
-}
-
-std::string FileInstance::StrError() const {
-  errno = 0;
-  return std::string(strerror(errno_));
-}
-
-ScopedMMap FileInstance::MMap(void* addr, size_t length, int prot, int flags,
-                              off_t offset) {
-  errno = 0;
-  auto ptr = mmap(addr, length, prot, flags, fd_, offset);
-  errno_ = errno;
-  return ScopedMMap(ptr, length);
-}
-
-ssize_t FileInstance::Truncate(off_t length) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Write(const void* buf, size_t count) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::EventfdWrite(eventfd_t value) {
-  errno = 0;
-  int rval = eventfd_write(fd_, value);
-  errno_ = errno;
-  return rval;
-}
-
-bool FileInstance::IsATTY() {
-  errno = 0;
-  int rval = isatty(fd_);
-  errno_ = errno;
-  return rval;
-}
-
-FileInstance::FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
-  // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
-  // flag
-  TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
-  std::stringstream identity;
-  identity << "fd=" << fd << " @" << this;
-  identity_ = identity.str();
-}
-
-FileInstance* FileInstance::Accept(struct sockaddr* addr,
-                                   socklen_t* addrlen) const {
-  int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
-  if (fd == -1) {
-    return new FileInstance(fd, errno);
-  } else {
-    return new FileInstance(fd, 0);
-  }
-}
-
-}  // namespace cuttlefish
+}  // namespace cvd
