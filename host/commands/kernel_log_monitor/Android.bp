@@ -19,9 +19,6 @@ cc_binary_host {
         "main.cc",
         "kernel_log_server.cc",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
