@@ -32,8 +32,9 @@
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
+namespace cuttlefish {
+
 namespace {
-using cvd::SharedFDSet;
 
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
@@ -84,8 +85,6 @@ int memfd_create_wrapper(const char* name, unsigned int flags) {
 
 }  // namespace
 
-namespace cvd {
-
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   std::vector<char> buffer(8192);
   while (length > 0) {
@@ -121,6 +120,52 @@ void FileInstance::Close() {
     }
   }
   fd_ = -1;
+}
+
+int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
+                                     socklen_t addrlen,
+                                     struct timeval* timeout) {
+  int original_flags = Fcntl(F_GETFL, 0);
+  if (original_flags == -1) {
+    LOG(ERROR) << "Could not get current file descriptor flags: " << StrError();
+    return -1;
+  }
+  if (Fcntl(F_SETFL, original_flags | O_NONBLOCK) == -1) {
+    LOG(ERROR) << "Failed to set O_NONBLOCK: " << StrError();
+    return -1;
+  }
+  Connect(addr, addrlen);  // This will return immediately because of O_NONBLOCK
+
+  fd_set fdset;
+  FD_ZERO(&fdset);
+  FD_SET(fd_, &fdset);
+
+  int select_res = select(fd_ + 1, nullptr, &fdset, nullptr, timeout);
+
+  if (Fcntl(F_SETFL, original_flags) == -1) {
+    LOG(ERROR) << "Failed to restore original flags: " << StrError();
+    return -1;
+  }
+
+  if (select_res != 1) {
+    LOG(ERROR) << "Did not connect within the timeout";
+    return -1;
+  }
+
+  int so_error;
+  socklen_t len = sizeof(so_error);
+  if (GetSockOpt(SOL_SOCKET, SO_ERROR, &so_error, &len) == -1) {
+    LOG(ERROR) << "Failed to get socket options: " << StrError();
+    return -1;
+  }
+
+  if (so_error != 0) {
+    LOG(ERROR) << "Failure in opening socket: " << so_error;
+    errno_ = so_error;
+    return -1;
+  }
+  errno_ = 0;
+  return 0;
 }
 
 bool FileInstance::IsSet(fd_set* in) const {
@@ -274,12 +319,26 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   }
 }
 
+SharedFD SharedFD::Mkstemp(std::string* path) {
+  int fd = mkstemp(path->data());
+  if (fd == -1) {
+    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
+  } else {
+    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  }
+}
+
 SharedFD SharedFD::ErrorFD(int error) {
   return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(-1, error)));
 }
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type) {
+  return SocketLocalClient(name, abstract, in_type, 0);
+}
+
+SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
+                                     int in_type, int timeout_seconds) {
   struct sockaddr_un addr;
   socklen_t addrlen;
   MakeAddress(name.c_str(), abstract, &addr, &addrlen);
@@ -287,7 +346,9 @@ SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
+  struct timeval timeout = {timeout_seconds, 0};
+  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
+  if (rval->ConnectWithTimeout(casted_addr, addrlen, &timeout) == -1) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
@@ -297,7 +358,7 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if (!rval->IsOpen()) {
     return rval;
@@ -314,7 +375,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if(!rval->IsOpen()) {
     return rval;
@@ -328,7 +389,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD::ErrorFD(rval->GetErrno());
   }
-  if (type == SOCK_STREAM) {
+  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     if (rval->Listen(4) < 0) {
       LOG(ERROR) << "Listen failed " << rval->StrError();
       return SharedFD::ErrorFD(rval->GetErrno());
@@ -363,9 +424,10 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 
   /* Only the bottom bits are really the socket type; there are flags too. */
   constexpr int SOCK_TYPE_MASK = 0xf;
+  auto socket_type = in_type & SOCK_TYPE_MASK;
 
   // Connection oriented sockets: start listening.
-  if ((in_type & SOCK_TYPE_MASK) == SOCK_STREAM) {
+  if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     // Follows the default from socket_local_server
     if (rval->Listen(1) == -1) {
       LOG(ERROR) << "Listen failed: " << rval->StrError();
@@ -383,7 +445,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 }
 
 SharedFD SharedFD::VsockServer(unsigned int port, int type) {
-  auto vsock = cvd::SharedFD::Socket(AF_VSOCK, type, 0);
+  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
   }
@@ -396,7 +458,7 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type) {
     LOG(ERROR) << "Bind failed (" << vsock->StrError() << ")";
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
-  if (type == SOCK_STREAM) {
+  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     if (vsock->Listen(4) < 0) {
       LOG(ERROR) << "Listen failed (" << vsock->StrError() << ")";
       return SharedFD::ErrorFD(vsock->GetErrno());
@@ -410,7 +472,7 @@ SharedFD SharedFD::VsockServer(int type) {
 }
 
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
-  auto vsock = cvd::SharedFD::Socket(AF_VSOCK, type, 0);
+  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
   }
@@ -425,4 +487,28 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   return vsock;
 }
 
-}  // namespace cvd
+SharedFD WeakFD::lock() const {
+  auto locked_file_instance = value_.lock();
+  if (locked_file_instance) {
+    return SharedFD(locked_file_instance);
+  }
+  return SharedFD();
+}
+
+ScopedMMap::ScopedMMap(void* ptr, size_t len) : ptr_(ptr), len_(len) {}
+
+ScopedMMap::ScopedMMap() : ptr_(MAP_FAILED), len_(0) {}
+
+ScopedMMap::ScopedMMap(ScopedMMap&& other)
+    : ptr_(other.ptr_), len_(other.len_) {
+  other.ptr_ = MAP_FAILED;
+  other.len_ = 0;
+}
+
+ScopedMMap::~ScopedMMap() {
+  if (ptr_ != MAP_FAILED) {
+    munmap(ptr_, len_);
+  }
+}
+
+}  // namespace cuttlefish

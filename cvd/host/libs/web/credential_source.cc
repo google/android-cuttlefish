@@ -17,6 +17,7 @@
 
 #include <android-base/logging.h>
 
+namespace cuttlefish {
 namespace {
 
 std::chrono::steady_clock::duration REFRESH_WINDOW =
@@ -24,7 +25,7 @@ std::chrono::steady_clock::duration REFRESH_WINDOW =
 std::string REFRESH_URL = "http://metadata.google.internal/computeMetadata/"
     "v1/instance/service-accounts/default/token";
 
-}
+} // namespace
 
 GceMetadataCredentialSource::GceMetadataCredentialSource() {
   latest_credential = "";
@@ -72,3 +73,5 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::make(
     const std::string& credential) {
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
+
+} // namespace cuttlefish
