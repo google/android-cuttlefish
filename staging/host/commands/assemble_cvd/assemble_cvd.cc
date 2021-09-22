@@ -196,7 +196,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Failed to obtain config singleton";
 
-  CreateDynamicDiskFiles(fetcher_config, config);
+  CreateDynamicDiskFiles(fetcher_config, *config);
 
   return config;
 }

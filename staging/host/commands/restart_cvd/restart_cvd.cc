@@ -44,7 +44,6 @@
 #include "common/libs/utils/environment.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/vm_manager.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to restart");

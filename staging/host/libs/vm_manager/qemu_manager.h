@@ -31,7 +31,7 @@ class QemuManager : public VmManager {
  public:
   static std::string name() { return "qemu_cli"; }
 
-  QemuManager(Arch arch) : VmManager(arch) {}
+  QemuManager(Arch);
   virtual ~QemuManager() = default;
 
   bool IsSupported() override;
@@ -40,6 +40,9 @@ class QemuManager : public VmManager {
 
   std::vector<cuttlefish::Command> StartCommands(
       const CuttlefishConfig& config) override;
+
+ private:
+  Arch arch_;
 };
 
 } // namespace vm_manager

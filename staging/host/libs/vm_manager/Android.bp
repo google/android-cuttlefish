@@ -55,6 +55,7 @@ cc_library_static {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
+        "libfruit",
         "libjsoncpp",
     ],
     static_libs: [

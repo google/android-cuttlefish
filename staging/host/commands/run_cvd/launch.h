@@ -16,6 +16,7 @@
 #pragma once
 
 #include <fruit/fruit.h>
+
 #include <string>
 #include <vector>
 
@@ -26,10 +27,11 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/kernel_log_pipe_provider.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
+fruit::Component<fruit::Required<const CuttlefishConfig, vm_manager::VmManager,
                                  const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
 launchComponent();
