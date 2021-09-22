@@ -23,6 +23,7 @@ cc_library {
         "files.cpp",
         "users.cpp",
         "network.cpp",
+        "tee_logging.cpp",
     ],
     shared: {
         shared_libs: [
