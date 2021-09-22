@@ -79,15 +79,15 @@ std::string Archive::ExtractToMemory(const std::string& path) {
   bsdtar_cmd.AddParameter(file);
   bsdtar_cmd.AddParameter("-O");
   bsdtar_cmd.AddParameter(path);
-  std::string stdout_str;
-  auto ret =
-      RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, &stdout_str, nullptr);
+  std::string stdout, stderr;
+  auto ret = RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, &stdout,
+                                 nullptr);
   if (ret != 0) {
     LOG(ERROR) << "Could not extract \"" << path << "\" from \"" << file
                << "\" to memory.";
     return "";
   }
-  return stdout_str;
+  return stdout;
 }
 
 } // namespace cuttlefish
