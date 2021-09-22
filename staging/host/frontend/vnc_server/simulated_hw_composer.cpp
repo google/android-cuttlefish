@@ -167,7 +167,3 @@ void SimulatedHWComposer::MakeStripes() {
 }
 
 int SimulatedHWComposer::NumberOfStripes() { return kNumStripes; }
-
-void SimulatedHWComposer::ReportClientsConnected() {
-  screen_connector_.ReportClientsConnected(true);
-}

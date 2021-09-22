@@ -26,10 +26,7 @@ namespace cuttlefish {
 class WaylandScreenConnector {
  public:
   WaylandScreenConnector(int frames_fd);
-
   void SetFrameCallback(GenerateProcessedFrameCallbackImpl frame_callback);
-  void ReportClientsConnected(bool /*have_clients*/) { /* ignore */
-  }
 
  private:
   std::unique_ptr<wayland::WaylandServer> server_;
