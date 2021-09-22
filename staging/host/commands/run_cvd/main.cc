@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <fruit/fruit.h>
+#include <gflags/gflags.h>
 #include <unistd.h>
+
 #include <fstream>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -45,6 +45,7 @@
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/custom_actions.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
@@ -116,7 +117,8 @@ fruit::Component<ServerLoop> runCvdComponent(
       .install(launchModemComponent)
       .install(launchStreamerComponent)
       .install(serverLoopComponent)
-      .install(validationComponent);
+      .install(validationComponent)
+      .install(vm_manager::VmManagerComponent);
 }
 
 bool IsStdinValid() {
