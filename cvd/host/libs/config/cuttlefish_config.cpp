@@ -130,6 +130,8 @@ const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
 const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
 const char* kVehicleHalServerPort = "vehicle_hal_server_port";
 
+const char* kAudioControlServerPort = "audiocontrol_server_port";
+
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
@@ -586,6 +588,14 @@ int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
   (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::audiocontrol_server_port() const {
+  return (*Dictionary())[kAudioControlServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_audiocontrol_server_port(int audiocontrol_server_port) {
+  (*Dictionary())[kAudioControlServerPort] = audiocontrol_server_port;
 }
 
 void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
