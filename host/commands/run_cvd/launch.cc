@@ -395,6 +395,8 @@ class GnssGrpcProxyServer : public CommandSource {
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
         instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("locationhvc_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
     };
     for (const auto& path : fifo_paths) {
       unlink(path.c_str());

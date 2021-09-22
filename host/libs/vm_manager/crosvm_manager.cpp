@@ -310,8 +310,13 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcReadWrite(
         instance.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
         instance.PerInstanceInternalPath("gnsshvc_fifo_vm.in"));
+    crosvm_cmd.AddHvcReadWrite(
+        instance.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
+        instance.PerInstanceInternalPath("locationhvc_fifo_vm.in"));
   } else {
-    crosvm_cmd.AddHvcSink();
+    for (auto i = 0; i < 2; i++) {
+      crosvm_cmd.AddHvcSink();
+    }
   }
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
