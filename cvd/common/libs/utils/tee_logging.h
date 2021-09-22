@@ -22,14 +22,20 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 android::base::LogSeverity ConsoleSeverity();
 android::base::LogSeverity LogFileSeverity();
 
+enum class MetadataLevel {
+  FULL,
+  ONLY_MESSAGE,
+};
+
 struct SeverityTarget {
   android::base::LogSeverity severity;
-  cvd::SharedFD target;
+  SharedFD target;
+  MetadataLevel metadata_level;
 };
 
 class TeeLogger {
@@ -51,4 +57,4 @@ public:
 TeeLogger LogToFiles(const std::vector<std::string>& files);
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files);
 
-} // namespace cvd
+} // namespace cuttlefish
