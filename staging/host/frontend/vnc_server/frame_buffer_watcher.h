@@ -40,8 +40,6 @@ class FrameBufferWatcher {
 
   StripePtrVec StripesNewerThan(ScreenOrientation orientation,
                                 const SeqNumberVec& seq_num) const;
-  void IncClientCount();
-  void DecClientCount();
 
   static int StripesPerFrame();
 

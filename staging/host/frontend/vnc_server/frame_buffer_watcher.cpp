@@ -190,11 +190,3 @@ void FrameBufferWatcher::Worker() {
 int FrameBufferWatcher::StripesPerFrame() {
   return SimulatedHWComposer::NumberOfStripes();
 }
-
-void FrameBufferWatcher::IncClientCount() {
-  hwcomposer.ReportClientsConnected();
-}
-
-void FrameBufferWatcher::DecClientCount() {
-  // Do nothing
-}

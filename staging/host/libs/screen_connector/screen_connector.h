@@ -160,13 +160,6 @@ class ScreenConnector : public ScreenConnectorInfo,
     return true;
   }
 
-  // Let the screen connector know when there are clients connected
-  void ReportClientsConnected(bool have_clients) {
-    // screen connector implementation must implement ReportClientsConnected
-    sc_android_src_->ReportClientsConnected(have_clients);
-    return ;
-  }
-
  protected:
   ScreenConnector(std::unique_ptr<WaylandScreenConnector>&& impl,
                   HostModeCtrl& host_mode_ctrl)
