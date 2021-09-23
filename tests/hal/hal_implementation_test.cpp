@@ -133,8 +133,14 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // This version needs to be implemented (b/190236358)
     {"android.hardware.vibrator.", 2},
 
-    // This version needs to be implemented (b/198331776)
+    // These versions need to be implemented (b/198331776)
     {"android.hardware.radio.", 1},
+    {"android.hardware.radio.data.", 1},
+    {"android.hardware.radio.messaging.", 1},
+    {"android.hardware.radio.modem.", 1},
+    {"android.hardware.radio.network.", 1},
+    {"android.hardware.radio.sim.", 1},
+    {"android.hardware.radio.voice.", 1},
 
     // This version needs to be implemented (b/198331886)
     {"android.hardware.radio.config.", 1},
