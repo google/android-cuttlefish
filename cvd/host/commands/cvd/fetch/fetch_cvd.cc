@@ -79,9 +79,9 @@ std::string TargetBuildZipFromArtifacts(
     const std::vector<Artifact>& artifacts) {
   std::string product = std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  auto match = product + "-" + name + "-" + id;
+  auto match = product + "-" + name + "-" + id + ".zip";
   for (const auto& artifact : artifacts) {
-    if (artifact.Name().find(match) != std::string::npos) {
+    if (artifact.Name() == match) {
       return artifact.Name();
     }
   }
