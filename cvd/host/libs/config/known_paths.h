@@ -31,7 +31,6 @@ std::string RootCanalBinary();
 std::string SocketVsockProxyBinary();
 std::string TombstoneReceiverBinary();
 std::string VehicleHalGrpcServerBinary();
-std::string VncServerBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string WmediumdBinary();
