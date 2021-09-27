@@ -812,6 +812,9 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_start_wmediumd(false);
     }
 
+    instance.set_start_ap(!FLAGS_ap_rootfs_image.empty() &&
+                          !FLAGS_ap_kernel_image.empty() && is_first_instance);
+
     is_first_instance = false;
 
     // instance.modem_simulator_ports := "" or "[port,]*port"
