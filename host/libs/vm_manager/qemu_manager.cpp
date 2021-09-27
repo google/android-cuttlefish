@@ -240,6 +240,8 @@ std::vector<Command> QemuManager::StartCommands(
         << instance.access_kregistry_path() <<  " file size ("
         << access_kregistry_size_bytes << ") not a multiple of 1MB";
   }
+  // TODO(162770965) Re-enable once QEMU on GCE supports virtio pci pmem devices
+  access_kregistry_size_bytes = 0;
 
   auto pstore_size_bytes = 0;
   if (FileExists(instance.pstore_path())) {
@@ -409,7 +411,7 @@ std::vector<Command> QemuManager::StartCommands(
 
   // QEMU does not implement virtio-pmem-pci for ARM64 yet; restore this
   // when the device has been added
-  if (!is_arm && FileExists(instance.access_kregistry_path())) {
+  if (!is_arm && access_kregistry_size_bytes > 0) {
     qemu_cmd.AddParameter("-object");
     qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share,mem-path=",
                           instance.access_kregistry_path(), ",size=",
