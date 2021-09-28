@@ -23,6 +23,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/reporting.h"
@@ -30,6 +31,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/vm_manager/crosvm_builder.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
@@ -702,6 +704,76 @@ class VmmCommands : public CommandSource {
   VmManager& vmm_;
 };
 
+class OpenWrt : public CommandSource {
+ public:
+  INJECT(OpenWrt(const CuttlefishConfig& config,
+                 const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // CommandSource
+  std::vector<Command> Commands() override {
+    constexpr auto crosvm_for_ap_socket = "crosvm_for_ap_control.sock";
+
+    CrosvmBuilder ap_cmd;
+    ap_cmd.SetBinary(config_.crosvm_binary());
+    ap_cmd.AddControlSocket(
+        instance_.PerInstanceInternalPath(crosvm_for_ap_socket));
+
+    if (!config_.vhost_user_mac80211_hwsim().empty()) {
+      ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
+                                config_.vhost_user_mac80211_hwsim());
+    }
+    SharedFD wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
+    // Only run the leases workaround if we are not using the new network
+    // bridge architecture - in that case, we have a wider DHCP address
+    // space and stale leases should be much less of an issue
+    if (!FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases") &&
+        wifi_tap->IsOpen()) {
+      // TODO(schuffelen): QEMU also needs this and this is not the best place
+      // for this code. Find a better place to put it.
+      auto lease_file =
+          ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-") +
+          ".leases";
+      std::uint8_t dhcp_server_ip[] = {
+          192, 168, 96, (std::uint8_t)(ForCurrentInstance(1) * 4 - 3)};
+      if (!ReleaseDhcpLeases(lease_file, wifi_tap, dhcp_server_ip)) {
+        LOG(ERROR)
+            << "Failed to release wifi DHCP leases. Connecting to the wifi "
+            << "network may not work.";
+      }
+    }
+    if (config_.enable_sandbox()) {
+      ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
+                                config_.seccomp_policy_dir());
+    } else {
+      ap_cmd.Cmd().AddParameter("--disable-sandbox");
+    }
+
+    ap_cmd.Cmd().AddParameter("--root=", config_.ap_rootfs_image());
+    ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
+
+    return single_element_emplace(std::move(ap_cmd.Cmd()));
+  }
+
+  // Feature
+  bool Enabled() const override {
+#ifdef ENFORCE_MAC80211_HWSIM
+    return false;
+#else
+    return instance_.start_ap();
+#endif
+  }
+  std::string Name() const override { return "OpenWrt"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override { return true; }
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
 using PublicDeps = fruit::Required<const CuttlefishConfig, VmManager,
                                    const CuttlefishConfig::InstanceSpecific>;
 fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
@@ -724,7 +796,8 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(Bases::Impls<TombstoneReceiver>)
       .install(Bases::Impls<VehicleHalServer>)
       .install(Bases::Impls<VmmCommands>)
-      .install(Bases::Impls<WmediumdServer>);
+      .install(Bases::Impls<WmediumdServer>)
+      .install(Bases::Impls<OpenWrt>);
 }
 
 } // namespace cuttlefish
