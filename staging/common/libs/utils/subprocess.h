@@ -15,6 +15,9 @@
  */
 #pragma once
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <common/libs/fs/shared_fd.h>
 #include <sys/types.h>
 
 #include <functional>
@@ -23,10 +26,6 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include <android-base/logging.h>
-
-#include <common/libs/fs/shared_fd.h>
 
 namespace cuttlefish {
 
@@ -200,6 +199,12 @@ class Command {
     // be at index 0 on the vector
     return command_[0];
   }
+
+  // Generates the contents for a bash script that can be used to run this
+  // command. Note that this command must not require any file descriptors
+  // or stdio redirects as those would not be available when the bash script
+  // is run.
+  std::string AsBashScript(const std::string& redirected_stdio_path = "") const;
 
  private:
   std::vector<std::string> command_;
