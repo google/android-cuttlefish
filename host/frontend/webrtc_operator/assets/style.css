@@ -61,6 +61,9 @@ body {
 #camera-control {
   display: none !important;
 }
+#record-video-control {
+  display: none !important;
+}
 
 #app-controls {
   margin-left: 10px;
