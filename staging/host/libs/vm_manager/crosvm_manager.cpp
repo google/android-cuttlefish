@@ -46,26 +46,6 @@ std::string GetControlSocketPath(
   return instance.PerInstanceInternalPath(socket_name.c_str());
 }
 
-bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd) {
-  auto lease_file_fd = SharedFD::Open(lease_path, O_RDONLY);
-  if (!lease_file_fd->IsOpen()) {
-    LOG(ERROR) << "Could not open leases file \"" << lease_path << '"';
-    return false;
-  }
-  bool success = true;
-  auto dhcp_leases = ParseDnsmasqLeases(lease_file_fd);
-  for (auto& lease : dhcp_leases) {
-    std::uint8_t dhcp_server_ip[] = {192, 168, 96, (std::uint8_t) (ForCurrentInstance(1) * 4 - 3)};
-    if (!ReleaseDhcp4(tap_fd, lease.mac_address, lease.ip_address, dhcp_server_ip)) {
-      LOG(ERROR) << "Failed to release " << lease;
-      success = false;
-    } else {
-      LOG(INFO) << "Successfully dropped " << lease;
-    }
-  }
-  return success;
-}
-
 }  // namespace
 
 bool CrosvmManager::IsSupported() {
@@ -126,7 +106,6 @@ std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
 }
 
 constexpr auto crosvm_socket = "crosvm_control.sock";
-constexpr auto crosvm_for_ap_socket = "crosvm_for_ap_control.sock";
 
 std::vector<Command> CrosvmManager::StartCommands(
     const CuttlefishConfig& config) {
@@ -134,13 +113,6 @@ std::vector<Command> CrosvmManager::StartCommands(
   CrosvmBuilder crosvm_cmd;
   crosvm_cmd.SetBinary(config.crosvm_binary());
   crosvm_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_socket));
-
-  bool use_ap_instance =
-      !config.ap_rootfs_image().empty() && !config.ap_kernel_image().empty();
-
-  CrosvmBuilder ap_cmd;
-  ap_cmd.SetBinary(config.crosvm_binary());
-  ap_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_for_ap_socket));
 
   if (!config.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");
@@ -153,8 +125,6 @@ std::vector<Command> CrosvmManager::StartCommands(
   if (!config.vhost_user_mac80211_hwsim().empty()) {
     crosvm_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
                                   config.vhost_user_mac80211_hwsim());
-    ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
-                              config.vhost_user_mac80211_hwsim());
   }
 
   if (config.protected_vm()) {
@@ -225,11 +195,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   SharedFD wifi_tap;
   // TODO(b/199103204): remove this as well when PRODUCT_ENFORCE_MAC80211_HWSIM
   // is removed
-#ifdef ENFORCE_MAC80211_HWSIM
-  if (use_ap_instance) {
-    wifi_tap = ap_cmd.AddTap(instance.wifi_tap_name());
-  }
-#else
+#ifndef ENFORCE_MAC80211_HWSIM
   wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
 #endif
 
@@ -255,11 +221,8 @@ std::vector<Command> CrosvmManager::StartCommands(
     }
     crosvm_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
                                   config.seccomp_policy_dir());
-    ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
-                              config.seccomp_policy_dir());
   } else {
     crosvm_cmd.Cmd().AddParameter("--disable-sandbox");
-    ap_cmd.Cmd().AddParameter("--disable-sandbox");
   }
 
   if (instance.vsock_guest_cid() >= 2) {
@@ -368,6 +331,8 @@ std::vector<Command> CrosvmManager::StartCommands(
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", config.bootloader());
 
+  // TODO(b/199103204): remove this as well when PRODUCT_ENFORCE_MAC80211_HWSIM
+  // is removed
   // Only run the leases workaround if we are not using the new network
   // bridge architecture - in that case, we have a wider DHCP address
   // space and stale leases should be much less of an issue
@@ -377,19 +342,17 @@ std::vector<Command> CrosvmManager::StartCommands(
     // this code. Find a better place to put it.
     auto lease_file =
         ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-") + ".leases";
-    if (!ReleaseDhcpLeases(lease_file, wifi_tap)) {
+
+    std::uint8_t dhcp_server_ip[] = {
+        192, 168, 96, (std::uint8_t)(ForCurrentInstance(1) * 4 - 3)};
+    if (!ReleaseDhcpLeases(lease_file, wifi_tap, dhcp_server_ip)) {
       LOG(ERROR) << "Failed to release wifi DHCP leases. Connecting to the wifi "
                  << "network may not work.";
     }
   }
-  ap_cmd.Cmd().AddParameter("--root=", config.ap_rootfs_image());
-  ap_cmd.Cmd().AddParameter(config.ap_kernel_image());
 
   std::vector<Command> ret;
   ret.push_back(std::move(crosvm_cmd.Cmd()));
-  if (use_ap_instance) {
-    ret.push_back(std::move(ap_cmd.Cmd()));
-  }
   ret.push_back(std::move(log_tee_cmd));
   return ret;
 }
