@@ -117,6 +117,11 @@ off_t FileSize(const std::string& path) {
   return st.st_size;
 }
 
+bool MakeFileExecutable(const std::string& path) {
+  LOG(DEBUG) << "Making " << path << " executable";
+  return chmod(path.c_str(), S_IRWXU) == 0;
+}
+
 // TODO(schuffelen): Use std::filesystem::last_write_time when on C++17
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path) {
   struct stat st;
