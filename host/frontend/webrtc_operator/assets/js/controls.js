@@ -39,9 +39,12 @@ function createToggleControl(elm, iconName, onChangeCb) {
     // return a promise of the new position.
     OnClick: cb => input.onchange =
         e => {
-          cb(e.target.checked).then(checked => {
-            e.target.checked = !!checked;
-          });
+          let nextPr = cb(e.target.checked);
+          if (nextPr && 'then' in nextPr) {
+            nextPr.then(checked => {
+              e.target.checked = !!checked;
+            });
+          }
         },
   };
 }
