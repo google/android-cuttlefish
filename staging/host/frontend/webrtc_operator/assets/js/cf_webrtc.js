@@ -302,7 +302,7 @@ class DeviceConnection {
     return this.#useDevice(in_use, this.#micSenders, {audio: true, video: false});
   }
 
-  async useVideo(in_use) {
+  async useCamera(in_use) {
     return this.#useDevice(in_use, this.#micSenders, {audio: false, video: true});
   }
 
