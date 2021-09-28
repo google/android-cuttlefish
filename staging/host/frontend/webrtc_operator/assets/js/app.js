@@ -183,6 +183,7 @@ class DeviceControlApp {
   #currentRotation = 0;
   #displayDescriptions = [];
   #buttons = {};
+  #recording = {};
 
   constructor(deviceConnection) {
     this.#deviceConnection = deviceConnection;
@@ -197,11 +198,14 @@ class DeviceControlApp {
         document.getElementById('mic-capture-control'), 'mic');
     let cameraCtrl = createToggleControl(
         document.getElementById('camera-control'), 'videocam');
+    let videoCaptureCtrl = createToggleControl(
+        document.getElementById('record-video-control'), 'movie_creation');
 
     keyboardCaptureCtrl.OnClick(
         enabled => this.#onKeyboardCaptureToggle(enabled));
     micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
-    cameraCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
+    cameraCtrl.OnClick(enabled => this.#onCameraCaptureToggle(enabled));
+    videoCaptureCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
 
     this.#showDeviceUI();
   }
@@ -899,8 +903,65 @@ class DeviceControlApp {
     return this.#deviceConnection.useMic(enabled);
   }
 
+  #onCameraCaptureToggle(enabled) {
+    return this.#deviceConnection.useCamera(enabled);
+  }
+
+  #getZeroPaddedString(value, desiredLength) {
+    const s = String(value);
+    return '0'.repeat(desiredLength - s.length) + s;
+  }
+
+  #getTimestampString() {
+    const now = new Date();
+    return [
+      now.getFullYear(),
+      this.#getZeroPaddedString(now.getMonth(), 2),
+      this.#getZeroPaddedString(now.getDay(), 2),
+      this.#getZeroPaddedString(now.getHours(), 2),
+      this.#getZeroPaddedString(now.getMinutes(), 2),
+      this.#getZeroPaddedString(now.getSeconds(), 2),
+    ].join('_');
+  }
+
   #onVideoCaptureToggle(enabled) {
-    return this.#deviceConnection.useVideo(enabled);
+    const recordToggle = document.getElementById('record-video-control');
+    if (enabled) {
+      let recorders = [];
+
+      const timestamp = this.#getTimestampString();
+
+      let deviceDisplayVideoList =
+        document.getElementsByClassName('device-display-video');
+      for (let i = 0; i < deviceDisplayVideoList.length; i++) {
+        const deviceDisplayVideo = deviceDisplayVideoList[i];
+
+        const recorder = new MediaRecorder(deviceDisplayVideo.captureStream());
+        const recordedData = [];
+
+        recorder.ondataavailable = event => recordedData.push(event.data);
+        recorder.onstop = event => {
+          const recording = new Blob(recordedData, { type: "video/webm" });
+
+          const downloadLink = document.createElement('a');
+          downloadLink.setAttribute('download', timestamp + '_display_' + i + '.webm');
+          downloadLink.setAttribute('href', URL.createObjectURL(recording));
+          downloadLink.click();
+        };
+
+        recorder.start();
+        recorders.push(recorder);
+      }
+      this.#recording['recorders'] = recorders;
+
+      recordToggle.style.backgroundColor = 'red';
+    } else {
+      for (const recorder of this.#recording['recorders']) {
+        recorder.stop();
+      }
+      recordToggle.style.backgroundColor = '';
+    }
+    return Promise.resolve(enabled);
   }
 
   #onCustomShellButton(shell_command, e) {
