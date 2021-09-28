@@ -16,6 +16,7 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <sys/stat.h>
@@ -136,6 +137,7 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--gdb=", config.gdb_port());
   }
 
+  auto gpu_capture_enabled = !config.gpu_capture_binary().empty();
   auto gpu_mode = config.gpu_mode();
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     crosvm_cmd.Cmd().AddParameter("--gpu=2D");
@@ -189,15 +191,19 @@ std::vector<Command> CrosvmManager::StartCommands(
                                   instance.switches_socket_path());
   }
 
-  crosvm_cmd.AddTap(instance.mobile_tap_name());
-  crosvm_cmd.AddTap(instance.ethernet_tap_name());
-
   SharedFD wifi_tap;
-  // TODO(b/199103204): remove this as well when PRODUCT_ENFORCE_MAC80211_HWSIM
-  // is removed
+  // GPU capture can only support named files and not file descriptors due to
+  // having to pass arguments to crosvm via a wrapper script.
+  if (!gpu_capture_enabled) {
+    crosvm_cmd.AddTap(instance.mobile_tap_name());
+    crosvm_cmd.AddTap(instance.ethernet_tap_name());
+
+    // TODO(b/199103204): remove this as well when
+    // PRODUCT_ENFORCE_MAC80211_HWSIM is removed
 #ifndef ENFORCE_MAC80211_HWSIM
-  wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
+    wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
 #endif
+  }
 
   if (FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
@@ -268,18 +274,17 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcSink();
   }
 
-  SharedFD log_out_rd, log_out_wr;
-  if (!SharedFD::Pipe(&log_out_rd, &log_out_wr)) {
-    LOG(ERROR) << "Failed to create log pipe for crosvm's stdout/stderr: "
-               << log_out_rd->StrError();
+  auto crosvm_logs_path = instance.PerInstanceInternalPath("crosvm.fifo");
+  auto crosvm_logs = SharedFD::Fifo(crosvm_logs_path, 0666);
+  if (!crosvm_logs->IsOpen()) {
+    LOG(FATAL) << "Failed to create log fifo for crosvm's stdout/stderr: "
+               << crosvm_logs->StrError();
     return {};
   }
-  crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut, log_out_wr);
-  crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr, log_out_wr);
 
-  Command log_tee_cmd(HostBinaryPath("log_tee"));
-  log_tee_cmd.AddParameter("--process_name=crosvm");
-  log_tee_cmd.AddParameter("--log_fd_in=", log_out_rd);
+  Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
+  crosvm_log_tee_cmd.AddParameter("--process_name=crosvm");
+  crosvm_log_tee_cmd.AddParameter("--log_fd_in=", crosvm_logs);
 
   // Serial port for logcat, redirected to a pipe
   crosvm_cmd.AddHvcReadOnly(instance.logcat_pipe_name());
@@ -352,8 +357,68 @@ std::vector<Command> CrosvmManager::StartCommands(
   }
 
   std::vector<Command> ret;
-  ret.push_back(std::move(crosvm_cmd.Cmd()));
-  ret.push_back(std::move(log_tee_cmd));
+
+  if (gpu_capture_enabled) {
+    const std::string gpu_capture_basename =
+        cpp_basename(config.gpu_capture_binary());
+
+    auto gpu_capture_logs_path =
+        instance.PerInstanceInternalPath("gpu_capture.fifo");
+    auto gpu_capture_logs = SharedFD::Fifo(gpu_capture_logs_path, 0666);
+    if (!gpu_capture_logs->IsOpen()) {
+      LOG(FATAL)
+          << "Failed to create log fifo for gpu capture's stdout/stderr: "
+          << gpu_capture_logs->StrError();
+      return {};
+    }
+
+    Command gpu_capture_log_tee_cmd(HostBinaryPath("log_tee"));
+    gpu_capture_log_tee_cmd.AddParameter("--process_name=",
+                                         gpu_capture_basename);
+    gpu_capture_log_tee_cmd.AddParameter("--log_fd_in=", gpu_capture_logs);
+
+    Command gpu_capture_command(config.gpu_capture_binary());
+    if (gpu_capture_basename == "ngfx") {
+      // Crosvm depends on command line arguments being passed as multiple
+      // arguments but ngfx only allows a single `--args`. To work around this,
+      // create a wrapper script that launches crosvm with all of the arguments
+      // and pass this wrapper script to ngfx.
+      const std::string crosvm_wrapper_path =
+          instance.PerInstanceInternalPath("crosvm_wrapper.sh");
+      const std::string crosvm_wrapper_content =
+          crosvm_cmd.Cmd().AsBashScript(crosvm_logs_path);
+
+      CHECK(android::base::WriteStringToFile(crosvm_wrapper_content,
+                                             crosvm_wrapper_path));
+      CHECK(MakeFileExecutable(crosvm_wrapper_path));
+
+      gpu_capture_command.AddParameter("--exe=", crosvm_wrapper_path);
+      gpu_capture_command.AddParameter("--launch-detached");
+      gpu_capture_command.AddParameter("--verbose");
+      gpu_capture_command.AddParameter("--activity=Frame Debugger");
+    } else {
+      // TODO(natsu): renderdoc
+      LOG(FATAL) << "Unhandled GPU capture binary: "
+                 << config.gpu_capture_binary();
+    }
+
+    gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                                      gpu_capture_logs);
+    gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+                                      gpu_capture_logs);
+
+    ret.push_back(std::move(gpu_capture_log_tee_cmd));
+    ret.push_back(std::move(gpu_capture_command));
+  } else {
+    crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                                   crosvm_logs);
+    crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+                                   crosvm_logs);
+
+    ret.push_back(std::move(crosvm_cmd.Cmd()));
+  }
+
+  ret.push_back(std::move(crosvm_log_tee_cmd));
   return ret;
 }
 
