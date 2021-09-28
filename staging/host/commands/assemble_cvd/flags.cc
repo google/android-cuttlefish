@@ -95,6 +95,9 @@ DEFINE_string(vm_manager, "",
 DEFINE_string(gpu_mode, cuttlefish::kGpuModeAuto,
               "What gpu configuration to use, one of {auto, drm_virgl, "
               "gfxstream, guest_swiftshader}");
+DEFINE_string(gpu_capture_binary, "",
+              "Path to the GPU capture binary to use when capturing GPU traces"
+              "(ngfx, renderdoc, etc)");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -518,7 +521,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   LOG(DEBUG) << graphics_availability;
 
   tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
-
   if (tmp_config_obj.gpu_mode() != kGpuModeAuto &&
       tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl &&
       tmp_config_obj.gpu_mode() != kGpuModeGfxStream &&
@@ -553,6 +555,19 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
                     "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
     }
   }
+
+  tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
+  tmp_config_obj.set_gpu_capture_binary(FLAGS_gpu_capture_binary);
+  if (!tmp_config_obj.gpu_capture_binary().empty()) {
+    CHECK(tmp_config_obj.gpu_mode() == kGpuModeGfxStream)
+        << "GPU capture only supported with --gpu_mode=gfxstream";
+
+    // GPU capture runs in a detached mode where the "launcher" process
+    // intentionally exits immediately.
+    CHECK(!tmp_config_obj.restart_subprocesses())
+        << "GPU capture only supported with --norestart_subprocesses";
+  }
+
   // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
   // auto-enabling sandbox when gpu is enabled (b/152323505).
   if (tmp_config_obj.gpu_mode() != kGpuModeGuestSwiftshader) {
@@ -626,7 +641,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_enable_adb_websocket(
           FLAGS_webrtc_enable_adb_websocket);
 
-  tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
