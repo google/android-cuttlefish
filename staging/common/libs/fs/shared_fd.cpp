@@ -310,6 +310,21 @@ SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
+SharedFD SharedFD::Fifo(const std::string& path, mode_t mode) {
+  struct stat st;
+  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
+    if (TEMP_FAILURE_RETRY(remove(path.c_str())) != 0) {
+      return ErrorFD(errno);
+    }
+  }
+
+  int fd = TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode));
+  if (fd == -1) {
+    return ErrorFD(errno);
+  }
+  return Open(path, mode);
+}
+
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
   if (fd == -1) {

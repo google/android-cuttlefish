@@ -16,6 +16,7 @@
 
 #include "common/libs/utils/subprocess.h"
 
+#include <android-base/logging.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -28,9 +29,8 @@
 #include <set>
 #include <thread>
 
-#include <android-base/logging.h>
-
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/files.h"
 
 namespace cuttlefish {
 namespace {
@@ -265,6 +265,20 @@ Subprocess Command::Start(SubprocessOptions options) const {
     }
   }
   return Subprocess(pid, subprocess_stopper_);
+}
+
+std::string Command::AsBashScript(
+    const std::string& redirected_stdio_path) const {
+  CHECK(inherited_fds_.empty())
+      << "Bash wrapper will not have inheritied file descriptors.";
+  CHECK(redirects_.empty()) << "Bash wrapper will not have redirected stdio.";
+
+  std::string contents =
+      "#!/bin/bash\n\n" + android::base::Join(command_, " \\\n");
+  if (!redirected_stdio_path.empty()) {
+    contents += " &> " + AbsolutePath(redirected_stdio_path);
+  }
+  return contents;
 }
 
 // A class that waits for threads to exit in its destructor.

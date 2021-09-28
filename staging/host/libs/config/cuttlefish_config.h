@@ -91,6 +91,9 @@ class CuttlefishConfig {
   std::string gpu_mode() const;
   void set_gpu_mode(const std::string& name);
 
+  std::string gpu_capture_binary() const;
+  void set_gpu_capture_binary(const std::string&);
+
   int cpus() const;
   void set_cpus(int cpus);
 

@@ -126,6 +126,7 @@ class SharedFD {
   // Fcntl or Dup functions.
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const std::string& pathname, mode_t mode);
+  static SharedFD Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
