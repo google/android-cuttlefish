@@ -294,4 +294,25 @@ bool ReleaseDhcp4(SharedFD tap, const std::uint8_t mac_address[6],
   return true;
 }
 
+bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd,
+                       const std::uint8_t dhcp_server_ip[4]) {
+  auto lease_file_fd = SharedFD::Open(lease_path, O_RDONLY);
+  if (!lease_file_fd->IsOpen()) {
+    LOG(ERROR) << "Could not open leases file \"" << lease_path << '"';
+    return false;
+  }
+  bool success = true;
+  auto dhcp_leases = ParseDnsmasqLeases(lease_file_fd);
+  for (auto& lease : dhcp_leases) {
+    if (!ReleaseDhcp4(tap_fd, lease.mac_address, lease.ip_address,
+                      dhcp_server_ip)) {
+      LOG(ERROR) << "Failed to release " << lease;
+      success = false;
+    } else {
+      LOG(INFO) << "Successfully dropped " << lease;
+    }
+  }
+  return success;
+}
+
 }  // namespace cuttlefish
