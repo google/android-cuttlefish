@@ -62,6 +62,8 @@ constexpr struct {
     {"init: starting service 'adbd'...", Event::AdbdStarted, kBare},
     {cuttlefish::kScreenChangedMessage, Event::ScreenChanged, kKeyValuePair},
     {cuttlefish::kKernelLoadedMessage, Event::KernelLoaded, kBare},
+    {cuttlefish::kDisplayPowerModeChangedMessage,
+     monitor::Event::DisplayPowerModeChanged, kKeyValuePair},
 };
 
 void ProcessSubscriptions(

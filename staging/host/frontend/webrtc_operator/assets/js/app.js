@@ -513,6 +513,9 @@ class DeviceControlApp {
         this.#takePhoto();
       }
     }
+    if (message_data.event == 'VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED') {
+      this.#updateDisplayVisibility(metadata.display, metadata.mode);
+    }
   }
 
   #updateDeviceStateDetails(lidSwitchOpen, hingeAngle) {
@@ -897,6 +900,24 @@ class DeviceControlApp {
 
     this.#deviceConnection.sendMultiTouch(
         {idArr, xArr, yArr, down: ctx.down, slotArr, display_label});
+  }
+
+  #updateDisplayVisibility(displayId, powerMode) {
+    const display = document.getElementById('display_' + displayId);
+    if (display == null) {
+      console.error('Unknown display id: ' + displayId);
+      return;
+    }
+    switch (powerMode) {
+      case 'On':
+        display.style.visibility = 'visible';
+        break;
+      case 'Off':
+        display.style.visibility = 'hidden';
+        break;
+      default:
+        console.error('Display ' + displayId + ' has unknown display power mode: ' + powerMode);
+    }
   }
 
   #onMicCaptureToggle(enabled) {
