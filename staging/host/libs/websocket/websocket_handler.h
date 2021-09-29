@@ -69,6 +69,7 @@ class WebSocketServer;
 enum class HttpStatusCode : int {
   // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
   Ok = 200,
+  NoContent = 204,
   BadRequest = 400,
   Unauthorized = 401,
   NotFound = 404,
