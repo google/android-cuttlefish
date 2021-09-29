@@ -13,12 +13,6 @@ allow gceservice app_data_file:{ file lnk_file } create_file_perms;
 allow gceservice kmsg_device:chr_file w_file_perms;
 allow gceservice kmsg_device:chr_file getattr;
 
-# Read tombstone snapshot file
-allow gceservice tombstone_snapshot_file:file r_file_perms;
-# List tombstone files
-allow gceservice tombstone_data_file:dir r_dir_perms;
-allow gceservice tombstone_data_file:file getattr;
-
 # Communicate with GCE Metadata Proxy over Unix domain sockets
 # The proxy process uses the default label ("kernel") because it is
 # started before Android init and thus before SELinux rule are applied.
