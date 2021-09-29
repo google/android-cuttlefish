@@ -15,8 +15,10 @@
 
 #pragma once
 
+#include <optional>
+//
 #include <keymaster/soft_key_factory.h>
-
+//
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
@@ -67,10 +69,15 @@ public:
       keymaster::KeymasterKeyBlob* key_material) const;
 
   keymaster_error_t SetSystemVersion(uint32_t os_version, uint32_t os_patchlevel);
-private:
+  keymaster_error_t SetVendorPatchlevel(uint32_t vendor_patchlevel);
+  keymaster_error_t SetBootPatchlevel(uint32_t boot_patchlevel);
+
+ private:
   TpmResourceManager& resource_manager_;
   uint32_t os_version_;
   uint32_t os_patchlevel_;
+  std::optional<uint32_t> vendor_patchlevel_;
+  std::optional<uint32_t> boot_patchlevel_;
 };
 
 }  // namespace cuttlefish
