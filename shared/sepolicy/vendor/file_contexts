@@ -35,16 +35,8 @@
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
 
 #############################
-# Root files
-/ts_snap\.txt  u:object_r:tombstone_snapshot_file:s0
-
-#############################
 # data files
 /data/vendor/mediadrm(/.*)?  u:object_r:mediadrm_vendor_data_file:s0
-
-#############################
-# var files
-/var/run/system(/.*)?  u:object_r:var_run_system_file:s0
 
 #############################
 # sys files
