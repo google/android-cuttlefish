@@ -9,14 +9,20 @@
 
 namespace cuttlefish {
 
-enum class DataImageResult {
-  Error,
-  NoChange,
-  FileUpdated,
+class DataImagePath {
+ public:
+  virtual ~DataImagePath() = default;
+  virtual const std::string& Path() const = 0;
 };
 
-DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
-                                     const std::string& path);
+class InitializeDataImage : public Feature {};
+
+fruit::Component<DataImagePath> FixedDataImagePathComponent(
+    const std::string* path);
+fruit::Component<fruit::Required<const CuttlefishConfig, DataImagePath>,
+                 InitializeDataImage>
+InitializeDataImageComponent();
+
 bool InitializeEspImage(const std::string& esp_image,
                         const std::string& kernel_path,
                         const std::string& initramfs_path);

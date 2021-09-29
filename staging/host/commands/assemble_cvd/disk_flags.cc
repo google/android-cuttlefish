@@ -446,7 +446,9 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       .bindInstance(*fetcher)
       .bindInstance(*config)
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
-      .install(InitializeMiscImageComponent);
+      .install(InitializeMiscImageComponent)
+      .install(FixedDataImagePathComponent, &FLAGS_data_image)
+      .install(InitializeDataImageComponent);
 }
 
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
@@ -464,11 +466,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                              FLAGS_otheros_initramfs_path))
         << "Failed to create esp image";
   }
-
-  // Create data if necessary
-  DataImageResult dataImageResult =
-      ApplyDataImagePolicy(config, FLAGS_data_image);
-  CHECK(dataImageResult != DataImageResult::Error) << "Failed to set up userdata";
 
   if (!FileExists(FLAGS_metadata_image)) {
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
@@ -542,12 +539,10 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   }
 
   bool oldOsCompositeDisk = ShouldCreateOsCompositeDisk(config);
-  bool newDataImage = dataImageResult == DataImageResult::FileUpdated;
   bool osCompositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
       config.AssemblyPath("os_composite_disk_config.txt"),
       os_composite_disk_config());
-  if (!osCompositeMatchesDiskConfig || oldOsCompositeDisk || !FLAGS_resume ||
-      newDataImage) {
+  if (!osCompositeMatchesDiskConfig || oldOsCompositeDisk || !FLAGS_resume) {
     CHECK(CreateOsCompositeDisk(config))
         << "Failed to create OS composite disk";
 
