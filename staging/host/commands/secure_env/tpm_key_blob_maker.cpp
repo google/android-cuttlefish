@@ -198,6 +198,14 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
   hw_enforced->push_back(keymaster::TAG_OS_VERSION, os_version_);
   hw_enforced->push_back(keymaster::TAG_OS_PATCHLEVEL, os_patchlevel_);
 
+  if (vendor_patchlevel_) {
+    hw_enforced->push_back(keymaster::TAG_VENDOR_PATCHLEVEL,
+                           *vendor_patchlevel_);
+  }
+  if (boot_patchlevel_) {
+    hw_enforced->push_back(keymaster::TAG_BOOT_PATCHLEVEL, *boot_patchlevel_);
+  }
+
   return UnvalidatedCreateKeyBlob(key_material, *hw_enforced, *sw_enforced,
                                   hidden, blob);
 }
@@ -262,9 +270,21 @@ keymaster_error_t TpmKeyBlobMaker::UnwrapKeyBlob(
 
 keymaster_error_t TpmKeyBlobMaker::SetSystemVersion(
     uint32_t os_version, uint32_t os_patchlevel) {
-  // TODO(b/155697375): Only accept new values of these from the bootloader
+  // TODO(b/201561154): Only accept new values of these from the bootloader
   os_version_ = os_version;
   os_patchlevel_ = os_patchlevel;
+  return KM_ERROR_OK;
+}
+
+keymaster_error_t TpmKeyBlobMaker::SetVendorPatchlevel(uint32_t patchlevel) {
+  // TODO(b/201561154): Only accept new values of these from the bootloader
+  vendor_patchlevel_ = patchlevel;
+  return KM_ERROR_OK;
+}
+
+keymaster_error_t TpmKeyBlobMaker::SetBootPatchlevel(uint32_t boot_patchlevel) {
+  // TODO(b/201561154): Only accept new values of these from the bootloader
+  boot_patchlevel_ = boot_patchlevel;
   return KM_ERROR_OK;
 }
 

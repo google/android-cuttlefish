@@ -356,4 +356,34 @@ TpmKeymasterContext::GetRemoteProvisioningContext() const {
   return remote_provisioning_context_.get();
 }
 
+keymaster_error_t TpmKeymasterContext::SetVendorPatchlevel(
+    uint32_t vendor_patchlevel) {
+  if (vendor_patchlevel_.has_value() &&
+      vendor_patchlevel != vendor_patchlevel_.value()) {
+    // Can't set patchlevel to a different value.
+    return KM_ERROR_INVALID_ARGUMENT;
+  }
+  vendor_patchlevel_ = vendor_patchlevel;
+  return key_blob_maker_->SetVendorPatchlevel(*vendor_patchlevel_);
+}
+
+keymaster_error_t TpmKeymasterContext::SetBootPatchlevel(
+    uint32_t boot_patchlevel) {
+  if (boot_patchlevel_.has_value() &&
+      boot_patchlevel != boot_patchlevel_.value()) {
+    // Can't set patchlevel to a different value.
+    return KM_ERROR_INVALID_ARGUMENT;
+  }
+  boot_patchlevel_ = boot_patchlevel;
+  return key_blob_maker_->SetBootPatchlevel(*boot_patchlevel_);
+}
+
+std::optional<uint32_t> TpmKeymasterContext::GetVendorPatchlevel() const {
+  return vendor_patchlevel_;
+}
+
+std::optional<uint32_t> TpmKeymasterContext::GetBootPatchlevel() const {
+  return boot_patchlevel_;
+}
+
 }  // namespace cuttlefish
