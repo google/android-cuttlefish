@@ -16,13 +16,13 @@
 
 #include "host/commands/assemble_cvd/disk_flags.h"
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <fruit/fruit.h>
+#include <gflags/gflags.h>
 #include <sys/statvfs.h>
 
 #include <fstream>
-
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/environment.h"
@@ -440,10 +440,23 @@ static void GeneratePersistentBootconfig(
       << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
 }
 
+static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
+                                               const CuttlefishConfig* config) {
+  return fruit::createComponent()
+      .bindInstance(*fetcher)
+      .bindInstance(*config)
+      .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
+      .install(InitializeMiscImageComponent);
+}
+
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                             const CuttlefishConfig& config) {
-  // Create misc if necessary
-  CHECK(InitializeMiscImage(FLAGS_misc_image)) << "Failed to create misc image";
+  // TODO(schuffelen): Unify this with the other injector created in
+  // assemble_cvd.cpp
+  fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config);
+
+  const auto& features = injector.getMultibindings<Feature>();
+  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
 
   // Create esp if necessary
   if (!FLAGS_otheros_root_image.empty()) {

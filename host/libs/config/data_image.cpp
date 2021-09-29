@@ -292,19 +292,64 @@ DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
   }
 }
 
-bool InitializeMiscImage(const std::string& misc_image) {
-  bool misc_exists = FileHasContent(misc_image.c_str());
+struct MiscImageTag {};
 
-  if (misc_exists) {
-    LOG(DEBUG) << "misc partition image: use existing";
+class FixedMiscImagePath : public MiscImagePath {
+ public:
+  INJECT(FixedMiscImagePath(ANNOTATED(MiscImageTag, std::string) path))
+      : path_(path) {}
+
+  const std::string& Path() const override { return path_; }
+
+ private:
+  std::string path_;
+};
+
+class InitializeMiscImageImpl : public InitializeMiscImage {
+ public:
+  INJECT(InitializeMiscImageImpl(MiscImagePath& misc_path))
+      : misc_path_(misc_path) {}
+
+  // Feature
+  std::string Name() const override { return "InitializeMiscImageImpl"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Enabled() const override { return true; }
+
+ protected:
+  bool Setup() override {
+    bool misc_exists = FileHasContent(misc_path_.Path());
+
+    if (misc_exists) {
+      LOG(DEBUG) << "misc partition image: use existing at \""
+                 << misc_path_.Path() << "\"";
+      return true;
+    }
+
+    LOG(DEBUG) << "misc partition image: creating empty at \""
+               << misc_path_.Path() << "\"";
+    if (!CreateBlankImage(misc_path_.Path(), 1 /* mb */, "none")) {
+      LOG(ERROR) << "Failed to create misc image";
+      return false;
+    }
     return true;
   }
 
-  LOG(DEBUG) << "misc partition image: creating empty";
-  if (!CreateBlankImage(misc_image, 1 /* mb */, "none")) {
-    return false;
-  }
-  return true;
+ private:
+  MiscImagePath& misc_path_;
+};
+
+fruit::Component<MiscImagePath> FixedMiscImagePathComponent(
+    const std::string* path) {
+  return fruit::createComponent()
+      .bind<MiscImagePath, FixedMiscImagePath>()
+      .bindInstance<fruit::Annotated<MiscImageTag, std::string>>(*path);
+}
+
+fruit::Component<fruit::Required<MiscImagePath>, InitializeMiscImage>
+InitializeMiscImageComponent() {
+  return fruit::createComponent()
+      .addMultibinding<Feature, InitializeMiscImage>()
+      .bind<InitializeMiscImage, InitializeMiscImageImpl>();
 }
 
 bool InitializeEspImage(const std::string& esp_image,
