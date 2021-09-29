@@ -45,6 +45,28 @@ std::string GetPath(struct lws* wsi) {
   return path;
 }
 
+const std::vector<std::pair<std::string, std::string>> kCORSHeaders = {
+    {"Access-Control-Allow-Origin", "*"},
+    {"Access-Control-Allow-Methods", "POST, GET, OPTIONS"},
+    {"Access-Control-Allow-Headers",
+     "Content-Type, Access-Control-Allow-Headers, Authorization, "
+     "X-Requested-With, Accept"}};
+
+bool AddCORSHeaders(struct lws* wsi, unsigned char** buffer_ptr,
+                    unsigned char* buffer_end) {
+  for (const auto& header : kCORSHeaders) {
+    const auto& name = header.first;
+    const auto& value = header.second;
+    if (lws_add_http_header_by_name(
+            wsi, reinterpret_cast<const unsigned char*>(name.c_str()),
+            reinterpret_cast<const unsigned char*>(value.c_str()), value.size(),
+            buffer_ptr, buffer_end)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool WriteCommonHttpHeaders(int status, const char* mime_type,
                             size_t content_len, struct lws* wsi) {
   constexpr size_t BUFF_SIZE = 2048;
@@ -55,6 +77,10 @@ bool WriteCommonHttpHeaders(int status, const char* mime_type,
   if (lws_add_http_common_headers(wsi, status, mime_type, content_len, &p,
                                   end)) {
     LOG(ERROR) << "Failed to write headers for response";
+    return false;
+  }
+  if (!AddCORSHeaders(wsi, &p, end)) {
+    LOG(ERROR) << "Failed to write CORS headers for response";
     return false;
   }
   if (lws_finalize_write_http_header(wsi, start, &p, end)) {
@@ -279,6 +305,15 @@ int WebSocketServer::DynServerCallback(struct lws* wsi,
         case LWSHUMETH_POST:
           // Do nothing until the body has been read
           break;
+        case LWSHUMETH_OPTIONS: {
+          // Response for CORS preflight
+          auto status = HttpStatusCode::NoContent;
+          if (!WriteCommonHttpHeaders(static_cast<int>(status), "", 0, wsi)) {
+            return 1;
+          }
+          lws_callback_on_writable(wsi);
+          break;
+        }
         default:
           LOG(ERROR) << "Unsupported HTTP method: " << method;
           return 1;
