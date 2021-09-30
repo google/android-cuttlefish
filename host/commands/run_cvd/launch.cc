@@ -357,7 +357,6 @@ class GnssGrpcProxyServer : public CommandSource {
  private:
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
-
     std::vector<SharedFD> fifos;
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
@@ -636,6 +635,7 @@ class WmediumdServer : public CommandSource {
   std::vector<Command> Commands() override {
     Command cmd(WmediumdBinary());
     cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
+    cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
     cmd.AddParameter("-c", config_path_);
     return single_element_emplace(std::move(cmd));
   }
@@ -802,4 +802,4 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(Bases::Impls<OpenWrt>);
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
