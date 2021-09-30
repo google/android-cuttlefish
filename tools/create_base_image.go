@@ -229,7 +229,7 @@ func main() {
   gce(ExitOnFail, `compute disks delete -q `+PZ+` "`+dest_image+`"`)
 
   if launch_instance != "" {
-    createInstance(launch_instance, `compute instances create `+PZ+
+    createInstance(launch_instance, PZ+
       ` --image-project="`+build_project+`" --image="`+dest_image+
       `" --machine-type=n1-standard-4 --scopes storage-ro --accelerator="type=`+
       gpu_type+`,count=1" --maintenance-policy=TERMINATE`)

@@ -69,7 +69,7 @@ sudo chroot /mnt/image /usr/bin/apt install -y software-properties-common
 sudo chroot /mnt/image /usr/bin/add-apt-repository non-free
 sudo chroot /mnt/image /usr/bin/add-apt-repository contrib
 sudo chroot /mnt/image /usr/bin/apt update
-sudo chroot /mnt/image /usr/bin/apt install -y nvidia-driver
+sudo chroot /mnt/image /bin/bash -c 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt install -y nvidia-driver'
 sudo chroot /mnt/image /usr/bin/apt install -y firmware-misc-nonfree
 sudo chroot /mnt/image /usr/bin/apt install -y libglvnd-dev
 
