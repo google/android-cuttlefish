@@ -440,11 +440,36 @@ static void GeneratePersistentBootconfig(
       << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
 }
 
+class InitializeMetadataImage : public Feature {
+ public:
+  INJECT(InitializeMetadataImage()) {}
+
+  // Feature
+  std::string Name() const override { return "InitializeMetadataImage"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Enabled() const override { return true; }
+
+ private:
+  bool Setup() {
+    if (!FileExists(FLAGS_metadata_image)) {
+      bool success = CreateBlankImage(FLAGS_metadata_image,
+                                      FLAGS_blank_metadata_image_mb, "none");
+      if (!success) {
+        LOG(ERROR) << "Failed to create \"" << FLAGS_metadata_image
+                   << "\" with size " << FLAGS_blank_metadata_image_mb;
+      }
+      return success;
+    }
+    return true;
+  }
+};
+
 static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
                                                const CuttlefishConfig* config) {
   return fruit::createComponent()
       .bindInstance(*fetcher)
       .bindInstance(*config)
+      .addMultibinding<Feature, InitializeMetadataImage>()
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
       .install(FixedDataImagePathComponent, &FLAGS_data_image)
@@ -465,10 +490,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     CHECK(InitializeEspImage(FLAGS_otheros_esp_image, FLAGS_otheros_kernel_path,
                              FLAGS_otheros_initramfs_path))
         << "Failed to create esp image";
-  }
-
-  if (!FileExists(FLAGS_metadata_image)) {
-    CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
   }
 
   // If we are booting a protected VM, for now, assume we want a super minimal
