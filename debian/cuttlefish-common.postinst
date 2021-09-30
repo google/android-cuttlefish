@@ -8,6 +8,11 @@ case "$1" in
     then
         addgroup --system cvdnetwork
     fi
+    
+    if ! getent group render > /dev/null 2>&1
+    then
+        addgroup --system render
+    fi
 
     # Create the kvm group when running inside a docker container.
     if test -f /.dockerenv && ( ! getent group kvm > /dev/null 2>&1 )
