@@ -1,2 +1,2 @@
 [Accounts]
-groups = ubuntu,adm,dialout,cdrom,floppy,audio,dip,video,plugdev,netdev,lxd,cvdnetwork,kvm
+groups = ubuntu,adm,dialout,cdrom,floppy,audio,dip,video,plugdev,netdev,lxd,cvdnetwork,kvm,render
