@@ -104,10 +104,12 @@ class Session {
 
   void ScheduleToTerminate();
 
+  bool IsInverted() const;
+  bool IsMagnified() const;
+
   const std::string session_id_;
   const std::uint32_t display_num_;
-  // host renderer is shared across sessions
-  ConfUiRenderer renderer_;
+  std::unique_ptr<ConfUiRenderer> renderer_;
   HostModeCtrl& host_mode_ctrl_;
   ScreenConnectorFrameRenderer& screen_connector_;
 
