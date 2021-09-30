@@ -1,7 +1,7 @@
 cuttlefish-common (0.9.20) stable; urgency=medium
 
   [ Ram Muthiah ]
-  * Rev'ng version number to account for removal of cuttlefish-google
+  * Adding render group append to cuttlefish common/integration installers
 
  -- Ram Muthiah <rammuthiah@google.com>  Mon, 30 Sep 2021 13:26:02 -0700
 
