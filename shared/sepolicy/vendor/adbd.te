@@ -1,9 +1,2 @@
 allow adbd self:{ socket vsock_socket } {create listen accept rw_socket_perms_no_ioctl};
-# TODO(b/130668487): Label the vsock sockets.
-allow adbd unlabeled:{socket vsock_socket} rw_socket_perms_no_ioctl;
 allow adbd kernel:system module_request;
-
-recovery_only(`
-# TODO(b/130668487): Label the vsock sockets.
-allow su unlabeled:{ socket vsock_socket } rw_socket_perms_no_ioctl;
-')
