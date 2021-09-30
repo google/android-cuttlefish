@@ -151,3 +151,11 @@ main() {
       "${FLAGS_dest_image}"
 EOF
 }
+
+FLAGS "$@" || exit 1
+if [[ "${FLAGS_help}" -eq 0 ]]; then
+  echo ${FLAGS_help}
+  exit 1
+fi
+
+main "${FLAGS_ARGV[@]}"
