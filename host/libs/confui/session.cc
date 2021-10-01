@@ -20,13 +20,12 @@ namespace cuttlefish {
 namespace confui {
 
 Session::Session(const std::string& session_name,
-                 const std::uint32_t display_num, ConfUiRenderer& host_renderer,
-                 HostModeCtrl& host_mode_ctrl,
+                 const std::uint32_t display_num, HostModeCtrl& host_mode_ctrl,
                  ScreenConnectorFrameRenderer& screen_connector,
                  const std::string& locale)
     : session_id_{session_name},
       display_num_{display_num},
-      renderer_{host_renderer},
+      renderer_{display_num},
       host_mode_ctrl_{host_mode_ctrl},
       screen_connector_{screen_connector},
       locale_{locale},
