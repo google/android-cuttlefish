@@ -1,0 +1,2 @@
+service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
+    oneshot
