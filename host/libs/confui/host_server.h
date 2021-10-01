@@ -35,7 +35,6 @@
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/logging.h"
 #include "host/libs/confui/host_mode_ctrl.h"
-#include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/host_virtual_input.h"
 #include "host/libs/confui/server_common.h"
 #include "host/libs/confui/session.h"
@@ -136,9 +135,6 @@ class HostServer : public HostVirtualInput {
   const std::uint32_t display_num_;
   HostModeCtrl& host_mode_ctrl_;
   ScreenConnectorFrameRenderer& screen_connector_;
-
-  // this member creates a raw frame
-  ConfUiRenderer renderer_;
 
   std::string input_socket_path_;
   int hal_vsock_port_;
