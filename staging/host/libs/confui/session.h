@@ -43,7 +43,7 @@ namespace confui {
 class Session {
  public:
   Session(const std::string& session_name, const std::uint32_t display_num,
-          ConfUiRenderer& host_renderer, HostModeCtrl& host_mode_ctrl,
+          HostModeCtrl& host_mode_ctrl,
           ScreenConnectorFrameRenderer& screen_connector,
           const std::string& locale = "en");
 
@@ -107,7 +107,7 @@ class Session {
   const std::string session_id_;
   const std::uint32_t display_num_;
   // host renderer is shared across sessions
-  ConfUiRenderer& renderer_;
+  ConfUiRenderer renderer_;
   HostModeCtrl& host_mode_ctrl_;
   ScreenConnectorFrameRenderer& screen_connector_;
 
