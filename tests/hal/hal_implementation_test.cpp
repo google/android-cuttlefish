@@ -59,7 +59,6 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.graphics.allocator@3.0",
     "android.hardware.graphics.bufferqueue@1.0",
     "android.hardware.graphics.bufferqueue@2.0",
-    "android.hardware.graphics.composer@2.4",
     "android.hardware.graphics.mapper@2.1",
     "android.hardware.graphics.mapper@3.0",
     "android.hardware.health.storage@1.0", // converted to AIDL, see b/177470478

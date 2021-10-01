@@ -375,8 +375,7 @@ PRODUCT_PACKAGES += \
     hwcomposer.drm_minigbm \
     hwcomposer.cutf \
     hwcomposer-stats \
-    android.hardware.graphics.composer@2.3-impl \
-    android.hardware.graphics.composer@2.3-service
+    android.hardware.graphics.composer@2.4-service
 
 #
 # Gralloc HAL
