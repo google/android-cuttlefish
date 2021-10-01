@@ -51,7 +51,6 @@ HostServer::HostServer(
     : display_num_(0),
       host_mode_ctrl_(host_mode_ctrl),
       screen_connector_{screen_connector},
-      renderer_(display_num_),
       hal_vsock_port_(HalHostVsockPort()) {
   ConfUiLog(DEBUG) << "Confirmation UI Host session is listening on: "
                    << hal_vsock_port_;
@@ -212,8 +211,8 @@ SharedFD HostServer::EstablishHalConnection() {
 }
 
 std::unique_ptr<Session> HostServer::CreateSession(const std::string& name) {
-  return std::make_unique<Session>(name, display_num_, renderer_,
-                                   host_mode_ctrl_, screen_connector_);
+  return std::make_unique<Session>(name, display_num_, host_mode_ctrl_,
+                                   screen_connector_);
 }
 
 static bool IsUserAbort(ConfUiMessage& msg) {
