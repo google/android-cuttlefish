@@ -19,3 +19,4 @@
 # of the below options.
 
 BasedOnStyle: Google
+IncludeBlocks: Preserve
