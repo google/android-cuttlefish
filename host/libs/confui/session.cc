@@ -75,26 +75,25 @@ bool Session::RenderDialog() {
       display_num_, frame_width, frame_height, frame_stride_bytes, frame_bytes);
 }
 
-MainLoopState Session::Transition(const bool is_user_input, SharedFD& hal_cli,
-                                  const FsmInput fsm_input,
+MainLoopState Session::Transition(SharedFD& hal_cli, const FsmInput fsm_input,
                                   const ConfUiMessage& conf_ui_message) {
   bool should_keep_running = false;
   bool already_terminated = false;
   switch (state_) {
     case MainLoopState::kInit: {
-      should_keep_running =
-          HandleInit(is_user_input, hal_cli, fsm_input, conf_ui_message);
+      should_keep_running = HandleInit(hal_cli, fsm_input, conf_ui_message);
     } break;
     case MainLoopState::kInSession: {
-      should_keep_running = HandleInSession(is_user_input, hal_cli, fsm_input);
+      should_keep_running =
+          HandleInSession(hal_cli, fsm_input, conf_ui_message);
     } break;
     case MainLoopState::kWaitStop: {
-      if (is_user_input) {
+      if (IsUserInput(fsm_input)) {
         ConfUiLog(VERBOSE) << "User input ignored " << ToString(fsm_input)
                            << " : " << ToString(conf_ui_message)
                            << " at the state " << ToString(state_);
       }
-      should_keep_running = HandleWaitStop(is_user_input, hal_cli, fsm_input);
+      should_keep_running = HandleWaitStop(hal_cli, fsm_input);
     } break;
     case MainLoopState::kTerminated: {
       already_terminated = true;
@@ -145,10 +144,9 @@ void Session::UserAbort(SharedFD hal_cli) {
   ScheduleToTerminate();
 }
 
-bool Session::HandleInit(const bool is_user_input, SharedFD hal_cli,
-                         const FsmInput fsm_input,
+bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
                          const ConfUiMessage& conf_ui_message) {
-  if (is_user_input) {
+  if (IsUserInput(fsm_input)) {
     // ignore user input
     state_ = MainLoopState::kInit;
     return true;
@@ -205,21 +203,35 @@ bool Session::HandleInit(const bool is_user_input, SharedFD hal_cli,
   return true;
 }
 
-bool Session::HandleInSession(const bool is_user_input, SharedFD hal_cli,
-                              const FsmInput fsm_input) {
-  if (!is_user_input || fsm_input == FsmInput::kUserUnknown ||
-      fsm_input == FsmInput::kUserAbort) {
+bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
+                              const ConfUiMessage& conf_ui_msg) {
+  auto invalid_input_handler = [&, this]() {
     ReportErrorToHal(hal_cli, HostError::kSystemError);
     ConfUiLog(ERROR) << "cmd " << ToString(fsm_input)
                      << " should not be handled in HandleInSession";
+  };
+
+  if (!IsUserInput(fsm_input)) {
+    invalid_input_handler();
     return false;
   }
 
+  const auto& user_input_msg =
+      static_cast<const ConfUiUserSelectionMessage&>(conf_ui_msg);
+  const auto response = user_input_msg.GetResponse();
+  if (response == UserResponse::kUnknown ||
+      response == UserResponse::kUserAbort) {
+    invalid_input_handler();
+    return false;
+  }
+
+  // TODO(kwstephenkim): for touch event, see if it is user confirm
+  // or user cancel or no meaning (clicked somewhere else)
   ConfUiLog(VERBOSE) << "In HandleInSession, session " << session_id_
                      << " is sending the user input " << ToString(fsm_input);
 
   bool is_success = false;
-  if (fsm_input == FsmInput::kUserCancel) {
+  if (response == UserResponse::kCancel) {
     // no need to sign
     is_success =
         SendResponse(hal_cli, session_id_, UserResponse::kCancel,
@@ -245,9 +257,8 @@ bool Session::HandleInSession(const bool is_user_input, SharedFD hal_cli,
   return true;
 }
 
-bool Session::HandleWaitStop(const bool is_user_input, SharedFD hal_cli,
-                             const FsmInput fsm_input) {
-  if (is_user_input) {
+bool Session::HandleWaitStop(SharedFD hal_cli, const FsmInput fsm_input) {
+  if (IsUserInput(fsm_input)) {
     // ignore user input
     state_ = MainLoopState::kWaitStop;
     return true;
