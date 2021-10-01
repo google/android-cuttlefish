@@ -1,5 +1,2 @@
 allow shell serial_device:chr_file { getattr ioctl read write };
 allow shell cuttlefish_sensor_injection_exec:file rx_file_perms;
-
-# TODO(b/130668487): Label the vsock sockets.
-allow shell adbd:{ socket vsock_socket } rw_socket_perms_no_ioctl;
