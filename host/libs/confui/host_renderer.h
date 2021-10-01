@@ -113,7 +113,7 @@ class ConfUiRenderer {
   teeui::Error UpdateTranslations();
   teeui::Error UpdateLocale();
   void SetDeviceContext(const unsigned long long w, const unsigned long long h,
-                        bool is_magnified);
+                        bool is_inverted, bool is_magnified);
 
   // a callback function to be effectively sent to TeeUI library
   teeui::Error UpdatePixels(TeeUiFrameWrapper& buffer, std::uint32_t x,
@@ -158,17 +158,19 @@ class ConfUiRenderer {
   teeui::Color shield_color_;
   bool is_inverted_;
   bool is_magnified_;
-  teeui::context<teeui::ConUIParameters> ctx_;
+  teeui::context<teeui::ConfUIParameters> ctx_;
   bool is_setup_well_;
 
-  static constexpr const teeui::Color kColorEnabled = 0xff212121;
-  static constexpr const teeui::Color kColorDisabled = 0xffbdbdbd;
-  static constexpr const teeui::Color kColorEnabledInv = 0xffdedede;
-  static constexpr const teeui::Color kColorDisabledInv = 0xff424242;
   static constexpr const teeui::Color kColorBackground = 0xffffffff;
   static constexpr const teeui::Color kColorBackgroundInv = 0xff212121;
-  static constexpr const teeui::Color kColorShieldInv = 0xffc4cb80;
+  static constexpr const teeui::Color kColorDisabled = 0xffbdbdbd;
+  static constexpr const teeui::Color kColorDisabledInv = 0xff424242;
+  static constexpr const teeui::Color kColorEnabled = 0xff212121;
+  static constexpr const teeui::Color kColorEnabledInv = 0xffdedede;
   static constexpr const teeui::Color kColorShield = 0xff778500;
+  static constexpr const teeui::Color kColorShieldInv = 0xffc4cb80;
+  static constexpr const teeui::Color kColorText = 0xff212121;
+  static constexpr const teeui::Color kColorTextInv = 0xffdedede;
 };
 }  // end of namespace confui
 }  // end of namespace cuttlefish

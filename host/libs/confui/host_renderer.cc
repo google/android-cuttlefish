@@ -65,7 +65,8 @@ ConfUiRenderer::ConfUiRenderer(const std::uint32_t display,
       is_magnified_(magnified),
       ctx_(6.45211, 400.0 / 412.0),
       is_setup_well_(false) {
-  SetDeviceContext(current_width_, current_height_, is_magnified_);
+  SetDeviceContext(current_width_, current_height_, is_inverted_,
+                   is_magnified_);
   layout_ = teeui::instantiateLayout(teeui::ConfUILayout(), ctx_);
   if (auto error = UpdateLocale()) {
     ConfUiLog(ERROR) << "Update Translation Error: " << Enum2Base(error.code());
@@ -119,21 +120,30 @@ teeui::Error ConfUiRenderer::UpdateTranslations() {
 
 void ConfUiRenderer::SetDeviceContext(const unsigned long long w,
                                       const unsigned long long h,
+                                      const bool is_inverted,
                                       const bool is_magnified) {
   using namespace teeui;
   const auto screen_width = operator""_px(w);
   const auto screen_height = operator""_px(h);
-  ctx_.setParam<RightEdgeOfScreen>(screen_width);
-  ctx_.setParam<BottomOfScreen>(screen_height);
-  ctx_.setParam<PowerButtonTop>(20.26_mm);
-  ctx_.setParam<PowerButtonBottom>(30.26_mm);
-  ctx_.setParam<VolUpButtonTop>(40.26_mm);
-  ctx_.setParam<VolUpButtonBottom>(50.26_mm);
-  ctx_.setParam<DefaultFontSize>(14_dp);
-  ctx_.setParam<BodyFontSize>(16_dp);
+  ctx_.setParam<RightEdgeOfScreen>(pxs(screen_width));
+  ctx_.setParam<BottomOfScreen>(pxs(screen_height));
   if (is_magnified) {
     ctx_.setParam<DefaultFontSize>(18_dp);
     ctx_.setParam<BodyFontSize>(20_dp);
+  } else {
+    ctx_.setParam<DefaultFontSize>(14_dp);
+    ctx_.setParam<BodyFontSize>(16_dp);
+  }
+  if (is_inverted) {
+    ctx_.setParam<ShieldColor>(kColorShieldInv);
+    ctx_.setParam<ColorText>(kColorTextInv);
+    ctx_.setParam<ColorBG>(kColorBackgroundInv);
+    ctx_.setParam<ColorButton>(kColorShieldInv);
+  } else {
+    ctx_.setParam<ShieldColor>(kColorShield);
+    ctx_.setParam<ColorText>(kColorText);
+    ctx_.setParam<ColorBG>(kColorBackground);
+    ctx_.setParam<ColorButton>(kColorShield);
   }
 }
 
