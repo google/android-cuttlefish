@@ -133,16 +133,49 @@ Return<void> RemoteGateKeeperDevice::verify(
     return {};
 }
 
-Return<void> RemoteGateKeeperDevice::deleteUser(uint32_t /*uid*/, deleteUser_cb _hidl_cb) {
-    LOG(ERROR) << "deleteUser is unimplemented";
-    _hidl_cb({GatekeeperStatusCode::ERROR_NOT_IMPLEMENTED, 0, {}});
-    return {};
+Return<void> RemoteGateKeeperDevice::deleteUser(uint32_t uid,
+                                                deleteUser_cb _hidl_cb) {
+  gatekeeper::DeleteUserRequest request{uid};
+  gatekeeper::DeleteUserResponse response;
+  auto error = Send(request, &response);
+
+  if (error != ERROR_NONE) {
+    LOG(ERROR) << "Verify request gave error: " << error;
+    _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
+  } else if (response.error == ERROR_RETRY) {
+    LOG(ERROR) << "Verify request response gave retry error";
+    _hidl_cb({GatekeeperStatusCode::ERROR_RETRY_TIMEOUT,
+              response.retry_timeout,
+              {}});
+  } else if (response.error != ERROR_NONE) {
+    LOG(ERROR) << "Verify request response gave error: " << response.error;
+    _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
+  } else {
+    _hidl_cb({GatekeeperStatusCode::STATUS_OK, 0, {}});
+  }
+  return {};
 }
 
 Return<void> RemoteGateKeeperDevice::deleteAllUsers(deleteAllUsers_cb _hidl_cb) {
-    LOG(ERROR) << "deleteAllUsers is unimplemented";
-    _hidl_cb({GatekeeperStatusCode::ERROR_NOT_IMPLEMENTED, 0, {}});
-    return {};
+  gatekeeper::DeleteAllUsersRequest request;
+  gatekeeper::DeleteAllUsersResponse response;
+  auto error = Send(request, &response);
+
+  if (error != ERROR_NONE) {
+    LOG(ERROR) << "Verify request gave error: " << error;
+    _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
+  } else if (response.error == ERROR_RETRY) {
+    LOG(ERROR) << "Verify request response gave retry error";
+    _hidl_cb({GatekeeperStatusCode::ERROR_RETRY_TIMEOUT,
+              response.retry_timeout,
+              {}});
+  } else if (response.error != ERROR_NONE) {
+    LOG(ERROR) << "Verify request response gave error: " << response.error;
+    _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
+  } else {
+    _hidl_cb({GatekeeperStatusCode::STATUS_OK, 0, {}});
+  }
+  return {};
 }
 
 gatekeeper_error_t RemoteGateKeeperDevice::Send(uint32_t command, const GateKeeperMessage& request,
