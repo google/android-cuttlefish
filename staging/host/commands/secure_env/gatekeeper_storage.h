@@ -36,6 +36,8 @@ public:
 
   virtual bool Allocate(const Json::Value& key, uint16_t size) = 0;
   virtual bool HasKey(const Json::Value& key) const = 0;
+  virtual bool Delete(const Json::Value& key);
+  virtual bool DeleteAll() = 0;
 
   virtual std::unique_ptr<TPM2B_MAX_NV_BUFFER> Read(const Json::Value& key)
       const = 0;

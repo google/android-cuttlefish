@@ -137,6 +137,97 @@ bool FragileTpmStorage::HasKey(const Json::Value& key) const {
   return GetHandle(key) != 0;
 }
 
+void FragileTpmStorage::DeleteHandle(TPM2_HANDLE handle) {
+  auto close_tr = [this](ESYS_TR* handle) {
+    Esys_TR_Close(resource_manager_.Esys(), handle);
+    delete handle;
+  };
+  std::unique_ptr<ESYS_TR, decltype(close_tr)> nv_handle(new ESYS_TR, close_tr);
+  auto rc = Esys_TR_FromTPMPublic(
+      /* esysContext */ resource_manager_.Esys(),
+      /* tpm_handle */ handle,
+      /* optionalSession1 */ ESYS_TR_NONE,
+      /* optionalSession2 */ ESYS_TR_NONE,
+      /* optionalSession3 */ ESYS_TR_NONE,
+      /* object */ nv_handle.get());
+  if (rc != TPM2_RC_SUCCESS) {
+    LOG(ERROR) << "Esys_TR_FromTPMPublic failed: " << rc << ": "
+               << Tss2_RC_Decode(rc);
+    return;
+  }
+  TPM2B_AUTH auth = {.size = 0, .buffer = {}};
+  Esys_TR_SetAuth(resource_manager_.Esys(), *nv_handle, &auth);
+
+  rc = Esys_NV_UndefineSpace(
+      /* esysContext */ resource_manager_.Esys(),
+      /* authHandle */ ESYS_TR_RH_OWNER,
+      /* nvIndex */ *nv_handle,
+      /* shandle1 */ ESYS_TR_NONE,
+      /* shandle2 */ ESYS_TR_NONE,
+      /* shandle3 */ ESYS_TR_NONE);
+  if (rc != TPM2_RC_SUCCESS) {
+    LOG(ERROR) << "Esys_NV_UndefineSpace failed: " << rc << ": "
+               << Tss2_RC_Decode(rc);
+  }
+}
+
+bool FragileTpmStorage::Delete(const Json::Value& key) {
+  // First delete the entry from the index file to make the user data
+  // inaccessible, then do a best-effort attempt at freeing up TPM NVRAM
+  // resources.
+  if (!index_.isMember(kEntries) || !index_[kEntries].isArray()) {
+    LOG(WARNING) << "Index was corrupted.";
+    return false;
+  }
+  auto index_backup = index_;
+  std::vector<TPM2_HANDLE> handles;
+  for (auto i = 0; i < index_[kEntries].size(); i++) {
+    if (!index_[kEntries][i].isMember(kKey)) {
+      LOG(WARNING) << "Index was corrupted";
+      return false;
+    }
+    if (index_[kEntries][i][kKey] != key) {
+      continue;
+    }
+    if (!index_[kEntries][i].isMember(kHandle)) {
+      LOG(ERROR) << "Index was corrupted";
+      return 0;
+    }
+    handles.push_back(index_[kEntries][kHandle].asUInt());
+    index_[kEntries].removeIndex(i, nullptr);
+  }
+  if (!WriteProtectedJsonToFile(resource_manager_, index_file_, index_)) {
+    LOG(ERROR) << "Failed to save changes to " << index_file_;
+    index_ = index_backup;
+    return false;
+  }
+  for (const auto& handle : handles) {
+    DeleteHandle(handle);
+  }
+  return true;
+}
+
+bool FragileTpmStorage::DeleteAll() {
+  // First delete the data from the index file to make the user data
+  // inaccessible, then do a best-effort attempt at freeing up TPM NVRAM
+  // resources.
+  Json::Value new_index(Json::objectValue);
+  new_index[kEntries] = Json::Value(Json::arrayValue);
+  if (!WriteProtectedJsonToFile(resource_manager_, index_file_, new_index)) {
+    LOG(ERROR) << "Failed to save changes to " << index_file_;
+    return false;
+  }
+  for (auto& entry : index_[kEntries]) {
+    if (!entry.isMember(kHandle)) {
+      LOG(ERROR) << "Index was corrupted: bad handle";
+      continue;
+    }
+    DeleteHandle(index_[kEntries][kHandle].asUInt());
+  }
+  index_ = new_index;
+  return true;
+}
+
 std::unique_ptr<TPM2B_MAX_NV_BUFFER> FragileTpmStorage::Read(
     const Json::Value& key) const {
   auto handle = GetHandle(key);
