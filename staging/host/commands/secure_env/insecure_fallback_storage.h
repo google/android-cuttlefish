@@ -44,6 +44,8 @@ public:
 
   bool Allocate(const Json::Value& key, uint16_t size) override;
   bool HasKey(const Json::Value& key) const override;
+  bool Delete(const Json::Value& key) override;
+  bool DeleteAll() override;
 
   std::unique_ptr<TPM2B_MAX_NV_BUFFER> Read(const Json::Value& key) const
       override;
