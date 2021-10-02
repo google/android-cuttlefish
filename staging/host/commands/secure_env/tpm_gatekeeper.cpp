@@ -197,6 +197,21 @@ static bool GetFailureRecordImpl(
   return true;
 }
 
+gatekeeper::gatekeeper_error_t TpmGatekeeper::RemoveUser(uint32_t uid) {
+  Json::Value key{std::to_string(uid)};
+  bool deleted_secure = secure_storage_.Delete(key);
+  bool deleted_insecure = insecure_storage_.Delete(key);
+  return (deleted_secure || deleted_insecure) ? gatekeeper::ERROR_NONE
+                                              : gatekeeper::ERROR_UNKNOWN;
+}
+
+gatekeeper::gatekeeper_error_t TpmGatekeeper::RemoveAllUsers() {
+  bool deleted_secure = secure_storage_.DeleteAll();
+  bool deleted_insecure = insecure_storage_.DeleteAll();
+  return (deleted_secure && deleted_insecure) ? gatekeeper::ERROR_NONE
+                                              : gatekeeper::ERROR_UNKNOWN;
+}
+
 bool TpmGatekeeper::GetFailureRecord(
     uint32_t uid,
     gatekeeper::secure_id_t secure_user_id,
