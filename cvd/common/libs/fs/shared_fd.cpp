@@ -310,21 +310,6 @@ SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
-SharedFD SharedFD::Fifo(const std::string& path, mode_t mode) {
-  struct stat st;
-  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
-    if (TEMP_FAILURE_RETRY(remove(path.c_str())) != 0) {
-      return ErrorFD(errno);
-    }
-  }
-
-  int fd = TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode));
-  if (fd == -1) {
-    return ErrorFD(errno);
-  }
-  return Open(path, mode);
-}
-
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
   if (fd == -1) {
@@ -459,7 +444,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
   return rval;
 }
 
-SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
+SharedFD SharedFD::VsockServer(unsigned int port, int type) {
   auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
@@ -467,17 +452,15 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
   sockaddr_vm addr{};
   addr.svm_family = AF_VSOCK;
   addr.svm_port = port;
-  addr.svm_cid = cid;
+  addr.svm_cid = VMADDR_CID_ANY;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
   if (vsock->Bind(casted_addr, sizeof(addr)) == -1) {
-    LOG(ERROR) << "Port " << port << " Bind failed (" << vsock->StrError()
-               << ")";
+    LOG(ERROR) << "Bind failed (" << vsock->StrError() << ")";
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     if (vsock->Listen(4) < 0) {
-      LOG(ERROR) << "Port" << port << " Listen failed (" << vsock->StrError()
-                 << ")";
+      LOG(ERROR) << "Listen failed (" << vsock->StrError() << ")";
       return SharedFD::ErrorFD(vsock->GetErrno());
     }
   }
@@ -525,231 +508,6 @@ ScopedMMap::ScopedMMap(ScopedMMap&& other)
 ScopedMMap::~ScopedMMap() {
   if (ptr_ != MAP_FAILED) {
     munmap(ptr_, len_);
-  }
-}
-
-/* static */ std::shared_ptr<FileInstance> FileInstance::ClosedInstance() {
-  return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
-}
-
-int FileInstance::Bind(const struct sockaddr* addr, socklen_t addrlen) {
-  errno = 0;
-  int rval = bind(fd_, addr, addrlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Connect(const struct sockaddr* addr, socklen_t addrlen) {
-  errno = 0;
-  int rval = connect(fd_, addr, addrlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::UNMANAGED_Dup() {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(dup(fd_));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::UNMANAGED_Dup2(int newfd) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(dup2(fd_, newfd));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Fcntl(int command, int value) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
-  if (rval == -1) {
-    errno_ = errno;
-  }
-  return rval;
-}
-
-unsigned int FileInstance::VsockServerPort() {
-  struct sockaddr_vm vm_socket;
-  socklen_t length = sizeof(vm_socket);
-  GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
-  return vm_socket.svm_port;
-}
-
-int FileInstance::Ioctl(int request, void* val) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::LinkAtCwd(const std::string& path) {
-  std::string name = "/proc/self/fd/";
-  name += std::to_string(fd_);
-  errno = 0;
-  int rval =
-      linkat(-1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Listen(int backlog) {
-  errno = 0;
-  int rval = listen(fd_, backlog);
-  errno_ = errno;
-  return rval;
-}
-
-off_t FileInstance::LSeek(off_t offset, int whence) {
-  errno = 0;
-  off_t rval = TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Recv(void* buf, size_t len, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::RecvMsg(struct msghdr* msg, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Read(void* buf, size_t count) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(read(fd_, buf, count));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::EventfdRead(eventfd_t* value) {
-  errno = 0;
-  auto rval = eventfd_read(fd_, value);
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Send(const void* buf, size_t len, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::SendMsg(const struct msghdr* msg, int flags) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Shutdown(int how) {
-  errno = 0;
-  int rval = shutdown(fd_, how);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::SetSockOpt(int level, int optname, const void* optval,
-                             socklen_t optlen) {
-  errno = 0;
-  int rval = setsockopt(fd_, level, optname, optval, optlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::GetSockOpt(int level, int optname, void* optval,
-                             socklen_t* optlen) {
-  errno = 0;
-  int rval = getsockopt(fd_, level, optname, optval, optlen);
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::SetTerminalRaw() {
-  errno = 0;
-  termios terminal_settings;
-  int rval = tcgetattr(fd_, &terminal_settings);
-  errno_ = errno;
-  if (rval < 0) {
-    return rval;
-  }
-  cfmakeraw(&terminal_settings);
-  rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
-  errno_ = errno;
-  return rval;
-}
-
-std::string FileInstance::StrError() const {
-  errno = 0;
-  return std::string(strerror(errno_));
-}
-
-ScopedMMap FileInstance::MMap(void* addr, size_t length, int prot, int flags,
-                              off_t offset) {
-  errno = 0;
-  auto ptr = mmap(addr, length, prot, flags, fd_, offset);
-  errno_ = errno;
-  return ScopedMMap(ptr, length);
-}
-
-ssize_t FileInstance::Truncate(off_t length) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
-  errno_ = errno;
-  return rval;
-}
-
-ssize_t FileInstance::Write(const void* buf, size_t count) {
-  errno = 0;
-  ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::EventfdWrite(eventfd_t value) {
-  errno = 0;
-  int rval = eventfd_write(fd_, value);
-  errno_ = errno;
-  return rval;
-}
-
-bool FileInstance::IsATTY() {
-  errno = 0;
-  int rval = isatty(fd_);
-  errno_ = errno;
-  return rval;
-}
-
-FileInstance::FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
-  // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
-  // flag
-  TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
-  std::stringstream identity;
-  identity << "fd=" << fd << " @" << this;
-  identity_ = identity.str();
-}
-
-FileInstance* FileInstance::Accept(struct sockaddr* addr,
-                                   socklen_t* addrlen) const {
-  int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
-  if (fd == -1) {
-    return new FileInstance(fd, errno);
-  } else {
-    return new FileInstance(fd, 0);
   }
 }
 
