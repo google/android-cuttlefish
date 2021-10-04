@@ -134,63 +134,77 @@ bool ResolveInstanceFiles() {
 
 std::vector<ImagePartition> os_composite_disk_config() {
   std::vector<ImagePartition> partitions;
-  partitions.push_back(ImagePartition {
-    .label = "misc",
-    .image_file_path = FLAGS_misc_image,
+  partitions.push_back(ImagePartition{
+      .label = "misc",
+      .image_file_path = FLAGS_misc_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "boot_a",
-    .image_file_path = FLAGS_boot_image,
+  partitions.push_back(ImagePartition{
+      .label = "boot_a",
+      .image_file_path = FLAGS_boot_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "boot_b",
-    .image_file_path = FLAGS_boot_image,
+  partitions.push_back(ImagePartition{
+      .label = "boot_b",
+      .image_file_path = FLAGS_boot_image,
+      .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_a",
       .image_file_path = FLAGS_vendor_boot_image,
+      .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_b",
       .image_file_path = FLAGS_vendor_boot_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "vbmeta_a",
-    .image_file_path = FLAGS_vbmeta_image,
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta_a",
+      .image_file_path = FLAGS_vbmeta_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "vbmeta_b",
-    .image_file_path = FLAGS_vbmeta_image,
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta_b",
+      .image_file_path = FLAGS_vbmeta_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "vbmeta_system_a",
-    .image_file_path = FLAGS_vbmeta_system_image,
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta_system_a",
+      .image_file_path = FLAGS_vbmeta_system_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "vbmeta_system_b",
-    .image_file_path = FLAGS_vbmeta_system_image,
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta_system_b",
+      .image_file_path = FLAGS_vbmeta_system_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "super",
-    .image_file_path = FLAGS_super_image,
+  partitions.push_back(ImagePartition{
+      .label = "super",
+      .image_file_path = FLAGS_super_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "userdata",
-    .image_file_path = FLAGS_data_image,
+  partitions.push_back(ImagePartition{
+      .label = "userdata",
+      .image_file_path = FLAGS_data_image,
+      .read_only = true,
   });
-  partitions.push_back(ImagePartition {
-    .label = "metadata",
-    .image_file_path = FLAGS_metadata_image,
+  partitions.push_back(ImagePartition{
+      .label = "metadata",
+      .image_file_path = FLAGS_metadata_image,
+      .read_only = true,
   });
   if (!FLAGS_otheros_root_image.empty()) {
     partitions.push_back(ImagePartition{
         .label = "otheros_esp",
         .image_file_path = FLAGS_otheros_esp_image,
         .type = kEfiSystemPartition,
+        .read_only = true,
     });
     partitions.push_back(ImagePartition{
         .label = "otheros_root",
         .image_file_path = FLAGS_otheros_root_image,
+        .read_only = true,
     });
   }
   return partitions;
