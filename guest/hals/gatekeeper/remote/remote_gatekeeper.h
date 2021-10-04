@@ -82,16 +82,6 @@ class RemoteGateKeeperDevice : public ::android::hardware::gatekeeper::V1_0::IGa
         return Send(VERIFY, request, response);
     }
 
-    gatekeeper_error_t Send(const DeleteUserRequest& request,
-                            DeleteUserResponse* response) {
-      return Send(DELETE_USER, request, response);
-    }
-
-    gatekeeper_error_t Send(const DeleteAllUsersRequest& request,
-                            DeleteAllUsersResponse* response) {
-      return Send(DELETE_ALL_USERS, request, response);
-    }
-
     int error_;
 };
 
