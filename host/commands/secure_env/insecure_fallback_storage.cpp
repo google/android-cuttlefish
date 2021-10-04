@@ -99,47 +99,6 @@ bool InsecureFallbackStorage::HasKey(const Json::Value& key) const {
   return static_cast<bool>(GetEntry(key));
 }
 
-bool InsecureFallbackStorage::Delete(const Json::Value& key) {
-  if (!index_.isMember(kEntries) || !index_[kEntries].isArray()) {
-    LOG(WARNING) << "Index was corrupted.";
-    return false;
-  }
-  auto index_backup = index_;
-  bool removed = false;
-  for (auto i = 0; i < index_[kEntries].size(); i++) {
-    if (!index_[kEntries][i].isMember(kKey)) {
-      LOG(WARNING) << "Index was corrupted";
-      return false;
-    }
-    if (index_[kEntries][i][kKey] != key) {
-      continue;
-    }
-    index_[kEntries].removeIndex(i, nullptr);
-    removed = true;
-  }
-  if (!removed) {
-    LOG(DEBUG) << "Requested deletion of user, but it was not found.";
-    return false;
-  }
-  if (!WriteProtectedJsonToFile(resource_manager_, index_file_, index_)) {
-    LOG(ERROR) << "Failed to save changes to " << index_file_;
-    index_ = index_backup;
-    return false;
-  }
-  return true;
-}
-
-bool InsecureFallbackStorage::DeleteAll() {
-  Json::Value new_index(Json::objectValue);
-  new_index[kEntries] = Json::Value(Json::arrayValue);
-  if (!WriteProtectedJsonToFile(resource_manager_, index_file_, new_index)) {
-    LOG(ERROR) << "Failed to save changes to " << index_file_;
-    return false;
-  }
-  index_ = new_index;
-  return true;
-}
-
 std::unique_ptr<TPM2B_MAX_NV_BUFFER> InsecureFallbackStorage::Read(
     const Json::Value& key) const {
   auto entry = GetEntry(key);
