@@ -48,8 +48,6 @@ public:
 
   bool Allocate(const Json::Value& key, uint16_t size) override;
   bool HasKey(const Json::Value& key) const override;
-  bool Delete(const Json::Value& key) override;
-  bool DeleteAll() override;
 
   std::unique_ptr<TPM2B_MAX_NV_BUFFER> Read(const Json::Value& key) const
       override;
@@ -57,7 +55,6 @@ public:
 private:
   TPM2_HANDLE GetHandle(const Json::Value& key) const;
   TPM2_HANDLE GenerateRandomHandle();
-  void DeleteHandle(TPM2_HANDLE);
 
   TpmResourceManager& resource_manager_;
   std::string index_file_;
