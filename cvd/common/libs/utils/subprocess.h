@@ -15,9 +15,6 @@
  */
 #pragma once
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <common/libs/fs/shared_fd.h>
 #include <sys/types.h>
 
 #include <functional>
@@ -27,20 +24,17 @@
 #include <unordered_set>
 #include <vector>
 
+#include <android-base/logging.h>
+
+#include <common/libs/fs/shared_fd.h>
+
 namespace cuttlefish {
-
-enum class StopperResult {
-  kStopFailure, /* Failed to stop the subprocess. */
-  kStopCrash,   /* Attempted to stop the subprocess cleanly, but that failed. */
-  kStopSuccess, /* The subprocess exited in the expected way. */
-};
-
 class Command;
 class Subprocess;
 class SubprocessOptions;
-using SubprocessStopper = std::function<StopperResult(Subprocess*)>;
+using SubprocessStopper = std::function<bool(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
-StopperResult KillSubprocess(Subprocess* subprocess);
+bool KillSubprocess(Subprocess* subprocess);
 
 // Keeps track of a running (sub)process. Allows to wait for its completion.
 // It's an error to wait twice for the same subprocess.
@@ -71,7 +65,7 @@ class Subprocess {
   // completion of the command, that's what Wait is for.
   bool Started() const { return started_; }
   pid_t pid() const { return pid_; }
-  StopperResult Stop() { return stopper_(this); }
+  bool Stop() { return stopper_(this); }
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
@@ -114,15 +108,15 @@ class Command {
  private:
   template <typename T>
   // For every type other than SharedFD (for which there is a specialisation)
-  void BuildParameter(std::stringstream* stream, T t) {
+  bool BuildParameter(std::stringstream* stream, T t) {
     *stream << t;
+    return true;
   }
   // Special treatment for SharedFD
-  void BuildParameter(std::stringstream* stream, SharedFD shared_fd);
+  bool BuildParameter(std::stringstream* stream, SharedFD shared_fd);
   template <typename T, typename... Args>
-  void BuildParameter(std::stringstream* stream, T t, Args... args) {
-    BuildParameter(stream, t);
-    BuildParameter(stream, args...);
+  bool BuildParameter(std::stringstream* stream, T t, Args... args) {
+    return BuildParameter(stream, t) && BuildParameter(stream, args...);
   }
 
  public:
@@ -141,14 +135,6 @@ class Command {
   Command(const Command&) = delete;
   Command& operator=(const Command&) = delete;
   ~Command();
-
-  const std::string& Executable() const { return command_[0]; }
-
-  void SetExecutable(const std::string& executable) {
-    command_[0] = executable;
-  }
-
-  void SetStopper(SubprocessStopper stopper) { subprocess_stopper_ = stopper; }
 
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
@@ -170,24 +156,33 @@ class Command {
   // object is destroyed. To add multiple parameters to the command the function
   // must be called multiple times, one per parameter.
   template <typename... Args>
-  void AddParameter(Args... args) {
+  bool AddParameter(Args... args) {
     std::stringstream ss;
-    BuildParameter(&ss, args...);
-    command_.push_back(ss.str());
+    if (BuildParameter(&ss, args...)) {
+      command_.push_back(ss.str());
+      return true;
+    }
+    return false;
   }
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
   template <typename... Args>
-  void AppendToLastParameter(Args... args) {
-    CHECK(!command_.empty()) << "There is no parameter to append to.";
+  bool AppendToLastParameter(Args... args) {
+    if (command_.empty()) {
+      LOG(ERROR) << "There is no parameter to append to.";
+      return false;
+    }
     std::stringstream ss;
-    BuildParameter(&ss, args...);
-    command_[command_.size() - 1] += ss.str();
+    if (BuildParameter(&ss, args...)) {
+      command_[command_.size()-1] += ss.str();
+      return true;
+    }
+    return false;
   }
 
   // Redirects the standard IO of the command.
-  void RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);
-  void RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+  bool RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);
+  bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                      Subprocess::StdIOChannel parent_channel);
 
   // Starts execution of the command. This method can be called multiple times,
@@ -199,12 +194,6 @@ class Command {
     // be at index 0 on the vector
     return command_[0];
   }
-
-  // Generates the contents for a bash script that can be used to run this
-  // command. Note that this command must not require any file descriptors
-  // or stdio redirects as those would not be available when the bash script
-  // is run.
-  std::string AsBashScript(const std::string& redirected_stdio_path = "") const;
 
  private:
   std::vector<std::string> command_;
