@@ -60,10 +60,6 @@ public:
 
   uint64_t GetMillisecondsSinceBoot() const override;
 
-  gatekeeper::gatekeeper_error_t RemoveUser(uint32_t) override;
-
-  gatekeeper::gatekeeper_error_t RemoveAllUsers() override;
-
   /**
    * Retrieves the failure record for user `uid`, assuming a user secret value
    * of `user_id`. If the secret value `user_id` is incorrect, the original

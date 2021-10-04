@@ -57,28 +57,6 @@ bool GatekeeperResponder::ProcessMessage() {
       gatekeeper_.Verify(verify_request, &response);
       return channel_.SendResponse(VERIFY, response);
     }
-    case DELETE_USER: {
-      DeleteUserRequest delete_request;
-      auto rc = delete_request.Deserialize(buffer, buffer_end);
-      if (rc != ERROR_NONE) {
-        LOG(ERROR) << "Failed to deserialize delete user request";
-        return false;
-      }
-      DeleteUserResponse response;
-      gatekeeper_.DeleteUser(delete_request, &response);
-      return channel_.SendResponse(DELETE_USER, response);
-    }
-    case DELETE_ALL_USERS: {
-      DeleteAllUsersRequest delete_request;
-      auto rc = delete_request.Deserialize(buffer, buffer_end);
-      if (rc != ERROR_NONE) {
-        LOG(ERROR) << "Failed to deserialize delete all users request";
-        return false;
-      }
-      DeleteAllUsersResponse response;
-      gatekeeper_.DeleteAllUsers(delete_request, &response);
-      return channel_.SendResponse(DELETE_ALL_USERS, response);
-    }
     default:
       LOG(ERROR) << "Unrecognized message id " << request->cmd;
       return false;
