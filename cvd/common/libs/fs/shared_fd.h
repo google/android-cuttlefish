@@ -126,6 +126,7 @@ class SharedFD {
   // Fcntl or Dup functions.
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const std::string& pathname, mode_t mode);
+  static SharedFD Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
@@ -232,27 +233,12 @@ class FileInstance {
   virtual ~FileInstance() { Close(); }
 
   // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static std::shared_ptr<FileInstance> ClosedInstance() {
-    return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
-  }
+  static std::shared_ptr<FileInstance> ClosedInstance();
 
-  int Bind(const struct sockaddr* addr, socklen_t addrlen) {
-    errno = 0;
-    int rval = bind(fd_, addr, addrlen);
-    errno_ = errno;
-    return rval;
-  }
-
-  int Connect(const struct sockaddr* addr, socklen_t addrlen) {
-    errno = 0;
-    int rval = connect(fd_, addr, addrlen);
-    errno_ = errno;
-    return rval;
-  }
-
+  int Bind(const struct sockaddr* addr, socklen_t addrlen);
+  int Connect(const struct sockaddr* addr, socklen_t addrlen);
   int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
                          struct timeval* timeout);
-
   void Close();
 
   // Returns true if the entire input was copied.
@@ -261,52 +247,16 @@ class FileInstance {
   // reference type.
   bool CopyFrom(FileInstance& in, size_t length);
 
-  int UNMANAGED_Dup() {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(dup(fd_));
-    errno_ = errno;
-    return rval;
-  }
-
-  int UNMANAGED_Dup2(int newfd) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(dup2(fd_, newfd));
-    errno_ = errno;
-    return rval;
-  }
-
-  int Fcntl(int command, int value) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
-    errno_ = errno;
-    return rval;
-  }
+  int UNMANAGED_Dup();
+  int UNMANAGED_Dup2(int newfd);
+  int Fcntl(int command, int value);
 
   int GetErrno() const { return errno_; }
+  int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
 
-  int GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
-    if (rval == -1) {
-      errno_ = errno;
-    }
-    return rval;
-  }
+  unsigned int VsockServerPort();
 
-  unsigned int VsockServerPort() {
-    struct sockaddr_vm vm_socket;
-    socklen_t length = sizeof(vm_socket);
-    GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
-    return vm_socket.svm_port;
-  }
-
-  int Ioctl(int request, void* val = nullptr) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
-    errno_ = errno;
-    return rval;
-  }
-
+  int Ioctl(int request, void* val = nullptr);
   bool IsOpen() const { return fd_ != -1; }
 
   // in probably isn't modified, but the API spec doesn't have const.
@@ -321,73 +271,16 @@ class FileInstance {
    * Using this on a file opened with O_TMPFILE can link it into the filesystem.
    */
   // Used with O_TMPFILE files to attach them to the filesystem.
-  int LinkAtCwd(const std::string& path) {
-    std::string name = "/proc/self/fd/";
-    name += std::to_string(fd_);
-    errno = 0;
-    int rval = linkat(
-        -1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
-    errno_ = errno;
-    return rval;
-  }
-
-  int Listen(int backlog) {
-    errno = 0;
-    int rval = listen(fd_, backlog);
-    errno_ = errno;
-    return rval;
-  }
-
+  int LinkAtCwd(const std::string& path);
+  int Listen(int backlog);
   static void Log(const char* message);
-
-  off_t LSeek(off_t offset, int whence) {
-    errno = 0;
-    off_t rval = TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Recv(void* buf, size_t len, int flags) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t RecvMsg(struct msghdr* msg, int flags) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Read(void* buf, size_t count) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(read(fd_, buf, count));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EventfdRead(eventfd_t* value) {
-    errno = 0;
-    auto rval = eventfd_read(fd_, value);
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Send(const void* buf, size_t len, int flags) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(send(fd_, buf, len, flags));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t SendMsg(const struct msghdr* msg, int flags) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
-    errno_ = errno;
-    return rval;
-  }
+  off_t LSeek(off_t offset, int whence);
+  ssize_t Recv(void* buf, size_t len, int flags);
+  ssize_t RecvMsg(struct msghdr* msg, int flags);
+  ssize_t Read(void* buf, size_t count);
+  int EventfdRead(eventfd_t* value);
+  ssize_t Send(const void* buf, size_t len, int flags);
+  ssize_t SendMsg(const struct msghdr* msg, int flags);
 
   template <typename... Args>
   ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {
@@ -399,118 +292,25 @@ class FileInstance {
     return ret;
   }
 
-  int Shutdown(int how) {
-    errno = 0;
-    int rval = shutdown(fd_, how);
-    errno_ = errno;
-    return rval;
-  }
-
+  int Shutdown(int how);
   void Set(fd_set* dest, int* max_index) const;
-
-  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen) {
-    errno = 0;
-    int rval = setsockopt(fd_, level, optname, optval, optlen);
-    errno_ = errno;
-    return rval;
-  }
-
-  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
-    errno = 0;
-    int rval = getsockopt(fd_, level, optname, optval, optlen);
-    errno_ = errno;
-    return rval;
-  }
-
-  int SetTerminalRaw() {
-    errno = 0;
-    termios terminal_settings;
-    int rval = tcgetattr(fd_, &terminal_settings);
-    errno_ = errno;
-    if (rval < 0) {
-      return rval;
-    }
-    cfmakeraw(&terminal_settings);
-    rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
-    errno_ = errno;
-    return rval;
-  }
-
-  const char* StrError() const {
-    errno = 0;
-    FileInstance* s = const_cast<FileInstance*>(this);
-    char* out = strerror_r(errno_, s->strerror_buf_, sizeof(strerror_buf_));
-
-    // From man page:
-    //  strerror_r() returns a pointer to a string containing the error message.
-    //  This may be either a pointer to a string that the function stores in
-    //  buf, or a pointer to some (immutable) static string (in which case buf
-    //  is unused).
-    if (out != s->strerror_buf_) {
-      strncpy(s->strerror_buf_, out, sizeof(strerror_buf_));
-    }
-    return strerror_buf_;
-  }
-
-  ScopedMMap MMap(void* addr, size_t length, int prot, int flags,
-                  off_t offset) {
-    errno = 0;
-    auto ptr = mmap(addr, length, prot, flags, fd_, offset);
-    errno_ = errno;
-    return ScopedMMap(ptr, length);
-  }
-
-  ssize_t Truncate(off_t length) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Write(const void* buf, size_t count) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EventfdWrite(eventfd_t value) {
-    errno = 0;
-    int rval = eventfd_write(fd_, value);
-    errno_ = errno;
-    return rval;
-  }
-
-  bool IsATTY() {
-    errno = 0;
-    int rval = isatty(fd_);
-    errno_ = errno;
-    return rval;
-  }
+  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen);
+  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen);
+  int SetTerminalRaw();
+  std::string StrError() const;
+  ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
+  ssize_t Truncate(off_t length);
+  ssize_t Write(const void* buf, size_t count);
+  int EventfdWrite(eventfd_t value);
+  bool IsATTY();
 
  private:
-  FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
-    // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
-    // flag
-    TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
-    std::stringstream identity;
-    identity << "fd=" << fd << " @" << this;
-    identity_ = identity.str();
-  }
-
-  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const {
-    int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
-    if (fd == -1) {
-      return new FileInstance(fd, errno);
-    } else {
-      return new FileInstance(fd, 0);
-    }
-  }
+  FileInstance(int fd, int in_errno);
+  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
 
   int fd_;
   int errno_;
   std::string identity_;
-  char strerror_buf_[160];
 };
 
 /* Methods that need both a fully defined SharedFD and a fully defined
