@@ -149,12 +149,12 @@ void MiscService::TimeUpdate() {
 
   std::stringstream ss;
   ss << "%CTZV: \"" << std::setfill('0') << std::setw(2)
-     << local_time.tm_year % 100 << "/" << std::setfill('0') << std::setw(2)
-     << local_time.tm_mon + 1 << "/" << std::setfill('0') << std::setw(2)
-     << local_time.tm_mday << "," << std::setfill('0') << std::setw(2)
-     << local_time.tm_hour << ":" << std::setfill('0') << std::setw(2)
-     << local_time.tm_min << ":" << std::setfill('0') << std::setw(2)
-     << local_time.tm_sec << (tzdiff >= 0 ? '+' : '-')
+     << gm_time.tm_year % 100 << "/" << std::setfill('0') << std::setw(2)
+     << gm_time.tm_mon + 1 << "/" << std::setfill('0') << std::setw(2)
+     << gm_time.tm_mday << "," << std::setfill('0') << std::setw(2)
+     << gm_time.tm_hour << ":" << std::setfill('0') << std::setw(2)
+     << gm_time.tm_min << ":" << std::setfill('0') << std::setw(2)
+     << gm_time.tm_sec << (tzdiff >= 0 ? '+' : '-')
      << (tzdiff >= 0 ? tzdiff : -tzdiff) << ":" << local_time.tm_isdst;
   if (!timezone_.empty()) {
     ss << ":" << timezone_;
