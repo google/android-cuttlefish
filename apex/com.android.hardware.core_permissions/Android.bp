@@ -18,8 +18,6 @@ override_apex {
         "android.hardware.faketouch.prebuilt.xml",
         "android.hardware.location.gps.prebuilt.xml",
         "android.hardware.reboot_escrow.prebuilt.xml",
-        "android.hardware.telephony.gsm.prebuilt.xml",
-        "android.hardware.telephony.ims.prebuilt.xml",
         "android.hardware.usb.accessory.prebuilt.xml",
         "android.hardware.usb.host.prebuilt.xml",
         "android.hardware.vulkan.level-0.prebuilt.xml",
