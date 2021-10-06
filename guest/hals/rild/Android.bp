@@ -39,6 +39,7 @@ cc_binary {
         "libril-modem-lib",
     ],
     init_rc: ["rild_cuttlefish.rc"],
+    vintf_fragments: [":libril-modem-lib-manifests"],
     relative_install_path: "hw",
     overrides: ["rild"],
 }
