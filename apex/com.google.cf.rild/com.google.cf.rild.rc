@@ -1,0 +1,5 @@
+service vendor.ril-daemon /apex/com.google.cf.rild/bin/hw/libcuttlefish-rild
+    class main
+    user radio
+    group radio inet misc audio log readproc wakelock
+    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
