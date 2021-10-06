@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 #define LOG_TAG "VsockCameraProvider"
-#include "vsock_camera_provider_2_6.h"
+#include "vsock_camera_provider_2_7.h"
 #include <cutils/properties.h>
 #include <log/log.h>
 #include "vsock_camera_server.h"
 
-namespace android::hardware::camera::provider::V2_6::implementation {
+namespace android::hardware::camera::provider::V2_7::implementation {
 
 namespace {
 VsockCameraServer gCameraServer;
 constexpr auto kDeviceName = "device@3.4/external/0";
 }  // namespace
 
-using android::hardware::camera::provider::V2_6::ICameraProvider;
+using android::hardware::camera::provider::V2_7::ICameraProvider;
 extern "C" ICameraProvider* HIDL_FETCH_ICameraProvider(const char* name) {
   return (strcmp(name, "external/0") == 0)
              ? new VsockCameraProvider(&gCameraServer)
@@ -129,8 +129,15 @@ Return<void> VsockCameraProvider::getConcurrentStreamingCameraIds(
 }
 
 Return<void> VsockCameraProvider::isConcurrentStreamCombinationSupported(
-    const hidl_vec<CameraIdAndStreamCombination>&,
+    const hidl_vec<::android::hardware::camera::provider::V2_6::CameraIdAndStreamCombination>&,
     isConcurrentStreamCombinationSupported_cb _hidl_cb) {
+  _hidl_cb(Status::OK, false);
+  return Void();
+}
+
+Return<void> VsockCameraProvider::isConcurrentStreamCombinationSupported_2_7(
+    const hidl_vec<::android::hardware::camera::provider::V2_7::CameraIdAndStreamCombination>&,
+    isConcurrentStreamCombinationSupported_2_7_cb _hidl_cb) {
   _hidl_cb(Status::OK, false);
   return Void();
 }
@@ -149,4 +156,4 @@ void VsockCameraProvider::deviceRemoved(const char* name) {
   }
 }
 
-}  // namespace android::hardware::camera::provider::V2_6::implementation
+}  // namespace android::hardware::camera::provider::V2_7::implementation
