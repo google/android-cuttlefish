@@ -83,6 +83,14 @@ int memfd_create_wrapper(const char* name, unsigned int flags) {
 #endif
 }
 
+bool IsRegularFile(const int fd) {
+  struct stat info;
+  if (fstat(fd, &info) < 0) {
+    return false;
+  }
+  return S_ISREG(info.st_mode);
+}
+
 }  // namespace
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
@@ -714,6 +722,9 @@ ssize_t FileInstance::Truncate(off_t length) {
 }
 
 ssize_t FileInstance::Write(const void* buf, size_t count) {
+  if (count == 0 && !IsRegular()) {
+    return 0;
+  }
   errno = 0;
   ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
   errno_ = errno;
@@ -734,7 +745,8 @@ bool FileInstance::IsATTY() {
   return rval;
 }
 
-FileInstance::FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
+FileInstance::FileInstance(int fd, int in_errno)
+    : fd_(fd), errno_(in_errno), is_regular_file_(IsRegularFile(fd_)) {
   // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
   // flag
   TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
