@@ -747,7 +747,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
     if (tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl &&
         tmp_config_obj.gpu_mode() != kGpuModeGfxStream) {
-        instance.set_frames_server_port(calc_vsock_port(6900));
       if (FLAGS_vm_manager == QemuManager::name()) {
         instance.set_keyboard_server_port(calc_vsock_port(7000));
         instance.set_touch_server_port(calc_vsock_port(7100));
