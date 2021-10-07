@@ -229,7 +229,6 @@ void HostServer::Transition(std::unique_ptr<ConfUiMessage>& input_ptr) {
   const auto session_id = input.GetSessionId();
   const auto cmd = input.GetType();
   const std::string cmd_str(ToString(cmd));
-  const bool is_user_input = (cmd == ConfUiCmd::kUserInputEvent);
   FsmInput fsm_input = ToFsmInput(input);
   ConfUiLog(VERBOSE) << "Handling " << ToString(cmd);
   if (IsUserAbort(input)) {
@@ -241,7 +240,7 @@ void HostServer::Transition(std::unique_ptr<ConfUiMessage>& input_ptr) {
     curr_session_->Abort();
     return;
   }
-  curr_session_->Transition(is_user_input, hal_cli_socket_, fsm_input, input);
+  curr_session_->Transition(hal_cli_socket_, fsm_input, input);
 }
 
 }  // end of namespace confui
