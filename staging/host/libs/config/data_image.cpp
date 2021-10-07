@@ -239,10 +239,10 @@ class InitializeDataImageImpl : public InitializeDataImage {
 
   // Feature
   std::string Name() const override { return "InitializeDataImageImpl"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Enabled() const override { return true; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     bool data_exists = FileHasContent(data_path_.Path());
     bool remove{};
@@ -364,10 +364,10 @@ class InitializeMiscImageImpl : public InitializeMiscImage {
 
   // Feature
   std::string Name() const override { return "InitializeMiscImageImpl"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Enabled() const override { return true; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     bool misc_exists = FileHasContent(misc_path_.Path());
 
