@@ -96,16 +96,16 @@ class ModemSimulator : public CommandSource {
   }
 
   // Feature
+  std::string Name() const override { return "ModemSimulator"; }
   bool Enabled() const override {
     if (!config_.enable_modem_simulator()) {
       LOG(DEBUG) << "Modem simulator not enabled";
     }
     return config_.enable_modem_simulator();
   }
-  std::string Name() const override { return "ModemSimulator"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     int instance_number = config_.modem_simulator_instance_number();
     if (instance_number > 3 /* max value */ || instance_number < 0) {
@@ -129,7 +129,6 @@ class ModemSimulator : public CommandSource {
     return true;
   }
 
- private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   std::vector<SharedFD> sockets_;
