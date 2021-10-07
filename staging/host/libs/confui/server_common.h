@@ -37,10 +37,7 @@ using TeeUiFrame = std::vector<std::uint32_t>;
 
 // FSM input to Session FSM
 enum class FsmInput : std::uint32_t {
-  kUserConfirm = 1,
-  kUserCancel,
-  kUserAbort,
-  kUserUnknown,
+  kUserEvent = 1,
   kHalStart,
   kHalStop,
   kHalAbort,
