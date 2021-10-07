@@ -95,16 +95,15 @@ class AdbConnector : public CommandSource {
   }
 
   // Feature
+  std::string Name() const override { return "AdbConnector"; }
   bool Enabled() const override {
     return helper_.TcpConnectorEnabled() || helper_.VsockConnectorEnabled();
   }
-  std::string Name() const override { return "AdbConnector"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
-
- protected:
-  bool Setup() override { return true; }
 
  private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() override { return true; }
+
   const AdbHelper& helper_;
 };
 
@@ -166,15 +165,15 @@ class SocketVsockProxy : public CommandSource {
   }
 
   // Feature
+  std::string Name() const override { return "SocketVsockProxy"; }
   bool Enabled() const override {
     return helper_.VsockTunnelEnabled() || helper_.VsockHalfTunnelEnabled();
   }
-  std::string Name() const override { return "SocketVsockProxy"; }
+
+ private:
   std::unordered_set<Feature*> Dependencies() const override {
     return {static_cast<Feature*>(&log_pipe_provider_)};
   }
-
- protected:
   bool Setup() override {
     tcp_server_ =
         SharedFD::SocketLocalServer(instance_.adb_host_port(), SOCK_STREAM);
@@ -187,7 +186,6 @@ class SocketVsockProxy : public CommandSource {
     return true;
   }
 
- private:
   const AdbHelper& helper_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   KernelLogPipeProvider& log_pipe_provider_;

@@ -112,11 +112,12 @@ class ProcessLeader : public Feature {
 
   SharedFD ForegroundLauncherPipe() { return foreground_launcher_pipe_; }
 
-  bool Enabled() const override { return true; }
+  // Feature
   std::string Name() const override { return "ProcessLeader"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Enabled() const override { return true; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     /* These two paths result in pretty different process state, but both
      * achieve the same goal of making the current process the leader of a
@@ -140,7 +141,6 @@ class ProcessLeader : public Feature {
     return true;
   }
 
- private:
   const CuttlefishConfig& config_;
   SharedFD foreground_launcher_pipe_;
 };
@@ -159,16 +159,16 @@ class CvdBootStateMachine : public Feature {
   ~CvdBootStateMachine() { boot_event_handler_.join(); }
 
   // Feature
-  bool Enabled() const override { return true; }
   std::string Name() const override { return "CvdBootStateMachine"; }
+  bool Enabled() const override { return true; }
+
+ private:
   std::unordered_set<Feature*> Dependencies() const {
     return {
         static_cast<Feature*>(&process_leader_),
         static_cast<Feature*>(&kernel_log_pipe_provider_),
     };
   }
-
- protected:
   bool Setup() override {
     fg_launcher_pipe_ = process_leader_.ForegroundLauncherPipe();
     if (FLAGS_reboot_notification_fd >= 0) {
@@ -189,7 +189,6 @@ class CvdBootStateMachine : public Feature {
     return true;
   }
 
- private:
   void ThreadLoop(SharedFD boot_events_pipe) {
     while (true) {
       SharedFDSet fd_set;
