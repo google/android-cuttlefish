@@ -107,15 +107,16 @@ class StreamerSockets : public virtual Feature {
   }
 
   // Feature
+  std::string Name() const override { return "StreamerSockets"; }
   bool Enabled() const override {
     bool is_qemu = config_.vm_manager() == vm_manager::QemuManager::name();
     bool is_accelerated = config_.gpu_mode() != kGpuModeGuestSwiftshader;
     return !(is_qemu && is_accelerated);
   }
-  std::string Name() const override { return "StreamerSockets"; }
+
+ private:
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
- protected:
   bool Setup() override {
     auto use_vsockets = config_.vm_manager() == vm_manager::QemuManager::name();
     for (int i = 0; i < config_.display_configs().size(); ++i) {
@@ -161,7 +162,6 @@ class StreamerSockets : public virtual Feature {
     return true;
   }
 
- private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   std::vector<SharedFD> touch_servers_;
@@ -199,18 +199,17 @@ class VncServer : public virtual CommandSource, public DiagnosticInformation {
   }
 
   // Feature
+  std::string Name() const override { return "VncServer"; }
   bool Enabled() const override {
     return sockets_.Enabled() && config_.enable_vnc_server();
   }
-  std::string Name() const override { return "VncServer"; }
+
+ private:
   std::unordered_set<Feature*> Dependencies() const override {
     return {static_cast<Feature*>(&sockets_)};
   }
-
- protected:
   bool Setup() override { return true; }
 
- private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   StreamerSockets& sockets_;
@@ -309,13 +308,14 @@ class WebRtcServer : public virtual CommandSource,
   bool Enabled() const override {
     return sockets_.Enabled() && config_.enable_webrtc();
   }
+
+ private:
   std::string Name() const override { return "WebRtcServer"; }
   std::unordered_set<Feature*> Dependencies() const override {
     return {static_cast<Feature*>(&sockets_),
             static_cast<Feature*>(&log_pipe_provider_)};
   }
 
- protected:
   bool Setup() override {
     if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &client_socket_,
                               &host_socket_)) {
@@ -340,7 +340,6 @@ class WebRtcServer : public virtual CommandSource,
     return true;
   }
 
- private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   StreamerSockets& sockets_;

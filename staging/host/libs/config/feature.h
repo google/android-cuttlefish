@@ -31,10 +31,12 @@ class FeatureSuperclass {
   virtual ~FeatureSuperclass() = default;
 
   virtual std::string Name() const = 0;
-  virtual std::unordered_set<Subclass*> Dependencies() const = 0;
 
   static bool TopologicalVisit(const std::unordered_set<Subclass*>& features,
                                const std::function<bool(Subclass*)>& callback);
+
+ private:
+  virtual std::unordered_set<Subclass*> Dependencies() const = 0;
 };
 
 // TODO(schuffelen): Rename this "SetupFeature"
@@ -46,7 +48,7 @@ class Feature : public virtual FeatureSuperclass<Feature> {
 
   virtual bool Enabled() const = 0;
 
- protected:
+ private:
   virtual bool Setup() = 0;
 };
 
@@ -57,7 +59,7 @@ class FlagFeature : public FeatureSuperclass<FlagFeature> {
   static bool WriteGflagsHelpXml(const std::vector<FlagFeature*>& features,
                                  std::ostream& out);
 
- protected:
+ private:
   // Must be executed in dependency order following Dependencies(). Expected to
   // mutate the `flags` argument to remove handled flags, and possibly introduce
   // new flag values (e.g. from a file).
