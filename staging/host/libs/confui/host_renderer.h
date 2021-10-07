@@ -29,39 +29,64 @@
 #include "common/libs/confui/confui.h"
 #include "host/libs/confui/layouts/layout.h"
 #include "host/libs/confui/server_common.h"
-#include "host/libs/screen_connector/screen_connector.h"
+#include "host/libs/screen_connector/screen_connector_common.h"
 
 namespace cuttlefish {
 namespace confui {
+class TeeUiFrameWrapper {
+ public:
+  TeeUiFrameWrapper(const int w, const int h, const teeui::Color color)
+      : w_(w), h_(h), teeui_frame_(ScreenSizeInBytes(w, h), color) {}
+  TeeUiFrameWrapper() = delete;
+  auto data() { return teeui_frame_.data(); }
+  int Width() const { return w_; }
+  int Height() const { return h_; }
+  bool IsEmpty() const { return teeui_frame_.empty(); }
+  auto Size() const { return teeui_frame_.size(); }
+  auto& operator[](const int idx) { return teeui_frame_[idx]; }
+  std::uint32_t ScreenStrideBytes() const {
+    return ScreenConnectorInfo::ComputeScreenStrideBytes(w_);
+  }
+
+ private:
+  static std::uint32_t ScreenSizeInBytes(const int w, const int h) {
+    return ScreenConnectorInfo::ComputeScreenSizeInBytes(w, h);
+  }
+  int w_;
+  int h_;
+  TeeUiFrame teeui_frame_;
+};
 
 /**
  * create a raw frame for confirmation UI dialog
+ *
+ * Many rendering code borrowed from the following source
+ *  https://android.googlesource.com/trusty/app/confirmationui/+/0429cc7/src
  */
 class ConfUiRenderer {
  public:
   using LabelConfMsg = teeui::LabelBody;
 
-  ConfUiRenderer(const std::uint32_t display);
+  static std::unique_ptr<ConfUiRenderer> GenerateRenderer(
+      const std::uint32_t display, const std::string& confirmation_msg,
+      const std::string& locale, const bool inverted, const bool magnified);
 
   /**
    * this does not repaint from the scratch all the time
    *
-   * Unless repainting the whole thing is needed, it remove the message
-   * label, and re-draw there. There seems yet no fancy way of doing this.
-   * Thus, it repaint the background color on the top of the label, and
-   * draw the label on the new background
-   *
-   * As HostRenderer is intended to be shared across sessions, HostRender
-   * owns the buffer, and returns reference to the buffer. Note that no
-   * 2 or more sessions are concurrently executed. Only 1 or 0 is active
-   * at the given moment.
+   * It does repaint its frame buffer only when w/h of
+   * current display has changed
    */
-  std::tuple<TeeUiFrame&, bool> RenderRawFrame(
-      const std::string& confirmation_msg, const std::string& lang_id = "en");
+  std::shared_ptr<TeeUiFrameWrapper> RenderRawFrame();
 
-  bool IsFrameReady() const { return !raw_frame_.empty(); }
+  bool IsFrameReady() const { return raw_frame_ && !raw_frame_->IsEmpty(); }
 
  private:
+  bool IsSetUpSuccessful() const { return is_setup_well_; }
+  ConfUiRenderer(const std::uint32_t display,
+                 const std::string& confirmation_msg, const std::string& locale,
+                 const bool inverted, const bool magnified);
+
   struct Boundary {            // inclusive but.. LayoutElement's size is float
     std::uint32_t x, y, w, h;  // (x, y) is the top left
   };
@@ -82,26 +107,18 @@ class ConfUiRenderer {
 
   // essentially, to repaint from the scratch, so returns new frame
   // when successful. Or, nullopt
-  std::optional<TeeUiFrame> RepaintRawFrame(const std::string& confirmation_msg,
-                                            const std::string& lang_id = "en");
+  std::unique_ptr<TeeUiFrameWrapper> RepaintRawFrame(const int w, const int h);
 
   bool InitLayout(const std::string& lang_id);
   teeui::Error UpdateTranslations();
-  /**
-   * could be confusing. update prompt_, and update the text_ in the Label
-   * object, the GUI components. This does not render immediately. And..
-   * to render it, we must clean up the existing dirty pixels, which
-   * this method does not do.
-   */
-  void SetConfUiMessage(const std::string& s);
-  teeui::Error SetLangId(const std::string& lang_id);
-  teeui::context<teeui::ConUIParameters> GetDeviceContext();
+  teeui::Error UpdateLocale();
+  void SetDeviceContext(const unsigned long long w, const unsigned long long h,
+                        bool is_inverted, bool is_magnified);
 
-  // effectively, will be send to teeui as a callback function
-  teeui::Error UpdatePixels(TeeUiFrame& buffer, std::uint32_t x,
+  // a callback function to be effectively sent to TeeUI library
+  teeui::Error UpdatePixels(TeeUiFrameWrapper& buffer, std::uint32_t x,
                             std::uint32_t y, teeui::Color color);
 
-  // from Trusty
   // second param is for type deduction
   template <typename... Elements>
   static teeui::Error drawElements(std::tuple<Elements...>& layout,
@@ -111,70 +128,49 @@ class ConfUiRenderer {
     // draw the remaining elements in the order they appear in the layout tuple.
     return (std::get<Elements>(layout).draw(drawPixel) || ...);
   }
-
-  // repaint the confirmation UI label only
-  teeui::Error RenderConfirmationMsgOnly(const std::string& confirmation_msg);
-
-  // from Trusty
-  template <typename Context>
-  void UpdateColorScheme(Context* ctx) {
-    using namespace teeui;
-    color_text_ = is_inverted_ ? kColorDisabledInv : kColorDisabled;
-    shield_color_ = is_inverted_ ? kColorShieldInv : kColorShield;
-    color_bg_ = is_inverted_ ? kColorBackgroundInv : kColorBackground;
-
-    ctx->template setParam<ShieldColor>(shield_color_);
-    ctx->template setParam<ColorText>(color_text_);
-    ctx->template setParam<ColorBG>(color_bg_);
-    return;
-  }
-
+  void UpdateColorScheme(const bool is_inverted);
   template <typename Label>
   auto SetText(const std::string& text) {
     return std::get<Label>(layout_).setText(
         {text.c_str(), text.c_str() + text.size()});
   }
 
-  /**
-   * source:
-   * https://android.googlesource.com/trusty/app/confirmationui/+/0429cc7/src/trusty_confirmation_ui.cpp#49
-   */
   template <typename Label>
-  teeui::Error UpdateString() {
-    using namespace teeui;
-    const char* str;
-    auto& label = std::get<Label>(layout_);
-    str = localization::lookup(TranslationId(label.textId()));
-    if (str == nullptr) {
-      ConfUiLog(ERROR) << "Given translation_id" << label.textId()
-                       << "not found";
-      return Error::Localization;
-    }
-    label.setText({str, str + strlen(str)});
-    return Error::OK;
-  }
+  teeui::Error UpdateString();
 
-  const int display_num_;
+  std::uint32_t display_num_;
   teeui::layout_t<teeui::ConfUILayout> layout_;
   std::string lang_id_;
-  std::string prompt_;  // confirmation ui message
-  TeeUiFrame raw_frame_;
+  std::string prompt_text_;  // confirmation ui message
+
+  /**
+   * Potentially, the same frame could be requested multiple times.
+   *
+   * While another thread/caller is using this frame, the frame should
+   * be kept here, too, to be returned upon future requests.
+   *
+   */
+  std::shared_ptr<TeeUiFrameWrapper> raw_frame_;
   std::uint32_t current_height_;
   std::uint32_t current_width_;
   teeui::Color color_bg_;
   teeui::Color color_text_;
   teeui::Color shield_color_;
   bool is_inverted_;
-  teeui::context<teeui::ConUIParameters> ctx_;
+  bool is_magnified_;
+  teeui::context<teeui::ConfUIParameters> ctx_;
+  bool is_setup_well_;
 
-  static constexpr const teeui::Color kColorEnabled = 0xff212121;
-  static constexpr const teeui::Color kColorDisabled = 0xffbdbdbd;
-  static constexpr const teeui::Color kColorEnabledInv = 0xffdedede;
-  static constexpr const teeui::Color kColorDisabledInv = 0xff424242;
   static constexpr const teeui::Color kColorBackground = 0xffffffff;
   static constexpr const teeui::Color kColorBackgroundInv = 0xff212121;
-  static constexpr const teeui::Color kColorShieldInv = 0xffc4cb80;
+  static constexpr const teeui::Color kColorDisabled = 0xffbdbdbd;
+  static constexpr const teeui::Color kColorDisabledInv = 0xff424242;
+  static constexpr const teeui::Color kColorEnabled = 0xff212121;
+  static constexpr const teeui::Color kColorEnabledInv = 0xffdedede;
   static constexpr const teeui::Color kColorShield = 0xff778500;
+  static constexpr const teeui::Color kColorShieldInv = 0xffc4cb80;
+  static constexpr const teeui::Color kColorText = 0xff212121;
+  static constexpr const teeui::Color kColorTextInv = 0xffdedede;
 };
 }  // end of namespace confui
 }  // end of namespace cuttlefish
