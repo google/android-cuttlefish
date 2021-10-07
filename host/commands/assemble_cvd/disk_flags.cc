@@ -857,6 +857,53 @@ class InitializeInstanceCompositeDisk : public Feature {
   GeneratePersistentBootconfigAndVbmeta& bootconfig_;
 };
 
+class VbmetaEnforceMinimumSize : public Feature {
+ public:
+  INJECT(VbmetaEnforceMinimumSize()) {}
+
+  std::string Name() const override { return "VbmetaEnforceMinimumSize"; }
+  bool Enabled() const override { return true; }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() override {
+    // libavb expects to be able to read the maximum vbmeta size, so we must
+    // provide a partition which matches this or the read will fail
+    for (const auto& vbmeta_image :
+         {FLAGS_vbmeta_image, FLAGS_vbmeta_system_image}) {
+      if (FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
+        auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
+        bool success = fd->Truncate(VBMETA_MAX_SIZE) == 0;
+        if (!success) {
+          LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " "
+                     << vbmeta_image << "` "
+                     << "failed: " << fd->StrError();
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+};
+
+class BootloaderPresentCheck : public Feature {
+ public:
+  INJECT(BootloaderPresentCheck()) {}
+
+  std::string Name() const override { return "BootloaderPresentCheck"; }
+  bool Enabled() const override { return true; }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() override {
+    if (!FileHasContent(FLAGS_bootloader)) {
+      LOG(ERROR) << "File not found: " << FLAGS_bootloader;
+      return false;
+    }
+    return true;
+  }
+};
+
 static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
                                                const CuttlefishConfig* config) {
   return fruit::createComponent()
@@ -864,6 +911,8 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       .bindInstance(*config)
       .addMultibinding<Feature, InitializeMetadataImage>()
       .addMultibinding<Feature, BootImageRepacker>()
+      .addMultibinding<Feature, VbmetaEnforceMinimumSize>()
+      .addMultibinding<Feature, BootloaderPresentCheck>()
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
       .install(FixedDataImagePathComponent, &FLAGS_data_image)
@@ -908,20 +957,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     CHECK(Feature::RunSetup(instance_features))
         << "Failed to run instance feature setup.";
   }
-
-  // libavb expects to be able to read the maximum vbmeta size, so we must
-  // provide a partition which matches this or the read will fail
-  for (const auto& vbmeta_image : { FLAGS_vbmeta_image, FLAGS_vbmeta_system_image }) {
-    if (FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
-      auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
-      CHECK(fd->Truncate(VBMETA_MAX_SIZE) == 0)
-        << "`truncate --size=" << VBMETA_MAX_SIZE << " " << vbmeta_image << "` "
-        << "failed: " << fd->StrError();
-    }
-  }
-
-  CHECK(FileHasContent(FLAGS_bootloader))
-      << "File not found: " << FLAGS_bootloader;
 
   if (SuperImageNeedsRebuilding(fetcher_config, config)) {
     bool success = RebuildSuperImage(fetcher_config, config, FLAGS_super_image);
