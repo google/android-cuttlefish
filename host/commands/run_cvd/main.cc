@@ -69,11 +69,11 @@ class CuttlefishEnvironment : public Feature, public DiagnosticInformation {
   }
 
   // Feature
-  bool Enabled() const override { return true; }
   std::string Name() const override { return "CuttlefishEnvironment"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Enabled() const override { return true; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto env =
         SharedFD::Open(config_.cuttlefish_env_path(), O_CREAT | O_RDWR, 0755);
