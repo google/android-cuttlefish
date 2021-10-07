@@ -61,12 +61,21 @@ struct ScreenConnectorInfo {
     CHECK_GE(display_configs.size(), display_number);
     return display_configs[display_number].width;
   }
-  static std::uint32_t ScreenStrideBytes(std::uint32_t display_number) {
-    return AlignToPowerOf2(ScreenWidth(display_number) * BytesPerPixel(), 4);
+  static std::uint32_t ComputeScreenStrideBytes(const std::uint32_t w) {
+    return AlignToPowerOf2(w * BytesPerPixel(), 4);
   }
-  static std::uint32_t ScreenSizeInBytes(std::uint32_t display_number) {
-    return ScreenStrideBytes(display_number) * ScreenHeight(display_number);
+  static std::uint32_t ComputeScreenSizeInBytes(const std::uint32_t w,
+                                                const std::uint32_t h) {
+    return ComputeScreenStrideBytes(w) * h;
   }
+  static std::uint32_t ScreenStrideBytes(const std::uint32_t display_number) {
+    return ComputeScreenStrideBytes(ScreenWidth(display_number));
+  }
+  static std::uint32_t ScreenSizeInBytes(const std::uint32_t display_number) {
+    return ComputeScreenStrideBytes(ScreenWidth(display_number)) *
+           ScreenHeight(display_number);
+  }
+
  private:
   static auto ChkAndGetConfig() -> decltype(cuttlefish::CuttlefishConfig::Get()) {
     auto config = cuttlefish::CuttlefishConfig::Get();
