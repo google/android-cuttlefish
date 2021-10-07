@@ -132,11 +132,11 @@ class ServerLoopImpl : public ServerLoop, public Feature {
   }
 
   // Feature
-  bool Enabled() const override { return true; }
   std::string Name() const override { return "ServerLoop"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
- protected:
+ private:
+  bool Enabled() const override { return true; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() {
     auto launcher_monitor_path = instance_.launcher_monitor_socket_path();
     server_ = SharedFD::SocketLocalServer(launcher_monitor_path.c_str(), false,
@@ -149,7 +149,6 @@ class ServerLoopImpl : public ServerLoop, public Feature {
     return true;
   }
 
- private:
   void DeleteFifos() {
     // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
     std::vector<std::string> pipes = {
