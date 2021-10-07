@@ -19,7 +19,7 @@
 #include "vsock_camera_device_3_4.h"
 #include "vsock_connection.h"
 
-namespace android::hardware::camera::provider::V2_6::implementation {
+namespace android::hardware::camera::provider::V2_7::implementation {
 
 using ::android::hardware::camera::device::V3_4::implementation::
     VsockCameraDevice;
@@ -52,4 +52,4 @@ class VsockCameraServer {
   callback_t connected_callback_;
 };
 
-}  // namespace android::hardware::camera::provider::V2_6::implementation
+}  // namespace android::hardware::camera::provider::V2_7::implementation

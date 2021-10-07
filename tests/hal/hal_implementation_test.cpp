@@ -26,11 +26,12 @@ using namespace android;
 // clang-format off
 static const std::set<std::string> kKnownMissingHidl = {
     "android.frameworks.bufferhub@1.0",
-    "android.frameworks.cameraservice.device@2.0",
+    "android.frameworks.cameraservice.device@2.1",
     "android.frameworks.schedulerservice@1.0", // deprecated, see b/37226359
     "android.frameworks.vr.composer@1.0",
     "android.frameworks.vr.composer@2.0",
     "android.frameworks.automotive.display@1.0",
+    "android.frameworks.stats@1.0",  // converted to AIDL, see b/177667419
     "android.hardware.audio@2.0",
     "android.hardware.audio@4.0",
     "android.hardware.audio@5.0",
@@ -45,7 +46,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.automotive.evs@1.1",
     "android.hardware.automotive.sv@1.0",
     "android.hardware.automotive.vehicle@2.0",
-    "android.hardware.biometrics.fingerprint@2.2",
+    "android.hardware.biometrics.fingerprint@2.3",
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
@@ -80,16 +81,16 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.tetheroffload.config@1.0",
     "android.hardware.tetheroffload.control@1.1", // see b/170699770
     "android.hardware.thermal@1.1",
-    "android.hardware.tv.cec@1.0",
+    "android.hardware.tv.cec@1.1",
     "android.hardware.tv.input@1.0",
-    "android.hardware.tv.tuner@1.0",
-    "android.hardware.usb@1.2",
-    "android.hardware.usb.gadget@1.1",
+    "android.hardware.tv.tuner@1.1",
+    "android.hardware.usb@1.3",
+    "android.hardware.usb.gadget@1.2",
     "android.hardware.vibrator@1.3",
     "android.hardware.vr@1.0",
     "android.hardware.weaver@1.0",
-    "android.hardware.wifi@1.4",
-    "android.hardware.wifi.hostapd@1.2",
+    "android.hardware.wifi@1.5",
+    "android.hardware.wifi.hostapd@1.3",
     "android.hardware.wifi.offload@1.0",
     "android.hidl.base@1.0",
     "android.hidl.memory.token@1.0",
@@ -107,6 +108,7 @@ struct VersionedAidlPackage {
 
 static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
+    {"android.hardware.biometrics.common.", 1},
     {"android.hardware.common.", 1},
     {"android.hardware.common.", 2},
     {"android.hardware.common.fmq.", 1},
@@ -127,10 +129,14 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.automotive.computepipe.registry.", 1},
     {"android.automotive.computepipe.runner.", 1},
     {"android.automotive.watchdog.", 2},
+    {"android.automotive.watchdog.", 3},
+    {"android.frameworks.automotive.powerpolicy.", 1},
+    {"android.frameworks.automotive.telemetry.", 1},
+    {"android.hardware.automotive.audiocontrol.", 1},
     {"android.hardware.automotive.occupant_awareness.", 1},
 
-    // This version needs to be implemented (b/190236358)
-    {"android.hardware.vibrator.", 2},
+    // This version needs to be implemented (b/190505425)
+    {"android.system.keystore2.", 2},
 
     // These versions need to be implemented (b/198331776)
     {"android.hardware.radio.", 1},
@@ -143,6 +149,10 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // This version needs to be implemented (b/198331886)
     {"android.hardware.radio.config.", 1},
+};
+
+static const std::set<VersionedAidlPackage> kComingSoonAidl = {
+    {"android.hardware.wifi.hostapd.", 1},
 };
 
 // AOSP packages which are never considered

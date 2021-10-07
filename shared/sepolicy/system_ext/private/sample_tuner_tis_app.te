@@ -1,0 +1,7 @@
+# Sample Tuner TIS app
+type sample_tuner_tis_app, domain;
+
+app_domain(sample_tuner_tis_app)
+
+allow sample_tuner_tis_app app_api_service:service_manager find;
+hal_client_domain(sample_tuner_tis_app, hal_tv_tuner);

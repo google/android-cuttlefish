@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.camera.provider@2.6-external-service"
+#define LOG_TAG "android.hardware.camera.provider@2.7-external-service"
 
-#include <android/hardware/camera/provider/2.6/ICameraProvider.h>
+#include <android/hardware/camera/provider/2.7/ICameraProvider.h>
 #include <hidl/LegacySupport.h>
 
 #include <binder/ProcessState.h>
 
 using android::hardware::defaultPassthroughServiceImplementation;
-using android::hardware::camera::provider::V2_6::ICameraProvider;
+using android::hardware::camera::provider::V2_7::ICameraProvider;
 
 int main() {
   ALOGI("External camera provider service is starting.");

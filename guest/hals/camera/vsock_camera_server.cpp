@@ -17,7 +17,7 @@
 #include "vsock_camera_server.h"
 #include <log/log.h>
 
-namespace android::hardware::camera::provider::V2_6::implementation {
+namespace android::hardware::camera::provider::V2_7::implementation {
 
 using ::android::hardware::camera::device::V3_4::implementation::
     VsockCameraDevice;
@@ -99,4 +99,4 @@ void VsockCameraServer::serverLoop(unsigned int port, unsigned int cid) {
   ALOGI("%s: Exiting", __FUNCTION__);
 }
 
-}  // namespace android::hardware::camera::provider::V2_6::implementation
+}  // namespace android::hardware::camera::provider::V2_7::implementation
