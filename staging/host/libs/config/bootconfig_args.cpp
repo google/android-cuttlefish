@@ -141,11 +141,6 @@ std::vector<std::string> BootconfigArgsFromConfig(
                instance.audiocontrol_server_port()));
   }
 
-  if (instance.frames_server_port()) {
-    bootconfig_args.push_back(concat("androidboot.vsock_frames_port=",
-                                     instance.frames_server_port()));
-  }
-
   if (instance.camera_server_port()) {
     bootconfig_args.push_back(concat("androidboot.vsock_camera_port=",
                                      instance.camera_server_port()));
