@@ -374,49 +374,82 @@ bool CreatePersistentCompositeDisk(
   return true;
 }
 
-static void RepackAllBootImages(const CuttlefishConfig& config) {
-  CHECK(FileHasContent(FLAGS_boot_image))
-      << "File not found: " << FLAGS_boot_image;
+class BootImageRepacker : public Feature {
+ public:
+  INJECT(BootImageRepacker(const CuttlefishConfig& config)) : config_(config) {}
 
-  CHECK(FileHasContent(FLAGS_vendor_boot_image))
-      << "File not found: " << FLAGS_vendor_boot_image;
-
-  if (FLAGS_kernel_path.size()) {
-    const std::string new_boot_image_path =
-        config.AssemblyPath("boot_repacked.img");
-    bool success = RepackBootImage(FLAGS_kernel_path, FLAGS_boot_image,
-                                   new_boot_image_path, config.assembly_dir());
-    CHECK(success) << "Failed to regenerate the boot image with the new kernel";
-    SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  // Feature
+  std::string Name() const override { return "BootImageRepacker"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Enabled() const override {
+    // If we are booting a protected VM, for now, assume that image repacking
+    // isn't trusted. Repacking requires resigning the image and keys from an
+    // android host aren't trusted.
+    return !config_.protected_vm();
   }
 
-  if (FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
-    const std::string new_vendor_boot_image_path =
-        config.AssemblyPath("vendor_boot_repacked.img");
-    // Repack the vendor boot images if kernels and/or ramdisks are passed in.
-    if (FLAGS_initramfs_path.size()) {
-      bool success = RepackVendorBootImage(
-          FLAGS_initramfs_path, FLAGS_vendor_boot_image,
-          new_vendor_boot_image_path, config.assembly_dir(),
-          config.bootconfig_supported());
-      CHECK(success) << "Failed to regenerate the vendor boot image with the "
-                        "new ramdisk";
-    } else {
-      // This control flow implies a kernel with all configs built in.
-      // If it's just the kernel, repack the vendor boot image without a
-      // ramdisk.
-      bool success = RepackVendorBootImageWithEmptyRamdisk(
-          FLAGS_vendor_boot_image, new_vendor_boot_image_path,
-          config.assembly_dir(), config.bootconfig_supported());
-      CHECK(success)
-          << "Failed to regenerate the vendor boot image without a ramdisk";
+ protected:
+  bool Setup() override {
+    if (!FileHasContent(FLAGS_boot_image)) {
+      LOG(ERROR) << "File not found: " << FLAGS_boot_image;
+      return false;
     }
-    SetCommandLineOptionWithMode("vendor_boot_image",
-                                 new_vendor_boot_image_path.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+
+    if (!FileHasContent(FLAGS_vendor_boot_image)) {
+      LOG(ERROR) << "File not found: " << FLAGS_vendor_boot_image;
+      return false;
+    }
+
+    if (FLAGS_kernel_path.size()) {
+      const std::string new_boot_image_path =
+          config_.AssemblyPath("boot_repacked.img");
+      bool success =
+          RepackBootImage(FLAGS_kernel_path, FLAGS_boot_image,
+                          new_boot_image_path, config_.assembly_dir());
+      if (!success) {
+        LOG(ERROR) << "Failed to regenerate the boot image with the new kernel";
+        return false;
+      }
+      SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
+                                   google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    }
+
+    if (FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
+      const std::string new_vendor_boot_image_path =
+          config_.AssemblyPath("vendor_boot_repacked.img");
+      // Repack the vendor boot images if kernels and/or ramdisks are passed in.
+      if (FLAGS_initramfs_path.size()) {
+        bool success = RepackVendorBootImage(
+            FLAGS_initramfs_path, FLAGS_vendor_boot_image,
+            new_vendor_boot_image_path, config_.assembly_dir(),
+            config_.bootconfig_supported());
+        if (!success) {
+          LOG(ERROR) << "Failed to regenerate the vendor boot image with the "
+                        "new ramdisk";
+        } else {
+          // This control flow implies a kernel with all configs built in.
+          // If it's just the kernel, repack the vendor boot image without a
+          // ramdisk.
+          bool success = RepackVendorBootImageWithEmptyRamdisk(
+              FLAGS_vendor_boot_image, new_vendor_boot_image_path,
+              config_.assembly_dir(), config_.bootconfig_supported());
+          if (!success) {
+            LOG(ERROR) << "Failed to regenerate the vendor boot image without "
+                          "a ramdisk";
+            return false;
+          }
+        }
+        SetCommandLineOptionWithMode(
+            "vendor_boot_image", new_vendor_boot_image_path.c_str(),
+            google::FlagSettingMode::SET_FLAGS_DEFAULT);
+      }
+    }
+    return true;
   }
-}
+
+ private:
+  const CuttlefishConfig& config_;
+};
 
 static void GeneratePersistentBootconfig(
     const CuttlefishConfig& config,
@@ -484,6 +517,7 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       .bindInstance(*fetcher)
       .bindInstance(*config)
       .addMultibinding<Feature, InitializeMetadataImage>()
+      .addMultibinding<Feature, BootImageRepacker>()
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
       .install(FixedDataImagePathComponent, &FLAGS_data_image)
@@ -509,11 +543,8 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // If we are booting a protected VM, for now, assume we want a super minimal
   // environment with no userdata encryption, limited debug, no FRP emulation, a
   // static env for the bootloader, no SD-Card and no resume-on-reboot HAL
-  // support. We can also assume that image repacking isn't trusted. Repacking
-  // requires resigning the image and keys from an android host aren't trusted.
+  // support.
   if (!FLAGS_protected_vm) {
-    RepackAllBootImages(config);
-
     for (const auto& instance : config.Instances()) {
       if (!FileExists(instance.access_kregistry_path())) {
         CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
