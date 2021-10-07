@@ -33,11 +33,11 @@ class ValidateTapDevices : public Feature {
   INJECT(ValidateTapDevices(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
 
-  bool Enabled() const override { return true; }
   std::string Name() const override { return "ValidateTapDevices"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Enabled() const override { return true; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto used_tap_devices = TapInterfacesInUse();
     if (used_tap_devices.count(instance_.wifi_tap_name())) {
@@ -69,9 +69,9 @@ class ValidateHostConfigurationFeature : public Feature {
 #endif
   }
   std::string Name() const override { return "ValidateHostConfiguration"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
 
- protected:
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
     // Check host configuration
     std::vector<std::string> config_commands;
