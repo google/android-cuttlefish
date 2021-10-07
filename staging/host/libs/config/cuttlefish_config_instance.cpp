@@ -311,14 +311,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_serv
   (*Dictionary())[kVncServerPort] = vnc_server_port;
 }
 
-static constexpr char kFramesServerPort[] = "frames_server_port";
-int CuttlefishConfig::InstanceSpecific::frames_server_port() const {
-  return (*Dictionary())[kFramesServerPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_frames_server_port(int frames_server_port) {
-  (*Dictionary())[kFramesServerPort] = frames_server_port;
-}
-
 static constexpr char kTouchServerPort[] = "touch_server_port";
 int CuttlefishConfig::InstanceSpecific::touch_server_port() const {
   return (*Dictionary())[kTouchServerPort].asInt();
