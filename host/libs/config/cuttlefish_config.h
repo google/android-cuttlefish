@@ -353,9 +353,6 @@ class CuttlefishConfig {
     // Port number to connect to the touch server on the host. (Only
     // operational if QEMU is the vmm.)
     int touch_server_port() const;
-    // Port number to connect to the frame server on the host. (Only
-    // operational if using swiftshader as the GPU.)
-    int frames_server_port() const;
     // Port number to connect to the vehicle HAL server on the host
     int vehicle_hal_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
