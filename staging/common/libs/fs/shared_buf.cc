@@ -47,16 +47,17 @@ ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
 ssize_t ReadExact(SharedFD fd, char* buf, size_t size) {
   size_t total_read = 0;
   ssize_t read = 0;
-  while ((read = fd->Read((void*)&(buf[total_read]), size - total_read)) > 0) {
-    if (read < 0) {
-      errno = fd->GetErrno();
-      return read;
+  do {
+    read = fd->Read((void*)&(buf[total_read]), size - total_read);
+    if (read <= 0) {
+      if (read < 0) {
+        errno = fd->GetErrno();
+        return read;
+      }
+      return total_read;
     }
     total_read += read;
-    if (total_read == size) {
-      break;
-    }
-  }
+  } while (total_read < size);
   return total_read;
 }
 
