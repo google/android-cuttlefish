@@ -30,6 +30,7 @@ namespace cuttlefish {
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
+ *
  */
 ssize_t ReadAll(SharedFD fd, std::string* buf);
 
@@ -40,6 +41,11 @@ ssize_t ReadAll(SharedFD fd, std::string* buf);
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
+ *
+ * If the size of buf is 0, read(fd, buf, 0) is effectively called, which means
+ * error(s) might be detected. If detected, the return value would be -1.
+ * If not detected, the return value will be 0.
+ *
  */
 ssize_t ReadExact(SharedFD fd, std::string* buf);
 
@@ -50,6 +56,11 @@ ssize_t ReadExact(SharedFD fd, std::string* buf);
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
+ *
+ * If the size of buf is 0, read(fd, buf, 0) is effectively called, which means
+ * error(s) might be detected. If detected, the return value would be -1.
+ * If not detected, the return value will be 0.
+ *
  */
 ssize_t ReadExact(SharedFD fd, std::vector<char>* buf);
 
@@ -60,6 +71,11 @@ ssize_t ReadExact(SharedFD fd, std::vector<char>* buf);
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
+ *
+ * When the size is 0, read(fd, buf, 0) is effectively called, which means
+ * error(s) might be detected. If detected, the return value would be -1.
+ * If not detected, the return value will be 0.
+ *
  */
 ssize_t ReadExact(SharedFD fd, char* buf, size_t size);
 
