@@ -52,6 +52,7 @@ class TeeUiFrameWrapper {
   static std::uint32_t ScreenSizeInBytes(const int w, const int h) {
     return ScreenConnectorInfo::ComputeScreenSizeInBytes(w, h);
   }
+
   int w_;
   int h_;
   TeeUiFrame teeui_frame_;
@@ -81,6 +82,13 @@ class ConfUiRenderer {
 
   bool IsFrameReady() const { return raw_frame_ && !raw_frame_->IsEmpty(); }
 
+  bool IsInConfirm(const std::uint32_t x, const std::uint32_t y) {
+    return IsInside<teeui::LabelOK>(x, y);
+  }
+  bool IsInCancel(const std::uint32_t x, const std::uint32_t y) {
+    return IsInside<teeui::LabelCancel>(x, y);
+  }
+
  private:
   bool IsSetUpSuccessful() const { return is_setup_well_; }
   ConfUiRenderer(const std::uint32_t display,
@@ -92,7 +100,7 @@ class ConfUiRenderer {
   };
 
   template <typename LayoutElement>
-  Boundary GetBoundary(LayoutElement&& e) {
+  Boundary GetBoundary(LayoutElement&& e) const {
     auto box = e.bounds_;
     Boundary b;
     // (x,y) is left top. so floor() makes sense
@@ -105,6 +113,14 @@ class ConfUiRenderer {
     return b;
   }
 
+  template <typename Element>
+  bool IsInside(const std::uint32_t x, const std::uint32_t y) const {
+    auto box = GetBoundary(std::get<Element>(layout_));
+    if (x >= box.x && x <= box.x + box.w && y >= box.y && y <= box.y + box.h) {
+      return true;
+    }
+    return false;
+  }
   // essentially, to repaint from the scratch, so returns new frame
   // when successful. Or, nullopt
   std::unique_ptr<TeeUiFrameWrapper> RepaintRawFrame(const int w, const int h);
