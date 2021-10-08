@@ -377,13 +377,10 @@ void VirtualInputDemux::GenerateKeyPressEvent(int code, bool down) {
   // also, socket virtual input should be inactive in the confirmation
   // UI session
   if (confui_input_.IsConfUiActive()) {
-    if (code == cuttlefish::xk::Menu) {
-      // release menu button in confirmation UI means for now cancel
-      confui_input_.PressCancelButton(down);
+    if (down) {
+      ConfUiLog(DEBUG) << "the key " << code
+                       << " is ignored in confirmation UI mode.";
     }
-    ConfUiLog(DEBUG) << "the key" << code << "ignored."
-                     << "currently confirmation UI handles"
-                     << "menu and power only.";
     return;
   }
   socket_virtual_input_.GenerateKeyPressEvent(code, down);
@@ -391,7 +388,9 @@ void VirtualInputDemux::GenerateKeyPressEvent(int code, bool down) {
 
 void VirtualInputDemux::PressPowerButton(bool down) {
   if (confui_input_.IsConfUiActive()) {
-    confui_input_.PressConfirmButton(down);
+    if (down) {
+      ConfUiLog(DEBUG) << "Power Buttown is ignored in confirmation UI mode.";
+    }
     return;
   }
   socket_virtual_input_.PressPowerButton(down);
@@ -399,8 +398,7 @@ void VirtualInputDemux::PressPowerButton(bool down) {
 
 void VirtualInputDemux::HandlePointerEvent(bool touch_down, int x, int y) {
   if (confui_input_.IsConfUiActive()) {
-    ConfUiLog(DEBUG) << "currently confirmation UI ignores pointer events at ("
-                     << x << ", " << y << ")";
+    confui_input_.TouchEvent(x, y, touch_down);
     return;
   }
   socket_virtual_input_.HandlePointerEvent(touch_down, x, y);
