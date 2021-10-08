@@ -45,6 +45,9 @@ template <>
 std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kUserInputEvent>(
     const packet::ParsedPacket& message);
 template <>
+std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kUserTouchEvent>(
+    const packet::ParsedPacket& message);
+template <>
 std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kCliRespond>(
     const packet::ParsedPacket& message);
 
@@ -61,6 +64,8 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage(
       return ToConfUiMessage<ConfUiCmd::kCliRespond>(confui_packet);
     case ConfUiCmd::kUserInputEvent:
       return ToConfUiMessage<ConfUiCmd::kUserInputEvent>(confui_packet);
+    case ConfUiCmd::kUserTouchEvent:
+      return ToConfUiMessage<ConfUiCmd::kUserTouchEvent>(confui_packet);
       // default ConfUiMessage with session & type only
     case ConfUiCmd::kAbort:
       return ToConfUiMessage<ConfUiCmd::kAbort>(confui_packet);
@@ -230,6 +235,22 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kUserInputEvent>(
                               message.additional_info_[0].end()};
   return std::make_unique<ConfUiUserSelectionMessage>(message.session_id_,
                                                       response);
+}
+
+template <>
+std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kUserTouchEvent>(
+    const packet::ParsedPacket& message) {
+  if (message.additional_info_.size() < 2) {
+    ConfUiLog(ERROR)
+        << "kUserTouchEvent message should have at least two additional_info_";
+    return {nullptr};
+  }
+  auto x = std::string(message.additional_info_[0].begin(),
+                       message.additional_info_[0].end());
+  auto y = std::string(message.additional_info_[1].begin(),
+                       message.additional_info_[1].end());
+  return std::make_unique<ConfUiUserTouchMessage>(message.session_id_,
+                                                  std::stoi(x), std::stoi(y));
 }
 
 template <>
