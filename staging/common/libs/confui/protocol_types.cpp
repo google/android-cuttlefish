@@ -38,7 +38,8 @@ std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose) {
       {ConfUiCmd::kCliAck, "kCliAck"},
       {ConfUiCmd::kCliRespond, "kCliRespond"},
       {ConfUiCmd::kAbort, "kAbort"},
-      {ConfUiCmd::kUserInputEvent, "kUserInputEvent"}};
+      {ConfUiCmd::kUserInputEvent, "kUserInputEvent"},
+      {ConfUiCmd::kUserInputEvent, "kUserTouchEvent"}};
   if (look_up_tab.find(cmd) != look_up_tab.end()) {
     return look_up_tab[cmd] + suffix;
   }
@@ -49,9 +50,10 @@ std::string ToString(const ConfUiCmd& cmd) { return ToDebugString(cmd, false); }
 
 ConfUiCmd ToCmd(std::uint32_t i) {
   std::vector<ConfUiCmd> all_cmds{
-      ConfUiCmd::kStart,      ConfUiCmd::kStop,  ConfUiCmd::kCliAck,
-      ConfUiCmd::kCliRespond, ConfUiCmd::kAbort, ConfUiCmd::kUserInputEvent,
-      ConfUiCmd::kUnknown};
+      ConfUiCmd::kStart,          ConfUiCmd::kStop,
+      ConfUiCmd::kCliAck,         ConfUiCmd::kCliRespond,
+      ConfUiCmd::kAbort,          ConfUiCmd::kUserInputEvent,
+      ConfUiCmd::kUserTouchEvent, ConfUiCmd::kUnknown};
 
   for (auto& cmd : all_cmds) {
     if (i == Enum2Base(cmd)) {
@@ -69,6 +71,7 @@ ConfUiCmd ToCmd(const std::string& cmd_str) {
       {"kCliRespond", ConfUiCmd::kCliRespond},
       {"kAbort", ConfUiCmd::kAbort},
       {"kUserInputEvent", ConfUiCmd::kUserInputEvent},
+      {"kUserTouchEvent", ConfUiCmd::kUserTouchEvent},
   };
   if (cmds.find(cmd_str) != cmds.end()) {
     return cmds[cmd_str];
@@ -143,6 +146,18 @@ std::string ConfUiUserSelectionMessage::ToString() const {
 
 bool ConfUiUserSelectionMessage::SendOver(SharedFD fd) {
   return Send_(fd, GetType(), session_id_, response_);
+}
+
+std::string ConfUiUserTouchMessage::ToString() const {
+  std::stringstream ss;
+  ss << "(" << x_ << "," << y_ << ")";
+  auto pos = ss.str();
+  return CreateString(session_id_, confui::ToString(GetType()), response_, pos);
+}
+
+bool ConfUiUserTouchMessage::SendOver(SharedFD fd) {
+  return Send_(fd, GetType(), session_id_, std::to_string(x_),
+               std::to_string(y_));
 }
 
 }  // end of namespace confui

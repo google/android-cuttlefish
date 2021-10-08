@@ -225,8 +225,6 @@ bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
     return false;
   }
 
-  // TODO(kwstephenkim): for touch event, see if it is user confirm
-  // or user cancel or no meaning (clicked somewhere else)
   ConfUiLog(VERBOSE) << "In HandleInSession, session " << session_id_
                      << " is sending the user input " << ToString(fsm_input);
 
