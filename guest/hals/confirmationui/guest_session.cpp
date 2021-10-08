@@ -65,11 +65,6 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
 
     // initiate prompt
     ConfUiLog(INFO) << "Initiating prompt";
-
-    // show prompt, too long, ok, or some host side error
-    // once the prompt is shown, you owe one ack
-    // if not, return with some errors
-
     const std::uint32_t payload_lower_bound =
         static_cast<std::uint32_t>(prompt_text_.size() + extra_data_.size());
     const std::uint32_t upper_bound =
@@ -84,9 +79,6 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
                    extra_data_, locale_, ui_options_);
     ConfUiLog(INFO) << "Session " << GetSessionId() << " started on both the guest and the host";
 
-    // note that the reference implementation has timeout
-    // after timeout, it started the input device, or process abort if any
-    // cuttlefish input device has already started, so we do not need timeout
     auto clean_up_and_get_first = [&]() -> std::unique_ptr<ConfUiMessage> {
         // blocking wait to get the first msg that belongs to this session
         while (true) {
@@ -98,6 +90,25 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
             return std::move(first_curr_session_msg);
         }
     };
+
+    /*
+     * Unconditionally wait ack, or host abort
+     *
+     * First couple of messages could be from the previous session.
+     * We should clear them up.
+     *
+     * Even though the guest HAL sends kAbort to the host, the kAbort
+     * does not happen immediately. Between the incoming_msg_queue_.FlushAll()
+     * and the actual abort on the host, there could still be messages
+     * sent from the host to the guest. As these lines are the first read
+     * for the current session, we clear up the preceding messages
+     * from the previous session until we see the message for the current
+     * session.
+     *
+     * Note that abort() call puts the Abort command in the queue. So,
+     * it will also show up in incoming_msg_queue_
+     *
+     */
     auto first_msg = std::move(clean_up_and_get_first());
 
     cuttlefish::confui::ConfUiAckMessage& start_ack_msg =
@@ -116,32 +127,17 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
         return error;
     }
 
-    // unconditionally wait ack, or abort
-    /**
-     * First couple of messages could be from the previous session.
-     * We should clear them up.
-     *
-     * Even though the guest HAL sends kAbort to the host, the kAbort
-     * does not happen immediately. Between the incoming_msg_queue_.FlushAll()
-     * and the actual abort on the host, there could still be messages
-     * sent from the host to the guest. As these lines are the first read
-     * for the current session, we clear up the preceding messages
-     * from the previous session until we see the message for the current
-     * session.
-     *
-     * Note that abort() call puts the Abort command in the queue. So,
-     * it will also show up in incoming_msg_queue_
-     *
-     */
-
     //  ############################## Start 2nd Phase #############################################
     listener_state_ = ListenerState::SetupDone;
     ConfUiLog(INFO) << "Transition to SetupDone";
+    stateLock.unlock();
+    listener_state_condv_.notify_all();
 
     // cuttlefish does not need the second phase to implement HAL APIs
     // input was already prepared before the confirmation UI screen was rendered
 
     //  ############################## Start 3rd Phase - interactive phase #########################
+    stateLock.lock();
     listener_state_ = ListenerState::Interactive;
     ConfUiLog(INFO) << "Transition to Interactive";
     stateLock.unlock();
