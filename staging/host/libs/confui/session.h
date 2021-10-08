@@ -76,6 +76,14 @@ class Session {
   bool IsSuspended() const;
   void CleanUp();
 
+  bool IsConfirm(const int x, const int y) {
+    return renderer_->IsInConfirm(x, y);
+  }
+
+  bool IsCancel(const int x, const int y) {
+    return renderer_->IsInCancel(x, y);
+  }
+
  private:
   bool IsUserInput(const FsmInput fsm_input) {
     return fsm_input == FsmInput::kUserEvent;

@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <teeui/common_message_types.h>  // /system/teeui/libteeui/.../include
@@ -38,7 +39,8 @@ enum class ConfUiCmd : std::uint32_t {
   kCliAck = 113,  // client acknowledged. "error:err_msg" or "success:command"
   kCliRespond = 114,  //  with "confirm" or "cancel" or "abort"
   kAbort = 115,       // to abort the current session
-  kUserInputEvent = 200
+  kUserInputEvent = 200,
+  kUserTouchEvent = 201
 };
 
 // this is for short messages
@@ -63,6 +65,7 @@ struct UserResponse {
   using type = std::string;
   constexpr static const auto kConfirm = "user_confirm";
   constexpr static const auto kCancel = "user_cancel";
+  constexpr static const auto kTouchEvent = "user_touch";
   // user may close x button on the virtual window or so
   // or.. scroll the session up and throw to trash bin
   constexpr static const auto kUserAbort = "user_abort";
@@ -183,7 +186,8 @@ class ConfUiStartMessage : public ConfUiMessage {
   std::string UiOptsToString() const;
 };
 
-// this one is to let the host know the user's choice
+// this one is for deliverSecureInputEvent() as well as
+// physical-input based implementation
 class ConfUiUserSelectionMessage : public ConfUiMessage {
  public:
   ConfUiUserSelectionMessage(const std::string& session_id,
@@ -196,6 +200,27 @@ class ConfUiUserSelectionMessage : public ConfUiMessage {
   bool SendOver(SharedFD fd) override;
 
  private:
+  UserResponse::type response_;
+};
+
+class ConfUiUserTouchMessage : public ConfUiMessage {
+ public:
+  ConfUiUserTouchMessage(const std::string& session_id, const int x,
+                         const int y)
+      : ConfUiMessage(session_id),
+        x_(x),
+        y_(y),
+        response_(UserResponse::kTouchEvent) {}
+  virtual ~ConfUiUserTouchMessage() = default;
+  std::string ToString() const override;
+  ConfUiCmd GetType() const override { return ConfUiCmd::kUserTouchEvent; }
+  auto GetResponse() const { return response_; }
+  bool SendOver(SharedFD fd) override;
+  std::pair<int, int> GetLocation() { return {x_, y_}; }
+
+ private:
+  int x_;
+  int y_;
   UserResponse::type response_;
 };
 

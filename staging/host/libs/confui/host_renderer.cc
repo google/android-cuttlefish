@@ -68,6 +68,7 @@ ConfUiRenderer::ConfUiRenderer(const std::uint32_t display,
   SetDeviceContext(current_width_, current_height_, is_inverted_,
                    is_magnified_);
   layout_ = teeui::instantiateLayout(teeui::ConfUILayout(), ctx_);
+
   if (auto error = UpdateLocale()) {
     ConfUiLog(ERROR) << "Update Translation Error: " << Enum2Base(error.code());
     // is_setup_well_ = false;
