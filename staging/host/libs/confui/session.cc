@@ -33,6 +33,28 @@ Session::Session(const std::string& session_name,
       state_{MainLoopState::kInit},
       saved_state_{MainLoopState::kInit} {}
 
+/** return grace period + alpha
+ *
+ * grace period is the gap between user seeing the dialog
+ * and the UI starts to take the user inputs
+ * Grace period should be at least 1s.
+ * Session requests the Renderer to render the dialog,
+ * but it might not be immediate. So, add alpha to 1s
+ */
+static const std::chrono::milliseconds GetGracePeriod() {
+  using std::literals::chrono_literals::operator""ms;
+  return 1000ms + 100ms;
+}
+
+bool Session::IsReadyForUserInput() const {
+  using std::literals::chrono_literals::operator""ms;
+  if (!start_time_) {
+    return false;
+  }
+  const auto right_now = Clock::now();
+  return (right_now - *start_time_) >= GetGracePeriod();
+}
+
 bool Session::IsConfUiActive() const {
   if (state_ == MainLoopState::kInSession ||
       state_ == MainLoopState::kWaitStop) {
@@ -195,6 +217,7 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
     ReportErrorToHal(hal_cli, HostError::kUIError);
     return false;
   }
+  start_time_ = std::make_unique<TimePoint>(std::move(Clock::now()));
   if (!SendAck(hal_cli, session_id_, true, "started")) {
     ConfUiLog(ERROR) << "Ack to kStart failed in I/O";
     return false;

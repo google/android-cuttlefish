@@ -99,12 +99,20 @@ void HostServer::HalCmdFetcherLoop() {
       is_socket_ok_ = false;
       continue;
     }
+    /*
+     * In case of Vts test, the msg could be a user input. For now, we do not
+     * enforce the input grace period for Vts. However, if ever we do, here is
+     * where the time point check should happen. Once it is enqueued, it is not
+     * always guaranteed to be picked up reasonably soon.
+     */
     input_multiplexer_.Push(hal_cmd_q_id_, std::move(msg));
   }
 }
 
 void HostServer::SendUserSelection(std::unique_ptr<ConfUiMessage>& input) {
-  if (curr_session_->GetState() != MainLoopState::kInSession) {
+  if (!curr_session_ ||
+      curr_session_->GetState() != MainLoopState::kInSession ||
+      !curr_session_->IsReadyForUserInput()) {
     // ignore
     return;
   }
