@@ -145,7 +145,8 @@ class ConnectionObserverImpl
   void OnTouchEvent(const std::string &display_label, int x, int y,
                     bool down) override {
     if (confui_input_.IsConfUiActive()) {
-      ConfUiLog(DEBUG) << "touch event ignored in confirmation UI mode";
+      ConfUiLog(DEBUG) << "delivering a touch event in confirmation UI mode";
+      confui_input_.TouchEvent(x, y, down);
       return;
     }
     auto buffer = GetEventBuffer();
@@ -165,10 +166,6 @@ class ConnectionObserverImpl
   void OnMultiTouchEvent(const std::string &display_label, Json::Value id,
                          Json::Value slot, Json::Value x, Json::Value y,
                          bool down, int size) {
-    if (confui_input_.IsConfUiActive()) {
-      ConfUiLog(DEBUG) << "multi-touch event ignored in confirmation UI mode";
-      return;
-    }
     auto buffer = GetEventBuffer();
     if (!buffer) {
       LOG(ERROR) << "Failed to allocate event buffer";
@@ -180,6 +177,16 @@ class ConnectionObserverImpl
       auto this_id = id[i].asInt();
       auto this_x = x[i].asInt();
       auto this_y = y[i].asInt();
+
+      if (confui_input_.IsConfUiActive()) {
+        if (down) {
+          ConfUiLog(DEBUG) << "Delivering event (" << x << ", " << y
+                           << ") to conf ui";
+        }
+        confui_input_.TouchEvent(this_x, this_y, down);
+        continue;
+      }
+
       buffer->AddEvent(EV_ABS, ABS_MT_SLOT, this_slot);
       if (down) {
         bool is_new = active_touch_slots_.insert(this_slot).second;
@@ -212,20 +219,7 @@ class ConnectionObserverImpl
 
   void OnKeyboardEvent(uint16_t code, bool down) override {
     if (confui_input_.IsConfUiActive()) {
-      ConfUiLog(DEBUG) << "and it's confirmation UI mode";
-      switch (code) {
-        case KEY_POWER:
-          ConfUiLog(DEBUG) << "Power pushed mode";
-          confui_input_.PressConfirmButton(down);
-          break;
-        case KEY_MENU:
-          confui_input_.PressCancelButton(down);
-          break;
-        default:
-          ConfUiLog(DEBUG) << "key" << code
-                           << "is ignored in confirmation UI mode";
-          break;
-      }
+      ConfUiLog(DEBUG) << "keyboard event ignored in confirmation UI mode";
       return;
     }
 
