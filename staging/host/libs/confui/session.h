@@ -17,6 +17,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <string>
 
@@ -84,6 +85,9 @@ class Session {
     return renderer_->IsInCancel(x, y);
   }
 
+  // tell if grace period has passed
+  bool IsReadyForUserInput() const;
+
  private:
   bool IsUserInput(const FsmInput fsm_input) {
     return fsm_input == FsmInput::kUserEvent;
@@ -137,6 +141,9 @@ class Session {
   // the input demuxer will check the confirmation UI mode based on this
   std::atomic<MainLoopState> state_;
   MainLoopState saved_state_;  // for restore/suspend
+  using Clock = std::chrono::steady_clock;
+  using TimePoint = std::chrono::time_point<Clock>;
+  std::unique_ptr<TimePoint> start_time_;
 };
 }  // end of namespace confui
 }  // end of namespace cuttlefish
