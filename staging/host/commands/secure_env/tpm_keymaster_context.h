@@ -70,8 +70,6 @@ private:
   const keymaster::OperationFactory* GetOperationFactory(
       keymaster_algorithm_t algorithm,
       keymaster_purpose_t purpose) const override;
-  const keymaster_algorithm_t* GetSupportedAlgorithms(
-      size_t* algorithms_count) const override;
 
   keymaster_error_t UpgradeKeyBlob(
       const keymaster::KeymasterKeyBlob& key_to_upgrade,
