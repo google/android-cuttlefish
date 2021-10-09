@@ -97,41 +97,6 @@ void RemoteKeymaster::GetVersion(const GetVersionRequest& request,
   ForwardCommand(GET_VERSION, request, response);
 }
 
-void RemoteKeymaster::SupportedAlgorithms(
-    const SupportedAlgorithmsRequest& request,
-    SupportedAlgorithmsResponse* response) {
-  ForwardCommand(GET_SUPPORTED_ALGORITHMS, request, response);
-}
-
-void RemoteKeymaster::SupportedBlockModes(
-    const SupportedBlockModesRequest& request,
-    SupportedBlockModesResponse* response) {
-  ForwardCommand(GET_SUPPORTED_BLOCK_MODES, request, response);
-}
-
-void RemoteKeymaster::SupportedPaddingModes(
-    const SupportedPaddingModesRequest& request,
-    SupportedPaddingModesResponse* response) {
-  ForwardCommand(GET_SUPPORTED_PADDING_MODES, request, response);
-}
-
-void RemoteKeymaster::SupportedDigests(const SupportedDigestsRequest& request,
-                                       SupportedDigestsResponse* response) {
-  ForwardCommand(GET_SUPPORTED_DIGESTS, request, response);
-}
-
-void RemoteKeymaster::SupportedImportFormats(
-    const SupportedImportFormatsRequest& request,
-    SupportedImportFormatsResponse* response) {
-  ForwardCommand(GET_SUPPORTED_IMPORT_FORMATS, request, response);
-}
-
-void RemoteKeymaster::SupportedExportFormats(
-    const SupportedExportFormatsRequest& request,
-    SupportedExportFormatsResponse* response) {
-  ForwardCommand(GET_SUPPORTED_EXPORT_FORMATS, request, response);
-}
-
 void RemoteKeymaster::AddRngEntropy(const AddEntropyRequest& request,
                                     AddEntropyResponse* response) {
   ForwardCommand(ADD_RNG_ENTROPY, request, response);
