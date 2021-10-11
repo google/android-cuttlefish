@@ -21,7 +21,10 @@ PRODUCT_MODEL := Cuttlefish x86_64 foldable
 
 # Include the device state configuration for a foldable device.
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/foldable/device_state_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/devicestate/device_state_configuration.xml
+    device/google/cuttlefish/shared/foldable/device_state_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/devicestate/device_state_configuration.xml \
+    device/google/cuttlefish/shared/foldable/display_layout_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_layout_configuration.xml \
+    device/google/cuttlefish/shared/foldable/display_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings.xml \
+
 # Include RRO settings that specify the fold states and screen information.
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/foldable/overlay
 # Include the foldable `launch_cvd --config foldable` option.

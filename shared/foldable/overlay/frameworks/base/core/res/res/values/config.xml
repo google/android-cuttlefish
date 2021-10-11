@@ -17,15 +17,12 @@
 */
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <!-- Indicate the display area rect for foldable devices in folded state. -->
-  <!-- left and right bounds come from:  (open_width/2) +/- (folded_width)/2 -->
-  <string name="config_foldedArea">476 0 1292 2208</string>
   <!-- WindowsManager JetPack display features -->
   <string name="config_display_features" translatable="false">fold-[884,0,884,2208]</string>
   <!-- Map of System DeviceState supplied by DeviceStateManager to WM Jetpack posture. -->
   <string-array name="config_device_state_postures" translatable="false">
       <item>0:1</item> <!-- CLOSED : STATE_FLAT -->
-      <item>3:2</item> <!-- HALF_OPENED : STATE_HALF_OPENED -->
+      <item>1:2</item> <!-- HALF_OPENED : STATE_HALF_OPENED -->
       <item>2:3</item> <!-- OPENED : STATE_FLIPPED -->
   </string-array>
   <!-- The device states (supplied by DeviceStateManager) that should be treated as folded by the
@@ -33,6 +30,9 @@
   <integer-array name="config_foldedDeviceStates" translatable="false">
     <item>0</item> <!-- CLOSED -->
   </integer-array>
+  <!-- Indicates whether to enable an animation when unfolding a device or not -->
+  <bool name="config_unfoldTransitionEnabled">true</bool>
+  <bool name="config_supportsConcurrentInternalDisplays">false</bool>
   <!-- Controls whether the device support multi window modes like split-screen. -->
   <bool name="config_supportsMultiWindow">true</bool>
   <!-- Controls whether device supports split-screen mode. -->
