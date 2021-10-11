@@ -23,6 +23,7 @@ cc_binary {
     srcs: [
         "main.cpp",
     ],
+    init_rc: ["rename_netiface.rc"],
     shared_libs: [
         "cuttlefish_net",
     ],
