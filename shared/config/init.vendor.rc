@@ -48,12 +48,14 @@ on fs
     restorecon_recursive /vendor
 
     # works around framework netiface enumeration issue
+    # TODO(b/202731768): Add this `start rename_eth0` command to the init.rc for rename_netiface
     start rename_eth0
 
     # So GceBootReporter can print to kmsg
     chmod 622 /dev/kmsg
 
 on fs && property:ro.vendor.wifi_impl=virt_wifi
+    # TODO(b/202731768): Add this `start setup_wifi` command to the init.rc for setup_wifi
     start setup_wifi
 
 on post-fs
@@ -96,12 +98,6 @@ service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=${ve
     user bluetooth
     group bluetooth
 
-service setup_wifi /vendor/bin/setup_wifi
-    oneshot
-
-service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
-    oneshot
-
 on property:sys.boot_completed=1
     trigger sys-boot-completed-set
 
@@ -137,17 +133,6 @@ on early-boot && property:ro.boot.vsock_touch_port=*
 on early-boot && property:ro.boot.vsock_keyboard_port=*
    enable vsoc_input_service
    start vsoc_input_service
-
-service wpa_supplicant /vendor/bin/hw/wpa_supplicant -g@android:wpa_wlan0
-    interface android.hardware.wifi.supplicant@1.0::ISupplicant default
-    interface android.hardware.wifi.supplicant@1.1::ISupplicant default
-    interface android.hardware.wifi.supplicant@1.2::ISupplicant default
-    interface android.hardware.wifi.supplicant@1.3::ISupplicant default
-    interface android.hardware.wifi.supplicant@1.4::ISupplicant default
-    socket wpa_wlan0 dgram 660 wifi wifi
-    group system wifi inet
-    disabled
-    oneshot
 
 service bugreport /system/bin/dumpstate -d -p -z
     class main
