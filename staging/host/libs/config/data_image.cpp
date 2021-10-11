@@ -1,15 +1,17 @@
 #include "host/libs/config/data_image.h"
 
 #include <android-base/logging.h>
-
-#include "common/libs/fs/shared_buf.h"
-
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/subprocess.h"
-
-#include "host/libs/config/mbr.h"
+#include <android-base/result.h>
 
 #include "blkid.h"
+
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/subprocess.h"
+#include "host/libs/config/mbr.h"
+
+using android::base::Error;
+using android::base::Result;
 
 namespace cuttlefish {
 
@@ -244,94 +246,89 @@ class InitializeDataImageImpl : public InitializeDataImage {
  private:
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
-    bool data_exists = FileHasContent(data_path_.Path());
-    bool remove{};
-    bool create{};
-    bool resize{};
-    bool change_format{};
-    std::string fs_type;
-    int file_mb = config_.blank_data_image_mb();
-
-    if (data_exists) {
-      fs_type = GetFsType(data_path_.Path());
-      if (fs_type != config_.userdata_format()) {
-        change_format = true;
-        if (file_mb <= 0) {
-          file_mb = FileSize(data_path_.Path()) >> 20;
-        }
-      }
-    }
-
-    if (config_.data_policy() == kDataPolicyUseExisting) {
-      if (!data_exists) {
-        LOG(ERROR) << "Specified data image file does not exist: "
-                   << data_path_.Path();
-        return false;
-      }
-      if (config_.blank_data_image_mb() > 0) {
-        LOG(ERROR)
-            << "You should NOT use -blank_data_image_mb with -data_policy="
-            << kDataPolicyUseExisting;
-        return false;
-      }
-      create = false;
-      remove = false;
-      resize = false;
-    } else if (config_.data_policy() == kDataPolicyAlwaysCreate) {
-      remove = data_exists;
-      create = true;
-      resize = false;
-    } else if (config_.data_policy() == kDataPolicyCreateIfMissing) {
-      create = !data_exists;
-      remove = false;
-      resize = false;
-    } else if (config_.data_policy() == kDataPolicyResizeUpTo) {
-      if (change_format) {
-        LOG(ERROR) << "You should NOT change the fs format with -data_policy="
-                   << kDataPolicyResizeUpTo;
-        return false;
-      }
-      create = false;
-      remove = false;
-      resize = true;
-    } else {
-      LOG(ERROR) << "Invalid data_policy: " << config_.data_policy();
+    auto action = ChooseAction();
+    if (!action.ok()) {
+      LOG(ERROR) << "Failed to select a userdata processing action: "
+                 << action.error();
       return false;
     }
-
-    if (remove) {
-      RemoveFile(data_path_.Path());
+    auto result = EvaluateAction(*action);
+    if (!result.ok()) {
+      LOG(ERROR) << "Failed to evaluate userdata action: " << result.error();
+      return false;
     }
-
-    if (create || change_format) {
-      if (file_mb <= 0) {
-        LOG(ERROR) << "-blank_data_image_mb is required to create data image";
-        return false;
-      }
-      if (!CreateBlankImage(data_path_.Path(), file_mb,
-                            config_.userdata_format())) {
-        return false;
-      }
-      return true;
-    } else if (resize) {
-      if (!data_exists) {
-        LOG(ERROR) << data_path_.Path()
-                   << " does not exist, but resizing was requested";
-        return false;
-      }
-      bool success = ResizeImage(config_, data_path_.Path(), file_mb);
-      if (!success) {
-        LOG(ERROR) << "Resizing \"" << data_path_.Path() << "\" to " << file_mb
-                   << " MB failed";
-      }
-      return success;
-    } else {
-      LOG(DEBUG) << data_path_.Path() << " exists. Not creating it.";
-      return true;
-    }
+    return true;
   }
 
  private:
+  enum class DataImageAction { kNoAction, kCreateImage, kResizeImage };
+
+  Result<DataImageAction> ChooseAction() {
+    if (config_.data_policy() == kDataPolicyAlwaysCreate) {
+      return DataImageAction::kCreateImage;
+    }
+    if (!FileHasContent(data_path_.Path())) {
+      if (config_.data_policy() == kDataPolicyUseExisting) {
+        return Error() << "A data image must exist to use -data_policy="
+                       << kDataPolicyUseExisting;
+      } else if (config_.data_policy() == kDataPolicyResizeUpTo) {
+        return Error() << data_path_.Path()
+                       << " does not exist, but resizing was requested";
+      }
+      return DataImageAction::kCreateImage;
+    }
+    if (GetFsType(data_path_.Path()) != config_.userdata_format()) {
+      if (config_.data_policy() == kDataPolicyResizeUpTo) {
+        return Error()
+               << "Changing the fs format is incompatible with -data_policy="
+               << kDataPolicyResizeUpTo;
+      }
+      return DataImageAction::kCreateImage;
+    }
+    if (config_.data_policy() == kDataPolicyResizeUpTo) {
+      return DataImageAction::kResizeImage;
+    }
+    return DataImageAction::kNoAction;
+  }
+
+  Result<void> EvaluateAction(DataImageAction action) {
+    switch (action) {
+      case DataImageAction::kNoAction:
+        LOG(DEBUG) << data_path_.Path() << " exists. Not creating it.";
+        return {};
+      case DataImageAction::kCreateImage: {
+        RemoveFile(data_path_.Path());
+        if (config_.blank_data_image_mb() == 0) {
+          return Error() << "Expected `-blank_data_image_mb` to be set for "
+                         << "image creation.";
+        }
+        bool success =
+            CreateBlankImage(data_path_.Path(), config_.blank_data_image_mb(),
+                             config_.userdata_format());
+        if (!success) {
+          return Error() << "Failed to create a blank image at \""
+                         << data_path_.Path() << "\" with size "
+                         << config_.blank_data_image_mb() << " and format \""
+                         << config_.userdata_format() << "\"";
+        }
+        return {};
+      }
+      case DataImageAction::kResizeImage: {
+        if (config_.blank_data_image_mb() == 0) {
+          return Error() << "Expected `-blank_data_image_mb` to be set for "
+                         << "image resizing.";
+        }
+        bool success = ResizeImage(config_, data_path_.Path(),
+                                   config_.blank_data_image_mb());
+        if (!success) {
+          return Error() << "Failed to resize \"" << data_path_.Path()
+                         << "\" to " << config_.blank_data_image_mb() << " MB";
+        }
+        return {};
+      }
+    }
+  }
+
   const CuttlefishConfig& config_;
   DataImagePath& data_path_;
 };
