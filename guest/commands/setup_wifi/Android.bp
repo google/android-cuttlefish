@@ -23,6 +23,7 @@ cc_binary {
     srcs: [
         "main.cpp",
     ],
+    init_rc: ["setup_wifi.rc"],
     shared_libs: [
         "cuttlefish_net",
         "libbase",
