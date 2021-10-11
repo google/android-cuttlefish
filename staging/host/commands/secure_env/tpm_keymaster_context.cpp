@@ -126,6 +126,12 @@ const OperationFactory* TpmKeymasterContext::GetOperationFactory(
   return operation_factory;
 }
 
+const keymaster_algorithm_t* TpmKeymasterContext::GetSupportedAlgorithms(
+      size_t* algorithms_count) const {
+  *algorithms_count = supported_algorithms_.size();
+  return supported_algorithms_.data();
+}
+
 // Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=44;drc=master
 
 static bool UpgradeIntegerTag(
