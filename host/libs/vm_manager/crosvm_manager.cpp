@@ -123,10 +123,12 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--vhost-net");
   }
 
+#ifdef ENFORCE_MAC80211_HWSIM
   if (!config.vhost_user_mac80211_hwsim().empty()) {
     crosvm_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
                                   config.vhost_user_mac80211_hwsim());
   }
+#endif
 
   if (config.protected_vm()) {
     crosvm_cmd.Cmd().AddParameter("--protected-vm");
