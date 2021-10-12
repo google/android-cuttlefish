@@ -642,7 +642,13 @@ class WmediumdServer : public CommandSource {
 
   // Feature
   std::string Name() const override { return "WmediumdServer"; }
-  bool Enabled() const override { return instance_.start_wmediumd(); }
+  bool Enabled() const override {
+#ifndef ENFORCE_MAC80211_HWSIM
+    return false;
+#else
+    return instance_.start_wmediumd();
+#endif
+  }
 
  private:
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
@@ -749,7 +755,7 @@ class OpenWrt : public CommandSource {
   // Feature
   std::string Name() const override { return "OpenWrt"; }
   bool Enabled() const override {
-#ifdef ENFORCE_MAC80211_HWSIM
+#ifndef ENFORCE_MAC80211_HWSIM
     return false;
 #else
     return instance_.start_ap();
