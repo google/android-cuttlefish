@@ -16,13 +16,13 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include <keymaster/attestation_context.h>
 
 class TpmAttestationRecordContext : public keymaster::AttestationContext {
 public:
- TpmAttestationRecordContext()
-     : keymaster::AttestationContext(::keymaster::KmVersion::KEYMINT_1) {}
+ TpmAttestationRecordContext();
  ~TpmAttestationRecordContext() = default;
 
  keymaster_security_level_t GetSecurityLevel() const override;
@@ -40,4 +40,5 @@ public:
 
 private:
     mutable std::unique_ptr<VerifiedBootParams> vb_params_;
+    std::vector<uint8_t> unique_id_hbk_;
 };

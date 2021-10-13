@@ -16,10 +16,19 @@
 #include "host/commands/secure_env/tpm_attestation_record.h"
 
 #include <keymaster/contexts/soft_attestation_cert.h>
+#include <keymaster/km_openssl/attestation_record.h>
+
+#include <openssl/rand.h>
 
 #include <android-base/logging.h>
 
 using keymaster::AuthorizationSet;
+
+TpmAttestationRecordContext::TpmAttestationRecordContext()
+    : keymaster::AttestationContext(::keymaster::KmVersion::KEYMINT_1),
+      unique_id_hbk_(16) {
+  RAND_bytes(unique_id_hbk_.data(), unique_id_hbk_.size());
+}
 
 keymaster_security_level_t TpmAttestationRecordContext::GetSecurityLevel() const {
   return KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
@@ -38,10 +47,11 @@ keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
 }
 
 keymaster::Buffer TpmAttestationRecordContext::GenerateUniqueId(
-    uint64_t, const keymaster_blob_t&, bool, keymaster_error_t* error) const {
-  LOG(ERROR) << "TODO(schuffelen): Implement GenerateUniqueId";
-  *error = KM_ERROR_UNIMPLEMENTED;
-  return {};
+    uint64_t creation_date_time, const keymaster_blob_t& application_id,
+    bool reset_since_rotation, keymaster_error_t* error) const {
+  *error = KM_ERROR_OK;
+  return keymaster::generate_unique_id(unique_id_hbk_, creation_date_time,
+                                       application_id, reset_since_rotation);
 }
 
 const keymaster::AttestationContext::VerifiedBootParams*
