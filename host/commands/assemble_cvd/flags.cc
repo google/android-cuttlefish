@@ -532,13 +532,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     LOG(FATAL) << "Invalid gpu_mode: " << FLAGS_gpu_mode;
   }
   if (tmp_config_obj.gpu_mode() == kGpuModeAuto) {
-    // TODO(b/171305898): remove this branch once HostComposer can send
-    // multiple displays.
-    if (tmp_config_obj.display_configs().size() > 1) {
-      LOG(INFO) << "Enabling --gpu_mode=guest_swiftshader due to "
-                   "multi-display.";
-      tmp_config_obj.set_gpu_mode(kGpuModeGuestSwiftshader);
-    } else if (ShouldEnableAcceleratedRendering(graphics_availability)) {
+    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
       LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
                    "rendering support.";
       if (FLAGS_vm_manager == QemuManager::name()) {
