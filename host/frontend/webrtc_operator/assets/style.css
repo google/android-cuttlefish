@@ -183,6 +183,18 @@ body {
   position: absolute;
 }
 
+/* Container <div> to show info about the individual display. */
+.device-display-info {
+  color: white;
+  /* dark green */
+  background-color: #007000;
+  font-family: 'Open Sans', sans-serif;
+  text-indent: 0px;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
 /* The actual <video> element for each display. */
 .device-display-video {
   position: absolute;
