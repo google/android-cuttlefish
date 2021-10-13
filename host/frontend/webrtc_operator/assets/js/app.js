@@ -162,17 +162,11 @@ class DeviceDetailsUpdater {
     return this;
   }
 
-  setDisplayDetailsText(text) {
-    this.#element.dataset.displayDetailsText = text;
-    return this;
-  }
-
   update() {
     this.#element.textContent =
         [
           this.#element.dataset.hardwareDetailsText,
           this.#element.dataset.deviceStateDetailsText,
-          this.#element.dataset.displayDetailsText,
         ].filter(e => e /*remove empty*/)
             .join('\n');
   }
@@ -296,8 +290,6 @@ class DeviceControlApp {
 
     this.#updateDeviceHardwareDetails(
         this.#deviceConnection.description.hardware);
-    this.#updateDeviceDisplayDetails(
-        this.#deviceConnection.description.displays[0]);
 
     // Show the error message and disable buttons when the WebRTC connection
     // fails.
@@ -385,11 +377,16 @@ class DeviceControlApp {
   }
 
   #resizeDeviceDisplays() {
-    const deviceDisplayPadding = 10;
+    // Padding between displays.
+    const deviceDisplayWidthPadding = 10;
+    // Padding for the display info above each display video.
+    const deviceDisplayHeightPadding = 38;
 
     let deviceDisplayList = document.getElementsByClassName('device-display');
     let deviceDisplayVideoList =
         document.getElementsByClassName('device-display-video');
+    let deviceDisplayInfoList =
+        document.getElementsByClassName('device-display-info');
 
     const deviceDisplays = document.getElementById('device-displays');
     const rotationDegrees = this.#getTransformRotation(deviceDisplays);
@@ -397,11 +394,11 @@ class DeviceControlApp {
 
     // Auto-scale the screen based on window size.
     let availableWidth = deviceDisplays.clientWidth;
-    let availableHeight = deviceDisplays.clientHeight;
+    let availableHeight = deviceDisplays.clientHeight - deviceDisplayHeightPadding;
 
     // Reserve space for padding between the displays.
     availableWidth = availableWidth -
-        (this.#displayDescriptions.length * deviceDisplayPadding);
+        (this.#displayDescriptions.length * deviceDisplayWidthPadding);
 
     // Loop once over all of the displays to compute the total space needed.
     let neededWidth = 0;
@@ -432,7 +429,14 @@ class DeviceControlApp {
     for (let i = 0; i < deviceDisplayList.length; i++) {
       let deviceDisplay = deviceDisplayList[i];
       let deviceDisplayVideo = deviceDisplayVideoList[i];
+      let deviceDisplayInfo = deviceDisplayInfoList[i];
       let deviceDisplayDescription = this.#displayDescriptions[i];
+
+      let rotated = this.#currentRotation == 1 ? ' (Rotated)' : '';
+      deviceDisplayInfo.textContent = `Display ${i} - ` +
+          `${deviceDisplayDescription.x_res}x` +
+          `${deviceDisplayDescription.y_res} ` +
+          `(${deviceDisplayDescription.dpi} DPI)${rotated}`;
 
       const originalDisplayWidth = deviceDisplayDescription.x_res;
       const originalDisplayHeight = deviceDisplayDescription.y_res;
@@ -463,7 +467,7 @@ class DeviceControlApp {
       deviceDisplay.style.width = scaledBoundingBoxWidth;
       deviceDisplay.style.height = scaledBoundingBoxHeight;
 
-      deviceDisplayLeftOffset = deviceDisplayLeftOffset + deviceDisplayPadding +
+      deviceDisplayLeftOffset = deviceDisplayLeftOffset + deviceDisplayWidthPadding +
           scaledBoundingBoxWidth;
     }
   }
@@ -505,8 +509,6 @@ class DeviceControlApp {
       }
 
       this.#currentRotation = metadata.rotation;
-      this.#updateDeviceDisplayDetails(
-          {dpi: metadata.dpi, x_res: metadata.width, y_res: metadata.height});
     }
     if (message_data.event == 'VIRTUAL_DEVICE_CAPTURE_IMAGE') {
       if (this.#deviceConnection.cameraEnabled) {
@@ -546,18 +548,6 @@ class DeviceControlApp {
         .update();
   }
 
-  #updateDeviceDisplayDetails(display) {
-    let dpi = display.dpi;
-    let x_res = display.x_res;
-    let y_res = display.y_res;
-    let rotated = this.#currentRotation == 1 ? ' (Rotated)' : '';
-    let displayDetailsText =
-        `Display - ${x_res}x${y_res} (${dpi}DPI)${rotated}`;
-    new DeviceDetailsUpdater()
-        .setDisplayDetailsText(displayDetailsText)
-        .update();
-  }
-
   // Creates a <video> element and a <div> container element for each display.
   // The extra <div> container elements are used to maintain the width and
   // height of the device as the CSS 'transform' property used on the <video>
@@ -575,19 +565,23 @@ class DeviceControlApp {
       // Start the screen as hidden. Only show when data is ready.
       deviceDisplay.style.visibility = 'hidden';
 
+      let deviceDisplayInfo = document.createElement("div");
+      deviceDisplayInfo.classList.add("device-display-info");
+      deviceDisplayInfo.id = deviceDisplayDescription.stream_id + '_info';
+      deviceDisplay.appendChild(deviceDisplayInfo);
+
       let deviceDisplayVideo = document.createElement('video');
       deviceDisplayVideo.autoplay = true;
       deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
       deviceDisplayVideo.classList.add('device-display-video');
-
       deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
         if (!anyDisplayLoaded) {
           anyDisplayLoaded = true;
           this.#onDeviceDisplayLoaded();
         }
       });
-
       deviceDisplay.appendChild(deviceDisplayVideo);
+
       deviceDisplays.appendChild(deviceDisplay);
 
       let stream_id = deviceDisplayDescription.stream_id;
@@ -903,7 +897,7 @@ class DeviceControlApp {
   }
 
   #updateDisplayVisibility(displayId, powerMode) {
-    const display = document.getElementById('display_' + displayId);
+    const display = document.getElementById('display_' + displayId).parentElement;
     if (display == null) {
       console.error('Unknown display id: ' + displayId);
       return;
