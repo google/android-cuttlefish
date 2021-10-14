@@ -82,6 +82,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.soundtrigger@2.3",
     "android.hardware.secure_element@1.2",
     "android.hardware.sensors@1.0",
+    "android.hardware.sensors@2.1",
     "android.hardware.tetheroffload.config@1.0",
     "android.hardware.tetheroffload.control@1.1", // see b/170699770
     "android.hardware.thermal@1.1",
