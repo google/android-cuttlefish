@@ -65,5 +65,6 @@ apex {
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
     ],
-    vintf_fragments: [":android.hardware.wifi.supplicant.xml"],
+    // TODO(b/202992812): Use the vintf_fragment from the wpa_supplicant project.
+    vintf_fragments: ["com.google.cf.wifi.xml"],
 }
