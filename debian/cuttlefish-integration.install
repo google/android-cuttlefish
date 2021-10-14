@@ -1,2 +1,1 @@
 host/packages/cuttlefish-integration/* /
-host/commands/adbshell/adbshell /usr/bin/
