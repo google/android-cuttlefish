@@ -15,11 +15,3 @@ include /usr/share/dpkg/buildflags.mk
 
 %:
 	dh $@ --with=config-package
-
-SOURCE_DIR := host/commands/adbshell
-override_dh_auto_build:
-	cc -std=c99 -Wall -D_XOPEN_SOURCE $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SOURCE_DIR)/adbshell.c -o $(SOURCE_DIR)/adbshell
-
-override_dh_auto_clean:
-	-rm -f $(SOURCE_DIR)/adbshell
-	dh_auto_clean
