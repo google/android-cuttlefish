@@ -11,18 +11,6 @@ cvd_account_groups=plugdev
 
 case "$1" in
     (configure)
-    add-shell /usr/bin/adbshell
-
-    for i in $(seq "${num_cvd_accounts}" ); do
-      cvd_account="cvd-$(printf %02d "${i}")"
-      # Skip account setup if an account is already configured
-      if id -u "${cvd_account}"; then
-        echo "${cvd_account}" exists
-      else
-        useradd -m "${cvd_account}" \
-          -G "${cvd_account_groups}" -s /usr/bin/adbshell
-      fi
-    done
     # Update the installed version of the diverted file with the
     # desired configuration.
     # We can't use the traditional transform approach here because
