@@ -22,8 +22,6 @@ override_apex {
         "android.hardware.usb.host.prebuilt.xml",
         "android.hardware.vulkan.level-0.prebuilt.xml",
         "android.hardware.vulkan.version-1_0_3.prebuilt.xml",
-        "android.hardware.wifi.prebuilt.xml",
-        "android.hardware.wifi.passpoint.prebuilt.xml",
         "android.software.device_id_attestation.prebuilt.xml",
         "android.software.ipsec_tunnels.prebuilt.xml",
         "android.software.opengles.deqp.level-2021-03-01.prebuilt.xml",
