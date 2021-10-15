@@ -37,3 +37,11 @@ prebuilt_etc_host {
     src: "grub.cfg",
     sub_dir: "grub",
 }
+
+prebuilt_etc {
+    name: "wpa_supplicant_overlay.conf.cf",
+    src: "wpa_supplicant_overlay.conf",
+    filename_from_src: true,
+    relative_install_path: "wifi",
+    installable: false,
+}
