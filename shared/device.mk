@@ -166,7 +166,6 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 PRODUCT_PACKAGES += \
     CuttlefishService \
     cuttlefish_sensor_injection \
-    rename_netiface \
     bt_vhci_forwarder \
     socket_vsock_proxy \
     tombstone_transmit \
@@ -195,7 +194,6 @@ PRODUCT_PACKAGES += \
     ip \
     sleep \
     tcpdump \
-    wpa_supplicant \
     wificond \
 
 #
@@ -299,7 +297,6 @@ PRODUCT_COPY_FILES += \
     hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json \
     hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_depth.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_depth.json \
     device/google/cuttlefish/shared/config/init.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cutf_cvm.rc \
-    device/google/cuttlefish/shared/config/wpa_supplicant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wpa_supplicant.rc \
     device/google/cuttlefish/shared/config/init.product.rc:$(TARGET_COPY_OUT_PRODUCT)/etc/init/init.rc \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
@@ -635,12 +632,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.memtrack-service.example
 
-# WLAN driver configuration files
-LOCAL_WPA_SUPPLICANT_OVERLAY ?= $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf
-PRODUCT_COPY_FILES += \
-    external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
-    $(LOCAL_WPA_SUPPLICANT_OVERLAY):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
-
 # Fastboot HAL & fastbootd
 PRODUCT_PACKAGES += \
     android.hardware.fastboot@1.1-impl-mock \
@@ -667,6 +658,28 @@ PRODUCT_PACKAGES += linker.recovery shell_and_utilities_recovery
 endif
 
 # wifi
+
+ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_PACKAGES += com.google.cf.wifi
+$(call add_soong_config_namespace, wpa_supplicant)
+$(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
+$(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
+# TODO(b/189970852): Convert com.google.cf.wifi to use mac8011_hwsim_virtio
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
+else
+
+PRODUCT_PACKAGES += \
+    rename_netiface \
+    wpa_supplicant
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/wpa_supplicant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wpa_supplicant.rc
+
+# WLAN driver configuration files
+LOCAL_WPA_SUPPLICANT_OVERLAY ?= $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf
+PRODUCT_COPY_FILES += \
+    external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
+    $(LOCAL_WPA_SUPPLICANT_OVERLAY):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
+
 ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += \
     mac80211_create_radios \
@@ -685,6 +698,8 @@ SOONG_CONFIG_cvdhost_enforce_mac80211_hwsim += true
 else
 PRODUCT_PACKAGES += setup_wifi
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
+endif
+
 endif
 
 # Host packages to install
