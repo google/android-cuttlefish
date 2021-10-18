@@ -16,6 +16,5 @@ cc_binary {
         "h4_packetizer_lib",
         "libgflags",
     ],
-    init_rc: ["bt_vhci_forwarder.rc"],
     defaults: ["cuttlefish_guest_only"]
 }
