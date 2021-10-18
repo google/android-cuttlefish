@@ -163,6 +163,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // No implementations on cuttlefish for wifi aidl hal
     {"android.hardware.wifi.hostapd.", 1},
+
+    // types-only packages, which never expect a default implementation
+    {"android.hardware.uwb.fira_android.", 1},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
