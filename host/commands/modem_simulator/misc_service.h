@@ -17,6 +17,8 @@
 
 #include "host/commands/modem_simulator/modem_service.h"
 
+#include <ctime>
+
 namespace cuttlefish {
 
 class MiscService : public ModemService, public std::enable_shared_from_this<MiscService>  {
@@ -36,6 +38,7 @@ class MiscService : public ModemService, public std::enable_shared_from_this<Mis
 
  private:
   void ParseTimeZone();
+  long TimeZoneOffset(time_t* utctime); // in seconds.
   void FixTimeZone(std::string& line);
   std::string timezone_;
   std::vector<CommandHandler> InitializeCommandHandlers();
