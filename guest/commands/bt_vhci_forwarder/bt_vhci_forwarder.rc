@@ -1,7 +1,0 @@
-on post-fs
-    start bt_vhci_forwarder
-
-service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=${vendor.ser.bt-uart}
-    user bluetooth
-    group bluetooth
-
