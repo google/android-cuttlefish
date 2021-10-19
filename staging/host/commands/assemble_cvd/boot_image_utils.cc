@@ -222,11 +222,20 @@ bool RepackBootImage(const std::string& new_kernel_path,
     return false;
   }
 
-  auto fd = SharedFD::Open(tmp_boot_image_path, O_RDWR);
-  auto original_size = FileSize(boot_image_path);
-  CHECK(fd->Truncate(original_size) == 0)
-    << "`truncate --size=" << original_size << " " << tmp_boot_image_path << "` "
-    << "failed: " << fd->StrError();
+  auto avbtool_path = HostBinaryPath("avbtool");
+  Command avb_cmd(avbtool_path);
+  avb_cmd.AddParameter("add_hash_footer");
+  avb_cmd.AddParameter("--image");
+  avb_cmd.AddParameter(tmp_boot_image_path);
+  avb_cmd.AddParameter("--partition_size");
+  avb_cmd.AddParameter(FileSize(boot_image_path));
+  avb_cmd.AddParameter("--partition_name");
+  avb_cmd.AddParameter("boot");
+  success = avb_cmd.Start().Wait();
+  if (success != 0) {
+    LOG(ERROR) << "Unable to run avbtool. Exited with status " << success;
+    return false;
+  }
 
   return DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path);
 }
@@ -296,11 +305,20 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     return false;
   }
 
-  auto fd = SharedFD::Open(tmp_vendor_boot_image_path, O_RDWR);
-  auto original_size = FileSize(vendor_boot_image_path);
-  CHECK(fd->Truncate(original_size) == 0)
-    << "`truncate --size=" << original_size << " " << tmp_vendor_boot_image_path << "` "
-    << "failed: " << fd->StrError();
+  auto avbtool_path = HostBinaryPath("avbtool");
+  Command avb_cmd(avbtool_path);
+  avb_cmd.AddParameter("add_hash_footer");
+  avb_cmd.AddParameter("--image");
+  avb_cmd.AddParameter(tmp_vendor_boot_image_path);
+  avb_cmd.AddParameter("--partition_size");
+  avb_cmd.AddParameter(FileSize(vendor_boot_image_path));
+  avb_cmd.AddParameter("--partition_name");
+  avb_cmd.AddParameter("vendor_boot");
+  success = avb_cmd.Start().Wait();
+  if (success != 0) {
+    LOG(ERROR) << "Unable to run avbtool. Exited with status " << success;
+    return false;
+  }
 
   return DeleteTmpFileIfNotChanged(tmp_vendor_boot_image_path, new_vendor_boot_image_path);
 }
