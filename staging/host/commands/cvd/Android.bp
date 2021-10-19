@@ -37,11 +37,5 @@ cc_binary_host {
         "cvd_internal_status",
         "cvd_internal_stop",
     ],
-    symlinks: [
-        "cvd_host_bugreport",
-        "cvd_status",
-        "launch_cvd",
-        "stop_cvd",
-    ],
     defaults: ["cuttlefish_host"],
 }

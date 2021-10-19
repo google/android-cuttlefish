@@ -20,10 +20,9 @@
 
 namespace cuttlefish {
 
-bool CleanPriorFiles(
-    const std::set<std::string>& preserving,
-    const std::string& assembly_dir,
-    const std::string& instance_dir);
+bool CleanPriorFiles(const std::set<std::string>& preserving,
+                     const std::string& assembly_dir,
+                     const std::vector<std::string>& instance_dirs);
 
 bool EnsureDirectoryExists(const std::string& directory_path);
 
