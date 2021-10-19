@@ -160,8 +160,6 @@ std::vector<std::string> BootconfigArgsFromConfig(
   bootconfig_args.push_back(
       concat("androidboot.wifi_mac_prefix=", instance.wifi_mac_prefix()));
 
-  bootconfig_args.push_back("androidboot.verifiedbootstate=orange");
-
   // Non-native architecture implies a significantly slower execution speed, so
   // set a large timeout multiplier.
   if (!IsHostCompatible(config.target_arch())) {

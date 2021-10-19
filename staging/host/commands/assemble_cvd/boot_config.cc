@@ -59,7 +59,7 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
   }
 
   // Note that the 0 index points to the GPT table.
-  env << "bootcmd=boot_android virtio 0#misc" << '\0';
+  env << "bootcmd=verified_boot_android virtio 0#misc" << '\0';
   if (FLAGS_vm_manager == CrosvmManager::name() &&
       config.target_arch() == Arch::Arm64) {
     env << "fdtaddr=0x80000000" << '\0';
