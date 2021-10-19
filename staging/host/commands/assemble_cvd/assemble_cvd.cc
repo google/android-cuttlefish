@@ -165,7 +165,8 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    CHECK(CleanPriorFiles(preserving, FLAGS_assembly_dir, FLAGS_instance_dir))
+    CHECK(
+        CleanPriorFiles(preserving, FLAGS_assembly_dir, config.instance_dirs()))
         << "Failed to clean prior files";
 
     // Create assembly directory if it doesn't exist.
@@ -189,8 +190,13 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
   }
 
   std::string first_instance = FLAGS_instance_dir + "." + std::to_string(GetInstance());
+  if (FileExists(FLAGS_instance_dir)) {
+    CHECK(RemoveFile(FLAGS_instance_dir))
+        << "Failed to remove instance_dir symlink " << FLAGS_instance_dir;
+  }
   CHECK_EQ(symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()), 0)
-      << "Could not symlink \"" << first_instance << "\" to \"" << FLAGS_instance_dir << "\"";
+      << "Could not symlink \"" << first_instance << "\" to \""
+      << FLAGS_instance_dir << "\"";
 
   // Do this early so that the config object is ready for anything that needs it
   auto config = CuttlefishConfig::Get();
