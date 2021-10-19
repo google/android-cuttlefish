@@ -209,13 +209,15 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
   auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
   const auto& json = curl_response.data;
   if (!(curl_response.HttpSuccess() || curl_response.HttpRedirect())) {
-    LOG(FATAL) << "Error fetching the url of \"" << artifact << "\" for \""
+    LOG(ERROR) << "Error fetching the url of \"" << artifact << "\" for \""
                << build << "\". The server response was \"" << json
                << "\", and code was " << curl_response.http_code;
+    return false;
   }
-  CHECK(!json.isMember("error"))
-      << "Response had \"error\" but had http success status. Received \""
-      << json << "\"";
+  if (json.isMember("error")) {
+    LOG(ERROR) << "Response had \"error\" but had http success status. "
+               << "Received \"" << json << "\"";
+  }
   if (!json.isMember("signedUrl")) {
     LOG(ERROR) << "URL endpoint did not have json path: " << json;
     return false;
