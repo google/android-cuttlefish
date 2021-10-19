@@ -18,16 +18,17 @@
 
 #include <android-base/logging.h>
 
+#include <dirent.h>
+#include <ftw.h>
+#include <libgen.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <array>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
-#include <libgen.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
@@ -88,6 +89,40 @@ bool IsDirectoryEmpty(const std::string& path) {
   return true;
 }
 
+bool RecursivelyRemoveDirectory(const std::string& path) {
+  // Copied from libbase TemporaryDir destructor.
+  auto callback = [](const char* child, const struct stat*, int file_type,
+                     struct FTW*) -> int {
+    switch (file_type) {
+      case FTW_D:
+      case FTW_DP:
+      case FTW_DNR:
+        if (rmdir(child) == -1) {
+          PLOG(ERROR) << "rmdir " << child;
+        }
+        break;
+      case FTW_NS:
+      default:
+        if (rmdir(child) != -1) {
+          break;
+        }
+        // FALLTHRU (for gcc, lint, pcc, etc; and following for clang)
+        FALLTHROUGH_INTENDED;
+      case FTW_F:
+      case FTW_SL:
+      case FTW_SLN:
+        if (unlink(child) == -1) {
+          PLOG(ERROR) << "unlink " << child;
+        }
+        break;
+    }
+    return 0;
+  };
+
+  return nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) ==
+         0;
+}
+
 std::string AbsolutePath(const std::string& path) {
   if (path.empty()) {
     return {};
@@ -143,10 +178,9 @@ bool RenameFile(const std::string& old_name, const std::string& new_name) {
 }
 
 bool RemoveFile(const std::string& file) {
-  LOG(DEBUG) << "Removing " << file;
+  LOG(DEBUG) << "Removing file " << file;
   return remove(file.c_str()) == 0;
 }
-
 
 std::string ReadFile(const std::string& file) {
   std::string contents;

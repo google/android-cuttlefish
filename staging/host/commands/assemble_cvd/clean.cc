@@ -113,10 +113,9 @@ bool CleanPriorFiles(const std::vector<std::string>& paths, const std::set<std::
 
 } // namespace
 
-bool CleanPriorFiles(
-    const std::set<std::string>& preserving,
-    const std::string& assembly_dir,
-    const std::string& instance_dir) {
+bool CleanPriorFiles(const std::set<std::string>& preserving,
+                     const std::string& assembly_dir,
+                     const std::vector<std::string>& instance_dirs) {
   std::vector<std::string> paths = {
     // Everything in the assembly directory
     assembly_dir,
@@ -125,19 +124,7 @@ bool CleanPriorFiles(
     // The global link to the config file
     GetGlobalConfigFileLink(),
   };
-
-  std::string runtime_dir_parent = cpp_dirname(AbsolutePath(instance_dir));
-  std::string runtime_dirs_basename = cpp_basename(AbsolutePath(instance_dir));
-
-  std::regex instance_dir_regex("^.+\\.[1-9]\\d*$");
-  for (const auto& path : DirectoryContents(runtime_dir_parent)) {
-    std::string absl_path = runtime_dir_parent + "/" + path;
-    if((path.rfind(runtime_dirs_basename, 0) == 0) && std::regex_match(path, instance_dir_regex) &&
-        DirectoryExists(absl_path)) {
-      paths.push_back(absl_path);
-    }
-  }
-  paths.push_back(instance_dir);
+  paths.insert(paths.end(), instance_dirs.begin(), instance_dirs.end());
   return CleanPriorFiles(paths, preserving);
 }
 

@@ -844,6 +844,14 @@ std::vector<CuttlefishConfig::InstanceSpecific> CuttlefishConfig::Instances() co
   return instances;
 }
 
+std::vector<std::string> CuttlefishConfig::instance_dirs() const {
+  std::vector<std::string> result;
+  for (const auto& instance : Instances()) {
+    result.push_back(instance.instance_dir());
+  }
+  return result;
+}
+
 int GetInstance() {
   static int instance_id = InstanceFromEnvironment();
   return instance_id;

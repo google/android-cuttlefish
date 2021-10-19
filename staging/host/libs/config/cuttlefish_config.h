@@ -322,6 +322,7 @@ class CuttlefishConfig {
   InstanceSpecific ForDefaultInstance() const;
 
   std::vector<InstanceSpecific> Instances() const;
+  std::vector<std::string> instance_dirs() const;
 
   // A view into an existing CuttlefishConfig object for a particular instance.
   class InstanceSpecific {
