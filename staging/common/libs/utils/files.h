@@ -26,6 +26,7 @@ bool FileHasContent(const std::string& path);
 std::vector<std::string> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path);
 bool IsDirectoryEmpty(const std::string& path);
+bool RecursivelyRemoveDirectory(const std::string& path);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);
 bool RenameFile(const std::string& old_name, const std::string& new_name);
