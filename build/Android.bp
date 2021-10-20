@@ -104,14 +104,18 @@ cvd_host_tests = [
 cvd_host_webrtc_assets = [
     "webrtc_adb.js",
     "webrtc_app.js",
+    "webrtc_index.js",
     "webrtc_controls.js",
     "webrtc_cf.js",
+    "webrtc_server_connector.js",
     "webrtc_index.html",
+    "webrtc_client.html",
     "webrtc_rootcanal.js",
     "webrtc_server.crt",
     "webrtc_server.key",
     "webrtc_server.p12",
     "webrtc_style.css",
+    "webrtc_index.css",
     "webrtc_controls.css",
     "webrtc_trusted.pem",
 ]
