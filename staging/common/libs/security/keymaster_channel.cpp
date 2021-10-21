@@ -25,7 +25,7 @@ namespace cuttlefish {
 
 ManagedKeymasterMessage CreateKeymasterMessage(
     AndroidKeymasterCommand command, bool is_response, size_t payload_size) {
-  auto memory = new uint8_t[payload_size + sizeof(keymaster_message)];
+  auto memory = std::malloc(payload_size + sizeof(keymaster_message));
   auto message = reinterpret_cast<keymaster_message*>(memory);
   message->cmd = command;
   message->is_response = is_response;
@@ -37,7 +37,7 @@ void KeymasterCommandDestroyer::operator()(keymaster_message* ptr) {
   {
     keymaster::Eraser(ptr, sizeof(keymaster_message) + ptr->payload_size);
   }
-  delete reinterpret_cast<uint8_t*>(ptr);
+  std::free(ptr);
 }
 
 KeymasterChannel::KeymasterChannel(SharedFD input, SharedFD output)
