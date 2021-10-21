@@ -344,8 +344,10 @@ void AudioHandler::SetStreamParameters(StreamSetParamsCommand& cmd) {
     stream_descs_[cmd.stream_id()].bits_per_sample = bits_per_sample;
     stream_descs_[cmd.stream_id()].sample_rate = sample_rate;
     stream_descs_[cmd.stream_id()].channels = channels;
+    // 10ms for playback and 20ms period for capture (10ms + previous leftover)
     auto len10ms = (channels * (sample_rate / 100) * bits_per_sample) / 8;
-    stream_descs_[cmd.stream_id()].buffer.Reset(len10ms);
+    auto len = IsCapture(cmd.stream_id()) ? 2 * len10ms : len10ms;
+    stream_descs_[cmd.stream_id()].buffer.Reset(len);
   }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
@@ -484,18 +486,35 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
       return;
     }
-    auto bytes_per_sample = stream_desc.bits_per_sample / 8;
-    auto samples_per_channel =
-        buffer.len() / stream_desc.channels / bytes_per_sample;
+    const auto bytes_per_sample = stream_desc.bits_per_sample / 8;
+    const auto samples_per_channel = stream_desc.sample_rate / 100;
+    const auto bytes_per_request =
+        samples_per_channel * bytes_per_sample * stream_desc.channels;
     bool muted = false;
-    auto res = audio_source_->GetMoreAudioData(
-        const_cast<uint8_t*>(buffer.get()), bytes_per_sample,
-        samples_per_channel, stream_desc.channels, stream_desc.sample_rate,
-        muted);
-    if (res < 0) {
-      // This is likely a recoverable error, log the error but don't let the VMM
-      // know about it so that it doesn't crash.
-      LOG(ERROR) << "Failed to receive audio data from client";
+    size_t bytes_read = 0;
+    auto& holding_buffer = stream_descs_[stream_id].buffer;
+    auto rx_buffer = const_cast<uint8_t*>(buffer.get());
+    while (bytes_read < buffer.len()) {
+      if (holding_buffer.freeCapacity() < bytes_per_request) {
+        LOG(ERROR) << "Buffer too small for receiving audio";
+        break;
+      }
+      auto pos = holding_buffer.end();
+      // First read to holding buffer...
+      auto res = audio_source_->GetMoreAudioData(
+          pos, bytes_per_sample, samples_per_channel, stream_desc.channels,
+          stream_desc.sample_rate, muted);
+      if (res < 0) {
+        // This is likely a recoverable error, log the error but don't let the
+        // VMM know about it so that it doesn't crash.
+        LOG(ERROR) << "Failed to receive audio data from client";
+        break;
+      }
+      auto bytes_received = res * bytes_per_sample * stream_desc.channels;
+      holding_buffer.count += bytes_received;
+      // ...then copy data to the rx buffer
+      bytes_read += holding_buffer.Take(rx_buffer + bytes_read,
+                                        buffer.len() - bytes_read);
     }
   }
   buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
@@ -514,12 +533,26 @@ size_t AudioHandler::HoldingBuffer::Add(const volatile uint8_t* data,
   return added_len;
 }
 
+size_t AudioHandler::HoldingBuffer::Take(uint8_t* dst, size_t len) {
+  auto n = std::min(len, count);
+  std::copy(buffer.begin(), buffer.begin() + n, dst);
+  std::copy(buffer.begin() + n, buffer.end(), buffer.begin());
+  count -= n;
+  return n;
+}
+
 bool AudioHandler::HoldingBuffer::empty() const { return count == 0; }
 
 bool AudioHandler::HoldingBuffer::full() const {
   return count == buffer.size();
 }
 
+size_t AudioHandler::HoldingBuffer::freeCapacity() const {
+  return buffer.size() - count;
+}
+
 uint8_t* AudioHandler::HoldingBuffer::data() { return buffer.data(); }
+
+uint8_t* AudioHandler::HoldingBuffer::end() { return &buffer[count]; }
 
 }  // namespace cuttlefish
