@@ -191,6 +191,15 @@ class DeviceControlApp {
       this.#deviceConnection.getStream(stream_id)
           .then(stream => {
             deviceAudio.srcObject = stream;
+            let playPromise = deviceAudio.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                // Autoplay not allowed, mute and try again
+                deviceAudio.muted = true;
+                deviceAudio.play();
+                showWarning("Audio playback is muted");
+              });
+            }
           })
           .catch(e => console.error('Unable to get audio stream: ', e));
     }
@@ -482,6 +491,7 @@ class DeviceControlApp {
 
       let deviceDisplayVideo = document.createElement('video');
       deviceDisplayVideo.autoplay = true;
+      deviceDisplayVideo.muted = true;
       deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
       deviceDisplayVideo.classList.add('device-display-video');
       deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
