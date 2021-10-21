@@ -1,2 +1,2 @@
 # Device types
-type ab_block_device, dev_type, bdev_type;
+type ab_block_device, dev_type;
