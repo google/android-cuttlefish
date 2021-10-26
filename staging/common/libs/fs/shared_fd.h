@@ -262,6 +262,9 @@ class FileInstance {
   // in probably isn't modified, but the API spec doesn't have const.
   bool IsSet(fd_set* in) const;
 
+  // whether this is a regular file or not
+  bool IsRegular() const { return is_regular_file_; }
+
   /**
    * Adds a hard link to a file descriptor, based on the current working
    * directory of the process or to some absolute path.
@@ -300,6 +303,14 @@ class FileInstance {
   std::string StrError() const;
   ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
   ssize_t Truncate(off_t length);
+  /*
+   * If the file is a regular file and the count is 0, Write() may detect
+   * error(s) by calling write(fd, buf, 0) declared in <unistd.h>. If detected,
+   * it will return -1. If not, 0 will be returned. For non-regular files such
+   * as socket or pipe, write(fd, buf, 0) is not specified. Write(), however,
+   * will do nothing and just return 0.
+   *
+   */
   ssize_t Write(const void* buf, size_t count);
   int EventfdWrite(eventfd_t value);
   bool IsATTY();
@@ -311,6 +322,7 @@ class FileInstance {
   int fd_;
   int errno_;
   std::string identity_;
+  bool is_regular_file_;
 };
 
 /* Methods that need both a fully defined SharedFD and a fully defined
