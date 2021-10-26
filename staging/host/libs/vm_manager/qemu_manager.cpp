@@ -391,7 +391,7 @@ std::vector<Command> QemuManager::StartCommands(
     qemu_cmd.AddParameter("egl-headless");
 
     qemu_cmd.AddParameter("-vnc");
-    qemu_cmd.AddParameter(":", instance.vnc_server_port() - 5900);
+    qemu_cmd.AddParameter(":", instance.qemu_vnc_server_port());
   } else {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("none");

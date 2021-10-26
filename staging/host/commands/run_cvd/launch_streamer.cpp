@@ -81,8 +81,8 @@ std::vector<Command> LaunchCustomActionServers(
   return commands;
 }
 
-// Creates the frame and input sockets and add the relevant arguments to the vnc
-// server and webrtc commands
+// Creates the frame and input sockets and add the relevant arguments to
+// webrtc commands
 class StreamerSockets : public virtual Feature {
  public:
   INJECT(StreamerSockets(const CuttlefishConfig& config,
@@ -168,51 +168,6 @@ class StreamerSockets : public virtual Feature {
   SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;
-};
-
-class VncServer : public virtual CommandSource, public DiagnosticInformation {
- public:
-  INJECT(VncServer(const CuttlefishConfig& config,
-                   const CuttlefishConfig::InstanceSpecific& instance,
-                   StreamerSockets& sockets))
-      : config_(config), instance_(instance), sockets_(sockets) {}
-  // DiagnosticInformation
-  std::vector<std::string> Diagnostics() const override {
-    if (!Enabled()) {
-      return {};
-    }
-    std::ostringstream out;
-    out << "VNC server started on port "
-        << config_.ForDefaultInstance().vnc_server_port();
-    return {out.str()};
-  }
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    Command vnc_server(VncServerBinary());
-    vnc_server.AddParameter("-port=", instance_.vnc_server_port());
-    sockets_.AppendCommandArguments(vnc_server);
-
-    std::vector<Command> commands;
-    commands.emplace_back(std::move(vnc_server));
-    return commands;
-  }
-
-  // Feature
-  std::string Name() const override { return "VncServer"; }
-  bool Enabled() const override {
-    return sockets_.Enabled() && config_.enable_vnc_server();
-  }
-
- private:
-  std::unordered_set<Feature*> Dependencies() const override {
-    return {static_cast<Feature*>(&sockets_)};
-  }
-  bool Setup() override { return true; }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  StreamerSockets& sockets_;
 };
 
 class WebRtcServer : public virtual CommandSource,
@@ -359,12 +314,9 @@ fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
 launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
-      .addMultibinding<CommandSource, VncServer>()
       .addMultibinding<DiagnosticInformation, WebRtcServer>()
-      .addMultibinding<DiagnosticInformation, VncServer>()
       .addMultibinding<Feature, StreamerSockets>()
-      .addMultibinding<Feature, WebRtcServer>()
-      .addMultibinding<Feature, VncServer>();
+      .addMultibinding<Feature, WebRtcServer>();
 }
 
 }  // namespace cuttlefish
