@@ -85,7 +85,6 @@ cvd_host_tools = [
     "tombstone_receiver",
     "toybox",
     "unpack_bootimg",
-    "vnc_server",
     "webRTC",
     "webrtc_operator",
     "wmediumd",
