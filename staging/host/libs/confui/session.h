@@ -93,7 +93,7 @@ class Session {
     return fsm_input == FsmInput::kUserEvent;
   }
 
-  /** create a frame, and render it on the vnc/webRTC client
+  /** create a frame, and render it on the webRTC client
    *
    * note that this does not check host_ctrl_mode_
    */
@@ -137,7 +137,7 @@ class Session {
 
   std::unique_ptr<Cbor> cbor_;
 
-  // effectively, this variables are shared with vnc, webRTC thread
+  // effectively, this variables are shared with webRTC thread
   // the input demuxer will check the confirmation UI mode based on this
   std::atomic<MainLoopState> state_;
   MainLoopState saved_state_;  // for restore/suspend

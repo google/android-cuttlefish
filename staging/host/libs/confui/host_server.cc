@@ -162,7 +162,7 @@ SharedFD HostServer::EstablishHalConnection() {
 [[noreturn]] void HostServer::MainLoop() {
   while (true) {
     // this gets one input from either queue:
-    // from HAL or from all webrtc/vnc clients
+    // from HAL or from all webrtc clients
     // if no input, sleep until there is
     auto input_ptr = input_multiplexer_.Pop();
     auto& input = *input_ptr;
