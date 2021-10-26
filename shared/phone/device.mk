@@ -37,6 +37,7 @@ PRODUCT_PACKAGES += \
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
 PRODUCT_PACKAGES += \
+    android.hardware.radio-service.compat \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
 endif
