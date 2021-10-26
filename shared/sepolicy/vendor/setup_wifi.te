@@ -5,7 +5,7 @@ init_daemon_domain(setup_wifi)
 
 allow setup_wifi self:capability { net_admin net_raw sys_module };
 allow setup_wifi self:udp_socket { create ioctl };
-allow setup_wifi self:netlink_route_socket { bind create nlmsg_write read write };
+allow setup_wifi self:netlink_route_socket { bind create nlmsg_write read write getattr };
 
 allow setup_wifi kernel:system module_request;
 
