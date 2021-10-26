@@ -23,7 +23,7 @@ namespace confui {
 enum class ConfUiKeys : std::uint32_t { Confirm = 7, Cancel = 8 };
 
 /**
- * vnc, webrtc will deliver the user inputs from their client
+ * webrtc will deliver the user inputs from their client
  * to this class object
  */
 class HostVirtualInput {
