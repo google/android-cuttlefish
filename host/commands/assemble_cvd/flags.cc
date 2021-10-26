@@ -102,10 +102,6 @@ DEFINE_string(gpu_capture_binary, "",
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
-DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process. "
-                                     "The VNC server runs at port 6443 + i for "
-                                     "the vsoc-i user or CUTTLEFISH_INSTANCE=i, "
-                                     "starting from 1.");
 
 DEFINE_bool(use_allocd, false,
             "Acquire static resources from the resource allocator daemon.");
@@ -227,8 +223,6 @@ DEFINE_bool(daemon, false,
             "Run cuttlefish in background, the launcher exits on boot "
             "completed/failed");
 
-DEFINE_string(device_title, "", "Human readable name for the instance, "
-              "used by the vnc_server for its server title");
 DEFINE_string(setupwizard_mode, "DISABLED",
             "One of DISABLED,OPTIONAL,REQUIRED");
 
@@ -337,11 +331,6 @@ std::pair<uint16_t, uint16_t> ParsePortRange(const std::string& flag) {
   ss.read(&c, 1);
   ss >> port_range.second;
   return port_range;
-}
-
-int NumStreamers() {
-  auto start_flags = {FLAGS_start_vnc_server, FLAGS_start_webrtc};
-  return std::count(start_flags.begin(), start_flags.end(), true);
 }
 
 std::string StrForInstance(const std::string& prefix, int num) {
@@ -462,9 +451,6 @@ void ReadKernelConfig(KernelConfig* kernel_config) {
 CuttlefishConfig InitializeCuttlefishConfiguration(
     const std::string& instance_dir, int modem_simulator_count,
     KernelConfig kernel_config, fruit::Injector<>& injector) {
-  // At most one streamer can be started.
-  CHECK(NumStreamers() <= 1);
-
   CuttlefishConfig tmp_config_obj;
 
   for (const auto& fragment : injector.getMultibindings<ConfigFragment>()) {
@@ -613,8 +599,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_tpm_device(FLAGS_tpm_device);
 
-  tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
-
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
   tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
@@ -736,7 +720,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_uuid(FLAGS_uuid);
 
     instance.set_modem_simulator_host_id(1000 + num);  // Must be 4 digits
-    instance.set_vnc_server_port(6444 + num - 1);
+    // the deprecated vnc was 6444 + num - 1, and qemu_vnc was vnc - 5900
+    instance.set_qemu_vnc_server_port(544 + num - 1);
     instance.set_adb_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
     instance.set_confui_host_vsock_port(7700 + num - 1);
@@ -768,7 +753,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
         FLAGS_bluetooth_default_commands_file);
 
     instance.set_camera_server_port(FLAGS_camera_server_port);
-    instance.set_device_title(FLAGS_device_title);
 
     if (FLAGS_protected_vm) {
       instance.set_virtual_disk_paths(
@@ -848,12 +832,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
-  // Audio is not available for VNC server
+  // Audio is not available for Arm64
   SetCommandLineOptionWithMode(
       "enable_audio",
-      (FLAGS_start_vnc_server || (cuttlefish::HostArch() == cuttlefish::Arch::Arm64))
-          ? "false"
-          : "true",
+      (cuttlefish::HostArch() == cuttlefish::Arch::Arm64) ? "false" : "true",
       SET_FLAGS_DEFAULT);
   tmp_config_obj.set_enable_audio(FLAGS_enable_audio);
 
@@ -862,7 +844,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
 void SetDefaultFlagsForQemu(Arch target_arch) {
   // for now, we don't set non-default options for QEMU
-  if (FLAGS_gpu_mode == kGpuModeGuestSwiftshader && NumStreamers() == 0) {
+  if (FLAGS_gpu_mode == kGpuModeGuestSwiftshader && !FLAGS_start_webrtc) {
     // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
     // possible to run without any streamer by setting --start_webrtc=false.
@@ -883,7 +865,7 @@ void SetDefaultFlagsForQemu(Arch target_arch) {
 }
 
 void SetDefaultFlagsForCrosvm() {
-  if (NumStreamers() == 0) {
+  if (!FLAGS_start_webrtc) {
     // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
     // possible to run without any streamer by setting --start_webrtc=false.
