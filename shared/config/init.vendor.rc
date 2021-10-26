@@ -54,8 +54,6 @@ on post-fs
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
 
-    start bt_vhci_forwarder
-
 on post-fs-data
     # works around framework netiface enumeration issue
     # TODO(b/202731768): Add this `start rename_eth0` command to the init.rc for rename_netiface
@@ -97,10 +95,6 @@ service wifi-net-sh /vendor/bin/init.wifi.sh
     group root wakelock wifi
     oneshot
     disabled    # Started on post-fs-data
-
-service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=${vendor.ser.bt-uart}
-    user bluetooth
-    group bluetooth
 
 on property:sys.boot_completed=1
     trigger sys-boot-completed-set
