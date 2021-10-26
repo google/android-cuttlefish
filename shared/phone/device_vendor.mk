@@ -35,12 +35,15 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.com.android.dataroaming=true \
     ro.telephony.default_network=9 \
 
+TARGET_USES_CF_RILD ?= true
+ifeq ($(TARGET_USES_CF_RILD),true)
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.rild
 else
 PRODUCT_PACKAGES += \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
+endif
 endif
 
 ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
