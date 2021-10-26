@@ -30,7 +30,7 @@ namespace cuttlefish {
  * mechanism to orchestrate concurrent executions of threads
  * that work for screen connector
  *
- * Within VNC or WebRTC service, it tells when it is now in the Android Mode or
+ * Within WebRTC service, it tells when it is now in the Android Mode or
  * Confirmation UI mode
  */
 class HostModeCtrl {

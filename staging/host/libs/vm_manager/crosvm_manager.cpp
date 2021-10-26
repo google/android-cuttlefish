@@ -171,7 +171,7 @@ std::vector<Command> CrosvmManager::StartCommands(
         config.protected_vm() ? "--disk=" : "--rwdisk=", disk);
   }
 
-  if (config.enable_vnc_server() || config.enable_webrtc()) {
+  if (config.enable_webrtc()) {
     auto touch_type_parameter =
         config.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
 

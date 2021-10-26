@@ -51,7 +51,7 @@ class HostServer : public HostVirtualInput {
   void Start();  // start this server itself
   virtual ~HostServer() {}
 
-  // implement input interfaces. called by webRTC & vnc
+  // implement input interfaces. called by webRTC
   void TouchEvent(const int x, const int y, const bool is_down) override;
   void UserAbortEvent() override;
   bool IsConfUiActive() override;
@@ -88,7 +88,7 @@ class HostServer : public HostVirtualInput {
    *  should render the Android guest frames but keep the confirmation
    *  UI session and frame
    *
-   *  The inputs are I = {u, g}. 'u' is the user input from vnc/webRTC
+   *  The inputs are I = {u, g}. 'u' is the user input from webRTC
    *  clients. Note that the host service serialized the concurrent user
    *  inputs from multiple clients. 'g' is the command from the HAL service
    *

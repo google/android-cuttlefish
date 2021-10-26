@@ -211,7 +211,7 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
 
   if (!RenderDialog()) {
     // the confirmation UI is driven by a user app, not running from the start
-    // automatically so that means webRTC/vnc should have been set up
+    // automatically so that means webRTC should have been set up
     ConfUiLog(ERROR) << "Dialog is not rendered. However, it should."
                      << "No webRTC can't initiate any confirmation UI.";
     ReportErrorToHal(hal_cli, HostError::kUIError);

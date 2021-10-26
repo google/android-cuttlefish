@@ -136,9 +136,6 @@ class CuttlefishConfig {
   void set_tpm_device(const std::string& tpm_device);
   std::string tpm_device() const;
 
-  void set_enable_vnc_server(bool enable_vnc_server);
-  bool enable_vnc_server() const;
-
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
@@ -342,8 +339,8 @@ class CuttlefishConfig {
     // If any of the following port numbers is 0, the relevant service is not
     // running on the guest.
 
-    // Port number to connect to vnc server on the host
-    int vnc_server_port() const;
+    // Port number for qemu to run a vnc server on the host
+    int qemu_vnc_server_port() const;
     // Port number to connect to the tombstone receiver on the host
     int tombstone_receiver_port() const;
     // Port number to connect to the config server on the host
@@ -375,7 +372,6 @@ class CuttlefishConfig {
     std::string rootcanal_default_commands_file() const;
 
     std::string adb_device_name() const;
-    std::string device_title() const;
     std::string gnss_file_path() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
@@ -472,7 +468,7 @@ class CuttlefishConfig {
     Json::Value* Dictionary();
   public:
     void set_serial_number(const std::string& serial_number);
-    void set_vnc_server_port(int vnc_server_port);
+    void set_qemu_vnc_server_port(int qemu_vnc_server_port);
     void set_tombstone_receiver_port(int tombstone_receiver_port);
     void set_config_server_port(int config_server_port);
     void set_frames_server_port(int config_server_port);
@@ -493,7 +489,6 @@ class CuttlefishConfig {
     void set_rootcanal_config_file(const std::string& rootcanal_config_file);
     void set_rootcanal_default_commands_file(
         const std::string& rootcanal_default_commands_file);
-    void set_device_title(const std::string& title);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);

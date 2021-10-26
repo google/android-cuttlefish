@@ -62,14 +62,14 @@ class ScreenConnectorQueue {
    * Note: this queue is supposed to be used only by ScreenConnector-
    * related components such as ScreenConnectorSource
    *
-   * The traditional assumption was that when webRTC or VNC calls
+   * The traditional assumption was that when webRTC calls
    * OnFrameAfter, the call should be block until it could return
    * one frame.
    *
    * Thus, the producers of this queue must not produce frames
-   * much faster than the consumer, VNC or WebRTC consumes.
+   * much faster than the consumer, WebRTC consumes.
    * Therefore, when the small buffer is full -- which means
-   * VNC or WebRTC would not call OnFrameAfter --, the producer
+   * WebRTC would not call OnNextFrame --, the producer
    * should stop adding itmes to the queue.
    *
    */

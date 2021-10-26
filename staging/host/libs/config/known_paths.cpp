@@ -69,8 +69,6 @@ std::string VehicleHalGrpcServerBinary() {
       "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server");
 }
 
-std::string VncServerBinary() { return HostBinaryPath("vnc_server"); }
-
 std::string WebRtcBinary() {
   return HostBinaryPath("webRTC");
 }
