@@ -475,8 +475,10 @@ PRODUCT_PACKAGES += \
 #
 # Confirmation UI HAL
 #
-PRODUCT_PACKAGES += \
-    android.hardware.confirmationui@1.0-service.cuttlefish
+ifeq ($(LOCAL_CONFIRMATIONUI_PRODUCT_PACKAGE),)
+    LOCAL_CONFIRMATIONUI_PRODUCT_PACKAGE := android.hardware.confirmationui@1.0-service.cuttlefish
+endif
+PRODUCT_PACKAGES += $(LOCAL_CONFIRMATIONUI_PRODUCT_PACKAGE)
 
 #
 # Dumpstate HAL
