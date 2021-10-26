@@ -290,14 +290,6 @@ bool CuttlefishConfig::enable_gnss_grpc_proxy() const {
   return (*dictionary_)[kEnableGnssGrpcProxy].asBool();
 }
 
-static constexpr char kEnableVncServer[] = "enable_vnc_server";
-bool CuttlefishConfig::enable_vnc_server() const {
-  return (*dictionary_)[kEnableVncServer].asBool();
-}
-void CuttlefishConfig::set_enable_vnc_server(bool enable_vnc_server) {
-  (*dictionary_)[kEnableVncServer] = enable_vnc_server;
-}
-
 static constexpr char kEnableSandbox[] = "enable_sandbox";
 void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
   (*dictionary_)[kEnableSandbox] = enable_sandbox;

@@ -52,11 +52,11 @@ class ScreenConnector : public ScreenConnectorInfo,
   using FrameMultiplexer = ScreenConnectorInputMultiplexer<ProcessedFrameType>;
 
   /**
-   * This is the type of the callback function WebRTC/VNC is supposed to provide
+   * This is the type of the callback function WebRTC is supposed to provide
    * ScreenConnector with.
    *
    * The callback function is how a raw bytes frame should be processed for
-   * WebRTC/VNC
+   * WebRTC
    *
    */
   using GenerateProcessedFrameCallback = std::function<void(
