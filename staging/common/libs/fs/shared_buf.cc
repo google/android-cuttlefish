@@ -33,14 +33,17 @@ const size_t BUFF_SIZE = 1 << 14;
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;
   ssize_t written = 0;
-  while (total_written < size) {
+  do {
     written = fd->Write((void*)&(buf[total_written]), size - total_written);
-    if (written < 0) {
-      errno = fd->GetErrno();
-      return written;
+    if (written <= 0) {
+      if (written < 0) {
+        errno = fd->GetErrno();
+        return written;
+      }
+      return total_written;
     }
     total_written += written;
-  }
+  } while (total_written < size);
   return total_written;
 }
 
