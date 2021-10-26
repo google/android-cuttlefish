@@ -1,0 +1,4 @@
+runtime_resource_overlay {
+    name: "cuttlefish_overlay_settings_provider",
+    soc_specific: true,
+}
