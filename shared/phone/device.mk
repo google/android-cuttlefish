@@ -32,9 +32,14 @@ PRODUCT_PACKAGES += \
     Phone \
     PhoneService \
     Telecom \
-    TeleService \
+    TeleService
+
+TARGET_USES_CF_RILD ?= true
+ifeq ($(TARGET_USES_CF_RILD),true)
+PRODUCT_PACKAGES += \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
+endif
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
