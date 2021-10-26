@@ -99,6 +99,12 @@ ssize_t ReadExactBinary(SharedFD fd, T* binary_data) {
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
+ *
+ * If the size of buf is 0, WriteAll returns 0 with no error set unless
+ * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
+ * effectively called. It may detect errors; if detected, errno is set and
+ * -1 is returned. If not detected, 0 is returned with errno unchanged.
+ *
  */
 ssize_t WriteAll(SharedFD fd, const std::string& buf);
 
@@ -109,6 +115,12 @@ ssize_t WriteAll(SharedFD fd, const std::string& buf);
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
+ *
+ * If the size of buf is 0, WriteAll returns 0 with no error set unless
+ * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
+ * effectively called. It may detect errors; if detected, errno is set and
+ * -1 is returned. If not detected, 0 is returned with errno unchanged.
+ *
  */
 ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf);
 
@@ -119,6 +131,12 @@ ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf);
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
+ *
+ * If size is 0, WriteAll returns 0 with no error set unless
+ * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
+ * effectively called. It may detect errors; if detected, errno is set and
+ * -1 is returned. If not detected, 0 is returned with errno unchanged.
+ *
  */
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size);
 
@@ -129,6 +147,12 @@ ssize_t WriteAll(SharedFD fd, const char* buf, size_t size);
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
+ *
+ * If ever sizeof(T) is 0, WriteAll returns 0 with no error set unless
+ * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
+ * effectively called. It may detect errors; if detected, errno is set and
+ * -1 is returned. If not detected, 0 is returned with errno unchanged.
+ *
  */
 template<typename T>
 ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
