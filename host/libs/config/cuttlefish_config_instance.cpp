@@ -294,21 +294,13 @@ std::string CuttlefishConfig::InstanceSpecific::adb_device_name() const {
   return "NO_ADB_MODE_SET_NO_VALID_DEVICE_NAME";
 }
 
-static constexpr char kDeviceTitle[] = "device_title";
-std::string CuttlefishConfig::InstanceSpecific::device_title() const {
-  return (*Dictionary())[kDeviceTitle].asString();
+static constexpr char kQemuVncServerPort[] = "qemu_vnc_server_port";
+int CuttlefishConfig::InstanceSpecific::qemu_vnc_server_port() const {
+  return (*Dictionary())[kQemuVncServerPort].asInt();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_device_title(
-    const std::string& title) {
-  (*Dictionary())[kDeviceTitle] = title;
-}
-
-static constexpr char kVncServerPort[] = "vnc_server_port";
-int CuttlefishConfig::InstanceSpecific::vnc_server_port() const {
-  return (*Dictionary())[kVncServerPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_server_port) {
-  (*Dictionary())[kVncServerPort] = vnc_server_port;
+void CuttlefishConfig::MutableInstanceSpecific::set_qemu_vnc_server_port(
+    int qemu_vnc_server_port) {
+  (*Dictionary())[kQemuVncServerPort] = qemu_vnc_server_port;
 }
 
 static constexpr char kTouchServerPort[] = "touch_server_port";

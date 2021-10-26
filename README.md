@@ -78,12 +78,3 @@ available devices at `https://localhost:8443` . For more information, see the
 WebRTC on Cuttlefish
 [documentation](https://source.android.com/setup/create/cuttlefish-ref-webrtc).
 
-## Launch Viewer (VNC)
-
-When launching with `--start_vnc_server=true` , You can use the
-[TightVNC JViewer](https://www.tightvnc.com/download.php). Once you have
-downloaded the *TightVNC Java Viewer JAR in a ZIP archive*, run it with
-
-   `$ java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=localhost -port=6444`
-
-Click "Connect" and you should see a lock screen!
