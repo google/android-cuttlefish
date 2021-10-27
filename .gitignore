@@ -9,7 +9,6 @@
 /debian/files
 /debian/*.debhelper
 /debian/debhelper-build-stamp
-adbshell
 
 equivs.txt
 deps.txt
