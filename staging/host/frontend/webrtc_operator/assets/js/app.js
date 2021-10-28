@@ -16,32 +16,7 @@
 
 'use strict';
 
-function showDeviceListUI() {
-  document.getElementById('error-message').style.display = 'none';
-  // Hide the device control screen
-  document.getElementById('device-connection').style.visibility = 'none';
-  // Show the device selection screen
-  document.getElementById('device-selector').style.display = 'visible';
-}
-
-function showDeviceControlUI() {
-  document.getElementById('error-message').style.display = 'none';
-  // Hide the device selection screen
-  document.getElementById('device-selector').style.display = 'none';
-  // Show the device control screen
-  document.getElementById('device-connection').style.visibility = 'visible';
-}
-
-function websocketUrl(path) {
-  return ((location.protocol == 'http:') ? 'ws://' : 'wss://') + location.host +
-      '/' + path;
-}
-
-function httpUrl(path) {
-  return location.protocol + '//' + location.host + '/' + path;
-}
-
-async function ConnectDevice(deviceId) {
+async function ConnectDevice(deviceId, serverConnector) {
   console.debug('Connect: ' + deviceId);
   // Prepare messages in case of connection failure
   let connectionAttemptDuration = 0;
@@ -58,16 +33,8 @@ async function ConnectDevice(deviceId) {
     }
   }, intervalMs);
 
-  let options = {
-    wsUrl: websocketUrl('connect_client'),
-    pollConfigUrl: httpUrl('infra_config'),
-    pollConnectUrl: httpUrl('connect'),
-    pollForwardUrl: httpUrl('forward'),
-    pollMessagesUrl: httpUrl('poll_messages'),
-  };
-
   let module = await import('./cf_webrtc.js');
-  let deviceConnection = await module.Connect(deviceId, options);
+  let deviceConnection = await module.Connect(deviceId, serverConnector);
   console.info('Connected to ' + deviceId);
   clearInterval(connectionInterval);
   return deviceConnection;
@@ -87,63 +54,6 @@ function showError(msg) {
   element.style.visibility = 'visible';
 }
 
-class DeviceListApp {
-  #url;
-  #selectDeviceCb;
-
-  constructor({url, selectDeviceCb}) {
-    this.#url = url;
-    this.#selectDeviceCb = selectDeviceCb;
-  }
-
-  start() {
-    // Get any devices that are already connected
-    this.#UpdateDeviceList();
-
-    // Update the list at the user's request
-    document.getElementById('refresh-list')
-        .addEventListener('click', evt => this.#UpdateDeviceList());
-  }
-
-  async #UpdateDeviceList() {
-    try {
-      const device_ids = await fetch(this.#url, {
-        method: 'GET',
-        cache: 'no-cache',
-        redirect: 'follow',
-      });
-      this.#ShowNewDeviceList(await device_ids.json());
-    } catch (e) {
-      console.error('Error getting list of device ids: ', e);
-    }
-  }
-
-  #ShowNewDeviceList(device_ids) {
-    let ul = document.getElementById('device-list');
-    ul.innerHTML = '';
-    let count = 1;
-    let device_to_button_map = {};
-    for (const dev_id of device_ids) {
-      const button_id = 'connect_' + count++;
-      ul.innerHTML +=
-          ('<li class="device_entry" title="Connect to ' + dev_id +
-           '"><div><span>' + dev_id + '</span><button id="' + button_id +
-           '" >Connect</button></div></li>');
-      device_to_button_map[dev_id] = button_id;
-    }
-
-    for (const [dev_id, button_id] of Object.entries(device_to_button_map)) {
-      let button = document.getElementById(button_id);
-      button.addEventListener('click', evt => {
-        let button = $(evt.target);
-        let div = button.parent();
-        button.remove();
-        div.append('<span class="spinner material-icons">sync</span>');
-        this.#selectDeviceCb(dev_id);
-      });
-    }
-  }
-}  // DeviceListApp
 
 class DeviceDetailsUpdater {
   #element;
@@ -281,6 +191,15 @@ class DeviceControlApp {
       this.#deviceConnection.getStream(stream_id)
           .then(stream => {
             deviceAudio.srcObject = stream;
+            let playPromise = deviceAudio.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                // Autoplay not allowed, mute and try again
+                deviceAudio.muted = true;
+                deviceAudio.play();
+                showWarning("Audio playback is muted");
+              });
+            }
           })
           .catch(e => console.error('Unable to get audio stream: ', e));
     }
@@ -572,6 +491,7 @@ class DeviceControlApp {
 
       let deviceDisplayVideo = document.createElement('video');
       deviceDisplayVideo.autoplay = true;
+      deviceDisplayVideo.muted = true;
       deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
       deviceDisplayVideo.classList.add('device-display-video');
       deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
@@ -989,24 +909,20 @@ class DeviceControlApp {
   }
 }  // DeviceControlApp
 
-
-// The app starts by showing the device list
-showDeviceListUI();
-let listDevicesUrl = httpUrl('devices');
-let selectDeviceCb = deviceId => {
-  ConnectDevice(deviceId).then(
-      deviceConnection => {
-        let deviceControlApp = new DeviceControlApp(deviceConnection);
-        deviceControlApp.start();
-        showDeviceControlUI();
-      },
-      err => {
-        console.error('Unable to connect: ', err);
-        showError(
-            'No connection to the guest device. ' +
-            'Please ensure the WebRTC process on the host machine is active.');
-      });
-};
-let deviceListApp =
-    new DeviceListApp({url: listDevicesUrl, selectDeviceCb});
-deviceListApp.start();
+window.addEventListener("load", async evt => {
+  try {
+    let connectorModule = await import('./server_connector.js');
+    let deviceConnection = await ConnectDevice(
+        connectorModule.deviceId(), await connectorModule.createConnector());
+    let deviceControlApp = new DeviceControlApp(deviceConnection);
+    deviceControlApp.start();
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('device-connection').style.display = 'block';
+  } catch(err) {
+    console.error('Unable to connect: ', err);
+    showError(
+      'No connection to the guest device. ' +
+      'Please ensure the WebRTC process on the host machine is active.');
+    throw err;
+  }
+});
