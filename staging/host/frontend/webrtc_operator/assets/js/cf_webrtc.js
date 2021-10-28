@@ -81,17 +81,6 @@ function awaitDataChannel(pc, label, onMessage) {
   };
 }
 
-async function ajaxPostJson(url, data) {
-  const response = await fetch(url, {
-    method: 'POST',
-    cache: 'no-cache',
-    headers: {'Content-Type': 'application/json'},
-    redirect: 'follow',
-    body: JSON.stringify(data),
-  });
-  return response.json();
-}
-
 class DeviceConnection {
   #pc;
   #control;
@@ -363,10 +352,14 @@ class DeviceConnection {
 
 class Controller {
   #pc;
+  #serverConnector;
 
-  constructor() {}
+  constructor(serverConnector) {
+    this.#serverConnector = serverConnector;
+    serverConnector.onDeviceMsg(msg => this.#onDeviceMessage(msg));
+  }
 
-  _onDeviceMessage(message) {
+  #onDeviceMessage(message) {
     let type = message.type;
     switch (type) {
       case 'offer':
@@ -392,11 +385,12 @@ class Controller {
 
   async #sendClientDescription(desc) {
     console.debug('sendClientDescription');
-    return this._sendToDevice({type: 'answer', sdp: desc.sdp});
+    return this.#serverConnector.sendToDevice({type: 'answer', sdp: desc.sdp});
   }
 
   async #sendIceCandidate(candidate) {
-    return this._sendToDevice({type: 'ice-candidate', candidate});
+    console.debug('sendIceCandidate');
+    return this.#serverConnector.sendToDevice({type: 'ice-candidate', candidate});
   }
 
   async #onOffer(desc) {
@@ -438,7 +432,7 @@ class Controller {
     this.#pc.addEventListener('icecandidate', evt => {
       if (evt.candidate) this.#sendIceCandidate(evt.candidate);
     });
-    this._sendToDevice({type: 'request-offer'});
+    this.#serverConnector.sendToDevice({type: 'request-offer'});
   }
 
   async renegotiateConnection() {
@@ -446,171 +440,8 @@ class Controller {
     let offer = await this.#pc.createOffer();
     console.debug('Local description (offer): ', offer);
     await this.#pc.setLocalDescription(offer);
-    this._sendToDevice({type: 'offer', sdp: offer.sdp});
+    this.#serverConnector.sendToDevice({type: 'offer', sdp: offer.sdp});
   }
-}
-
-class WebsocketController extends Controller {
-  #promiseResolvers;
-  #websocket;
-
-  constructor(websocket) {
-    super();
-
-    websocket.onmessage = e => {
-      let data = JSON.parse(e.data);
-      this.#onWebsocketMessage(data);
-    };
-    this.#websocket = websocket;
-
-    this.#promiseResolvers = {};
-  }
-
-  #onWebsocketMessage(message) {
-    const type = message.message_type;
-    if (message.error) {
-      console.error(message.error);
-      this._on_connection_failed(message.error);
-      return;
-    }
-    switch (type) {
-      case 'config':
-        this._infra_config = message;
-        break;
-      case 'device_info':
-        if (this._on_device_available) {
-          this._on_device_available(message.device_info);
-          delete this._on_device_available;
-        } else {
-          console.error('Received unsolicited device info');
-        }
-        break;
-      case 'device_msg':
-        this._onDeviceMessage(message.payload);
-        break;
-      default:
-        console.error('Unrecognized message type from server: ', type);
-        this._on_connection_failed(
-            'Unrecognized message type from server: ' + type);
-        console.error(message);
-    }
-  }
-
-  async #wsSendJson(obj) {
-    return this.#websocket.send(JSON.stringify(obj));
-  }
-
-  async _sendToDevice(payload) {
-    return this.#wsSendJson({message_type: 'forward', payload});
-  }
-
-  async requestDevice(device_id) {
-    return new Promise((resolve, reject) => {
-      this._on_device_available = (deviceInfo) => resolve({
-        deviceInfo,
-        infraConfig: this._infra_config,
-      });
-      this._on_connection_failed = (error) => reject(error);
-      this.#wsSendJson({
-        message_type: 'connect',
-        device_id,
-      });
-    });
-  }
-}
-
-class PollingController extends Controller {
-  #connectUrl;
-  #forwardUrl;
-  #pollUrl;
-  #connection_id;
-  #infraConfig;
-  #pollerSchedule;
-
-  constructor(connectUrl, forwardUrl, pollUrl, infra_config) {
-    super();
-
-    this.#connectUrl = connectUrl;
-    this.#forwardUrl = forwardUrl;
-    this.#pollUrl = pollUrl;
-    this.#infraConfig = infra_config;
-  }
-
-  #startPolling() {
-    if (this.#pollerSchedule !== undefined) {
-      return;
-    }
-
-    let currentPollDelay = 1000;
-    let pollerRoutine = async () => {
-      let messages = await ajaxPostJson(this.#pollUrl, {
-        connection_id: this.#connection_id,
-      });
-      // Do exponential backoff on the polling up to 60 seconds
-      currentPollDelay = Math.min(60000, 2 * currentPollDelay);
-      for (const message of messages) {
-        this._onDeviceMessage(message);
-        // There is at least one message, poll sooner
-        currentPollDelay = 1000;
-      }
-      this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
-    };
-
-    this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
-  }
-
-  async _sendToDevice(obj) {
-    // Forward messages act like polling messages as well
-    let device_messages = await ajaxPostJson(this.#forwardUrl, {
-      connection_id: this.#connection_id,
-      payload: obj,
-    });
-    for (const message of device_messages) {
-      this._onDeviceMessage(message);
-    }
-  }
-
-  async requestDevice(device_id) {
-    let response = await ajaxPostJson(this.#connectUrl, {
-             device_id
-           });
-    this.#connection_id = response.connection_id;
-
-    // Start polling after we get a connection id
-    this.#startPolling();
-
-    return {
-      deviceInfo: response.device_info,
-      infraConfig: this.#infraConfig,
-    };
-  }
-}
-
-async function createController(options) {
-  try {
-    let ws = await new Promise((resolve, reject) => {
-      let ws = new WebSocket(options.wsUrl);
-      ws.onopen = () => {
-        console.debug(`Connected to ${options.wsUrl}`);
-        resolve(ws);
-      };
-      ws.onerror = evt => {
-        console.error('WebSocket error:', evt);
-        reject(evt);
-      };
-    });
-    return new WebsocketController(ws);
-  } catch (e) {
-    console.warn('Failed to connect websocket, trying polling instead');
-  }
-
-  const config = (await fetch(options.pollConfigUrl, {
-                   method: 'GET',
-                   redirect: 'follow',
-                 })).json();
-  return new PollingController(
-      options.pollConnectUrl, options.pollForwardUrl, options.pollMessagesUrl,
-      await config);
 }
 
 function createPeerConnection(infra_config) {
@@ -633,10 +464,8 @@ function createPeerConnection(infra_config) {
   return pc;
 }
 
-export async function Connect(deviceId, options) {
-  let control = await createController(options);
-
-  let requestRet = await control.requestDevice(deviceId);
+export async function Connect(deviceId, serverConnector) {
+  let requestRet = await serverConnector.requestDevice(deviceId);
   let deviceInfo = requestRet.deviceInfo;
   let infraConfig = requestRet.infraConfig;
   console.debug('Device available:');
@@ -649,10 +478,11 @@ export async function Connect(deviceId, options) {
   }
   let pc = createPeerConnection(infraConfig);
 
+  let control = new Controller(serverConnector);
   let deviceConnection = new DeviceConnection(pc, control);
   deviceConnection.description = deviceInfo;
 
-  let connected_promise = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     pc.addEventListener('connectionstatechange', evt => {
       let state = pc.connectionState;
       if (state == 'connected') {
@@ -661,9 +491,6 @@ export async function Connect(deviceId, options) {
         reject(evt);
       }
     });
+    control.ConnectDevice(pc);
   });
-
-  control.ConnectDevice(pc);
-
-  return connected_promise;
 }
