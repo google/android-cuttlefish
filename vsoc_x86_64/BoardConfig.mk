@@ -40,8 +40,6 @@ TARGET_NATIVE_BRIDGE_2ND_ARCH_VARIANT := armv7-a-neon
 TARGET_NATIVE_BRIDGE_2ND_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 
-BUILD_BROKEN_DUP_RULES := true
-
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
     BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/x86-64/*.ko)
 endif
