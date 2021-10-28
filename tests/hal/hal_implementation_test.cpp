@@ -108,6 +108,7 @@ struct VersionedAidlPackage {
 
 static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
+    {"android.hardware.audio.common.", 1},
     {"android.hardware.biometrics.common.", 1},
     {"android.hardware.common.", 1},
     {"android.hardware.common.", 2},
