@@ -1,0 +1,83 @@
+<?--
+ Copyright (C) 2019 The Android Open Source Project
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ -->
+
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="style.css" >
+        <link rel="stylesheet" type="text/css" href="controls.css" >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    </head>
+
+    <body>
+      <div id="loader"></div>
+      <section id="device-connection">
+        <div id="error-message-div"><h3 id="error-message" class="error"></h3></div>
+        <div id='header'>
+          <div id='app-controls'>
+            <div id="keyboard-capture-control" title="Capture Keyboard"></div>
+            <div id="mic-capture-control" title="Capture Microphone"></div>
+            <div id="camera-control" title="Capture Camera"></div>
+            <audio controls id="device-audio"></audio>
+            <div id="record-video-control" title="Capture Display as Webm"></div>
+          </div>
+          <div id='status-div'>
+            <h3 id='status-message' class='connecting'>Connecting to device</h3>
+          </div>
+        </div>
+        <div id='controls-and-displays'>
+          <div id='control-panel-default-buttons' class='control-panel-column'>
+            <button id='device-details-button' title='Device Details' class='material-icons'>
+              settings
+            </button>
+            <button id='bluetooth-console-button' title='Bluetooth console' class='material-icons'>
+              settings_bluetooth
+            </button>
+          </div>
+          <div id='control-panel-custom-buttons' class='control-panel-column'></div>
+          <div id='device-displays'>
+          </div>
+        </div>
+      </section>
+      <div id='device-details-modal' class='modal'>
+        <div id='device-details-modal-header' class='modal-header'>
+          <h2>Device Details</h2>
+          <button id='device-details-close' title='Close' class='material-icons modal-close'>close</button>
+        </div>
+        <hr>
+        <h3>Hardware Configuration</h3>
+        <span id='device-details-hardware'>unknown</span>
+      </div>
+      <div id='bluetooth-console-modal' class='modal'>
+        <div id='bluetooth-console-modal-header' class='modal-header'>
+          <h2>Bluetooth Console</h2>
+          <button id='bluetooth-console-close' title='Close' class='material-icons modal-close'>close</button>
+        </div>
+        <div>
+          <table>
+            <tr><td colspan='2'><textarea id='bluetooth-console-view' readonly rows='10' cols='60'></textarea></td></tr>
+            <tr><td width='1'><p id='bluetooth-console-cmd-label'>Command:</p></td><td width='100'><input id='bluetooth-console-input' type='text'></input></td></tr>
+          </table>
+        </div>
+      </div>
+       <script src="js/adb.js"></script>
+       <script src="js/rootcanal.js"></script>
+       <script src="js/cf_webrtc.js" type="module"></script>
+       <script src="js/controls.js"></script>
+       <script src="js/app.js"></script>
+    </body>
+</html>
