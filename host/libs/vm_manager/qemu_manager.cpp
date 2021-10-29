@@ -232,6 +232,7 @@ std::vector<Command> QemuManager::StartCommands(
   };
 
   bool is_arm = arch_ == Arch::Arm || arch_ == Arch::Arm64;
+  bool is_arm64 = arch_ == Arch::Arm64;
 
   auto access_kregistry_size_bytes = 0;
   if (FileExists(instance.access_kregistry_path())) {
@@ -255,9 +256,10 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
   qemu_cmd.AddParameter("-machine");
-  auto machine = is_arm ? "virt,gic-version=2,mte=on"
-                        : "pc-i440fx-2.8,accel=kvm,nvdimm=on";
-  qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
+  auto machine = is_arm ? "virt,gic-version=2" :
+                          "pc-i440fx-2.8,accel=kvm,nvdimm=on";
+  auto mte = is_arm64 ? ",mte=on" : "";
+  qemu_cmd.AddParameter(machine, mte, ",usb=off,dump-guest-core=off");
 
   qemu_cmd.AddParameter("-m");
   auto maxmem = config.memory_mb() +
