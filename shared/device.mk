@@ -174,17 +174,8 @@ PRODUCT_PACKAGES += \
     vsoc_input_service \
     vtpm_manager \
 
-SOONG_CONFIG_NAMESPACES += cvd
-SOONG_CONFIG_cvd += launch_configs
-SOONG_CONFIG_cvd_launch_configs += \
-    cvd_config_auto.json \
-    cvd_config_phone.json \
-    cvd_config_tablet.json \
-    cvd_config_tv.json \
-
-SOONG_CONFIG_cvd += grub_config
-SOONG_CONFIG_cvd_grub_config += \
-    grub.cfg \
+$(call soong_config_append, cvd, launch_configs, cvd_config_auto.json cvd_config_phone.json cvd_config_tablet.json cvd_config_tv.json)
+$(call soong_config_append, cvd, grub_config, grub.cfg)
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -704,9 +695,7 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
 
-SOONG_CONFIG_NAMESPACES += cvdhost
-SOONG_CONFIG_cvdhost += enforce_mac80211_hwsim
-SOONG_CONFIG_cvdhost_enforce_mac80211_hwsim += true
+$(call soong_config_append,cvdhost,enforce_mac80211_hwsim,true)
 
 else
 PRODUCT_PACKAGES += setup_wifi
