@@ -256,10 +256,23 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
   qemu_cmd.AddParameter("-machine");
-  auto machine = is_arm ? "virt,gic-version=2" :
-                          "pc-i440fx-2.8,accel=kvm,nvdimm=on";
-  auto mte = is_arm64 ? ",mte=on" : "";
-  qemu_cmd.AddParameter(machine, mte, ",usb=off,dump-guest-core=off");
+  std::string machine = is_arm ? "virt" : "pc-i440fx-2.8,nvdimm=on";
+  if (IsHostCompatible(arch_)) {
+    machine += ",accel=kvm";
+    if (is_arm) {
+      machine += ",gic-version=3";
+    }
+  } else if (is_arm) {
+    // QEMU doesn't support GICv3 with TCG yet
+    machine += ",gic-version=2";
+    if (is_arm64) {
+      // Only enable MTE in TCG mode. We haven't started to run on ARMv8/ARMv9
+      // devices with KVM and MTE, so MTE will always require TCG
+      machine += ",mte=on";
+    }
+    CHECK(config.cpus() <= 8) << "CPUs must be no more than 8 with GICv2";
+  }
+  qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
   qemu_cmd.AddParameter("-m");
   auto maxmem = config.memory_mb() +
