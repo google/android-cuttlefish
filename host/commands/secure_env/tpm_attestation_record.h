@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include <keymaster/attestation_context.h>
 
@@ -40,6 +41,7 @@ public:
      keymaster_algorithm_t algorithm, keymaster_error_t* error) const override;
 private:
  VerifiedBootParams vb_params_;
+ std::vector<uint8_t> unique_id_hbk_;
 };
 
 }  // namespace cuttlefish
