@@ -1,3 +1,7 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 apex_key {
     name: "com.google.aosp_cf_x86_64_phone.rros.key",
     public_key: "com.google.aosp_cf_x86_64_phone.rros.avbpubkey",
