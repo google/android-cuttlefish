@@ -202,8 +202,11 @@ class CuttlefishConfig {
   void set_metrics_binary(const std::string& metrics_binary);
   std::string metrics_binary() const;
 
-  void set_extra_kernel_cmdline(std::string extra_cmdline);
+  void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
+
+  void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
+  std::vector<std::string> extra_bootconfig_args() const;
 
   // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
