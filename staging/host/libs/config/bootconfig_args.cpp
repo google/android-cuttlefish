@@ -166,7 +166,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
     bootconfig_args.push_back("androidboot.hw_timeout_multiplier=50");
   }
 
-  // TODO(b/173815685): Create an extra_bootconfig flag and add it to bootconfig
+  AppendVector(&bootconfig_args, config.extra_bootconfig_args());
 
   return bootconfig_args;
 }
