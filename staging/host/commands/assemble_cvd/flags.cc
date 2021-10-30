@@ -81,6 +81,10 @@ DEFINE_string(kernel_path, "",
 DEFINE_string(initramfs_path, "", "Path to the initramfs");
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
+DEFINE_string(extra_bootconfig_args, "",
+              "Space-separated list of extra bootconfig args. "
+              "Note: overwriting an existing bootconfig argument "
+              "requires ':=' instead of '='.");
 DEFINE_bool(guest_enforce_security, true,
             "Whether to run in enforcing mode (non permissive).");
 DEFINE_bool(guest_audit_security, true,
@@ -583,6 +587,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
+  tmp_config_obj.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
 
   if (FLAGS_console) {
     SetCommandLineOptionWithMode("enable_sandbox", "false", SET_FLAGS_DEFAULT);

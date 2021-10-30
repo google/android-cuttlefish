@@ -579,7 +579,8 @@ std::string CuttlefishConfig::metrics_binary() const {
 }
 
 static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
-void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
+void CuttlefishConfig::set_extra_kernel_cmdline(
+    const std::string& extra_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
   for (const auto& arg : android::base::Split(extra_cmdline, " ")) {
     args_json_obj.append(arg);
@@ -592,6 +593,23 @@ std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
     cmdline.push_back(arg.asString());
   }
   return cmdline;
+}
+
+static constexpr char kExtraBootconfigArgs[] = "extra_bootconfig_args";
+void CuttlefishConfig::set_extra_bootconfig_args(
+    const std::string& extra_bootconfig_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(extra_bootconfig_args, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kExtraBootconfigArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::extra_bootconfig_args() const {
+  std::vector<std::string> bootconfig;
+  for (const Json::Value& arg : (*dictionary_)[kExtraBootconfigArgs]) {
+    bootconfig.push_back(arg.asString());
+  }
+  return bootconfig;
 }
 
 static constexpr char kRilDns[] = "ril_dns";
