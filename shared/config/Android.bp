@@ -45,3 +45,8 @@ prebuilt_etc {
     relative_install_path: "wifi",
     installable: false,
 }
+
+filegroup {
+    name: "manifest_android.hardware.bluetooth@1.1-service.xml",
+    srcs: ["manifest_android.hardware.bluetooth@1.1-service.xml"]
+}

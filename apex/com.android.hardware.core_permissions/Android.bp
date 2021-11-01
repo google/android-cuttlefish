@@ -7,8 +7,6 @@ override_apex {
     base: "com.android.hardware.core_permissions",
     prebuilts: [
         "android.hardware.audio.low_latency.prebuilt.xml",
-        "android.hardware.bluetooth_le.prebuilt.xml",
-        "android.hardware.bluetooth.prebuilt.xml",
         "android.hardware.camera.concurrent.prebuilt.xml",
         "android.hardware.camera.flash-autofocus.prebuilt.xml",
         "android.hardware.camera.front.prebuilt.xml",
