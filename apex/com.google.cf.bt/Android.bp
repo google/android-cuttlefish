@@ -1,0 +1,50 @@
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+apex_key {
+    name: "com.google.cf.bt.key",
+    public_key: "com.google.cf.bt.avbpubkey",
+    private_key: "com.google.cf.bt.pem",
+}
+
+android_app_certificate {
+    name: "com.google.cf.bt.certificate",
+    certificate: "com.google.cf.bt",
+}
+prebuilt_etc {
+    name: "com.google.cf.bt.rc",
+    src: "com.google.cf.bt.rc",
+    installable: false,
+}
+apex {
+    name: "com.google.cf.bt",
+    manifest: "manifest.json",
+    file_contexts: "file_contexts",
+    key: "com.google.cf.bt.key",
+    certificate: ":com.google.cf.bt.certificate",
+    use_vndk_as_stable: true,
+    updatable: false,
+    soc_specific: true,
+    binaries: [
+        "android.hardware.bluetooth@1.1-service.btlinux",
+        "bt_vhci_forwarder",
+    ],
+    prebuilts: [
+        "android.hardware.bluetooth_le.prebuilt.xml",
+        "android.hardware.bluetooth.prebuilt.xml",
+        "com.google.cf.bt.rc",
+    ],
+    init_rc: ["com.google.cf.bt.trig.rc"],
+    vintf_fragments: [":manifest_android.hardware.bluetooth@1.1-service.xml"],
+}
