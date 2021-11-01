@@ -719,6 +719,10 @@ PRODUCT_SOONG_NAMESPACES += vendor/google_devices/common/proprietary/confirmatio
 PRODUCT_VENDOR_PROPERTIES += \
     ro.surface_flinger.running_without_sync_framework=true
 
+# Enable GPU-intensive background blur support on Cuttlefish when requested by apps
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.surface_flinger.supports_background_blur 1
+
 # Set support one-handed mode
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.support_one_handed_mode=true
