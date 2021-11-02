@@ -296,7 +296,7 @@ std::vector<Command> QemuManager::StartCommands(
 
   qemu_cmd.AddParameter("-chardev");
   qemu_cmd.AddParameter("socket,id=charmonitor,path=", GetMonitorPath(config),
-                        ",server,nowait");
+                        ",server=on,wait=off");
 
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
@@ -400,7 +400,7 @@ std::vector<Command> QemuManager::StartCommands(
     // As we will pass this to ramoops, define this region first so it is always
     // located at this address. This is currently x86 only.
     qemu_cmd.AddParameter("-object");
-    qemu_cmd.AddParameter("memory-backend-file,id=objpmem0,share,mem-path=",
+    qemu_cmd.AddParameter("memory-backend-file,id=objpmem0,share=on,mem-path=",
                           instance.pstore_path(), ",size=", pstore_size_bytes);
 
     qemu_cmd.AddParameter("-device");
@@ -411,7 +411,7 @@ std::vector<Command> QemuManager::StartCommands(
   // when the device has been added
   if (!is_arm && access_kregistry_size_bytes > 0) {
     qemu_cmd.AddParameter("-object");
-    qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share,mem-path=",
+    qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share=on,mem-path=",
                           instance.access_kregistry_path(), ",size=",
                           access_kregistry_size_bytes);
 
