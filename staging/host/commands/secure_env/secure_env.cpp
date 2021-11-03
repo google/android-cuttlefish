@@ -34,6 +34,7 @@
 #include "host/commands/secure_env/in_process_tpm.h"
 #include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
+#include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_keymaster_context.h"
@@ -162,22 +163,22 @@ int SecureEnvMain(int argc, char** argv) {
         new TpmKeymasterEnforcement(*resource_manager, *tpm_gatekeeper));
   }
 
-  // keymaster::AndroidKeymaster puts the given pointer into a UniquePtr,
-  // taking ownership.
-  keymaster::KeymasterContext* keymaster_context;
+  std::unique_ptr<keymaster::KeymasterContext> keymaster_context;
   if (FLAGS_keymint_impl == "software") {
     // TODO: See if this is the right KM version.
-    keymaster_context = new keymaster::PureSoftKeymasterContext(
-        keymaster::KmVersion::KEYMINT_1, KM_SECURITY_LEVEL_SOFTWARE);
+    keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
+        keymaster::KmVersion::KEYMINT_1, KM_SECURITY_LEVEL_SOFTWARE));
   } else if (FLAGS_keymint_impl == "tpm") {
-    keymaster_context =
-        new TpmKeymasterContext(*resource_manager, *keymaster_enforcement);
+    keymaster_context.reset(
+        new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
   } else {
     LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
     return -1;
   }
+  // keymaster::AndroidKeymaster puts the context pointer into a UniquePtr,
+  // taking ownership.
   keymaster::AndroidKeymaster keymaster{
-      keymaster_context, kOperationTableSize,
+      new ProxyKeymasterContext(*keymaster_context), kOperationTableSize,
       keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_1,
                                 0 /* km_date */)};
 
