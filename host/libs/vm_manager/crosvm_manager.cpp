@@ -70,7 +70,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
         "androidboot.hardware.hwcomposer=ranchu",
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
-    };
+        "androidboot.opengles.version=196609"};  // OpenGL ES 3.1
   }
 
   if (gpu_mode == kGpuModeDrmVirgl) {
@@ -82,14 +82,13 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
     };
   }
   if (gpu_mode == kGpuModeGfxStream) {
-    return {
-        "androidboot.cpuvulkan.version=0",
-        "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=ranchu",
-        "androidboot.hardware.egl=emulation",
-        "androidboot.hardware.vulkan=ranchu",
-        "androidboot.hardware.gltransport=virtio-gpu-asg",
-    };
+    return {"androidboot.cpuvulkan.version=0",
+            "androidboot.hardware.gralloc=minigbm",
+            "androidboot.hardware.hwcomposer=ranchu",
+            "androidboot.hardware.egl=emulation",
+            "androidboot.hardware.vulkan=ranchu",
+            "androidboot.hardware.gltransport=virtio-gpu-asg",
+            "androidboot.opengles.version=196608"};  // OpenGL ES 3.0
   }
   return {};
 }
