@@ -11,6 +11,7 @@ on early-init
     setprop ro.hardware.vulkan ${ro.boot.hardware.vulkan}
     setprop ro.cpuvulkan.version ${ro.boot.cpuvulkan.version}
     setprop ro.hw_timeout_multiplier ${ro.boot.hw_timeout_multiplier}
+    setprop ro.opengles.version ${ro.boot.opengles.version}
 
     # start module load in the background
     start vendor.dlkm_loader
