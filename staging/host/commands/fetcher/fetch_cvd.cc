@@ -297,6 +297,9 @@ int FetchCvdMain(int argc, char** argv) {
       if (FLAGS_otatools_build != "") {
         ota_build = ArgumentToBuild(&build_api, FLAGS_otatools_build,
                                     DEFAULT_BUILD_TARGET, retry_period);
+      } else if (FLAGS_system_build != "") {
+        ota_build = ArgumentToBuild(&build_api, FLAGS_system_build,
+                                    DEFAULT_BUILD_TARGET, retry_period);
       }
       std::vector<std::string> ota_tools_files =
           download_ota_tools(&build_api, ota_build, target_dir);
