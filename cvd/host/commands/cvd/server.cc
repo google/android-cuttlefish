@@ -47,6 +47,7 @@ constexpr char kStatusBin[] = "cvd_internal_status";
 constexpr char kStopBin[] = "cvd_internal_stop";
 
 constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
+constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
 constexpr char kHelpBin[] = "help_placeholder";  // Unused, prints kHelpMessage.
 constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
 
@@ -58,6 +59,7 @@ Commands:
   start               Start a device.
   stop                Stop a running device.
   clear               Stop all running devices and delete all instance and assembly directories.
+  fleet               View the current fleet status.
   kill-server         Kill the cvd_server background process.
   status              Check and print the state of a running instance.
   host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
@@ -77,7 +79,8 @@ const std::map<std::string, std::string> CommandToBinaryMap = {
     {"cvd_status", kStatusBin},
     {"stop", kStopBin},
     {"stop_cvd", kStopBin},
-    {"clear", kClearBin}};
+    {"clear", kClearBin},
+    {"fleet", kFleetBin}};
 
 class CvdServer {
  public:
@@ -269,6 +272,9 @@ class CvdServer {
     } else if (bin == kClearBin) {
       *response.mutable_status() = CvdClear(out, err);
       return SendResponse(client, response);
+    } else if (bin == kFleetBin) {
+      *response.mutable_status() = CvdFleet(out);
+      return SendResponse(client, response);
     } else if (bin == kStartBin) {
       // Track this assembly_dir in the fleet.
       AssemblyInfo info;
@@ -438,6 +444,38 @@ class CvdServer {
              "known assembly and instance dirs.\n");
 
     assemblies_.clear();
+    status.set_code(cvd::Status::OK);
+    return status;
+  }
+
+  cvd::Status CvdFleet(const SharedFD& out) const {
+    for (const auto& it : assemblies_) {
+      const AssemblyDir& assembly_dir = it.first;
+      const AssemblyInfo& assembly_info = it.second;
+      auto config_path = GetCuttlefishConfigPath(assembly_dir);
+      if (config_path) {
+        // Reads CuttlefishConfig::instance_names(), which must remain stable
+        // across changes to config file format (within server.h major version).
+        auto config = CuttlefishConfig::GetFromFile(*config_path);
+        if (config) {
+          WriteAll(out, "Group:\n");
+          WriteAll(out, "  Assembly dir: " + assembly_dir + "\n");
+          WriteAll(out, "  Instances:\n");
+          for (const std::string& instance_name : config->instance_names()) {
+            Command command(assembly_info.host_binaries_dir + kStatusBin);
+            command.AddParameter("--print");
+            command.AddParameter("--instance_name=", instance_name);
+            command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+            command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                           *config_path);
+            if (int wait_result = command.Start().Wait(); wait_result != 0) {
+              WriteAll(out, "      (unknown instance status error)");
+            }
+          }
+        }
+      }
+    }
+    cvd::Status status;
     status.set_code(cvd::Status::OK);
     return status;
   }
