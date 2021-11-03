@@ -39,6 +39,7 @@ constexpr char kLogcatVsockMode[] = "vsock";
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 constexpr char kVsocUserPrefix[] = "vsoc-";
+constexpr char kCvdNamePrefix[] = "cvd-";
 constexpr char kBootStartedMessage[] ="VIRTUAL_DEVICE_BOOT_STARTED";
 constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
 constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
@@ -321,17 +322,20 @@ class CuttlefishConfig {
 
   MutableInstanceSpecific ForInstance(int instance_num);
   InstanceSpecific ForInstance(int instance_num) const;
+  InstanceSpecific ForInstanceName(const std::string& name) const;
   InstanceSpecific ForDefaultInstance() const;
 
   std::vector<InstanceSpecific> Instances() const;
   std::vector<std::string> instance_dirs() const;
+
+  void set_instance_names(const std::vector<std::string>& instance_names);
+  std::vector<std::string> instance_names() const;
 
   // A view into an existing CuttlefishConfig object for a particular instance.
   class InstanceSpecific {
     const CuttlefishConfig* config_;
     std::string id_;
     friend InstanceSpecific CuttlefishConfig::ForInstance(int num) const;
-    friend InstanceSpecific CuttlefishConfig::ForDefaultInstance() const;
     friend std::vector<InstanceSpecific> CuttlefishConfig::Instances() const;
 
     InstanceSpecific(const CuttlefishConfig* config, const std::string& id)

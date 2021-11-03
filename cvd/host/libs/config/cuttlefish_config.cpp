@@ -40,9 +40,26 @@
 namespace cuttlefish {
 namespace {
 
+static constexpr int kDefaultInstance = 1;
+
+int InstanceFromString(std::string instance_str) {
+  if (android::base::StartsWith(instance_str, kVsocUserPrefix)) {
+    instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
+  } else if (android::base::StartsWith(instance_str, kCvdNamePrefix)) {
+    instance_str = instance_str.substr(std::string(kCvdNamePrefix).size());
+  }
+
+  int instance = std::stoi(instance_str);
+  if (instance <= 0) {
+    LOG(INFO) << "Failed to interpret \"" << instance_str << "\" as an id, "
+              << "using instance id " << kDefaultInstance;
+    return kDefaultInstance;
+  }
+  return instance;
+}
+
 int InstanceFromEnvironment() {
   static constexpr char kInstanceEnvironmentVariable[] = "CUTTLEFISH_INSTANCE";
-  static constexpr int kDefaultInstance = 1;
 
   // CUTTLEFISH_INSTANCE environment variable
   std::string instance_str = StringFromEnv(kInstanceEnvironmentVariable, "");
@@ -60,15 +77,8 @@ int InstanceFromEnvironment() {
       LOG(DEBUG) << "Non-vsoc user, using instance id " << kDefaultInstance;
       return kDefaultInstance;
     }
-    instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
   }
-  int instance = std::stoi(instance_str);
-  if (instance <= 0) {
-    LOG(INFO) << "Failed to interpret \"" << instance_str << "\" as an id, "
-              << "using instance id " << kDefaultInstance;
-    return kDefaultInstance;
-  }
-  return instance;
+  return InstanceFromString(instance_str);
 }
 
 const char* kInstances = "instances";
@@ -848,8 +858,13 @@ CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstance(int num) const 
   return InstanceSpecific(this, std::to_string(num));
 }
 
+CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstanceName(
+    const std::string& name) const {
+  return ForInstance(InstanceFromString(name));
+}
+
 CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForDefaultInstance() const {
-  return InstanceSpecific(this, std::to_string(GetInstance()));
+  return ForInstance(GetInstance());
 }
 
 std::vector<CuttlefishConfig::InstanceSpecific> CuttlefishConfig::Instances() const {
@@ -867,6 +882,31 @@ std::vector<std::string> CuttlefishConfig::instance_dirs() const {
     result.push_back(instance.instance_dir());
   }
   return result;
+}
+
+static constexpr char kInstanceNames[] = "instance_names";
+void CuttlefishConfig::set_instance_names(
+    const std::vector<std::string>& instance_names) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& name : instance_names) {
+    args_json_obj.append(name);
+  }
+  (*dictionary_)[kInstanceNames] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::instance_names() const {
+  // NOTE: The structure of this field needs to remain stable, since
+  // cvd_server may call this on config JSON files from various builds.
+  //
+  // This info is duplicated into its own field here so it is simpler
+  // to keep stable, rather than parsing from Instances()::instance_name.
+  //
+  // Any non-stable changes must be accompanied by an uprev to the
+  // cvd_server major version.
+  std::vector<std::string> names;
+  for (const Json::Value& name : (*dictionary_)[kInstanceNames]) {
+    names.push_back(name.asString());
+  }
+  return names;
 }
 
 int GetInstance() {
