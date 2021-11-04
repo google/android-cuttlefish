@@ -704,11 +704,10 @@ static void requestShutdown(RIL_Token t)
 {
     int onOff;
 
-    int err;
     ATResponse *p_response = NULL;
 
     if (sState != RADIO_STATE_OFF) {
-        err = at_send_command("AT+CFUN=0", &p_response);
+        at_send_command("AT+CFUN=0", &p_response);
         setRadioState(RADIO_STATE_UNAVAILABLE);
     }
 
@@ -1197,7 +1196,6 @@ static void requestDial(void *data, size_t datalen __unused, RIL_Token t)
     RIL_Dial *p_dial;
     char *cmd;
     const char *clir;
-    int ret;
 
     p_dial = (RIL_Dial *)data;
 
@@ -1210,7 +1208,7 @@ static void requestDial(void *data, size_t datalen __unused, RIL_Token t)
 
     asprintf(&cmd, "ATD%s%s;", p_dial->address, clir);
 
-    ret = at_send_command(cmd, NULL);
+    at_send_command(cmd, NULL);
 
     free(cmd);
 
@@ -1254,7 +1252,6 @@ static void requestHangup(void *data, size_t datalen __unused, RIL_Token t)
 {
     int *p_line;
 
-    int ret;
     char *cmd;
 
     if (getSIMStatus() == SIM_ABSENT) {
@@ -1267,7 +1264,7 @@ static void requestHangup(void *data, size_t datalen __unused, RIL_Token t)
     // "Releases a specific active call X"
     asprintf(&cmd, "AT+CHLD=1%d", p_line[0]);
 
-    ret = at_send_command(cmd, NULL);
+    at_send_command(cmd, NULL);
 
     free(cmd);
 
@@ -1672,7 +1669,6 @@ static int parseRegistrationState(char *str, int *type, int *items, int **respon
     char *line = str, *p;
     int *resp = NULL;
     int skip;
-    int count = 3;
     int commas;
 
     RLOGD("parseRegistrationState. Parsing: %s",str);
@@ -1758,7 +1754,6 @@ static int parseRegistrationState(char *str, int *type, int *items, int **respon
             if (err < 0) goto error;
             err = at_tok_nextint(&line, &resp[3]);
             if (err < 0) goto error;
-            count = 4;
         break;
         default:
             goto error;
@@ -2615,7 +2610,6 @@ static void requestTransmitApduBasic( void *data, size_t datalen,
     RIL_UNUSED_PARM(datalen);
 
     int err, len;
-    int instruction = 0;
     char *cmd = NULL;
     char *line = NULL;
     RIL_SIM_APDU *p_args = NULL;
@@ -2660,7 +2654,6 @@ static void requestTransmitApduBasic( void *data, size_t datalen,
     sscanf(&(sr.simResponse[len - 4]), "%02x%02x", &(sr.sw1), &(sr.sw2));
     sr.simResponse[len - 4] = '\0';
 
-    instruction = p_args->instruction;
     RIL_onRequestComplete(t, RIL_E_SUCCESS, &sr, sizeof(sr));
     at_response_free(p_response);
     return;
@@ -2851,14 +2844,22 @@ static void requestSMSAcknowledge(void *data, size_t datalen __unused, RIL_Token
 
     if (ackSuccess == 1) {
         err = at_send_command("AT+CNMA=1", NULL);
+        if (err < 0) {
+            goto error;
+        }
     } else if (ackSuccess == 0)  {
         err = at_send_command("AT+CNMA=2", NULL);
+        if (err < 0) {
+            goto error;
+        }
     } else {
         RLOGE("unsupported arg to RIL_REQUEST_SMS_ACKNOWLEDGE\n");
         goto error;
     }
 
     RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+
+    return;
 error:
     RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
 }
@@ -6235,6 +6236,10 @@ const RIL_RadioFunctions *RIL_Init(const struct RIL_Env *env, int argc, char **a
     pthread_attr_init (&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     ret = pthread_create(&s_tid_mainloop, &attr, mainLoop, NULL);
+    if (ret < 0) {
+        RLOGE("pthread_create: %s:", strerror(errno));
+        return NULL;
+    }
 
     return &s_callbacks;
 }
