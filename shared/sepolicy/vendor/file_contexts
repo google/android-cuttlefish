@@ -4,6 +4,7 @@
 
 /dev/block/by-name/misc u:object_r:misc_block_device:s0
 /dev/block/by-name/boot_[ab] u:object_r:boot_block_device:s0
+/dev/block/by-name/init_boot_[ab] u:object_r:boot_block_device:s0
 /dev/block/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
 /dev/block/by-name/vbmeta_[ab] u:object_r:ab_block_device:s0
 /dev/block/by-name/vbmeta_system_[ab] u:object_r:ab_block_device:s0
