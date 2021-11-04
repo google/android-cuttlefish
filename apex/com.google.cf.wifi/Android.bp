@@ -16,17 +16,6 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-apex_key {
-    name: "com.google.cf.wifi.key",
-    public_key: "com.google.cf.wifi.avbpubkey",
-    private_key: "com.google.cf.wifi.pem",
-}
-
-android_app_certificate {
-    name: "com.google.cf.wifi.certificate",
-    certificate: "com.google.cf.wifi",
-}
-
 prebuilt_etc {
     name: "com.google.cf.wifi.rc",
     src: "com.google.cf.wifi.rc",
@@ -46,8 +35,8 @@ apex {
     // Name expected by wpa_supplicant when it looks for config files.
     apex_name: "com.android.wifi.hal",
     manifest: "apex_manifest.json",
-    key: "com.google.cf.wifi.key",
-    certificate: ":com.google.cf.wifi.certificate",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
     file_contexts: "file_contexts",
     use_vndk_as_stable: true,
     updatable: false,
