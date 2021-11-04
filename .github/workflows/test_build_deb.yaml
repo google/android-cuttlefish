@@ -1,0 +1,22 @@
+name: CI
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: debian@sha256:6a8bad8d20e1ca5ecbb7a314e51df6fca73fcce19af2778550671bdd1cbe7b43 # aka stable-20211011
+    steps:
+    - name: setup apt
+      run: apt update -y && apt upgrade -y
+    - name: install debuild dependencies
+      run: apt install -y git devscripts config-package-dev debhelper-compat
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      with:
+        path: "android-cuttlefish"
+    - name: build debian package
+      run: cd android-cuttlefish && debuild -i -us -uc -b
+    - name: install debian package
+      run: dpkg -i cuttlefish-common_*_*64.deb || apt-get install -f -y
