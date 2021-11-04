@@ -16,17 +16,6 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-apex_key {
-    name: "com.google.cf.rild.key",
-    public_key: "com.google.cf.rild.avbpubkey",
-    private_key: "com.google.cf.rild.pem",
-}
-
-android_app_certificate {
-    name: "com.google.cf.rild.certificate",
-    certificate: "com.google.cf.rild",
-}
-
 prebuilt_etc {
     name: "com.google.cf.rild.rc",
     src: "com.google.cf.rild.rc",
@@ -36,8 +25,8 @@ prebuilt_etc {
 apex {
     name: "com.google.cf.rild",
     manifest: "apex_manifest.json",
-    key: "com.google.cf.rild.key",
-    certificate: ":com.google.cf.rild.certificate",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
     file_contexts: "file_contexts",
     use_vndk_as_stable: true,
     updatable: false,

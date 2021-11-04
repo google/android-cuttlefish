@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-apex_key {
-    name: "com.google.cf.bt.key",
-    public_key: "com.google.cf.bt.avbpubkey",
-    private_key: "com.google.cf.bt.pem",
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_app_certificate {
-    name: "com.google.cf.bt.certificate",
-    certificate: "com.google.cf.bt",
-}
 prebuilt_etc {
     name: "com.google.cf.bt.rc",
     src: "com.google.cf.bt.rc",
     installable: false,
 }
+
 apex {
     name: "com.google.cf.bt",
     manifest: "manifest.json",
     file_contexts: "file_contexts",
-    key: "com.google.cf.bt.key",
-    certificate: ":com.google.cf.bt.certificate",
+    key: "com.google.cf.apex.key",
+    certificate: ":com.google.cf.apex.certificate",
     use_vndk_as_stable: true,
     updatable: false,
     soc_specific: true,
