@@ -68,7 +68,9 @@ cf_rtc_wakeup_alarmtimer(/devices/platform/9010000.pl031, 0, 0)
 
 # qemu (arm)
 cf_pci_block_device(/devices/platform/3f000000.pcie/pci0000:00, 0x7, 7)
-cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00, 0x12)
+cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00, 0x13)
+genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # common on all platforms / vm managers
 genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
