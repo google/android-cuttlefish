@@ -85,26 +85,26 @@ class Subprocess {
 };
 
 class SubprocessOptions {
-  bool verbose_;
-  bool exit_with_parent_;
-  bool in_group_;
-public:
-  SubprocessOptions() : verbose_(true), exit_with_parent_(true) {}
+ public:
+  SubprocessOptions()
+      : verbose_(true), exit_with_parent_(true), in_group_(false) {}
 
-  void Verbose(bool verbose) {
-    verbose_ = verbose;
-  }
-  void ExitWithParent(bool exit_with_parent) {
-    exit_with_parent_ = exit_with_parent;
-  }
+  SubprocessOptions& Verbose(bool verbose) &;
+  SubprocessOptions Verbose(bool verbose) &&;
+  SubprocessOptions& ExitWithParent(bool exit_with_parent) &;
+  SubprocessOptions ExitWithParent(bool exit_with_parent) &&;
   // The subprocess runs as head of its own process group.
-  void InGroup(bool in_group) {
-    in_group_ = in_group;
-  }
+  SubprocessOptions& InGroup(bool in_group) &;
+  SubprocessOptions InGroup(bool in_group) &&;
 
   bool Verbose() const { return verbose_; }
   bool ExitWithParent() const { return exit_with_parent_; }
   bool InGroup() const { return in_group_; }
+
+ private:
+  bool verbose_;
+  bool exit_with_parent_;
+  bool in_group_;
 };
 
 // An executable command. Multiple subprocesses can be started from the same
@@ -130,7 +130,10 @@ class Command {
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
   Command(const std::string& executable,
-          SubprocessStopper stopper = KillSubprocess);
+          SubprocessStopper stopper = KillSubprocess)
+      : subprocess_stopper_(stopper) {
+    command_.push_back(executable);
+  }
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -150,29 +153,15 @@ class Command {
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
   void SetEnvironment(const std::vector<std::string>& env) {
+    use_parent_env_ = false;
     env_ = env;
   }
 
-  void AddEnvironmentVariable(const std::string& env_var,
-                              const std::string& value) {
-    return AddEnvironmentVariable(env_var + "=" + value);
-  }
-
-  void AddEnvironmentVariable(const std::string& env_var) {
-    env_.push_back(env_var);
-  }
-
-  // Specify an environment variable to be unset from the parent's
-  // environment for the subprocesses to be started.
-  void UnsetFromEnvironment(const std::string& env_var) {
-    auto it = env_.begin();
-    while (it != env_.end()) {
-      if (android::base::StartsWith(*it, env_var + "=")) {
-        it = env_.erase(it);
-      } else {
-        ++it;
-      }
-    }
+  // Specify environment variables to be unset from the parent's environment
+  // for the subprocesses to be started.
+  void UnsetFromEnvironment(const std::vector<std::string>& env) {
+    use_parent_env_ = true;
+    std::copy(env.cbegin(), env.cend(), std::inserter(unenv_, unenv_.end()));
   }
 
   // Adds a single parameter to the command. All arguments are concatenated into
@@ -221,7 +210,9 @@ class Command {
   std::vector<std::string> command_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
+  bool use_parent_env_ = true;
   std::vector<std::string> env_{};
+  std::unordered_set<std::string> unenv_{};
   SubprocessStopper subprocess_stopper_;
 };
 
