@@ -40,6 +40,7 @@ using cuttlefish::HostBinaryPath;
 using cuttlefish::StringFromEnv;
 using cuttlefish::vm_manager::CrosvmManager;
 using google::FlagSettingMode::SET_FLAGS_DEFAULT;
+using google::FlagSettingMode::SET_FLAGS_VALUE;
 
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -858,6 +859,8 @@ void SetDefaultFlagsForQemu(Arch target_arch) {
   std::string default_bootloader =
       DefaultHostArtifactsPath("etc/bootloader_");
   if(target_arch == Arch::Arm) {
+      // Bootloader is unstable >512MB RAM on 32-bit ARM
+      SetCommandLineOptionWithMode("memory_mb", "512", SET_FLAGS_VALUE);
       default_bootloader += "arm";
   } else if (target_arch == Arch::Arm64) {
       default_bootloader += "aarch64";
