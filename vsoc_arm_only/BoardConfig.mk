@@ -27,7 +27,7 @@ TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
 TARGET_CPU_VARIANT := cortex-a15
 
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-arm/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-arm/*.ko)
 
 HOST_CROSS_OS := linux_bionic
 HOST_CROSS_ARCH := arm64
