@@ -58,6 +58,8 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
         // Crosvm ARM only supports earlycon uart over mmio.
         vm_manager_cmdline.push_back(" earlycon=uart8250,mmio,0x3f8");
       }
+      // Cuttlefish does not use CMA, so don't reserve RAM for it
+      vm_manager_cmdline.push_back(" cma=0");
     } else {
       // To update the uart8250 address:
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
