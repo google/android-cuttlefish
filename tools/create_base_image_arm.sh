@@ -154,14 +154,15 @@ fi
 
 if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
 	cd ${KERNEL_REPO}
+	rm -rf out
 	BUILD_CONFIG=common/build.config.rockpi4 build/build.sh -j`nproc`
 	cd -
 
+	dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
 	${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh \
 		-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e \
-		-k ${KERNEL_REPO}/out/android-mainline/dist/Image \
-		-i ${KERNEL_REPO}/out/android-mainline/dist/initramfs.img \
-		-d ${KERNEL_REPO}/out/android-mainline/dist/rk3399-rock-pi-4b.dtb:rockchip
+		-k ${dist_dir}/Image -i ${dist_dir}/initramfs.img \
+		-d ${dist_dir}/rk3399-rock-pi-4b.dtb:rockchip
 	if [ $? -ne 0 ]; then
 		echo "error: failed to build rootfs. exiting..."
 		exit 1
