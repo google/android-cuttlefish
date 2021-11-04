@@ -87,9 +87,6 @@ on boot
     setprop ro.hardware.audio.primary goldfish
     symlink /dev/hvc6 /dev/gnss0
 
-    # Update dm-verity state and set partition.*.verified properties
-    verity_update_state
-
 service wifi-net-sh /vendor/bin/init.wifi.sh
     class late_start
     user root
