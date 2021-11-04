@@ -49,7 +49,7 @@ func NewJsonWs(w http.ResponseWriter, r *http.Request) *JsonWs {
 func (ws *JsonWs) Send(val interface{}) bool {
 	select {
 	case _, _ = <-ws.cl:
-		// A message on this channel means the ws is closed
+		// Activity on this channel means the ws is closed
 		return false
 	default:
 		// Do nothing

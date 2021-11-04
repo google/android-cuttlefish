@@ -16,9 +16,17 @@ package main
 
 import (
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 )
+
+type Client interface {
+	// Send a message to the device
+	Send(msg interface{}) bool
+	// Provides an oportunity for the client to react to the device being disconnected
+	OnDeviceDisconnected()
+}
 
 // Implements the client interface using a websocket connection
 type WsClient struct {
@@ -48,7 +56,7 @@ type PolledClient struct {
 	// The id given to this client by the device
 	clientId int
 	// A reference to the polled set to clean up when the device disconnects
-	set *PolledSet
+	polledSet *PolledSet
 }
 
 // From IClient
@@ -60,7 +68,7 @@ func (c *PolledClient) Send(msg interface{}) bool {
 }
 func (c *PolledClient) OnDeviceDisconnected() {
 	// This object is useless when the device disconnects, release all resourcess associated to it
-	c.set.Destroy(c.id)
+	c.polledSet.Destroy(c.id)
 }
 
 // Sends a message to the device
@@ -78,9 +86,11 @@ func (c *PolledClient) GetMessages(start int, count int) []interface{} {
 	end := start + count
 	if end > len(c.messages) {
 		end = len(c.messages)
+		count = end - start
 	}
-	// Safe to return slice because c.messages is never shrunk
-	return c.messages[start:end]
+	ret := make([]interface{}, count)
+	copy(ret, c.messages[start:end])
+	return ret
 }
 
 func (c *PolledClient) Id() string {
@@ -104,7 +114,12 @@ func (s *PolledSet) NewConnection(d *Device) *PolledClient {
 	for {
 		id := randStr(64)
 		if _, ok := s.connections[id]; !ok {
-			conn := &PolledClient{id: id, device: d, messages: make([]interface{}, 0), set: s}
+			conn := &PolledClient{
+				id:        id,
+				device:    d,
+				messages:  make([]interface{}, 0),
+				polledSet: s,
+			}
 			s.connections[id] = conn
 			conn.clientId = d.Register(conn)
 			return conn
@@ -133,9 +148,9 @@ func NewPolledSet() *PolledSet {
 const runes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func randStr(l int) string {
-	s := make([]byte, l)
-	for i := range s {
-		s[i] = runes[rand.Intn(len(runes))]
+	var s strings.Builder
+	for i := 0; i < l; i++ {
+		s.WriteByte(runes[rand.Intn(len(runes))])
 	}
-	return string(s)
+	return s.String()
 }

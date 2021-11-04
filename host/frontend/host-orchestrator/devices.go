@@ -22,13 +22,6 @@ import (
 	"sync"
 )
 
-type Client interface {
-	// Send a message to the device
-	Send(msg interface{}) bool
-	// Provides an oportunity for the client to react to the device being disconnected
-	OnDeviceDisconnected()
-}
-
 type Device struct {
 	id   string
 	info interface{}

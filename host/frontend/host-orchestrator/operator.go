@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -28,10 +27,11 @@ import (
 func main() {
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
-	var config interface{}
-	err := json.Unmarshal([]byte("{\"ice_servers\":[{\"urls\":[\"stun:stun.l.google.com:19302\"]}],\"message_type\":\"config\"}"), &config)
-	if err != nil {
-		log.Fatal("Malformed config string")
+	config := InfraConfig{
+		Type: "config",
+		IceServers: []IceServer{
+			IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
+		},
 	}
 
 	setupDeviceEndpoint(pool, config)
@@ -43,7 +43,7 @@ func main() {
 	}
 }
 
-func setupDeviceEndpoint(pool *DevicePool, config interface{}) {
+func setupDeviceEndpoint(pool *DevicePool, config InfraConfig) {
 	devMux := http.NewServeMux()
 	if devMux == nil {
 		log.Fatal("Failed to allocate ServeMux")
@@ -61,7 +61,7 @@ func setupDeviceEndpoint(pool *DevicePool, config interface{}) {
 	}()
 }
 
-func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config interface{}) *mux.Router {
+func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfig) *mux.Router {
 	router := mux.NewRouter()
 	http.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
 		clientWs(w, r, pool, config)
@@ -91,7 +91,7 @@ func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config interface{
 }
 
 // Device endpoint
-func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config interface{}) {
+func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config InfraConfig) {
 	log.Println(r.URL)
 	ws := NewJsonWs(w, r)
 	if ws == nil {
@@ -191,7 +191,7 @@ func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 // Client websocket endpoint
 
-func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config interface{}) {
+func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config InfraConfig) {
 	log.Println(r.URL)
 	ws := NewJsonWs(w, r)
 	if ws == nil {
@@ -372,6 +372,14 @@ type NewConnReply struct {
 	DeviceInfo interface{} `json:"device_info"`
 }
 
+type InfraConfig struct {
+	Type       string      `json:"message_type"`
+	IceServers []IceServer `json:"ice_servers"`
+}
+type IceServer struct {
+	URLs []string `json:"urls"`
+}
+
 // Utility functions
 
 // Log and reply with an error over a websocket
@@ -389,12 +397,5 @@ func replyJSON(w http.ResponseWriter, obj interface{}) error {
 
 // Whether a device file request should be intercepted and served from the signaling server instead
 func shouldIntercept(path string) bool {
-	_, err := os.Stat(fmt.Sprintf("intercept/%s", path))
-	if err != nil && os.IsNotExist(err) {
-		return false
-	}
-	if err != nil {
-		log.Println("Error accessing intercepted file: ", err)
-	}
-	return true
+	return path == "/js/server_connector.js"
 }
