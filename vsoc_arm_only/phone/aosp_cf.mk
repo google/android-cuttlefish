@@ -67,5 +67,10 @@ PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish arm phone 32-bit only
 
 PRODUCT_VENDOR_PROPERTIES += \
+    ro.config.low_ram=true \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+TARGET_SYSTEM_PROP += \
+    build/make/target/board/go_defaults_512.prop \
+    build/make/target/board/go_defaults_common.prop
