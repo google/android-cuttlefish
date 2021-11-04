@@ -28,6 +28,7 @@ cc_defaults {
         "libcuttlefish_kernel_log_monitor_utils",
         "libcuttlefish_security",
         "libcuttlefish_utils",
+        "libfruit",
         "libgatekeeper",
         "libjsoncpp",
         "libkeymaster_portable",
