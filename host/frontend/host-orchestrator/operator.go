@@ -121,7 +121,7 @@ func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 			info = make(map[string]interface{})
 		}
 		port := msg.Port
-		device := NewDevice(ws, id, port, info)
+		device := NewDevice(ws, port, info)
 		if !pool.Register(device, id) {
 			wsReplyError(ws, fmt.Sprintln("Device id already taken: ", id))
 			return

@@ -24,8 +24,6 @@ import (
 )
 
 // A websocket connection that can send and receive json objects.
-// Using websockets requires some boilerplate code, even using gorilla, which is
-// encapsulated behind this object.
 // Only one thread should call Recv() at a time, Send() and Close() are thread safe
 type JsonWs struct {
 	conn     *websocket.Conn
