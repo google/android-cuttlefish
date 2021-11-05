@@ -14,5 +14,6 @@
 # limitations under the License.
 
 TARGET_KERNEL_USE ?= 5.10
+TARGET_KERNEL_PATH ?= device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-i686/kernel-$(TARGET_KERNEL_USE)
 
-PRODUCT_COPY_FILES += device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-i686/kernel-$(TARGET_KERNEL_USE):kernel
+PRODUCT_COPY_FILES +=$(TARGET_KERNEL_PATH):kernel
