@@ -71,3 +71,8 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.he
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/vintf/manifest/manifest_android.hardware.health.storage@1.0.cuttlefish.xml)
 
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/product/apex/com.android.gki.*)
+
+$(call add-clean-step, find $(PRODUCT_OUT)/system -type f -name "*charger*" -print0 | xargs -0 rm -f)
+$(call add-clean-step, find $(PRODUCT_OUT)/vendor -type f -name "*health@*" -print0 | xargs -0 rm -f)
+$(call add-clean-step, find $(PRODUCT_OUT)/recovery/root -type f -name "*charger*" -print0 | xargs -0 rm -f)
+$(call add-clean-step, find $(PRODUCT_OUT)/recovery/root -type f -name "*health@*" -print0 | xargs -0 rm -f)
