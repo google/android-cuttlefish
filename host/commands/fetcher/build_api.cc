@@ -154,7 +154,7 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
   std::vector<Artifact> artifacts;
   do {
     std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target +
-                      "/attempts/latest/artifacts?maxResults=1000";
+                      "/attempts/latest/artifacts?maxResults=100";
     if (page_token != "") {
       url += "&pageToken=" + page_token;
     }
