@@ -359,6 +359,9 @@ void Streamer::Impl::OnOpen() {
         cuttlefish::webrtc_signaling::kRegisterType;
     register_obj[cuttlefish::webrtc_signaling::kDeviceIdField] =
         config_.device_id;
+    CHECK(config_.client_files_port >= 0) << "Invalide device port provided";
+    register_obj[cuttlefish::webrtc_signaling::kDevicePortField] =
+        config_.client_files_port;
 
     Json::Value device_info;
     Json::Value displays(Json::ValueType::arrayValue);

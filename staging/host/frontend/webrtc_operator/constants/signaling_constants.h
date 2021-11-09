@@ -25,6 +25,7 @@ constexpr auto kClientIdField = "client_id";
 constexpr auto kPayloadField = "payload";
 constexpr auto kServersField = "ice_servers";
 constexpr auto kClientSecretField = "connection_id";
+constexpr auto kDevicePortField = "device_port";
 // These are defined in the IceServer dictionary
 constexpr auto kUrlsField = "urls";
 constexpr auto kUsernameField = "username";

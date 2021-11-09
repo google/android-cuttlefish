@@ -248,6 +248,8 @@ class WebRtcServer : public virtual CommandSource,
     // issue most of the time.
     webrtc.AddParameter("--command_fd=", client_socket_);
     webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
+    webrtc.AddParameter("-client_dir=",
+                        DefaultHostArtifactsPath("usr/share/webrtc/assets"));
 
     // TODO get from launcher params
     const auto& actions = custom_action_config_.CustomActions();
