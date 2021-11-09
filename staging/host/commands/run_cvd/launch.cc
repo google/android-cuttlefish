@@ -745,8 +745,14 @@ class OpenWrt : public CommandSource {
     } else {
       ap_cmd.Cmd().AddParameter("--disable-sandbox");
     }
+    ap_cmd.Cmd().AddParameter("--rwdisk=",
+                              instance_.PerInstancePath("ap_overlay.img"));
+    ap_cmd.Cmd().AddParameter(
+        "--disk=", instance_.PerInstancePath("persistent_composite.img"));
+    // TODO(jeongik): OpenWrt kernel doesn't support specifying root by label.
+    // Consider that assemble_cvd passes the path.
+    ap_cmd.Cmd().AddParameter("--params=\"root=/dev/vda13\"");
 
-    ap_cmd.Cmd().AddParameter("--root=", config_.ap_rootfs_image());
     ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
 
     return single_element_emplace(std::move(ap_cmd.Cmd()));

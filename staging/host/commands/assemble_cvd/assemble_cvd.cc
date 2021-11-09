@@ -138,6 +138,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
                 << "overlay incompatible. Wiping the overlay files.";
     } else if (FLAGS_resume && !create_os_composite_disk) {
       preserving.insert("overlay.img");
+      preserving.insert("ap_overlay.img");
       preserving.insert("os_composite_disk_config.txt");
       preserving.insert("os_composite_gpt_header.img");
       preserving.insert("os_composite_gpt_footer.img");
