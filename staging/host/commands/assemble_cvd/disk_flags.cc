@@ -78,6 +78,7 @@ DEFINE_int32(blank_metadata_image_mb, 16,
 DEFINE_int32(blank_sdcard_image_mb, 2048,
              "If enabled, the size of the blank sdcard image to generate, MB.");
 
+DECLARE_string(ap_rootfs_image);
 DECLARE_string(bootloader);
 DECLARE_bool(use_sdcard);
 DECLARE_string(initramfs_path);
@@ -131,7 +132,16 @@ bool ResolveInstanceFiles() {
 
   return true;
 }
-
+void create_overlay_image(const CuttlefishConfig& config,
+                          std::string overlay_path) {
+  bool missingOverlay = !FileExists(overlay_path);
+  bool newOverlay = FileModificationTime(overlay_path) <
+                    FileModificationTime(config.os_composite_disk_path());
+  if (missingOverlay || !FLAGS_resume || newOverlay) {
+    CreateQcowOverlay(config.crosvm_binary(), config.os_composite_disk_path(),
+                      overlay_path);
+  }
+}
 std::vector<ImagePartition> os_composite_disk_config() {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition{
@@ -204,6 +214,13 @@ std::vector<ImagePartition> os_composite_disk_config() {
     partitions.push_back(ImagePartition{
         .label = "otheros_root",
         .image_file_path = FLAGS_otheros_root_image,
+        .read_only = true,
+    });
+  }
+  if (!FLAGS_ap_rootfs_image.empty()) {
+    partitions.push_back(ImagePartition{
+        .label = "ap_rootfs",
+        .image_file_path = FLAGS_ap_rootfs_image,
         .read_only = true,
     });
   }
@@ -725,13 +742,10 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
 
   if (!FLAGS_protected_vm) {
     for (auto instance : config.Instances()) {
-      auto overlay_path = instance.PerInstancePath("overlay.img");
-      bool missingOverlay = !FileExists(overlay_path);
-      bool newOverlay = FileModificationTime(overlay_path) <
-                        FileModificationTime(config.os_composite_disk_path());
-      if (missingOverlay || !FLAGS_resume || newOverlay) {
-        CreateQcowOverlay(config.crosvm_binary(),
-                          config.os_composite_disk_path(), overlay_path);
+      create_overlay_image(config, instance.PerInstancePath("overlay.img"));
+      if (instance.start_ap()) {
+        create_overlay_image(config,
+                             instance.PerInstancePath("ap_overlay.img"));
       }
     }
   }
