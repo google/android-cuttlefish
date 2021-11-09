@@ -307,6 +307,14 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/surround_sound_configuration_5_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/surround_sound_configuration_5_0.xml \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
 
+# TODO(b/205065320): remove this when wifi vendor apex support mac80211_hwsim
+ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
+    frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml \
+
+endif
+
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.input.config
 else
@@ -674,12 +682,20 @@ endif
 
 # wifi
 
+# TODO(b/205065320): remove this when wifi vendor apex support mac80211_hwsim
+LOCAL_USE_WIFI_VENDOR_APEX := false
+ifneq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+LOCAL_USE_WIFI_VENDOR_APEX := true
+endif
+endif
+
+ifeq ($(LOCAL_USE_WIFI_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.wifi
 $(call add_soong_config_namespace, wpa_supplicant)
 $(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
 $(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
-# TODO(b/189970852): Convert com.google.cf.wifi to use mac8011_hwsim_virtio
+# TODO(b/205065320): Convert com.google.cf.wifi to use mac8011_hwsim_virtio
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
 else
 
