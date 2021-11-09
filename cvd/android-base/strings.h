@@ -32,6 +32,20 @@ namespace base {
 std::vector<std::string> Split(const std::string& s,
                                const std::string& delimiters);
 
+// Splits a string into a vector of string tokens.
+//
+// The string is split at each occurrence of a character in delimiters.
+// Coalesce runs of delimiter bytes and ignore delimiter bytes at the start or
+// end of string. In other words, return only nonempty string tokens.
+// Use when you don't care about recovering the original string with Join().
+//
+// Example:
+//   Tokenize(" foo  bar ", " ") => {"foo", "bar"}
+//   Join(Tokenize("  foo  bar", " "), " ") => "foo bar"
+//
+// The empty string is not a valid delimiter list.
+std::vector<std::string> Tokenize(const std::string& s, const std::string& delimiters);
+
 // Trims whitespace off both ends of the given string.
 std::string Trim(const std::string& s);
 
