@@ -191,13 +191,18 @@ class ServerLoopImpl : public ServerLoop, public Feature {
     auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
     LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
     CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
-
-    auto overlay_path = instance_.PerInstancePath("overlay.img");
-    unlink(overlay_path.c_str());
-    if (!CreateQcowOverlay(config_.crosvm_binary(),
-                           config_.os_composite_disk_path(), overlay_path)) {
-      LOG(ERROR) << "CreateQcowOverlay failed";
-      return false;
+    std::vector<std::string> overlay_files{"overlay.img"};
+    if (instance_.start_ap()) {
+      overlay_files.emplace_back("ap_overlay.img");
+    }
+    for (auto overlay_file : {"overlay.img", "ap_overlay.img"}) {
+      auto overlay_path = instance_.PerInstancePath(overlay_file);
+      unlink(overlay_path.c_str());
+      if (!CreateQcowOverlay(config_.crosvm_binary(),
+                             config_.os_composite_disk_path(), overlay_path)) {
+        LOG(ERROR) << "CreateQcowOverlay failed";
+        return false;
+      }
     }
     return true;
   }
