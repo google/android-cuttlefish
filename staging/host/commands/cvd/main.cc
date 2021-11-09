@@ -113,7 +113,7 @@ int CvdMain(int argc, char** argv) {
   }
 
   setenv(
-      "ANDROID_SOONG_HOST_OUT",
+      "ANDROID_HOST_OUT",
       android::base::Dirname(android::base::GetExecutableDirectory()).c_str(),
       /*overwrite=*/true);
   Command command(HostBinaryPath(bin));
