@@ -542,6 +542,68 @@ class InitializeAccessKregistryImage : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
+class InitializePstore : public Feature {
+ public:
+  INJECT(InitializePstore(const CuttlefishConfig& config,
+                          const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // Feature
+  std::string Name() const override { return "InitializePstore"; }
+  bool Enabled() const override { return !config_.protected_vm(); }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() {
+    if (FileExists(instance_.pstore_path())) {
+      return true;
+    }
+    bool success =
+        CreateBlankImage(instance_.pstore_path(), 2 /* mb */, "none");
+    if (!success) {
+      LOG(ERROR) << "Failed to create pstore_path \"" << instance_.pstore_path()
+                 << "\"";
+      return false;
+    }
+    return true;
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
+class InitializeSdCard : public Feature {
+ public:
+  INJECT(InitializeSdCard(const CuttlefishConfig& config,
+                          const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // Feature
+  std::string Name() const override { return "InitializeSdCard"; }
+  bool Enabled() const override {
+    return FLAGS_use_sdcard && !config_.protected_vm();
+  }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() {
+    if (FileExists(instance_.sdcard_path())) {
+      return true;
+    }
+    bool success = CreateBlankImage(instance_.sdcard_path(),
+                                    FLAGS_blank_sdcard_image_mb, "sdcard");
+    if (!success) {
+      LOG(ERROR) << "Failed to create sdcard \"" << instance_.sdcard_path()
+                 << "\"";
+      return false;
+    }
+    return true;
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
 static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
                                                const CuttlefishConfig* config) {
   return fruit::createComponent()
@@ -565,7 +627,10 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*fetcher)
       .bindInstance(*config)
       .bindInstance(*instance)
-      .addMultibinding<Feature, InitializeAccessKregistryImage>();
+      .addMultibinding<Feature, InitializeAccessKregistryImage>()
+      .addMultibinding<Feature, InitializePstore>()
+      .addMultibinding<Feature, InitializeSdCard>()
+      .install(InitBootloaderEnvPartitionComponent);
 }
 
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
@@ -592,18 +657,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // support.
   if (!FLAGS_protected_vm) {
     for (const auto& instance : config.Instances()) {
-      if (!FileExists(instance.pstore_path())) {
-        CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
-      }
-
-      if (FLAGS_use_sdcard && !FileExists(instance.sdcard_path())) {
-        CreateBlankImage(instance.sdcard_path(),
-                         FLAGS_blank_sdcard_image_mb, "sdcard");
-      }
-
-      CHECK(InitBootloaderEnvPartition(config, instance))
-          << "Failed to create bootloader environment partition";
-
       const auto frp = instance.factory_reset_protected_path();
       if (!FileExists(frp)) {
         CreateBlankImage(frp, 1 /* mb */, "none");
