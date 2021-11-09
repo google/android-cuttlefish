@@ -40,26 +40,9 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr int kDefaultInstance = 1;
-
-int InstanceFromString(std::string instance_str) {
-  if (android::base::StartsWith(instance_str, kVsocUserPrefix)) {
-    instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
-  } else if (android::base::StartsWith(instance_str, kCvdNamePrefix)) {
-    instance_str = instance_str.substr(std::string(kCvdNamePrefix).size());
-  }
-
-  int instance = std::stoi(instance_str);
-  if (instance <= 0) {
-    LOG(INFO) << "Failed to interpret \"" << instance_str << "\" as an id, "
-              << "using instance id " << kDefaultInstance;
-    return kDefaultInstance;
-  }
-  return instance;
-}
-
 int InstanceFromEnvironment() {
   static constexpr char kInstanceEnvironmentVariable[] = "CUTTLEFISH_INSTANCE";
+  static constexpr int kDefaultInstance = 1;
 
   // CUTTLEFISH_INSTANCE environment variable
   std::string instance_str = StringFromEnv(kInstanceEnvironmentVariable, "");
@@ -77,8 +60,15 @@ int InstanceFromEnvironment() {
       LOG(DEBUG) << "Non-vsoc user, using instance id " << kDefaultInstance;
       return kDefaultInstance;
     }
+    instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
   }
-  return InstanceFromString(instance_str);
+  int instance = std::stoi(instance_str);
+  if (instance <= 0) {
+    LOG(INFO) << "Failed to interpret \"" << instance_str << "\" as an id, "
+              << "using instance id " << kDefaultInstance;
+    return kDefaultInstance;
+  }
+  return instance;
 }
 
 const char* kInstances = "instances";
@@ -772,11 +762,15 @@ void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
   (*dictionary_)[kUserdataFormat] = fmt;
 }
 
-/*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
-    const std::string& path) {
+// Creates the (initially empty) config object and populates it with values from
+// the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
+// Returns nullptr if there was an error loading from file
+/*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
+  auto config_file_path = StringFromEnv(kCuttlefishConfigEnvVarName,
+                                        GetGlobalConfigFileLink());
   auto ret = new CuttlefishConfig();
   if (ret) {
-    auto loaded = ret->LoadFromFile(path.c_str());
+    auto loaded = ret->LoadFromFile(config_file_path.c_str());
     if (!loaded) {
       delete ret;
       return nullptr;
@@ -785,19 +779,8 @@ void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
   return ret;
 }
 
-/*static*/ std::unique_ptr<const CuttlefishConfig>
-CuttlefishConfig::GetFromFile(const std::string& path) {
-  return std::unique_ptr<const CuttlefishConfig>(BuildConfigImpl(path));
-}
-
-// Creates the (initially empty) config object and populates it with values from
-// the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
-// Returns nullptr if there was an error loading from file
 /*static*/ const CuttlefishConfig* CuttlefishConfig::Get() {
-  auto config_file_path =
-      StringFromEnv(kCuttlefishConfigEnvVarName, GetGlobalConfigFileLink());
-  static std::shared_ptr<CuttlefishConfig> config(
-      BuildConfigImpl(config_file_path));
+  static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
   return config.get();
 }
 
@@ -858,13 +841,8 @@ CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstance(int num) const 
   return InstanceSpecific(this, std::to_string(num));
 }
 
-CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstanceName(
-    const std::string& name) const {
-  return ForInstance(InstanceFromString(name));
-}
-
 CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForDefaultInstance() const {
-  return ForInstance(GetInstance());
+  return InstanceSpecific(this, std::to_string(GetInstance()));
 }
 
 std::vector<CuttlefishConfig::InstanceSpecific> CuttlefishConfig::Instances() const {
@@ -882,31 +860,6 @@ std::vector<std::string> CuttlefishConfig::instance_dirs() const {
     result.push_back(instance.instance_dir());
   }
   return result;
-}
-
-static constexpr char kInstanceNames[] = "instance_names";
-void CuttlefishConfig::set_instance_names(
-    const std::vector<std::string>& instance_names) {
-  Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& name : instance_names) {
-    args_json_obj.append(name);
-  }
-  (*dictionary_)[kInstanceNames] = args_json_obj;
-}
-std::vector<std::string> CuttlefishConfig::instance_names() const {
-  // NOTE: The structure of this field needs to remain stable, since
-  // cvd_server may call this on config JSON files from various builds.
-  //
-  // This info is duplicated into its own field here so it is simpler
-  // to keep stable, rather than parsing from Instances()::instance_name.
-  //
-  // Any non-stable changes must be accompanied by an uprev to the
-  // cvd_server major version.
-  std::vector<std::string> names;
-  for (const Json::Value& name : (*dictionary_)[kInstanceNames]) {
-    names.push_back(name.asString());
-  }
-  return names;
 }
 
 int GetInstance() {
@@ -947,7 +900,8 @@ std::string RandomSerialNumber(const std::string& prefix) {
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
+  return (StringFromEnv("ANDROID_SOONG_HOST_OUT", StringFromEnv("HOME", ".")) +
+          "/") +
          file_name;
 }
 
@@ -955,7 +909,9 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #ifdef __ANDROID__
   return binary_name;
 #else
-  return DefaultHostArtifactsPath("bin/" + binary_name);
+  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+          "/bin/") +
+         binary_name;
 #endif
 }
 
