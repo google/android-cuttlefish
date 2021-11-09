@@ -58,7 +58,7 @@ def main():
   parser.add_argument(
       '-host_dir',
       type=str,
-      default=os.environ.get('ANDROID_SOONG_HOST_OUT', '.'),
+      default=os.environ.get('ANDROID_HOST_OUT', '.'),
       help='path to soong host out directory')
   parser.add_argument(
       '-image_dir',
