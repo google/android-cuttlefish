@@ -59,9 +59,6 @@ def stop_cvd(args):
 
 
 def __get_default_hostdir():
-  soong_host_dir = os.environ.get('ANDROID_SOONG_HOST_OUT')
-  if soong_host_dir:
-    return soong_host_dir
   return os.environ.get('ANDROID_HOST_OUT', '.')
 
 
