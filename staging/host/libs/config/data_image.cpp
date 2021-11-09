@@ -401,141 +401,98 @@ InitializeMiscImageComponent() {
       .bind<InitializeMiscImage, InitializeMiscImageImpl>();
 }
 
-struct EspImageTag {};
-struct KernelPathTag {};
-struct InitRamFsTag {};
-
-class InitializeEspImageImpl : public InitializeEspImage {
- public:
-  INJECT(InitializeEspImageImpl(ANNOTATED(EspImageTag, std::string) esp_image,
-                                ANNOTATED(KernelPathTag, std::string)
-                                    kernel_path,
-                                ANNOTATED(InitRamFsTag, std::string)
-                                    initramfs_path))
-      : esp_image_(esp_image),
-        kernel_path_(kernel_path),
-        initramfs_path_(initramfs_path) {}
-
-  // Feature
-  std::string Name() const override { return "InitializeEspImageImpl"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
-  bool Enabled() const override {
-    bool esp_exists = FileHasContent(esp_image_);
-    if (esp_exists) {
-      LOG(DEBUG) << "esp partition image: use existing";
-      return false;
-    }
+bool InitializeEspImage(const std::string& esp_image,
+                        const std::string& kernel_path,
+                        const std::string& initramfs_path) {
+  bool esp_exists = FileHasContent(esp_image.c_str());
+  if (esp_exists) {
+    LOG(DEBUG) << "esp partition image: use existing";
     return true;
   }
 
- protected:
-  bool Setup() override {
-    LOG(DEBUG) << "esp partition image: creating default";
+  LOG(DEBUG) << "esp partition image: creating default";
 
-    // newfs_msdos won't make a partition smaller than 257 mb
-    // this should be enough for anybody..
-    auto tmp_esp_image = esp_image_ + ".tmp";
-    if (!NewfsMsdos(tmp_esp_image, 257 /* mb */, 0 /* mb (offset) */)) {
-      LOG(ERROR) << "Failed to create filesystem for " << tmp_esp_image;
-      return false;
+  // newfs_msdos won't make a partition smaller than 257 mb
+  // this should be enough for anybody..
+  auto tmp_esp_image = esp_image + ".tmp";
+  if (!NewfsMsdos(tmp_esp_image, 257 /* mb */, 0 /* mb (offset) */)) {
+    LOG(ERROR) << "Failed to create filesystem for " << tmp_esp_image;
+    return false;
+  }
+
+  // For licensing and build reproducibility reasons, pick up the bootloaders
+  // from the host Linux distribution (if present) and pack them into the
+  // automatically generated ESP. If the user wants their own bootloaders,
+  // they can use -esp_image=/path/to/esp.img to override, so we don't need
+  // to accommodate customizations of this packing process.
+
+  // Currently we only support Debian based distributions, and GRUB is built
+  // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
+  // nowhere else. If you want to add support for other distros, make the
+  // extra directories below and copy the initial grub.cfg there as well
+  auto mmd = HostBinaryPath("mmd");
+  auto success =
+      execute({mmd, "-i", tmp_esp_image, "EFI", "EFI/BOOT", "EFI/debian"});
+  if (success != 0) {
+    LOG(ERROR) << "Failed to create directories in " << tmp_esp_image;
+    return false;
+  }
+
+  // The grub binaries are small, so just copy all the architecture blobs
+  // we can find, which minimizes complexity. If the user removed the grub bin
+  // package from their system, the ESP will be empty and Other OS will not be
+  // supported
+  auto mcopy = HostBinaryPath("mcopy");
+  bool copied = false;
+  for (auto grub : kGrubBlobTable) {
+    if (!FileExists(grub.first)) {
+      continue;
     }
-
-    // For licensing and build reproducibility reasons, pick up the bootloaders
-    // from the host Linux distribution (if present) and pack them into the
-    // automatically generated ESP. If the user wants their own bootloaders,
-    // they can use -esp_image=/path/to/esp.img to override, so we don't need
-    // to accommodate customizations of this packing process.
-
-    // Currently we only support Debian based distributions, and GRUB is built
-    // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
-    // nowhere else. If you want to add support for other distros, make the
-    // extra directories below and copy the initial grub.cfg there as well
-    auto mmd = HostBinaryPath("mmd");
-    auto success =
-        execute({mmd, "-i", tmp_esp_image, "EFI", "EFI/BOOT", "EFI/debian"});
+    success = execute(
+        {mcopy, "-o", "-i", tmp_esp_image, "-s", grub.first, "::" + grub.second});
     if (success != 0) {
-      LOG(ERROR) << "Failed to create directories in " << tmp_esp_image;
+      LOG(ERROR) << "Failed to copy " << grub.first << " to " << grub.second
+                 << " in " << tmp_esp_image;
       return false;
     }
+    copied = true;
+  }
 
-    // The grub binaries are small, so just copy all the architecture blobs
-    // we can find, which minimizes complexity. If the user removed the grub bin
-    // package from their system, the ESP will be empty and Other OS will not be
-    // supported
-    auto mcopy = HostBinaryPath("mcopy");
-    bool copied = false;
-    for (auto grub : kGrubBlobTable) {
-      if (!FileExists(grub.first)) {
-        continue;
-      }
-      success = execute({mcopy, "-o", "-i", tmp_esp_image, "-s", grub.first,
-                         "::" + grub.second});
-      if (success != 0) {
-        LOG(ERROR) << "Failed to copy " << grub.first << " to " << grub.second
-                   << " in " << tmp_esp_image;
-        return false;
-      }
-      copied = true;
-    }
+  if (!copied) {
+    LOG(ERROR) << "No GRUB binaries were found on this system; Other OS "
+                  "support will be broken";
+    return false;
+  }
 
-    if (!copied) {
-      LOG(ERROR) << "No GRUB binaries were found on this system; Other OS "
-                    "support will be broken";
-      return false;
-    }
+  auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
+  CHECK(FileExists(grub_cfg)) << "Missing file " << grub_cfg << "!";
+  success = execute({mcopy, "-i", tmp_esp_image, "-s", grub_cfg, "::EFI/debian/"});
+  if (success != 0) {
+    LOG(ERROR) << "Failed to copy " << grub_cfg << " to " << tmp_esp_image;
+    return false;
+  }
 
-    auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
-    CHECK(FileExists(grub_cfg)) << "Missing file " << grub_cfg << "!";
-    success =
-        execute({mcopy, "-i", tmp_esp_image, "-s", grub_cfg, "::EFI/debian/"});
+  if (!kernel_path.empty()) {
+    success = execute({mcopy, "-i", tmp_esp_image, "-s", kernel_path, "::vmlinuz"});
     if (success != 0) {
-      LOG(ERROR) << "Failed to copy " << grub_cfg << " to " << tmp_esp_image;
+      LOG(ERROR) << "Failed to copy " << kernel_path << " to " << tmp_esp_image;
       return false;
     }
 
-    if (!kernel_path_.empty()) {
+    if (!initramfs_path.empty()) {
       success = execute(
-          {mcopy, "-i", tmp_esp_image, "-s", kernel_path_, "::vmlinuz"});
+          {mcopy, "-i", tmp_esp_image, "-s", initramfs_path, "::initrd.img"});
       if (success != 0) {
-        LOG(ERROR) << "Failed to copy " << kernel_path_ << " to "
+        LOG(ERROR) << "Failed to copy " << initramfs_path << " to "
                    << tmp_esp_image;
         return false;
       }
-
-      if (!initramfs_path_.empty()) {
-        success = execute({mcopy, "-i", tmp_esp_image, "-s", initramfs_path_,
-                           "::initrd.img"});
-        if (success != 0) {
-          LOG(ERROR) << "Failed to copy " << initramfs_path_ << " to "
-                     << tmp_esp_image;
-          return false;
-        }
-      }
     }
-
-    if (!cuttlefish::RenameFile(tmp_esp_image, esp_image_)) {
-      LOG(ERROR) << "Renaming " << tmp_esp_image << " to " << esp_image_
-                 << " failed";
-      return false;
-    }
-    return true;
   }
 
- private:
-  std::string esp_image_;
-  std::string kernel_path_;
-  std::string initramfs_path_;
-};
-
-fruit::Component<InitializeEspImage> InitializeEspImageComponent(
-    const std::string* esp_image, const std::string* kernel_path,
-    const std::string* initramfs_path) {
-  return fruit::createComponent()
-      .bind<InitializeEspImage, InitializeEspImageImpl>()
-      .bindInstance<fruit::Annotated<EspImageTag, std::string>>(*esp_image)
-      .bindInstance<fruit::Annotated<KernelPathTag, std::string>>(*kernel_path)
-      .bindInstance<fruit::Annotated<InitRamFsTag, std::string>>(
-          *initramfs_path);
+  CHECK(cuttlefish::RenameFile(tmp_esp_image, esp_image))
+      << "Renaming " << tmp_esp_image << " to " << esp_image << " failed";
+  return true;
 }
 
 } // namespace cuttlefish
