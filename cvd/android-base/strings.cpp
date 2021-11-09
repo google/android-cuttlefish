@@ -46,6 +46,23 @@ std::vector<std::string> Split(const std::string& s,
   return result;
 }
 
+std::vector<std::string> Tokenize(const std::string& s, const std::string& delimiters) {
+  CHECK_NE(delimiters.size(), 0U);
+
+  std::vector<std::string> result;
+  size_t end = 0;
+
+  while (true) {
+    size_t base = s.find_first_not_of(delimiters, end);
+    if (base == s.npos) {
+      break;
+    }
+    end = s.find_first_of(delimiters, base);
+    result.push_back(s.substr(base, end - base));
+  }
+  return result;
+}
+
 std::string Trim(const std::string& s) {
   std::string result;
 
