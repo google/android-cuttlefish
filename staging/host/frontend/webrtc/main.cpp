@@ -30,6 +30,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "host/frontend/webrtc/audio_handler.h"
+#include "host/frontend/webrtc/client_server.h"
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
@@ -59,6 +60,7 @@ DEFINE_bool(write_virtio_input, true,
             "Whether to send input events in virtio format.");
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
 DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
+DEFINE_string(client_dir, "webrtc", "Location of the client files");
 
 using cuttlefish::AudioHandler;
 using cuttlefish::CfConnectionObserverFactory;
@@ -203,6 +205,8 @@ int main(int argc, char** argv) {
   auto screen_connector_ptr = cuttlefish::DisplayHandler::ScreenConnector::Get(
       FLAGS_frame_server_fd, host_mode_ctrl);
   auto& screen_connector = *(screen_connector_ptr.get());
+  auto client_server = cuttlefish::ClientFilesServer::New(FLAGS_client_dir);
+  CHECK(client_server) << "Failed to initialize client files server";
 
   // create confirmation UI service, giving host_mode_ctrl and
   // screen_connector
@@ -213,6 +217,7 @@ int main(int argc, char** argv) {
   StreamerConfig streamer_config;
 
   streamer_config.device_id = instance.webrtc_device_id();
+  streamer_config.client_files_port = client_server->port();
   streamer_config.tcp_port_range = cvd_config->webrtc_tcp_port_range();
   streamer_config.udp_port_range = cvd_config->webrtc_udp_port_range();
   streamer_config.operator_server.addr = cvd_config->sig_server_address();

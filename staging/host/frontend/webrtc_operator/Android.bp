@@ -68,59 +68,10 @@ prebuilt_usr_share_host {
 }
 
 prebuilt_usr_share_host {
-    name: "webrtc_client.html",
-    src: "assets/client.html",
-    filename: "client.html",
-    sub_dir: "webrtc/assets",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_style.css",
-    src: "assets/style.css",
-    filename: "style.css",
-    sub_dir: "webrtc/assets",
-}
-
-prebuilt_usr_share_host {
     name: "webrtc_index.css",
     src: "assets/index.css",
     filename: "index.css",
     sub_dir: "webrtc/assets",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_controls.css",
-    src: "assets/controls.css",
-    filename: "controls.css",
-    sub_dir: "webrtc/assets",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_adb.js",
-    src: "assets/js/adb.js",
-    filename: "adb.js",
-    sub_dir: "webrtc/assets/js",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_cf.js",
-    src: "assets/js/cf_webrtc.js",
-    filename: "cf_webrtc.js",
-    sub_dir: "webrtc/assets/js",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_server_connector.js",
-    src: "assets/js/server_connector.js",
-    filename: "server_connector.js",
-    sub_dir: "webrtc/assets/js",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_app.js",
-    src: "assets/js/app.js",
-    filename: "app.js",
-    sub_dir: "webrtc/assets/js",
 }
 
 prebuilt_usr_share_host {
@@ -131,16 +82,9 @@ prebuilt_usr_share_host {
 }
 
 prebuilt_usr_share_host {
-    name: "webrtc_controls.js",
-    src: "assets/js/controls.js",
-    filename: "controls.js",
-    sub_dir: "webrtc/assets/js",
-}
-
-prebuilt_usr_share_host {
-    name: "webrtc_rootcanal.js",
-    src: "assets/js/rootcanal.js",
-    filename: "rootcanal.js",
+    name: "webrtc_server_connector.js",
+    src: "assets/js/server_connector.js",
+    filename: "server_connector.js",
     sub_dir: "webrtc/assets/js",
 }
 
