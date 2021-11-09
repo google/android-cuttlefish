@@ -42,6 +42,8 @@ class ClientHandler;
 struct StreamerConfig {
   // The id with which to register with the operator server.
   std::string device_id;
+  // The port on which the client files are being served
+  int client_files_port;
   struct {
     // The ip address or domain name of the operator server.
     std::string addr;
