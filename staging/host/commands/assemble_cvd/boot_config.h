@@ -16,11 +16,19 @@
 #pragma once
 
 #include <string>
-#include <host/libs/config/cuttlefish_config.h>
+
+#include <fruit/fruit.h>
+
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
-bool InitBootloaderEnvPartition(const CuttlefishConfig& config,
-                                const CuttlefishConfig::InstanceSpecific& instance);
+class InitBootloaderEnvPartition : public Feature {};
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 InitBootloaderEnvPartition>
+InitBootloaderEnvPartitionComponent();
 
 } // namespace cuttlefish
