@@ -91,6 +91,11 @@ cvd_host_tools = [
     "wmediumd_gen_config",
 ]
 
+cvd_openwrt_images = [
+    "kernel_for_openwrt",
+    "openwrt_rootfs",
+]
+
 cvd_bluetooth_config_files = [
     "controller_properties.json",
     "default_commands",
@@ -185,7 +190,8 @@ cvd_host_package_customization {
             deps: cvd_host_webrtc_assets +
                 cvd_host_model_simulator_files +
                 cvd_host_qemu_bootloader +
-                cvd_bluetooth_config_files,
+                cvd_bluetooth_config_files +
+                cvd_openwrt_images,
         },
     },
 
