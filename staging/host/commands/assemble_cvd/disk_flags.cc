@@ -621,6 +621,37 @@ class InitializeSdCard : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
+class InitializeFactoryResetProtected : public Feature {
+ public:
+  INJECT(InitializeFactoryResetProtected(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // Feature
+  std::string Name() const override { return "InitializeSdCard"; }
+  bool Enabled() const override { return !config_.protected_vm(); }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() {
+    if (FileExists(instance_.factory_reset_protected_path())) {
+      return true;
+    }
+    bool success = CreateBlankImage(instance_.factory_reset_protected_path(),
+                                    1 /* mb */, "none");
+    if (!success) {
+      LOG(ERROR) << "Failed to create FRP \""
+                 << instance_.factory_reset_protected_path() << "\"";
+      return false;
+    }
+    return true;
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
 static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
                                                const CuttlefishConfig* config) {
   return fruit::createComponent()
@@ -647,6 +678,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<Feature, InitializeAccessKregistryImage>()
       .addMultibinding<Feature, InitializePstore>()
       .addMultibinding<Feature, InitializeSdCard>()
+      .addMultibinding<Feature, InitializeFactoryResetProtected>()
       .install(InitBootloaderEnvPartitionComponent);
 }
 
@@ -674,11 +706,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // support.
   if (!FLAGS_protected_vm) {
     for (const auto& instance : config.Instances()) {
-      const auto frp = instance.factory_reset_protected_path();
-      if (!FileExists(frp)) {
-        CreateBlankImage(frp, 1 /* mb */, "none");
-      }
-
       GeneratePersistentBootconfig(config, instance);
     }
   }
