@@ -78,6 +78,7 @@ cc_binary_host {
         "adb_handler.cpp",
         "audio_handler.cpp",
         "bluetooth_handler.cpp",
+        "client_server.cpp",
         "connection_observer.cpp",
         "cvd_video_frame_buffer.cpp",
         "display_handler.cpp",
@@ -144,4 +145,60 @@ cc_binary_host {
         "libwebm_mkvmuxer",
     ],
     defaults: ["cuttlefish_buildhost_only"],
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_client.html",
+    src: "client/client.html",
+    filename: "client.html",
+    sub_dir: "webrtc/assets",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_style.css",
+    src: "client/style.css",
+    filename: "style.css",
+    sub_dir: "webrtc/assets",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_controls.css",
+    src: "client/controls.css",
+    filename: "controls.css",
+    sub_dir: "webrtc/assets",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_adb.js",
+    src: "client/js/adb.js",
+    filename: "adb.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_cf.js",
+    src: "client/js/cf_webrtc.js",
+    filename: "cf_webrtc.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_app.js",
+    src: "client/js/app.js",
+    filename: "app.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_controls.js",
+    src: "client/js/controls.js",
+    filename: "controls.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_rootcanal.js",
+    src: "client/js/rootcanal.js",
+    filename: "rootcanal.js",
+    sub_dir: "webrtc/assets/js",
 }
