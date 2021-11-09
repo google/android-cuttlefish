@@ -80,63 +80,89 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
 
 }  // namespace
 
+class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
+ public:
+  INJECT(InitBootloaderEnvPartitionImpl(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
 
-bool InitBootloaderEnvPartition(const CuttlefishConfig& config,
-                                const CuttlefishConfig::InstanceSpecific& instance) {
-  auto boot_env_image_path = instance.uboot_env_image_path();
-  auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
-  auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
-  auto kernel_cmdline =
-      android::base::Join(KernelCommandLineFromConfig(config), " ");
-  // If the bootconfig isn't supported in the guest kernel, the bootconfig args
-  // need to be passed in via the uboot env. This won't be an issue for protect
-  // kvm which is running a kernel with bootconfig support.
-  if (!config.bootconfig_supported()) {
-    auto bootconfig_args =
-        android::base::Join(BootconfigArgsFromConfig(config, instance), " ");
-    // "androidboot.hardware" kernel parameter has changed to "hardware" in
-    // bootconfig and needs to be replaced before being used in the kernel
-    // cmdline.
-    bootconfig_args = android::base::StringReplace(
-        bootconfig_args, " hardware=", " androidboot.hardware=", true);
-    // TODO(b/182417593): Until we pass the module parameters through
-    // modules.options, we pass them through bootconfig using
-    // 'kernel.<key>=<value>' But if we don't support bootconfig, we need to
-    // rename them back to the old cmdline version
-    bootconfig_args =
-        android::base::StringReplace(bootconfig_args, " kernel.", " ", true);
-    kernel_cmdline += " ";
-    kernel_cmdline += bootconfig_args;
-  }
-  if (!WriteEnvironment(config, kernel_cmdline, uboot_env_path)) {
-    LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path << ".'";
-    return false;
-  }
+  // Feature
+  std::string Name() const override { return "InitBootloaderEnvPartitionImpl"; }
+  bool Enabled() const override { return !config_.protected_vm(); }
 
-  auto mkimage_path = HostBinaryPath("mkenvimage");
-  Command cmd(mkimage_path);
-  cmd.AddParameter("-s");
-  cmd.AddParameter("4096");
-  cmd.AddParameter("-o");
-  cmd.AddParameter(tmp_boot_env_image_path);
-  cmd.AddParameter(uboot_env_path);
-  int success = cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run mkenvimage. Exited with status " << success;
-    return false;
-  }
-
-  if(!FileExists(boot_env_image_path) || ReadFile(boot_env_image_path) != ReadFile(tmp_boot_env_image_path)) {
-    if(!RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
-      LOG(ERROR) << "Unable to delete the old env image.";
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() override {
+    auto boot_env_image_path = instance_.uboot_env_image_path();
+    auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
+    auto uboot_env_path = instance_.PerInstancePath("mkenvimg_input");
+    auto kernel_cmdline =
+        android::base::Join(KernelCommandLineFromConfig(config_), " ");
+    // If the bootconfig isn't supported in the guest kernel, the bootconfig
+    // args need to be passed in via the uboot env. This won't be an issue for
+    // protect kvm which is running a kernel with bootconfig support.
+    if (!config_.bootconfig_supported()) {
+      auto bootconfig_args = android::base::Join(
+          BootconfigArgsFromConfig(config_, instance_), " ");
+      // "androidboot.hardware" kernel parameter has changed to "hardware" in
+      // bootconfig and needs to be replaced before being used in the kernel
+      // cmdline.
+      bootconfig_args = android::base::StringReplace(
+          bootconfig_args, " hardware=", " androidboot.hardware=", true);
+      // TODO(b/182417593): Until we pass the module parameters through
+      // modules.options, we pass them through bootconfig using
+      // 'kernel.<key>=<value>' But if we don't support bootconfig, we need to
+      // rename them back to the old cmdline version
+      bootconfig_args =
+          android::base::StringReplace(bootconfig_args, " kernel.", " ", true);
+      kernel_cmdline += " ";
+      kernel_cmdline += bootconfig_args;
+    }
+    if (!WriteEnvironment(config_, kernel_cmdline, uboot_env_path)) {
+      LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path
+                 << ".'";
       return false;
     }
-    LOG(DEBUG) << "Updated bootloader environment image.";
-  } else {
-    RemoveFile(tmp_boot_env_image_path);
+
+    auto mkimage_path = HostBinaryPath("mkenvimage");
+    Command cmd(mkimage_path);
+    cmd.AddParameter("-s");
+    cmd.AddParameter("4096");
+    cmd.AddParameter("-o");
+    cmd.AddParameter(tmp_boot_env_image_path);
+    cmd.AddParameter(uboot_env_path);
+    int success = cmd.Start().Wait();
+    if (success != 0) {
+      LOG(ERROR) << "Unable to run mkenvimage. Exited with status " << success;
+      return false;
+    }
+
+    if (!FileExists(boot_env_image_path) ||
+        ReadFile(boot_env_image_path) != ReadFile(tmp_boot_env_image_path)) {
+      if (!RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
+        LOG(ERROR) << "Unable to delete the old env image.";
+        return false;
+      }
+      LOG(DEBUG) << "Updated bootloader environment image.";
+    } else {
+      RemoveFile(tmp_boot_env_image_path);
+    }
+
+    return true;
   }
 
-  return true;
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 InitBootloaderEnvPartition>
+InitBootloaderEnvPartitionComponent() {
+  return fruit::createComponent()
+      .bind<InitBootloaderEnvPartition, InitBootloaderEnvPartitionImpl>()
+      .addMultibinding<Feature, InitBootloaderEnvPartition>();
 }
 
 } // namespace cuttlefish
