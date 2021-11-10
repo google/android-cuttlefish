@@ -49,6 +49,7 @@ cvd_host_tools = [
     "cvd_internal_status",
     "cvd_internal_stop",
     "cvd_host_bugreport",
+    "cvd_server",
     "cvd_status",
     "extract-ikconfig",
     "extract-vmlinux",
