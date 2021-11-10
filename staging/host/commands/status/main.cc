@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -46,6 +47,15 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
+#define CHECK_PRINT(print, condition, message)                               \
+  if (print) {                                                               \
+    if (!(condition)) {                                                      \
+      std::cout << "      Status: Stopped (" << message << ")" << std::endl; \
+      exit(0);                                                               \
+    }                                                                        \
+  } else                                                                     \
+    CHECK(condition) << message
+
 namespace cuttlefish {
 
 int CvdStatusMain(int argc, char** argv) {
@@ -59,6 +69,14 @@ int CvdStatusMain(int argc, char** argv) {
       GflagsCompatFlag("wait_for_launcher", wait_for_launcher)
           .Help("How many seconds to wait for the launcher to respond to the "
                 "status command. A value of zero means wait indefinitely"));
+  std::string instance_name;
+  flags.emplace_back(GflagsCompatFlag("instance_name", instance_name)
+                         .Help("Name of the instance to check. If not "
+                               "provided, DefaultInstance is used."));
+  bool print;
+  flags.emplace_back(GflagsCompatFlag("print", print)
+                         .Help("If provided, prints status and instance config "
+                               "information to stdout instead of CHECK"));
 
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(UnexpectedArgumentGuard());
@@ -70,20 +88,34 @@ int CvdStatusMain(int argc, char** argv) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Failed to obtain config object";
 
-  auto instance = config->ForDefaultInstance();
+  auto instance = instance_name.empty()
+                      ? config->ForDefaultInstance()
+                      : config->ForInstanceName(instance_name);
+
+  if (print) {
+    std::cout << "    " << instance.instance_name() << std::endl;
+    std::cout << "      Dir: " << instance.instance_dir() << std::endl;
+    std::cout << "      Web access: https://" << config->sig_server_address()
+              << ":" << std::to_string(config->sig_server_port())
+              << "/client.html?deviceId=" << instance.instance_name()
+              << std::endl;
+  }
+
   auto monitor_path = instance.launcher_monitor_socket_path();
-  CHECK(!monitor_path.empty()) << "No path to launcher monitor found";
+  CHECK_PRINT(print, !monitor_path.empty(),
+              "No path to launcher monitor found");
 
   auto monitor_socket = SharedFD::SocketLocalClient(
       monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
-  CHECK(monitor_socket->IsOpen())
-      << "Unable to connect to launcher monitor at " << monitor_path << ": "
-      << monitor_socket->StrError();
+  CHECK_PRINT(print, monitor_socket->IsOpen(),
+              "Unable to connect to launcher monitor at " + monitor_path +
+                  ": " + monitor_socket->StrError());
 
   auto request = LauncherAction::kStatus;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
-  CHECK(bytes_sent > 0) << "Error sending launcher monitor the status command: "
-                        << monitor_socket->StrError();
+  CHECK_PRINT(print, bytes_sent > 0,
+              "Error sending launcher monitor the status command: " +
+                  monitor_socket->StrError());
 
   // Perform a select with a timeout to guard against launcher hanging
   SharedFDSet read_set;
@@ -91,20 +123,26 @@ int CvdStatusMain(int argc, char** argv) {
   struct timeval timeout = {wait_for_launcher, 0};
   int selected = Select(&read_set, nullptr, nullptr,
                         wait_for_launcher <= 0 ? nullptr : &timeout);
-  CHECK(selected >= 0) << "Failed communication with the launcher monitor: "
-                       << strerror(errno);
-  CHECK(selected > 0)
-      << "Timeout expired waiting for launcher monitor to respond";
+  CHECK_PRINT(print, selected >= 0,
+              std::string("Failed communication with the launcher monitor: ") +
+                  strerror(errno));
+  CHECK_PRINT(print, selected > 0,
+              "Timeout expired waiting for launcher monitor to respond");
 
   LauncherResponse response;
   auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
-  CHECK(bytes_recv > 0) << "Error receiving response from launcher monitor: "
-                        << monitor_socket->StrError();
-  CHECK(response == LauncherResponse::kSuccess)
-      << "Received '" << static_cast<char>(response)
-      << "' response from launcher monitor";
+  CHECK_PRINT(print, bytes_recv > 0,
+              std::string("Error receiving response from launcher monitor: ") +
+                  monitor_socket->StrError());
+  CHECK_PRINT(print, response == LauncherResponse::kSuccess,
+              std::string("Received '") + static_cast<char>(response) +
+                  "' response from launcher monitor");
 
-  LOG(INFO) << "run_cvd is active.";
+  if (print) {
+    std::cout << "      Status: Running" << std::endl;
+  } else {
+    LOG(INFO) << "run_cvd is active.";
+  }
   return 0;
 }
 

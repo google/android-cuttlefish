@@ -37,21 +37,18 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
-
-DEFINE_int32(wait_for_launcher, 5,
-             "How many seconds to wait for the launcher to respond to the stop "
-             "command. A value of zero means wait indefinetly");
 
 namespace cuttlefish {
 namespace {
@@ -145,14 +142,15 @@ int FallBackStop(const std::set<std::string>& paths) {
   return exit_code;
 }
 
-bool CleanStopInstance(const CuttlefishConfig::InstanceSpecific& instance) {
+bool CleanStopInstance(const CuttlefishConfig::InstanceSpecific& instance,
+                       std::int32_t wait_for_launcher) {
   auto monitor_path = instance.launcher_monitor_socket_path();
   if (monitor_path.empty()) {
     LOG(ERROR) << "No path to launcher monitor found";
     return false;
   }
   auto monitor_socket = SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM, FLAGS_wait_for_launcher);
+      monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
   if (!monitor_socket->IsOpen()) {
     LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
                << ": " << monitor_socket->StrError();
@@ -168,9 +166,9 @@ bool CleanStopInstance(const CuttlefishConfig::InstanceSpecific& instance) {
   // Perform a select with a timeout to guard against launcher hanging
   SharedFDSet read_set;
   read_set.Set(monitor_socket);
-  struct timeval timeout = {FLAGS_wait_for_launcher, 0};
+  struct timeval timeout = {wait_for_launcher, 0};
   int selected = Select(&read_set, nullptr, nullptr,
-                        FLAGS_wait_for_launcher <= 0 ? nullptr : &timeout);
+                        wait_for_launcher <= 0 ? nullptr : &timeout);
   if (selected < 0){
     LOG(ERROR) << "Failed communication with the launcher monitor: "
                << strerror(errno);
@@ -197,8 +195,9 @@ bool CleanStopInstance(const CuttlefishConfig::InstanceSpecific& instance) {
 }
 
 int StopInstance(const CuttlefishConfig& config,
-                 const CuttlefishConfig::InstanceSpecific& instance) {
-  bool res = CleanStopInstance(instance);
+                 const CuttlefishConfig::InstanceSpecific& instance,
+                 std::int32_t wait_for_launcher) {
+  bool res = CleanStopInstance(instance, wait_for_launcher);
   if (!res) {
     return FallBackStop(PathsForInstance(config, instance));
   }
@@ -230,7 +229,24 @@ void ReleaseAllocdResources(SharedFD allocd_sock, uint32_t session_id) {
 
 int StopCvdMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, true);
+
+  std::vector<Flag> flags;
+
+  std::int32_t wait_for_launcher;
+  flags.emplace_back(
+      GflagsCompatFlag("wait_for_launcher", wait_for_launcher)
+          .Help("How many seconds to wait for the launcher to respond to the "
+                "status command. A value of zero means wait indefinitely"));
+  bool clear_instance_dirs;
+  flags.emplace_back(
+      GflagsCompatFlag("clear_instance_dirs", clear_instance_dirs)
+          .Help("If provided, deletes the instance dir after attempting to "
+                "stop each instance."));
+  flags.emplace_back(HelpFlag(flags));
+  flags.emplace_back(UnexpectedArgumentGuard());
+  std::vector<std::string> args =
+      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  CHECK(ParseFlags(flags, args)) << "Could not process command line flags.";
 
   auto config = CuttlefishConfig::Get();
   if (!config) {
@@ -241,7 +257,7 @@ int StopCvdMain(int argc, char** argv) {
   int ret = 0;
   for (const auto& instance : config->Instances()) {
     auto session_id = instance.session_id();
-    int exit_status = StopInstance(*config, instance);
+    int exit_status = StopInstance(*config, instance, wait_for_launcher);
     if (exit_status == 0 && instance.use_allocd()) {
       // only release session resources if the instance was stopped
       SharedFD allocd_sock =
@@ -253,6 +269,14 @@ int StopCvdMain(int argc, char** argv) {
       }
 
       ReleaseAllocdResources(allocd_sock, session_id);
+    }
+    if (clear_instance_dirs) {
+      if (DirectoryExists(instance.instance_dir())) {
+        LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
+        if (!RecursivelyRemoveDirectory(instance.instance_dir())) {
+          LOG(ERROR) << "Unable to rmdir " << instance.instance_dir();
+        }
+      }
     }
     ret |= exit_status;
   }
