@@ -772,14 +772,6 @@ void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
   (*dictionary_)[kUserdataFormat] = fmt;
 }
 
-static constexpr char kApImageDevPath[] = "ap_image_dev_path";
-std::string CuttlefishConfig::ap_image_dev_path() const {
-  return (*dictionary_)[kApImageDevPath].asString();
-}
-void CuttlefishConfig::set_ap_image_dev_path(const std::string& dev_path) {
-  (*dictionary_)[kApImageDevPath] = dev_path;
-}
-
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();
