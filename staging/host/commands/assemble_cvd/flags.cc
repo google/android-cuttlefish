@@ -840,6 +840,12 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     }
   } // end of num_instances loop
 
+  std::vector<std::string> names;
+  for (const auto& instance : tmp_config_obj.Instances()) {
+    names.emplace_back(instance.instance_name());
+  }
+  tmp_config_obj.set_instance_names(names);
+
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
   // Audio is not available for Arm64

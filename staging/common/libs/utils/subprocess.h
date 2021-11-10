@@ -130,10 +130,7 @@ class Command {
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
   Command(const std::string& executable,
-          SubprocessStopper stopper = KillSubprocess)
-      : subprocess_stopper_(stopper) {
-    command_.push_back(executable);
-  }
+          SubprocessStopper stopper = KillSubprocess);
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -153,15 +150,29 @@ class Command {
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
   void SetEnvironment(const std::vector<std::string>& env) {
-    use_parent_env_ = false;
     env_ = env;
   }
 
-  // Specify environment variables to be unset from the parent's environment
-  // for the subprocesses to be started.
-  void UnsetFromEnvironment(const std::vector<std::string>& env) {
-    use_parent_env_ = true;
-    std::copy(env.cbegin(), env.cend(), std::inserter(unenv_, unenv_.end()));
+  void AddEnvironmentVariable(const std::string& env_var,
+                              const std::string& value) {
+    return AddEnvironmentVariable(env_var + "=" + value);
+  }
+
+  void AddEnvironmentVariable(const std::string& env_var) {
+    env_.push_back(env_var);
+  }
+
+  // Specify an environment variable to be unset from the parent's
+  // environment for the subprocesses to be started.
+  void UnsetFromEnvironment(const std::string& env_var) {
+    auto it = env_.begin();
+    while (it != env_.end()) {
+      if (android::base::StartsWith(*it, env_var + "=")) {
+        it = env_.erase(it);
+      } else {
+        ++it;
+      }
+    }
   }
 
   // Adds a single parameter to the command. All arguments are concatenated into
@@ -210,9 +221,7 @@ class Command {
   std::vector<std::string> command_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
-  bool use_parent_env_ = true;
   std::vector<std::string> env_{};
-  std::unordered_set<std::string> unenv_{};
   SubprocessStopper subprocess_stopper_;
 };
 
