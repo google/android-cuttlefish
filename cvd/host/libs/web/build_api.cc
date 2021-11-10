@@ -93,11 +93,9 @@ std::vector<std::string> BuildApi::Headers() {
 
 std::string BuildApi::LatestBuildId(const std::string& branch,
                                     const std::string& target) {
-  std::string url =
-      BUILD_API + "/builds?branch=" + curl.UrlEscape(branch) +
-      "&buildAttemptStatus=complete" +
-      "&buildType=submitted&maxResults=1&successful=true&target=" +
-      curl.UrlEscape(target);
+  std::string url = BUILD_API + "/builds?branch=" + branch
+      + "&buildAttemptStatus=complete"
+      + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
   if (!curl_response.HttpSuccess()) {
@@ -119,8 +117,7 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
 }
 
 std::string BuildApi::BuildStatus(const DeviceBuild& build) {
-  std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
-                    curl.UrlEscape(build.target);
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
   if (!curl_response.HttpSuccess()) {
@@ -136,8 +133,7 @@ std::string BuildApi::BuildStatus(const DeviceBuild& build) {
 }
 
 std::string BuildApi::ProductName(const DeviceBuild& build) {
-  std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
-                    curl.UrlEscape(build.target);
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
   if (!curl_response.HttpSuccess()) {
@@ -157,11 +153,10 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
   std::string page_token = "";
   std::vector<Artifact> artifacts;
   do {
-    std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
-                      curl.UrlEscape(build.target) +
+    std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target +
                       "/attempts/latest/artifacts?maxResults=100";
     if (page_token != "") {
-      url += "&pageToken=" + curl.UrlEscape(page_token);
+      url += "&pageToken=" + page_token;
     }
     auto curl_response = curl.DownloadToJson(url, Headers());
     const auto& json = curl_response.data;
@@ -209,9 +204,8 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path) {
   std::string download_url_endpoint =
-      BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
-      curl.UrlEscape(build.target) + "/attempts/latest/artifacts/" +
-      curl.UrlEscape(artifact) + "/url";
+      BUILD_API + "/builds/" + build.id + "/" + build.target +
+      "/attempts/latest/artifacts/" + artifact + "/url";
   auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
   const auto& json = curl_response.data;
   if (!(curl_response.HttpSuccess() || curl_response.HttpRedirect())) {
