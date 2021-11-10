@@ -7,6 +7,7 @@ override_apex {
     base: "com.android.hardware.core_permissions",
     prebuilts: [
         "android.hardware.audio.low_latency.prebuilt.xml",
+        "android.hardware.biometrics.face.prebuilt.xml",
         "android.hardware.camera.concurrent.prebuilt.xml",
         "android.hardware.camera.flash-autofocus.prebuilt.xml",
         "android.hardware.camera.front.prebuilt.xml",
@@ -14,6 +15,7 @@ override_apex {
         "android.hardware.camera.raw.prebuilt.xml",
         "android.hardware.ethernet.prebuilt.xml",
         "android.hardware.faketouch.prebuilt.xml",
+        "android.hardware.fingerprint.prebuilt.xml",
         "android.hardware.location.gps.prebuilt.xml",
         "android.hardware.reboot_escrow.prebuilt.xml",
         "android.hardware.usb.accessory.prebuilt.xml",
