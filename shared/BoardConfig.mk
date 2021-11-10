@@ -220,9 +220,6 @@ BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 BOARD_KERNEL_CMDLINE += init=/init
 BOARD_BOOTCONFIG += androidboot.hardware=cutf_cvm
 
-# TODO(b/179489292): Remove once kfence is enabled everywhere
-BOARD_KERNEL_CMDLINE += kfence.sample_interval=500
-
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 
 # TODO(b/182417593): Move all of these module options to modules.options
