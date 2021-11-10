@@ -484,18 +484,69 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
       return;
     }
-    auto bytes_per_sample = stream_desc.bits_per_sample / 8;
-    auto samples_per_channel =
-        buffer.len() / stream_desc.channels / bytes_per_sample;
+    const auto bytes_per_sample = stream_desc.bits_per_sample / 8;
+    const auto samples_per_channel = stream_desc.sample_rate / 100;
+    const auto bytes_per_request =
+        samples_per_channel * bytes_per_sample * stream_desc.channels;
     bool muted = false;
-    auto res = audio_source_->GetMoreAudioData(
-        const_cast<uint8_t*>(buffer.get()), bytes_per_sample,
-        samples_per_channel, stream_desc.channels, stream_desc.sample_rate,
-        muted);
-    if (res < 0) {
-      // This is likely a recoverable error, log the error but don't let the VMM
-      // know about it so that it doesn't crash.
-      LOG(ERROR) << "Failed to receive audio data from client";
+    size_t bytes_read = 0;
+    auto& holding_buffer = stream_descs_[stream_id].buffer;
+    auto rx_buffer = const_cast<uint8_t*>(buffer.get());
+    if (!holding_buffer.empty()) {
+      // Consume any bytes remaining from previous requests
+      bytes_read += holding_buffer.Take(rx_buffer + bytes_read,
+                                        buffer.len() - bytes_read);
+    }
+    while (buffer.len() - bytes_read >= bytes_per_request) {
+      // Skip the holding buffer in as many reads as possible to avoid the extra
+      // copies
+      auto write_pos = rx_buffer + bytes_read;
+      auto res = audio_source_->GetMoreAudioData(
+          write_pos, bytes_per_sample, samples_per_channel,
+          stream_desc.channels, stream_desc.sample_rate, muted);
+      if (res < 0) {
+        // This is likely a recoverable error, log the error but don't let the
+        // VMM know about it so that it doesn't crash.
+        LOG(ERROR) << "Failed to receive audio data from client";
+        break;
+      }
+      if (muted) {
+        // The source is muted, just fill the buffer with zeros and return
+        memset(rx_buffer + bytes_read, 0, buffer.len() - bytes_read);
+        bytes_read = buffer.len();
+        break;
+      }
+      auto bytes_received = res * bytes_per_sample * stream_desc.channels;
+      bytes_read += bytes_received;
+    }
+    if (bytes_read < buffer.len()) {
+      // There is some buffer left to fill, but it's less than 10ms, read into
+      // holding buffer to ensure the remainder is kept around for future reads
+      auto write_pos = holding_buffer.data();
+      // Holding buffer is the exact size we need to read into and is emptied
+      // before we try to read into it.
+      CHECK(holding_buffer.freeCapacity() >= bytes_per_request)
+          << "Buffer too small for receiving audio";
+      auto res = audio_source_->GetMoreAudioData(
+          write_pos, bytes_per_sample, samples_per_channel,
+          stream_desc.channels, stream_desc.sample_rate, muted);
+      if (res < 0) {
+        // This is likely a recoverable error, log the error but don't let the
+        // VMM know about it so that it doesn't crash.
+        LOG(ERROR) << "Failed to receive audio data from client";
+      } else if (muted) {
+        // The source is muted, just fill the buffer with zeros and return
+        memset(rx_buffer + bytes_read, 0, buffer.len() - bytes_read);
+        bytes_read = buffer.len();
+      } else {
+        auto bytes_received = res * bytes_per_sample * stream_desc.channels;
+        holding_buffer.count += bytes_received;
+        bytes_read += holding_buffer.Take(rx_buffer + bytes_read,
+                                          buffer.len() - bytes_read);
+        // If the entire buffer is not full by now there is a bug above
+        // somewhere
+        CHECK(bytes_read == buffer.len()) << "Failed to read entire buffer";
+      }
     }
   }
   buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
@@ -514,10 +565,22 @@ size_t AudioHandler::HoldingBuffer::Add(const volatile uint8_t* data,
   return added_len;
 }
 
+size_t AudioHandler::HoldingBuffer::Take(uint8_t* dst, size_t len) {
+  auto n = std::min(len, count);
+  std::copy(buffer.begin(), buffer.begin() + n, dst);
+  std::copy(buffer.begin() + n, buffer.begin() + count, buffer.begin());
+  count -= n;
+  return n;
+}
+
 bool AudioHandler::HoldingBuffer::empty() const { return count == 0; }
 
 bool AudioHandler::HoldingBuffer::full() const {
   return count == buffer.size();
+}
+
+size_t AudioHandler::HoldingBuffer::freeCapacity() const {
+  return buffer.size() - count;
 }
 
 uint8_t* AudioHandler::HoldingBuffer::data() { return buffer.data(); }
