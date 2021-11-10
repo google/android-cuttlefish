@@ -25,10 +25,13 @@ cc_binary_host {
     shared_libs: [
         "libext2_blkid",
         "libbase",
+        "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libjsoncpp",
+        "libprotobuf-cpp-lite",
     ],
     static_libs: [
+        "libcuttlefish_cvd_proto",
         "libcuttlefish_host_config",
     ],
     required: [
@@ -36,6 +39,30 @@ cc_binary_host {
         "cvd_internal_start",
         "cvd_internal_status",
         "cvd_internal_stop",
+        "cvd_server",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: [
+        "cuttlefish_host",
+    ],
+}
+
+cc_binary_host {
+    name: "cvd_server",
+    srcs: [
+        "server.cc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libjsoncpp",
+        "libprotobuf-cpp-lite",
+    ],
+    static_libs: [
+        "libcuttlefish_cvd_proto",
+        "libcuttlefish_host_config",
+    ],
+    defaults: [
+        "cuttlefish_host",
+    ],
 }

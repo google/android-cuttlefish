@@ -25,12 +25,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <stdio.h>
 #include <map>
 #include <set>
 #include <thread>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
+
+extern char** environ;
 
 namespace cuttlefish {
 namespace {
@@ -73,12 +76,6 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   }
   ret.push_back(NULL);
   return ret;
-}
-
-void UnsetEnvironment(const std::unordered_set<std::string>& unenv) {
-  for (auto it = unenv.cbegin(); it != unenv.cend(); ++it) {
-    unsetenv(it->c_str());
-  }
 }
 }  // namespace
 
@@ -166,6 +163,14 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
   return StopperResult::kStopSuccess;
 }
 
+Command::Command(const std::string& executable, SubprocessStopper stopper)
+    : subprocess_stopper_(stopper) {
+  for (char** env = environ; *env; env++) {
+    env_.emplace_back(*env);
+  }
+  command_.push_back(executable);
+}
+
 Command::~Command() {
   // Close all inherited file descriptors
   for (const auto& entry : inherited_fds_) {
@@ -234,17 +239,9 @@ Subprocess Command::Start(SubprocessOptions options) const {
       }
     }
     int rval;
-    // If use_parent_env_ is false, the current process's environment is used as
-    // the environment of the child process. To force an empty emvironment for
-    // the child process pass the address of a pointer to NULL
-    if (use_parent_env_) {
-      UnsetEnvironment(unenv_);
-      rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
-    } else {
-      auto envp = ToCharPointers(env_);
-      rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
-                    const_cast<char* const*>(envp.data()));
-    }
+    auto envp = ToCharPointers(env_);
+    rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+                   const_cast<char* const*>(envp.data()));
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
                << ")";

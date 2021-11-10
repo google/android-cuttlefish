@@ -234,7 +234,7 @@ class WebRtcServer : public virtual CommandSource,
     };
 
     Command webrtc(WebRtcBinary(), stopper);
-    webrtc.UnsetFromEnvironment({"http_proxy"});
+    webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
     if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
       webrtc.AddParameter("-switches_fd=", switches_server_);
