@@ -317,6 +317,10 @@ class CuttlefishConfig {
   void set_userdata_format(const std::string& userdata_format);
   std::string userdata_format() const;
 
+  // The path of an AP image in composite disk
+  std::string ap_image_dev_path() const;
+  void set_ap_image_dev_path(const std::string& dev_path);
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
