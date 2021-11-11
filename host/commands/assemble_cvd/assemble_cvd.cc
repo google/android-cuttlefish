@@ -177,6 +177,18 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
                   << config.AssemblyPath("assemble_cvd.log")
                   << ": " << log->StrError();
     }
+
+    auto disk_config = GetOsCompositeDiskConfig();
+    if (auto it = std::find_if(disk_config.begin(), disk_config.end(),
+                               [](const auto& partition) {
+                                 return partition.label == "ap_rootfs";
+                               });
+        it != disk_config.end()) {
+      auto ap_image_idx = std::distance(disk_config.begin(), it) + 1;
+      std::stringstream ss;
+      ss << "/dev/vda" << ap_image_idx;
+      config.set_ap_image_dev_path(ss.str());
+    }
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.
       CHECK(EnsureDirectoryExists(instance.instance_dir()));
