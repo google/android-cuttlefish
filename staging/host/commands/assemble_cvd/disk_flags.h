@@ -22,6 +22,7 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
+#include "host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
@@ -29,5 +30,6 @@ bool ResolveInstanceFiles();
 bool ShouldCreateOsCompositeDisk(const CuttlefishConfig& config);
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                             const CuttlefishConfig& config);
+std::vector<ImagePartition> GetOsCompositeDiskConfig();
 
 } // namespace cuttlefish
