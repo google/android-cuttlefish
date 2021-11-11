@@ -15,6 +15,7 @@
 package main
 
 import (
+	"math/rand"
 	"testing"
 )
 
@@ -87,6 +88,7 @@ func TestDestroy(t *testing.T) {
 }
 
 func TestRandStr(t *testing.T) {
+	rand.Seed(1)
 	s1 := randStr(1)
 	if len(s1) != 1 {
 		t.Error("Returned string of wrong length")

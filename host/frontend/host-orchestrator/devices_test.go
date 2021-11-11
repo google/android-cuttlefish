@@ -30,9 +30,9 @@ type MockClient struct {
 	disconnectCount int
 }
 
-func (c *MockClient) Send(msg interface{}) bool {
+func (c *MockClient) Send(msg interface{}) error {
 	c.sendCount++
-	return true
+	return nil
 }
 
 func (c *MockClient) OnDeviceDisconnected() {
@@ -57,20 +57,20 @@ func TestDeviceRegister(t *testing.T) {
 	if id1 == id2 {
 		t.Error("Same id for different clients")
 	}
-	if !d.ToClient(id1, "msg") {
-		t.Error("Failed to send to registered device")
+	if err := d.ToClient(id1, "msg"); err != nil {
+		t.Error("Failed to send to registered device: ", err)
 	}
-	if !d.ToClient(id2, "msg") {
-		t.Error("Failed to send to registered device")
+	if err := d.ToClient(id2, "msg"); err != nil {
+		t.Error("Failed to send to registered device: ", err)
 	}
-	if d.ToClient(-1, "msg") {
+	if d.ToClient(-1, "msg") == nil {
 		t.Error("Succeeded in sending to unexisting client")
 	}
 
 	d.Unregister(id1)
 	d.DisconnectClients()
 
-	if d.ToClient(id1, "msg") {
+	if d.ToClient(id1, "msg") == nil {
 		t.Error("Succeeded sending to unregistered client")
 	}
 

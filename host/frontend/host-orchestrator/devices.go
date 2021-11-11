@@ -15,6 +15,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http/httputil"
@@ -46,7 +47,7 @@ func NewDevice(ws *JsonWs, port int, info interface{}) *Device {
 }
 
 // Sends a message to the device
-func (d *Device) Send(msg interface{}) bool {
+func (d *Device) Send(msg interface{}) error {
 	return d.ws.Send(msg)
 }
 
@@ -67,19 +68,20 @@ func (d *Device) Unregister(id int) {
 // Notify the clients that the device has disconnected
 func (d *Device) DisconnectClients() {
 	d.clientsMtx.Lock()
-	defer d.clientsMtx.Unlock()
-	for _, client := range d.clients {
+	clientsCopy := d.clients
+	d.clientsMtx.Unlock()
+	for _, client := range clientsCopy {
 		client.OnDeviceDisconnected()
 	}
 }
 
 // Send a message to the client
-func (d *Device) ToClient(id int, msg interface{}) bool {
+func (d *Device) ToClient(id int, msg interface{}) error {
 	d.clientsMtx.Lock()
 	client, ok := d.clients[id]
 	d.clientsMtx.Unlock()
 	if !ok {
-		return false
+		return errors.New(fmt.Sprint("Unknown client: ", id))
 	}
 	return client.Send(msg)
 }

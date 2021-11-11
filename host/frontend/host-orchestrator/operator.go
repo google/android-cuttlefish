@@ -18,13 +18,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+        "math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
 	config := InfraConfig{
@@ -38,7 +41,7 @@ func main() {
 	r := setupServerRoutes(pool, polledSet, config)
 
 	http.Handle("/", r)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":1080", nil); err != nil {
 		log.Fatal("ListenAndServe client: ", err)
 	}
 }
@@ -101,9 +104,8 @@ func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 	go func() {
 		defer ws.Close()
 		var msg RegisterMsg
-		ok := ws.Recv(&msg)
-		if !ok {
-			wsReplyError(ws, "Websocket closed unexpectedly")
+		if err := ws.Recv(&msg); err != nil {
+			log.Println(ws, "Error receiving from device: ", err)
 			return
 		}
 		if msg.Type != "register" {
@@ -127,15 +129,14 @@ func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 			return
 		}
 		defer pool.Unregister(id)
-		if !device.Send(config) {
-			log.Println("Failed to send config to device")
+		if err := device.Send(config); err != nil {
+			log.Println("Failed to send config to device: ", err)
 			return
 		}
 		for {
 			var msg ForwardMsg
-			ok := ws.Recv(&msg)
-			if !ok {
-				log.Println("Device websocket closed")
+			if err := ws.Recv(&msg); err != nil {
+				log.Println("Error receiving from device: ", err)
 				return
 			}
 			if msg.Type != "forward" {
@@ -156,8 +157,8 @@ func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 				"message_type": "device_msg",
 				"payload":      payload,
 			}
-			if !device.ToClient(clientId, dMsg) {
-				log.Println(ws, "Missing client ", int(clientId), " for device ", id)
+			if err := device.ToClient(clientId, dMsg); err != nil {
+				log.Println("Device: ", id, " failed to send message to client: ", err)
 				wsReplyError(ws, fmt.Sprintln("Client disconnected: ", clientId))
 			}
 		}
@@ -201,9 +202,8 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 	go func() {
 		defer ws.Close()
 		var msg ConnectMsg
-		ok := ws.Recv(&msg)
-		if !ok {
-			log.Println("Websocket closed unexpectedly")
+		if err := ws.Recv(&msg); err != nil {
+			log.Println("Failed to receive from client: ", err)
 			return
 		}
 		if msg.Type != "connect" {
@@ -223,21 +223,20 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 		client := NewWsClient(ws)
 		id := device.Register(client)
 		defer device.Unregister(id)
-		if !client.Send(config) {
-			log.Println("Failed to send config to client")
+		if err := client.Send(config); err != nil {
+			log.Println("Failed to send config to client: ", err)
 			return
 		}
 		infoMsg := make(map[string]interface{})
 		infoMsg["message_type"] = "device_info"
 		infoMsg["device_info"] = device.info
-		if !client.Send(infoMsg) {
-			log.Println("Failed to send device info to client")
+		if err := client.Send(infoMsg); err != nil {
+			log.Println("Failed to send device info to client: ", err)
 			return
 		}
 		for {
 			var msg ForwardMsg
-			ok := ws.Recv(&msg)
-			if !ok {
+			if err := ws.Recv(&msg); err != nil {
 				log.Println("Client websocket closed")
 				return
 			}
@@ -255,7 +254,7 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 				"client_id":    id,
 				"payload":      payload,
 			}
-			if !device.Send(cMsg) {
+			if err := device.Send(cMsg); err != nil {
 				wsReplyError(ws, "Device disconnected")
 			}
 		}
@@ -302,7 +301,8 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 		"client_id":    conn.ClientId(),
 		"payload":      msg.Payload,
 	}
-	if !conn.ToDevice(cMsg) {
+	if err := conn.ToDevice(cMsg); err != nil {
+		log.Println("Failed to send message to device: ", err)
 		http.Error(w, "Device disconnected", http.StatusNotFound)
 	}
 	replyJSON(w, "ok")
@@ -385,7 +385,9 @@ type IceServer struct {
 // Log and reply with an error over a websocket
 func wsReplyError(ws *JsonWs, msg string) {
 	log.Println(msg)
-	ws.Send(ErrorMsg{Error: msg})
+	if err := ws.Send(ErrorMsg{Error: msg}); err != nil {
+		log.Println("Failed to send error reply: ", err)
+	}
 }
 
 // Send a JSON http response to the client

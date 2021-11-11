@@ -23,7 +23,7 @@ import (
 
 type Client interface {
 	// Send a message to the device
-	Send(msg interface{}) bool
+	Send(msg interface{}) error
 	// Provides an oportunity for the client to react to the device being disconnected
 	OnDeviceDisconnected()
 }
@@ -38,7 +38,7 @@ func NewWsClient(ws *JsonWs) *WsClient {
 }
 
 // From IClient
-func (c *WsClient) Send(msg interface{}) bool {
+func (c *WsClient) Send(msg interface{}) error {
 	return c.ws.Send(msg)
 }
 func (c *WsClient) OnDeviceDisconnected() {
@@ -60,11 +60,11 @@ type PolledClient struct {
 }
 
 // From IClient
-func (c *PolledClient) Send(msg interface{}) bool {
+func (c *PolledClient) Send(msg interface{}) error {
 	c.msgMtx.Lock()
 	defer c.msgMtx.Unlock()
 	c.messages = append(c.messages, msg)
-	return true
+	return nil
 }
 func (c *PolledClient) OnDeviceDisconnected() {
 	// This object is useless when the device disconnects, release all resourcess associated to it
@@ -72,7 +72,7 @@ func (c *PolledClient) OnDeviceDisconnected() {
 }
 
 // Sends a message to the device
-func (c *PolledClient) ToDevice(msg interface{}) bool {
+func (c *PolledClient) ToDevice(msg interface{}) error {
 	return c.device.Send(msg)
 }
 

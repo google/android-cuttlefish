@@ -15,7 +15,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"sync"
@@ -41,37 +40,14 @@ func NewJsonWs(w http.ResponseWriter, r *http.Request) *JsonWs {
 	return &JsonWs{conn: conn}
 }
 
-func (ws *JsonWs) Send(val interface{}) bool {
-	msg, err := json.Marshal(val)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-
+func (ws *JsonWs) Send(val interface{}) error {
 	ws.writeMtx.Lock()
 	defer ws.writeMtx.Unlock()
-
-	err = ws.conn.WriteMessage(websocket.TextMessage, msg)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return ws.conn.WriteJSON(val)
 }
 
-func (ws *JsonWs) Recv(val interface{}) bool {
-	_, msg, err := ws.conn.ReadMessage()
-	if err != nil {
-		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			log.Printf("error: %v", err)
-		}
-		return false
-	}
-	if err := json.Unmarshal(msg, &val); err != nil {
-		log.Println(err)
-		return false
-	}
-	return true
+func (ws *JsonWs) Recv(val interface{}) error {
+	return ws.conn.ReadJSON(val)
 }
 
 func (ws *JsonWs) Close() {
