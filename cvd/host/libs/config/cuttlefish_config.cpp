@@ -955,7 +955,8 @@ std::string RandomSerialNumber(const std::string& prefix) {
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
+  return (StringFromEnv("ANDROID_SOONG_HOST_OUT", StringFromEnv("HOME", ".")) +
+          "/") +
          file_name;
 }
 
@@ -963,7 +964,9 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #ifdef __ANDROID__
   return binary_name;
 #else
-  return DefaultHostArtifactsPath("bin/" + binary_name);
+  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+          "/bin/") +
+         binary_name;
 #endif
 }
 
