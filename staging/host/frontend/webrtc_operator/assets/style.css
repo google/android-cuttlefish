@@ -1,0 +1,206 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+body {
+  background-color:black;
+  margin: 0;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+#device-selector {
+  color: whitesmoke;
+}
+#device-selector li.device-entry {
+  cursor: pointer;
+}
+
+#refresh-list {
+  cursor: pointer;
+}
+
+#device-list .device-entry button {
+  margin-left: 10px;
+}
+
+#device-connection {
+  visibility: hidden;
+  max-height: 100vh;
+}
+
+
+/* Top header row. */
+
+#header {
+  height: 64px;
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+  align-items: center;
+}
+
+#app-controls {
+  margin-left: 10px;
+}
+#app-controls > div {
+  display: inline-block;
+  position: relative;
+  margin-right: 6px;
+}
+#device-audio {
+  height: 44px;
+}
+
+#status-div {
+  flex-grow: 1;
+}
+#status-message {
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  padding: 10px;
+  margin: 10px;
+}
+#status-message.connecting {
+  /* dark yellow */
+  background-color: #927836;
+}
+#status-message.error {
+  /* dark red */
+  background-color: #900000;
+}
+#status-message.connected {
+  /* dark green */
+  background-color: #007000;
+}
+
+/* Control panel buttons and device screen(s). */
+
+#controls-and-displays {
+  height: calc(100% - 84px);
+
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+}
+
+#controls-and-displays > div {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.modal {
+  /* Start out hidden, and use absolute positioning. */
+  display: none;
+  position: absolute;
+
+  border-radius: 10px;
+  padding: 20px;
+  padding-top: 1px;
+
+  background-color: #5f6368ea; /* Semi-transparent Google grey 500 */
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+}
+.modal-header {
+  cursor: move;
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+  justify-content: space-between;
+}
+.modal-close {
+  color: white;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+#device-details-modal span {
+  white-space: pre;
+}
+#bluetooth-console-input {
+  width: 100%;
+}
+#bluetooth-console-cmd-label {
+  color: white;
+}
+
+.control-panel-column {
+  width: 50px;
+  /* Items inside this use a column Flexbox.*/
+  display: flex;
+  flex-direction: column;
+}
+#control-panel-custom-buttons {
+  display: none;
+  /* Give the custom buttons column a blue background. */
+  background-color: #1c4587ff;
+  height: fit-content;
+  border-radius: 10px;
+}
+
+.control-panel-column button {
+  margin: 0px 0px 5px 0px;
+  height: 50px;
+  font-size: 32px;
+
+  color: #e8eaed; /* Google grey 200 */
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+.control-panel-column button:disabled {
+  color: #9aa0a6; /* Google grey 500 */
+}
+.control-panel-column button.modal-button-opened {
+  border-radius: 10px;
+  background-color: #5f6368; /* Google grey 700 */
+}
+
+#device-displays {
+  /* Take up the remaining width of the window.*/
+  flex-grow: 1;
+  /* Don't grow taller than the window.*/
+  max-height: 100vh;
+  /* Allows child elements to be positioned relative to this element. */
+  position: relative;
+}
+
+/*
+ * Container <div> used to wrap each display's <video> element which is used for
+ * maintaining each display's width and height while the display is potentially
+ * rotating.
+ */
+.device-display {
+  /* Prevents #device-displays from using this element when computing flex size. */
+  position: absolute;
+}
+
+/* Container <div> to show info about the individual display. */
+.device-display-info {
+  color: white;
+  /* dark green */
+  background-color: #007000;
+  font-family: 'Open Sans', sans-serif;
+  text-indent: 0px;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* The actual <video> element for each display. */
+.device-display-video {
+  position: absolute;
+  left:  0px;
+  touch-action: none;
+  object-fit: cover;
+}
