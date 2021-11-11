@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-        "math/rand"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -249,10 +249,10 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 				wsReplyError(ws, "Client forward message missing payload")
 				return
 			}
-			cMsg := map[string]interface{}{
-				"message_type": "client_msg",
-				"client_id":    id,
-				"payload":      payload,
+			cMsg := ClientMsg{
+				Type:     "client_msg",
+				ClientId: id,
+				Payload:  payload,
 			}
 			if err := device.Send(cMsg); err != nil {
 				wsReplyError(ws, "Device disconnected")
@@ -296,10 +296,10 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	cMsg := map[string]interface{}{
-		"message_type": "client_msg",
-		"client_id":    conn.ClientId(),
-		"payload":      msg.Payload,
+	cMsg := ClientMsg{
+		Type:     "client_msg",
+		ClientId: conn.ClientId(),
+		Payload:  msg.Payload,
 	}
 	if err := conn.ToDevice(cMsg); err != nil {
 		log.Println("Failed to send message to device: ", err)
@@ -357,6 +357,12 @@ type ForwardMsg struct {
 	Payload interface{} `json:"payload"`
 	// This is used by the device message and ignored by the client
 	ClientId int `json:"client_id"`
+}
+
+type ClientMsg struct {
+	Type     string      `json:"message_type"`
+	ClientId int         `json:"client_id"`
+	Payload  interface{} `json:"payload"`
 }
 
 type ErrorMsg struct {
