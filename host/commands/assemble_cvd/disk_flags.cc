@@ -35,7 +35,6 @@
 #include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
@@ -142,7 +141,7 @@ void create_overlay_image(const CuttlefishConfig& config,
                       overlay_path);
   }
 }
-std::vector<ImagePartition> os_composite_disk_config() {
+std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition{
       .label = "misc",
@@ -309,7 +308,7 @@ bool ShouldCreateCompositeDisk(const std::string& composite_disk_path,
 
 bool ShouldCreateOsCompositeDisk(const CuttlefishConfig& config) {
   return ShouldCreateCompositeDisk(config.os_composite_disk_path(),
-                                   os_composite_disk_config());
+                                   GetOsCompositeDiskConfig());
 }
 
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
@@ -357,12 +356,12 @@ bool CreateOsCompositeDisk(const CuttlefishConfig& config) {
         config.AssemblyPath("os_composite_gpt_header.img");
     std::string footer_path =
         config.AssemblyPath("os_composite_gpt_footer.img");
-    CreateCompositeDisk(os_composite_disk_config(), header_path, footer_path,
+    CreateCompositeDisk(GetOsCompositeDiskConfig(), header_path, footer_path,
                         config.os_composite_disk_path());
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(os_composite_disk_config(), config.os_composite_disk_path());
+    AggregateImage(GetOsCompositeDiskConfig(), config.os_composite_disk_path());
   }
   return true;
 }
@@ -750,7 +749,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   bool oldOsCompositeDisk = ShouldCreateOsCompositeDisk(config);
   bool osCompositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
       config.AssemblyPath("os_composite_disk_config.txt"),
-      os_composite_disk_config());
+      GetOsCompositeDiskConfig());
   if (!osCompositeMatchesDiskConfig || oldOsCompositeDisk || !FLAGS_resume) {
     CHECK(CreateOsCompositeDisk(config))
         << "Failed to create OS composite disk";
