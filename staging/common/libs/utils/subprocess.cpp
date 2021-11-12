@@ -79,6 +79,33 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
 }
 }  // namespace
 
+SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
+  verbose_ = verbose;
+  return *this;
+}
+SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
+  verbose_ = verbose;
+  return *this;
+}
+
+SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
+  exit_with_parent_ = v;
+  return *this;
+}
+SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
+  exit_with_parent_ = v;
+  return *this;
+}
+
+SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
+  in_group_ = in_group;
+  return *this;
+}
+SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
+  in_group_ = in_group;
+  return *this;
+}
+
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
       started_(subprocess.started_),
