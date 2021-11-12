@@ -139,8 +139,7 @@ bool ProcessMonitor::MonitorRoutine() {
 
   LOG(DEBUG) << "Starting monitoring subprocesses";
   for (auto& monitored : monitored_processes_) {
-    cuttlefish::SubprocessOptions options;
-    options.InGroup(true);
+    auto options = SubprocessOptions().InGroup(true);
     monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
     CHECK(monitored.proc->Started()) << "Failed to start process";
   }
@@ -185,8 +184,7 @@ bool ProcessMonitor::MonitorRoutine() {
     } else {
       LogSubprocessExit(it->cmd->GetShortName(), it->proc->pid(), wstatus);
       if (restart_subprocesses_) {
-        cuttlefish::SubprocessOptions options;
-        options.InGroup(true);
+        auto options = SubprocessOptions().InGroup(true);
         it->proc.reset(new Subprocess(it->cmd->Start(options)));
       } else {
         monitored_processes_.erase(it);
