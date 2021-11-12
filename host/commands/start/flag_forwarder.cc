@@ -290,8 +290,7 @@ void FlagForwarder::UpdateFlagDefaults() const {
     // Ensure this is set on by putting it at the end.
     cmd.AddParameter("--helpxml");
     std::string helpxml_input, helpxml_output, helpxml_error;
-    cuttlefish::SubprocessOptions options;
-    options.Verbose(false);
+    auto options = cuttlefish::SubprocessOptions().Verbose(false);
     int helpxml_ret = cuttlefish::RunWithManagedStdio(std::move(cmd), &helpxml_input,
                                                &helpxml_output, &helpxml_error,
                                                options);
