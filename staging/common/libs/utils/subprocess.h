@@ -85,26 +85,26 @@ class Subprocess {
 };
 
 class SubprocessOptions {
-  bool verbose_;
-  bool exit_with_parent_;
-  bool in_group_;
-public:
-  SubprocessOptions() : verbose_(true), exit_with_parent_(true) {}
+ public:
+  SubprocessOptions()
+      : verbose_(true), exit_with_parent_(true), in_group_(false) {}
 
-  void Verbose(bool verbose) {
-    verbose_ = verbose;
-  }
-  void ExitWithParent(bool exit_with_parent) {
-    exit_with_parent_ = exit_with_parent;
-  }
+  SubprocessOptions& Verbose(bool verbose) &;
+  SubprocessOptions Verbose(bool verbose) &&;
+  SubprocessOptions& ExitWithParent(bool exit_with_parent) &;
+  SubprocessOptions ExitWithParent(bool exit_with_parent) &&;
   // The subprocess runs as head of its own process group.
-  void InGroup(bool in_group) {
-    in_group_ = in_group;
-  }
+  SubprocessOptions& InGroup(bool in_group) &;
+  SubprocessOptions InGroup(bool in_group) &&;
 
   bool Verbose() const { return verbose_; }
   bool ExitWithParent() const { return exit_with_parent_; }
   bool InGroup() const { return in_group_; }
+
+ private:
+  bool verbose_;
+  bool exit_with_parent_;
+  bool in_group_;
 };
 
 // An executable command. Multiple subprocesses can be started from the same
