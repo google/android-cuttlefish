@@ -35,6 +35,8 @@ bool MakeFileExecutable(const std::string& path);
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
 std::string cpp_dirname(const std::string& str);
 std::string cpp_basename(const std::string& str);
+// Whether a file exists and is a unix socket
+bool FileIsSocket(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
