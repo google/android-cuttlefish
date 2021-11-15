@@ -811,9 +811,13 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
         FLAGS_vhost_user_mac80211_hwsim.empty() && is_first_instance;
     if (start_wmediumd) {
       // TODO(b/199020470) move this to the directory for shared resources
-      auto socket_path =
+      auto vhost_user_socket_path =
           const_instance.PerInstanceInternalPath("vhost_user_mac80211");
-      tmp_config_obj.set_vhost_user_mac80211_hwsim(socket_path);
+      auto wmediumd_api_socket_path =
+          const_instance.PerInstanceInternalPath("wmediumd_api_server");
+
+      tmp_config_obj.set_vhost_user_mac80211_hwsim(vhost_user_socket_path);
+      tmp_config_obj.set_wmediumd_api_server_socket(wmediumd_api_socket_path);
       instance.set_start_wmediumd(true);
     } else {
       instance.set_start_wmediumd(false);
