@@ -70,6 +70,7 @@ using cuttlefish::webrtc_streaming::LocalRecorder;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
 using cuttlefish::webrtc_streaming::VideoSink;
+using cuttlefish::webrtc_streaming::ServerConfig;
 
 class CfOperatorObserver
     : public cuttlefish::webrtc_streaming::OperatorObserver {
@@ -226,11 +227,11 @@ int main(int argc, char** argv) {
   if (cvd_config->sig_server_secure()) {
     streamer_config.operator_server.security =
         cvd_config->sig_server_strict()
-            ? WsConnection::Security::kStrict
-            : WsConnection::Security::kAllowSelfSigned;
+            ? ServerConfig::Security::kStrict
+            : ServerConfig::Security::kAllowSelfSigned;
   } else {
     streamer_config.operator_server.security =
-        WsConnection::Security::kInsecure;
+        ServerConfig::Security::kInsecure;
   }
 
   if (!cvd_config->sig_server_headers_path().empty()) {
