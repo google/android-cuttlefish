@@ -89,6 +89,7 @@ cvd_host_tools = [
     "webRTC",
     "webrtc_operator",
     "wmediumd",
+    "wmediumd_control",
     "wmediumd_gen_config",
 ]
 
