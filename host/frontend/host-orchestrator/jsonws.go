@@ -15,14 +15,16 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-// A websocket connection that can send and receive json objects.
+// A websocket connection that can send and receive JSON objects.
 // Only one thread should call Recv() at a time, Send() and Close() are thread safe
 type JsonWs struct {
 	conn     *websocket.Conn
@@ -55,4 +57,44 @@ func (ws *JsonWs) Close() {
 	defer ws.writeMtx.Unlock()
 	ws.conn.WriteMessage(websocket.CloseMessage, []byte{})
 	ws.conn.Close()
+}
+
+// A Unix socket connection (as returned by Accept) that can send recieve JSON objects.
+// Only one thread should call Recv() at a time, Send and Close are thread safe
+type JSONUnix struct {
+	conn     net.Conn
+	writeMtx sync.Mutex
+	buff     []byte
+}
+
+func NewJSONUnix(c net.Conn) *JSONUnix {
+	return &JSONUnix{
+		conn: c,
+		buff: make([]byte, 10240), // 10K should be enough for each msg
+	}
+}
+
+func (c *JSONUnix) Send(val interface{}) error {
+	s, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+	c.writeMtx.Lock()
+	defer c.writeMtx.Unlock()
+	_, err = c.conn.Write(s)
+	return err
+}
+
+func (c *JSONUnix) Recv(val interface{}) error {
+	n, err := c.conn.Read(c.buff)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(c.buff[:n], val)
+}
+
+func (c *JSONUnix) Close() {
+	c.writeMtx.Lock()
+	defer c.writeMtx.Unlock()
+	c.conn.Close()
 }
