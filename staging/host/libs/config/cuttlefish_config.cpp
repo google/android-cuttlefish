@@ -690,6 +690,14 @@ std::string CuttlefishConfig::vhost_user_mac80211_hwsim() const {
   return (*dictionary_)[kVhostUserMac80211Hwsim].asString();
 }
 
+static constexpr char kWmediumdApiServerSocket[] = "wmediumd_api_server_socket";
+void CuttlefishConfig::set_wmediumd_api_server_socket(const std::string& path) {
+  (*dictionary_)[kWmediumdApiServerSocket] = path;
+}
+std::string CuttlefishConfig::wmediumd_api_server_socket() const {
+  return (*dictionary_)[kWmediumdApiServerSocket].asString();
+}
+
 static constexpr char kApRootfsImage[] = "ap_rootfs_image";
 std::string CuttlefishConfig::ap_rootfs_image() const {
   return (*dictionary_)[kApRootfsImage].asString();
