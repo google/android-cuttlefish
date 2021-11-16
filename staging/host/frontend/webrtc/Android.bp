@@ -31,7 +31,7 @@ cc_library_static {
         "lib/utils.cpp",
         "lib/video_track_source_impl.cpp",
         "lib/vp8only_encoder_factory.cpp",
-        "lib/ws_connection.cpp",
+        "lib/server_connection.cpp",
     ],
     cflags: [
         // libwebrtc headers need this
