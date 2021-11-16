@@ -693,19 +693,7 @@ endif
 endif
 
 ifeq ($(LOCAL_USE_WIFI_VENDOR_APEX),true)
-
 PRODUCT_PACKAGES += com.google.cf.wifi
-# Demonstrate multi-installed vendor APEXes by installing another wifi HAL vendor APEX
-# which does not include the passpoint feature XML.
-#
-# The default is set in BoardConfig.mk using bootconfig.
-# This can be changed at CVD launch-time using
-#     --extra_bootconfig_args "androidboot.vendor.apex.com.android.wifi.hal:=X"
-# or post-launch, at runtime using
-#     setprop persist.vendor.apex.com.android.wifi.hal X && reboot
-# where X is the name of the APEX file to use.
-PRODUCT_PACKAGES += com.google.cf.wifi.no-passpoint
-
 $(call add_soong_config_namespace, wpa_supplicant)
 $(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
 $(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
