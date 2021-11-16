@@ -79,32 +79,55 @@ function validateMacAddress(val) {
   return (regex.test(val));
 }
 
-$('[validate-mac]').bind('input', function() {
-    var button = document.getElementById("bluetooth-wizard-device");
-    if (validateMacAddress($(this).val())) {
+function validateMacWrapper() {
+  let type = document.getElementById('bluetooth-wizard-type').value;
+  let button = document.getElementById("bluetooth-wizard-device");
+  let macField = document.getElementById('bluetooth-wizard-mac');
+  if (this.id == 'bluetooth-wizard-type') {
+    if (type == "remote_loopback") {
       button.disabled = false;
-      this.setCustomValidity('');
-    } else {
-      button.disabled = true;
-      this.setCustomValidity('MAC address invalid');
+      macField.setCustomValidity('');
+      macField.disabled = true;
+      macField.required = false;
+      macField.placeholder = 'N/A';
+      macField.value = '';
+      return;
     }
-});
+  }
+  macField.disabled = false;
+  macField.required = true;
+  macField.placeholder = 'Device MAC';
+  if (validateMacAddress($(macField).val())) {
+    button.disabled = false;
+    macField.setCustomValidity('');
+  } else {
+    button.disabled = true;
+    macField.setCustomValidity('MAC address invalid');
+  }
+}
+
+$('[validate-mac]').bind('input', validateMacWrapper);
+$('[validate-mac]').bind('select', validateMacWrapper);
 
 function parseDevice(device) {
-  let id = device.substring(0, device.indexOf(":"));
-  device = device.substring(device.indexOf(":")+1);
-  let name = device.substring(0, device.indexOf("@"));
-  let mac = device.substring(device.indexOf("@")+1);
+  let id, name, mac;
+  var regex = /([0-9]+):([^@ ]*)(@(([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})))?/;
+  if (regex.test(device)) {
+    let regexMatches = device.match(regex);
+    id = regexMatches[1];
+    name = regexMatches[2];
+    mac = regexMatches[4];
+  }
+  if (mac === undefined) {
+    mac = "";
+  }
   return [id, name, mac];
 }
 
 function btUpdateAdded(devices) {
   let deviceArr = devices.split('\r\n');
-  if (deviceArr[0].indexOf("Devices:") >= 0) {
-    return false;
-  }
-  if (deviceArr[0].indexOf(":") >= 0 && deviceArr[0].indexOf("@") >= 0) {
-    let [id, name, mac] = parseDevice(deviceArr[0]);
+  let [id, name, mac] = parseDevice(deviceArr[0]);
+  if (name) {
     let div = document.getElementById('bluetooth-wizard-confirm').getElementsByClassName('bluetooth-text')[1];
     div.innerHTML = "";
     div.innerHTML += "<p>Name: <b>" + id + "</b></p>";
@@ -113,6 +136,32 @@ function btUpdateAdded(devices) {
     return true;
   }
   return false;
+}
+
+function parsePhy(phy) {
+  let id = phy.substring(0, phy.indexOf(":"));
+  phy = phy.substring(phy.indexOf(":") + 1);
+  let name = phy.substring(0, phy.indexOf(":"));
+  let devices = phy.substring(phy.indexOf(":") + 1);
+  return [id, name, devices];
+}
+
+function btParsePhys(phys) {
+  if (phys.indexOf("Phys:") < 0) {
+    return null;
+  }
+  let phyDict = {};
+  phys = phys.split('Phys:')[1];
+  let phyArr = phys.split('\r\n');
+  for (var phy of phyArr.slice(1)) {
+    phy = phy.trim();
+    if (phy.length == 0 || phy.indexOf("deleted") >= 0) {
+      continue;
+    }
+    let [id, name, devices] = parsePhy(phy);
+    phyDict[name] = id;
+  }
+  return phyDict;
 }
 
 function btUpdateDeviceList(devices) {
