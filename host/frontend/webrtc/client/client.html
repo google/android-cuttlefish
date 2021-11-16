@@ -44,7 +44,7 @@
             <button id='device-details-button' title='Device Details' class='material-icons'>
               settings
             </button>
-            <button id='bluetooth-console-button' title='Bluetooth console' class='material-icons'>
+            <button id='bluetooth-modal-button' title='Bluetooth console' class='material-icons'>
               settings_bluetooth
             </button>
           </div>
@@ -62,16 +62,85 @@
         <h3>Hardware Configuration</h3>
         <span id='device-details-hardware'>unknown</span>
       </div>
-      <div id='bluetooth-console-modal' class='modal'>
-        <div id='bluetooth-console-modal-header' class='modal-header'>
-          <h2>Bluetooth Console</h2>
-          <button id='bluetooth-console-close' title='Close' class='material-icons modal-close'>close</button>
+
+      <div id='bluetooth-modal' class='modal-wrapper'>
+        <div id='bluetooth-prompt' class='modal'>
+          <div id='bluetooth-prompt-header' class='modal-header'>
+            <h2>Bluetooth</h2>
+            <button id='bluetooth-prompt-close' title='Close' class='material-icons modal-close'>close</button>
+          </div>
+          <div>
+            <div id='bluetooth-prompt-text' class='bluetooth-text'>
+            We have enabled a BT Wizard to simplify adding a<br>bluetooth device.<br>
+            Alternatively, you can enter the BT Console if you<br>want to exercise full control.</div><br>
+            <div class='bluetooth-button'>
+              <button id='bluetooth-prompt-wizard' title='Start Wizard' class='modal-button-highlight'>Start Wizard</button>
+              <button id='bluetooth-prompt-list' title='Device List' class='modal-button'>Device List</button>
+              <button id='bluetooth-prompt-console' title='BT Console' class='modal-button'>BT Console</button>
+            </div>
+          </div>
         </div>
-        <div>
-          <table>
-            <tr><td colspan='2'><textarea id='bluetooth-console-view' readonly rows='10' cols='60'></textarea></td></tr>
-            <tr><td width='1'><p id='bluetooth-console-cmd-label'>Command:</p></td><td width='100'><input id='bluetooth-console-input' type='text'></input></td></tr>
-          </table>
+        <div id='bluetooth-wizard' class='modal'>
+          <div id='bluetooth-wizard-modal-header' class='modal-header'>
+            <h2>BT Wizard</h2>
+            <button id='bluetooth-wizard-close' title='Close' class='material-icons modal-close'>close</button>
+          </div>
+          <div>
+            <div class='bluetooth-text-field'><input type="text" id='bluetooth-wizard-name' placeholder="Device Name"></input></div>
+            <div class='bluetooth-drop-down'>
+              <select id='bluetooth-wizard-type' validate-mac="true" required>
+                <option value="beacon">Beacon</option>
+                <option value="beacon_swarm">Beacon Swarm</option>
+                <!-- Disabled because they were "started but never finished" (according to mylesgw@)
+                <option value="car_kit">Car Kit</option>
+                <option value="classic">Classic</option> -->
+                <option value="keyboard">Keyboard</option>
+                <option value="remote_loopback">Remote Loopback</option>
+                <option value="scripted_beacon">Scripted Beacon</option>
+                <!-- Disabled because it will never show up in the UI
+                <option value="sniffer">Sniffer</option> -->
+              </select>
+            </div>
+            <div class='bluetooth-text-field'><input type="text" id='bluetooth-wizard-mac' placeholder="Device MAC" validate-mac="true" required></input><span></span></div>
+            <div class='bluetooth-button'>
+              <button id='bluetooth-wizard-device' title='Add Device' class='modal-button-highlight' disabled>Add Device</button>
+              <button id='bluetooth-wizard-cancel' title='Cancel' class='modal-button'>Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div id='bluetooth-wizard-confirm' class='modal'>
+          <div id='bluetooth-wizard-confirm-header' class='modal-header'>
+            <h2>BT Wizard</h2>
+            <button id='bluetooth-wizard-confirm-close' title='Close' class='material-icons modal-close'>close</button>
+          </div>
+          <div id='bluetooth-wizard-text' class='bluetooth-text'>Device added. See device details below.</div><br>
+          <div class='bluetooth-text'>
+            <p>Name: <b>GKeyboard</b></p>
+            <p>Type: <b>Keyboard</b></p>
+            <p>MAC Addr: <b>be:ac:01:55:00:03</b></p>
+          </div>
+          <div class='bluetooth-button'><button id='bluetooth-wizard-another' title='Add Another' class='modal-button-highlight'>Add Another</button></div>
+        </div>
+        <div id='bluetooth-list' class='modal'>
+          <div id='bluetooth-list-header' class='modal-header'>
+            <h2>Device List</h2>
+            <button id='bluetooth-list-close' title='Close' class='material-icons modal-close'>close</button>
+          </div>
+          <div class='bluetooth-text'>
+            <div><button title="Delete" data-device-id="delete" class="bluetooth-list-trash material-icons">delete</button>GKeyboard | Keyboard | be:ac:01:55:00:03</div>
+            <div><button title="Delete" data-device-id="delete" class="bluetooth-list-trash material-icons">delete</button>GHeadphones | Audio | dc:fa:32:00:55:02</div>
+          </div>
+        </div>
+        <div id='bluetooth-console' class='modal'>
+          <div id='bluetooth-console-modal-header' class='modal-header'>
+            <h2>BT Console</h2>
+            <button id='bluetooth-console-close' title='Close' class='material-icons modal-close'>close</button>
+          </div>
+          <div>
+            <div colspan='2'><textarea id='bluetooth-console-view' readonly rows='10' cols='60'></textarea></div>
+            <div width='1'><p id='bluetooth-console-cmd-label'>Command:</p></div>
+            <div width='100'><input id='bluetooth-console-input' type='text'></input></div>
+          </div>
         </div>
       </div>
        <script src="js/adb.js"></script>
