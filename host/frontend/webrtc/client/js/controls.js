@@ -168,15 +168,23 @@ function createControlPanelButton(
   return button;
 }
 
-function createModalButton(button_id, modal_id, close_id) {
+function positionModal(button_id, modal_id) {
   const modalButton = document.getElementById(button_id);
   const modalDiv = document.getElementById(modal_id);
-  const modalHeader = modalDiv.querySelector('.modal-header');
-  const modalClose = document.getElementById(close_id);
 
   // Position the modal to the right of the show modal button.
   modalDiv.style.top = modalButton.offsetTop;
   modalDiv.style.left = modalButton.offsetWidth + 30;
+}
+
+function createModalButton(button_id, modal_id, close_id, hide_id) {
+  const modalButton = document.getElementById(button_id);
+  const modalDiv = document.getElementById(modal_id);
+  const modalHeader = modalDiv.querySelector('.modal-header');
+  const modalClose = document.getElementById(close_id);
+  const modalDivHide = document.getElementById(hide_id);
+
+  positionModal(button_id, modal_id);
 
   function showHideModal(show) {
     if (show) {
@@ -185,6 +193,9 @@ function createModalButton(button_id, modal_id, close_id) {
     } else {
       modalButton.classList.remove('modal-button-opened')
       modalDiv.style.display = 'none';
+    }
+    if (modalDivHide != null) {
+      modalDivHide.style.display = 'none';
     }
   }
   // Allow the show modal button to toggle the modal,

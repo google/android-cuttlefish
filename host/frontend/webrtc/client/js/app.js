@@ -138,12 +138,38 @@ class DeviceControlApp {
     this.#buttons['volumeup'] = createControlPanelButton(
         'volumeup', 'Volume Up', 'volume_up',
         evt => this.#onControlPanelButton(evt));
+
     createModalButton(
         'device-details-button', 'device-details-modal',
         'device-details-close');
     createModalButton(
-        'bluetooth-console-button', 'bluetooth-console-modal',
-        'bluetooth-console-close');
+        'bluetooth-modal-button', 'bluetooth-prompt',
+        'bluetooth-prompt-close');
+    createModalButton(
+        'bluetooth-prompt-wizard', 'bluetooth-wizard',
+        'bluetooth-wizard-close', 'bluetooth-prompt');
+    createModalButton(
+        'bluetooth-wizard-device', 'bluetooth-wizard-confirm',
+        'bluetooth-wizard-confirm-close', 'bluetooth-wizard');
+    createModalButton(
+        'bluetooth-wizard-another', 'bluetooth-wizard',
+        'bluetooth-wizard-close', 'bluetooth-wizard-confirm');
+    createModalButton(
+        'bluetooth-prompt-list', 'bluetooth-list',
+        'bluetooth-list-close', 'bluetooth-prompt');
+    createModalButton(
+        'bluetooth-prompt-console', 'bluetooth-console',
+        'bluetooth-console-close', 'bluetooth-prompt');
+    createModalButton(
+        'bluetooth-wizard-cancel', 'bluetooth-prompt',
+        'bluetooth-wizard-close', 'bluetooth-wizard');
+
+    positionModal('device-details-button', 'bluetooth-modal');
+    positionModal('device-details-button', 'bluetooth-prompt');
+    positionModal('device-details-button', 'bluetooth-wizard');
+    positionModal('device-details-button', 'bluetooth-wizard-confirm');
+    positionModal('device-details-button', 'bluetooth-list');
+    positionModal('device-details-button', 'bluetooth-console');
 
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
