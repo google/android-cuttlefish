@@ -32,7 +32,7 @@
 #include "host/frontend/webrtc/lib/connection_observer.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/video_sink.h"
-#include "host/frontend/webrtc/lib/ws_connection.h"
+#include "host/frontend/webrtc/lib/server_connection.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
