@@ -49,6 +49,8 @@ class CurlWrapper {
       const std::string& url, const std::vector<std::string>& headers = {}) = 0;
   virtual CurlResponse<Json::Value> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers = {}) = 0;
+
+  virtual std::string UrlEscape(const std::string&) = 0;
 };
 
 }
