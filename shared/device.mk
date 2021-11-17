@@ -633,8 +633,13 @@ PRODUCT_PACKAGES += \
 
 #
 # USB
+ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_PACKAGES += \
+    com.android.hardware.usb
+else
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
+endif
 
 # Vibrator HAL
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
