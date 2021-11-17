@@ -156,6 +156,13 @@ class CurlWrapperImpl : public CurlWrapper {
     return {json, response.http_code};
   }
 
+  std::string UrlEscape(const std::string& text) override {
+    char* escaped_str = curl_easy_escape(curl_, text.c_str(), text.size());
+    std::string ret{escaped_str};
+    curl_free(escaped_str);
+    return ret;
+  }
+
  private:
   CURL* curl_;
   std::mutex mutex_;
@@ -186,6 +193,10 @@ class CurlServerErrorRetryingWrapper : public CurlWrapper {
       const std::string& url, const std::vector<std::string>& headers) {
     return RetryImpl<Json::Value>(
         [&, this]() { return inner_curl_.DownloadToJson(url, headers); });
+  }
+
+  std::string UrlEscape(const std::string& text) override {
+    return inner_curl_.UrlEscape(text);
   }
 
  private:
