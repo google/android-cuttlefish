@@ -197,7 +197,7 @@ func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config InfraConfig) {
 	log.Println(r.URL)
-	ws := NewJsonWs(w, r)
+	ws := NewJSONWs(w, r)
 	if ws == nil {
 		return
 	}
