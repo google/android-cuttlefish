@@ -60,6 +60,10 @@ sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
 
+# update QEMU version to most recent backport
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bullseye-backports
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t bullseye-backports
+
 # Install GPU driver dependencies
 sudo chroot /mnt/image /usr/bin/apt install -y gcc
 sudo chroot /mnt/image /usr/bin/apt install -y linux-source
