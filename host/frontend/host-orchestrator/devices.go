@@ -68,7 +68,10 @@ func (d *Device) Unregister(id int) {
 // Notify the clients that the device has disconnected
 func (d *Device) DisconnectClients() {
 	d.clientsMtx.Lock()
-	clientsCopy := d.clients
+	clientsCopy := make([]Client, 0, len(d.clients))
+	for _, client := range d.clients {
+		clientsCopy = append(clientsCopy, client)
+	}
 	d.clientsMtx.Unlock()
 	for _, client := range clientsCopy {
 		client.OnDeviceDisconnected()
