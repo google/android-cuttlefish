@@ -287,6 +287,9 @@ class CuttlefishConfig {
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
 
+  void set_wmediumd_api_server_socket(const std::string& path);
+  std::string wmediumd_api_server_socket() const;
+
   void set_ap_rootfs_image(const std::string& path);
   std::string ap_rootfs_image() const;
 
@@ -316,6 +319,10 @@ class CuttlefishConfig {
 
   void set_userdata_format(const std::string& userdata_format);
   std::string userdata_format() const;
+
+  // The path of an AP image in composite disk
+  std::string ap_image_dev_path() const;
+  void set_ap_image_dev_path(const std::string& dev_path);
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
