@@ -1283,6 +1283,7 @@ static void requestSignalStrength(void *data __unused, size_t datalen __unused, 
 
     memset(response, 0, sizeof(response));
 
+    // TODO(b/206814247): Rename AT+CSQ command.
     err = at_send_command_singleline("AT+CSQ", "+CSQ:", &p_response);
 
     if (err < 0 || p_response->success == 0) {
@@ -6003,7 +6004,7 @@ static void onUnsolicited (const char *s, const char *sms_pdu)
             response, sizeof(response));
         free(line);
     } else if (strStartsWith(s, "+CUSATEND")) {  // session end
-      RIL_onUnsolicitedResponse(RIL_UNSOL_STK_SESSION_END, NULL, 0);
+        RIL_onUnsolicitedResponse(RIL_UNSOL_STK_SESSION_END, NULL, 0);
     } else if (strStartsWith(s, "+CUSATP:")) {
         line = p = strdup(s);
         if (!line) {
