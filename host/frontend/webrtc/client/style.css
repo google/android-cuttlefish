@@ -79,6 +79,7 @@ body {
   font-family: 'Open Sans', sans-serif;
   padding: 10px;
   margin: 10px;
+  border-radius: 10px;
 }
 #error-message.hidden {
   display: none;
