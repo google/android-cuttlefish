@@ -32,6 +32,7 @@
 #include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_builder.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
@@ -763,7 +764,8 @@ class OpenWrt : public CommandSource {
 #ifndef ENFORCE_MAC80211_HWSIM
     return false;
 #else
-    return instance_.start_ap();
+    return instance_.start_ap() &&
+           config_.vm_manager() == vm_manager::CrosvmManager::name();
 #endif
   }
 
