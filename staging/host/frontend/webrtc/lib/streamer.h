@@ -44,18 +44,7 @@ struct StreamerConfig {
   std::string device_id;
   // The port on which the client files are being served
   int client_files_port;
-  struct {
-    // The ip address or domain name of the operator server.
-    std::string addr;
-    int port;
-    // The path component of the operator server's register url.
-    std::string path;
-    // The security level to use when connecting to the operator server.
-    WsConnection::Security security;
-    // A list of key value pairs to include as HTTP handshake headers when
-    // connecting to the operator.
-    std::vector<std::pair<std::string, std::string>> http_headers;
-  } operator_server;
+  ServerConfig operator_server;
   // The port ranges webrtc is allowed to use.
   // [0,0] means all ports
   std::pair<uint16_t, uint16_t> udp_port_range = {15550, 15558};
