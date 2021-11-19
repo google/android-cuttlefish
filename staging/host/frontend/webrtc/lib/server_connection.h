@@ -26,47 +26,62 @@
 #include <thread>
 #include <vector>
 
+#include <json/json.h>
 #include <libwebsockets.h>
 
-class WsConnectionObserver {
- public:
-  virtual ~WsConnectionObserver() = default;
-  virtual void OnOpen() = 0;
-  virtual void OnClose() = 0;
-  virtual void OnError(const std::string& error) = 0;
-  virtual void OnReceive(const uint8_t* msg, size_t length, bool is_binary) = 0;
-};
+namespace cuttlefish {
+namespace webrtc_streaming {
 
-class WsConnection {
- public:
+struct ServerConfig {
   enum class Security {
     kInsecure,
     kAllowSelfSigned,
     kStrict,
   };
 
-  virtual ~WsConnection() = default;
-
-  virtual void Connect() = 0;
-
-  virtual bool Send(const uint8_t* data, size_t len, bool binary = false) = 0;
-
- protected:
-  WsConnection() = default;
+  // The ip address or domain name of the operator server.
+  std::string addr;
+  int port;
+  // The path component of the operator server's register url.
+  std::string path;
+  // The security level to use when connecting to the operator server.
+  Security security;
+  // A list of key value pairs to include as HTTP handshake headers when
+  // connecting to the operator.
+  std::vector<std::pair<std::string, std::string>> http_headers;
 };
 
-class WsConnectionContext {
+class ServerConnectionObserver {
  public:
-  static std::shared_ptr<WsConnectionContext> Create();
-
-  virtual ~WsConnectionContext() = default;
-
-  virtual std::shared_ptr<WsConnection> CreateConnection(
-      int port, const std::string& addr, const std::string& path,
-      WsConnection::Security secure,
-      std::weak_ptr<WsConnectionObserver> observer,
-      const std::vector<std::pair<std::string, std::string>>& headers = {}) = 0;
-
- protected:
-  WsConnectionContext() = default;
+  virtual ~ServerConnectionObserver() = default;
+  // Called when the connection to the server has been established. This is the
+  // cue to start using Send().
+  virtual void OnOpen() = 0;
+  virtual void OnClose() = 0;
+  // Called when the connection to the server has failed with an unrecoverable
+  // error.
+  virtual void OnError(const std::string& error) = 0;
+  virtual void OnReceive(const uint8_t* msg, size_t length, bool is_binary) = 0;
 };
+
+// Represents a connection to the signaling server. When a connection is created
+// it connects with the server automatically but sends no info.
+class ServerConnection {
+ public:
+  static std::unique_ptr<ServerConnection> Connect(
+      const ServerConfig& conf,
+      std::weak_ptr<ServerConnectionObserver> observer);
+
+  // Destroying the connection will disconnect from the signaling server and
+  // release any open fds.
+  virtual ~ServerConnection() = default;
+
+  // Sends data to the server encoded as JSON.
+  virtual bool Send(const Json::Value&) = 0;
+
+ private:
+  virtual void Connect() = 0;
+};
+
+}  // namespace webrtc_streaming
+}  // namespace cuttlefish
