@@ -44,14 +44,12 @@ function showWarning(msg) {
   let element = document.getElementById('error-message');
   element.className = 'warning';
   element.textContent = msg;
-  element.style.visibility = 'visible';
 }
 
 function showError(msg) {
   let element = document.getElementById('error-message');
   element.className = 'error';
   element.textContent = msg;
-  element.style.visibility = 'visible';
 }
 
 
@@ -916,13 +914,12 @@ window.addEventListener("load", async evt => {
         connectorModule.deviceId(), await connectorModule.createConnector());
     let deviceControlApp = new DeviceControlApp(deviceConnection);
     deviceControlApp.start();
-    document.getElementById('loader').style.display = 'none';
     document.getElementById('device-connection').style.display = 'block';
   } catch(err) {
     console.error('Unable to connect: ', err);
     showError(
       'No connection to the guest device. ' +
       'Please ensure the WebRTC process on the host machine is active.');
-    throw err;
   }
+  document.getElementById('loader').style.display = 'none';
 });
