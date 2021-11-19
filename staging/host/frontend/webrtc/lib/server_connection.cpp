@@ -18,29 +18,52 @@
 #include <android-base/logging.h>
 #include <libwebsockets.h>
 
-class WsConnectionContextImpl;
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 
-class WsConnectionImpl : public WsConnection,
-                         public std::enable_shared_from_this<WsConnectionImpl> {
+namespace cuttlefish {
+namespace webrtc_streaming {
+
+// ServerConnection over Unix socket
+class UnixServerConnection : public ServerConnection {
+ public:
+  UnixServerConnection(SharedFD conn,
+                       std::weak_ptr<ServerConnectionObserver> observer);
+
+  bool Send(const Json::Value& msg) override;
+
+ private:
+  void Connect() override;
+  void ReadLoop();
+
+  SharedFD conn_;
+  std::mutex write_mtx_;
+  std::weak_ptr<ServerConnectionObserver> observer_;
+  std::thread thread_;
+};
+
+// ServerConnection using websockets
+class WsConnectionContext;
+
+class WsConnection : public std::enable_shared_from_this<WsConnection> {
  public:
   struct CreateConnectionSul {
     lws_sorted_usec_list_t sul = {};
-    std::weak_ptr<WsConnectionImpl> weak_this;
+    std::weak_ptr<WsConnection> weak_this;
   };
 
-  WsConnectionImpl(
-      int port, const std::string& addr, const std::string& path,
-      Security secure,
-      const std::vector<std::pair<std::string, std::string>>& headers,
-      std::weak_ptr<WsConnectionObserver> observer,
-      std::shared_ptr<WsConnectionContextImpl> context);
+  WsConnection(int port, const std::string& addr, const std::string& path,
+               ServerConfig::Security secure,
+               const std::vector<std::pair<std::string, std::string>>& headers,
+               std::weak_ptr<ServerConnectionObserver> observer,
+               std::shared_ptr<WsConnectionContext> context);
 
-  ~WsConnectionImpl() override;
+  ~WsConnection();
 
-  void Connect() override;
+  void Connect();
+  bool Send(const Json::Value& msg);
+
   void ConnectInner();
-
-  bool Send(const uint8_t* data, size_t len, bool binary = false) override;
 
   void OnError(const std::string& error);
   void OnReceive(const uint8_t* data, size_t len, bool is_binary);
@@ -66,41 +89,43 @@ class WsConnectionImpl : public WsConnection,
     std::vector<uint8_t> buffer_;
     bool is_binary_;
   };
+  bool Send(const uint8_t* data, size_t len, bool binary = false);
 
   CreateConnectionSul extended_sul_;
   struct lws* wsi_;
   const int port_;
   const std::string addr_;
   const std::string path_;
-  const Security security_;
+  const ServerConfig::Security security_;
   const std::vector<std::pair<std::string, std::string>> headers_;
 
-  std::weak_ptr<WsConnectionObserver> observer_;
+  std::weak_ptr<ServerConnectionObserver> observer_;
 
   // each element contains the data to be sent and whether it's binary or not
   std::deque<WsBuffer> write_queue_;
   std::mutex write_queue_mutex_;
   // The connection object should not outlive the context object. This reference
   // guarantees it.
-  std::shared_ptr<WsConnectionContextImpl> context_;
+  std::shared_ptr<WsConnectionContext> context_;
 };
 
-class WsConnectionContextImpl
-    : public WsConnectionContext,
-      public std::enable_shared_from_this<WsConnectionContextImpl> {
+class WsConnectionContext
+    : public std::enable_shared_from_this<WsConnectionContext> {
  public:
-  WsConnectionContextImpl(struct lws_context* lws_ctx);
-  ~WsConnectionContextImpl() override;
+  static std::shared_ptr<WsConnectionContext> Create();
 
-  std::shared_ptr<WsConnection> CreateConnection(
+  WsConnectionContext(struct lws_context* lws_ctx);
+  ~WsConnectionContext();
+
+  std::unique_ptr<ServerConnection> CreateConnection(
       int port, const std::string& addr, const std::string& path,
-      WsConnection::Security secure,
-      std::weak_ptr<WsConnectionObserver> observer,
-      const std::vector<std::pair<std::string, std::string>>& headers) override;
+      ServerConfig::Security secure,
+      std::weak_ptr<ServerConnectionObserver> observer,
+      const std::vector<std::pair<std::string, std::string>>& headers);
 
-  void RememberConnection(void*, std::weak_ptr<WsConnectionImpl>);
+  void RememberConnection(void*, std::weak_ptr<WsConnection>);
   void ForgetConnection(void*);
-  std::shared_ptr<WsConnectionImpl> GetConnection(void*);
+  std::shared_ptr<WsConnection> GetConnection(void*);
 
   struct lws_context* lws_context() {
     return lws_context_;
@@ -109,11 +134,98 @@ class WsConnectionContextImpl
  private:
   void Start();
 
-  std::map<void*, std::weak_ptr<WsConnectionImpl>> weak_by_ptr_;
+  std::map<void*, std::weak_ptr<WsConnection>> weak_by_ptr_;
   std::mutex map_mutex_;
   struct lws_context* lws_context_;
   std::thread message_loop_;
 };
+
+std::unique_ptr<ServerConnection> ServerConnection::Connect(
+    const ServerConfig& conf,
+    std::weak_ptr<ServerConnectionObserver> observer) {
+  std::unique_ptr<ServerConnection> ret;
+  // If the provided address points to an existing UNIX socket in the file
+  // system connect to it, otherwise assume it's a network address and connect
+  // using websockets
+  if (FileIsSocket(conf.addr)) {
+    auto conn = SharedFD::SocketLocalClient(conf.addr, false, SOCK_SEQPACKET);
+    if (!conn->IsOpen()) {
+      LOG(ERROR) << "Failed to connect to unix socket: " << conn->StrError();
+      if (auto o = observer.lock(); o) {
+        o->OnError("Failed to connect to unix socket");
+      }
+      // Safe to return null here since OnOpen wasn't called and therefore the
+      // connection won't be accessed.
+      return nullptr;
+    }
+    ret.reset(new UnixServerConnection(conn, observer));
+  } else {
+    // This can be a local variable since the ws connection will keep a
+    // reference to it.
+    auto ws_context = WsConnectionContext::Create();
+    CHECK(ws_context) << "Failed to create websocket context";
+    ret = ws_context->CreateConnection(conf.port, conf.addr, conf.path,
+                                       conf.security, observer,
+                                       conf.http_headers);
+  }
+  ret->Connect();
+  return ret;
+}
+
+// UnixServerConnection implementation
+
+UnixServerConnection::UnixServerConnection(
+    SharedFD conn, std::weak_ptr<ServerConnectionObserver> observer)
+    : conn_(conn), observer_(observer), thread_([this]() { ReadLoop(); }) {}
+
+bool UnixServerConnection::Send(const Json::Value& msg) {
+  Json::StreamWriterBuilder factory;
+  auto str = Json::writeString(factory, msg);
+  std::lock_guard<std::mutex> lock(write_mtx_);
+  auto res =
+      conn_->Send(reinterpret_cast<const uint8_t*>(str.c_str()), str.size(), 0);
+  if (res < 0) {
+    LOG(ERROR) << "Failed to send data to signaling server: "
+               << conn_->StrError();
+    // Don't call OnError() here, the receiving thread probably did it already
+    // or is about to do it.
+  }
+  // A SOCK_SEQPACKET unix socket will send the entire message or fail, but it
+  // won't send a partial message.
+  return res == str.size();
+}
+
+void UnixServerConnection::Connect() {
+  if (auto observer = observer_.lock(); observer) {
+    observer->OnOpen();
+  }
+}
+
+void UnixServerConnection::ReadLoop() {
+  std::vector<uint8_t> buffer(4096, 0);
+  while (true) {
+    auto size = conn_->Recv(buffer.data(), 0, MSG_TRUNC | MSG_PEEK);
+    if (size > buffer.size()) {
+      // Enlarge enough to accommodate size bytes and be a multiple of 4096
+      auto new_size = (size + 4095) & ~4095;
+      buffer.resize(new_size);
+    }
+    auto res = conn_->Recv(buffer.data(), buffer.size(), MSG_TRUNC);
+    if (res < 0) {
+      LOG(ERROR) << "Failed to read from server: " << conn_->StrError();
+      if (auto observer = observer_.lock(); observer) {
+        observer->OnError(conn_->StrError());
+      }
+      return;
+    }
+    auto observer = observer_.lock();
+    if (observer) {
+      observer->OnReceive(buffer.data(), res, false);
+    }
+  }
+}
+
+// WsConnection implementation
 
 int LwsCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user,
                 void* in, size_t len);
@@ -152,23 +264,22 @@ std::shared_ptr<WsConnectionContext> WsConnectionContext::Create() {
   if (!lws_ctx) {
     return nullptr;
   }
-  return std::shared_ptr<WsConnectionContext>(
-      new WsConnectionContextImpl(lws_ctx));
+  return std::shared_ptr<WsConnectionContext>(new WsConnectionContext(lws_ctx));
 }
 
-WsConnectionContextImpl::WsConnectionContextImpl(struct lws_context* lws_ctx)
+WsConnectionContext::WsConnectionContext(struct lws_context* lws_ctx)
     : lws_context_(lws_ctx) {
   Start();
 }
 
-WsConnectionContextImpl::~WsConnectionContextImpl() {
+WsConnectionContext::~WsConnectionContext() {
   lws_context_destroy(lws_context_);
   if (message_loop_.joinable()) {
     message_loop_.join();
   }
 }
 
-void WsConnectionContextImpl::Start() {
+void WsConnectionContext::Start() {
   message_loop_ = std::thread([this]() {
     for (;;) {
       if (lws_service(lws_context_, 0) < 0) {
@@ -178,18 +289,33 @@ void WsConnectionContextImpl::Start() {
   });
 }
 
-std::shared_ptr<WsConnection> WsConnectionContextImpl::CreateConnection(
+// This wrapper is needed because the ServerConnection objects are meant to be
+// referenced by std::unique_ptr but WsConnection needs to be referenced by
+// std::shared_ptr because it's also (weakly) referenced by the websocket
+// thread.
+class WsConnectionWrapper : public ServerConnection {
+ public:
+  WsConnectionWrapper(std::shared_ptr<WsConnection> conn) : conn_(conn) {}
+
+  bool Send(const Json::Value& msg) override { return conn_->Send(msg); }
+
+ private:
+  void Connect() override { return conn_->Connect(); }
+  std::shared_ptr<WsConnection> conn_;
+};
+
+std::unique_ptr<ServerConnection> WsConnectionContext::CreateConnection(
     int port, const std::string& addr, const std::string& path,
-    WsConnection::Security security,
-    std::weak_ptr<WsConnectionObserver> observer,
+    ServerConfig::Security security,
+    std::weak_ptr<ServerConnectionObserver> observer,
     const std::vector<std::pair<std::string, std::string>>& headers) {
-  return std::shared_ptr<WsConnection>(new WsConnectionImpl(
-      port, addr, path, security, headers, observer, shared_from_this()));
+  return std::unique_ptr<ServerConnection>(
+      new WsConnectionWrapper(std::make_shared<WsConnection>(
+          port, addr, path, security, headers, observer, shared_from_this())));
 }
 
-std::shared_ptr<WsConnectionImpl> WsConnectionContextImpl::GetConnection(
-    void* raw) {
-  std::shared_ptr<WsConnectionImpl> connection;
+std::shared_ptr<WsConnection> WsConnectionContext::GetConnection(void* raw) {
+  std::shared_ptr<WsConnection> connection;
   {
     std::lock_guard<std::mutex> lock(map_mutex_);
     if (weak_by_ptr_.count(raw) == 0) {
@@ -203,24 +329,24 @@ std::shared_ptr<WsConnectionImpl> WsConnectionContextImpl::GetConnection(
   return connection;
 }
 
-void WsConnectionContextImpl::RememberConnection(
-    void* raw, std::weak_ptr<WsConnectionImpl> conn) {
+void WsConnectionContext::RememberConnection(void* raw,
+                                             std::weak_ptr<WsConnection> conn) {
   std::lock_guard<std::mutex> lock(map_mutex_);
   weak_by_ptr_.emplace(
-      std::pair<void*, std::weak_ptr<WsConnectionImpl>>(raw, conn));
+      std::pair<void*, std::weak_ptr<WsConnection>>(raw, conn));
 }
 
-void WsConnectionContextImpl::ForgetConnection(void* raw) {
+void WsConnectionContext::ForgetConnection(void* raw) {
   std::lock_guard<std::mutex> lock(map_mutex_);
   weak_by_ptr_.erase(raw);
 }
 
-WsConnectionImpl::WsConnectionImpl(
+WsConnection::WsConnection(
     int port, const std::string& addr, const std::string& path,
-    Security security,
+    ServerConfig::Security security,
     const std::vector<std::pair<std::string, std::string>>& headers,
-    std::weak_ptr<WsConnectionObserver> observer,
-    std::shared_ptr<WsConnectionContextImpl> context)
+    std::weak_ptr<ServerConnectionObserver> observer,
+    std::shared_ptr<WsConnectionContext> context)
     : port_(port),
       addr_(addr),
       path_(path),
@@ -229,23 +355,22 @@ WsConnectionImpl::WsConnectionImpl(
       observer_(observer),
       context_(context) {}
 
-WsConnectionImpl::~WsConnectionImpl() {
+WsConnection::~WsConnection() {
   context_->ForgetConnection(this);
   // This will cause the callback to be called which will drop the connection
   // after seeing the context doesn't remember this object
   lws_callback_on_writable(wsi_);
 }
 
-void WsConnectionImpl::Connect() {
+void WsConnection::Connect() {
   memset(&extended_sul_.sul, 0, sizeof(extended_sul_.sul));
   extended_sul_.weak_this = weak_from_this();
   lws_sul_schedule(context_->lws_context(), 0, &extended_sul_.sul,
                    CreateConnectionCallback, 1);
 }
 
-void WsConnectionImpl::AddHttpHeaders(unsigned char** p,
-                                      unsigned char* end) const {
-  for (const auto& header_entry: headers_) {
+void WsConnection::AddHttpHeaders(unsigned char** p, unsigned char* end) const {
+  for (const auto& header_entry : headers_) {
     const auto& name = header_entry.first;
     const auto& value = header_entry.second;
     auto res = lws_add_http_header_by_name(
@@ -262,33 +387,32 @@ void WsConnectionImpl::AddHttpHeaders(unsigned char** p,
   }
 }
 
-void WsConnectionImpl::OnError(const std::string& error) {
+void WsConnection::OnError(const std::string& error) {
   auto observer = observer_.lock();
   if (observer) {
     observer->OnError(error);
   }
 }
-void WsConnectionImpl::OnReceive(const uint8_t* data, size_t len,
-                                 bool is_binary) {
+void WsConnection::OnReceive(const uint8_t* data, size_t len, bool is_binary) {
   auto observer = observer_.lock();
   if (observer) {
     observer->OnReceive(data, len, is_binary);
   }
 }
-void WsConnectionImpl::OnOpen() {
+void WsConnection::OnOpen() {
   auto observer = observer_.lock();
   if (observer) {
     observer->OnOpen();
   }
 }
-void WsConnectionImpl::OnClose() {
+void WsConnection::OnClose() {
   auto observer = observer_.lock();
   if (observer) {
     observer->OnClose();
   }
 }
 
-void WsConnectionImpl::OnWriteable() {
+void WsConnection::OnWriteable() {
   WsBuffer buffer;
   {
     std::lock_guard<std::mutex> lock(write_queue_mutex_);
@@ -307,7 +431,13 @@ void WsConnectionImpl::OnWriteable() {
   }
 }
 
-bool WsConnectionImpl::Send(const uint8_t* data, size_t len, bool binary) {
+bool WsConnection::Send(const Json::Value& msg) {
+  Json::StreamWriterBuilder factory;
+  auto str = Json::writeString(factory, msg);
+  return Send(reinterpret_cast<const uint8_t*>(str.c_str()), str.size());
+}
+
+bool WsConnection::Send(const uint8_t* data, size_t len, bool binary) {
   if (!wsi_) {
     LOG(WARNING) << "Send called on an uninitialized connection!!";
     return false;
@@ -331,8 +461,8 @@ int LwsCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user,
   // when the connection was created. This function object should be used with
   // care.
   auto with_connection =
-      [wsi, user](std::function<void(std::shared_ptr<WsConnectionImpl>)> cb) {
-        auto context = reinterpret_cast<WsConnectionContextImpl*>(user);
+      [wsi, user](std::function<void(std::shared_ptr<WsConnection>)> cb) {
+        auto context = reinterpret_cast<WsConnectionContext*>(user);
         auto connection = context->GetConnection(wsi);
         if (!connection) {
           return DROP;
@@ -343,36 +473,35 @@ int LwsCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user,
 
   switch (reason) {
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-      return with_connection(
-          [in](std::shared_ptr<WsConnectionImpl> connection) {
-            connection->OnError(in ? (char*)in : "(null)");
-          });
+      return with_connection([in](std::shared_ptr<WsConnection> connection) {
+        connection->OnError(in ? (char*)in : "(null)");
+      });
 
     case LWS_CALLBACK_CLIENT_RECEIVE:
       return with_connection(
-          [in, len, wsi](std::shared_ptr<WsConnectionImpl> connection) {
+          [in, len, wsi](std::shared_ptr<WsConnection> connection) {
             connection->OnReceive((const uint8_t*)in, len,
                                   lws_frame_is_binary(wsi));
           });
 
     case LWS_CALLBACK_CLIENT_ESTABLISHED:
-      return with_connection([](std::shared_ptr<WsConnectionImpl> connection) {
+      return with_connection([](std::shared_ptr<WsConnection> connection) {
         connection->OnOpen();
       });
 
     case LWS_CALLBACK_CLIENT_CLOSED:
-      return with_connection([](std::shared_ptr<WsConnectionImpl> connection) {
+      return with_connection([](std::shared_ptr<WsConnection> connection) {
         connection->OnClose();
       });
 
     case LWS_CALLBACK_CLIENT_WRITEABLE:
-      return with_connection([](std::shared_ptr<WsConnectionImpl> connection) {
+      return with_connection([](std::shared_ptr<WsConnection> connection) {
         connection->OnWriteable();
       });
 
     case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
       return with_connection(
-          [in, len](std::shared_ptr<WsConnectionImpl> connection) {
+          [in, len](std::shared_ptr<WsConnection> connection) {
             auto p = reinterpret_cast<unsigned char**>(in);
             auto end = (*p) + len;
             connection->AddHttpHeaders(p, end);
@@ -391,8 +520,8 @@ int LwsCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user,
 }
 
 void CreateConnectionCallback(lws_sorted_usec_list_t* sul) {
-  std::shared_ptr<WsConnectionImpl> connection =
-      reinterpret_cast<WsConnectionImpl::CreateConnectionSul*>(sul)
+  std::shared_ptr<WsConnection> connection =
+      reinterpret_cast<WsConnection::CreateConnectionSul*>(sul)
           ->weak_this.lock();
   if (!connection) {
     LOG(WARNING) << "The object was already destroyed by the time of the first "
@@ -402,7 +531,7 @@ void CreateConnectionCallback(lws_sorted_usec_list_t* sul) {
   connection->ConnectInner();
 }
 
-void WsConnectionImpl::ConnectInner() {
+void WsConnection::ConnectInner() {
   struct lws_client_connect_info connect_info;
 
   memset(&connect_info, 0, sizeof(connect_info));
@@ -414,15 +543,15 @@ void WsConnectionImpl::ConnectInner() {
   connect_info.host = connect_info.address;
   connect_info.origin = connect_info.address;
   switch (security_) {
-    case Security::kAllowSelfSigned:
+    case ServerConfig::Security::kAllowSelfSigned:
       connect_info.ssl_connection = LCCSCF_ALLOW_SELFSIGNED |
                                     LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK |
                                     LCCSCF_USE_SSL;
       break;
-    case Security::kStrict:
+    case ServerConfig::Security::kStrict:
       connect_info.ssl_connection = LCCSCF_USE_SSL;
       break;
-    case Security::kInsecure:
+    case ServerConfig::Security::kInsecure:
       connect_info.ssl_connection = 0;
       break;
   }
@@ -444,3 +573,6 @@ void WsConnectionImpl::ConnectInner() {
     LOG(ERROR) << "Connection failed!";
   }
 }
+
+}  // namespace webrtc_streaming
+}  // namespace cuttlefish
