@@ -350,24 +350,88 @@ void NetworkService::AdjustSignalStrengthValue(int& value,
     value = range.second;
   }
 }
+
 /**
+ * IMPORTANT NOTE: Current implementation of AT+CSQ differs from standards
+ * described in TS 27.007 8.5 which only only supports RSSI and BER.
+ *
+ * TODO(b/206814247): Rename AT+CSQ command.
+ *
  * AT+CSQ
- *   Execution command returns received signal strength indication <rssi>
- *   and channel bit error rate <ber> from the MT.
+ *   Execution command returns received signal strength indication. This is a
+ *   Cuttlefish specific command.
  *
- * command            Possible response(s)
- * AT+CSQ               +CSQ: <rssi>,<ber>
- *                      +CME ERROR: <err>
+ * Command            Possible response(s)
+ * AT+CSQ             +CSQ: <gsm_rssi>,<gsm_ber>,<cdma_dbm>,
+ *                      <cdma_ecio>,<evdo_dbm>,<evdo_ecio>,<evdo_snr>,
+ *                      <lte_rssi>,<lte_rsrp>,<lte_rsrq>,<lte_rssnr>,
+ *                      <lte_cqi>,<lte_ta>,<tdscdma_rscp>,<wcdma_rssi>,
+ *                      <wcdma_ber>,<nr_ss_rsrp>,<nr_ss_rsrq>,<nr_ss_sinr>,
+ *                      <nr_csi_rsrp>,<nr_csi_rsrq>,<nr_csi_sinr>
+ *                    +CME ERROR: <err>
  *
- * <rssi>: integer type
- *       0 ‑113 dBm or less
- *       1 ‑111 dBm
- *       2...30  ‑109... ‑53 dBm
- *       31  ‑51 dBm or greater
- *       99  not known or not detectable
- * <ber>: integer type; channel bit error rate (in percent)
- *      0...7 as RXQUAL values in the table in 3GPP TS 45.008 [20] subclause 8.2.4
- *      99  not known or not detectable
+ * <gsm_rssi>: Valid values are (0-31, 99) as defined in TS 27.007 8.5.
+ * <gsm_ber>: Bit error rate (0-7, 99) as defined in TS 27.007 8.5.
+ * <cdma_dbm>: Valid values are positive integers.
+ *   This value is the actual RSSI value multiplied by -1.
+ *   Example: If the actual RSSI is -75, then this response value will be 75.
+ * <cdma_ecio>: Valid values are positive integers.
+ *   This value is the actual Ec/Io multiplied by -10.
+ *   Example: If the actual Ec/Io is -12.5 dB, then this response value will
+ *   be 125.
+ * <evdo_dbm>: Refer cdma_dbm.
+ * <evdo_ecio>: Refer cdma_ecio.
+ * <evdo_snr>: Valid values are 0-8.
+ *   8 is the highest signal to noise ratio.
+ * <lte_rssi>: Refer gsm_rssi.
+ * <lte_rsrp>:
+ *   The current Reference Signal Receive Power in dBm multiplied by 1.
+ *   Range: 44 to 140 dBm.
+ *   INT_MAX: 0x7FFFFFFF denotes invalid value.
+ *   Reference: 3GPP TS 36.133 9.1.4.
+ * <lte_rsrq>:
+ *   The current Reference Signal Receive Quality in dB multiplied by -1.
+ *   Range: 20 to 3 dB.
+ *   INT_MAX: 0x7FFFFFFF denotes invalid value.
+ *   Reference: 3GPP TS 36.133 9.1.7.
+ * <lte_rssnr>:
+ *   The current reference signal signal-to-noise ratio in 0.1 dB units.
+ *   Range: -200 to +300 (-200 = -20.0 dB, +300 = 30dB).
+ *   INT_MAX : 0x7FFFFFFF denotes invalid value.
+ *   Reference: 3GPP TS 36.101 8.1.1.
+ * <lte_cqi>: The current Channel Quality Indicator.
+ *   Range: 0 to 15.
+ *   INT_MAX : 0x7FFFFFFF denotes invalid value.
+ *   Reference: 3GPP TS 36.101 9.2, 9.3, A.4.
+ * <lte_ta>:
+ *   Timing advance in micro seconds for a one way trip from cell to device.
+ *   Approximate distance can be calculated using 300m/us * timingAdvance.
+ *   Range: 0 to 0x7FFFFFFE.
+ *   INT_MAX : 0x7FFFFFFF denotes invalid value.
+ *   Reference: 3GPP 36.321 section 6.1.3.5.
+ * <tdscdma_rscp>: P-CCPCH RSCP as defined in TS 25.225 5.1.1.
+ *   Valid values are (0-96, 255) as defined in TS 27.007 8.69.
+ *   INT_MAX denotes that the value is invalid/unreported.
+ * <wcdma_rssi>: Refer gsm_rssi.
+ * <wcdma_ber>: Refer gsm_ber.
+ * <nr_ss_rsrp>: SS reference signal received power, multiplied by -1.
+ *   Reference: 3GPP TS 38.215.
+ *   Range [44, 140], INT_MAX means invalid/unreported.
+ * <nr_ss_rsrq>: SS reference signal received quality, multiplied by -1.
+ *   Reference: 3GPP TS 38.215.
+ *   Range [3, 20], INT_MAX means invalid/unreported.
+ * <nr_ss_sinr>: SS signal-to-noise and interference ratio.
+ *   Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+ *   Range [-23, 40], INT_MAX means invalid/unreported.
+ * <nr_csi_rsrp>: CSI reference signal received power, multiplied by -1.
+ *   Reference: 3GPP TS 38.215.
+ *   Range [44, 140], INT_MAX means invalid/unreported.
+ * <nr_csi_rsrq>: CSI reference signal received quality, multiplied by -1.
+ *   Reference: 3GPP TS 38.215.
+ *   Range [3, 20], INT_MAX means invalid/unreported.
+ * <nr_csi_sinr>: CSI signal-to-noise and interference ratio.
+ *   Reference: 3GPP TS 138.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+ *   Range [-23, 40], INT_MAX means invalid/unreported.
  *
  * see RIL_REQUEST_SIGNAL_STRENGTH in RIL
  */
@@ -1102,28 +1166,31 @@ std::string NetworkService::GetSignalStrength() {
   }
 
   std::stringstream ss;
-  ss << "+CSQ: " << signal_strength_.gsm_rssi << ","
-                 << signal_strength_.gsm_ber << ","
-                 << signal_strength_.cdma_dbm << ","
-                 << signal_strength_.cdma_ecio << ","
-                 << signal_strength_.evdo_dbm << ","
-                 << signal_strength_.evdo_ecio << ","
-                 << signal_strength_.evdo_snr << ","
-                 << signal_strength_.lte_rssi << ","
-                 << signal_strength_.lte_rsrp << ","
-                 << signal_strength_.lte_rsrq << ","
-                 << signal_strength_.lte_rssnr << ","
-                 << signal_strength_.lte_cqi << ","
-                 << signal_strength_.lte_ta << ","
-                 << signal_strength_.tdscdma_rscp << ","
-                 << signal_strength_.wcdma_rssi << ","
-                 << signal_strength_.wcdma_ber << ","
-                 << signal_strength_.nr_ss_rsrp << ","
-                 << signal_strength_.nr_ss_rsrq << ","
-                 << signal_strength_.nr_ss_sinr << ","
-                 << signal_strength_.nr_csi_rsrp << ","
-                 << signal_strength_.nr_csi_rsrq << ","
-                 << signal_strength_.nr_csi_sinr;;
+  // clang-format off
+  ss << "+CSQ: "
+     << signal_strength_.gsm_rssi << ","
+     << signal_strength_.gsm_ber << ","
+     << signal_strength_.cdma_dbm << ","
+     << signal_strength_.cdma_ecio << ","
+     << signal_strength_.evdo_dbm << ","
+     << signal_strength_.evdo_ecio << ","
+     << signal_strength_.evdo_snr << ","
+     << signal_strength_.lte_rssi << ","
+     << signal_strength_.lte_rsrp << ","
+     << signal_strength_.lte_rsrq << ","
+     << signal_strength_.lte_rssnr << ","
+     << signal_strength_.lte_cqi << ","
+     << signal_strength_.lte_ta << ","
+     << signal_strength_.tdscdma_rscp << ","
+     << signal_strength_.wcdma_rssi << ","
+     << signal_strength_.wcdma_ber << ","
+     << signal_strength_.nr_ss_rsrp << ","
+     << signal_strength_.nr_ss_rsrq << ","
+     << signal_strength_.nr_ss_sinr << ","
+     << signal_strength_.nr_csi_rsrp << ","
+     << signal_strength_.nr_csi_rsrq << ","
+     << signal_strength_.nr_csi_sinr;
+  // clang-format on
   return ss.str();
 }
 
