@@ -57,7 +57,12 @@ func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
 	if err := os.RemoveAll(path); err != nil {
 		log.Fatal("Failed to clean previous socket: ", err)
 	}
-	sock, err := net.Listen("unixpacket", path)
+	addr, err := net.ResolveUnixAddr("unixpacket", path)
+	if err != nil {
+		log.Println("Failed to create unix address from path: ", err)
+		return
+	}
+	sock, err := net.ListenUnix("unixpacket", addr)
 	if err != nil {
 		log.Fatal("Failed to create unix socket: ", err)
 	}
@@ -65,7 +70,7 @@ func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
 	go func() {
 		defer sock.Close()
 		for {
-			c, err := sock.Accept()
+			c, err := sock.AcceptUnix()
 			if err != nil {
 				log.Fatal("Failed to accept: ", err)
 			}
