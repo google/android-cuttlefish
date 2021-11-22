@@ -40,16 +40,30 @@ async function ConnectDevice(deviceId, serverConnector) {
   return deviceConnection;
 }
 
-function showWarning(msg) {
+function setupMessages() {
+  let closeBtn = document.querySelector('#error-message .close-btn');
+  closeBtn.addEventListener('click', evt => {
+    evt.target.parentElement.className = 'hidden';
+  });
+}
+
+function showMessage(msg, className) {
   let element = document.getElementById('error-message');
-  element.className = 'warning';
-  element.textContent = msg;
+  if (element.childNodes.length < 2) {
+    // First time, no text node yet
+    element.insertAdjacentText('afterBegin', msg);
+  } else {
+    element.childNodes[0].data = msg;
+  }
+  element.className = className;
+}
+
+function showWarning(msg) {
+  showMessage(msg, 'warning');
 }
 
 function showError(msg) {
-  let element = document.getElementById('error-message');
-  element.className = 'error';
-  element.textContent = msg;
+  showMessage(msg, 'error');
 }
 
 
@@ -909,6 +923,7 @@ class DeviceControlApp {
 
 window.addEventListener("load", async evt => {
   try {
+    setupMessages();
     let connectorModule = await import('./server_connector.js');
     let deviceConnection = await ConnectDevice(
         connectorModule.deviceId(), await connectorModule.createConnector());
