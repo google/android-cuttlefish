@@ -84,7 +84,7 @@ PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhalsend
 
 # Cuttlefish RIL support
-TARGET_USES_CF_RILD ?= true
+TARGET_USES_CF_RILD ?= false
 ifeq ($(TARGET_USES_CF_RILD),true)
     PRODUCT_PACKAGES += \
         libcuttlefish-ril-2 \

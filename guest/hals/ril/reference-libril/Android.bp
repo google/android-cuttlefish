@@ -59,3 +59,12 @@ cc_library {
         "libprotobuf-c-nano-enable_malloc"
     ],
 }
+
+filegroup {
+    name: "libril-modem-lib-manifests",
+    srcs: [
+        "android.hardware.radio@1.6.xml",
+        "android.hardware.radio.config@1.3.xml",
+    ],
+}
+

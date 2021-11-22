@@ -1,0 +1,18 @@
+<manifest version="1.0" type="device">
+    <hal format="hidl">
+        <name>android.hardware.radio</name>
+        <transport>hwbinder</transport>
+        <version>1.6</version>
+        <interface>
+            <name>IRadio</name>
+            <instance>slot1</instance>
+            <!-- cuttlefish doesn't support SIM slot 2/3 -->
+        </interface>
+        <!-- TODO (b/130079344):
+        <interface>
+            <name>ISap</name>
+            <instance>slot1</instance>
+        </interface>
+        -->
+    </hal>
+</manifest>
