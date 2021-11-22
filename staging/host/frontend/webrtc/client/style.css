@@ -81,6 +81,10 @@ body {
   margin: 10px;
   border-radius: 10px;
 }
+#error-message .close-btn {
+  float: right;
+  cursor: pointer;
+}
 #error-message.hidden {
   display: none;
 }
