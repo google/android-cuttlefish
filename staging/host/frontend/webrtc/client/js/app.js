@@ -206,10 +206,8 @@ class DeviceControlApp {
             let playPromise = deviceAudio.play();
             if (playPromise !== undefined) {
               playPromise.catch(error => {
-                // Autoplay not allowed, mute and try again
-                deviceAudio.muted = true;
-                deviceAudio.play();
-                showWarning("Audio playback is muted");
+                showWarning(
+                    'Audio failed to play automatically, click on the play button to activate it');
               });
             }
           })
