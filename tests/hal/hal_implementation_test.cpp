@@ -122,6 +122,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // This interface needs to be implemented (b/193240715)
     {"android.hardware.graphics.composer3.", 1},
 
+    // No implementations on cuttlefish for omapi aidl hal
+    {"android.se.omapi.", 1},
+
     // These KeyMaster types are in an AIDL types-only HAL because they're used
     // by the Identity Credential AIDL HAL. Remove this when fully porting
     // KeyMaster to AIDL.
