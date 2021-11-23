@@ -119,6 +119,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // No implementations on cuttlefish for wifi aidl hal
     {"android.hardware.wifi.hostapd.", 1},
 
+    // No implementations on cuttlefish for omapi aidl hal
+    {"android.se.omapi.", 1},
+
     // These KeyMaster types are in an AIDL types-only HAL because they're used
     // by the Identity Credential AIDL HAL. Remove this when fully porting
     // KeyMaster to AIDL.
