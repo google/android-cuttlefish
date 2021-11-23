@@ -19,14 +19,21 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
+const defaultSocketPath = "/run/cuttlefish/operator"
+const defaultPort = "1080"
+
 func main() {
+	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
+	port := fromEnvOrDefault("ORCHESTRATOR_PORT", defaultPort)
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
@@ -37,29 +44,37 @@ func main() {
 		},
 	}
 
-	setupDeviceEndpoint(pool, config)
+	setupDeviceEndpoint(pool, config, socketPath)
 	r := setupServerRoutes(pool, polledSet, config)
 
 	http.Handle("/", r)
-	if err := http.ListenAndServe(":1080", nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprint(":", port), nil); err != nil {
 		log.Fatal("ListenAndServe client: ", err)
 	}
 }
 
-func setupDeviceEndpoint(pool *DevicePool, config InfraConfig) {
-	devMux := http.NewServeMux()
-	if devMux == nil {
-		log.Fatal("Failed to allocate ServeMux")
+func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
+	if err := os.RemoveAll(path); err != nil {
+		log.Fatal("Failed to clean previous socket: ", err)
 	}
-	// http.HandleFunc("/", serveHome)
-	devMux.HandleFunc("/register_device", func(w http.ResponseWriter, r *http.Request) {
-		deviceWs(w, r, pool, config)
-	})
-	// Serve the register_device endpoint in a different thread
+	addr, err := net.ResolveUnixAddr("unixpacket", path)
+	if err != nil {
+		log.Println("Failed to create unix address from path: ", err)
+		return
+	}
+	sock, err := net.ListenUnix("unixpacket", addr)
+	if err != nil {
+		log.Fatal("Failed to create unix socket: ", err)
+	}
+	// Serve the register_device endpoint in a background thread
 	go func() {
-		err := http.ListenAndServe("127.0.0.1:8081", devMux)
-		if err != nil {
-			log.Fatal("ListenAndServe device: ", err)
+		defer sock.Close()
+		for {
+			c, err := sock.AcceptUnix()
+			if err != nil {
+				log.Fatal("Failed to accept: ", err)
+			}
+			go deviceEndpoint(NewJSONUnix(c), pool, config)
 		}
 	}()
 }
@@ -94,75 +109,68 @@ func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfi
 }
 
 // Device endpoint
-func deviceWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config InfraConfig) {
-	log.Println(r.URL)
-	ws := NewJsonWs(w, r)
-	if ws == nil {
+func deviceEndpoint(c *JSONUnix, pool *DevicePool, config InfraConfig) {
+	log.Println("Device connected")
+	defer c.Close()
+	var msg RegisterMsg
+	if err := c.Recv(&msg); err != nil {
+		log.Println("Error reading from device: ", err)
 		return
 	}
-	// Serve the websocket in its own thread
-	go func() {
-		defer ws.Close()
-		var msg RegisterMsg
-		if err := ws.Recv(&msg); err != nil {
-			log.Println(ws, "Error receiving from device: ", err)
+	if msg.Type != "register" {
+		replyError(c, "First device message must be the registration")
+		return
+	}
+	id := msg.DeviceId
+	if id == "" {
+		replyError(c, "Missing device_id")
+		return
+	}
+	info := msg.Info
+	if info == nil {
+		log.Println("No device info provided by: ", id)
+		info = make(map[string]interface{})
+	}
+	port := msg.Port
+	device := NewDevice(c, port, info)
+	if !pool.Register(device, id) {
+		replyError(c, fmt.Sprintln("Device id already taken: ", id))
+		return
+	}
+	defer pool.Unregister(id)
+	if err := device.Send(config); err != nil {
+		log.Println("Failed to send config to device: ", err)
+		return
+	}
+	for {
+		var msg ForwardMsg
+		if err := c.Recv(&msg); err != nil {
+			log.Println("Error reading from device: ", err)
 			return
 		}
-		if msg.Type != "register" {
-			wsReplyError(ws, "First device message must be the registration")
+		if msg.Type != "forward" {
+			replyError(c, fmt.Sprintln("Unrecognized message type: ", msg.Type))
 			return
 		}
-		id := msg.DeviceId
-		if id == "" {
-			wsReplyError(ws, "Missing device_id")
+		clientId := msg.ClientId
+		if clientId == 0 {
+			replyError(c, "Device forward message missing client id")
 			return
 		}
-		info := msg.Info
-		if info == nil {
-			log.Println("No device info provided by: ", id)
-			info = make(map[string]interface{})
-		}
-		port := msg.Port
-		device := NewDevice(ws, port, info)
-		if !pool.Register(device, id) {
-			wsReplyError(ws, fmt.Sprintln("Device id already taken: ", id))
+		payload := msg.Payload
+		if payload == nil {
+			replyError(c, "Device forward message missing payload")
 			return
 		}
-		defer pool.Unregister(id)
-		if err := device.Send(config); err != nil {
-			log.Println("Failed to send config to device: ", err)
-			return
+		dMsg := map[string]interface{}{
+			"message_type": "device_msg",
+			"payload":      payload,
 		}
-		for {
-			var msg ForwardMsg
-			if err := ws.Recv(&msg); err != nil {
-				log.Println("Error receiving from device: ", err)
-				return
-			}
-			if msg.Type != "forward" {
-				wsReplyError(ws, fmt.Sprintln("Unrecognized message type: ", msg.Type))
-				return
-			}
-			clientId := msg.ClientId
-			if clientId == 0 {
-				wsReplyError(ws, "Device forward message missing client id")
-				return
-			}
-			payload := msg.Payload
-			if payload == nil {
-				wsReplyError(ws, "Device forward message missing payload")
-				return
-			}
-			dMsg := map[string]interface{}{
-				"message_type": "device_msg",
-				"payload":      payload,
-			}
-			if err := device.ToClient(clientId, dMsg); err != nil {
-				log.Println("Device: ", id, " failed to send message to client: ", err)
-				wsReplyError(ws, fmt.Sprintln("Client disconnected: ", clientId))
-			}
+		if err := device.ToClient(clientId, dMsg); err != nil {
+			log.Println("Device: ", id, " failed to send message to client: ", err)
+			replyError(c, fmt.Sprintln("Client disconnected: ", clientId))
 		}
-	}()
+	}
 }
 
 // General client endpoints
@@ -194,7 +202,7 @@ func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config InfraConfig) {
 	log.Println(r.URL)
-	ws := NewJsonWs(w, r)
+	ws := NewJSONWs(w, r)
 	if ws == nil {
 		return
 	}
@@ -207,17 +215,17 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 			return
 		}
 		if msg.Type != "connect" {
-			wsReplyError(ws, "First client message must be 'connect'")
+			replyError(ws, "First client message must be 'connect'")
 			return
 		}
 		deviceId := msg.DeviceId
 		if deviceId == "" {
-			wsReplyError(ws, "Missing or invalid device_id")
+			replyError(ws, "Missing or invalid device_id")
 			return
 		}
 		device := pool.GetDevice(deviceId)
 		if device == nil {
-			wsReplyError(ws, fmt.Sprintln("Unknown device id: ", deviceId))
+			replyError(ws, fmt.Sprintln("Unknown device id: ", deviceId))
 			return
 		}
 		client := NewWsClient(ws)
@@ -241,12 +249,12 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 				return
 			}
 			if msg.Type != "forward" {
-				wsReplyError(ws, fmt.Sprintln("Unrecognized message type: ", msg.Type))
+				replyError(ws, fmt.Sprintln("Unrecognized message type: ", msg.Type))
 				return
 			}
 			payload := msg.Payload
 			if payload == nil {
-				wsReplyError(ws, "Client forward message missing payload")
+				replyError(ws, "Client forward message missing payload")
 				return
 			}
 			cMsg := ClientMsg{
@@ -255,7 +263,7 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 				Payload:  payload,
 			}
 			if err := device.Send(cMsg); err != nil {
-				wsReplyError(ws, "Device disconnected")
+				replyError(ws, "Device disconnected")
 			}
 		}
 	}()
@@ -388,10 +396,15 @@ type IceServer struct {
 
 // Utility functions
 
-// Log and reply with an error over a websocket
-func wsReplyError(ws *JsonWs, msg string) {
+// Interface implemented by any connection capable of sending in JSON format
+type JSONConn interface {
+	Send(val interface{}) error
+}
+
+// Log and reply with an error
+func replyError(c JSONConn, msg string) {
 	log.Println(msg)
-	if err := ws.Send(ErrorMsg{Error: msg}); err != nil {
+	if err := c.Send(ErrorMsg{Error: msg}); err != nil {
 		log.Println("Failed to send error reply: ", err)
 	}
 }
@@ -406,4 +419,12 @@ func replyJSON(w http.ResponseWriter, obj interface{}) error {
 // Whether a device file request should be intercepted and served from the signaling server instead
 func shouldIntercept(path string) bool {
 	return path == "/js/server_connector.js"
+}
+
+func fromEnvOrDefault(key string, def string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return def
+	}
+	return val
 }

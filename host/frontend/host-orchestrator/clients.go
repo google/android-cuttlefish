@@ -30,10 +30,10 @@ type Client interface {
 
 // Implements the client interface using a websocket connection
 type WsClient struct {
-	ws *JsonWs
+	ws *JSONWs
 }
 
-func NewWsClient(ws *JsonWs) *WsClient {
+func NewWsClient(ws *JSONWs) *WsClient {
 	return &WsClient{ws: ws}
 }
 

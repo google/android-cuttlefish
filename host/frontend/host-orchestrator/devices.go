@@ -25,7 +25,7 @@ import (
 
 type Device struct {
 	info interface{}
-	ws   *JsonWs
+	conn *JSONUnix
 	// Reverse proxy to the client files
 	Proxy *httputil.ReverseProxy
 	// Synchronizes access to the client list and the client count
@@ -35,7 +35,7 @@ type Device struct {
 	clientCount int
 }
 
-func NewDevice(ws *JsonWs, port int, info interface{}) *Device {
+func NewDevice(conn *JSONUnix, port int, info interface{}) *Device {
 	url, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	if err != nil {
 		// This should not happen
@@ -43,12 +43,12 @@ func NewDevice(ws *JsonWs, port int, info interface{}) *Device {
 		return nil
 	}
 	proxy := httputil.NewSingleHostReverseProxy(url)
-	return &Device{ws: ws, Proxy: proxy, info: info, clients: make(map[int]Client), clientCount: 0}
+	return &Device{conn: conn, Proxy: proxy, info: info, clients: make(map[int]Client), clientCount: 0}
 }
 
 // Sends a message to the device
 func (d *Device) Send(msg interface{}) error {
-	return d.ws.Send(msg)
+	return d.conn.Send(msg)
 }
 
 func (d *Device) Register(c Client) int {
