@@ -3,12 +3,14 @@ Maintainer: Cuttlefish Team
 Section: misc
 Priority: optional
 Build-Depends: config-package-dev,
-               debhelper-compat (= 12)
+               debhelper-compat (= 12),
+               golang
 Standards-Version: 4.5.0
 
 Package: cuttlefish-common
 Architecture: any
-Depends: binfmt-support [arm64],
+Depends: adduser,
+         binfmt-support [arm64],
          bridge-utils,
          dnsmasq-base,
          e2fsprogs,

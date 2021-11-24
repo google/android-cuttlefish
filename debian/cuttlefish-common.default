@@ -36,3 +36,7 @@
 #wifi_ipv6_prefix_length=
 #ethernet_ipv6_prefix=
 #ethernet_ipv6_prefix_length=
+
+# The port on which the orchestrator server should listen on for plain HTTP.
+# Defaults to 1080.
+# orchestrator_port=

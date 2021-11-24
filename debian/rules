@@ -15,3 +15,16 @@ include /usr/share/dpkg/buildflags.mk
 
 %:
 	dh $@ --with=config-package
+
+SOURCE_DIR := host/frontend/host-orchestrator
+override_dh_auto_build:
+	$(SOURCE_DIR)/build
+
+override_dh_installinit:
+	dh_installinit --name=cuttlefish-host-orchestrator
+	dh_installinit
+
+override_dh_auto_clean:
+	-rm -f $(SOURCE_DIR)/host-orchestrator
+	dh_auto_clean
+
