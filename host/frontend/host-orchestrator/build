@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+cd $(dirname $0)
+
+go build -v
+
+go test
+

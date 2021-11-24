@@ -10,6 +10,8 @@
 /debian/*.debhelper
 /debian/debhelper-build-stamp
 
+/host/frontend/host-orchestrator/host-orchestrator
+
 equivs.txt
 deps.txt
 ignore-depends-for-*.txt
