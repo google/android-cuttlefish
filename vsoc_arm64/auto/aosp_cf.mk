@@ -26,3 +26,6 @@ PRODUCT_MODEL := Cuttlefish arm64 auto
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+# TODO(b/205788876) remove this when openwrt has an image for arm.
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
