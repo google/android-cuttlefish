@@ -91,7 +91,6 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.vibrator@1.3",
     "android.hardware.vr@1.0",
     "android.hardware.weaver@1.0",
-    "android.hardware.wifi@1.5",
     "android.hardware.wifi.hostapd@1.3",
     "android.hardware.wifi.offload@1.0",
     "android.hidl.base@1.0",
@@ -169,15 +168,11 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // This version needs to be implemented (b/198331886)
     {"android.hardware.radio.config.", 1},
 
-    // No implementations on cuttlefish for wifi aidl hal
-    {"android.hardware.wifi.hostapd.", 1},
-
     // types-only packages, which never expect a default implementation
     {"android.hardware.uwb.fira_android.", 1},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
-    {"android.hardware.wifi.hostapd.", 1},
 };
 
 // AOSP packages which are never considered
