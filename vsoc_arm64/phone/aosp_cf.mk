@@ -37,6 +37,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 # All components inherited here go to vendor image
 #
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
+# TODO(b/205788876) remove this when openwrt has an image for arm.
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
 
 # Nested virtualization support
 $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
