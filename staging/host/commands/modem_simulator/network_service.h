@@ -20,6 +20,7 @@
 #include "host/commands/modem_simulator/data_service.h"
 #include "host/commands/modem_simulator/misc_service.h"
 #include "host/commands/modem_simulator/modem_service.h"
+#include "host/commands/modem_simulator/network_service_constants.h"
 #include "host/commands/modem_simulator/sim_service.h"
 
 namespace cuttlefish {
@@ -202,50 +203,24 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
                            * Reference: 3GPP TS 138.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
                            * Range [-23, 40], INT_MAX means invalid/unreported. */
 
-    // Default invalid value
-    SignalStrength():
-      gsm_rssi(99),     // [0, 31]
-      gsm_ber(0),       // [7, 99]
-      cdma_dbm(125),    // [0, 120]
-      cdma_ecio(165),   // [0, 160]
-      evdo_dbm(125),    // [0, 120]
-      evdo_ecio(165),   // [0, 160]
-      evdo_snr(-1),     // [0, 8]
-      lte_rssi(99),     // [0, 31]
-      lte_rsrp(-1),     // [43,140]
-      lte_rsrq(-5),     // [-3,34]
-      lte_rssnr(-205),  // [-200, 300]
-      lte_cqi(-1),      // [0, 15]
-      lte_ta(-1),       // [0, 1282]
-      tdscdma_rscp(99), // [0, 96]
-      wcdma_rssi(99),   // [0, 31]
-      wcdma_ber(0),     // [7, 99]
-      nr_ss_rsrp(0),    // [44, 140]
-      nr_ss_rsrq(0),    // [3, 10]
-      nr_ss_sinr(45),   // [-23,40]
-      nr_csi_rsrp(0),   // [44, 140]
-      nr_csi_rsrq(0),   // [3, 20]
-      nr_csi_sinr(30)   // [-23, 23]
-      {}
-
-    // After radio power on, off, or set network mode, reset to invalid value
-    void Reset() {
-      gsm_rssi = INT_MAX;
-      gsm_ber = INT_MAX;
-      cdma_dbm = INT_MAX;
-      cdma_ecio = INT_MAX;
-      evdo_dbm = INT_MAX;
-      evdo_ecio = INT_MAX;
-      evdo_snr = INT_MAX;
-      lte_rssi = INT_MAX;
+    // Set to values representing an unknown or not detectable signal.
+    void SetUnknownValues() {
+      gsm_rssi = kRssiUnknownValue;
+      gsm_ber = kBerUnknownValue;
+      cdma_dbm = kDbmUnknownValue;
+      cdma_ecio = kEcioUnknownValue;
+      evdo_dbm = kDbmUnknownValue;
+      evdo_ecio = kEcioUnknownValue;
+      evdo_snr = kSnrUnknownValue;
+      lte_rssi = kRssiUnknownValue;
       lte_rsrp = INT_MAX;
       lte_rsrq = INT_MAX;
       lte_rssnr = INT_MAX;
       lte_cqi = INT_MAX;
       lte_ta = INT_MAX;
       tdscdma_rscp = INT_MAX;
-      wcdma_rssi = INT_MAX;
-      wcdma_ber = INT_MAX;
+      wcdma_rssi = kRssiUnknownValue;
+      wcdma_ber = kBerUnknownValue;
       nr_ss_rsrp = INT_MAX;
       nr_ss_rsrq = INT_MAX;
       nr_ss_sinr = INT_MAX;
