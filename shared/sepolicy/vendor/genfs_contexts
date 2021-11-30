@@ -41,6 +41,8 @@ cf_rtc_wakeup_alarmtimer(/devices/platform/rtc_cmos, 0, 1)
 #genfscon sysfs /devices/platform/GFSH0001:00/power_supply u:object_r:sysfs_batteryinfo:s0
 #genfscon sysfs /devices/platform/GFSH0001:00/power_supply/ac/wakeup3 u:object_r:sysfs_wakeup:s0
 #genfscon sysfs /devices/platform/GFSH0001:00/power_supply/battery/wakeup4 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim0/net u:object_r:sysfs_net:s0
+genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim1/net u:object_r:sysfs_net:s0
 
 # crosvm (arm64)
 cf_pci_block_device(/devices/platform/10000.pci, 0x7, 7)
