@@ -19,6 +19,7 @@
 #include <libwebsockets.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
 
 namespace cuttlefish {
@@ -28,7 +29,9 @@ namespace webrtc_streaming {
 class UnixServerConnection : public ServerConnection {
  public:
   UnixServerConnection(SharedFD conn,
-                       std::weak_ptr<ServerConnectionObserver> observer);
+                       std::weak_ptr<ServerConnectionObserver> observer,
+                       SharedFD thread_notifier_);
+  ~UnixServerConnection() override;
 
   bool Send(const Json::Value& msg) override;
 
@@ -39,6 +42,10 @@ class UnixServerConnection : public ServerConnection {
   SharedFD conn_;
   std::mutex write_mtx_;
   std::weak_ptr<ServerConnectionObserver> observer_;
+  // The event fd must be declared before the thread to ensure it's initialized
+  // before the thread starts and is safe to be accessed from it.
+  SharedFD thread_notifier_;
+  std::atomic_bool running_ = true;
   std::thread thread_;
 };
 
@@ -158,7 +165,12 @@ std::unique_ptr<ServerConnection> ServerConnection::Connect(
       // connection won't be accessed.
       return nullptr;
     }
-    ret.reset(new UnixServerConnection(conn, observer));
+    auto thread_notifier = SharedFD::Event();
+    if (!thread_notifier->IsOpen()) {
+      LOG(ERROR) << "Failed to create eventfd for background thread";
+      return nullptr;
+    }
+    ret.reset(new UnixServerConnection(conn, observer, thread_notifier));
   } else {
     // This can be a local variable since the ws connection will keep a
     // reference to it.
@@ -175,8 +187,26 @@ std::unique_ptr<ServerConnection> ServerConnection::Connect(
 // UnixServerConnection implementation
 
 UnixServerConnection::UnixServerConnection(
-    SharedFD conn, std::weak_ptr<ServerConnectionObserver> observer)
-    : conn_(conn), observer_(observer), thread_([this]() { ReadLoop(); }) {}
+    SharedFD conn, std::weak_ptr<ServerConnectionObserver> observer,
+    SharedFD thread_notifier)
+    : conn_(conn),
+      observer_(observer),
+      thread_notifier_(thread_notifier),
+      thread_([this]() { ReadLoop(); }) {}
+
+UnixServerConnection::~UnixServerConnection() {
+  if (!thread_notifier_->IsOpen()) {
+    // The thread won't be running if this isn't open
+    return;
+  }
+  running_ = false;
+  if (thread_notifier_->EventfdWrite(1) < 0) {
+    LOG(ERROR) << "Failed to notify background thread, this thread may block";
+  }
+  if (thread_.joinable()) {
+    thread_.join();
+  }
+}
 
 bool UnixServerConnection::Send(const Json::Value& msg) {
   Json::StreamWriterBuilder factory;
@@ -202,25 +232,49 @@ void UnixServerConnection::Connect() {
 }
 
 void UnixServerConnection::ReadLoop() {
+  if (!thread_notifier_->IsOpen()) {
+    LOG(ERROR) << "The UnixServerConnection's background thread is unable to "
+                  "receive notifications so it can't run";
+    return;
+  }
   std::vector<uint8_t> buffer(4096, 0);
-  while (true) {
-    auto size = conn_->Recv(buffer.data(), 0, MSG_TRUNC | MSG_PEEK);
-    if (size > buffer.size()) {
-      // Enlarge enough to accommodate size bytes and be a multiple of 4096
-      auto new_size = (size + 4095) & ~4095;
-      buffer.resize(new_size);
-    }
-    auto res = conn_->Recv(buffer.data(), buffer.size(), MSG_TRUNC);
+  while (running_) {
+    SharedFDSet rset;
+    rset.Set(thread_notifier_);
+    rset.Set(conn_);
+    auto res = Select(&rset, nullptr, nullptr, nullptr);
     if (res < 0) {
-      LOG(ERROR) << "Failed to read from server: " << conn_->StrError();
-      if (auto observer = observer_.lock(); observer) {
-        observer->OnError(conn_->StrError());
-      }
-      return;
+      LOG(ERROR) << "Failed to select from background thread";
+      break;
     }
-    auto observer = observer_.lock();
-    if (observer) {
-      observer->OnReceive(buffer.data(), res, false);
+    if (rset.IsSet(thread_notifier_)) {
+      eventfd_t val;
+      auto res = thread_notifier_->EventfdRead(&val);
+      if (res < 0) {
+        LOG(ERROR) << "Error reading from event fd: "
+                   << thread_notifier_->StrError();
+        break;
+      }
+    }
+    if (rset.IsSet(conn_)) {
+      auto size = conn_->Recv(buffer.data(), 0, MSG_TRUNC | MSG_PEEK);
+      if (size > buffer.size()) {
+        // Enlarge enough to accommodate size bytes and be a multiple of 4096
+        auto new_size = (size + 4095) & ~4095;
+        buffer.resize(new_size);
+      }
+      auto res = conn_->Recv(buffer.data(), buffer.size(), MSG_TRUNC);
+      if (res < 0) {
+        LOG(ERROR) << "Failed to read from server: " << conn_->StrError();
+        if (auto observer = observer_.lock(); observer) {
+          observer->OnError(conn_->StrError());
+        }
+        return;
+      }
+      auto observer = observer_.lock();
+      if (observer) {
+        observer->OnReceive(buffer.data(), res, false);
+      }
     }
   }
 }
