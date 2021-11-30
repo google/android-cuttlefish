@@ -1,6 +1,6 @@
-cvd_host_packages := $(SOONG_HOST_OUT)/cvd-host_package.tar.gz
+cvd_host_packages := $(HOST_OUT)/cvd-host_package.tar.gz
 ifeq ($(HOST_CROSS_OS)_$(HOST_CROSS_ARCH),linux_bionic_arm64)
-  cvd_host_packages += $(SOONG_OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)/cvd-host_package.tar.gz
+  cvd_host_packages += $(OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)/cvd-host_package.tar.gz
 endif
 
 .PHONY: hosttar
