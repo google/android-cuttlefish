@@ -241,6 +241,31 @@ int CvdMain(int argc, char** argv, char** envp) {
   std::vector<std::string> args = ArgsToVec(argc, argv);
   std::vector<Flag> flags;
 
+  // TODO(b/206893146): Make this decision inside the server.
+  if (args[0] == "acloud") {
+    bool passthrough = true;
+    ParseFlags({GflagsCompatFlag("acloud_passthrough", passthrough)}, args);
+    if (passthrough) {
+      auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
+      if (android_top == "") {
+        LOG(ERROR) << "Could not find android environment. Please run "
+                   << "\"source build/envsetup.sh\".";
+        return 1;
+      }
+      // TODO(b/206893146): Detect what the platform actually is.
+      auto py_acloud_path =
+          android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
+      char** new_argv = new char*[args.size() + 1];
+      for (size_t i = 0; i < args.size(); i++) {
+        new_argv[i] = args[i].data();
+      }
+      new_argv[args.size()] = nullptr;
+      execv(py_acloud_path.data(), new_argv);
+      delete[] new_argv;
+      PLOG(ERROR) << "execv(" << py_acloud_path << ", ...) failed";
+      return 1;
+    }
+  }
   bool clean = false;
   flags.emplace_back(GflagsCompatFlag("clean", clean));
 
