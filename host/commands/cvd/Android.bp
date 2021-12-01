@@ -19,6 +19,7 @@ package {
 
 cc_binary_host {
     name: "cvd",
+    symlinks: ["acloud"],
     srcs: [
         "main.cc",
     ],
