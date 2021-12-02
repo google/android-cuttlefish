@@ -135,11 +135,40 @@ class KernelLogMonitor : public CommandSource,
   std::vector<SharedFD> event_pipe_read_ends_;
 };
 
+class LogTeeCreator {
+ public:
+  INJECT(LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
+
+  Command CreateLogTee(Command& cmd, const std::string& process_name) {
+    auto name_with_ext = process_name + "_logs.fifo";
+    auto logs_path = instance_.PerInstanceInternalPath(name_with_ext.c_str());
+    auto logs = SharedFD::Fifo(logs_path, 0666);
+    if (!logs->IsOpen()) {
+      LOG(FATAL) << "Failed to create fifo for " << process_name
+                 << " output: " << logs->StrError();
+    }
+
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
+
+    Command log_tee_cmd(HostBinaryPath("log_tee"));
+    log_tee_cmd.AddParameter("--process_name=rootcanal");
+    log_tee_cmd.AddParameter("--log_fd_in=", logs);
+
+    return log_tee_cmd;
+  }
+
+ private:
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
 class RootCanal : public CommandSource {
  public:
   INJECT(RootCanal(const CuttlefishConfig& config,
-                   const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                   const CuttlefishConfig::InstanceSpecific& instance,
+                   LogTeeCreator& log_tee))
+      : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -161,24 +190,9 @@ class RootCanal : public CommandSource {
     command.AddParameter("--default_commands_file=",
                          instance_.rootcanal_default_commands_file());
 
-    auto logs_path = instance_.PerInstanceInternalPath("rootcanal_logs.fifo");
-    auto logs = SharedFD::Fifo(logs_path, 0666);
-    if (!logs->IsOpen()) {
-      LOG(FATAL) << "Failed to create log fifo for root canal output: "
-                 << logs->StrError();
-      return {};
-    }
-
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
-
-    Command log_tee_cmd(HostBinaryPath("log_tee"));
-    log_tee_cmd.AddParameter("--process_name=rootcanal");
-    log_tee_cmd.AddParameter("--log_fd_in=", logs);
-
     std::vector<Command> commands;
+    commands.emplace_back(log_tee_.CreateLogTee(command, "rootcanal"));
     commands.emplace_back(std::move(command));
-    commands.emplace_back(std::move(log_tee_cmd));
     return commands;
   }
 
@@ -192,6 +206,7 @@ class RootCanal : public CommandSource {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  LogTeeCreator& log_tee_;
 };
 
 class LogcatReceiver : public CommandSource, public DiagnosticInformation {
@@ -647,8 +662,9 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
 class WmediumdServer : public CommandSource {
  public:
   INJECT(WmediumdServer(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                        const CuttlefishConfig::InstanceSpecific& instance,
+                        LogTeeCreator& log_tee))
+      : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -657,24 +673,9 @@ class WmediumdServer : public CommandSource {
     cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
     cmd.AddParameter("-c", config_path_);
 
-    auto logs_path = instance_.PerInstanceInternalPath("wmediumd_logs.fifo");
-    auto logs = SharedFD::Fifo(logs_path, 0666);
-    if (!logs->IsOpen()) {
-      LOG(FATAL) << "Failed to create log fifo for wmediumd output: "
-                 << logs->StrError();
-      return {};
-    }
-
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
-
-    Command log_tee_cmd(HostBinaryPath("log_tee"));
-    log_tee_cmd.AddParameter("--process_name=wmediumd");
-    log_tee_cmd.AddParameter("--log_fd_in=", logs);
-
     std::vector<Command> commands;
+    commands.emplace_back(log_tee_.CreateLogTee(cmd, "wmediumd"));
     commands.emplace_back(std::move(cmd));
-    commands.emplace_back(std::move(log_tee_cmd));
     return commands;
   }
 
@@ -714,6 +715,7 @@ class WmediumdServer : public CommandSource {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  LogTeeCreator& log_tee_;
   std::string config_path_;
 };
 
@@ -742,8 +744,9 @@ class VmmCommands : public CommandSource {
 class OpenWrt : public CommandSource {
  public:
   INJECT(OpenWrt(const CuttlefishConfig& config,
-                 const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                 const CuttlefishConfig::InstanceSpecific& instance,
+                 LogTeeCreator& log_tee))
+      : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -795,24 +798,9 @@ class OpenWrt : public CommandSource {
 
     ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
 
-    auto logs_path = instance_.PerInstanceInternalPath("crosvm_openwrt.fifo");
-    auto crosvm_logs = SharedFD::Fifo(logs_path, 0666);
-    if (!crosvm_logs->IsOpen()) {
-      LOG(FATAL) << "Failed to create log fifo for OpenWRT crosvm's output: "
-                 << crosvm_logs->StrError();
-      return {};
-    }
-
-    ap_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut, crosvm_logs);
-    ap_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr, crosvm_logs);
-
-    Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
-    crosvm_log_tee_cmd.AddParameter("--process_name=openwrt_crosvm");
-    crosvm_log_tee_cmd.AddParameter("--log_fd_in=", crosvm_logs);
-
     std::vector<Command> commands;
+    commands.emplace_back(log_tee_.CreateLogTee(ap_cmd.Cmd(), "openwrt"));
     commands.emplace_back(std::move(ap_cmd.Cmd()));
-    commands.emplace_back(std::move(crosvm_log_tee_cmd));
     return commands;
   }
 
@@ -833,6 +821,7 @@ class OpenWrt : public CommandSource {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  LogTeeCreator& log_tee_;
 };
 
 using PublicDeps = fruit::Required<const CuttlefishConfig, VmManager,
