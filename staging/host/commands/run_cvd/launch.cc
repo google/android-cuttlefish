@@ -161,7 +161,25 @@ class RootCanal : public CommandSource {
     command.AddParameter("--default_commands_file=",
                          instance_.rootcanal_default_commands_file());
 
-    return single_element_emplace(std::move(command));
+    auto logs_path = instance_.PerInstanceInternalPath("rootcanal_logs.fifo");
+    auto logs = SharedFD::Fifo(logs_path, 0666);
+    if (!logs->IsOpen()) {
+      LOG(FATAL) << "Failed to create log fifo for root canal output: "
+                 << logs->StrError();
+      return {};
+    }
+
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
+
+    Command log_tee_cmd(HostBinaryPath("log_tee"));
+    log_tee_cmd.AddParameter("--process_name=rootcanal");
+    log_tee_cmd.AddParameter("--log_fd_in=", logs);
+
+    std::vector<Command> commands;
+    commands.emplace_back(std::move(command));
+    commands.emplace_back(std::move(log_tee_cmd));
+    return commands;
   }
 
   // Feature
@@ -638,7 +656,26 @@ class WmediumdServer : public CommandSource {
     cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
     cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
     cmd.AddParameter("-c", config_path_);
-    return single_element_emplace(std::move(cmd));
+
+    auto logs_path = instance_.PerInstanceInternalPath("wmediumd_logs.fifo");
+    auto logs = SharedFD::Fifo(logs_path, 0666);
+    if (!logs->IsOpen()) {
+      LOG(FATAL) << "Failed to create log fifo for wmediumd output: "
+                 << logs->StrError();
+      return {};
+    }
+
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
+
+    Command log_tee_cmd(HostBinaryPath("log_tee"));
+    log_tee_cmd.AddParameter("--process_name=wmediumd");
+    log_tee_cmd.AddParameter("--log_fd_in=", logs);
+
+    std::vector<Command> commands;
+    commands.emplace_back(std::move(cmd));
+    commands.emplace_back(std::move(log_tee_cmd));
+    return commands;
   }
 
   // Feature
@@ -753,9 +790,30 @@ class OpenWrt : public CommandSource {
     ap_cmd.Cmd().AddParameter("--params=\"root=" + config_.ap_image_dev_path() +
                               "\"");
 
+    auto kernel_logs_path = instance_.PerInstancePath("crosvm_openwrt.log");
+    ap_cmd.AddSerialConsoleReadOnly(kernel_logs_path);
+
     ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
 
-    return single_element_emplace(std::move(ap_cmd.Cmd()));
+    auto logs_path = instance_.PerInstanceInternalPath("crosvm_openwrt.fifo");
+    auto crosvm_logs = SharedFD::Fifo(logs_path, 0666);
+    if (!crosvm_logs->IsOpen()) {
+      LOG(FATAL) << "Failed to create log fifo for OpenWRT crosvm's output: "
+                 << crosvm_logs->StrError();
+      return {};
+    }
+
+    ap_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut, crosvm_logs);
+    ap_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr, crosvm_logs);
+
+    Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
+    crosvm_log_tee_cmd.AddParameter("--process_name=openwrt_crosvm");
+    crosvm_log_tee_cmd.AddParameter("--log_fd_in=", crosvm_logs);
+
+    std::vector<Command> commands;
+    commands.emplace_back(std::move(ap_cmd.Cmd()));
+    commands.emplace_back(std::move(crosvm_log_tee_cmd));
+    return commands;
   }
 
   // Feature
