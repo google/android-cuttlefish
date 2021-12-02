@@ -161,7 +161,25 @@ class RootCanal : public CommandSource {
     command.AddParameter("--default_commands_file=",
                          instance_.rootcanal_default_commands_file());
 
-    return single_element_emplace(std::move(command));
+    auto logs_path = instance_.PerInstanceInternalPath("rootcanal_logs.fifo");
+    auto logs = SharedFD::Fifo(logs_path, 0666);
+    if (!logs->IsOpen()) {
+      LOG(FATAL) << "Failed to create log fifo for root canal output: "
+                 << logs->StrError();
+      return {};
+    }
+
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
+
+    Command log_tee_cmd(HostBinaryPath("log_tee"));
+    log_tee_cmd.AddParameter("--process_name=rootcanal");
+    log_tee_cmd.AddParameter("--log_fd_in=", logs);
+
+    std::vector<Command> commands;
+    commands.emplace_back(std::move(command));
+    commands.emplace_back(std::move(log_tee_cmd));
+    return commands;
   }
 
   // Feature
