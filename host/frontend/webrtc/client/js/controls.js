@@ -49,6 +49,103 @@ function createToggleControl(elm, iconName, onChangeCb) {
   };
 }
 
+function createButtonListener(button_id_class, func,
+  deviceConnection, listener) {
+  let buttons = [];
+  let ele = document.getElementById(button_id_class);
+  if (ele != null) {
+    buttons.push(ele);
+  } else {
+    buttons = document.getElementsByClassName(button_id_class);
+  }
+  for (var button of buttons) {
+    if (func != null) {
+      button.onclick = func;
+    }
+    button.addEventListener('mousedown', listener);
+  }
+}
+
+function createInputListener(input_id, func, listener) {
+  input = document.getElementById(input_id);
+  if (func != null) {
+    input.oninput = func;
+  }
+  input.addEventListener('input', listener);
+}
+
+function validateMacAddress(val) {
+  var regex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+  return (regex.test(val));
+}
+
+$('[validate-mac]').bind('input', function() {
+    var button = document.getElementById("bluetooth-wizard-device");
+    if (validateMacAddress($(this).val())) {
+      button.disabled = false;
+      this.setCustomValidity('');
+    } else {
+      button.disabled = true;
+      this.setCustomValidity('MAC address invalid');
+    }
+});
+
+function parseDevice(device) {
+  let id = device.substring(0, device.indexOf(":"));
+  device = device.substring(device.indexOf(":")+1);
+  let name = device.substring(0, device.indexOf("@"));
+  let mac = device.substring(device.indexOf("@")+1);
+  return [id, name, mac];
+}
+
+function btUpdateAdded(devices) {
+  let deviceArr = devices.split('\r\n');
+  if (deviceArr[0].indexOf("Devices:") >= 0) {
+    return false;
+  }
+  if (deviceArr[0].indexOf(":") >= 0 && deviceArr[0].indexOf("@") >= 0) {
+    let [id, name, mac] = parseDevice(deviceArr[0]);
+    let div = document.getElementById('bluetooth-wizard-confirm').getElementsByClassName('bluetooth-text')[1];
+    div.innerHTML = "";
+    div.innerHTML += "<p>Name: <b>" + id + "</b></p>";
+    div.innerHTML += "<p>Type: <b>" + name + "</b></p>";
+    div.innerHTML += "<p>MAC Addr: <b>" + mac + "</b></p>";
+    return true;
+  }
+  return false;
+}
+
+function btUpdateDeviceList(devices) {
+  let deviceArr = devices.split('\r\n');
+  if (deviceArr[0].indexOf("Devices:") >= 0) {
+    let div = document.getElementById('bluetooth-list').getElementsByClassName('bluetooth-text')[0];
+    div.innerHTML = "";
+    let count = 0;
+    for (var device of deviceArr.slice(1)) {
+      if (device.indexOf("Phys:") >= 0) {
+        break;
+      }
+      count++;
+      if (device.indexOf("deleted") >= 0) {
+        continue;
+      }
+      let [id, name, mac] = parseDevice(device);
+      let innerDiv = '<div><button title="Delete" data-device-id="'
+      innerDiv += id;
+      innerDiv += '" class="bluetooth-list-trash material-icons">delete</button>';
+      innerDiv += name;
+      if (mac) {
+        innerDiv += " | "
+        innerDiv += mac;
+      }
+      innerDiv += '</div>';
+      div.innerHTML += innerDiv;
+    }
+    return count;
+  }
+  return -1;
+}
+
 function createControlPanelButton(
     command, title, icon_name, listener,
     parent_id = 'control-panel-default-buttons') {
