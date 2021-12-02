@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     // There is no guarantee of success all the time since log line boundaries
     // could be out sync with the reads, but that's ok.
     if (android::base::StartsWith(trimmed, "[INFO")) {
-      LOG(INFO) << trimmed;
+      LOG(DEBUG) << trimmed;
     } else if (android::base::StartsWith(trimmed, "[ERROR")) {
       LOG(ERROR) << trimmed;
     } else if (android::base::StartsWith(trimmed, "[WARNING")) {
