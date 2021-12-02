@@ -293,7 +293,7 @@ int AssembleCvdMain(int argc, char** argv) {
   for (const auto& help_flag : help_flags) {
     if (!help_flag.Parse(args)) {
       LOG(ERROR) << "Failed to process help flag.";
-      return false;
+      return 1;
     }
   }
 
@@ -301,13 +301,16 @@ int AssembleCvdMain(int argc, char** argv) {
   auto flag_features = injector.getMultibindings<FlagFeature>();
   if (!FlagFeature::ProcessFlags(flag_features, args)) {
     LOG(ERROR) << "Failed to parse flags.";
-    return false;
+    return 1;
   }
+
+  CHECK(GetKernelConfigAndSetDefaults(&kernel_config))
+      << "Failed to parse arguments";
 
   if (help || help_str != "") {
     LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
     LOG(WARNING) << "In the meantime, call `launch_cvd --help`";
-    return false;
+    return 1;
   } else if (helpxml) {
     if (!FlagFeature::WriteGflagsHelpXml(flag_features, std::cout)) {
       LOG(ERROR) << "Failure in writing gflags helpxml output";
@@ -317,9 +320,6 @@ int AssembleCvdMain(int argc, char** argv) {
   // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
-
-  CHECK(GetKernelConfigAndSetDefaults(&kernel_config))
-      << "Failed to parse arguments";
 
   auto config = InitFilesystemAndCreateConfig(std::move(fetcher_config),
                                               kernel_config, injector);
