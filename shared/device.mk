@@ -317,14 +317,6 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/surround_sound_configuration_5_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/surround_sound_configuration_5_0.xml \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
 
-# TODO(b/205065320): remove this when wifi vendor apex support mac80211_hwsim
-ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
-    frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml \
-
-endif
-
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.input.config
 else
@@ -711,17 +703,8 @@ PRODUCT_PACKAGES += linker.recovery shell_and_utilities_recovery
 endif
 
 # wifi
-
-# TODO(b/205065320): remove this when wifi vendor apex support mac80211_hwsim
-LOCAL_USE_WIFI_VENDOR_APEX := false
-ifneq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-LOCAL_USE_WIFI_VENDOR_APEX := true
-endif
-endif
-
-ifeq ($(LOCAL_USE_WIFI_VENDOR_APEX),true)
-
+ifneq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += com.google.cf.wifi
 # Demonstrate multi-installed vendor APEXes by installing another wifi HAL vendor APEX
 # which does not include the passpoint feature XML.
@@ -737,8 +720,17 @@ PRODUCT_PACKAGES += com.google.cf.wifi.no-passpoint
 $(call add_soong_config_namespace, wpa_supplicant)
 $(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
 $(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
-# TODO(b/205065320): Convert com.google.cf.wifi to use mac8011_hwsim_virtio
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
+else
+PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/apex/com.google.cf.wifi_hwsim
+PRODUCT_PACKAGES += com.google.cf.wifi_hwsim
+$(call add_soong_config_namespace, wpa_supplicant)
+$(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
+$(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
+
+$(call soong_config_append,cvdhost,enforce_mac80211_hwsim,true)
+endif
 else
 
 PRODUCT_PACKAGES += \
@@ -757,10 +749,8 @@ ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += \
     mac80211_create_radios \
     hostapd \
-    android.hardware.wifi@1.0-service
-
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/guest/services/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
+    android.hardware.wifi@1.0-service \
+    init.wifi.sh
 
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
 

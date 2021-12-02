@@ -1,0 +1,8 @@
+
+service init_wifi_sh /vendor/bin/init_wifi.sh
+    class late_start
+    user root
+    group root wakelock wifi
+    oneshot
+    disabled    # Started on post-fs-data
+

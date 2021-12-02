@@ -12,26 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+soong_namespace {
+    imports: [
+        "device/generic/goldfish",
+    ],
+}
+
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 prebuilt_etc {
-    name: "com.google.cf.wifi.rc",
-    src: "com.google.cf.wifi.rc",
+    name: "com.google.cf.wifi_hwsim.rc",
+    src: "com.google.cf.wifi_hwsim.rc",
     installable: false,
 }
 
-prebuilt_etc {
-    name: "wpa_supplicant.conf.cf",
-    src: ":wpa_supplicant_template.conf",
-    filename: "wpa_supplicant.conf",
-    relative_install_path: "wifi",
-    installable: false,
+cc_binary {
+    name: "android.hardware.wifi@1.0-service_cf",
+    defaults: ["android.hardware.wifi@1.0-service_default"],
+    shared_libs: ["libwifi-hal_cf"],
+    static_libs: ["android.hardware.wifi@1.0-service-lib_cf"],
 }
 
-apex_defaults {
-    name: "com.google.cf.wifi.defaults",
+cc_library_static {
+    name: "android.hardware.wifi@1.0-service-lib_cf",
+    defaults: ["android.hardware.wifi@1.0-service-lib_defaults"],
+    shared_libs: ["libwifi-hal_cf"],
+}
+
+cc_library_shared {
+    name: "libwifi-hal_cf",
+    defaults: ["libwifi-hal_defaults"],
+    whole_static_libs: ["libwifi-hal-emu"],
+}
+
+apex {
+    name: "com.google.cf.wifi_hwsim",
     // Name expected by wpa_supplicant when it looks for config files.
     apex_name: "com.android.wifi.hal",
     manifest: "apex_manifest.json",
@@ -43,31 +60,20 @@ apex_defaults {
     // Install the apex in /vendor/apex
     soc_specific: true,
     binaries: [
+        "mac80211_create_radios",
         "rename_netiface",
-        "setup_wifi",
         "wpa_supplicant_cf",
+        "hostapd_cf",
+        "android.hardware.wifi@1.0-service_cf",
     ],
+    sh_binaries: ["init.wifi.sh_apex"],
     prebuilts: [
+        "android.hardware.wifi.passpoint.prebuilt.xml",
         "android.hardware.wifi.prebuilt.xml",
-        "com.google.cf.wifi.rc",
+        "com.google.cf.wifi_hwsim.rc",
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
     ],
     // TODO(b/202992812): Use the vintf_fragment from the wpa_supplicant project.
-    vintf_fragments: ["com.google.cf.wifi.xml"],
-}
-
-apex {
-    name: "com.google.cf.wifi",
-    defaults: ["com.google.cf.wifi.defaults"],
-    prebuilts: [
-        "android.hardware.wifi.passpoint.prebuilt.xml",
-    ],
-    multi_install_skip_symbol_files: true,
-}
-
-apex {
-    name: "com.google.cf.wifi.no-passpoint",
-    defaults: ["com.google.cf.wifi.defaults"],
-    multi_install_skip_symbol_files: true,
+    vintf_fragments: ["com.google.cf.wifi_hwsim.xml"],
 }
