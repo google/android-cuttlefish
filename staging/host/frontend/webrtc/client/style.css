@@ -166,6 +166,38 @@ body {
 #bluetooth-console-cmd-label {
   color: white;
 }
+.bluetooth-text, .bluetooth-text-bold, .bluetooth-text-field input {
+  font: normal 18px/1 "Open Sans", sans-serif;
+}
+.bluetooth-text, .bluetooth-text-bold {
+  color: white;
+}
+.bluetooth-text-bold {
+  font: bold;
+}
+.bluetooth-button {
+  text-align: center;
+}
+.bluetooth-drop-down select {
+  font: normal 18px/1 "Open Sans", sans-serif;
+  color: black;
+  width: 500px;
+  margin: 5px;
+  rows: 10;
+  columns: 60;
+}
+.bluetooth-text-field input {
+  color: black;
+  width: 500px;
+  margin: 5px;
+  rows: 10;
+  columns: 60;
+}
+.bluetooth-list-trash {
+  background:    #00000000;
+  border:        0px;
+  color:         #ffffff;
+}
 
 .control-panel-column {
   width: 50px;
