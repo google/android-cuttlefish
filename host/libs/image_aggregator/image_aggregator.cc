@@ -573,6 +573,12 @@ void CreateQcowOverlay(const std::string& crosvm_path,
   crosvm_qcow2_cmd.AddParameter("create_qcow2");
   crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
   crosvm_qcow2_cmd.AddParameter(output_overlay_path);
+
+  auto devnull = SharedFD::Open("/dev/null", O_RDONLY);
+  CHECK(devnull->IsOpen()) << "Failed to open /dev/null";
+  crosvm_qcow2_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, devnull);
+  crosvm_qcow2_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, devnull);
+
   int success = crosvm_qcow2_cmd.Start().Wait();
   if (success != 0) {
     LOG(FATAL) << "Unable to run crosvm create_qcow2. Exited with status " << success;
