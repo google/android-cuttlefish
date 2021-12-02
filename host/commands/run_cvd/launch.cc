@@ -656,7 +656,26 @@ class WmediumdServer : public CommandSource {
     cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
     cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
     cmd.AddParameter("-c", config_path_);
-    return single_element_emplace(std::move(cmd));
+
+    auto logs_path = instance_.PerInstanceInternalPath("wmediumd_logs.fifo");
+    auto logs = SharedFD::Fifo(logs_path, 0666);
+    if (!logs->IsOpen()) {
+      LOG(FATAL) << "Failed to create log fifo for wmediumd output: "
+                 << logs->StrError();
+      return {};
+    }
+
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
+
+    Command log_tee_cmd(HostBinaryPath("log_tee"));
+    log_tee_cmd.AddParameter("--process_name=wmediumd");
+    log_tee_cmd.AddParameter("--log_fd_in=", logs);
+
+    std::vector<Command> commands;
+    commands.emplace_back(std::move(cmd));
+    commands.emplace_back(std::move(log_tee_cmd));
+    return commands;
   }
 
   // Feature
