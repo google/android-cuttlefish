@@ -140,7 +140,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_path() const {
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
-  return AbsolutePath(PerInstancePath("logcat"));
+  return AbsolutePath(PerInstanceLogPath("logcat"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
@@ -158,7 +158,7 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
-  return AbsolutePath(PerInstancePath("launcher.log"));
+  return AbsolutePath(PerInstanceLogPath("launcher.log"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
@@ -492,6 +492,16 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
     return PerInstancePath(kInternalDirName);
   }
   auto relative_path = (std::string(kInternalDirName) + "/") + file_name;
+  return PerInstancePath(relative_path.c_str());
+}
+
+std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
+    const std::string& file_name) const {
+  if (file_name.size() == 0) {
+    // Don't append a / if file_name is empty.
+    return PerInstancePath(kLogDirName);
+  }
+  auto relative_path = (std::string(kLogDirName) + "/") + file_name;
   return PerInstancePath(relative_path.c_str());
 }
 

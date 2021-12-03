@@ -97,6 +97,22 @@ bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 # define O_TMPFILE (020000000 | O_DIRECTORY)
 #endif
 
+void CreateLegacyLogSymlinks(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::string log_files[] = {
+      "kernel.log",  "launcher.log",        "logcat",
+      "metrics.log", "modem_simulator.log",
+  };
+  for (const auto& log_file : log_files) {
+    auto symlink_location = instance.PerInstancePath(log_file.c_str());
+    auto log_target = "logs/" + log_file;  // Relative path
+    if (symlink(log_target.c_str(), symlink_location.c_str()) != 0) {
+      PLOG(FATAL) << "symlink(\"" << log_target << ", " << symlink_location
+                  << ") failed";
+    }
+  }
+}
+
 const CuttlefishConfig* InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, KernelConfig kernel_config,
     fruit::Injector<>& injector) {
@@ -198,6 +214,9 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       CHECK(EnsureDirectoryExists(shared_dir));
       auto recording_dir = instance.instance_dir() + "/recording";
       CHECK(EnsureDirectoryExists(recording_dir));
+      CHECK(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
+      // TODO(schuffelen): Move this code somewhere better
+      CreateLegacyLogSymlinks(instance);
     }
     CHECK(SaveConfig(config)) << "Failed to initialize configuration";
   }

@@ -54,6 +54,7 @@ constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
+constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 constexpr char kKernelLoadedMessage[] = "] Linux version";
 
@@ -404,6 +405,7 @@ class CuttlefishConfig {
     // directory..
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
+    std::string PerInstanceLogPath(const std::string& file_name) const;
 
     std::string instance_dir() const;
 
