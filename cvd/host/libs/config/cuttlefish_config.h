@@ -54,6 +54,7 @@ constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
+constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 constexpr char kKernelLoadedMessage[] = "] Linux version";
 
@@ -98,9 +99,6 @@ class CuttlefishConfig {
 
   std::string gpu_capture_binary() const;
   void set_gpu_capture_binary(const std::string&);
-
-  std::string hwcomposer() const;
-  void set_hwcomposer(const std::string&);
 
   int cpus() const;
   void set_cpus(int cpus);
@@ -407,6 +405,7 @@ class CuttlefishConfig {
     // directory..
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
+    std::string PerInstanceLogPath(const std::string& file_name) const;
 
     std::string instance_dir() const;
 
@@ -584,9 +583,4 @@ extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;
-
-// HwComposer modes
-extern const char* const kHwComposerAuto;
-extern const char* const kHwComposerDrmMinigbm;
-extern const char* const kHwComposerRanchu;
 }  // namespace cuttlefish
