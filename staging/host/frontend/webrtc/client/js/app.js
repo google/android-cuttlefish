@@ -100,6 +100,8 @@ class DeviceControlApp {
   #displayDescriptions = [];
   #buttons = {};
   #recording = {};
+  #phys = {};
+  #deviceCount = 0;
 
   constructor(deviceConnection) {
     this.#deviceConnection = deviceConnection;
@@ -150,12 +152,49 @@ class DeviceControlApp {
     this.#buttons['volumeup'] = createControlPanelButton(
         'volumeup', 'Volume Up', 'volume_up',
         evt => this.#onControlPanelButton(evt));
+
     createModalButton(
         'device-details-button', 'device-details-modal',
         'device-details-close');
     createModalButton(
-        'bluetooth-console-button', 'bluetooth-console-modal',
-        'bluetooth-console-close');
+        'bluetooth-modal-button', 'bluetooth-prompt',
+        'bluetooth-prompt-close');
+    createModalButton(
+        'bluetooth-prompt-wizard', 'bluetooth-wizard',
+        'bluetooth-wizard-close', 'bluetooth-prompt');
+    createModalButton(
+        'bluetooth-wizard-device', 'bluetooth-wizard-confirm',
+        'bluetooth-wizard-confirm-close', 'bluetooth-wizard');
+    createModalButton(
+        'bluetooth-wizard-another', 'bluetooth-wizard',
+        'bluetooth-wizard-close', 'bluetooth-wizard-confirm');
+    createModalButton(
+        'bluetooth-prompt-list', 'bluetooth-list',
+        'bluetooth-list-close', 'bluetooth-prompt');
+    createModalButton(
+        'bluetooth-prompt-console', 'bluetooth-console',
+        'bluetooth-console-close', 'bluetooth-prompt');
+    createModalButton(
+        'bluetooth-wizard-cancel', 'bluetooth-prompt',
+        'bluetooth-wizard-close', 'bluetooth-wizard');
+
+    positionModal('device-details-button', 'bluetooth-modal');
+    positionModal('device-details-button', 'bluetooth-prompt');
+    positionModal('device-details-button', 'bluetooth-wizard');
+    positionModal('device-details-button', 'bluetooth-wizard-confirm');
+    positionModal('device-details-button', 'bluetooth-list');
+    positionModal('device-details-button', 'bluetooth-console');
+
+    createButtonListener('bluetooth-prompt-list', null, this.#deviceConnection,
+      evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
+    createButtonListener('bluetooth-wizard-device', null, this.#deviceConnection,
+      evt => this.#onRootCanalCommand(this.#deviceConnection, "add", evt));
+    createButtonListener('bluetooth-list-trash', null, this.#deviceConnection,
+      evt => this.#onRootCanalCommand(this.#deviceConnection, "del", evt));
+    createButtonListener('bluetooth-prompt-wizard', null, this.#deviceConnection,
+      evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
+    createButtonListener('bluetooth-wizard-another', null, this.#deviceConnection,
+      evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
 
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
@@ -239,8 +278,48 @@ class DeviceControlApp {
           createRootcanalMessage(command, args));
     });
     this.#deviceConnection.onBluetoothMessage(msg => {
-      bluetoothConsole.addLine(decodeRootcanalMessage(msg));
+      let decoded = decodeRootcanalMessage(msg);
+      let deviceCount = btUpdateDeviceList(decoded);
+      if (deviceCount > 0) {
+        this.#deviceCount = deviceCount;
+        createButtonListener('bluetooth-list-trash', null, this.#deviceConnection,
+           evt => this.#onRootCanalCommand(this.#deviceConnection, "del", evt));
+      }
+      btUpdateAdded(decoded);
+      let phyList = btParsePhys(decoded);
+      if (phyList) {
+        this.#phys = phyList;
+      }
+      bluetoothConsole.addLine(decoded);
     });
+  }
+
+  #onRootCanalCommand(deviceConnection, cmd, evt) {
+    if (cmd == "list") {
+      deviceConnection.sendBluetoothMessage(createRootcanalMessage("list", []));
+    }
+    if (cmd == "del") {
+      let id = evt.srcElement.getAttribute("data-device-id");
+      deviceConnection.sendBluetoothMessage(createRootcanalMessage("del", [id]));
+      deviceConnection.sendBluetoothMessage(createRootcanalMessage("list", []));
+    }
+    if (cmd == "add") {
+      let name = document.getElementById('bluetooth-wizard-name').value;
+      let type = document.getElementById('bluetooth-wizard-type').value;
+      if (type == "remote_loopback") {
+        deviceConnection.sendBluetoothMessage(createRootcanalMessage("add", [type]));
+      } else {
+        let mac = document.getElementById('bluetooth-wizard-mac').value;
+        deviceConnection.sendBluetoothMessage(createRootcanalMessage("add", [type, mac]));
+      }
+      let phyId = this.#phys["LOW_ENERGY"].toString();
+      if (type == "remote_loopback") {
+        phyId = this.#phys["BR_EDR"].toString();
+      }
+      let devId = this.#deviceCount.toString();
+      this.#deviceCount++;
+      deviceConnection.sendBluetoothMessage(createRootcanalMessage("add_device_to_phy", [devId, phyId]));
+    }
   }
 
   #showWebrtcError() {
