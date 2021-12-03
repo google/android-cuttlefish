@@ -448,7 +448,7 @@ void NetworkService::HandleSignalStrength(const Client& client) {
 
   android_last_signal_time_ = time(0);
 
-  auto response = GetSignalStrength();
+  auto response = BuildCSQCommandResponse();
 
   responses.push_back(response);
   responses.push_back("OK");
@@ -1135,36 +1135,7 @@ void NetworkService::OnDataRegisterStateChanged() {
   SendUnsolicitedCommand(ss.str());
 }
 
-std::string NetworkService::GetSignalStrength() {
-  switch (current_network_mode_) {
-    case M_MODEM_TECH_GSM:
-      signal_strength_.gsm_rssi += (rand() % 3 - 1);
-      AdjustSignalStrengthValue(signal_strength_.gsm_rssi, kGSMSignalStrength);
-      break;
-    case M_MODEM_TECH_CDMA:
-      signal_strength_.cdma_dbm += (rand() % 3 - 1);
-      AdjustSignalStrengthValue(signal_strength_.cdma_dbm, kCDMASignalStrength);
-      break;
-    case M_MODEM_TECH_EVDO:
-      signal_strength_.evdo_dbm += (rand() % 3 - 1);
-      AdjustSignalStrengthValue(signal_strength_.evdo_dbm, kEVDOSignalStrength);
-      break;
-    case M_MODEM_TECH_LTE:
-      signal_strength_.lte_rssi += (rand() % 3 - 1);
-      AdjustSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength);
-      break;
-    case M_MODEM_TECH_WCDMA:
-      signal_strength_.wcdma_rssi += (rand() % 3 - 1);
-      AdjustSignalStrengthValue(signal_strength_.wcdma_rssi, kWCDMASignalStrength);
-      break;
-    case M_MODEM_TECH_NR:
-      signal_strength_.nr_ss_rsrp += (rand() % 3 - 1);
-      AdjustSignalStrengthValue(signal_strength_.nr_ss_rsrp, kNRSignalStrength);
-      break;
-    default:
-      break;
-  }
-
+std::string NetworkService::BuildCSQCommandResponse() {
   std::stringstream ss;
   // clang-format off
   ss << "+CSQ: "
@@ -1295,7 +1266,7 @@ void NetworkService::HandleReceiveRemoteSignal(const Client& client,
 
 void NetworkService::OnSignalStrengthChanged() {
   applySignalPercentage(percentd_);
-  auto command = GetSignalStrength();
+  auto command = BuildCSQCommandResponse();
   SendUnsolicitedCommand(command);
 }
 
