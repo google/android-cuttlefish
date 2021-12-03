@@ -157,6 +157,38 @@ body {
   outline: none;
   background-color: transparent;
 }
+.modal-button, .modal-button-highlight {
+  background:    #e8eaed; /* Google grey 200 */
+  border-radius: 10px;
+  box-shadow:    1px 1px #444444;
+  padding:       10px 20px;
+  color:         #000000;
+  display:       inline-block;
+  font:          normal bold 14px/1 "Open Sans", sans-serif;
+  text-align:    center;
+}
+#bluetooth-wizard-mac:valid {
+  border: 2px solid black;
+}
+#bluetooth-wizard-mac:invalid {
+  border: 2px solid red;
+}
+#bluetooth-wizard-mac:invalid + span::before {
+  font-weight: bold;
+  content: 'X';
+  color: red;
+}
+#bluetooth-wizard-mac:valid + span::before {
+  font-weight: bold;
+  content: 'OK';
+  color: green;
+}
+.modal-button {
+  background:    #e8eaed; /* Google grey 200 */
+}
+.modal-button-highlight {
+  background:    #f4cccc;
+}
 #device-details-modal span {
   white-space: pre;
 }
