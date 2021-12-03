@@ -85,7 +85,7 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   void AdjustSignalStrengthValue(int& value, const std::pair<int, int>& range);
   void SetSignalStrengthValue(int& value, const std::pair<int, int>& range,
                               double percentd);
-  std::string GetSignalStrength();
+  std::string BuildCSQCommandResponse();
   void applySignalPercentage(double percentd);
 
   MiscService* misc_service_ = nullptr;
