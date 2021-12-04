@@ -304,9 +304,6 @@ int AssembleCvdMain(int argc, char** argv) {
     return 1;
   }
 
-  CHECK(GetKernelConfigAndSetDefaults(&kernel_config))
-      << "Failed to parse arguments";
-
   if (help || help_str != "") {
     LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
     LOG(WARNING) << "In the meantime, call `launch_cvd --help`";
@@ -320,6 +317,9 @@ int AssembleCvdMain(int argc, char** argv) {
   // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
+
+  CHECK(GetKernelConfigAndSetDefaults(&kernel_config))
+      << "Failed to parse arguments";
 
   auto config = InitFilesystemAndCreateConfig(std::move(fetcher_config),
                                               kernel_config, injector);
