@@ -855,17 +855,17 @@ void ClientHandler::OnIceGatheringChange(
 void ClientHandler::OnIceCandidateError(const std::string &host_candidate,
                                         const std::string &url, int error_code,
                                         const std::string &error_text) {
-  LOG(ERROR) << "Gathering of an ICE candidate (host candidate: "
-             << host_candidate << ", url: " << url
-             << ") failed: " << error_text;
+  LOG(VERBOSE) << "Gathering of an ICE candidate (host candidate: "
+               << host_candidate << ", url: " << url
+               << ") failed: " << error_text;
 }
 
 void ClientHandler::OnIceCandidateError(const std::string &address, int port,
                                         const std::string &url, int error_code,
                                         const std::string &error_text) {
-  LOG(ERROR) << "Gathering of an ICE candidate (address: " << address
-             << ", port: " << port << ", url: " << url
-             << ") failed: " << error_text;
+  LOG(VERBOSE) << "Gathering of an ICE candidate (address: " << address
+               << ", port: " << port << ", url: " << url
+               << ") failed: " << error_text;
 }
 
 void ClientHandler::OnSignalingChange(
