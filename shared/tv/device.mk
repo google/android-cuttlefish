@@ -40,6 +40,9 @@ PRODUCT_PROPERTY_OVERRIDES += ro.hdmi.device_type=4
 # Tuner HAL
 PRODUCT_PACKAGES += android.hardware.tv.tuner@1.1-service
 
+# Fallback IME and Home apps
+PRODUCT_PACKAGES += LeanbackIME TvSampleLeanbackLauncher TvProvision
+
 # Enabling managed profiles
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/tv/overlay
 

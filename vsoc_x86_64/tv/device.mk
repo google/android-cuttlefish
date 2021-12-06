@@ -15,10 +15,12 @@
 #
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, device/google/atv/products/atv_base.mk)
 $(call inherit-product, device/google/cuttlefish/shared/tv/device.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
+PRODUCT_BRAND := generic
 PRODUCT_NAME := aosp_cf_x86_64_tv
 PRODUCT_DEVICE := vsoc_x86_64
 PRODUCT_MANUFACTURER := Google
