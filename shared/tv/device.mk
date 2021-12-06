@@ -44,6 +44,9 @@ PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example
 # Sample Tuner Input for testing
 PRODUCT_PACKAGES += LiveTv sampletunertvinput
 
+# Fallback IME and Home apps
+PRODUCT_PACKAGES += LeanbackIME TvSampleLeanbackLauncher TvProvision
+
 # Enabling managed profiles
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/tv/overlay
 
