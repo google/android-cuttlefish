@@ -661,7 +661,10 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
       .install(FixedDataImagePathComponent, &FLAGS_data_image)
-      .install(InitializeDataImageComponent);
+      .install(InitializeDataImageComponent)
+      // Create esp if necessary
+      .install(InitializeEspImageComponent, &FLAGS_otheros_esp_image,
+               &FLAGS_otheros_kernel_path, &FLAGS_otheros_initramfs_path);
 }
 
 static fruit::Component<> DiskChangesPerInstanceComponent(
@@ -686,13 +689,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
 
   const auto& features = injector.getMultibindings<Feature>();
   CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
-
-  // Create esp if necessary
-  if (!FLAGS_otheros_root_image.empty()) {
-    CHECK(InitializeEspImage(FLAGS_otheros_esp_image, FLAGS_otheros_kernel_path,
-                             FLAGS_otheros_initramfs_path))
-        << "Failed to create esp image";
-  }
 
   for (const auto& instance : config.Instances()) {
     fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
