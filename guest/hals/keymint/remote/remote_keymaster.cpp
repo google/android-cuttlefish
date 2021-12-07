@@ -17,6 +17,8 @@
 #include "remote_keymaster.h"
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
+#include <android-base/strings.h>
 #include <keymaster/android_keymaster_messages.h>
 #include <keymaster/keymaster_configuration.h>
 
@@ -79,9 +81,14 @@ bool RemoteKeymaster::Initialize() {
     return false;
   }
 
-  // Set the boot patchlevel to zero for Cuttlefish.
+  // Set the boot patchlevel to value retrieved from system property (which
+  // requires SELinux permission).
   ConfigureBootPatchlevelRequest boot_req(message_version());
-  boot_req.boot_patchlevel = 0;
+  static constexpr char boot_prop_name[] = "ro.vendor.boot_security_patch";
+  auto boot_prop_value = android::base::GetProperty(boot_prop_name, "");
+  boot_prop_value = android::base::StringReplace(boot_prop_value.data(), "-",
+                                                 "", /* all */ true);
+  boot_req.boot_patchlevel = std::stoi(boot_prop_value);
   ConfigureBootPatchlevelResponse boot_rsp = ConfigureBootPatchlevel(boot_req);
   if (boot_rsp.error != KM_ERROR_OK) {
     LOG(ERROR) << "Failed to configure keymaster boot patchlevel: "
