@@ -153,7 +153,7 @@ class LogTeeCreator {
     cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
 
     Command log_tee_cmd(HostBinaryPath("log_tee"));
-    log_tee_cmd.AddParameter("--process_name=rootcanal");
+    log_tee_cmd.AddParameter("--process_name=", process_name);
     log_tee_cmd.AddParameter("--log_fd_in=", logs);
 
     return log_tee_cmd;
