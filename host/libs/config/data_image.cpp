@@ -404,6 +404,7 @@ InitializeMiscImageComponent() {
 struct EspImageTag {};
 struct KernelPathTag {};
 struct InitRamFsTag {};
+struct RootFsTag {};
 
 class InitializeEspImageImpl : public InitializeEspImage {
  public:
@@ -411,25 +412,26 @@ class InitializeEspImageImpl : public InitializeEspImage {
                                 ANNOTATED(KernelPathTag, std::string)
                                     kernel_path,
                                 ANNOTATED(InitRamFsTag, std::string)
-                                    initramfs_path))
+                                    initramfs_path,
+                                ANNOTATED(RootFsTag, std::string) rootfs_path))
       : esp_image_(esp_image),
         kernel_path_(kernel_path),
-        initramfs_path_(initramfs_path) {}
+        initramfs_path_(initramfs_path),
+        rootfs_path_(rootfs_path) {}
 
   // Feature
   std::string Name() const override { return "InitializeEspImageImpl"; }
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
-  bool Enabled() const override {
-    bool esp_exists = FileHasContent(esp_image_);
-    if (esp_exists) {
-      LOG(DEBUG) << "esp partition image: use existing";
-      return false;
-    }
-    return true;
-  }
+  bool Enabled() const override { return !rootfs_path_.empty(); }
 
  protected:
   bool Setup() override {
+    bool esp_exists = FileHasContent(esp_image_);
+    if (esp_exists) {
+      LOG(DEBUG) << "esp partition image: use existing";
+      return true;
+    }
+
     LOG(DEBUG) << "esp partition image: creating default";
 
     // newfs_msdos won't make a partition smaller than 257 mb
@@ -525,17 +527,20 @@ class InitializeEspImageImpl : public InitializeEspImage {
   std::string esp_image_;
   std::string kernel_path_;
   std::string initramfs_path_;
+  std::string rootfs_path_;
 };
 
 fruit::Component<InitializeEspImage> InitializeEspImageComponent(
     const std::string* esp_image, const std::string* kernel_path,
-    const std::string* initramfs_path) {
+    const std::string* initramfs_path, const std::string* rootfs_path) {
   return fruit::createComponent()
+      .addMultibinding<Feature, InitializeEspImage>()
       .bind<InitializeEspImage, InitializeEspImageImpl>()
       .bindInstance<fruit::Annotated<EspImageTag, std::string>>(*esp_image)
       .bindInstance<fruit::Annotated<KernelPathTag, std::string>>(*kernel_path)
       .bindInstance<fruit::Annotated<InitRamFsTag, std::string>>(
-          *initramfs_path);
+          *initramfs_path)
+      .bindInstance<fruit::Annotated<RootFsTag, std::string>>(*rootfs_path);
 }
 
 } // namespace cuttlefish
