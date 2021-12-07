@@ -27,7 +27,7 @@ TARGET_BOOTLOADER_BOARD_NAME := cutf
 
 BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := $(TARGET_RO_FILE_SYSTEM_TYPE)
 
-# Boot partition size: 32M
+# Boot partition size: 64M
 # This is only used for OTA update packages. The image size on disk
 # will not change (as is it not a filesystem.)
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
