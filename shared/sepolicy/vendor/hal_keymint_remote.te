@@ -12,3 +12,4 @@ allow hal_keymint_remote kmsg_device:chr_file w_file_perms;
 allow hal_keymint_remote kmsg_device:chr_file getattr;
 
 get_prop(hal_keymint_remote, vendor_security_patch_level_prop)
+get_prop(hal_keymint_remote, vendor_boot_security_patch_level_prop)
