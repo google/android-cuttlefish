@@ -91,10 +91,6 @@ const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxStream = "gfxstream";
 
-const char* const kHwComposerAuto = "auto";
-const char* const kHwComposerDrmMinigbm = "drm_minigbm";
-const char* const kHwComposerRanchu = "ranchu";
-
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
                                    const char* subpath) {
@@ -126,12 +122,12 @@ bool CuttlefishConfig::SaveFragment(const ConfigFragment& fragment) {
   return true;
 }
 
-static constexpr char kAssemblyDir[] = "assembly_dir";
-std::string CuttlefishConfig::assembly_dir() const {
-  return (*dictionary_)[kAssemblyDir].asString();
+static constexpr char kRootDir[] = "root_dir";
+std::string CuttlefishConfig::root_dir() const {
+  return (*dictionary_)[kRootDir].asString();
 }
-void CuttlefishConfig::set_assembly_dir(const std::string& assembly_dir) {
-  (*dictionary_)[kAssemblyDir] = assembly_dir;
+void CuttlefishConfig::set_root_dir(const std::string& root_dir) {
+  (*dictionary_)[kRootDir] = root_dir;
 }
 
 static constexpr char kVmManager[] = "vm_manager";
@@ -156,14 +152,6 @@ std::string CuttlefishConfig::gpu_capture_binary() const {
 }
 void CuttlefishConfig::set_gpu_capture_binary(const std::string& name) {
   (*dictionary_)[kGpuCaptureBinary] = name;
-}
-
-static constexpr char kHWComposer[] = "hwcomposer";
-std::string CuttlefishConfig::hwcomposer() const {
-  return (*dictionary_)[kHWComposer].asString();
-}
-void CuttlefishConfig::set_hwcomposer(const std::string& name) {
-  (*dictionary_)[kHWComposer] = name;
 }
 
 static constexpr char kCpus[] = "cpus";
@@ -867,6 +855,19 @@ bool CuttlefishConfig::SaveToFile(const std::string& file) const {
   }
   ofs << *dictionary_;
   return !ofs.fail();
+}
+
+std::string CuttlefishConfig::instances_dir() const {
+  return AbsolutePath(root_dir() + "/instances");
+}
+
+std::string CuttlefishConfig::InstancesPath(
+    const std::string& file_name) const {
+  return AbsolutePath(instances_dir() + "/" + file_name);
+}
+
+std::string CuttlefishConfig::assembly_dir() const {
+  return AbsolutePath(root_dir() + "/assembly");
 }
 
 std::string CuttlefishConfig::AssemblyPath(
