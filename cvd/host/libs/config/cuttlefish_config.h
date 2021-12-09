@@ -150,6 +150,9 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
+  void set_gem5_binary_dir(const std::string& gem5_binary_dir);
+  std::string gem5_binary_dir() const;
+
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
