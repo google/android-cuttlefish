@@ -83,10 +83,6 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   bool IsHasNetwork();
   void UpdateRegisterState(RegistrationState state);
   void AdjustSignalStrengthValue(int& value, const std::pair<int, int>& range);
-  void SetSignalStrengthValue(int& value, const std::pair<int, int>& range,
-                              double percentd);
-  std::string BuildCSQCommandResponse();
-  void applySignalPercentage(double percentd);
 
   MiscService* misc_service_ = nullptr;
   SimService* sim_service_ = nullptr;
@@ -203,35 +199,37 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
                            * Reference: 3GPP TS 138.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
                            * Range [-23, 40], INT_MAX means invalid/unreported. */
 
-    // Set to values representing an unknown or not detectable signal.
-    void SetUnknownValues() {
-      gsm_rssi = kRssiUnknownValue;
-      gsm_ber = kBerUnknownValue;
-      cdma_dbm = kDbmUnknownValue;
-      cdma_ecio = kEcioUnknownValue;
-      evdo_dbm = kDbmUnknownValue;
-      evdo_ecio = kEcioUnknownValue;
-      evdo_snr = kSnrUnknownValue;
-      lte_rssi = kRssiUnknownValue;
-      lte_rsrp = INT_MAX;
-      lte_rsrq = INT_MAX;
-      lte_rssnr = INT_MAX;
-      lte_cqi = INT_MAX;
-      lte_ta = INT_MAX;
-      tdscdma_rscp = INT_MAX;
-      wcdma_rssi = kRssiUnknownValue;
-      wcdma_ber = kBerUnknownValue;
-      nr_ss_rsrp = INT_MAX;
-      nr_ss_rsrq = INT_MAX;
-      nr_ss_sinr = INT_MAX;
-      nr_csi_rsrp = INT_MAX;
-      nr_csi_rsrq = INT_MAX;
-      nr_csi_sinr = INT_MAX;
-    }
+    SignalStrength()
+        : gsm_rssi(kRssiUnknownValue),
+          gsm_ber(kBerUnknownValue),
+          cdma_dbm(kDbmUnknownValue),
+          cdma_ecio(kEcioUnknownValue),
+          evdo_dbm(kDbmUnknownValue),
+          evdo_ecio(kEcioUnknownValue),
+          evdo_snr(kSnrUnknownValue),
+          lte_rssi(kRssiUnknownValue),
+          lte_rsrp(INT_MAX),
+          lte_rsrq(INT_MAX),
+          lte_rssnr(INT_MAX),
+          lte_cqi(INT_MAX),
+          lte_ta(INT_MAX),
+          tdscdma_rscp(INT_MAX),
+          wcdma_rssi(kRssiUnknownValue),
+          wcdma_ber(kBerUnknownValue),
+          nr_ss_rsrp(INT_MAX),
+          nr_ss_rsrq(INT_MAX),
+          nr_ss_sinr(INT_MAX),
+          nr_csi_rsrp(INT_MAX),
+          nr_csi_rsrq(INT_MAX),
+          nr_csi_sinr(INT_MAX) {}
   };
 
-  double percentd_{0.8};
-  SignalStrength signal_strength_;
+  int signal_strength_percent_{80};
+
+  static int GetValueInRange(const std::pair<int, int>& range, int percent);
+  static std::string BuildCSQCommandResponse(
+      const SignalStrength& signal_strength);
+  SignalStrength GetCurrentSignalStrength();
 
   /* Data / voice Registration State */
   struct NetworkRegistrationStatus {
