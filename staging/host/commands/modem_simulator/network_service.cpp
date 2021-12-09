@@ -318,7 +318,6 @@ void NetworkService::HandleRadioPower(const Client& client, std::string& command
       client.SendCommandResponse(kCmeErrorOperationNotSupported);
       return;
   }
-  signal_strength_.SetUnknownValues();
 
   client.SendCommandResponse("OK");
 }
@@ -333,22 +332,6 @@ bool NetworkService::WakeupFromSleep() {
   time_t now = time(0);
   const bool wakeup_from_sleep = (now > android_last_signal_time_ + 120);
   return wakeup_from_sleep;
-}
-
-void NetworkService::SetSignalStrengthValue(int& value,
-                                            const std::pair<int, int>& range,
-                                            double percentd) {
-  value = range.first + percentd * (range.second - range.first);
-  AdjustSignalStrengthValue(value, range);
-}
-
-void NetworkService::AdjustSignalStrengthValue(int& value,
-                                               const std::pair<int, int>& range) {
-  if (value < range.first) {
-    value = range.first;
-  } else if (value > range.second) {
-    value = range.second;
-  }
 }
 
 /**
@@ -448,7 +431,7 @@ void NetworkService::HandleSignalStrength(const Client& client) {
 
   android_last_signal_time_ = time(0);
 
-  auto response = BuildCSQCommandResponse();
+  auto response = BuildCSQCommandResponse(GetCurrentSignalStrength());
 
   responses.push_back(response);
   responses.push_back("OK");
@@ -456,11 +439,9 @@ void NetworkService::HandleSignalStrength(const Client& client) {
 }
 
 bool NetworkService::IsHasNetwork() {
-  if (radio_state_ == RADIO_STATE_OFF ||
-      oper_selection_mode_ == OperatorSelectionMode::OPER_SELECTION_DEREGISTRATION) {
-    return false;
-  }
-  return true;
+  return radio_state_ != RADIO_STATE_OFF &&
+         oper_selection_mode_ !=
+             OperatorSelectionMode::OPER_SELECTION_DEREGISTRATION;
 }
 
 /**
@@ -1051,7 +1032,6 @@ void NetworkService::HandleSetPreferredNetworkType(const Client& client, std::st
 
   if (current != current_network_mode_) {
     UpdateRegisterState(NET_REGISTRATION_UNREGISTERED);
-    signal_strength_.SetUnknownValues();
 
     ss << "+CTEC: "<< current_network_mode_;
 
@@ -1135,34 +1115,75 @@ void NetworkService::OnDataRegisterStateChanged() {
   SendUnsolicitedCommand(ss.str());
 }
 
-std::string NetworkService::BuildCSQCommandResponse() {
+int NetworkService::GetValueInRange(const std::pair<int, int>& range,
+                                    int percent) {
+  int range_size = range.second - range.first + 1;
+  return range.first + (int)((percent / 101.0) * range_size);
+}
+
+std::string NetworkService::BuildCSQCommandResponse(
+    const SignalStrength& signal_strength) {
   std::stringstream ss;
   // clang-format off
   ss << "+CSQ: "
-     << signal_strength_.gsm_rssi << ","
-     << signal_strength_.gsm_ber << ","
-     << signal_strength_.cdma_dbm << ","
-     << signal_strength_.cdma_ecio << ","
-     << signal_strength_.evdo_dbm << ","
-     << signal_strength_.evdo_ecio << ","
-     << signal_strength_.evdo_snr << ","
-     << signal_strength_.lte_rssi << ","
-     << signal_strength_.lte_rsrp << ","
-     << signal_strength_.lte_rsrq << ","
-     << signal_strength_.lte_rssnr << ","
-     << signal_strength_.lte_cqi << ","
-     << signal_strength_.lte_ta << ","
-     << signal_strength_.tdscdma_rscp << ","
-     << signal_strength_.wcdma_rssi << ","
-     << signal_strength_.wcdma_ber << ","
-     << signal_strength_.nr_ss_rsrp << ","
-     << signal_strength_.nr_ss_rsrq << ","
-     << signal_strength_.nr_ss_sinr << ","
-     << signal_strength_.nr_csi_rsrp << ","
-     << signal_strength_.nr_csi_rsrq << ","
-     << signal_strength_.nr_csi_sinr;
+     << signal_strength.gsm_rssi << ","
+     << signal_strength.gsm_ber << ","
+     << signal_strength.cdma_dbm << ","
+     << signal_strength.cdma_ecio << ","
+     << signal_strength.evdo_dbm << ","
+     << signal_strength.evdo_ecio << ","
+     << signal_strength.evdo_snr << ","
+     << signal_strength.lte_rssi << ","
+     << signal_strength.lte_rsrp << ","
+     << signal_strength.lte_rsrq << ","
+     << signal_strength.lte_rssnr << ","
+     << signal_strength.lte_cqi << ","
+     << signal_strength.lte_ta << ","
+     << signal_strength.tdscdma_rscp << ","
+     << signal_strength.wcdma_rssi << ","
+     << signal_strength.wcdma_ber << ","
+     << signal_strength.nr_ss_rsrp << ","
+     << signal_strength.nr_ss_rsrq << ","
+     << signal_strength.nr_ss_sinr << ","
+     << signal_strength.nr_csi_rsrp << ","
+     << signal_strength.nr_csi_rsrq << ","
+     << signal_strength.nr_csi_sinr;
   // clang-format on
   return ss.str();
+}
+
+NetworkService::SignalStrength NetworkService::GetCurrentSignalStrength() {
+  NetworkService::SignalStrength result;
+  if (!IsHasNetwork()) {
+    return result;
+  }
+  int percent = signal_strength_percent_;
+  switch (current_network_mode_) {
+    case M_MODEM_TECH_GSM:
+      result.gsm_rssi = GetValueInRange(kGSMSignalStrength, percent);
+      break;
+    case M_MODEM_TECH_CDMA:
+      result.cdma_dbm = GetValueInRange(kCDMASignalStrength, percent);
+      break;
+    case M_MODEM_TECH_EVDO:
+      result.evdo_dbm = GetValueInRange(kEVDOSignalStrength, percent);
+      break;
+    case M_MODEM_TECH_LTE:
+      result.lte_rssi = GetValueInRange(kLTESignalStrength, percent);
+      break;
+    case M_MODEM_TECH_WCDMA:
+      result.wcdma_rssi = GetValueInRange(kWCDMASignalStrength, percent);
+      break;
+    case M_MODEM_TECH_NR:
+      // special for NR: it uses LTE as primary, so LTE signal strength is
+      // needed as well
+      result.lte_rssi = GetValueInRange(kLTESignalStrength, percent);
+      result.nr_ss_rsrp = GetValueInRange(kNRSignalStrength, percent);
+      break;
+    default:
+      break;
+  }
+  return result;
 }
 
 /* AT+REMOTEREG: state*/
@@ -1174,7 +1195,6 @@ void NetworkService::HandleReceiveRemoteVoiceDataReg(const Client& client,
   int stated = std::stoi(states, nullptr, 10);
 
   UpdateRegisterState(NET_REGISTRATION_UNREGISTERED);
-  signal_strength_.SetUnknownValues();
 
   thread_looper_->PostWithDelay(
       std::chrono::seconds(1),
@@ -1200,7 +1220,6 @@ void NetworkService::HandleReceiveRemoteCTEC(const Client& client,
     current_network_mode_ = current_network_mode_new;
     auto saved_state = voice_registration_status_.registration_state;
     UpdateRegisterState(NET_REGISTRATION_UNREGISTERED);
-    signal_strength_.SetUnknownValues();
 
     ss << "+CTEC: " << current_network_mode_;
 
@@ -1211,53 +1230,18 @@ void NetworkService::HandleReceiveRemoteCTEC(const Client& client,
   }
 }
 
-void NetworkService::applySignalPercentage(double percentd) {
-  switch (current_network_mode_) {
-    case M_MODEM_TECH_GSM:
-      SetSignalStrengthValue(signal_strength_.gsm_rssi, kGSMSignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_CDMA:
-      SetSignalStrengthValue(signal_strength_.cdma_dbm, kCDMASignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_EVDO:
-      SetSignalStrengthValue(signal_strength_.evdo_dbm, kEVDOSignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_LTE:
-      SetSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_WCDMA:
-      SetSignalStrengthValue(signal_strength_.wcdma_rssi, kWCDMASignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_NR:
-      // special for NR: it uses LTE as primary, so LTE signal strength is
-      // needed as well
-      SetSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength,
-                             percentd);
-      SetSignalStrengthValue(signal_strength_.nr_ss_rsrp, kNRSignalStrength,
-                             percentd);
-      break;
-    default:
-      break;
-  }
-}
-
 /* AT+REMOTESIGNAL: percent */
 void NetworkService::HandleReceiveRemoteSignal(const Client& client,
                                                std::string& command) {
   (void)client;
   std::stringstream ss;
   std::string percents = command.substr(std::string("AT+REMOTESIGNAL:").size());
-  double percentd = std::stoi(percents, nullptr, 10) / 100.0;
+  int percent = std::stoi(percents, nullptr, 10);
 
-  if (percentd >= 0 && percentd <= 1.0) {
-    percentd_ = percentd;
+  if (percent >= 0 && percent <= 100) {
+    signal_strength_percent_ = percent;
   } else {
-    LOG(DEBUG) << "out of bound signal strength: " << percentd;
+    LOG(DEBUG) << "out of bound signal strength percent: " << percent;
     return;
   }
 
@@ -1265,9 +1249,7 @@ void NetworkService::HandleReceiveRemoteSignal(const Client& client,
 }
 
 void NetworkService::OnSignalStrengthChanged() {
-  applySignalPercentage(percentd_);
-  auto command = BuildCSQCommandResponse();
-  SendUnsolicitedCommand(command);
+  SendUnsolicitedCommand(BuildCSQCommandResponse(GetCurrentSignalStrength()));
 }
 
 NetworkService::RegistrationState NetworkService::GetVoiceRegistrationState() const {
