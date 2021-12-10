@@ -553,9 +553,8 @@ PRODUCT_PACKAGES += \
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
     LOCAL_HEALTH_PRODUCT_PACKAGE := \
-    android.hardware.health-service.cuttlefish \
-    android.hardware.health-service.cuttlefish_recovery \
-
+    android.hardware.health@2.1-impl-cuttlefish \
+    android.hardware.health@2.1-service
 endif
 PRODUCT_PACKAGES += $(LOCAL_HEALTH_PRODUCT_PACKAGE)
 
