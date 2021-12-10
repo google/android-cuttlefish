@@ -13,101 +13,107 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.health@2.1-service.cuttlefish"
+#define LOG_TAG "android.hardware.health-service.cuttlefish"
 
 #include <memory>
 #include <string_view>
 
 #include <android-base/logging.h>
+#include <android/binder_interface_utils.h>
+#include <health-impl/Health.h>
 #include <health/utils.h>
-#include <health2impl/Health.h>
 
-using ::android::sp;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
+using ::aidl::android::hardware::health::BatteryHealth;
+using ::aidl::android::hardware::health::BatteryStatus;
+using ::aidl::android::hardware::health::HalHealthLoop;
+using ::aidl::android::hardware::health::Health;
+using ::aidl::android::hardware::health::HealthInfo;
+using ::aidl::android::hardware::health::IHealth;
 using ::android::hardware::health::InitHealthdConfig;
-using ::android::hardware::health::V1_0::BatteryStatus;
-using ::android::hardware::health::V2_0::Result;
-using ::android::hardware::health::V2_1::IHealth;
+using ::ndk::ScopedAStatus;
+using ::ndk::SharedRefBase;
 using namespace std::literals;
 
-namespace android {
-namespace hardware {
-namespace health {
-namespace V2_1 {
-namespace implementation {
+namespace aidl::android::hardware::health {
 
-// Health HAL implementation for cuttlefish. Note that in this implementation, cuttlefish
-// pretends to be a device with a battery being charged. Implementations on real devices
-// should not insert these fake values. For example, a battery-less device should report
-// batteryPresent = false and batteryStatus = UNKNOWN.
+// Health HAL implementation for cuttlefish. Note that in this implementation,
+// cuttlefish pretends to be a device with a battery being charged.
+// Implementations on real devices should not insert these fake values. For
+// example, a battery-less device should report batteryPresent = false and
+// batteryStatus = UNKNOWN.
 
 class HealthImpl : public Health {
  public:
-  HealthImpl(std::unique_ptr<healthd_config>&& config)
-    : Health(std::move(config)) {}
-    Return<void> getChargeCounter(getChargeCounter_cb _hidl_cb) override;
-    Return<void> getCurrentNow(getCurrentNow_cb _hidl_cb) override;
-    Return<void> getCapacity(getCapacity_cb _hidl_cb) override;
-    Return<void> getChargeStatus(getChargeStatus_cb _hidl_cb) override;
+  // Inherit constructor.
+  using Health::Health;
+  virtual ~HealthImpl() {}
+
+  ScopedAStatus getChargeCounterUah(int32_t* out) override;
+  ScopedAStatus getCurrentNowMicroamps(int32_t* out) override;
+  ScopedAStatus getCurrentAverageMicroamps(int32_t* out) override;
+  ScopedAStatus getCapacity(int32_t* out) override;
+  ScopedAStatus getChargeStatus(BatteryStatus* out) override;
+
  protected:
   void UpdateHealthInfo(HealthInfo* health_info) override;
 };
 
 void HealthImpl::UpdateHealthInfo(HealthInfo* health_info) {
-  auto* battery_props = &health_info->legacy.legacy;
-  battery_props->chargerAcOnline = true;
-  battery_props->chargerUsbOnline = true;
-  battery_props->chargerWirelessOnline = false;
-  battery_props->maxChargingCurrent = 500000;
-  battery_props->maxChargingVoltage = 5000000;
-  battery_props->batteryStatus = V1_0::BatteryStatus::CHARGING;
-  battery_props->batteryHealth = V1_0::BatteryHealth::GOOD;
-  battery_props->batteryPresent = true;
-  battery_props->batteryLevel = 85;
-  battery_props->batteryVoltage = 3600;
-  battery_props->batteryTemperature = 350;
-  battery_props->batteryCurrent = 400000;
-  battery_props->batteryCycleCount = 32;
-  battery_props->batteryFullCharge = 4000000;
-  battery_props->batteryChargeCounter = 1900000;
-  battery_props->batteryTechnology = "Li-ion";
+  health_info->chargerAcOnline = true;
+  health_info->chargerUsbOnline = true;
+  health_info->chargerWirelessOnline = false;
+  health_info->maxChargingCurrentMicroamps = 500000;
+  health_info->maxChargingVoltageMicrovolts = 5000000;
+  health_info->batteryStatus = BatteryStatus::CHARGING;
+  health_info->batteryHealth = BatteryHealth::GOOD;
+  health_info->batteryPresent = true;
+  health_info->batteryLevel = 85;
+  health_info->batteryVoltageMillivolts = 3600;
+  health_info->batteryTemperatureTenthsCelsius = 350;
+  health_info->batteryCurrentMicroamps = 400000;
+  health_info->batteryCycleCount = 32;
+  health_info->batteryFullChargeUah = 4000000;
+  health_info->batteryChargeCounterUah = 1900000;
+  health_info->batteryTechnology = "Li-ion";
 }
 
-Return<void> HealthImpl::getChargeCounter(getChargeCounter_cb _hidl_cb) {
-  _hidl_cb(Result::SUCCESS, 1900000);
-  return Void();
+ScopedAStatus HealthImpl::getChargeCounterUah(int32_t* out) {
+  *out = 1900000;
+  return ScopedAStatus::ok();
 }
 
-Return<void> HealthImpl::getCurrentNow(getCurrentNow_cb _hidl_cb) {
-  _hidl_cb(Result::SUCCESS, 400000);
-  return Void();
+ScopedAStatus HealthImpl::getCurrentNowMicroamps(int32_t* out) {
+  *out = 400000;
+  return ScopedAStatus::ok();
 }
 
-Return<void> HealthImpl::getCapacity(getCapacity_cb _hidl_cb) {
-  _hidl_cb(Result::SUCCESS, 85);
-  return Void();
+ScopedAStatus HealthImpl::getCurrentAverageMicroamps(int32_t*) {
+  return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-Return<void> HealthImpl::getChargeStatus(getChargeStatus_cb _hidl_cb) {
-  _hidl_cb(Result::SUCCESS, BatteryStatus::CHARGING);
-  return Void();
+ScopedAStatus HealthImpl::getCapacity(int32_t* out) {
+  *out = 85;
+  return ScopedAStatus::ok();
 }
 
-}  // namespace implementation
-}  // namespace V2_1
-}  // namespace health
-}  // namespace hardware
-}  // namespace android
+ScopedAStatus HealthImpl::getChargeStatus(BatteryStatus* out) {
+  *out = BatteryStatus::CHARGING;
+  return ScopedAStatus::ok();
+}
 
+}  // namespace aidl::android::hardware::health
 
-extern "C" IHealth* HIDL_FETCH_IHealth(const char* instance) {
-  using ::android::hardware::health::V2_1::implementation::HealthImpl;
-  if (instance != "default"sv) {
-      return nullptr;
-  }
+int main(int, [[maybe_unused]] char** argv) {
+#ifdef __ANDROID_RECOVERY__
+  android::base::InitLogging(argv, android::base::KernelLogger);
+#endif
+  // Cuttlefish does not support offline-charging mode, hence do not handle
+  // --charger option.
+  using aidl::android::hardware::health::HealthImpl;
+  LOG(INFO) << "Starting health HAL.";
   auto config = std::make_unique<healthd_config>();
   InitHealthdConfig(config.get());
-
-  return new HealthImpl(std::move(config));
+  auto binder = SharedRefBase::make<HealthImpl>("default", std::move(config));
+  auto hal_health_loop = std::make_shared<HalHealthLoop>(binder, binder);
+  return hal_health_loop->StartLoop();
 }
