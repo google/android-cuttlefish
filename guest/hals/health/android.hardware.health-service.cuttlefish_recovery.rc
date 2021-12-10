@@ -1,7 +1,0 @@
-service vendor.health-cuttlefish /system/bin/hw/android.hardware.health-service.cuttlefish_recovery
-    class hal
-    seclabel u:r:hal_health_default:s0
-    user system
-    group system
-    capabilities WAKE_ALARM BLOCK_SUSPEND
-    file /dev/kmsg w
