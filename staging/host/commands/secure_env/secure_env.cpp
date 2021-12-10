@@ -110,9 +110,9 @@ std::thread StartKernelEventMonitor(SharedFD kernel_events_fd) {
   });
 }
 
-fruit::Component<Tpm> SecureEnvComponent() {
-  return fruit::createComponent().registerProvider(
-      []() -> Tpm* {  // fruit will take ownership
+fruit::Component<TpmResourceManager> SecureEnvComponent() {
+  return fruit::createComponent()
+      .registerProvider([]() -> Tpm* {  // fruit will take ownership
         if (FLAGS_tpm_impl == "in_memory") {
           return new InProcessTpm();
         } else if (FLAGS_tpm_impl == "host_device") {
@@ -121,7 +121,27 @@ fruit::Component<Tpm> SecureEnvComponent() {
           LOG(FATAL) << "Unknown TPM implementation: " << FLAGS_tpm_impl;
           abort();
         }
-      });
+      })
+      .registerProvider([](Tpm* tpm) {
+        if (tpm->TctiContext() == nullptr) {
+          LOG(FATAL) << "Unable to connect to TPM implementation.";
+        }
+        ESYS_CONTEXT* esys_ptr = nullptr;
+        std::unique_ptr<ESYS_CONTEXT, void (*)(ESYS_CONTEXT*)> esys(
+            nullptr, [](ESYS_CONTEXT* esys) { Esys_Finalize(&esys); });
+        auto rc = Esys_Initialize(&esys_ptr, tpm->TctiContext(), nullptr);
+        if (rc != TPM2_RC_SUCCESS) {
+          LOG(FATAL) << "Could not initialize esys: " << Tss2_RC_Decode(rc)
+                     << " (" << rc << ")";
+        }
+        esys.reset(esys_ptr);
+        return esys;
+      })
+      .registerProvider(
+          [](std::unique_ptr<ESYS_CONTEXT, void (*)(ESYS_CONTEXT*)>& esys) {
+            return new TpmResourceManager(
+                esys.get());  // fruit will take ownership
+          });
 }
 
 }  // namespace
@@ -131,26 +151,8 @@ int SecureEnvMain(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::SoftKeymasterLogger km_logger;
 
-  fruit::Injector<Tpm> injector(SecureEnvComponent);
-  Tpm* tpm = injector.get<Tpm*>();
-
-  if (tpm->TctiContext() == nullptr) {
-    LOG(FATAL) << "Unable to connect to TPM implementation.";
-  }
-
-  std::unique_ptr<TpmResourceManager> resource_manager;
-  std::unique_ptr<ESYS_CONTEXT, void(*)(ESYS_CONTEXT*)> esys(
-      nullptr, [](ESYS_CONTEXT* esys) { Esys_Finalize(&esys); });
-  if (FLAGS_keymint_impl == "tpm" || FLAGS_gatekeeper_impl == "tpm") {
-    ESYS_CONTEXT* esys_ptr = nullptr;
-    auto rc = Esys_Initialize(&esys_ptr, tpm->TctiContext(), nullptr);
-    if (rc != TPM2_RC_SUCCESS) {
-      LOG(FATAL) << "Could not initialize esys: " << Tss2_RC_Decode(rc)
-                 << " (" << rc << ")";
-    }
-    esys.reset(esys_ptr);
-    resource_manager.reset(new TpmResourceManager(esys.get()));
-  }
+  fruit::Injector<TpmResourceManager> injector(SecureEnvComponent);
+  TpmResourceManager* resource_manager = injector.get<TpmResourceManager*>();
 
   std::unique_ptr<GatekeeperStorage> secure_storage;
   std::unique_ptr<GatekeeperStorage> insecure_storage;
