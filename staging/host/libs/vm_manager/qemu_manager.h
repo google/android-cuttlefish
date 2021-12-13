@@ -35,7 +35,8 @@ class QemuManager : public VmManager {
   virtual ~QemuManager() = default;
 
   bool IsSupported() override;
-  std::vector<std::string> ConfigureGpuMode(const std::string&) override;
+  std::vector<std::string> ConfigureGraphics(const std::string&,
+      const std::string&) override;
   std::string ConfigureBootDevices(int num_disks) override;
 
   std::vector<cuttlefish::Command> StartCommands(
