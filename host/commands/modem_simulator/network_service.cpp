@@ -255,9 +255,10 @@ void NetworkService::OnSimStatusChanged(SimService::SimStatus sim_status) {
     // Note: not saved to nvram config due to sim status may change after reboot
     current_network_mode_ = M_MODEM_TECH_WCDMA;
   }
-  thread_looper_->PostWithDelay(std::chrono::seconds(1),
+  thread_looper_->Post(
       makeSafeCallback(this, &NetworkService::UpdateRegisterState,
-          voice_registration_status_.registration_state));
+                       voice_registration_status_.registration_state),
+      std::chrono::seconds(1));
 }
 
 /**
@@ -721,8 +722,10 @@ void NetworkService::HandleSetNetworkSelectionMode(const Client& client, std::st
 
   NvramConfig::SaveToFile();
 
-  thread_looper_->PostWithDelay(std::chrono::seconds(1),
-      makeSafeCallback(this, &NetworkService::UpdateRegisterState, registration_state));
+  thread_looper_->Post(
+      makeSafeCallback(this, &NetworkService::UpdateRegisterState,
+                       registration_state),
+      std::chrono::seconds(1));
 }
 
 NetworkService::NetworkRegistrationStatus::AccessTechnoloy
@@ -1035,9 +1038,10 @@ void NetworkService::HandleSetPreferredNetworkType(const Client& client, std::st
 
     ss << "+CTEC: "<< current_network_mode_;
 
-    thread_looper_->PostWithDelay(std::chrono::milliseconds(200),
+    thread_looper_->Post(
         makeSafeCallback(this, &NetworkService::UpdateRegisterState,
-            NET_REGISTRATION_HOME));
+                         NET_REGISTRATION_HOME),
+        std::chrono::milliseconds(200));
   } else {
     ss << "+CTEC: DONE";
   }
@@ -1196,10 +1200,10 @@ void NetworkService::HandleReceiveRemoteVoiceDataReg(const Client& client,
 
   UpdateRegisterState(NET_REGISTRATION_UNREGISTERED);
 
-  thread_looper_->PostWithDelay(
-      std::chrono::seconds(1),
+  thread_looper_->Post(
       makeSafeCallback(this, &NetworkService::UpdateRegisterState,
-                       (cuttlefish::NetworkService::RegistrationState)stated));
+                       (cuttlefish::NetworkService::RegistrationState)stated),
+      std::chrono::seconds(1));
 }
 
 /* AT+REMOTECTEC: ctec */
@@ -1223,10 +1227,10 @@ void NetworkService::HandleReceiveRemoteCTEC(const Client& client,
 
     ss << "+CTEC: " << current_network_mode_;
 
-    thread_looper_->PostWithDelay(
-        std::chrono::seconds(1),
+    thread_looper_->Post(
         makeSafeCallback(this, &NetworkService::UpdateRegisterState,
-                         saved_state));
+                         saved_state),
+        std::chrono::seconds(1));
   }
 }
 

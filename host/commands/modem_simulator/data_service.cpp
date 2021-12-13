@@ -335,10 +335,10 @@ void DataService::updatePhysicalChannelconfigs(int modem_tech, int freq,
 
   // call again after 1 sec delay
   count--;
-  thread_looper_->PostWithDelay(
-      std::chrono::seconds(1),
+  thread_looper_->Post(
       makeSafeCallback(this, &DataService::updatePhysicalChannelconfigs,
-                       modem_tech, freq, cellBandwidthDownlink, count));
+                       modem_tech, freq, cellBandwidthDownlink, count),
+      std::chrono::seconds(1));
 }
 
 }  // namespace cuttlefish
