@@ -1,0 +1,8 @@
+service vendor.health-cuttlefish /vendor/bin/hw/android.hardware.health-service.cuttlefish
+    class hal
+    user system
+    group system
+    capabilities WAKE_ALARM BLOCK_SUSPEND
+    file /dev/kmsg w
+
+# cuttlefish has no charger mode.
