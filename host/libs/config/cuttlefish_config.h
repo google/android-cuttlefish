@@ -54,6 +54,7 @@ constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
+constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 constexpr char kKernelLoadedMessage[] = "] Linux version";
 
@@ -83,9 +84,13 @@ class CuttlefishConfig {
   bool SaveFragment(const ConfigFragment&);
   bool LoadFragment(ConfigFragment&) const;
 
-  std::string assembly_dir() const;
-  void set_assembly_dir(const std::string& assembly_dir);
+  std::string root_dir() const;
+  void set_root_dir(const std::string& root_dir);
 
+  std::string instances_dir() const;
+  std::string InstancesPath(const std::string&) const;
+
+  std::string assembly_dir() const;
   std::string AssemblyPath(const std::string&) const;
 
   std::string os_composite_disk_path() const;
@@ -407,6 +412,7 @@ class CuttlefishConfig {
     // directory..
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
+    std::string PerInstanceLogPath(const std::string& file_name) const;
 
     std::string instance_dir() const;
 
@@ -473,6 +479,8 @@ class CuttlefishConfig {
     std::string factory_reset_protected_path() const;
 
     std::string persistent_bootconfig_path() const;
+
+    std::string id() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -481,8 +489,7 @@ class CuttlefishConfig {
     std::string id_;
     friend MutableInstanceSpecific CuttlefishConfig::ForInstance(int num);
 
-    MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id)
-        : config_(config), id_(id) {}
+    MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id);
 
     Json::Value* Dictionary();
   public:
@@ -516,7 +523,6 @@ class CuttlefishConfig {
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
-    void set_instance_dir(const std::string& instance_dir);
     // modem simulator related
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
