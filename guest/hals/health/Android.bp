@@ -17,6 +17,58 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+cc_defaults {
+    name: "android.hardware.health-service.cuttlefish-defaults",
+    relative_install_path: "hw",
+    vintf_fragments: ["android.hardware.health-service.cuttlefish.xml"],
+
+    srcs: [
+        "health-aidl.cpp",
+    ],
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+
+    static_libs: [
+        "android.hardware.health-translate-ndk",
+        "libbatterymonitor",
+        "libhealthloop",
+        "libhealth_aidl_impl",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "android.hardware.health-V1-ndk",
+    ],
+
+    defaults: ["enabled_on_p_and_later"],
+}
+
+cc_binary {
+    name: "android.hardware.health-service.cuttlefish",
+    defaults: ["android.hardware.health-service.cuttlefish-defaults"],
+    proprietary: true,
+    init_rc: ["android.hardware.health-service.cuttlefish.rc"],
+    overrides: ["charger"],
+}
+
+cc_binary {
+    name: "android.hardware.health-service.cuttlefish_recovery",
+    defaults: ["android.hardware.health-service.cuttlefish-defaults"],
+    recovery: true,
+    init_rc: ["android.hardware.health-service.cuttlefish_recovery.rc"],
+    overrides: ["charger.recovery"],
+}
+
+// Deprecated. Retained to be used on other devices. It is not installed on cuttlefish.
+// TODO(b/210183170): Delete once other devices transition to the AIDL HAL.
 cc_library_shared {
     name: "android.hardware.health@2.1-impl-cuttlefish",
     stem: "android.hardware.health@2.0-impl-2.1-cuttlefish",
@@ -26,7 +78,7 @@ cc_library_shared {
     relative_install_path: "hw",
 
     srcs: [
-        "health.cpp",
+        "health-hidl.cpp",
     ],
 
     cflags: [
