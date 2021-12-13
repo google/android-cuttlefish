@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
   auto config = cuttlefish::CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
 
-  auto modem_log_path = instance.PerInstancePath("modem_simulator.log");
+  auto modem_log_path = instance.PerInstanceLogPath("modem_simulator.log");
 
   {
     auto log_path = instance.launcher_log_path();
