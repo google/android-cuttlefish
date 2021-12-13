@@ -41,31 +41,31 @@ class ModemServiceTest : public ::testing::Test {
     {
       cuttlefish::CuttlefishConfig tmp_config_obj;
       std::string config_file = tmp_test_dir + "/.cuttlefish_config.json";
-      std::string instance_dir = tmp_test_dir + "/cuttlefish_runtime.1";
-      fs::create_directories(instance_dir);
+      tmp_config_obj.set_root_dir(tmp_test_dir + "/cuttlefish");
       tmp_config_obj.set_ril_dns("8.8.8.8");
       std::vector<int> instance_nums;
       for (int i = 0; i < 1; i++) {
         instance_nums.push_back(cuttlefish::GetInstance() + i);
       }
       for (const auto &num : instance_nums) {
-        auto instance = tmp_config_obj.ForInstance(num);
-        instance.set_instance_dir(instance_dir);
+        tmp_config_obj.ForInstance(num);  // Trigger creation in map
       }
 
       for (auto instance : tmp_config_obj.Instances()) {
+        fs::create_directories(instance.instance_dir());
         if (!tmp_config_obj.SaveToFile(
                 instance.PerInstancePath("cuttlefish_config.json"))) {
           LOG(ERROR) << "Unable to save copy config object";
           return;
         }
+        std::string icfilename =
+            instance.PerInstancePath("/iccprofile_for_sim0.xml");
+        std::ofstream offile(icfilename, std::ofstream::out);
+        offile << std::string(myiccfile);
+        offile.close();
+        fs::copy_file(instance.PerInstancePath("/cuttlefish_config.json"),
+                      config_file, fs::copy_options::overwrite_existing);
       }
-      fs::copy_file(instance_dir + "/cuttlefish_config.json", config_file,
-                    fs::copy_options::overwrite_existing);
-      std::string icfilename = instance_dir + "/iccprofile_for_sim0.xml";
-      std::ofstream offile(icfilename, std::ofstream::out);
-      offile << std::string(myiccfile);
-      offile.close();
 
       ::setenv("CUTTLEFISH_CONFIG_FILE", config_file.c_str(), 1);
     }

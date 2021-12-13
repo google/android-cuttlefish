@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   CHECK(config) << "Could not open cuttlefish config";
 
   auto instance = config->ForDefaultInstance();
-  auto metrics_log_path = instance.PerInstancePath("metrics.log");
+  auto metrics_log_path = instance.PerInstanceLogPath("metrics.log");
 
   if (config->run_as_daemon()) {
     android::base::SetLogger(
