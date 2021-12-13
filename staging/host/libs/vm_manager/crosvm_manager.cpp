@@ -57,8 +57,8 @@ bool CrosvmManager::IsSupported() {
 #endif
 }
 
-std::vector<std::string> CrosvmManager::ConfigureGpuMode(
-    const std::string& gpu_mode) {
+std::vector<std::string> CrosvmManager::ConfigureGraphics(
+    const std::string& gpu_mode, const std::string& hwcomposer) {
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
@@ -67,7 +67,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
     return {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=ranchu",
+        "androidboot.hardware.hwcomposer="+ hwcomposer,
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
         "androidboot.opengles.version=196609"};  // OpenGL ES 3.1
@@ -84,7 +84,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
   if (gpu_mode == kGpuModeGfxStream) {
     return {"androidboot.cpuvulkan.version=0",
             "androidboot.hardware.gralloc=minigbm",
-            "androidboot.hardware.hwcomposer=ranchu",
+            "androidboot.hardware.hwcomposer=" + hwcomposer,
             "androidboot.hardware.egl=emulation",
             "androidboot.hardware.vulkan=ranchu",
             "androidboot.hardware.gltransport=virtio-gpu-asg",

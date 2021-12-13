@@ -100,6 +100,8 @@ DEFINE_string(vm_manager, "",
 DEFINE_string(gpu_mode, cuttlefish::kGpuModeAuto,
               "What gpu configuration to use, one of {auto, drm_virgl, "
               "gfxstream, guest_swiftshader}");
+DEFINE_string(hwcomposer, cuttlefish::kHwComposerAuto,
+              "What hardware composer to use, one of {auto, drm, ranchu} ");
 DEFINE_string(gpu_capture_binary, "",
               "Path to the GPU capture binary to use when capturing GPU traces"
               "(ngfx, renderdoc, etc)");
@@ -567,15 +569,33 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
         << "GPU capture only supported with --norestart_subprocesses";
   }
 
+  tmp_config_obj.set_hwcomposer(FLAGS_hwcomposer);
+  if (!tmp_config_obj.hwcomposer().empty()) {
+    if (tmp_config_obj.hwcomposer() == kHwComposerRanchu) {
+      CHECK(tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl)
+        << "ranchu hwcomposer not supported with --gpu_mode=drm_virgl";
+    }
+  }
+
+  if (tmp_config_obj.hwcomposer() == kHwComposerAuto) {
+      if (tmp_config_obj.gpu_mode() == kGpuModeDrmVirgl) {
+        tmp_config_obj.set_hwcomposer(kHwComposerDrmMinigbm);
+      } else {
+        tmp_config_obj.set_hwcomposer(kHwComposerRanchu);
+      }
+  }
+
   // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
   // auto-enabling sandbox when gpu is enabled (b/152323505).
   if (tmp_config_obj.gpu_mode() != kGpuModeGuestSwiftshader) {
     SetCommandLineOptionWithMode("enable_sandbox", "false", SET_FLAGS_DEFAULT);
   }
 
-  if (vmm->ConfigureGpuMode(tmp_config_obj.gpu_mode()).empty()) {
-    LOG(FATAL) << "Invalid gpu_mode=" << FLAGS_gpu_mode <<
-               " does not work with vm_manager=" << FLAGS_vm_manager;
+  if (vmm->ConfigureGraphics(tmp_config_obj.gpu_mode(),
+         tmp_config_obj.hwcomposer()).empty()) {
+    LOG(FATAL) << "Invalid (gpu_mode=," << FLAGS_gpu_mode <<
+               " hwcomposer= " << FLAGS_hwcomposer <<
+               ") does not work with vm_manager=" << FLAGS_vm_manager;
   }
 
   CHECK(!FLAGS_smt || FLAGS_cpus % 2 == 0)
