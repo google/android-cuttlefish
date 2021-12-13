@@ -123,8 +123,8 @@ bool QemuManager::IsSupported() {
   return HostSupportsQemuCli();
 }
 
-std::vector<std::string> QemuManager::ConfigureGpuMode(
-    const std::string& gpu_mode) {
+std::vector<std::string> QemuManager::ConfigureGraphics(
+    const std::string& gpu_mode, const std::string& hwcomposer) {
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     // Override the default HAL search paths in all cases. We do this because
     // the HAL search path allows for fallbacks, and fallbacks in conjunction
@@ -133,7 +133,7 @@ std::vector<std::string> QemuManager::ConfigureGpuMode(
     return {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=ranchu",
+        "androidboot.hardware.hwcomposer=" + hwcomposer,
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
     };

@@ -78,7 +78,8 @@ std::vector<std::string> BootconfigArgsFromConfig(
   auto vmm = vm_manager::GetVmManager(config.vm_manager(), config.target_arch());
   bootconfig_args.push_back(
       vmm->ConfigureBootDevices(instance.virtual_disk_paths().size()));
-  AppendVector(&bootconfig_args, vmm->ConfigureGpuMode(config.gpu_mode()));
+  AppendVector(&bootconfig_args, vmm->ConfigureGraphics(config.gpu_mode(),
+      config.hwcomposer()));
 
   bootconfig_args.push_back(
       concat("androidboot.serialno=", instance.serial_number()));
