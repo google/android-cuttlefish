@@ -91,6 +91,10 @@ const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxStream = "gfxstream";
 
+const char* const kHwComposerAuto = "auto";
+const char* const kHwComposerDrmMinigbm = "drm_minigbm";
+const char* const kHwComposerRanchu = "ranchu";
+
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
                                    const char* subpath) {
@@ -152,6 +156,14 @@ std::string CuttlefishConfig::gpu_capture_binary() const {
 }
 void CuttlefishConfig::set_gpu_capture_binary(const std::string& name) {
   (*dictionary_)[kGpuCaptureBinary] = name;
+}
+
+static constexpr char kHWComposer[] = "hwcomposer";
+std::string CuttlefishConfig::hwcomposer() const {
+  return (*dictionary_)[kHWComposer].asString();
+}
+void CuttlefishConfig::set_hwcomposer(const std::string& name) {
+  (*dictionary_)[kHWComposer] = name;
 }
 
 static constexpr char kCpus[] = "cpus";

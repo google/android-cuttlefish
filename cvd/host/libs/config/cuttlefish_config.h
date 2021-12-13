@@ -104,6 +104,9 @@ class CuttlefishConfig {
   std::string gpu_capture_binary() const;
   void set_gpu_capture_binary(const std::string&);
 
+  std::string hwcomposer() const;
+  void set_hwcomposer(const std::string&);
+
   int cpus() const;
   void set_cpus(int cpus);
 
@@ -587,4 +590,9 @@ extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;
+
+// HwComposer modes
+extern const char* const kHwComposerAuto;
+extern const char* const kHwComposerDrmMinigbm;
+extern const char* const kHwComposerRanchu;
 }  // namespace cuttlefish
