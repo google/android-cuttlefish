@@ -42,8 +42,8 @@ ThreadLooper::Serial ThreadLooper::Post(Callback cb) {
   return serial;
 }
 
-ThreadLooper::Serial ThreadLooper::PostWithDelay(
-        std::chrono::steady_clock::duration delay, Callback cb) {
+ThreadLooper::Serial ThreadLooper::Post(
+    Callback cb, std::chrono::steady_clock::duration delay) {
   CHECK(cb != nullptr);
 
   auto serial = next_serial_++;

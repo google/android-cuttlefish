@@ -60,7 +60,7 @@ class ThreadLooper {
   typedef int32_t Serial;
 
   Serial Post(Callback cb);
-  Serial PostWithDelay(std::chrono::steady_clock::duration delay, Callback cb);
+  Serial Post(Callback cb, std::chrono::steady_clock::duration delay);
 
   void Stop();
 
