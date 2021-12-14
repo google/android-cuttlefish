@@ -25,4 +25,10 @@ constexpr int kDbmUnknownValue = -1;
 constexpr int kEcioUnknownValue = -1;
 constexpr int kSnrUnknownValue = -1;
 
+// Constants representing the range of values of different signal strength
+// parameters.
+constexpr auto kRssiRange = std::make_pair(4, 30);
+constexpr auto kDbmRange = std::make_pair(-120, -4);
+constexpr auto kRsrpRange = std::make_pair(-140, -44);
+
 }  // namespace cuttlefish
