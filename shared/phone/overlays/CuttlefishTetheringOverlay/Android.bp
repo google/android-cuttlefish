@@ -1,0 +1,6 @@
+runtime_resource_overlay {
+    name: "CuttlefishTetheringOverlay",
+    resource_dirs: ["res"],
+    vendor: true,
+    sdk_version: "current",
+}
