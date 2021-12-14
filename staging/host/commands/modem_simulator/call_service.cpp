@@ -219,11 +219,13 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
     int index = last_active_call_index_++;
 
     auto call_token = std::make_pair(index, call_status.number);
-    call_status.timeout_serial = thread_looper_->PostWithDelay(
-        std::chrono::minutes(1),
-        makeSafeCallback<CallService>(this, [call_token](CallService* me) {
-          me->TimerWaitingRemoteCallResponse(call_token);
-        }));
+    call_status.timeout_serial = thread_looper_->Post(
+        makeSafeCallback<CallService>(this,
+                                      [call_token](CallService* me) {
+                                        me->TimerWaitingRemoteCallResponse(
+                                            call_token);
+                                      }),
+        std::chrono::minutes(1));
 
     active_calls_[index] = call_status;
   } else {
@@ -237,8 +239,9 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
       in_emergency_mode_ = true;
       SendUnsolicitedCommand("+WSOS: 1");
     }
-    thread_looper_->PostWithDelay(std::chrono::seconds(1),
-        makeSafeCallback(this, &CallService::SimulatePendingCallsAnswered));
+    thread_looper_->Post(
+        makeSafeCallback(this, &CallService::SimulatePendingCallsAnswered),
+        std::chrono::seconds(1));
   }
 
   client.SendCommandResponse("OK");
