@@ -7,3 +7,9 @@ persist.vendor.radio.videopause.mode            u:object_r:vendor_radio_prop:s0
 persist.vendor.radio.smlog_switch               u:object_r:vendor_radio_prop:s0
 ro.vendor.radio.log_loc                         u:object_r:vendor_radio_prop:s0
 ro.vendor.radio.log_prefix                      u:object_r:vendor_radio_prop:s0
+
+# Boot animation dynamic colors
+persist.bootanim.color1     u:object_r:bootanim_system_prop:s0     exact    int
+persist.bootanim.color2     u:object_r:bootanim_system_prop:s0     exact    int
+persist.bootanim.color3     u:object_r:bootanim_system_prop:s0     exact    int
+persist.bootanim.color4     u:object_r:bootanim_system_prop:s0     exact    int
