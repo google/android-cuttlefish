@@ -1672,6 +1672,9 @@ static int parseRegistrationState(char *str, int *type, int *items, int **respon
     int skip;
     int commas;
 
+    s_lac = -1;
+    s_cid = -1;
+
     RLOGD("parseRegistrationState. Parsing: %s",str);
     err = at_tok_start(&line);
     if (err < 0) goto error;
@@ -1709,19 +1712,14 @@ static int parseRegistrationState(char *str, int *type, int *items, int **respon
         case 0: /* +CREG: <stat> */
             err = at_tok_nextint(&line, &resp[0]);
             if (err < 0) goto error;
-            resp[1] = -1;
-            resp[2] = -1;
-        break;
+            break;
 
         case 1: /* +CREG: <n>, <stat> */
             err = at_tok_nextint(&line, &skip);
             if (err < 0) goto error;
             err = at_tok_nextint(&line, &resp[0]);
             if (err < 0) goto error;
-            resp[1] = -1;
-            resp[2] = -1;
-            if (err < 0) goto error;
-        break;
+            break;
 
         case 2: /* +CREG: <stat>, <lac>, <cid> */
             err = at_tok_nextint(&line, &resp[0]);
@@ -1759,8 +1757,12 @@ static int parseRegistrationState(char *str, int *type, int *items, int **respon
         default:
             goto error;
     }
-    s_lac = resp[1];
-    s_cid = resp[2];
+
+    if (commas >= 2) {
+        s_lac = resp[1];
+        s_cid = resp[2];
+    }
+
     if (response)
         *response = resp;
     if (items)
