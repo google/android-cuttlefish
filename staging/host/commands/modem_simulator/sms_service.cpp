@@ -294,21 +294,20 @@ void SmsService::HandleSendSMSPDU(const Client& client, std::string& command) {
              port <= kRemotePortRange.second) {
     auto remote_host_port = std::to_string(port);
     if (GetHostId() == remote_host_port) {  // Send SMS to local host port
-      thread_looper_->PostWithDelay(
-          std::chrono::seconds(1),
-          makeSafeCallback<SmsService>(this, [&sms_pdu](SmsService* me) {
-            me->HandleReceiveSMS(sms_pdu);
-          }));
+      thread_looper_->Post(
+          makeSafeCallback<SmsService>(
+              this,
+              [&sms_pdu](SmsService* me) { me->HandleReceiveSMS(sms_pdu); }),
+          std::chrono::seconds(1));
     } else {  // Send SMS to remote host port
       SendSmsToRemote(remote_host_port, sms_pdu);
     }
   } else if (sim_service_ && phone_number == sim_service_->GetPhoneNumber()) {
     /* Local phone number */
-    thread_looper_->PostWithDelay(
-        std::chrono::seconds(1),
-        makeSafeCallback<SmsService>(this, [sms_pdu](SmsService* me) {
-          me->HandleReceiveSMS(sms_pdu);
-        }));
+    thread_looper_->Post(
+        makeSafeCallback<SmsService>(
+            this, [sms_pdu](SmsService* me) { me->HandleReceiveSMS(sms_pdu); }),
+        std::chrono::seconds(1));
   } /* else pretend send SMS success */
 
   std::stringstream ss;
@@ -319,11 +318,12 @@ void SmsService::HandleSendSMSPDU(const Client& client, std::string& command) {
 
   if (sms_pdu.IsNeededStatuReport()) {
     int ref = message_reference_;
-    thread_looper_->PostWithDelay(
-        std::chrono::seconds(1),
-        makeSafeCallback<SmsService>(this, [sms_pdu, ref](SmsService* me) {
-          me->HandleSMSStatuReport(sms_pdu, ref);
-        }));
+    thread_looper_->Post(
+        makeSafeCallback<SmsService>(this,
+                                     [sms_pdu, ref](SmsService* me) {
+                                       me->HandleSMSStatuReport(sms_pdu, ref);
+                                     }),
+        std::chrono::seconds(1));
   }
 }
 
