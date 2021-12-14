@@ -327,7 +327,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   }
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
-  if (config.enable_sandbox()) {
+  if (0 && config.enable_sandbox()) {
     // Set up directory shared with virtiofs
     crosvm_cmd.Cmd().AddParameter(
         "--shared-dir=", instance.PerInstancePath(kSharedDirName),
