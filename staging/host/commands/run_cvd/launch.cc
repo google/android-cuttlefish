@@ -793,7 +793,7 @@ class OpenWrt : public CommandSource {
     ap_cmd.Cmd().AddParameter("--params=\"root=" + config_.ap_image_dev_path() +
                               "\"");
 
-    auto kernel_logs_path = instance_.PerInstancePath("crosvm_openwrt.log");
+    auto kernel_logs_path = instance_.PerInstanceLogPath("crosvm_openwrt.log");
     ap_cmd.AddSerialConsoleReadOnly(kernel_logs_path);
 
     ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
