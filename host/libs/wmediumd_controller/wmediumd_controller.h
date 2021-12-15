@@ -41,6 +41,8 @@ class WmediumdController {
   bool SetSnr(const std::string& node1, const std::string& node2, uint8_t snr);
   bool ReloadCurrentConfig(void);
   bool ReloadConfig(const std::string& configPath);
+  bool StartPcap(const std::string& pcapPath);
+  bool StopPcap(void);
 
  private:
   WmediumdController() {}
