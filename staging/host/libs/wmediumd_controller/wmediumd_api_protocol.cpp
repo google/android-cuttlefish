@@ -98,4 +98,10 @@ void WmediumdMessageReloadConfig::SerializeBody(std::string& buf) const {
   buf.push_back('\0');
 }
 
+void WmediumdMessageStartPcap::SerializeBody(std::string& buf) const {
+  std::copy(std::begin(pcap_path_), std::end(pcap_path_),
+            std::back_inserter(buf));
+  buf.push_back('\0');
+}
+
 }  // namespace cuttlefish
