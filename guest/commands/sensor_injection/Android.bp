@@ -6,10 +6,9 @@ cc_binary {
     name: "cuttlefish_sensor_injection",
     srcs: ["main.cpp"],
     shared_libs: [
-        "android.hardware.sensors@1.0",
-        "android.hardware.sensors@2.1",
+        "android.hardware.sensors-V1-ndk",
         "libbase",
-        "libbinder",
+        "libbinder_ndk",
         "libhidlbase",
         "liblog",
         "libutils",
