@@ -36,7 +36,12 @@ const std::string usageMessage =
     "      set SNR between two nodes. (0 <= snr <= 255)\n\n"
     "    reload_config [path]\n"
     "      force reload wmediumd configuration file\n\n"
-    "      if path is not specified, reload current configuration file\n\n";
+    "      if path is not specified, reload current configuration file\n\n"
+    "    start_pcap path\n"
+    "      start packet capture and save capture result to file.\n"
+    "      file format is pcap capture format.\n\n"
+    "    stop_pcap\n"
+    "      stop packet capture\n\n";
 
 DEFINE_string(wmediumd_api_server, "",
               "Unix socket path of wmediumd api server");
@@ -120,6 +125,26 @@ bool HandleReloadConfigCommand(cuttlefish::WmediumdController& client,
   }
 }
 
+bool HandleStartPcapCommand(cuttlefish::WmediumdController& client,
+                            const std::vector<std::string>& args) {
+  if (args.size() != 2) {
+    LOG(ERROR) << "error: you must provide only 1 option(path)";
+    return false;
+  }
+
+  return client.StartPcap(args[1]);
+}
+
+bool HandleStopPcapCommand(cuttlefish::WmediumdController& client,
+                           const std::vector<std::string>& args) {
+  if (args.size() != 1) {
+    LOG(ERROR) << "error: you must not provide option";
+    return false;
+  }
+
+  return client.StopPcap();
+}
+
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(usageMessage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -162,6 +187,8 @@ int main(int argc, char** argv) {
                                             const std::vector<std::string>&)>>{{
           {"set_snr", HandleSetSnrCommand},
           {"reload_config", HandleReloadConfigCommand},
+          {"start_pcap", HandleStartPcapCommand},
+          {"stop_pcap", HandleStopPcapCommand},
       }};
 
   if (commandMap.find(args[0]) == std::end(commandMap)) {

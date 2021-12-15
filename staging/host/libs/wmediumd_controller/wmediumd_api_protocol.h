@@ -36,6 +36,8 @@ enum class WmediumdMessageType : uint32_t {
   kSetSnr = 8,
   kReloadConfig = 9,
   kReloadCurrentConfig = 10,
+  kStartPcap = 11,
+  kStopPcap = 12,
 };
 
 class WmediumdMessage {
@@ -101,6 +103,30 @@ class WmediumdMessageReloadCurrentConfig : public WmediumdMessage {
 
   WmediumdMessageType Type() const override {
     return WmediumdMessageType::kReloadCurrentConfig;
+  }
+};
+
+class WmediumdMessageStartPcap : public WmediumdMessage {
+ public:
+  WmediumdMessageStartPcap(const std::string& pcapPath)
+      : pcap_path_(pcapPath) {}
+
+  WmediumdMessageType Type() const override {
+    return WmediumdMessageType::kStartPcap;
+  }
+
+ private:
+  void SerializeBody(std::string& out) const override;
+
+  std::string pcap_path_;
+};
+
+class WmediumdMessageStopPcap : public WmediumdMessage {
+ public:
+  WmediumdMessageStopPcap() = default;
+
+  WmediumdMessageType Type() const override {
+    return WmediumdMessageType::kStopPcap;
   }
 };
 
