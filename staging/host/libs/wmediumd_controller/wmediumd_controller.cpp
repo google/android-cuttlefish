@@ -69,6 +69,14 @@ bool WmediumdController::ReloadConfig(const std::string& configPath) {
   return SendMessage(WmediumdMessageReloadConfig(configPath));
 }
 
+bool WmediumdController::StartPcap(const std::string& pcapPath) {
+  return SendMessage(WmediumdMessageStartPcap(pcapPath));
+}
+
+bool WmediumdController::StopPcap(void) {
+  return SendMessage(WmediumdMessageStopPcap());
+}
+
 bool WmediumdController::SendMessage(const WmediumdMessage& message) {
   auto sendResult = SendAll(wmediumd_socket_, message.Serialize());
 
