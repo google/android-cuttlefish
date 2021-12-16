@@ -178,7 +178,7 @@ int SecureEnvMain(int argc, char** argv) {
   if (FLAGS_keymint_impl == "software") {
     // TODO: See if this is the right KM version.
     keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
-        keymaster::KmVersion::KEYMINT_1, KM_SECURITY_LEVEL_SOFTWARE));
+        keymaster::KmVersion::KEYMINT_2, KM_SECURITY_LEVEL_SOFTWARE));
   } else if (FLAGS_keymint_impl == "tpm") {
     keymaster_context.reset(
         new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
@@ -190,7 +190,7 @@ int SecureEnvMain(int argc, char** argv) {
   // taking ownership.
   keymaster::AndroidKeymaster keymaster{
       new ProxyKeymasterContext(*keymaster_context), kOperationTableSize,
-      keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_1,
+      keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_2,
                                 0 /* km_date */)};
 
   auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
