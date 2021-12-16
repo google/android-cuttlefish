@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "host/commands/cvd/server.h"
+
 #include <future>
 #include <map>
 #include <optional>
@@ -21,9 +23,9 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <build/version.h>
 
 #include "cvd_server.pb.h"
-#include "host/commands/cvd/server.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -145,6 +147,8 @@ class CvdServer {
         cvd::kVersionMajor);
     response.mutable_version_response()->mutable_version()->set_minor(
         cvd::kVersionMinor);
+    response.mutable_version_response()->mutable_version()->set_build(
+        android::build::GetBuildNumber());
     response.mutable_status()->set_code(cvd::Status::OK);
     return SendResponse(client, response);
   }
