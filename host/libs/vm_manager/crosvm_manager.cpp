@@ -206,7 +206,8 @@ std::vector<Command> CrosvmManager::StartCommands(
 #endif
   }
 
-  if (FileExists(instance.access_kregistry_path())) {
+  bool is_arm = HostArch() == Arch::Arm || HostArch() == Arch::Arm64;
+  if (!is_arm && FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
                                   instance.access_kregistry_path());
   }
