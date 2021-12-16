@@ -26,17 +26,7 @@ namespace {
 
 const char* kInstances = "instances";
 
-std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
-
 }  // namespace
-
-static constexpr char kInstanceDir[] = "instance_dir";
-CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
-    CuttlefishConfig* config, const std::string& id)
-    : config_(config), id_(id) {
-  // Legacy for acloud
-  (*Dictionary())[kInstanceDir] = config_->InstancesPath(IdToName(id));
-}
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
   return &(*config_->dictionary_)[kInstances][id_];
@@ -46,8 +36,13 @@ const Json::Value* CuttlefishConfig::InstanceSpecific::Dictionary() const {
   return &(*config_->dictionary_)[kInstances][id_];
 }
 
+static constexpr char kInstanceDir[] = "instance_dir";
 std::string CuttlefishConfig::InstanceSpecific::instance_dir() const {
-  return config_->InstancesPath(IdToName(id_));
+  return (*Dictionary())[kInstanceDir].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_instance_dir(
+    const std::string& instance_dir) {
+  (*Dictionary())[kInstanceDir] = instance_dir;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_internal_dir() const {
@@ -511,9 +506,7 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
-  return IdToName(id_);
+  return kCvdNamePrefix + id_;
 }
-
-std::string CuttlefishConfig::InstanceSpecific::id() const { return id_; }
 
 }  // namespace cuttlefish
