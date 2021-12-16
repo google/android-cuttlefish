@@ -32,6 +32,7 @@ cc_binary_host {
         "libprotobuf-cpp-lite",
     ],
     static_libs: [
+        "libbuildversion",
         "libcuttlefish_cvd_proto",
         "libcuttlefish_host_config",
     ],
@@ -45,6 +46,7 @@ cc_binary_host {
     defaults: [
         "cuttlefish_host",
     ],
+    use_version_lib: true,
 }
 
 cc_binary_host {
@@ -60,10 +62,12 @@ cc_binary_host {
         "libprotobuf-cpp-lite",
     ],
     static_libs: [
+        "libbuildversion",
         "libcuttlefish_cvd_proto",
         "libcuttlefish_host_config",
     ],
     defaults: [
         "cuttlefish_host",
     ],
+    use_version_lib: true,
 }

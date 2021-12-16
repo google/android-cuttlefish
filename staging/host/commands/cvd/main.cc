@@ -26,6 +26,7 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/result.h>
+#include <build/version.h>
 
 #include "cvd_server.pb.h"
 
@@ -85,9 +86,16 @@ class CvdClient {
         return EnsureCvdServerRunning(host_tool_directory, num_retries - 1);
       } else {
         std::cout << "Unable to start the cvd_server with version "
-                  << cvd::kVersionMajor << "." << cvd::kVersionMinor;
+                  << cvd::kVersionMajor << "." << cvd::kVersionMinor
+                  << std::endl;
         return false;
       }
+    }
+    if (server_version.build() != android::build::GetBuildNumber()) {
+      std::cout << "WARNING: cvd_server client version ("
+                << android::build::GetBuildNumber()
+                << ") does not match  server version ("
+                << server_version.build() << std::endl;
     }
     return true;
   }
