@@ -462,7 +462,7 @@ void ReadKernelConfig(KernelConfig* kernel_config) {
 } // namespace
 
 CuttlefishConfig InitializeCuttlefishConfiguration(
-    const std::string& root_dir, int modem_simulator_count,
+    const std::string& instance_dir, int modem_simulator_count,
     KernelConfig kernel_config, fruit::Injector<>& injector) {
   CuttlefishConfig tmp_config_obj;
 
@@ -471,8 +471,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
         << "Failed to save fragment " << fragment->Name();
   }
 
-  tmp_config_obj.set_root_dir(root_dir);
-
+  tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
   tmp_config_obj.set_target_arch(kernel_config.target_arch);
   tmp_config_obj.set_bootconfig_supported(kernel_config.bootconfig_supported);
   auto vmm = GetVmManager(FLAGS_vm_manager, kernel_config.target_arch);
@@ -707,7 +706,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
     auto instance = tmp_config_obj.ForInstance(num);
     auto const_instance =
-        const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
+        const_cast<const CuttlefishConfig&>(tmp_config_obj)
+            .ForInstance(num);
+    // Set this first so that calls to PerInstancePath below are correct
+    instance.set_instance_dir(instance_dir + "." + std::to_string(num));
     instance.set_use_allocd(FLAGS_use_allocd);
     if (FLAGS_use_random_serial) {
       instance.set_serial_number(
