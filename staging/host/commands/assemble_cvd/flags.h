@@ -19,10 +19,9 @@ struct KernelConfig {
 
 bool GetKernelConfigAndSetDefaults(KernelConfig* kernel_config);
 // Must be called after ParseCommandLineFlags.
-CuttlefishConfig InitializeCuttlefishConfiguration(const std::string& root_dir,
-                                                   int modem_simulator_count,
-                                                   KernelConfig kernel_config,
-                                                   fruit::Injector<>& injector);
+CuttlefishConfig InitializeCuttlefishConfiguration(
+    const std::string& instance_dir, int modem_simulator_count,
+    KernelConfig kernel_config, fruit::Injector<>& injector);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 std::string GetCuttlefishEnvPath();
