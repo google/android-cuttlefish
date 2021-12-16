@@ -43,7 +43,7 @@ VerifiedBootParams MakeVbParams() {
 }  // namespace
 
 TpmAttestationRecordContext::TpmAttestationRecordContext()
-    : keymaster::AttestationContext(::keymaster::KmVersion::KEYMINT_1),
+    : keymaster::AttestationContext(::keymaster::KmVersion::KEYMINT_2),
       vb_params_(MakeVbParams()),
       unique_id_hbk_(16) {
   RAND_bytes(unique_id_hbk_.data(), unique_id_hbk_.size());
