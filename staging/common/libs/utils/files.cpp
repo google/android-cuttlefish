@@ -35,9 +35,9 @@
 
 namespace cuttlefish {
 
-bool FileExists(const std::string& path, bool follow_symlinks) {
+bool FileExists(const std::string& path) {
   struct stat st;
-  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
+  return stat(path.c_str(), &st) == 0;
 }
 
 bool FileHasContent(const std::string& path) {
@@ -57,9 +57,9 @@ std::vector<std::string> DirectoryContents(const std::string& path) {
   return ret;
 }
 
-bool DirectoryExists(const std::string& path, bool follow_symlinks) {
+bool DirectoryExists(const std::string& path) {
   struct stat st;
-  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
+  if (stat(path.c_str(), &st) == -1) {
     return false;
   }
   if ((st.st_mode & S_IFMT) != S_IFDIR) {
