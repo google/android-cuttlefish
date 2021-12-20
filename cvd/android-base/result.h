@@ -291,23 +291,17 @@ struct OkOrFail<Result<T, E>> {
 // These also work with base::android::expected.
 // For advanced matchers and customized error messages, see result-gtest.h.
 
-#define CHECK_RESULT_OK(stmt)       \
-  do {                              \
-    const auto& tmp = (stmt);       \
-    CHECK(tmp.ok()) << tmp.error(); \
-  } while (0)
+#define ASSERT_RESULT_OK(stmt)                            \
+  if (const auto& tmp = (stmt); !tmp.ok())                \
+  FAIL() << "Value of: " << #stmt << "\n"                 \
+         << "  Actual: " << tmp.error().message() << "\n" \
+         << "Expected: is ok\n"
 
-#define ASSERT_RESULT_OK(stmt)            \
-  do {                                    \
-    const auto& tmp = (stmt);             \
-    ASSERT_TRUE(tmp.ok()) << tmp.error(); \
-  } while (0)
-
-#define EXPECT_RESULT_OK(stmt)            \
-  do {                                    \
-    auto tmp = (stmt);                    \
-    EXPECT_TRUE(tmp.ok()) << tmp.error(); \
-  } while (0)
+#define EXPECT_RESULT_OK(stmt)                                   \
+  if (const auto& tmp = (stmt); !tmp.ok())                       \
+  ADD_FAILURE() << "Value of: " << #stmt << "\n"                 \
+                << "  Actual: " << tmp.error().message() << "\n" \
+                << "Expected: is ok\n"
 
 }  // namespace base
 }  // namespace android
