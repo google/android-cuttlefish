@@ -104,5 +104,8 @@ inline bool ConsumeSuffix(std::string_view* s, std::string_view suffix) {
 [[nodiscard]] std::string StringReplace(std::string_view s, std::string_view from,
                                         std::string_view to, bool all);
 
+// Converts an errno number to its error message string.
+std::string ErrnoNumberAsString(int errnum);
+
 }  // namespace base
 }  // namespace android

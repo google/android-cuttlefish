@@ -16,11 +16,17 @@
 
 #include "android-base/strings.h"
 
+#include "android-base/stringprintf.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 #include <string>
 #include <vector>
+
+// Wraps the posix version of strerror_r to make it available in translation units
+// that define _GNU_SOURCE.
+extern "C" int posix_strerror_r(int errnum, char* buf, size_t buflen);
 
 namespace android {
 namespace base {
@@ -150,6 +156,16 @@ std::string StringReplace(std::string_view s, std::string_view from, std::string
   } while (all);
   result.append(s.data() + start_pos, s.size() - start_pos);
   return result;
+}
+
+std::string ErrnoNumberAsString(int errnum) {
+  char buf[100];
+  buf[0] = '\0';
+  int strerror_err = posix_strerror_r(errnum, buf, sizeof(buf));
+  if (strerror_err < 0) {
+    return StringPrintf("Failed to convert errno %d to string: %d", errnum, strerror_err);
+  }
+  return buf;
 }
 
 }  // namespace base
