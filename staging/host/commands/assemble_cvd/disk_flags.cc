@@ -467,41 +467,70 @@ class BootImageRepacker : public Feature {
   const CuttlefishConfig& config_;
 };
 
-static void GeneratePersistentBootconfig(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  const auto bootconfig_path = instance.persistent_bootconfig_path();
-  if (!FileExists(bootconfig_path)) {
-    CreateBlankImage(bootconfig_path, 1 /* mb */, "none");
+class GeneratePersistentBootconfig : public Feature {
+ public:
+  INJECT(GeneratePersistentBootconfig(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // Feature
+  std::string Name() const override { return "GeneratePersistentBootconfig"; }
+  bool Enabled() const override { return !config_.protected_vm(); }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() override {
+    const auto bootconfig_path = instance_.persistent_bootconfig_path();
+    if (!FileExists(bootconfig_path)) {
+      if (!CreateBlankImage(bootconfig_path, 1 /* mb */, "none")) {
+        LOG(ERROR) << "Failed to create image at " << bootconfig_path;
+        return false;
+      }
+    }
+
+    auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
+    if (!bootconfig_fd->IsOpen()) {
+      LOG(ERROR) << "Unable to open bootconfig file: "
+                 << bootconfig_fd->StrError();
+      return false;
+    }
+
+    //  Cuttlefish for the time being won't be able to support OTA from a
+    //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
+    //  device is stopped (via stop_cvd). This is rarely an issue since OTA
+    //  testing run on cuttlefish is done within one launch cycle of the device.
+    //  If this ever becomes an issue, this code will have to be rewritten.
+    if (!config_.bootconfig_supported()) {
+      return true;
+    }
+
+    const std::string bootconfig =
+        android::base::Join(BootconfigArgsFromConfig(config_, instance_),
+                            "\n") +
+        "\n";
+    ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
+    if (bytesWritten != bootconfig.size()) {
+      LOG(ERROR) << "Failed to write contents of bootconfig to \""
+                 << bootconfig_path << "\"";
+      return false;
+    }
+    LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
+               << ReadFile(bootconfig_path);
+
+    const off_t bootconfig_size_bytes =
+        AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
+    if (bootconfig_fd->Truncate(bootconfig_size_bytes) != 0) {
+      LOG(ERROR) << "`truncate --size=" << bootconfig_size_bytes << " bytes "
+                 << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
+      return false;
+    }
+    return true;
   }
 
-  auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
-  CHECK(bootconfig_fd->IsOpen())
-      << "Unable to open bootconfig file: " << bootconfig_fd->StrError();
-
-  //  Cuttlefish for the time being won't be able to support OTA from a
-  //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the device
-  //  is stopped (via stop_cvd). This is rarely an issue since OTA testing run
-  //  on cuttlefish is done within one launch cycle of the device. If this ever
-  //  becomes an issue, this code will have to be rewritten.
-  if (!config.bootconfig_supported()) {
-    return;
-  }
-
-  const std::string bootconfig =
-      android::base::Join(BootconfigArgsFromConfig(config, instance), "\n") +
-      "\n";
-  ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
-  CHECK(bytesWritten == bootconfig.size());
-  LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
-             << ReadFile(bootconfig_path);
-
-  const off_t bootconfig_size_bytes =
-      AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
-  CHECK(bootconfig_fd->Truncate(bootconfig_size_bytes) == 0)
-      << "`truncate --size=" << bootconfig_size_bytes << " bytes "
-      << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
-}
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
 
 class InitializeMetadataImage : public Feature {
  public:
@@ -679,6 +708,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<Feature, InitializePstore>()
       .addMultibinding<Feature, InitializeSdCard>()
       .addMultibinding<Feature, InitializeFactoryResetProtected>()
+      .addMultibinding<Feature, GeneratePersistentBootconfig>()
       .install(InitBootloaderEnvPartitionComponent);
 }
 
@@ -698,16 +728,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         instance_injector.getMultibindings<Feature>();
     CHECK(Feature::RunSetup(instance_features))
         << "Failed to run instance feature setup.";
-  }
-
-  // If we are booting a protected VM, for now, assume we want a super minimal
-  // environment with no userdata encryption, limited debug, no FRP emulation, a
-  // static env for the bootloader, no SD-Card and no resume-on-reboot HAL
-  // support.
-  if (!FLAGS_protected_vm) {
-    for (const auto& instance : config.Instances()) {
-      GeneratePersistentBootconfig(config, instance);
-    }
   }
 
   for (const auto& instance : config.Instances()) {
