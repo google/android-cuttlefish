@@ -126,12 +126,12 @@ bool CuttlefishConfig::SaveFragment(const ConfigFragment& fragment) {
   return true;
 }
 
-static constexpr char kAssemblyDir[] = "assembly_dir";
-std::string CuttlefishConfig::assembly_dir() const {
-  return (*dictionary_)[kAssemblyDir].asString();
+static constexpr char kRootDir[] = "root_dir";
+std::string CuttlefishConfig::root_dir() const {
+  return (*dictionary_)[kRootDir].asString();
 }
-void CuttlefishConfig::set_assembly_dir(const std::string& assembly_dir) {
-  (*dictionary_)[kAssemblyDir] = assembly_dir;
+void CuttlefishConfig::set_root_dir(const std::string& root_dir) {
+  (*dictionary_)[kRootDir] = root_dir;
 }
 
 static constexpr char kVmManager[] = "vm_manager";
@@ -867,6 +867,19 @@ bool CuttlefishConfig::SaveToFile(const std::string& file) const {
   }
   ofs << *dictionary_;
   return !ofs.fail();
+}
+
+std::string CuttlefishConfig::instances_dir() const {
+  return AbsolutePath(root_dir() + "/instances");
+}
+
+std::string CuttlefishConfig::InstancesPath(
+    const std::string& file_name) const {
+  return AbsolutePath(instances_dir() + "/" + file_name);
+}
+
+std::string CuttlefishConfig::assembly_dir() const {
+  return AbsolutePath(root_dir() + "/assembly");
 }
 
 std::string CuttlefishConfig::AssemblyPath(

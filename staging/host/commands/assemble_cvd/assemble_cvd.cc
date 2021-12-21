@@ -38,8 +38,9 @@ using cuttlefish::StringFromEnv;
 
 DEFINE_string(assembly_dir, StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
               "A directory to put generated files common between instances");
-DEFINE_string(instance_dir, StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
-              "A directory to put all instance specific files");
+DEFINE_string(instance_dir, StringFromEnv("HOME", ".") + "/cuttlefish",
+              "This is a directory that will hold the cuttlefish generated"
+              "files, including both instance-specific and common files");
 DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
                           "possible. i.e., if --noresume is passed, the disk "
                           "will be reset to the state it was initially launched "
@@ -89,6 +90,13 @@ bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
                << ": " << strerror(errno);
     return false;
   }
+  std::string instance_dir_link =
+      FLAGS_instance_dir + "/cuttlefish_config.json";
+  if (symlink(config_file.c_str(), instance_dir_link.c_str()) != 0) {
+    PLOG(ERROR) << "Failed to create symlink to config file at "
+                << instance_dir_link;
+    return false;
+  }
 
   return true;
 }
@@ -97,8 +105,7 @@ bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 # define O_TMPFILE (020000000 | O_DIRECTORY)
 #endif
 
-void CreateLegacyLogSymlinks(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+void CreateLegacySymlinks(const CuttlefishConfig::InstanceSpecific& instance) {
   std::string log_files[] = {
       "kernel.log",  "launcher.log",        "logcat",
       "metrics.log", "modem_simulator.log", "crosvm_openwrt.log",
@@ -111,23 +118,40 @@ void CreateLegacyLogSymlinks(
                   << ") failed";
     }
   }
+
+  std::stringstream legacy_instance_path_stream;
+  legacy_instance_path_stream << FLAGS_instance_dir;
+  if (gflags::GetCommandLineFlagInfoOrDie("instance_dir").is_default) {
+    legacy_instance_path_stream << "_runtime";
+  }
+  legacy_instance_path_stream << "." << instance.id();
+  auto legacy_instance_path = legacy_instance_path_stream.str();
+
+  if (DirectoryExists(legacy_instance_path, /* follow_symlinks */ false)) {
+    CHECK(RecursivelyRemoveDirectory(legacy_instance_path))
+        << "Failed to remove legacy directory " << legacy_instance_path;
+  } else if (FileExists(legacy_instance_path, /* follow_symlinks */ false)) {
+    CHECK(RemoveFile(legacy_instance_path))
+        << "Failed to remove instance_dir symlink " << legacy_instance_path;
+  }
+  if (symlink(instance.instance_dir().c_str(), legacy_instance_path.c_str())) {
+    PLOG(FATAL) << "symlink(\"" << instance.instance_dir() << "\", \""
+                << legacy_instance_path << "\") failed";
+  }
 }
 
 const CuttlefishConfig* InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, KernelConfig kernel_config,
     fruit::Injector<>& injector) {
-  std::string assembly_dir_parent = AbsolutePath(FLAGS_assembly_dir);
-  while (assembly_dir_parent[assembly_dir_parent.size() - 1] == '/') {
-    assembly_dir_parent =
-        assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
+  std::string runtime_dir_parent = AbsolutePath(FLAGS_instance_dir);
+  while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
+    runtime_dir_parent =
+        runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
   }
-  assembly_dir_parent =
-      assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
-  auto log =
-      SharedFD::Open(
-          assembly_dir_parent,
-          O_WRONLY | O_TMPFILE,
-          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+  runtime_dir_parent =
+      runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
+  auto log = SharedFD::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
+                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
   if (!log->IsOpen()) {
     LOG(ERROR) << "Could not open O_TMPFILE precursor to assemble_cvd.log: "
                << log->StrError();
@@ -182,12 +206,13 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    CHECK(
-        CleanPriorFiles(preserving, FLAGS_assembly_dir, config.instance_dirs()))
+    CHECK(CleanPriorFiles(preserving, config.assembly_dir(),
+                          config.instance_dirs()))
         << "Failed to clean prior files";
 
-    // Create assembly directory if it doesn't exist.
-    CHECK(EnsureDirectoryExists(FLAGS_assembly_dir));
+    CHECK(EnsureDirectoryExists(config.root_dir()));
+    CHECK(EnsureDirectoryExists(config.assembly_dir()));
+    CHECK(EnsureDirectoryExists(config.instances_dir()));
     if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
                   << config.AssemblyPath("assemble_cvd.log")
@@ -216,23 +241,37 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       CHECK(EnsureDirectoryExists(recording_dir));
       CHECK(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
       // TODO(schuffelen): Move this code somewhere better
-      CreateLegacyLogSymlinks(instance);
+      CreateLegacySymlinks(instance);
     }
     CHECK(SaveConfig(config)) << "Failed to initialize configuration";
   }
 
-  std::string first_instance = FLAGS_instance_dir + "." + std::to_string(GetInstance());
-  if (FileExists(FLAGS_instance_dir)) {
-    CHECK(RemoveFile(FLAGS_instance_dir))
-        << "Failed to remove instance_dir symlink " << FLAGS_instance_dir;
-  }
-  CHECK_EQ(symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()), 0)
-      << "Could not symlink \"" << first_instance << "\" to \""
-      << FLAGS_instance_dir << "\"";
-
   // Do this early so that the config object is ready for anything that needs it
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Failed to obtain config singleton";
+
+  if (DirectoryExists(FLAGS_assembly_dir, /* follow_symlinks */ false)) {
+    CHECK(RecursivelyRemoveDirectory(FLAGS_assembly_dir))
+        << "Failed to remove directory " << FLAGS_assembly_dir;
+  } else if (FileExists(FLAGS_assembly_dir, /* follow_symlinks */ false)) {
+    CHECK(RemoveFile(FLAGS_assembly_dir))
+        << "Failed to remove file" << FLAGS_assembly_dir;
+  }
+  if (symlink(config->assembly_dir().c_str(), FLAGS_assembly_dir.c_str())) {
+    PLOG(FATAL) << "symlink(\"" << config->assembly_dir() << "\", \""
+                << FLAGS_assembly_dir << "\") failed";
+  }
+
+  std::string first_instance = config->Instances()[0].instance_dir();
+  std::string double_legacy_instance_dir = FLAGS_instance_dir + "_runtime";
+  if (FileExists(double_legacy_instance_dir, /* follow_symlinks */ false)) {
+    CHECK(RemoveFile(double_legacy_instance_dir))
+        << "Failed to remove symlink " << double_legacy_instance_dir;
+  }
+  if (symlink(first_instance.c_str(), double_legacy_instance_dir.c_str())) {
+    PLOG(FATAL) << "Could not symlink \"" << first_instance << "\" to \""
+                << double_legacy_instance_dir << "\"";
+  }
 
   CreateDynamicDiskFiles(fetcher_config, *config);
 
