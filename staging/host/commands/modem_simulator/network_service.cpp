@@ -35,7 +35,8 @@ NetworkService::NetworkService(int32_t service_id,
                                ChannelMonitor* channel_monitor,
                                ThreadLooper* thread_looper)
     : ModemService(service_id, this->InitializeCommandHandlers(),
-                   channel_monitor, thread_looper) {
+                   channel_monitor, thread_looper),
+      keep_signal_strength_changing_loop_(this) {
   InitializeServiceState();
 }
 
@@ -993,7 +994,7 @@ void NetworkService::UpdateRegisterState(RegistrationState state ) {
 
   OnVoiceRegisterStateChanged();
   OnDataRegisterStateChanged();
-  OnSignalStrengthChanged();
+  keep_signal_strength_changing_loop_.Start();
 
   int cellBandwidthDownlink = 5000;
   const int UNKNOWN = 0;
@@ -1250,4 +1251,30 @@ void NetworkService::OnSignalStrengthChanged() {
 NetworkService::RegistrationState NetworkService::GetVoiceRegistrationState() const {
   return voice_registration_status_.registration_state;
 }
+
+NetworkService::KeepSignalStrengthChangingLoop::KeepSignalStrengthChangingLoop(
+    NetworkService* network_service)
+    : network_service_(network_service) {}
+
+void NetworkService::KeepSignalStrengthChangingLoop::Start() {
+  if (loop_started_.test_and_set()) {
+    LOG(ERROR) << "Signal strength is already changing automatically";
+  } else {
+    UpdateSignalStrengthCallback();
+  }
+}
+
+void NetworkService::KeepSignalStrengthChangingLoop::
+    UpdateSignalStrengthCallback() {
+  network_service_->signal_strength_percent_ -= 5;
+  if (network_service_->signal_strength_percent_ <= 0) {
+    network_service_->signal_strength_percent_ = 100;
+  }
+  network_service_->thread_looper_->Post(
+      makeSafeCallback(this, &NetworkService::KeepSignalStrengthChangingLoop::
+                                 UpdateSignalStrengthCallback),
+      std::chrono::seconds(10));
+  network_service_->OnSignalStrengthChanged();
+}
+
 }  // namespace cuttlefish
