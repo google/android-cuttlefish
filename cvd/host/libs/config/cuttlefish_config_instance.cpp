@@ -26,17 +26,7 @@ namespace {
 
 const char* kInstances = "instances";
 
-std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
-
 }  // namespace
-
-static constexpr char kInstanceDir[] = "instance_dir";
-CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
-    CuttlefishConfig* config, const std::string& id)
-    : config_(config), id_(id) {
-  // Legacy for acloud
-  (*Dictionary())[kInstanceDir] = config_->InstancesPath(IdToName(id));
-}
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
   return &(*config_->dictionary_)[kInstances][id_];
@@ -46,8 +36,13 @@ const Json::Value* CuttlefishConfig::InstanceSpecific::Dictionary() const {
   return &(*config_->dictionary_)[kInstances][id_];
 }
 
+static constexpr char kInstanceDir[] = "instance_dir";
 std::string CuttlefishConfig::InstanceSpecific::instance_dir() const {
-  return config_->InstancesPath(IdToName(id_));
+  return (*Dictionary())[kInstanceDir].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_instance_dir(
+    const std::string& instance_dir) {
+  (*Dictionary())[kInstanceDir] = instance_dir;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_internal_dir() const {
@@ -145,7 +140,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_path() const {
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
-  return AbsolutePath(PerInstanceLogPath("logcat"));
+  return AbsolutePath(PerInstancePath("logcat"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
@@ -163,7 +158,7 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
-  return AbsolutePath(PerInstanceLogPath("launcher.log"));
+  return AbsolutePath(PerInstancePath("launcher.log"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
@@ -433,6 +428,15 @@ bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
   return (*Dictionary())[kStartSigServer].asBool();
 }
 
+static constexpr char kStartSigServerProxy[] = "webrtc_start_sig_server_proxy";
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_start_webrtc_sig_server_proxy(bool start) {
+  (*Dictionary())[kStartSigServerProxy] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server_proxy() const {
+  return (*Dictionary())[kStartSigServerProxy].asBool();
+}
+
 static constexpr char kStartWmediumd[] = "start_wmediumd";
 void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd(bool start) {
   (*Dictionary())[kStartWmediumd] = start;
@@ -500,20 +504,8 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
   return PerInstancePath(relative_path.c_str());
 }
 
-std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
-    const std::string& file_name) const {
-  if (file_name.size() == 0) {
-    // Don't append a / if file_name is empty.
-    return PerInstancePath(kLogDirName);
-  }
-  auto relative_path = (std::string(kLogDirName) + "/") + file_name;
-  return PerInstancePath(relative_path.c_str());
-}
-
 std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
-  return IdToName(id_);
+  return kCvdNamePrefix + id_;
 }
-
-std::string CuttlefishConfig::InstanceSpecific::id() const { return id_; }
 
 }  // namespace cuttlefish
