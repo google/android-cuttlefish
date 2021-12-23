@@ -90,13 +90,6 @@ bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
                << ": " << strerror(errno);
     return false;
   }
-  std::string instance_dir_link =
-      FLAGS_instance_dir + "/cuttlefish_config.json";
-  if (symlink(config_file.c_str(), instance_dir_link.c_str()) != 0) {
-    PLOG(ERROR) << "Failed to create symlink to config file at "
-                << instance_dir_link;
-    return false;
-  }
 
   return true;
 }
