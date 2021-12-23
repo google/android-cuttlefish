@@ -800,13 +800,20 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       }
       instance.set_webrtc_device_id(device_id);
     }
-    if (FLAGS_start_webrtc_sig_server && is_first_instance) {
+    if (!is_first_instance || !FLAGS_start_webrtc) {
+      // Only the first instance starts the signaling server or proxy
+      instance.set_start_webrtc_signaling_server(false);
+      instance.set_start_webrtc_sig_server_proxy(false);
+    } else {
       auto port = 8443 + num - 1;
       // Change the signaling server port for all instances
       tmp_config_obj.set_sig_server_port(port);
-      instance.set_start_webrtc_signaling_server(true);
-    } else {
-      instance.set_start_webrtc_signaling_server(false);
+      // Either the signaling server or the proxy is started, never both
+      instance.set_start_webrtc_signaling_server(FLAGS_start_webrtc_sig_server);
+      // The proxy is only started if the host operator is available
+      instance.set_start_webrtc_sig_server_proxy(
+          cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH) &&
+          !FLAGS_start_webrtc_sig_server);
     }
 
     // Start wmediumd process for the first instance if

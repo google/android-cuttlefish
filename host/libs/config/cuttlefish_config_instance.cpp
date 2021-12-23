@@ -428,6 +428,15 @@ bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
   return (*Dictionary())[kStartSigServer].asBool();
 }
 
+static constexpr char kStartSigServerProxy[] = "webrtc_start_sig_server_proxy";
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_start_webrtc_sig_server_proxy(bool start) {
+  (*Dictionary())[kStartSigServerProxy] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server_proxy() const {
+  return (*Dictionary())[kStartSigServerProxy].asBool();
+}
+
 static constexpr char kStartWmediumd[] = "start_wmediumd";
 void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd(bool start) {
   (*Dictionary())[kStartWmediumd] = start;

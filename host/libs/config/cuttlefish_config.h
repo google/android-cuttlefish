@@ -458,6 +458,10 @@ class CuttlefishConfig {
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
 
+    // Whether to start a reverse proxy to the webrtc signaling server already
+    // running in the host
+    bool start_webrtc_sig_server_proxy() const;
+
     // Whether this instance should start the wmediumd process
     bool start_wmediumd() const;
 
@@ -519,6 +523,7 @@ class CuttlefishConfig {
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
+    void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
     void set_start_ap(bool start);
     // Wifi MAC address inside the guest
