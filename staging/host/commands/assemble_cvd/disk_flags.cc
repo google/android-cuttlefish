@@ -45,6 +45,10 @@ DECLARE_string(system_image_dir);
 DEFINE_string(boot_image, "",
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
+DEFINE_string(
+    init_boot_image, "",
+    "Location of cuttlefish init boot image. If empty it is assumed to "
+    "be init_boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_string(super_image, "", "Location of the super partition image.");
 DEFINE_string(misc_image, "",
@@ -99,6 +103,11 @@ bool ResolveInstanceFiles() {
   // be placed in --system_image_dir location.
   std::string default_boot_image = FLAGS_system_image_dir + "/boot.img";
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_init_boot_image =
+      FLAGS_system_image_dir + "/init_boot.img";
+  SetCommandLineOptionWithMode("init_boot_image",
+                               default_init_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_data_image = FLAGS_system_image_dir + "/userdata.img";
   SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
@@ -156,6 +165,16 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   partitions.push_back(ImagePartition{
       .label = "boot_b",
       .image_file_path = FLAGS_boot_image,
+      .read_only = true,
+  });
+  partitions.push_back(ImagePartition{
+      .label = "init_boot_a",
+      .image_file_path = FLAGS_init_boot_image,
+      .read_only = true,
+  });
+  partitions.push_back(ImagePartition{
+      .label = "init_boot_b",
+      .image_file_path = FLAGS_init_boot_image,
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
@@ -409,6 +428,11 @@ class BootImageRepacker : public Feature {
     if (!FileHasContent(FLAGS_boot_image)) {
       LOG(ERROR) << "File not found: " << FLAGS_boot_image;
       return false;
+    }
+    // The init_boot partition is be optional for testing boot.img
+    // with the ramdisk inside.
+    if (!FileHasContent(FLAGS_init_boot_image)) {
+      LOG(WARNING) << "File not found: " << FLAGS_init_boot_image;
     }
 
     if (!FileHasContent(FLAGS_vendor_boot_image)) {
