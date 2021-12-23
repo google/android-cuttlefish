@@ -55,14 +55,9 @@ std::string TargetFilesZip(const FetcherConfig& fetcher_config,
 
 const std::string kMiscInfoPath = "META/misc_info.txt";
 const std::set<std::string> kDefaultTargetImages = {
-  "IMAGES/boot.img",
-  "IMAGES/odm.img",
-  "IMAGES/odm_dlkm.img",
-  "IMAGES/recovery.img",
-  "IMAGES/userdata.img",
-  "IMAGES/vbmeta.img",
-  "IMAGES/vendor.img",
-  "IMAGES/vendor_dlkm.img",
+    "IMAGES/boot.img",     "IMAGES/init_boot.img", "IMAGES/odm.img",
+    "IMAGES/odm_dlkm.img", "IMAGES/recovery.img",  "IMAGES/userdata.img",
+    "IMAGES/vbmeta.img",   "IMAGES/vendor.img",    "IMAGES/vendor_dlkm.img",
 };
 const std::set<std::string> kDefaultTargetBuildProp = {
   "ODM/build.prop",
