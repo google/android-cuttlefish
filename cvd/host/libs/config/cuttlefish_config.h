@@ -487,6 +487,8 @@ class CuttlefishConfig {
 
     std::string persistent_bootconfig_path() const;
 
+    std::string vbmeta_path() const;
+
     std::string id() const;
   };
 
@@ -601,6 +603,6 @@ extern const char* const kGpuModeGfxStream;
 
 // HwComposer modes
 extern const char* const kHwComposerAuto;
-extern const char* const kHwComposerDrm;
+extern const char* const kHwComposerDrmMinigbm;
 extern const char* const kHwComposerRanchu;
 }  // namespace cuttlefish
