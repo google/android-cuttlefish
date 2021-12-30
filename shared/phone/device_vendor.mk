@@ -41,6 +41,7 @@ ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.rild
 else
 PRODUCT_PACKAGES += \
+    android.hardware.radio-service.compat \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
 endif
