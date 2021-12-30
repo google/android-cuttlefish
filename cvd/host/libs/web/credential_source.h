@@ -20,6 +20,9 @@
 
 #include "curl_wrapper.h"
 
+#include <json/json.h>
+#include <openssl/evp.h>
+
 namespace cuttlefish {
 
 class CredentialSource {
@@ -53,4 +56,24 @@ public:
   static std::unique_ptr<CredentialSource> make(const std::string& credential);
 };
 
+class ServiceAccountOauthCredentialSource : public CredentialSource {
+ public:
+  static std::unique_ptr<ServiceAccountOauthCredentialSource> FromJson(
+      CurlWrapper& curl, const Json::Value& service_account_json,
+      const std::string& scope);
+
+  std::string Credential() override;
+
+ private:
+  ServiceAccountOauthCredentialSource(CurlWrapper& curl);
+  void RefreshCredential();
+
+  CurlWrapper& curl_;
+  std::string email_;
+  std::string scope_;
+  std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
+
+  std::string latest_credential_;
+  std::chrono::steady_clock::time_point expiration_;
+};
 }
