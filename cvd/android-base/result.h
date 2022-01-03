@@ -124,7 +124,7 @@ struct Errno {
   }
 };
 
-template <typename E = Errno>
+template <typename E = Errno, bool include_message = true>
 struct ResultError {
   template <typename T, typename P, typename = std::enable_if_t<std::is_convertible_v<P, E>>>
   ResultError(T&& message, P&& code)
@@ -145,6 +145,22 @@ struct ResultError {
 };
 
 template <typename E>
+struct ResultError<E, /* include_message */ false> {
+  template <typename P, typename = std::enable_if_t<std::is_convertible_v<P, E>>>
+  ResultError(P&& code) : code_(E(std::forward<P>(code))) {}
+
+  template <typename T>
+  operator android::base::expected<T, ResultError<E, false>>() const {
+    return android::base::unexpected(ResultError<E, false>(code_));
+  }
+
+  const E& code() const { return code_; }
+
+ private:
+  E code_;
+};
+
+template <typename E>
 inline bool operator==(const ResultError<E>& lhs, const ResultError<E>& rhs) {
   return lhs.message() == rhs.message() && lhs.code() == rhs.code();
 }
@@ -160,7 +176,22 @@ inline std::ostream& operator<<(std::ostream& os, const ResultError<E>& t) {
   return os;
 }
 
-template <typename E = Errno, typename = std::enable_if_t<!std::is_same_v<E, int>>>
+namespace internal {
+// Stream class that does nothing and is has zero (actually 1) size. It is used instead of
+// std::stringstream when include_message is false so that we use less on stack.
+// sizeof(std::stringstream) is 280 on arm64.
+struct DoNothingStream {
+  template <typename T>
+  DoNothingStream& operator<<(T&&) {
+    return *this;
+  }
+
+  std::string str() const { return ""; }
+};
+}  // namespace internal
+
+template <typename E = Errno, bool include_message = true,
+          typename = std::enable_if_t<!std::is_same_v<E, int>>>
 class Error {
  public:
   Error() : code_(0), has_code_(false) {}
@@ -174,8 +205,15 @@ class Error {
     return android::base::unexpected(ResultError<P>(str(), static_cast<P>(code_)));
   }
 
+  template <typename T, typename P, typename = std::enable_if_t<std::is_convertible_v<E, P>>>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  operator android::base::expected<T, ResultError<P, false>>() const {
+    return android::base::unexpected(ResultError<P, false>(static_cast<P>(code_)));
+  }
+
   template <typename T>
   Error& operator<<(T&& t) {
+    static_assert(include_message, "<< not supported when include_message = false");
     // NOLINTNEXTLINE(bugprone-suspicious-semicolon)
     if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, ResultError<E>>) {
       if (!has_code_) {
@@ -190,6 +228,7 @@ class Error {
   }
 
   const std::string str() const {
+    static_assert(include_message, "str() not supported when include_message = false");
     std::string str = ss_.str();
     if (has_code_) {
       if (str.empty()) {
@@ -216,7 +255,7 @@ class Error {
     (*this) << message;
   }
 
-  std::stringstream ss_;
+  std::conditional_t<include_message, std::stringstream, internal::DoNothingStream> ss_;
   E code_;
   const bool has_code_;
 };
@@ -253,8 +292,8 @@ inline Error<Errno> ErrnoErrorfImpl(const T&& fmt, const Args&... args) {
 #define Errorf(fmt, ...) android::base::ErrorfImpl(FMT_STRING(fmt), ##__VA_ARGS__)
 #define ErrnoErrorf(fmt, ...) android::base::ErrnoErrorfImpl(FMT_STRING(fmt), ##__VA_ARGS__)
 
-template <typename T, typename E = Errno>
-using Result = android::base::expected<T, ResultError<E>>;
+template <typename T, typename E = Errno, bool include_message = true>
+using Result = android::base::expected<T, ResultError<E, include_message>>;
 
 // Specialization of android::base::OkOrFail<V> for V = Result<T, E>. See android-base/errors.h
 // for the contract.
