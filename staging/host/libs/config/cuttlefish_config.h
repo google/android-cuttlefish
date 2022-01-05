@@ -107,6 +107,9 @@ class CuttlefishConfig {
   std::string hwcomposer() const;
   void set_hwcomposer(const std::string&);
 
+  void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
+  bool enable_gpu_udmabuf() const;
+
   int cpus() const;
   void set_cpus(int cpus);
 
