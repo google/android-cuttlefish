@@ -166,6 +166,14 @@ void CuttlefishConfig::set_hwcomposer(const std::string& name) {
   (*dictionary_)[kHWComposer] = name;
 }
 
+static constexpr char kEnableGpuUdmabuf[] = "enable_gpu_udmabuf";
+void CuttlefishConfig::set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf) {
+  (*dictionary_)[kEnableGpuUdmabuf] = enable_gpu_udmabuf;
+}
+bool CuttlefishConfig::enable_gpu_udmabuf() const {
+  return (*dictionary_)[kEnableGpuUdmabuf].asBool();
+}
+
 static constexpr char kCpus[] = "cpus";
 int CuttlefishConfig::cpus() const { return (*dictionary_)[kCpus].asInt(); }
 void CuttlefishConfig::set_cpus(int cpus) { (*dictionary_)[kCpus] = cpus; }
