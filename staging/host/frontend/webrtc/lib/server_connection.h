@@ -79,6 +79,9 @@ class ServerConnection {
   // Sends data to the server encoded as JSON.
   virtual bool Send(const Json::Value&) = 0;
 
+  // makes re-connect request
+  virtual void Reconnect();
+
  private:
   virtual void Connect() = 0;
 };
