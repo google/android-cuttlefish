@@ -22,9 +22,7 @@
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
-
-using android::base::Error;
-using android::base::Result;
+#include "common/libs/utils/result.h"
 
 // This would use android::base::ReceiveFileDescriptors, but it silently drops
 // SCM_CREDENTIALS control messages.
@@ -57,9 +55,7 @@ Result<ControlMessage> ControlMessage::FromFileDescriptors(
   message.Raw()->cmsg_type = SCM_RIGHTS;
   for (int i = 0; i < fds.size(); i++) {
     int fd_copy = fds[i]->Fcntl(F_DUPFD_CLOEXEC, 3);
-    if (fd_copy < 0) {
-      return Error() << "Failed to duplicate fd: " << fds[i]->StrError();
-    }
+    CF_EXPECT(fd_copy >= 0, "Failed to duplicate fd: " << fds[i]->StrError());
     message.fds_.push_back(fd_copy);
     // Following the CMSG_DATA spec, use memcpy to avoid alignment issues.
     memcpy(CMSG_DATA(message.Raw()) + (i * sizeof(int)), &fd_copy, sizeof(int));
@@ -122,9 +118,7 @@ bool ControlMessage::IsCredentials() const {
 }
 
 Result<ucred> ControlMessage::AsCredentials() const {
-  if (!IsCredentials()) {
-    return Error() << "Control message does not hold a credential";
-  }
+  CF_EXPECT(IsCredentials(), "Control message does not hold a credential");
   ucred credentials;
   memcpy(&credentials, CMSG_DATA(Raw()), sizeof(ucred));
   return credentials;
@@ -137,9 +131,7 @@ bool ControlMessage::IsFileDescriptors() const {
 }
 
 Result<std::vector<SharedFD>> ControlMessage::AsSharedFDs() const {
-  if (!IsFileDescriptors()) {
-    return Error() << "Message does not contain file descriptors";
-  }
+  CF_EXPECT(IsFileDescriptors(), "Message does not contain file descriptors");
   size_t fdcount =
       static_cast<size_t>(Raw()->cmsg_len - CMSG_LEN(0)) / sizeof(int);
   std::vector<SharedFD> shared_fds;
@@ -148,9 +140,7 @@ Result<std::vector<SharedFD>> ControlMessage::AsSharedFDs() const {
     int fd = -1;
     memcpy(&fd, CMSG_DATA(Raw()) + (i * sizeof(int)), sizeof(fd));
     SharedFD shared_fd = SharedFD::Dup(fd);
-    if (!shared_fd->IsOpen()) {
-      return Error() << "Could not dup FD " << fd;
-    }
+    CF_EXPECT(shared_fd->IsOpen(), "Could not dup FD " << fd);
     shared_fds.push_back(shared_fd);
   }
   return shared_fds;
@@ -168,11 +158,8 @@ Result<std::vector<SharedFD>> UnixSocketMessage::FileDescriptors() {
   std::vector<SharedFD> fds;
   for (const auto& control_message : control) {
     if (control_message.IsFileDescriptors()) {
-      auto additional_fds = control_message.AsSharedFDs();
-      if (!additional_fds.ok()) {
-        return Error() << "Failed to get FDs: " << additional_fds.error();
-      }
-      fds.insert(fds.end(), additional_fds->begin(), additional_fds->end());
+      auto additional_fds = CF_EXPECT(control_message.AsSharedFDs());
+      fds.insert(fds.end(), additional_fds.begin(), additional_fds.end());
     }
   }
   return fds;
@@ -189,20 +176,17 @@ Result<ucred> UnixSocketMessage::Credentials() {
   std::vector<ucred> credentials;
   for (const auto& control_message : control) {
     if (control_message.IsCredentials()) {
-      auto creds = control_message.AsCredentials();
-      if (!creds.ok()) {
-        return Error() << "Message claims to have credentials but does not: "
-                       << creds.error();
-      }
-      credentials.push_back(*creds);
+      auto creds = CF_EXPECT(control_message.AsCredentials(),
+                             "Message claims to have credentials but does not");
+      credentials.push_back(creds);
     }
   }
   if (credentials.size() == 0) {
-    return Error() << "No credentials present";
+    return CF_ERR("No credentials present");
   } else if (credentials.size() == 1) {
     return credentials[0];
   } else {
-    return Error() << "Excepted 1 credential, received " << credentials.size();
+    return CF_ERR("Excepted 1 credential, received " << credentials.size());
   }
 }
 
@@ -215,8 +199,8 @@ UnixMessageSocket::UnixMessageSocket(SharedFD socket) : socket_(socket) {
 Result<void> UnixMessageSocket::EnableCredentials(bool enable) {
   int flag = enable ? 1 : 0;
   if (socket_->SetSockOpt(SOL_SOCKET, SO_PASSCRED, &flag, sizeof(flag)) != 0) {
-    return Error() << "Could not set credential status to " << enable << ": "
-                   << socket_->StrError();
+    return CF_ERR("Could not set credential status to " << enable << ": "
+                                                        << socket_->StrError());
   }
   return {};
 }
@@ -233,9 +217,8 @@ Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
   auto cmsg = CMSG_FIRSTHDR(&message_header);
   size_t calculated_control_len = 0;
   for (const ControlMessage& control : message.control) {
-    if (cmsg == nullptr) {
-      return Error() << "Control messages did not fit in control buffer";
-    }
+    CF_EXPECT(cmsg != nullptr,
+              "Control messages did not fit in control buffer");
     /* size() should match CMSG_SPACE */
     memcpy(cmsg, control.data_.data(), control.data_.size());
     calculated_control_len += control.data_.size();
@@ -252,12 +235,10 @@ Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
   message_header.msg_flags = 0;
 
   auto bytes_sent = socket_->SendMsg(&message_header, MSG_NOSIGNAL);
-  if (bytes_sent < 0) {
-    return Error() << "Failed to send message: " << socket_->StrError();
-  } else if (bytes_sent != message.data.size()) {
-    return Error() << "Failed to send entire message. Sent " << bytes_sent
-                   << ", excepted to send " << message.data.size();
-  }
+  CF_EXPECT(bytes_sent >= 0, "Failed to send message: " << socket_->StrError());
+  CF_EXPECT(bytes_sent == message.data.size(),
+            "Failed to send entire message. Sent "
+                << bytes_sent << ", excepted to send " << message.data.size());
   return {};
 }
 
@@ -277,15 +258,12 @@ Result<UnixSocketMessage> UnixMessageSocket::ReadMessage() {
   message_header.msg_flags = 0;
 
   auto bytes_read = socket_->RecvMsg(&message_header, MSG_CMSG_CLOEXEC);
-  if (bytes_read < 0) {
-    return Error() << "Read error: " << socket_->StrError();
-  } else if (message_header.msg_flags & MSG_TRUNC) {
-    return Error() << "Message was truncated on read";
-  } else if (message_header.msg_flags & MSG_CTRUNC) {
-    return Error() << "Message control data was truncated on read";
-  } else if (message_header.msg_flags & MSG_ERRQUEUE) {
-    return Error() << "Error queue error";
-  }
+  CF_EXPECT(bytes_read >= 0, "Read error: " << socket_->StrError());
+  CF_EXPECT(!(message_header.msg_flags & MSG_TRUNC),
+            "Message was truncated on read");
+  CF_EXPECT(!(message_header.msg_flags & MSG_CTRUNC),
+            "Message control data was truncated on read");
+  CF_EXPECT(!(message_header.msg_flags & MSG_ERRQUEUE), "Error queue error");
   UnixSocketMessage managed_message;
   for (auto cmsg = CMSG_FIRSTHDR(&message_header); cmsg != nullptr;
        cmsg = CMSG_NXTHDR(&message_header, cmsg)) {
