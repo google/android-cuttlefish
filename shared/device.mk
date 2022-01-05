@@ -586,11 +586,12 @@ PRODUCT_PACKAGES += \
 # Sensors
 #
 ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-       LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
-else
+# TODO(b/210883464): Convert the sensors APEX to use the new AIDL impl.
+#ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+#       LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
+#else
        LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors-service.example
-endif
+#endif
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_SENSOR_PRODUCT_PACKAGE)
