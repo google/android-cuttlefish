@@ -46,9 +46,9 @@ std::string GetPath(struct lws* wsi) {
 }
 
 const std::vector<std::pair<std::string, std::string>> kCORSHeaders = {
-    {"Access-Control-Allow-Origin", "*"},
-    {"Access-Control-Allow-Methods", "POST, GET, OPTIONS"},
-    {"Access-Control-Allow-Headers",
+    {"Access-Control-Allow-Origin:", "*"},
+    {"Access-Control-Allow-Methods:", "POST, GET, OPTIONS"},
+    {"Access-Control-Allow-Headers:",
      "Content-Type, Access-Control-Allow-Headers, Authorization, "
      "X-Requested-With, Accept"}};
 
