@@ -64,6 +64,8 @@ constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 
 constexpr int kRegistrationRetries = 3;
 constexpr int kRetryFirstIntervalMs = 1000;
+constexpr int kReconnectRetries = 100;
+constexpr int kReconnectIntervalMs = 1000;
 
 bool ParseMessage(const uint8_t* data, size_t length, Json::Value* msg_out) {
   auto str = reinterpret_cast<const char*>(data);
@@ -336,8 +338,15 @@ void Streamer::Impl::Register(std::weak_ptr<OperatorObserver> observer) {
   operator_observer_ = observer;
   // When the connection is established the OnOpen function will be called where
   // the registration will take place
-  server_connection_ =
-      ServerConnection::Connect(config_.operator_server, weak_from_this());
+  if (!server_connection_) {
+    server_connection_ =
+        ServerConnection::Connect(config_.operator_server, weak_from_this());
+  } else {
+    // in case connection attempt is retried, just call Reconnect().
+    // Recreating server_connection_ object will destroy existing WSConnection
+    // object and task re-scheduling will fail
+    server_connection_->Reconnect();
+  }
 }
 
 void Streamer::Impl::OnOpen() {
@@ -428,13 +437,20 @@ void Streamer::Impl::OnClose() {
       observer->OnClose();
     }
   });
+  LOG(INFO) << "Trying to re-connect to operator..";
+  registration_retries_left_ = kReconnectRetries;
+  retry_interval_ms_ = kReconnectIntervalMs;
+  signal_thread_->PostDelayedTask(
+      RTC_FROM_HERE, [this]() { Register(operator_observer_); },
+      retry_interval_ms_);
 }
 
 void Streamer::Impl::OnError(const std::string& error) {
   // Called from websocket thread.
   if (registration_retries_left_) {
     LOG(WARNING) << "Connection to operator failed (" << error << "), "
-                 << registration_retries_left_ << " retries left";
+                 << registration_retries_left_ << " retries left"
+                 << " (will retry in " << retry_interval_ms_ / 1000 << "s)";
     --registration_retries_left_;
     signal_thread_->PostDelayedTask(
         RTC_FROM_HERE,
