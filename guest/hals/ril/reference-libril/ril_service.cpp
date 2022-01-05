@@ -2448,7 +2448,7 @@ Return<void> RadioImpl_1_6::getCellInfoList_1_6(int32_t serial) {
 #if VDBG
     RLOGD("getCellInfoList_1_6: serial %d", serial);
 #endif
-    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CELL_INFO_LIST);
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CELL_INFO_LIST_1_6);
     return Void();
 }
 
@@ -8934,47 +8934,72 @@ int radio_1_6::getVoiceRadioTechnologyResponse(int slotId,
     return 0;
 }
 
-int radio_1_6::getCellInfoListResponse(int slotId,
-                                   int responseType,
-                                   int serial, RIL_Errno e, void *response,
-                                   size_t responseLen) {
+int radio_1_6::getCellInfoListResponse(int slotId, int responseType, int serial, RIL_Errno e,
+                                       void* response, size_t responseLen) {
 #if VDBG
     RLOGD("getCellInfoListResponse: serial %d", serial);
 #endif
-
-    if (radioService[slotId]->mRadioResponse != NULL ||
-        radioService[slotId]->mRadioResponseV1_2 != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        V1_6::RadioResponseInfo responseInfo = {};
+        populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+        hidl_vec<V1_6::CellInfo> ret;
+        Return<void> retStatus;
+        if (response != NULL && responseLen != 0 && responseLen % sizeof(RIL_CellInfo_v16) == 0) {
+            convertRilCellInfoListToHal_1_6(response, responseLen, ret);
+        } else {
+            RLOGE("getCellInfoListResponse_1_6: Invalid response");
+            if (e == RIL_E_SUCCESS) responseInfo.error = V1_6::RadioError::INVALID_RESPONSE;
+        }
+        retStatus = radioService[slotId]->mRadioResponseV1_6->getCellInfoListResponse_1_6(
+                responseInfo, ret);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL ||
+               radioService[slotId]->mRadioResponseV1_2 != NULL ||
+               radioService[slotId]->mRadioResponseV1_4 != NULL ||
+               radioService[slotId]->mRadioResponseV1_5 != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
-
+        bool error = response == NULL && responseLen != 0;
         Return<void> retStatus;
-        hidl_vec<CellInfo> ret;
-        if ((response == NULL && responseLen != 0)
-                || responseLen % sizeof(RIL_CellInfo_v12) != 0) {
-            RLOGE("getCellInfoListResponse: Invalid response");
-            if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
-
-            if (radioService[slotId]->mRadioResponseV1_2 != NULL) {
-                hidl_vec<V1_2::CellInfo> ret;
-                retStatus = radioService[slotId]->mRadioResponseV1_2->
-                        getCellInfoListResponse_1_2(responseInfo, ret);
+        if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+            hidl_vec<V1_5::CellInfo> ret;
+            if (!error && responseLen % sizeof(RIL_CellInfo_v16) != 0) {
+                convertRilCellInfoListToHal_1_5(response, responseLen, ret);
             } else {
-                hidl_vec<CellInfo> ret;
-                retStatus = radioService[slotId]->mRadioResponse->
-                        getCellInfoListResponse(responseInfo, ret);
+                RLOGE("getCellInfoListResponse_1_5: Invalid response");
+                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
             }
-        } else {
-            if (radioService[slotId]->mRadioResponseV1_2 != NULL) {
-                hidl_vec<V1_2::CellInfo> ret;
+            retStatus = radioService[slotId]->mRadioResponseV1_5->getCellInfoListResponse_1_5(
+                    responseInfo, ret);
+        } else if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+            hidl_vec<V1_4::CellInfo> ret;
+            if (!error && responseLen % sizeof(RIL_CellInfo_v16) != 0) {
+                convertRilCellInfoListToHal_1_4(response, responseLen, ret);
+            } else {
+                RLOGE("getCellInfoListResponse_1_4: Invalid response");
+                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+            }
+            radioService[slotId]->mRadioResponseV1_4->getCellInfoListResponse_1_4(responseInfo,
+                                                                                  ret);
+        } else if (radioService[slotId]->mRadioResponseV1_2 != NULL) {
+            hidl_vec<V1_2::CellInfo> ret;
+            if (!error && responseLen % sizeof(RIL_CellInfo_v12) != 0) {
                 convertRilCellInfoListToHal_1_2(response, responseLen, ret);
-                retStatus = radioService[slotId]->mRadioResponseV1_2->
-                        getCellInfoListResponse_1_2(responseInfo, ret);
             } else {
-                hidl_vec<CellInfo> ret;
-                convertRilCellInfoListToHal(response, responseLen, ret);
-                retStatus = radioService[slotId]->mRadioResponse->
-                        getCellInfoListResponse(responseInfo, ret);
+                RLOGE("getCellInfoListResponse_1_2: Invalid response");
+                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
             }
+            radioService[slotId]->mRadioResponseV1_2->getCellInfoListResponse_1_2(responseInfo,
+                                                                                  ret);
+        } else {
+            hidl_vec<CellInfo> ret;
+            if (!error && responseLen % sizeof(RIL_CellInfo) != 0) {
+                convertRilCellInfoListToHal(response, responseLen, ret);
+            } else {
+                RLOGE("getCellInfoListResponse: Invalid response");
+                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+            }
+            radioService[slotId]->mRadioResponse->getCellInfoListResponse(responseInfo, ret);
         }
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {

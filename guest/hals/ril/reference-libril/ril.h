@@ -6202,7 +6202,7 @@ typedef enum {
  *
  * "data" is NULL
  *
- * "response" is an array of  RIL_CellInfo_v12.
+ * "response" is an array of RIL_CellInfo_v12.
  *
  * Valid errors:
  *  SUCCESS
@@ -7543,8 +7543,12 @@ typedef enum {
 
 #define RIL_REQUEST_UPDATE_SIM_PHONEBOOK_RECORDS 172
 
+/**
+ * Same as RIL_REQUEST_GET_CELL_INFO_LIST but "response" is an array of RIL_CellInfo_v16.
+ */
+#define RIL_REQUEST_GET_CELL_INFO_LIST_1_6 173
 
-#define RIL_REQUEST_LAST RIL_REQUEST_UPDATE_SIM_PHONEBOOK_RECORDS
+#define RIL_REQUEST_LAST RIL_REQUEST_GET_CELL_INFO_LIST_1_6
 
 /***********************************************************************/
 
