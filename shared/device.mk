@@ -589,7 +589,7 @@ ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
        LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
 else
-       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors@2.1-service.mock
+       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors-service.example
 endif
 endif
 PRODUCT_PACKAGES += \
