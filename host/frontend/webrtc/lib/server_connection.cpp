@@ -184,6 +184,8 @@ std::unique_ptr<ServerConnection> ServerConnection::Connect(
   return ret;
 }
 
+void ServerConnection::Reconnect() { Connect(); }
+
 // UnixServerConnection implementation
 
 UnixServerConnection::UnixServerConnection(
