@@ -105,6 +105,9 @@ DEFINE_string(hwcomposer, cuttlefish::kHwComposerAuto,
 DEFINE_string(gpu_capture_binary, "",
               "Path to the GPU capture binary to use when capturing GPU traces"
               "(ngfx, renderdoc, etc)");
+DEFINE_bool(enable_gpu_udmabuf,
+            false,
+            "Use the udmabuf driver for zero-copy virtio-gpu");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -585,6 +588,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
         tmp_config_obj.set_hwcomposer(kHwComposerRanchu);
       }
   }
+
+  tmp_config_obj.set_enable_gpu_udmabuf(FLAGS_enable_gpu_udmabuf);
 
   // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
   // auto-enabling sandbox when gpu is enabled (b/152323505).
