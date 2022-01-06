@@ -1,0 +1,5 @@
+type hal_identity_remote, domain;
+hal_server_domain(hal_identity_remote, hal_identity)
+
+type hal_identity_remote_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_identity_remote)
