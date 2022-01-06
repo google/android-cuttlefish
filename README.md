@@ -26,7 +26,7 @@
 2. Download, build, and install the host debian package:
 
    ```bash
-   sudo apt install -y git devscripts config-package-dev debhelper-compat
+   sudo apt install -y git devscripts config-package-dev debhelper-compat golang
    git clone https://github.com/google/android-cuttlefish
    cd android-cuttlefish
    debuild -i -us -uc -b
