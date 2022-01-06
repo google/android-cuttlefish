@@ -98,14 +98,11 @@ else
         start|stop|status)
             "$1"
             ;;
-        restart)
+        restart|force-reload|condrestart|try-restart)
             stop && start
             ;;
-        condrestart|try-restart)
-            stop && start
-            ;;
-        reload|force-reload)
-            # Nothing to do; we reread configuration on each invocation
+        reload)
+            # Nothing to do
             ;;
         shutdown)
             stop
