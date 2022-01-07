@@ -272,7 +272,7 @@ class CvdServer {
 
       // Handle `cvd help <subcommand>` by calling the subcommand with --help.
       bin = it->second;
-      args = {"--help"};
+      args_copy.push_back("--help");
     } else if (bin == kClearBin) {
       *response.mutable_status() = CvdClear(out, err);
       return SendResponse(client, response);
