@@ -160,6 +160,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // This version needs to be implemented (b/198331886)
     {"android.hardware.radio.config.", 1},
+
+    // These versions need to be implemented (b/203490261)
+    {"android.hardware.bluetooth.audio.", 1},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
