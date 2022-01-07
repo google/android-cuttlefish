@@ -1,0 +1,3 @@
+service vendor.identity-remote /vendor/bin/hw/android.hardware.identity-service.remote
+    class hal
+    user nobody
