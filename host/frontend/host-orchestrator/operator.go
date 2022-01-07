@@ -48,6 +48,7 @@ func main() {
 	r := setupServerRoutes(pool, polledSet, config)
 
 	http.Handle("/", r)
+	log.Println("Client endpoint created")
 	if err := http.ListenAndServe(fmt.Sprint(":", port), nil); err != nil {
 		log.Fatal("ListenAndServe client: ", err)
 	}
@@ -66,6 +67,12 @@ func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
 	if err != nil {
 		log.Fatal("Failed to create unix socket: ", err)
 	}
+	// Make sure the socket is only accessible by owner and group
+	if err := os.Chmod(path, 0770); err != nil {
+		// This shouldn't happen since the creation of the socket just succeeded
+		log.Println("Failed to change permissions on socket file: ", err)
+	}
+	log.Println("Device endpoint created")
 	// Serve the register_device endpoint in a background thread
 	go func() {
 		defer sock.Close()

@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides: cuttlefish-host-orchestrator
+# Required-Start: $network $remote_fs
+# Required-Stop: $network $remote_fs
+# Default-Start:
+# Default-Stop: 0 1 2 3 4 5 6
+# Short-Description: Cuttlefish Host Orchestrator service
+# Description: The Host Orchestrator service provides the signaling
+#              server used by all cuttlefish instances running in this
+#              host as well as orchestration capabilities.
+### END INIT INFO
+#
+# Copyright (C) 2021 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Make sure calls to this script get redirected to systemctl when
+# using systemd
+
+. /lib/lsb/init-functions
+
+if [ -f /etc/default/cuttlefish-common ]; then
+    . /etc/default/cuttlefish-common
+fi
+orchestrator_port=${orchestrator_port:-1080}
+
+RUN_DIR="/run/cuttlefish"
+ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
+DAEMON="/usr/lib/cuttlefish-common/bin/host-orchestrator"
+PIDFILE="${RUN_DIR}"/host-orchestrator.pid
+
+start() {
+  mkdir -p "${RUN_DIR}"
+  chown _cutf-operator:cvdnetwork "${RUN_DIR}"
+  chmod 775 "${RUN_DIR}"
+
+  ORCHESTRATOR_PORT="${orchestrator_port}" \
+  ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  start-stop-daemon --start \
+    --pidfile "${PIDFILE}" \
+    --chuid _cutf-operator:cvdnetwork \
+    --chdir "${ASSET_DIR}" \
+    --background --no-close \
+    --output "${RUN_DIR}"/host-orchestrator.log \
+    --make-pidfile \
+    --exec "${DAEMON}"
+
+}
+
+stop() {
+  start-stop-daemon --stop \
+    --pidfile "${PIDFILE}" \
+    --remove-pidfile \
+    --exec "${DAEMON}"
+  # The presence of the socket will cause devices to try to connect to it
+  # instead of starting their own signaling servers, so it needs to be removed
+  # once the service isn't running.
+  unlink "${RUN_DIR}"/operator
+}
+
+status() {
+  # Return
+  #   0 if daemon is running
+  #   1 if daemon is dead and pid file exists
+  #   3 if daemon is not running
+  #   4 if daemon status is unknown
+  start-stop-daemon --start --quiet --pidfile "${PIDFILE}" --exec ${DAEMON} --test > /dev/null
+  case "${?}" in
+    0) [ -e "${PIDFILE}" ] && return 1 ; return 3 ;;
+    1) return 0 ;;
+    *) return 4 ;;
+  esac
+}
+
+usage() {
+    echo $0: start\|stop\|status
+}
+
+if test $# != 1; then
+    usage
+else
+    case "$1" in
+        --help)
+            usage 0
+            ;;
+        start|stop|status)
+            "$1"
+            ;;
+        restart|force-reload|condrestart|try-restart)
+            stop && start
+            ;;
+        reload)
+            # Nothing to do
+            ;;
+        shutdown)
+            stop
+            ;;
+        *)
+            usage
+            ;;
+    esac
+fi
+exit 0
