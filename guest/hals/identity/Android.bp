@@ -1,0 +1,51 @@
+cc_binary {
+    name: "android.hardware.identity-service.remote",
+    relative_install_path: "hw",
+    init_rc: ["android.hardware.identity-service.remote.rc"],
+    vintf_fragments: ["android.hardware.identity-service.remote.xml"],
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-g",
+    ],
+    shared_libs: [
+        "liblog",
+        "libcrypto",
+        "libbinder_ndk",
+        "libkeymaster_messages",
+    ],
+    static_libs: [
+        "libbase",
+        "libcppbor_external",
+        "libcppcose_rkp",
+        "libutils",
+        "libsoft_attestation_cert",
+        "libkeymaster_portable",
+        "libsoft_attestation_cert",
+        "libpuresoftkeymasterdevice",
+        "android.hardware.identity-support-lib",
+        "android.hardware.identity-V3-ndk",
+        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.security.keymint-V1-ndk",
+    ],
+    local_include_dirs: [
+        "common",
+        "libeic",
+    ],
+    srcs: [
+        "service.cpp",
+        "RemoteSecureHardwareProxy.cpp",
+        "common/IdentityCredential.cpp",
+        "common/IdentityCredentialStore.cpp",
+        "common/WritableIdentityCredential.cpp",
+        "libeic/EicCbor.c",
+        "libeic/EicPresentation.c",
+        "libeic/EicProvisioning.c",
+        "libeic/EicOpsImpl.cc",
+    ],
+    required: [
+        "android.hardware.identity_credential.xml",
+    ],
+}
+
