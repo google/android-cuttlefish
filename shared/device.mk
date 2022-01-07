@@ -572,7 +572,7 @@ PRODUCT_PACKAGES += \
 
 # Identity Credential
 PRODUCT_PACKAGES += \
-    android.hardware.identity-service.example
+    android.hardware.identity-service.remote
 
 # Input Classifier HAL
 PRODUCT_PACKAGES += \
