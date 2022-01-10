@@ -16,4 +16,7 @@
 <permissions>
     <unavailable-feature name="android.software.print" />
     <unavailable-feature name="android.software.voice_recognizers" />
+<!-- b/208794808 Exclude this feature to skip the CTS test
+     android.telephony.cts.TelephonyManagerTest#testSimSlotMapping -->
+    <unavailable-feature name="android.hardware.telephony.subscription" />
 </permissions>
