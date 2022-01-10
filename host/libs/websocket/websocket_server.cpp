@@ -204,7 +204,6 @@ void WebSocketServer::InitializeLwsObjects() {
   info.mounts = &static_mount_;
   info.protocols = protocols;
   info.vhost_name = "localhost";
-  info.ws_ping_pong_interval = 10;
   info.headers = &headers_;
   info.retry_and_idle_policy = &retry_;
 
