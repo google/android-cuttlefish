@@ -33,6 +33,7 @@ std::string TombstoneReceiverBinary();
 std::string VehicleHalGrpcServerBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
+std::string WebRtcSigServerProxyBinary();
 std::string WmediumdBinary();
 std::string WmediumdGenConfigBinary();
 
