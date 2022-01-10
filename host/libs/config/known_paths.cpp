@@ -77,6 +77,10 @@ std::string WebRtcSigServerBinary() {
   return HostBinaryPath("webrtc_operator");
 }
 
+std::string WebRtcSigServerProxyBinary() {
+  return HostBinaryPath("operator_proxy");
+}
+
 std::string WmediumdBinary() { return HostBinaryPath("wmediumd"); }
 
 std::string WmediumdGenConfigBinary() {
