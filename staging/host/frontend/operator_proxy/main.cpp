@@ -20,6 +20,7 @@
 
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/logging.h"
 
 DEFINE_int32(http_server_port, 8443, "The port for the http server");
 DEFINE_bool(use_secure_http, true, "Whether to use HTTPS or HTTP.");
@@ -30,7 +31,10 @@ DEFINE_string(certs_dir,
 DEFINE_string(operator_addr, "localhost:1080/",
               "The address of the operator server to proxy");
 
-int main() {
+int main(int argc, char** argv) {
+  cuttlefish::DefaultSubprocessLogging(argv);
+  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
+
   struct lws_context_creation_info info;
   struct lws_context* context;
 
