@@ -22,6 +22,7 @@ cc_binary {
     srcs: [
         "cvd_test_gce_driver.cpp",
         "gce_api.cpp",
+        "key_pair.cpp",
     ],
     static_libs: [
         "libcuttlefish_web",
