@@ -750,7 +750,7 @@ class OpenWrt : public CommandSource {
 
   // CommandSource
   std::vector<Command> Commands() override {
-    constexpr auto crosvm_for_ap_socket = "crosvm_for_ap_control.sock";
+    constexpr auto crosvm_for_ap_socket = "ap_control.sock";
 
     CrosvmBuilder ap_cmd;
     ap_cmd.SetBinary(config_.crosvm_binary());
