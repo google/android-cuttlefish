@@ -32,7 +32,7 @@ DEFINE_string(operator_addr, "localhost:1080/",
 
 int main() {
   struct lws_context_creation_info info;
-  struct lws_context *context;
+  struct lws_context* context;
 
   lws_set_log_level(LLL_ERR, NULL);
 
@@ -59,11 +59,12 @@ int main() {
   memset(&info, 0, sizeof info);
   info.port = FLAGS_http_server_port;
   info.mounts = &mount;
-  if (FLAGS_use_secure_http) {
-    std::string cert_file = FLAGS_certs_dir + "/server.crt";
-    std::string key_file = FLAGS_certs_dir + "/server.key";
-    std::string ca_file = FLAGS_certs_dir + "/CA.crt";
 
+  // These vars need to be in scope for the call to lws_create-context below
+  std::string cert_file = FLAGS_certs_dir + "/server.crt";
+  std::string key_file = FLAGS_certs_dir + "/server.key";
+  std::string ca_file = FLAGS_certs_dir + "/CA.crt";
+  if (FLAGS_use_secure_http) {
     info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     info.ssl_cert_filepath = cert_file.c_str();
     info.ssl_private_key_filepath = key_file.c_str();
