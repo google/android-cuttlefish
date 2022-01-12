@@ -30,7 +30,8 @@ using ::aidl::android::hardware::security::keymint::
 ndk::ScopedAStatus IdentityCredentialStore::getHardwareInformation(
     HardwareInformation* hardwareInformation) {
   HardwareInformation hw;
-  hw.credentialStoreName = "Identity Credential Reference Implementation";
+  hw.credentialStoreName =
+      "Identity Credential Cuttlefish Remote Implementation";
   hw.credentialStoreAuthorName = "Google";
   hw.dataChunkSize = kGcmChunkSize;
   hw.isDirectAccess = false;
