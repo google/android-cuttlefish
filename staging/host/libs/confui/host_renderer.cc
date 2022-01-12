@@ -16,6 +16,8 @@
 
 #include "host/libs/confui/host_renderer.h"
 
+#include "host/libs/config/cuttlefish_config.h"
+
 namespace cuttlefish {
 namespace confui {
 static teeui::Color alfaCombineChannel(std::uint32_t shift, double alfa,
@@ -42,6 +44,15 @@ std::unique_ptr<ConfUiRenderer> ConfUiRenderer::GenerateRenderer(
   return nullptr;
 }
 
+static int GetDpi(const int display_num = 0) {
+  auto config = CuttlefishConfig::Get();
+  CHECK(config) << "Config is Missing";
+  auto display_configs = config->display_configs();
+  CHECK_GT(display_configs.size(), display_num)
+      << "Invalid display number " << display_num;
+  return display_configs[display_num].dpi;
+}
+
 /**
  * device configuration
  *
@@ -50,6 +61,11 @@ std::unique_ptr<ConfUiRenderer> ConfUiRenderer::GenerateRenderer(
  * The numbers are, however, to fit for the host webRTC local/remote clients
  * in general, not necessarily the supposedly guest device (e.g. Auto, phone,
  * etc)
+ *
+ * In general, for a normal PC, roughly ctx_(6.45211, 400.0/412.0) is a good
+ * combination for the default DPI, 320. If we want to see the impact
+ * of the change in the guest DPI, we could adjust the combination above
+ * proportionally
  *
  */
 ConfUiRenderer::ConfUiRenderer(const std::uint32_t display,
@@ -63,7 +79,7 @@ ConfUiRenderer::ConfUiRenderer(const std::uint32_t display,
       current_width_{ScreenConnectorInfo::ScreenWidth(display_num_)},
       is_inverted_(inverted),
       is_magnified_(magnified),
-      ctx_(6.45211, 400.0 / 412.0),
+      ctx_(6.45211 * GetDpi() / 320.0, 400.0 / 412.0 * GetDpi() / 320.0),
       is_setup_well_(false) {
   SetDeviceContext(current_width_, current_height_, is_inverted_,
                    is_magnified_);
