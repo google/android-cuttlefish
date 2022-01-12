@@ -45,7 +45,13 @@ cc_binary {
         "libeic/EicOpsImpl.cc",
     ],
     required: [
-        "android.hardware.identity_credential.xml",
+        "android.hardware.identity_credential.remote.xml",
     ],
 }
 
+prebuilt_etc {
+    name: "android.hardware.identity_credential.remote.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.identity_credential.remote.xml",
+}
