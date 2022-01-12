@@ -137,11 +137,15 @@ cvd_host_model_simulator_files = [
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
     "balloon_device.policy_x86_64",
+    "battery.policy_x86_64",
     "block_device.policy_x86_64",
     "cras_audio_device.policy_x86_64",
+    "cras_snd_device.policy_x86_64",
     "fs_device.policy_x86_64",
     "gpu_device.policy_x86_64",
+    "gpu_render_server.policy_x86_64",
     "input_device.policy_x86_64",
+    "iommu_device.policy_x86_64",
     "net_device.policy_x86_64",
     "null_audio_device.policy_x86_64",
     "pmem_device.policy_x86_64",
@@ -157,13 +161,16 @@ cvd_host_seccomp_policy_x86_64 = [
     "xhci.policy_x86_64",
 ]
 
-cvd_host_seccomp_policy_arm64 = [
+cvd_host_seccomp_policy_aarch64 = [
     "9p_device.policy_aarch64",
     "balloon_device.policy_aarch64",
+    "battery.policy_aarch64",
     "block_device.policy_aarch64",
     "cras_audio_device.policy_aarch64",
+    "cras_snd_device.policy_aarch64",
     "fs_device.policy_aarch64",
     "gpu_device.policy_aarch64",
+    "gpu_render_server.policy_aarch64",
     "input_device.policy_aarch64",
     "net_device.policy_aarch64",
     "null_audio_device.policy_aarch64",
@@ -209,7 +216,7 @@ cvd_host_package_customization {
         arm64: {
             multilib: {
                 common: {
-                    deps: cvd_host_seccomp_policy_arm64,
+                    deps: cvd_host_seccomp_policy_aarch64,
                 },
             },
         },
