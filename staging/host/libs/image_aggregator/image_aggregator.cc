@@ -569,19 +569,22 @@ void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
 void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path) {
-  Command crosvm_qcow2_cmd(crosvm_path);
-  crosvm_qcow2_cmd.AddParameter("create_qcow2");
-  crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
-  crosvm_qcow2_cmd.AddParameter(output_overlay_path);
+  Command cmd(crosvm_path);
+  cmd.AddParameter("create_qcow2");
+  cmd.AddParameter("--backing_file=", backing_file);
+  cmd.AddParameter(output_overlay_path);
 
-  auto devnull = SharedFD::Open("/dev/null", O_RDONLY);
-  CHECK(devnull->IsOpen()) << "Failed to open /dev/null";
-  crosvm_qcow2_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, devnull);
-  crosvm_qcow2_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, devnull);
+  std::string stdout;
+  std::string stderr;
+  int success = RunWithManagedStdio(std::move(cmd), nullptr, &stdout, &stderr);
 
-  int success = crosvm_qcow2_cmd.Start().Wait();
   if (success != 0) {
-    LOG(FATAL) << "Unable to run crosvm create_qcow2. Exited with status " << success;
+    LOG(ERROR) << "Failed to run `" << crosvm_path
+               << " create_qcow2 --backing_file=" << backing_file << " "
+               << output_overlay_path << "`";
+    LOG(ERROR) << "stdout:\n###\n" << stdout << "\n###";
+    LOG(ERROR) << "stderr:\n###\n" << stderr << "\n###";
+    LOG(FATAL) << "Return code: \"" << success << "\"";
   }
 }
 
