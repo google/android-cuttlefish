@@ -28,6 +28,7 @@ sh_binary {
     src: ":init.wifi.sh_apex_srcs",
     filename: "init.wifi.sh",
     vendor: true,
+    installable: false,
     init_rc: [
         "init.wifi.sh.rc",
     ],
@@ -36,7 +37,6 @@ sh_binary {
 sh_binary {
     name: "init.wifi.sh",
     src: "init.wifi.sh",
-    filename: "init_wifi.sh",
     vendor: true,
     init_rc: [
         "init.wifi.sh.rc",
