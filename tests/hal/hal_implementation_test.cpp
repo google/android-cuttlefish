@@ -127,6 +127,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.graphics.common.", 1},
     {"android.hardware.graphics.common.", 2},
     {"android.hardware.graphics.common.", 3},
+    {"android.hardware.input.common.", 1},
 
     // This interface needs to be implemented (b/193240715)
     {"android.hardware.graphics.composer3.", 1},
