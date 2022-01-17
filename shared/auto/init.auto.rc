@@ -1,0 +1,11 @@
+on post-fs-data
+    start automotive_display
+    start vendor.evs-hal-mock
+    start evs_manager_cf
+
+service evs_manager_cf /system/bin/android.automotive.evs.manager@1.1 --target hw/0
+    class hal
+    priority -20
+    user automotive_evs
+    group automotive_evs system
+    disabled # will not automatically start with its class; must be explicitly started.

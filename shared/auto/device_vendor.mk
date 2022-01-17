@@ -98,6 +98,26 @@ PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhaldump \
     canhalsend
 
+# EVS
+# By default, we enable EvsManager and a mock EVS HAL implementation.  If you want to use your own
+# EVS HAL implementation, please set ENABLE_MOCK_EVSHAL as false and add your HAL implementation to
+# the product.  Please also check init.auto.rc and see how you can configure EvsManager to use your
+# EVS HAL.
+ENABLE_EVS_SERVICE ?= true
+ENABLE_MOCK_EVSHAL ?= true
+ENABLE_CAREVSSERVICE_SAMPLE ?= true
+ifeq ($(ENABLE_MOCK_EVSHAL), true)
+    ifeq ($(ENABLE_EVS_SAMPLE), true)
+        $(error ENABLE_EVS_SAMPLE must not be set as true when EVS_MOCK_EVSHAL is true)
+    endif
+    PRODUCT_PACKAGES += android.hardware.automotive.evs@1.1-service \
+                        evs_app \
+                        android.frameworks.automotive.display@1.0-service
+    PRODUCT_COPY_FILES += \
+        device/google/cuttlefish/shared/auto/init.auto.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.auto.rc
+    BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
+endif
+
 BOARD_IS_AUTOMOTIVE := true
 
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/auto/overlay

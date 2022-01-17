@@ -1,0 +1,5 @@
+# Allow surfaceflinger to perform binder IPC to hal_evs_default
+binder_call(surfaceflinger, hal_evs_default)
+
+# Allow surfaceflinger to perform binder IPC to automotive_display_service
+binder_call(surfaceflinger, automotive_display_service_server)

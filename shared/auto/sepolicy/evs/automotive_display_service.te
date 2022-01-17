@@ -1,0 +1,2 @@
+# Allow automotive_display_service to perform binder IPC to hal_evs_default
+binder_call(automotive_display_service_server, hal_evs_default)
