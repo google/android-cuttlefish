@@ -99,6 +99,15 @@ int CvdStatusMain(int argc, char** argv) {
               << ":" << std::to_string(config->sig_server_port())
               << "/client.html?deviceId=" << instance.instance_name()
               << std::endl;
+    std::cout << "      Adb serial: " << instance.adb_ip_and_port()
+              << std::endl;
+    std::cout << "      Webrtc port: "
+              << std::to_string(config->sig_server_port()) << std::endl;
+    for (int i = 0; i < config->display_configs().size(); i++) {
+      std::cout << "      Display: " << config->display_configs()[i].width
+                << " x " << config->display_configs()[i].height << " ("
+                << config->display_configs()[i].height << ") " << std::endl;
+    }
   }
 
   auto monitor_path = instance.launcher_monitor_socket_path();
