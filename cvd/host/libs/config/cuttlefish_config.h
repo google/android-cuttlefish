@@ -313,6 +313,22 @@ class CuttlefishConfig {
   void set_wmediumd_config(const std::string& path);
   std::string wmediumd_config() const;
 
+  void set_rootcanal_hci_port(int rootcanal_hci_port);
+  int rootcanal_hci_port() const;
+
+  void set_rootcanal_link_port(int rootcanal_link_port);
+  int rootcanal_link_port() const;
+
+  void set_rootcanal_test_port(int rootcanal_test_port);
+  int rootcanal_test_port() const;
+
+  void set_rootcanal_config_file(const std::string& rootcanal_config_file);
+  std::string rootcanal_config_file() const;
+
+  void set_rootcanal_default_commands_file(
+      const std::string& rootcanal_default_commands_file);
+  std::string rootcanal_default_commands_file() const;
+
   void set_record_screen(bool record_screen);
   bool record_screen() const;
 
@@ -392,14 +408,8 @@ class CuttlefishConfig {
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
     std::string adb_ip_and_port() const;
-    // Port number to connect to the root-canal on the host
-    int rootcanal_hci_port() const;
-    int rootcanal_link_port() const;
-    int rootcanal_test_port() const;
     // Port number to connect to the camera hal on the guest
     int camera_server_port() const;
-    std::string rootcanal_config_file() const;
-    std::string rootcanal_default_commands_file() const;
 
     std::string adb_device_name() const;
     std::string gnss_file_path() const;
@@ -480,6 +490,9 @@ class CuttlefishConfig {
     // Whether this instance should start the wmediumd process
     bool start_wmediumd() const;
 
+    // Whether this instance should start a rootcanal instance
+    bool start_rootcanal() const;
+
     // Whether this instance should start an ap instance
     bool start_ap() const;
 
@@ -520,13 +533,7 @@ class CuttlefishConfig {
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
     void set_confui_host_vsock_port(int confui_host_port);
-    void set_rootcanal_hci_port(int rootcanal_hci_port);
-    void set_rootcanal_link_port(int rootcanal_link_port);
-    void set_rootcanal_test_port(int rootcanal_test_port);
     void set_camera_server_port(int camera_server_port);
-    void set_rootcanal_config_file(const std::string& rootcanal_config_file);
-    void set_rootcanal_default_commands_file(
-        const std::string& rootcanal_default_commands_file);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
@@ -542,6 +549,7 @@ class CuttlefishConfig {
     void set_start_webrtc_signaling_server(bool start);
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
+    void set_start_rootcanal(bool start);
     void set_start_ap(bool start);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
