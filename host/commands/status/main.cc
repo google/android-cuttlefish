@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -65,6 +65,7 @@ int CvdStatusMain(int argc, char** argv) {
   std::vector<Flag> flags;
 
   std::int32_t wait_for_launcher;
+  Json::Value device_info;
   flags.emplace_back(
       GflagsCompatFlag("wait_for_launcher", wait_for_launcher)
           .Help("How many seconds to wait for the launcher to respond to the "
@@ -91,24 +92,6 @@ int CvdStatusMain(int argc, char** argv) {
   auto instance = instance_name.empty()
                       ? config->ForDefaultInstance()
                       : config->ForInstanceName(instance_name);
-
-  if (print) {
-    std::cout << "    " << instance.instance_name() << std::endl;
-    std::cout << "      Dir: " << instance.instance_dir() << std::endl;
-    std::cout << "      Web access: https://" << config->sig_server_address()
-              << ":" << std::to_string(config->sig_server_port())
-              << "/client.html?deviceId=" << instance.instance_name()
-              << std::endl;
-    std::cout << "      Adb serial: " << instance.adb_ip_and_port()
-              << std::endl;
-    std::cout << "      Webrtc port: "
-              << std::to_string(config->sig_server_port()) << std::endl;
-    for (int i = 0; i < config->display_configs().size(); i++) {
-      std::cout << "      Display: " << config->display_configs()[i].width
-                << " x " << config->display_configs()[i].height << " ("
-                << config->display_configs()[i].height << ") " << std::endl;
-    }
-  }
 
   auto monitor_path = instance.launcher_monitor_socket_path();
   CHECK_PRINT(print, !monitor_path.empty(),
@@ -148,7 +131,23 @@ int CvdStatusMain(int argc, char** argv) {
                   "' response from launcher monitor");
 
   if (print) {
-    std::cout << "      Status: Running" << std::endl;
+    Json::Value device_info;
+    device_info["instance_name"] = instance.instance_name();
+    device_info["instance_dir"] = instance.instance_dir();
+    device_info["web_access"] =
+        "https://" + config->sig_server_address() + ":" +
+        std::to_string(config->sig_server_port()) +
+        "/client.html?deviceId=" + instance.instance_name();
+    device_info["adb_serial"] = instance.adb_ip_and_port();
+    device_info["webrtc_port"] = std::to_string(config->sig_server_port());
+    for (int i = 0; i < config->display_configs().size(); i++) {
+      device_info["displays"][i] =
+          std::to_string(config->display_configs()[i].width) + " x " +
+          std::to_string(config->display_configs()[i].height) + " ( " +
+          std::to_string(config->display_configs()[i].dpi) + " )";
+    }
+    device_info["status"] = "Running";
+    std::cout << device_info.toStyledString() << std::endl;
   } else {
     LOG(INFO) << "run_cvd is active.";
   }
