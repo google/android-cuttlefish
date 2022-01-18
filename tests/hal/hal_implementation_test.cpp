@@ -163,9 +163,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.automotive.occupant_awareness.", 1},
     {"android.hardware.automotive.vehicle.", 1},
 
-    // The implementation is retrieved via android.hardware.gnss.IGnss
-    {"android.hardware.gnss.visibility_control.", 1},
-
     // These types are only used in TV.
     {"android.hardware.tv.tuner.", 1},
 
