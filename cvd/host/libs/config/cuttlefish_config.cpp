@@ -174,6 +174,14 @@ bool CuttlefishConfig::enable_gpu_udmabuf() const {
   return (*dictionary_)[kEnableGpuUdmabuf].asBool();
 }
 
+static constexpr char kEnableGpuAngle[] = "enable_gpu_angle";
+void CuttlefishConfig::set_enable_gpu_angle(const bool enable_gpu_angle) {
+  (*dictionary_)[kEnableGpuAngle] = enable_gpu_angle;
+}
+bool CuttlefishConfig::enable_gpu_angle() const {
+  return (*dictionary_)[kEnableGpuAngle].asBool();
+}
+
 static constexpr char kCpus[] = "cpus";
 int CuttlefishConfig::cpus() const { return (*dictionary_)[kCpus].asInt(); }
 void CuttlefishConfig::set_cpus(int cpus) { (*dictionary_)[kCpus] = cpus; }
