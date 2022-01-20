@@ -77,7 +77,7 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
     return {
       "androidboot.cpuvulkan.version=0",
       "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=drm_minigbm",
+      "androidboot.hardware.hwcomposer=drm",
       "androidboot.hardware.egl=mesa",
     };
   }
