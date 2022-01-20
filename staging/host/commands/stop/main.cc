@@ -214,7 +214,7 @@ int StopCvdMain(int argc, char** argv) {
 
   std::vector<Flag> flags;
 
-  std::int32_t wait_for_launcher;
+  std::int32_t wait_for_launcher = 5;
   flags.emplace_back(
       GflagsCompatFlag("wait_for_launcher", wait_for_launcher)
           .Help("How many seconds to wait for the launcher to respond to the "
