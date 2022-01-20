@@ -399,7 +399,7 @@ PRODUCT_PACKAGES += \
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
-    hwcomposer.drm_minigbm \
+    hwcomposer.drm \
     hwcomposer.cutf \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.4-service
