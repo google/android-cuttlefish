@@ -68,9 +68,11 @@ apex {
     ],
     sh_binaries: ["init.wifi.sh_apex"],
     prebuilts: [
+        "android.hardware.wifi.direct.prebuilt.xml",
         "android.hardware.wifi.passpoint.prebuilt.xml",
         "android.hardware.wifi.prebuilt.xml",
         "com.google.cf.wifi_hwsim.rc",
+        "p2p_supplicant.conf.cf",
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
     ],
