@@ -191,6 +191,17 @@ cvd_host_qemu_bootloader = [
     "bootloader_qemu_arm",
 ]
 
+prebuilt_etc_host {
+    name: "cvd_avb_testkey",
+    filename: "cvd_avb_testkey.pem",
+    src: ":avb_testkey_rsa4096",
+}
+
+cvd_host_avb_testkey = [
+    "cvd_avb_pubkey",
+    "cvd_avb_testkey",
+]
+
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
@@ -198,6 +209,7 @@ cvd_host_package_customization {
     multilib: {
         common: {
             deps: cvd_host_webrtc_assets +
+                cvd_host_avb_testkey +
                 cvd_host_model_simulator_files +
                 cvd_host_qemu_bootloader +
                 cvd_bluetooth_config_files +
