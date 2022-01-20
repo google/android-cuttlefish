@@ -490,6 +490,8 @@ class CuttlefishConfig {
 
     std::string persistent_bootconfig_path() const;
 
+    std::string vbmeta_path() const;
+
     std::string id() const;
   };
 
