@@ -583,7 +583,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   if (tmp_config_obj.hwcomposer() == kHwComposerAuto) {
       if (tmp_config_obj.gpu_mode() == kGpuModeDrmVirgl) {
-        tmp_config_obj.set_hwcomposer(kHwComposerDrmMinigbm);
+        tmp_config_obj.set_hwcomposer(kHwComposerDrm);
       } else {
         tmp_config_obj.set_hwcomposer(kHwComposerRanchu);
       }

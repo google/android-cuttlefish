@@ -92,7 +92,7 @@ const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxStream = "gfxstream";
 
 const char* const kHwComposerAuto = "auto";
-const char* const kHwComposerDrmMinigbm = "drm_minigbm";
+const char* const kHwComposerDrm = "drm";
 const char* const kHwComposerRanchu = "ranchu";
 
 std::string DefaultEnvironmentPath(const char* environment_key,
