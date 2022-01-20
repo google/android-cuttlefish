@@ -46,6 +46,14 @@ prebuilt_etc {
     installable: false,
 }
 
+prebuilt_etc {
+    name: "p2p_supplicant.conf.cf",
+    src: "p2p_supplicant.conf",
+    filename_from_src: true,
+    relative_install_path: "wifi",
+    installable: false,
+}
+
 filegroup {
     name: "manifest_android.hardware.bluetooth@1.1-service.xml",
     srcs: ["manifest_android.hardware.bluetooth@1.1-service.xml"]
