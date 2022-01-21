@@ -15,6 +15,9 @@
  */
 package com.android.cuttlefish.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import javax.inject.Inject;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -27,4 +30,15 @@ public class GceInstanceRuleTest {
 
   @Test
   public void createInstance() {}
+
+  @Test
+  public void sshToInstance() throws Exception {
+    assertEquals(0, gceInstance.ssh("ls", "/").returnCode());
+  }
+
+  @Test
+  public void uploadBuildArtifact() throws Exception {
+    gceInstance.uploadBuildArtifact("fetch_cvd", "/home/vsoc-01/fetch_cvd");
+    assertEquals(0, gceInstance.ssh("chmod", "+x", "/home/vsoc-01/fetch_cvd").returnCode());
+  }
 }
