@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2022 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,12 @@
 PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
 SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/go_handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/go_handheld_core_hardware.xml
+
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
@@ -25,14 +30,8 @@ PRODUCT_VENDOR_PROPERTIES += \
     keyguard.no_require_sim=true \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
+    ro.com.android.dataroaming=true \
     ro.telephony.default_network=9 \
-
-PRODUCT_PACKAGES += \
-    MmsService \
-    Phone \
-    PhoneService \
-    Telecom \
-    TeleService
 
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
@@ -41,16 +40,8 @@ PRODUCT_PACKAGES += \
     libcuttlefish-rild
 endif
 
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
-    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml
+PRODUCT_PACKAGES += \
+    cuttlefish_phone_overlay_frameworks_base_core \
+    cuttlefish_go_phone_overlay_frameworks_base_core \
 
-DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/phone/overlay
-
-# These flags are important for the GSI, but break auto
-# These are used by aosp_cf_x86_go_phone targets
-PRODUCT_ENFORCE_RRO_TARGETS := framework-res
-
-# Storage: for factory reset protection feature
-PRODUCT_VENDOR_PROPERTIES += \
-    ro.frp.pst=/dev/block/by-name/frp
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/go/android-info.txt
