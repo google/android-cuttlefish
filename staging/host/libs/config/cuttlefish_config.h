@@ -110,6 +110,9 @@ class CuttlefishConfig {
   void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
   bool enable_gpu_udmabuf() const;
 
+  void set_enable_gpu_angle(const bool enable_gpu_angle);
+  bool enable_gpu_angle() const;
+
   int cpus() const;
   void set_cpus(int cpus);
 

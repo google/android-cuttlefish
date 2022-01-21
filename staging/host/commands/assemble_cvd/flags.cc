@@ -109,6 +109,10 @@ DEFINE_bool(enable_gpu_udmabuf,
             false,
             "Use the udmabuf driver for zero-copy virtio-gpu");
 
+DEFINE_bool(enable_gpu_angle,
+            false,
+            "Use ANGLE to provide GLES implementation (always true for"
+            " guest_swiftshader");
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
@@ -590,6 +594,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_enable_gpu_udmabuf(FLAGS_enable_gpu_udmabuf);
+  tmp_config_obj.set_enable_gpu_angle(FLAGS_enable_gpu_angle);
 
   // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
   // auto-enabling sandbox when gpu is enabled (b/152323505).
@@ -597,8 +602,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     SetCommandLineOptionWithMode("enable_sandbox", "false", SET_FLAGS_DEFAULT);
   }
 
-  if (vmm->ConfigureGraphics(tmp_config_obj.gpu_mode(),
-         tmp_config_obj.hwcomposer()).empty()) {
+  if (vmm->ConfigureGraphics(tmp_config_obj).empty()) {
     LOG(FATAL) << "Invalid (gpu_mode=," << FLAGS_gpu_mode <<
                " hwcomposer= " << FLAGS_hwcomposer <<
                ") does not work with vm_manager=" << FLAGS_vm_manager;
