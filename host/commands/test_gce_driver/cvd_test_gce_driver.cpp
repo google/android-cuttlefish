@@ -35,6 +35,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -164,23 +165,76 @@ class ReadEvalPrintLoop {
       ssh->RemoteParameter(argument);
     }
 
-    // TODO(schuffelen): Stream these into multiple data messages
-    std::string out;
-    std::string err;
-    auto ret = RunWithManagedStdio(ssh->Build(), nullptr, &out, &err);
+    std::optional<Subprocess> ssh_proc;
+    SharedFD stdout_read;
+    SharedFD stderr_read;
+    {  // Things created here need to be closed early
+      auto cmd = ssh->Build();
+
+      SharedFD stdout_write;
+      if (!SharedFD::Pipe(&stdout_read, &stdout_write)) {
+        return Error() << "Failed to open pipe for stdout";
+      }
+      cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, stdout_write);
+
+      SharedFD stderr_write;
+      if (!SharedFD::Pipe(&stderr_read, &stderr_write)) {
+        return Error() << "Failed to open pipe for stderr";
+      }
+      cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, stderr_write);
+
+      ssh_proc = cmd.Start();
+    }
+
+    while (stdout_read->IsOpen() || stderr_read->IsOpen()) {
+      SharedFDSet read_set;
+      if (stdout_read->IsOpen()) {
+        read_set.Set(stdout_read);
+      }
+      if (stderr_read->IsOpen()) {
+        read_set.Set(stderr_read);
+      }
+      Select(&read_set, nullptr, nullptr, nullptr);
+      if (read_set.IsSet(stdout_read)) {
+        char buffer[1 << 14];
+        auto read = stdout_read->Read(buffer, sizeof(buffer));
+        if (read < 0) {
+          return Error() << "Failure in reading ssh stdout: "
+                         << stdout_read->StrError();
+        } else if (read == 0) {  // EOF
+          stdout_read = SharedFD();
+        } else {
+          test_gce_driver::TestMessage output;
+          output.mutable_data()->set_type(
+              test_gce_driver::DataType::DATA_TYPE_STDOUT);
+          output.mutable_data()->set_contents(buffer, read);
+          if (!SerializeDelimitedToFileDescriptor(output, out_)) {
+            return Error() << "Failure while writing stdout message";
+          }
+        }
+      }
+      if (read_set.IsSet(stderr_read)) {
+        char buffer[1 << 14];
+        auto read = stderr_read->Read(buffer, sizeof(buffer));
+        if (read < 0) {
+          return Error() << "Failure in reading ssh stderr: "
+                         << stderr_read->StrError();
+        } else if (read == 0) {  // EOF
+          stderr_read = SharedFD();
+        } else {
+          test_gce_driver::TestMessage output;
+          output.mutable_data()->set_type(
+              test_gce_driver::DataType::DATA_TYPE_STDERR);
+          output.mutable_data()->set_contents(buffer, read);
+          if (!SerializeDelimitedToFileDescriptor(output, out_)) {
+            return Error() << "Failure while writing stdout message";
+          }
+        }
+      }
+    }
+
+    auto ret = ssh_proc->Wait();
     test_gce_driver::TestMessage output;
-    output.mutable_data()->set_type(
-        test_gce_driver::DataType::DATA_TYPE_STDOUT);
-    output.mutable_data()->set_contents(out);
-    if (!SerializeDelimitedToFileDescriptor(output, out_)) {
-      return Error() << "Failure while writing stdout message";
-    }
-    output.mutable_data()->set_type(
-        test_gce_driver::DataType::DATA_TYPE_STDERR);
-    output.mutable_data()->set_contents(err);
-    if (!SerializeDelimitedToFileDescriptor(output, out_)) {
-      return Error() << "Failure while writing stderr message";
-    }
     output.mutable_data()->set_type(
         test_gce_driver::DataType::DATA_TYPE_RETURN_CODE);
     output.mutable_data()->set_contents(std::to_string(ret));
