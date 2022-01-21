@@ -58,8 +58,8 @@ class VmManager {
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;
-  virtual std::vector<std::string> ConfigureGraphics(const std::string&,
-      const std::string&) = 0;
+  virtual std::vector<std::string> ConfigureGraphics(
+      const CuttlefishConfig& config) = 0;
   virtual std::string ConfigureBootDevices(int num_disks) = 0;
 
   // Starts the VMM. It will usually build a command and pass it to the
