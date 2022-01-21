@@ -178,17 +178,17 @@ class RootCanal : public CommandSource {
     Command command(RootCanalBinary());
 
     // Test port
-    command.AddParameter(instance_.rootcanal_test_port());
+    command.AddParameter(config_.rootcanal_test_port());
     // HCI server port
-    command.AddParameter(instance_.rootcanal_hci_port());
+    command.AddParameter(config_.rootcanal_hci_port());
     // Link server port
-    command.AddParameter(instance_.rootcanal_link_port());
+    command.AddParameter(config_.rootcanal_link_port());
     // Bluetooth controller properties file
     command.AddParameter("--controller_properties_file=",
-                         instance_.rootcanal_config_file());
+                         config_.rootcanal_config_file());
     // Default commands file
     command.AddParameter("--default_commands_file=",
-                         instance_.rootcanal_default_commands_file());
+                         config_.rootcanal_default_commands_file());
 
     std::vector<Command> commands;
     commands.emplace_back(log_tee_.CreateLogTee(command, "rootcanal"));
@@ -198,7 +198,9 @@ class RootCanal : public CommandSource {
 
   // Feature
   std::string Name() const override { return "RootCanal"; }
-  bool Enabled() const override { return config_.enable_host_bluetooth(); }
+  bool Enabled() const override {
+    return config_.enable_host_bluetooth() && instance_.start_rootcanal();
+  }
 
  private:
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
@@ -433,9 +435,9 @@ class BluetoothConnector : public CommandSource {
     Command command(DefaultHostArtifactsPath("bin/bt_connector"));
     command.AddParameter("-bt_out=", fifos_[0]);
     command.AddParameter("-bt_in=", fifos_[1]);
-    command.AddParameter("-hci_port=", instance_.rootcanal_hci_port());
-    command.AddParameter("-link_port=", instance_.rootcanal_link_port());
-    command.AddParameter("-test_port=", instance_.rootcanal_test_port());
+    command.AddParameter("-hci_port=", config_.rootcanal_hci_port());
+    command.AddParameter("-link_port=", config_.rootcanal_link_port());
+    command.AddParameter("-test_port=", config_.rootcanal_test_port());
     return single_element_emplace(std::move(command));
   }
 
