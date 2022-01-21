@@ -707,6 +707,14 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);
 
+  tmp_config_obj.set_rootcanal_hci_port(7300);
+  tmp_config_obj.set_rootcanal_link_port(7400);
+  tmp_config_obj.set_rootcanal_test_port(7500);
+  tmp_config_obj.set_rootcanal_config_file(
+      FLAGS_bluetooth_controller_properties_file);
+  tmp_config_obj.set_rootcanal_default_commands_file(
+      FLAGS_bluetooth_default_commands_file);
+
   tmp_config_obj.set_record_screen(FLAGS_record_screen);
 
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth);
@@ -785,14 +793,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_gnss_file_path(gnss_file_paths[num-1]);
     }
 
-    instance.set_rootcanal_hci_port(7300 + num - 1);
-    instance.set_rootcanal_link_port(7400 + num - 1);
-    instance.set_rootcanal_test_port(7500 + num - 1);
-    instance.set_rootcanal_config_file(
-        FLAGS_bluetooth_controller_properties_file);
-    instance.set_rootcanal_default_commands_file(
-        FLAGS_bluetooth_default_commands_file);
-
     instance.set_camera_server_port(FLAGS_camera_server_port);
 
     if (FLAGS_protected_vm) {
@@ -860,6 +860,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     } else {
       instance.set_start_wmediumd(false);
     }
+
+    instance.set_start_rootcanal(is_first_instance);
 
     instance.set_start_ap(!FLAGS_ap_rootfs_image.empty() &&
                           !FLAGS_ap_kernel_image.empty() && is_first_instance);

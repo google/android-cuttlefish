@@ -361,33 +361,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int confi
   (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
-static constexpr char kRootcanalHciPort[] = "rootcanal_hci_port";
-int CuttlefishConfig::InstanceSpecific::rootcanal_hci_port() const {
-  return (*Dictionary())[kRootcanalHciPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_hci_port(
-    int rootcanal_hci_port) {
-  (*Dictionary())[kRootcanalHciPort] = rootcanal_hci_port;
-}
-
-static constexpr char kRootcanalLinkPort[] = "rootcanal_link_port";
-int CuttlefishConfig::InstanceSpecific::rootcanal_link_port() const {
-  return (*Dictionary())[kRootcanalLinkPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_link_port(
-    int rootcanal_link_port) {
-  (*Dictionary())[kRootcanalLinkPort] = rootcanal_link_port;
-}
-
-static constexpr char kRootcanalTestPort[] = "rootcanal_test_port";
-int CuttlefishConfig::InstanceSpecific::rootcanal_test_port() const {
-  return (*Dictionary())[kRootcanalTestPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_test_port(
-    int rootcanal_test_port) {
-  (*Dictionary())[kRootcanalTestPort] = rootcanal_test_port;
-}
-
 static constexpr char kCameraServerPort[] = "camera_server_port";
 int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
   return (*Dictionary())[kCameraServerPort].asInt();
@@ -395,29 +368,6 @@ int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_camera_server_port(
     int camera_server_port) {
   (*Dictionary())[kCameraServerPort] = camera_server_port;
-}
-
-static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
-std::string CuttlefishConfig::InstanceSpecific::rootcanal_config_file() const {
-  return (*Dictionary())[kRootcanalConfigFile].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_config_file(
-    const std::string& rootcanal_config_file) {
-  (*Dictionary())[kRootcanalConfigFile] =
-      DefaultHostArtifactsPath(rootcanal_config_file);
-}
-
-static constexpr char kRootcanalDefaultCommandsFile[] =
-    "rootcanal_default_commands_file";
-std::string
-CuttlefishConfig::InstanceSpecific::rootcanal_default_commands_file() const {
-  return (*Dictionary())[kRootcanalDefaultCommandsFile].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_rootcanal_default_commands_file(
-        const std::string& rootcanal_default_commands_file) {
-  (*Dictionary())[kRootcanalDefaultCommandsFile] =
-      DefaultHostArtifactsPath(rootcanal_default_commands_file);
 }
 
 static constexpr char kWebrtcDeviceId[] = "webrtc_device_id";
@@ -452,6 +402,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd(bool start) {
 }
 bool CuttlefishConfig::InstanceSpecific::start_wmediumd() const {
   return (*Dictionary())[kStartWmediumd].asBool();
+}
+
+static constexpr char kStartRootcanal[] = "start_rootcanal";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_rootcanal(
+    bool start) {
+  (*Dictionary())[kStartRootcanal] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
+  return (*Dictionary())[kStartRootcanal].asBool();
 }
 
 static constexpr char kStartAp[] = "start_ap";
