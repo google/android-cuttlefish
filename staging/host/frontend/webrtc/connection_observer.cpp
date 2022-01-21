@@ -345,11 +345,10 @@ class ConnectionObserverImpl
   void OnBluetoothChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                   bluetooth_message_sender) override {
     LOG(VERBOSE) << "Bluetooth channel open";
+    auto config = cuttlefish::CuttlefishConfig::Get();
+    CHECK(config) << "Failed to get config";
     bluetooth_handler_.reset(new cuttlefish::webrtc_streaming::BluetoothHandler(
-        cuttlefish::CuttlefishConfig::Get()
-            ->ForDefaultInstance()
-            .rootcanal_test_port(),
-        bluetooth_message_sender));
+        config->rootcanal_test_port(), bluetooth_message_sender));
   }
 
   void OnBluetoothMessage(const uint8_t *msg, size_t size) override {
