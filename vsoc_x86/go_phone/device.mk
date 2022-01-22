@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-$(call inherit-product, device/google/cuttlefish/shared/go/device.mk)
+$(call inherit-product, build/target/product/go_defaults.mk)
+$(call inherit-product, device/google/cuttlefish/shared/phone/device.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
