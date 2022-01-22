@@ -802,3 +802,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \
    dlkm_loader
+
+# NFC AIDL HAL
+PRODUCT_PACKAGES += \
+    android.hardware.nfc-service.cuttlefish
