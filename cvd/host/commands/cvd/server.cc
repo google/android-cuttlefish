@@ -462,9 +462,6 @@ class CvdServer {
         // across changes to config file format (within server.h major version).
         auto config = CuttlefishConfig::GetFromFile(*config_path);
         if (config) {
-          WriteAll(out, "Group:\n");
-          WriteAll(out, "  Assembly dir: " + assembly_dir + "\n");
-          WriteAll(out, "  Instances:\n");
           for (const std::string& instance_name : config->instance_names()) {
             Command command(assembly_info.host_binaries_dir + kStatusBin);
             command.AddParameter("--print");
