@@ -89,7 +89,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.tv.cec@1.1",
     "android.hardware.tv.input@1.0",
     "android.hardware.tv.tuner@1.1",
-    "android.hardware.usb@1.3",
+    "android.hardware.usb@1.3", // migrated to AIDL see b/200993386
     "android.hardware.usb.gadget@1.2",
     "android.hardware.vibrator@1.3",
     "android.hardware.vr@1.0",
