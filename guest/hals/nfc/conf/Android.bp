@@ -1,0 +1,8 @@
+prebuilt_etc {
+    name: "libnfc-hal-cf.conf-default",
+    src: "libnfc-hal-cf.conf",
+    proprietary: true,
+    vendor: true,
+    filename: "libnfc-hal-cf.conf",
+
+}
