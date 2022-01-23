@@ -400,8 +400,11 @@ std::vector<Command> QemuManager::StartCommands(
 
   if (config.enable_gnss_grpc_proxy()) {
     add_hvc(instance.PerInstanceInternalPath("gnsshvc_fifo_vm"));
+    add_hvc(instance.PerInstanceInternalPath("locationhvc_fifo_vm"));
   } else {
-    add_hvc_sink();
+    for (auto i = 0; i < 2; i++) {
+      add_hvc_sink();
+    }
   }
 
   auto disk_num = instance.virtual_disk_paths().size();
