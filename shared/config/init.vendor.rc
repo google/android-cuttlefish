@@ -89,6 +89,7 @@ on boot
     start socket_vsock_proxy
     setprop ro.hardware.audio.primary goldfish
     symlink /dev/hvc6 /dev/gnss0
+    symlink /dev/hvc7 /dev/gnss1
 
 on property:sys.boot_completed=1
     trigger sys-boot-completed-set
