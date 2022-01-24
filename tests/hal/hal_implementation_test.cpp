@@ -36,6 +36,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.audio@4.0",
     "android.hardware.audio@5.0",
     "android.hardware.audio@6.0",
+    "android.hardware.audio@7.1",    // will be implemented soon, tracked by b/214426419
     "android.hardware.audio.effect@2.0",
     "android.hardware.audio.effect@4.0",
     "android.hardware.audio.effect@5.0",
