@@ -180,6 +180,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("boot_repacked.img");
       preserving.insert("vendor_boot_repacked.img");
       preserving.insert("access-kregistry");
+      preserving.insert("hwcomposer-pmem");
       preserving.insert("NVChip");
       preserving.insert("gatekeeper_secure");
       preserving.insert("gatekeeper_insecure");

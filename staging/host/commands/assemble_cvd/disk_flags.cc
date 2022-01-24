@@ -681,6 +681,37 @@ class InitializeAccessKregistryImage : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
+class InitializeHwcomposerPmemImage : public Feature {
+ public:
+  INJECT(InitializeHwcomposerPmemImage(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  // Feature
+  std::string Name() const override { return "InitializeHwcomposerPmemImage"; }
+  bool Enabled() const override { return !config_.protected_vm(); }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() {
+    if (FileExists(instance_.hwcomposer_pmem_path())) {
+      return true;
+    }
+    bool success =
+        CreateBlankImage(instance_.hwcomposer_pmem_path(), 2 /* mb */, "none");
+    if (!success) {
+      LOG(ERROR) << "Failed to create hwcomposer pmem image \""
+                 << instance_.hwcomposer_pmem_path() << "\"";
+      return false;
+    }
+    return true;
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
 class InitializePstore : public Feature {
  public:
   INJECT(InitializePstore(const CuttlefishConfig& config,
@@ -799,6 +830,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .addMultibinding<Feature, InitializeAccessKregistryImage>()
+      .addMultibinding<Feature, InitializeHwcomposerPmemImage>()
       .addMultibinding<Feature, InitializePstore>()
       .addMultibinding<Feature, InitializeSdCard>()
       .addMultibinding<Feature, InitializeFactoryResetProtected>()
@@ -874,6 +906,9 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       }
       if (FileExists(instance.access_kregistry_path())) {
         CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
+      }
+      if (FileExists(instance.hwcomposer_pmem_path())) {
+        CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */, "none");
       }
       if (FileExists(instance.pstore_path())) {
         CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
