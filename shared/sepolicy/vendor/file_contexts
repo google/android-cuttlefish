@@ -15,6 +15,7 @@
 /dev/block/by-name/frp  u:object_r:frp_block_device:s0
 
 /dev/block/pmem0  u:object_r:rebootescrow_device:s0
+/dev/block/pmem1  u:object_r:hal_graphics_composer_pmem_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/dri u:object_r:gpu_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
