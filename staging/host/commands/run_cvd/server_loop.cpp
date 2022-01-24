@@ -182,6 +182,10 @@ class ServerLoopImpl : public ServerLoop, public Feature {
     unlink(kregistry_path.c_str());
     CreateBlankImage(kregistry_path, 2 /* mb */, "none");
 
+    auto hwcomposer_pmem_path = instance_.hwcomposer_pmem_path();
+    unlink(hwcomposer_pmem_path.c_str());
+    CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none");
+
     auto pstore_path = instance_.pstore_path();
     unlink(pstore_path.c_str());
     CreateBlankImage(pstore_path, 2 /* mb */, "none");
