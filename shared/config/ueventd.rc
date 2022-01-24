@@ -9,6 +9,9 @@
 # resume-on-reboot
 /dev/block/pmem0 0770 system system
 
+# hwcomposer
+/dev/block/pmem1 0770 system system
+
 # vtpm
 /dev/tpm0 0000 root root
 /dev/tpmrm0 000 system system

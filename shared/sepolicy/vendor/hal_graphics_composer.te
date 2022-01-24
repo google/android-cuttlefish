@@ -3,3 +3,9 @@ allow hal_graphics_composer_server self:{ socket vsock_socket } create_socket_pe
 gpu_access(hal_graphics_composer_server)
 
 get_prop(hal_graphics_composer_server, vendor_cuttlefish_config_server_port_prop)
+get_prop(hal_graphics_composer_server, vendor_hwcomposer_prop)
+
+# Persistent memory for some hwcomposer configuration.
+type hal_graphics_composer_pmem_device, dev_type;
+allow hal_graphics_composer_server hal_graphics_composer_pmem_device:blk_file rw_file_perms;
+allow hal_graphics_composer_server block_device:dir search;
