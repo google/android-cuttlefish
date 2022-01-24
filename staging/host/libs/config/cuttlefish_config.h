@@ -443,6 +443,8 @@ class CuttlefishConfig {
 
     std::string access_kregistry_path() const;
 
+    std::string hwcomposer_pmem_path() const;
+
     std::string pstore_path() const;
 
     std::string console_path() const;
