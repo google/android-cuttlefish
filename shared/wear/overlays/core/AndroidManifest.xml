@@ -1,11 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.providers.settings.cuttlefish.overlay">
+    package="android.cuttlefish.wear.overlay">
 
     <application android:hasCode="false" />
 
     <overlay
-      android:targetPackage="com.android.providers.settings"
+      android:targetPackage="android"
       android:isStatic="true"
-      android:priority="1"
+      android:priority="3"
       />
 </manifest>

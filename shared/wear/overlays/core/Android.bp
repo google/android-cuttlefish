@@ -1,0 +1,8 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+runtime_resource_overlay {
+    name: "cuttlefish_wear_overlay_frameworks_base_core",
+    soc_specific: true,
+}
