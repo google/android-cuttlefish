@@ -110,6 +110,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     persist.sys.zram_enabled=1 \
     ro.hardware.keystore_desede=true \
     ro.rebootescrow.device=/dev/block/pmem0 \
+    ro.vendor.hwcomposer.pmem=/dev/block/pmem1 \
     ro.incremental.enable=1 \
     debug.c2.use_dmabufheaps=1 \
     ro.camerax.extensions.enabled=true \
