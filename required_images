@@ -2,7 +2,6 @@ boot.img
 init_boot.img
 bootloader
 super.img
-system_dlkm.img
 userdata.img
 vbmeta.img
 vbmeta_system.img
