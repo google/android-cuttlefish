@@ -132,6 +132,7 @@ int CvdStatusMain(int argc, char** argv) {
 
   if (print) {
     Json::Value device_info;
+    device_info["assembly_dir"] = config->assembly_dir();
     device_info["instance_name"] = instance.instance_name();
     device_info["instance_dir"] = instance.instance_dir();
     device_info["web_access"] =
