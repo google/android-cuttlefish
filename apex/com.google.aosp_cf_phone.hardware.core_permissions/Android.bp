@@ -17,7 +17,7 @@ package {
 }
 
 override_apex {
-    name: "com.google.aosp_cf_x86_64_phone.hardware.core_permissions",
+    name: "com.google.aosp_cf_phone.hardware.core_permissions",
     base: "com.android.hardware.core_permissions",
     prebuilts: [
         "android.hardware.audio.low_latency.prebuilt.xml",
