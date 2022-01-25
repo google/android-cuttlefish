@@ -32,7 +32,5 @@ PRODUCT_PACKAGES += \
 
 # Include RRO settings that specify the fold states and screen information.
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/foldable/overlay
-# Include the foldable `launch_cvd --config foldable` option.
-$(call soong_config_append,cvd, launch_configs, cvd_config_foldable.json)
 # Include the android-info.txt that specifies the foldable --config by default.
 TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/foldable/android-info.txt
