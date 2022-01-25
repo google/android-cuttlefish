@@ -57,6 +57,7 @@ ScopedAStatus RemoteRemotelyProvisionedComponent::getHardwareInfo(
   info->versionNumber = 1;
   info->rpcAuthorName = "Google";
   info->supportedEekCurve = RpcHardwareInfo::CURVE_25519;
+  info->uniqueId = "remote keymint";
   return ScopedAStatus::ok();
 }
 
