@@ -12,10 +12,6 @@
 # hwcomposer
 /dev/block/pmem1 0770 system system
 
-# vtpm
-/dev/tpm0 0000 root root
-/dev/tpmrm0 000 system system
-
 # seriallogging
 /dev/hvc2 0660 system logd
 
