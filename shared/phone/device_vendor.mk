@@ -58,7 +58,7 @@ endif
 
 # Runtime Resource Overlays
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.google.aosp_cf_x86_64_phone.rros
+PRODUCT_PACKAGES += com.google.aosp_cf_phone.rros
 else
 PRODUCT_PACKAGES += cuttlefish_phone_overlay_frameworks_base_core
 endif

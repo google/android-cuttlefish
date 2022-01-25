@@ -50,7 +50,7 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
 # Exclude features that are not available on AOSP devices.
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.google.aosp_cf_x86_64_phone.hardware.core_permissions
+PRODUCT_PACKAGES += com.google.aosp_cf_phone.hardware.core_permissions
 else
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
