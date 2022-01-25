@@ -61,6 +61,12 @@ PRODUCT_DEVICE := vsoc_x86_64
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86_64 phone
 
+# Window sidecar and extensions to enhance activity embedding, multi-display,
+# tablet, and foldable support.
+PRODUCT_PACKAGES += \
+    androidx.window.extensions \
+    androidx.window.sidecar \
+
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
