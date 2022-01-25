@@ -805,6 +805,58 @@ class InitializeFactoryResetProtected : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
+class InitializeInstanceCompositeDisk : public Feature {
+ public:
+  INJECT(InitializeInstanceCompositeDisk(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance,
+      InitializeFactoryResetProtected& frp,
+      InitBootloaderEnvPartition& bootloader_env,
+      GeneratePersistentBootconfigAndVbmeta& bootconfig))
+      : config_(config),
+        instance_(instance),
+        frp_(frp),
+        bootloader_env_(bootloader_env),
+        bootconfig_(bootconfig) {}
+
+  std::string Name() const override {
+    return "InitializeInstanceCompositeDisk";
+  }
+  bool Enabled() const override { return true; }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override {
+    return {
+        static_cast<Feature*>(&frp_),
+        static_cast<Feature*>(&bootloader_env_),
+        static_cast<Feature*>(&bootconfig_),
+    };
+  }
+  bool Setup() override {
+    bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
+        instance_.PerInstancePath("persistent_composite_disk_config.txt"),
+        persistent_composite_disk_config(config_, instance_));
+    bool oldCompositeDisk =
+        ShouldCreateCompositeDisk(instance_.persistent_composite_disk_path(),
+                                  persistent_composite_disk_config(config_, instance_));
+
+    if (!compositeMatchesDiskConfig || oldCompositeDisk) {
+      bool success = CreatePersistentCompositeDisk(config_, instance_);
+      if (!success) {
+        LOG(ERROR) << "Failed to create persistent composite disk";
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  InitializeFactoryResetProtected& frp_;
+  InitBootloaderEnvPartition& bootloader_env_;
+  GeneratePersistentBootconfigAndVbmeta& bootconfig_;
+};
+
 static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
                                                const CuttlefishConfig* config) {
   return fruit::createComponent()
@@ -835,6 +887,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<Feature, InitializeSdCard>()
       .addMultibinding<Feature, InitializeFactoryResetProtected>()
       .addMultibinding<Feature, GeneratePersistentBootconfigAndVbmeta>()
+      .addMultibinding<Feature, InitializeInstanceCompositeDisk>()
       .install(InitBootloaderEnvPartitionComponent);
 }
 
@@ -854,20 +907,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         instance_injector.getMultibindings<Feature>();
     CHECK(Feature::RunSetup(instance_features))
         << "Failed to run instance feature setup.";
-  }
-
-  for (const auto& instance : config.Instances()) {
-    bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
-        instance.PerInstancePath("persistent_composite_disk_config.txt"),
-        persistent_composite_disk_config(config, instance));
-    bool oldCompositeDisk = ShouldCreateCompositeDisk(
-        instance.persistent_composite_disk_path(),
-        persistent_composite_disk_config(config, instance));
-
-    if (!compositeMatchesDiskConfig || oldCompositeDisk) {
-      CHECK(CreatePersistentCompositeDisk(config, instance))
-          << "Failed to create persistent composite disk";
-    }
   }
 
   // libavb expects to be able to read the maximum vbmeta size, so we must
