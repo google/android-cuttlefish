@@ -17,7 +17,7 @@ package {
 }
 
 apex {
-    name: "com.google.aosp_cf_x86_64_phone.rros",
+    name: "com.google.aosp_cf_phone.rros",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
