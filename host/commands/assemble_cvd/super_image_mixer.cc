@@ -236,10 +236,7 @@ bool BuildSuperImage(const std::string& combined_target_zip,
   }) == 0;
 }
 
-} // namespace
-
-bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
-                               const CuttlefishConfig&) {
+bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config) {
   bool has_default_build = false;
   bool has_system_build = false;
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
@@ -281,6 +278,52 @@ bool RebuildSuperImage(const FetcherConfig& fetcher_config,
     LOG(ERROR) << "Could not write the final output super image.";
   }
   return success;
+}
+
+class SuperImageOutputPathTag {};
+
+class SuperImageRebuilderImpl : public SuperImageRebuilder {
+ public:
+  INJECT(SuperImageRebuilderImpl(const FetcherConfig& fetcher_config,
+                                 const CuttlefishConfig& config,
+                                 ANNOTATED(SuperImageOutputPathTag, std::string)
+                                     output_path))
+      : fetcher_config_(fetcher_config),
+        config_(config),
+        output_path_(output_path) {}
+
+  std::string Name() const override { return "SuperImageRebuilderImpl"; }
+  bool Enabled() const override { return true; }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  bool Setup() override {
+    if (SuperImageNeedsRebuilding(fetcher_config_)) {
+      bool success = RebuildSuperImage(fetcher_config_, config_, output_path_);
+      if (!success) {
+        LOG(ERROR)
+            << "Super image rebuilding requested but could not be completed.";
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const FetcherConfig& fetcher_config_;
+  const CuttlefishConfig& config_;
+  std::string output_path_;
+};
+
+}  // namespace
+
+fruit::Component<fruit::Required<const FetcherConfig, const CuttlefishConfig>,
+                 SuperImageRebuilder>
+SuperImageRebuilderComponent(const std::string* output_path) {
+  return fruit::createComponent()
+      .bindInstance<fruit::Annotated<SuperImageOutputPathTag, std::string>>(
+          *output_path)
+      .bind<SuperImageRebuilder, SuperImageRebuilderImpl>()
+      .addMultibinding<Feature, SuperImageRebuilder>();
 }
 
 } // namespace cuttlefish
