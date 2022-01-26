@@ -42,6 +42,10 @@
 4. Enter a branch name. Start with `aosp-master` if you don't know what you're
    looking for
 5. Navigate to `aosp_cf_x86_64_phone` and click on `userdebug` for the latest build
+*** promo
+   For ARM, use branch `aosp-master-throttled-copped` and device target `aosp_cf_arm64_only_phone-userdebug`
+***
+
 6. Click on `Artifacts`
 7. Scroll down to the OTA images. These packages look like
    `aosp_cf_x86_64_phone-img-xxxxxx.zip` -- it will always have `img` in the name.
