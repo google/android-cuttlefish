@@ -130,6 +130,7 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
+  static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
   static SharedFD Mkstemp(std::string* path);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
@@ -240,6 +241,8 @@ class FileInstance {
   int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
                          struct timeval* timeout);
   void Close();
+
+  bool Chmod(mode_t mode);
 
   // Returns true if the entire input was copied.
   // Otherwise an error will be set either on this file or the input.
