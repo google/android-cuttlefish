@@ -920,7 +920,8 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       // Create esp if necessary
       .install(InitializeEspImageComponent, &FLAGS_otheros_esp_image,
                &FLAGS_otheros_kernel_path, &FLAGS_otheros_initramfs_path,
-               &FLAGS_otheros_root_image);
+               &FLAGS_otheros_root_image)
+      .install(SuperImageRebuilderComponent, &FLAGS_super_image);
 }
 
 static fruit::Component<> DiskChangesPerInstanceComponent(
@@ -956,11 +957,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         instance_injector.getMultibindings<Feature>();
     CHECK(Feature::RunSetup(instance_features))
         << "Failed to run instance feature setup.";
-  }
-
-  if (SuperImageNeedsRebuilding(fetcher_config, config)) {
-    bool success = RebuildSuperImage(fetcher_config, config, FLAGS_super_image);
-    CHECK(success) << "Super image rebuilding requested but could not be completed.";
   }
 
   bool oldOsCompositeDisk = ShouldCreateOsCompositeDisk(config);
