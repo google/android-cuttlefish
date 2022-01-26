@@ -28,13 +28,16 @@ import org.junit.runner.RunWith;
 @RunWith(CuttlefishIntegrationTestRunner.class)
 public class LaunchTest {
   @Inject @Rule public GceInstanceRule gceInstance;
+  @Inject private BuildChooser buildChooser;
 
   @Before
   public void downloadInstanceFiles() throws Exception {
     gceInstance.uploadBuildArtifact("fetch_cvd", "fetch_cvd");
     assertEquals(0, gceInstance.ssh("chmod", "+x", "fetch_cvd").returnCode());
     // TODO(schuffelen): Make this fetch the current build
-    assertEquals(0, gceInstance.ssh("./fetch_cvd").returnCode());
+    assertEquals(0,
+        gceInstance.ssh("./fetch_cvd", "-default_build=" + buildChooser.fetchCvdBuild())
+            .returnCode());
   }
 
   @Test

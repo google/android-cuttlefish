@@ -36,6 +36,7 @@ public class AcloudLocalInstanceTest {
   private String gceJsonKeyPath = null;
 
   @Inject @Rule public GceInstanceRule gceInstance;
+  @Inject private BuildChooser buildChooser;
 
   @Test
   public void launchAcloudPrebuilt() throws Exception {
@@ -48,7 +49,9 @@ public class AcloudLocalInstanceTest {
     assertEquals(0,
         gceInstance
             .ssh("./acloud", "create", "-y", "--local-instance", "--skip-pre-run-check",
-                "--service-account-json-private-key-path=key.json")
+                "--service-account-json-private-key-path=key.json",
+                "--build-id=" + buildChooser.buildId(),
+                "--build-target=" + buildChooser.buildFlavor())
             .returnCode());
   }
 
@@ -63,7 +66,9 @@ public class AcloudLocalInstanceTest {
     assertEquals(0,
         gceInstance
             .ssh("./acloud", "create", "-y", "--local-instance", "--skip-pre-run-check",
-                "--service-account-json-private-key-path=key.json")
+                "--service-account-json-private-key-path=key.json",
+                "--build-id=" + buildChooser.buildId(),
+                "--build-target=" + buildChooser.buildFlavor())
             .returnCode());
   }
 }

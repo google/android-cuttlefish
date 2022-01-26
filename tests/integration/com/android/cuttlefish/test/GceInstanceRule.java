@@ -61,6 +61,7 @@ public final class GceInstanceRule implements TestRule {
   private String gceJsonKeyPath = null;
 
   @Inject private TestInformation testInfo;
+  @Inject private BuildChooser buildChooser;
 
   private Process driverProcess;
   private String managedInstance;
@@ -198,9 +199,7 @@ public final class GceInstanceRule implements TestRule {
   public void uploadBuildArtifact(String artifact, String destFile) throws IOException {
     TestMessage.Builder request = TestMessage.newBuilder();
     request.getUploadBuildArtifactBuilder().getInstanceBuilder().setName(managedInstance);
-    request.getUploadBuildArtifactBuilder().getBuildBuilder().setId("8097738");
-    request.getUploadBuildArtifactBuilder().getBuildBuilder().setTarget(
-        "aosp_cf_x86_64_phone-userdebug");
+    request.getUploadBuildArtifactBuilder().setBuild(buildChooser.buildProto());
     request.getUploadBuildArtifactBuilder().setArtifactName(artifact);
     request.getUploadBuildArtifactBuilder().setRemotePath(destFile);
     sendMessage(request.build());
