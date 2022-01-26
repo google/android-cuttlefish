@@ -27,7 +27,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "android-base/logging.h"
+#include <android-base/logging.h>
+
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
@@ -128,6 +130,16 @@ void FileInstance::Close() {
     }
   }
   fd_ = -1;
+}
+
+bool FileInstance::Chmod(mode_t mode) {
+  int original_error = errno;
+  int ret = fchmod(fd_, mode);
+  if (ret != 0) {
+    errno_ = errno;
+  }
+  errno = original_error;
+  return ret == 0;
 }
 
 int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
@@ -291,6 +303,20 @@ SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
   int fd = memfd_create_wrapper(name.c_str(), flags);
   int error_num = errno;
   return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
+}
+
+SharedFD SharedFD::MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags) {
+  auto memfd = MemfdCreate(name, flags);
+  if (WriteAll(memfd, data) != data.size()) {
+    return ErrorFD(errno);
+  }
+  if (memfd->LSeek(0, SEEK_SET) != 0) {
+    return ErrorFD(memfd->GetErrno());
+  }
+  if (!memfd->Chmod(0700)) {
+    return ErrorFD(memfd->GetErrno());
+  }
+  return memfd;
 }
 
 bool SharedFD::SocketPair(int domain, int type, int protocol,
