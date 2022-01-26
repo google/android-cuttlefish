@@ -390,8 +390,6 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     hwcomposer.drm \
-    hwcomposer.cutf \
-    hwcomposer-stats \
     android.hardware.graphics.composer@2.4-service
 
 #
