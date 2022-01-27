@@ -5,8 +5,8 @@
 1. Make sure virtualization with KVM is available.
 
    ```bash
-    grep -c -w "vmx\|svm" /proc/cpuinfo
-    ```
+   grep -c -w "vmx\|svm" /proc/cpuinfo
+   ```
 
    This should return a non-zero value. If running on a cloud machine, this may
    take cloud-vendor-specific steps to enable. For Google Compute Engine
@@ -31,7 +31,7 @@
    cd android-cuttlefish
    debuild -i -us -uc -b
    sudo dpkg -i ../cuttlefish-common_*_*64.deb || sudo apt-get install -f
-   sudo usermod -aG kvm,cvdnetwork $USER
+   sudo usermod -aG kvm,cvdnetwork,render $USER
    sudo reboot
    ```
 
@@ -42,6 +42,7 @@
 4. Enter a branch name. Start with `aosp-master` if you don't know what you're
    looking for
 5. Navigate to `aosp_cf_x86_64_phone` and click on `userdebug` for the latest build
+
 *** promo
    For ARM, use branch `aosp-master-throttled-copped` and device target `aosp_cf_arm64_only_phone-userdebug`
 ***
@@ -65,10 +66,6 @@
 
    `$ HOME=$PWD ./bin/launch_cvd`
 
-11. Stop cuttlefish with:
-
-   `$ HOME=$PWD ./bin/stop_cvd`
-
 ## Debug Cuttlefish
 
 You can use `adb` to debug it, just like a physical device:
@@ -81,4 +78,11 @@ When launching with `---start_webrtc` (the default), you can see a list of all
 available devices at `https://localhost:8443` . For more information, see the
 WebRTC on Cuttlefish
 [documentation](https://source.android.com/setup/create/cuttlefish-ref-webrtc).
+
+## Stop Cuttlefish
+
+You will need to stop the virtual device within the same directory as you used
+to launch the device.
+
+    `$ HOME=$PWD ./bin/stop_cvd`
 
