@@ -44,15 +44,6 @@ namespace {
 
 class CvdClient {
  public:
-  CvdClient(const SharedFD& server) { SetServer(server); }
-
-  void SetServer(const SharedFD& server) {
-    CHECK(server->IsOpen()) << "Unable to open connection to cvd_server.";
-    server_ = UnixMessageSocket(server);
-    CHECK(server_->EnableCredentials(true).ok())
-        << "Unable to enable UnixMessageSocket credentials.";
-  }
-
   bool EnsureCvdServerRunning(const std::string& host_tool_directory,
                               int num_retries = 1) {
     cvd::Request request;
@@ -169,10 +160,24 @@ class CvdClient {
  private:
   std::optional<UnixMessageSocket> server_;
 
+  void SetServer(const SharedFD& server) {
+    CHECK(!server_) << "Already have a server";
+    CHECK(server->IsOpen()) << "Unable to open connection to cvd_server.";
+    server_ = UnixMessageSocket(server);
+    CHECK(server_->EnableCredentials(true).ok())
+        << "Unable to enable UnixMessageSocket credentials.";
+  }
+
   android::base::Result<cvd::Response> SendRequest(
       const cvd::Request& request, std::optional<SharedFD> extra_fd = {}) {
     if (!server_) {
-      return android::base::Error() << "server_ not set, cannot SendRequest.";
+      auto connection =
+          SharedFD::SocketLocalClient(cvd::kServerSocketPath,
+                                      /*is_abstract=*/true, SOCK_STREAM);
+      if (!connection->IsOpen()) {
+        return android::base::Error() << "server_ not set, cannot SendRequest.";
+      }
+      SetServer(connection);
     }
     // Serialize and send the request.
     std::string serialized;
@@ -279,9 +284,7 @@ int CvdMain(int argc, char** argv, char** envp) {
 
   CHECK(ParseFlags(flags, args));
 
-  CvdClient client(SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                               /*is_abstract=*/true,
-                                               SOCK_STREAM));
+  CvdClient client;
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
@@ -295,8 +298,6 @@ int CvdMain(int argc, char** argv, char** envp) {
     LOG(INFO) << "cvd invoked with --clean; "
               << "stopping the cvd_server before continuing.";
     client.StopCvdServer(/*clear=*/true);
-    client = CvdClient(SharedFD::SocketLocalClient(
-        cvd::kServerSocketPath, /*is_abstract=*/true, SOCK_STREAM));
   }
 
   // Handle all remaining commands by forwarding them to the cvd_server.
