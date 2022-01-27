@@ -42,6 +42,7 @@ cc_library_static {
         "fonts.S",
     ],
     shared_libs: [
+        "libcn-cbor",
         "libcuttlefish_fs",
         "libbase",
         "libjsoncpp",
