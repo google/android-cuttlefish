@@ -150,9 +150,6 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
-  void set_tpm_device(const std::string& tpm_device);
-  std::string tpm_device() const;
-
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
