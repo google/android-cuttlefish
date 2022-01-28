@@ -208,6 +208,11 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
     ReportErrorToHal(hal_cli, HostError::kIncorrectUTF8);
     return false;
   }
+  if (!cbor_->IsOk()) {
+    ConfUiLog(ERROR) << "Unknown Error in cbor implementation";
+    ReportErrorToHal(hal_cli, HostError::kSystemError);
+    return false;
+  }
 
   if (!RenderDialog()) {
     // the confirmation UI is driven by a user app, not running from the start
