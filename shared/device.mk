@@ -94,6 +94,14 @@ PRODUCT_PRODUCT_PROPERTIES += \
     ro.com.google.locationfeatures=1 \
     persist.sys.fuse.passthrough.enable=true \
 
+# Until we support adb keys on user builds, and fix logcat over serial,
+# spawn adbd by default without authorization for "adb logcat"
+ifeq ($(TARGET_BUILD_VARIANT),user)
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.adb.secure=0 \
+    ro.debuggable=1
+endif
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
