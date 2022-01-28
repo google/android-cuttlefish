@@ -82,6 +82,7 @@ cvd_host_tools = [
     "root-canal",
     "run_cvd",
     "secure_env",
+    "cvd_send_sms",
     "socket_vsock_proxy",
     "stop_cvd",
     "tombstone_receiver",
