@@ -96,17 +96,8 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
 std::vector<std::string> KernelCommandLineFromConfig(
     const CuttlefishConfig& config) {
   std::vector<std::string> kernel_cmdline;
-
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
-
-  if (config.guest_audit_security()) {
-    kernel_cmdline.push_back("audit=1");
-  } else {
-    kernel_cmdline.push_back("audit=0");
-  }
-
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
-
   return kernel_cmdline;
 }
 
