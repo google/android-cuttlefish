@@ -58,18 +58,8 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
 
   if(FLAGS_pause_in_bootloader) {
     env << "bootdelay=-1" << '\0';
-  } else {
-    env << "bootdelay=0" << '\0';
   }
 
-  // Note that the 0 index points to the GPT table.
-  env << "bootcmd=verified_boot_android virtio 0#misc" << '\0';
-  if (FLAGS_vm_manager == CrosvmManager::name() &&
-      config.target_arch() == Arch::Arm64) {
-    env << "fdtaddr=0x80000000" << '\0';
-  } else {
-    env << "fdtaddr=0x40000000" << '\0';
-  }
   env << '\0';
   std::string env_str = env.str();
   std::ofstream file_out(env_path.c_str(), std::ios::binary);
