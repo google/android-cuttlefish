@@ -17,21 +17,26 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <android/hardware/keymaster/4.0/types.h>
 
+#include <cn-cbor/cn-cbor.h>
+
 namespace cuttlefish {
 namespace confui {
 
 /** take prompt_text_, extra_data
- * returns "message"
- * using "message", communicating with host keymaster,
- * returns signed confirmation when appropriate
+ * returns CBOR map, created with the two
+ *
+ * Usage:
+ *  if (IsOk()) GetMessage()
+ *
+ * The CBOR map is used to create signed confirmation
  */
 class Cbor {
-  // TODO(kwstephenkim): replace this using cbor libraries under external
   enum class Error : uint32_t {
     OK = 0,
     OUT_OF_DATA = 1,
@@ -53,13 +58,12 @@ class Cbor {
   };
 
  public:
-  using HardwareAuthToken =
-      android::hardware::keymaster::V4_0::HardwareAuthToken;
   Cbor(const std::string& prompt_text,
        const std::vector<std::uint8_t>& extra_data)
       : prompt_text_(prompt_text),
         extra_data_(extra_data),
-        buffer_status_{Error::OK} {
+        buffer_status_{Error::OK},
+        buffer_(kMax + 1) {
     Init();
   }
 
@@ -69,31 +73,29 @@ class Cbor {
   bool IsMalformedUtf8() const {
     return buffer_status_ == Error::MALFORMED_UTF8;
   }
-  std::vector<std::uint8_t>&& GetMessage() {
-    return std::move(formatted_message_buffer_);
-  }
+  // call this only when IsOk() returns true
+  std::vector<std::uint8_t>&& GetMessage();
+
+  /** When encoded, the Cbor object should not exceed this limit in terms of
+   * size in bytes
+   */
   const std::uint32_t kMax = static_cast<std::uint32_t>(MessageSize::MAX);
 
  private:
+  class CborDeleter {
+   public:
+    void operator()(cn_cbor* ptr) { cn_cbor_free(ptr); }
+  };
+
+  std::unique_ptr<cn_cbor, CborDeleter> cb_map_;
   std::string prompt_text_;
   std::vector<std::uint8_t> extra_data_;
-
-  // should be shorter than or equal to buf[std::uint32_t(MessageSize::MAX)]
-  std::vector<std::uint8_t> formatted_message_buffer_;
   Error buffer_status_;
-  void Init();
-  /**
-   * formatted_message_buffer_.emplace_back(created_header)
-   */
-  bool WriteHeader(const Cbor::Type type, const std::uint64_t value);
-  bool WriteTextToBuffer(const std::string& text);
-  bool WriteBytesToBuffer(const std::vector<std::uint8_t>& bytes);
+  std::vector<std::uint8_t> buffer_;
 
-  inline uint8_t getByte(const uint64_t& v, const uint8_t index) {
-    return v >> (index * 8);
-  }
-  bool WriteBytes(uint64_t value, uint8_t size);
+  void Init();
   Error CheckUTF8Copy(const std::string& text);
 };
+
 }  // namespace confui
 }  // end of namespace cuttlefish
