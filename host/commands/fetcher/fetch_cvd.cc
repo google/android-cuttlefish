@@ -32,9 +32,9 @@
 
 #include "host/libs/config/fetcher_config.h"
 
-#include "build_api.h"
-#include "credential_source.h"
-#include "install_zip.h"
+#include "host/libs/web/build_api.h"
+#include "host/libs/web/credential_source.h"
+#include "host/libs/web/install_zip.h"
 
 namespace {
 
