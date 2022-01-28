@@ -17,20 +17,20 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "fetch_cvd",
+cc_library {
+    name: "libcuttlefish_web",
     srcs: [
-        "fetch_cvd.cc",
+        "build_api.cc",
+        "credential_source.cc",
+        "curl_wrapper.cc",
+        "install_zip.cc",
     ],
     static_libs: [
-        "libcuttlefish_web",
         "libcuttlefish_host_config",
-        "libgflags",
         "libext2_blkid",
     ],
     target: {
         host: {
-            stl: "libc++_static",
             static_libs: [
                 "libbase",
                 "libcuttlefish_fs",
