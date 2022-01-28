@@ -222,8 +222,8 @@ void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   *stream << fd;
 }
 
-void Command::RedirectStdIO(Subprocess::StdIOChannel channel,
-                            SharedFD shared_fd) {
+Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+                                SharedFD shared_fd) & {
   CHECK(shared_fd->IsOpen());
   CHECK(redirects_.count(channel) == 0)
       << "Attempted multiple redirections of fd: " << static_cast<int>(channel);
@@ -231,11 +231,22 @@ void Command::RedirectStdIO(Subprocess::StdIOChannel channel,
   CHECK(dup_fd >= 0) << "Could not acquire a new file descriptor: "
                      << shared_fd->StrError();
   redirects_[channel] = dup_fd;
+  return *this;
 }
-void Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                            Subprocess::StdIOChannel parent_channel) {
+Command Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+                               SharedFD shared_fd) && {
+  RedirectStdIO(channel, shared_fd);
+  return std::move(*this);
+}
+Command& Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                                Subprocess::StdIOChannel parent_channel) & {
   return RedirectStdIO(subprocess_channel,
                        SharedFD::Dup(static_cast<int>(parent_channel)));
+}
+Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                               Subprocess::StdIOChannel parent_channel) && {
+  RedirectStdIO(subprocess_channel, parent_channel);
+  return std::move(*this);
 }
 
 Subprocess Command::Start(SubprocessOptions options) const {

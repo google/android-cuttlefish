@@ -141,30 +141,57 @@ class Command {
 
   const std::string& Executable() const { return command_[0]; }
 
-  void SetExecutable(const std::string& executable) {
+  Command& SetExecutable(const std::string& executable) & {
     command_[0] = executable;
+    return *this;
+  }
+  Command SetExecutable(const std::string& executable) && {
+    SetExecutable(executable);
+    return std::move(*this);
   }
 
-  void SetStopper(SubprocessStopper stopper) { subprocess_stopper_ = stopper; }
+  Command& SetStopper(SubprocessStopper stopper) & {
+    subprocess_stopper_ = stopper;
+    return *this;
+  }
+  Command SetStopper(SubprocessStopper stopper) && {
+    SetStopper(stopper);
+    return std::move(*this);
+  }
 
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
-  void SetEnvironment(const std::vector<std::string>& env) {
+  Command& SetEnvironment(const std::vector<std::string>& env) & {
     env_ = env;
+    return *this;
+  }
+  Command SetEnvironment(const std::vector<std::string>& env) && {
+    SetEnvironment(env);
+    return std::move(*this);
   }
 
-  void AddEnvironmentVariable(const std::string& env_var,
-                              const std::string& value) {
+  Command& AddEnvironmentVariable(const std::string& env_var,
+                                  const std::string& value) & {
     return AddEnvironmentVariable(env_var + "=" + value);
   }
+  Command AddEnvironmentVariable(const std::string& env_var,
+                                 const std::string& value) && {
+    AddEnvironmentVariable(env_var, value);
+    return std::move(*this);
+  }
 
-  void AddEnvironmentVariable(const std::string& env_var) {
+  Command& AddEnvironmentVariable(const std::string& env_var) & {
     env_.push_back(env_var);
+    return *this;
+  }
+  Command AddEnvironmentVariable(const std::string& env_var) && {
+    AddEnvironmentVariable(env_var);
+    return std::move(*this);
   }
 
   // Specify an environment variable to be unset from the parent's
   // environment for the subprocesses to be started.
-  void UnsetFromEnvironment(const std::string& env_var) {
+  Command& UnsetFromEnvironment(const std::string& env_var) & {
     auto it = env_.begin();
     while (it != env_.end()) {
       if (android::base::StartsWith(*it, env_var + "=")) {
@@ -173,6 +200,11 @@ class Command {
         ++it;
       }
     }
+    return *this;
+  }
+  Command UnsetFromEnvironment(const std::string& env_var) && {
+    UnsetFromEnvironment(env_var);
+    return std::move(*this);
   }
 
   // Adds a single parameter to the command. All arguments are concatenated into
@@ -181,25 +213,42 @@ class Command {
   // object is destroyed. To add multiple parameters to the command the function
   // must be called multiple times, one per parameter.
   template <typename... Args>
-  void AddParameter(Args... args) {
+  Command& AddParameter(Args... args) & {
     std::stringstream ss;
     BuildParameter(&ss, args...);
     command_.push_back(ss.str());
+    return *this;
+  }
+  template <typename... Args>
+  Command AddParameter(Args... args) && {
+    AddParameter(std::forward<Args>(args)...);
+    return std::move(*this);
   }
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
   template <typename... Args>
-  void AppendToLastParameter(Args... args) {
+  Command& AppendToLastParameter(Args... args) & {
     CHECK(!command_.empty()) << "There is no parameter to append to.";
     std::stringstream ss;
     BuildParameter(&ss, args...);
     command_[command_.size() - 1] += ss.str();
+    return *this;
+  }
+  template <typename... Args>
+  Command AppendToLastParameter(Args... args) && {
+    AppendToLastParameter(std::forward<Args>(args)...);
+    return std::move(*this);
   }
 
   // Redirects the standard IO of the command.
-  void RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);
-  void RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                     Subprocess::StdIOChannel parent_channel);
+  Command& RedirectStdIO(Subprocess::StdIOChannel channel,
+                         SharedFD shared_fd) &;
+  Command RedirectStdIO(Subprocess::StdIOChannel channel,
+                        SharedFD shared_fd) &&;
+  Command& RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                         Subprocess::StdIOChannel parent_channel) &;
+  Command RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                        Subprocess::StdIOChannel parent_channel) &&;
 
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
