@@ -191,7 +191,6 @@ PRODUCT_PACKAGES += \
     tombstone_producer \
     suspend_blocker \
     vsoc_input_service \
-    vtpm_manager \
 
 $(call soong_config_append, cvd, launch_configs, cvd_config_auto.json cvd_config_foldable.json cvd_config_phone.json cvd_config_tablet.json cvd_config_tv.json)
 $(call soong_config_append, cvd, grub_config, grub.cfg)
