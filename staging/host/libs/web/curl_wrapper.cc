@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 
+#include <fstream>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -28,6 +29,14 @@
 
 namespace cuttlefish {
 namespace {
+
+size_t curl_to_function_cb(char* ptr, size_t, size_t nmemb, void* userdata) {
+  CurlWrapper::DataCallback* callback = (CurlWrapper::DataCallback*)userdata;
+  if (!(*callback)(ptr, nmemb)) {
+    return 0;  // Signals error to curl
+  }
+  return nmemb;
+}
 
 size_t file_write_callback(char *ptr, size_t, size_t nmemb, void *userdata) {
   std::stringstream* stream = (std::stringstream*) userdata;
@@ -128,54 +137,18 @@ class CurlWrapperImpl : public CurlWrapper {
     return PostToJson(url, json_str.str(), headers);
   }
 
-  CurlResponse<std::string> DownloadToFile(
-      const std::string& url, const std::string& path,
+  CurlResponse<bool> DownloadToCallback(
+      DataCallback callback, const std::string& url,
       const std::vector<std::string>& headers) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
-    if (!curl_) {
-      LOG(ERROR) << "curl was not initialized\n";
-      return {"", -1};
-    }
-    curl_slist* curl_headers = build_slist(headers);
-    curl_easy_reset(curl_);
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
-    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    char error_buf[CURL_ERROR_SIZE];
-    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    FILE* file = fopen(path.c_str(), "w");
-    if (!file) {
-      LOG(ERROR) << "could not open file " << path;
-      return {"", -1};
-    }
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)file);
-    CURLcode res = curl_easy_perform(curl_);
-    if (curl_headers) {
-      curl_slist_free_all(curl_headers);
-    }
-    fclose(file);
-    if (res != CURLE_OK) {
-      LOG(ERROR) << "curl_easy_perform() failed. "
-                 << "Code was \"" << res << "\". "
-                 << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                 << "Error buffer was \"" << error_buf << "\".";
-      return {{}, -1};
-    }
-    long http_code = 0;
-    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return {path, http_code};
-  }
-
-  CurlResponse<std::string> DownloadToString(
-      const std::string& url, const std::vector<std::string>& headers) {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO) << "Attempting to download \"" << url << "\"";
     if (!curl_) {
       LOG(ERROR) << "curl was not initialized\n";
-      return {"", -1};
+      return {false, -1};
+    }
+    if (!callback(nullptr, 0)) {  // Signal start of data
+      LOG(ERROR) << "Callback failure\n";
+      return {false, -1};
     }
     curl_slist* curl_headers = build_slist(headers);
     curl_easy_reset(curl_);
@@ -183,9 +156,8 @@ class CurlWrapperImpl : public CurlWrapper {
                      "/etc/ssl/certs/ca-certificates.crt");
     curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
     curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    std::stringstream data;
-    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data);
+    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
     char error_buf[CURL_ERROR_SIZE];
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
@@ -198,11 +170,54 @@ class CurlWrapperImpl : public CurlWrapper {
                  << "Code was \"" << res << "\". "
                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
                  << "Error buffer was \"" << error_buf << "\".";
-      return {"", -1};
+      return {false, -1};
     }
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return {data.str(), http_code};
+    return {true, http_code};
+  }
+
+  CurlResponse<std::string> DownloadToFile(
+      const std::string& url, const std::string& path,
+      const std::vector<std::string>& headers) {
+    LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
+    std::fstream stream;
+    auto callback = [&stream, path](char* data, size_t size) -> bool {
+      if (data == nullptr) {
+        stream.open(path, std::ios::out | std::ios::binary | std::ios::trunc);
+        return !stream.fail();
+      }
+      stream.write(data, size);
+      return !stream.fail();
+    };
+    auto callback_res = DownloadToCallback(callback, url, headers);
+    if (!callback_res.data) {
+      return {"", callback_res.http_code};
+    }
+    return {path, callback_res.http_code};
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!curl_) {
+      LOG(ERROR) << "curl was not initialized\n";
+      return {"", -1};
+    }
+  }
+
+  CurlResponse<std::string> DownloadToString(
+      const std::string& url, const std::vector<std::string>& headers) {
+    std::stringstream stream;
+    auto callback = [&stream](char* data, size_t size) -> bool {
+      if (data == nullptr) {
+        stream = std::stringstream();
+        return true;
+      }
+      stream.write(data, size);
+      return true;
+    };
+    auto callback_res = DownloadToCallback(callback, url, headers);
+    if (!callback_res.data) {
+      return {"", callback_res.http_code};
+    }
+    return {stream.str(), callback_res.http_code};
   }
 
   CurlResponse<Json::Value> DownloadToJson(
@@ -332,6 +347,12 @@ class CurlServerErrorRetryingWrapper : public CurlWrapper {
         [&, this]() { return inner_curl_.DownloadToJson(url, headers); });
   }
 
+  CurlResponse<bool> DownloadToCallback(
+      DataCallback cb, const std::string& url,
+      const std::vector<std::string>& hdrs) override {
+    return RetryImpl<bool>(
+        [&, this]() { return inner_curl_.DownloadToCallback(cb, url, hdrs); });
+  }
   CurlResponse<Json::Value> DeleteToJson(
       const std::string& url,
       const std::vector<std::string>& headers) override {
