@@ -152,11 +152,9 @@ class LogTeeCreator {
     cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
     cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
 
-    Command log_tee_cmd(HostBinaryPath("log_tee"));
-    log_tee_cmd.AddParameter("--process_name=", process_name);
-    log_tee_cmd.AddParameter("--log_fd_in=", logs);
-
-    return log_tee_cmd;
+    return Command(HostBinaryPath("log_tee"))
+        .AddParameter("--process_name=", process_name)
+        .AddParameter("--log_fd_in=", logs);
   }
 
  private:
@@ -222,9 +220,8 @@ class LogcatReceiver : public CommandSource, public DiagnosticInformation {
 
   // CommandSource
   std::vector<Command> Commands() override {
-    Command command(LogcatReceiverBinary());
-    command.AddParameter("-log_pipe_fd=", pipe_);
-    return single_element_emplace(std::move(command));
+    return single_element_emplace(
+        Command(LogcatReceiverBinary()).AddParameter("-log_pipe_fd=", pipe_));
   }
 
   // Feature
@@ -263,9 +260,8 @@ class ConfigServer : public CommandSource {
 
   // CommandSource
   std::vector<Command> Commands() override {
-    Command cmd(ConfigServerBinary());
-    cmd.AddParameter("-server_fd=", socket_);
-    return single_element_emplace(std::move(cmd));
+    return single_element_emplace(
+        Command(ConfigServerBinary()).AddParameter("-server_fd=", socket_));
   }
 
   // Feature
@@ -297,10 +293,10 @@ class TombstoneReceiver : public CommandSource {
 
   // CommandSource
   std::vector<Command> Commands() override {
-    Command cmd(TombstoneReceiverBinary());
-    cmd.AddParameter("-server_fd=", socket_);
-    cmd.AddParameter("-tombstone_dir=", tombstone_dir_);
-    return single_element_emplace(std::move(cmd));
+    return single_element_emplace(
+        Command(TombstoneReceiverBinary())
+            .AddParameter("-server_fd=", socket_)
+            .AddParameter("-tombstone_dir=", tombstone_dir_));
   }
 
   // Feature
