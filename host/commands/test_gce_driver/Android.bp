@@ -28,6 +28,7 @@ cc_binary {
     static_libs: [
         "libcuttlefish_web",
         "libcuttlefish_host_config",
+        "libcuttlefish_test_gce_proto_cpp",
         "libgflags",
         "libext2_blkid",
     ],
@@ -45,6 +46,7 @@ cc_binary {
                 "libssl",
                 "libz",
                 "libjsoncpp",
+                "libprotobuf-cpp-full",
             ],
         },
         android: {
@@ -59,8 +61,27 @@ cc_binary {
                 "libssl",
                 "libz",
                 "libjsoncpp",
+                "libprotobuf-cpp-full",
             ],
         },
     },
     defaults: ["cuttlefish_host"],
+}
+
+cc_library_static {
+    name: "libcuttlefish_test_gce_proto_cpp",
+    proto: {
+        export_proto_headers: true,
+        type: "full",
+    },
+    srcs: ["test_gce_driver.proto"],
+    defaults: ["cuttlefish_host"],
+}
+
+java_library_host {
+    name: "libcuttlefish_test_gce_proto_java",
+    proto: {
+        type: "full",
+    },
+    srcs: ["test_gce_driver.proto"],
 }
