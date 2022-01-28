@@ -154,7 +154,25 @@ int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
     LOG(ERROR) << "Failed to set O_NONBLOCK: " << StrError();
     return -1;
   }
-  Connect(addr, addrlen);  // This will return immediately because of O_NONBLOCK
+
+  auto connect_res = Connect(
+      addr, addrlen);  // This will return immediately because of O_NONBLOCK
+
+  if (connect_res == 0) {  // Immediate success
+    if (Fcntl(F_SETFL, original_flags) == -1) {
+      LOG(ERROR) << "Failed to restore original flags: " << StrError();
+      return -1;
+    }
+    return 0;
+  }
+
+  if (GetErrno() != EAGAIN && GetErrno() != EINPROGRESS) {
+    LOG(ERROR) << "Immediate connection failure: " << StrError();
+    if (Fcntl(F_SETFL, original_flags) == -1) {
+      LOG(ERROR) << "Failed to restore original flags: " << StrError();
+    }
+    return -1;
+  }
 
   fd_set fdset;
   FD_ZERO(&fdset);
