@@ -90,51 +90,39 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::make(
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
 
-static int OpenSslPrintErrCallback(const char* str, size_t len, void*) {
-  LOG(ERROR) << std::string(str, len);
-  return 1;  // success
+static std::string CollectSslErrors() {
+  std::stringstream errors;
+  auto callback = [](const char* str, size_t len, void* stream) {
+    ((std::stringstream*)stream)->write(str, len);
+    return 1;  // success
+  };
+  ERR_print_errors_cb(callback, &errors);
+  return errors.str();
 }
 
-std::unique_ptr<ServiceAccountOauthCredentialSource>
+Result<ServiceAccountOauthCredentialSource>
 ServiceAccountOauthCredentialSource::FromJson(CurlWrapper& curl,
                                               const Json::Value& json,
                                               const std::string& scope) {
-  std::unique_ptr<ServiceAccountOauthCredentialSource> source;
-  source.reset(new ServiceAccountOauthCredentialSource(curl));
+  ServiceAccountOauthCredentialSource source(curl);
+  source.scope_ = scope;
 
-  if (!json.isMember("client_email")) {
-    LOG(ERROR) << "Service account json missing `client_email` field";
-    return {};
-  } else if (json["client_email"].type() != Json::ValueType::stringValue) {
-    LOG(ERROR) << "Service account `client_email` field was the wrong type";
-    return {};
-  }
-  source->email_ = json["client_email"].asString();
+  CF_EXPECT(json.isMember("client_email"));
+  CF_EXPECT(json["client_email"].type() == Json::ValueType::stringValue);
+  source.email_ = json["client_email"].asString();
 
-  if (!json.isMember("private_key")) {
-    LOG(ERROR) << "Service account json missing `private_key` field";
-    return {};
-  } else if (json["private_key"].type() != Json::ValueType::stringValue) {
-    LOG(ERROR) << "Service account json `private_key` field was the wrong type";
-    return {};
-  }
+  CF_EXPECT(json.isMember("private_key"));
+  CF_EXPECT(json["private_key"].type() == Json::ValueType::stringValue);
   std::string key_str = json["private_key"].asString();
 
-  std::unique_ptr<BIO, int (*)(BIO*)> bo(BIO_new(BIO_s_mem()), BIO_free);
-  if (!bo) {
-    LOG(ERROR) << "Failed to create boringssl BIO";
-    return {};
-  }
-  CHECK(BIO_write(bo.get(), key_str.c_str(), key_str.size()) == key_str.size());
+  std::unique_ptr<BIO, int (*)(BIO*)> bo(CF_EXPECT(BIO_new(BIO_s_mem())),
+                                         BIO_free);
+  CF_EXPECT(BIO_write(bo.get(), key_str.c_str(), key_str.size()) ==
+            key_str.size());
 
-  source->private_key_.reset(PEM_read_bio_PrivateKey(bo.get(), nullptr, 0, 0));
-  if (!source->private_key_) {
-    LOG(ERROR) << "PEM_read_bio_PrivateKey failed, showing openssl error stack";
-    ERR_print_errors_cb(OpenSslPrintErrCallback, nullptr);
-    return {};
-  }
-
-  source->scope_ = scope;
+  auto pkey = CF_EXPECT(PEM_read_bio_PrivateKey(bo.get(), nullptr, 0, 0),
+                        CollectSslErrors());
+  source.private_key_.reset(pkey);
 
   return source;
 }
