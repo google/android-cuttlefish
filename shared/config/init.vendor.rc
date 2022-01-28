@@ -1,8 +1,6 @@
 on early-init
 #    loglevel 8
 
-    mount securityfs securityfs /sys/kernel/security
-
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.hardware.egl ${ro.boot.hardware.egl}
     setprop debug.sf.vsync_reactor_ignore_present_fences true
