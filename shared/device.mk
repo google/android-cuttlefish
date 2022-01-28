@@ -449,7 +449,7 @@ endif
 #
 LOCAL_AUDIO_PRODUCT_PACKAGE ?= \
     android.hardware.audio.service \
-    android.hardware.audio@7.0-impl.ranchu \
+    android.hardware.audio@7.1-impl.ranchu \
     android.hardware.audio.effect@7.0-impl \
 
 LOCAL_AUDIO_PRODUCT_COPY_FILES ?= \
