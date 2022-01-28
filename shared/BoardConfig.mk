@@ -224,12 +224,24 @@ BOARD_RAMDISK_USE_LZ4 := true
 # To see full logs from init, disable ratelimiting.
 # The default is 5 messages per second amortized, with a burst of up to 10.
 BOARD_KERNEL_CMDLINE += printk.devkmsg=on
+
+# Reboot immediately on panic
+BOARD_KERNEL_CMDLINE += panic=-1
+
+# Always (solely or additionally) print kernel logs to hvc0
+BOARD_KERNEL_CMDLINE += console=hvc0
+
+# Cuttlefish doesn't use CMA, so don't reserve RAM for it
+BOARD_KERNEL_CMDLINE += cma=0
+
+# Default firmware load path
 BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 
-BOARD_KERNEL_CMDLINE += init=/init
-BOARD_BOOTCONFIG += androidboot.hardware=cutf_cvm
-
+# Needed to boot Android
 BOARD_KERNEL_CMDLINE += loop.max_part=7
+BOARD_KERNEL_CMDLINE += init=/init
+
+BOARD_BOOTCONFIG += androidboot.hardware=cutf_cvm
 
 # TODO(b/182417593): Move all of these module options to modules.options
 # TODO(b/176860479): Remove once goldfish and cuttlefish share a wifi implementation

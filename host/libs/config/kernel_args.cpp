@@ -45,7 +45,6 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
   if (config.vm_manager() == QemuManager::name() || config.use_bootloader()) {
     // crosvm sets up the console= earlycon= panic= flags for us if booting straight to
     // the kernel, but QEMU and the bootloader via crosvm does not.
-    AppendVector(&vm_manager_cmdline, {"console=hvc0", "panic=-1"});
     Arch target_arch = config.target_arch();
     if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
       if (config.vm_manager() == QemuManager::name()) {
@@ -53,13 +52,11 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
         // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
         // $ dtc -O dts -o virt.dts -I dtb virt.dtb
         // In the virt.dts file, look for a uart node
-        vm_manager_cmdline.push_back(" earlycon=pl011,mmio32,0x9000000");
+        vm_manager_cmdline.push_back("earlycon=pl011,mmio32,0x9000000");
       } else {
         // Crosvm ARM only supports earlycon uart over mmio.
-        vm_manager_cmdline.push_back(" earlycon=uart8250,mmio,0x3f8");
+        vm_manager_cmdline.push_back("earlycon=uart8250,mmio,0x3f8");
       }
-      // Cuttlefish does not use CMA, so don't reserve RAM for it
-      vm_manager_cmdline.push_back(" cma=0");
     } else {
       // To update the uart8250 address:
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
