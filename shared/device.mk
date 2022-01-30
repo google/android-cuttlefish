@@ -584,8 +584,11 @@ PRODUCT_PACKAGES += \
 #
 # Thermal (mock)
 #
-PRODUCT_PACKAGES += \
-    android.hardware.thermal@2.0-service.mock
+ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+PRODUCT_PACKAGES += com.android.hardware.thermal.mock
+else
+PRODUCT_PACKAGES += android.hardware.thermal@2.0-service.mock
+endif
 
 #
 # Lights
