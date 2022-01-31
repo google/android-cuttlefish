@@ -512,18 +512,22 @@ class GeneratePersistentBootconfigAndVbmeta : public Feature {
   std::string Name() const override {
     return "GeneratePersistentBootconfigAndVbmeta";
   }
-  //  Cuttlefish for the time being won't be able to support OTA from a
-  //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
-  //  device is stopped (via stop_cvd). This is rarely an issue since OTA
-  //  testing run on cuttlefish is done within one launch cycle of the device.
-  //  If this ever becomes an issue, this code will have to be rewritten.
   bool Enabled() const override {
-    return (!config_.protected_vm() && config_.bootconfig_supported());
+    return (!config_.protected_vm());
   }
 
  private:
   std::unordered_set<Feature*> Dependencies() const override { return {}; }
   bool Setup() override {
+    //  Cuttlefish for the time being won't be able to support OTA from a
+    //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
+    //  device is stopped (via stop_cvd). This is rarely an issue since OTA
+    //  testing run on cuttlefish is done within one launch cycle of the device.
+    //  If this ever becomes an issue, this code will have to be rewritten.
+    if(!config_.bootconfig_supported()) {
+      return true;
+    }
+
     const auto bootconfig_path = instance_.persistent_bootconfig_path();
     if (!FileExists(bootconfig_path)) {
       if (!CreateBlankImage(bootconfig_path, 1 /* mb */, "none")) {
