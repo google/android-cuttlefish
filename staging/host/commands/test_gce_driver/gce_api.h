@@ -73,6 +73,8 @@ class GceInstanceInfo {
   explicit GceInstanceInfo(const Json::Value&);
 
   std::optional<std::string> Zone() const;
+  GceInstanceInfo& Zone(const std::string&) &;
+  GceInstanceInfo Zone(const std::string&) &&;
 
   std::optional<std::string> Name() const;
   GceInstanceInfo& Name(const std::string&) &;
@@ -118,19 +120,20 @@ class GceApi {
   };
 
   GceApi(CurlWrapper&, CredentialSource& credentials,
-         const std::string& project, const std::string& zone);
+         const std::string& project);
 
   std::future<android::base::Result<GceInstanceInfo>> Get(
       const GceInstanceInfo&);
-  std::future<android::base::Result<GceInstanceInfo>> Get(const std::string&);
+  std::future<android::base::Result<GceInstanceInfo>> Get(
+      const std::string& zone, const std::string& name);
 
   Operation Insert(const Json::Value&);
   Operation Insert(const GceInstanceInfo&);
 
-  Operation Reset(const std::string&);
+  Operation Reset(const std::string& zone, const std::string& name);
   Operation Reset(const GceInstanceInfo&);
 
-  Operation Delete(const std::string&);
+  Operation Delete(const std::string& zone, const std::string& name);
   Operation Delete(const GceInstanceInfo&);
 
  private:
@@ -139,7 +142,6 @@ class GceApi {
   CurlWrapper& curl_;
   CredentialSource& credentials_;
   std::string project_;
-  std::string zone_;
 };
 
 }  // namespace cuttlefish
