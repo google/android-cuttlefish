@@ -144,7 +144,11 @@ class ReadEvalPrintLoop {
     if (request.id().name() == "") {
       return Error() << "Instance name must be specified";
     }
-    auto instance = ScopedGceInstance::CreateDefault(gce_, request.id().name());
+    if (request.id().zone() == "") {
+      return Error() << "Instance zone must be specified";
+    }
+    auto instance = ScopedGceInstance::CreateDefault(gce_, request.id().zone(),
+                                                     request.id().name());
     if (!instance.ok()) {
       return Error() << "Failed to create instance: " << instance.error();
     }
@@ -416,8 +420,8 @@ int TestGceDriverMain(int argc, char** argv) {
   std::string service_account_json_private_key_path = "";
   flags.emplace_back(GflagsCompatFlag("service-account-json-private-key-path",
                                       service_account_json_private_key_path));
-  std::string instance_name = "";
-  flags.emplace_back(GflagsCompatFlag("instance-name", instance_name));
+  std::string cloud_project = "";
+  flags.emplace_back(GflagsCompatFlag("cloud-project", cloud_project));
 
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
@@ -434,7 +438,7 @@ int TestGceDriverMain(int argc, char** argv) {
   CHECK(gce_creds);
 
   // TODO(b/216667647): Allow these settings to be configured.
-  GceApi gce(*curl, *gce_creds, "cloud-android-testing", "us-west1-a");
+  GceApi gce(*curl, *gce_creds, cloud_project);
 
   static constexpr char BUILD_SCOPE[] =
       "https://www.googleapis.com/auth/androidbuild.internal";
