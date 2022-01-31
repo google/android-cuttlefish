@@ -166,6 +166,14 @@ constexpr char kGceZone[] = "zone";
 std::optional<std::string> GceInstanceInfo::Zone() const {
   return OptStringMember(data_, kGceZone);
 }
+GceInstanceInfo& GceInstanceInfo::Zone(const std::string& zone) & {
+  data_[kGceZone] = zone;
+  return *this;
+}
+GceInstanceInfo GceInstanceInfo::Zone(const std::string& zone) && {
+  data_[kGceZone] = zone;
+  return *this;
+}
 
 constexpr char kGceName[] = "name";
 std::optional<std::string> GceInstanceInfo::Name() const {
@@ -275,8 +283,8 @@ GceInstanceInfo GceInstanceInfo::AddScope(const std::string& scope) && {
 const Json::Value& GceInstanceInfo::AsJson() const { return data_; }
 
 GceApi::GceApi(CurlWrapper& curl, CredentialSource& credentials,
-               const std::string& project, const std::string& zone)
-    : curl_(curl), credentials_(credentials), project_(project), zone_(zone) {}
+               const std::string& project)
+    : curl_(curl), credentials_(credentials), project_(project) {}
 
 std::vector<std::string> GceApi::Headers() {
   return {
@@ -367,14 +375,6 @@ static std::string RandomUuid() {
 
 std::future<Result<GceInstanceInfo>> GceApi::Get(
     const GceInstanceInfo& instance) {
-  if (auto instance_zone = instance.Zone();
-      instance_zone && zone_ != *instance_zone) {
-    auto task = [this, instance_zone]() -> Result<GceInstanceInfo> {
-      return Error() << "Zone mismatch: \"" << zone_ << "\" vs \""
-                     << *instance_zone << "\"";
-    };
-    return std::async(std::launch::deferred, task);
-  }
   auto name = instance.Name();
   if (!name) {
     auto task = [json = instance.AsJson()]() -> Result<GceInstanceInfo> {
@@ -382,14 +382,22 @@ std::future<Result<GceInstanceInfo>> GceApi::Get(
     };
     return std::async(std::launch::deferred, task);
   }
-  return Get(*name);
+  auto zone = instance.Zone();
+  if (!zone) {
+    auto task = [json = instance.AsJson()]() -> Result<GceInstanceInfo> {
+      return Error() << "Missing a zone for \"" << json << "\"";
+    };
+    return std::async(std::launch::deferred, task);
+  }
+  return Get(*zone, *name);
 }
 
-std::future<Result<GceInstanceInfo>> GceApi::Get(const std::string& name) {
+std::future<Result<GceInstanceInfo>> GceApi::Get(const std::string& zone,
+                                                 const std::string& name) {
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone_);
+  url << "/zones/" << curl_.UrlEscape(zone);
   url << "/instances/" << curl_.UrlEscape(name);
   auto task = [this, url = url.str()]() -> Result<GceInstanceInfo> {
     auto response = curl_.DownloadToJson(url, Headers());
@@ -403,17 +411,28 @@ std::future<Result<GceInstanceInfo>> GceApi::Get(const std::string& name) {
 }
 
 GceApi::Operation GceApi::Insert(const Json::Value& request) {
+  if (!request.isMember("zone") ||
+      request["zone"].type() != Json::ValueType::stringValue) {
+    auto task = [request]() -> Result<Json::Value> {
+      return Error() << "Missing a zone for \"" << request << "\"";
+    };
+    return Operation(
+        std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
+  }
+  auto zone = request["zone"].asString();
+  Json::Value requestNoZone = request;
+  requestNoZone.removeMember("zone");
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone_);
+  url << "/zones/" << curl_.UrlEscape(zone);
   url << "/instances";
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
-  auto task = [this, request, url = url.str()]() -> Result<Json::Value> {
-    auto response = curl_.PostToJson(url, request, Headers());
+  auto task = [this, requestNoZone, url = url.str()]() -> Result<Json::Value> {
+    auto response = curl_.PostToJson(url, requestNoZone, Headers());
     if (!response.HttpSuccess()) {
       return Error() << "Failed to create instance: " << response.data
-                     << ". Sent request " << request;
+                     << ". Sent request " << requestNoZone;
     }
     return response.data;
   };
@@ -425,20 +444,12 @@ GceApi::Operation GceApi::Insert(const GceInstanceInfo& request) {
   return Insert(request.AsJson());
 }
 
-static std::string RemoveUrlFromZone(const std::string& zone) {
-  auto last_slash = zone.rfind("/");
-  return last_slash == std::string::npos ? zone : zone.substr(last_slash);
-}
-
-static bool CompareZone(const std::string& zone1, const std::string& zone2) {
-  return RemoveUrlFromZone(zone1) == RemoveUrlFromZone(zone2);
-}
-
-GceApi::Operation GceApi::Reset(const std::string& name) {
+GceApi::Operation GceApi::Reset(const std::string& zone,
+                                const std::string& name) {
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone_);
+  url << "/zones/" << curl_.UrlEscape(zone);
   url << "/instances/" << curl_.UrlEscape(name);
   url << "/reset";
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
@@ -454,15 +465,6 @@ GceApi::Operation GceApi::Reset(const std::string& name) {
 }
 
 GceApi::Operation GceApi::Reset(const GceInstanceInfo& instance) {
-  if (auto instance_zone = instance.Zone();
-      instance_zone && CompareZone(zone_, *instance_zone)) {
-    auto task = [this, instance_zone]() -> Result<Json::Value> {
-      return Error() << "Zone mismatch: \"" << zone_ << "\" vs \""
-                     << *instance_zone << "\"";
-    };
-    return Operation(
-        std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
-  }
   auto name = instance.Name();
   if (!name) {
     auto task = [json = instance.AsJson()]() -> Result<Json::Value> {
@@ -471,14 +473,23 @@ GceApi::Operation GceApi::Reset(const GceInstanceInfo& instance) {
     return Operation(
         std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
   }
-  return Reset(*name);
+  auto zone = instance.Zone();
+  if (!zone) {
+    auto task = [json = instance.AsJson()]() -> Result<Json::Value> {
+      return Error() << "Missing a zone for \"" << json << "\"";
+    };
+    return Operation(
+        std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
+  }
+  return Reset(*zone, *name);
 }
 
-GceApi::Operation GceApi::Delete(const std::string& name) {
+GceApi::Operation GceApi::Delete(const std::string& zone,
+                                 const std::string& name) {
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone_);
+  url << "/zones/" << curl_.UrlEscape(zone);
   url << "/instances/" << curl_.UrlEscape(name);
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
   auto task = [this, url = url.str()]() -> Result<Json::Value> {
@@ -493,15 +504,6 @@ GceApi::Operation GceApi::Delete(const std::string& name) {
 }
 
 GceApi::Operation GceApi::Delete(const GceInstanceInfo& instance) {
-  if (auto instance_zone = instance.Zone();
-      instance_zone && CompareZone(zone_, *instance_zone)) {
-    auto task = [this, instance_zone]() -> Result<Json::Value> {
-      return Error() << "Zone mismatch: \"" << zone_ << "\" vs \""
-                     << *instance_zone << "\"";
-    };
-    return Operation(
-        std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
-  }
   auto name = instance.Name();
   if (!name) {
     auto task = [json = instance.AsJson()]() -> Result<Json::Value> {
@@ -510,7 +512,15 @@ GceApi::Operation GceApi::Delete(const GceInstanceInfo& instance) {
     return Operation(
         std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
   }
-  return Delete(*name);
+  auto zone = instance.Zone();
+  if (!zone) {
+    auto task = [json = instance.AsJson()]() -> Result<Json::Value> {
+      return Error() << "Missing a zone for \"" << json << "\"";
+    };
+    return Operation(
+        std::unique_ptr<Operation::Impl>(new Operation::Impl(*this, task)));
+  }
+  return Delete(*zone, *name);
 }
 
 }  // namespace cuttlefish

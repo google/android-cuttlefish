@@ -45,6 +45,7 @@ message Error {
 
 message GceInstanceId {
   string name = 1;
+  string zone = 2;
 }
 
 message CreateInstance {
