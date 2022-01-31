@@ -107,9 +107,6 @@ ENABLE_EVS_SERVICE ?= true
 ENABLE_MOCK_EVSHAL ?= true
 ENABLE_CAREVSSERVICE_SAMPLE ?= true
 ifeq ($(ENABLE_MOCK_EVSHAL), true)
-    ifeq ($(ENABLE_EVS_SAMPLE), true)
-        $(error ENABLE_EVS_SAMPLE must not be set as true when EVS_MOCK_EVSHAL is true)
-    endif
     PRODUCT_PACKAGES += android.hardware.automotive.evs@1.1-service \
                         evs_app \
                         android.frameworks.automotive.display@1.0-service
