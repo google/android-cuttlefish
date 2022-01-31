@@ -72,7 +72,8 @@ class SshCommand {
 class ScopedGceInstance {
  public:
   static android::base::Result<std::unique_ptr<ScopedGceInstance>>
-  CreateDefault(GceApi& gce, const std::string& instance_name);
+  CreateDefault(GceApi& gce, const std::string& zone,
+                const std::string& instance_name);
   ~ScopedGceInstance();
 
   android::base::Result<SshCommand> Ssh();
