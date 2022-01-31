@@ -161,7 +161,7 @@ Command SshCommand::Build() const {
 }
 
 Result<std::unique_ptr<ScopedGceInstance>> ScopedGceInstance::CreateDefault(
-    GceApi& gce, const std::string& instance_name) {
+    GceApi& gce, const std::string& zone, const std::string& instance_name) {
   auto ssh_key = KeyPair::CreateRsa(4096);
   if (!ssh_key.ok()) {
     return Error() << "Could not create ssh key pair: " << ssh_key.error();
@@ -175,6 +175,7 @@ Result<std::unique_ptr<ScopedGceInstance>> ScopedGceInstance::CreateDefault(
   auto default_instance_info =
       GceInstanceInfo()
           .Name(instance_name)
+          .Zone(zone)
           .MachineType("zones/us-west1-a/machineTypes/n1-standard-4")
           .AddMetadata("ssh-keys", "vsoc-01:" + *ssh_pubkey)
           .AddNetworkInterface(GceNetworkInterface::Default())
