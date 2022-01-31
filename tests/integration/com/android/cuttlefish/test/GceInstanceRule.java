@@ -60,6 +60,10 @@ public final class GceInstanceRule implements TestRule {
   @Nullable
   private String gceJsonKeyPath = null;
 
+  @Inject(optional = true) @SetOption("cloud-project") private String cloudProject;
+
+  @Inject(optional = true) @SetOption("zone") private String zone = "us-west1-a";
+
   @Inject private TestInformation testInfo;
   @Inject private BuildChooser buildChooser;
 
@@ -70,6 +74,7 @@ public final class GceInstanceRule implements TestRule {
     ImmutableList.Builder<String> cmdline = new ImmutableList.Builder();
     cmdline.add(gceDriver.toString());
     assumeNotNull(gceJsonKeyPath);
+    cmdline.add("--cloud-project=" + cloudProject);
     cmdline.add("--service-account-json-private-key-path=" + gceJsonKeyPath);
     ProcessBuilder processBuilder = new ProcessBuilder(cmdline.build());
     processBuilder.redirectInput(ProcessBuilder.Redirect.PIPE);
@@ -98,6 +103,7 @@ public final class GceInstanceRule implements TestRule {
     String desiredName = "cuttlefish-integration-" + UUID.randomUUID();
     TestMessage.Builder request = TestMessage.newBuilder();
     request.getCreateInstanceBuilder().getIdBuilder().setName(desiredName);
+    request.getCreateInstanceBuilder().getIdBuilder().setZone(zone);
     sendMessage(request.build());
     ImmutableList<TestMessage> errors =
         collectResponses().stream().filter(TestMessage::hasError).collect(toImmutableList());
