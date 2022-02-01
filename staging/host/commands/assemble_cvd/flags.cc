@@ -88,8 +88,6 @@ DEFINE_string(extra_bootconfig_args, "",
               "requires ':=' instead of '='.");
 DEFINE_bool(guest_enforce_security, true,
             "Whether to run in enforcing mode (non permissive).");
-DEFINE_bool(guest_audit_security, true,
-            "Whether to log security audits.");
 DEFINE_int32(memory_mb, 0, "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, cuttlefish::ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
@@ -623,7 +621,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_gdb_port(FLAGS_gdb_port);
 
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
-  tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   tmp_config_obj.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
 
