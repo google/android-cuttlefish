@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/*
+** Copyright 2022, The Android Open Source Project.
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+<resources>
+    <bool name="def_accelerometer_rotation">false</bool>
+
+    <integer name="def_screen_off_timeout">15000</integer>
+    <bool name="def_lockscreen_disabled">false</bool>
+    <bool name="def_sound_effects_enabled">false</bool>
+    <integer name="def_power_sounds_enabled">0</integer>
+    <integer name="def_lockscreen_sounds_enabled">0</integer>
+    <integer name="def_dock_sounds_enabled">0</integer>
+    <integer name="def_dock_sounds_enabled_when_accessibility">1</integer>
+    <string name="def_location_providers_allowed" translatable="false">gps,network</string>
+    <string name="def_bluetooth_disabled_profiles">65536</string>
+    <bool name="def_accessibility_speak_password">true</bool>
+    <bool name="def_auto_time">false</bool>
+    <bool name="def_auto_time_zone">false</bool>
+    <bool name="def_mobile_data_always_on">false</bool>
+    <bool name="def_wifi_on">true</bool>
+    <bool name="def_wifi_wakeup_enabled">false</bool>
+    <bool name="def_vibrate_when_ringing">true</bool>
+</resources>

@@ -33,6 +33,12 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "cvd_config_wear.json",
+    src: "config_wear.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "grub.cfg",
     src: "grub.cfg",
     sub_dir: "grub",
