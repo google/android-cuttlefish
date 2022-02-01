@@ -13,8 +13,3 @@ gpu_access(hal_camera_default)
 
 # Vsocket camera
 allow hal_camera_default self:vsock_socket { accept bind create getopt listen read write };
-
-# The camera HAL can respond to APEX updates (see ApexUpdateListener), but this
-# is not used by the emulated camera HAL APEX. Ignore these denials.
-dontaudit hal_camera_default property_socket:sock_file { write };
-dontaudit hal_camera_default apex_info_file:file { read };
