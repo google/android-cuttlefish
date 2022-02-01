@@ -198,9 +198,6 @@ class CuttlefishConfig {
   void set_guest_enforce_security(bool guest_enforce_security);
   bool guest_enforce_security() const;
 
-  void set_guest_audit_security(bool guest_audit_security);
-  bool guest_audit_security() const;
-
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
