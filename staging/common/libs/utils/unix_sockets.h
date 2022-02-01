@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -30,7 +31,7 @@ class UnixMessageSocket;
 struct ControlMessage {
  public:
   static ControlMessage FromRaw(const cmsghdr*);
-  static android::base::Result<ControlMessage> FromFileDescriptors(
+  static Result<ControlMessage> FromFileDescriptors(
       const std::vector<SharedFD>&);
   static ControlMessage FromCredentials(const ucred&);
   ControlMessage(const ControlMessage&) = delete;
@@ -42,10 +43,10 @@ struct ControlMessage {
   const cmsghdr* Raw() const;
 
   bool IsCredentials() const;
-  android::base::Result<ucred> AsCredentials() const;
+  Result<ucred> AsCredentials() const;
 
   bool IsFileDescriptors() const;
-  android::base::Result<std::vector<SharedFD>> AsSharedFDs() const;
+  Result<std::vector<SharedFD>> AsSharedFDs() const;
 
  private:
   friend class UnixMessageSocket;
@@ -61,19 +62,18 @@ struct UnixSocketMessage {
   std::vector<ControlMessage> control;
 
   bool HasFileDescriptors();
-  android::base::Result<std::vector<SharedFD>> FileDescriptors();
+  Result<std::vector<SharedFD>> FileDescriptors();
   bool HasCredentials();
-  android::base::Result<ucred> Credentials();
+  Result<ucred> Credentials();
 };
 
 class UnixMessageSocket {
  public:
   UnixMessageSocket(SharedFD);
-  [[nodiscard]] android::base::Result<void> WriteMessage(
-      const UnixSocketMessage&);
-  android::base::Result<UnixSocketMessage> ReadMessage();
+  [[nodiscard]] Result<void> WriteMessage(const UnixSocketMessage&);
+  Result<UnixSocketMessage> ReadMessage();
 
-  [[nodiscard]] android::base::Result<void> EnableCredentials(bool);
+  [[nodiscard]] Result<void> EnableCredentials(bool);
 
  private:
   SharedFD socket_;
