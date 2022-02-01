@@ -32,6 +32,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
@@ -96,7 +97,7 @@ class CvdServer {
       } else if (read_set.IsSet(server)) {
         auto client = SharedFD::Accept(*server);
         while (true) {
-          android::base::Result<void> result = {};
+          Result<void> result = {};
           auto request_with_stdio = GetRequest(client);
           if (!request_with_stdio.ok()) {
             client->Close();
@@ -117,8 +118,8 @@ class CvdServer {
               break;
             case cvd::Request::ContentsCase::kShutdownRequest:
               if (!extra) {
-                result = Error()
-                         << "Missing extra ShareFD for shutdown write_pipe";
+                result =
+                    CF_ERR("Missing extra ShareFD for shutdown write_pipe");
               } else {
                 result = Shutdown(client, request.shutdown_request(), out, err,
                                   *extra);
@@ -129,7 +130,7 @@ class CvdServer {
                                      err);
               break;
             default:
-              result = Error() << "Unknown request in cvd_server.";
+              result = CF_ERR("Unknown request in cvd_server.");
               break;
           }
           if (!result.ok()) {
@@ -141,7 +142,7 @@ class CvdServer {
     }
   }
 
-  android::base::Result<void> GetVersion(const SharedFD& client) const {
+  Result<void> GetVersion(const SharedFD& client) const {
     cvd::Response response;
     response.mutable_version_response()->mutable_version()->set_major(
         cvd::kVersionMajor);
@@ -153,10 +154,10 @@ class CvdServer {
     return SendResponse(client, response);
   }
 
-  android::base::Result<void> Shutdown(const SharedFD& client,
-                                       const cvd::ShutdownRequest& request,
-                                       const SharedFD& out, const SharedFD& err,
-                                       const SharedFD& write_pipe) {
+  Result<void> Shutdown(const SharedFD& client,
+                        const cvd::ShutdownRequest& request,
+                        const SharedFD& out, const SharedFD& err,
+                        const SharedFD& write_pipe) {
     cvd::Response response;
     response.mutable_shutdown_response();
 
@@ -185,11 +186,10 @@ class CvdServer {
     return SendResponse(client, response);
   }
 
-  android::base::Result<void> HandleCommand(const SharedFD& client,
-                                            const cvd::CommandRequest& request,
-                                            const SharedFD& in,
-                                            const SharedFD& out,
-                                            const SharedFD& err) {
+  Result<void> HandleCommand(const SharedFD& client,
+                             const cvd::CommandRequest& request,
+                             const SharedFD& in, const SharedFD& out,
+                             const SharedFD& err) {
     cvd::Response response;
     response.mutable_command_response();
 
@@ -344,67 +344,64 @@ class CvdServer {
     return {};
   }
 
-  UnixMessageSocket GetClient(const SharedFD& client) const {
-    UnixMessageSocket result = UnixMessageSocket(client);
-    CHECK(result.EnableCredentials(true).ok())
-        << "Unable to enable UnixMessageSocket credentials.";
+  Result<UnixMessageSocket> GetClient(const SharedFD& client) const {
+    UnixMessageSocket result(client);
+    CF_EXPECT(result.EnableCredentials(true),
+              "Unable to enable UnixMessageSocket credentials.");
     return result;
   }
 
-  android::base::Result<RequestWithStdio> GetRequest(
-      const SharedFD& client) const {
+  Result<RequestWithStdio> GetRequest(const SharedFD& client) const {
     RequestWithStdio result;
 
-    UnixMessageSocket reader = GetClient(client);
-    auto read_result = reader.ReadMessage();
-    if (!read_result.ok()) {
-      return Error() << read_result.error();
-    }
+    UnixMessageSocket reader =
+        CF_EXPECT(GetClient(client), "Couldn't get client");
+    auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
 
-    if (read_result->data.empty()) {
-      return Error() << "Read empty packet, so the client has probably closed "
-                        "the connection.";
-    }
+    CF_EXPECT(!read_result.data.empty(),
+              "Read empty packet, so the client has probably closed "
+              "the connection.");
 
-    std::string serialized(read_result->data.begin(), read_result->data.end());
+    std::string serialized(read_result.data.begin(), read_result.data.end());
     cvd::Request request;
-    if (!request.ParseFromString(serialized)) {
-      return Error() << "Unable to parse serialized request proto.";
-    }
+    CF_EXPECT(request.ParseFromString(serialized),
+              "Unable to parse serialized request proto.");
     result.request = request;
 
-    if (!read_result->HasFileDescriptors()) {
-      return Error() << "Missing stdio fds from request.";
-    }
-    auto fds = read_result->FileDescriptors();
-    if (!fds.ok() || (fds->size() != 3 && fds->size() != 4)) {
-      return Error() << "Error reading stdio fds from request: " << fds.error();
-    }
-    result.in = (*fds)[0];
-    result.out = (*fds)[1];
-    result.err = (*fds)[2];
-    if (fds->size() == 4) {
-      result.extra = (*fds)[3];
+    CF_EXPECT(read_result.HasFileDescriptors(),
+              "Missing stdio fds from request.");
+    auto fds = CF_EXPECT(read_result.FileDescriptors(),
+                         "Error reading stdio fds from request");
+    CF_EXPECT(
+        fds.size() == 3 || fds.size() == 4,
+        "Wrong number of FDs, received " << fds.size() << ", wanted 3 or 4");
+    result.in = fds[0];
+    result.out = fds[1];
+    result.err = fds[2];
+    if (fds.size() == 4) {
+      result.extra = fds[3];
     }
 
-    if (read_result->HasCredentials()) {
+    if (read_result.HasCredentials()) {
       // TODO(b/198453477): Use Credentials to control command access.
-      LOG(DEBUG) << "Has credentials, uid=" << read_result->Credentials()->uid;
+      auto creds =
+          CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
+      LOG(DEBUG) << "Has credentials, uid=" << creds.uid;
     }
 
     return result;
   }
 
-  android::base::Result<void> SendResponse(
-      const SharedFD& client, const cvd::Response& response) const {
+  Result<void> SendResponse(const SharedFD& client,
+                            const cvd::Response& response) const {
     std::string serialized;
-    if (!response.SerializeToString(&serialized)) {
-      return android::base::Error() << "Unable to serialize response proto.";
-    }
+    CF_EXPECT(response.SerializeToString(&serialized),
+              "Unable to serialize response proto.");
     UnixSocketMessage message;
     message.data = std::vector<char>(serialized.begin(), serialized.end());
 
-    UnixMessageSocket writer = GetClient(client);
+    UnixMessageSocket writer =
+        CF_EXPECT(GetClient(client), "Couldn't get client");
     return writer.WriteMessage(message);
   }
 
