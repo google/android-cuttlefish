@@ -146,7 +146,7 @@ bool ModemSimulator::IsRadioOn() const {
 
 bool ModemSimulator::IsWaitingSmsPdu() {
   if (sms_service_) {
-    return (sms_service_->IsWaitingSmsPdu() |
+    return (sms_service_->IsWaitingSmsPdu() ||
             sms_service_->IsWaitingSmsToSim());
   }
   return false;
