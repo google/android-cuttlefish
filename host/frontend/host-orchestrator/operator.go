@@ -48,9 +48,9 @@ func main() {
 	r := setupServerRoutes(pool, polledSet, config)
 
 	http.Handle("/", r)
-	log.Println("Client endpoint created")
+	log.Println("Client http endpoint created")
 	if err := http.ListenAndServe(fmt.Sprint(":", port), nil); err != nil {
-		log.Fatal("ListenAndServe client: ", err)
+		log.Fatal("ListenAndServe http client: ", err)
 	}
 }
 
