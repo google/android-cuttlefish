@@ -564,14 +564,6 @@ bool CuttlefishConfig::guest_enforce_security() const {
   return (*dictionary_)[kGuestEnforceSecurity].asBool();
 }
 
-const char* kGuestAuditSecurity = "guest_audit_security";
-void CuttlefishConfig::set_guest_audit_security(bool guest_audit_security) {
-  (*dictionary_)[kGuestAuditSecurity] = guest_audit_security;
-}
-bool CuttlefishConfig::guest_audit_security() const {
-  return (*dictionary_)[kGuestAuditSecurity].asBool();
-}
-
 static constexpr char kenableHostBluetooth[] = "enable_host_bluetooth";
 void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
   (*dictionary_)[kenableHostBluetooth] = enable_host_bluetooth;
