@@ -15,6 +15,12 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "cvd_config_go.json",
+    src: "config_go.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "cvd_config_phone.json",
     src: "config_phone.json",
     sub_dir: "cvd_config",
