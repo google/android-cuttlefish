@@ -7,11 +7,9 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/mbr.h"
-
-using android::base::Error;
-using android::base::Result;
 
 namespace cuttlefish {
 
@@ -269,20 +267,18 @@ class InitializeDataImageImpl : public InitializeDataImage {
     }
     if (!FileHasContent(data_path_.Path())) {
       if (config_.data_policy() == kDataPolicyUseExisting) {
-        return Error() << "A data image must exist to use -data_policy="
-                       << kDataPolicyUseExisting;
+        return CF_ERR("A data image must exist to use -data_policy="
+                      << kDataPolicyUseExisting);
       } else if (config_.data_policy() == kDataPolicyResizeUpTo) {
-        return Error() << data_path_.Path()
-                       << " does not exist, but resizing was requested";
+        return CF_ERR(data_path_.Path()
+                      << " does not exist, but resizing was requested");
       }
       return DataImageAction::kCreateImage;
     }
     if (GetFsType(data_path_.Path()) != config_.userdata_format()) {
-      if (config_.data_policy() == kDataPolicyResizeUpTo) {
-        return Error()
-               << "Changing the fs format is incompatible with -data_policy="
-               << kDataPolicyResizeUpTo;
-      }
+      CF_EXPECT(config_.data_policy() == kDataPolicyResizeUpTo,
+                "Changing the fs format is incompatible with -data_policy="
+                    << kDataPolicyResizeUpTo);
       return DataImageAction::kCreateImage;
     }
     if (config_.data_policy() == kDataPolicyResizeUpTo) {
@@ -298,32 +294,27 @@ class InitializeDataImageImpl : public InitializeDataImage {
         return {};
       case DataImageAction::kCreateImage: {
         RemoveFile(data_path_.Path());
-        if (config_.blank_data_image_mb() == 0) {
-          return Error() << "Expected `-blank_data_image_mb` to be set for "
-                         << "image creation.";
-        }
-        bool success =
+        CF_EXPECT(config_.blank_data_image_mb() != 0,
+                  "Expected `-blank_data_image_mb` to be set for "
+                  "image creation.");
+        CF_EXPECT(
             CreateBlankImage(data_path_.Path(), config_.blank_data_image_mb(),
-                             config_.userdata_format());
-        if (!success) {
-          return Error() << "Failed to create a blank image at \""
-                         << data_path_.Path() << "\" with size "
-                         << config_.blank_data_image_mb() << " and format \""
-                         << config_.userdata_format() << "\"";
-        }
+                             config_.userdata_format()),
+            "Failed to create a blank image at \""
+                << data_path_.Path() << "\" with size "
+                << config_.blank_data_image_mb() << " and format \""
+                << config_.userdata_format() << "\"");
         return {};
       }
       case DataImageAction::kResizeImage: {
-        if (config_.blank_data_image_mb() == 0) {
-          return Error() << "Expected `-blank_data_image_mb` to be set for "
-                         << "image resizing.";
-        }
-        bool success = ResizeImage(config_, data_path_.Path(),
-                                   config_.blank_data_image_mb());
-        if (!success) {
-          return Error() << "Failed to resize \"" << data_path_.Path()
-                         << "\" to " << config_.blank_data_image_mb() << " MB";
-        }
+        CF_EXPECT(config_.blank_data_image_mb() != 0,
+                  "Expected `-blank_data_image_mb` to be set for "
+                  "image resizing.");
+        CF_EXPECT(ResizeImage(config_, data_path_.Path(),
+                              config_.blank_data_image_mb()),
+                  "Failed to resize \"" << data_path_.Path() << "\" to "
+                                        << config_.blank_data_image_mb()
+                                        << " MB");
         return {};
       }
     }
