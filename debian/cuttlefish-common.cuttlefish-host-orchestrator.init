@@ -34,19 +34,34 @@
 if [ -f /etc/default/cuttlefish-common ]; then
     . /etc/default/cuttlefish-common
 fi
-orchestrator_port=${orchestrator_port:-1080}
+orchestrator_http_port=${orchestrator_http_port:-1080}
+orchestrator_https_port=${orchestrator_https_port:-1443}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
 DAEMON="/usr/lib/cuttlefish-common/bin/host-orchestrator"
+GENERATE_CERT="/usr/lib/cuttlefish-common/bin/generate_cert"
 PIDFILE="${RUN_DIR}"/host-orchestrator.pid
+CERT_DIR="/etc/cuttlefish-common/host-orchestrator/cert"
+
+function gen_cert {
+  mkdir -p "${CERT_DIR}"
+  cd "${CERT_DIR}"
+  # https://go.dev/src/crypto/tls/generate_cert.go
+  ${GENERATE_CERT} --host="localhost" --duration="867240h0m0s"
+  chown _cutf-operator:cvdnetwork "${CERT_DIR}/cert.pem"
+  chown _cutf-operator:cvdnetwork "${CERT_DIR}/key.pem"
+  cd -
+}
 
 start() {
+  gen_cert
   mkdir -p "${RUN_DIR}"
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  ORCHESTRATOR_PORT="${orchestrator_port}" \
+  ORCHESTRATOR_HTTP_PORT="${orchestrator_http_port}" \
+  ORCHESTRATOR_HTTPS_PORT="${orchestrator_https_port}" \
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \

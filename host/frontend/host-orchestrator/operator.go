@@ -23,17 +23,22 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
 const defaultSocketPath = "/run/cuttlefish/operator"
-const defaultPort = "1080"
+const defaultHttpPort = "1080"
+const defaultHttpsPort = "1443"
+
+const tlsCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
 
 func main() {
 	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
-	port := fromEnvOrDefault("ORCHESTRATOR_PORT", defaultPort)
+	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
+	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
@@ -46,12 +51,26 @@ func main() {
 
 	setupDeviceEndpoint(pool, config, socketPath)
 	r := setupServerRoutes(pool, polledSet, config)
-
 	http.Handle("/", r)
-	log.Println("Client endpoint created")
-	if err := http.ListenAndServe(fmt.Sprint(":", port), nil); err != nil {
-		log.Fatal("ListenAndServe client: ", err)
-	}
+
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+
+	go func() {
+		log.Println("Client http endpoint created")
+		log.Fatal(http.ListenAndServe(fmt.Sprint(":", httpPort), nil))
+		wg.Done()
+	}()
+
+	go func() {
+		log.Println("Client https endpoint created.")
+		certPath := tlsCertDir + "/cert.pem"
+		keyPath := tlsCertDir + "/key.pem"
+		log.Fatal(http.ListenAndServeTLS(fmt.Sprint(":", httpsPort), certPath, keyPath, nil))
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
 
 func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {

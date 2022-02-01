@@ -39,4 +39,8 @@
 
 # The port on which the orchestrator server should listen on for plain HTTP.
 # Defaults to 1080.
-# orchestrator_port=
+# orchestrator_http_port=
+#
+# The port on which the orchestrator server should listen on for HTTPS.
+# Defaults to 1443.
+# orchestrator_https_port=
