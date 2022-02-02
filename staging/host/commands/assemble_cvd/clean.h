@@ -18,12 +18,14 @@
 #include <set>
 #include <string>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
-bool CleanPriorFiles(const std::set<std::string>& preserving,
-                     const std::string& assembly_dir,
-                     const std::vector<std::string>& instance_dirs);
+Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
+                             const std::string& assembly_dir,
+                             const std::vector<std::string>& instance_dirs);
 
-bool EnsureDirectoryExists(const std::string& directory_path);
+Result<void> EnsureDirectoryExists(const std::string& directory_path);
 
 } // namespace cuttlefish

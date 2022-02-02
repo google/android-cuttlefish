@@ -932,7 +932,7 @@ void SetDefaultFlagsForCrosvm() {
   std::set<Arch> supported_archs{Arch::X86_64};
   bool default_enable_sandbox =
       supported_archs.find(HostArch()) != supported_archs.end() &&
-      EnsureDirectoryExists(kCrosvmVarEmptyDir) &&
+      EnsureDirectoryExists(kCrosvmVarEmptyDir).ok() &&
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
   SetCommandLineOptionWithMode("enable_sandbox",
                                (default_enable_sandbox ? "true" : "false"),
