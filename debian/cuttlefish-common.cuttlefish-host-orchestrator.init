@@ -45,13 +45,19 @@ PIDFILE="${RUN_DIR}"/host-orchestrator.pid
 CERT_DIR="/etc/cuttlefish-common/host-orchestrator/cert"
 
 function gen_cert {
-  mkdir -p "${CERT_DIR}"
-  cd "${CERT_DIR}"
-  # https://go.dev/src/crypto/tls/generate_cert.go
-  ${GENERATE_CERT} --host="localhost" --duration="867240h0m0s"
-  chown _cutf-operator:cvdnetwork "${CERT_DIR}/cert.pem"
-  chown _cutf-operator:cvdnetwork "${CERT_DIR}/key.pem"
-  cd -
+  CERT_FILE="${CERT_DIR}/cert.pem"
+  KEY_FILE="${CERT_DIR}/key.pem"
+  if test -f "$CERT_FILE" && test -f "$KEY_FILE"; then
+    echo "TLS certificate files for https communication already exist."
+  else
+    mkdir -p "${CERT_DIR}"
+    pushd "${CERT_DIR}"
+    # https://go.dev/src/crypto/tls/generate_cert.go
+    ${GENERATE_CERT} --host="localhost" --duration="867240h0m0s"
+    chown _cutf-operator:cvdnetwork "${CERT_FILE}"
+    chown _cutf-operator:cvdnetwork "${KEY_FILE}"
+    popd
+  fi
 }
 
 start() {

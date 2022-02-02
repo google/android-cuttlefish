@@ -19,7 +19,7 @@ include /usr/share/dpkg/buildflags.mk
 SOURCE_DIR := host/frontend/host-orchestrator
 override_dh_auto_build:
 	$(SOURCE_DIR)/build
-	go build -o out/generate_cert /usr/local/go/src/crypto/tls/generate_cert.go
+	go build -o out/generate_cert "$(shell go env GOROOT)/src/crypto/tls/generate_cert.go"
 
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-host-orchestrator

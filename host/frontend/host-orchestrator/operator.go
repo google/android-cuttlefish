@@ -35,10 +35,24 @@ const defaultHttpsPort = "1443"
 
 const tlsCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
 
+func startHttpServer() {
+	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
+	server := &http.Server{Addr: fmt.Sprint(":", httpPort)}
+	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", httpPort))
+	log.Fatal(server.ListenAndServe())
+}
+
+func startHttpsServer() {
+	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
+	certPath := tlsCertDir + "/cert.pem"
+	keyPath := tlsCertDir + "/key.pem"
+	server := &http.Server{Addr: fmt.Sprint(":", httpsPort)}
+	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", httpsPort))
+	log.Fatal(server.ListenAndServeTLS(certPath, keyPath))
+}
+
 func main() {
 	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
-	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
@@ -53,23 +67,16 @@ func main() {
 	r := setupServerRoutes(pool, polledSet, config)
 	http.Handle("/", r)
 
+	starters := []func(){startHttpServer, startHttpsServer}
 	wg := new(sync.WaitGroup)
-	wg.Add(2)
-
-	go func() {
-		log.Println("Client http endpoint created")
-		log.Fatal(http.ListenAndServe(fmt.Sprint(":", httpPort), nil))
-		wg.Done()
-	}()
-
-	go func() {
-		log.Println("Client https endpoint created.")
-		certPath := tlsCertDir + "/cert.pem"
-		keyPath := tlsCertDir + "/key.pem"
-		log.Fatal(http.ListenAndServeTLS(fmt.Sprint(":", httpsPort), certPath, keyPath, nil))
-		wg.Done()
-	}()
-
+	wg.Add(len(starters))
+	for _, starter := range starters {
+		starter_ := starter
+		go func(f func()) {
+			defer wg.Done()
+			f()
+		}(starter_)
+	}
 	wg.Wait()
 }
 
