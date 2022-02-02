@@ -166,6 +166,16 @@ std::vector<std::string> BootconfigArgsFromConfig(
     bootconfig_args.push_back("androidboot.hw_timeout_multiplier=50");
   }
 
+  // TODO(b/217564326): improve this checks for a hypervisor in the VM.
+  if (config.target_arch() == Arch::X86 ||
+      config.target_arch() == Arch::X86_64) {
+    bootconfig_args.push_back(
+        concat("androidboot.hypervisor.version=cf-", config.vm_manager()));
+    bootconfig_args.push_back("androidboot.hypervisor.vm.supported=1");
+    bootconfig_args.push_back(
+        "androidboot.hypervisor.protected_vm.supported=0");
+  }
+
   AppendVector(&bootconfig_args, config.extra_bootconfig_args());
 
   return bootconfig_args;
