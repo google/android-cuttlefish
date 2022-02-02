@@ -574,16 +574,17 @@ void CreateQcowOverlay(const std::string& crosvm_path,
   cmd.AddParameter("--backing_file=", backing_file);
   cmd.AddParameter(output_overlay_path);
 
-  std::string stdout;
-  std::string stderr;
-  int success = RunWithManagedStdio(std::move(cmd), nullptr, &stdout, &stderr);
+  std::string stdout_str;
+  std::string stderr_str;
+  int success =
+      RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, &stderr_str);
 
   if (success != 0) {
     LOG(ERROR) << "Failed to run `" << crosvm_path
                << " create_qcow2 --backing_file=" << backing_file << " "
                << output_overlay_path << "`";
-    LOG(ERROR) << "stdout:\n###\n" << stdout << "\n###";
-    LOG(ERROR) << "stderr:\n###\n" << stderr << "\n###";
+    LOG(ERROR) << "stdout:\n###\n" << stdout_str << "\n###";
+    LOG(ERROR) << "stderr:\n###\n" << stderr_str << "\n###";
     LOG(FATAL) << "Return code: \"" << success << "\"";
   }
 }
