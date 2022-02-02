@@ -98,7 +98,8 @@ bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 # define O_TMPFILE (020000000 | O_DIRECTORY)
 #endif
 
-void CreateLegacySymlinks(const CuttlefishConfig::InstanceSpecific& instance) {
+Result<void> CreateLegacySymlinks(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::string log_files[] = {
       "kernel.log",  "launcher.log",        "logcat",
       "metrics.log", "modem_simulator.log", "crosvm_openwrt.log",
@@ -107,8 +108,8 @@ void CreateLegacySymlinks(const CuttlefishConfig::InstanceSpecific& instance) {
     auto symlink_location = instance.PerInstancePath(log_file.c_str());
     auto log_target = "logs/" + log_file;  // Relative path
     if (symlink(log_target.c_str(), symlink_location.c_str()) != 0) {
-      PLOG(FATAL) << "symlink(\"" << log_target << ", " << symlink_location
-                  << ") failed";
+      return CF_ERRNO("symlink(\"" << log_target << ", " << symlink_location
+                                   << ") failed");
     }
   }
 
@@ -121,19 +122,20 @@ void CreateLegacySymlinks(const CuttlefishConfig::InstanceSpecific& instance) {
   auto legacy_instance_path = legacy_instance_path_stream.str();
 
   if (DirectoryExists(legacy_instance_path, /* follow_symlinks */ false)) {
-    CHECK(RecursivelyRemoveDirectory(legacy_instance_path))
-        << "Failed to remove legacy directory " << legacy_instance_path;
+    CF_EXPECT(RecursivelyRemoveDirectory(legacy_instance_path),
+              "Failed to remove legacy directory " << legacy_instance_path);
   } else if (FileExists(legacy_instance_path, /* follow_symlinks */ false)) {
-    CHECK(RemoveFile(legacy_instance_path))
-        << "Failed to remove instance_dir symlink " << legacy_instance_path;
+    CF_EXPECT(RemoveFile(legacy_instance_path),
+              "Failed to remove instance_dir symlink " << legacy_instance_path);
   }
   if (symlink(instance.instance_dir().c_str(), legacy_instance_path.c_str())) {
-    PLOG(FATAL) << "symlink(\"" << instance.instance_dir() << "\", \""
-                << legacy_instance_path << "\") failed";
+    return CF_ERRNO("symlink(\"" << instance.instance_dir() << "\", \""
+                                 << legacy_instance_path << "\") failed");
   }
+  return {};
 }
 
-const CuttlefishConfig* InitFilesystemAndCreateConfig(
+Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, KernelConfig kernel_config,
     fruit::Injector<>& injector) {
   std::string runtime_dir_parent = AbsolutePath(FLAGS_instance_dir);
@@ -200,13 +202,13 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    CHECK(CleanPriorFiles(preserving, config.assembly_dir(),
-                          config.instance_dirs()))
-        << "Failed to clean prior files";
+    CF_EXPECT(CleanPriorFiles(preserving, config.assembly_dir(),
+                              config.instance_dirs()),
+              "Failed to clean prior files");
 
-    CHECK(EnsureDirectoryExists(config.root_dir()));
-    CHECK(EnsureDirectoryExists(config.assembly_dir()));
-    CHECK(EnsureDirectoryExists(config.instances_dir()));
+    CF_EXPECT(EnsureDirectoryExists(config.root_dir()));
+    CF_EXPECT(EnsureDirectoryExists(config.assembly_dir()));
+    CF_EXPECT(EnsureDirectoryExists(config.instances_dir()));
     if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
                   << config.AssemblyPath("assemble_cvd.log")
@@ -226,16 +228,16 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
     }
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.
-      CHECK(EnsureDirectoryExists(instance.instance_dir()));
+      CF_EXPECT(EnsureDirectoryExists(instance.instance_dir()));
       auto internal_dir = instance.instance_dir() + "/" + kInternalDirName;
-      CHECK(EnsureDirectoryExists(internal_dir));
+      CF_EXPECT(EnsureDirectoryExists(internal_dir));
       auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
-      CHECK(EnsureDirectoryExists(shared_dir));
+      CF_EXPECT(EnsureDirectoryExists(shared_dir));
       auto recording_dir = instance.instance_dir() + "/recording";
-      CHECK(EnsureDirectoryExists(recording_dir));
-      CHECK(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
+      CF_EXPECT(EnsureDirectoryExists(recording_dir));
+      CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
       // TODO(schuffelen): Move this code somewhere better
-      CreateLegacySymlinks(instance);
+      CF_EXPECT(CreateLegacySymlinks(instance));
     }
     CHECK(SaveConfig(config)) << "Failed to initialize configuration";
   }
@@ -300,25 +302,25 @@ fruit::Component<> FlagsComponent() {
 
 } // namespace
 
-int AssembleCvdMain(int argc, char** argv) {
+Result<int> AssembleCvdMain(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
   int tty = isatty(0);
   int error_num = errno;
-  CHECK_EQ(tty, 0)
-      << "stdin was a tty, expected to be passed the output of a previous stage. "
-      << "Did you mean to run launch_cvd?";
-  CHECK(error_num != EBADF)
-      << "stdin was not a valid file descriptor, expected to be passed the output "
-      << "of launch_cvd. Did you mean to run launch_cvd?";
+  CF_EXPECT(tty == 0,
+            "stdin was a tty, expected to be passed the output of a "
+            "previous stage. Did you mean to run launch_cvd?");
+  CF_EXPECT(error_num != EBADF,
+            "stdin was not a valid file descriptor, expected to be "
+            "passed the output of launch_cvd. Did you mean to run launch_cvd?");
 
   std::string input_files_str;
   {
     auto input_fd = SharedFD::Dup(0);
     auto bytes_read = ReadAll(input_fd, &input_files_str);
-    CHECK(bytes_read >= 0)
-        << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
+    CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
+                                   << input_fd->StrError() << "\"");
   }
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
@@ -373,8 +375,10 @@ int AssembleCvdMain(int argc, char** argv) {
   CHECK(GetKernelConfigAndSetDefaults(&kernel_config))
       << "Failed to parse arguments";
 
-  auto config = InitFilesystemAndCreateConfig(std::move(fetcher_config),
-                                              kernel_config, injector);
+  auto config =
+      CF_EXPECT(InitFilesystemAndCreateConfig(std::move(fetcher_config),
+                                              kernel_config, injector),
+                "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
@@ -385,5 +389,7 @@ int AssembleCvdMain(int argc, char** argv) {
 } // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::AssembleCvdMain(argc, argv);
+  auto res = cuttlefish::AssembleCvdMain(argc, argv);
+  CHECK(res.ok()) << "assemble_cvd failed: \n" << res.error();
+  return *res;
 }
