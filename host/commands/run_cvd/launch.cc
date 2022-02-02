@@ -430,7 +430,7 @@ class BluetoothConnector : public CommandSource {
 
   // CommandSource
   std::vector<Command> Commands() override {
-    Command command(DefaultHostArtifactsPath("bin/bt_connector"));
+    Command command(HostBinaryPath("bt_connector"));
     command.AddParameter("-bt_out=", fifos_[0]);
     command.AddParameter("-bt_in=", fifos_[1]);
     command.AddParameter("-hci_port=", config_.rootcanal_hci_port());
