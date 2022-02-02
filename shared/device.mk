@@ -70,6 +70,7 @@ AB_OTA_PARTITIONS += \
     odm_dlkm \
     product \
     system \
+    system_dlkm \
     system_ext \
     vbmeta \
     vbmeta_system \
