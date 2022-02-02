@@ -62,8 +62,8 @@ std::vector<Command> LaunchCustomActionServers(
 
       // Launch the action server, providing its socket pair fd as the only
       // argument.
-      std::string binary = "bin/" + *(custom_action.server);
-      Command command(DefaultHostArtifactsPath(binary));
+      auto binary = HostBinaryPath(*(custom_action.server));
+      Command command(binary);
       command.AddParameter(action_server_socket);
       commands.emplace_back(std::move(command));
 
