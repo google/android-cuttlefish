@@ -172,7 +172,11 @@ void ConfigureLogs(const CuttlefishConfig& config,
     auto assemble_log = ReadFile(assembly_path);
     launcher_log_ofstream << assemble_log;
   }
-  ::android::base::SetLogger(LogToStderrAndFiles({log_path}));
+  std::string prefix;
+  if (config.Instances().size() > 1) {
+    prefix = instance.instance_name() + ": ";
+  }
+  ::android::base::SetLogger(LogToStderrAndFiles({log_path}, prefix));
 }
 
 bool ChdirIntoRuntimeDir(const CuttlefishConfig::InstanceSpecific& instance) {
