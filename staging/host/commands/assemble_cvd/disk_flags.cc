@@ -501,16 +501,16 @@ class BootImageRepacker : public Feature {
   const CuttlefishConfig& config_;
 };
 
-class GeneratePersistentBootconfigAndVbmeta : public Feature {
+class GeneratePersistentBootconfig : public Feature {
  public:
-  INJECT(GeneratePersistentBootconfigAndVbmeta(
+  INJECT(GeneratePersistentBootconfig(
       const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
   // Feature
   std::string Name() const override {
-    return "GeneratePersistentBootconfigAndVbmeta";
+    return "GeneratePersistentBootconfig";
   }
   bool Enabled() const override {
     return (!config_.protected_vm());
@@ -587,7 +587,43 @@ class GeneratePersistentBootconfigAndVbmeta : public Feature {
                  << success;
       return false;
     }
+    return true;
+  }
 
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
+class GeneratePersistentVbmeta : public Feature {
+ public:
+  INJECT(GeneratePersistentVbmeta(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance,
+      InitBootloaderEnvPartition& bootloader_env,
+      GeneratePersistentBootconfig& bootconfig))
+      : config_(config),
+        instance_(instance),
+        bootloader_env_(bootloader_env),
+        bootconfig_(bootconfig) {}
+
+  // Feature
+  std::string Name() const override {
+    return "GeneratePersistentVbmeta";
+  }
+  bool Enabled() const override {
+    return (!config_.protected_vm());
+  }
+
+ private:
+  std::unordered_set<Feature*> Dependencies() const override {
+    return {
+        static_cast<Feature*>(&bootloader_env_),
+        static_cast<Feature*>(&bootconfig_),
+    };
+  }
+
+  bool Setup() override {
+    auto avbtool_path = HostBinaryPath("avbtool");
     Command vbmeta_cmd(avbtool_path);
     vbmeta_cmd.AddParameter("make_vbmeta_image");
     vbmeta_cmd.AddParameter("--output");
@@ -597,11 +633,18 @@ class GeneratePersistentBootconfigAndVbmeta : public Feature {
     vbmeta_cmd.AddParameter("--key");
     vbmeta_cmd.AddParameter(
         DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
+
     vbmeta_cmd.AddParameter("--chain_partition");
-    vbmeta_cmd.AddParameter("bootconfig:1:" +
+    vbmeta_cmd.AddParameter("uboot_env:1:" +
                             DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
 
-    success = vbmeta_cmd.Start().Wait();
+    if (config_.bootconfig_supported()) {
+        vbmeta_cmd.AddParameter("--chain_partition");
+        vbmeta_cmd.AddParameter("bootconfig:2:" +
+                                DefaultHostArtifactsPath("etc/cvd.avbpubkey"));
+    }
+
+    bool success = vbmeta_cmd.Start().Wait();
     if (success != 0) {
       LOG(ERROR) << "Unable to create persistent vbmeta. Exited with status "
                  << success;
@@ -628,6 +671,8 @@ class GeneratePersistentBootconfigAndVbmeta : public Feature {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  InitBootloaderEnvPartition& bootloader_env_;
+  GeneratePersistentBootconfig& bootconfig_;
 };
 
 class InitializeMetadataImage : public Feature {
@@ -815,13 +860,11 @@ class InitializeInstanceCompositeDisk : public Feature {
       const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance,
       InitializeFactoryResetProtected& frp,
-      InitBootloaderEnvPartition& bootloader_env,
-      GeneratePersistentBootconfigAndVbmeta& bootconfig))
+      GeneratePersistentVbmeta& vbmeta))
       : config_(config),
         instance_(instance),
         frp_(frp),
-        bootloader_env_(bootloader_env),
-        bootconfig_(bootconfig) {}
+        vbmeta_(vbmeta) {}
 
   std::string Name() const override {
     return "InitializeInstanceCompositeDisk";
@@ -832,8 +875,7 @@ class InitializeInstanceCompositeDisk : public Feature {
   std::unordered_set<Feature*> Dependencies() const override {
     return {
         static_cast<Feature*>(&frp_),
-        static_cast<Feature*>(&bootloader_env_),
-        static_cast<Feature*>(&bootconfig_),
+        static_cast<Feature*>(&vbmeta_),
     };
   }
   bool Setup() override {
@@ -857,8 +899,7 @@ class InitializeInstanceCompositeDisk : public Feature {
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   InitializeFactoryResetProtected& frp_;
-  InitBootloaderEnvPartition& bootloader_env_;
-  GeneratePersistentBootconfigAndVbmeta& bootconfig_;
+  GeneratePersistentVbmeta& vbmeta_;
 };
 
 class VbmetaEnforceMinimumSize : public Feature {
@@ -940,7 +981,8 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<Feature, InitializePstore>()
       .addMultibinding<Feature, InitializeSdCard>()
       .addMultibinding<Feature, InitializeFactoryResetProtected>()
-      .addMultibinding<Feature, GeneratePersistentBootconfigAndVbmeta>()
+      .addMultibinding<Feature, GeneratePersistentBootconfig>()
+      .addMultibinding<Feature, GeneratePersistentVbmeta>()
       .addMultibinding<Feature, InitializeInstanceCompositeDisk>()
       .install(InitBootloaderEnvPartitionComponent);
 }
