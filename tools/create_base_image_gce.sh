@@ -59,6 +59,8 @@ sudo chroot /mnt/image /usr/bin/apt install -y aapt
 sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
+sudo chroot /mnt/image /usr/bin/apt install -t bullseye-backports -y linux-image-cloud-amd64
+sudo chroot /mnt/image /usr/bin/apt --purge -y remove linux-image-5.10.0-10-cloud-amd64
 
 # update QEMU version to most recent backport
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bullseye-backports
@@ -72,10 +74,15 @@ sudo chroot /mnt/image /usr/bin/apt install -y make
 sudo chroot /mnt/image /usr/bin/apt install -y software-properties-common
 sudo chroot /mnt/image /usr/bin/add-apt-repository non-free
 sudo chroot /mnt/image /usr/bin/add-apt-repository contrib
+# TODO rammuthiah rootcause why this line is needed
+# For reasons unknown the above two lines don't add non-free and
+# contrib to the bullseye backports.
+sudo chroot /mnt/image /usr/bin/add-apt-repository 'deb http://deb.debian.org/debian bullseye-backports main non-free contrib'
 sudo chroot /mnt/image /usr/bin/apt update
-sudo chroot /mnt/image /bin/bash -c 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt install -y nvidia-driver'
-sudo chroot /mnt/image /usr/bin/apt install -y firmware-misc-nonfree
-sudo chroot /mnt/image /usr/bin/apt install -y libglvnd-dev
+
+sudo chroot /mnt/image /bin/bash -c 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt install -y nvidia-driver -t bullseye-backports'
+sudo chroot /mnt/image /usr/bin/apt install -y firmware-misc-nonfree -t bullseye-backports
+sudo chroot /mnt/image /usr/bin/apt install -y libglvnd-dev -t bullseye-backports
 
 # Verify
 query_nvidia() {
@@ -93,11 +100,11 @@ if [[ $(query_nvidia "driver_version") == "" ]]; then
 fi
 
 # Vulkan loader
-sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1
+sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bullseye-backports
 
 # Wayland-server needed to have Nvidia driver fail gracefully when attemping to
 # use the EGL API on GCE instances without a GPU.
-sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0
+sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0 -t bullseye-backports
 
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf
