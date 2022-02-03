@@ -51,31 +51,31 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
                         const std::string& kernel_args,
                         const std::string& env_path) {
   std::ostringstream env;
-  env << "bootargs=" << kernel_args << '\0';
+
+  // Avoid overriding uenvcmd unless debugging
+  if (!kernel_args.empty() || FLAGS_pause_in_bootloader) {
+    if (!kernel_args.empty()) {
+      env << "uenvcmd=setenv bootargs \"$cbootargs\" " << kernel_args << " && ";
+    } else {
+      env << "uenvcmd=setenv bootargs \"$cbootargs\" && ";
+    }
+    if (FLAGS_pause_in_bootloader) {
+      env << "if test $paused -ne 1; then paused=1; else run bootcmd_android; fi";
+    } else {
+      env << "run bootcmd_android";
+    }
+    env << '\0';
+  }
   if (!config.boot_slot().empty()) {
-      env << "android_slot_suffix=_" << config.boot_slot() << '\0';
-  }
-
-  if(FLAGS_pause_in_bootloader) {
-    env << "bootdelay=-1" << '\0';
-  } else {
-    env << "bootdelay=0" << '\0';
-  }
-
-  // Note that the 0 index points to the GPT table.
-  env << "bootcmd=verified_boot_android virtio 0#misc" << '\0';
-  if (FLAGS_vm_manager == CrosvmManager::name() &&
-      config.target_arch() == Arch::Arm64) {
-    env << "fdtaddr=0x80000000" << '\0';
-  } else {
-    env << "fdtaddr=0x40000000" << '\0';
+    env << "android_slot_suffix=_" << config.boot_slot() << '\0';
   }
   env << '\0';
+
   std::string env_str = env.str();
   std::ofstream file_out(env_path.c_str(), std::ios::binary);
   file_out << env_str;
 
-  if(!file_out.good()) {
+  if (!file_out.good()) {
     return 0;
   }
 
