@@ -57,30 +57,25 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
         // Crosvm ARM only supports earlycon uart over mmio.
         vm_manager_cmdline.push_back("earlycon=uart8250,mmio,0x3f8");
       }
-    } else {
+    } else if (config.vm_manager() == QemuManager::name()) {
       // To update the uart8250 address:
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
       // Only 'io' mode works; mmio and mmio32 do not
       vm_manager_cmdline.push_back("earlycon=uart8250,io,0x3f8");
 
-      if (config.vm_manager() == QemuManager::name()) {
-        // crosvm doesn't support ACPI PNP, but QEMU does. We need to disable
-        // it on QEMU so that the ISA serial ports aren't claimed by ACPI, so
-        // we can use serdev with platform devices instead
-        vm_manager_cmdline.push_back("pnpacpi=off");
+      // crosvm doesn't support ACPI PNP, but QEMU does. We need to disable
+      // it on QEMU so that the ISA serial ports aren't claimed by ACPI, so
+      // we can use serdev with platform devices instead
+      vm_manager_cmdline.push_back("pnpacpi=off");
 
-        // crosvm sets up the ramoops.xx= flags for us, but QEMU does not.
-        // See external/crosvm/x86_64/src/lib.rs
-        // this feature is not supported on aarch64
-        vm_manager_cmdline.push_back("ramoops.mem_address=0x100000000");
-        vm_manager_cmdline.push_back("ramoops.mem_size=0x200000");
-        vm_manager_cmdline.push_back("ramoops.console_size=0x80000");
-        vm_manager_cmdline.push_back("ramoops.record_size=0x80000");
-        vm_manager_cmdline.push_back("ramoops.dump_oops=1");
-      } else {
-        // crosvm requires these additional parameters on x86_64 in bootloader mode
-        AppendVector(&vm_manager_cmdline, {"acpi=noirq", "reboot=k"});
-      }
+      // crosvm sets up the ramoops.xx= flags for us, but QEMU does not.
+      // See external/crosvm/x86_64/src/lib.rs
+      // this feature is not supported on aarch64
+      vm_manager_cmdline.push_back("ramoops.mem_address=0x100000000");
+      vm_manager_cmdline.push_back("ramoops.mem_size=0x200000");
+      vm_manager_cmdline.push_back("ramoops.console_size=0x80000");
+      vm_manager_cmdline.push_back("ramoops.record_size=0x80000");
+      vm_manager_cmdline.push_back("ramoops.dump_oops=1");
     }
   }
 
