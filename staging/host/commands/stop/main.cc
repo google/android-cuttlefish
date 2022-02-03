@@ -172,7 +172,8 @@ bool CleanStopInstance(const CuttlefishConfig::InstanceSpecific& instance,
                << "' response from launcher monitor";
     return false;
   }
-  LOG(INFO) << "Successfully stopped device " << instance.adb_ip_and_port();
+  LOG(INFO) << "Successfully stopped device " << instance.instance_name()
+            << ": " << instance.adb_ip_and_port();
   return true;
 }
 
