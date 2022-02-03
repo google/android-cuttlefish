@@ -37,18 +37,26 @@ const tlsCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
 
 func startHttpServer() {
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
-	server := &http.Server{Addr: fmt.Sprint(":", httpPort)}
 	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", httpPort))
-	log.Fatal(server.ListenAndServe())
+	log.Fatal(http.ListenAndServe(
+		fmt.Sprint(":", httpPort),
+		// handler is nil, so DefaultServeMux is used.
+		nil))
 }
 
 func startHttpsServer() {
 	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"
-	server := &http.Server{Addr: fmt.Sprint(":", httpsPort)}
 	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", httpsPort))
-	log.Fatal(server.ListenAndServeTLS(certPath, keyPath))
+	log.Fatal(http.ListenAndServeTLS(fmt.Sprint(":", httpsPort),
+		certPath,
+		keyPath,
+		// handler is nil, so DefaultServeMux is used.
+		//
+		// Using DefaultServerMux in both servers (http and https) is not a problem
+		// as http.ServeMux instances are thread safe.
+		nil))
 }
 
 func main() {
@@ -71,11 +79,10 @@ func main() {
 	wg := new(sync.WaitGroup)
 	wg.Add(len(starters))
 	for _, starter := range starters {
-		starter_ := starter
 		go func(f func()) {
 			defer wg.Done()
 			f()
-		}(starter_)
+		}(starter)
 	}
 	wg.Wait()
 }
