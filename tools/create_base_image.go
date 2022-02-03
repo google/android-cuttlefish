@@ -183,6 +183,8 @@ func main() {
 
   abt := os.Getenv("ANDROID_BUILD_TOP")
   source_files := `"` + abt + `/device/google/cuttlefish/tools/create_base_image_gce.sh"`
+  source_files += " " + `"` + abt + `/device/google/cuttlefish/tools/update_gce_kernel.sh"`
+  source_files += " " + `"` + abt + `/device/google/cuttlefish/tools/remove_old_gce_kernel.sh"`
   source_files += " " + scratch_dir + "/*"
   if INTERNAL_extra_source != "" {
     source_files += " " + INTERNAL_extra_source + "/*"
@@ -219,6 +221,19 @@ func main() {
   // beta for the --internal-ip flag that may be passed via SSH_FLAGS
   gce(ExitOnFail, `beta compute scp `+SSH_FLAGS+` `+PZ+` `+source_files+
     ` "`+build_instance+`:"`)
+
+  // Update the host kernel before installing any kernel modules
+  // Needed to guarantee that the modules in the chroot aren't built for the
+  // wrong kernel
+  gce(WarnOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` "`+build_instance+
+    `" -- ./update_gce_kernel.sh`)
+  // TODO rammuthiah if the instance is clobbered with ssh commands within
+  // 5 seconds of reboot, it becomes inaccessible. Workaround that by sleeping
+  // 50 seconds.
+  time.Sleep(50 * time.Second)
+  gce(ExitOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` "`+build_instance+
+    `" -- ./remove_old_gce_kernel.sh`)
+
   gce(ExitOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` "`+build_instance+
     `" -- ./create_base_image_gce.sh`)
   gce(ExitOnFail, `compute instances delete -q `+PZ+` "`+build_instance+`"`)
