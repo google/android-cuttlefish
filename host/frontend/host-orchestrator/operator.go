@@ -23,17 +23,44 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
 const defaultSocketPath = "/run/cuttlefish/operator"
-const defaultPort = "1080"
+const defaultHttpPort = "1080"
+const defaultHttpsPort = "1443"
+
+const tlsCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
+
+func startHttpServer() {
+	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
+	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", httpPort))
+	log.Fatal(http.ListenAndServe(
+		fmt.Sprint(":", httpPort),
+		// handler is nil, so DefaultServeMux is used.
+		nil))
+}
+
+func startHttpsServer() {
+	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
+	certPath := tlsCertDir + "/cert.pem"
+	keyPath := tlsCertDir + "/key.pem"
+	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", httpsPort))
+	log.Fatal(http.ListenAndServeTLS(fmt.Sprint(":", httpsPort),
+		certPath,
+		keyPath,
+		// handler is nil, so DefaultServeMux is used.
+		//
+		// Using DefaultServerMux in both servers (http and https) is not a problem
+		// as http.ServeMux instances are thread safe.
+		nil))
+}
 
 func main() {
 	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
-	port := fromEnvOrDefault("ORCHESTRATOR_PORT", defaultPort)
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
@@ -46,12 +73,18 @@ func main() {
 
 	setupDeviceEndpoint(pool, config, socketPath)
 	r := setupServerRoutes(pool, polledSet, config)
-
 	http.Handle("/", r)
-	log.Println("Client endpoint created")
-	if err := http.ListenAndServe(fmt.Sprint(":", port), nil); err != nil {
-		log.Fatal("ListenAndServe client: ", err)
+
+	starters := []func(){startHttpServer, startHttpsServer}
+	wg := new(sync.WaitGroup)
+	wg.Add(len(starters))
+	for _, starter := range starters {
+		go func(f func()) {
+			defer wg.Done()
+			f()
+		}(starter)
 	}
+	wg.Wait()
 }
 
 func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
