@@ -42,22 +42,15 @@ void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
 // substitute for the vm_manager comparisons.
 std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) {
   std::vector<std::string> vm_manager_cmdline;
-  if (config.vm_manager() == QemuManager::name() || config.use_bootloader()) {
-    // crosvm sets up the console= earlycon= panic= flags for us if booting straight to
-    // the kernel, but QEMU and the bootloader via crosvm does not.
+  if (config.vm_manager() == QemuManager::name()) {
     Arch target_arch = config.target_arch();
     if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
-      if (config.vm_manager() == QemuManager::name()) {
-        // To update the pl011 address:
-        // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
-        // $ dtc -O dts -o virt.dts -I dtb virt.dtb
-        // In the virt.dts file, look for a uart node
-        vm_manager_cmdline.push_back("earlycon=pl011,mmio32,0x9000000");
-      } else {
-        // Crosvm ARM only supports earlycon uart over mmio.
-        vm_manager_cmdline.push_back("earlycon=uart8250,mmio,0x3f8");
-      }
-    } else if (config.vm_manager() == QemuManager::name()) {
+      // To update the pl011 address:
+      // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
+      // $ dtc -O dts -o virt.dts -I dtb virt.dtb
+      // In the virt.dts file, look for a uart node
+      vm_manager_cmdline.push_back("earlycon=pl011,mmio32,0x9000000");
+    } else {
       // To update the uart8250 address:
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
       // Only 'io' mode works; mmio and mmio32 do not
