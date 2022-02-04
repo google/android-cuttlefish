@@ -52,20 +52,17 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
                         const std::string& env_path) {
   std::ostringstream env;
 
-  // Avoid overriding uenvcmd unless debugging
-  if (!kernel_args.empty() || FLAGS_pause_in_bootloader) {
-    if (!kernel_args.empty()) {
-      env << "uenvcmd=setenv bootargs \"$cbootargs\" " << kernel_args << " && ";
-    } else {
-      env << "uenvcmd=setenv bootargs \"$cbootargs\" && ";
-    }
-    if (FLAGS_pause_in_bootloader) {
-      env << "if test $paused -ne 1; then paused=1; else run bootcmd_android; fi";
-    } else {
-      env << "run bootcmd_android";
-    }
-    env << '\0';
+  if (!kernel_args.empty()) {
+    env << "uenvcmd=setenv bootargs \"$cbootargs\" " << kernel_args << " && ";
+  } else {
+    env << "uenvcmd=setenv bootargs \"$cbootargs\" && ";
   }
+  if (FLAGS_pause_in_bootloader) {
+    env << "if test $paused -ne 1; then paused=1; else run bootcmd_android; fi";
+  } else {
+    env << "run bootcmd_android";
+  }
+  env << '\0';
   if (!config.boot_slot().empty()) {
     env << "android_slot_suffix=_" << config.boot_slot() << '\0';
   }
