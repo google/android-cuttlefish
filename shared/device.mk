@@ -508,7 +508,7 @@ PRODUCT_PACKAGES += \
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.4-service.clearkey \
+    android.hardware.drm@latest-service.clearkey \
     android.hardware.drm@latest-service.widevine
 
 #
