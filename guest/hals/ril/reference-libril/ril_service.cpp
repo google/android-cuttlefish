@@ -16,6 +16,8 @@
 
 #define LOG_TAG "RILC"
 
+#include "RefRadioNetwork.h"
+
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
@@ -27,7 +29,6 @@
 #include <libradiocompat/RadioData.h>
 #include <libradiocompat/RadioMessaging.h>
 #include <libradiocompat/RadioModem.h>
-#include <libradiocompat/RadioNetwork.h>
 #include <libradiocompat/RadioSim.h>
 #include <libradiocompat/RadioVoice.h>
 
@@ -13396,7 +13397,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         publishRadioHal<compat::RadioData>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioMessaging>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioModem>(context, radioHidl, callbackMgr, slot);
-        publishRadioHal<compat::RadioNetwork>(context, radioHidl, callbackMgr, slot);
+        publishRadioHal<cf::ril::RefRadioNetwork>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioSim>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioVoice>(context, radioHidl, callbackMgr, slot);
 
