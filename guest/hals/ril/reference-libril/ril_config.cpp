@@ -17,12 +17,12 @@
 
 #define LOG_TAG "RILC"
 
+#include <android-base/logging.h>
 #include <android/hardware/radio/config/1.1/IRadioConfig.h>
-#include <android/hardware/radio/config/1.2/IRadioConfigResponse.h>
-#include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
-#include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigIndication.h>
-#include <android/hardware/radio/1.1/types.h>
+#include <android/hardware/radio/config/1.2/IRadioConfigResponse.h>
+#include <android/hardware/radio/config/1.3/IRadioConfig.h>
+#include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
 
 #include <ril.h>
 #include <guest/hals/ril/reference-libril/ril_service.h>
@@ -111,7 +111,7 @@ Return<void> RadioConfigImpl::setResponseFunctions(
         const ::android::sp<V1_0::IRadioConfigIndication>& radioConfigIndication) {
     pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(RIL_SOCKET_1);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 
     mRadioConfigResponse = radioConfigResponse;
     mRadioConfigIndication = radioConfigIndication;
@@ -141,7 +141,7 @@ Return<void> RadioConfigImpl::setResponseFunctions(
     mCounterRadioConfig++;
 
     ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 
     return Void();
 }
@@ -258,6 +258,7 @@ Return<void> RadioConfigImpl::getHalDeviceCapabilities(int32_t serial) {
 
 void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
     using namespace android::hardware;
+
     RLOGD("Entry %s", __FUNCTION__);
     const char *serviceNames = "default";
 
@@ -268,7 +269,7 @@ void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo
 
     pthread_rwlock_t *radioServiceRwlockPtr = getRadioServiceRwlock(0);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
     RLOGD("registerConfigService: starting V1_2::IConfigRadio %s", serviceNames);
     radioConfigService = new RadioConfigImpl;
 
@@ -281,8 +282,9 @@ void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo
     radioConfigService->mRadioConfigIndicationV1_2 = NULL;
     android::status_t status = radioConfigService->registerAsService(serviceNames);
     RLOGD("registerConfigService registerService: status %d", status);
+
     ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 }
 
 void checkReturnStatus(Return<void>& ret) {
@@ -298,11 +300,11 @@ void checkReturnStatus(Return<void>& ret) {
         int counter = mCounterRadioConfig;
         pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(0);
         int ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         // acquire wrlock
         ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         // make sure the counter value has not changed
         if (counter == mCounterRadioConfig) {
@@ -320,11 +322,11 @@ void checkReturnStatus(Return<void>& ret) {
 
         // release wrlock
         ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         // Reacquire rdlock
         ret = pthread_rwlock_rdlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
     }
 }
 
