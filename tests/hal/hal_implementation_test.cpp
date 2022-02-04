@@ -188,9 +188,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // types-only packages, which never expect a default implementation
     {"android.hardware.uwb.fira_android.", 1},
-
-    // This interface needs to be implemented (b/200055138)
-    {"android.hardware.drm.", 1},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
