@@ -566,10 +566,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.identity-service.remote
 
-# Input Classifier HAL
-PRODUCT_PACKAGES += \
-    android.hardware.input.classifier@1.0-service.default
-
 PRODUCT_PACKAGES += \
     android.hardware.input.processor-service.example
 
