@@ -897,22 +897,10 @@ int at_handshake()
 {
     int i;
     int err = 0;
-    bool inEmulator;
 
-    if (0 != pthread_equal(s_tid_reader, pthread_self())) {
-        /* cannot be called from reader thread */
-        return AT_ERROR_INVALID_THREAD;
-    }
-    inEmulator = isInEmulator();
-    if (inEmulator) {
-        pthread_mutex_lock(&s_writeMutex);
-    }
-    pthread_mutex_lock(&s_commandmutex);
-
-    for (i = 0 ; i < HANDSHAKE_RETRY_COUNT ; i++) {
+    for (i = 0; i < HANDSHAKE_RETRY_COUNT && err != AT_ERROR_INVALID_THREAD; i++) {
         /* some stacks start with verbose off */
-        err = at_send_command_full_nolock ("ATE0Q0V1", NO_RESULT,
-                    NULL, NULL, HANDSHAKE_TIMEOUT_MSEC, NULL);
+        err = at_send_command_full("ATE0Q0V1", NO_RESULT, NULL, NULL, HANDSHAKE_TIMEOUT_MSEC, NULL);
 
         if (err == 0) {
             break;
@@ -924,11 +912,6 @@ int at_handshake()
            (they will appear as extraneous unsolicited responses) */
 
         sleepMsec(HANDSHAKE_TIMEOUT_MSEC);
-    }
-
-    pthread_mutex_unlock(&s_commandmutex);
-    if (inEmulator) {
-        pthread_mutex_unlock(&s_writeMutex);
     }
 
     return err;
