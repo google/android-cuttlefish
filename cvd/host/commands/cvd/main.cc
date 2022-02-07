@@ -36,7 +36,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "host/commands/cvd/server_constants.h"
+#include "host/commands/cvd/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -173,14 +173,9 @@ class CvdClient {
     if (!server_) {
       auto connection =
           SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                      /*is_abstract=*/true, SOCK_SEQPACKET);
+                                      /*is_abstract=*/true, SOCK_STREAM);
       if (!connection->IsOpen()) {
-        auto connection =
-            SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                        /*is_abstract=*/true, SOCK_STREAM);
-      }
-      if (!connection->IsOpen()) {
-        return android::base::Error() << "Failed to connect to server";
+        return android::base::Error() << "server_ not set, cannot SendRequest.";
       }
       SetServer(connection);
     }
@@ -229,7 +224,7 @@ class CvdClient {
   void StartCvdServer(const std::string& host_tool_directory) {
     SharedFD server_fd =
         SharedFD::SocketLocalServer(cvd::kServerSocketPath,
-                                    /*is_abstract=*/true, SOCK_SEQPACKET, 0666);
+                                    /*is_abstract=*/true, SOCK_STREAM, 0666);
     CHECK(server_fd->IsOpen()) << server_fd->StrError();
 
     // TODO(b/196114111): Investigate fully "daemonizing" the cvd_server.
@@ -243,8 +238,7 @@ class CvdClient {
 
     // Connect to the server_fd, which waits for startup.
     SetServer(SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                          /*is_abstract=*/true,
-                                          SOCK_SEQPACKET));
+                                          /*is_abstract=*/true, SOCK_STREAM));
   }
 
   void CheckStatus(const cvd::Status& status, const std::string& rpc) {
