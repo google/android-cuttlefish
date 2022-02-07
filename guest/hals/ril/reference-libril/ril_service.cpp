@@ -16,6 +16,7 @@
 
 #define LOG_TAG "RILC"
 
+#include <android-base/logging.h>
 #include <android/hardware/radio/1.6/IRadio.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
 #include <android/hardware/radio/1.6/IRadioResponse.h>
@@ -973,11 +974,11 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
         int counter = isRadioService ? mCounterRadio[slotId] : mCounterOemHook[slotId];
         pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(slotId);
         int ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         // acquire wrlock
         ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         // make sure the counter value has not changed
         if (counter == (isRadioService ? mCounterRadio[slotId] : mCounterOemHook[slotId])) {
@@ -1006,11 +1007,11 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
 
         // release wrlock
         ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         // Reacquire rdlock
         ret = pthread_rwlock_rdlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
     }
 }
 
@@ -1025,7 +1026,7 @@ Return<void> RadioImpl_1_6::setResponseFunctions(
 
     pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(mSlotId);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 
     mRadioResponse = radioResponseParam;
     mRadioIndication = radioIndicationParam;
@@ -1075,7 +1076,7 @@ Return<void> RadioImpl_1_6::setResponseFunctions(
     mCounterRadio[mSlotId]++;
 
     ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 
     // client is connected. Send initial indications.
     android::onNewCommandConnect((RIL_SOCKET_ID) mSlotId);
@@ -4763,14 +4764,14 @@ Return<void> OemHookImpl::setResponseFunctions(
 
     pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(mSlotId);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 
     mOemHookResponse = oemHookResponseParam;
     mOemHookIndication = oemHookIndicationParam;
     mCounterOemHook[mSlotId]++;
 
     ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-    assert(ret == 0);
+    CHECK_EQ(ret, 0);
 
     return Void();
 }
@@ -10555,7 +10556,7 @@ int radio_1_6::updateSimPhonebookRecordsResponse(int slotId, int responseType, i
         V1_6::RadioResponseInfo responseInfo = {};
         populateResponseInfo_1_6(responseInfo, serial, responseType, e);
 
-        int32_t updatedRecordIndex;
+        int32_t updatedRecordIndex = 0;
         Return<void> retStatus =
                 radioService[slotId]->mRadioResponseV1_6->updateSimPhonebookRecordsResponse(
                         responseInfo, updatedRecordIndex);
@@ -10927,8 +10928,8 @@ int radio_1_6::currentSignalStrengthInd(int slotId, int indicationType, int toke
                                         void* response, size_t responseLen) {
     if (radioService[slotId] != NULL && (radioService[slotId]->mRadioIndication != NULL ||
                                          radioService[slotId]->mRadioIndicationV1_2 != NULL ||
-                                         radioService[slotId]->mRadioIndicationV1_4 != NULL) ||
-        radioService[slotId]->mRadioIndicationV1_6 != NULL) {
+                                         radioService[slotId]->mRadioIndicationV1_4 != NULL ||
+                                         radioService[slotId]->mRadioIndicationV1_6 != NULL)) {
         if (response == NULL || responseLen != sizeof(RIL_SignalStrength_v12)) {
             RLOGE("currentSignalStrengthInd: invalid response");
             return 0;
@@ -13353,7 +13354,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
     for (int i = 0; i < simCount; i++) {
         pthread_rwlock_t *radioServiceRwlockPtr = getRadioServiceRwlock(i);
         int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
 
         RLOGD("sim i = %d registering ...", i);
 
@@ -13374,7 +13375,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         }
 
         ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
-        assert(ret == 0);
+        CHECK_EQ(ret, 0);
     }
 }
 
