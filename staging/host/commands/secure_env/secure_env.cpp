@@ -110,7 +110,34 @@ std::thread StartKernelEventMonitor(SharedFD kernel_events_fd) {
   });
 }
 
-fruit::Component<TpmResourceManager> SecureEnvComponent() {
+fruit::Component<fruit::Required<gatekeeper::SoftGateKeeper, TpmGatekeeper,
+                                 TpmResourceManager>,
+                 gatekeeper::GateKeeper, keymaster::KeymasterEnforcement>
+ChooseGatekeeperComponent() {
+  if (FLAGS_gatekeeper_impl == "software") {
+    return fruit::createComponent()
+        .bind<gatekeeper::GateKeeper, gatekeeper::SoftGateKeeper>()
+        .registerProvider([]() -> keymaster::KeymasterEnforcement* {
+          return new keymaster::SoftKeymasterEnforcement(64, 64);
+        });
+  } else if (FLAGS_gatekeeper_impl == "tpm") {
+    return fruit::createComponent()
+        .bind<gatekeeper::GateKeeper, TpmGatekeeper>()
+        .registerProvider(
+            [](TpmResourceManager& resource_manager,
+               TpmGatekeeper& gatekeeper) -> keymaster::KeymasterEnforcement* {
+              return new TpmKeymasterEnforcement(resource_manager, gatekeeper);
+            });
+  } else {
+    LOG(FATAL) << "Invalid gatekeeper implementation: "
+               << FLAGS_gatekeeper_impl;
+    abort();
+  }
+}
+
+fruit::Component<TpmResourceManager, gatekeeper::GateKeeper,
+                 keymaster::KeymasterEnforcement>
+SecureEnvComponent() {
   return fruit::createComponent()
       .registerProvider([]() -> Tpm* {  // fruit will take ownership
         if (FLAGS_tpm_impl == "in_memory") {
@@ -141,7 +168,22 @@ fruit::Component<TpmResourceManager> SecureEnvComponent() {
           [](std::unique_ptr<ESYS_CONTEXT, void (*)(ESYS_CONTEXT*)>& esys) {
             return new TpmResourceManager(
                 esys.get());  // fruit will take ownership
-          });
+          })
+      .registerProvider([](TpmResourceManager& resource_manager) {
+        return new FragileTpmStorage(resource_manager, "gatekeeper_secure");
+      })
+      .registerProvider([](TpmResourceManager& resource_manager) {
+        return new InsecureFallbackStorage(resource_manager,
+                                           "gatekeeper_insecure");
+      })
+      .registerProvider([](TpmResourceManager& resource_manager,
+                           FragileTpmStorage& secure_storage,
+                           InsecureFallbackStorage& insecure_storage) {
+        return new TpmGatekeeper(resource_manager, secure_storage,
+                                 insecure_storage);
+      })
+      .registerProvider([]() { return new gatekeeper::SoftGateKeeper(); })
+      .install(ChooseGatekeeperComponent);
 }
 
 }  // namespace
@@ -151,28 +193,13 @@ int SecureEnvMain(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::SoftKeymasterLogger km_logger;
 
-  fruit::Injector<TpmResourceManager> injector(SecureEnvComponent);
+  fruit::Injector<TpmResourceManager, gatekeeper::GateKeeper,
+                  keymaster::KeymasterEnforcement>
+      injector(SecureEnvComponent);
   TpmResourceManager* resource_manager = injector.get<TpmResourceManager*>();
-
-  std::unique_ptr<GatekeeperStorage> secure_storage;
-  std::unique_ptr<GatekeeperStorage> insecure_storage;
-  std::unique_ptr<gatekeeper::GateKeeper> gatekeeper;
-  std::unique_ptr<keymaster::KeymasterEnforcement> keymaster_enforcement;
-  if (FLAGS_gatekeeper_impl == "software") {
-    gatekeeper.reset(new gatekeeper::SoftGateKeeper);
-    keymaster_enforcement.reset(
-        new keymaster::SoftKeymasterEnforcement(64, 64));
-  } else if (FLAGS_gatekeeper_impl == "tpm") {
-    secure_storage.reset(
-        new FragileTpmStorage(*resource_manager, "gatekeeper_secure"));
-    insecure_storage.reset(
-        new InsecureFallbackStorage(*resource_manager, "gatekeeper_insecure"));
-    TpmGatekeeper* tpm_gatekeeper =
-        new TpmGatekeeper(*resource_manager, *secure_storage, *insecure_storage);
-    gatekeeper.reset(tpm_gatekeeper);
-    keymaster_enforcement.reset(
-        new TpmKeymasterEnforcement(*resource_manager, *tpm_gatekeeper));
-  }
+  gatekeeper::GateKeeper* gatekeeper = injector.get<gatekeeper::GateKeeper*>();
+  keymaster::KeymasterEnforcement* keymaster_enforcement =
+      injector.get<keymaster::KeymasterEnforcement*>();
 
   std::unique_ptr<keymaster::KeymasterContext> keymaster_context;
   if (FLAGS_keymint_impl == "software") {
