@@ -259,6 +259,10 @@ std::vector<ImagePartition> persistent_composite_disk_config(
       .label = "uboot_env",
       .image_file_path = instance.uboot_env_image_path(),
   });
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta",
+      .image_file_path = instance.vbmeta_path(),
+  });
   if (!FLAGS_protected_vm) {
     partitions.push_back(ImagePartition{
         .label = "frp",
@@ -269,10 +273,6 @@ std::vector<ImagePartition> persistent_composite_disk_config(
     partitions.push_back(ImagePartition{
         .label = "bootconfig",
         .image_file_path = instance.persistent_bootconfig_path(),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta",
-        .image_file_path = instance.vbmeta_path(),
     });
   }
   return partitions;
