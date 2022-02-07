@@ -499,8 +499,10 @@ PRODUCT_PACKAGES += \
 #
 # GPS
 #
-PRODUCT_PACKAGES += \
+LOCAL_GNSS_PRODUCT_PACKAGE ?= \
     android.hardware.gnss-service.example
+
+PRODUCT_PACKAGES += $(LOCAL_GNSS_PRODUCT_PACKAGE)
 
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
