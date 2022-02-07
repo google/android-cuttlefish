@@ -31,6 +31,7 @@ class MiscService : public ModemService, public std::enable_shared_from_this<Mis
   MiscService &operator=(const MiscService &) = delete;
 
   void HandleGetIMEI(const Client& client, std::string& command);
+  void HandleTimeUpdate(const Client& client, std::string& command);
 
   void TimeUpdate();
 
