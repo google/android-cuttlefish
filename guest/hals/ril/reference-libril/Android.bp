@@ -24,6 +24,7 @@ cc_library {
         "-Wno-unused-parameter",
     ],
     srcs: [
+        "RefRadioNetwork.cpp",
         "ril.cpp",
         "RilSapSocket.cpp",
         "ril_config.cpp",
@@ -36,6 +37,14 @@ cc_library {
         "hardware/ril/include",
     ],
     shared_libs: [
+        "android.hardware.radio-library.compat",
+        "android.hardware.radio.config-V1-ndk",
+        "android.hardware.radio.data-V1-ndk",
+        "android.hardware.radio.messaging-V1-ndk",
+        "android.hardware.radio.modem-V1-ndk",
+        "android.hardware.radio.network-V1-ndk",
+        "android.hardware.radio.sim-V1-ndk",
+        "android.hardware.radio.voice-V1-ndk",
         "android.hardware.radio@1.0",
         "android.hardware.radio@1.1",
         "android.hardware.radio@1.2",
@@ -49,6 +58,7 @@ cc_library {
         "android.hardware.radio.config@1.3",
         "android.hardware.radio.deprecated@1.0",
         "libbase",
+        "libbinder_ndk",
         "libcutils",
         "libhardware_legacy",
         "libhidlbase",
@@ -64,8 +74,6 @@ cc_library {
 filegroup {
     name: "libril-modem-lib-manifests",
     srcs: [
-        "android.hardware.radio@1.6.xml",
-        "android.hardware.radio.config@1.3.xml",
         "android.hardware.radio@2.0.xml",
     ],
 }

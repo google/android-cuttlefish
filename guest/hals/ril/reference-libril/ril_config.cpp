@@ -18,11 +18,14 @@
 #define LOG_TAG "RILC"
 
 #include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 #include <android/hardware/radio/config/1.1/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigIndication.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigResponse.h>
 #include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
+#include <libradiocompat/RadioConfig.h>
 
 #include <ril.h>
 #include <guest/hals/ril/reference-libril/ril_service.h>
@@ -32,8 +35,6 @@ using namespace android::hardware::radio::V1_0;
 using namespace android::hardware::radio::config;
 using namespace android::hardware::radio::config::V1_0;
 using namespace android::hardware::radio::config::V1_3;
-using ::android::hardware::configureRpcThreadpool;
-using ::android::hardware::joinRpcThreadpool;
 using ::android::hardware::Return;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
@@ -258,6 +259,8 @@ Return<void> RadioConfigImpl::getHalDeviceCapabilities(int32_t serial) {
 
 void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
     using namespace android::hardware;
+    using namespace std::string_literals;
+    namespace compat = android::hardware::radio::compat;
 
     RLOGD("Entry %s", __FUNCTION__);
     const char *serviceNames = "default";
@@ -280,8 +283,14 @@ void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo
     radioConfigService->mRadioConfigResponseV1_2 = NULL;
     radioConfigService->mRadioConfigResponseV1_3 = NULL;
     radioConfigService->mRadioConfigIndicationV1_2 = NULL;
-    android::status_t status = radioConfigService->registerAsService(serviceNames);
-    RLOGD("registerConfigService registerService: status %d", status);
+
+    // use a compat shim to convert HIDL interface to AIDL and publish it
+    // PLEASE NOTE this is a temporary solution
+    static auto aidlHal = ndk::SharedRefBase::make<compat::RadioConfig>(radioConfigService);
+    const auto instance = compat::RadioConfig::descriptor + "/"s + std::string(serviceNames);
+    const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
+    RLOGD("registerConfigService addService: status %d", status);
+    CHECK_EQ(status, STATUS_OK);
 
     ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
     CHECK_EQ(ret, 0);

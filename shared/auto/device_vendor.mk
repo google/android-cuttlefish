@@ -35,7 +35,6 @@ TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_system_ext.mk)
 PRODUCT_PACKAGES += \
-    android.hardware.radio-service.compat \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
 else
