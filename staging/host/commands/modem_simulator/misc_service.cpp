@@ -94,6 +94,10 @@ std::vector<CommandHandler> MiscService::InitializeCommandHandlers() {
                      [this](const Client& client, std::string& cmd) {
                        this->HandleGetIMEI(client, cmd);
                      }),
+      CommandHandler("+REMOTETIMEUPDATE",
+                     [this](const Client& client, std::string& cmd) {
+                       this->HandleTimeUpdate(client, cmd);
+                     }),
   };
   return (command_handlers);
 }
@@ -132,6 +136,12 @@ void MiscService::HandleGetIMEI(const Client& client, std::string& command) {
 
   responses.push_back("OK");
   client.SendCommandResponse(responses);
+}
+
+void MiscService::HandleTimeUpdate(const Client& client, std::string& command) {
+    (void)client;
+    (void)command;
+    TimeUpdate();
 }
 
 long MiscService::TimeZoneOffset(time_t* utctime)
