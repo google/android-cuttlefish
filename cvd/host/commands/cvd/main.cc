@@ -36,7 +36,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
