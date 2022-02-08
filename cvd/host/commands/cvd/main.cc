@@ -55,9 +55,10 @@ class CvdClient {
       StartCvdServer(host_tool_directory);
       response = SendRequest(request);
     }
-    CHECK(response.ok() && response->has_version_response())
-        << "GetVersion call missing VersionResponse.";
+    CHECK(response.ok()) << response.error().message();
     CheckStatus(response->status(), "GetVersion");
+    CHECK(response->has_version_response())
+        << "GetVersion call missing VersionResponse.";
 
     auto server_version = response->version_response().version();
     if (server_version.major() != cvd::kVersionMajor) {
@@ -117,9 +118,9 @@ class CvdClient {
       return;
     }
 
+    CheckStatus(response->status(), "Shutdown");
     CHECK(response->has_shutdown_response())
         << "Shutdown call missing ShutdownResponse.";
-    CheckStatus(response->status(), "Shutdown");
 
     // Clear out the server_ socket.
     server_.reset();
@@ -152,9 +153,10 @@ class CvdClient {
     }
 
     auto response = SendRequest(request);
-    CHECK(response.ok() && response->has_command_response())
-        << "HandleCommand call missing CommandResponse.";
+    CHECK(response.ok()) << response.error().message();
     CheckStatus(response->status(), "GetVersion");
+    CHECK(response->has_command_response())
+        << "HandleCommand call missing CommandResponse.";
   }
 
  private:

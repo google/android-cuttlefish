@@ -96,8 +96,45 @@ struct RequestWithStdio {
   std::optional<SharedFD> extra;
 };
 
+class CvdServerHandler {
+ public:
+  virtual ~CvdServerHandler() = default;
+
+  virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
+  virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
+};
+
+static std::optional<std::string> GetCuttlefishConfigPath(
+    const std::string& assembly_dir) {
+  std::string assembly_dir_realpath;
+  if (DirectoryExists(assembly_dir)) {
+    CHECK(android::base::Realpath(assembly_dir, &assembly_dir_realpath));
+    std::string config_path =
+        AbsolutePath(assembly_dir_realpath + "/" + "cuttlefish_config.json");
+    if (FileExists(config_path)) {
+      return config_path;
+    }
+  }
+  return {};
+}
+
 class CvdServer {
  public:
+  using AssemblyDir = std::string;
+  struct AssemblyInfo {
+    std::string host_binaries_dir;
+  };
+
+  Result<void> AddHandler(CvdServerHandler* handler) {
+    CF_EXPECT(handler != nullptr, "Received a null handler");
+    handlers_.push_back(handler);
+    return {};
+  }
+
+  std::map<AssemblyDir, AssemblyInfo>& Assemblies() { return assemblies_; }
+
+  void Stop() { running_ = false; }
+
   void ServerLoop(const SharedFD& server) {
     while (running_) {
       SharedFDSet read_set;
@@ -107,50 +144,176 @@ class CvdServer {
         PLOG(ERROR) << "Select call returned error.";
       } else if (read_set.IsSet(server)) {
         auto client = SharedFD::Accept(*server);
+        CHECK(client->IsOpen())
+            << "Failed to get client: " << client->StrError();
         while (true) {
           auto request = GetRequest(client);
           if (!request.ok()) {
             client->Close();
             break;
           }
-          Result<cvd::Response> response;
-          switch (request->request.contents_case()) {
-            case cvd::Request::ContentsCase::CONTENTS_NOT_SET:
-              // No more messages from this client.
+          auto response = HandleRequest(*request);
+          if (response.ok()) {
+            auto resp_success = SendResponse(client, *response);
+            if (!resp_success.ok()) {
+              LOG(ERROR) << "Failed to write response: "
+                         << resp_success.error().message();
               client->Close();
               break;
-            case cvd::Request::ContentsCase::kVersionRequest:
-              response = GetVersion(*request);
-              break;
-            case cvd::Request::ContentsCase::kShutdownRequest:
-              response = Shutdown(*request);
-              break;
-            case cvd::Request::ContentsCase::kCommandRequest:
-              response = HandleCommand(*request);
-              break;
-            default:
-              response = CF_ERR("Unknown request in cvd_server.");
-              break;
-          }
-          if (response.ok()) {
-            SendResponse(client, *response);
+            }
           } else {
             LOG(ERROR) << response.error();
             cvd::Response error_response;
             error_response.mutable_status()->set_code(cvd::Status::INTERNAL);
             *error_response.mutable_status()->mutable_message() =
                 response.error().message();
-            SendResponse(client, error_response);
+            auto resp_success = SendResponse(client, *response);
+            if (!resp_success.ok()) {
+              LOG(ERROR) << "Failed to write response: "
+                         << resp_success.error().message();
+            }
             client->Close();
+            break;
           }
         }
       }
     }
   }
 
-  Result<cvd::Response> GetVersion(const RequestWithStdio& request) const {
-    CF_EXPECT(request.request.contents_case() ==
-              cvd::Request::ContentsCase::kVersionRequest);
+  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err) {
+    cvd::Status status;
+    for (const auto& it : assemblies_) {
+      const AssemblyDir& assembly_dir = it.first;
+      const AssemblyInfo& assembly_info = it.second;
+      auto config_path = GetCuttlefishConfigPath(assembly_dir);
+      if (config_path) {
+        // Stop all instances that are using this assembly dir.
+        Command command(assembly_info.host_binaries_dir + kStopBin);
+        // Delete the instance dirs.
+        command.AddParameter("--clear_instance_dirs");
+        command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+        command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
+        command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                       *config_path);
+        if (int wait_result = command.Start().Wait(); wait_result != 0) {
+          WriteAll(
+              out,
+              "Warning: error stopping instances for assembly dir " +
+                  assembly_dir +
+                  ".\nThis can happen if instances are already stopped.\n");
+        }
+
+        // Delete the assembly dir.
+        WriteAll(out, "Deleting " + assembly_dir + "\n");
+        if (DirectoryExists(assembly_dir) &&
+            !RecursivelyRemoveDirectory(assembly_dir)) {
+          status.set_code(cvd::Status::FAILED_PRECONDITION);
+          status.set_message("Unable to rmdir " + assembly_dir);
+          return status;
+        }
+      }
+    }
+    RemoveFile(StringFromEnv("HOME", ".") + "/cuttlefish_runtime");
+    RemoveFile(GetGlobalConfigFileLink());
+    WriteAll(out,
+             "Stopped all known instances and deleted all "
+             "known assembly and instance dirs.\n");
+
+    assemblies_.clear();
+    status.set_code(cvd::Status::OK);
+    return status;
+  }
+
+ private:
+  std::map<AssemblyDir, AssemblyInfo> assemblies_;
+  std::vector<CvdServerHandler*> handlers_;
+  bool running_ = true;
+
+  Result<cvd::Response> HandleRequest(const RequestWithStdio& request) {
+    Result<cvd::Response> response;
+    std::vector<CvdServerHandler*> compatible_handlers;
+    for (auto& handler : handlers_) {
+      if (CF_EXPECT(handler->CanHandle(request))) {
+        compatible_handlers.push_back(handler);
+      }
+    }
+    CF_EXPECT(compatible_handlers.size() == 1,
+              "Expected exactly one handler for message, found "
+                  << compatible_handlers.size());
+    return CF_EXPECT(compatible_handlers[0]->Handle(request));
+  }
+
+  Result<UnixMessageSocket> GetClient(const SharedFD& client) const {
+    UnixMessageSocket result(client);
+    CF_EXPECT(result.EnableCredentials(true),
+              "Unable to enable UnixMessageSocket credentials.");
+    return result;
+  }
+
+  Result<RequestWithStdio> GetRequest(const SharedFD& client) const {
+    RequestWithStdio result;
+
+    UnixMessageSocket reader =
+        CF_EXPECT(GetClient(client), "Couldn't get client");
+    auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
+
+    CF_EXPECT(!read_result.data.empty(),
+              "Read empty packet, so the client has probably closed "
+              "the connection.");
+
+    std::string serialized(read_result.data.begin(), read_result.data.end());
+    cvd::Request request;
+    CF_EXPECT(request.ParseFromString(serialized),
+              "Unable to parse serialized request proto.");
+    result.request = request;
+
+    CF_EXPECT(read_result.HasFileDescriptors(),
+              "Missing stdio fds from request.");
+    auto fds = CF_EXPECT(read_result.FileDescriptors(),
+                         "Error reading stdio fds from request");
+    CF_EXPECT(
+        fds.size() == 3 || fds.size() == 4,
+        "Wrong number of FDs, received " << fds.size() << ", wanted 3 or 4");
+    result.in = fds[0];
+    result.out = fds[1];
+    result.err = fds[2];
+    if (fds.size() == 4) {
+      result.extra = fds[3];
+    }
+
+    if (read_result.HasCredentials()) {
+      // TODO(b/198453477): Use Credentials to control command access.
+      auto creds =
+          CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
+      LOG(DEBUG) << "Has credentials, uid=" << creds.uid;
+    }
+
+    return result;
+  }
+
+  Result<void> SendResponse(const SharedFD& client,
+                            const cvd::Response& response) const {
+    std::string serialized;
+    CF_EXPECT(response.SerializeToString(&serialized),
+              "Unable to serialize response proto.");
+    UnixSocketMessage message;
+    message.data = std::vector<char>(serialized.begin(), serialized.end());
+
+    UnixMessageSocket writer =
+        CF_EXPECT(GetClient(client), "Couldn't get client");
+    return writer.WriteMessage(message);
+  }
+};
+
+class CvdVersionHandler : public CvdServerHandler {
+ public:
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+    return request.request.contents_case() ==
+           cvd::Request::ContentsCase::kVersionRequest;
+  }
+
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    CF_EXPECT(CanHandle(request));
     cvd::Response response;
     response.mutable_version_response()->mutable_version()->set_major(
         cvd::kVersionMajor);
@@ -161,10 +324,19 @@ class CvdServer {
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
+};
 
-  Result<cvd::Response> Shutdown(const RequestWithStdio& request) {
-    CF_EXPECT(request.request.contents_case() ==
-              cvd::Request::ContentsCase::kShutdownRequest);
+class CvdShutdownHandler : public CvdServerHandler {
+ public:
+  CvdShutdownHandler(CvdServer& server) : server_(server) {}
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+    return request.request.contents_case() ==
+           cvd::Request::ContentsCase::kShutdownRequest;
+  }
+
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    CF_EXPECT(CanHandle(request));
     cvd::Response response;
     response.mutable_shutdown_response();
 
@@ -176,11 +348,11 @@ class CvdServer {
     }
 
     if (request.request.shutdown_request().clear()) {
-      *response.mutable_status() = CvdClear(request.out, request.err);
+      *response.mutable_status() = server_.CvdClear(request.out, request.err);
       return response;
     }
 
-    if (!assemblies_.empty()) {
+    if (!server_.Assemblies().empty()) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Cannot shut down cvd_server while devices are being tracked. "
@@ -193,15 +365,27 @@ class CvdServer {
     (*request.extra)->UNMANAGED_Dup();
 
     WriteAll(request.out, "Stopping the cvd_server.\n");
-    running_ = false;
+    server_.Stop();
 
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
 
-  Result<cvd::Response> HandleCommand(const RequestWithStdio& request) {
-    CF_EXPECT(request.request.contents_case() ==
-              cvd::Request::ContentsCase::kCommandRequest);
+ private:
+  CvdServer& server_;
+};
+
+class CvdCommandHandler : public CvdServerHandler {
+ public:
+  CvdCommandHandler(CvdServer& server) : server_(server) {}
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const {
+    return request.request.contents_case() ==
+           cvd::Request::ContentsCase::kCommandRequest;
+  }
+
+  Result<cvd::Response> Handle(const RequestWithStdio& request) {
+    CF_EXPECT(CanHandle(request));
     cvd::Response response;
     response.mutable_command_response();
 
@@ -287,7 +471,7 @@ class CvdServer {
       bin = it->second;
       args_copy.push_back("--help");
     } else if (bin == kClearBin) {
-      *response.mutable_status() = CvdClear(request.out, request.err);
+      *response.mutable_status() = server_.CvdClear(request.out, request.err);
       return response;
     } else if (bin == kFleetBin) {
       auto env_config = request.request.command_request().env().find(
@@ -300,12 +484,12 @@ class CvdServer {
       return response;
     } else if (bin == kStartBin) {
       // Track this assembly_dir in the fleet.
-      AssemblyInfo info;
+      CvdServer::AssemblyInfo info;
       info.host_binaries_dir = host_artifacts_path->second + "/bin/";
-      assemblies_.emplace(assembly_dir, info);
+      server_.Assemblies().emplace(assembly_dir, info);
     }
 
-    Command command(assemblies_[assembly_dir].host_binaries_dir + bin);
+    Command command(server_.Assemblies()[assembly_dir].host_binaries_dir + bin);
     for (const std::string& arg : args_copy) {
       command.AddParameter(arg);
     }
@@ -337,137 +521,13 @@ class CvdServer {
   }
 
  private:
-  using AssemblyDir = std::string;
-  struct AssemblyInfo {
-    std::string host_binaries_dir;
-  };
-  std::map<AssemblyDir, AssemblyInfo> assemblies_;
-  bool running_ = true;
-
-  std::optional<std::string> GetCuttlefishConfigPath(
-      const std::string& assembly_dir) const {
-    std::string assembly_dir_realpath;
-    if (DirectoryExists(assembly_dir)) {
-      CHECK(android::base::Realpath(assembly_dir, &assembly_dir_realpath));
-      std::string config_path =
-          AbsolutePath(assembly_dir_realpath + "/" + "cuttlefish_config.json");
-      if (FileExists(config_path)) {
-        return config_path;
-      }
-    }
-    return {};
-  }
-
-  Result<UnixMessageSocket> GetClient(const SharedFD& client) const {
-    UnixMessageSocket result(client);
-    CF_EXPECT(result.EnableCredentials(true),
-              "Unable to enable UnixMessageSocket credentials.");
-    return result;
-  }
-
-  Result<RequestWithStdio> GetRequest(const SharedFD& client) const {
-    RequestWithStdio result;
-
-    UnixMessageSocket reader =
-        CF_EXPECT(GetClient(client), "Couldn't get client");
-    auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
-
-    CF_EXPECT(!read_result.data.empty(),
-              "Read empty packet, so the client has probably closed "
-              "the connection.");
-
-    std::string serialized(read_result.data.begin(), read_result.data.end());
-    cvd::Request request;
-    CF_EXPECT(request.ParseFromString(serialized),
-              "Unable to parse serialized request proto.");
-    result.request = request;
-
-    CF_EXPECT(read_result.HasFileDescriptors(),
-              "Missing stdio fds from request.");
-    auto fds = CF_EXPECT(read_result.FileDescriptors(),
-                         "Error reading stdio fds from request");
-    CF_EXPECT(
-        fds.size() == 3 || fds.size() == 4,
-        "Wrong number of FDs, received " << fds.size() << ", wanted 3 or 4");
-    result.in = fds[0];
-    result.out = fds[1];
-    result.err = fds[2];
-    if (fds.size() == 4) {
-      result.extra = fds[3];
-    }
-
-    if (read_result.HasCredentials()) {
-      // TODO(b/198453477): Use Credentials to control command access.
-      auto creds =
-          CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
-      LOG(DEBUG) << "Has credentials, uid=" << creds.uid;
-    }
-
-    return result;
-  }
-
-  Result<void> SendResponse(const SharedFD& client,
-                            const cvd::Response& response) const {
-    std::string serialized;
-    CF_EXPECT(response.SerializeToString(&serialized),
-              "Unable to serialize response proto.");
-    UnixSocketMessage message;
-    message.data = std::vector<char>(serialized.begin(), serialized.end());
-
-    UnixMessageSocket writer =
-        CF_EXPECT(GetClient(client), "Couldn't get client");
-    return writer.WriteMessage(message);
-  }
-
-  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err) {
-    cvd::Status status;
-    for (const auto& it : assemblies_) {
-      const AssemblyDir& assembly_dir = it.first;
-      const AssemblyInfo& assembly_info = it.second;
-      auto config_path = GetCuttlefishConfigPath(assembly_dir);
-      if (config_path) {
-        // Stop all instances that are using this assembly dir.
-        Command command(assembly_info.host_binaries_dir + kStopBin);
-        // Delete the instance dirs.
-        command.AddParameter("--clear_instance_dirs");
-        command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-        command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
-        command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
-                                       *config_path);
-        if (int wait_result = command.Start().Wait(); wait_result != 0) {
-          WriteAll(
-              out,
-              "Warning: error stopping instances for assembly dir " +
-                  assembly_dir +
-                  ".\nThis can happen if instances are already stopped.\n");
-        }
-
-        // Delete the assembly dir.
-        WriteAll(out, "Deleting " + assembly_dir + "\n");
-        if (DirectoryExists(assembly_dir) &&
-            !RecursivelyRemoveDirectory(assembly_dir)) {
-          status.set_code(cvd::Status::FAILED_PRECONDITION);
-          status.set_message("Unable to rmdir " + assembly_dir);
-          return status;
-        }
-      }
-    }
-    RemoveFile(StringFromEnv("HOME", ".") + "/cuttlefish_runtime");
-    RemoveFile(GetGlobalConfigFileLink());
-    WriteAll(out,
-             "Stopped all known instances and deleted all "
-             "known assembly and instance dirs.\n");
-
-    assemblies_.clear();
-    status.set_code(cvd::Status::OK);
-    return status;
-  }
+  CvdServer& server_;
 
   cvd::Status CvdFleet(const SharedFD& out,
                        const std::string& env_config) const {
-    for (const auto& it : assemblies_) {
-      const AssemblyDir& assembly_dir = it.first;
-      const AssemblyInfo& assembly_info = it.second;
+    for (const auto& it : server_.Assemblies()) {
+      const CvdServer::AssemblyDir& assembly_dir = it.first;
+      const CvdServer::AssemblyInfo& assembly_info = it.second;
       auto config_path = GetCuttlefishConfigPath(assembly_dir);
       if (FileExists(env_config)) {
         config_path = env_config;
@@ -498,8 +558,10 @@ class CvdServer {
   }
 };
 
-int CvdServerMain(int argc, char** argv) {
+Result<int> CvdServerMain(int argc, char** argv) {
   android::base::InitLogging(argv, android::base::StderrLogger);
+
+  LOG(INFO) << "Starting server";
 
   std::vector<Flag> flags;
   SharedFD server_fd;
@@ -508,10 +570,21 @@ int CvdServerMain(int argc, char** argv) {
           .Help("File descriptor to an already created vsock server"));
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
-  CHECK(ParseFlags(flags, args));
+  CF_EXPECT(ParseFlags(flags, args));
 
-  CHECK(server_fd->IsOpen()) << "Did not receive a valid cvd_server fd";
+  CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
+
   CvdServer server;
+
+  CvdVersionHandler version_handler;
+  CF_EXPECT(server.AddHandler(&version_handler));
+
+  CvdShutdownHandler shutdown_handler(server);
+  CF_EXPECT(server.AddHandler(&shutdown_handler));
+
+  CvdCommandHandler command_handler(server);
+  CF_EXPECT(server.AddHandler(&command_handler));
+
   server.ServerLoop(server_fd);
   return 0;
 }
@@ -520,5 +593,7 @@ int CvdServerMain(int argc, char** argv) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::CvdServerMain(argc, argv);
+  auto res = cuttlefish::CvdServerMain(argc, argv);
+  CHECK(res.ok()) << "cvd server failed: " << res.error().message();
+  return *res;
 }
