@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server.h"
-
 #include <future>
 #include <map>
 #include <optional>
@@ -36,6 +34,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -456,7 +455,8 @@ class CvdServer {
       auto config_path = GetCuttlefishConfigPath(assembly_dir);
       if (config_path) {
         // Reads CuttlefishConfig::instance_names(), which must remain stable
-        // across changes to config file format (within server.h major version).
+        // across changes to config file format (within server_constants.h major
+        // version).
         auto config = CuttlefishConfig::GetFromFile(*config_path);
         if (config) {
           for (const std::string& instance_name : config->instance_names()) {
