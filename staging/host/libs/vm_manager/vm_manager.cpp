@@ -24,6 +24,7 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
@@ -33,6 +34,8 @@ std::unique_ptr<VmManager> GetVmManager(const std::string& name, Arch arch) {
   std::unique_ptr<VmManager> vmm;
   if (name == QemuManager::name()) {
     vmm.reset(new QemuManager(arch));
+  } else if (name == Gem5Manager::name()) {
+    vmm.reset(new Gem5Manager(arch));
   } else if (name == CrosvmManager::name()) {
     vmm.reset(new CrosvmManager());
   }
@@ -75,4 +78,3 @@ VmManagerComponent() {
 
 } // namespace vm_manager
 } // namespace cuttlefish
-
