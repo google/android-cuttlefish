@@ -36,4 +36,5 @@ java_test_host {
     ],
 
     plugins: ["auto_value_plugin", "auto_annotation_plugin"],
+    test_suites: ["general-tests"],
 }
