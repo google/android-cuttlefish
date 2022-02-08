@@ -312,6 +312,14 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
+static constexpr char kGem5BinaryDir[] = "gem5_binary_dir";
+std::string CuttlefishConfig::gem5_binary_dir() const {
+  return (*dictionary_)[kGem5BinaryDir].asString();
+}
+void CuttlefishConfig::set_gem5_binary_dir(const std::string& gem5_binary_dir) {
+  (*dictionary_)[kGem5BinaryDir] = gem5_binary_dir;
+}
+
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
 void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
