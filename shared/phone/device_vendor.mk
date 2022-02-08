@@ -37,6 +37,7 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
+PRODUCT_PACKAGES += android.hardware.radio-service.compat
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.rild
 else
