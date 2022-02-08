@@ -53,7 +53,7 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
   std::ostringstream env;
 
   if (!kernel_args.empty()) {
-    env << "uenvcmd=setenv bootargs \"$cbootargs\" " << kernel_args << " && ";
+    env << "uenvcmd=setenv bootargs \"$cbootargs " << kernel_args << "\" && ";
   } else {
     env << "uenvcmd=setenv bootargs \"$cbootargs\" && ";
   }
