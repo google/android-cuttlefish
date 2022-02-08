@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 
@@ -17,7 +18,7 @@ struct KernelConfig {
   bool bootconfig_supported;
 };
 
-bool GetKernelConfigAndSetDefaults(KernelConfig* kernel_config);
+Result<KernelConfig> GetKernelConfigAndSetDefaults();
 // Must be called after ParseCommandLineFlags.
 CuttlefishConfig InitializeCuttlefishConfiguration(const std::string& root_dir,
                                                    int modem_simulator_count,
