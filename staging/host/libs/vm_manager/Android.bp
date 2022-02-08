@@ -44,6 +44,7 @@ cc_library_static {
     srcs: [
         "crosvm_builder.cpp",
         "crosvm_manager.cpp",
+        "gem5_manager.cpp",
         "host_configuration.cpp",
         "qemu_manager.cpp",
         "vm_manager.cpp",

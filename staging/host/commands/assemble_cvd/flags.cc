@@ -32,6 +32,7 @@
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -246,6 +247,8 @@ DEFINE_string(qemu_binary_dir, "/usr/bin",
               "Path to the directory containing the qemu binary to use");
 DEFINE_string(crosvm_binary, HostBinaryPath("crosvm"),
               "The Crosvm binary to use");
+DEFINE_string(gem5_binary_dir, HostBinaryPath("gem5"),
+              "Path to the gem5 build tree root");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
             "emulation gRPC server on the host");
@@ -335,6 +338,7 @@ DECLARE_string(system_image_dir);
 
 namespace cuttlefish {
 using vm_manager::QemuManager;
+using vm_manager::Gem5Manager;
 using vm_manager::GetVmManager;
 
 namespace {
@@ -641,6 +645,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary_dir(FLAGS_qemu_binary_dir);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
+  tmp_config_obj.set_gem5_binary_dir(FLAGS_gem5_binary_dir);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
@@ -799,9 +804,16 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
           {const_instance.PerInstancePath("os_composite.img")});
     } else {
       std::vector<std::string> virtual_disk_paths = {
-          const_instance.PerInstancePath("overlay.img"),
           const_instance.PerInstancePath("persistent_composite.img"),
       };
+      if (FLAGS_vm_manager != Gem5Manager::name()) {
+        virtual_disk_paths.insert(virtual_disk_paths.begin(),
+            const_instance.PerInstancePath("overlay.img"));
+      } else {
+        // Gem5 already uses CoW wrappers around disk images
+        virtual_disk_paths.insert(virtual_disk_paths.begin(),
+            tmp_config_obj.os_composite_disk_path());
+      }
       if (FLAGS_use_sdcard) {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
       }
@@ -947,10 +959,19 @@ void SetDefaultFlagsForCrosvm() {
                                SET_FLAGS_DEFAULT);
 }
 
+void SetDefaultFlagsForGem5() {
+  // TODO: Add support for gem5 gpu models
+  SetCommandLineOptionWithMode("gpu_mode", kGpuModeGuestSwiftshader,
+                               SET_FLAGS_DEFAULT);
+
+  SetCommandLineOptionWithMode("cpus", "1", SET_FLAGS_DEFAULT);
+}
+
 Result<KernelConfig> GetKernelConfigAndSetDefaults() {
   CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
   KernelConfig kernel_config = CF_EXPECT(ReadKernelConfig());
+
   if (FLAGS_vm_manager == "") {
     if (IsHostCompatible(kernel_config.target_arch)) {
       FLAGS_vm_manager = CrosvmManager::name();
@@ -963,21 +984,29 @@ Result<KernelConfig> GetKernelConfigAndSetDefaults() {
     SetDefaultFlagsForQemu(kernel_config.target_arch);
   } else if (FLAGS_vm_manager == CrosvmManager::name()) {
     SetDefaultFlagsForCrosvm();
+  } else if (FLAGS_vm_manager == Gem5Manager::name()) {
+    // TODO: Get the other architectures working
+    if (kernel_config.target_arch != Arch::Arm64) {
+      return CF_ERR("Gem5 only supports ARM64");
+    }
+    SetDefaultFlagsForGem5();
   } else {
     return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
   }
-  auto host_operator_present =
-      cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH);
-  // The default for starting signaling server depends on whether or not webrtc
-  // is to be started and the presence of the host orchestrator.
-  SetCommandLineOptionWithMode(
-      "start_webrtc_sig_server",
-      FLAGS_start_webrtc && !host_operator_present ? "true" : "false",
-      SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode(
-      "webrtc_sig_server_addr",
-      host_operator_present ? HOST_OPERATOR_SOCKET_PATH : "0.0.0.0",
-      SET_FLAGS_DEFAULT);
+  if (FLAGS_vm_manager != Gem5Manager::name()) {
+    auto host_operator_present =
+        cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH);
+    // The default for starting signaling server depends on whether or not webrtc
+    // is to be started and the presence of the host orchestrator.
+    SetCommandLineOptionWithMode(
+        "start_webrtc_sig_server",
+        FLAGS_start_webrtc && !host_operator_present ? "true" : "false",
+        SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode(
+        "webrtc_sig_server_addr",
+        host_operator_present ? HOST_OPERATOR_SOCKET_PATH : "0.0.0.0",
+        SET_FLAGS_DEFAULT);
+  }
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
 
