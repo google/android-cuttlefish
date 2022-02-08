@@ -224,6 +224,10 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
           nr_csi_sinr(INT_MAX) {}
   };
 
+  // There's no such thing as a percentange for signal strength in the real
+  // world, as for example for battery usage, this percent value is used to pick
+  // a value within the corresponding signal strength values range for emulation
+  // purposes only.
   int signal_strength_percent_{80};
 
   static int GetValueInRange(const std::pair<int, int>& range, int percent);
@@ -288,6 +292,20 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
 
   bool first_signal_strength_request_;  // For time update
   time_t android_last_signal_time_;
+
+  class KeepSignalStrengthChangingLoop {
+   public:
+    KeepSignalStrengthChangingLoop(NetworkService& network_service);
+    void Start();
+
+   private:
+    void UpdateSignalStrengthCallback();
+
+    NetworkService& network_service_;
+    std::atomic_flag loop_started_;
+  };
+
+  KeepSignalStrengthChangingLoop keep_signal_strength_changing_loop_;
 };
 
 }  // namespace cuttlefish
