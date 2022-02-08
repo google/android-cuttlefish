@@ -32,4 +32,11 @@ bool RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
     const std::string& unpack_dir, bool bootconfig_supported);
+bool UnpackBootImage(const std::string& boot_image_path,
+                     const std::string& unpack_dir);
+bool UnpackVendorBootImageIfNotUnpacked(
+    const std::string& vendor_boot_image_path, const std::string& unpack_dir);
+void RepackGem5BootImage(const std::string& initrd_path,
+                         const std::string& bootconfig_path,
+                         const std::string& unpack_dir);
 }

@@ -36,6 +36,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/gem5_manager.h"
 
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
 #define VBMETA_MAX_SIZE 65536ul
@@ -94,6 +95,7 @@ DECLARE_bool(protected_vm);
 namespace cuttlefish {
 
 using vm_manager::CrosvmManager;
+using vm_manager::Gem5Manager;
 
 Result<void> ResolveInstanceFiles() {
   CF_EXPECT(!FLAGS_system_image_dir.empty(),
@@ -448,7 +450,13 @@ class BootImageRepacker : public Feature {
       return false;
     }
 
-    if (FLAGS_kernel_path.size()) {
+    // Repacking a boot.img doesn't work with Gem5 because the user must always
+    // specify a vmlinux instead of an arm64 Image, and that file can be too
+    // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
+    // able to extract the ramdisk.img in a later stage and so this step must
+    // not fail (..and the repacked kernel wouldn't be used anyway).
+    if (FLAGS_kernel_path.size() &&
+        config_.vm_manager() != Gem5Manager::name()) {
       const std::string new_boot_image_path =
           config_.AssemblyPath("boot_repacked.img");
       bool success =
@@ -497,6 +505,109 @@ class BootImageRepacker : public Feature {
 
  private:
   const CuttlefishConfig& config_;
+};
+
+class Gem5ImageUnpacker : public Feature {
+ public:
+  INJECT(Gem5ImageUnpacker(
+      const CuttlefishConfig& config,
+      BootImageRepacker& bir))
+      : config_(config),
+        bir_(bir) {}
+
+  // Feature
+  std::string Name() const override { return "Gem5ImageUnpacker"; }
+
+  std::unordered_set<Feature*> Dependencies() const override {
+    return {
+      static_cast<Feature*>(&bir_),
+    };
+  }
+
+  bool Enabled() const override {
+    // Everything has a bootloader except gem5, so only run this for gem5
+    return config_.vm_manager() == Gem5Manager::name();
+  }
+
+ protected:
+  bool Setup() override {
+    /* Unpack the original or repacked boot and vendor boot ramdisks, so that
+     * we have access to the baked bootconfig and raw compressed ramdisks.
+     * This allows us to emulate what a bootloader would normally do, which
+     * Gem5 can't support itself. This code also copies the kernel again
+     * (because Gem5 only supports raw vmlinux) and handles the bootloader
+     * binaries specially. This code is just part of the solution; it only
+     * does the parts which are instance agnostic.
+     */
+
+    if (!FileHasContent(FLAGS_boot_image)) {
+      LOG(ERROR) << "File not found: " << FLAGS_boot_image;
+      return false;
+    }
+    // The init_boot partition is be optional for testing boot.img
+    // with the ramdisk inside.
+    if (!FileHasContent(FLAGS_init_boot_image)) {
+      LOG(WARNING) << "File not found: " << FLAGS_init_boot_image;
+    }
+
+    if (!FileHasContent(FLAGS_vendor_boot_image)) {
+      LOG(ERROR) << "File not found: " << FLAGS_vendor_boot_image;
+      return false;
+    }
+
+    const std::string unpack_dir = config_.assembly_dir();
+
+    bool success = UnpackBootImage(FLAGS_init_boot_image, unpack_dir);
+    if (!success) {
+      LOG(ERROR) << "Failed to extract the init boot image";
+      return false;
+    }
+
+    success = UnpackVendorBootImageIfNotUnpacked(FLAGS_vendor_boot_image,
+                                                 unpack_dir);
+    if (!success) {
+      LOG(ERROR) << "Failed to extract the vendor boot image";
+      return false;
+    }
+
+    // Assume the user specified a kernel manually which is a vmlinux
+    std::ofstream kernel(unpack_dir + "/kernel", std::ios_base::binary |
+                                                 std::ios_base::trunc);
+    std::ifstream vmlinux(FLAGS_kernel_path, std::ios_base::binary);
+    kernel << vmlinux.rdbuf();
+    kernel.close();
+
+    // Gem5 needs the bootloader binary to be a specific directory structure
+    // to find it. Create a 'binaries' directory and copy it into there
+    const std::string binaries_dir = unpack_dir + "/binaries";
+    if (mkdir(binaries_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+        && errno != EEXIST) {
+      PLOG(ERROR) << "Failed to create dir: \"" << binaries_dir << "\" ";
+      return false;
+    }
+    std::ofstream bootloader(binaries_dir + "/" +
+                             cpp_basename(FLAGS_bootloader),
+                             std::ios_base::binary | std::ios_base::trunc);
+    std::ifstream src_bootloader(FLAGS_bootloader, std::ios_base::binary);
+    bootloader << src_bootloader.rdbuf();
+    bootloader.close();
+
+    // Gem5 also needs the ARM version of the bootloader, even though it
+    // doesn't use it. It'll even open it to check it's a valid ELF file.
+    // Work around this by copying such a named file from the same directory
+    std::ofstream boot_arm(binaries_dir + "/boot.arm",
+                           std::ios_base::binary | std::ios_base::trunc);
+    std::ifstream src_boot_arm(cpp_dirname(FLAGS_bootloader) + "/boot.arm",
+                               std::ios_base::binary);
+    boot_arm << src_boot_arm.rdbuf();
+    boot_arm.close();
+
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  BootImageRepacker& bir_;
 };
 
 class GeneratePersistentBootconfig : public Feature {
@@ -956,6 +1067,7 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       .addMultibinding<Feature, BootImageRepacker>()
       .addMultibinding<Feature, VbmetaEnforceMinimumSize>()
       .addMultibinding<Feature, BootloaderPresentCheck>()
+      .addMultibinding<Feature, Gem5ImageUnpacker>()
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
       .install(FixedDataImagePathComponent, &FLAGS_data_image)
@@ -1046,6 +1158,14 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       if (!file.empty()) {
         CHECK(FileHasContent(file)) << "File not found: " << file;
       }
+    }
+    // Gem5 Simulate per-instance what the bootloader would usually do
+    // Since on other devices this runs every time, just do it here every time
+    if (config.vm_manager() == Gem5Manager::name()) {
+      RepackGem5BootImage(
+          instance.PerInstancePath("initrd.img"),
+          instance.persistent_bootconfig_path(),
+          config.assembly_dir());
     }
   }
 }
