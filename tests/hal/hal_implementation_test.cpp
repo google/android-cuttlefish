@@ -51,6 +51,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.bluetooth.audio@2.2",
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
+    "android.hardware.camera.provider@2.7", // Camera converted to AIDL, b/196432585
     "android.hardware.cas.native@1.0",
     "android.hardware.configstore@1.1", // deprecated, see b/149050985, b/149050733
     "android.hardware.contexthub@1.2",
@@ -133,11 +134,14 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.graphics.common.", 3},
     {"android.hardware.input.common.", 1},
 
-    // This interface needs to be implemented (TODO:b/196432585)
+    // android.hardware.camera.device is an interface returned by
+    // android.hardware.camera.provider.
+    // android.hardware.camera.common and android.hardware.camera.metadata are
+    // types used by android.hardware.camera.provider and
+    // android.hardware.camera.device.
     {"android.hardware.camera.common.", 1},
     {"android.hardware.camera.device.", 1},
     {"android.hardware.camera.metadata.", 1},
-    {"android.hardware.camera.provider.", 1},
 
     // This interface needs to be implemented (b/193240715)
     {"android.hardware.graphics.composer3.", 1},
