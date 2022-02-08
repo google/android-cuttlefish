@@ -173,9 +173,14 @@ class CvdClient {
     if (!server_) {
       auto connection =
           SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                      /*is_abstract=*/true, SOCK_STREAM);
+                                      /*is_abstract=*/true, SOCK_SEQPACKET);
       if (!connection->IsOpen()) {
-        return android::base::Error() << "server_ not set, cannot SendRequest.";
+        auto connection =
+            SharedFD::SocketLocalClient(cvd::kServerSocketPath,
+                                        /*is_abstract=*/true, SOCK_STREAM);
+      }
+      if (!connection->IsOpen()) {
+        return android::base::Error() << "Failed to connect to server";
       }
       SetServer(connection);
     }
@@ -224,7 +229,7 @@ class CvdClient {
   void StartCvdServer(const std::string& host_tool_directory) {
     SharedFD server_fd =
         SharedFD::SocketLocalServer(cvd::kServerSocketPath,
-                                    /*is_abstract=*/true, SOCK_STREAM, 0666);
+                                    /*is_abstract=*/true, SOCK_SEQPACKET, 0666);
     CHECK(server_fd->IsOpen()) << server_fd->StrError();
 
     // TODO(b/196114111): Investigate fully "daemonizing" the cvd_server.
@@ -238,7 +243,8 @@ class CvdClient {
 
     // Connect to the server_fd, which waits for startup.
     SetServer(SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                          /*is_abstract=*/true, SOCK_STREAM));
+                                          /*is_abstract=*/true,
+                                          SOCK_SEQPACKET));
   }
 
   void CheckStatus(const cvd::Status& status, const std::string& rpc) {
