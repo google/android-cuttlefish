@@ -413,13 +413,15 @@ std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
 }
 
 #ifdef __ANDROID__
-void ReadKernelConfig(KernelConfig* kernel_config) {
+Result<KernelConfig> ReadKernelConfig() {
   // QEMU isn't on Android, so always follow host arch
-  kernel_config->target_arch = HostArch();
-  kernel_config->bootconfig_supported = true;
+  KernelConfig ret{};
+  ret.target_arch = HostArch();
+  ret.bootconfig_supported = true;
+  return ret;
 }
 #else
-void ReadKernelConfig(KernelConfig* kernel_config) {
+Result<KernelConfig> ReadKernelConfig() {
   // extract-ikconfig can be called directly on the boot image since it looks
   // for the ikconfig header in the image before extracting the config list.
   // This code is liable to break if the boot image ever includes the
@@ -437,31 +439,33 @@ void ReadKernelConfig(KernelConfig* kernel_config) {
   std::string ikconfig_path =
       StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";
   auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
-  CHECK(ikconfig_fd->IsOpen())
-      << "Unable to create ikconfig file: " << ikconfig_fd->StrError();
+  CF_EXPECT(ikconfig_fd->IsOpen(),
+            "Unable to create ikconfig file: " << ikconfig_fd->StrError());
   ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, ikconfig_fd);
 
   auto ikconfig_proc = ikconfig_cmd.Start();
-  CHECK(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0)
-      << "Failed to extract ikconfig from " << kernel_image_path;
+  CF_EXPECT(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0,
+            "Failed to extract ikconfig from " << kernel_image_path);
 
   std::string config = ReadFile(ikconfig_path);
 
+  KernelConfig kernel_config;
   if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
-    kernel_config->target_arch = Arch::Arm;
+    kernel_config.target_arch = Arch::Arm;
   } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
-    kernel_config->target_arch = Arch::Arm64;
+    kernel_config.target_arch = Arch::Arm64;
   } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
-    kernel_config->target_arch = Arch::X86_64;
+    kernel_config.target_arch = Arch::X86_64;
   } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
-    kernel_config->target_arch = Arch::X86;
+    kernel_config.target_arch = Arch::X86;
   } else {
-    LOG(FATAL) << "Unknown target architecture";
+    return CF_ERR("Unknown target architecture");
   }
-  kernel_config->bootconfig_supported =
+  kernel_config.bootconfig_supported =
       config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
 
   unlink(ikconfig_path.c_str());
+  return kernel_config;
 }
 #endif  // #ifdef __ANDROID__
 
@@ -943,16 +947,12 @@ void SetDefaultFlagsForCrosvm() {
                                SET_FLAGS_DEFAULT);
 }
 
-bool GetKernelConfigAndSetDefaults(KernelConfig* kernel_config) {
-  bool invalid_manager = false;
+Result<KernelConfig> GetKernelConfigAndSetDefaults() {
+  CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
-  if (!ResolveInstanceFiles()) {
-    return false;
-  }
-
-  ReadKernelConfig(kernel_config);
+  KernelConfig kernel_config = CF_EXPECT(ReadKernelConfig());
   if (FLAGS_vm_manager == "") {
-    if (IsHostCompatible(kernel_config->target_arch)) {
+    if (IsHostCompatible(kernel_config.target_arch)) {
       FLAGS_vm_manager = CrosvmManager::name();
     } else {
       FLAGS_vm_manager = QemuManager::name();
@@ -960,13 +960,11 @@ bool GetKernelConfigAndSetDefaults(KernelConfig* kernel_config) {
   }
 
   if (FLAGS_vm_manager == QemuManager::name()) {
-    SetDefaultFlagsForQemu(kernel_config->target_arch);
+    SetDefaultFlagsForQemu(kernel_config.target_arch);
   } else if (FLAGS_vm_manager == CrosvmManager::name()) {
     SetDefaultFlagsForCrosvm();
   } else {
-    std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
-              << std::endl;
-    invalid_manager = true;
+    return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
   }
   auto host_operator_present =
       cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH);
@@ -980,13 +978,10 @@ bool GetKernelConfigAndSetDefaults(KernelConfig* kernel_config) {
       "webrtc_sig_server_addr",
       host_operator_present ? HOST_OPERATOR_SOCKET_PATH : "0.0.0.0",
       SET_FLAGS_DEFAULT);
-  if (invalid_manager) {
-    return false;
-  }
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
 
-  return true;
+  return kernel_config;
 }
 
 std::string GetConfigFilePath(const CuttlefishConfig& config) {
