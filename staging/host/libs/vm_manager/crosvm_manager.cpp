@@ -210,16 +210,14 @@ std::vector<Command> CrosvmManager::StartCommands(
 #endif
   }
 
-  bool is_arm = HostArch() == Arch::Arm || HostArch() == Arch::Arm64;
-  if (!is_arm) {
-    if (FileExists(instance.access_kregistry_path())) {
-      crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
-                                    instance.access_kregistry_path());
-    }
-    if (FileExists(instance.hwcomposer_pmem_path())) {
-      crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
-                                    instance.hwcomposer_pmem_path());
-    }
+  if (FileExists(instance.access_kregistry_path())) {
+    crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
+                                  instance.access_kregistry_path());
+  }
+
+  if (FileExists(instance.hwcomposer_pmem_path())) {
+    crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
+                                  instance.hwcomposer_pmem_path());
   }
 
   if (FileExists(instance.pstore_path())) {
