@@ -35,7 +35,8 @@ NetworkService::NetworkService(int32_t service_id,
                                ChannelMonitor* channel_monitor,
                                ThreadLooper* thread_looper)
     : ModemService(service_id, this->InitializeCommandHandlers(),
-                   channel_monitor, thread_looper) {
+                   channel_monitor, thread_looper),
+      keep_signal_strength_changing_loop_(*this) {
   InitializeServiceState();
 }
 
@@ -133,6 +134,8 @@ void NetworkService::InitializeServiceState() {
 
   first_signal_strength_request_ = true;
   android_last_signal_time_ = 0;
+
+  keep_signal_strength_changing_loop_.Start();
 }
 
 void NetworkService::InitializeNetworkOperator() {
@@ -1250,4 +1253,36 @@ void NetworkService::OnSignalStrengthChanged() {
 NetworkService::RegistrationState NetworkService::GetVoiceRegistrationState() const {
   return voice_registration_status_.registration_state;
 }
+
+NetworkService::KeepSignalStrengthChangingLoop::KeepSignalStrengthChangingLoop(
+    NetworkService& network_service)
+    : network_service_{network_service}, loop_started_ ATOMIC_FLAG_INIT {}
+
+void NetworkService::KeepSignalStrengthChangingLoop::Start() {
+  if (loop_started_.test_and_set()) {
+    LOG(ERROR) << "Signal strength is already changing automatically";
+  } else {
+    UpdateSignalStrengthCallback();
+  }
+}
+
+void NetworkService::KeepSignalStrengthChangingLoop::
+    UpdateSignalStrengthCallback() {
+  if (network_service_.IsHasNetwork()) {
+    network_service_.signal_strength_percent_ -= 5;
+    // With "close to 0" values, the signal strength bar on the Android UI will
+    // be shown empty, this also represents that theres's no connectivity which
+    // is missleading as the connectivity continues, so a lower bound of 10 will
+    // be used so the signal strenght bar is never emptied
+    if (network_service_.signal_strength_percent_ <= 10) {
+      network_service_.signal_strength_percent_ = 100;
+    }
+    network_service_.OnSignalStrengthChanged();
+  }
+  network_service_.thread_looper_->Post(
+      makeSafeCallback(this, &NetworkService::KeepSignalStrengthChangingLoop::
+                                 UpdateSignalStrengthCallback),
+      std::chrono::seconds(10));
+}
+
 }  // namespace cuttlefish
