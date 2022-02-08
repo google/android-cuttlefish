@@ -328,7 +328,6 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // set gflags defaults to point to kernel/RD from fetcher config
   ExtractKernelParamsFromFetcherConfig(fetcher_config);
 
-  KernelConfig kernel_config;
   auto args = ArgsToVec(argc - 1, argv + 1);
 
   bool help = false;
@@ -372,8 +371,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  CHECK(GetKernelConfigAndSetDefaults(&kernel_config))
-      << "Failed to parse arguments";
+  auto kernel_config =
+      CF_EXPECT(GetKernelConfigAndSetDefaults(), "Failed to parse arguments");
 
   auto config =
       CF_EXPECT(InitFilesystemAndCreateConfig(std::move(fetcher_config),
