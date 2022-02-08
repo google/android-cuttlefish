@@ -44,6 +44,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/utils.h"
@@ -124,64 +125,51 @@ int FallBackStop(const std::set<std::string>& dirs) {
   return exit_code;
 }
 
-bool CleanStopInstance(const CuttlefishConfig::InstanceSpecific& instance,
-                       std::int32_t wait_for_launcher) {
+Result<void> CleanStopInstance(
+    const CuttlefishConfig::InstanceSpecific& instance,
+    std::int32_t wait_for_launcher) {
   auto monitor_path = instance.launcher_monitor_socket_path();
-  if (monitor_path.empty()) {
-    LOG(ERROR) << "No path to launcher monitor found";
-    return false;
-  }
+  CF_EXPECT(!monitor_path.empty(), "No path to launcher monitor found");
+
   auto monitor_socket = SharedFD::SocketLocalClient(
       monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
-  if (!monitor_socket->IsOpen()) {
-    LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
-               << ": " << monitor_socket->StrError();
-    return false;
-  }
+  CF_EXPECT(monitor_socket->IsOpen(),
+            "Unable to connect to launcher monitor at "
+                << monitor_path << ": " << monitor_socket->StrError());
+
   auto request = LauncherAction::kStop;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
-  if (bytes_sent < 0) {
-    LOG(ERROR) << "Error sending launcher monitor the stop command: "
-               << monitor_socket->StrError();
-    return false;
-  }
+  CF_EXPECT(bytes_sent >= 0, "Error sending launcher monitor the stop command: "
+                                 << monitor_socket->StrError());
+
   // Perform a select with a timeout to guard against launcher hanging
   SharedFDSet read_set;
   read_set.Set(monitor_socket);
   struct timeval timeout = {wait_for_launcher, 0};
   int selected = Select(&read_set, nullptr, nullptr,
                         wait_for_launcher <= 0 ? nullptr : &timeout);
-  if (selected < 0){
-    LOG(ERROR) << "Failed communication with the launcher monitor: "
-               << strerror(errno);
-    return false;
-  }
-  if (selected == 0) {
-    LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
-    return false;
-  }
+  CF_EXPECT(selected >= 0, "Failed communication with the launcher monitor: "
+                               << strerror(errno));
+  CF_EXPECT(selected > 0, "Timeout expired waiting for launcher to respond");
+
   LauncherResponse response;
   auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
-  if (bytes_recv < 0) {
-    LOG(ERROR) << "Error receiving response from launcher monitor: "
-               << monitor_socket->StrError();
-    return false;
-  }
-  if (response != LauncherResponse::kSuccess) {
-    LOG(ERROR) << "Received '" << static_cast<char>(response)
-               << "' response from launcher monitor";
-    return false;
-  }
+  CF_EXPECT(bytes_recv >= 0, "Error receiving response from launcher monitor: "
+                                 << monitor_socket->StrError());
+  CF_EXPECT(response == LauncherResponse::kSuccess,
+            "Received '" << static_cast<char>(response)
+                         << "' response from launcher monitor");
   LOG(INFO) << "Successfully stopped device " << instance.instance_name()
             << ": " << instance.adb_ip_and_port();
-  return true;
+  return {};
 }
 
 int StopInstance(const CuttlefishConfig& config,
                  const CuttlefishConfig::InstanceSpecific& instance,
                  std::int32_t wait_for_launcher) {
-  bool res = CleanStopInstance(instance, wait_for_launcher);
-  if (!res) {
+  auto res = CleanStopInstance(instance, wait_for_launcher);
+  if (!res.ok()) {
+    LOG(ERROR) << "Clean stop failed: " << res.error();
     return FallBackStop(DirsForInstance(config, instance));
   }
   return 0;
