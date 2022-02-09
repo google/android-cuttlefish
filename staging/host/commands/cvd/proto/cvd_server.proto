@@ -23,6 +23,7 @@ message Status {
   enum Code {
     OK = 0;
     FAILED_PRECONDITION = 9;
+    INTERNAL = 13;
   }
 
   Code code = 1;
