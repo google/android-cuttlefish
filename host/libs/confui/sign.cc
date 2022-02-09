@@ -19,10 +19,39 @@
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
+#include <string>
+
+#include <android-base/logging.h>
+
+#include "common/libs/confui/confui.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/security/confui_sign.h"
+#include "host/commands/kernel_log_monitor/utils.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/confui/sign_utils.h"
 
 namespace cuttlefish {
 namespace confui {
+namespace {
+std::string GetSecureEnvSocketPath() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  CHECK(config) << "Config must not be null";
+  auto instance = config->ForDefaultInstance();
+  return instance.PerInstanceInternalPath("confui_secure_env_vm.sock");
+}
+
+/**
+ * the secure_env signing server may be on slightly later than
+ * confirmation UI host/webRTC process.
+ */
+SharedFD ConnectToSecureEnv() {
+  auto socket_path = GetSecureEnvSocketPath();
+  SharedFD socket_to_secure_env =
+      SharedFD::SocketLocalClient(socket_path, false, SOCK_STREAM);
+  return socket_to_secure_env;
+}
+}  // end of namespace
+
 class HMacImplementation {
  public:
   static std::optional<support::hmac_t> hmac256(
@@ -57,7 +86,7 @@ enum class TestKeyBits : uint8_t {
   BYTE = 165 /* 0xA5 */,
 };
 
-std::optional<std::vector<std::uint8_t>> test_sign(
+std::optional<std::vector<std::uint8_t>> TestSign(
     const std::vector<std::uint8_t>& message) {
   // the same as userConfirm()
   using namespace support;
@@ -74,9 +103,28 @@ std::optional<std::vector<std::uint8_t>> test_sign(
       std::vector<std::uint8_t>(confirm_signed.begin(), confirm_signed.end())};
 }
 
-std::optional<std::vector<std::uint8_t>> sign(
+std::optional<std::vector<std::uint8_t>> Sign(
     const std::vector<std::uint8_t>& message) {
-  return test_sign(message);
+  SharedFD socket_to_secure_env = ConnectToSecureEnv();
+  if (!socket_to_secure_env->IsOpen()) {
+    ConfUiLog(ERROR) << "Failed to connect to secure_env signing server.";
+    return std::nullopt;
+  }
+  ConfUiSignRequester sign_client(socket_to_secure_env);
+  // request signature
+  sign_client.Request(message);
+  auto response_opt = sign_client.Receive();
+  if (!response_opt) {
+    ConfUiLog(ERROR) << "Received nullopt";
+    return std::nullopt;
+  }
+  // respond should be either error code or the signature
+  auto response = std::move(response_opt.value());
+  if (response.error_ != SignMessageError::kOk) {
+    ConfUiLog(ERROR) << "Response was received with non-OK error code";
+    return std::nullopt;
+  }
+  return {response.payload_};
 }
 }  // namespace confui
 }  // end of namespace cuttlefish
