@@ -18,10 +18,11 @@
 #include <chrono>
 #include <memory>
 
-#include "curl_wrapper.h"
-
 #include <json/json.h>
 #include <openssl/evp.h>
+
+#include "common/libs/utils/result.h"
+#include "host/libs/web/curl_wrapper.h"
 
 namespace cuttlefish {
 
@@ -58,7 +59,7 @@ public:
 
 class ServiceAccountOauthCredentialSource : public CredentialSource {
  public:
-  static std::unique_ptr<ServiceAccountOauthCredentialSource> FromJson(
+  static Result<ServiceAccountOauthCredentialSource> FromJson(
       CurlWrapper& curl, const Json::Value& service_account_json,
       const std::string& scope);
 
