@@ -59,15 +59,13 @@ using google::protobuf::util::SerializeDelimitedToFileDescriptor;
 namespace cuttlefish {
 namespace {
 
-android::base::Result<Json::Value> ReadJsonFromFile(const std::string& path) {
+Result<Json::Value> ReadJsonFromFile(const std::string& path) {
   Json::CharReaderBuilder builder;
   std::ifstream ifs(path);
   Json::Value content;
   std::string errorMessage;
-  if (!Json::parseFromStream(builder, ifs, &content, &errorMessage)) {
-    return android::base::Error()
-           << "Could not read config file \"" << path << "\": " << errorMessage;
-  }
+  CF_EXPECT(Json::parseFromStream(builder, ifs, &content, &errorMessage),
+            "Could not read config file \"" << path << "\": " << errorMessage);
   return content;
 }
 
@@ -125,66 +123,47 @@ class ReadEvalPrintLoop {
       if (!handler_result.ok()) {
         test_gce_driver::TestMessage error_msg;
         error_msg.mutable_error()->set_text(handler_result.error().message());
-        if (!SerializeDelimitedToFileDescriptor(error_msg, out_)) {
-          return Error() << "Failure while writing error message: \""
-                         << handler_result.error() << "\"";
-        }
+        CF_EXPECT(SerializeDelimitedToFileDescriptor(error_msg, out_),
+                  "Failure while writing error message: (\n"
+                      << handler_result.error() << "\n)");
       }
       test_gce_driver::TestMessage stream_end_msg;
       stream_end_msg.mutable_stream_end();  // Set this in the oneof
-      if (!SerializeDelimitedToFileDescriptor(stream_end_msg, out_)) {
-        return Error() << "Failure while writing stream end message";
-      }
+      CF_EXPECT(SerializeDelimitedToFileDescriptor(stream_end_msg, out_));
     }
     return {};
   }
 
  private:
   Result<void> NewInstance(const test_gce_driver::CreateInstance& request) {
-    if (request.id().name() == "") {
-      return Error() << "Instance name must be specified";
-    }
-    if (request.id().zone() == "") {
-      return Error() << "Instance zone must be specified";
-    }
-    auto instance = ScopedGceInstance::CreateDefault(gce_, request.id().zone(),
-                                                     request.id().name());
-    if (!instance.ok()) {
-      return Error() << "Failed to create instance: " << instance.error();
-    }
-    instances_.emplace(request.id().name(), std::move(*instance));
+    CF_EXPECT(request.id().name() != "", "Instance name must be specified");
+    CF_EXPECT(request.id().zone() != "", "Instance zone must be specified");
+    auto instance = CF_EXPECT(ScopedGceInstance::CreateDefault(
+        gce_, request.id().zone(), request.id().name()));
+    instances_.emplace(request.id().name(), std::move(instance));
     return {};
   }
   Result<void> SshCommand(const test_gce_driver::SshCommand& request) {
     auto instance = instances_.find(request.instance().name());
-    if (instance == instances_.end()) {
-      return Error() << "Instance \"" << request.instance().name()
-                     << "\" not found";
-    }
-    auto ssh = instance->second->Ssh();
-    if (!ssh.ok()) {
-      return Error() << "Failed to set up ssh command: " << ssh.error();
-    }
+    CF_EXPECT(instance != instances_.end(),
+              "Instance \"" << request.instance().name() << "\" not found");
+    auto ssh = CF_EXPECT(instance->second->Ssh());
     for (auto argument : request.arguments()) {
-      ssh->RemoteParameter(argument);
+      ssh.RemoteParameter(argument);
     }
 
     std::optional<Subprocess> ssh_proc;
     SharedFD stdout_read;
     SharedFD stderr_read;
     {  // Things created here need to be closed early
-      auto cmd = ssh->Build();
+      auto cmd = ssh.Build();
 
       SharedFD stdout_write;
-      if (!SharedFD::Pipe(&stdout_read, &stdout_write)) {
-        return Error() << "Failed to open pipe for stdout";
-      }
+      CF_EXPECT(SharedFD::Pipe(&stdout_read, &stdout_write));
       cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, stdout_write);
 
       SharedFD stderr_write;
-      if (!SharedFD::Pipe(&stderr_read, &stderr_write)) {
-        return Error() << "Failed to open pipe for stderr";
-      }
+      CF_EXPECT(SharedFD::Pipe(&stderr_read, &stderr_write));
       cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, stderr_write);
 
       ssh_proc = cmd.Start();
@@ -202,58 +181,48 @@ class ReadEvalPrintLoop {
       if (read_set.IsSet(stdout_read)) {
         char buffer[1 << 14];
         auto read = stdout_read->Read(buffer, sizeof(buffer));
-        if (read < 0) {
-          return Error() << "Failure in reading ssh stdout: "
-                         << stdout_read->StrError();
-        } else if (read == 0) {  // EOF
+        CF_EXPECT(read >= 0,
+                  "Failure in reading ssh stdout: " << stdout_read->StrError());
+        if (read == 0) {  // EOF
           stdout_read = SharedFD();
         } else {
-          test_gce_driver::TestMessage output;
-          output.mutable_data()->set_type(
+          test_gce_driver::TestMessage stdout_chunk;
+          stdout_chunk.mutable_data()->set_type(
               test_gce_driver::DataType::DATA_TYPE_STDOUT);
-          output.mutable_data()->set_contents(buffer, read);
-          if (!SerializeDelimitedToFileDescriptor(output, out_)) {
-            return Error() << "Failure while writing stdout message";
-          }
+          stdout_chunk.mutable_data()->set_contents(buffer, read);
+          CF_EXPECT(SerializeDelimitedToFileDescriptor(stdout_chunk, out_));
         }
       }
       if (read_set.IsSet(stderr_read)) {
         char buffer[1 << 14];
         auto read = stderr_read->Read(buffer, sizeof(buffer));
-        if (read < 0) {
-          return Error() << "Failure in reading ssh stderr: "
-                         << stderr_read->StrError();
-        } else if (read == 0) {  // EOF
+        CF_EXPECT(read >= 0,
+                  "Failure in reading ssh stderr: " << stdout_read->StrError());
+        if (read == 0) {  // EOF
           stderr_read = SharedFD();
         } else {
-          test_gce_driver::TestMessage output;
-          output.mutable_data()->set_type(
+          test_gce_driver::TestMessage stderr_chunk;
+          stderr_chunk.mutable_data()->set_type(
               test_gce_driver::DataType::DATA_TYPE_STDERR);
-          output.mutable_data()->set_contents(buffer, read);
-          if (!SerializeDelimitedToFileDescriptor(output, out_)) {
-            return Error() << "Failure while writing stdout message";
-          }
+          stderr_chunk.mutable_data()->set_contents(buffer, read);
+          CF_EXPECT(SerializeDelimitedToFileDescriptor(stderr_chunk, out_));
         }
       }
     }
 
     auto ret = ssh_proc->Wait();
-    test_gce_driver::TestMessage output;
-    output.mutable_data()->set_type(
+    test_gce_driver::TestMessage retcode_chunk;
+    retcode_chunk.mutable_data()->set_type(
         test_gce_driver::DataType::DATA_TYPE_RETURN_CODE);
-    output.mutable_data()->set_contents(std::to_string(ret));
-    if (!SerializeDelimitedToFileDescriptor(output, out_)) {
-      return Error() << "Failure while writing return code message";
-    }
+    retcode_chunk.mutable_data()->set_contents(std::to_string(ret));
+    CF_EXPECT(SerializeDelimitedToFileDescriptor(retcode_chunk, out_));
     return {};
   }
   Result<void> UploadBuildArtifact(
       const test_gce_driver::UploadBuildArtifact& request) {
     auto instance = instances_.find(request.instance().name());
-    if (instance == instances_.end()) {
-      return Error() << "Instance \"" << request.instance().name()
-                     << "\" not found";
-    }
+    CF_EXPECT(instance != instances_.end(),
+              "Instance \"" << request.instance().name() << "\" not found");
 
     struct {
       ScopedGceInstance* instance;
@@ -269,15 +238,14 @@ class ReadEvalPrintLoop {
       if (data == nullptr) {
         auto ssh = callback_state.instance->Ssh();
         if (!ssh.ok()) {
-          callback_state.result = Error()
-                                  << "ssh command failed: " << ssh.error();
+          callback_state.result = CF_ERR("ssh command failed\n" << ssh.error());
           return false;
         }
 
         auto tcp_server = ssh->TcpServerStdin();
         if (!tcp_server.ok()) {
-          callback_state.result = Error() << "ssh tcp server failed: "
-                                          << tcp_server.error();
+          callback_state.result = CF_ERR("ssh tcp server failed\n"
+                                         << tcp_server.error());
           return false;
         }
         callback_state.tcp_server = *tcp_server;
@@ -289,70 +257,59 @@ class ReadEvalPrintLoop {
         if (!callback_state.tcp_client->IsOpen()) {
           callback_state.ssh_proc->Stop();
           callback_state.ssh_proc->Wait();
-          callback_state.result = Error()
-                                  << "Failed to accept TCP client: "
-                                  << callback_state.tcp_client->StrError();
+          callback_state.result =
+              CF_ERR("Failed to accept TCP client: "
+                     << callback_state.tcp_client->StrError());
           return false;
         }
       }
       if (WriteAll(callback_state.tcp_client, data, size) != size) {
         callback_state.ssh_proc->Stop();
-        callback_state.result = Error()
-                                << "Failed to write contents: "
-                                << callback_state.tcp_client->StrError();
+        callback_state.result =
+            CF_ERR("Failed to write contents\n"
+                   << callback_state.tcp_client->StrError());
         return false;
       }
       return true;
     };
 
     DeviceBuild build(request.build().id(), request.build().target());
-    if (!build_.ArtifactToCallback(build, request.artifact_name(), callback)) {
-      return Error() << "Failed to send file: "
-                     << (callback_state.result.ok()
-                             ? "Unknown failure"
-                             : callback_state.result.error().message());
-    }
+    CF_EXPECT(
+        build_.ArtifactToCallback(build, request.artifact_name(), callback),
+        "Failed to send file: (\n"
+            << (callback_state.result.ok()
+                    ? "Unknown failure"
+                    : callback_state.result.error().message() + "\n)"));
 
     if (callback_state.tcp_client->IsOpen() &&
         callback_state.tcp_client->Shutdown(SHUT_WR) != 0) {
-      return Error() << "Failed to shutdown socket: "
-                     << callback_state.tcp_client->StrError();
+      return CF_ERR("Failed to shutdown socket: "
+                    << callback_state.tcp_client->StrError());
     }
 
     if (callback_state.ssh_proc) {
       auto ssh_ret = callback_state.ssh_proc->Wait();
-      if (ssh_ret != 0) {
-        return Error() << "SSH command failed with code: " << ssh_ret;
-      }
+      CF_EXPECT(ssh_ret == 0, "SSH command failed with code: " << ssh_ret);
     }
 
     return {};
   }
   Result<void> UploadFile(const test_gce_driver::UploadFile& request) {
     auto instance = instances_.find(request.instance().name());
-    if (instance == instances_.end()) {
-      return Error() << "Instance \"" << request.instance().name()
-                     << "\" not found";
-    }
+    CF_EXPECT(instance != instances_.end(),
+              "Instance \"" << request.instance().name() << "\" not found");
 
-    auto ssh = instance->second->Ssh();
-    if (!ssh.ok()) {
-      return Error() << "Could not create command: " << ssh.error();
-    }
+    auto ssh = CF_EXPECT(instance->second->Ssh());
+    auto tcp = CF_EXPECT(ssh.TcpServerStdin());
 
-    auto tcp = ssh->TcpServerStdin();
-    if (!tcp.ok()) {
-      return Error() << "Failed to set up remote stdin: " << tcp.error();
-    }
+    ssh.RemoteParameter("cat >" + request.remote_path());
 
-    ssh->RemoteParameter("cat >" + request.remote_path());
+    auto ssh_proc = ssh.Build().Start();
 
-    auto ssh_proc = ssh->Build().Start();
-
-    auto client = SharedFD::Accept(**tcp);
+    auto client = SharedFD::Accept(*tcp);
     if (!client->IsOpen()) {
       ssh_proc.Stop();
-      return Error() << "Failed to accept TCP client: " << client->StrError();
+      return CF_ERR("Failed to accept TCP client: " << client->StrError());
     }
 
     while (true) {
@@ -364,42 +321,38 @@ class ReadEvalPrintLoop {
           ParseDelimitedFromZeroCopyStream(&data_msg, &in_, &clean_eof);
       if (clean_eof) {
         ssh_proc.Stop();
-        return Error() << "Received EOF";
+        return CF_ERR("Received EOF");
       } else if (!parsed) {
         ssh_proc.Stop();
-        return Error() << "Failed to parse message";
+        return CF_ERR("Failed to parse message");
       } else if (data_msg.contents_case() ==
                  test_gce_driver::TestMessage::ContentsCase::kStreamEnd) {
         break;
       } else if (data_msg.contents_case() !=
                  test_gce_driver::TestMessage::ContentsCase::kData) {
         ssh_proc.Stop();
-        return Error() << "Received wrong type of message: "
-                       << data_msg.contents_case();
+        return CF_ERR(
+            "Received wrong type of message: " << data_msg.contents_case());
       } else if (data_msg.data().type() !=
                  test_gce_driver::DataType::DATA_TYPE_FILE_CONTENTS) {
         ssh_proc.Stop();
-        return Error() << "Received unexpected data type: "
-                       << data_msg.data().type();
+        return CF_ERR(
+            "Received unexpected data type: " << data_msg.data().type());
       }
       LOG(INFO) << "going to write message of size "
                 << data_msg.data().contents().size();
       if (WriteAll(client, data_msg.data().contents()) !=
           data_msg.data().contents().size()) {
         ssh_proc.Stop();
-        return Error() << "Failed to write contents: " << client->StrError();
+        return CF_ERR("Failed to write contents: " << client->StrError());
       }
       LOG(INFO) << "successfully wrote message?";
     }
 
-    if (client->Shutdown(SHUT_WR) != 0) {
-      return Error() << "Failed to shutdown socket: " << client->StrError();
-    }
+    CF_EXPECT(client->Shutdown(SHUT_WR) != 0, client->StrError());
 
     auto ssh_ret = ssh_proc.Wait();
-    if (ssh_ret != 0) {
-      return Error() << "SSH command failed with code: " << ssh_ret;
-    }
+    CF_EXPECT(ssh_ret == 0, "SSH command failed with code: " << ssh_ret);
 
     return {};
   }
@@ -415,7 +368,7 @@ class ReadEvalPrintLoop {
 
 }  // namespace
 
-int TestGceDriverMain(int argc, char** argv) {
+Result<void> TestGceDriverMain(int argc, char** argv) {
   std::vector<Flag> flags;
   std::string service_account_json_private_key_path = "";
   flags.emplace_back(GflagsCompatFlag("service-account-json-private-key-path",
@@ -425,39 +378,36 @@ int TestGceDriverMain(int argc, char** argv) {
 
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
-  CHECK(ParseFlags(flags, args)) << "Could not process command line flags.";
+  CF_EXPECT(ParseFlags(flags, args), "Could not process command line flags.");
 
-  auto service_json = ReadJsonFromFile(service_account_json_private_key_path);
-  CHECK(service_json.ok()) << service_json.error();
+  auto service_json =
+      CF_EXPECT(ReadJsonFromFile(service_account_json_private_key_path));
 
   static constexpr char COMPUTE_SCOPE[] =
       "https://www.googleapis.com/auth/compute";
   auto curl = CurlWrapper::Create();
-  auto gce_creds = ServiceAccountOauthCredentialSource::FromJson(
-      *curl, *service_json, COMPUTE_SCOPE);
-  CHECK(gce_creds);
+  auto gce_creds = CF_EXPECT(ServiceAccountOauthCredentialSource::FromJson(
+      *curl, service_json, COMPUTE_SCOPE));
 
-  // TODO(b/216667647): Allow these settings to be configured.
-  GceApi gce(*curl, *gce_creds, cloud_project);
+  GceApi gce(*curl, gce_creds, cloud_project);
 
   static constexpr char BUILD_SCOPE[] =
       "https://www.googleapis.com/auth/androidbuild.internal";
-  auto build_creds = ServiceAccountOauthCredentialSource::FromJson(
-      *curl, *service_json, BUILD_SCOPE);
-  CHECK(build_creds);
+  auto build_creds = CF_EXPECT(ServiceAccountOauthCredentialSource::FromJson(
+      *curl, service_json, BUILD_SCOPE));
 
-  BuildApi build(*curl, build_creds.get());
+  BuildApi build(*curl, &build_creds);
 
   ReadEvalPrintLoop executor(gce, build, STDIN_FILENO, STDOUT_FILENO);
   LOG(INFO) << "Starting processing";
-  auto result = executor.Process();
-  CHECK(result.ok()) << "Executor loop failed: " << result.error();
+  CF_EXPECT(executor.Process());
 
-  return 0;
+  return {};
 }
 
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::TestGceDriverMain(argc, argv);
+  auto res = cuttlefish::TestGceDriverMain(argc, argv);
+  CHECK(res.ok()) << "cvd_test_gce_driver failed: " << res.error();
 }
