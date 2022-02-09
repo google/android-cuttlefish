@@ -1075,7 +1075,7 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
       // Create esp if necessary
       .install(InitializeEspImageComponent, &FLAGS_otheros_esp_image,
                &FLAGS_otheros_kernel_path, &FLAGS_otheros_initramfs_path,
-               &FLAGS_otheros_root_image)
+               &FLAGS_otheros_root_image, config)
       .install(SuperImageRebuilderComponent, &FLAGS_super_image);
 }
 
