@@ -25,10 +25,12 @@
 #include <tss2/tss2_rc.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/security/confui_sign.h"
 #include "common/libs/security/gatekeeper_channel.h"
 #include "common/libs/security/keymaster_channel.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
+#include "host/commands/secure_env/confui_sign_server.h"
 #include "host/commands/secure_env/device_tpm.h"
 #include "host/commands/secure_env/fragile_tpm_storage.h"
 #include "host/commands/secure_env/gatekeeper_responder.h"
@@ -43,6 +45,7 @@
 #include "host/commands/secure_env/tpm_resource_manager.h"
 #include "host/libs/config/logging.h"
 
+DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
 DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
 DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
@@ -193,6 +196,7 @@ int SecureEnvMain(int argc, char** argv) {
       keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_2,
                                 0 /* km_date */)};
 
+  auto confui_server_fd = DupFdFlag(FLAGS_confui_server_fd);
   auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
   auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
   auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
@@ -223,6 +227,11 @@ int SecureEnvMain(int argc, char** argv) {
     }
   });
 
+  threads.emplace_back([confui_server_fd, resource_manager]() {
+    ConfUiSignServer confui_sign_server(*resource_manager, confui_server_fd);
+    // no return, infinite loop
+    confui_sign_server.MainLoop();
+  });
   threads.emplace_back(StartKernelEventMonitor(kernel_events_fd));
 
   for (auto& t : threads) {

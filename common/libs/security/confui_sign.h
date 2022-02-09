@@ -76,6 +76,10 @@ class ConfUiSignSender {
   bool Send(const SignMessageError error,
             const std::vector<std::uint8_t>& encoded_hmac);
 
+  bool IsOk() const { return impl_.IsOk(); }
+  bool IsIoError() const { return impl_.IsIoError(); }
+  bool IsLogicError() const { return impl_.IsLogicError(); }
+
  private:
   SharedFD server_fd_;
   ConfUiSignerImpl impl_;
