@@ -14,6 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Runs CuttlefishIntegrationTest">
+    <option name="test-suite-tag" value="cuttlefish_integration_test" />
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="jar" value="CuttlefishIntegrationTest.jar" />
     </test>
