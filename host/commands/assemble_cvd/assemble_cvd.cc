@@ -265,7 +265,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                  << double_legacy_instance_dir << "\") failed");
   }
 
-  CreateDynamicDiskFiles(fetcher_config, *config);
+  CF_EXPECT(CreateDynamicDiskFiles(fetcher_config, *config));
 
   return config;
 }
