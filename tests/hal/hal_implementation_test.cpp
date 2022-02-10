@@ -149,6 +149,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.frameworks.automotive.powerpolicy.", 1},
     {"android.frameworks.automotive.telemetry.", 1},
     {"android.hardware.automotive.audiocontrol.", 1},
+    {"android.hardware.automotive.audiocontrol.", 2},
     {"android.hardware.automotive.occupant_awareness.", 1},
 
     // No implementation in AOSP for supplicant aidl hal (b/210166896)
