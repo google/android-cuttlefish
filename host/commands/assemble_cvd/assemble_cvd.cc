@@ -71,27 +71,23 @@ std::string GetLegacyConfigFilePath(const CuttlefishConfig& config) {
   return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
 }
 
-bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
+Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
   auto config_file = GetConfigFilePath(tmp_config_obj);
   auto config_link = GetGlobalConfigFileLink();
   // Save the config object before starting any host process
-  if (!tmp_config_obj.SaveToFile(config_file)) {
-    LOG(ERROR) << "Unable to save config object";
-    return false;
-  }
+  CF_EXPECT(tmp_config_obj.SaveToFile(config_file),
+            "Failed to save to \"" << config_file << "\"");
   auto legacy_config_file = GetLegacyConfigFilePath(tmp_config_obj);
-  if (!tmp_config_obj.SaveToFile(legacy_config_file)) {
-    LOG(ERROR) << "Unable to save legacy config object";
-    return false;
-  }
+  CF_EXPECT(tmp_config_obj.SaveToFile(legacy_config_file),
+            "Failed to save to \"" << legacy_config_file << "\"");
+
   setenv(kCuttlefishConfigEnvVarName, config_file.c_str(), true);
   if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
-    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
-               << ": " << strerror(errno);
-    return false;
+    return CF_ERRNO("symlink(\"" << config_file << "\", \"" << config_link
+                                 << ") failed");
   }
 
-  return true;
+  return {};
 }
 
 #ifndef O_TMPFILE
@@ -239,34 +235,34 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       // TODO(schuffelen): Move this code somewhere better
       CF_EXPECT(CreateLegacySymlinks(instance));
     }
-    CHECK(SaveConfig(config)) << "Failed to initialize configuration";
+    CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
   }
 
   // Do this early so that the config object is ready for anything that needs it
   auto config = CuttlefishConfig::Get();
-  CHECK(config) << "Failed to obtain config singleton";
+  CF_EXPECT(config != nullptr, "Failed to obtain config singleton");
 
   if (DirectoryExists(FLAGS_assembly_dir, /* follow_symlinks */ false)) {
-    CHECK(RecursivelyRemoveDirectory(FLAGS_assembly_dir))
-        << "Failed to remove directory " << FLAGS_assembly_dir;
+    CF_EXPECT(RecursivelyRemoveDirectory(FLAGS_assembly_dir),
+              "Failed to remove directory " << FLAGS_assembly_dir);
   } else if (FileExists(FLAGS_assembly_dir, /* follow_symlinks */ false)) {
-    CHECK(RemoveFile(FLAGS_assembly_dir))
-        << "Failed to remove file" << FLAGS_assembly_dir;
+    CF_EXPECT(RemoveFile(FLAGS_assembly_dir),
+              "Failed to remove file" << FLAGS_assembly_dir);
   }
   if (symlink(config->assembly_dir().c_str(), FLAGS_assembly_dir.c_str())) {
-    PLOG(FATAL) << "symlink(\"" << config->assembly_dir() << "\", \""
-                << FLAGS_assembly_dir << "\") failed";
+    return CF_ERRNO("symlink(\"" << config->assembly_dir() << "\", \""
+                                 << FLAGS_assembly_dir << "\") failed");
   }
 
   std::string first_instance = config->Instances()[0].instance_dir();
   std::string double_legacy_instance_dir = FLAGS_instance_dir + "_runtime";
   if (FileExists(double_legacy_instance_dir, /* follow_symlinks */ false)) {
-    CHECK(RemoveFile(double_legacy_instance_dir))
-        << "Failed to remove symlink " << double_legacy_instance_dir;
+    CF_EXPECT(RemoveFile(double_legacy_instance_dir),
+              "Failed to remove symlink " << double_legacy_instance_dir);
   }
   if (symlink(first_instance.c_str(), double_legacy_instance_dir.c_str())) {
-    PLOG(FATAL) << "Could not symlink \"" << first_instance << "\" to \""
-                << double_legacy_instance_dir << "\"";
+    return CF_ERRNO("symlink(\"" << first_instance << "\", \""
+                                 << double_legacy_instance_dir << "\") failed");
   }
 
   CreateDynamicDiskFiles(fetcher_config, *config);
