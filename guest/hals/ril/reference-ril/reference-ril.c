@@ -1891,8 +1891,12 @@ static void requestRegistrationState(int request, void *data __unused,
     } else { // type == RADIO_TECH_3GPP
         RLOGD("registration state type: 3GPP");
         startfrom = 0;
-        asprintf(&responseStr[1], "%x", registration[1]);
-        asprintf(&responseStr[2], "%x", registration[2]);
+        if (count > 1) {
+            asprintf(&responseStr[1], "%x", registration[1]);
+        }
+        if (count > 2) {
+            asprintf(&responseStr[2], "%x", registration[2]);
+        }
         if (count > 3) {
             asprintf(&responseStr[3], "%d", mapNetworkRegistrationResponse(registration[3]));
         }
