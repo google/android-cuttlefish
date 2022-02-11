@@ -808,3 +808,6 @@ PRODUCT_PACKAGES += \
 # NFC AIDL HAL
 PRODUCT_PACKAGES += \
     android.hardware.nfc-service.cuttlefish
+
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/pci.ids:$(TARGET_COPY_OUT_VENDOR)/pci.ids
