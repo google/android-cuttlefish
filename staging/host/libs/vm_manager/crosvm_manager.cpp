@@ -98,7 +98,8 @@ std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
   // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
     // crosvm has an additional PCI device for an ISA bridge
-    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 1, num_disks);
+    // virtio_gpu and virtio_wl precedes the first console or disk
+    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 3, num_disks);
   } else {
     // On ARM64 crosvm, block devices are on their own bridge, so we don't
     // need to calculate it, and the path is always the same
