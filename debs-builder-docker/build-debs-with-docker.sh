@@ -44,6 +44,8 @@ function build_host_debian_pkg {
   local out_on_guest="$host_dir_on_guest/out"
 
   local container_name="meow_yumi"
+  # in case of previous failure, we ensure we restart a new container
+  docker rm -f $container_name
   if ! docker run -d \
        --rm --privileged \
        --user="vsoc-01" -w "$guest_home" \
