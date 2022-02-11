@@ -484,6 +484,7 @@ class SecureEnvironment : public CommandSource {
   // CommandSource
   std::vector<Command> Commands() override {
     Command command(HostBinaryPath("secure_env"));
+    command.AddParameter("-confui_server_fd=", confui_server_fd_);
     command.AddParameter("-keymaster_fd_out=", fifos_[0]);
     command.AddParameter("-keymaster_fd_in=", fifos_[1]);
     command.AddParameter("-gatekeeper_fd_out=", fifos_[2]);
@@ -531,6 +532,15 @@ class SecureEnvironment : public CommandSource {
       fifos_.push_back(fd);
     }
 
+    auto confui_socket_path =
+        instance_.PerInstanceInternalPath("confui_secure_env_vm.sock");
+    confui_server_fd_ = SharedFD::SocketLocalServer(confui_socket_path, false,
+                                                    SOCK_STREAM, 0600);
+    if (!confui_server_fd_->IsOpen()) {
+      LOG(ERROR) << "Could not open " << confui_socket_path << ": "
+                 << confui_server_fd_->StrError();
+      return false;
+    }
     kernel_log_pipe_ = kernel_log_pipe_provider_.KernelLogPipe();
 
     return true;
@@ -538,6 +548,7 @@ class SecureEnvironment : public CommandSource {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD confui_server_fd_;
   std::vector<SharedFD> fifos_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
   SharedFD kernel_log_pipe_;
