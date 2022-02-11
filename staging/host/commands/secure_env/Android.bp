@@ -58,6 +58,7 @@ cc_library_host_static {
     name: "libsecure_env",
     srcs: [
         "composite_serialization.cpp",
+        "confui_sign_server.cpp",
         "device_tpm.cpp",
         "encrypted_serializable.cpp",
         "fragile_tpm_storage.cpp",
