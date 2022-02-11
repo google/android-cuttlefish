@@ -69,6 +69,9 @@ std::string SystemErrorCodeToString(int error_code);
 //
 // Actually this can be used for any type as long as the OkOrFail<T> contract is satisfied. See
 // below.
+// If implicit conversion compilation errors occur involving a value type with a templated
+// forwarding ref ctor, compilation with cpp20 or explicitly converting to the desired
+// return type is required.
 #define OR_RETURN(expr)                                                                 \
   ({                                                                                    \
     decltype(expr)&& tmp = (expr);                                                      \
@@ -109,7 +112,7 @@ namespace base {
 
 // The OkOrFail contract for a type T. This must be implemented for a type T if you want to use
 // OR_RETURN(stmt) where stmt evalues to a value of type T.
-template <typename T>
+template <typename T, typename = void>
 struct OkOrFail {
   // Checks if T is ok or fail.
   static bool IsOk(const T&);

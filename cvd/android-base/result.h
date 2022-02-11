@@ -96,6 +96,7 @@
 
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #include "android-base/errors.h"
 #include "android-base/expected.h"
@@ -297,9 +298,93 @@ using Result = android::base::expected<T, ResultError<E, include_message>>;
 
 // Specialization of android::base::OkOrFail<V> for V = Result<T, E>. See android-base/errors.h
 // for the contract.
-template <typename T, typename E>
-struct OkOrFail<Result<T, E>> {
-  typedef Result<T, E> V;
+
+namespace impl {
+template <typename U>
+using Code = std::decay_t<decltype(std::declval<U>().error().code())>;
+
+template <typename U>
+using ErrorType = std::decay_t<decltype(std::declval<U>().error())>;
+
+template <typename U>
+constexpr bool IsNumeric = std::is_integral_v<U> || std::is_floating_point_v<U> ||
+                           (std::is_enum_v<U> && std::is_convertible_v<U, size_t>);
+
+// This base class exists to take advantage of shadowing
+// We include the conversion in this base class so that if the conversion in NumericConversions
+// overlaps, we (arbitrarily) choose the implementation in NumericConversions due to shadowing.
+template <typename T>
+struct ConversionBase {
+  ErrorType<T> error_;
+  // T is a expected<U, ErrorType<T>>.
+  operator const T() const && {
+    return unexpected(std::move(error_));
+  }
+
+  operator const Code<T>() const && {
+    return error_.code();
+  }
+
+};
+
+// User defined conversions can be followed by numeric conversions
+// Although we template specialize for the exact code type, we need
+// specializations for conversions to all numeric types to avoid an
+// ambiguous conversion sequence.
+template <typename T, typename = void>
+struct NumericConversions : public ConversionBase<T> {};
+template <typename T>
+struct NumericConversions<T,
+    std::enable_if_t<impl::IsNumeric<impl::Code<T>>>
+    > : public ConversionBase<T>
+{
+#pragma push_macro("SPECIALIZED_CONVERSION")
+#define SPECIALIZED_CONVERSION(type)\
+  operator const expected<type, ErrorType<T>>() const &&\
+  { return unexpected(std::move(this->error_));}
+
+  SPECIALIZED_CONVERSION(int)
+  SPECIALIZED_CONVERSION(short int)
+  SPECIALIZED_CONVERSION(unsigned short int)
+  SPECIALIZED_CONVERSION(unsigned int)
+  SPECIALIZED_CONVERSION(long int)
+  SPECIALIZED_CONVERSION(unsigned long int)
+  SPECIALIZED_CONVERSION(long long int)
+  SPECIALIZED_CONVERSION(unsigned long long int)
+  SPECIALIZED_CONVERSION(bool)
+  SPECIALIZED_CONVERSION(char)
+  SPECIALIZED_CONVERSION(unsigned char)
+  SPECIALIZED_CONVERSION(signed char)
+  SPECIALIZED_CONVERSION(wchar_t)
+  SPECIALIZED_CONVERSION(char16_t)
+  SPECIALIZED_CONVERSION(char32_t)
+  SPECIALIZED_CONVERSION(float)
+  SPECIALIZED_CONVERSION(double)
+  SPECIALIZED_CONVERSION(long double)
+
+#undef SPECIALIZED_CONVERSION
+#pragma pop_macro("SPECIALIZED_CONVERSION")
+  // For debugging purposes
+  using IsNumericT = std::true_type;
+};
+
+#ifdef __cpp_concepts
+template<class U>
+concept Trivial = std::is_same_v<U, U>;
+#endif
+} // namespace impl
+
+template <typename T, typename E, bool include_message>
+struct OkOrFail<Result<T, E, include_message>>
+    : public impl::NumericConversions<Result<T, E, include_message>> {
+  using V = Result<T, E, include_message>;
+  using Err = impl::ErrorType<V>;
+  using C = impl::Code<V>;
+private:
+   OkOrFail(Err&& v): impl::NumericConversions<V>{std::move(v)} {}
+   OkOrFail(const OkOrFail& other) = delete;
+   OkOrFail(const OkOrFail&& other) = delete;
+public:
   // Checks if V is ok or fail
   static bool IsOk(const V& val) { return val.ok(); }
 
@@ -307,20 +392,23 @@ struct OkOrFail<Result<T, E>> {
   static T Unwrap(V&& val) { return std::move(val.value()); }
 
   // Consumes V when it's a fail value
-  static OkOrFail<V> Fail(V&& v) {
+  static const OkOrFail<V> Fail(V&& v) {
     assert(!IsOk(v));
-    return OkOrFail<V>{std::move(v)};
+    return OkOrFail<V>{std::move(v.error())};
   }
-  V val_;
 
-  // Turns V into S (convertible from E) or Result<U, E>
-  template <typename S, typename = std::enable_if_t<std::is_convertible_v<E, S>>>
-  operator S() && {
-    return val_.error().code();
+  // We specialize as much as possible to avoid ambiguous conversion with
+  // templated expected ctor
+  operator const Result<C, E, include_message>() const && {
+    return unexpected(std::move(this->error_));
   }
+#ifdef __cpp_concepts
+  template <impl::Trivial U>
+#else
   template <typename U>
-  operator Result<U, E>() && {
-    return val_.error();
+#endif
+  operator const Result<U, E, include_message>() const && {
+    return unexpected(std::move(this->error_));
   }
 
   static std::string ErrorMessage(const V& val) { return val.error().message(); }
