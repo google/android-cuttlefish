@@ -47,6 +47,7 @@ constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 constexpr char kStartBin[] = "cvd_internal_start";
 constexpr char kStatusBin[] = "cvd_internal_status";
 constexpr char kStopBin[] = "cvd_internal_stop";
+constexpr char kSendSmsBin[] = "cvd_send_sms";
 
 constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
 constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
@@ -65,6 +66,8 @@ Commands:
   kill-server         Kill the cvd_server background process.
   status              Check and print the state of a running instance.
   host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
+  send_sms            Send an SMS to a device.
+  cvd_send_sms        Send an SMS to a device.
 
 Args:
   <command args>      Each command has its own set of args. See cvd help <command>.
@@ -82,7 +85,10 @@ const std::map<std::string, std::string> CommandToBinaryMap = {
     {"stop", kStopBin},
     {"stop_cvd", kStopBin},
     {"clear", kClearBin},
-    {"fleet", kFleetBin}};
+    {"fleet", kFleetBin},
+    {"send_sms", kSendSmsBin},
+    {"cvd_send_sms", kSendSmsBin},
+};
 
 struct RequestWithStdio {
   cvd::Request request;
