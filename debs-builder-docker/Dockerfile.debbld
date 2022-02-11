@@ -21,7 +21,7 @@ RUN apt-get update
 VOLUME [ "/sys/fs/cgroup" ]
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y apt-utils sudo vim dpkg-dev devscripts gawk coreutils equivs
+    && apt-get install --no-install-recommends -y apt-utils sudo vim dpkg-dev devscripts gawk coreutils equivs git
 
 SHELL ["/bin/bash", "-c"]
 
