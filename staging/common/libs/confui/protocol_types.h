@@ -81,6 +81,7 @@ class ConfUiMessage {
   std::string GetSessionId() const { return session_id_; }
   virtual ConfUiCmd GetType() const = 0;
   virtual bool SendOver(SharedFD fd) = 0;
+  bool IsUserInput() const;
 
  protected:
   std::string session_id_;

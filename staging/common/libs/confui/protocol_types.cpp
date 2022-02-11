@@ -97,6 +97,16 @@ static std::string ByteVecToString(const std::vector<T>& v) {
   return result;
 }
 
+bool ConfUiMessage::IsUserInput() const {
+  switch (GetType()) {
+    case ConfUiCmd::kUserInputEvent:
+    case ConfUiCmd::kUserTouchEvent:
+      return true;
+    default:
+      return false;
+  }
+}
+
 std::string ConfUiAckMessage::ToString() const {
   return CreateString(session_id_, confui::ToString(GetType()),
                       (is_success_ ? "success" : "fail"), status_message_);
