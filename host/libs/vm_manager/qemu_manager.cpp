@@ -156,7 +156,8 @@ std::string QemuManager::ConfigureBootDevices(int num_disks) {
     case Arch::X86:
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
-      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 2, num_disks);
+      // virtio_gpu precedes the first console or disk
+      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 3, num_disks);
     }
     case Arch::Arm:
       return "androidboot.boot_devices=3f000000.pcie";
@@ -357,6 +358,27 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
+  if (config.gpu_mode() == kGpuModeDrmVirgl) {
+    qemu_cmd.AddParameter("-display");
+    qemu_cmd.AddParameter("egl-headless");
+
+    qemu_cmd.AddParameter("-vnc");
+    qemu_cmd.AddParameter(":", instance.qemu_vnc_server_port());
+  } else {
+    qemu_cmd.AddParameter("-display");
+    qemu_cmd.AddParameter("none");
+  }
+
+  auto display_configs = config.display_configs();
+  CHECK_GE(display_configs.size(), 1);
+  auto display_config = display_configs[0];
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter(qemu_version.first < 6 ?
+                            "virtio-gpu-pci" : "virtio-gpu-gl-pci", ",id=gpu0",
+                        ",xres=", display_config.width,
+                        ",yres=", display_config.height);
+
   // In kgdb mode, earlycon is an interactive console, and so early
   // dmesg will go there instead of the kernel.log. On QEMU, we do this
   // bit of logic up before the hvc console is set up, so the command line
@@ -443,17 +465,6 @@ std::vector<Command> QemuManager::StartCommands(
                           ",id=virtio-disk", i, bootindex);
   }
 
-  if (config.gpu_mode() == kGpuModeDrmVirgl) {
-    qemu_cmd.AddParameter("-display");
-    qemu_cmd.AddParameter("egl-headless");
-
-    qemu_cmd.AddParameter("-vnc");
-    qemu_cmd.AddParameter(":", instance.qemu_vnc_server_port());
-  } else {
-    qemu_cmd.AddParameter("-display");
-    qemu_cmd.AddParameter("none");
-  }
-
   if (!is_arm && FileExists(instance.pstore_path())) {
     // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
     // As we will pass this to ramoops, define this region first so it is always
@@ -535,16 +546,6 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet2,id=net2");
 #endif
-
-  auto display_configs = config.display_configs();
-  CHECK_GE(display_configs.size(), 1);
-  auto display_config = display_configs[0];
-
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter(qemu_version.first < 6 ?
-                            "virtio-gpu-pci" : "virtio-gpu-gl-pci", ",id=gpu0",
-                        ",xres=", display_config.width,
-                        ",yres=", display_config.height);
 
   qemu_cmd.AddParameter("-cpu");
   qemu_cmd.AddParameter(IsHostCompatible(arch_) ? "host" : "max");
