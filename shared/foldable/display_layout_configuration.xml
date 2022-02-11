@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<layouts>
+  <layout>
+    <!-- CLOSED: display0 disabled, display1 enabled -->
+    <state>0</state>
+
+    <display enabled="false">
+      <address>4619827259835644672</address>
+    </display>
+
+    <display enabled="true" defaultDisplay="true">
+      <address>4619827551948147201</address>
+    </display>
+  </layout>
+
+  <layout>
+    <!-- HALF_OPENED: display0 enabled, display1 disabled -->
+    <state>1</state>
+
+    <display enabled="true" defaultDisplay="true">
+      <address>4619827259835644672</address>
+    </display>
+
+    <display enabled="false">
+      <address>4619827551948147201</address>
+    </display>
+  </layout>
+
+  <layout>
+    <!-- OPENED: display0 enabled, display1 disabled -->
+    <state>2</state>
+
+    <display enabled="true" defaultDisplay="true">
+      <address>4619827259835644672</address>
+    </display>
+
+    <display enabled="false">
+      <address>4619827551948147201</address>
+    </display>
+  </layout>
+</layouts>

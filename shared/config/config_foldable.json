@@ -1,7 +1,6 @@
 {
-	"x_res" : 1768,
-	"y_res" : 2208,
-	"dpi" : 386,
+	"display0" : "width=1768,height=2208,dpi=374",
+	"display1" : "width=832,height=2268,dpi=387",
 	"memory_mb" : 4096,
 	"custom_actions" : [
                 {
@@ -15,6 +14,19 @@
                                 "command":"device_state_closed",
                                 "title":"Device State Closed",
                                 "icon_name":"smartphone"
+                        }
+                },
+                {
+                        "device_states": [
+                                {
+                                        "lid_switch_open": true,
+                                        "hinge_angle_value": 90
+                                }
+                        ],
+                        "button":{
+                                "command":"device_state_half_opened",
+                                "title":"Device State Half-Opened",
+                                "icon_name":"laptop"
                         }
                 },
                 {
