@@ -1,0 +1,69 @@
+#
+#	List of PCI ID's
+#
+#	Version: 2022.02.09
+#	Date:    2022-02-09 03:15:01
+#
+#	Maintained by Albert Pool, Martin Mares, and other volunteers from
+#	the PCI ID Project at https://pci-ids.ucw.cz/.
+#
+#	New data are always welcome, especially if they are accurate. If you have
+#	anything to contribute, please follow the instructions at the web site.
+#
+#	This file can be distributed under either the GNU General Public License
+#	(version 2 or higher) or the 3-clause BSD License.
+#
+#	The database is a compilation of factual data, and as such the copyright
+#	only covers the aggregation and formatting. The copyright is held by
+#	Martin Mares and Albert Pool.
+#
+
+# Vendors, devices and subsystems. Please keep sorted.
+
+# Syntax:
+# vendor  vendor_name
+#	device  device_name				<-- single tab
+#		subvendor subdevice  subsystem_name	<-- two tabs
+
+# ANDROID:
+# This is a heavily reduced subset of devices put together to work around an
+# issue in toybox lspci. Toybox lspci doesn't fully understand the pci.ids
+# format, and gets stuck in "QEMU Virtual Machine" devices in other sections.
+
+1af4  Red Hat, Inc.
+	1000  Virtio network device
+	1001  Virtio block device
+	1002  Virtio memory balloon
+	1003  Virtio console
+	1004  Virtio SCSI
+	1005  Virtio RNG
+	1009  Virtio filesystem
+# virtio 1.0
+	1041  Virtio network device
+# virtio 1.0
+	1042  Virtio block device
+# virtio 1.0
+	1043  Virtio console
+# virtio 1.0
+	1044  Virtio RNG
+# virtio 1.0
+	1045  Virtio memory balloon
+# virtio 1.0
+	1048  Virtio SCSI
+# virtio 1.0
+	1049  Virtio filesystem
+# virtio 1.0
+	1050  Virtio GPU
+# virtio 1.0
+	1052  Virtio input
+# virtio 1.0
+	1053  Virtio socket
+	105a  Virtio file system
+	1110  Inter-VM shared memory
+		1af4 1100  QEMU Virtual Machine
+1b73  Fresco Logic
+	1000  FL1000G USB 3.0 Host Controller
+		1d5c 1000  Anker USB 3.0 Express Card
+	1009  FL1009 USB 3.0 Host Controller
+	1100  FL1100 USB 3.0 Host Controller
+		16b8 6e31  Allegro Pro USB 3.0 PCIe
