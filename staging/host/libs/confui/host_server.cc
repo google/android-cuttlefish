@@ -171,9 +171,7 @@ SharedFD HostServer::EstablishHalConnection() {
     const std::string cmd_str(ToString(cmd));
 
     // take input for the Finite States Machine below
-    const bool is_user_input = (cmd == ConfUiCmd::kUserInputEvent) ||
-                               (cmd == ConfUiCmd::kUserTouchEvent);
-    std::string src = is_user_input ? "input" : "hal";
+    std::string src = input.IsUserInput() ? "input" : "hal";
     ConfUiLog(VERBOSE) << "In Session " << GetCurrentSessionId() << ", "
                        << "in state " << GetCurrentState() << ", "
                        << "received input from " << src << " cmd =" << cmd_str
