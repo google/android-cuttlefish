@@ -1,6 +1,7 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster-slim AS cuttlefish-hostpkg-builder
+# take the same debian image as in .github/test_build_deb.yaml
+FROM debian:stable-20211011 AS cuttlefish-hostpkg-builder
 
 ENV container docker
 ENV LC_ALL C
