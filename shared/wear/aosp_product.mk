@@ -16,8 +16,11 @@
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/base_product.mk)
 
-# Instead of including AllAudio.mk, install a minimal set of samples
-_ringtones := Atria Callisto Dione Ganymede Luna Oberon Phobos Pyxis Sedna Triton Umbriel
+# Default AOSP sounds
+$(call inherit-product-if-exists, frameworks/base/data/sounds/AllAudio.mk)
+
+# Wear pulls in some obsolete samples as well
+_ringtones := Callisto Dione Ganymede Luna Oberon Phobos Sedna Triton Umbriel
 PRODUCT_COPY_FILES += \
     frameworks/base/data/sounds/alarms/ogg/Oxygen.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/alarms/Oxygen.ogg \
     frameworks/base/data/sounds/notifications/ogg/Tethys.ogg:$(TARGET_COPY_OUT_PRODUCT)/media/audio/notifications/Tethys.ogg \
