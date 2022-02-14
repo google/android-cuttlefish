@@ -1,0 +1,19 @@
+cc_binary {
+    name: "android.hardware.bluetooth.audio-service.cuttlefish",
+    relative_install_path: "hw",
+    init_rc: ["btaudio-service-cuttlefish.rc"],
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libutils",
+        "libbinder_ndk",
+    ],
+    srcs: [
+        "main.cc",
+    ],
+}
