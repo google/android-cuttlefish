@@ -25,7 +25,7 @@
 namespace keymaster {
 
 RemoteKeymaster::RemoteKeymaster(cuttlefish::KeymasterChannel* channel,
-                                 uint32_t message_version)
+                                 int32_t message_version)
     : channel_(channel), message_version_(message_version) {}
 
 RemoteKeymaster::~RemoteKeymaster() {}
