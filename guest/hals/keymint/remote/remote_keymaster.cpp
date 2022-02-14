@@ -96,6 +96,21 @@ bool RemoteKeymaster::Initialize() {
     return false;
   }
 
+  // Pass verified boot information to the remote KM implementation
+  auto vbmeta_digest = GetVbmetaDigest();
+  if (vbmeta_digest) {
+    ConfigureVerifiedBootInfoRequest request(
+        message_version(), GetVerifiedBootState(), GetBootloaderState(),
+        *vbmeta_digest);
+    ConfigureVerifiedBootInfoResponse response =
+        ConfigureVerifiedBootInfo(request);
+    if (response.error != KM_ERROR_OK) {
+      LOG(ERROR) << "Failed to configure keymaster verified boot info: "
+                 << response.error;
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -287,6 +302,13 @@ ConfigureBootPatchlevelResponse RemoteKeymaster::ConfigureBootPatchlevel(
     const ConfigureBootPatchlevelRequest& request) {
   ConfigureBootPatchlevelResponse response(message_version());
   ForwardCommand(CONFIGURE_BOOT_PATCHLEVEL, request, &response);
+  return response;
+}
+
+ConfigureVerifiedBootInfoResponse RemoteKeymaster::ConfigureVerifiedBootInfo(
+    const ConfigureVerifiedBootInfoRequest& request) {
+  ConfigureVerifiedBootInfoResponse response(message_version());
+  ForwardCommand(CONFIGURE_VERIFIED_BOOT_INFO, request, &response);
   return response;
 }
 

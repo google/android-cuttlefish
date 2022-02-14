@@ -90,6 +90,8 @@ class RemoteKeymaster {
       const ConfigureVendorPatchlevelRequest& request);
   ConfigureBootPatchlevelResponse ConfigureBootPatchlevel(
       const ConfigureBootPatchlevelRequest& request);
+  ConfigureVerifiedBootInfoResponse ConfigureVerifiedBootInfo(
+      const ConfigureVerifiedBootInfoRequest& request);
   void GenerateTimestampToken(GenerateTimestampTokenRequest& request,
                               GenerateTimestampTokenResponse* response);
 
