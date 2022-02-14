@@ -66,6 +66,7 @@ PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     boot \
+    init_boot \
     odm \
     odm_dlkm \
     product \
