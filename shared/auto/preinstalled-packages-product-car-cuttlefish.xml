@@ -30,10 +30,6 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
-    <install-in-user-type package="com.android.managedprovisioning">
-        <install-in user-type="FULL" />
-        <install-in user-type="SYSTEM" />
-    </install-in-user-type>
     <install-in-user-type package="com.android.phone">
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
