@@ -2,6 +2,19 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+filegroup {
+    name: "device_google_cuttlefish_shared_config_pci_ids",
+    srcs: ["pci.ids"],
+    licenses: ["device_google_cuttlefish_shared_config_pci_ids_license"],
+}
+
+license {
+    name: "device_google_cuttlefish_shared_config_pci_ids_license",
+    package_name: "PCI IDS",
+    license_kinds: ["SPDX-license-identifier-BSD-3-Clause"],
+    license_text: ["LICENSE_BSD"],
+}
+
 prebuilt_etc_host {
     name: "cvd_config_auto.json",
     src: "config_auto.json",
