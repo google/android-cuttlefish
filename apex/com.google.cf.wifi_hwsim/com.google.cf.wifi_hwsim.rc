@@ -1,5 +1,5 @@
 
-service rename_eth0 /apex/com.android.wifi.hal/bin/rename_netiface eth0 rmnet0
+service rename_eth0 /apex/com.android.wifi.hal/bin/rename_netiface eth0 buried_eth0
     oneshot
 
 service init_wifi_sh /apex/com.android.wifi.hal/bin/init.wifi.sh
