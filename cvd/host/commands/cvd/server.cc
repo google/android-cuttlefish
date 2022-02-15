@@ -290,7 +290,13 @@ class CvdServer {
       *response.mutable_status() = CvdClear(request.out, request.err);
       return response;
     } else if (bin == kFleetBin) {
-      *response.mutable_status() = CvdFleet(request.out);
+      auto env_config = request.request.command_request().env().find(
+          kCuttlefishConfigEnvVarName);
+      std::string config_path;
+      if (env_config != request.request.command_request().env().end()) {
+        config_path = env_config->second;
+      }
+      *response.mutable_status() = CvdFleet(request.out, config_path);
       return response;
     } else if (bin == kStartBin) {
       // Track this assembly_dir in the fleet.
@@ -457,11 +463,15 @@ class CvdServer {
     return status;
   }
 
-  cvd::Status CvdFleet(const SharedFD& out) const {
+  cvd::Status CvdFleet(const SharedFD& out,
+                       const std::string& env_config) const {
     for (const auto& it : assemblies_) {
       const AssemblyDir& assembly_dir = it.first;
       const AssemblyInfo& assembly_info = it.second;
       auto config_path = GetCuttlefishConfigPath(assembly_dir);
+      if (FileExists(env_config)) {
+        config_path = env_config;
+      }
       if (config_path) {
         // Reads CuttlefishConfig::instance_names(), which must remain stable
         // across changes to config file format (within server_constants.h major
