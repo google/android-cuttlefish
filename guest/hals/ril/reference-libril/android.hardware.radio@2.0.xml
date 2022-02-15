@@ -1,5 +1,8 @@
 <manifest version="1.0" type="device">
-    <!-- Radio HIDL HAL 1.6 translated to AIDL HAL by android.hardware.radio-service.compat -->
+    <hal format="aidl">
+        <name>android.hardware.radio.config</name>
+        <fqname>IRadioConfig/default</fqname>
+    </hal>
     <hal format="aidl">
         <name>android.hardware.radio.data</name>
         <fqname>IRadioData/slot1</fqname>

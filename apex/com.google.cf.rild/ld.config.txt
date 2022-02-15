@@ -1,7 +1,0 @@
-dir.myapex = /apex/com.google.cf.rild/bin
-
-[myapex]
-additional.namespaces = vndk
-namespace.default.search.paths  = /apex/com.google.cf.rild/${LIB}
-# For android.hardware.radio-service.compat
-namespace.vndk.permitted.paths  = /vendor/${LIB}/hw
