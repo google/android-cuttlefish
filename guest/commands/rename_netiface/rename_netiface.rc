@@ -1,2 +1,2 @@
-service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
+service rename_eth0 /vendor/bin/rename_netiface eth0 buried_eth0
     oneshot
