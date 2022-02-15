@@ -59,7 +59,7 @@ static void *noopRemoveWarning( void *a ) { return a; }
 /* pathname returned from RIL_REQUEST_SETUP_DATA_CALL / RIL_REQUEST_SETUP_DEFAULT_PDP */
 // This is used if Wifi is not supported, plain old eth0
 #ifdef CUTTLEFISH_ENABLE
-#define PPP_TTY_PATH_ETH0 "rmnet0"
+#define PPP_TTY_PATH_ETH0 "buried_eth0"
 #else
 #define PPP_TTY_PATH_ETH0 "eth0"
 #endif
@@ -2765,9 +2765,9 @@ static void requestSetupDataCall(void *data, size_t datalen, RIL_Token t)
             goto error;
         }
 
-        qmistatus = system("netcfg rmnet0 dhcp");
+        qmistatus = system("netcfg buried_eth0 dhcp");
 
-        RLOGD("netcfg rmnet0 dhcp: status %d\n", qmistatus);
+        RLOGD("netcfg buried_eth0 dhcp: status %d\n", qmistatus);
 
         if (qmistatus < 0) goto error;
 
