@@ -33,7 +33,6 @@ PRODUCT_PACKAGES += \
     clatd \
     clatd.conf \
     DownloadProvider \
-    drmserver \
     ethernet-service \
     fsck.f2fs \
     FusedLocation \
@@ -45,10 +44,8 @@ PRODUCT_PACKAGES += \
     netutils-wrapper-1.0 \
     screenrecord \
     StatementService \
-    Telecom \
     TelephonyProvider \
     TeleService \
-    Traceur \
     UserDictionaryProvider \
 
 PRODUCT_HOST_PACKAGES += \
