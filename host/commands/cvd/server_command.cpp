@@ -82,8 +82,9 @@ class CvdCommandHandler : public CvdServerHandler {
   INJECT(CvdCommandHandler(CvdServer& server)) : server_(server) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
-    return request.request.contents_case() ==
-           cvd::Request::ContentsCase::kCommandRequest;
+    auto invocation = ParseInvocation(request.request);
+    return CommandToBinaryMap.find(invocation.command) !=
+           CommandToBinaryMap.end();
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) {
@@ -91,56 +92,24 @@ class CvdCommandHandler : public CvdServerHandler {
     cvd::Response response;
     response.mutable_command_response();
 
-    if (request.request.command_request().args_size() == 0) {
-      // No command to handle
-      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-      response.mutable_status()->set_message("No args passed to HandleCommand");
-      return response;
-    }
+    auto invocation = ParseInvocation(request.request);
 
-    std::vector<Flag> flags;
-
-    std::vector<std::string> args;
-    for (const std::string& arg : request.request.command_request().args()) {
-      args.push_back(arg);
-    }
-
-    std::string bin;
-    std::string program_name = cpp_basename(args[0]);
-    std::string subcommand_name = program_name;
-    if (program_name == "cvd") {
-      if (args.size() == 1) {
-        // Show help if user invokes `cvd` alone.
-        subcommand_name = "help";
-      } else {
-        subcommand_name = args[1];
-      }
-    }
-    auto subcommand_bin = CommandToBinaryMap.find(subcommand_name);
-    if (subcommand_bin == CommandToBinaryMap.end()) {
-      // Show help if subcommand not found.
-      bin = kHelpBin;
-    } else {
-      bin = subcommand_bin->second;
-    }
-
-    // Remove program name from args
-    size_t args_to_skip = 1;
-    if (program_name == "cvd" && args.size() > 1) {
-      args_to_skip = 2;
-    }
-    args.erase(args.begin(), args.begin() + args_to_skip);
+    auto subcommand_bin = CommandToBinaryMap.find(invocation.command);
+    CF_EXPECT(subcommand_bin != CommandToBinaryMap.end());
+    auto bin = subcommand_bin->second;
 
     // assembly_dir is used to possibly set CuttlefishConfig path env variable
     // later. This env variable is used by subcommands when locating the config.
+    std::vector<Flag> flags;
     std::string assembly_dir =
         StringFromEnv("HOME", ".") + "/cuttlefish_assembly";
     flags.emplace_back(GflagsCompatFlag("assembly_dir", assembly_dir));
 
     // Create a copy of args before parsing, to be passed to subcommands.
-    std::vector<std::string> args_copy = args;
+    auto args = invocation.arguments;
+    auto args_copy = invocation.arguments;
 
-    CHECK(ParseFlags(flags, args));
+    CHECK(ParseFlags(flags, invocation.arguments));
 
     auto host_artifacts_path =
         request.request.command_request().env().find("ANDROID_HOST_OUT");
@@ -261,6 +230,35 @@ class CvdCommandHandler : public CvdServerHandler {
 };
 
 }  // namespace
+
+CommandInvocation ParseInvocation(const cvd::Request& request) {
+  CommandInvocation invocation;
+  if (request.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
+    return invocation;
+  }
+  if (request.command_request().args_size() == 0) {
+    return invocation;
+  }
+  for (const std::string& arg : request.command_request().args()) {
+    invocation.arguments.push_back(arg);
+  }
+  invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
+  if (invocation.arguments[0] == "cvd") {
+    if (invocation.arguments.size() == 1) {
+      // Show help if user invokes `cvd` alone.
+      invocation.command = "help";
+      invocation.arguments = {};
+    } else {  // More arguments
+      invocation.command = invocation.arguments[1];
+      invocation.arguments.erase(invocation.arguments.begin());
+      invocation.arguments.erase(invocation.arguments.begin());
+    }
+  } else {
+    invocation.command = invocation.arguments[0];
+    invocation.arguments.erase(invocation.arguments.begin());
+  }
+  return invocation;
+}
 
 fruit::Component<> cvdCommandComponent() {
   return fruit::createComponent()

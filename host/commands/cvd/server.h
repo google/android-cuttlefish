@@ -88,4 +88,11 @@ fruit::Component<> cvdVersionComponent();
 std::optional<std::string> GetCuttlefishConfigPath(
     const std::string& assembly_dir);
 
+struct CommandInvocation {
+  std::string command;
+  std::vector<std::string> arguments;
+};
+
+CommandInvocation ParseInvocation(const cvd::Request& request);
+
 }  // namespace cuttlefish
