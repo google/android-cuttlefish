@@ -151,6 +151,8 @@ class CvdClient {
       (*command_request->mutable_env())[e.substr(0, eq_pos)] =
           e.substr(eq_pos + 1);
     }
+    std::unique_ptr<char, void(*)(void*)> cwd(getcwd(nullptr, 0), &free);
+    command_request->set_working_directory(cwd.get());
 
     auto response = SendRequest(request);
     CHECK(response.ok()) << response.error().message();
