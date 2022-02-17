@@ -1,8 +1,0 @@
-service btaudio_hal_service /vendor/bin/hw/android.hardware.bluetooth.audio-service.cuttlefish
-    class hal
-    user audioserver
-    group audio camera drmrpc inet media mediadrm net_bt net_bt_admin net_bw_acct wakelock context_hub
-    capabilities BLOCK_SUSPEND
-    ioprio rt 4
-    task_profiles ProcessCapacityHigh HighPerformance
-    onrestart restart audioserver
