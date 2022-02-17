@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server.h"
-
-#include <signal.h>
-#include <unistd.h>
-
-#include <atomic>
 #include <future>
 #include <map>
-#include <mutex>
 #include <optional>
 #include <thread>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
-#include <android-base/scopeguard.h>
-#include <android-base/strings.h>
-#include <fruit/fruit.h>
+#include <build/version.h>
 
 #include "cvd_server.pb.h"
 
@@ -42,544 +33,492 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/build_api.h"
-#include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/demo_multi_vd.h"
-#include "host/commands/cvd/epoll_loop.h"
-#include "host/commands/cvd/logger.h"
-#include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server_command/acloud.h"
-#include "host/commands/cvd/server_command/cmd_list.h"
-#include "host/commands/cvd/server_command/display.h"
-#include "host/commands/cvd/server_command/env.h"
-#include "host/commands/cvd/server_command/generic.h"
-#include "host/commands/cvd/server_command/handler_proxy.h"
-#include "host/commands/cvd/server_command/load_configs.h"
-#include "host/commands/cvd/server_command/power.h"
-#include "host/commands/cvd/server_command/reset.h"
-#include "host/commands/cvd/server_command/snapshot.h"
-#include "host/commands/cvd/server_command/start.h"
-#include "host/commands/cvd/server_command/subcmd.h"
+#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
 
-using android::base::ScopeGuard;
-
 namespace cuttlefish {
+namespace {
 
-static constexpr int kNumThreads = 10;
+using android::base::Error;
 
-CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
-                     InstanceManager& instance_manager,
-                     HostToolTargetManager& host_tool_target_manager,
-                     ServerLogger& server_logger)
-    : build_api_(build_api),
-      epoll_pool_(epoll_pool),
-      instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager),
-      server_logger_(server_logger),
-      running_(true),
-      optout_(false) {
-  std::scoped_lock lock(threads_mutex_);
-  for (auto i = 0; i < kNumThreads; i++) {
-    threads_.emplace_back([this]() {
-      while (running_) {
-        auto result = epoll_pool_.HandleEvent();
-        if (!result.ok()) {
-          LOG(ERROR) << "Epoll worker error:\n" << result.error().Message();
-          LOG(DEBUG) << "Epoll worker error:\n" << result.error().Trace();
+constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
+constexpr char kStartBin[] = "cvd_internal_start";
+constexpr char kStatusBin[] = "cvd_internal_status";
+constexpr char kStopBin[] = "cvd_internal_stop";
+constexpr char kSendSmsBin[] = "cvd_send_sms";
+
+constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
+constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
+constexpr char kHelpBin[] = "help_placeholder";  // Unused, prints kHelpMessage.
+constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
+
+usage: cvd <command> <args>
+
+Commands:
+  help                Print this message.
+  help <command>      Print help for a command.
+  start               Start a device.
+  stop                Stop a running device.
+  clear               Stop all running devices and delete all instance and assembly directories.
+  fleet               View the current fleet status.
+  kill-server         Kill the cvd_server background process.
+  status              Check and print the state of a running instance.
+  host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
+  send_sms            Send an SMS to a device.
+  cvd_send_sms        Send an SMS to a device.
+
+Args:
+  <command args>      Each command has its own set of args. See cvd help <command>.
+  --clean             If provided, runs cvd kill-server before the requested command.
+)";
+
+const std::map<std::string, std::string> CommandToBinaryMap = {
+    {"help", kHelpBin},
+    {"host_bugreport", kHostBugreportBin},
+    {"cvd_host_bugreport", kHostBugreportBin},
+    {"start", kStartBin},
+    {"launch_cvd", kStartBin},
+    {"status", kStatusBin},
+    {"cvd_status", kStatusBin},
+    {"stop", kStopBin},
+    {"stop_cvd", kStopBin},
+    {"clear", kClearBin},
+    {"fleet", kFleetBin},
+    {"send_sms", kSendSmsBin},
+    {"cvd_send_sms", kSendSmsBin},
+};
+
+struct RequestWithStdio {
+  cvd::Request request;
+  SharedFD in, out, err;
+  std::optional<SharedFD> extra;
+};
+
+class CvdServer {
+ public:
+  void ServerLoop(const SharedFD& server) {
+    while (running_) {
+      SharedFDSet read_set;
+      read_set.Set(server);
+      int num_fds = Select(&read_set, nullptr, nullptr, nullptr);
+      if (num_fds <= 0) {  // Ignore select error
+        PLOG(ERROR) << "Select call returned error.";
+      } else if (read_set.IsSet(server)) {
+        auto client = SharedFD::Accept(*server);
+        while (true) {
+          auto request = GetRequest(client);
+          if (!request.ok()) {
+            client->Close();
+            break;
+          }
+          Result<cvd::Response> response;
+          switch (request->request.contents_case()) {
+            case cvd::Request::ContentsCase::CONTENTS_NOT_SET:
+              // No more messages from this client.
+              client->Close();
+              break;
+            case cvd::Request::ContentsCase::kVersionRequest:
+              response = GetVersion(*request);
+              break;
+            case cvd::Request::ContentsCase::kShutdownRequest:
+              response = Shutdown(*request);
+              break;
+            case cvd::Request::ContentsCase::kCommandRequest:
+              response = HandleCommand(*request);
+              break;
+            default:
+              response = CF_ERR("Unknown request in cvd_server.");
+              break;
+          }
+          if (response.ok()) {
+            SendResponse(client, *response);
+          } else {
+            LOG(ERROR) << response.error();
+            cvd::Response error_response;
+            error_response.mutable_status()->set_code(cvd::Status::INTERNAL);
+            *error_response.mutable_status()->mutable_message() =
+                response.error().message();
+            SendResponse(client, error_response);
+            client->Close();
+          }
         }
       }
-      auto wakeup = BestEffortWakeup();
-      CHECK(wakeup.ok()) << wakeup.error().Trace();
-    });
+    }
   }
-}
 
-CvdServer::~CvdServer() {
-  running_ = false;
-  auto wakeup = BestEffortWakeup();
-  CHECK(wakeup.ok()) << wakeup.error().Trace();
-  Join();
-}
+  Result<cvd::Response> GetVersion(const RequestWithStdio& request) const {
+    CF_EXPECT(request.request.contents_case() ==
+              cvd::Request::ContentsCase::kVersionRequest);
+    cvd::Response response;
+    response.mutable_version_response()->mutable_version()->set_major(
+        cvd::kVersionMajor);
+    response.mutable_version_response()->mutable_version()->set_minor(
+        cvd::kVersionMinor);
+    response.mutable_version_response()->mutable_version()->set_build(
+        android::build::GetBuildNumber());
+    response.mutable_status()->set_code(cvd::Status::OK);
+    return response;
+  }
 
-fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
-  return fruit::createComponent()
-      .bindInstance(*server)
-      .bindInstance(server->instance_manager_)
-      .bindInstance(server->build_api_)
-      .bindInstance(server->host_tool_target_manager_)
-      .bindInstance<
-          fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>(
-          server->optout_)
-      .install(CvdAcloudComponent)
-      .install(CvdCmdlistComponent)
-      .install(CommandSequenceExecutorComponent)
-      .install(cvdCommandComponent)
-      .install(CvdDevicePowerComponent)
-      .install(CvdDisplayComponent)
-      .install(CvdEnvComponent)
-      .install(cvdGenericCommandComponent)
-      .install(CvdHandlerProxyComponent)
-      .install(CvdHelpComponent)
-      .install(CvdResetComponent)
-      .install(CvdRestartComponent)
-      .install(CvdSnapshotComponent)
-      .install(cvdShutdownComponent)
-      .install(CvdStartCommandComponent)
-      .install(cvdVersionComponent)
-      .install(DemoMultiVdComponent)
-      .install(LoadConfigsComponent);
-}
+  Result<cvd::Response> Shutdown(const RequestWithStdio& request) {
+    CF_EXPECT(request.request.contents_case() ==
+              cvd::Request::ContentsCase::kShutdownRequest);
+    cvd::Response response;
+    response.mutable_shutdown_response();
 
-Result<void> CvdServer::BestEffortWakeup() {
-  // This attempts to cascade through the responder threads, forcing them
-  // to wake up and see that running_ is false, then exit and wake up
-  // further threads.
-  auto eventfd = SharedFD::Event();
-  CF_EXPECT(eventfd->IsOpen(), eventfd->StrError());
-  CF_EXPECT(eventfd->EventfdWrite(1) == 0, eventfd->StrError());
+    if (!request.extra) {
+      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
+      response.mutable_status()->set_message(
+          "Missing extra SharedFD for shutdown");
+      return response;
+    }
 
-  auto cb = [](EpollEvent) -> Result<void> { return {}; };
-  CF_EXPECT(epoll_pool_.Register(eventfd, EPOLLIN, cb));
-  return {};
-}
+    if (request.request.shutdown_request().clear()) {
+      *response.mutable_status() = CvdClear(request.out, request.err);
+      return response;
+    }
 
-void CvdServer::Stop() {
-  {
-    std::lock_guard lock(ongoing_requests_mutex_);
+    if (!assemblies_.empty()) {
+      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
+      response.mutable_status()->set_message(
+          "Cannot shut down cvd_server while devices are being tracked. "
+          "Try `cvd kill-server`.");
+      return response;
+    }
+
+    // Intentionally leak the extra fd so that it only closes
+    // when this process fully exits.
+    (*request.extra)->UNMANAGED_Dup();
+
+    WriteAll(request.out, "Stopping the cvd_server.\n");
     running_ = false;
-  }
-  while (true) {
-    std::shared_ptr<OngoingRequest> request;
-    {
-      std::lock_guard lock(ongoing_requests_mutex_);
-      if (ongoing_requests_.empty()) {
-        break;
-      }
-      auto it = ongoing_requests_.begin();
-      request = *it;
-      ongoing_requests_.erase(it);
-    }
-    {
-      std::lock_guard lock(request->mutex);
-      if (request->handler == nullptr) {
-        continue;
-      }
-      request->handler->Interrupt();
-    }
-    auto wakeup = BestEffortWakeup();
-    CHECK(wakeup.ok()) << wakeup.error().Trace();
-    std::scoped_lock lock(threads_mutex_);
-    for (auto& thread : threads_) {
-      auto current_thread = thread.get_id() == std::this_thread::get_id();
-      auto matching_thread = thread.get_id() == request->thread_id;
-      if (!current_thread && matching_thread && thread.joinable()) {
-        thread.join();
-      }
-    }
-  }
-}
 
-void CvdServer::Join() {
-  for (auto& thread : threads_) {
-    if (thread.joinable()) {
-      thread.join();
+    response.mutable_status()->set_code(cvd::Status::OK);
+    return response;
+  }
+
+  Result<cvd::Response> HandleCommand(const RequestWithStdio& request) {
+    CF_EXPECT(request.request.contents_case() ==
+              cvd::Request::ContentsCase::kCommandRequest);
+    cvd::Response response;
+    response.mutable_command_response();
+
+    if (request.request.command_request().args_size() == 0) {
+      // No command to handle
+      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
+      response.mutable_status()->set_message("No args passed to HandleCommand");
+      return response;
     }
-  }
-}
 
-Result<void> CvdServer::Exec(const ExecParam& exec_param) {
-  CF_EXPECT(server_fd_->IsOpen(), "Server not running");
-  Stop();
-  android::base::unique_fd server_dup{server_fd_->UNMANAGED_Dup()};
-  CF_EXPECT(server_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-  android::base::unique_fd client_dup{
-      exec_param.carryover_client_fd->UNMANAGED_Dup()};
-  CF_EXPECT(client_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-  android::base::unique_fd client_stderr_dup{
-      exec_param.client_stderr_fd->UNMANAGED_Dup()};
-  CF_EXPECT(client_stderr_dup.get() >= 0,
-            "dup: \"" << exec_param.client_stderr_fd->StrError() << "\"");
-  std::string acloud_translator_opt_out_arg(
-      "-INTERNAL_acloud_translator_optout=");
-  if (optout_) {
-    acloud_translator_opt_out_arg.append("true");
-  } else {
-    acloud_translator_opt_out_arg.append("false");
-  }
-  cvd_common::Args argv_str = {
-      kServerExecPath,
-      "-INTERNAL_server_fd=" + std::to_string(server_dup.get()),
-      "-INTERNAL_carryover_client_fd=" + std::to_string(client_dup.get()),
-      "-INTERNAL_carryover_stderr_fd=" +
-          std::to_string(client_stderr_dup.get()),
-      acloud_translator_opt_out_arg,
-  };
+    std::vector<Flag> flags;
 
-  int in_memory_dup = -1;
-  ScopeGuard exit_action([&in_memory_dup]() {
-    if (in_memory_dup >= 0) {
-      if (close(in_memory_dup) != 0) {
-        LOG(ERROR) << "Failed to close file " << in_memory_dup;
+    std::vector<std::string> args;
+    for (const std::string& arg : request.request.command_request().args()) {
+      args.push_back(arg);
+    }
+
+    std::string bin;
+    std::string program_name = cpp_basename(args[0]);
+    std::string subcommand_name = program_name;
+    if (program_name == "cvd") {
+      if (args.size() == 1) {
+        // Show help if user invokes `cvd` alone.
+        subcommand_name = "help";
+      } else {
+        subcommand_name = args[1];
       }
     }
-  });
-  if (exec_param.in_memory_data_fd) {
-    in_memory_dup = exec_param.in_memory_data_fd.value()->UNMANAGED_Dup();
-    CF_EXPECTF(in_memory_dup >= 0, "dup: \"{}\"",
-               exec_param.in_memory_data_fd.value()->StrError());
-    argv_str.push_back("-INTERNAL_memory_carryover_fd=" +
-                       std::to_string(in_memory_dup));
-  }
-
-  std::vector<char*> argv_cstr;
-  for (const auto& argv : argv_str) {
-    argv_cstr.emplace_back(strdup(argv.c_str()));
-  }
-  argv_cstr.emplace_back(nullptr);
-  android::base::unique_fd new_exe_dup{exec_param.new_exe->UNMANAGED_Dup()};
-  CF_EXPECT(new_exe_dup.get() >= 0,
-            "dup: \"" << exec_param.new_exe->StrError() << "\"");
-
-  if (exec_param.verbose) {
-    LOG(ERROR) << "Server Exec'ing: " << android::base::Join(argv_str, " ");
-  }
-
-  fexecve(new_exe_dup.get(), argv_cstr.data(), environ);
-  for (const auto& argv : argv_cstr) {
-    free(argv);
-  }
-  return CF_ERR("fexecve failed: \"" << strerror(errno) << "\"");
-}
-
-Result<CvdServerHandler*> RequestHandler(
-    const RequestWithStdio& request,
-    const std::vector<CvdServerHandler*>& handlers) {
-  Result<cvd::Response> response;
-  std::vector<CvdServerHandler*> compatible_handlers;
-  for (auto& handler : handlers) {
-    if (CF_EXPECT(handler->CanHandle(request))) {
-      compatible_handlers.push_back(handler);
-    }
-  }
-  CF_EXPECT(compatible_handlers.size() == 1,
-            "Expected exactly one handler for message, found "
-                << compatible_handlers.size());
-  return compatible_handlers[0];
-}
-
-Result<void> CvdServer::StartServer(SharedFD server_fd) {
-  server_fd_ = server_fd;
-  auto cb = [this](EpollEvent ev) -> Result<void> {
-    CF_EXPECT(AcceptClient(ev));
-    return {};
-  };
-  CF_EXPECT(epoll_pool_.Register(server_fd, EPOLLIN, cb));
-  return {};
-}
-
-Result<void> CvdServer::AcceptCarryoverClient(SharedFD client) {
-  auto self_cb = [this](EpollEvent ev) -> Result<void> {
-    CF_EXPECT(HandleMessage(ev));
-    return {};
-  };
-  CF_EXPECT(epoll_pool_.Register(client, EPOLLIN, self_cb));
-
-  cvd::Response success_message;
-  success_message.mutable_status()->set_code(cvd::Status::OK);
-  success_message.mutable_command_response();
-  CF_EXPECT(SendResponse(client, success_message));
-  return {};
-}
-
-Result<void> CvdServer::AcceptClient(EpollEvent event) {
-  ScopeGuard stop_on_failure([this] { Stop(); });
-
-  CF_EXPECT(event.events & EPOLLIN);
-  auto client_fd = SharedFD::Accept(*event.fd);
-  CF_EXPECT(client_fd->IsOpen(), client_fd->StrError());
-  auto client_cb = [this](EpollEvent ev) -> Result<void> {
-    CF_EXPECT(HandleMessage(ev));
-    return {};
-  };
-  CF_EXPECT(epoll_pool_.Register(client_fd, EPOLLIN, client_cb));
-
-  auto self_cb = [this](EpollEvent ev) -> Result<void> {
-    CF_EXPECT(AcceptClient(ev));
-    return {};
-  };
-  CF_EXPECT(epoll_pool_.Register(event.fd, EPOLLIN, self_cb));
-
-  stop_on_failure.Disable();
-  return {};
-}
-
-Result<void> CvdServer::HandleMessage(EpollEvent event) {
-  ScopeGuard abandon_client([this, event] { epoll_pool_.Remove(event.fd); });
-
-  if (event.events & EPOLLHUP) {  // Client went away.
-    epoll_pool_.Remove(event.fd);
-    return {};
-  }
-
-  CF_EXPECT(event.events & EPOLLIN);
-  auto request = CF_EXPECT(GetRequest(event.fd));
-  if (!request) {  // End-of-file / client went away.
-    epoll_pool_.Remove(event.fd);
-    return {};
-  }
-  const auto verbosity = request->Message().verbosity();
-  const auto encoded_verbosity = EncodeVerbosity(verbosity);
-  auto logger =
-      encoded_verbosity.ok()
-          ? server_logger_.LogThreadToFd(request->Err(), *encoded_verbosity)
-          : server_logger_.LogThreadToFd(request->Err());
-  auto response = HandleRequest(*request, event.fd);
-  if (!response.ok()) {
-    cvd::Response failure_message;
-    failure_message.mutable_status()->set_code(cvd::Status::INTERNAL);
-    failure_message.mutable_status()->set_message(response.error().Trace());
-    CF_EXPECT(SendResponse(event.fd, failure_message));
-    return {};  // Error already sent to the client, don't repeat on the server
-  }
-  CF_EXPECT(SendResponse(event.fd, *response));
-
-  auto self_cb = [this, err = request->Err()](EpollEvent ev) -> Result<void> {
-    CF_EXPECT(HandleMessage(ev));
-    return {};
-  };
-  CF_EXPECT(epoll_pool_.Register(event.fd, EPOLLIN, self_cb));
-
-  abandon_client.Disable();
-  return {};
-}
-
-static Result<android::base::LogSeverity> Verbosity(
-    const RequestWithStdio& request, const std::string& default_val) {
-  if (request.Message().contents_case() !=
-      cvd::Request::ContentsCase::kCommandRequest) {
-    return default_val.empty() ? kCvdDefaultVerbosity
-                               : CF_EXPECT(EncodeVerbosity(default_val));
-  }
-  const auto& selector_opts =
-      request.Message().command_request().selector_opts();
-  auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
-  auto verbosity_flag =
-      selector::SelectorFlags::New().FlagsAsCollection().GetFlag(
-          selector::SelectorFlags::kVerbosity);
-  auto verbosity_opt =
-      CF_EXPECT(verbosity_flag->FilterFlag<std::string>(selector_args));
-  auto ret_val = verbosity_opt.value_or(default_val);
-  if (ret_val.empty()) {
-    const auto severity_in_string =
-        CF_EXPECT(VerbosityToString(kCvdDefaultVerbosity));
-    LOG(DEBUG) << "Verbosity level is not given, so using the default value: "
-               << severity_in_string << " is used";
-    return kCvdDefaultVerbosity;
-  }
-  return CF_EXPECT(EncodeVerbosity(ret_val),
-                   "Invalid verbosity level : \"" << ret_val << "\"");
-}
-
-// convert HOME, ANDROID_HOST_OUT, ANDROID_SOONG_HOST_OUT
-// and ANDROID_PRODUCT_OUT into absolute paths if any.
-static Result<RequestWithStdio> ConvertDirPathToAbsolute(
-    const RequestWithStdio& request) {
-  if (request.Message().contents_case() !=
-      cvd::Request::ContentsCase::kCommandRequest) {
-    return request;
-  }
-  if (request.Message().command_request().env().empty()) {
-    return request;
-  }
-  auto envs =
-      cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  std::unordered_set<std::string> interested_envs{
-      kAndroidHostOut, kAndroidSoongHostOut, "HOME", kAndroidProductOut};
-  const auto& current_dir =
-      request.Message().command_request().working_directory();
-
-  // make sure that "~" is not included
-  for (const auto& key : interested_envs) {
-    if (!Contains(envs, key)) {
-      continue;
-    }
-    const auto& dir = envs.at(key);
-    CF_EXPECT(dir != "~" && !android::base::StartsWith(dir, "~/"),
-              "The " << key << " directory should not start with ~");
-  }
-
-  for (const auto& key : interested_envs) {
-    if (!Contains(envs, key)) {
-      continue;
-    }
-    const auto dir = envs.at(key);
-    envs[key] =
-        CF_EXPECT(EmulateAbsolutePath({.current_working_dir = current_dir,
-                                       .home_dir = std::nullopt,  // unused
-                                       .path_to_convert = dir,
-                                       .follow_symlink = false}));
-  }
-
-  auto cmd_args =
-      cvd_common::ConvertToArgs(request.Message().command_request().args());
-  auto selector_args = cvd_common::ConvertToArgs(
-      request.Message().command_request().selector_opts().args());
-  RequestWithStdio new_request(
-      request.Client(),
-      MakeRequest({.cmd_args = std::move(cmd_args),
-                   .env = std::move(envs),
-                   .selector_args = std::move(selector_args),
-                   .working_dir = current_dir},
-                  request.Message().command_request().wait_behavior()),
-      request.FileDescriptors(), request.Credentials());
-  return new_request;
-}
-
-static Result<void> VerifyUser(const RequestWithStdio& request) {
-  CF_EXPECT(request.Credentials(),
-            "ucred is not available while it is necessary.");
-  const uid_t client_uid = request.Credentials()->uid;
-  CF_EXPECT_EQ(client_uid, getuid(), "Cvd server process is one per user.");
-  return {};
-}
-
-Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
-                                               SharedFD client) {
-  CF_EXPECT(VerifyUser(orig_request));
-  auto request = CF_EXPECT(ConvertDirPathToAbsolute(orig_request));
-  const auto verbosity =
-      CF_EXPECT(Verbosity(request, request.Message().verbosity()));
-  server_logger_.SetSeverity(verbosity);
-
-  fruit::Injector<> injector(RequestComponent, this);
-
-  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
-    CF_EXPECT(late_injected->LateInject(injector));
-  }
-
-  auto possible_handlers = injector.getMultibindings<CvdServerHandler>();
-
-  // Even if the interrupt callback outlives the request handler, it'll only
-  // hold on to this struct which will be cleaned out when the request handler
-  // exits.
-  auto shared = std::make_shared<OngoingRequest>();
-  shared->handler = CF_EXPECT(RequestHandler(request, possible_handlers));
-  shared->thread_id = std::this_thread::get_id();
-
-  {
-    std::lock_guard lock(ongoing_requests_mutex_);
-    if (running_) {
-      ongoing_requests_.insert(shared);
+    auto subcommand_bin = CommandToBinaryMap.find(subcommand_name);
+    if (subcommand_bin == CommandToBinaryMap.end()) {
+      // Show help if subcommand not found.
+      bin = kHelpBin;
     } else {
-      // We're executing concurrently with a Stop() call.
-      return {};
+      bin = subcommand_bin->second;
     }
-  }
-  ScopeGuard remove_ongoing_request([this, shared] {
-    std::lock_guard lock(ongoing_requests_mutex_);
-    ongoing_requests_.erase(shared);
-  });
 
-  auto interrupt_cb = [this, shared, verbosity,
-                       err = request.Err()](EpollEvent) -> Result<void> {
-    auto logger = server_logger_.LogThreadToFd(err, verbosity);
-    std::lock_guard lock(shared->mutex);
-    CF_EXPECT(shared->handler != nullptr);
-    CF_EXPECT(shared->handler->Interrupt());
-    return {};
+    // Remove program name from args
+    size_t args_to_skip = 1;
+    if (program_name == "cvd" && args.size() > 1) {
+      args_to_skip = 2;
+    }
+    args.erase(args.begin(), args.begin() + args_to_skip);
+
+    // assembly_dir is used to possibly set CuttlefishConfig path env variable
+    // later. This env variable is used by subcommands when locating the config.
+    std::string assembly_dir =
+        StringFromEnv("HOME", ".") + "/cuttlefish_assembly";
+    flags.emplace_back(GflagsCompatFlag("assembly_dir", assembly_dir));
+
+    // Create a copy of args before parsing, to be passed to subcommands.
+    std::vector<std::string> args_copy = args;
+
+    CHECK(ParseFlags(flags, args));
+
+    auto host_artifacts_path =
+        request.request.command_request().env().find("ANDROID_HOST_OUT");
+    if (host_artifacts_path == request.request.command_request().env().end()) {
+      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
+      response.mutable_status()->set_message(
+          "Missing ANDROID_HOST_OUT in client environment.");
+      return response;
+    }
+
+    if (bin == kHelpBin) {
+      // Handle `cvd help`
+      if (args.empty()) {
+        WriteAll(request.out, kHelpMessage);
+        response.mutable_status()->set_code(cvd::Status::OK);
+        return response;
+      }
+
+      // Certain commands have no detailed help text.
+      std::set<std::string> builtins = {"help", "clear", "kill-server"};
+      auto it = CommandToBinaryMap.find(args[0]);
+      if (it == CommandToBinaryMap.end() ||
+          builtins.find(args[0]) != builtins.end()) {
+        WriteAll(request.out, kHelpMessage);
+        response.mutable_status()->set_code(cvd::Status::OK);
+        return response;
+      }
+
+      // Handle `cvd help <subcommand>` by calling the subcommand with --help.
+      bin = it->second;
+      args_copy.push_back("--help");
+    } else if (bin == kClearBin) {
+      *response.mutable_status() = CvdClear(request.out, request.err);
+      return response;
+    } else if (bin == kFleetBin) {
+      auto env_config = request.request.command_request().env().find(
+          kCuttlefishConfigEnvVarName);
+      std::string config_path;
+      if (env_config != request.request.command_request().env().end()) {
+        config_path = env_config->second;
+      }
+      *response.mutable_status() = CvdFleet(request.out, config_path);
+      return response;
+    } else if (bin == kStartBin) {
+      // Track this assembly_dir in the fleet.
+      AssemblyInfo info;
+      info.host_binaries_dir = host_artifacts_path->second + "/bin/";
+      assemblies_.emplace(assembly_dir, info);
+    }
+
+    Command command(assemblies_[assembly_dir].host_binaries_dir + bin);
+    for (const std::string& arg : args_copy) {
+      command.AddParameter(arg);
+    }
+
+    // Set CuttlefishConfig path based on assembly dir,
+    // used by subcommands when locating the CuttlefishConfig.
+    if (request.request.command_request().env().count(
+            kCuttlefishConfigEnvVarName) == 0) {
+      auto config_path = GetCuttlefishConfigPath(assembly_dir);
+      if (config_path) {
+        command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                       *config_path);
+      }
+    }
+    for (auto& it : request.request.command_request().env()) {
+      command.AddEnvironmentVariable(it.first, it.second);
+    }
+
+    // Redirect stdin, stdout, stderr back to the cvd client
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.in);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.out);
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.err);
+    SubprocessOptions options;
+    options.ExitWithParent(false);
+    command.Start(options);
+
+    response.mutable_status()->set_code(cvd::Status::OK);
+    return response;
+  }
+
+ private:
+  using AssemblyDir = std::string;
+  struct AssemblyInfo {
+    std::string host_binaries_dir;
   };
-  CF_EXPECT(epoll_pool_.Register(client, EPOLLHUP, interrupt_cb));
+  std::map<AssemblyDir, AssemblyInfo> assemblies_;
+  bool running_ = true;
 
-  auto response = CF_EXPECT(shared->handler->Handle(request));
-  {
-    std::lock_guard lock(shared->mutex);
-    shared->handler = nullptr;
-  }
-  CF_EXPECT(epoll_pool_.Remove(client));  // Delete interrupt handler
-
-  return response;
-}
-
-Result<void> CvdServer::InstanceDbFromJson(const std::string& json_string) {
-  const uid_t uid = getuid();
-  auto json = CF_EXPECT(ParseJson(json_string));
-  CF_EXPECT(instance_manager_.LoadFromJson(uid, json));
-  return {};
-}
-
-static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
-  return fruit::createComponent()
-      .addMultibinding<CvdServer, CvdServer>()
-      .bindInstance(*server_logger)
-      .install(BuildApiModule)
-      .install(EpollLoopComponent)
-      .install(HostToolTargetManagerComponent);
-}
-
-Result<int> CvdServerMain(ServerMainParam&& param) {
-  SetMinimumVerbosity(android::base::VERBOSE);
-
-  LOG(INFO) << "Starting server";
-
-  CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
-
-  signal(SIGPIPE, SIG_IGN);
-
-  SharedFD server_fd = std::move(param.internal_server_fd);
-  CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
-
-  std::unique_ptr<ServerLogger> server_logger = std::move(param.server_logger);
-  fruit::Injector<> injector(ServerComponent, server_logger.get());
-
-  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
-    CF_EXPECT(late_injected->LateInject(injector));
+  std::optional<std::string> GetCuttlefishConfigPath(
+      const std::string& assembly_dir) const {
+    std::string assembly_dir_realpath;
+    if (DirectoryExists(assembly_dir)) {
+      CHECK(android::base::Realpath(assembly_dir, &assembly_dir_realpath));
+      std::string config_path =
+          AbsolutePath(assembly_dir_realpath + "/" + "cuttlefish_config.json");
+      if (FileExists(config_path)) {
+        return config_path;
+      }
+    }
+    return {};
   }
 
-  auto server_bindings = injector.getMultibindings<CvdServer>();
-  CF_EXPECT(server_bindings.size() == 1,
-            "Expected 1 server binding, got " << server_bindings.size());
-  auto& server = *(server_bindings[0]);
-
-  std::optional<SharedFD> memory_carryover_fd =
-      std::move(param.memory_carryover_fd);
-  if (memory_carryover_fd) {
-    const std::string json_string =
-        CF_EXPECT(ReadAllFromMemFd(*memory_carryover_fd));
-    CF_EXPECT(server.InstanceDbFromJson(json_string),
-              "Failed to load from: " << json_string);
+  Result<UnixMessageSocket> GetClient(const SharedFD& client) const {
+    UnixMessageSocket result(client);
+    CF_EXPECT(result.EnableCredentials(true),
+              "Unable to enable UnixMessageSocket credentials.");
+    return result;
   }
-  if (param.acloud_translator_optout) {
-    server.optout_ = param.acloud_translator_optout.value();
-  }
-  server.StartServer(server_fd);
 
-  SharedFD carryover_client = std::move(param.carryover_client_fd);
-  // The carryover_client wouldn't be available after AcceptCarryoverClient()
-  if (carryover_client->IsOpen()) {
-    // release scoped_logger for this thread inside AcceptCarryoverClient()
-    CF_EXPECT(server.AcceptCarryoverClient(carryover_client));
-  }
-  server.Join();
+  Result<RequestWithStdio> GetRequest(const SharedFD& client) const {
+    RequestWithStdio result;
 
+    UnixMessageSocket reader =
+        CF_EXPECT(GetClient(client), "Couldn't get client");
+    auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
+
+    CF_EXPECT(!read_result.data.empty(),
+              "Read empty packet, so the client has probably closed "
+              "the connection.");
+
+    std::string serialized(read_result.data.begin(), read_result.data.end());
+    cvd::Request request;
+    CF_EXPECT(request.ParseFromString(serialized),
+              "Unable to parse serialized request proto.");
+    result.request = request;
+
+    CF_EXPECT(read_result.HasFileDescriptors(),
+              "Missing stdio fds from request.");
+    auto fds = CF_EXPECT(read_result.FileDescriptors(),
+                         "Error reading stdio fds from request");
+    CF_EXPECT(
+        fds.size() == 3 || fds.size() == 4,
+        "Wrong number of FDs, received " << fds.size() << ", wanted 3 or 4");
+    result.in = fds[0];
+    result.out = fds[1];
+    result.err = fds[2];
+    if (fds.size() == 4) {
+      result.extra = fds[3];
+    }
+
+    if (read_result.HasCredentials()) {
+      // TODO(b/198453477): Use Credentials to control command access.
+      auto creds =
+          CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
+      LOG(DEBUG) << "Has credentials, uid=" << creds.uid;
+    }
+
+    return result;
+  }
+
+  Result<void> SendResponse(const SharedFD& client,
+                            const cvd::Response& response) const {
+    std::string serialized;
+    CF_EXPECT(response.SerializeToString(&serialized),
+              "Unable to serialize response proto.");
+    UnixSocketMessage message;
+    message.data = std::vector<char>(serialized.begin(), serialized.end());
+
+    UnixMessageSocket writer =
+        CF_EXPECT(GetClient(client), "Couldn't get client");
+    return writer.WriteMessage(message);
+  }
+
+  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err) {
+    cvd::Status status;
+    for (const auto& it : assemblies_) {
+      const AssemblyDir& assembly_dir = it.first;
+      const AssemblyInfo& assembly_info = it.second;
+      auto config_path = GetCuttlefishConfigPath(assembly_dir);
+      if (config_path) {
+        // Stop all instances that are using this assembly dir.
+        Command command(assembly_info.host_binaries_dir + kStopBin);
+        // Delete the instance dirs.
+        command.AddParameter("--clear_instance_dirs");
+        command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+        command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
+        command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                       *config_path);
+        if (int wait_result = command.Start().Wait(); wait_result != 0) {
+          WriteAll(
+              out,
+              "Warning: error stopping instances for assembly dir " +
+                  assembly_dir +
+                  ".\nThis can happen if instances are already stopped.\n");
+        }
+
+        // Delete the assembly dir.
+        WriteAll(out, "Deleting " + assembly_dir + "\n");
+        if (DirectoryExists(assembly_dir) &&
+            !RecursivelyRemoveDirectory(assembly_dir)) {
+          status.set_code(cvd::Status::FAILED_PRECONDITION);
+          status.set_message("Unable to rmdir " + assembly_dir);
+          return status;
+        }
+      }
+    }
+    RemoveFile(StringFromEnv("HOME", ".") + "/cuttlefish_runtime");
+    RemoveFile(GetGlobalConfigFileLink());
+    WriteAll(out,
+             "Stopped all known instances and deleted all "
+             "known assembly and instance dirs.\n");
+
+    assemblies_.clear();
+    status.set_code(cvd::Status::OK);
+    return status;
+  }
+
+  cvd::Status CvdFleet(const SharedFD& out,
+                       const std::string& env_config) const {
+    for (const auto& it : assemblies_) {
+      const AssemblyDir& assembly_dir = it.first;
+      const AssemblyInfo& assembly_info = it.second;
+      auto config_path = GetCuttlefishConfigPath(assembly_dir);
+      if (FileExists(env_config)) {
+        config_path = env_config;
+      }
+      if (config_path) {
+        // Reads CuttlefishConfig::instance_names(), which must remain stable
+        // across changes to config file format (within server_constants.h major
+        // version).
+        auto config = CuttlefishConfig::GetFromFile(*config_path);
+        if (config) {
+          for (const std::string& instance_name : config->instance_names()) {
+            Command command(assembly_info.host_binaries_dir + kStatusBin);
+            command.AddParameter("--print");
+            command.AddParameter("--instance_name=", instance_name);
+            command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+            command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                           *config_path);
+            if (int wait_result = command.Start().Wait(); wait_result != 0) {
+              WriteAll(out, "      (unknown instance status error)");
+            }
+          }
+        }
+      }
+    }
+    cvd::Status status;
+    status.set_code(cvd::Status::OK);
+    return status;
+  }
+};
+
+int CvdServerMain(int argc, char** argv) {
+  android::base::InitLogging(argv, android::base::StderrLogger);
+
+  std::vector<Flag> flags;
+  SharedFD server_fd;
+  flags.emplace_back(
+      SharedFDFlag("server_fd", server_fd)
+          .Help("File descriptor to an already created vsock server"));
+  std::vector<std::string> args =
+      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  CHECK(ParseFlags(flags, args));
+
+  CHECK(server_fd->IsOpen()) << "Did not receive a valid cvd_server fd";
+  CvdServer server;
+  server.ServerLoop(server_fd);
   return 0;
 }
 
-Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd) {
-  const auto n_message_size = mem_fd->LSeek(0, SEEK_END);
-  CF_EXPECT_NE(n_message_size, -1, "LSeek on the memory file failed.");
-  std::vector<char> buffer(n_message_size);
-  CF_EXPECT_EQ(mem_fd->LSeek(0, SEEK_SET), 0, mem_fd->StrError());
-  auto n_read = ReadExact(mem_fd, buffer.data(), n_message_size);
-  CF_EXPECT(n_read == n_message_size,
-            "Expected to read " << n_message_size << " bytes but actually read "
-                                << n_read << " bytes.");
-  std::string message(buffer.begin(), buffer.end());
-  return message;
-}
-
+}  // namespace
 }  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::CvdServerMain(argc, argv);
+}
