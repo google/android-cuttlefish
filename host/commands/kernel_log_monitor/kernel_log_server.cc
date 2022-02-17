@@ -61,6 +61,7 @@ constexpr struct {
     // TODO(b/131864854): Replace this with a string less likely to change
     {"init: starting service 'adbd'...", Event::AdbdStarted, kBare},
     {cuttlefish::kScreenChangedMessage, Event::ScreenChanged, kKeyValuePair},
+    {cuttlefish::kBootloaderLoadedMessage, Event::BootloaderLoaded, kBare},
     {cuttlefish::kKernelLoadedMessage, Event::KernelLoaded, kBare},
     {cuttlefish::kDisplayPowerModeChangedMessage,
      monitor::Event::DisplayPowerModeChanged, kKeyValuePair},
