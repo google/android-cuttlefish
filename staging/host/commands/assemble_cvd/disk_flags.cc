@@ -351,28 +351,25 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
-bool CreateOsCompositeDisk(const CuttlefishConfig& config) {
-  if (!SharedFD::Open(config.os_composite_disk_path().c_str(),
-                      O_WRONLY | O_CREAT, 0644)
-           ->IsOpen()) {
-    LOG(ERROR) << "Could not ensure " << config.os_composite_disk_path()
-               << " exists";
-    return false;
-  }
+Result<void> CreateOsCompositeDisk(const CuttlefishConfig& config) {
+  CF_EXPECT(
+      SharedFD::Open(config.os_composite_disk_path().c_str(),
+                     O_WRONLY | O_CREAT, 0644)
+          ->IsOpen(),
+      "Could not ensure \"" << config.os_composite_disk_path() << "\" exists");
   if (config.vm_manager() == CrosvmManager::name()) {
     // Check if filling in the sparse image would run out of disk space.
     auto existing_sizes = SparseFileSizes(FLAGS_data_image);
-    if (existing_sizes.sparse_size == 0 && existing_sizes.disk_size == 0) {
-      LOG(ERROR) << "Unable to determine size of \"" << FLAGS_data_image
-                 << "\". Does this file exist?";
-    }
+    CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
+              "Unable to determine size of \"" << FLAGS_data_image
+                                               << "\". Does this file exist?");
     auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
     if (available_space < existing_sizes.sparse_size - existing_sizes.disk_size) {
       // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a separate machine
-      LOG(ERROR) << "Not enough space remaining in fs containing " << FLAGS_data_image;
-      LOG(ERROR) << "Wanted " << (existing_sizes.sparse_size - existing_sizes.disk_size);
-      LOG(ERROR) << "Got " << available_space;
-      return false;
+      return CF_ERR("Not enough space remaining in fs containing \""
+                    << FLAGS_data_image << "\", wanted "
+                    << (existing_sizes.sparse_size - existing_sizes.disk_size)
+                    << ", got " << available_space);
     } else {
       LOG(DEBUG) << "Available space: " << available_space;
       LOG(DEBUG) << "Sparse size of \"" << FLAGS_data_image << "\": "
@@ -391,7 +388,7 @@ bool CreateOsCompositeDisk(const CuttlefishConfig& config) {
     // aggregator doesn't maintain any sparse attributes.
     AggregateImage(GetOsCompositeDiskConfig(), config.os_composite_disk_path());
   }
-  return true;
+  return {};
 }
 
 bool CreatePersistentCompositeDisk(
@@ -1097,22 +1094,22 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(InitBootloaderEnvPartitionComponent);
 }
 
-void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                            const CuttlefishConfig& config) {
+Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
+                                    const CuttlefishConfig& config) {
   // TODO(schuffelen): Unify this with the other injector created in
   // assemble_cvd.cpp
   fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config);
 
   const auto& features = injector.getMultibindings<Feature>();
-  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
+  CF_EXPECT(Feature::RunSetup(features));
 
   for (const auto& instance : config.Instances()) {
     fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
                                         &fetcher_config, &config, &instance);
     const auto& instance_features =
         instance_injector.getMultibindings<Feature>();
-    CHECK(Feature::RunSetup(instance_features))
-        << "Failed to run instance feature setup.";
+    CF_EXPECT(Feature::RunSetup(instance_features),
+              "instance = \"" << instance.instance_name() << "\"");
   }
 
   bool oldOsCompositeDisk = ShouldCreateOsCompositeDisk(config);
@@ -1120,8 +1117,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       config.AssemblyPath("os_composite_disk_config.txt"),
       GetOsCompositeDiskConfig());
   if (!osCompositeMatchesDiskConfig || oldOsCompositeDisk || !FLAGS_resume) {
-    CHECK(CreateOsCompositeDisk(config))
-        << "Failed to create OS composite disk";
+    CF_EXPECT(CreateOsCompositeDisk(config));
 
     for (auto instance : config.Instances()) {
       if (FLAGS_resume) {
@@ -1131,13 +1127,18 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                   << instance.serial_number();
       }
       if (FileExists(instance.access_kregistry_path())) {
-        CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
+        CF_EXPECT(CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */,
+                                   "none"),
+                  "Failed for \"" << instance.access_kregistry_path() << "\"");
       }
       if (FileExists(instance.hwcomposer_pmem_path())) {
-        CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */, "none");
+        CF_EXPECT(CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */,
+                                   "none"),
+                  "Failed for \"" << instance.hwcomposer_pmem_path() << "\"");
       }
       if (FileExists(instance.pstore_path())) {
-        CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
+        CF_EXPECT(CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none"),
+                  "Failed for\"" << instance.pstore_path() << "\"");
       }
     }
   }
@@ -1156,7 +1157,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     // Check that the files exist
     for (const auto& file : instance.virtual_disk_paths()) {
       if (!file.empty()) {
-        CHECK(FileHasContent(file)) << "File not found: " << file;
+        CF_EXPECT(FileHasContent(file), "File not found: \"" << file << "\"");
       }
     }
     // Gem5 Simulate per-instance what the bootloader would usually do
@@ -1168,6 +1169,8 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
           config.assembly_dir());
     }
   }
+
+  return {};
 }
 
 } // namespace cuttlefish
