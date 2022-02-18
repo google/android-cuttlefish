@@ -18,6 +18,7 @@
 
 #include <future>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <thread>
 
@@ -62,9 +63,26 @@ Result<void> CvdServer::AddHandler(CvdServerHandler* handler) {
   return {};
 }
 
-std::map<CvdServer::AssemblyDir, CvdServer::AssemblyInfo>&
-CvdServer::Assemblies() {
-  return assemblies_;
+bool CvdServer::HasAssemblies() const {
+  std::lock_guard assemblies_lock(assemblies_mutex_);
+  return !assemblies_.empty();
+}
+
+void CvdServer::SetAssembly(const CvdServer::AssemblyDir& dir,
+                            const CvdServer::AssemblyInfo& info) {
+  std::lock_guard assemblies_lock(assemblies_mutex_);
+  assemblies_[dir] = info;
+}
+
+Result<CvdServer::AssemblyInfo> CvdServer::GetAssembly(
+    const CvdServer::AssemblyDir& dir) const {
+  std::lock_guard assemblies_lock(assemblies_mutex_);
+  auto info_it = assemblies_.find(dir);
+  if (info_it == assemblies_.end()) {
+    return CF_ERR("No assembly dir \"" << dir << "\"");
+  } else {
+    return info_it->second;
+  }
 }
 
 void CvdServer::Stop() { running_ = false; }
@@ -113,8 +131,43 @@ void CvdServer::ServerLoop(const SharedFD& server) {
   }
 }
 
+cvd::Status CvdServer::CvdFleet(const SharedFD& out,
+                                const std::string& env_config) const {
+  std::lock_guard assemblies_lock(assemblies_mutex_);
+  for (const auto& it : assemblies_) {
+    const AssemblyDir& assembly_dir = it.first;
+    const AssemblyInfo& assembly_info = it.second;
+    auto config_path = GetCuttlefishConfigPath(assembly_dir);
+    if (FileExists(env_config)) {
+      config_path = env_config;
+    }
+    if (config_path) {
+      // Reads CuttlefishConfig::instance_names(), which must remain stable
+      // across changes to config file format (within server_constants.h major
+      // version).
+      auto config = CuttlefishConfig::GetFromFile(*config_path);
+      if (config) {
+        for (const std::string& instance_name : config->instance_names()) {
+          Command command(assembly_info.host_binaries_dir + kStatusBin);
+          command.AddParameter("--print");
+          command.AddParameter("--instance_name=", instance_name);
+          command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+          command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                         *config_path);
+          if (int wait_result = command.Start().Wait(); wait_result != 0) {
+            WriteAll(out, "      (unknown instance status error)");
+          }
+        }
+      }
+    }
+  }
+  cvd::Status status;
+  status.set_code(cvd::Status::OK);
+  return status;
+}
 
 cvd::Status CvdServer::CvdClear(const SharedFD& out, const SharedFD& err) {
+  std::lock_guard assemblies_lock(assemblies_mutex_);
   cvd::Status status;
   for (const auto& it : assemblies_) {
     const AssemblyDir& assembly_dir = it.first;
