@@ -193,7 +193,8 @@ Result<ucred> UnixSocketMessage::Credentials() {
 UnixMessageSocket::UnixMessageSocket(SharedFD socket) : socket_(socket) {
   socklen_t ln = sizeof(max_message_size_);
   CHECK(socket->GetSockOpt(SOL_SOCKET, SO_SNDBUF, &max_message_size_, &ln) == 0)
-      << "error: can't retrieve socket max message size\n";
+      << "error: can't retrieve socket max message size: "
+      << socket->StrError();
 }
 
 Result<void> UnixMessageSocket::EnableCredentials(bool enable) {

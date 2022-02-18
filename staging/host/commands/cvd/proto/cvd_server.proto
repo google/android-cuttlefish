@@ -72,5 +72,6 @@ message CommandRequest {
   repeated string args = 1;
   // Environment variables that will be used by the subcommand.
   map<string, string> env = 2;
+  string working_directory = 3;
 }
 message CommandResponse {}
