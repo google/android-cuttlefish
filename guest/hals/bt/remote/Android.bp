@@ -25,7 +25,6 @@ cc_binary {
     ],
     static_libs: [
         "libbt-rootcanal",
-        "libbt-rootcanal-types",
         "async_fd_watcher",
     ],
     init_rc: ["android.hardware.bluetooth@1.1-service.remote.rc"],
