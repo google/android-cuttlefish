@@ -1,0 +1,9 @@
+type hal_audio_cuttlefish, domain;
+type hal_audio_cuttlefish_exec, exec_type, vendor_file_type, file_type;
+
+hal_server_domain(hal_audio_cuttlefish, hal_audio)
+
+init_daemon_domain(hal_audio_cuttlefish)
+
+binder_use(hal_audio_cuttlefish)
+allow hal_audio_cuttlefish audioserver:fifo_file write;
