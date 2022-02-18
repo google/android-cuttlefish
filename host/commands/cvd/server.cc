@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/server.h"
 
+#include <atomic>
 #include <future>
 #include <map>
 #include <mutex>
@@ -56,6 +57,8 @@ std::optional<std::string> GetCuttlefishConfigPath(
   }
   return {};
 }
+
+CvdServer::CvdServer() : running_(true) {}
 
 Result<void> CvdServer::AddHandler(CvdServerHandler* handler) {
   CF_EXPECT(handler != nullptr, "Received a null handler");
