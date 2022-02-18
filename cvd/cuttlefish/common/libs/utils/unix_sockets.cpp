@@ -15,17 +15,11 @@
  */
 #include "common/libs/utils/unix_sockets.h"
 
-#include <fcntl.h>
-#include <sys/uio.h>
-#include <unistd.h>
-
-#include <cstring>
-#include <memory>
-#include <ostream>
-#include <utility>
-#include <vector>
-
 #include <android-base/logging.h>
+#include <android-base/result.h>
+
+#include <numeric>
+#include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
@@ -69,7 +63,6 @@ Result<ControlMessage> ControlMessage::FromFileDescriptors(
   return message;
 }
 
-#ifdef __linux__
 ControlMessage ControlMessage::FromCredentials(const ucred& credentials) {
   ControlMessage message;
   message.data_.resize(CMSG_SPACE(sizeof(ucred)), 0);
@@ -80,7 +73,6 @@ ControlMessage ControlMessage::FromCredentials(const ucred& credentials) {
   memcpy(CMSG_DATA(message.Raw()), &credentials, sizeof(credentials));
   return message;
 }
-#endif
 
 ControlMessage::ControlMessage(ControlMessage&& existing) {
   // Enforce that the old ControlMessage is left empty, so it doesn't try to
@@ -118,7 +110,6 @@ const cmsghdr* ControlMessage::Raw() const {
   return reinterpret_cast<const cmsghdr*>(data_.data());
 }
 
-#ifdef __linux__
 bool ControlMessage::IsCredentials() const {
   bool right_level = Raw()->cmsg_level == SOL_SOCKET;
   bool right_type = Raw()->cmsg_type == SCM_CREDENTIALS;
@@ -132,7 +123,6 @@ Result<ucred> ControlMessage::AsCredentials() const {
   memcpy(&credentials, CMSG_DATA(Raw()), sizeof(ucred));
   return credentials;
 }
-#endif
 
 bool ControlMessage::IsFileDescriptors() const {
   bool right_level = Raw()->cmsg_level == SOL_SOCKET;
@@ -174,7 +164,6 @@ Result<std::vector<SharedFD>> UnixSocketMessage::FileDescriptors() {
   }
   return fds;
 }
-#ifdef __linux__
 bool UnixSocketMessage::HasCredentials() {
   for (const auto& control_message : control) {
     if (control_message.IsCredentials()) {
@@ -200,7 +189,6 @@ Result<ucred> UnixSocketMessage::Credentials() {
     return CF_ERR("Excepted 1 credential, received " << credentials.size());
   }
 }
-#endif
 
 UnixMessageSocket::UnixMessageSocket(SharedFD socket) : socket_(socket) {
   socklen_t ln = sizeof(max_message_size_);
@@ -209,7 +197,6 @@ UnixMessageSocket::UnixMessageSocket(SharedFD socket) : socket_(socket) {
       << socket->StrError();
 }
 
-#ifdef __linux__
 Result<void> UnixMessageSocket::EnableCredentials(bool enable) {
   int flag = enable ? 1 : 0;
   if (socket_->SetSockOpt(SOL_SOCKET, SO_PASSCRED, &flag, sizeof(flag)) != 0) {
@@ -218,7 +205,6 @@ Result<void> UnixMessageSocket::EnableCredentials(bool enable) {
   }
   return {};
 }
-#endif
 
 Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
   auto control_size = 0;
@@ -230,11 +216,13 @@ Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
   message_header.msg_control = message_control.data();
   message_header.msg_controllen = message_control.size();
   auto cmsg = CMSG_FIRSTHDR(&message_header);
+  size_t calculated_control_len = 0;
   for (const ControlMessage& control : message.control) {
     CF_EXPECT(cmsg != nullptr,
               "Control messages did not fit in control buffer");
     /* size() should match CMSG_SPACE */
     memcpy(cmsg, control.data_.data(), control.data_.size());
+    calculated_control_len += control.data_.size();
     cmsg = CMSG_NXTHDR(&message_header, cmsg);
   }
 
@@ -270,21 +258,13 @@ Result<UnixSocketMessage> UnixMessageSocket::ReadMessage() {
   message_header.msg_namelen = 0;
   message_header.msg_flags = 0;
 
-#ifdef __linux__
   auto bytes_read = socket_->RecvMsg(&message_header, MSG_CMSG_CLOEXEC);
-#elif defined(__APPLE__)
-  auto bytes_read = socket_->RecvMsg(&message_header, 0);
-#else
-#error "Unsupported operating system"
-#endif
   CF_EXPECT(bytes_read >= 0, "Read error: " << socket_->StrError());
   CF_EXPECT(!(message_header.msg_flags & MSG_TRUNC),
             "Message was truncated on read");
   CF_EXPECT(!(message_header.msg_flags & MSG_CTRUNC),
             "Message control data was truncated on read");
-#ifdef __linux__
   CF_EXPECT(!(message_header.msg_flags & MSG_ERRQUEUE), "Error queue error");
-#endif
   UnixSocketMessage managed_message;
   for (auto cmsg = CMSG_FIRSTHDR(&message_header); cmsg != nullptr;
        cmsg = CMSG_NXTHDR(&message_header, cmsg)) {
