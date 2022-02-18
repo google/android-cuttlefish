@@ -50,7 +50,9 @@ class CvdShutdownHandler : public CvdServerHandler {
 
     if (request.request.shutdown_request().clear()) {
       *response.mutable_status() = server_.CvdClear(request.out, request.err);
-      return response;
+      if (response.status().code() != cvd::Status::OK) {
+        return response;
+      }
     }
 
     if (server_.HasAssemblies()) {
