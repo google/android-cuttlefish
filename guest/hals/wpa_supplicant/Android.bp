@@ -14,7 +14,7 @@
 
 package {
     default_applicable_licenses: [
-        "external_wpa_supplicant_8_wpa_supplicant_license",
+        "external_wpa_supplicant_8_license",
     ],
 }
 
