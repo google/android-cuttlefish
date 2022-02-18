@@ -191,9 +191,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
     {"android.hardware.uwb.fira_android.", 1},
 
-    // These versions need to be implemented (b/203490261)
-    {"android.hardware.bluetooth.audio.", 1},
-
     // This interface needs to be implemented (b/200055138)
     {"android.hardware.drm.", 1},
 };
