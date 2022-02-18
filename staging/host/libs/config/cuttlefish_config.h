@@ -57,6 +57,7 @@ constexpr char kSharedDirName[] = "shared";
 constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 constexpr char kKernelLoadedMessage[] = "] Linux version";
+constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
 
 enum class SecureHal {
   Unknown,

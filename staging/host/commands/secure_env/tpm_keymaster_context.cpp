@@ -361,6 +361,9 @@ keymaster_error_t TpmKeymasterContext::SetVendorPatchlevel(
   if (vendor_patchlevel_.has_value() &&
       vendor_patchlevel != vendor_patchlevel_.value()) {
     // Can't set patchlevel to a different value.
+    LOG(ERROR) << "Invalid set vendor patchlevel attempt. Old patchlevel: \""
+               << *vendor_patchlevel_ << "\", new patchlevel: \""
+               << vendor_patchlevel << "\"";
     return KM_ERROR_INVALID_ARGUMENT;
   }
   vendor_patchlevel_ = vendor_patchlevel;
@@ -372,6 +375,9 @@ keymaster_error_t TpmKeymasterContext::SetBootPatchlevel(
   if (boot_patchlevel_.has_value() &&
       boot_patchlevel != boot_patchlevel_.value()) {
     // Can't set patchlevel to a different value.
+    LOG(ERROR) << "Invalid set boot patchlevel attempt. Old patchlevel: \""
+               << *boot_patchlevel_ << "\", new patchlevel: \""
+               << boot_patchlevel << "\"";
     return KM_ERROR_INVALID_ARGUMENT;
   }
   boot_patchlevel_ = boot_patchlevel;
