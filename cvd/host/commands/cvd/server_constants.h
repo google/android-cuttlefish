@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <map>
 #include <mutex>
 #include <optional>
@@ -56,7 +57,7 @@ class CvdServer {
     std::string host_binaries_dir;
   };
 
-  INJECT(CvdServer()) = default;
+  INJECT(CvdServer());
 
   Result<void> AddHandler(CvdServerHandler* handler);
 
@@ -75,7 +76,7 @@ class CvdServer {
   mutable std::mutex assemblies_mutex_;
   std::map<AssemblyDir, AssemblyInfo> assemblies_;
   std::vector<CvdServerHandler*> handlers_;
-  bool running_ = true;
+  std::atomic_bool running_ = true;
 
   Result<cvd::Response> HandleRequest(const RequestWithStdio& request);
 
