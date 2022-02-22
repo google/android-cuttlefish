@@ -77,6 +77,7 @@
 /vendor/bin/hw/android\.hardware\.drm-service\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service-lazy\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.graphics\.allocator@4\.0-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
+/vendor/bin/hw/android\.hardware\.graphics\.composer3-service\.ranchu  u:object_r:hal_graphics_composer_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health-service\.cuttlefish u:object_r:hal_health_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health\.storage-service\.cuttlefish u:object_r:hal_health_storage_default_exec:s0
@@ -89,7 +90,6 @@
 /vendor/bin/hw/android\.hardware\.net\.nlinterceptor-service\.default  u:object_r:hal_nlinterceptor_default_exec:s0
 /vendor/bin/setup_wifi  u:object_r:setup_wifi_exec:s0
 /vendor/bin/bt_vhci_forwarder  u:object_r:bt_vhci_forwarder_exec:s0
-
 /vendor/bin/hw/android\.hardware\.sensors-service\.example  u:object_r:hal_sensors_default_exec:s0
 /vendor/bin/hw/android\.hardware\.sensors@2\.1-service\.mock  u:object_r:hal_sensors_default_exec:s0
 /vendor/bin/hw/android\.hardware\.input\.classifier@1\.0-service.default  u:object_r:hal_input_classifier_default_exec:s0
