@@ -504,7 +504,7 @@ class SecureEnvironment : public CommandSource {
 
   // Feature
   std::string Name() const override { return "SecureEnvironment"; }
-  bool Enabled() const override { return config_.enable_host_bluetooth(); }
+  bool Enabled() const override { return true; }
 
  private:
   std::unordered_set<Feature*> Dependencies() const override {
