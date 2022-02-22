@@ -233,7 +233,6 @@ endif
 
 # GL/Vk implementation for gfxstream
 PRODUCT_PACKAGES += \
-    hwcomposer.ranchu \
     libandroidemu \
     libOpenglCodecCommon \
     libOpenglSystemCommon \
@@ -399,9 +398,17 @@ PRODUCT_PACKAGES += \
 #
 # Hardware Composer HAL
 #
+# The device needs to avoid having both hwcomposer2.4 and hwcomposer3
+# services running at the same time so make the user manually enables
+# in order to run with --gpu_mode=drm.
+ifeq ($(TARGET_ENABLE_DRMHWCOMPOSER),true)
 PRODUCT_PACKAGES += \
-    hwcomposer.drm \
-    android.hardware.graphics.composer@2.4-service
+    android.hardware.graphics.composer@2.4-service \
+    hwcomposer.drm
+else
+PRODUCT_PACKAGES += \
+    android.hardware.graphics.composer3-service.ranchu
+endif
 
 #
 # Gralloc HAL
