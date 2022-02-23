@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,85 @@
  * limitations under the License.
  */
 
+#pragma once
+
+#include <map>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "cvd_server.pb.h"
+
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/unix_sockets.h"
+
 namespace cuttlefish {
-namespace cvd {
 
-// Major version uprevs are backwards incompatible.
-// Minor version uprevs are backwards compatible within major version.
-constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 1;
+constexpr char kStopBin[] = "cvd_internal_stop";
 
-// Pathname of the abstract cvd_server socket.
-constexpr char kServerSocketPath[] = "cvd_server";
+struct RequestWithStdio {
+  cvd::Request request;
+  SharedFD in, out, err;
+  std::optional<SharedFD> extra;
+};
 
-}  // namespace cvd
+class CvdServerHandler {
+ public:
+  virtual ~CvdServerHandler() = default;
+
+  virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
+  virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
+};
+
+class CvdServer {
+ public:
+  using AssemblyDir = std::string;
+  struct AssemblyInfo {
+    std::string host_binaries_dir;
+  };
+
+  INJECT(CvdServer()) = default;
+
+  Result<void> AddHandler(CvdServerHandler* handler);
+
+  std::map<AssemblyDir, AssemblyInfo>& Assemblies();
+
+  void Stop();
+
+  void ServerLoop(const SharedFD& server);
+
+  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
+
+ private:
+  std::map<AssemblyDir, AssemblyInfo> assemblies_;
+  std::vector<CvdServerHandler*> handlers_;
+  bool running_ = true;
+
+  Result<cvd::Response> HandleRequest(const RequestWithStdio& request);
+
+  Result<UnixMessageSocket> GetClient(const SharedFD& client) const;
+
+  Result<RequestWithStdio> GetRequest(const SharedFD& client) const;
+
+  Result<void> SendResponse(const SharedFD& client,
+                            const cvd::Response& response) const;
+};
+
+fruit::Component<> cvdCommandComponent();
+fruit::Component<> cvdShutdownComponent();
+fruit::Component<> cvdVersionComponent();
+
+std::optional<std::string> GetCuttlefishConfigPath(
+    const std::string& assembly_dir);
+
+struct CommandInvocation {
+  std::string command;
+  std::vector<std::string> arguments;
+};
+
+CommandInvocation ParseInvocation(const cvd::Request& request);
+
 }  // namespace cuttlefish
