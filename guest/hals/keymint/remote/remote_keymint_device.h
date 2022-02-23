@@ -82,6 +82,13 @@ class RemoteKeyMintDevice : public BnKeyMintDevice {
       const std::vector<uint8_t>& appId, const std::vector<uint8_t>& appData,
       std::vector<KeyCharacteristics>* keyCharacteristics) override;
 
+  ScopedAStatus getRootOfTrustChallenge(
+      std::array<uint8_t, 16>* challenge) override;
+  ScopedAStatus getRootOfTrust(const std::array<uint8_t, 16>& challenge,
+                               std::vector<uint8_t>* rootOfTrust) override;
+  ScopedAStatus sendRootOfTrust(
+      const std::vector<uint8_t>& rootOfTrust) override;
+
  protected:
   ::keymaster::RemoteKeymaster& impl_;
   SecurityLevel securityLevel_;

@@ -443,4 +443,20 @@ ScopedAStatus RemoteKeyMintDevice::getKeyCharacteristics(
   return ScopedAStatus::ok();
 }
 
+ScopedAStatus RemoteKeyMintDevice::getRootOfTrustChallenge(
+    std::array<uint8_t, 16>* /* challenge */) {
+  return kmError2ScopedAStatus(KM_ERROR_UNIMPLEMENTED);
+}
+
+ScopedAStatus RemoteKeyMintDevice::getRootOfTrust(
+    const std::array<uint8_t, 16>& /* challenge */,
+    std::vector<uint8_t>* /* rootOfTrust */) {
+  return kmError2ScopedAStatus(KM_ERROR_UNIMPLEMENTED);
+}
+
+ScopedAStatus RemoteKeyMintDevice::sendRootOfTrust(
+    const std::vector<uint8_t>& /* rootOfTrust */) {
+  return kmError2ScopedAStatus(KM_ERROR_UNIMPLEMENTED);
+}
+
 }  // namespace aidl::android::hardware::security::keymint
