@@ -40,6 +40,12 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "cvd_config_slim.json",
+    src: "config_slim.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "cvd_config_tablet.json",
     src: "config_tablet.json",
     sub_dir: "cvd_config",
