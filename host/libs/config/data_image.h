@@ -25,9 +25,11 @@ InitializeDataImageComponent();
 
 class InitializeEspImage : public Feature {};
 
-fruit::Component<InitializeEspImage> InitializeEspImageComponent(
+fruit::Component<fruit::Required<const CuttlefishConfig>,
+    InitializeEspImage> InitializeEspImageComponent(
     const std::string* esp_image, const std::string* kernel_path,
-    const std::string* initramfs_path, const std::string* root_fs);
+    const std::string* initramfs_path, const std::string* root_fs,
+    const CuttlefishConfig* config);
 
 bool CreateBlankImage(
     const std::string& image, int num_mb, const std::string& image_fmt);
