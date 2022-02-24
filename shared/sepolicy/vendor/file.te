@@ -1,5 +1,4 @@
 # File types
 type sensors_hal_socket, file_type;
-type sysfs_gpu, fs_type, sysfs_type;
 type sysfs_iio_devices, fs_type, sysfs_type;
 type mediadrm_vendor_data_file, file_type, data_file_type;
