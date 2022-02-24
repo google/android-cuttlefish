@@ -4,7 +4,11 @@ set -e
 
 cd $(dirname $0)
 
+# Override these variables to make go not depend on HOME
+mkdir -p /tmp/go
+export GOPATH=/tmp/go
+export GOCACHE=/tmp/go/go-build
+
 go build -v
 
 go test
-
