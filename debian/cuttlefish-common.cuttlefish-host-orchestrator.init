@@ -52,8 +52,15 @@ function gen_cert {
   else
     mkdir -p "${CERT_DIR}"
     pushd "${CERT_DIR}"
-    # https://go.dev/src/crypto/tls/generate_cert.go
-    ${GENERATE_CERT} --host="localhost" --duration="867240h0m0s"
+    openssl req \
+      -newkey rsa:4096 \
+      -x509 \
+      -sha256 \
+      -days 36000 \
+      -nodes \
+      -out "${CERT_FILE}" \
+      -keyout "${KEY_FILE}" \
+      -subj "/C=US"
     chown _cutf-operator:cvdnetwork "${CERT_FILE}"
     chown _cutf-operator:cvdnetwork "${KEY_FILE}"
     popd
