@@ -115,7 +115,7 @@ bool NvramConfig::LoadFromFile(const char* file) {
   }
 
   Json::CharReaderBuilder builder;
-  std::ifstream ifs(real_file_path);
+  std::ifstream ifs = modem::DeviceConfig::open_ifstream_crossplat(real_file_path.c_str());
   std::string errorMessage;
   if (!Json::parseFromStream(builder, ifs, dictionary_.get(), &errorMessage)) {
     LOG(ERROR) << "Could not read config file " << file << ": "
@@ -126,7 +126,7 @@ bool NvramConfig::LoadFromFile(const char* file) {
 }
 
 bool NvramConfig::SaveToFile(const std::string& file) const {
-  std::ofstream ofs(file);
+  std::ofstream ofs = modem::DeviceConfig::open_ofstream_crossplat(file.c_str());
   if (!ofs.is_open()) {
     LOG(ERROR) << "Unable to write to file " << file;
     return false;
