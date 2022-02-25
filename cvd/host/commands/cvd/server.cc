@@ -98,28 +98,71 @@ Result<void> CvdServer::ServerLoop(SharedFD server) {
 
     auto message_queue = CF_EXPECT(ClientMessageQueue::Create(client_fd));
 
-    while (true) {
-      auto request = message_queue.WaitForRequest();
-      if (!request.ok()) {
-        LOG(DEBUG) << "Didn't get client request:" << request.error().message();
-        break;
+    std::atomic_bool running = true;
+    std::mutex handler_mutex;
+    CvdServerHandler* handler = nullptr;
+    std::thread message_responder([this, &message_queue, &handler,
+                                   &handler_mutex, &running]() {
+      while (running) {
+        auto request = message_queue.WaitForRequest();
+        if (!request.ok()) {
+          LOG(DEBUG) << "Didn't get client request:"
+                     << request.error().message();
+          break;
+        }
+        Result<cvd::Response> response;
+        {
+          std::scoped_lock lock(handler_mutex);
+          auto handler_result = RequestHandler(*request);
+          if (handler_result.ok()) {
+            handler = *handler_result;
+          } else {
+            handler = nullptr;
+            response = cvd::Response();
+            response->mutable_status()->set_code(cvd::Status::INTERNAL);
+            response->mutable_status()->set_message("No handler found");
+          }
+          // Drop the handler lock so it has a chance to be interrupted.
+        }
+        if (handler) {
+          response = handler->Handle(*request);
+        }
+        {
+          std::scoped_lock lock(handler_mutex);
+          handler = nullptr;
+        }
+        if (!response.ok()) {
+          LOG(DEBUG) << "Error handling request: " << request.error().message();
+          cvd::Response error_response;
+          error_response.mutable_status()->set_code(cvd::Status::INTERNAL);
+          error_response.mutable_status()->set_message(
+              response.error().message());
+          response = error_response;
+        }
+        auto write_response = message_queue.PostResponse(*response);
+        if (!write_response.ok()) {
+          LOG(DEBUG) << "Error writing response: " << write_response.error();
+          break;
+        }
       }
-      auto response = HandleRequest(*request);
-      if (!response.ok()) {
-        LOG(DEBUG) << "Error handling request: " << request.error().message();
-        cvd::Response error_response;
-        error_response.mutable_status()->set_code(cvd::Status::INTERNAL);
-        error_response.mutable_status()->set_message(
-            response.error().message());
-        response = error_response;
-      }
-      auto write_response = message_queue.PostResponse(*response);
-      if (!write_response.ok()) {
-        LOG(DEBUG) << "Error writing response: " << write_response.error();
-        break;
+    });
+
+    message_queue.Join();
+    // The client has gone away, do our best to interrupt/stop ongoing
+    // operations.
+    running = false;
+    {
+      // This might end up executing after the handler is completed, but it at
+      // least won't race with the handler being overwritten by another pointer.
+      std::scoped_lock lock(handler_mutex);
+      if (handler) {
+        auto interrupt = handler->Interrupt();
+        if (!interrupt.ok()) {
+          LOG(ERROR) << "Failed to interrupt handler: " << interrupt.error();
+        }
       }
     }
-    message_queue.Join();
+    message_responder.join();
   }
   return {};
 }
@@ -202,7 +245,7 @@ cvd::Status CvdServer::CvdClear(const SharedFD& out, const SharedFD& err) {
   return status;
 }
 
-Result<cvd::Response> CvdServer::HandleRequest(
+Result<CvdServerHandler*> CvdServer::RequestHandler(
     const RequestWithStdio& request) {
   Result<cvd::Response> response;
   std::vector<CvdServerHandler*> compatible_handlers;
@@ -214,7 +257,8 @@ Result<cvd::Response> CvdServer::HandleRequest(
   CF_EXPECT(compatible_handlers.size() == 1,
             "Expected exactly one handler for message, found "
                 << compatible_handlers.size());
-  return CF_EXPECT(compatible_handlers[0]->Handle(request));
+  return compatible_handlers[0];
+  ;
 }
 
 static fruit::Component<CvdServer> serverComponent() {

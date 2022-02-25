@@ -43,6 +43,7 @@ class CvdServerHandler {
 
   virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
   virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
+  virtual Result<void> Interrupt() = 0;
 };
 
 class CvdServer {
@@ -73,7 +74,7 @@ class CvdServer {
   std::vector<CvdServerHandler*> handlers_;
   std::atomic_bool running_ = true;
 
-  Result<cvd::Response> HandleRequest(const RequestWithStdio& request);
+  Result<CvdServerHandler*> RequestHandler(const RequestWithStdio& request);
 };
 
 fruit::Component<> cvdCommandComponent();
