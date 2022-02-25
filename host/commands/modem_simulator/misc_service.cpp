@@ -18,6 +18,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include "host/commands/modem_simulator/device_config.h"
+
 namespace cuttlefish {
 
 MiscService::MiscService(int32_t service_id, ChannelMonitor* channel_monitor,
@@ -30,7 +32,7 @@ MiscService::MiscService(int32_t service_id, ChannelMonitor* channel_monitor,
 void MiscService::ParseTimeZone() {
 #if defined(__linux__)
   constexpr char TIMEZONE_FILENAME[] = "/etc/timezone";
-  std::ifstream ifs(TIMEZONE_FILENAME);
+  std::ifstream ifs = modem::DeviceConfig::open_ifstream_crossplat(TIMEZONE_FILENAME);
   if (ifs.is_open()) {
     std::string line;
     if (std::getline(ifs, line)) {
