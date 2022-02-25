@@ -23,6 +23,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
 #include "host/commands/modem_simulator/channel_monitor.h"
+#include "host/commands/modem_simulator/device_config.h"
 #include "host/commands/modem_simulator/modem_simulator.h"
 #include "host/libs/config/cuttlefish_config.h"
 namespace fs = std::filesystem;
@@ -60,7 +61,7 @@ class ModemServiceTest : public ::testing::Test {
         }
         std::string icfilename =
             instance.PerInstancePath("/iccprofile_for_sim0.xml");
-        std::ofstream offile(icfilename, std::ofstream::out);
+        std::ofstream offile = modem::DeviceConfig::open_ofstream_crossplat(icfilename.c_str(), std::ofstream::out);
         offile << std::string(myiccfile);
         offile.close();
         fs::copy_file(instance.PerInstancePath("/cuttlefish_config.json"),
