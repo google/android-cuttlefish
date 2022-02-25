@@ -52,11 +52,13 @@ namespace cuttlefish {
 class ConsoleForwarder {
  public:
   ConsoleForwarder(std::string console_path, SharedFD console_in,
-                   SharedFD console_out, SharedFD console_log)
+                   SharedFD console_out, SharedFD console_log,
+                   SharedFD kernel_log)
       : console_path_(console_path),
         console_in_(console_in),
         console_out_(console_out),
-        console_log_(console_log) {}
+        console_log_(console_log),
+        kernel_log_(kernel_log) {}
   [[noreturn]] void StartServer() {
     // Create a new thread to handle writes to the console
     writer_thread_ = std::thread([this]() { WriteLoop(); });
@@ -176,6 +178,7 @@ class ConsoleForwarder {
         if (client_fd->IsOpen()) {
           EnqueueWrite(buf_ptr, client_fd);
         }
+        EnqueueWrite(buf_ptr, kernel_log_);
       }
       if (read_set.IsSet(client_fd)) {
         std::shared_ptr<std::vector<char>> buf_ptr = std::make_shared<std::vector<char>>(4096);
@@ -199,6 +202,7 @@ class ConsoleForwarder {
   SharedFD console_in_;
   SharedFD console_out_;
   SharedFD console_log_;
+  SharedFD kernel_log_;
   std::thread writer_thread_;
   std::mutex write_queue_mutex_;
   std::condition_variable condvar_;
@@ -232,7 +236,10 @@ int ConsoleForwarderMain(int argc, char** argv) {
   auto console_log = instance.PerInstancePath("console_log");
   auto console_log_fd =
       SharedFD::Open(console_log.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
-  ConsoleForwarder console_forwarder(console_path, console_in, console_out, console_log_fd);
+  auto kernel_log_fd = SharedFD::Open(instance.kernel_log_pipe_name(),
+                                      O_APPEND | O_WRONLY, 0666);
+  ConsoleForwarder console_forwarder(console_path, console_in, console_out,
+                                     console_log_fd, kernel_log_fd);
 
   // Don't get a SIGPIPE from the clients
   CHECK(sigaction(SIGPIPE, nullptr, nullptr) == 0)
