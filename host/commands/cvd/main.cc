@@ -175,6 +175,7 @@ class CvdClient {
     }
     std::unique_ptr<char, void(*)(void*)> cwd(getcwd(nullptr, 0), &free);
     command_request->set_working_directory(cwd.get());
+    command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
 
     auto response = SendRequest(request);
     CHECK(response.ok()) << response.error().message();

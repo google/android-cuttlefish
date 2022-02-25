@@ -87,6 +87,7 @@ class CvdCommandHandler : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) {
+    std::unique_lock interrupt_lock(interruptible_);
     CF_EXPECT(CanHandle(request));
     cvd::Response response;
     response.mutable_command_response();
@@ -184,17 +185,77 @@ class CvdCommandHandler : public CvdServerHandler {
     command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.out);
     command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.err);
     SubprocessOptions options;
-    options.ExitWithParent(false);
-    command.Start(options);
 
-    response.mutable_status()->set_code(cvd::Status::OK);
+    if (request.request.command_request().wait_behavior() ==
+        cvd::WAIT_BEHAVIOR_START) {
+      options.ExitWithParent(false);
+    }
+    subprocess_ = command.Start(options);
+
+    if (request.request.command_request().wait_behavior() ==
+        cvd::WAIT_BEHAVIOR_START) {
+      response.mutable_status()->set_code(cvd::Status::OK);
+      return response;
+    }
+    interrupt_lock.unlock();
+
+    siginfo_t infop{};
+
+    // This blocks until the process exits, but doesn't reap it.
+    auto result = subprocess_->Wait(&infop, WEXITED | WNOWAIT);
+    CF_EXPECT(result != -1, "Lost track of subprocess pid");
+    interrupt_lock.lock();
+    // Perform a reaping wait on the process (which should already have exited).
+    result = subprocess_->Wait(&infop, WEXITED);
+    CF_EXPECT(result != -1, "Lost track of subprocess pid");
+    // The double wait avoids a race around the kernel reusing pids. Waiting
+    // with WNOWAIT won't cause the child process to be reaped, so the kernel
+    // won't reuse the pid until the Wait call below, and any kill signals won't
+    // reach unexpected processes.
+
+    subprocess_ = {};
+
+    if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
+      response.mutable_status()->set_code(cvd::Status::OK);
+      return response;
+    }
+
+    response.mutable_status()->set_code(cvd::Status::INTERNAL);
+    if (infop.si_code == CLD_EXITED) {
+      response.mutable_status()->set_message("Exited with code " +
+                                             std::to_string(infop.si_status));
+    } else if (infop.si_code == CLD_KILLED) {
+      response.mutable_status()->set_message("Exited with signal " +
+                                             std::to_string(infop.si_status));
+    } else {
+      response.mutable_status()->set_message("Quit with code " +
+                                             std::to_string(infop.si_status));
+    }
     return response;
   }
 
-  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
+  Result<void> Interrupt() override {
+    std::scoped_lock interrupt_lock(interruptible_);
+    if (subprocess_) {
+      auto stop_result = subprocess_->Stop();
+      switch (stop_result) {
+        case StopperResult::kStopFailure:
+          return CF_ERR("Failed to stop subprocess");
+        case StopperResult::kStopCrash:
+          return CF_ERR("Stopper caused process to crash");
+        case StopperResult::kStopSuccess:
+          return {};
+        default:
+          return CF_ERR("Unknown stop result: " << (uint64_t)stop_result);
+      }
+    }
+    return {};
+  }
 
  private:
   CvdServer& server_;
+  std::optional<Subprocess> subprocess_;
+  std::mutex interruptible_;
 };
 
 }  // namespace
