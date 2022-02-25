@@ -74,6 +74,8 @@ class CvdShutdownHandler : public CvdServerHandler {
     return response;
   }
 
+  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
+
  private:
   CvdServer& server_;
 };
