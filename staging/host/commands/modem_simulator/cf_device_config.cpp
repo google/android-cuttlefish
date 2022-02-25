@@ -71,5 +71,13 @@ std::string DeviceConfig::ril_dns() {
   return ril_config.dns();
 }
 
+std::ifstream DeviceConfig::open_ifstream_crossplat(const char* filename) {
+    return std::ifstream(filename);
+}
+
+std::ofstream DeviceConfig::open_ofstream_crossplat(const char* filename, std::ios_base::openmode mode) {
+    return std::ofstream(filename, mode);
+}
+
 }  // namespace modem
 }  // namespace cuttlefish
