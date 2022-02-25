@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/server.h"
 
+#include <signal.h>
+
 #include <atomic>
 #include <future>
 #include <map>
@@ -37,7 +39,6 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -90,48 +91,37 @@ Result<CvdServer::AssemblyInfo> CvdServer::GetAssembly(
 
 void CvdServer::Stop() { running_ = false; }
 
-void CvdServer::ServerLoop(const SharedFD& server) {
+Result<void> CvdServer::ServerLoop(SharedFD server) {
   while (running_) {
-    SharedFDSet read_set;
-    read_set.Set(server);
-    int num_fds = Select(&read_set, nullptr, nullptr, nullptr);
-    if (num_fds <= 0) {  // Ignore select error
-      PLOG(ERROR) << "Select call returned error.";
-    } else if (read_set.IsSet(server)) {
-      auto client = SharedFD::Accept(*server);
-      CHECK(client->IsOpen()) << "Failed to get client: " << client->StrError();
-      while (true) {
-        auto request = GetRequest(client);
-        if (!request.ok()) {
-          client->Close();
-          break;
-        }
-        auto response = HandleRequest(*request);
-        if (response.ok()) {
-          auto resp_success = SendResponse(client, *response);
-          if (!resp_success.ok()) {
-            LOG(ERROR) << "Failed to write response: "
-                       << resp_success.error().message();
-            client->Close();
-            break;
-          }
-        } else {
-          LOG(ERROR) << response.error();
-          cvd::Response error_response;
-          error_response.mutable_status()->set_code(cvd::Status::INTERNAL);
-          *error_response.mutable_status()->mutable_message() =
-              response.error().message();
-          auto resp_success = SendResponse(client, *response);
-          if (!resp_success.ok()) {
-            LOG(ERROR) << "Failed to write response: "
-                       << resp_success.error().message();
-          }
-          client->Close();
-          break;
-        }
+    auto client_fd = SharedFD::Accept(*server);
+    CF_EXPECT(client_fd->IsOpen(), client_fd->StrError());
+
+    auto message_queue = CF_EXPECT(ClientMessageQueue::Create(client_fd));
+
+    while (true) {
+      auto request = message_queue.WaitForRequest();
+      if (!request.ok()) {
+        LOG(DEBUG) << "Didn't get client request:" << request.error().message();
+        break;
+      }
+      auto response = HandleRequest(*request);
+      if (!response.ok()) {
+        LOG(DEBUG) << "Error handling request: " << request.error().message();
+        cvd::Response error_response;
+        error_response.mutable_status()->set_code(cvd::Status::INTERNAL);
+        error_response.mutable_status()->set_message(
+            response.error().message());
+        response = error_response;
+      }
+      auto write_response = message_queue.PostResponse(*response);
+      if (!write_response.ok()) {
+        LOG(DEBUG) << "Error writing response: " << write_response.error();
+        break;
       }
     }
+    message_queue.Join();
   }
+  return {};
 }
 
 cvd::Status CvdServer::CvdFleet(const SharedFD& out,
@@ -227,68 +217,6 @@ Result<cvd::Response> CvdServer::HandleRequest(
   return CF_EXPECT(compatible_handlers[0]->Handle(request));
 }
 
-Result<UnixMessageSocket> CvdServer::GetClient(const SharedFD& client) const {
-  UnixMessageSocket result(client);
-  CF_EXPECT(result.EnableCredentials(true),
-            "Unable to enable UnixMessageSocket credentials.");
-  return result;
-}
-
-Result<RequestWithStdio> CvdServer::GetRequest(const SharedFD& client) const {
-  RequestWithStdio result;
-
-  UnixMessageSocket reader =
-      CF_EXPECT(GetClient(client), "Couldn't get client");
-  auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
-
-  CF_EXPECT(!read_result.data.empty(),
-            "Read empty packet, so the client has probably closed "
-            "the connection.");
-
-  std::string serialized(read_result.data.begin(), read_result.data.end());
-  cvd::Request request;
-  CF_EXPECT(request.ParseFromString(serialized),
-            "Unable to parse serialized request proto.");
-  result.request = request;
-
-  CF_EXPECT(read_result.HasFileDescriptors(),
-            "Missing stdio fds from request.");
-  auto fds = CF_EXPECT(read_result.FileDescriptors(),
-                       "Error reading stdio fds from request");
-  CF_EXPECT(fds.size() == 3 || fds.size() == 4, "Wrong number of FDs, received "
-                                                    << fds.size()
-                                                    << ", wanted 3 or 4");
-  result.in = fds[0];
-  result.out = fds[1];
-  result.err = fds[2];
-  if (fds.size() == 4) {
-    result.extra = fds[3];
-  }
-
-
-  if (read_result.HasCredentials()) {
-    // TODO(b/198453477): Use Credentials to control command access.
-    auto creds =
-        CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
-    LOG(DEBUG) << "Has credentials, uid=" << creds.uid;
-  }
-
-  return result;
-}
-
-Result<void> CvdServer::SendResponse(const SharedFD& client,
-                                     const cvd::Response& response) const {
-  std::string serialized;
-  CF_EXPECT(response.SerializeToString(&serialized),
-            "Unable to serialize response proto.");
-  UnixSocketMessage message;
-  message.data = std::vector<char>(serialized.begin(), serialized.end());
-
-  UnixMessageSocket writer =
-      CF_EXPECT(GetClient(client), "Couldn't get client");
-  return writer.WriteMessage(message);
-}
-
 static fruit::Component<CvdServer> serverComponent() {
   return fruit::createComponent()
       .install(cvdCommandComponent)
@@ -300,6 +228,8 @@ static Result<int> CvdServerMain(int argc, char** argv) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   LOG(INFO) << "Starting server";
+
+  signal(SIGPIPE, SIG_IGN);
 
   std::vector<Flag> flags;
   SharedFD server_fd;
@@ -318,7 +248,7 @@ static Result<int> CvdServerMain(int argc, char** argv) {
     CF_EXPECT(server.AddHandler(handler));
   }
 
-  server.ServerLoop(server_fd);
+  CF_EXPECT(server.ServerLoop(server_fd));
   return 0;
 }
 
