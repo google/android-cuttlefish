@@ -289,7 +289,7 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
   return invocation;
 }
 
-fruit::Component<> cvdCommandComponent() {
+fruit::Component<fruit::Required<CvdServer>> cvdCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdCommandHandler>();
 }
