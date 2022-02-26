@@ -430,7 +430,7 @@ void Streamer::Impl::OnClose() {
   // Called from websocket thread
   // The operator shouldn't close the connection with the client, it's up to the
   // device to decide when to disconnect.
-  LOG(WARNING) << "Websocket closed unexpectedly";
+  LOG(WARNING) << "Connection with server closed unexpectedly";
   signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
     auto observer = operator_observer_.lock();
     if (observer) {

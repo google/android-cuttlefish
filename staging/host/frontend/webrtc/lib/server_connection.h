@@ -66,6 +66,9 @@ class ServerConnectionObserver {
 
 // Represents a connection to the signaling server. When a connection is created
 // it connects with the server automatically but sends no info.
+// Only Send() can be called from multiple threads simultaneously. Reconnect(),
+// Send() and the destructor will run into race conditions if called
+// concurrently.
 class ServerConnection {
  public:
   static std::unique_ptr<ServerConnection> Connect(
