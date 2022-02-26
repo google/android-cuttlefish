@@ -82,7 +82,7 @@ class CvdShutdownHandler : public CvdServerHandler {
 
 }  // namespace
 
-fruit::Component<> cvdShutdownComponent() {
+fruit::Component<fruit::Required<CvdServer>> cvdShutdownComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdShutdownHandler>();
 }
