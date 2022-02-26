@@ -28,24 +28,25 @@ namespace webrtc_streaming {
 // ServerConnection over Unix socket
 class UnixServerConnection : public ServerConnection {
  public:
-  UnixServerConnection(SharedFD conn,
-                       std::weak_ptr<ServerConnectionObserver> observer,
-                       SharedFD thread_notifier_);
+  UnixServerConnection(const std::string& addr,
+                       std::weak_ptr<ServerConnectionObserver> observer);
   ~UnixServerConnection() override;
 
   bool Send(const Json::Value& msg) override;
 
  private:
   void Connect() override;
+  void StopThread();
   void ReadLoop();
 
+  const std::string addr_;
   SharedFD conn_;
   std::mutex write_mtx_;
   std::weak_ptr<ServerConnectionObserver> observer_;
   // The event fd must be declared before the thread to ensure it's initialized
   // before the thread starts and is safe to be accessed from it.
   SharedFD thread_notifier_;
-  std::atomic_bool running_ = true;
+  std::atomic_bool running_ = false;
   std::thread thread_;
 };
 
@@ -155,22 +156,7 @@ std::unique_ptr<ServerConnection> ServerConnection::Connect(
   // system connect to it, otherwise assume it's a network address and connect
   // using websockets
   if (FileIsSocket(conf.addr)) {
-    auto conn = SharedFD::SocketLocalClient(conf.addr, false, SOCK_SEQPACKET);
-    if (!conn->IsOpen()) {
-      LOG(ERROR) << "Failed to connect to unix socket: " << conn->StrError();
-      if (auto o = observer.lock(); o) {
-        o->OnError("Failed to connect to unix socket");
-      }
-      // Safe to return null here since OnOpen wasn't called and therefore the
-      // connection won't be accessed.
-      return nullptr;
-    }
-    auto thread_notifier = SharedFD::Event();
-    if (!thread_notifier->IsOpen()) {
-      LOG(ERROR) << "Failed to create eventfd for background thread";
-      return nullptr;
-    }
-    ret.reset(new UnixServerConnection(conn, observer, thread_notifier));
+    ret.reset(new UnixServerConnection(conf.addr, observer));
   } else {
     // This can be a local variable since the ws connection will keep a
     // reference to it.
@@ -189,25 +175,11 @@ void ServerConnection::Reconnect() { Connect(); }
 // UnixServerConnection implementation
 
 UnixServerConnection::UnixServerConnection(
-    SharedFD conn, std::weak_ptr<ServerConnectionObserver> observer,
-    SharedFD thread_notifier)
-    : conn_(conn),
-      observer_(observer),
-      thread_notifier_(thread_notifier),
-      thread_([this]() { ReadLoop(); }) {}
+    const std::string& addr, std::weak_ptr<ServerConnectionObserver> observer)
+    : addr_(addr), observer_(observer) {}
 
 UnixServerConnection::~UnixServerConnection() {
-  if (!thread_notifier_->IsOpen()) {
-    // The thread won't be running if this isn't open
-    return;
-  }
-  running_ = false;
-  if (thread_notifier_->EventfdWrite(1) < 0) {
-    LOG(ERROR) << "Failed to notify background thread, this thread may block";
-  }
-  if (thread_.joinable()) {
-    thread_.join();
-  }
+  StopThread();
 }
 
 bool UnixServerConnection::Send(const Json::Value& msg) {
@@ -228,8 +200,45 @@ bool UnixServerConnection::Send(const Json::Value& msg) {
 }
 
 void UnixServerConnection::Connect() {
-  if (auto observer = observer_.lock(); observer) {
-    observer->OnOpen();
+  // The thread could be running if this is a Reconnect
+  StopThread();
+
+  conn_ = SharedFD::SocketLocalClient(addr_, false, SOCK_SEQPACKET);
+  if (!conn_->IsOpen()) {
+    LOG(ERROR) << "Failed to connect to unix socket: " << conn_->StrError();
+    if (auto o = observer_.lock(); o) {
+      o->OnError("Failed to connect to unix socket");
+    }
+    return;
+  }
+  thread_notifier_ = SharedFD::Event();
+  if (!thread_notifier_->IsOpen()) {
+    LOG(ERROR) << "Failed to create eventfd for background thread: "
+               << thread_notifier_->StrError();
+    if (auto o = observer_.lock(); o) {
+      o->OnError("Failed to create eventfd for background thread");
+    }
+    return;
+  }
+  if (auto o = observer_.lock(); o) {
+    o->OnOpen();
+  }
+  // Start the thread
+  running_ = true;
+  thread_ = std::thread([this](){ReadLoop();});
+}
+
+void UnixServerConnection::StopThread() {
+  running_ = false;
+  if (!thread_notifier_->IsOpen()) {
+    // The thread won't be running if this isn't open
+    return;
+  }
+  if (thread_notifier_->EventfdWrite(1) < 0) {
+    LOG(ERROR) << "Failed to notify background thread, this thread may block";
+  }
+  if (thread_.joinable()) {
+    thread_.join();
   }
 }
 
@@ -272,6 +281,13 @@ void UnixServerConnection::ReadLoop() {
           observer->OnError(conn_->StrError());
         }
         return;
+      }
+      if (res == 0) {
+        auto observer = observer_.lock();
+        if (observer) {
+          observer->OnClose();
+        }
+        break;
       }
       auto observer = observer_.lock();
       if (observer) {
