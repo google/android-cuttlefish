@@ -42,11 +42,25 @@ class TpmRemoteProvisioningContext
       const cppcose::bytevec& input) const override;
   std::pair<std::vector<uint8_t>, cppbor::Array> GenerateBcc(
       bool testMode) const;
+  void SetSystemVersion(uint32_t os_version, uint32_t os_patchlevel);
+  void SetVendorPatchlevel(uint32_t vendor_patchlevel);
+  void SetBootPatchlevel(uint32_t boot_patchlevel);
+  void SetVerifiedBootInfo(std::string_view boot_state,
+                           std::string_view bootloader_state,
+                           const std::vector<uint8_t>& vbmeta_digest);
 
  private:
   std::vector<uint8_t> devicePrivKey_;
   cppbor::Array bcc_;
   TpmResourceManager& resource_manager_;
+
+  std::optional<uint32_t> os_version_;
+  std::optional<uint32_t> os_patchlevel_;
+  std::optional<uint32_t> vendor_patchlevel_;
+  std::optional<uint32_t> boot_patchlevel_;
+  std::optional<std::string> verified_boot_state_;
+  std::optional<std::string> bootloader_state_;
+  std::optional<std::vector<uint8_t>> vbmeta_digest_;
 };
 
 }  // namespace cuttlefish

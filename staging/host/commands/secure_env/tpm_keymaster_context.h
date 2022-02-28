@@ -51,6 +51,9 @@ private:
   uint32_t os_patchlevel_;
   std::optional<uint32_t> vendor_patchlevel_;
   std::optional<uint32_t> boot_patchlevel_;
+  std::optional<std::string> bootloader_state_;
+  std::optional<std::string> verified_boot_state_;
+  std::optional<std::vector<uint8_t>> vbmeta_digest_;
 
  public:
   TpmKeymasterContext(TpmResourceManager&, keymaster::KeymasterEnforcement&);
@@ -112,6 +115,10 @@ private:
 
   keymaster::RemoteProvisioningContext* GetRemoteProvisioningContext()
       const override;
+
+  keymaster_error_t SetVerifiedBootInfo(
+      std::string_view verified_boot_state, std::string_view bootloader_state,
+      const std::vector<uint8_t>& vbmeta_digest) override;
 
   keymaster_error_t SetVendorPatchlevel(uint32_t vendor_patchlevel) override;
   keymaster_error_t SetBootPatchlevel(uint32_t boot_patchlevel) override;
