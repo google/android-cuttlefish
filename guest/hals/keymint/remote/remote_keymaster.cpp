@@ -25,7 +25,7 @@
 namespace keymaster {
 
 RemoteKeymaster::RemoteKeymaster(cuttlefish::KeymasterChannel* channel,
-                                 uint32_t message_version)
+                                 int32_t message_version)
     : channel_(channel), message_version_(message_version) {}
 
 RemoteKeymaster::~RemoteKeymaster() {}
@@ -94,6 +94,21 @@ bool RemoteKeymaster::Initialize() {
     LOG(ERROR) << "Failed to configure keymaster boot patchlevel: "
                << boot_rsp.error;
     return false;
+  }
+
+  // Pass verified boot information to the remote KM implementation
+  auto vbmeta_digest = GetVbmetaDigest();
+  if (vbmeta_digest) {
+    ConfigureVerifiedBootInfoRequest request(
+        message_version(), GetVerifiedBootState(), GetBootloaderState(),
+        *vbmeta_digest);
+    ConfigureVerifiedBootInfoResponse response =
+        ConfigureVerifiedBootInfo(request);
+    if (response.error != KM_ERROR_OK) {
+      LOG(ERROR) << "Failed to configure keymaster verified boot info: "
+                 << response.error;
+      return false;
+    }
   }
 
   return true;
@@ -287,6 +302,13 @@ ConfigureBootPatchlevelResponse RemoteKeymaster::ConfigureBootPatchlevel(
     const ConfigureBootPatchlevelRequest& request) {
   ConfigureBootPatchlevelResponse response(message_version());
   ForwardCommand(CONFIGURE_BOOT_PATCHLEVEL, request, &response);
+  return response;
+}
+
+ConfigureVerifiedBootInfoResponse RemoteKeymaster::ConfigureVerifiedBootInfo(
+    const ConfigureVerifiedBootInfoRequest& request) {
+  ConfigureVerifiedBootInfoResponse response(message_version());
+  ForwardCommand(CONFIGURE_VERIFIED_BOOT_INFO, request, &response);
   return response;
 }
 
