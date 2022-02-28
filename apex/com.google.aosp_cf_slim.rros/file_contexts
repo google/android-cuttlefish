@@ -1,0 +1,2 @@
+(/.*)?		u:object_r:vendor_file:s0
+/overlay(/.*)?	u:object_r:vendor_overlay_file:s0
