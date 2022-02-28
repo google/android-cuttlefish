@@ -29,9 +29,10 @@ using VerifiedBootParams = keymaster::AttestationContext::VerifiedBootParams;
 using keymaster::AuthorizationSet;
 
 VerifiedBootParams MakeVbParams() {
-  // Cuttlefish is hard-coded to verifiedbootstate=orange
-  // See device/google/cuttlefish/host/libs/config/bootconfig_args.cpp
   VerifiedBootParams vb_params;
+
+  // TODO: If Cuttlefish ever supports a boot state other than "orange", we'll
+  // also need to plumb in the public key.
   static uint8_t empty_vb_key[32] = {};
   vb_params.verified_boot_key = {empty_vb_key, sizeof(empty_vb_key)};
   vb_params.verified_boot_hash = {empty_vb_key, sizeof(empty_vb_key)};
@@ -70,9 +71,8 @@ keymaster::Buffer TpmAttestationRecordContext::GenerateUniqueId(
 
 const VerifiedBootParams* TpmAttestationRecordContext::GetVerifiedBootParams(
     keymaster_error_t* error) const {
-  static VerifiedBootParams vb_params = MakeVbParams();
   *error = KM_ERROR_OK;
-  return &vb_params;
+  return &vb_params_;
 }
 
 keymaster::KeymasterKeyBlob
@@ -85,6 +85,26 @@ keymaster::CertificateChain
 TpmAttestationRecordContext::GetAttestationChain(keymaster_algorithm_t algorithm,
                                                  keymaster_error_t* error) const {
   return keymaster::getAttestationChain(algorithm, error);
+}
+
+void TpmAttestationRecordContext::SetVerifiedBootInfo(
+    std::string_view verified_boot_state, std::string_view bootloader_state,
+    const std::vector<uint8_t>& vbmeta_digest) {
+  vbmeta_digest_ = vbmeta_digest;
+  vb_params_.verified_boot_hash = {vbmeta_digest_.data(),
+                                   vbmeta_digest_.size()};
+
+  if (verified_boot_state == "green") {
+    vb_params_.verified_boot_state = KM_VERIFIED_BOOT_VERIFIED;
+  } else if (verified_boot_state == "yellow") {
+    vb_params_.verified_boot_state = KM_VERIFIED_BOOT_SELF_SIGNED;
+  } else if (verified_boot_state == "red") {
+    vb_params_.verified_boot_state = KM_VERIFIED_BOOT_FAILED;
+  } else {  // Default to orange
+    vb_params_.verified_boot_state = KM_VERIFIED_BOOT_UNVERIFIED;
+  }
+
+  vb_params_.device_locked = bootloader_state == "locked";
 }
 
 }  // namespace cuttlefish
