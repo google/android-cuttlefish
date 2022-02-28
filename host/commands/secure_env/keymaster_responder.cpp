@@ -88,6 +88,8 @@ bool KeymasterResponder::ProcessMessage() {
     HANDLE_MESSAGE_W_RETURN(CONFIGURE_VENDOR_PATCHLEVEL,
                             ConfigureVendorPatchlevel)
     HANDLE_MESSAGE_W_RETURN(CONFIGURE_BOOT_PATCHLEVEL, ConfigureBootPatchlevel)
+    HANDLE_MESSAGE_W_RETURN(CONFIGURE_VERIFIED_BOOT_INFO,
+                            ConfigureVerifiedBootInfo)
 #undef HANDLE_MESSAGE_W_RETURN
 #define HANDLE_MESSAGE_W_RETURN_NO_ARG(ENUM_NAME, METHOD_NAME) \
     case ENUM_NAME: {\
