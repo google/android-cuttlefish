@@ -26,14 +26,14 @@ namespace keymaster {
 class RemoteKeymaster {
  private:
   cuttlefish::KeymasterChannel* channel_;
-  const uint32_t message_version_;
+  const int32_t message_version_;
 
   void ForwardCommand(AndroidKeymasterCommand command, const Serializable& req,
                       KeymasterResponse* rsp);
 
  public:
   RemoteKeymaster(cuttlefish::KeymasterChannel*,
-                  uint32_t message_version = kDefaultMessageVersion);
+                  int32_t message_version = kDefaultMessageVersion);
   ~RemoteKeymaster();
   bool Initialize();
   void GetVersion(const GetVersionRequest& request,
@@ -90,12 +90,14 @@ class RemoteKeymaster {
       const ConfigureVendorPatchlevelRequest& request);
   ConfigureBootPatchlevelResponse ConfigureBootPatchlevel(
       const ConfigureBootPatchlevelRequest& request);
+  ConfigureVerifiedBootInfoResponse ConfigureVerifiedBootInfo(
+      const ConfigureVerifiedBootInfoRequest& request);
   void GenerateTimestampToken(GenerateTimestampTokenRequest& request,
                               GenerateTimestampTokenResponse* response);
 
   // CF HAL and remote sides are always compiled together, so will never
   // disagree about message versions.
-  uint32_t message_version() { return message_version_; }
+  int32_t message_version() { return message_version_; }
 };
 
 }  // namespace keymaster
