@@ -58,10 +58,11 @@ cc_library_static {
         "libcuttlefish_host_config",
         "libcuttlefish_utils",
         "libcuttlefish_confui",
+        "libcuttlefish_security",
         "libcuttlefish_wayland_server",
         "libft2.nodep",
         "libteeui",
         "libteeui_localization",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_buildhost_only"],
 }
