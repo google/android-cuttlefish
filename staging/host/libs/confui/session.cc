@@ -267,7 +267,7 @@ bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
                      std::vector<std::uint8_t>{}, std::vector<std::uint8_t>{});
   } else {
     message_ = std::move(cbor_->GetMessage());
-    auto message_opt = (is_secure_input ? sign(message_) : test_sign(message_));
+    auto message_opt = (is_secure_input ? Sign(message_) : TestSign(message_));
     if (!message_opt) {
       ReportErrorToHal(hal_cli, HostError::kSystemError);
       return false;
