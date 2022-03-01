@@ -44,14 +44,13 @@ GENERATE_CERT="/usr/lib/cuttlefish-common/bin/generate_cert"
 PIDFILE="${RUN_DIR}"/host-orchestrator.pid
 CERT_DIR="/etc/cuttlefish-common/host-orchestrator/cert"
 
-function gen_cert {
+gen_cert() {
   CERT_FILE="${CERT_DIR}/cert.pem"
   KEY_FILE="${CERT_DIR}/key.pem"
-  if [[ -f "$CERT_FILE" && -f "$KEY_FILE" ]]; then
+  if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
     echo "TLS certificate files for https communication already exist."
   else
     mkdir -p "${CERT_DIR}"
-    pushd "${CERT_DIR}"
     openssl req \
       -newkey rsa:4096 \
       -x509 \
@@ -63,7 +62,6 @@ function gen_cert {
       -subj "/C=US"
     chown _cutf-operator:cvdnetwork "${CERT_FILE}"
     chown _cutf-operator:cvdnetwork "${KEY_FILE}"
-    popd
   fi
 }
 
@@ -81,7 +79,6 @@ start() {
     --chuid _cutf-operator:cvdnetwork \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
-    --output "${RUN_DIR}"/host-orchestrator.log \
     --make-pidfile \
     --exec "${DAEMON}"
 
