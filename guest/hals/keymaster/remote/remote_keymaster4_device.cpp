@@ -20,9 +20,10 @@
 #include "remote_keymaster4_device.h"
 
 #include <android/hardware/keymaster/3.0/IKeymasterDevice.h>
-#include <authorization_set.h>
 #include <cutils/log.h>
 #include <keymaster/android_keymaster_messages.h>
+#include <keymaster/authorization_set.h>
+#include <keymaster_tags.h>
 
 using ::keymaster::AbortOperationRequest;
 using ::keymaster::AbortOperationResponse;
