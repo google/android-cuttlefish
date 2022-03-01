@@ -57,7 +57,7 @@ enum class TestKeyBits : uint8_t {
   BYTE = 165 /* 0xA5 */,
 };
 
-std::optional<std::vector<std::uint8_t>> sign(
+std::optional<std::vector<std::uint8_t>> test_sign(
     const std::vector<std::uint8_t>& message) {
   // the same as userConfirm()
   using namespace support;
@@ -74,5 +74,9 @@ std::optional<std::vector<std::uint8_t>> sign(
       std::vector<std::uint8_t>(confirm_signed.begin(), confirm_signed.end())};
 }
 
+std::optional<std::vector<std::uint8_t>> sign(
+    const std::vector<std::uint8_t>& message) {
+  return test_sign(message);
+}
 }  // namespace confui
 }  // end of namespace cuttlefish
