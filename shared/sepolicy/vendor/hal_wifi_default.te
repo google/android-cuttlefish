@@ -1,3 +1,4 @@
 allow hal_wifi_default hal_wifi_default:netlink_route_socket {
     create bind write read nlmsg_read nlmsg_readpriv };
 allow hal_wifi_default self:capability { sys_module };
+set_prop(hal_wifi_default, vendor_wlan_versions_prop)
