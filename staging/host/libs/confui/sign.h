@@ -24,6 +24,8 @@ namespace cuttlefish {
 namespace confui {
 
 // TODO(kwstephenkim): replace this with signing using secure env host services
+std::optional<std::vector<std::uint8_t>> test_sign(
+    const std::vector<std::uint8_t>& message);
 std::optional<std::vector<std::uint8_t>> sign(
     const std::vector<std::uint8_t>& message);
 
