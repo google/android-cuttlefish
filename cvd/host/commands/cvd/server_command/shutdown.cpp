@@ -32,7 +32,7 @@ class CvdShutdownHandler : public CvdServerHandler {
   INJECT(CvdShutdownHandler(CvdServer& server)) : server_(server) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return request.request.contents_case() ==
+    return request.Message().contents_case() ==
            cvd::Request::ContentsCase::kShutdownRequest;
   }
 
@@ -41,15 +41,16 @@ class CvdShutdownHandler : public CvdServerHandler {
     cvd::Response response;
     response.mutable_shutdown_response();
 
-    if (!request.extra) {
+    if (!request.Extra()) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Missing extra SharedFD for shutdown");
       return response;
     }
 
-    if (request.request.shutdown_request().clear()) {
-      *response.mutable_status() = server_.CvdClear(request.out, request.err);
+    if (request.Message().shutdown_request().clear()) {
+      *response.mutable_status() =
+          server_.CvdClear(request.Out(), request.Err());
       if (response.status().code() != cvd::Status::OK) {
         return response;
       }
@@ -65,9 +66,9 @@ class CvdShutdownHandler : public CvdServerHandler {
 
     // Intentionally leak the write_pipe fd so that it only closes
     // when this process fully exits.
-    (*request.extra)->UNMANAGED_Dup();
+    (*request.Extra())->UNMANAGED_Dup();
 
-    WriteAll(request.out, "Stopping the cvd_server.\n");
+    WriteAll(request.Out(), "Stopping the cvd_server.\n");
     server_.Stop();
 
     response.mutable_status()->set_code(cvd::Status::OK);
