@@ -41,5 +41,5 @@ cc_library_static {
         "libteeui",
         "libteeui_localization",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_buildhost_only"],
 }
