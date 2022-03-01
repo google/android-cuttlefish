@@ -1,3 +1,3 @@
 #!/bin/bash -r
 
-test $(lspci | grep -i vga | grep -icw nvidia) -gt 0
+test $(lspci | grep -iE '(vga|3D controller)' | grep -icw nvidia) -gt 0
