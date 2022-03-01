@@ -18,6 +18,8 @@
 
 #include <algorithm>
 
+#include "host/libs/confui/secure_input.h"
+
 namespace cuttlefish {
 namespace confui {
 
@@ -245,13 +247,14 @@ bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
   }
 
   const auto& user_input_msg =
-      static_cast<const ConfUiUserSelectionMessage&>(conf_ui_msg);
+      static_cast<const ConfUiSecureUserSelectionMessage&>(conf_ui_msg);
   const auto response = user_input_msg.GetResponse();
   if (response == UserResponse::kUnknown ||
       response == UserResponse::kUserAbort) {
     invalid_input_handler();
     return false;
   }
+  const bool is_secure_input = user_input_msg.IsSecure();
 
   ConfUiLog(VERBOSE) << "In HandleInSession, session " << session_id_
                      << " is sending the user input " << ToString(fsm_input);
@@ -263,9 +266,8 @@ bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
         SendResponse(hal_cli, session_id_, UserResponse::kCancel,
                      std::vector<std::uint8_t>{}, std::vector<std::uint8_t>{});
   } else {
-    // TODO(kwstephenkim): sign using cuttlefish host secure_env
     message_ = std::move(cbor_->GetMessage());
-    auto message_opt = sign(message_);
+    auto message_opt = (is_secure_input ? sign(message_) : test_sign(message_));
     if (!message_opt) {
       ReportErrorToHal(hal_cli, HostError::kSystemError);
       return false;

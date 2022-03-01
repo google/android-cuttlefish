@@ -25,6 +25,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/confui/host_utils.h"
+#include "host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -36,6 +37,29 @@ static auto CuttlefishConfigDefaultInstance() {
 
 static int HalHostVsockPort() {
   return CuttlefishConfigDefaultInstance().confui_host_vsock_port();
+}
+
+/**
+ * null if not user/touch, or wrap it and ConfUiSecure{Selection,Touch}Message
+ *
+ * ConfUiMessage must NOT ConfUiSecure{Selection,Touch}Message types
+ */
+static std::unique_ptr<ConfUiMessage> WrapWithSecureFlag(
+    const ConfUiMessage& base_msg, const bool secure) {
+  switch (base_msg.GetType()) {
+    case ConfUiCmd::kUserInputEvent: {
+      const ConfUiUserSelectionMessage& as_selection =
+          static_cast<const ConfUiUserSelectionMessage&>(base_msg);
+      return ToSecureSelectionMessage(as_selection, secure);
+    }
+    case ConfUiCmd::kUserTouchEvent: {
+      const ConfUiUserTouchMessage& as_touch =
+          static_cast<const ConfUiUserTouchMessage&>(base_msg);
+      return ToSecureTouchMessage(as_touch, secure);
+    }
+    default:
+      return nullptr;
+  }
 }
 
 HostServer& HostServer::Get(
@@ -105,6 +129,11 @@ void HostServer::HalCmdFetcherLoop() {
      * where the time point check should happen. Once it is enqueued, it is not
      * always guaranteed to be picked up reasonably soon.
      */
+    constexpr bool is_secure = false;
+    auto to_override_if_user_input = WrapWithSecureFlag(*msg, is_secure);
+    if (to_override_if_user_input) {
+      msg = std::move(to_override_if_user_input);
+    }
     input_multiplexer_.Push(hal_cmd_q_id_, std::move(msg));
   }
 }
@@ -116,7 +145,9 @@ void HostServer::SendUserSelection(std::unique_ptr<ConfUiMessage>& input) {
     // ignore
     return;
   }
-  input_multiplexer_.Push(user_input_evt_q_id_, std::move(input));
+  constexpr bool is_secure = true;
+  auto secure_input = WrapWithSecureFlag(*input, is_secure);
+  input_multiplexer_.Push(user_input_evt_q_id_, std::move(secure_input));
 }
 
 void HostServer::TouchEvent(const int x, const int y, const bool is_down) {
@@ -125,7 +156,9 @@ void HostServer::TouchEvent(const int x, const int y, const bool is_down) {
   }
   std::unique_ptr<ConfUiMessage> input =
       std::make_unique<ConfUiUserTouchMessage>(GetCurrentSessionId(), x, y);
-  SendUserSelection(input);
+  constexpr bool is_secure = true;
+  auto secure_input = WrapWithSecureFlag(*input, is_secure);
+  SendUserSelection(secure_input);
 }
 
 void HostServer::UserAbortEvent() {
@@ -135,7 +168,9 @@ void HostServer::UserAbortEvent() {
   std::unique_ptr<ConfUiMessage> input =
       std::make_unique<ConfUiUserSelectionMessage>(GetCurrentSessionId(),
                                                    UserResponse::kUserAbort);
-  SendUserSelection(input);
+  constexpr bool is_secure = true;
+  auto secure_input = WrapWithSecureFlag(*input, is_secure);
+  SendUserSelection(secure_input);
 }
 
 bool HostServer::IsConfUiActive() {
@@ -187,8 +222,8 @@ SharedFD HostServer::EstablishHalConnection() {
       curr_session_ = CreateSession(input.GetSessionId());
     }
     if (cmd == ConfUiCmd::kUserTouchEvent) {
-      ConfUiUserTouchMessage& touch_event =
-          static_cast<ConfUiUserTouchMessage&>(input);
+      ConfUiSecureUserTouchMessage& touch_event =
+          static_cast<ConfUiSecureUserTouchMessage&>(input);
       auto [x, y] = touch_event.GetLocation();
       const bool is_confirm = curr_session_->IsConfirm(x, y);
       const bool is_cancel = curr_session_->IsCancel(x, y);
@@ -196,9 +231,11 @@ SharedFD HostServer::EstablishHalConnection() {
         // ignore, take the next input
         continue;
       }
-      input_ptr = std::make_unique<ConfUiUserSelectionMessage>(
-          GetCurrentSessionId(),
-          (is_confirm ? UserResponse::kConfirm : UserResponse::kCancel));
+      decltype(input_ptr) tmp_input_ptr =
+          std::make_unique<ConfUiUserSelectionMessage>(
+              GetCurrentSessionId(),
+              (is_confirm ? UserResponse::kConfirm : UserResponse::kCancel));
+      input_ptr = WrapWithSecureFlag(*tmp_input_ptr, touch_event.IsSecure());
     }
     Transition(input_ptr);
 
