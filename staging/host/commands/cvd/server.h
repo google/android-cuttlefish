@@ -16,7 +16,9 @@
 
 #pragma once
 
+#include <atomic>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -31,6 +33,7 @@
 
 namespace cuttlefish {
 
+constexpr char kStatusBin[] = "cvd_internal_status";
 constexpr char kStopBin[] = "cvd_internal_stop";
 
 struct RequestWithStdio {
@@ -54,22 +57,26 @@ class CvdServer {
     std::string host_binaries_dir;
   };
 
-  INJECT(CvdServer()) = default;
+  INJECT(CvdServer());
 
   Result<void> AddHandler(CvdServerHandler* handler);
 
-  std::map<AssemblyDir, AssemblyInfo>& Assemblies();
+  bool HasAssemblies() const;
+  void SetAssembly(const AssemblyDir&, const AssemblyInfo&);
+  Result<AssemblyInfo> GetAssembly(const AssemblyDir&) const;
 
   void Stop();
 
   void ServerLoop(const SharedFD& server);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
+  cvd::Status CvdFleet(const SharedFD& out, const std::string& envconfig) const;
 
  private:
+  mutable std::mutex assemblies_mutex_;
   std::map<AssemblyDir, AssemblyInfo> assemblies_;
   std::vector<CvdServerHandler*> handlers_;
-  bool running_ = true;
+  std::atomic_bool running_ = true;
 
   Result<cvd::Response> HandleRequest(const RequestWithStdio& request);
 
