@@ -46,5 +46,68 @@ class Gem5Manager : public VmManager {
   Arch arch_;
 };
 
+const std::string fs_header = R"CPP_STR_END(import argparse
+import devices
+import os
+import m5
+from m5.util import addToPath
+from m5.objects import *
+from m5.options import *
+from common import SysPaths
+from common import ObjectList
+from common import MemConfig
+from common.cores.arm import HPI
+m5.util.addToPath('../..')
+)CPP_STR_END";
+
+const std::string fs_mem_pci = R"CPP_STR_END(
+  MemConfig.config_mem(args, root.system)
+
+  pci_devices = []
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=0))))
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=1, outfile="none"))))
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=2))))
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=3, outfile="none"))))
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=4, outfile="none"))))
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=5, outfile="none"))))
+  pci_devices.append(PciVirtIO(vio=VirtIOConsole(device=Terminal(number=6, outfile="none"))))
+
+  for each_item in args.disk_image:
+    disk_image = CowDiskImage()
+    disk_image.child.image_file = SysPaths.disk(each_item)
+    pci_devices.append(PciVirtIO(vio=VirtIOBlock(image=disk_image)))
+
+  root.system.pci_devices = pci_devices
+  for pci_device in root.system.pci_devices:
+    root.system.attach_pci(pci_device)
+
+  root.system.connect()
+)CPP_STR_END";
+
+const std::string fs_kernel_cmd = R"CPP_STR_END(
+  kernel_cmd = [
+    "lpj=19988480",
+    "norandmaps",
+    "mem=%s" % args.mem_size,
+    "console=hvc0",
+    "panic=-1",
+    "earlycon=pl011,mmio32,0x1c090000",
+    "audit=1",
+    "printk.devkmsg=on",
+    "firmware_class.path=/vendor/etc/",
+    "kfence.sample_interval=500",
+    "loop.max_part=7",
+    "bootconfig",
+  ]
+  root.system.workload.command_line = " ".join(kernel_cmd)
+  m5.instantiate()
+  sys.exit(m5.simulate().getCode())
+)CPP_STR_END";
+
+const std::string fs_exe_main = R"CPP_STR_END(
+if __name__ == "__m5_main__":
+  main()
+)CPP_STR_END";
+
 } // namespace vm_manager
 } // namespace cuttlefish
