@@ -29,6 +29,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.hdmi.cec.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.hdmi.cec.xml \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
+    frameworks/native/data/etc/android.hardware.tv.tuner.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.tv.tuner.xml \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_1_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_1_0.xml \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_1_1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_1_1.xml \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_aidl_V1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_aidl_V1.xml
