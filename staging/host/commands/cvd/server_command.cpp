@@ -39,7 +39,6 @@ namespace {
 
 constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 constexpr char kStartBin[] = "cvd_internal_start";
-constexpr char kStatusBin[] = "cvd_internal_status";
 
 constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
 constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
@@ -151,16 +150,17 @@ class CvdCommandHandler : public CvdServerHandler {
       if (env_config != request.request.command_request().env().end()) {
         config_path = env_config->second;
       }
-      *response.mutable_status() = CvdFleet(request.out, config_path);
+      *response.mutable_status() = server_.CvdFleet(request.out, config_path);
       return response;
     } else if (bin == kStartBin) {
       // Track this assembly_dir in the fleet.
       CvdServer::AssemblyInfo info;
       info.host_binaries_dir = host_artifacts_path->second + "/bin/";
-      server_.Assemblies().emplace(assembly_dir, info);
+      server_.SetAssembly(assembly_dir, info);
     }
 
-    Command command(server_.Assemblies()[assembly_dir].host_binaries_dir + bin);
+    auto assembly_info = CF_EXPECT(server_.GetAssembly(assembly_dir));
+    Command command(assembly_info.host_binaries_dir + bin);
     for (const std::string& arg : args_copy) {
       command.AddParameter(arg);
     }
@@ -193,40 +193,6 @@ class CvdCommandHandler : public CvdServerHandler {
 
  private:
   CvdServer& server_;
-
-  cvd::Status CvdFleet(const SharedFD& out,
-                       const std::string& env_config) const {
-    for (const auto& it : server_.Assemblies()) {
-      const CvdServer::AssemblyDir& assembly_dir = it.first;
-      const CvdServer::AssemblyInfo& assembly_info = it.second;
-      auto config_path = GetCuttlefishConfigPath(assembly_dir);
-      if (FileExists(env_config)) {
-        config_path = env_config;
-      }
-      if (config_path) {
-        // Reads CuttlefishConfig::instance_names(), which must remain stable
-        // across changes to config file format (within server_constants.h major
-        // version).
-        auto config = CuttlefishConfig::GetFromFile(*config_path);
-        if (config) {
-          for (const std::string& instance_name : config->instance_names()) {
-            Command command(assembly_info.host_binaries_dir + kStatusBin);
-            command.AddParameter("--print");
-            command.AddParameter("--instance_name=", instance_name);
-            command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-            command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
-                                           *config_path);
-            if (int wait_result = command.Start().Wait(); wait_result != 0) {
-              WriteAll(out, "      (unknown instance status error)");
-            }
-          }
-        }
-      }
-    }
-    cvd::Status status;
-    status.set_code(cvd::Status::OK);
-    return status;
-  }
 };
 
 }  // namespace
