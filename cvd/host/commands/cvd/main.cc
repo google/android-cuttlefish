@@ -34,7 +34,6 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/server_constants.h"
@@ -42,21 +41,6 @@
 
 namespace cuttlefish {
 namespace {
-
-Result<SharedFD> ConnectToServer() {
-  auto connection =
-      SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                  /*is_abstract=*/true, SOCK_SEQPACKET);
-  if (!connection->IsOpen()) {
-    auto connection =
-        SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                    /*is_abstract=*/true, SOCK_STREAM);
-  }
-  if (!connection->IsOpen()) {
-    return CF_ERR("Failed to connect to server");
-  }
-  return connection;
-}
 
 class CvdClient {
  public:
@@ -110,13 +94,7 @@ class CvdClient {
 
   void StopCvdServer(bool clear) {
     if (!server_) {
-      // server_ may not represent a valid connection even while the server is
-      // running, if we haven't tried to connect. This establishes first whether
-      // the server is running.
-      auto connection_attempt = ConnectToServer();
-      if (!connection_attempt.ok()) {
-        return;
-      }
+      return;
     }
 
     cvd::Request request;
@@ -175,7 +153,6 @@ class CvdClient {
     }
     std::unique_ptr<char, void(*)(void*)> cwd(getcwd(nullptr, 0), &free);
     command_request->set_working_directory(cwd.get());
-    command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
 
     auto response = SendRequest(request);
     CHECK(response.ok()) << response.error().message();
@@ -198,7 +175,18 @@ class CvdClient {
   android::base::Result<cvd::Response> SendRequest(
       const cvd::Request& request, std::optional<SharedFD> extra_fd = {}) {
     if (!server_) {
-      SetServer(CF_EXPECT(ConnectToServer()));
+      auto connection =
+          SharedFD::SocketLocalClient(cvd::kServerSocketPath,
+                                      /*is_abstract=*/true, SOCK_SEQPACKET);
+      if (!connection->IsOpen()) {
+        auto connection =
+            SharedFD::SocketLocalClient(cvd::kServerSocketPath,
+                                        /*is_abstract=*/true, SOCK_STREAM);
+      }
+      if (!connection->IsOpen()) {
+        return android::base::Error() << "Failed to connect to server";
+      }
+      SetServer(connection);
     }
     // Serialize and send the request.
     std::string serialized;
