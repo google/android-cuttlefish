@@ -32,7 +32,7 @@ class CvdShutdownHandler : public CvdServerHandler {
   INJECT(CvdShutdownHandler(CvdServer& server)) : server_(server) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return request.Message().contents_case() ==
+    return request.request.contents_case() ==
            cvd::Request::ContentsCase::kShutdownRequest;
   }
 
@@ -41,19 +41,16 @@ class CvdShutdownHandler : public CvdServerHandler {
     cvd::Response response;
     response.mutable_shutdown_response();
 
-    if (!request.Extra()) {
+    if (!request.extra) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Missing extra SharedFD for shutdown");
       return response;
     }
 
-    if (request.Message().shutdown_request().clear()) {
-      *response.mutable_status() =
-          server_.CvdClear(request.Out(), request.Err());
-      if (response.status().code() != cvd::Status::OK) {
-        return response;
-      }
+    if (request.request.shutdown_request().clear()) {
+      *response.mutable_status() = server_.CvdClear(request.out, request.err);
+      return response;
     }
 
     if (server_.HasAssemblies()) {
@@ -66,16 +63,14 @@ class CvdShutdownHandler : public CvdServerHandler {
 
     // Intentionally leak the write_pipe fd so that it only closes
     // when this process fully exits.
-    (*request.Extra())->UNMANAGED_Dup();
+    (*request.extra)->UNMANAGED_Dup();
 
-    WriteAll(request.Out(), "Stopping the cvd_server.\n");
+    WriteAll(request.out, "Stopping the cvd_server.\n");
     server_.Stop();
 
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
-
-  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
 
  private:
   CvdServer& server_;
@@ -83,7 +78,7 @@ class CvdShutdownHandler : public CvdServerHandler {
 
 }  // namespace
 
-fruit::Component<fruit::Required<CvdServer>> cvdShutdownComponent() {
+fruit::Component<> cvdShutdownComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdShutdownHandler>();
 }

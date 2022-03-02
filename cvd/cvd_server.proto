@@ -67,18 +67,11 @@ message ShutdownRequest {
 }
 message ShutdownResponse {}
 
-enum WaitBehavior {
-  WAIT_BEHAVIOR_UNKNOWN = 0;
-  WAIT_BEHAVIOR_START = 1;
-  WAIT_BEHAVIOR_COMPLETE = 2;
-}
-
 message CommandRequest {
   // The args that should be executed, including the subcommand.
   repeated string args = 1;
   // Environment variables that will be used by the subcommand.
   map<string, string> env = 2;
   string working_directory = 3;
-  WaitBehavior wait_behavior = 4;
 }
 message CommandResponse {}
