@@ -167,7 +167,7 @@ int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
   }
 
   if (GetErrno() != EAGAIN && GetErrno() != EINPROGRESS) {
-    LOG(ERROR) << "Immediate connection failure: " << StrError();
+    LOG(DEBUG) << "Immediate connection failure: " << StrError();
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
     }
