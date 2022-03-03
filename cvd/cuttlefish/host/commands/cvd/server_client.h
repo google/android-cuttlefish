@@ -16,44 +16,39 @@
 
 #pragma once
 
-#include <sys/socket.h>
-
 #include <memory>
-#include <optional>
-#include <vector>
 
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/unix_sockets.h"
 
 namespace cuttlefish {
 
-class RequestWithStdio {
- public:
-  RequestWithStdio(SharedFD, cvd::Request, std::vector<SharedFD>,
-                   std::optional<ucred>);
-
-  SharedFD Client() const;
-  const cvd::Request& Message() const;
-  const std::vector<SharedFD>& FileDescriptors() const;
-  SharedFD In() const;
-  SharedFD Out() const;
-  SharedFD Err() const;
-  std::optional<SharedFD> Extra() const;
-  std::optional<ucred> Credentials() const;
-
- private:
-  SharedFD client_fd_;
-  cvd::Request message_;
-  std::vector<SharedFD> fds_;
-  std::optional<ucred> creds_;
+struct RequestWithStdio {
+  cvd::Request request;
+  SharedFD in, out, err;
+  std::optional<SharedFD> extra;
 };
 
-Result<UnixMessageSocket> GetClient(const SharedFD& client);
-Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client);
-Result<void> SendResponse(const SharedFD& client,
-                          const cvd::Response& response);
+class ClientMessageQueue {
+ public:
+  static Result<ClientMessageQueue> Create(SharedFD client);
+  ClientMessageQueue(ClientMessageQueue&&);
+  ~ClientMessageQueue();
+  ClientMessageQueue& operator=(ClientMessageQueue&&);
+
+  Result<RequestWithStdio> WaitForRequest();
+  Result<void> PostResponse(const cvd::Response& response);
+  Result<void> Stop();
+  void Join();
+
+ private:
+  class Internal;
+
+  std::unique_ptr<Internal> internal_;
+
+  ClientMessageQueue(std::unique_ptr<Internal>);
+};
 
 }  // namespace cuttlefish
