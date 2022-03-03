@@ -41,8 +41,6 @@ Result<UnixMessageSocket> GetClient(const SharedFD& client) {
 }
 
 Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
-  RequestWithStdio result;
-
   UnixMessageSocket reader =
       CF_EXPECT(GetClient(client), "Couldn't get client");
   auto read_result = CF_EXPECT(reader.ReadMessage(), "Couldn't read message");
@@ -57,7 +55,6 @@ Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
   cvd::Request request;
   CF_EXPECT(request.ParseFromString(serialized),
             "Unable to parse serialized request proto.");
-  result.request = request;
 
   CF_EXPECT(read_result.HasFileDescriptors(),
             "Missing stdio fds from request.");
@@ -66,21 +63,15 @@ Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
   CF_EXPECT(fds.size() == 3 || fds.size() == 4, "Wrong number of FDs, received "
                                                     << fds.size()
                                                     << ", wanted 3 or 4");
-  result.in = fds[0];
-  result.out = fds[1];
-  result.err = fds[2];
-  if (fds.size() == 4) {
-    result.extra = fds[3];
-  }
 
+  std::optional<ucred> creds;
   if (read_result.HasCredentials()) {
     // TODO(b/198453477): Use Credentials to control command access.
-    auto creds =
-        CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
-    LOG(DEBUG) << "Has credentials, uid=" << creds.uid;
+    creds = CF_EXPECT(read_result.Credentials(), "Failed to get credentials");
+    LOG(DEBUG) << "Has credentials, uid=" << creds->uid;
   }
 
-  return result;
+  return RequestWithStdio(std::move(request), std::move(fds), std::move(creds));
 }
 
 Result<void> SendResponse(const SharedFD& client,
@@ -98,6 +89,31 @@ Result<void> SendResponse(const SharedFD& client,
 }
 
 }  // namespace
+
+RequestWithStdio::RequestWithStdio(cvd::Request message,
+                                   std::vector<SharedFD> fds,
+                                   std::optional<ucred> creds)
+    : message_(message), fds_(std::move(fds)), creds_(creds) {}
+
+const cvd::Request& RequestWithStdio::Message() const { return message_; }
+
+SharedFD RequestWithStdio::In() const {
+  return fds_.size() > 0 ? fds_[0] : SharedFD();
+}
+
+SharedFD RequestWithStdio::Out() const {
+  return fds_.size() > 1 ? fds_[1] : SharedFD();
+}
+
+SharedFD RequestWithStdio::Err() const {
+  return fds_.size() > 2 ? fds_[2] : SharedFD();
+}
+
+std::optional<SharedFD> RequestWithStdio::Extra() const {
+  return fds_.size() > 3 ? fds_[3] : std::optional<SharedFD>{};
+}
+
+std::optional<ucred> RequestWithStdio::Credentials() const { return creds_; }
 
 class ClientMessageQueue::Internal {
  public:

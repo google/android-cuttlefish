@@ -16,7 +16,11 @@
 
 #pragma once
 
+#include <sys/socket.h>
+
 #include <memory>
+#include <optional>
+#include <vector>
 
 #include "cvd_server.pb.h"
 
@@ -25,10 +29,21 @@
 
 namespace cuttlefish {
 
-struct RequestWithStdio {
-  cvd::Request request;
-  SharedFD in, out, err;
-  std::optional<SharedFD> extra;
+class RequestWithStdio {
+ public:
+  RequestWithStdio(cvd::Request, std::vector<SharedFD>, std::optional<ucred>);
+
+  const cvd::Request& Message() const;
+  SharedFD In() const;
+  SharedFD Out() const;
+  SharedFD Err() const;
+  std::optional<SharedFD> Extra() const;
+  std::optional<ucred> Credentials() const;
+
+ private:
+  cvd::Request message_;
+  std::vector<SharedFD> fds_;
+  std::optional<ucred> creds_;
 };
 
 class ClientMessageQueue {
