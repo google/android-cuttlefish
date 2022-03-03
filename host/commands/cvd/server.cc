@@ -45,6 +45,14 @@
 
 namespace cuttlefish {
 
+static fruit::Component<> RequestComponent(CvdServer* server) {
+  return fruit::createComponent()
+      .bindInstance(*server)
+      .install(cvdCommandComponent)
+      .install(cvdShutdownComponent)
+      .install(cvdVersionComponent);
+}
+
 std::optional<std::string> GetCuttlefishConfigPath(
     const std::string& assembly_dir) {
   std::string assembly_dir_realpath;
@@ -60,12 +68,6 @@ std::optional<std::string> GetCuttlefishConfigPath(
 }
 
 CvdServer::CvdServer() : running_(true) {}
-
-Result<void> CvdServer::AddHandler(CvdServerHandler* handler) {
-  CF_EXPECT(handler != nullptr, "Received a null handler");
-  handlers_.push_back(handler);
-  return {};
-}
 
 bool CvdServer::HasAssemblies() const {
   std::lock_guard assemblies_lock(assemblies_mutex_);
@@ -91,6 +93,22 @@ Result<CvdServer::AssemblyInfo> CvdServer::GetAssembly(
 
 void CvdServer::Stop() { running_ = false; }
 
+static Result<CvdServerHandler*> RequestHandler(
+    const RequestWithStdio& request,
+    const std::vector<CvdServerHandler*>& handlers) {
+  Result<cvd::Response> response;
+  std::vector<CvdServerHandler*> compatible_handlers;
+  for (auto& handler : handlers) {
+    if (CF_EXPECT(handler->CanHandle(request))) {
+      compatible_handlers.push_back(handler);
+    }
+  }
+  CF_EXPECT(compatible_handlers.size() == 1,
+            "Expected exactly one handler for message, found "
+                << compatible_handlers.size());
+  return compatible_handlers[0];
+}
+
 Result<void> CvdServer::ServerLoop(SharedFD server) {
   while (running_) {
     auto client_fd = SharedFD::Accept(*server);
@@ -110,10 +128,12 @@ Result<void> CvdServer::ServerLoop(SharedFD server) {
                      << request.error().message();
           break;
         }
+        fruit::Injector<> request_injector(RequestComponent, this);
         Result<cvd::Response> response;
         {
           std::scoped_lock lock(handler_mutex);
-          auto handler_result = RequestHandler(*request);
+          auto handler_result = RequestHandler(
+              *request, request_injector.getMultibindings<CvdServerHandler>());
           if (handler_result.ok()) {
             handler = *handler_result;
           } else {
@@ -245,27 +265,8 @@ cvd::Status CvdServer::CvdClear(const SharedFD& out, const SharedFD& err) {
   return status;
 }
 
-Result<CvdServerHandler*> CvdServer::RequestHandler(
-    const RequestWithStdio& request) {
-  Result<cvd::Response> response;
-  std::vector<CvdServerHandler*> compatible_handlers;
-  for (auto& handler : handlers_) {
-    if (CF_EXPECT(handler->CanHandle(request))) {
-      compatible_handlers.push_back(handler);
-    }
-  }
-  CF_EXPECT(compatible_handlers.size() == 1,
-            "Expected exactly one handler for message, found "
-                << compatible_handlers.size());
-  return compatible_handlers[0];
-  ;
-}
-
-static fruit::Component<CvdServer> serverComponent() {
-  return fruit::createComponent()
-      .install(cvdCommandComponent)
-      .install(cvdShutdownComponent)
-      .install(cvdVersionComponent);
+static fruit::Component<CvdServer> ServerComponent() {
+  return fruit::createComponent();
 }
 
 static Result<int> CvdServerMain(int argc, char** argv) {
@@ -286,13 +287,9 @@ static Result<int> CvdServerMain(int argc, char** argv) {
 
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
-  fruit::Injector<CvdServer> injector(serverComponent);
-  CvdServer& server = injector.get<CvdServer&>();
-  for (auto handler : injector.getMultibindings<CvdServerHandler>()) {
-    CF_EXPECT(server.AddHandler(handler));
-  }
+  fruit::Injector<CvdServer> injector(ServerComponent);
+  CF_EXPECT(injector.get<CvdServer&>().ServerLoop(server_fd));
 
-  CF_EXPECT(server.ServerLoop(server_fd));
   return 0;
 }
 
