@@ -32,7 +32,7 @@ class CvdVersionHandler : public CvdServerHandler {
   INJECT(CvdVersionHandler()) = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return request.request.contents_case() ==
+    return request.Message().contents_case() ==
            cvd::Request::ContentsCase::kVersionRequest;
   }
 
