@@ -55,8 +55,6 @@ class CvdServer {
 
   INJECT(CvdServer());
 
-  Result<void> AddHandler(CvdServerHandler* handler);
-
   bool HasAssemblies() const;
   void SetAssembly(const AssemblyDir&, const AssemblyInfo&);
   Result<AssemblyInfo> GetAssembly(const AssemblyDir&) const;
@@ -71,14 +69,11 @@ class CvdServer {
  private:
   mutable std::mutex assemblies_mutex_;
   std::map<AssemblyDir, AssemblyInfo> assemblies_;
-  std::vector<CvdServerHandler*> handlers_;
   std::atomic_bool running_ = true;
-
-  Result<CvdServerHandler*> RequestHandler(const RequestWithStdio& request);
 };
 
-fruit::Component<> cvdCommandComponent();
-fruit::Component<> cvdShutdownComponent();
+fruit::Component<fruit::Required<CvdServer>> cvdCommandComponent();
+fruit::Component<fruit::Required<CvdServer>> cvdShutdownComponent();
 fruit::Component<> cvdVersionComponent();
 
 std::optional<std::string> GetCuttlefishConfigPath(
