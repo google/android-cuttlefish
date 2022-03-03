@@ -545,6 +545,7 @@ DEVICE_MANIFEST_FILE += \
 else
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.emulated.camera.provider.hal
+PRODUCT_PACKAGES += com.google.emulated.camera.provider.hal.fastscenecycle
 endif
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.7-service-google \
