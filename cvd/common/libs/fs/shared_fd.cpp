@@ -15,15 +15,17 @@
  */
 #include "common/libs/fs/shared_fd.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#include <cstddef>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <poll.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <cstddef>
+
 #include <algorithm>
 #include <vector>
 
@@ -93,41 +95,22 @@ bool IsRegularFile(const int fd) {
   return S_ISREG(info.st_mode);
 }
 
-constexpr size_t kPreferredBufferSize = 8192;
-
 }  // namespace
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
-  std::vector<char> buffer(kPreferredBufferSize);
+  std::vector<char> buffer(8192);
   while (length > 0) {
     ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
+    length -= num_read;
     if (num_read <= 0) {
       return false;
     }
-    length -= num_read;
-
-    ssize_t written = 0;
-    do {
-      auto res = Write(buffer.data(), num_read);
-     if (res <= 0) {
+    if (Write(buffer.data(), num_read) != num_read) {
       // The caller will have to log an appropriate message.
-       return false;
-     }
-     written += res;
-    } while(written < num_read);
+      return false;
+    }
   }
   return true;
-}
-
-bool FileInstance::CopyAllFrom(FileInstance& in) {
-  // FileInstance may have been constructed with a non-zero errno_ value because
-  // the errno variable is not zeroed out before.
-  errno_ = 0;
-  in.errno_ = 0;
-  while (CopyFrom(in, kPreferredBufferSize)) {
-  }
-  // Only return false if there was an actual error.
-  return !GetErrno() && !in.GetErrno();
 }
 
 void FileInstance::Close() {
@@ -276,6 +259,24 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   CheckMarked(&writefds, write_set);
   CheckMarked(&errorfds, error_set);
   return rval;
+}
+
+int SharedFD::Poll(std::vector<PollSharedFd>& fds, int timeout) {
+  return Poll(fds.data(), fds.size(), timeout);
+}
+
+int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
+  std::vector<pollfd> native_pollfds(num_fds);
+  for (size_t i = 0; i < num_fds; i++) {
+    native_pollfds[i].fd = fds[i].fd->fd_;
+    native_pollfds[i].events = fds[i].events;
+    native_pollfds[i].revents = 0;
+  }
+  int ret = poll(native_pollfds.data(), native_pollfds.size(), timeout);
+  for (size_t i = 0; i < num_fds; i++) {
+    fds[i].revents = native_pollfds[i].revents;
+  }
+  return ret;
 }
 
 static void MakeAddress(const char* name, bool abstract,
