@@ -911,11 +911,12 @@ class DeviceControlApp {
       console.error('Unknown display id: ' + displayId);
       return;
     }
+    powerMode = powerMode.toLowerCase();
     switch (powerMode) {
-      case 'On':
+      case 'on':
         display.style.visibility = 'visible';
         break;
-      case 'Off':
+      case 'off':
         display.style.visibility = 'hidden';
         break;
       default:
