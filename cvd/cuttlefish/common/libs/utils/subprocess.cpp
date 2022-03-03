@@ -16,34 +16,19 @@
 
 #include "common/libs/utils/subprocess.h"
 
-#ifdef __linux__
-#include <sys/prctl.h>
-#endif
-
+#include <android-base/logging.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <string.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <cerrno>
-#include <cstring>
+#include <stdio.h>
 #include <map>
-#include <optional>
-#include <ostream>
 #include <set>
-#include <sstream>
-#include <string>
 #include <thread>
-#include <type_traits>
-#include <utility>
-#include <vector>
-
-#include <android-base/logging.h>
-#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -94,33 +79,6 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
 }
 }  // namespace
 
-std::vector<std::string> ArgsToVec(char** argv) {
-  std::vector<std::string> args;
-  for (int i = 0; argv && argv[i]; i++) {
-    args.push_back(argv[i]);
-  }
-  return args;
-}
-
-std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
-  std::unordered_map<std::string, std::string> env_map;
-  if (!envp) {
-    return env_map;
-  }
-  for (char** e = envp; *e != nullptr; e++) {
-    std::string env_var_val(*e);
-    auto tokens = android::base::Split(env_var_val, "=");
-    if (tokens.size() <= 1) {
-      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
-      continue;
-    }
-    const auto var = tokens.at(0);
-    tokens.erase(tokens.begin());
-    env_map[var] = android::base::Join(tokens, "=");
-  }
-  return env_map;
-}
-
 SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
   verbose_ = verbose;
   return *this;
@@ -130,7 +88,6 @@ SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
   return *this;
 }
 
-#ifdef __linux__
 SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
   exit_with_parent_ = v;
   return *this;
@@ -139,7 +96,6 @@ SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
   exit_with_parent_ = v;
   return *this;
 }
-#endif
 
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
   in_group_ = in_group;
@@ -151,7 +107,7 @@ SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
 }
 
 Subprocess::Subprocess(Subprocess&& subprocess)
-    : pid_(subprocess.pid_.load()),
+    : pid_(subprocess.pid_),
       started_(subprocess.started_),
       stopper_(subprocess.stopper_) {
   // Make sure the moved object no longer controls this subprocess
@@ -160,7 +116,7 @@ Subprocess::Subprocess(Subprocess&& subprocess)
 }
 
 Subprocess& Subprocess::operator=(Subprocess&& other) {
-  pid_ = other.pid_.load();
+  pid_ = other.pid_;
   started_ = other.started_;
   stopper_ = other.stopper_;
 
@@ -177,7 +133,7 @@ int Subprocess::Wait() {
     return -1;
   }
   int wstatus = 0;
-  auto pid = pid_.load();  // Wait will set pid_ to -1 after waiting
+  auto pid = pid_;  // Wait will set pid_ to -1 after waiting
   auto wait_ret = waitpid(pid, &wstatus, 0);
   if (wait_ret < 0) {
     auto error = errno;
@@ -186,17 +142,14 @@ int Subprocess::Wait() {
   }
   int retval = 0;
   if (WIFEXITED(wstatus)) {
-    pid_ = -1;
     retval = WEXITSTATUS(wstatus);
     if (retval) {
       LOG(DEBUG) << "Subprocess " << pid
                  << " exited with error code: " << retval;
     }
   } else if (WIFSIGNALED(wstatus)) {
-    pid_ = -1;
-    int sig_num = WTERMSIG(wstatus);
-    LOG(ERROR) << "Subprocess " << pid << " was interrupted by a signal '"
-               << strsignal(sig_num) << "' (" << sig_num << ")";
+    LOG(ERROR) << "Subprocess " << pid
+               << " was interrupted by a signal: " << WTERMSIG(wstatus);
     retval = -1;
   }
   return retval;
@@ -211,42 +164,13 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
   *infop = {};
   auto retval = waitid(P_PID, pid_, infop, options);
   // We don't want to wait twice for the same process
-  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
+  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED ||
+                infop->si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
   if (exited && reaped) {
     pid_ = -1;
   }
   return retval;
-}
-
-static Result<void> SendSignalImpl(const int signal, const pid_t pid,
-                                   bool to_group, const bool started) {
-  if (pid == -1) {
-    return CF_ERR(strerror(ESRCH));
-  }
-  CF_EXPECTF(started == true,
-             "The Subprocess object lost the ownership"
-             "of the process {}.",
-             pid);
-  int ret_code = 0;
-  if (to_group) {
-    ret_code = killpg(getpgid(pid), signal);
-  } else {
-    ret_code = kill(pid, signal);
-  }
-  CF_EXPECTF(ret_code == 0, "kill/killpg returns {} with errno: {}", ret_code,
-             strerror(errno));
-  return {};
-}
-
-Result<void> Subprocess::SendSignal(const int signal) {
-  CF_EXPECT(SendSignalImpl(signal, pid_, /* to_group */ false, started_));
-  return {};
-}
-
-Result<void> Subprocess::SendSignalToGroup(const int signal) {
-  CF_EXPECT(SendSignalImpl(signal, pid_, /* to_group */ true, started_));
-  return {};
 }
 
 StopperResult KillSubprocess(Subprocess* subprocess) {
@@ -272,12 +196,12 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
   return StopperResult::kStopSuccess;
 }
 
-Command::Command(std::string executable, SubprocessStopper stopper)
+Command::Command(const std::string& executable, SubprocessStopper stopper)
     : subprocess_stopper_(stopper) {
   for (char** env = environ; *env; env++) {
     env_.emplace_back(*env);
   }
-  command_.emplace_back(std::move(executable));
+  command_.push_back(executable);
 }
 
 Command::~Command() {
@@ -331,42 +255,6 @@ Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
   return std::move(*this);
 }
 
-Command& Command::SetWorkingDirectory(const std::string& path) & {
-#ifdef __linux__
-  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
-#elif defined(__APPLE__)
-  auto fd = SharedFD::Open(path, O_RDONLY | O_DIRECTORY);
-#else
-#error "Unsupported operating system"
-#endif
-  CHECK(fd->IsOpen()) << "Could not open \"" << path
-                      << "\" dir fd: " << fd->StrError();
-  return SetWorkingDirectory(fd);
-}
-Command Command::SetWorkingDirectory(const std::string& path) && {
-  return std::move(SetWorkingDirectory(path));
-}
-Command& Command::SetWorkingDirectory(SharedFD dirfd) & {
-  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
-  working_directory_ = std::move(dirfd);
-  return *this;
-}
-Command Command::SetWorkingDirectory(SharedFD dirfd) && {
-  return std::move(SetWorkingDirectory(std::move(dirfd)));
-}
-
-Command& Command::AddPrerequisite(
-    const std::function<Result<void>()>& prerequisite) & {
-  prerequisites_.push_back(prerequisite);
-  return *this;
-}
-
-Command Command::AddPrerequisite(
-    const std::function<Result<void>()>& prerequisite) && {
-  prerequisites_.push_back(prerequisite);
-  return std::move(*this);
-}
-
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
 
@@ -376,23 +264,11 @@ Subprocess Command::Start(SubprocessOptions options) const {
 
   pid_t pid = fork();
   if (!pid) {
-#ifdef __linux__
     if (options.ExitWithParent()) {
       prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
     }
-#endif
 
     do_redirects(redirects_);
-
-    for (auto& prerequisite : prerequisites_) {
-      auto prerequisiteResult = prerequisite();
-
-      if (!prerequisiteResult.ok()) {
-        LOG(ERROR) << "Failed to check prerequisites: "
-                   << prerequisiteResult.error().Message();
-      }
-    }
-
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
       if (setpgid(0, 0) != 0) {
@@ -406,26 +282,13 @@ Subprocess Command::Start(SubprocessOptions options) const {
         LOG(ERROR) << "fcntl failed: " << strerror(error_num);
       }
     }
-    if (working_directory_->IsOpen()) {
-      if (SharedFD::Fchdir(working_directory_) != 0) {
-        LOG(ERROR) << "Fchdir failed: " << working_directory_->StrError();
-      }
-    }
     int rval;
     auto envp = ToCharPointers(env_);
-    const char* executable = executable_ ? executable_->c_str() : cmd[0];
-#ifdef __linux__
-    rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
+    rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
                    const_cast<char* const*>(envp.data()));
-#elif defined(__APPLE__)
-    rval = execve(executable, const_cast<char* const*>(cmd.data()),
-                  const_cast<char* const*>(envp.data()));
-#else
-#error "Unsupported architecture"
-#endif
     // No need for an if: if exec worked it wouldn't have returned
-    LOG(ERROR) << "exec of " << cmd[0] << " with path \"" << executable
-               << "\" failed (" << strerror(errno) << ")";
+    LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
+               << ")";
     exit(rval);
   }
   if (pid == -1) {
@@ -562,79 +425,29 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
   return code;
 }
 
-namespace {
-
-struct ExtraParam {
-  // option for Subprocess::Start()
-  SubprocessOptions subprocess_options;
-  // options for Subprocess::Wait(...)
-  int wait_options;
-  siginfo_t* infop;
-};
-Result<int> ExecuteImpl(const std::vector<std::string>& command,
-                        const std::optional<std::vector<std::string>>& envs,
-                        const std::optional<ExtraParam>& extra_param) {
+int execute(const std::vector<std::string>& command,
+            const std::vector<std::string>& env) {
   Command cmd(command[0]);
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(command[i]);
   }
-  if (envs) {
-    cmd.SetEnvironment(*envs);
+  cmd.SetEnvironment(env);
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
   }
-  auto subprocess =
-      (!extra_param ? cmd.Start() : cmd.Start(extra_param->subprocess_options));
-  CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
-
-  if (extra_param) {
-    CF_EXPECT(extra_param->infop != nullptr,
-              "When ExtraParam is given, the infop buffer address "
-                  << "must not be nullptr.");
-    return subprocess.Wait(extra_param->infop, extra_param->wait_options);
-  } else {
-    return subprocess.Wait();
+  return subprocess.Wait();
+}
+int execute(const std::vector<std::string>& command) {
+  Command cmd(command[0]);
+  for (size_t i = 1; i < command.size(); ++i) {
+    cmd.AddParameter(command[i]);
   }
-}
-
-}  // namespace
-
-int Execute(const std::vector<std::string>& commands,
-            const std::vector<std::string>& envs) {
-  auto result = ExecuteImpl(commands, envs, /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
-int Execute(const std::vector<std::string>& commands) {
-  std::vector<std::string> envs;
-  auto result = ExecuteImpl(commands, /* envs */ std::nullopt,
-                            /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
-  siginfo_t info;
-  auto ret_code =
-      CF_EXPECT(ExecuteImpl(commands, /* envs */ std::nullopt,
-                            ExtraParam{.subprocess_options = subprocess_options,
-                                       .infop = &info,
-                                       .wait_options = wait_options}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
-  return info;
-}
-
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          const std::vector<std::string>& envs,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
-  siginfo_t info;
-  auto ret_code =
-      CF_EXPECT(ExecuteImpl(commands, envs,
-                            ExtraParam{.subprocess_options = subprocess_options,
-                                       .infop = &info,
-                                       .wait_options = wait_options}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
-  return info;
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
+  }
+  return subprocess.Wait();
 }
 
 }  // namespace cuttlefish

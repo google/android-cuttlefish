@@ -15,36 +15,20 @@
  */
 #pragma once
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <common/libs/fs/shared_fd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-
-#include <atomic>
-#include <cstdio>
-#include <cstring>
 #include <functional>
 #include <map>
-#include <optional>
-#include <ostream>
 #include <sstream>
 #include <string>
-#include <type_traits>
-#include <unordered_map>
-#include <utility>
+#include <unordered_set>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
-
 namespace cuttlefish {
-
-/*
- * Does what ArgsToVec(int argc, char**) from flag_parser.h does
- * without argc.
- */
-std::vector<std::string> ArgsToVec(char** argv);
-std::unordered_map<std::string, std::string> EnvpToMap(char** envp);
 
 enum class StopperResult {
   kStopFailure, /* Failed to stop the subprocess. */
@@ -52,7 +36,9 @@ enum class StopperResult {
   kStopSuccess, /* The subprocess exited in the expected way. */
 };
 
+class Command;
 class Subprocess;
+class SubprocessOptions;
 using SubprocessStopper = std::function<StopperResult(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
 StopperResult KillSubprocess(Subprocess* subprocess);
@@ -88,16 +74,13 @@ class Subprocess {
   pid_t pid() const { return pid_; }
   StopperResult Stop() { return stopper_(this); }
 
-  Result<void> SendSignal(const int signal);
-  Result<void> SendSignalToGroup(const int signal);
-
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
   // frees the pid, which allows the kernel to reuse it so we may end up waiting
   // for the wrong process)
   Subprocess(const Subprocess&) = delete;
   Subprocess& operator=(const Subprocess&) = delete;
-  std::atomic<pid_t> pid_ = -1;
+  pid_t pid_ = -1;
   bool started_ = false;
   SubprocessStopper stopper_;
 };
@@ -109,10 +92,8 @@ class SubprocessOptions {
 
   SubprocessOptions& Verbose(bool verbose) &;
   SubprocessOptions Verbose(bool verbose) &&;
-#ifdef __linux__
   SubprocessOptions& ExitWithParent(bool exit_with_parent) &;
   SubprocessOptions ExitWithParent(bool exit_with_parent) &&;
-#endif
   // The subprocess runs as head of its own process group.
   SubprocessOptions& InGroup(bool in_group) &;
   SubprocessOptions InGroup(bool in_group) &&;
@@ -149,7 +130,8 @@ class Command {
   // Constructs a command object from the path to an executable binary and an
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
-  Command(std::string executable, SubprocessStopper stopper = KillSubprocess);
+  Command(const std::string& executable,
+          SubprocessStopper stopper = KillSubprocess);
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -158,50 +140,35 @@ class Command {
   Command& operator=(const Command&) = delete;
   ~Command();
 
-  const std::string& Executable() const {
-    return executable_ ? *executable_ : command_[0];
-  }
+  const std::string& Executable() const { return command_[0]; }
 
-  Command& SetExecutable(std::string executable) & {
-    executable_ = std::move(executable);
+  Command& SetExecutable(const std::string& executable) & {
+    command_[0] = executable;
     return *this;
   }
-  Command SetExecutable(std::string executable) && {
-    return std::move(SetExecutable(executable));
-  }
-
-  Command& SetName(std::string name) & {
-    command_[0] = std::move(name);
-    return *this;
-  }
-  Command SetName(std::string name) && {
-    return std::move(SetName(std::move(name)));
-  }
-
-  Command& SetExecutableAndName(std::string name) & {
-    return SetExecutable(name).SetName(std::move(name));
-  }
-
-  Command SetExecutableAndName(std::string name) && {
-    return std::move(SetExecutableAndName(std::move(name)));
+  Command SetExecutable(const std::string& executable) && {
+    SetExecutable(executable);
+    return std::move(*this);
   }
 
   Command& SetStopper(SubprocessStopper stopper) & {
-    subprocess_stopper_ = std::move(stopper);
+    subprocess_stopper_ = stopper;
     return *this;
   }
   Command SetStopper(SubprocessStopper stopper) && {
-    return std::move(SetStopper(std::move(stopper)));
+    SetStopper(stopper);
+    return std::move(*this);
   }
 
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
-  Command& SetEnvironment(std::vector<std::string> env) & {
-    env_ = std::move(env);
+  Command& SetEnvironment(const std::vector<std::string>& env) & {
+    env_ = env;
     return *this;
   }
-  Command SetEnvironment(std::vector<std::string> env) && {
-    return std::move(SetEnvironment(std::move(env)));
+  Command SetEnvironment(const std::vector<std::string>& env) && {
+    SetEnvironment(env);
+    return std::move(*this);
   }
 
   Command& AddEnvironmentVariable(const std::string& env_var,
@@ -214,12 +181,13 @@ class Command {
     return std::move(*this);
   }
 
-  Command& AddEnvironmentVariable(std::string env_var) & {
-    env_.emplace_back(std::move(env_var));
+  Command& AddEnvironmentVariable(const std::string& env_var) & {
+    env_.push_back(env_var);
     return *this;
   }
-  Command AddEnvironmentVariable(std::string env_var) && {
-    return std::move(AddEnvironmentVariable(std::move(env_var)));
+  Command AddEnvironmentVariable(const std::string& env_var) && {
+    AddEnvironmentVariable(env_var);
+    return std::move(*this);
   }
 
   // Specify an environment variable to be unset from the parent's
@@ -236,7 +204,8 @@ class Command {
     return *this;
   }
   Command UnsetFromEnvironment(const std::string& env_var) && {
-    return std::move(UnsetFromEnvironment(env_var));
+    UnsetFromEnvironment(env_var);
+    return std::move(*this);
   }
 
   // Adds a single parameter to the command. All arguments are concatenated into
@@ -253,7 +222,8 @@ class Command {
   }
   template <typename... Args>
   Command AddParameter(Args... args) && {
-    return std::move(AddParameter(std::forward<Args>(args)...));
+    AddParameter(std::forward<Args>(args)...);
+    return std::move(*this);
   }
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
@@ -267,7 +237,8 @@ class Command {
   }
   template <typename... Args>
   Command AppendToLastParameter(Args... args) && {
-    return std::move(AppendToLastParameter(std::forward<Args>(args)...));
+    AppendToLastParameter(std::forward<Args>(args)...);
+    return std::move(*this);
   }
 
   // Redirects the standard IO of the command.
@@ -279,14 +250,6 @@ class Command {
                          Subprocess::StdIOChannel parent_channel) &;
   Command RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                         Subprocess::StdIOChannel parent_channel) &&;
-
-  Command& SetWorkingDirectory(const std::string& path) &;
-  Command SetWorkingDirectory(const std::string& path) &&;
-  Command& SetWorkingDirectory(SharedFD dirfd) &;
-  Command SetWorkingDirectory(SharedFD dirfd) &&;
-
-  Command& AddPrerequisite(const std::function<Result<void>()>& prerequisite) &;
-  Command AddPrerequisite(const std::function<Result<void>()>& prerequisite) &&;
 
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
@@ -305,14 +268,11 @@ class Command {
   std::string AsBashScript(const std::string& redirected_stdio_path = "") const;
 
  private:
-  std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
-  std::vector<std::function<Result<void>()>> prerequisites_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   std::vector<std::string> env_{};
   SubprocessStopper subprocess_stopper_;
-  SharedFD working_directory_;
 };
 
 /*
@@ -331,31 +291,12 @@ int RunWithManagedStdio(Command&& command, const std::string* stdin,
                         std::string* stdout, std::string* stderr,
                         SubprocessOptions options = SubprocessOptions());
 
-/**
- * Returns pid on success, negative values on error
- *
- * If failed in fork() or exec(), returns -1.
- * Or, returns pid.
- *
- * TODO: Changes return type to Result<int>
- *
- *   For now, too many callsites expects int, and needs quite a lot of changes
- *   if we change the return type.
- */
-int Execute(const std::vector<std::string>& commands);
-int Execute(const std::vector<std::string>& commands,
-            const std::vector<std::string>& envs);
-
-/**
- * Similar as the two above but returns CF_ERR instead of -1, and siginfo_t
- * instead of pid.
- */
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          SubprocessOptions subprocess_options,
-                          int wait_options);
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          const std::vector<std::string>& envs,
-                          SubprocessOptions subprocess_options,
-                          int wait_options);
+// Convenience wrapper around Command and Subprocess class, allows to easily
+// execute a command and wait for it to complete. The version without the env
+// parameter starts the command with the same environment as the parent. Returns
+// zero if the command completed successfully, non zero otherwise.
+int execute(const std::vector<std::string>& command,
+            const std::vector<std::string>& env);
+int execute(const std::vector<std::string>& command);
 
 }  // namespace cuttlefish

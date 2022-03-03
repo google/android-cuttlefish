@@ -15,30 +15,22 @@
  */
 #include "common/libs/fs/shared_fd.h"
 
-#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <cstddef>
 #include <errno.h>
 #include <fcntl.h>
-#include <net/if.h>
 #include <netinet/in.h>
-#include <poll.h>
-#include <sys/file.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
 #include <unistd.h>
-#include <cstddef>
-
 #include <algorithm>
-#include <sstream>
 #include <vector>
 
-#include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/result.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
@@ -85,16 +77,11 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
 #endif
 
 int memfd_create_wrapper(const char* name, unsigned int flags) {
-#ifdef __linux__
 #ifdef CUTTLEFISH_HOST
   // TODO(schuffelen): Use memfd_create with a newer host libc.
   return syscall(__NR_memfd_create, name, flags);
 #else
   return memfd_create(name, flags);
-#endif
-#else
-  (void)flags;
-  return shm_open(name, O_RDWR);
 #endif
 }
 
@@ -106,64 +93,22 @@ bool IsRegularFile(const int fd) {
   return S_ISREG(info.st_mode);
 }
 
-constexpr size_t kPreferredBufferSize = 8192;
-
 }  // namespace
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
-  std::vector<char> buffer(kPreferredBufferSize);
+  std::vector<char> buffer(8192);
   while (length > 0) {
-    // Wait until either in becomes readable or our fd closes.
-    constexpr ssize_t IN = 0;
-    constexpr ssize_t OUT = 1;
-    struct pollfd pollfds[2];
-    pollfds[IN].fd = in.fd_;
-    pollfds[IN].events = POLLIN;
-    pollfds[IN].revents = 0;
-    pollfds[OUT].fd = fd_;
-    pollfds[OUT].events = 0;
-    pollfds[OUT].revents = 0;
-    int res = poll(pollfds, 2, -1 /* indefinitely */);
-    if (res < 0) {
-      errno_ = errno;
-      return false;
-    }
-    if (pollfds[OUT].revents != 0) {
-      // destination was either closed, invalid or errored, either way there is no
-      // point in continuing.
-      return false;
-    }
-
     ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
+    length -= num_read;
     if (num_read <= 0) {
       return false;
     }
-    length -= num_read;
-
-    ssize_t written = 0;
-    do {
-      // No need to use poll for writes: even if the source closes, the data
-      // needs to be delivered to the other side.
-      auto res = Write(buffer.data(), num_read);
-      if (res <= 0) {
-        // The caller will have to log an appropriate message.
-        return false;
-      }
-      written += res;
-    } while(written < num_read);
+    if (Write(buffer.data(), num_read) != num_read) {
+      // The caller will have to log an appropriate message.
+      return false;
+    }
   }
   return true;
-}
-
-bool FileInstance::CopyAllFrom(FileInstance& in) {
-  // FileInstance may have been constructed with a non-zero errno_ value because
-  // the errno variable is not zeroed out before.
-  errno_ = 0;
-  in.errno_ = 0;
-  while (CopyFrom(in, kPreferredBufferSize)) {
-  }
-  // Only return false if there was an actual error.
-  return !GetErrno() && !in.GetErrno();
 }
 
 void FileInstance::Close() {
@@ -314,24 +259,6 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   return rval;
 }
 
-int SharedFD::Poll(std::vector<PollSharedFd>& fds, int timeout) {
-  return Poll(fds.data(), fds.size(), timeout);
-}
-
-int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
-  std::vector<pollfd> native_pollfds(num_fds);
-  for (size_t i = 0; i < num_fds; i++) {
-    native_pollfds[i].fd = fds[i].fd->fd_;
-    native_pollfds[i].events = fds[i].events;
-    native_pollfds[i].revents = 0;
-  }
-  int ret = poll(native_pollfds.data(), native_pollfds.size(), timeout);
-  for (size_t i = 0; i < num_fds; i++) {
-    fds[i].revents = native_pollfds[i].revents;
-  }
-  return ret;
-}
-
 static void MakeAddress(const char* name, bool abstract,
                         struct sockaddr_un* dest, socklen_t* len) {
   memset(dest, 0, sizeof(*dest));
@@ -385,12 +312,10 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   return false;
 }
 
-#ifdef __linux__
 SharedFD SharedFD::Event(int initval, int flags) {
   int fd = eventfd(initval, flags);
   return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
-#endif
 
 SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
   int fd = memfd_create_wrapper(name.c_str(), flags);
@@ -425,11 +350,7 @@ bool SharedFD::SocketPair(int domain, int type, int protocol,
 }
 
 SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
-  return Open(path.c_str(), flags, mode);
-}
-
-SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
+  int fd = TEMP_FAILURE_RETRY(open(path.c_str(), flags, mode));
   if (fd == -1) {
     return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
   } else {
@@ -441,29 +362,19 @@ SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
-int SharedFD::Fchdir(SharedFD shared_fd) {
-  if (!shared_fd.value_) {
-    return -1;
-  }
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
-  shared_fd->errno_ = errno;
-  return rval;
-}
-
 SharedFD SharedFD::Fifo(const std::string& path, mode_t mode) {
-  struct stat st {};
+  struct stat st;
   if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
     if (TEMP_FAILURE_RETRY(remove(path.c_str())) != 0) {
       return ErrorFD(errno);
     }
   }
 
-  int rval = TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode));
-  if (rval == -1) {
+  int fd = TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode));
+  if (fd == -1) {
     return ErrorFD(errno);
   }
-  return Open(path, O_RDWR);
+  return Open(path, mode);
 }
 
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
@@ -515,66 +426,12 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  auto rval = SharedFD::Socket(AF_INET, type, 0);
+  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  return rval;
-}
-
-SharedFD SharedFD::SocketClient(const std::string& host, int port, int type,
-                                std::chrono::seconds timeout) {
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(host.c_str());
-  auto rval = SharedFD::Socket(AF_INET, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval->ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                               sizeof addr, &timeout_timeval) < 0) {
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  return rval;
-}
-
-SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& interface,
-                                 int port, int type, std::chrono::seconds timeout) {
-  sockaddr_in6 addr{};
-  addr.sin6_family = AF_INET6;
-  addr.sin6_port = htons(port);
-  inet_pton(AF_INET6, host.c_str(), &addr.sin6_addr);
-  auto rval = SharedFD::Socket(AF_INET6, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-
-  if (!interface.empty()) {
-#ifdef __linux__
-    ifreq ifr{};
-    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface.c_str());
-
-    if (rval->SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1) {
-      return SharedFD::ErrorFD(rval->GetErrno());
-    }
-#elif defined(__APPLE__)
-    int idx = if_nametoindex(interface.c_str());
-    if (rval->SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) == -1) {
-      return SharedFD::ErrorFD(rval->GetErrno());
-    }
-#else
-#error "Unsupported operating system"
-#endif
-  }
-
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval->ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                               sizeof addr, &timeout_timeval) < 0) {
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
+                    sizeof addr) < 0) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
@@ -654,7 +511,6 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
   return rval;
 }
 
-#ifdef __linux__
 SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
   auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
@@ -699,7 +555,6 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   }
   return vsock;
 }
-#endif
 
 SharedFD WeakFD::lock() const {
   auto locked_file_instance = value_.lock();
@@ -764,21 +619,6 @@ int FileInstance::Fcntl(int command, int value) {
   return rval;
 }
 
-int FileInstance::Fsync() {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fsync(fd_));
-  errno_ = errno;
-  return rval;
-}
-
-Result<void> FileInstance::Flock(int operation) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(flock(fd_, operation));
-  errno_ = errno;
-  CF_EXPECT(rval == 0, StrError());
-  return {};
-}
-
 int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
   errno = 0;
   int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
@@ -788,14 +628,12 @@ int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
   return rval;
 }
 
-#ifdef __linux__
 unsigned int FileInstance::VsockServerPort() {
   struct sockaddr_vm vm_socket;
   socklen_t length = sizeof(vm_socket);
   GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
   return vm_socket.svm_port;
 }
-#endif
 
 int FileInstance::Ioctl(int request, void* val) {
   errno = 0;
@@ -849,14 +687,12 @@ ssize_t FileInstance::Read(void* buf, size_t count) {
   return rval;
 }
 
-#ifdef __linux__
 int FileInstance::EventfdRead(eventfd_t* value) {
   errno = 0;
   auto rval = eventfd_read(fd_, value);
   errno_ = errno;
   return rval;
 }
-#endif
 
 ssize_t FileInstance::Send(const void* buf, size_t len, int flags) {
   errno = 0;
@@ -939,14 +775,12 @@ ssize_t FileInstance::Write(const void* buf, size_t count) {
   return rval;
 }
 
-#ifdef __linux__
 int FileInstance::EventfdWrite(eventfd_t value) {
   errno = 0;
   int rval = eventfd_write(fd_, value);
   errno_ = errno;
   return rval;
 }
-#endif
 
 bool FileInstance::IsATTY() {
   errno = 0;
@@ -954,19 +788,6 @@ bool FileInstance::IsATTY() {
   errno_ = errno;
   return rval;
 }
-
-#ifdef __linux__
-Result<std::string> FileInstance::ProcFdLinkTarget() const {
-  std::stringstream output_composer;
-  output_composer << "/proc/" << getpid() << "/fd/" << fd_;
-  const std::string mem_fd_link = output_composer.str();
-  std::string mem_fd_target;
-  CF_EXPECT(
-      android::base::Readlink(mem_fd_link, &mem_fd_target),
-      "Getting link for the memory file \"" << mem_fd_link << "\" failed");
-  return mem_fd_target;
-}
-#endif
 
 FileInstance::FileInstance(int fd, int in_errno)
     : fd_(fd), errno_(in_errno), is_regular_file_(IsRegularFile(fd_)) {
