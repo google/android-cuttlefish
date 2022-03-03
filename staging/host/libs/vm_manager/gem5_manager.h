@@ -98,6 +98,7 @@ const std::string fs_kernel_cmd = R"CPP_STR_END(
     "kfence.sample_interval=500",
     "loop.max_part=7",
     "bootconfig",
+    "androidboot.force_normal_boot=1",
   ]
   root.system.workload.command_line = " ".join(kernel_cmd)
   m5.instantiate()
