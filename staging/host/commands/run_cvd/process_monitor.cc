@@ -131,6 +131,21 @@ static void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   }
 }
 
+static void LogSubprocessExit(const std::string& name, const siginfo_t& infop) {
+  LOG(INFO) << "Detected unexpected exit of monitored subprocess " << name;
+  if (infop.si_code == CLD_EXITED) {
+    LOG(INFO) << "Subprocess " << name << " (" << infop.si_pid
+              << ") has exited with exit code " << infop.si_status;
+  } else if (infop.si_code == CLD_KILLED) {
+    LOG(ERROR) << "Subprocess " << name << " (" << infop.si_pid
+               << ") was interrupted by a signal: " << infop.si_status;
+  } else {
+    LOG(INFO) << "subprocess " << name << " (" << infop.si_pid
+              << ") has exited for unknown reasons (code = " << infop.si_code
+              << ", status = " << infop.si_status << ")";
+  }
+}
+
 bool ProcessMonitor::MonitorRoutine() {
   // Make this process a subreaper to reliably catch subprocess exits.
   // See https://man7.org/linux/man-pages/man2/prctl.2.html
@@ -199,14 +214,14 @@ bool ProcessMonitor::MonitorRoutine() {
       LOG(WARNING) << "Error in stopping \"" << it.cmd->GetShortName() << "\"";
       return false;
     }
-    int wstatus = 0;
-    auto pid = it.proc->Wait(&wstatus, 0);
-    if (pid < 0) {
+    siginfo_t infop;
+    auto success = it.proc->Wait(&infop, WEXITED);
+    if (success < 0) {
       LOG(WARNING) << "Failed to wait for process " << it.cmd->GetShortName();
       return false;
     }
     if (stop_result == StopperResult::kStopCrash) {
-      LogSubprocessExit(it.cmd->GetShortName(), pid, wstatus);
+      LogSubprocessExit(it.cmd->GetShortName(), infop);
     }
     return true;
   };

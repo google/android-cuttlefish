@@ -134,7 +134,7 @@ int Subprocess::Wait() {
   }
   int wstatus = 0;
   auto pid = pid_;  // Wait will set pid_ to -1 after waiting
-  auto wait_ret = Wait(&wstatus, 0);
+  auto wait_ret = waitpid(pid, &wstatus, 0);
   if (wait_ret < 0) {
     auto error = errno;
     LOG(ERROR) << "Error on call to waitpid: " << strerror(error);
@@ -144,7 +144,7 @@ int Subprocess::Wait() {
   if (WIFEXITED(wstatus)) {
     retval = WEXITSTATUS(wstatus);
     if (retval) {
-      LOG(ERROR) << "Subprocess " << pid
+      LOG(DEBUG) << "Subprocess " << pid
                  << " exited with error code: " << retval;
     }
   } else if (WIFSIGNALED(wstatus)) {
@@ -154,16 +154,22 @@ int Subprocess::Wait() {
   }
   return retval;
 }
-pid_t Subprocess::Wait(int* wstatus, int options) {
+int Subprocess::Wait(siginfo_t* infop, int options) {
   if (pid_ < 0) {
     LOG(ERROR)
         << "Attempt to wait on invalid pid(has it been waited on already?): "
         << pid_;
     return -1;
   }
-  auto retval = waitpid(pid_, wstatus, options);
+  *infop = {};
+  auto retval = waitid(P_PID, pid_, infop, options);
   // We don't want to wait twice for the same process
-  pid_ = -1;
+  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED ||
+                infop->si_code == CLD_DUMPED;
+  bool reaped = !(options & WNOWAIT);
+  if (exited && reaped) {
+    pid_ = -1;
+  }
   return retval;
 }
 
@@ -407,12 +413,8 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     // This is necessary to close the write end of the pipe.
     Command forceDelete = std::move(cmd);
   }
-  int wstatus;
-  subprocess.Wait(&wstatus, 0);
-  if (WIFSIGNALED(wstatus)) {
-    LOG(ERROR) << "Command was interrupted by a signal: " << WTERMSIG(wstatus);
-    return -1;
-  }
+
+  int code = subprocess.Wait();
   {
     auto join_threads = std::move(thread_joiner);
   }
@@ -420,7 +422,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     LOG(ERROR) << "IO error communicating with " << cmd_short_name;
     return -1;
   }
-  return WEXITSTATUS(wstatus);
+  return code;
 }
 
 int execute(const std::vector<std::string>& command,
