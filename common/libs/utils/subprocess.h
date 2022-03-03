@@ -19,6 +19,7 @@
 #include <android-base/strings.h>
 #include <common/libs/fs/shared_fd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include <functional>
 #include <map>
@@ -64,8 +65,8 @@ class Subprocess {
   // Waits for the subprocess to complete. Returns zero if completed
   // successfully, non-zero otherwise.
   int Wait();
-  // Same as waitpid(2)
-  pid_t Wait(int* wstatus, int options);
+  // Same as waitid(2)
+  int Wait(siginfo_t* infop, int options);
   // Whether the command started successfully. It only says whether the call to
   // fork() succeeded or not, it says nothing about exec or successful
   // completion of the command, that's what Wait is for.
