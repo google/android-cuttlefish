@@ -57,6 +57,8 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.contexthub@1.2",
     "android.hardware.fastboot@1.1",
     "android.hardware.dumpstate@1.1", // deprecated, see b/205760700
+    "android.hardware.gnss@1.1", // GNSS converted to AIDL, b/206670536
+    "android.hardware.gnss@2.1", // GNSS converted to AIDL, b/206670536
     "android.hardware.gnss.measurement_corrections@1.1", // is sub-interface of gnss
     "android.hardware.gnss.visibility_control@1.0",
     "android.hardware.graphics.allocator@2.0",
