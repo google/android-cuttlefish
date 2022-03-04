@@ -156,91 +156,91 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition{
       .label = "misc",
-      .image_file_path = FLAGS_misc_image,
+      .image_file_path = AbsolutePath(FLAGS_misc_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_a",
-      .image_file_path = FLAGS_boot_image,
+      .image_file_path = AbsolutePath(FLAGS_boot_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_b",
-      .image_file_path = FLAGS_boot_image,
+      .image_file_path = AbsolutePath(FLAGS_boot_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "init_boot_a",
-      .image_file_path = FLAGS_init_boot_image,
+      .image_file_path = AbsolutePath(FLAGS_init_boot_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "init_boot_b",
-      .image_file_path = FLAGS_init_boot_image,
+      .image_file_path = AbsolutePath(FLAGS_init_boot_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_a",
-      .image_file_path = FLAGS_vendor_boot_image,
+      .image_file_path = AbsolutePath(FLAGS_vendor_boot_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_b",
-      .image_file_path = FLAGS_vendor_boot_image,
+      .image_file_path = AbsolutePath(FLAGS_vendor_boot_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_a",
-      .image_file_path = FLAGS_vbmeta_image,
+      .image_file_path = AbsolutePath(FLAGS_vbmeta_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_b",
-      .image_file_path = FLAGS_vbmeta_image,
+      .image_file_path = AbsolutePath(FLAGS_vbmeta_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_a",
-      .image_file_path = FLAGS_vbmeta_system_image,
+      .image_file_path = AbsolutePath(FLAGS_vbmeta_system_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_b",
-      .image_file_path = FLAGS_vbmeta_system_image,
+      .image_file_path = AbsolutePath(FLAGS_vbmeta_system_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "super",
-      .image_file_path = FLAGS_super_image,
+      .image_file_path = AbsolutePath(FLAGS_super_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "userdata",
-      .image_file_path = FLAGS_data_image,
+      .image_file_path = AbsolutePath(FLAGS_data_image),
       .read_only = true,
   });
   partitions.push_back(ImagePartition{
       .label = "metadata",
-      .image_file_path = FLAGS_metadata_image,
+      .image_file_path = AbsolutePath(FLAGS_metadata_image),
       .read_only = true,
   });
   if (!FLAGS_otheros_root_image.empty()) {
     partitions.push_back(ImagePartition{
         .label = "otheros_esp",
-        .image_file_path = FLAGS_otheros_esp_image,
+        .image_file_path = AbsolutePath(FLAGS_otheros_esp_image),
         .type = kEfiSystemPartition,
         .read_only = true,
     });
     partitions.push_back(ImagePartition{
         .label = "otheros_root",
-        .image_file_path = FLAGS_otheros_root_image,
+        .image_file_path = AbsolutePath(FLAGS_otheros_root_image),
         .read_only = true,
     });
   }
   if (!FLAGS_ap_rootfs_image.empty()) {
     partitions.push_back(ImagePartition{
         .label = "ap_rootfs",
-        .image_file_path = FLAGS_ap_rootfs_image,
+        .image_file_path = AbsolutePath(FLAGS_ap_rootfs_image),
         .read_only = true,
     });
   }
@@ -257,22 +257,23 @@ std::vector<ImagePartition> persistent_composite_disk_config(
   // cuttlefish.fragment in external/u-boot).
   partitions.push_back(ImagePartition{
       .label = "uboot_env",
-      .image_file_path = instance.uboot_env_image_path(),
+      .image_file_path = AbsolutePath(instance.uboot_env_image_path()),
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta",
-      .image_file_path = instance.vbmeta_path(),
+      .image_file_path = AbsolutePath(instance.vbmeta_path()),
   });
   if (!FLAGS_protected_vm) {
     partitions.push_back(ImagePartition{
         .label = "frp",
-        .image_file_path = instance.factory_reset_protected_path(),
+        .image_file_path =
+            AbsolutePath(instance.factory_reset_protected_path()),
     });
   }
   if (config.bootconfig_supported()) {
     partitions.push_back(ImagePartition{
         .label = "bootconfig",
-        .image_file_path = instance.persistent_bootconfig_path(),
+        .image_file_path = AbsolutePath(instance.persistent_bootconfig_path()),
     });
   }
   return partitions;
@@ -381,8 +382,9 @@ Result<void> CreateOsCompositeDisk(const CuttlefishConfig& config) {
         config.AssemblyPath("os_composite_gpt_header.img");
     std::string footer_path =
         config.AssemblyPath("os_composite_gpt_footer.img");
-    CreateCompositeDisk(GetOsCompositeDiskConfig(), header_path, footer_path,
-                        config.os_composite_disk_path());
+    CreateCompositeDisk(GetOsCompositeDiskConfig(), AbsolutePath(header_path),
+                        AbsolutePath(footer_path),
+                        AbsolutePath(config.os_composite_disk_path()));
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
@@ -406,9 +408,10 @@ bool CreatePersistentCompositeDisk(
         instance.PerInstancePath("persistent_composite_gpt_header.img");
     std::string footer_path =
         instance.PerInstancePath("persistent_composite_gpt_footer.img");
-    CreateCompositeDisk(persistent_composite_disk_config(config, instance),
-                        header_path, footer_path,
-                        instance.persistent_composite_disk_path());
+    CreateCompositeDisk(
+        persistent_composite_disk_config(config, instance),
+        AbsolutePath(header_path), AbsolutePath(footer_path),
+        AbsolutePath(instance.persistent_composite_disk_path()));
   } else {
     AggregateImage(persistent_composite_disk_config(config, instance),
                    instance.persistent_composite_disk_path());
