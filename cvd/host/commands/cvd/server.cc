@@ -45,51 +45,18 @@
 
 namespace cuttlefish {
 
-static fruit::Component<> RequestComponent(CvdServer* server) {
+static fruit::Component<> RequestComponent(CvdServer* server,
+                                           InstanceManager* instance_manager) {
   return fruit::createComponent()
       .bindInstance(*server)
+      .bindInstance(*instance_manager)
       .install(cvdCommandComponent)
       .install(cvdShutdownComponent)
       .install(cvdVersionComponent);
 }
 
-std::optional<std::string> GetCuttlefishConfigPath(
-    const std::string& assembly_dir) {
-  std::string assembly_dir_realpath;
-  if (DirectoryExists(assembly_dir)) {
-    CHECK(android::base::Realpath(assembly_dir, &assembly_dir_realpath));
-    std::string config_path =
-        AbsolutePath(assembly_dir_realpath + "/" + "cuttlefish_config.json");
-    if (FileExists(config_path)) {
-      return config_path;
-    }
-  }
-  return {};
-}
-
-CvdServer::CvdServer() : running_(true) {}
-
-bool CvdServer::HasAssemblies() const {
-  std::lock_guard assemblies_lock(assemblies_mutex_);
-  return !assemblies_.empty();
-}
-
-void CvdServer::SetAssembly(const CvdServer::AssemblyDir& dir,
-                            const CvdServer::AssemblyInfo& info) {
-  std::lock_guard assemblies_lock(assemblies_mutex_);
-  assemblies_[dir] = info;
-}
-
-Result<CvdServer::AssemblyInfo> CvdServer::GetAssembly(
-    const CvdServer::AssemblyDir& dir) const {
-  std::lock_guard assemblies_lock(assemblies_mutex_);
-  auto info_it = assemblies_.find(dir);
-  if (info_it == assemblies_.end()) {
-    return CF_ERR("No assembly dir \"" << dir << "\"");
-  } else {
-    return info_it->second;
-  }
-}
+CvdServer::CvdServer(InstanceManager& instance_manager)
+    : instance_manager_(instance_manager), running_(true) {}
 
 void CvdServer::Stop() { running_ = false; }
 
@@ -128,7 +95,8 @@ Result<void> CvdServer::ServerLoop(SharedFD server) {
                      << request.error().message();
           break;
         }
-        fruit::Injector<> request_injector(RequestComponent, this);
+        fruit::Injector<> request_injector(RequestComponent, this,
+                                           &instance_manager_);
         Result<cvd::Response> response;
         {
           std::scoped_lock lock(handler_mutex);
@@ -185,84 +153,6 @@ Result<void> CvdServer::ServerLoop(SharedFD server) {
     message_responder.join();
   }
   return {};
-}
-
-cvd::Status CvdServer::CvdFleet(const SharedFD& out,
-                                const std::string& env_config) const {
-  std::lock_guard assemblies_lock(assemblies_mutex_);
-  for (const auto& it : assemblies_) {
-    const AssemblyDir& assembly_dir = it.first;
-    const AssemblyInfo& assembly_info = it.second;
-    auto config_path = GetCuttlefishConfigPath(assembly_dir);
-    if (FileExists(env_config)) {
-      config_path = env_config;
-    }
-    if (config_path) {
-      // Reads CuttlefishConfig::instance_names(), which must remain stable
-      // across changes to config file format (within server_constants.h major
-      // version).
-      auto config = CuttlefishConfig::GetFromFile(*config_path);
-      if (config) {
-        for (const std::string& instance_name : config->instance_names()) {
-          Command command(assembly_info.host_binaries_dir + kStatusBin);
-          command.AddParameter("--print");
-          command.AddParameter("--instance_name=", instance_name);
-          command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-          command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
-                                         *config_path);
-          if (int wait_result = command.Start().Wait(); wait_result != 0) {
-            WriteAll(out, "      (unknown instance status error)");
-          }
-        }
-      }
-    }
-  }
-  cvd::Status status;
-  status.set_code(cvd::Status::OK);
-  return status;
-}
-
-cvd::Status CvdServer::CvdClear(const SharedFD& out, const SharedFD& err) {
-  std::lock_guard assemblies_lock(assemblies_mutex_);
-  cvd::Status status;
-  for (const auto& it : assemblies_) {
-    const AssemblyDir& assembly_dir = it.first;
-    const AssemblyInfo& assembly_info = it.second;
-    auto config_path = GetCuttlefishConfigPath(assembly_dir);
-    if (config_path) {
-      // Stop all instances that are using this assembly dir.
-      Command command(assembly_info.host_binaries_dir + kStopBin);
-      // Delete the instance dirs.
-      command.AddParameter("--clear_instance_dirs");
-      command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-      command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
-      command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, *config_path);
-      if (int wait_result = command.Start().Wait(); wait_result != 0) {
-        WriteAll(out,
-                 "Warning: error stopping instances for assembly dir " +
-                     assembly_dir +
-                     ".\nThis can happen if instances are already stopped.\n");
-      }
-
-      // Delete the assembly dir.
-      WriteAll(out, "Deleting " + assembly_dir + "\n");
-      if (DirectoryExists(assembly_dir) &&
-          !RecursivelyRemoveDirectory(assembly_dir)) {
-        status.set_code(cvd::Status::FAILED_PRECONDITION);
-        status.set_message("Unable to rmdir " + assembly_dir);
-        return status;
-      }
-    }
-  }
-  RemoveFile(StringFromEnv("HOME", ".") + "/cuttlefish_runtime");
-  RemoveFile(GetGlobalConfigFileLink());
-  WriteAll(out,
-           "Stopped all known instances and deleted all "
-           "known assembly and instance dirs.\n");
-
-  assemblies_.clear();
-  status.set_code(cvd::Status::OK);
-  return status;
 }
 
 static fruit::Component<CvdServer> ServerComponent() {
