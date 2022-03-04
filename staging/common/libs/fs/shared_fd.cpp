@@ -15,15 +15,17 @@
  */
 #include "common/libs/fs/shared_fd.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#include <cstddef>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <poll.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <cstddef>
+
 #include <algorithm>
 #include <vector>
 
@@ -276,6 +278,24 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   CheckMarked(&writefds, write_set);
   CheckMarked(&errorfds, error_set);
   return rval;
+}
+
+int SharedFD::Poll(std::vector<PollSharedFd>& fds, int timeout) {
+  return Poll(fds.data(), fds.size(), timeout);
+}
+
+int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
+  std::vector<pollfd> native_pollfds(num_fds);
+  for (size_t i = 0; i < num_fds; i++) {
+    native_pollfds[i].fd = fds[i].fd->fd_;
+    native_pollfds[i].events = fds[i].events;
+    native_pollfds[i].revents = 0;
+  }
+  int ret = poll(native_pollfds.data(), native_pollfds.size(), timeout);
+  for (size_t i = 0; i < num_fds; i++) {
+    fds[i].revents = native_pollfds[i].revents;
+  }
+  return ret;
 }
 
 static void MakeAddress(const char* name, bool abstract,
