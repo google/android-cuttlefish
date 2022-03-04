@@ -93,10 +93,12 @@ bool IsRegularFile(const int fd) {
   return S_ISREG(info.st_mode);
 }
 
+constexpr size_t kPreferredBufferSize = 8192;
+
 }  // namespace
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
-  std::vector<char> buffer(8192);
+  std::vector<char> buffer(kPreferredBufferSize);
   while (length > 0) {
     ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
     if (num_read <= 0) {
@@ -115,6 +117,17 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
     } while(written < num_read);
   }
   return true;
+}
+
+bool FileInstance::CopyAllFrom(FileInstance& in) {
+  // FileInstance may have been constructed with a non-zero errno_ value because
+  // the errno variable is not zeroed out before.
+  errno_ = 0;
+  in.errno_ = 0;
+  while (CopyFrom(in, kPreferredBufferSize)) {
+  }
+  // Only return false if there was an actual error.
+  return !GetErrno() && !in.GetErrno();
 }
 
 void FileInstance::Close() {
