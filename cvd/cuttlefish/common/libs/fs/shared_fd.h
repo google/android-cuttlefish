@@ -19,26 +19,21 @@
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
-#ifdef __linux__
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
-#endif
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
+#include <sys/timerfd.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 
-#include <chrono>
 #include <memory>
 #include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -48,11 +43,7 @@
 
 #include <android-base/cmsg.h>
 
-#ifdef __linux__
 #include "vm_sockets.h"
-#endif
-
-#include "common/libs/utils/result.h"
 
 /**
  * Classes to to enable safe access to files.
@@ -75,8 +66,6 @@
  */
 namespace cuttlefish {
 
-struct PollSharedFd;
-class Epoll;
 class FileInstance;
 
 /**
@@ -135,20 +124,14 @@ class SharedFD {
   static SharedFD Dup(int unmanaged_fd);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
-  static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const std::string& pathname, mode_t mode);
-  static int Fchdir(SharedFD);
   static SharedFD Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
-#ifdef __linux__
   static SharedFD Event(int initval = 0, int flags = 0);
-#endif
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
   static SharedFD Mkstemp(std::string* path);
-  static int Poll(PollSharedFd* fds, size_t num_fds, int timeout);
-  static int Poll(std::vector<PollSharedFd>& fds, int timeout);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
@@ -157,20 +140,13 @@ class SharedFD {
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
-  static SharedFD SocketClient(const std::string& host, int port,
-                               int type, std::chrono::seconds timeout = std::chrono::seconds(0));
-  static SharedFD Socket6Client(const std::string& host, const std::string& interface, int port,
-                                int type, std::chrono::seconds timeout = std::chrono::seconds(0));
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
-
-#ifdef __linux__
   static SharedFD VsockServer(unsigned int port, int type,
                               unsigned int cid = VMADDR_CID_ANY);
   static SharedFD VsockServer(int type);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
-#endif
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
 
@@ -232,13 +208,6 @@ class ScopedMMap {
 
   operator bool() const { return ptr_ != MAP_FAILED; }
 
-  // Checks whether the interval [offset, offset + length) is contained within
-  // [0, len_)
-  bool WithinBounds(size_t offset, size_t length) const {
-    // Don't add offset + len to avoid overflow
-    return offset < len_ && len_ - offset >= length;
-  }
-
  private:
   void* ptr_ = MAP_FAILED;
   size_t len_;
@@ -260,7 +229,6 @@ class ScopedMMap {
 class FileInstance {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
-  friend class Epoll;
 
  public:
   virtual ~FileInstance() { Close(); }
@@ -286,18 +254,12 @@ class FileInstance {
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
-  int Fchdir();
   int Fcntl(int command, int value);
-  int Fsync();
-
-  Result<void> Flock(int operation);
 
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
 
-#ifdef __linux__
   unsigned int VsockServerPort();
-#endif
 
   int Ioctl(int request, void* val = nullptr);
   bool IsOpen() const { return fd_ != -1; }
@@ -324,9 +286,7 @@ class FileInstance {
   ssize_t Recv(void* buf, size_t len, int flags);
   ssize_t RecvMsg(struct msghdr* msg, int flags);
   ssize_t Read(void* buf, size_t count);
-#ifdef __linux__
   int EventfdRead(eventfd_t* value);
-#endif
   ssize_t Send(const void* buf, size_t len, int flags);
   ssize_t SendMsg(const struct msghdr* msg, int flags);
 
@@ -357,14 +317,8 @@ class FileInstance {
    *
    */
   ssize_t Write(const void* buf, size_t count);
-#ifdef __linux__
   int EventfdWrite(eventfd_t value);
-#endif
   bool IsATTY();
-
-  // Returns the target of "/proc/getpid()/fd/" + std::to_string(fd_)
-  // if appropriate
-  Result<std::string> ProcFdLinkTarget() const;
 
  private:
   FileInstance(int fd, int in_errno);
@@ -376,16 +330,10 @@ class FileInstance {
   bool is_regular_file_;
 };
 
-struct PollSharedFd {
-  SharedFD fd;
-  short events;
-  short revents;
-};
-
 /* Methods that need both a fully defined SharedFD and a fully defined
    FileInstance. */
 
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
+inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cuttlefish
 
