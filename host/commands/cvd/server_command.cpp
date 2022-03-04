@@ -32,6 +32,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/instance_manager.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -78,7 +79,8 @@ const std::map<std::string, std::string> CommandToBinaryMap = {
 
 class CvdCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdCommandHandler(CvdServer& server)) : server_(server) {}
+  INJECT(CvdCommandHandler(InstanceManager& instance_manager))
+      : instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
@@ -144,7 +146,7 @@ class CvdCommandHandler : public CvdServerHandler {
       args_copy.push_back("--help");
     } else if (bin == kClearBin) {
       *response.mutable_status() =
-          server_.CvdClear(request.Out(), request.Err());
+          instance_manager_.CvdClear(request.Out(), request.Err());
       return response;
     } else if (bin == kFleetBin) {
       auto env_config = request.Message().command_request().env().find(
@@ -153,16 +155,17 @@ class CvdCommandHandler : public CvdServerHandler {
       if (env_config != request.Message().command_request().env().end()) {
         config_path = env_config->second;
       }
-      *response.mutable_status() = server_.CvdFleet(request.Out(), config_path);
+      *response.mutable_status() =
+          instance_manager_.CvdFleet(request.Out(), config_path);
       return response;
     } else if (bin == kStartBin) {
       // Track this assembly_dir in the fleet.
-      CvdServer::AssemblyInfo info;
+      InstanceManager::AssemblyInfo info;
       info.host_binaries_dir = host_artifacts_path->second + "/bin/";
-      server_.SetAssembly(assembly_dir, info);
+      instance_manager_.SetAssembly(assembly_dir, info);
     }
 
-    auto assembly_info = CF_EXPECT(server_.GetAssembly(assembly_dir));
+    auto assembly_info = CF_EXPECT(instance_manager_.GetAssembly(assembly_dir));
     Command command(assembly_info.host_binaries_dir + bin);
     for (const std::string& arg : args_copy) {
       command.AddParameter(arg);
@@ -255,7 +258,7 @@ class CvdCommandHandler : public CvdServerHandler {
   }
 
  private:
-  CvdServer& server_;
+  InstanceManager& instance_manager_;
   std::optional<Subprocess> subprocess_;
   std::mutex interruptible_;
 };
@@ -291,7 +294,7 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
   return invocation;
 }
 
-fruit::Component<fruit::Required<CvdServer>> cvdCommandComponent() {
+fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdCommandHandler>();
 }

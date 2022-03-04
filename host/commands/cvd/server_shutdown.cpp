@@ -23,13 +23,16 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/instance_manager.h"
 
 namespace cuttlefish {
 namespace {
 
 class CvdShutdownHandler : public CvdServerHandler {
  public:
-  INJECT(CvdShutdownHandler(CvdServer& server)) : server_(server) {}
+  INJECT(CvdShutdownHandler(CvdServer& server,
+                            InstanceManager& instance_manager))
+      : server_(server), instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     return request.Message().contents_case() ==
@@ -50,13 +53,13 @@ class CvdShutdownHandler : public CvdServerHandler {
 
     if (request.Message().shutdown_request().clear()) {
       *response.mutable_status() =
-          server_.CvdClear(request.Out(), request.Err());
+          instance_manager_.CvdClear(request.Out(), request.Err());
       if (response.status().code() != cvd::Status::OK) {
         return response;
       }
     }
 
-    if (server_.HasAssemblies()) {
+    if (instance_manager_.HasAssemblies()) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Cannot shut down cvd_server while devices are being tracked. "
@@ -79,11 +82,13 @@ class CvdShutdownHandler : public CvdServerHandler {
 
  private:
   CvdServer& server_;
+  InstanceManager& instance_manager_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<CvdServer>> cvdShutdownComponent() {
+fruit::Component<fruit::Required<CvdServer, InstanceManager>>
+cvdShutdownComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdShutdownHandler>();
 }
