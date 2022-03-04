@@ -305,14 +305,14 @@ public:
     disk.set_length(DiskSize());
 
     ComponentDisk* header = disk.add_component_disks();
-    header->set_file_path(AbsolutePath(header_file));
+    header->set_file_path(header_file);
     header->set_offset(0);
 
     for (auto& partition : partitions_) {
       uint64_t size = 0;
       for (const auto& path : partition.source.image_file_paths) {
         ComponentDisk* component = disk.add_component_disks();
-        component->set_file_path(AbsolutePath(path));
+        component->set_file_path(path);
         component->set_offset(partition.offset + size);
         component->set_read_write_capability(
             partition.source.read_only ? ReadWriteCapability::READ_ONLY
@@ -328,14 +328,14 @@ public:
       // because writes in the guest of can't be reflected to the backing file.
       if (partition.AlignedSize() != partition.size) {
         ComponentDisk* component = disk.add_component_disks();
-        component->set_file_path(AbsolutePath(header_file));
+        component->set_file_path(header_file);
         component->set_offset(partition.offset + partition.size);
         component->set_read_write_capability(ReadWriteCapability::READ_ONLY);
       }
     }
 
     ComponentDisk* footer = disk.add_component_disks();
-    footer->set_file_path(AbsolutePath(footer_file));
+    footer->set_file_path(footer_file);
     footer->set_offset(next_disk_offset_);
 
     return disk;
