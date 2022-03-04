@@ -16,11 +16,14 @@
 
 #include "host/commands/run_cvd/boot_state_machine.h"
 
-#include <gflags/gflags.h>
+#include <poll.h>
+
 #include <memory>
 #include <thread>
 
-#include "android-base/logging.h"
+#include <android-base/logging.h>
+#include <gflags/gflags.h>
+
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -191,14 +194,23 @@ class CvdBootStateMachine : public Feature {
 
   void ThreadLoop(SharedFD boot_events_pipe) {
     while (true) {
-      SharedFDSet fd_set;
-      fd_set.Set(boot_events_pipe);
-      int result = Select(&fd_set, nullptr, nullptr, nullptr);
+      PollSharedFd poll_shared_fd = {
+          .fd = boot_events_pipe,
+          .events = POLLIN | POLLHUP,
+      };
+      int result = SharedFD::Poll(&poll_shared_fd, 1, -1);
       if (result < 0) {
         PLOG(FATAL) << "Failed to call Select";
         return;
       }
-      if (!fd_set.IsSet(boot_events_pipe)) {
+      if (poll_shared_fd.revents & POLLHUP) {
+        LOG(ERROR) << "Failed to read a complete kernel log boot event.";
+        state_ |= kGuestBootFailed;
+        if (MaybeWriteNotification()) {
+          break;
+        }
+      }
+      if (!(poll_shared_fd.revents & POLLIN)) {
         continue;
       }
       auto sent_code = OnBootEvtReceived(boot_events_pipe);
