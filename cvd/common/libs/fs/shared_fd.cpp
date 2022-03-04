@@ -99,14 +99,20 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   std::vector<char> buffer(8192);
   while (length > 0) {
     ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
-    length -= num_read;
     if (num_read <= 0) {
       return false;
     }
-    if (Write(buffer.data(), num_read) != num_read) {
+    length -= num_read;
+
+    ssize_t written = 0;
+    do {
+      auto res = Write(buffer.data(), num_read);
+     if (res <= 0) {
       // The caller will have to log an appropriate message.
-      return false;
-    }
+       return false;
+     }
+     written += res;
+    } while(written < num_read);
   }
   return true;
 }
@@ -167,7 +173,7 @@ int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
   }
 
   if (GetErrno() != EAGAIN && GetErrno() != EINPROGRESS) {
-    LOG(DEBUG) << "Immediate connection failure: " << StrError();
+    LOG(ERROR) << "Immediate connection failure: " << StrError();
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
     }
