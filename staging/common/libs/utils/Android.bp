@@ -33,6 +33,7 @@ cc_library {
         "tee_logging.cpp",
         "unix_sockets.cpp",
         "vsock_connection.cpp",
+        "socket2socket_proxy.cpp",
     ],
     shared: {
         shared_libs: [
