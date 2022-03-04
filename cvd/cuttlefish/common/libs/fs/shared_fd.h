@@ -34,7 +34,6 @@
 
 #include <memory>
 #include <sstream>
-#include <vector>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -67,7 +66,6 @@
  */
 namespace cuttlefish {
 
-struct PollSharedFd;
 class FileInstance;
 
 /**
@@ -134,8 +132,6 @@ class SharedFD {
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
   static SharedFD Mkstemp(std::string* path);
-  static int Poll(PollSharedFd* fds, size_t num_fds, int timeout);
-  static int Poll(std::vector<PollSharedFd>& fds, int timeout);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
@@ -332,12 +328,6 @@ class FileInstance {
   int errno_;
   std::string identity_;
   bool is_regular_file_;
-};
-
-struct PollSharedFd {
-  SharedFD fd;
-  short events;
-  short revents;
 };
 
 /* Methods that need both a fully defined SharedFD and a fully defined
