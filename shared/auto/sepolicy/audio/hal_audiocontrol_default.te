@@ -1,0 +1,2 @@
+# Enable audiocontrol to listen to power policy daemon.
+carpowerpolicy_callback_domain(hal_audiocontrol_default)
