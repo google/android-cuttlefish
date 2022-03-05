@@ -33,6 +33,7 @@ cc_binary {
     ],
     static_libs: [
         "libgflags",
+        "libcuttlefish_utils",
     ],
     target: {
         host: {
