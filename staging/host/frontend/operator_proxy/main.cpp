@@ -24,21 +24,29 @@
 #include "host/libs/config/logging.h"
 
 DEFINE_int32(server_port, 8443, "The port for the proxy server");
-DEFINE_int32(operator_port, 1443,
-              "The port of the operator server to proxy");
+DEFINE_int32(operator_port, 1443, "The port of the operator server to proxy");
+
+cuttlefish::SharedFD OpenConnection() {
+  auto conn =
+      cuttlefish::SharedFD::SocketLocalClient(FLAGS_operator_port, SOCK_STREAM);
+  if (!conn->IsOpen()) {
+    LOG(ERROR) << "Failed to connect to operator: " << conn->StrError();
+  }
+  return conn;
+}
 
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto server = cuttlefish::SharedFD::SocketLocalServer(FLAGS_server_port, SOCK_STREAM);
-  CHECK(server->IsOpen()) << "Error Creating proxy server: " << server->StrError();
+  auto server =
+      cuttlefish::SharedFD::SocketLocalServer(FLAGS_server_port, SOCK_STREAM);
+  CHECK(server->IsOpen()) << "Error Creating proxy server: "
+                          << server->StrError();
 
   signal(SIGPIPE, SIG_IGN);
 
-  cuttlefish::Proxy(server, [](){
-      return cuttlefish::SharedFD::SocketLocalClient(FLAGS_operator_port, SOCK_STREAM);
-      });
+  cuttlefish::Proxy(server, OpenConnection);
 
   return 0;
 }
