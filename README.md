@@ -29,7 +29,7 @@
    sudo apt install -y git devscripts config-package-dev debhelper-compat golang
    git clone https://github.com/google/android-cuttlefish
    cd android-cuttlefish
-   debuild -i -us -uc -b
+   debuild -i -us -uc -b -d
    sudo dpkg -i ../cuttlefish-common_*_*64.deb || sudo apt-get install -f
    sudo usermod -aG kvm,cvdnetwork,render $USER
    sudo reboot
