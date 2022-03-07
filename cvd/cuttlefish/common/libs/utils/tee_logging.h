@@ -21,17 +21,8 @@
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-
-std::string FromSeverity(const android::base::LogSeverity severity);
-Result<android::base::LogSeverity> ToSeverity(const std::string& value);
-
-std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
-                                  android::base::LogSeverity severity,
-                                  const char* tag, const char* file,
-                                  unsigned int line, const char* message);
 
 android::base::LogSeverity ConsoleSeverity();
 android::base::LogSeverity LogFileSeverity();
@@ -39,7 +30,6 @@ android::base::LogSeverity LogFileSeverity();
 enum class MetadataLevel {
   FULL,
   ONLY_MESSAGE,
-  TAG_AND_MESSAGE
 };
 
 struct SeverityTarget {
@@ -67,7 +57,6 @@ private:
 TeeLogger LogToFiles(const std::vector<std::string>& files,
                      const std::string& log_prefix = "");
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& log_prefix = "",
-                              MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
+                              const std::string& log_prefix = "");
 
 } // namespace cuttlefish

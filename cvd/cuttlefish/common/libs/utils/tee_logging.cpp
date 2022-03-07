@@ -15,34 +15,15 @@
 
 #include "tee_logging.h"
 
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <inttypes.h>
 
-#include <algorithm>
-#include <cctype>
-#include <cinttypes>
-#include <cstring>
-#include <ctime>
-#include <memory>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
-#include <android-base/logging.h>
-#include <android-base/macros.h>
-#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/threads.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/result.h"
 
 using android::base::GetThreadId;
 using android::base::FATAL;
@@ -50,76 +31,42 @@ using android::base::LogSeverity;
 using android::base::StringPrintf;
 
 namespace cuttlefish {
-namespace {
 
-std::string ToUpper(const std::string& input) {
-  std::string output = input;
-  std::transform(output.begin(), output.end(), output.begin(),
-                 [](unsigned char ch) { return std::toupper(ch); });
-  return output;
-}
-
-}  // namespace
-
-std::string FromSeverity(const android::base::LogSeverity severity) {
-  switch (severity) {
-    case android::base::VERBOSE:
-      return "VERBOSE";
-    case android::base::DEBUG:
-      return "DEBUG";
-    case android::base::INFO:
-      return "INFO";
-    case android::base::WARNING:
-      return "WARNING";
-    case android::base::ERROR:
-      return "ERROR";
-    case android::base::FATAL_WITHOUT_ABORT:
-      return "FATAL_WITHOUT_ABORT";
-    case android::base::FATAL:
-      return "FATAL";
-  }
-  return "Unexpected severity";
-}
-
-Result<LogSeverity> ToSeverity(const std::string& value) {
-  const std::unordered_map<std::string, android::base::LogSeverity>
-      string_to_severity{
-          {"VERBOSE", android::base::VERBOSE},
-          {"DEBUG", android::base::DEBUG},
-          {"INFO", android::base::INFO},
-          {"WARNING", android::base::WARNING},
-          {"ERROR", android::base::ERROR},
-          {"FATAL_WITHOUT_ABORT", android::base::FATAL_WITHOUT_ABORT},
-          {"FATAL", android::base::FATAL},
-      };
-
-  const auto upper_value = ToUpper(value);
-  if (Contains(string_to_severity, upper_value)) {
-    return string_to_severity.at(value);
-  } else {
-    int value_int;
-    CF_EXPECT(android::base::ParseInt(value, &value_int),
-              "Unable to determine severity from \"" << value << "\"");
-    const auto iter = std::find_if(
-        string_to_severity.begin(), string_to_severity.end(),
-        [&value_int](
-            const std::pair<std::string, android::base::LogSeverity>& entry) {
-          return static_cast<int>(entry.second) == value_int;
-        });
-    CF_EXPECT(iter != string_to_severity.end(),
-              "Unable to determine severity from \"" << value << "\"");
-    return iter->second;
-  }
-}
-
-static LogSeverity GuessSeverity(const std::string& env_var,
-                                 LogSeverity default_value) {
+static LogSeverity GuessSeverity(
+    const std::string& env_var, LogSeverity default_value) {
+  using android::base::VERBOSE;
+  using android::base::DEBUG;
+  using android::base::INFO;
+  using android::base::WARNING;
+  using android::base::ERROR;
+  using android::base::FATAL_WITHOUT_ABORT;
+  using android::base::FATAL;
   std::string env_value = StringFromEnv(env_var, "");
-  auto severity_result = ToSeverity(env_value);
-  if (!severity_result.ok()) {
+  using android::base::EqualsIgnoreCase;
+  if (EqualsIgnoreCase(env_value, "VERBOSE")
+      || env_value == std::to_string((int) VERBOSE)) {
+    return VERBOSE;
+  } else if (EqualsIgnoreCase(env_value, "DEBUG")
+      || env_value == std::to_string((int) DEBUG)) {
+    return DEBUG;
+  } else if (EqualsIgnoreCase(env_value, "INFO")
+      || env_value == std::to_string((int) INFO)) {
+    return INFO;
+  } else if (EqualsIgnoreCase(env_value, "WARNING")
+      || env_value == std::to_string((int) WARNING)) {
+    return WARNING;
+  } else if (EqualsIgnoreCase(env_value, "ERROR")
+      || env_value == std::to_string((int) ERROR)) {
+    return ERROR;
+  } else if (EqualsIgnoreCase(env_value, "FATAL_WITHOUT_ABORT")
+      || env_value == std::to_string((int) FATAL_WITHOUT_ABORT)) {
+    return FATAL_WITHOUT_ABORT;
+  } else if (EqualsIgnoreCase(env_value, "FATAL")
+      || env_value == std::to_string((int) FATAL)) {
+    return FATAL;
+  } else {
     return default_value;
   }
-  return severity_result.value();
 }
 
 LogSeverity ConsoleSeverity() {
@@ -166,10 +113,9 @@ static void SplitByLines(const char* msg, const F& log_function, Args&&... args)
 // Copied from system/libbase/logging_splitters.h
 // This adds the log header to each line of message and returns it as a string intended to be
 // written to stderr.
-std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
-                                  LogSeverity severity, const char* tag,
-                                  const char* file, unsigned int line,
-                                  const char* message) {
+static std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
+                                         LogSeverity severity, const char* tag, const char* file,
+                                         unsigned int line, const char* message) {
   char timestamp[32];
   strftime(timestamp, sizeof(timestamp), "%m-%d %H:%M:%S", &now);
 
@@ -231,21 +177,15 @@ void TeeLogger::operator()(
   for (const auto& destination : destinations_) {
     std::string msg_with_prefix = prefix_ + message;
     std::string output_string;
-    switch (destination.metadata_level) {
-      case MetadataLevel::ONLY_MESSAGE:
-        output_string = msg_with_prefix + std::string("\n");
-        break;
-      case MetadataLevel::TAG_AND_MESSAGE:
-        output_string = fmt::format("{}] {}{}", tag, msg_with_prefix, "\n");
-        break;
-      default:
-        struct tm now;
-        time_t t = time(nullptr);
-        localtime_r(&t, &now);
-        output_string =
-            StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag,
-                                  file, line, msg_with_prefix.c_str());
-        break;
+    if (destination.metadata_level == MetadataLevel::ONLY_MESSAGE) {
+      output_string = msg_with_prefix + std::string("\n");
+    } else {
+      struct tm now;
+      time_t t = time(nullptr);
+      localtime_r(&t, &now);
+      output_string =
+          StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag,
+                                file, line, msg_with_prefix.c_str());
     }
     if (severity >= destination.severity) {
       if (destination.target->IsATTY()) {
@@ -262,8 +202,10 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   std::vector<SeverityTarget> log_severities;
   for (const auto& file : files) {
     auto log_file_fd =
-        SharedFD::Open(file, O_CREAT | O_WRONLY | O_APPEND,
-                       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+        SharedFD::Open(
+          file,
+          O_CREAT | O_WRONLY | O_APPEND,
+          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
     if (!log_file_fd->IsOpen()) {
       LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
     }
@@ -279,12 +221,11 @@ TeeLogger LogToFiles(const std::vector<std::string>& files,
 }
 
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& prefix,
-                              MetadataLevel stderr_level) {
+                              const std::string& prefix) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
   log_severities.push_back(SeverityTarget{ConsoleSeverity(),
                                           SharedFD::Dup(/* stderr */ 2),
-                                          stderr_level});
+                                          MetadataLevel::ONLY_MESSAGE});
   return TeeLogger(log_severities, prefix);
 }
 
