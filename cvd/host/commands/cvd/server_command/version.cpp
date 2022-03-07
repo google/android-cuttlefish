@@ -32,7 +32,7 @@ class CvdVersionHandler : public CvdServerHandler {
   INJECT(CvdVersionHandler()) = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return request.request.contents_case() ==
+    return request.Message().contents_case() ==
            cvd::Request::ContentsCase::kVersionRequest;
   }
 
@@ -48,6 +48,8 @@ class CvdVersionHandler : public CvdServerHandler {
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
+
+  Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
 };
 
 }  // namespace

@@ -30,17 +30,12 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
 constexpr char kStatusBin[] = "cvd_internal_status";
 constexpr char kStopBin[] = "cvd_internal_stop";
-
-struct RequestWithStdio {
-  cvd::Request request;
-  SharedFD in, out, err;
-  std::optional<SharedFD> extra;
-};
 
 class CvdServerHandler {
  public:
@@ -48,6 +43,7 @@ class CvdServerHandler {
 
   virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
   virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
+  virtual Result<void> Interrupt() = 0;
 };
 
 class CvdServer {
@@ -59,15 +55,13 @@ class CvdServer {
 
   INJECT(CvdServer());
 
-  Result<void> AddHandler(CvdServerHandler* handler);
-
   bool HasAssemblies() const;
   void SetAssembly(const AssemblyDir&, const AssemblyInfo&);
   Result<AssemblyInfo> GetAssembly(const AssemblyDir&) const;
 
   void Stop();
 
-  void ServerLoop(const SharedFD& server);
+  Result<void> ServerLoop(SharedFD server);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
   cvd::Status CvdFleet(const SharedFD& out, const std::string& envconfig) const;
@@ -75,21 +69,11 @@ class CvdServer {
  private:
   mutable std::mutex assemblies_mutex_;
   std::map<AssemblyDir, AssemblyInfo> assemblies_;
-  std::vector<CvdServerHandler*> handlers_;
   std::atomic_bool running_ = true;
-
-  Result<cvd::Response> HandleRequest(const RequestWithStdio& request);
-
-  Result<UnixMessageSocket> GetClient(const SharedFD& client) const;
-
-  Result<RequestWithStdio> GetRequest(const SharedFD& client) const;
-
-  Result<void> SendResponse(const SharedFD& client,
-                            const cvd::Response& response) const;
 };
 
-fruit::Component<> cvdCommandComponent();
-fruit::Component<> cvdShutdownComponent();
+fruit::Component<fruit::Required<CvdServer>> cvdCommandComponent();
+fruit::Component<fruit::Required<CvdServer>> cvdShutdownComponent();
 fruit::Component<> cvdVersionComponent();
 
 std::optional<std::string> GetCuttlefishConfigPath(
