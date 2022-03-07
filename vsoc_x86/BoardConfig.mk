@@ -31,7 +31,7 @@ TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_ABI := armeabi-v7a armeabi
 
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/5.10/x86-64/*.ko)
+    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/x86-64/*.ko)
 endif
 
 # TODO(b/156534160): Temporarily allow for the old style PRODUCT_COPY_FILES for ndk_translation_prebuilt
