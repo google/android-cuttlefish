@@ -31,7 +31,6 @@
 #include "common/libs/utils/unix_sockets.h"
 
 namespace cuttlefish {
-namespace {
 
 Result<UnixMessageSocket> GetClient(const SharedFD& client) {
   UnixMessageSocket result(client);
@@ -88,8 +87,6 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-}  // namespace
-
 RequestWithStdio::RequestWithStdio(cvd::Request message,
                                    std::vector<SharedFD> fds,
                                    std::optional<ucred> creds)
@@ -114,147 +111,5 @@ std::optional<SharedFD> RequestWithStdio::Extra() const {
 }
 
 std::optional<ucred> RequestWithStdio::Credentials() const { return creds_; }
-
-class ClientMessageQueue::Internal {
- public:
-  SharedFD client_;
-  std::thread thread_;  // TODO(schuffelen): Use a thread pool
-  std::atomic_bool running_;
-  std::condition_variable request_queue_condition_variable_;
-  std::mutex request_queue_mutex_;
-  std::queue<RequestWithStdio> request_queue_;
-  SharedFD event_;
-  std::mutex response_queue_mutex_;
-  std::queue<cvd::Response> response_queue_;
-
-  ~Internal();
-  Result<void> Stop();
-  void Join();
-  Result<void> Loop();
-};
-
-Result<ClientMessageQueue> ClientMessageQueue::Create(SharedFD client) {
-  std::unique_ptr<ClientMessageQueue::Internal> internal(
-      new ClientMessageQueue::Internal);
-  internal->client_ = client;
-  internal->running_ = true;
-  internal->event_ = SharedFD::Event();
-  CF_EXPECT(internal->event_->IsOpen(),
-            "Failed to create event fd: " << internal->event_->StrError());
-  internal->thread_ = std::thread([internal = internal.get()]() {
-    auto result = internal->Loop();
-    if (!result.ok()) {
-      LOG(ERROR) << "Client thread error: {\n" << result.error() << "\n}";
-    }
-    internal->running_ = false;
-    internal->request_queue_condition_variable_.notify_all();
-  });
-  return ClientMessageQueue(std::move(internal));
-}
-
-ClientMessageQueue::ClientMessageQueue(std::unique_ptr<Internal> internal)
-    : internal_(std::move(internal)) {}
-
-ClientMessageQueue::ClientMessageQueue(ClientMessageQueue&&) = default;
-
-ClientMessageQueue::~ClientMessageQueue() = default;
-
-ClientMessageQueue& ClientMessageQueue::operator=(ClientMessageQueue&&) =
-    default;
-
-Result<RequestWithStdio> ClientMessageQueue::WaitForRequest() {
-  CF_EXPECT(internal_.get(), "inactive class instance");
-  std::unique_lock lock(internal_->request_queue_mutex_);
-  while (internal_->running_ && internal_->request_queue_.empty()) {
-    internal_->request_queue_condition_variable_.wait(lock);
-  }
-  CF_EXPECT(!internal_->request_queue_.empty(), "Request queue has stopped");
-  auto response = std::move(internal_->request_queue_.front());
-  internal_->request_queue_.pop();
-  return response;
-}
-
-Result<void> ClientMessageQueue::PostResponse(const cvd::Response& response) {
-  CF_EXPECT(internal_.get(), "inactive class instance");
-  std::scoped_lock lock(internal_->response_queue_mutex_);
-  internal_->response_queue_.emplace(response);
-  CF_EXPECT(internal_->event_->EventfdWrite(1) == 0,
-            internal_->event_->StrError());
-  return {};
-}
-
-Result<void> ClientMessageQueue::Stop() {
-  if (internal_) {
-    return internal_->Stop();
-  }
-  return {};
-}
-
-void ClientMessageQueue::Join() {
-  if (internal_) {
-    internal_->Join();
-  }
-}
-
-ClientMessageQueue::Internal::~Internal() {
-  auto stop_res = Stop();
-  CHECK(stop_res.ok()) << stop_res.error().message();
-  Join();
-}
-
-Result<void> ClientMessageQueue::Internal::Stop() {
-  running_ = false;
-  if (event_->IsOpen()) {
-    CF_EXPECT(event_->EventfdWrite(1) == 0, event_->StrError());
-  }
-  return {};
-}
-
-void ClientMessageQueue::Internal::Join() {
-  if (thread_.joinable()) {
-    thread_.join();
-  }
-}
-
-Result<void> ClientMessageQueue::Internal::Loop() {
-  while (running_) {
-    SharedFDSet read_set;
-    read_set.Set(client_);
-    read_set.Set(event_);
-    SharedFDSet write_set;
-    {
-      std::scoped_lock lock(response_queue_mutex_);
-      if (!response_queue_.empty()) {
-        write_set.Set(client_);
-      }
-    }
-    int fds = Select(&read_set, &write_set, nullptr, nullptr);
-    CF_EXPECT(fds > 0, strerror(errno));
-    if (read_set.IsSet(client_)) {
-      auto request = CF_EXPECT(GetRequest(client_));
-      if (!request) {
-        break;
-      }
-      std::scoped_lock lock(request_queue_mutex_);
-      request_queue_.emplace(*request);
-      request_queue_condition_variable_.notify_one();
-    }
-    if (read_set.IsSet(event_)) {
-      eventfd_t eventfd_num;
-      CF_EXPECT(event_->EventfdRead(&eventfd_num) == 0);
-    }
-    if (write_set.IsSet(client_)) {
-      cvd::Response response;
-      {
-        std::scoped_lock lock(response_queue_mutex_);
-        CF_EXPECT(!response_queue_.empty());
-        response = response_queue_.front();
-        response_queue_.pop();
-      }
-      CF_EXPECT(SendResponse(client_, response));
-    }
-  }
-  return {};
-}
 
 }  // namespace cuttlefish
