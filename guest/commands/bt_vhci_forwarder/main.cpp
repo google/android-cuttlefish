@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
   fds[1].events = POLLIN;
   unsigned char buf[kBufferSize];
 
-  auto h4 = test_vendor_lib::H4Packetizer(
+  auto h4 = rootcanal::H4Packetizer(
       virtio_fd,
       [](const std::vector<uint8_t>& /* raw_command */) {
         LOG(ERROR)
