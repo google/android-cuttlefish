@@ -56,6 +56,12 @@ class CvdServer {
   void Join();
 
  private:
+  struct OngoingRequest {
+    CvdServerHandler* handler;
+    std::mutex mutex;
+    std::thread::id thread_id;
+  };
+
   Result<void> AcceptClient(EpollEvent);
   Result<void> HandleMessage(EpollEvent);
   Result<void> BestEffortWakeup();
@@ -64,7 +70,10 @@ class CvdServer {
   InstanceManager& instance_manager_;
   std::atomic_bool running_ = true;
 
+  std::mutex ongoing_requests_mutex_;
+  std::set<std::shared_ptr<OngoingRequest>> ongoing_requests_;
   // TODO(schuffelen): Move this thread pool to another class.
+  std::mutex threads_mutex_;
   std::vector<std::thread> threads_;
 };
 
