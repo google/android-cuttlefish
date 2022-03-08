@@ -10,29 +10,10 @@
 -->
 <!-- Android Auto Embedded specific HALs-->
 <manifest version="1.0" type="device">
-    <!-- FIXME: Implement automotive.evs HAL
-    <hal format="hidl">
-        <name>android.hardware.automotive.evs</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IEvsEnumerator</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    -->
     <hal format="hidl">
         <name>android.hardware.automotive.can</name>
         <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>ICanController</name>
-            <instance>socketcan</instance>
-        </interface>
-        <interface>
-            <name>ICanBus</name>
-            <instance>test</instance>
-        </interface>
+        <fqname>@1.0::ICanBus/test</fqname>
     </hal>
     <!-- FIXME: Move this to shared manifest.xml -->
     <hal format="hidl">
