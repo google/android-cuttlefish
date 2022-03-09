@@ -68,13 +68,13 @@ class BluetoothHci : public IBluetoothHci {
   ::android::sp<V1_0::IBluetoothHciCallbacks> cb_ = nullptr;
   ::android::sp<V1_1::IBluetoothHciCallbacks> cb_1_1_ = nullptr;
 
-  test_vendor_lib::H4Packetizer h4_{fd_,
-                                    [](const std::vector<uint8_t>&) {},
-                                    [](const std::vector<uint8_t>&) {},
-                                    [](const std::vector<uint8_t>&) {},
-                                    [](const std::vector<uint8_t>&) {},
-                                    [](const std::vector<uint8_t>&) {},
-                                    [] {}};
+  rootcanal::H4Packetizer h4_{fd_,
+                              [](const std::vector<uint8_t>&) {},
+                              [](const std::vector<uint8_t>&) {},
+                              [](const std::vector<uint8_t>&) {},
+                              [](const std::vector<uint8_t>&) {},
+                              [](const std::vector<uint8_t>&) {},
+                              [] {}};
 
   ::android::hardware::Return<void> initialize_impl(
       const sp<V1_0::IBluetoothHciCallbacks>& cb,
@@ -88,7 +88,7 @@ class BluetoothHci : public IBluetoothHci {
 
   ::android::hardware::bluetooth::async::AsyncFdWatcher fd_watcher_;
 
-  void send(test_vendor_lib::PacketType type,
+  void send(rootcanal::PacketType type,
             const ::android::hardware::hidl_vec<uint8_t>& packet);
 };
 
