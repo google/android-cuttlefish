@@ -78,7 +78,7 @@ class CvdClient {
 
     auto server_version = response->version_response().version();
     if (server_version.major() != cvd::kVersionMajor) {
-      std::cout << "Major version difference: cvd(" << cvd::kVersionMajor << "."
+      std::cerr << "Major version difference: cvd(" << cvd::kVersionMajor << "."
                 << cvd::kVersionMinor << ") != cvd_server("
                 << server_version.major() << "." << server_version.minor()
                 << "). Try `cvd kill-server` or `pkill cvd_server`."
@@ -86,21 +86,21 @@ class CvdClient {
       return false;
     }
     if (server_version.minor() < cvd::kVersionMinor) {
-      std::cout << "Minor version of cvd_server is older than latest. "
+      std::cerr << "Minor version of cvd_server is older than latest. "
                 << "Attempting to restart..." << std::endl;
       StopCvdServer(/*clear=*/false);
       StartCvdServer(host_tool_directory);
       if (num_retries > 0) {
         return EnsureCvdServerRunning(host_tool_directory, num_retries - 1);
       } else {
-        std::cout << "Unable to start the cvd_server with version "
+        std::cerr << "Unable to start the cvd_server with version "
                   << cvd::kVersionMajor << "." << cvd::kVersionMinor
                   << std::endl;
         return false;
       }
     }
     if (server_version.build() != android::build::GetBuildNumber()) {
-      std::cout << "WARNING: cvd_server client version ("
+      std::cerr << "WARNING: cvd_server client version ("
                 << android::build::GetBuildNumber()
                 << ") does not match  server version ("
                 << server_version.build() << std::endl;
