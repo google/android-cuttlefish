@@ -673,28 +673,30 @@ class GeneratePersistentBootconfig : public Feature {
     }
     bootconfig_fd->Close();
 
-    const off_t bootconfig_size_bytes = AlignToPowerOf2(
-        MAX_AVB_METADATA_SIZE + bytesWritten, PARTITION_SIZE_SHIFT);
+    if (config_.vm_manager() != Gem5Manager::name()) {
+      const off_t bootconfig_size_bytes = AlignToPowerOf2(
+          MAX_AVB_METADATA_SIZE + bytesWritten, PARTITION_SIZE_SHIFT);
 
-    auto avbtool_path = HostBinaryPath("avbtool");
-    Command bootconfig_hash_footer_cmd(avbtool_path);
-    bootconfig_hash_footer_cmd.AddParameter("add_hash_footer");
-    bootconfig_hash_footer_cmd.AddParameter("--image");
-    bootconfig_hash_footer_cmd.AddParameter(bootconfig_path);
-    bootconfig_hash_footer_cmd.AddParameter("--partition_size");
-    bootconfig_hash_footer_cmd.AddParameter(bootconfig_size_bytes);
-    bootconfig_hash_footer_cmd.AddParameter("--partition_name");
-    bootconfig_hash_footer_cmd.AddParameter("bootconfig");
-    bootconfig_hash_footer_cmd.AddParameter("--key");
-    bootconfig_hash_footer_cmd.AddParameter(
-        DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
-    bootconfig_hash_footer_cmd.AddParameter("--algorithm");
-    bootconfig_hash_footer_cmd.AddParameter("SHA256_RSA4096");
-    int success = bootconfig_hash_footer_cmd.Start().Wait();
-    if (success != 0) {
-      LOG(ERROR) << "Unable to run append hash footer. Exited with status "
-                 << success;
-      return false;
+      auto avbtool_path = HostBinaryPath("avbtool");
+      Command bootconfig_hash_footer_cmd(avbtool_path);
+      bootconfig_hash_footer_cmd.AddParameter("add_hash_footer");
+      bootconfig_hash_footer_cmd.AddParameter("--image");
+      bootconfig_hash_footer_cmd.AddParameter(bootconfig_path);
+      bootconfig_hash_footer_cmd.AddParameter("--partition_size");
+      bootconfig_hash_footer_cmd.AddParameter(bootconfig_size_bytes);
+      bootconfig_hash_footer_cmd.AddParameter("--partition_name");
+      bootconfig_hash_footer_cmd.AddParameter("bootconfig");
+      bootconfig_hash_footer_cmd.AddParameter("--key");
+      bootconfig_hash_footer_cmd.AddParameter(
+          DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
+      bootconfig_hash_footer_cmd.AddParameter("--algorithm");
+      bootconfig_hash_footer_cmd.AddParameter("SHA256_RSA4096");
+      int success = bootconfig_hash_footer_cmd.Start().Wait();
+      if (success != 0) {
+        LOG(ERROR) << "Unable to run append hash footer. Exited with status "
+                   << success;
+        return false;
+      }
     }
     return true;
   }
