@@ -143,14 +143,14 @@ std::vector<Command> CrosvmManager::StartCommands(
   auto gpu_capture_enabled = !config.gpu_capture_binary().empty();
   auto gpu_mode = config.gpu_mode();
   auto udmabuf_string = config.enable_gpu_udmabuf() ? "true" : "false";
-  auto angle_string = config.enable_gpu_angle() ? "true" : "false";
+  auto angle_string = config.enable_gpu_angle() ? ",angle=true" : "";
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     crosvm_cmd.Cmd().AddParameter("--gpu=2D,udmabuf=", udmabuf_string);
   } else if (gpu_mode == kGpuModeDrmVirgl || gpu_mode == kGpuModeGfxStream) {
     crosvm_cmd.Cmd().AddParameter(
         gpu_mode == kGpuModeGfxStream ? "--gpu=gfxstream," : "--gpu=",
         "egl=true,surfaceless=true,glx=false,gles=true,udmabuf=", udmabuf_string,
-        ",angle=", angle_string);
+        angle_string);
   }
 
   for (const auto& display_config : config.display_configs()) {
