@@ -125,7 +125,7 @@ Return<void> BluetoothHci::initialize_impl(
     CHECK(death_recipient_->getHasDied())
         << "Error sending init callback, but no death notification.";
   }
-  h4_ = test_vendor_lib::H4Packetizer(
+  h4_ = rootcanal::H4Packetizer(
       fd_,
       [](const std::vector<uint8_t>& /* raw_command */) {
         LOG_ALWAYS_FATAL("Unexpected command!");
@@ -159,26 +159,26 @@ Return<void> BluetoothHci::close() {
 }
 
 Return<void> BluetoothHci::sendHciCommand(const hidl_vec<uint8_t>& packet) {
-  send(test_vendor_lib::PacketType::COMMAND, packet);
+  send(rootcanal::PacketType::COMMAND, packet);
   return Void();
 }
 
 Return<void> BluetoothHci::sendAclData(const hidl_vec<uint8_t>& packet) {
-  send(test_vendor_lib::PacketType::ACL, packet);
+  send(rootcanal::PacketType::ACL, packet);
   return Void();
 }
 
 Return<void> BluetoothHci::sendScoData(const hidl_vec<uint8_t>& packet) {
-  send(test_vendor_lib::PacketType::SCO, packet);
+  send(rootcanal::PacketType::SCO, packet);
   return Void();
 }
 
 Return<void> BluetoothHci::sendIsoData(const hidl_vec<uint8_t>& packet) {
-  send(test_vendor_lib::PacketType::ISO, packet);
+  send(rootcanal::PacketType::ISO, packet);
   return Void();
 }
 
-void BluetoothHci::send(test_vendor_lib::PacketType type,
+void BluetoothHci::send(rootcanal::PacketType type,
                         const ::android::hardware::hidl_vec<uint8_t>& v) {
   h4_.Send(static_cast<uint8_t>(type), v.data(), v.size());
 }
