@@ -179,6 +179,7 @@ class CvdCommandHandler : public CvdServerHandler {
       }
     }
     for (auto& it : request.Message().command_request().env()) {
+      command.UnsetFromEnvironment(it.first);
       command.AddEnvironmentVariable(it.first, it.second);
     }
 
