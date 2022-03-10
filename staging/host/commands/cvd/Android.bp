@@ -52,6 +52,7 @@ cc_binary_host {
 cc_binary_host {
     name: "cvd_server",
     srcs: [
+        "instance_manager.cpp",
         "server.cc",
         "server_client.cpp",
         "server_command.cpp",
