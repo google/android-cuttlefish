@@ -374,8 +374,11 @@ std::vector<Command> QemuManager::StartCommands(
   auto display_config = display_configs[0];
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter(qemu_version.first < 6 ?
-                            "virtio-gpu-pci" : "virtio-gpu-gl-pci", ",id=gpu0",
+
+  bool use_gpu_gl = qemu_version.first >= 6 &&
+                    config.gpu_mode() != kGpuModeGuestSwiftshader;
+  qemu_cmd.AddParameter(use_gpu_gl ?
+                            "virtio-gpu-gl-pci" : "virtio-gpu-pci", ",id=gpu0",
                         ",xres=", display_config.width,
                         ",yres=", display_config.height);
 
