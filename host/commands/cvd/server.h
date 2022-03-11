@@ -18,8 +18,8 @@
 
 #include <atomic>
 #include <map>
-#include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -27,9 +27,11 @@
 
 #include "cvd_server.pb.h"
 
+#include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_client.h"
 
@@ -46,14 +48,24 @@ class CvdServerHandler {
 
 class CvdServer {
  public:
-  INJECT(CvdServer(InstanceManager&));
+  INJECT(CvdServer(EpollPool&, InstanceManager&));
+  ~CvdServer();
 
+  Result<void> StartServer(SharedFD server);
   void Stop();
-  Result<void> ServerLoop(SharedFD server);
+  void Join();
 
  private:
+  Result<void> AcceptClient(EpollEvent);
+  Result<void> HandleMessage(EpollEvent);
+  Result<void> BestEffortWakeup();
+
+  EpollPool& epoll_pool_;
   InstanceManager& instance_manager_;
   std::atomic_bool running_ = true;
+
+  // TODO(schuffelen): Move this thread pool to another class.
+  std::vector<std::thread> threads_;
 };
 
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent();
