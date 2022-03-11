@@ -19,7 +19,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <poll.h>
-#include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -655,13 +654,6 @@ int FileInstance::UNMANAGED_Dup2(int newfd) {
 int FileInstance::Fcntl(int command, int value) {
   errno = 0;
   int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Flock(int operation) {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(flock(fd_, operation));
   errno_ = errno;
   return rval;
 }
