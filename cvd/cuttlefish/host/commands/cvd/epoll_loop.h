@@ -32,7 +32,9 @@ using EpollCallback = std::function<Result<void>(EpollEvent)>;
 
 class EpollPool {
  public:
-  INJECT(EpollPool());
+  EpollPool(Epoll);
+  EpollPool(EpollPool&&);
+  EpollPool& operator=(EpollPool&&);
 
   /**
    * The `callback` function will be invoked with an EpollEvent containing `fd`
@@ -49,6 +51,7 @@ class EpollPool {
   Result<void> Remove(SharedFD fd);
 
  private:
+  std::shared_mutex instance_mutex_;
   Epoll epoll_;
   std::mutex callbacks_mutex_;
   std::map<SharedFD, EpollCallback> callbacks_;
