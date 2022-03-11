@@ -20,6 +20,7 @@ package {
 cc_library {
     name: "libcuttlefish_fs",
     srcs: [
+        "epoll.cpp",
         "shared_buf.cc",
         "shared_fd.cpp",
         "shared_fd_stream.cpp",
@@ -49,6 +50,7 @@ cc_library {
 cc_library_static {
     name: "libcuttlefish_fs_product",
     srcs: [
+        "epoll.cpp",
         "shared_buf.cc",
         "shared_fd.cpp",
         "shared_fd_stream.cpp",
