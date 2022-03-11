@@ -68,6 +68,7 @@
 namespace cuttlefish {
 
 struct PollSharedFd;
+class Epoll;
 class FileInstance;
 
 /**
@@ -233,6 +234,7 @@ class ScopedMMap {
 class FileInstance {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
+  friend class Epoll;
 
  public:
   virtual ~FileInstance() { Close(); }
