@@ -671,9 +671,9 @@ class GeneratePersistentBootconfig : public Feature {
                  << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
       return false;
     }
-    bootconfig_fd->Close();
 
     if (config_.vm_manager() != Gem5Manager::name()) {
+      bootconfig_fd->Close();
       const off_t bootconfig_size_bytes = AlignToPowerOf2(
           MAX_AVB_METADATA_SIZE + bytesWritten, PARTITION_SIZE_SHIFT);
 
@@ -697,6 +697,11 @@ class GeneratePersistentBootconfig : public Feature {
                    << success;
         return false;
       }
+    } else {
+      const off_t bootconfig_size_bytes_gem5 = AlignToPowerOf2(
+          bytesWritten, PARTITION_SIZE_SHIFT);
+      bootconfig_fd->Truncate(bootconfig_size_bytes_gem5);
+      bootconfig_fd->Close();
     }
     return true;
   }
