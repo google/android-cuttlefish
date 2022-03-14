@@ -141,6 +141,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.common.", 2},
     {"android.hardware.common.fmq.", 1},
 
+    // The interface is in development (b/205884982)
+    {"android.hardware.audio.core.", 1},
+
     {"android.hardware.graphics.common.", 1},
     {"android.hardware.graphics.common.", 2},
     {"android.hardware.graphics.common.", 3},
