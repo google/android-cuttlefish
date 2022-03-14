@@ -278,6 +278,8 @@ DEFINE_int32(modem_simulator_sim_type, 1,
 
 DEFINE_bool(console, false, "Enable the serial console");
 
+DEFINE_bool(enable_kernel_log, true, "Enable kernel console/dmesg logging");
+
 DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
 
 DEFINE_string(
@@ -636,6 +638,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_console(FLAGS_console);
+  tmp_config_obj.set_enable_kernel_log(FLAGS_enable_kernel_log);
   tmp_config_obj.set_kgdb(FLAGS_console && FLAGS_kgdb);
 
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
