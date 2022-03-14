@@ -15,15 +15,4 @@
         <transport>hwbinder</transport>
         <fqname>@1.0::ICanBus/test</fqname>
     </hal>
-    <!-- FIXME: Move this to shared manifest.xml -->
-    <hal format="hidl">
-        <name>android.hardware.broadcastradio</name>
-        <transport>hwbinder</transport>
-        <version>2.0</version>
-        <interface>
-            <name>IBroadcastRadio</name>
-            <instance>amfm</instance>
-            <instance>dab</instance>
-        </interface>
-    </hal>
 </manifest>
