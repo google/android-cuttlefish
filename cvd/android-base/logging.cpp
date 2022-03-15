@@ -100,7 +100,7 @@ static const char* GetFileBasename(const char* file) {
 #if defined(__linux__)
 static int OpenKmsg() {
 #if defined(__ANDROID__)
-  // pick up 'file w /dev/kmsg' environment from daemon's init rc file
+  // pick up 'file /dev/kmsg w' environment from daemon's init rc file
   const auto val = getenv("ANDROID_FILE__dev_kmsg");
   if (val != nullptr) {
     int fd;
