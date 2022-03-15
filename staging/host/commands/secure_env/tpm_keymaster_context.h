@@ -70,7 +70,7 @@ private:
 
   const keymaster::KeyFactory* GetKeyFactory(
       keymaster_algorithm_t algorithm) const override;
-  const keymaster::OperationFactory* GetOperationFactory(
+  keymaster::OperationFactory* GetOperationFactory(
       keymaster_algorithm_t algorithm,
       keymaster_purpose_t purpose) const override;
   const keymaster_algorithm_t* GetSupportedAlgorithms(
