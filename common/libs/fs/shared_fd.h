@@ -262,6 +262,8 @@ class FileInstance {
   int UNMANAGED_Dup2(int newfd);
   int Fcntl(int command, int value);
 
+  int Flock(int operation);
+
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
 
