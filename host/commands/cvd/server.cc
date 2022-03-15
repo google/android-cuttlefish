@@ -62,6 +62,7 @@ CvdServer::CvdServer(EpollPool& epoll_pool, InstanceManager& instance_manager)
     : epoll_pool_(epoll_pool),
       instance_manager_(instance_manager),
       running_(true) {
+  std::scoped_lock lock(threads_mutex_);
   for (auto i = 0; i < kNumThreads; i++) {
     threads_.emplace_back([this]() {
       while (running_) {
@@ -96,7 +97,39 @@ Result<void> CvdServer::BestEffortWakeup() {
   return {};
 }
 
-void CvdServer::Stop() { running_ = false; }
+void CvdServer::Stop() {
+  {
+    std::lock_guard lock(ongoing_requests_mutex_);
+    running_ = false;
+  }
+  while (true) {
+    std::shared_ptr<OngoingRequest> request;
+    {
+      std::lock_guard lock(ongoing_requests_mutex_);
+      if (ongoing_requests_.empty()) {
+        break;
+      }
+      auto it = ongoing_requests_.begin();
+      request = *it;
+      ongoing_requests_.erase(it);
+    }
+    {
+      std::lock_guard lock(request->mutex);
+      if (request->handler == nullptr) {
+        continue;
+      }
+      request->handler->Interrupt();
+    }
+    std::scoped_lock lock(threads_mutex_);
+    for (auto& thread : threads_) {
+      auto current_thread = thread.get_id() == std::this_thread::get_id();
+      auto matching_thread = thread.get_id() == request->thread_id;
+      if (!current_thread && matching_thread && thread.joinable()) {
+        thread.join();
+      }
+    }
+  }
+}
 
 void CvdServer::Join() {
   for (auto& thread : threads_) {
@@ -188,12 +221,23 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   // Even if the interrupt callback outlives the request handler, it'll only
   // hold on to this struct which will be cleaned out when the request handler
   // exits.
-  struct SharedState {
-    CvdServerHandler* handler;
-    std::mutex mutex;
-  };
-  auto shared = std::make_shared<SharedState>();
+  auto shared = std::make_shared<OngoingRequest>();
   shared->handler = CF_EXPECT(RequestHandler(*request, possible_handlers));
+  shared->thread_id = std::this_thread::get_id();
+
+  {
+    std::lock_guard lock(ongoing_requests_mutex_);
+    if (running_) {
+      ongoing_requests_.insert(shared);
+    } else {
+      // We're executing concurrently with a Stop() call.
+      return {};
+    }
+  }
+  ScopeGuard remove_ongoing_request([this, shared] {
+    std::lock_guard lock(ongoing_requests_mutex_);
+    ongoing_requests_.erase(shared);
+  });
 
   auto interrupt_cb = [shared](EpollEvent) -> Result<void> {
     std::lock_guard lock(shared->mutex);
