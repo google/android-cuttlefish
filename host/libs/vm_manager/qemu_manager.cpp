@@ -386,7 +386,7 @@ std::vector<Command> QemuManager::StartCommands(
   // dmesg will go there instead of the kernel.log. On QEMU, we do this
   // bit of logic up before the hvc console is set up, so the command line
   // flags appear in the right order and "append=on" does the right thing
-  if (!(config.console() && (config.kgdb() || config.use_bootloader()))) {
+  if (!config.console() && (config.kgdb() || config.use_bootloader())) {
     add_serial_console_ro(instance.kernel_log_pipe_name());
   }
 
