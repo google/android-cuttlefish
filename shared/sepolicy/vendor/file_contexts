@@ -76,7 +76,6 @@
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.drm-service\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service-lazy\.widevine  u:object_r:hal_drm_widevine_exec:s0
-/vendor/bin/hw/android\.hardware\.graphics\.allocator-V1-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
 /vendor/bin/hw/android\.hardware\.graphics\.allocator@4\.0-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
 /vendor/bin/hw/android\.hardware\.graphics\.composer3-service\.ranchu  u:object_r:hal_graphics_composer_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
