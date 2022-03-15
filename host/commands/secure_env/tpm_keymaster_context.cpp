@@ -26,6 +26,8 @@
 #include <keymaster/km_openssl/rsa_key_factory.h>
 #include <keymaster/km_openssl/soft_keymaster_enforcement.h>
 #include <keymaster/km_openssl/triple_des_key.h>
+#include <keymaster/operation.h>
+#include <keymaster/wrapped_key.h>
 
 #include "host/commands/secure_env/tpm_attestation_record.h"
 #include "host/commands/secure_env/tpm_key_blob_maker.h"
@@ -36,8 +38,9 @@ namespace cuttlefish {
 
 namespace {
 using keymaster::AuthorizationSet;
-using keymaster::KeymasterKeyBlob;
 using keymaster::KeyFactory;
+using keymaster::KeymasterBlob;
+using keymaster::KeymasterKeyBlob;
 using keymaster::OperationFactory;
 
 keymaster::AuthorizationSet GetHiddenTags(
@@ -53,6 +56,18 @@ keymaster::AuthorizationSet GetHiddenTags(
                      entry.data_length);
   }
   return output;
+}
+
+keymaster_error_t TranslateAuthorizationSetError(AuthorizationSet::Error err) {
+  switch (err) {
+    case AuthorizationSet::OK:
+      return KM_ERROR_OK;
+    case AuthorizationSet::ALLOCATION_FAILURE:
+      return KM_ERROR_MEMORY_ALLOCATION_FAILED;
+    case AuthorizationSet::MALFORMED_DATA:
+      return KM_ERROR_UNKNOWN_ERROR;
+  }
+  return KM_ERROR_UNKNOWN_ERROR;
 }
 
 }  // namespace
@@ -111,7 +126,7 @@ const KeyFactory* TpmKeymasterContext::GetKeyFactory(
   return it->second.get();
 }
 
-const OperationFactory* TpmKeymasterContext::GetOperationFactory(
+OperationFactory* TpmKeymasterContext::GetOperationFactory(
     keymaster_algorithm_t algorithm, keymaster_purpose_t purpose) const {
   auto key_factory = GetKeyFactory(algorithm);
   if (key_factory == nullptr) {
@@ -341,15 +356,222 @@ keymaster::CertificateChain TpmKeymasterContext::GenerateSelfSignedCertificate(
 }
 
 keymaster_error_t TpmKeymasterContext::UnwrapKey(
-    const KeymasterKeyBlob&,
-    const KeymasterKeyBlob&,
-    const AuthorizationSet&,
-    const KeymasterKeyBlob&,
-    AuthorizationSet*,
-    keymaster_key_format_t*,
-    KeymasterKeyBlob*) const {
-  LOG(ERROR) << "TODO(b/155697375): Implement UnwrapKey";
-  return KM_ERROR_UNIMPLEMENTED;
+    const KeymasterKeyBlob& wrapped_key_blob,
+    const KeymasterKeyBlob& wrapping_key_blob,
+    const AuthorizationSet& wrapping_key_params,
+    const KeymasterKeyBlob& masking_key, AuthorizationSet* wrapped_key_params,
+    keymaster_key_format_t* wrapped_key_format,
+    KeymasterKeyBlob* wrapped_key_material) const {
+  keymaster_error_t error = KM_ERROR_OK;
+
+  if (wrapped_key_material == nullptr) {
+    return KM_ERROR_UNEXPECTED_NULL_POINTER;
+  }
+
+  // Parse wrapping key.
+  keymaster::UniquePtr<keymaster::Key> wrapping_key;
+  error = ParseKeyBlob(wrapping_key_blob, wrapping_key_params, &wrapping_key);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  keymaster::AuthProxy wrapping_key_auths(wrapping_key->hw_enforced(),
+                                          wrapping_key->sw_enforced());
+
+  // Check Wrapping Key Purpose
+  if (!wrapping_key_auths.Contains(keymaster::TAG_PURPOSE, KM_PURPOSE_WRAP)) {
+    LOG(ERROR) << "Wrapping key did not have KM_PURPOSE_WRAP";
+    return KM_ERROR_INCOMPATIBLE_PURPOSE;
+  }
+
+  // Check Padding mode is RSA_OAEP and digest is SHA_2_256 (spec
+  // mandated)
+  if (!wrapping_key_auths.Contains(keymaster::TAG_DIGEST,
+                                   KM_DIGEST_SHA_2_256)) {
+    LOG(ERROR) << "Wrapping key lacks authorization for SHA2-256";
+    return KM_ERROR_INCOMPATIBLE_DIGEST;
+  }
+  if (!wrapping_key_auths.Contains(keymaster::TAG_PADDING, KM_PAD_RSA_OAEP)) {
+    LOG(ERROR) << "Wrapping key lacks authorization for padding OAEP";
+    return KM_ERROR_INCOMPATIBLE_PADDING_MODE;
+  }
+
+  // Check that that was also the padding mode and digest specified
+  if (!wrapping_key_params.Contains(keymaster::TAG_DIGEST,
+                                    KM_DIGEST_SHA_2_256)) {
+    LOG(ERROR) << "Wrapping key must use SHA2-256";
+    return KM_ERROR_INCOMPATIBLE_DIGEST;
+  }
+  if (!wrapping_key_params.Contains(keymaster::TAG_PADDING, KM_PAD_RSA_OAEP)) {
+    LOG(ERROR) << "Wrapping key must use OAEP padding";
+    return KM_ERROR_INCOMPATIBLE_PADDING_MODE;
+  }
+
+  // Parse wrapped key data.
+  KeymasterBlob iv;
+  KeymasterKeyBlob transit_key;
+  KeymasterKeyBlob secure_key;
+  KeymasterBlob tag;
+  KeymasterBlob wrapped_key_description;
+  error = parse_wrapped_key(wrapped_key_blob, &iv, &transit_key, &secure_key,
+                            &tag, wrapped_key_params, wrapped_key_format,
+                            &wrapped_key_description);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  // Decrypt encryptedTransportKey (transit_key) with wrapping_key
+  keymaster::OperationFactory* operation_factory =
+      wrapping_key->key_factory()->GetOperationFactory(KM_PURPOSE_DECRYPT);
+  if (operation_factory == NULL) {
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  AuthorizationSet out_params;
+  keymaster::OperationPtr operation(operation_factory->CreateOperation(
+      std::move(*wrapping_key), wrapping_key_params, &error));
+  if ((operation.get() == nullptr) || (error != KM_ERROR_OK)) {
+    return error;
+  }
+
+  error = operation->Begin(wrapping_key_params, &out_params);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  keymaster::Buffer input;
+  if (!input.Reinitialize(transit_key.key_material,
+                          transit_key.key_material_size)) {
+    return KM_ERROR_MEMORY_ALLOCATION_FAILED;
+  }
+
+  keymaster::Buffer output;
+  error = operation->Finish(wrapping_key_params, input,
+                            keymaster::Buffer() /* signature */, &out_params,
+                            &output);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  // decrypt the encrypted key material with the transit key
+  KeymasterKeyBlob transport_key = {output.peek_read(),
+                                    output.available_read()};
+
+  // XOR the transit key with the masking key
+  if (transport_key.key_material_size != masking_key.key_material_size) {
+    return KM_ERROR_INVALID_ARGUMENT;
+  }
+  for (size_t i = 0; i < transport_key.key_material_size; i++) {
+    transport_key.writable_data()[i] ^= masking_key.key_material[i];
+  }
+
+  auto transport_key_authorizations =
+      keymaster::AuthorizationSetBuilder()
+          .AesEncryptionKey(256)
+          .Padding(KM_PAD_NONE)
+          .Authorization(keymaster::TAG_BLOCK_MODE, KM_MODE_GCM)
+          .Authorization(keymaster::TAG_NONCE, iv)
+          .Authorization(keymaster::TAG_MIN_MAC_LENGTH, 128)
+          .build();
+  if (transport_key_authorizations.is_valid() != AuthorizationSet::Error::OK) {
+    return TranslateAuthorizationSetError(
+        transport_key_authorizations.is_valid());
+  }
+
+  auto gcm_params = keymaster::AuthorizationSetBuilder()
+                        .Padding(KM_PAD_NONE)
+                        .Authorization(keymaster::TAG_BLOCK_MODE, KM_MODE_GCM)
+                        .Authorization(keymaster::TAG_NONCE, iv)
+                        .Authorization(keymaster::TAG_MAC_LENGTH, 128)
+                        .build();
+  if (gcm_params.is_valid() != AuthorizationSet::Error::OK) {
+    return TranslateAuthorizationSetError(
+        transport_key_authorizations.is_valid());
+  }
+
+  auto aes_factory = GetKeyFactory(KM_ALGORITHM_AES);
+  if (!aes_factory) {
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  keymaster::UniquePtr<keymaster::Key> aes_transport_key;
+  error = aes_factory->LoadKey(std::move(transport_key), gcm_params,
+                               std::move(transport_key_authorizations),
+                               AuthorizationSet(), &aes_transport_key);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  keymaster::OperationFactory* aes_operation_factory =
+      GetOperationFactory(KM_ALGORITHM_AES, KM_PURPOSE_DECRYPT);
+  if (!aes_operation_factory) {
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  keymaster::OperationPtr aes_operation(aes_operation_factory->CreateOperation(
+      std::move(*aes_transport_key), gcm_params, &error));
+  if (!aes_operation.get()) {
+    return error;
+  }
+
+  error = aes_operation->Begin(gcm_params, &out_params);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  size_t total_key_size = secure_key.key_material_size + tag.data_length;
+  keymaster::Buffer plaintext_key;
+  if (!plaintext_key.Reinitialize(total_key_size)) {
+    return KM_ERROR_MEMORY_ALLOCATION_FAILED;
+  }
+  keymaster::Buffer encrypted_key;
+  if (!encrypted_key.Reinitialize(total_key_size)) {
+    return KM_ERROR_MEMORY_ALLOCATION_FAILED;
+  }
+
+  // Concatenate key data and authentication tag.
+  if (!encrypted_key.write(secure_key.key_material,
+                           secure_key.key_material_size)) {
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+  if (!encrypted_key.write(tag.data, tag.data_length)) {
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  auto update_params = keymaster::AuthorizationSetBuilder()
+                           .Authorization(keymaster::TAG_ASSOCIATED_DATA,
+                                          wrapped_key_description.data,
+                                          wrapped_key_description.data_length)
+                           .build();
+  if (update_params.is_valid() != AuthorizationSet::Error::OK) {
+    return TranslateAuthorizationSetError(update_params.is_valid());
+  }
+
+  size_t update_consumed = 0;
+  AuthorizationSet update_outparams;
+  error = aes_operation->Update(update_params, encrypted_key, &update_outparams,
+                                &plaintext_key, &update_consumed);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  AuthorizationSet finish_params;
+  AuthorizationSet finish_out_params;
+  keymaster::Buffer finish_input;
+  error = aes_operation->Finish(finish_params, finish_input,
+                                keymaster::Buffer() /* signature */,
+                                &finish_out_params, &plaintext_key);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  *wrapped_key_material = {plaintext_key.peek_read(),
+                           plaintext_key.available_read()};
+  if (!wrapped_key_material->key_material && plaintext_key.peek_read()) {
+    return KM_ERROR_MEMORY_ALLOCATION_FAILED;
+  }
+
+  return error;
 }
 
 keymaster::RemoteProvisioningContext*
