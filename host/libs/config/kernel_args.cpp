@@ -43,6 +43,7 @@ void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
 std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) {
   std::vector<std::string> vm_manager_cmdline;
   if (config.vm_manager() == QemuManager::name()) {
+    vm_manager_cmdline.push_back("console=hvc0");
     Arch target_arch = config.target_arch();
     if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
       // To update the pl011 address:
