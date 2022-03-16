@@ -16,6 +16,9 @@ allow init proc:dir mounton;
 allow init ab_block_device:lnk_file relabelto;
 allow init boot_block_device:lnk_file relabelto;
 
+# init needs to tune block device
+allow init sysfs_devices_block:file w_file_perms;
+
 # /mnt/sdcard -> /storage/self/primary symlink is deprecated. Ignore attempts to
 # create it. This denial is fixed in core policy in Android R aosp/943799.
 dontaudit init tmpfs:lnk_file create;
