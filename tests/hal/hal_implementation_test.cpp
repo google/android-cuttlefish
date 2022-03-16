@@ -132,9 +132,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.common.", 2},
     {"android.hardware.common.fmq.", 1},
 
-    // This interface needs to be implemented (b/215332992)
-    {"android.hardware.graphics.allocator.", 1},
-
     {"android.hardware.graphics.common.", 1},
     {"android.hardware.graphics.common.", 2},
     {"android.hardware.graphics.common.", 3},
