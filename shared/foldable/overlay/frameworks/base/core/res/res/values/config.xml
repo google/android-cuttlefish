@@ -32,6 +32,8 @@
   </integer-array>
   <!-- Indicates whether to enable an animation when unfolding a device or not -->
   <bool name="config_unfoldTransitionEnabled">true</bool>
+  <!-- Indicates whether to enable hinge angle sensor when using unfold animation -->
+  <bool name="config_unfoldTransitionHingeAngle">true</bool>
   <bool name="config_supportsConcurrentInternalDisplays">false</bool>
   <!-- Controls whether the device support multi window modes like split-screen. -->
   <bool name="config_supportsMultiWindow">true</bool>
