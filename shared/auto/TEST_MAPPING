@@ -1,0 +1,28 @@
+{
+  "auto-presubmit": [
+    {
+      "name": "AndroidCarApiTest"
+    },
+    {
+      "name": "CarSecurityPermissionTest"
+    },
+    {
+      "name": "CtsCarTestCases"
+    },
+    {
+      "name": "CtsCarBuiltinApiTestCases"
+    },
+    {
+      "name": "CtsCarHostTestCases"
+    },
+    {
+      "name": "CtsCarBuiltinApiHostTestCases"
+    },
+    {
+      "name": "CarServiceTest"
+    },
+    {
+      "name": "CarServiceUnitTest"
+    }
+  ]
+}
