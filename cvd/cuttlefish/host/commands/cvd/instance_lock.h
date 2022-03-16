@@ -16,19 +16,23 @@
 #pragma once
 
 #include <set>
-#include <string>
 
 #include <fruit/fruit.h>
 
-#include "host/commands/cvd/lock_file.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
+class InstanceLockFileManager;
+
+enum class InUseState : char {
+  kInUse = 'I',
+  kNotInUse = 'N',
+};
+
 // This class is not thread safe.
 class InstanceLockFile {
-  friend class InstanceLockFileManager;
-  using LockFile = cvd_impl::LockFile;
-
  public:
   int Instance() const;
   Result<InUseState> Status() const;
@@ -37,15 +41,15 @@ class InstanceLockFile {
   bool operator<(const InstanceLockFile&) const;
 
  private:
-  InstanceLockFile(LockFile&& lock_file, const int instance_num);
-  LockFile lock_file_;
-  const int instance_num_;
+  friend class InstanceLockFileManager;
+
+  InstanceLockFile(SharedFD fd, int instance_num);
+
+  SharedFD fd_;
+  int instance_num_;
 };
 
 class InstanceLockFileManager {
-  using LockFile = cvd_impl::LockFile;
-  using LockFileManager = cvd_impl::LockFileManager;
-
  public:
   INJECT(InstanceLockFileManager());
 
@@ -54,20 +58,6 @@ class InstanceLockFileManager {
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
   Result<std::set<InstanceLockFile>> TryAcquireLocks(const std::set<int>& nums);
-
-  // Best-effort attempt to find a free instance id.
-  Result<std::optional<InstanceLockFile>> TryAcquireUnusedLock();
-
-  Result<std::vector<InstanceLockFile>> LockAllAvailable();
-
- private:
-  /*
-   * Generate value to initialize
-   */
-  Result<std::set<int>> FindPotentialInstanceNumsFromNetDevices();
-  static Result<std::string> LockFilePath(int instance_num);
-  std::optional<std::set<int>> all_instance_nums_;
-  LockFileManager lock_file_manager_;
 };
 
 }  // namespace cuttlefish
