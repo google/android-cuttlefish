@@ -261,43 +261,62 @@ class CvdClient {
   }
 };
 
+[[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
+  auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
+  if (android_top == "") {
+    LOG(FATAL) << "Could not find android environment. Please run "
+               << "\"source build/envsetup.sh\".";
+    abort();
+  }
+  // TODO(b/206893146): Detect what the platform actually is.
+  auto py_acloud_path =
+      android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
+  char** new_argv = new char*[args.size() + 1];
+  for (size_t i = 0; i < args.size(); i++) {
+    new_argv[i] = args[i].data();
+  }
+  new_argv[args.size()] = nullptr;
+  execv(py_acloud_path.data(), new_argv);
+  PLOG(FATAL) << "execv(" << py_acloud_path << ", ...) failed";
+  abort();
+}
+
 Result<int> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   std::vector<std::string> args = ArgsToVec(argc, argv);
   std::vector<Flag> flags;
 
+  CvdClient client;
+
   // TODO(b/206893146): Make this decision inside the server.
   if (args[0] == "acloud") {
-    bool passthrough = true;
-    ParseFlags({GflagsCompatFlag("acloud_passthrough", passthrough)}, args);
-    if (passthrough) {
-      auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-      if (android_top == "") {
-        LOG(ERROR) << "Could not find android environment. Please run "
-                   << "\"source build/envsetup.sh\".";
-        return 1;
+    auto server_running = client.EnsureCvdServerRunning(
+        android::base::Dirname(android::base::GetExecutableDirectory()));
+    if (server_running.ok()) {
+      // TODO(schuffelen): Deduplicate when calls to setenv are removed.
+      std::vector<std::string> env;
+      for (char** e = envp; *e != 0; e++) {
+        env.emplace_back(*e);
       }
-      // TODO(b/206893146): Detect what the platform actually is.
-      auto py_acloud_path =
-          android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
-      char** new_argv = new char*[args.size() + 1];
-      for (size_t i = 0; i < args.size(); i++) {
-        new_argv[i] = args[i].data();
+      args[0] = "try-acloud";
+      auto attempt = client.HandleCommand(args, env);
+      if (attempt.ok()) {
+        args[0] = "acloud";
+        CF_EXPECT(client.HandleCommand(args, env));
+        return 0;
+      } else {
+        CallPythonAcloud(args);
       }
-      new_argv[args.size()] = nullptr;
-      execv(py_acloud_path.data(), new_argv);
-      delete[] new_argv;
-      PLOG(ERROR) << "execv(" << py_acloud_path << ", ...) failed";
-      return 1;
+    } else {
+      // Something is wrong with the server, fall back to python acloud
+      CallPythonAcloud(args);
     }
   }
   bool clean = false;
   flags.emplace_back(GflagsCompatFlag("clean", clean));
 
   CF_EXPECT(ParseFlags(flags, args));
-
-  CvdClient client;
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
@@ -318,6 +337,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
                 android::base::GetExecutableDirectory())),
             "Unable to ensure cvd_server is running.");
 
+  // TODO(schuffelen): Deduplicate when calls to setenv are removed.
   std::vector<std::string> env;
   for (char** e = envp; *e != 0; e++) {
     env.emplace_back(*e);
