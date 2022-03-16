@@ -178,8 +178,12 @@ class CvdClient {
     command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
 
     auto response = SendRequest(request);
-    CHECK(response.ok()) << response.error().message();
-    CheckStatus(response->status(), "GetVersion");
+    if (!response.ok()) {
+      std::cerr << "Communication failure with server: \n"
+                << response.error() << "\n";
+      LOG(FATAL) << "Cannot continue";
+    }
+    CheckStatus(response->status(), "HandleCommand");
     CHECK(response->has_command_response())
         << "HandleCommand call missing CommandResponse.";
   }
@@ -264,9 +268,11 @@ class CvdClient {
   }
 
   void CheckStatus(const cvd::Status& status, const std::string& rpc) {
-    CHECK(status.code() == cvd::Status::OK)
-        << "Failed to call cvd_server " << rpc << " (" << status.code()
-        << "): " << status.message();
+    if (status.code() != cvd::Status::OK) {
+      std::cerr << "Received error response for \"" << rpc << "\":\n"
+                << status.message() << "\n";
+      LOG(FATAL) << "Cannot continue";
+    }
   }
 };
 
