@@ -53,6 +53,7 @@ cc_binary_host {
     name: "cvd_server",
     srcs: [
         "epoll_loop.cpp",
+        "instance_lock.cpp",
         "instance_manager.cpp",
         "server.cc",
         "server_client.cpp",
