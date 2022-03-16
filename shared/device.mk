@@ -638,6 +638,12 @@ PRODUCT_COPY_FILES += \
 endif
 
 #
+# Dice HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.security.dice-service.non-secure-software.vendor
+
+#
 # Power and PowerStats HALs
 #
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
