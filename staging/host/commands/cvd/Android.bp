@@ -55,6 +55,7 @@ cc_binary_host {
         "epoll_loop.cpp",
         "instance_lock.cpp",
         "instance_manager.cpp",
+        "scope_guard.cpp",
         "server.cc",
         "server_client.cpp",
         "server_command.cpp",
