@@ -40,6 +40,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/epoll_loop.h"
+#include "host/commands/cvd/scope_guard.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -154,20 +155,6 @@ static Result<CvdServerHandler*> RequestHandler(
                 << compatible_handlers.size());
   return compatible_handlers[0];
 }
-
-class ScopeGuard {
- public:
-  ScopeGuard(std::function<void()> fn) : fn_(fn) {}
-  ~ScopeGuard() {
-    if (fn_) {
-      fn_();
-    }
-  }
-  void Cancel() { fn_ = nullptr; }
-
- private:
-  std::function<void()> fn_;
-};
 
 Result<void> CvdServer::StartServer(SharedFD server_fd) {
   auto cb = [this](EpollEvent ev) -> Result<void> {
