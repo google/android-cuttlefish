@@ -36,6 +36,9 @@ BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
 endif
 BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 67108864
 
+# init_boot partition size is recommended to be 8MB, it can be larger.
+# When this variable is set, init_boot.img will be built with the generic
+# ramdisk, and that ramdisk will no longer be included in boot.img.
 BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE := 8388608
 
 # Build a separate vendor.img partition
