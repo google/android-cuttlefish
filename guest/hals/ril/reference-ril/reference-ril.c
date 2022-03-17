@@ -962,6 +962,19 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
         }
     }
 
+    // If cid = -1, return the data call list without processing CGCONTRDP (setupDataCall)
+    if (cid == -1) {
+        if (t != NULL)
+            RIL_onRequestComplete(*t, RIL_E_SUCCESS, &responses[0],
+                                  sizeof(RIL_Data_Call_Response_v11));
+        else
+            RIL_onUnsolicitedResponse(RIL_UNSOL_DATA_CALL_LIST_CHANGED, responses,
+                                      n * sizeof(RIL_Data_Call_Response_v11));
+        at_response_free(p_response);
+        p_response = NULL;
+        return;
+    }
+
     at_response_free(p_response);
     p_response = NULL;
 
