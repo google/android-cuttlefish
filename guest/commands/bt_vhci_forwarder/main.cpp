@@ -142,6 +142,11 @@ int main(int argc, char** argv) {
         PLOG(ERROR) << "vhci to virtio-console failed";
       }
     }
+    if (fds[1].revents & POLLHUP) {
+      LOG(ERROR) << "PollHUP";
+      usleep(50 * 1000);
+      continue;
+    }
     if (fds[1].revents & (POLLIN | POLLERR)) {
       // 'virtio-console to vhci' depends on H4Packetizer because vhci expects
       // full packet, but the data from virtio-console could be partial.
