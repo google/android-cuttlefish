@@ -72,8 +72,17 @@ void Flag::ValidateAlias(const FlagAlias& alias) {
   if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
     CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
         << "Overlapping flag aliases for " << alias.name;
+    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesArbitrary, alias.name}))
+        << "Overlapping flag aliases for " << alias.name;
   } else if (alias.mode == FlagAliasMode::kFlagExact) {
+    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesFollowing, alias.name}))
+        << "Overlapping flag aliases for " << alias.name;
+    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesArbitrary, alias.name}))
+        << "Overlapping flag aliases for " << alias.name;
+  } else if (alias.mode == FlagAliasMode::kFlagConsumesArbitrary) {
     CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
+        << "Overlapping flag aliases for " << alias.name;
+    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesFollowing, alias.name}))
         << "Overlapping flag aliases for " << alias.name;
   }
 }
@@ -116,6 +125,10 @@ Flag Flag::Setter(std::function<bool(const FlagMatch&)> fn) && {
   return *this;
 }
 
+static bool LikelyFlag(const std::string& next_arg) {
+  return android::base::StartsWith(next_arg, "-");
+}
+
 Flag::FlagProcessResult Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   if (!setter_ && aliases_.size() > 0) {
@@ -124,6 +137,23 @@ Flag::FlagProcessResult Flag::Process(
   }
   for (auto& alias : aliases_) {
     switch (alias.mode) {
+      case FlagAliasMode::kFlagConsumesArbitrary:
+        if (arg != alias.name) {
+          continue;
+        }
+        if (!next_arg || LikelyFlag(*next_arg)) {
+          if (!(*setter_)({arg, ""})) {
+            LOG(ERROR) << "Processing \"" << arg << "\" failed";
+            return FlagProcessResult::kFlagError;
+          }
+          return FlagProcessResult::kFlagConsumed;
+        }
+        if (!(*setter_)({arg, *next_arg})) {
+          LOG(ERROR) << "Processing \"" << arg << "\" \"" << *next_arg
+                     << "\" failed";
+          return FlagProcessResult::kFlagError;
+        }
+        return FlagProcessResult::kFlagConsumedOnlyFollowing;
       case FlagAliasMode::kFlagConsumesFollowing:
         if (arg != alias.name) {
           continue;
@@ -173,12 +203,13 @@ bool Flag::Parse(std::vector<std::string>& arguments) const {
     }
     auto result = Process(arg, next_arg);
     if (result == FlagProcessResult::kFlagError) {
-      LOG(ERROR) << "Failure in parsing \"" << arg << "\"";
       return false;
     } else if (result == FlagProcessResult::kFlagConsumed) {
       arguments.erase(arguments.begin() + i);
     } else if (result == FlagProcessResult::kFlagConsumedWithFollowing) {
       arguments.erase(arguments.begin() + i, arguments.begin() + i + 2);
+    } else if (result == FlagProcessResult::kFlagConsumedOnlyFollowing) {
+      arguments.erase(arguments.begin() + i + 1, arguments.begin() + i + 2);
     } else if (result == FlagProcessResult::kFlagSkip) {
       i++;
       continue;
