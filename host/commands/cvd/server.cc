@@ -52,6 +52,7 @@ static fruit::Component<> RequestComponent(CvdServer* server,
   return fruit::createComponent()
       .bindInstance(*server)
       .bindInstance(*instance_manager)
+      .install(AcloudCommandComponent)
       .install(cvdCommandComponent)
       .install(cvdShutdownComponent)
       .install(cvdVersionComponent);
