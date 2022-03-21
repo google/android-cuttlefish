@@ -64,6 +64,7 @@ class CvdServer {
 
   Result<void> AcceptClient(EpollEvent);
   Result<void> HandleMessage(EpollEvent);
+  Result<cvd::Response> HandleRequest(RequestWithStdio, SharedFD client);
   Result<void> BestEffortWakeup();
 
   EpollPool& epoll_pool_;
