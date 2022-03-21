@@ -52,6 +52,7 @@ cc_binary_host {
 cc_binary_host {
     name: "cvd_server",
     srcs: [
+        "acloud_command.cpp",
         "epoll_loop.cpp",
         "instance_lock.cpp",
         "instance_manager.cpp",
