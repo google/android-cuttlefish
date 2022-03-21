@@ -1447,6 +1447,32 @@ done:
     RIL_onRequestComplete(t, RIL_E_SUCCESS, &i, sizeof(i));
 }
 
+static void requestGetCarrierRestrictions(void* data, size_t datalen, RIL_Token t) {
+    RIL_UNUSED_PARM(datalen);
+    RIL_UNUSED_PARM(data);
+
+    // Fixed values. TODO: query modem
+    RIL_Carrier allowed_carriers = {
+            "123",          // mcc
+            "456",          // mnc
+            RIL_MATCH_ALL,  // match_type
+            "",             // match_data
+    };
+
+    RIL_Carrier excluded_carriers;
+
+    RIL_CarrierRestrictionsWithPriority restrictions = {
+            1,                   // len_allowed_carriers
+            0,                   // len_excluded_carriers
+            &allowed_carriers,   // allowed_carriers
+            &excluded_carriers,  // excluded_carriers
+            1,                   // allowedCarriersPrioritized
+            NO_MULTISIM_POLICY   // multiSimPolicy
+    };
+
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, &restrictions, sizeof(restrictions));
+}
+
 static void requestCdmaPrlVersion(int request __unused, void *data __unused,
                                    size_t datalen __unused, RIL_Token t)
 {
@@ -4755,6 +4781,7 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_ALLOW_DATA:
         case RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION:
         case RIL_REQUEST_SET_BAND_MODE:
+        case RIL_REQUEST_SET_CARRIER_RESTRICTIONS:
         case RIL_REQUEST_GET_NEIGHBORING_CELL_IDS:
         case RIL_REQUEST_SET_LOCATION_UPDATES:
         case RIL_REQUEST_SET_TTY_MODE:
@@ -4961,6 +4988,8 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_GET_SLICING_CONFIG:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
+        case RIL_REQUEST_GET_CARRIER_RESTRICTIONS:
+            requestGetCarrierRestrictions(data, datalen, t);
 
         // Radio config requests
         case RIL_REQUEST_CONFIG_GET_SLOT_STATUS:

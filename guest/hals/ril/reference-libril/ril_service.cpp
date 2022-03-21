@@ -9644,6 +9644,7 @@ int radio_1_6::setAllowedCarriersResponse(int slotId,
     RLOGD("setAllowedCarriersResponse: serial %d", serial);
 #endif
     RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
 
     if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
         Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4
