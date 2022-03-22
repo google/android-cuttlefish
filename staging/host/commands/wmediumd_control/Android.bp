@@ -36,5 +36,8 @@ cc_binary {
         "libcuttlefish_wmediumd_controller",
         "libgflags",
     ],
+    header_libs: [
+        "wmediumd_headers",
+    ],
     defaults: ["cuttlefish_host"],
 }

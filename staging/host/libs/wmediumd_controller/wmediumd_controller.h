@@ -43,12 +43,15 @@ class WmediumdController {
   bool ReloadConfig(const std::string& configPath);
   bool StartPcap(const std::string& pcapPath);
   bool StopPcap(void);
+  std::optional<WmediumdMessageStationsList> GetStations(void);
 
  private:
   WmediumdController() {}
 
   bool Connect(const std::string& serverSocketPath);
   bool SendMessage(const WmediumdMessage& message);
+  std::optional<WmediumdMessageReply> SendMessageWithReply(
+      const WmediumdMessage& message);
 
   SharedFD wmediumd_socket_;
 };
