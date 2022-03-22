@@ -39,7 +39,7 @@ InstanceLockFile::InstanceLockFile(SharedFD fd, int instance_num)
 int InstanceLockFile::Instance() const { return instance_num_; }
 
 Result<InUseState> InstanceLockFile::Status() const {
-  CF_EXPECT(fd_->LSeek(0, SEEK_SET), fd_->StrError());
+  CF_EXPECT(fd_->LSeek(0, SEEK_SET) == 0, fd_->StrError());
   char state_char = static_cast<char>(InUseState::kNotInUse);
   CF_EXPECT(fd_->Read(&state_char, 1) >= 0, fd_->StrError());
   switch (state_char) {
@@ -53,7 +53,7 @@ Result<InUseState> InstanceLockFile::Status() const {
 }
 
 Result<void> InstanceLockFile::Status(InUseState state) {
-  CF_EXPECT(fd_->LSeek(0, SEEK_SET), fd_->StrError());
+  CF_EXPECT(fd_->LSeek(0, SEEK_SET) == 0, fd_->StrError());
   char state_char = static_cast<char>(state);
   CF_EXPECT(fd_->Write(&state_char, 1) == 1, fd_->StrError());
   return {};
@@ -69,7 +69,7 @@ bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
 InstanceLockFileManager::InstanceLockFileManager() = default;
 
 // Replicates tempfile.gettempdir() in Python
-static std::string TempDir() {
+std::string TempDir() {
   std::vector<std::string> try_dirs = {
       StringFromEnv("TMPDIR", ""),
       StringFromEnv("TEMP", ""),
