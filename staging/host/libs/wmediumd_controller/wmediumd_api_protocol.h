@@ -18,7 +18,10 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
+
+#include <wmediumd/api.h>
 
 #include "common/libs/fs/shared_fd.h"
 
@@ -32,12 +35,13 @@ enum class WmediumdMessageType : uint32_t {
   kNetlink = 4,
   kSetControl = 5,
   kTxStart = 6,
-  kGetNodes = 7,
+  kGetStations = 7,
   kSetSnr = 8,
   kReloadConfig = 9,
   kReloadCurrentConfig = 10,
   kStartPcap = 11,
   kStopPcap = 12,
+  kStationsList = 13,
 };
 
 class WmediumdMessage {
@@ -128,6 +132,49 @@ class WmediumdMessageStopPcap : public WmediumdMessage {
   WmediumdMessageType Type() const override {
     return WmediumdMessageType::kStopPcap;
   }
+};
+
+class WmediumdMessageGetStations : public WmediumdMessage {
+ public:
+  WmediumdMessageGetStations() = default;
+
+  WmediumdMessageType Type() const override {
+    return WmediumdMessageType::kGetStations;
+  }
+};
+
+class WmediumdMessageReply : public WmediumdMessage {
+ public:
+  WmediumdMessageReply() = default;
+  WmediumdMessageReply(WmediumdMessageType type, const std::string& data)
+      : type_(type), data_(data) {}
+
+  WmediumdMessageType Type() const override { return type_; }
+
+  size_t Size() const { return data_.size(); }
+  const char* Data() const { return data_.data(); }
+
+ private:
+  WmediumdMessageType type_;
+  std::string data_;
+};
+
+class WmediumdMessageStationsList : public WmediumdMessage {
+ public:
+  WmediumdMessageStationsList() = default;
+  static std::optional<WmediumdMessageStationsList> Parse(
+      const WmediumdMessageReply& reply);
+
+  WmediumdMessageType Type() const override {
+    return WmediumdMessageType::kStationsList;
+  }
+
+  const std::vector<wmediumd_station_info>& GetStations() const {
+    return station_list_;
+  }
+
+ private:
+  std::vector<wmediumd_station_info> station_list_;
 };
 
 }  // namespace cuttlefish
