@@ -533,7 +533,7 @@ class SecureEnvironment : public CommandSource {
     }
 
     auto confui_socket_path =
-        instance_.PerInstanceInternalPath("confui_secure_env_vm.sock");
+        instance_.PerInstanceInternalPath("confui_sign.sock");
     confui_server_fd_ = SharedFD::SocketLocalServer(confui_socket_path, false,
                                                     SOCK_STREAM, 0600);
     if (!confui_server_fd_->IsOpen()) {
