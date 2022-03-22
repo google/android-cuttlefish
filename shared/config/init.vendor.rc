@@ -76,7 +76,6 @@ on post-fs-data && property:ro.vendor.wifi_impl=mac8011_hwsim_virtio
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/hostapd 0770 wifi wifi
     mkdir /data/vendor/wifi/hostapd/sockets 0770 wifi wifi
-    setprop vold.post_fs_data_done 1
     start init_wifi_sh
 
 on boot
