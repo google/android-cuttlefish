@@ -104,4 +104,39 @@ void WmediumdMessageStartPcap::SerializeBody(std::string& buf) const {
   buf.push_back('\0');
 }
 
+std::optional<WmediumdMessageStationsList> WmediumdMessageStationsList::Parse(
+    const WmediumdMessageReply& reply) {
+  size_t pos = 0;
+  size_t dataSize = reply.Size();
+  auto data = reply.Data();
+
+  if (reply.Type() != WmediumdMessageType::kStationsList) {
+    LOG(FATAL) << "expected reply type "
+               << static_cast<uint32_t>(WmediumdMessageType::kStationsList)
+               << ", got " << static_cast<uint32_t>(reply.Type()) << std::endl;
+  }
+
+  WmediumdMessageStationsList result;
+
+  if (pos + sizeof(uint32_t) > dataSize) {
+    LOG(ERROR) << "invalid response size";
+    return std::nullopt;
+  }
+
+  uint32_t count = *reinterpret_cast<const uint32_t*>(data + pos);
+  pos += sizeof(uint32_t);
+
+  for (uint32_t i = 0; i < count; ++i) {
+    if (pos + sizeof(wmediumd_station_info) > dataSize) {
+      LOG(ERROR) << "invalid response size";
+      return std::nullopt;
+    }
+    result.station_list_.push_back(
+        *reinterpret_cast<const wmediumd_station_info*>(data + pos));
+    pos += sizeof(wmediumd_station_info);
+  }
+
+  return result;
+}
+
 }  // namespace cuttlefish

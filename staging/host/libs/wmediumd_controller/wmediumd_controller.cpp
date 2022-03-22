@@ -20,6 +20,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "common/libs/fs/shared_buf.h"
@@ -77,28 +78,61 @@ bool WmediumdController::StopPcap(void) {
   return SendMessage(WmediumdMessageStopPcap());
 }
 
+std::optional<WmediumdMessageStationsList> WmediumdController::GetStations(
+    void) {
+  auto reply = SendMessageWithReply(WmediumdMessageGetStations());
+
+  if (!reply) {
+    return std::nullopt;
+  }
+
+  return WmediumdMessageStationsList::Parse(*reply);
+}
+
 bool WmediumdController::SendMessage(const WmediumdMessage& message) {
-  auto sendResult = SendAll(wmediumd_socket_, message.Serialize());
+  auto reply = SendMessageWithReply(message);
 
-  if (!sendResult) {
-    LOG(ERROR) << "sendmessage failed: " << wmediumd_socket_->StrError();
+  if (!reply) {
     return false;
   }
 
-  std::string recvBuf = RecvAll(wmediumd_socket_, sizeof(uint32_t) * 2);
-
-  if (recvBuf.size() != sizeof(uint32_t) * 2) {
-    LOG(ERROR) << "error: RecvAll failed while receiving result from server";
-    return false;
-  }
-
-  uint32_t type = *reinterpret_cast<const uint32_t*>(recvBuf.c_str());
-
-  if (static_cast<WmediumdMessageType>(type) != WmediumdMessageType::kAck) {
+  if (reply->Type() != WmediumdMessageType::kAck) {
     return false;
   }
 
   return true;
+}
+
+std::optional<WmediumdMessageReply> WmediumdController::SendMessageWithReply(
+    const WmediumdMessage& message) {
+  auto sendResult = SendAll(wmediumd_socket_, message.Serialize());
+
+  if (!sendResult) {
+    LOG(ERROR) << "sendmessage failed: " << wmediumd_socket_->StrError();
+    return std::nullopt;
+  }
+
+  std::string recvHeader = RecvAll(wmediumd_socket_, sizeof(uint32_t) * 2);
+
+  if (recvHeader.size() != sizeof(uint32_t) * 2) {
+    LOG(ERROR)
+        << "error: RecvAll failed while receiving result header from server";
+    return std::nullopt;
+  }
+
+  uint32_t type = *reinterpret_cast<const uint32_t*>(recvHeader.c_str());
+  uint32_t dataLen =
+      *reinterpret_cast<const uint32_t*>(recvHeader.c_str() + sizeof(uint32_t));
+
+  std::string recvData = RecvAll(wmediumd_socket_, dataLen);
+
+  if (recvData.size() != dataLen) {
+    LOG(ERROR)
+        << "error: RecvAll failed while receiving result data from server";
+    return std::nullopt;
+  }
+
+  return WmediumdMessageReply(static_cast<WmediumdMessageType>(type), recvData);
 }
 
 }  // namespace cuttlefish
