@@ -26,6 +26,9 @@ cc_library_static {
     export_include_dirs: [
         ".",
     ],
+    header_libs: [
+        "wmediumd_headers",
+    ],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
