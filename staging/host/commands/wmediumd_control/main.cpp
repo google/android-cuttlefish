@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -41,7 +42,9 @@ const std::string usageMessage =
     "      start packet capture and save capture result to file.\n"
     "      file format is pcap capture format.\n\n"
     "    stop_pcap\n"
-    "      stop packet capture\n\n";
+    "      stop packet capture\n\n"
+    "    list_stations\n"
+    "      listing stations connected to wmediumd\n\n";
 
 DEFINE_string(wmediumd_api_server, "",
               "Unix socket path of wmediumd api server");
@@ -70,6 +73,21 @@ bool ValidMacAddr(const std::string& macAddr) {
   }
 
   return true;
+}
+
+std::string MacToString(const char* macAddr) {
+  std::stringstream result;
+
+  for (int i = 0; i < ETH_ALEN; i++) {
+    result << std::setfill('0') << std::setw(2) << std::right << std::hex
+           << static_cast<int>(static_cast<uint8_t>(macAddr[i]));
+
+    if (i != 5) {
+      result << ":";
+    }
+  }
+
+  return result.str();
 }
 
 bool HandleSetSnrCommand(cuttlefish::WmediumdController& client,
@@ -145,6 +163,44 @@ bool HandleStopPcapCommand(cuttlefish::WmediumdController& client,
   return client.StopPcap();
 }
 
+bool HandleListStationsCommand(cuttlefish::WmediumdController& client,
+                               const std::vector<std::string>& args) {
+  if (args.size() != 1) {
+    LOG(ERROR) << "error: you must not provide option";
+    return false;
+  }
+
+  auto result = client.GetStations();
+
+  if (!result) {
+    LOG(ERROR) << "error: failed to get stations";
+    return false;
+  }
+
+  auto stationList = result->GetStations();
+
+  std::cout << "Total stations : " << stationList.size() << std::endl
+            << std::endl;
+  std::cout << "Mac Address      "
+            << "\t"
+            << "X Pos"
+            << "\t"
+            << "Y Pos"
+            << "\t"
+            << "TX Power" << std::endl;
+
+  for (auto& station : stationList) {
+    std::cout << MacToString(station.addr) << "\t" << std::setprecision(1)
+              << std::fixed << station.x << "\t" << std::setprecision(1)
+              << std::fixed << station.y << "\t" << station.tx_power
+              << std::endl;
+  }
+
+  std::cout << std::endl;
+
+  return true;
+}
+
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(usageMessage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -189,6 +245,7 @@ int main(int argc, char** argv) {
           {"reload_config", HandleReloadConfigCommand},
           {"start_pcap", HandleStartPcapCommand},
           {"stop_pcap", HandleStopPcapCommand},
+          {"list_stations", HandleListStationsCommand},
       }};
 
   if (commandMap.find(args[0]) == std::end(commandMap)) {
