@@ -55,6 +55,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.cas.native@1.0",
     "android.hardware.configstore@1.1", // deprecated, see b/149050985, b/149050733
     "android.hardware.contexthub@1.2",
+    "android.hardware.drm@1.4", // converted to AIDL, b/200055138
     "android.hardware.fastboot@1.1",
     "android.hardware.dumpstate@1.1", // deprecated, see b/205760700
     "android.hardware.gnss@1.1", // GNSS converted to AIDL, b/206670536
