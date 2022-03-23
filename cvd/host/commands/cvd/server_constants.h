@@ -107,4 +107,6 @@ struct CommandInvocation {
 
 CommandInvocation ParseInvocation(const cvd::Request& request);
 
+Result<int> CvdServerMain(SharedFD server_fd);
+
 }  // namespace cuttlefish
