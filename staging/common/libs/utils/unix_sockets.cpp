@@ -216,13 +216,11 @@ Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
   message_header.msg_control = message_control.data();
   message_header.msg_controllen = message_control.size();
   auto cmsg = CMSG_FIRSTHDR(&message_header);
-  size_t calculated_control_len = 0;
   for (const ControlMessage& control : message.control) {
     CF_EXPECT(cmsg != nullptr,
               "Control messages did not fit in control buffer");
     /* size() should match CMSG_SPACE */
     memcpy(cmsg, control.data_.data(), control.data_.size());
-    calculated_control_len += control.data_.size();
     cmsg = CMSG_NXTHDR(&message_header, cmsg);
   }
 
