@@ -16,13 +16,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <optional>
-#include <set>
+#include <ostream>
 #include <string>
 #include <vector>
-
-#include <android-base/logging.h>
 
 /* Support for parsing individual flags out of a larger list of flags. This
  * supports externally determining the order that flags are evaluated in, and
