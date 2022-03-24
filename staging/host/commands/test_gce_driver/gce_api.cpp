@@ -373,6 +373,16 @@ static std::string RandomUuid() {
   return uuid_str;
 }
 
+// GCE gives back full URLs for zones, but it only wants the last part in
+// requests
+static std::string SanitizeZone(const std::string& zone) {
+  auto last_slash = zone.rfind("/");
+  if (last_slash == std::string::npos) {
+    return zone;
+  }
+  return zone.substr(last_slash + 1);
+}
+
 std::future<Result<GceInstanceInfo>> GceApi::Get(
     const GceInstanceInfo& instance) {
   auto name = instance.Name();
@@ -397,7 +407,7 @@ std::future<Result<GceInstanceInfo>> GceApi::Get(const std::string& zone,
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone);
+  url << "/zones/" << curl_.UrlEscape(SanitizeZone(zone));
   url << "/instances/" << curl_.UrlEscape(name);
   auto task = [this, url = url.str()]() -> Result<GceInstanceInfo> {
     auto response = curl_.DownloadToJson(url, Headers());
@@ -425,7 +435,7 @@ GceApi::Operation GceApi::Insert(const Json::Value& request) {
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone);
+  url << "/zones/" << curl_.UrlEscape(SanitizeZone(zone));
   url << "/instances";
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
   auto task = [this, requestNoZone, url = url.str()]() -> Result<Json::Value> {
@@ -449,7 +459,7 @@ GceApi::Operation GceApi::Reset(const std::string& zone,
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone);
+  url << "/zones/" << curl_.UrlEscape(SanitizeZone(zone));
   url << "/instances/" << curl_.UrlEscape(name);
   url << "/reset";
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
@@ -489,7 +499,7 @@ GceApi::Operation GceApi::Delete(const std::string& zone,
   std::stringstream url;
   url << "https://compute.googleapis.com/compute/v1";
   url << "/projects/" << curl_.UrlEscape(project_);
-  url << "/zones/" << curl_.UrlEscape(zone);
+  url << "/zones/" << curl_.UrlEscape(SanitizeZone(zone));
   url << "/instances/" << curl_.UrlEscape(name);
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
   auto task = [this, url = url.str()]() -> Result<Json::Value> {
