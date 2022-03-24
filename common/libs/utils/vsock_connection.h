@@ -15,11 +15,16 @@
  */
 #pragma once
 
-#include <json/json.h>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <mutex>
+#include <string>
 #include <vector>
+
+#include <json/json.h>
+
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
