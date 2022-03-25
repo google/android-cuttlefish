@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-#include "keymaster_channel.h"
+#include "common/libs/security/keymaster_channel.h"
+
+#include <cstdlib>
+#include <memory>
+#include <ostream>
+#include <string>
 
 #include <android-base/logging.h>
-#include "keymaster/android_keymaster_utils.h"
+#include <keymaster/android_keymaster_messages.h>
+#include <keymaster/mem.h>
+#include <keymaster/serializable.h>
 
 #include "common/libs/fs/shared_buf.h"
 
