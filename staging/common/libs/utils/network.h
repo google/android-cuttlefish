@@ -15,7 +15,8 @@
  */
 #pragma once
 
-#include <cstddef>
+#include <cstdint>
+#include <ostream>
 #include <set>
 #include <string>
 #include <vector>

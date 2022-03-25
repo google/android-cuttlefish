@@ -16,7 +16,9 @@
 
 #include "common/libs/utils/archive.h"
 
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/strings.h>

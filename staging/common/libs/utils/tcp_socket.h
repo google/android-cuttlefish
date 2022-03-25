@@ -23,12 +23,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+#include <string>
 #include <vector>
 
 namespace cuttlefish {
 using Message = std::vector<std::uint8_t>;
-
-class ServerSocket;
 
 // Recv and Send wait until all data has been received or sent.
 // Send is thread safe in this regard, Recv is not.
@@ -62,7 +61,7 @@ class ClientSocket {
   bool closed() const;
 
  private:
-  friend ServerSocket;
+  friend class ServerSocket;
   explicit ClientSocket(SharedFD fd) : fd_(fd) {}
 
   SharedFD fd_;

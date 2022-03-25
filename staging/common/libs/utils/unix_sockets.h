@@ -15,18 +15,15 @@
  */
 #pragma once
 
-#include <android-base/result.h>
+#include <sys/socket.h>
 
 #include <cstdint>
-#include <variant>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-
-class UnixMessageSocket;
 
 struct ControlMessage {
  public:

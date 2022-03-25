@@ -18,7 +18,7 @@
 #include <type_traits>
 
 #include <android-base/logging.h>
-#include <android-base/result.h>
+#include <android-base/result.h>  // IWYU pragma: export
 
 #include "common/libs/utils/files.h"
 

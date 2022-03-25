@@ -15,18 +15,23 @@
  */
 #pragma once
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <common/libs/fs/shared_fd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+
+#include <cstdio>
+#include <cstring>
 #include <functional>
 #include <map>
+#include <ostream>
 #include <sstream>
 #include <string>
-#include <unordered_set>
+#include <utility>
 #include <vector>
+
+#include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 
@@ -36,9 +41,7 @@ enum class StopperResult {
   kStopSuccess, /* The subprocess exited in the expected way. */
 };
 
-class Command;
 class Subprocess;
-class SubprocessOptions;
 using SubprocessStopper = std::function<StopperResult(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
 StopperResult KillSubprocess(Subprocess* subprocess);
