@@ -16,8 +16,7 @@
 
 #include "common/libs/utils/subprocess.h"
 
-#include <android-base/logging.h>
-#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/prctl.h>
@@ -25,10 +24,20 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <stdio.h>
+#include <cerrno>
+#include <cstring>
 #include <map>
+#include <memory>
+#include <ostream>
 #include <set>
+#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
