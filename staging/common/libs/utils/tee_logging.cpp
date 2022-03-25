@@ -15,9 +15,22 @@
 
 #include "tee_logging.h"
 
-#include <stdlib.h>
-#include <inttypes.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
+#include <cinttypes>
+#include <cstring>
+#include <ctime>
+#include <memory>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
+#include <android-base/macros.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/threads.h>

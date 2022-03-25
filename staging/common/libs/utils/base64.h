@@ -16,14 +16,15 @@
 
 #pragma once
 
-#include <cinttypes>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 namespace cuttlefish {
 
-bool EncodeBase64(const void* _data, size_t size, std::string* out);
+bool EncodeBase64(const void* _data, std::size_t size, std::string* out);
 
-bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer);
+bool DecodeBase64(const std::string& data, std::vector<std::uint8_t>* buffer);
 
 }  // namespace cuttlefish

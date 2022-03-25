@@ -19,17 +19,31 @@
 #include <android-base/logging.h>
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <ftw.h>
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <array>
+#include <cerrno>
+#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
+#include <ios>
+#include <iosfwd>
+#include <istream>
+#include <memory>
+#include <ostream>
+#include <ratio>
+#include <string>
 #include <vector>
+
+#include <android-base/macros.h>
 
 #include "common/libs/fs/shared_fd.h"
 
