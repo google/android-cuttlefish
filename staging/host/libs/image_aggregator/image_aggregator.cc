@@ -301,7 +301,7 @@ public:
   CompositeDisk MakeCompositeDiskSpec(const std::string& header_file,
                                       const std::string& footer_file) const {
     CompositeDisk disk;
-    disk.set_version(1);
+    disk.set_version(2);
     disk.set_length(DiskSize());
 
     ComponentDisk* header = disk.add_component_disks();
