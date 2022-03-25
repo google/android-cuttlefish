@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
 
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);
