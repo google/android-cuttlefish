@@ -23,7 +23,6 @@
 #include <string>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
 
@@ -47,9 +46,12 @@ std::string StringFromEnv(const std::string& varname,
  */
 std::string HostArchStr() {
   static std::string arch;
-  if (!arch.empty()) {
+  static bool cached = false;
+
+  if (cached) {
     return arch;
   }
+  cached = true;
 
   // good to check if uname exists and is executable
   // or, guarantee uname is available by dependency list
@@ -68,9 +70,7 @@ std::string HostArchStr() {
         decltype(len) upper = len + 1;
         std::string format("%");
         format.append(std::to_string(upper)).append("s");
-        // 1 extra character needed for the terminating null
-        // character added by fscanf.
-        std::shared_ptr<char> buf(new char[upper + 1],
+        std::shared_ptr<char> buf(new char[upper],
                                   std::default_delete<char[]>());
         if (fscanf(fp, format.c_str(), buf.get()) == EOF) {
           return std::string{};
@@ -78,19 +78,22 @@ std::string HostArchStr() {
         std::string result(buf.get());
         return (result.length() < upper) ? result : std::string{};
       };
-  arch = android::base::Trim(std::string_view{read_from_file(pip, 20)});
+  arch = read_from_file(pip, 20);
   pclose(pip);
+
+  // l and r trim on arch
+  static const char* whitespace = "\t\n\r\f\v ";
+  arch.erase(arch.find_last_not_of(whitespace) + 1); // r trim
+  arch.erase(0, arch.find_first_not_of(whitespace)); // l trim
   return arch;
 }
 
 Arch HostArch() {
   std::string arch_str = HostArchStr();
-  if (arch_str == "aarch64" || arch_str == "arm64") {
+  if (arch_str == "aarch64") {
     return Arch::Arm64;
   } else if (arch_str == "arm") {
     return Arch::Arm;
-  } else if (arch_str == "riscv64") {
-    return Arch::RiscV64;
   } else if (arch_str == "x86_64") {
     return Arch::X86_64;
   } else if (arch_str.size() == 4 && arch_str[0] == 'i' && arch_str[2] == '8' &&

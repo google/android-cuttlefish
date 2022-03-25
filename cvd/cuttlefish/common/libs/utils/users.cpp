@@ -17,44 +17,19 @@
 #include "common/libs/utils/users.h"
 
 #include <grp.h>
-#include <pwd.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
-#include <mutex>
 #include <ostream>
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
 #include <android-base/logging.h>
-
-#include "common/libs/utils/contains.h"
 
 namespace cuttlefish {
 namespace {
-std::vector<gid_t> GetSuplementaryGroups() {
-  int num_groups = getgroups(0, nullptr);
-  if (num_groups < 0) {
-    LOG(ERROR) << "Unable to get number of suplementary groups: "
-               << std::strerror(errno);
-    return {};
-  }
-  std::vector<gid_t> groups(num_groups + 1);
-  int retval = getgroups(groups.size(), groups.data());
-  if (retval < 0) {
-    LOG(ERROR) << "Error obtaining list of suplementary groups (list size: "
-               << groups.size() << "): " << std::strerror(errno);
-    return {};
-  }
-  return groups;
-}
-}  // namespace
-
 gid_t GroupIdFromName(const std::string& group_name) {
   struct group grp{};
   struct group* grp_p{};
@@ -82,6 +57,24 @@ gid_t GroupIdFromName(const std::string& group_name) {
   }
 }
 
+std::vector<gid_t> GetSuplementaryGroups() {
+  int num_groups = getgroups(0, nullptr);
+  if (num_groups < 0) {
+    LOG(ERROR) << "Unable to get number of suplementary groups: "
+               << std::strerror(errno);
+    return {};
+  }
+  std::vector<gid_t> groups(num_groups + 1);
+  int retval = getgroups(groups.size(), groups.data());
+  if (retval < 0) {
+    LOG(ERROR) << "Error obtaining list of suplementary groups (list size: "
+               << groups.size() << "): " << std::strerror(errno);
+    return {};
+  }
+  return groups;
+}
+}  // namespace
+
 bool InGroup(const std::string& group) {
   auto gid = GroupIdFromName(group);
   if (gid == static_cast<gid_t>(-1)) {
@@ -93,33 +86,11 @@ bool InGroup(const std::string& group) {
   }
 
   auto groups = GetSuplementaryGroups();
-  return Contains(groups, gid);
-}
 
-Result<std::string> SystemWideUserHome(const uid_t uid) {
-  // getpwuid() is not thread-safe, so we need a lock across all calls
-  static std::mutex getpwuid_mutex;
-  std::string home_dir;
-  {
-    std::lock_guard<std::mutex> lock(getpwuid_mutex);
-    const auto entry = getpwuid(uid);
-    if (entry) {
-      home_dir = entry->pw_dir;
-    }
-    endpwent();
-    if (home_dir.empty()) {
-      return CF_ERRNO("Failed to find the home directory using " << uid);
-    }
+  if (std::find(groups.cbegin(), groups.cend(), gid) != groups.cend()) {
+    return true;
   }
-  std::string home_realpath;
-  if (!android::base::Realpath(home_dir, &home_realpath)) {
-    return CF_ERRNO("Failed to convert " << home_dir << " to its Realpath");
-  }
-  return home_realpath;
-}
-
-Result<std::string> SystemWideUserHome() {
-  return SystemWideUserHome(getuid());
+  return false;
 }
 
 } // namespace cuttlefish

@@ -47,10 +47,6 @@ std::future<bool> VsockConnection::ConnectAsync(unsigned int port,
 }
 
 void VsockConnection::Disconnect() {
-  // We need to serialize all accesses to the SharedFD.
-  std::lock_guard<std::recursive_mutex> read_lock(read_mutex_);
-  std::lock_guard<std::recursive_mutex> write_lock(write_mutex_);
-
   LOG(INFO) << "Disconnecting with fd status:" << fd_->StrError();
   fd_->Shutdown(SHUT_RDWR);
   if (disconnect_callback_) {
@@ -63,21 +59,10 @@ void VsockConnection::SetDisconnectCallback(std::function<void()> callback) {
   disconnect_callback_ = callback;
 }
 
-bool VsockConnection::IsConnected() {
-  // We need to serialize all accesses to the SharedFD.
-  std::lock_guard<std::recursive_mutex> read_lock(read_mutex_);
-  std::lock_guard<std::recursive_mutex> write_lock(write_mutex_);
+bool VsockConnection::IsConnected() const { return fd_->IsOpen(); }
 
-  return fd_->IsOpen();
-}
-
-bool VsockConnection::DataAvailable() {
+bool VsockConnection::DataAvailable() const {
   SharedFDSet read_set;
-
-  // We need to serialize all accesses to the SharedFD.
-  std::lock_guard<std::recursive_mutex> read_lock(read_mutex_);
-  std::lock_guard<std::recursive_mutex> write_lock(write_mutex_);
-
   read_set.Set(fd_);
   struct timeval timeout = {0, 0};
   return Select(&read_set, nullptr, nullptr, &timeout) > 0;
@@ -144,7 +129,7 @@ std::future<std::vector<char>> VsockConnection::ReadMessageAsync() {
 Json::Value VsockConnection::ReadJsonMessage() {
   auto msg = ReadMessage();
   Json::CharReaderBuilder builder;
-  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+  Json::CharReader* reader = builder.newCharReader();
   Json::Value json_msg;
   std::string errors;
   if (!reader->parse(msg.data(), msg.data() + msg.size(), &json_msg, &errors)) {
