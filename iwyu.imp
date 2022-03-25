@@ -1,0 +1,16 @@
+[
+  { symbol: ["std::basic_istream<>::pos_type", "private", "<fstream>", "public"] },
+  { include: ["\"__hash_table\"", "private", "<unordered_map>", "public"] },
+  { include: ["\"__mutex_base\"", "private", "<mutex>", "public"] },
+  { include: ["\"__string\"", "private", "<string>", "public"] },
+  { include: ["\"json/reader.h\"", "private", "<json/json.h>", "public"] },
+  { include: ["\"json/value.h\"", "private", "<json/json.h>", "public"] },
+  { include: ["\"json/writer.h\"", "private", "<json/json.h>", "public"] },
+  { symbol: ["std::forward", "private", "<utility>", "public" ] },
+  { symbol: ["std::ifstream", "private", "<fstream>", "public" ] },
+  { symbol: ["std::less", "private", "<functional>", "public" ] },
+  { symbol: ["std::move", "private", "<utility>", "public"] },
+  { symbol: ["std::ostream", "private", "<ostream>", "public"] },
+  { symbol: ["std::string", "private", "<string>", "public"] },
+  { symbol: ["std::stringstream", "private", "<sstream>", "public"] },
+]
