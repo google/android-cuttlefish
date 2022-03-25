@@ -16,13 +16,6 @@
 
 #include "common/libs/utils/network.h"
 
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <netinet/ether.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
-#include <string.h>
-
 // Kernel headers don't mix well with userspace headers, but there is no
 // userspace header that provides the if_tun.h #defines.  Include the kernel
 // header, but move conflicting definitions out of the way using macros.
@@ -30,11 +23,30 @@
 #include <linux/if_tun.h>
 #undef ethdhr
 
+#include <endian.h>
+#include <fcntl.h>
+#include <linux/if_ether.h>
+#include <linux/types.h>
+#include <net/ethernet.h>
+#include <net/if.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+
+#include <cstdlib>
+#include <cstring>
+#include <functional>
+#include <ios>
+#include <memory>
+#include <ostream>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
 #include <android-base/strings.h>
-#include "android-base/logging.h"
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
