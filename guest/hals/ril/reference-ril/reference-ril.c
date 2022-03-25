@@ -2874,6 +2874,7 @@ static void requestDeactivateDataCall(void *data, RIL_Token t)
     rilErrno = setInterfaceState(radioInterfaceName, kInterfaceDown);
     RIL_onRequestComplete(t, rilErrno, NULL, 0);
     putPDP(cid);
+    requestOrSendDataCallList(-1, NULL);
 }
 
 static void requestSMSAcknowledge(void *data, size_t datalen __unused, RIL_Token t)
