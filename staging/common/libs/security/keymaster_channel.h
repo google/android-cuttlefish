@@ -16,12 +16,14 @@
 
 #pragma once
 
-#include "keymaster/android_keymaster_messages.h"
-#include "keymaster/serializable.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+
+#include <keymaster/android_keymaster_messages.h>
+#include <keymaster/serializable.h>
 
 #include "common/libs/fs/shared_fd.h"
-
-#include <memory>
 
 namespace keymaster {
 
@@ -33,8 +35,8 @@ namespace keymaster {
 struct keymaster_message {
     AndroidKeymasterCommand cmd : 31;
     bool is_response : 1;
-    uint32_t payload_size;
-    uint8_t payload[0];
+    std::uint32_t payload_size;
+    std::uint8_t payload[0];
 };
 
 } // namespace keymaster
@@ -61,8 +63,9 @@ using ManagedKeymasterMessage =
  * Allocates memory for a keymaster_message carrying a message of size
  * `payload_size`.
  */
-ManagedKeymasterMessage CreateKeymasterMessage(
-    AndroidKeymasterCommand command, bool is_response, size_t payload_size);
+ManagedKeymasterMessage CreateKeymasterMessage(AndroidKeymasterCommand command,
+                                               bool is_response,
+                                               std::size_t payload_size);
 
 /*
  * Interface for communication channels that synchronously communicate Keymaster
