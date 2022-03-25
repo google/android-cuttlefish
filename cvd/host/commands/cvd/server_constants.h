@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,81 @@
  * limitations under the License.
  */
 
+#pragma once
+
+#include <atomic>
+#include <map>
+#include <optional>
+#include <shared_mutex>
+#include <string>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "cvd_server.pb.h"
+
+#include "common/libs/fs/epoll.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/epoll_loop.h"
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_client.h"
+
 namespace cuttlefish {
-namespace cvd {
 
-// Major version uprevs are backwards incompatible.
-// Minor version uprevs are backwards compatible within major version.
-constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 1;
+class CvdServerHandler {
+ public:
+  virtual ~CvdServerHandler() = default;
 
-// Pathname of the abstract cvd_server socket.
-constexpr char kServerSocketPath[] = "cvd_server";
+  virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
+  virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
+  virtual Result<void> Interrupt() = 0;
+};
 
-}  // namespace cvd
+class CvdServer {
+ public:
+  INJECT(CvdServer(EpollPool&, InstanceManager&));
+  ~CvdServer();
+
+  Result<void> StartServer(SharedFD server);
+  void Stop();
+  void Join();
+
+ private:
+  struct OngoingRequest {
+    CvdServerHandler* handler;
+    std::mutex mutex;
+    std::thread::id thread_id;
+  };
+
+  Result<void> AcceptClient(EpollEvent);
+  Result<void> HandleMessage(EpollEvent);
+  Result<cvd::Response> HandleRequest(RequestWithStdio, SharedFD client);
+  Result<void> BestEffortWakeup();
+
+  EpollPool& epoll_pool_;
+  InstanceManager& instance_manager_;
+  std::atomic_bool running_ = true;
+
+  std::mutex ongoing_requests_mutex_;
+  std::set<std::shared_ptr<OngoingRequest>> ongoing_requests_;
+  // TODO(schuffelen): Move this thread pool to another class.
+  std::mutex threads_mutex_;
+  std::vector<std::thread> threads_;
+};
+
+fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent();
+fruit::Component<fruit::Required<CvdServer, InstanceManager>>
+cvdShutdownComponent();
+fruit::Component<> cvdVersionComponent();
+fruit::Component<> AcloudCommandComponent();
+
+struct CommandInvocation {
+  std::string command;
+  std::vector<std::string> arguments;
+};
+
+CommandInvocation ParseInvocation(const cvd::Request& request);
+
 }  // namespace cuttlefish
