@@ -23,8 +23,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-
 /* Support for parsing individual flags out of a larger list of flags. This
  * supports externally determining the order that flags are evaluated in, and
  * incrementally integrating with existing flag parsing implementations.
@@ -48,10 +46,6 @@ enum class FlagAliasMode {
   /* Match a pair of arguments of the form `<name>` `<value>`. In practice,
    * <name> will look like "-flag" or "--flag". */
   kFlagConsumesFollowing,
-  /* Match a sequence of arguments of the form `<name>` `<value>` `<value>`.
-   * This uses heuristics to try to determine when `<value>` is actually another
-   * flag. */
-  kFlagConsumesArbitrary,
 };
 
 /* A single matching rule for a `Flag`. One `Flag` can have multiple rules. */
@@ -81,16 +75,15 @@ class Flag {
   /* Set a loader that displays the current value in help text. Optional. */
   Flag& Getter(std::function<std::string()>) &;
   Flag Getter(std::function<std::string()>) &&;
-  /* Set the callback for matches. The callback may be invoked multiple times.
-   */
-  Flag& Setter(std::function<Result<void>(const FlagMatch&)>) &;
-  Flag Setter(std::function<Result<void>(const FlagMatch&)>) &&;
+  /* Set the callback for matches. The callback be invoked multiple times. */
+  Flag& Setter(std::function<bool(const FlagMatch&)>) &;
+  Flag Setter(std::function<bool(const FlagMatch&)>) &&;
 
   /* Examines a list of arguments, removing any matches from the list and
    * invoking the `Setter` for every match. Returns `false` if the callback ever
    * returns `false`. Non-matches are left in place. */
-  Result<void> Parse(std::vector<std::string>& flags) const;
-  Result<void> Parse(std::vector<std::string>&& flags) const;
+  bool Parse(std::vector<std::string>& flags) const;
+  bool Parse(std::vector<std::string>&& flags) const;
 
   /* Write gflags `--helpxml` style output for a string-type flag. */
   bool WriteGflagsCompatXml(std::ostream&) const;
@@ -99,10 +92,10 @@ class Flag {
   /* Reports whether `Process` wants to consume zero, one, or two arguments. */
   enum class FlagProcessResult {
     /* Error in handling a flag, exit flag handling with an error result. */
+    kFlagError,
     kFlagSkip,                  /* Flag skipped; consume no arguments. */
     kFlagConsumed,              /* Flag processed; consume one argument. */
     kFlagConsumedWithFollowing, /* Flag processed; consume 2 arguments. */
-    kFlagConsumedOnlyFollowing, /* Flag processed; consume next argument. */
   };
 
   void ValidateAlias(const FlagAlias& alias);
@@ -110,9 +103,8 @@ class Flag {
   Flag UnvalidatedAlias(const FlagAlias& alias) &&;
 
   /* Attempt to match a single argument. */
-  Result<FlagProcessResult> Process(
-      const std::string& argument,
-      const std::optional<std::string>& next_arg) const;
+  FlagProcessResult Process(const std::string& argument,
+                            const std::optional<std::string>& next_arg) const;
 
   bool HasAlias(const FlagAlias&) const;
 
@@ -123,42 +115,27 @@ class Flag {
   std::vector<FlagAlias> aliases_;
   std::optional<std::string> help_;
   std::optional<std::function<std::string()>> getter_;
-  std::optional<std::function<Result<void>(const FlagMatch&)>> setter_;
+  std::optional<std::function<bool(const FlagMatch&)>> setter_;
 };
 
 std::ostream& operator<<(std::ostream&, const Flag&);
 
 std::vector<std::string> ArgsToVec(int argc, char** argv);
 
-Result<bool> ParseBool(const std::string& value, const std::string& name);
-
 /* Handles a list of flags. Flags are matched in the order given in case two
  * flags match the same argument. Matched flags are removed, leaving only
  * unmatched arguments. */
-Result<void> ParseFlags(const std::vector<Flag>& flags,
-                        std::vector<std::string>& args,
-                        const bool recognize_end_of_option_mark = false);
-Result<void> ParseFlags(const std::vector<Flag>& flags,
-                        std::vector<std::string>&&,
-                        const bool recognize_end_of_option_mark = false);
+bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>& args);
+bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>&&);
 
 bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
-
-/* If -verbosity or --verbosity flags have a value, translates it to an android
- * LogSeverity */
-Flag VerbosityFlag(android::base::LogSeverity& value);
 
 /* If any of these are used, they should be evaluated after all other flags, and
  * in the order defined here (help before invalid flags, invalid flags before
  * unexpected arguments). */
 
 /* If a "-help" or "--help" flag is present, prints all the flags and fails. */
-Flag HelpFlag(const std::vector<Flag>& flags, std::string text = "");
-
-/* If a "-helpxml" is present, prints all the flags in XML and fails. */
-Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&, bool& value,
-                 std::string text = "");
-
+Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text = "");
 /* Catches unrecognized arguments that begin with `-`, and errors out. This
  * effectively denies unknown flags. */
 Flag InvalidFlagGuard();
@@ -174,8 +151,5 @@ Flag GflagsCompatFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
 Flag GflagsCompatFlag(const std::string& name, std::int32_t& value);
 Flag GflagsCompatFlag(const std::string& name, bool& value);
-Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
-Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool default_value);
 
 }  // namespace cuttlefish

@@ -16,16 +16,14 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-// Check network interface with given name exists, such as cvd-ebr.
-bool NetworkInterfaceExists(const std::string& interface_name);
-
-#ifdef __linux__
 // Creates, or connects to if it already exists, a tap network interface. The
 // user needs CAP_NET_ADMIN to create such interfaces or be the owner to connect
 // to one.
@@ -33,13 +31,25 @@ SharedFD OpenTapInterface(const std::string& interface_name);
 
 // Returns a list of TAP devices that have open file descriptors
 std::set<std::string> TapInterfacesInUse();
-#endif
 
-void GenerateCorrespondingIpv6ForMac(const std::uint8_t mac[6], std::uint8_t out[16]);
-void GenerateMobileMacForInstance(int index, std::uint8_t out[6]);
-void GenerateEthMacForInstance(int index, std::uint8_t out[6]);
-void GenerateWifiMacForInstance(int index, std::uint8_t out[6]);
+struct DnsmasqDhcp4Lease {
+  std::uint64_t expiry;
+  std::uint8_t mac_address[6];
+  std::uint8_t ip_address[4];
+  std::string hostname;
+  std::string client_id;
+};
 
-std::string MacAddressToString(const std::uint8_t mac[6]);
-std::string Ipv6ToString(const std::uint8_t ip[16]);
+// Parses a dnsmasq lease file
+std::vector<DnsmasqDhcp4Lease> ParseDnsmasqLeases(SharedFD lease_file);
+
+std::ostream& operator<<(std::ostream&, const DnsmasqDhcp4Lease&);
+
+// Sends a DHCPRELEASE message over the socket;
+bool ReleaseDhcp4(SharedFD tap, const std::uint8_t mac_address[6],
+                  const std::uint8_t ip_address[4],
+                  const std::uint8_t dhcp_server_ip[4]);
+
+bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd,
+                       const std::uint8_t dhcp_server_ip[4]);
 }
