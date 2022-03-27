@@ -102,20 +102,31 @@ PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhalsend
 
 # EVS
-# By default, we enable EvsManager and a mock EVS HAL implementation.  If you want to use your own
-# EVS HAL implementation, please set ENABLE_MOCK_EVSHAL as false and add your HAL implementation to
-# the product.  Please also check init.auto.rc and see how you can configure EvsManager to use your
-# EVS HAL.
+# By default, we enable EvsManager, a sample EVS app, and a mock EVS HAL implementation.
+# If you want to use your own EVS HAL implementation, please set ENABLE_MOCK_EVSHAL as false
+# and add your HAL implementation to the product.  Please also check init.evs.rc and see how
+# you can configure EvsManager to use your EVS HAL implementation.  Similarly, please set
+# ENABLE_SAMPLE_EVS_APP as false if you want to use your own EVS app configuration or own EVS
+# app implementation.
 ENABLE_EVS_SERVICE ?= true
 ENABLE_MOCK_EVSHAL ?= true
 ENABLE_CAREVSSERVICE_SAMPLE ?= true
+ENABLE_SAMPLE_EVS_APP ?= true
+
 ifeq ($(ENABLE_MOCK_EVSHAL), true)
-    PRODUCT_PACKAGES += android.hardware.automotive.evs@1.1-service \
-                        evs_app \
-                        android.frameworks.automotive.display@1.0-service
-    PRODUCT_COPY_FILES += \
-        device/google/cuttlefish/shared/auto/init.auto.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.auto.rc
-    BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
+CUSTOMIZE_EVS_SERVICE_PARAMETER := true
+PRODUCT_PACKAGES += android.hardware.automotive.evs@1.1-service \
+    android.frameworks.automotive.display@1.0-service
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/auto/evs/init.evs.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.evs.rc
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
+endif
+
+ifeq ($(ENABLE_SAMPLE_EVS_APP), true)
+PRODUCT_PACKAGES += evs_app
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/auto/evs/evs_app_config.json:$(TARGET_COPY_OUT_SYSTEM)/etc/automotive/evs/config_override.json
+BOARD_SEPOLICY_DIRS += packages/services/Car/cpp/evs/apps/sepolicy/private
 endif
 
 BOARD_IS_AUTOMOTIVE := true
