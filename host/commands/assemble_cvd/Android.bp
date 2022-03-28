@@ -59,6 +59,8 @@ cc_binary {
         "libgflags",
     ],
     required: [
+        "mkenvimage",
+        "mkenvimage_slim",
         "lz4",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
