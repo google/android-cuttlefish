@@ -58,6 +58,9 @@ class InstanceLockFileManager {
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
   Result<std::set<InstanceLockFile>> TryAcquireLocks(const std::set<int>& nums);
+
+  // Best-effort attempt to find a free instance id.
+  Result<std::optional<InstanceLockFile>> TryAcquireUnusedLock();
 };
 
 }  // namespace cuttlefish
