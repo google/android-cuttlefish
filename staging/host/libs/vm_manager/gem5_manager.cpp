@@ -130,6 +130,7 @@ std::vector<std::string> Gem5Manager::ConfigureGraphics(
       "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+      "androidboot.hardware.hwcomposer.mode=noop",
       "androidboot.hardware.egl=angle",
       "androidboot.hardware.vulkan=pastel",
   };
