@@ -124,15 +124,4 @@ Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
   return {};
 }
 
-Result<void> EnsureDirectoryExists(const std::string& directory_path) {
-  if (!DirectoryExists(directory_path)) {
-    LOG(DEBUG) << "Setting up " << directory_path;
-    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-        && errno != EEXIST) {
-      return CF_ERRNO("Failed to create dir: \"" << directory_path);
-    }
-  }
-  return {};
-}
-
 } // namespace cuttlefish
