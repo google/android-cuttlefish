@@ -20,8 +20,6 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>  // IWYU pragma: export
 
-#include "common/libs/utils/files.h"
-
 namespace cuttlefish {
 
 using android::base::Result;

@@ -26,7 +26,6 @@
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/host_tools_version.h"
