@@ -18,9 +18,12 @@
 
 #include <sys/file.h>
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 
+#include <android-base/file.h>
+#include <android-base/strings.h>
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
@@ -37,8 +40,8 @@ int InstanceLockFile::Instance() const { return instance_num_; }
 
 Result<InUseState> InstanceLockFile::Status() const {
   CF_EXPECT(fd_->LSeek(0, SEEK_SET), fd_->StrError());
-  char state_char;
-  CF_EXPECT(fd_->Read(&state_char, 1) == 1, fd_->StrError());
+  char state_char = static_cast<char>(InUseState::kNotInUse);
+  CF_EXPECT(fd_->Read(&state_char, 1) >= 0, fd_->StrError());
   switch (state_char) {
     case static_cast<char>(InUseState::kInUse):
       return InUseState::kInUse;
@@ -86,6 +89,7 @@ static std::string TempDir() {
 static Result<SharedFD> OpenLockFile(int instance_num) {
   std::stringstream path;
   path << TempDir() << "/acloud_cvd_temp/";
+  CF_EXPECT(EnsureDirectoryExists(path.str()));
   path << "local-instance-" << instance_num << ".lock";
   auto fd = SharedFD::Open(path.str(), O_CREAT | O_RDWR, 0666);
   CF_EXPECT(fd->IsOpen(), "open(\"" << path.str() << "\"): " << fd->StrError());
@@ -130,6 +134,55 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
     }
   }
   return locks;
+}
+
+static Result<std::set<int>> AllInstanceNums() {
+  // Estimate this by looking at available tap devices
+  // clang-format off
+  /** Sample format:
+Inter-|   Receive                                                |  Transmit
+ face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+cvd-wtap-02:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0
+  */
+  // clang-format on
+  static constexpr char kPath[] = "/proc/net/dev";
+  std::string proc_net_dev;
+  using android::base::ReadFileToString;
+  CF_EXPECT(ReadFileToString(kPath, &proc_net_dev, /* follow_symlinks */ true));
+  auto lines = android::base::Split(proc_net_dev, "\n");
+  std::set<int> etaps, mtaps, wtaps;
+  for (const auto& line : lines) {
+    std::set<int>* tap_set = nullptr;
+    if (android::base::StartsWith(line, "cvd-etap-")) {
+      tap_set = &etaps;
+    } else if (android::base::StartsWith(line, "cvd-mtap-")) {
+      tap_set = &mtaps;
+    } else if (android::base::StartsWith(line, "cvd-wtap-")) {
+      tap_set = &wtaps;
+    } else {
+      continue;
+    }
+    tap_set->insert(std::stoi(line.substr(std::string{"cvd-etap-"}.size())));
+  }
+  std::set<int> emtaps;
+  std::set_intersection(etaps.begin(), etaps.end(), mtaps.begin(), mtaps.end(),
+                        std::inserter(emtaps, emtaps.begin()));
+  std::set<int> emwtaps;
+  std::set_intersection(emtaps.begin(), emtaps.end(), wtaps.begin(),
+                        wtaps.end(), std::inserter(emwtaps, emwtaps.begin()));
+  return emwtaps;
+}
+
+Result<std::optional<InstanceLockFile>>
+InstanceLockFileManager::TryAcquireUnusedLock() {
+  auto nums = CF_EXPECT(AllInstanceNums());
+  for (const auto& num : nums) {
+    auto lock = CF_EXPECT(TryAcquireLock(num));
+    if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
+      return std::move(*lock);
+    }
+  }
+  return {};
 }
 
 }  // namespace cuttlefish
