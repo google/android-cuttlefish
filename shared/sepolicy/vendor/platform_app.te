@@ -1,3 +1,4 @@
 gpu_access(platform_app)
 
 allow platform_app broadcastradio_service:service_manager find;
+allow platform_app hal_wlc_hwservice:hwservice_manager find;
