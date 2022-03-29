@@ -21,11 +21,14 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);
 bool FileHasContent(const std::string& path);
 std::vector<std::string> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
+Result<void> EnsureDirectoryExists(const std::string& directory_path);
 bool IsDirectoryEmpty(const std::string& path);
 bool RecursivelyRemoveDirectory(const std::string& path);
 off_t FileSize(const std::string& path);
