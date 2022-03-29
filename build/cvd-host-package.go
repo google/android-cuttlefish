@@ -87,7 +87,7 @@ var pctx = android.NewPackageContext("android/soong/cuttlefish")
 
 func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	zipFile := android.PathForModuleOut(ctx, "package.zip")
-	c.CopyDepsToZip(ctx, zipFile)
+	c.CopyDepsToZip(ctx, c.GatherPackagingSpecs(ctx), zipFile)
 
 	// Dir where to extract the zip file and construct the final tar.gz from
 	packageDir := android.PathForModuleOut(ctx, ".temp")
