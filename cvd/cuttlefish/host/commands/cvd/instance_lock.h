@@ -31,6 +31,9 @@ enum class InUseState : char {
   kNotInUse = 'N',
 };
 
+// Replicates tempfile.gettempdir() in Python
+std::string TempDir();
+
 // This class is not thread safe.
 class InstanceLockFile {
  public:
