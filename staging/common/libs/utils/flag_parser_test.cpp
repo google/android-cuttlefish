@@ -264,4 +264,61 @@ TEST(FlagParser, UnexpectedArgumentGuard) {
   ASSERT_FALSE(flag.Parse({"-"}));
 }
 
+class FlagConsumesArbitraryTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    elems_.clear();
+    flag_ = Flag()
+                .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--flag"})
+                .Setter([this](const FlagMatch& match) {
+                  elems_.push_back(match.value);
+                  return true;
+                });
+  }
+  Flag flag_;
+  std::vector<std::string> elems_;
+};
+
+TEST_F(FlagConsumesArbitraryTest, NoValues) {
+  std::vector<std::string> inputs = {"--flag"};
+  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_EQ(inputs, (std::vector<std::string>{}));
+  ASSERT_EQ(elems_, (std::vector<std::string>{""}));
+}
+
+TEST_F(FlagConsumesArbitraryTest, OneValue) {
+  std::vector<std::string> inputs = {"--flag", "value"};
+  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_EQ(inputs, (std::vector<std::string>{}));
+  ASSERT_EQ(elems_, (std::vector<std::string>{"value", ""}));
+}
+
+TEST_F(FlagConsumesArbitraryTest, TwoValues) {
+  std::vector<std::string> inputs = {"--flag", "value1", "value2"};
+  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_EQ(inputs, (std::vector<std::string>{}));
+  ASSERT_EQ(elems_, (std::vector<std::string>{"value1", "value2", ""}));
+}
+
+TEST_F(FlagConsumesArbitraryTest, NoValuesOtherFlag) {
+  std::vector<std::string> inputs = {"--flag", "--otherflag"};
+  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_EQ(inputs, (std::vector<std::string>{"--otherflag"}));
+  ASSERT_EQ(elems_, (std::vector<std::string>{""}));
+}
+
+TEST_F(FlagConsumesArbitraryTest, OneValueOtherFlag) {
+  std::vector<std::string> inputs = {"--flag", "value", "--otherflag"};
+  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_EQ(inputs, (std::vector<std::string>{"--otherflag"}));
+  ASSERT_EQ(elems_, (std::vector<std::string>{"value", ""}));
+}
+
+TEST_F(FlagConsumesArbitraryTest, TwoValuesOtherFlag) {
+  std::vector<std::string> inputs = {"--flag", "v1", "v2", "--otherflag"};
+  ASSERT_TRUE(flag_.Parse(inputs));
+  ASSERT_EQ(inputs, (std::vector<std::string>{"--otherflag"}));
+  ASSERT_EQ(elems_, (std::vector<std::string>{"v1", "v2", ""}));
+}
+
 }  // namespace cuttlefish
