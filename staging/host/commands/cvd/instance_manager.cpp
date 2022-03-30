@@ -53,6 +53,9 @@ std::optional<std::string> GetCuttlefishConfigPath(
   return {};
 }
 
+InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager)
+    : lock_manager_(lock_manager) {}
+
 bool InstanceManager::HasAssemblies() const {
   std::lock_guard assemblies_lock(assemblies_mutex_);
   return !assemblies_.empty();
@@ -140,6 +143,12 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
         status.set_code(cvd::Status::FAILED_PRECONDITION);
         status.set_message("Unable to rmdir " + assembly_dir);
         return status;
+      }
+      for (const auto& instance : assembly_info.instances) {
+        auto lock = lock_manager_.TryAcquireLock(instance);
+        if (lock.ok() && (*lock)) {
+          (*lock)->Status(InUseState::kNotInUse);
+        }
       }
     }
   }

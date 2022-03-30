@@ -94,6 +94,10 @@ RequestWithStdio::RequestWithStdio(cvd::Request message,
 
 const cvd::Request& RequestWithStdio::Message() const { return message_; }
 
+const std::vector<SharedFD>& RequestWithStdio::FileDescriptors() const {
+  return fds_;
+}
+
 SharedFD RequestWithStdio::In() const {
   return fds_.size() > 0 ? fds_[0] : SharedFD();
 }
