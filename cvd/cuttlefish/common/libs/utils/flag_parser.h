@@ -46,6 +46,10 @@ enum class FlagAliasMode {
   /* Match a pair of arguments of the form `<name>` `<value>`. In practice,
    * <name> will look like "-flag" or "--flag". */
   kFlagConsumesFollowing,
+  /* Match a sequence of arguments of the form `<name>` `<value>` `<value>`.
+   * This uses heuristics to try to determine when `<value>` is actually another
+   * flag. */
+  kFlagConsumesArbitrary,
 };
 
 /* A single matching rule for a `Flag`. One `Flag` can have multiple rules. */
@@ -96,6 +100,7 @@ class Flag {
     kFlagSkip,                  /* Flag skipped; consume no arguments. */
     kFlagConsumed,              /* Flag processed; consume one argument. */
     kFlagConsumedWithFollowing, /* Flag processed; consume 2 arguments. */
+    kFlagConsumedOnlyFollowing, /* Flag processed; consume next argument. */
   };
 
   void ValidateAlias(const FlagAlias& alias);
