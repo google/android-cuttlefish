@@ -21,7 +21,7 @@
 // header, but move conflicting definitions out of the way using macros.
 #define ethhdr __kernel_ethhdr
 #include <linux/if_tun.h>
-#undef ethdhr
+#undef ethhdr
 
 #include <endian.h>
 #include <fcntl.h>
