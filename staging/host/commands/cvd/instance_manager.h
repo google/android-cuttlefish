@@ -27,6 +27,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/instance_lock.h"
 
 namespace cuttlefish {
 
@@ -38,9 +39,10 @@ class InstanceManager {
   using AssemblyDir = std::string;
   struct AssemblyInfo {
     std::string host_binaries_dir;
+    std::set<int> instances;
   };
 
-  INJECT(InstanceManager()) = default;
+  INJECT(InstanceManager(InstanceLockFileManager&));
 
   bool HasAssemblies() const;
   void SetAssembly(const AssemblyDir&, const AssemblyInfo&);
@@ -50,6 +52,8 @@ class InstanceManager {
   cvd::Status CvdFleet(const SharedFD& out, const std::string& envconfig) const;
 
  private:
+  InstanceLockFileManager& lock_manager_;
+
   mutable std::mutex assemblies_mutex_;
   std::map<AssemblyDir, AssemblyInfo> assemblies_;
 };

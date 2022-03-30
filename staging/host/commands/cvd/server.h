@@ -30,6 +30,7 @@
 #include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/instance_manager.h"
@@ -78,11 +79,26 @@ class CvdServer {
   std::vector<std::thread> threads_;
 };
 
+class CvdCommandHandler : public CvdServerHandler {
+ public:
+  INJECT(CvdCommandHandler(InstanceManager& instance_manager));
+
+  Result<bool> CanHandle(const RequestWithStdio&) const override;
+  Result<cvd::Response> Handle(const RequestWithStdio&) override;
+  Result<void> Interrupt() override;
+
+ private:
+  InstanceManager& instance_manager_;
+  std::optional<Subprocess> subprocess_;
+  std::mutex interruptible_;
+  bool interrupted_ = false;
+};
+
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent();
 fruit::Component<fruit::Required<CvdServer, InstanceManager>>
 cvdShutdownComponent();
 fruit::Component<> cvdVersionComponent();
-fruit::Component<> AcloudCommandComponent();
+fruit::Component<fruit::Required<CvdCommandHandler>> AcloudCommandComponent();
 
 struct CommandInvocation {
   std::string command;

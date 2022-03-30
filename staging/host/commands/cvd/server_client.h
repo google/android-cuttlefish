@@ -35,6 +35,7 @@ class RequestWithStdio {
   RequestWithStdio(cvd::Request, std::vector<SharedFD>, std::optional<ucred>);
 
   const cvd::Request& Message() const;
+  const std::vector<SharedFD>& FileDescriptors() const;
   SharedFD In() const;
   SharedFD Out() const;
   SharedFD Err() const;
