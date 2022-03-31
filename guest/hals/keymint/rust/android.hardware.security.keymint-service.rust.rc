@@ -1,0 +1,6 @@
+service vendor.keymint-rust /vendor/bin/hw/android.hardware.security.keymint-service.rust
+    class early_hal
+    user nobody
+    # The keymint service is not allowed to restart.
+    # If it crashes, a device restart is required.
+    oneshot
