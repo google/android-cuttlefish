@@ -29,8 +29,16 @@
 // the client loaded.
 // In this case the device id is passed as a parameter in the url.
 export function deviceId() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('deviceId');
+  // The server connector is loaded from the client.html file, which is loaded
+  // with a path like "/vX/devices/{deviceId}/files/"
+  let pathElements = location.pathname.split('/');
+  let devIdx = pathElements.indexOf("devices");
+  if (devIdx < 0 || devIdx + 2 >= pathElements.length ||
+      pathElements[devIdx + 2] != 'files') {
+    // The path doesn't match our expectations
+    throw 'server connector is incompatible with this server';
+  }
+  return pathElements[devIdx + 1];
 }
 
 // Creates a connector capable of communicating with the signaling server.
