@@ -144,6 +144,7 @@ std::vector<std::string> QemuManager::ConfigureGraphics(
       "androidboot.cpuvulkan.version=0",
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=drm",
+      "androidboot.hardware.hwcomposer.mode=client",
       "androidboot.hardware.egl=mesa",
     };
   }
