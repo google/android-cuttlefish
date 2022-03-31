@@ -1,4 +1,10 @@
-cuttlefish-common (0.9.21) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.22) unstable; urgency=medium
+
+  * Start host-orchestrator on boot
+
+ -- Jorge Moreira Broche <jemoreira@google.com>  Thu, 31 Mar 2022 11:43:43 -0700
+
+cuttlefish-common (0.9.21) stable; urgency=medium
 
   * Initial version of host-orchestrator
 
