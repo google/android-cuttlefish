@@ -150,11 +150,10 @@ const CuttlefishConfig* FindConfigFromStdin() {
       return nullptr;
     }
   }
-  std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
-  bool found_config = false;
+  std::vector<std::string> input_files =
+      android::base::Split(input_files_str, "\n");
   for (const auto& file : input_files) {
     if (file.find("cuttlefish_config.json") != std::string::npos) {
-      found_config = true;
       setenv(kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
     }
   }
