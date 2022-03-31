@@ -55,7 +55,7 @@ class SmsSenderTest : public ::testing::Test {
 TEST_F(SmsSenderTest, InvalidContentFails) {
   SmsSender sender(client_fd_);
 
-  bool result = sender.Send("");
+  bool result = sender.Send("", "+16501234567");
 
   EXPECT_FALSE(result);
 }
@@ -63,21 +63,21 @@ TEST_F(SmsSenderTest, InvalidContentFails) {
 TEST_F(SmsSenderTest, ValidContentSucceeds) {
   SmsSender sender(client_fd_);
 
-  bool result = sender.Send("hellohello");
+  bool result = sender.Send("hellohello", "+16501234567");
 
   EXPECT_TRUE(result);
   AssertCommandIsSent(
-      "REM0AT+REMOTESMS=0001000B916105214365F700000ae8329bfd4697d9ec37\r");
+      "REM0AT+REMOTESMS=0001000b916105214365f700000ae8329bfd4697d9ec37\r");
 }
 
 TEST_F(SmsSenderTest, NonDefaultModemIdValueSucceeds) {
   SmsSender sender(client_fd_);
 
-  bool result = sender.Send("hellohello", 1);
+  bool result = sender.Send("hellohello", "+16501234567", 1);
 
   EXPECT_TRUE(result);
   AssertCommandIsSent(
-      "REM1AT+REMOTESMS=0001000B916105214365F700000ae8329bfd4697d9ec37\r");
+      "REM1AT+REMOTESMS=0001000b916105214365f700000ae8329bfd4697d9ec37\r");
 }
 
 }  // namespace
