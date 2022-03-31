@@ -18,62 +18,29 @@
 
 #include <android-base/logging.h>
 
-#include <dirent.h>
-#include <fcntl.h>
-#include <ftw.h>
-#include <libgen.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
 #include <array>
-#include <cerrno>
-#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
-#include <ios>
-#include <iosfwd>
-#include <istream>
-#include <memory>
-#include <ostream>
-#include <ratio>
-#include <string>
-#include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include <android-base/macros.h>
+namespace cvd {
 
-#include "common/libs/fs/shared_fd.h"
-
-namespace cuttlefish {
-
-bool FileExists(const std::string& path, bool follow_symlinks) {
+bool FileExists(const std::string& path) {
   struct stat st;
-  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
+  return stat(path.c_str(), &st) == 0;
 }
 
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
 }
 
-std::vector<std::string> DirectoryContents(const std::string& path) {
-  std::vector<std::string> ret;
-  std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
-  CHECK(dir != nullptr) << "Could not read from dir \"" << path << "\"";
-  if (dir) {
-    struct dirent *ent;
-    while ((ent = readdir(dir.get()))) {
-      ret.push_back(ent->d_name);
-    }
-  }
-  return ret;
-}
-
-bool DirectoryExists(const std::string& path, bool follow_symlinks) {
+bool DirectoryExists(const std::string& path) {
   struct stat st;
-  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
+  if (stat(path.c_str(), &st) == -1) {
     return false;
   }
   if ((st.st_mode & S_IFMT) != S_IFDIR) {
@@ -82,83 +49,12 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks) {
   return true;
 }
 
-Result<void> EnsureDirectoryExists(const std::string& directory_path) {
-  if (!DirectoryExists(directory_path)) {
-    LOG(DEBUG) << "Setting up " << directory_path;
-    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-            0 &&
-        errno != EEXIST) {
-      return CF_ERRNO("Failed to create dir: \"" << directory_path);
-    }
-  }
-  return {};
-}
-
-bool IsDirectoryEmpty(const std::string& path) {
-  auto direc = ::opendir(path.c_str());
-  if (!direc) {
-    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
-               << " as it failed to be open" << std::endl;
-    return false;
-  }
-
-  decltype(::readdir(direc)) sub = nullptr;
-  int cnt {0};
-  while ( (sub = ::readdir(direc)) ) {
-    cnt++;
-    if (cnt > 2) {
-    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
-               << " as it exists but not empty" << std::endl;
-      return false;
-    }
-  }
-  return true;
-}
-
-bool RecursivelyRemoveDirectory(const std::string& path) {
-  // Copied from libbase TemporaryDir destructor.
-  auto callback = [](const char* child, const struct stat*, int file_type,
-                     struct FTW*) -> int {
-    switch (file_type) {
-      case FTW_D:
-      case FTW_DP:
-      case FTW_DNR:
-        if (rmdir(child) == -1) {
-          PLOG(ERROR) << "rmdir " << child;
-        }
-        break;
-      case FTW_NS:
-      default:
-        if (rmdir(child) != -1) {
-          break;
-        }
-        // FALLTHRU (for gcc, lint, pcc, etc; and following for clang)
-        FALLTHROUGH_INTENDED;
-      case FTW_F:
-      case FTW_SL:
-      case FTW_SLN:
-        if (unlink(child) == -1) {
-          PLOG(ERROR) << "unlink " << child;
-        }
-        break;
-    }
-    return 0;
-  };
-
-  return nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) ==
-         0;
-}
-
 std::string AbsolutePath(const std::string& path) {
   if (path.empty()) {
     return {};
   }
   if (path[0] == '/') {
     return path;
-  }
-  if (path[0] == '~') {
-    LOG(WARNING) << "Tilde expansion in path " << path <<" is not supported";
-    return {};
   }
 
   std::array<char, PATH_MAX> buffer{};
@@ -178,11 +74,6 @@ off_t FileSize(const std::string& path) {
   return st.st_size;
 }
 
-bool MakeFileExecutable(const std::string& path) {
-  LOG(DEBUG) << "Making " << path << " executable";
-  return chmod(path.c_str(), S_IRWXU) == 0;
-}
-
 // TODO(schuffelen): Use std::filesystem::last_write_time when on C++17
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path) {
   struct stat st;
@@ -194,7 +85,7 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
 }
 
 bool RenameFile(const std::string& old_name, const std::string& new_name) {
-  LOG(DEBUG) << "Renaming " << old_name << " to " << new_name;
+  LOG(INFO) << "Renaming " << old_name << " to " << new_name;
   if(rename(old_name.c_str(), new_name.c_str())) {
     LOG(ERROR) << "File rename failed due to " << strerror(errno);
     return false;
@@ -204,9 +95,10 @@ bool RenameFile(const std::string& old_name, const std::string& new_name) {
 }
 
 bool RemoveFile(const std::string& file) {
-  LOG(DEBUG) << "Removing file " << file;
+  LOG(INFO) << "Removing " << file;
   return remove(file.c_str()) == 0;
 }
+
 
 std::string ReadFile(const std::string& file) {
   std::string contents;
@@ -225,80 +117,9 @@ std::string ReadFile(const std::string& file) {
 
 std::string CurrentDirectory() {
   char* path = getcwd(nullptr, 0);
-  if (path == nullptr) {
-    PLOG(ERROR) << "`getcwd(nullptr, 0)` failed";
-    return "";
-  }
   std::string ret(path);
   free(path);
   return ret;
 }
 
-FileSizes SparseFileSizes(const std::string& path) {
-  auto fd = SharedFD::Open(path, O_RDONLY);
-  if (!fd->IsOpen()) {
-    LOG(ERROR) << "Could not open \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t farthest_seek = fd->LSeek(0, SEEK_END);
-  LOG(VERBOSE) << "Farthest seek: " << farthest_seek;
-  if (farthest_seek == -1) {
-    LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t data_bytes = 0;
-  off_t offset = 0;
-  while (offset < farthest_seek) {
-    off_t new_offset = fd->LSeek(offset, SEEK_HOLE);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      data_bytes += new_offset - offset;
-      offset = new_offset;
-    }
-    if (offset >= farthest_seek) {
-      break;
-    }
-    new_offset = fd->LSeek(offset, SEEK_DATA);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      offset = new_offset;
-    }
-  }
-  return (FileSizes) { .sparse_size = farthest_seek, .disk_size = data_bytes };
-}
-
-std::string cpp_basename(const std::string& str) {
-  char* copy = strdup(str.c_str()); // basename may modify its argument
-  std::string ret(basename(copy));
-  free(copy);
-  return ret;
-}
-
-std::string cpp_dirname(const std::string& str) {
-  char* copy = strdup(str.c_str()); // dirname may modify its argument
-  std::string ret(dirname(copy));
-  free(copy);
-  return ret;
-}
-
-bool FileIsSocket(const std::string& path) {
-  struct stat st;
-  return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
-}
-
-
-}  // namespace cuttlefish
+}  // namespace cvd
