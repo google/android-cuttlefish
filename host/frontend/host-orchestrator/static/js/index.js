@@ -88,9 +88,8 @@ window.addEventListener('load', e => {
   let listDevicesUrl = '/devices';
   let selectDeviceCb = deviceId => {
     return new Promise((resolve, reject) => {
-      let client = window.open(
-          `/devices/${deviceId}/files/client.html?deviceId=${deviceId}`,
-          deviceId);
+      let client =
+          window.open(`/devices/${deviceId}/files/client.html`, deviceId);
       client.addEventListener('load', evt => {
         console.log('loaded');
         resolve();

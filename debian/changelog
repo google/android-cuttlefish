@@ -1,5 +1,6 @@
 cuttlefish-common (0.9.22) unstable; urgency=medium
 
+  * Don't require deviceId parameter in host-orchestrator
   * Start host-orchestrator on boot
 
  -- Jorge Moreira Broche <jemoreira@google.com>  Thu, 31 Mar 2022 11:43:43 -0700
