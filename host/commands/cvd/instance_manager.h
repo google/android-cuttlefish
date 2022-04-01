@@ -36,17 +36,17 @@ constexpr char kStopBin[] = "cvd_internal_stop";
 
 class InstanceManager {
  public:
-  using AssemblyDir = std::string;
-  struct AssemblyInfo {
+  using InstanceGroupDir = std::string;
+  struct InstanceGroupInfo {
     std::string host_binaries_dir;
     std::set<int> instances;
   };
 
   INJECT(InstanceManager(InstanceLockFileManager&));
 
-  bool HasAssemblies() const;
-  void SetAssembly(const AssemblyDir&, const AssemblyInfo&);
-  Result<AssemblyInfo> GetAssembly(const AssemblyDir&) const;
+  bool HasInstanceGroups() const;
+  void SetInstanceGroup(const InstanceGroupDir&, const InstanceGroupInfo&);
+  Result<InstanceGroupInfo> GetInstanceGroup(const InstanceGroupDir&) const;
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
   cvd::Status CvdFleet(const SharedFD& out, const std::string& envconfig) const;
@@ -54,8 +54,8 @@ class InstanceManager {
  private:
   InstanceLockFileManager& lock_manager_;
 
-  mutable std::mutex assemblies_mutex_;
-  std::map<AssemblyDir, AssemblyInfo> assemblies_;
+  mutable std::mutex instance_groups_mutex_;
+  std::map<InstanceGroupDir, InstanceGroupInfo> instance_groups_;
 };
 
 std::optional<std::string> GetCuttlefishConfigPath(
