@@ -17,7 +17,8 @@ namespace cuttlefish {
 SmsSender::SmsSender(SharedFD modem_simulator_client_fd)
     : modem_simulator_client_fd_(modem_simulator_client_fd) {}
 
-bool SmsSender::Send(const std::string& content, uint32_t modem_id) {
+bool SmsSender::Send(const std::string& content,
+                     const std::string& sender_number, uint32_t modem_id) {
   if (!modem_simulator_client_fd_->IsOpen()) {
     LOG(ERROR) << "Failed to connect to remote modem simulator, error: "
                << modem_simulator_client_fd_->StrError();
@@ -25,6 +26,7 @@ bool SmsSender::Send(const std::string& content, uint32_t modem_id) {
   }
   PDUFormatBuilder builder;
   builder.SetUserData(content);
+  builder.SetSenderNumber(sender_number);
   std::string pdu_format_str = builder.Build();
   if (pdu_format_str.empty()) {
     return false;
