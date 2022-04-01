@@ -139,17 +139,6 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       return false;
     }
 
-    if (!FileExists(boot_env_image_path) ||
-        ReadFile(boot_env_image_path) != ReadFile(tmp_boot_env_image_path)) {
-      if (!RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
-        LOG(ERROR) << "Unable to delete the old env image.";
-        return false;
-      }
-      LOG(DEBUG) << "Updated bootloader environment image.";
-    } else {
-      RemoveFile(tmp_boot_env_image_path);
-    }
-
     const off_t boot_env_size_bytes = AlignToPowerOf2(
         MAX_AVB_METADATA_SIZE + 4096, PARTITION_SIZE_SHIFT);
 
@@ -157,7 +146,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     Command boot_env_hash_footer_cmd(avbtool_path);
     boot_env_hash_footer_cmd.AddParameter("add_hash_footer");
     boot_env_hash_footer_cmd.AddParameter("--image");
-    boot_env_hash_footer_cmd.AddParameter(boot_env_image_path);
+    boot_env_hash_footer_cmd.AddParameter(tmp_boot_env_image_path);
     boot_env_hash_footer_cmd.AddParameter("--partition_size");
     boot_env_hash_footer_cmd.AddParameter(boot_env_size_bytes);
     boot_env_hash_footer_cmd.AddParameter("--partition_name");
@@ -173,6 +162,18 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
                  << success;
       return false;
     }
+
+    if (!FileExists(boot_env_image_path) ||
+        ReadFile(boot_env_image_path) != ReadFile(tmp_boot_env_image_path)) {
+      if (!RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
+        LOG(ERROR) << "Unable to delete the old env image.";
+        return false;
+      }
+      LOG(DEBUG) << "Updated bootloader environment image.";
+    } else {
+      RemoveFile(tmp_boot_env_image_path);
+    }
+
     return true;
   }
 
