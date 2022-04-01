@@ -45,6 +45,7 @@ cc_binary_host {
                 "libjsoncpp",
                 "liblog",
                 "libprotobuf-cpp-lite",
+                "libz",
             ],
         },
         android: {
@@ -57,6 +58,7 @@ cc_binary_host {
                 "libjsoncpp",
                 "liblog",
                 "libprotobuf-cpp-lite",
+                "libz",
             ],
         },
     },
