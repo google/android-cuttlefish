@@ -126,16 +126,16 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       return false;
     }
 
-    auto mkimage_path = HostBinaryPath("mkenvimage");
+    auto mkimage_path = HostBinaryPath("mkenvimage_slim");
     Command cmd(mkimage_path);
-    cmd.AddParameter("-s");
-    cmd.AddParameter("4096");
-    cmd.AddParameter("-o");
+    cmd.AddParameter("-output_path");
     cmd.AddParameter(tmp_boot_env_image_path);
+    cmd.AddParameter("-input_path");
     cmd.AddParameter(uboot_env_path);
     int success = cmd.Start().Wait();
     if (success != 0) {
-      LOG(ERROR) << "Unable to run mkenvimage. Exited with status " << success;
+      LOG(ERROR) << "Unable to run mkenvimage_slim. Exited with status "
+                 << success;
       return false;
     }
 
