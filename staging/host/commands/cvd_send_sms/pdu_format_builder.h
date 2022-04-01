@@ -31,22 +31,22 @@ namespace cuttlefish {
 // messaging, OTA provisioning etc)
 // * User data.
 //
-// NOTE: For now, this implementation allows to pass the user data (sms text)
-// only, phone number and coding scheme are not parameterized yet. The fixed
-// phone number is +1 (650) 123-4567 and the fixed coding scheme is 7 bit
-// Alphabet.
+// NOTE: For sender phone number, only international numbers following the
+// E.164 format (https://www.itu.int/rec/T-REC-E.164) are supported.
+//
+// NOTE: The coding scheme is not parameterized yet using always the 7bit
+// Alphabet coding scheme.
 class PDUFormatBuilder {
  public:
   void SetUserData(const std::string& user_data);
+  void SetSenderNumber(const std::string& number);
   // Returns the corresponding PDU format string, returns an empty string if
-  // the User Data set is invalid.
+  // the User Data or the Sender Number set are invalid.
   std::string Build();
 
  private:
-  // Encodes using the GSM 7bit encoding as defined in 3GPP TS 23.038
-  // https://www.etsi.org/deliver/etsi_ts/123000_123099/123038/09.01.01_60/ts_123038v090101p.pdf
-  static std::string Gsm7bitEncode(const std::string& input);
   std::string user_data_;
+  std::string sender_number_;
 };
 
 }  // namespace cuttlefish
