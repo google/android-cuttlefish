@@ -4,6 +4,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/cvd_send_sms/sms_sender.h"
 
+DEFINE_string(sender_number, "+16501234567",
+              "sender phone number in E.164 format");
 DEFINE_uint32(instance_number, 1,
               "number of the cvd instance to send the sms to, default is 1");
 DEFINE_uint32(modem_id, 0,
@@ -14,6 +16,8 @@ namespace {
 
 // Usage examples:
 //   * cvd_send_sms "hello world"
+//   * cvd_send_sms --sender_number="+16501239999" "hello world"
+//   * cvd_send_sms --sender_number="16501239999" "hello world"
 //   * cvd_send_sms --instance-number=2 "hello world"
 //   * cvd_send_sms --instance-number=2 --modem_id=1 "hello world"
 
@@ -32,7 +36,7 @@ int SendSmsMain(int argc, char** argv) {
   auto client_socket = cuttlefish::SharedFD::SocketLocalClient(
       socket_name.c_str(), /* abstract */ true, SOCK_STREAM);
   SmsSender sms_sender(client_socket);
-  if (!sms_sender.Send(argv[1], FLAGS_modem_id)) {
+  if (!sms_sender.Send(argv[1], FLAGS_sender_number, FLAGS_modem_id)) {
     return -1;
   }
   return 0;

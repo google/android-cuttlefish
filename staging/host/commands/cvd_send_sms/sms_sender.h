@@ -26,7 +26,8 @@ class SmsSender {
   SmsSender(SharedFD modem_simulator_client_fd);
 
   // Returns true if SMS was successfully sent, returns false otherwise.
-  bool Send(const std::string& sms_body, uint32_t modem_id = 0);
+  bool Send(const std::string& sms_body, const std::string& sender_number,
+            uint32_t modem_id = 0);
 
  private:
   SharedFD modem_simulator_client_fd_;
