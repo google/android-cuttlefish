@@ -272,21 +272,10 @@ static fruit::Component<CvdServer> ServerComponent() {
       .install(EpollLoopComponent);
 }
 
-static Result<int> CvdServerMain(int argc, char** argv) {
-  android::base::InitLogging(argv, android::base::StderrLogger);
-
+Result<int> CvdServerMain(SharedFD server_fd) {
   LOG(INFO) << "Starting server";
 
   signal(SIGPIPE, SIG_IGN);
-
-  std::vector<Flag> flags;
-  SharedFD server_fd;
-  flags.emplace_back(
-      SharedFDFlag("server_fd", server_fd)
-          .Help("File descriptor to an already created vsock server"));
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
-  CF_EXPECT(ParseFlags(flags, args));
 
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
@@ -299,9 +288,3 @@ static Result<int> CvdServerMain(int argc, char** argv) {
 }
 
 }  // namespace cuttlefish
-
-int main(int argc, char** argv) {
-  auto res = cuttlefish::CvdServerMain(argc, argv);
-  CHECK(res.ok()) << "cvd server failed: " << res.error().message();
-  return *res;
-}
