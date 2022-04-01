@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <regex>
 #include <sstream>
 #include <vector>
 
@@ -31,34 +32,10 @@ const std::vector<std::string> kGSM7BitDefaultAlphabet = {
   "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "ä", "ö", "ñ", "ü", "à",
 };
 // clang-format on
-}  // namespace
 
-void PDUFormatBuilder::SetUserData(const std::string& user_data) {
-  user_data_ = user_data;
-}
-
-std::string PDUFormatBuilder::Build() {
-  if (user_data_.empty()) {
-    LOG(ERROR) << "Empty user data.";
-    return "";
-  }
-  int ulength = icu::UnicodeString(user_data_.c_str()).length();
-  if (ulength > 160) {
-    LOG(ERROR) << "Invalid user data as it has more than 160 characters: "
-               << user_data_;
-    return "";
-  }
-  std::string encoded = Gsm7bitEncode(user_data_);
-  if (encoded.empty()) {
-    return "";
-  }
-  std::stringstream ss;
-  ss << "0001000B916105214365F70000";
-  ss << std::setfill('0') << std::setw(2) << std::hex << ulength << encoded;
-  return ss.str();
-}
-
-std::string PDUFormatBuilder::Gsm7bitEncode(const std::string& input) {
+// Encodes using the GSM 7bit encoding as defined in 3GPP TS 23.038
+// https://www.etsi.org/deliver/etsi_ts/123000_123099/123038/09.01.01_60/ts_123038v090101p.pdf
+static std::string Gsm7bitEncode(const std::string& input) {
   icu::UnicodeString unicode_str(input.c_str());
   icu::UCharCharacterIterator iter(unicode_str.getTerminatedBuffer(),
                                    unicode_str.length());
@@ -111,4 +88,80 @@ std::string PDUFormatBuilder::Gsm7bitEncode(const std::string& input) {
   return result.str();
 }
 
+// Validates whether the passed phone number conforms to the E.164 specs,
+// https://www.itu.int/rec/T-REC-E.164
+static bool IsValidE164PhoneNumber(const std::string& number) {
+  const static std::regex e164_regex("^\\+?[1-9]\\d{1,14}$");
+  return std::regex_match(number, e164_regex);
+}
+
+// Encodes numeric values by using the Semi-Octect representation.
+static std::string SemiOctectsEncode(const std::string& input) {
+  bool length_is_odd = input.length() % 2 == 1;
+  int end = length_is_odd ? input.length() - 1 : input.length();
+  std::stringstream ss;
+  for (int i = 0; i < end; i += 2) {
+    ss << input[i + 1];
+    ss << input[i];
+  }
+  if (length_is_odd) {
+    ss << "f";
+    ss << input[input.length() - 1];
+  }
+  return ss.str();
+}
+
+// Converts to hexadecimal representation filling with a leading 0 if
+// necessary.
+static std::string DecimalToHexString(int number) {
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(2) << std::hex << number;
+  return ss.str();
+}
+}  // namespace
+
+void PDUFormatBuilder::SetUserData(const std::string& user_data) {
+  user_data_ = user_data;
+}
+
+void PDUFormatBuilder::SetSenderNumber(const std::string& sender_number) {
+  sender_number_ = sender_number;
+}
+
+std::string PDUFormatBuilder::Build() {
+  if (user_data_.empty()) {
+    LOG(ERROR) << "Empty user data.";
+    return "";
+  }
+  if (sender_number_.empty()) {
+    LOG(ERROR) << "Empty sender phone number.";
+    return "";
+  }
+  if (!IsValidE164PhoneNumber(sender_number_)) {
+    LOG(ERROR) << "Sender phone number"
+               << " \"" << sender_number_ << "\" "
+               << "does not conform with the E.164 format";
+    return "";
+  }
+  std::string sender_number_without_plus =
+      sender_number_[0] == '+' ? sender_number_.substr(1) : sender_number_;
+  int ulength = icu::UnicodeString(user_data_.c_str()).length();
+  if (ulength > 160) {
+    LOG(ERROR) << "Invalid user data as it has more than 160 characters: "
+               << user_data_;
+    return "";
+  }
+  std::string encoded = Gsm7bitEncode(user_data_);
+  if (encoded.empty()) {
+    return "";
+  }
+  std::stringstream ss;
+  ss << "000100" << DecimalToHexString(sender_number_without_plus.length())
+     << "91"  // 91 indicates international phone number format.
+     << SemiOctectsEncode(sender_number_without_plus)
+     << "00"  // TP-PID. Protocol identifier
+     << "00"  // TP-DCS. Data coding scheme. The GSM 7bit default alphabet.
+     << DecimalToHexString(ulength) << encoded;
+  return ss.str();
+}
 }  // namespace cuttlefish
