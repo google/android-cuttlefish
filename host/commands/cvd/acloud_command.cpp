@@ -116,12 +116,43 @@ class AcloudCommand : public CvdServerHandler {
     flags.emplace_back(local_instance_flag);
 
     bool verbose = false;
+    flags.emplace_back(Flag()
+                           .Alias({FlagAliasMode::kFlagExact, "-v"})
+                           .Alias({FlagAliasMode::kFlagExact, "-vv"})
+                           .Alias({FlagAliasMode::kFlagExact, "--verbose"})
+                           .Setter([&verbose](const FlagMatch&) {
+                             verbose = true;
+                             return true;
+                           }));
+
+    std::optional<std::string> branch;
     flags.emplace_back(
         Flag()
-            .Alias({FlagAliasMode::kFlagExact, "-v"})
-            .Alias({FlagAliasMode::kFlagExact, "-vv"})
-            .Alias({FlagAliasMode::kFlagExact, "--verbose"})
-            .Setter([&verbose](const FlagMatch&) { return verbose = true; }));
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--branch"})
+            .Setter([&branch](const FlagMatch& m) {
+              branch = m.value;
+              return true;
+            }));
+
+    std::optional<std::string> build_id;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build-id"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build_id"})
+            .Setter([&build_id](const FlagMatch& m) {
+              build_id = m.value;
+              return true;
+            }));
+
+    std::optional<std::string> build_target;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build-target"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build_target"})
+            .Setter([&build_target](const FlagMatch& m) {
+              build_target = m.value;
+              return true;
+            }));
 
     CF_EXPECT(ParseFlags(flags, arguments));
     CF_EXPECT(arguments.size() == 0,
@@ -149,6 +180,12 @@ class AcloudCommand : public CvdServerHandler {
     fetch_command.add_args("fetch");
     fetch_command.add_args("--directory");
     fetch_command.add_args(dir);
+    if (branch || build_id || build_target) {
+      fetch_command.add_args("--default_build");
+      auto target = build_target ? "/" + *build_target : "";
+      auto build = build_id.value_or(branch.value_or("aosp-master"));
+      fetch_command.add_args(build + target);
+    }
     auto& fetch_env = *fetch_command.mutable_env();
     auto host_artifacts_path =
         request.Message().command_request().env().find("ANDROID_HOST_OUT");
