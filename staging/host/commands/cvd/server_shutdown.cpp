@@ -59,7 +59,7 @@ class CvdShutdownHandler : public CvdServerHandler {
       }
     }
 
-    if (instance_manager_.HasAssemblies()) {
+    if (instance_manager_.HasInstanceGroups()) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Cannot shut down cvd_server while devices are being tracked. "
