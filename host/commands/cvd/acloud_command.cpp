@@ -18,12 +18,15 @@
 #include <optional>
 #include <vector>
 
+#include <android-base/strings.h>
+
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
@@ -36,6 +39,25 @@ struct ConvertedAcloudCreateCommand {
   InstanceLockFile lock;
   std::vector<RequestWithStdio> requests;
 };
+
+/**
+ * Split a string into arguments based on shell tokenization rules.
+ *
+ * This behaves like `shlex.split` from python where arguments are separated
+ * based on whitespace, but quoting and quote escaping is respected. This
+ * function effectively removes one level of quoting from its inputs while
+ * making the split.
+ */
+Result<std::vector<std::string>> BashTokenize(const std::string& str) {
+  Command command("bash");
+  command.AddParameter("-c");
+  command.AddParameter("printf '%s\n' ", str);
+  std::string stdout;
+  std::string stderr;
+  auto ret = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
+  CF_EXPECT(ret == 0, "printf fail \"" << stdout << "\", \"" << stderr << "\"");
+  return android::base::Split(stdout, "\n");
+}
 
 class ConvertAcloudCreateCommand {
  public:
@@ -108,6 +130,15 @@ class ConvertAcloudCreateCommand {
               return true;
             }));
 
+    std::optional<std::string> launch_args;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--launch-args"})
+            .Setter([&launch_args](const FlagMatch& m) {
+              launch_args = m.value;
+              return true;
+            }));
+
     CF_EXPECT(ParseFlags(flags, arguments));
     CF_EXPECT(arguments.size() == 0,
               "Unrecognized arguments:'"
@@ -158,6 +189,11 @@ class ConvertAcloudCreateCommand {
     start_command.add_args("report_anonymous_usage_stats");
     start_command.add_args("--report_anonymous_usage_stats");
     start_command.add_args("y");
+    if (launch_args) {
+      for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
+        start_command.add_args(arg);
+      }
+    }
     auto& start_env = *start_command.mutable_env();
     start_env["ANDROID_HOST_OUT"] = dir;
     start_env["ANDROID_PRODUCT_OUT"] = dir;
