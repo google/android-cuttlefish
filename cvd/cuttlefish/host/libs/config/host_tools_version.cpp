@@ -45,9 +45,7 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
   if (!DirectoryExists(full_path)) {
     return {};
   }
-  auto files_result = DirectoryContents(full_path);
-  CHECK(files_result.ok()) << files_result.error().FormatForEnv();
-  std::vector<std::string> files = std::move(*files_result);
+  std::vector<std::string> files = DirectoryContents(full_path);
   for (auto it = files.begin(); it != files.end();) {
     if (*it == "." || *it == "..") {
       it = files.erase(it);
@@ -56,7 +54,6 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
     }
   }
   std::vector<std::future<uint32_t>> calculations;
-  calculations.reserve(files.size());
   for (auto& file : files) {
     file = path + "/" + file; // mutate in place in files vector
     calculations.emplace_back(
