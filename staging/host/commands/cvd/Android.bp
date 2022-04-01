@@ -23,14 +23,31 @@ cc_binary_host {
     srcs: [
         "main.cc",
     ],
-    shared_libs: [
-        "libext2_blkid",
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libjsoncpp",
-        "libprotobuf-cpp-lite",
-    ],
+    target: {
+        host: {
+            stl: "libc++_static",
+            static_libs: [
+                "libext2_blkid",
+                "libbase",
+                "libcuttlefish_fs",
+                "libcuttlefish_utils",
+                "libjsoncpp",
+                "liblog",
+                "libprotobuf-cpp-lite",
+            ],
+        },
+        android: {
+            shared_libs: [
+                "libext2_blkid",
+                "libbase",
+                "libcuttlefish_fs",
+                "libjsoncpp",
+                "libcuttlefish_utils",
+                "liblog",
+                "libprotobuf-cpp-lite",
+            ],
+        },
+    },
     static_libs: [
         "libbuildversion",
         "libcuttlefish_cvd_proto",
@@ -63,14 +80,31 @@ cc_binary_host {
         "server_shutdown.cpp",
         "server_version.cpp",
     ],
-    shared_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libfruit",
-        "libjsoncpp",
-        "libprotobuf-cpp-lite",
-    ],
+    target: {
+        host: {
+            stl: "libc++_static",
+            static_libs: [
+                "libbase",
+                "libcuttlefish_fs",
+                "libcuttlefish_utils",
+                "libfruit",
+                "libjsoncpp",
+                "liblog",
+                "libprotobuf-cpp-lite",
+            ],
+        },
+        android: {
+            shared_libs: [
+                "libbase",
+                "libcuttlefish_fs",
+                "libcuttlefish_utils",
+                "libfruit",
+                "libjsoncpp",
+                "liblog",
+                "libprotobuf-cpp-lite",
+            ],
+        },
+    },
     static_libs: [
         "libbuildversion",
         "libcuttlefish_cvd_proto",
