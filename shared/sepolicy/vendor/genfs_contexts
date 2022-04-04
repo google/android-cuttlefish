@@ -36,6 +36,8 @@ cf_pci_gpu_device(/devices/pci0000:00, 0x2)
 genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
 genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXPWRBN:00/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc_cmos/rtc/rtc0/wakeup3 u:object_r:sysfs_wakeup:s0
 cf_rtc_wakeup_alarmtimer(/devices/platform/rtc_cmos, 0, 1)
 ## currently disabled
 #genfscon sysfs /devices/LNXSYSTM:00/GFSH0001:00/wakeup u:object_r:sysfs_wakeup:s0
