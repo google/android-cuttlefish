@@ -27,6 +27,8 @@ override_apex {
         "android.hardware.fingerprint.prebuilt.xml",
         "android.hardware.location.gps.prebuilt.xml",
         "android.hardware.reboot_escrow.prebuilt.xml",
+        "android.hardware.usb.accessory.prebuilt.xml",
+        "android.hardware.usb.host.prebuilt.xml",
         "android.hardware.vulkan.level-0.prebuilt.xml",
         "android.hardware.vulkan.version-1_0_3.prebuilt.xml",
         "android.software.device_id_attestation.prebuilt.xml",
