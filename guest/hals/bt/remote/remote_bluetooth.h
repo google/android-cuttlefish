@@ -22,7 +22,7 @@
 #include <hidl/MQDescriptor.h>
 #include <string>
 #include "async_fd_watcher.h"
-#include "model/devices/h4_packetizer.h"
+#include "model/hci/h4_packetizer.h"
 
 namespace android {
 namespace hardware {
