@@ -27,6 +27,7 @@ apex {
     // Install the apex in /vendor/apex
     soc_specific: true,
     rros: [
+        "cuttlefish_overlay_connectivity",
         "cuttlefish_overlay_frameworks_base_core",
         "cuttlefish_overlay_settings_provider",
         "cuttlefish_phone_overlay_frameworks_base_core",
