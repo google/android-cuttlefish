@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-function createToggleControl(elm, iconName, onChangeCb) {
+function createToggleControl(elm, iconName, initialState = false) {
   let icon = document.createElement('span');
   icon.classList.add('toggle-control-icon');
   icon.classList.add('material-icons-outlined');
@@ -26,6 +26,7 @@ function createToggleControl(elm, iconName, onChangeCb) {
   toggle.classList.add('toggle-control-switch');
   let input = document.createElement('input');
   input.type = 'checkbox';
+  input.checked = !!initialState;
   toggle.appendChild(input);
   let slider = document.createElement('span');
   slider.classList.add('toggle-control-slider');
@@ -46,6 +47,11 @@ function createToggleControl(elm, iconName, onChangeCb) {
             });
           }
         },
+    // Sets the state of the toggle control. This only affects the
+    // visible state of the control in the UI, it doesn't affect the
+    // state of the underlying resources. It's most useful to make
+    // changes of said resources visible to the user.
+    Set: checked => input.checked = !!checked,
   };
 }
 

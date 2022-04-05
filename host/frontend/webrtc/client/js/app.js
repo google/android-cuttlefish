@@ -118,12 +118,20 @@ class DeviceControlApp {
         document.getElementById('camera-control'), 'videocam');
     let videoCaptureCtrl = createToggleControl(
         document.getElementById('record-video-control'), 'movie_creation');
+    const audioElm = document.getElementById('device-audio');
+    let audioPlaybackCtrl = createToggleControl(
+        document.getElementById('audio-playback-control'), 'speaker', !audioElm.paused);
 
     keyboardCaptureCtrl.OnClick(
         enabled => this.#onKeyboardCaptureToggle(enabled));
     micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
     cameraCtrl.OnClick(enabled => this.#onCameraCaptureToggle(enabled));
     videoCaptureCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
+    audioPlaybackCtrl.OnClick(enabled => this.#onAudioPlaybackToggle(enabled));
+    // The audio element may start or stop playing at any time, this ensures the
+    // audio control always show the right state.
+    audioElm.onplay = () => audioPlaybackCtrl.Set(true);
+    audioElm.onpause = () => audioPlaybackCtrl.Set(false);
 
     this.#showDeviceUI();
   }
@@ -246,7 +254,7 @@ class DeviceControlApp {
             if (playPromise !== undefined) {
               playPromise.catch(error => {
                 showWarning(
-                    'Audio failed to play automatically, click on the play button to activate it');
+                    'Audio playback is disabled, click on the speaker control to activate it');
               });
             }
           })
@@ -987,6 +995,15 @@ class DeviceControlApp {
       recordToggle.style.backgroundColor = '';
     }
     return Promise.resolve(enabled);
+  }
+
+  #onAudioPlaybackToggle(enabled) {
+    const audioElem = document.getElementById('device-audio');
+    if (enabled) {
+      audioElem.play();
+    } else {
+      audioElem.pause();
+    }
   }
 
   #onCustomShellButton(shell_command, e) {
