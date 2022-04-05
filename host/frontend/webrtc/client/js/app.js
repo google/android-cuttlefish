@@ -110,24 +110,23 @@ class DeviceControlApp {
   start() {
     console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
-    let keyboardCaptureCtrl = createToggleControl(
-        document.getElementById('keyboard-capture-control'), 'keyboard');
-    let micCaptureCtrl = createToggleControl(
-        document.getElementById('mic-capture-control'), 'mic');
-    let cameraCtrl = createToggleControl(
-        document.getElementById('camera-control'), 'videocam');
-    let videoCaptureCtrl = createToggleControl(
-        document.getElementById('record-video-control'), 'movie_creation');
-    const audioElm = document.getElementById('device-audio');
-    let audioPlaybackCtrl = createToggleControl(
-        document.getElementById('audio-playback-control'), 'speaker', !audioElm.paused);
-
-    keyboardCaptureCtrl.OnClick(
+    createToggleControl(
+        document.getElementById('keyboard-capture-control'), 'keyboard',
         enabled => this.#onKeyboardCaptureToggle(enabled));
-    micCaptureCtrl.OnClick(enabled => this.#onMicCaptureToggle(enabled));
-    cameraCtrl.OnClick(enabled => this.#onCameraCaptureToggle(enabled));
-    videoCaptureCtrl.OnClick(enabled => this.#onVideoCaptureToggle(enabled));
-    audioPlaybackCtrl.OnClick(enabled => this.#onAudioPlaybackToggle(enabled));
+    createToggleControl(
+        document.getElementById('mic-capture-control'), 'mic',
+        enabled => this.#onMicCaptureToggle(enabled));
+    createToggleControl(
+        document.getElementById('camera-control'), 'videocam',
+        enabled => this.#onCameraCaptureToggle(enabled));
+    createToggleControl(
+        document.getElementById('record-video-control'), 'movie_creation',
+        enabled => this.#onVideoCaptureToggle(enabled));
+    const audioElm = document.getElementById('device-audio');
+
+    let audioPlaybackCtrl = createToggleControl(
+        document.getElementById('audio-playback-control'), 'speaker',
+        enabled => this.#onAudioPlaybackToggle(enabled), !audioElm.paused);
     // The audio element may start or stop playing at any time, this ensures the
     // audio control always show the right state.
     audioElm.onplay = () => audioPlaybackCtrl.Set(true);
