@@ -150,9 +150,6 @@ class DeviceControlApp {
         'rotate', 'Rotate', 'screen_rotation',
         evt => this.#onRotateButton(evt));
     this.#buttons['rotate'].adb = true;
-    this.#buttons['volumemute'] = createControlPanelButton(
-        'volumemute', 'Volume Mute', 'volume_mute',
-        evt => this.#onControlPanelButton(evt));
     this.#buttons['volumedown'] = createControlPanelButton(
         'volumedown', 'Volume Down', 'volume_down',
         evt => this.#onControlPanelButton(evt));
