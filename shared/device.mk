@@ -252,8 +252,9 @@ PRODUCT_PACKAGES += \
 # Runtime Resource Overlays
 ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += \
+    cuttlefish_overlay_connectivity \
     cuttlefish_overlay_frameworks_base_core \
-    cuttlefish_overlay_settings_provider \
+    cuttlefish_overlay_settings_provider
 
 endif
 
