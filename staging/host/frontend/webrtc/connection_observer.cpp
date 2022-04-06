@@ -321,8 +321,6 @@ class ConnectionObserverImpl
       OnKeyboardEvent(KEY_HOMEPAGE, button_state == "down");
     } else if (command == "menu") {
       OnKeyboardEvent(KEY_MENU, button_state == "down");
-    } else if (command == "volumemute") {
-      OnKeyboardEvent(KEY_MUTE, button_state == "down");
     } else if (command == "volumedown") {
       OnKeyboardEvent(KEY_VOLUMEDOWN, button_state == "down");
     } else if (command == "volumeup") {
