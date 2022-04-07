@@ -17,13 +17,9 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "tombstone_transmit",
-    srcs: [
-        "tombstone_transmit.cpp",
-    ],
+cc_defaults {
+    name: "tombstone_transmit_defaults",
     static_libs: [
-        "libcuttlefish_fs_product",
         "libgflags",
         "libbase",
         "libcutils",
@@ -32,7 +28,36 @@ cc_binary {
         "liblog",
     ],
     stl: "libc++_static",
-    defaults: ["cuttlefish_guest_product_only"],
+}
+
+cc_binary {
+    name: "tombstone_transmit",
+    srcs: [
+        "tombstone_transmit.cpp",
+    ],
+    static_libs: [
+        "libcuttlefish_fs_product",
+    ],
+    defaults: [
+        "tombstone_transmit_defaults",
+        "cuttlefish_guest_product_only"
+    ],
+}
+
+// Same as tombstone_transmit, but place the binary in /system partition
+// We are using the binary for microdroid, which does not have /product partition
+cc_binary {
+    name: "tombstone_transmit.microdroid",
+    srcs: [
+        "tombstone_transmit.cpp",
+    ],
+    static_libs: [
+        "libcuttlefish_fs",
+    ],
+    defaults: [
+        "tombstone_transmit_defaults",
+        "cuttlefish_base",
+    ],
 }
 
 cc_binary {
