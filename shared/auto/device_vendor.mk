@@ -123,8 +123,6 @@ BOARD_IS_AUTOMOTIVE := true
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/auto/overlay
 
 PRODUCT_PACKAGES += CarServiceOverlayCuttleFish
-ifeq (true, $(USE_GOOGLE_CAR_APEX))
-PRODUCT_PACKAGES += CarServiceOverlayCuttleFishGoogle
-endif # USE_GOOGLE_CAR_APEX
+GOOGLE_CAR_SERVICE_OVERLAY += CarServiceOverlayCuttleFishGoogle
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/auto/android-info.txt
