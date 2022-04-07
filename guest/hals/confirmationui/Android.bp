@@ -36,7 +36,6 @@ cc_binary {
         "libutils",
     ],
     static_libs: [
-        "libcutils",
         "libcuttlefish_confui",
     ],
 
@@ -63,6 +62,7 @@ cc_library {
         "android.hardware.confirmationui@1.0",
         "android.hardware.keymaster@4.0",
         "libbase",
+        "libcutils",
         "libdmabufheap",
         "libhidlbase",
         "libteeui_hal_support",
@@ -77,7 +77,6 @@ cc_library {
         "guest_session.cpp",
     ],
     static_libs: [
-        "libcutils",
         "libcuttlefish_confui",
         "libcuttlefish_fs",
     ],
