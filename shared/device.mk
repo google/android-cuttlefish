@@ -104,12 +104,10 @@ PRODUCT_PRODUCT_PROPERTIES += \
 endif
 
 # Explanation of specific properties:
-#   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
 PRODUCT_VENDOR_PROPERTIES += \
     tombstoned.max_tombstone_count=500 \
     vendor.bt.rootcanal_test_console=off \
-    debug.hwui.swap_with_damage=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming?=false \
     ro.hardware.virtual_device=1 \
