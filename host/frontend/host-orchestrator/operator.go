@@ -33,7 +33,7 @@ const defaultSocketPath = "/run/cuttlefish/operator"
 const defaultHttpPort = "1080"
 const defaultHttpsPort = "1443"
 
-const tlsCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
+const defaultTLSCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
 
 func startHttpServer() {
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
@@ -45,6 +45,7 @@ func startHttpServer() {
 }
 
 func startHttpsServer() {
+	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", defaultTLSCertDir)
 	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"

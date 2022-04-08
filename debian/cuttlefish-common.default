@@ -44,3 +44,8 @@
 # The port on which the orchestrator server should listen on for HTTPS.
 # Defaults to 1443.
 # orchestrator_https_port=
+#
+# The directory where the TLS certificate needed to establish the HTTPS
+# communication lives.
+# Defaults to "/etc/cuttlefish-common/host-orchestrator/cert".
+# orchestrator_tls_cert_dir=
