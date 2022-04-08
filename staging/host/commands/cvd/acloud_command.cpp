@@ -15,12 +15,16 @@
  */
 #include "host/commands/cvd/server.h"
 
+#include <optional>
+#include <vector>
+
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
 
@@ -28,71 +32,21 @@ namespace cuttlefish {
 
 namespace {
 
-class TryAcloudCommand : public CvdServerHandler {
- public:
-  INJECT(TryAcloudCommand()) = default;
-  ~TryAcloudCommand() = default;
-
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return ParseInvocation(request.Message()).command == "try-acloud";
-  }
-  Result<cvd::Response> Handle(const RequestWithStdio&) override {
-    return CF_ERR("TODO(schuffelen)");
-  }
-  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
+struct ConvertedAcloudCreateCommand {
+  InstanceLockFile lock;
+  std::vector<RequestWithStdio> requests;
 };
 
-std::string BashEscape(const std::string& input) {
-  bool safe = true;
-  for (const auto& c : input) {
-    if ('0' <= c && c <= '9') {
-      continue;
-    }
-    if ('a' <= c && c <= 'z') {
-      continue;
-    }
-    if ('A' <= c && c <= 'Z') {
-      continue;
-    }
-    if (c == '_' || c == '-' || c == '.' || c == ',' || c == '/') {
-      continue;
-    }
-    safe = false;
-  }
-  using android::base::StringReplace;
-  return safe ? input : "'" + StringReplace(input, "'", "\\'", true) + "'";
-}
-
-class AcloudCommand : public CvdServerHandler {
+class ConvertAcloudCreateCommand {
  public:
-  INJECT(AcloudCommand(CvdCommandHandler& inner_handler,
-                       InstanceLockFileManager& lock_file_manager))
-      : inner_handler_(inner_handler), lock_file_manager_(lock_file_manager) {}
-  ~AcloudCommand() = default;
+  INJECT(ConvertAcloudCreateCommand(InstanceLockFileManager& lock_file_manager))
+      : lock_file_manager_(lock_file_manager) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    return ParseInvocation(request.Message()).command == "acloud";
-  }
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    CF_EXPECT(CanHandle(request));
-
+  Result<ConvertedAcloudCreateCommand> Convert(
+      const RequestWithStdio& request) {
     auto arguments = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(arguments.size() > 0);
     CF_EXPECT(arguments[0] == "create");
-
-    std::stringstream translation_message;
-    translation_message << "Translating request `";
-    translation_message << "acloud ";
-    for (const auto& argument : arguments) {
-      translation_message << BashEscape(argument) << " ";
-    }
-    translation_message.seekp(-1, translation_message.cur);
-    translation_message << "`\n";  // Overwrite last space
-
     arguments.erase(arguments.begin());
 
     std::vector<Flag> flags;
@@ -191,11 +145,7 @@ class AcloudCommand : public CvdServerHandler {
         request.Message().command_request().env().find("ANDROID_HOST_OUT");
     if (host_artifacts_path ==
         request.Message().command_request().env().end()) {
-      cvd::Response response;
-      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-      response.mutable_status()->set_message(
-          "Missing ANDROID_HOST_OUT in client environment.");
-      return response;
+      return CF_ERR("Missing ANDROID_HOST_OUT in client environment.");
     }
     fetch_env["ANDROID_HOST_OUT"] = host_artifacts_path->second;
 
@@ -214,53 +164,74 @@ class AcloudCommand : public CvdServerHandler {
     start_env["CUTTLEFISH_INSTANCE"] = std::to_string(lock->Instance());
     start_env["HOME"] = dir;
 
-    auto translation = translation_message.str();
-    CF_EXPECT(WriteAll(request.Err(), translation) == translation.size(),
-              request.Err()->StrError());
-
-    std::vector<cvd::Request> inner_requests = {fetch_request, start_request};
-    for (const auto& inner_proto : inner_requests) {
-      std::stringstream effective_command;
-      effective_command << "Executing `";
-      for (const auto& env_var : inner_proto.command_request().env()) {
-        effective_command << BashEscape(env_var.first) << "="
-                          << BashEscape(env_var.second) << " ";
-      }
-      for (const auto& argument : inner_proto.command_request().args()) {
-        effective_command << BashEscape(argument) << " ";
-      }
-      effective_command.seekp(-1, effective_command.cur);
-      effective_command << "`\n";  // Overwrite last space
-      auto command_str = effective_command.str();
-
-      std::vector<SharedFD> fds;
-      if (verbose) {
-        fds = request.FileDescriptors();
-      } else {
-        auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-        CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-        fds = {dev_null, dev_null, dev_null};
-      }
-      RequestWithStdio inner_request(inner_proto, fds, request.Credentials());
-
-      CF_EXPECT(WriteAll(request.Err(), command_str) == command_str.size(),
-                request.Err()->StrError());
-
-      interrupt_lock.unlock();
-      auto response = CF_EXPECT(inner_handler_.Handle(inner_request));
-      interrupt_lock.lock();
-      if (interrupted_) {
-        return CF_ERR("Interrupted");
-      }
-      CF_EXPECT(response.status().code() == cvd::Status::OK,
-                "Reason: \"" << response.status().message() << "\"");
-      static const char kDoneMsg[] = "Done\n";
-
-      CF_EXPECT(WriteAll(request.Err(), kDoneMsg) == sizeof(kDoneMsg) - 1,
-                request.Err()->StrError());
+    std::vector<SharedFD> fds;
+    if (verbose) {
+      fds = request.FileDescriptors();
+    } else {
+      auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
+      CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
+      fds = {dev_null, dev_null, dev_null};
     }
 
-    CF_EXPECT(lock->Status(InUseState::kInUse));
+    ConvertedAcloudCreateCommand ret = {
+        .lock = {std::move(*lock)},
+    };
+    for (auto& request_proto : {fetch_request, start_request}) {
+      ret.requests.emplace_back(request_proto, fds, request.Credentials());
+    }
+    return ret;
+  }
+
+ private:
+  InstanceLockFileManager& lock_file_manager_;
+};
+
+class TryAcloudCreateCommand : public CvdServerHandler {
+ public:
+  INJECT(TryAcloudCreateCommand(ConvertAcloudCreateCommand& converter))
+      : converter_(converter) {}
+  ~TryAcloudCreateCommand() = default;
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+    auto invocation = ParseInvocation(request.Message());
+    return invocation.command == "try-acloud" &&
+           invocation.arguments.size() >= 1 &&
+           invocation.arguments[0] == "create";
+  }
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    CF_EXPECT(converter_.Convert(request));
+    return CF_ERR("Unreleased");
+  }
+  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
+
+ private:
+  ConvertAcloudCreateCommand& converter_;
+};
+
+class AcloudCreateCommand : public CvdServerHandler {
+ public:
+  INJECT(AcloudCreateCommand(CommandSequenceExecutor& executor,
+                             ConvertAcloudCreateCommand& converter))
+      : executor_(executor), converter_(converter) {}
+  ~AcloudCreateCommand() = default;
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+    auto invocation = ParseInvocation(request.Message());
+    return invocation.command == "acloud" && invocation.arguments.size() >= 1 &&
+           invocation.arguments[0] == "create";
+  }
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    std::unique_lock interrupt_lock(interrupt_mutex_);
+    if (interrupted_) {
+      return CF_ERR("Interrupted");
+    }
+    CF_EXPECT(CanHandle(request));
+
+    auto converted = CF_EXPECT(converter_.Convert(request));
+    interrupt_lock.unlock();
+    CF_EXPECT(executor_.Execute(converted.requests, request.Err()));
+
+    CF_EXPECT(converted.lock.Status(InUseState::kInUse));
 
     cvd::Response response;
     response.mutable_command_response();
@@ -269,13 +240,13 @@ class AcloudCommand : public CvdServerHandler {
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
-    CF_EXPECT(inner_handler_.Interrupt());
+    CF_EXPECT(executor_.Interrupt());
     return {};
   }
 
  private:
-  CvdCommandHandler& inner_handler_;
-  InstanceLockFileManager& lock_file_manager_;
+  CommandSequenceExecutor& executor_;
+  ConvertAcloudCreateCommand& converter_;
 
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
@@ -285,8 +256,8 @@ class AcloudCommand : public CvdServerHandler {
 
 fruit::Component<fruit::Required<CvdCommandHandler>> AcloudCommandComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, AcloudCommand>()
-      .addMultibinding<CvdServerHandler, TryAcloudCommand>();
+      .addMultibinding<CvdServerHandler, AcloudCreateCommand>()
+      .addMultibinding<CvdServerHandler, TryAcloudCreateCommand>();
 }
 
 }  // namespace cuttlefish
