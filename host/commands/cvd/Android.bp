@@ -22,6 +22,7 @@ cc_binary_host {
     symlinks: ["acloud"],
     srcs: [
         "acloud_command.cpp",
+        "command_sequence.cpp",
         "epoll_loop.cpp",
         "instance_lock.cpp",
         "instance_manager.cpp",
