@@ -20,33 +20,22 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "cvd_server.pb.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
-#include "host/commands/cvd/server_command/server_handler.h"
-#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
-class CommandSequenceExecutor : public LateInjected {
+class CommandSequenceExecutor {
  public:
-  INJECT(CommandSequenceExecutor());
-
-  Result<void> LateInject(fruit::Injector<>&) override;
+  INJECT(CommandSequenceExecutor(CvdCommandHandler& inner_handler));
 
   Result<void> Interrupt();
-  Result<std::vector<cvd::Response>> Execute(
-      const std::vector<RequestWithStdio>&, SharedFD report);
-  Result<cvd::Response> ExecuteOne(const RequestWithStdio&, SharedFD report);
-
-  std::vector<std::string> CmdList() const;
+  Result<void> Execute(const std::vector<RequestWithStdio>&, SharedFD report);
 
  private:
-  std::vector<CvdServerHandler*> server_handlers_;
-  std::vector<CvdServerHandler*> handler_stack_;
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
+  CvdCommandHandler& inner_handler_;
 };
-
-fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent();
 
 }  // namespace cuttlefish
