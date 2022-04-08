@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <optional>
 #include <type_traits>
 
 #include <android-base/logging.h>
@@ -52,8 +53,13 @@ using android::base::Result;
                               << CF_ERR_MSG() << "\n  with errno " << errno
 
 template <typename T>
-typename std::conditional_t<std::is_void_v<T>, bool, T>
-VoidSafeResultDereference(Result<T>&& result) {
+T OutcomeDereference(std::optional<T>&& value) {
+  return std::move(*value);
+}
+
+template <typename T>
+typename std::conditional_t<std::is_void_v<T>, bool, T> OutcomeDereference(
+    Result<T>&& result) {
   if constexpr (std::is_void<T>::value) {
     return result.ok();
   } else {
@@ -63,41 +69,59 @@ VoidSafeResultDereference(Result<T>&& result) {
 
 template <typename T>
 typename std::enable_if<std::is_convertible_v<T, bool>, T>::type
-VoidSafeResultDereference(T&& value) {
+OutcomeDereference(T&& value) {
   return std::forward<T>(value);
 }
 
+inline bool TypeIsSuccess(bool value) { return value; }
+
 template <typename T>
-bool IsOkOrTrue(T&& value) {
-  if constexpr (std::is_convertible_v<T, bool>) {
-    return (bool)value;
-  } else {
-    return value.ok();
-  }
+bool TypeIsSuccess(std::optional<T>& value) {
+  return value.has_value();
 }
 
 template <typename T>
-auto ErrorFromBoolOrResult(T&& value) {
-  if constexpr (std::is_convertible_v<T, bool>) {
-    return (android::base::Error() << "Received `false`").str();
-  } else {
-    return value.error();
-  }
+bool TypeIsSuccess(Result<T>& value) {
+  return value.ok();
+}
+
+template <typename T>
+bool TypeIsSuccess(Result<T>&& value) {
+  return value.ok();
+}
+
+inline auto ErrorFromType(bool) {
+  return (android::base::Error() << "Received `false`").str();
+}
+
+template <typename T>
+inline auto ErrorFromType(std::optional<T>) {
+  return (android::base::Error() << "Received empty optional").str();
+}
+
+template <typename T>
+auto ErrorFromType(Result<T>& value) {
+  return value.error();
+}
+
+template <typename T>
+auto ErrorFromType(Result<T>&& value) {
+  return value.error();
 }
 
 #define CF_EXPECT_OVERLOAD(_1, _2, NAME, ...) NAME
 
-#define CF_EXPECT2(RESULT, MSG)                                          \
-  ({                                                                     \
-    decltype(RESULT)&& macro_intermediate_result = RESULT;               \
-    if (!IsOkOrTrue(macro_intermediate_result)) {                        \
-      return android::base::Error()                                      \
-             << ErrorFromBoolOrResult(macro_intermediate_result) << "\n" \
-             << MSG << "\n"                                              \
-             << CF_ERR_MSG() << "\n"                                     \
-             << "  for CF_EXPECT(" << #RESULT << ")";                    \
-    };                                                                   \
-    VoidSafeResultDereference(std::move(macro_intermediate_result));     \
+#define CF_EXPECT2(RESULT, MSG)                                  \
+  ({                                                             \
+    decltype(RESULT)&& macro_intermediate_result = RESULT;       \
+    if (!TypeIsSuccess(macro_intermediate_result)) {             \
+      return android::base::Error()                              \
+             << ErrorFromType(macro_intermediate_result) << "\n" \
+             << MSG << "\n"                                      \
+             << CF_ERR_MSG() << "\n"                             \
+             << "  for CF_EXPECT(" << #RESULT << ")";            \
+    };                                                           \
+    OutcomeDereference(std::move(macro_intermediate_result));    \
   })
 
 #define CF_EXPECT1(RESULT) CF_EXPECT2(RESULT, "Received error")
