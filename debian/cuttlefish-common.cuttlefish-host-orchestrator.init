@@ -36,21 +36,20 @@ if [ -f /etc/default/cuttlefish-common ]; then
 fi
 orchestrator_http_port=${orchestrator_http_port:-1080}
 orchestrator_https_port=${orchestrator_https_port:-1443}
+orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host-orchestrator/cert"}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
 DAEMON="/usr/lib/cuttlefish-common/bin/host-orchestrator"
-GENERATE_CERT="/usr/lib/cuttlefish-common/bin/generate_cert"
 PIDFILE="${RUN_DIR}"/host-orchestrator.pid
-CERT_DIR="/etc/cuttlefish-common/host-orchestrator/cert"
 
 gen_cert() {
-  CERT_FILE="${CERT_DIR}/cert.pem"
-  KEY_FILE="${CERT_DIR}/key.pem"
+  CERT_FILE="${orchestrator_tls_cert_dir}/cert.pem"
+  KEY_FILE="${orchestrator_tls_cert_dir}/key.pem"
   if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
     echo "TLS certificate files for https communication already exist."
   else
-    mkdir -p "${CERT_DIR}"
+    mkdir -p "${orchestrator_tls_cert_dir}"
     openssl req \
       -newkey rsa:4096 \
       -x509 \
@@ -73,6 +72,7 @@ start() {
 
   ORCHESTRATOR_HTTP_PORT="${orchestrator_http_port}" \
   ORCHESTRATOR_HTTPS_PORT="${orchestrator_https_port}" \
+  ORCHESTRATOR_TLS_CERT_DIR="${orchestrator_tls_cert_dir}" \
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
