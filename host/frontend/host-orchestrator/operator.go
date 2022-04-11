@@ -16,6 +16,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -71,9 +72,10 @@ func main() {
 			IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
+	im := &InstanceManager{}
 
 	setupDeviceEndpoint(pool, config, socketPath)
-	r := setupServerRoutes(pool, polledSet, config)
+	r := setupServerRoutes(pool, polledSet, config, im)
 	http.Handle("/", r)
 
 	starters := []func(){startHttpServer, startHttpsServer}
@@ -120,7 +122,7 @@ func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
 	}()
 }
 
-func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfig) *mux.Router {
+func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfig, im *InstanceManager) *mux.Router {
 	router := mux.NewRouter()
 	http.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
 		clientWs(w, r, pool, config)
@@ -132,6 +134,9 @@ func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfi
 	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 		listDevices(w, r, pool)
 	}).Methods("GET")
+	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
+		createDevices(w, r, im)
+	}).Methods("POST")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
 	}).Methods("POST")
@@ -142,7 +147,7 @@ func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfi
 		createPolledConnection(w, r, pool, polledSet)
 	}).Methods("POST")
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
-		replyJSON(w, config)
+		replyJSONOK(w, config)
 	}).Methods("GET")
 	fs := http.FileServer(http.Dir("static"))
 	router.PathPrefix("/").Handler(fs)
@@ -217,9 +222,24 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config InfraConfig) {
 // General client endpoints
 
 func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
-	if err := replyJSON(w, pool.DeviceIds()); err != nil {
+	if err := replyJSONOK(w, pool.DeviceIds()); err != nil {
 		log.Println(err)
 	}
+}
+
+func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) {
+	var msg CreateCVDRequest
+	err := json.NewDecoder(r.Body).Decode(&msg)
+	if err != nil {
+		replyJSONErr(w, NewBadRequestError("Malformed JSON in request", err))
+		return
+	}
+	op, err := im.CreateCVD(&msg)
+	if err != nil {
+		replyJSONErr(w, err)
+		return
+	}
+	replyJSONOK(w, op)
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
@@ -328,7 +348,7 @@ func createPolledConnection(w http.ResponseWriter, r *http.Request, pool *Device
 	}
 	conn := polledSet.NewConnection(device)
 	reply := NewConnReply{ConnId: conn.Id(), DeviceInfo: device.info}
-	replyJSON(w, reply)
+	replyJSONOK(w, reply)
 }
 
 func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
@@ -354,7 +374,7 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 		log.Println("Failed to send message to device: ", err)
 		http.Error(w, "Device disconnected", http.StatusNotFound)
 	}
-	replyJSON(w, "ok")
+	replyJSONOK(w, "ok")
 }
 
 func messages(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
@@ -384,7 +404,7 @@ func messages(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 		}
 		count = i
 	}
-	replyJSON(w, conn.GetMessages(start, count))
+	replyJSONOK(w, conn.GetMessages(start, count))
 }
 
 // JSON objects schema
@@ -435,6 +455,49 @@ type IceServer struct {
 	URLs []string `json:"urls"`
 }
 
+type CreateCVDRequest struct {
+	// REQUIRED.
+	BuildInfo *BuildInfo `json:"build_info"`
+	// The number of CVDs to create. Use this field if creating more than one instance.
+	// Defaults to 1.
+	InstancesCount int `json:"instances_count"`
+	// REQUIRED. The Android build id used to download the fetch_cvd binary from.
+	FetchCVDBuildID string `json:"fetch_cvd_build_id"`
+	// REQUIRED. Access token to required to communicate with the Android Build API.
+	BuildAPIAccessToken string `json:"build_api_access_token"`
+}
+
+type BuildInfo struct {
+	// [REQUIRED] The Android build identifier.
+	BuildID string `json:"build_id"`
+	// [REQUIRED] A string to determine the specific product and flavor from
+	// the set of builds, e.g. aosp_cf_x86_64_phone-userdebug.
+	Target string `json:"target"`
+}
+
+type Operation struct {
+	Name string `json:"name"`
+	// Service-specific metadata associated with the operation.  It typically
+	// contains progress information and common metadata such as create time.
+	Metadata interface{} `json:"metadata,omitempty"`
+	// If the value is `false`, it means the operation is still in progress.
+	// If `true`, the operation is completed, and either `error` or `response` is
+	// available.
+	Done bool `json:"done"`
+	// Result will contain either an error or a result object but never both.
+	Result *Result `json:"result,omitempty"`
+}
+
+type Result struct {
+	Error        Error       `json:"error,omitempty"`
+	ResultObject interface{} `json:"result,omitempty"`
+}
+
+type Error struct {
+	Code    string `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
 // Utility functions
 
 // Interface implemented by any connection capable of sending in JSON format
@@ -450,9 +513,24 @@ func replyError(c JSONConn, msg string) {
 	}
 }
 
+// Send a JSON http response with success status code to the client
+func replyJSONOK(w http.ResponseWriter, obj interface{}) error {
+	return replyJSON(w, obj, http.StatusOK)
+}
+
+// Send a JSON http response with error to the client
+func replyJSONErr(w http.ResponseWriter, err error) error {
+	var e *AppError
+	if errors.As(err, &e) {
+		return replyJSON(w, e.JSONResponse(), e.StatusCode)
+	}
+	return replyJSON(w, ErrorMsg{Error: "Internal Server Error"}, http.StatusInternalServerError)
+}
+
 // Send a JSON http response to the client
-func replyJSON(w http.ResponseWriter, obj interface{}) error {
+func replyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
 	encoder := json.NewEncoder(w)
 	return encoder.Encode(obj)
 }
