@@ -1,4 +1,4 @@
-on post-fs-data
+on late-init
     start automotive_display
     start vendor.evs-hal-mock
     start evs_manager_cf
