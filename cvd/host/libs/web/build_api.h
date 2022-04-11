@@ -81,37 +81,34 @@ using Build = std::variant<DeviceBuild, DirectoryBuild>;
 std::ostream& operator<<(std::ostream&, const Build&);
 
 class BuildApi {
-  CurlWrapper& curl;
-  CredentialSource* credential_source;
+ public:
+  BuildApi(CurlWrapper&, CredentialSource*);
+  BuildApi(CurlWrapper&, CredentialSource*, std::string api_key);
+  ~BuildApi() = default;
 
-  std::vector<std::string> Headers();
-public:
- BuildApi(CurlWrapper&, CredentialSource*);
- ~BuildApi() = default;
+  std::string LatestBuildId(const std::string& branch,
+                            const std::string& target);
 
- std::string LatestBuildId(const std::string& branch,
-                           const std::string& target);
+  std::string BuildStatus(const DeviceBuild&);
 
- std::string BuildStatus(const DeviceBuild&);
+  std::string ProductName(const DeviceBuild&);
 
- std::string ProductName(const DeviceBuild&);
+  std::vector<Artifact> Artifacts(const DeviceBuild&);
 
- std::vector<Artifact> Artifacts(const DeviceBuild&);
+  bool ArtifactToCallback(const DeviceBuild& build, const std::string& artifact,
+                          CurlWrapper::DataCallback callback);
 
- bool ArtifactToCallback(const DeviceBuild& build, const std::string& artifact,
-                         CurlWrapper::DataCallback callback);
+  bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
+                      const std::string& path);
 
- bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
-                     const std::string& path);
+  std::vector<Artifact> Artifacts(const DirectoryBuild&);
 
- std::vector<Artifact> Artifacts(const DirectoryBuild&);
+  bool ArtifactToFile(const DirectoryBuild& build, const std::string& artifact,
+                      const std::string& path);
 
- bool ArtifactToFile(const DirectoryBuild& build, const std::string& artifact,
-                     const std::string& path);
-
- std::vector<Artifact> Artifacts(const Build& build) {
-   return std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
- }
+  std::vector<Artifact> Artifacts(const Build& build) {
+    return std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
+  }
 
   bool ArtifactToFile(const Build& build, const std::string& artifact,
                       const std::string& path) {
@@ -119,6 +116,13 @@ public:
       return ArtifactToFile(arg, artifact, path);
     }, build);
   }
+
+ private:
+  std::vector<std::string> Headers();
+
+  CurlWrapper& curl;
+  CredentialSource* credential_source;
+  std::string api_key_;
 };
 
 Build ArgumentToBuild(BuildApi* api, const std::string& arg,
