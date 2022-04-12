@@ -457,6 +457,45 @@ void CameraChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
                          msg_data + msg.size());
 }
 
+std::vector<webrtc::PeerConnectionInterface::IceServer>
+ClientHandler::ParseIceServersMessage(const Json::Value &message) {
+  std::vector<webrtc::PeerConnectionInterface::IceServer> ret;
+  if (!message.isMember("ice_servers") || !message["ice_servers"].isArray()) {
+    // Log as verbose since the ice_servers field is optional in some messages
+    LOG(VERBOSE) << "ice_servers field not present in json object or not an array";
+    return ret;
+  }
+  auto& servers = message["ice_servers"];
+  for (const auto& server: servers) {
+    webrtc::PeerConnectionInterface::IceServer ice_server;
+    if (!server.isMember("urls") || !server["urls"].isArray()) {
+      // The urls field is required
+      LOG(WARNING)
+          << "ICE server specification missing urls field or not an array: "
+          << server.toStyledString();
+      continue;
+    }
+    auto urls = server["urls"];
+    for (int url_idx = 0; url_idx < urls.size(); url_idx++) {
+      auto url = urls[url_idx];
+      if (!url.isString()) {
+        LOG(WARNING) << "Non string 'urls' field in ice server: "
+                     << url.toStyledString();
+        continue;
+      }
+      ice_server.urls.push_back(url.asString());
+    }
+    if (server.isMember("credential") && server["credential"].isString()) {
+      ice_server.password = server["credential"].asString();
+    }
+    if (server.isMember("username") && server["username"].isString()) {
+      ice_server.username = server["username"].asString();
+    }
+    ret.push_back(ice_server);
+  }
+  return ret;
+}
+
 std::shared_ptr<ClientHandler> ClientHandler::Create(
     int client_id, std::shared_ptr<ConnectionObserver> observer,
     std::function<void(const Json::Value &)> send_to_client_cb,
