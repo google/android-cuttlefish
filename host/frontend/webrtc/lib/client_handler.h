@@ -127,7 +127,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
 
   void LogAndReplyError(const std::string& error_msg) const;
   void AddPendingIceCandidates();
-  bool BuildPeerConnection();
+  bool BuildPeerConnection(const Json::Value& message);
 
   int client_id_;
   State state_ = State::kNew;
@@ -166,7 +166,9 @@ class PeerConnectionBuilder {
  public:
   virtual ~PeerConnectionBuilder() = default;
   virtual rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
-      webrtc::PeerConnectionObserver* observer) = 0;
+      webrtc::PeerConnectionObserver* observer,
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          per_connection_servers) = 0;
 };
 
 }  // namespace webrtc_streaming
