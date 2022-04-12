@@ -46,6 +46,12 @@ class ClientVideoTrackImpl;
 class ClientHandler : public webrtc::PeerConnectionObserver,
                       public std::enable_shared_from_this<ClientHandler> {
  public:
+  // Checks if the message contains an "ice_servers" array field and parses it
+  // into a vector of webrtc ICE servers. Returns an empty vector if the field
+  // isn't present.
+  static std::vector<webrtc::PeerConnectionInterface::IceServer>
+  ParseIceServersMessage(const Json::Value& message);
+
   static std::shared_ptr<ClientHandler> Create(
       int client_id, std::shared_ptr<ConnectionObserver> observer,
       std::function<void(const Json::Value&)> send_client_cb,

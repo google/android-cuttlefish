@@ -474,39 +474,8 @@ void Streamer::Impl::OnError(const std::string& error) {
 void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
-  if (server_message.isMember("ice_servers") &&
-      server_message["ice_servers"].isArray()) {
-    auto servers = server_message["ice_servers"];
-    operator_config_.servers.clear();
-    for (int server_idx = 0; server_idx < servers.size(); server_idx++) {
-      auto server = servers[server_idx];
-      webrtc::PeerConnectionInterface::IceServer ice_server;
-      if (!server.isMember("urls") || !server["urls"].isArray()) {
-        // The urls field is required
-        LOG(WARNING)
-            << "Invalid ICE server specification obtained from server: "
-            << server.toStyledString();
-        continue;
-      }
-      auto urls = server["urls"];
-      for (int url_idx = 0; url_idx < urls.size(); url_idx++) {
-        auto url = urls[url_idx];
-        if (!url.isString()) {
-          LOG(WARNING) << "Non string 'urls' field in ice server: "
-                       << url.toStyledString();
-          continue;
-        }
-        ice_server.urls.push_back(url.asString());
-        if (server.isMember("credential") && server["credential"].isString()) {
-          ice_server.password = server["credential"].asString();
-        }
-        if (server.isMember("username") && server["username"].isString()) {
-          ice_server.username = server["username"].asString();
-        }
-        operator_config_.servers.push_back(ice_server);
-      }
-    }
-  }
+  operator_config_.servers =
+      ClientHandler::ParseIceServersMessage(server_message);
 }
 
 void Streamer::Impl::HandleClientMessage(const Json::Value& server_message) {
