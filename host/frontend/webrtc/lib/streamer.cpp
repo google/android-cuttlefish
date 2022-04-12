@@ -158,7 +158,9 @@ class Streamer::Impl : public ServerConnectionObserver,
 
   // PeerConnectionBuilder
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
-      webrtc::PeerConnectionObserver* observer) override;
+      webrtc::PeerConnectionObserver* observer,
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          per_connection_servers) override;
 
   // All accesses to these variables happen from the signal_thread, so there is
   // no need for extra synchronization mechanisms (mutex)
@@ -605,12 +607,16 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
 }
 
 rtc::scoped_refptr<webrtc::PeerConnectionInterface> Streamer::Impl::Build(
-    webrtc::PeerConnectionObserver* observer) {
+    webrtc::PeerConnectionObserver* observer,
+    const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+        per_connection_servers) {
   webrtc::PeerConnectionInterface::RTCConfiguration config;
   config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
   config.enable_dtls_srtp = true;
   config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
                         operator_config_.servers.end());
+  config.servers.insert(config.servers.end(), per_connection_servers.begin(),
+                        per_connection_servers.end());
   webrtc::PeerConnectionDependencies dependencies(observer);
   // PortRangeSocketFactory's super class' constructor needs to be called on the
   // network thread or have it as a parameter

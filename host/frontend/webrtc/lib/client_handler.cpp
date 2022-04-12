@@ -584,8 +584,9 @@ void ClientHandler::AddPendingIceCandidates() {
   pending_ice_candidates_.clear();
 }
 
-bool ClientHandler::BuildPeerConnection() {
-  peer_connection_ = connection_builder_.Build(this);
+bool ClientHandler::BuildPeerConnection(const Json::Value &message) {
+  auto ice_servers = ParseIceServersMessage(message);
+  peer_connection_ = connection_builder_.Build(this, ice_servers);
   if (!peer_connection_) {
     return false;
   }
@@ -684,7 +685,7 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
   if (type == "request-offer") {
     if (state_ == State::kNew) {
       // The peer connection must be created on the first request-offer
-      if (!BuildPeerConnection()) {
+      if (!BuildPeerConnection(message)) {
         LogAndReplyError("Failed to create peer connection");
         return;
       }
