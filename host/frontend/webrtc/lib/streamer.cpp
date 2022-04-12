@@ -136,6 +136,7 @@ class AudioDeviceModuleWrapper : public AudioSource {
 
 
 class Streamer::Impl : public ServerConnectionObserver,
+                       public PeerConnectionBuilder,
                        public std::enable_shared_from_this<ServerConnectionObserver> {
  public:
   std::shared_ptr<ClientHandler> CreateClientHandler(int client_id);
@@ -154,6 +155,10 @@ class Streamer::Impl : public ServerConnectionObserver,
 
   void HandleConfigMessage(const Json::Value& msg);
   void HandleClientMessage(const Json::Value& server_message);
+
+  // PeerConnectionBuilder
+  rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
+      webrtc::PeerConnectionObserver* observer) override;
 
   // All accesses to these variables happen from the signal_thread, so there is
   // no need for extra synchronization mechanisms (mutex)
@@ -567,7 +572,7 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
   auto observer = connection_observer_factory_->CreateObserver();
 
   auto client_handler = ClientHandler::Create(
-      client_id, observer,
+      client_id, observer, *this,
       [this, client_id](const Json::Value& msg) {
         SendMessageToClient(client_id, msg);
       },
@@ -578,28 +583,6 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
           DestroyClientHandler(client_id);
         }
       });
-
-  webrtc::PeerConnectionInterface::RTCConfiguration config;
-  config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
-  config.enable_dtls_srtp = true;
-  config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
-                        operator_config_.servers.end());
-  webrtc::PeerConnectionDependencies dependencies(client_handler.get());
-  // PortRangeSocketFactory's super class' constructor needs to be called on the
-  // network thread or have it as a parameter
-  dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
-      network_thread_.get(), config_.udp_port_range, config_.tcp_port_range));
-  auto peer_connection = peer_connection_factory_->CreatePeerConnection(
-      config, std::move(dependencies));
-
-  if (!peer_connection) {
-    LOG(ERROR) << "Failed to create peer connection";
-    return nullptr;
-  }
-
-  if (!client_handler->SetPeerConnection(std::move(peer_connection))) {
-    return nullptr;
-  }
 
   for (auto& entry : displays_) {
     auto& label = entry.first;
@@ -619,6 +602,28 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
   }
 
   return client_handler;
+}
+
+rtc::scoped_refptr<webrtc::PeerConnectionInterface> Streamer::Impl::Build(
+    webrtc::PeerConnectionObserver* observer) {
+  webrtc::PeerConnectionInterface::RTCConfiguration config;
+  config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
+  config.enable_dtls_srtp = true;
+  config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
+                        operator_config_.servers.end());
+  webrtc::PeerConnectionDependencies dependencies(observer);
+  // PortRangeSocketFactory's super class' constructor needs to be called on the
+  // network thread or have it as a parameter
+  dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
+      network_thread_.get(), config_.udp_port_range, config_.tcp_port_range));
+  auto peer_connection = peer_connection_factory_->CreatePeerConnection(
+      config, std::move(dependencies));
+
+  if (!peer_connection) {
+    LOG(ERROR) << "Failed to create peer connection";
+    return nullptr;
+  }
+  return peer_connection;
 }
 
 void Streamer::Impl::SendMessageToClient(int client_id,

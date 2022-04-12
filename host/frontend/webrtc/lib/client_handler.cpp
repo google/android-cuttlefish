@@ -498,20 +498,24 @@ ClientHandler::ParseIceServersMessage(const Json::Value &message) {
 
 std::shared_ptr<ClientHandler> ClientHandler::Create(
     int client_id, std::shared_ptr<ConnectionObserver> observer,
+    PeerConnectionBuilder &connection_builder,
     std::function<void(const Json::Value &)> send_to_client_cb,
     std::function<void(bool)> on_connection_changed_cb) {
-  return std::shared_ptr<ClientHandler>(new ClientHandler(
-      client_id, observer, send_to_client_cb, on_connection_changed_cb));
+  return std::shared_ptr<ClientHandler>(
+      new ClientHandler(client_id, observer, connection_builder,
+                        send_to_client_cb, on_connection_changed_cb));
 }
 
 ClientHandler::ClientHandler(
     int client_id, std::shared_ptr<ConnectionObserver> observer,
+    PeerConnectionBuilder &connection_builder,
     std::function<void(const Json::Value &)> send_to_client_cb,
     std::function<void(bool)> on_connection_changed_cb)
     : client_id_(client_id),
       observer_(observer),
       send_to_client_(send_to_client_cb),
       on_connection_changed_cb_(on_connection_changed_cb),
+      connection_builder_(connection_builder),
       camera_track_(new ClientVideoTrackImpl()) {}
 
 ClientHandler::~ClientHandler() {
@@ -520,54 +524,37 @@ ClientHandler::~ClientHandler() {
   }
 }
 
-bool ClientHandler::SetPeerConnection(
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection) {
-  peer_connection_ = peer_connection;
-
-  // libwebrtc configures the video encoder with a start bitrate of just 300kbs
-  // which causes it to drop the first 4 frames it receives. Any value over 2Mbs
-  // will be capped at 2Mbs when passed to the encoder by the peer_connection
-  // object, so we pass the maximum possible value here.
-  webrtc::BitrateSettings bitrate_settings;
-  bitrate_settings.start_bitrate_bps = 2000000; // 2Mbs
-  peer_connection_->SetBitrate(bitrate_settings);
-  // At least one data channel needs to be created on the side that makes the
-  // SDP offer (the device) for data channels to be enabled at all.
-  // This channel is meant to carry control commands from the client.
-  auto control_channel = peer_connection_->CreateDataChannel(
-      "device-control", nullptr /* config */);
-  if (!control_channel) {
-    LOG(ERROR) << "Failed to create control data channel";
-    return false;
-  }
-  control_handler_.reset(new ControlChannelHandler(control_channel, observer_));
-  return true;
-}
-
 bool ClientHandler::AddDisplay(
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track,
     const std::string &label) {
-  // Send each track as part of a different stream with the label as id
-  auto err_or_sender =
-      peer_connection_->AddTrack(video_track, {label} /* stream_id */);
-  if (!err_or_sender.ok()) {
-    LOG(ERROR) << "Failed to add video track to the peer connection";
-    return false;
+  displays_.emplace_back(video_track, label);
+  if (peer_connection_) {
+    // Send each track as part of a different stream with the label as id
+    auto err_or_sender =
+        peer_connection_->AddTrack(video_track, {label} /* stream_id */);
+    if (!err_or_sender.ok()) {
+      LOG(ERROR) << "Failed to add video track to the peer connection";
+      return false;
+    }
+    // TODO (b/154138394): use the returned sender (err_or_sender.value()) to
+    // remove the display from the connection.
   }
-  // TODO (b/154138394): use the returned sender (err_or_sender.value()) to
-  // remove the display from the connection.
   return true;
 }
 
 bool ClientHandler::AddAudio(
     rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track,
     const std::string &label) {
-  // Send each track as part of a different stream with the label as id
-  auto err_or_sender =
-      peer_connection_->AddTrack(audio_track, {label} /* stream_id */);
-  if (!err_or_sender.ok()) {
-    LOG(ERROR) << "Failed to add video track to the peer connection";
-    return false;
+  // Store the audio track for when the peer connection is created
+  audio_streams_.emplace_back(audio_track, label);
+  if (peer_connection_) {
+    // Send each track as part of a different stream with the label as id
+    auto err_or_sender =
+        peer_connection_->AddTrack(audio_track, {label} /* stream_id */);
+    if (!err_or_sender.ok()) {
+      LOG(ERROR) << "Failed to add video track to the peer connection";
+      return false;
+    }
   }
   return true;
 }
@@ -595,6 +582,55 @@ void ClientHandler::AddPendingIceCandidates() {
                                       });
   }
   pending_ice_candidates_.clear();
+}
+
+bool ClientHandler::BuildPeerConnection() {
+  peer_connection_ = connection_builder_.Build(this);
+  if (!peer_connection_) {
+    return false;
+  }
+
+  // Re-add the video and audio tracks after the peer connection has been
+  // created
+  decltype(displays_) tmp_displays;
+  tmp_displays.swap(displays_);
+  for (auto &pair : tmp_displays) {
+    auto &video_track = pair.first;
+    auto &label = pair.second;
+    if (!AddDisplay(video_track, label)) {
+      return false;
+    }
+  }
+  decltype(audio_streams_) tmp_audio_streams;
+  tmp_audio_streams.swap(audio_streams_);
+  for (auto &pair : tmp_audio_streams) {
+    auto &audio_track = pair.first;
+    auto &label = pair.second;
+    if (!AddAudio(audio_track, label)) {
+      return false;
+    }
+  }
+
+  // libwebrtc configures the video encoder with a start bitrate of just 300kbs
+  // which causes it to drop the first 4 frames it receives. Any value over 2Mbs
+  // will be capped at 2Mbs when passed to the encoder by the peer_connection
+  // object, so we pass the maximum possible value here.
+  webrtc::BitrateSettings bitrate_settings;
+  bitrate_settings.start_bitrate_bps = 2000000;  // 2Mbs
+  peer_connection_->SetBitrate(bitrate_settings);
+
+  // At least one data channel needs to be created on the side that makes the
+  // SDP offer (the device) for data channels to be enabled at all.
+  // This channel is meant to carry control commands from the client.
+  auto control_channel = peer_connection_->CreateDataChannel(
+      "device-control", nullptr /* config */);
+  if (!control_channel) {
+    LOG(ERROR) << "Failed to create control data channel";
+    return false;
+  }
+  control_handler_.reset(new ControlChannelHandler(control_channel, observer_));
+
+  return true;
 }
 
 void ClientHandler::OnCreateSDPSuccess(
@@ -646,9 +682,15 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
   }
   auto type = message["type"].asString();
   if (type == "request-offer") {
-    // Can't check for state being different that kNew because renegotiation can
-    // start in any state after the answer is returned.
-    if (state_ == State::kCreatingOffer) {
+    if (state_ == State::kNew) {
+      // The peer connection must be created on the first request-offer
+      if (!BuildPeerConnection()) {
+        LogAndReplyError("Failed to create peer connection");
+        return;
+      }
+      // Renegotiation can start in any state after the answer is returned, not
+      // just kNew.
+    } else if (state_ == State::kCreatingOffer) {
       // An offer has been requested already
       LogAndReplyError("Multiple requests for offer received from single client");
       return;
