@@ -27,7 +27,7 @@
   "cameras" : [
     {
       "cameraId" : "/dev/video10",
-      "function" : "reverse,park",
+      "function" : "reverse",
       "x" : 0.0,
       "y" : 20.0,
       "z" : 48,
@@ -37,48 +37,6 @@
       "hfov" : 115,
       "vfov" : 80,
       "hflip" : true,
-      "vflip" : false
-    },
-    {
-      "cameraId" : "/dev/video11",
-      "function" : "front,park",
-      "x" : 0.0,
-      "y" : 100.0,
-      "z" : 48,
-      "yaw" : 0,
-      "pitch" : -10,
-      "roll" : 0,
-      "hfov" : 115,
-      "vfov" : 80,
-      "hflip" : false,
-      "vflip" : false
-    },
-    {
-      "cameraId" : "/dev/video12",
-      "function" : "right,park",
-      "x" : -25.0,
-      "y" : 60.0,
-      "z" : 88,
-      "yaw" : -90,
-      "pitch" : -10,
-      "roll" : 0,
-      "hfov" : 60,
-      "vfov" : 62,
-      "hflip" : false,
-      "vflip" : false
-    },
-    {
-      "cameraId" : "/dev/video13",
-      "function" : "left, park",
-      "x" : 20.0,
-      "y" : 60.0,
-      "z" : 88,
-      "yaw" : 90,
-      "pitch" : -10,
-      "roll" : 0,
-      "hfov" : 60,
-      "vfov" : 62,
-      "hflip" : false,
       "vflip" : false
     }
   ]
