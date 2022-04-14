@@ -450,20 +450,22 @@ PRODUCT_PACKAGES += \
 #
 # Audio HAL
 #
-LOCAL_AUDIO_PRODUCT_PACKAGE ?= \
+ifndef LOCAL_AUDIO_PRODUCT_PACKAGE
+LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio.service \
     android.hardware.audio@7.1-impl.ranchu \
-    android.hardware.audio.effect@7.0-impl \
+    android.hardware.audio.effect@7.0-impl
+endif
 
-LOCAL_AUDIO_PRODUCT_COPY_FILES ?= \
+ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
+LOCAL_AUDIO_PRODUCT_COPY_FILES := \
     device/generic/goldfish/audio/policy/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
     device/generic/goldfish/audio/policy/primary_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/primary_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
-    frameworks/av/media/libeffects/data/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
-
-LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS ?=
+    frameworks/av/media/libeffects/data/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml
+endif
 
 PRODUCT_PACKAGES += $(LOCAL_AUDIO_PRODUCT_PACKAGE)
 PRODUCT_COPY_FILES += $(LOCAL_AUDIO_PRODUCT_COPY_FILES)
@@ -748,8 +750,12 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/wpa_supplicant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wpa_supplicant.rc
 
 # WLAN driver configuration files
-LOCAL_WPA_SUPPLICANT_OVERLAY ?= $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf
-LOCAL_P2P_SUPPLICANT ?= $(LOCAL_PATH)/config/p2p_supplicant.conf
+ifndef LOCAL_WPA_SUPPLICANT_OVERLAY
+LOCAL_WPA_SUPPLICANT_OVERLAY := $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf
+endif
+ifndef LOCAL_P2P_SUPPLICANT
+LOCAL_P2P_SUPPLICANT := $(LOCAL_PATH)/config/p2p_supplicant.conf
+endif
 PRODUCT_COPY_FILES += \
     external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
     $(LOCAL_WPA_SUPPLICANT_OVERLAY):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf \
