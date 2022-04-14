@@ -646,7 +646,7 @@ endif
 # Dice HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.security.dice-service.non-secure-software.vendor
+    android.hardware.security.dice-service.non-secure-software
 
 #
 # Power and PowerStats HALs
