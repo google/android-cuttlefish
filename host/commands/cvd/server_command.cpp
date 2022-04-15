@@ -250,6 +250,10 @@ Result<cvd::Response> CvdCommandHandler::Handle(
 
   subprocess_ = {};
 
+  if (infop.si_code == CLD_EXITED && bin == kStopBin) {
+    instance_manager_.RemoveInstanceGroup(home);
+  }
+
   if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
