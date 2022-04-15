@@ -412,11 +412,8 @@ endif
 #
 # Gralloc HAL
 #
-# Note: having both HIDL 4.0 and AIDL V1 is intentional as the framework
-# is not ready to fully switch over to AIDL only.
 PRODUCT_PACKAGES += \
     android.hardware.graphics.allocator-V1-service.minigbm \
-    android.hardware.graphics.allocator@4.0-service.minigbm \
     android.hardware.graphics.mapper@4.0-impl.minigbm
 
 #
