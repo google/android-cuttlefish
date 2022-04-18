@@ -18,12 +18,15 @@
 #include <optional>
 #include <vector>
 
+#include <android-base/strings.h>
+
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
@@ -37,6 +40,25 @@ struct ConvertedAcloudCreateCommand {
   std::vector<RequestWithStdio> requests;
 };
 
+/**
+ * Split a string into arguments based on shell tokenization rules.
+ *
+ * This behaves like `shlex.split` from python where arguments are separated
+ * based on whitespace, but quoting and quote escaping is respected. This
+ * function effectively removes one level of quoting from its inputs while
+ * making the split.
+ */
+Result<std::vector<std::string>> BashTokenize(const std::string& str) {
+  Command command("bash");
+  command.AddParameter("-c");
+  command.AddParameter("printf '%s\n' ", str);
+  std::string stdout;
+  std::string stderr;
+  auto ret = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
+  CF_EXPECT(ret == 0, "printf fail \"" << stdout << "\", \"" << stderr << "\"");
+  return android::base::Split(stdout, "\n");
+}
+
 class ConvertAcloudCreateCommand {
  public:
   INJECT(ConvertAcloudCreateCommand(InstanceLockFileManager& lock_file_manager))
@@ -48,6 +70,8 @@ class ConvertAcloudCreateCommand {
     CF_EXPECT(arguments.size() > 0);
     CF_EXPECT(arguments[0] == "create");
     arguments.erase(arguments.begin());
+
+    const auto& request_command = request.Message().command_request();
 
     std::vector<Flag> flags;
     bool local_instance_set;
@@ -88,6 +112,15 @@ class ConvertAcloudCreateCommand {
               return true;
             }));
 
+    bool local_image;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--local-image"})
+            .Setter([&local_image](const FlagMatch& m) {
+              local_image = true;
+              return m.value == "";
+            }));
+
     std::optional<std::string> build_id;
     flags.emplace_back(
         Flag()
@@ -105,6 +138,15 @@ class ConvertAcloudCreateCommand {
             .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build_target"})
             .Setter([&build_target](const FlagMatch& m) {
               build_target = m.value;
+              return true;
+            }));
+
+    std::optional<std::string> launch_args;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--launch-args"})
+            .Setter([&launch_args](const FlagMatch& m) {
+              launch_args = m.value;
               return true;
             }));
 
@@ -128,28 +170,40 @@ class ConvertAcloudCreateCommand {
     auto dir = TempDir() + "/acloud_cvd_temp/local-instance-" +
                std::to_string(lock->Instance());
 
-    cvd::Request fetch_request;
-    auto& fetch_command = *fetch_request.mutable_command_request();
-    fetch_command.add_args("cvd");
-    fetch_command.add_args("fetch");
-    fetch_command.add_args("--directory");
-    fetch_command.add_args(dir);
-    if (branch || build_id || build_target) {
-      fetch_command.add_args("--default_build");
-      auto target = build_target ? "/" + *build_target : "";
-      auto build = build_id.value_or(branch.value_or("aosp-master"));
-      fetch_command.add_args(build + target);
-    }
-    auto& fetch_env = *fetch_command.mutable_env();
-    auto host_artifacts_path =
-        request.Message().command_request().env().find("ANDROID_HOST_OUT");
-    if (host_artifacts_path ==
-        request.Message().command_request().env().end()) {
-      return CF_ERR("Missing ANDROID_HOST_OUT in client environment.");
-    }
-    fetch_env["ANDROID_HOST_OUT"] = host_artifacts_path->second;
+    static constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
 
-    cvd::Request start_request;
+    auto host_artifacts_path = request_command.env().find(kAndroidHostOut);
+    CF_EXPECT(host_artifacts_path != request_command.env().end(),
+              "Missing " << kAndroidHostOut);
+
+    std::vector<cvd::Request> request_protos;
+    if (local_image) {
+      cvd::Request& mkdir_request = request_protos.emplace_back();
+      auto& mkdir_command = *mkdir_request.mutable_command_request();
+      mkdir_command.add_args("cvd");
+      mkdir_command.add_args("mkdir");
+      mkdir_command.add_args("-p");
+      mkdir_command.add_args(dir);
+      auto& mkdir_env = *mkdir_command.mutable_env();
+      mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
+    } else {
+      cvd::Request& fetch_request = request_protos.emplace_back();
+      auto& fetch_command = *fetch_request.mutable_command_request();
+      fetch_command.add_args("cvd");
+      fetch_command.add_args("fetch");
+      fetch_command.add_args("--directory");
+      fetch_command.add_args(dir);
+      if (branch || build_id || build_target) {
+        fetch_command.add_args("--default_build");
+        auto target = build_target ? "/" + *build_target : "";
+        auto build = build_id.value_or(branch.value_or("aosp-master"));
+        fetch_command.add_args(build + target);
+      }
+      auto& fetch_env = *fetch_command.mutable_env();
+      fetch_env[kAndroidHostOut] = host_artifacts_path->second;
+    }
+
+    cvd::Request& start_request = request_protos.emplace_back();
     auto& start_command = *start_request.mutable_command_request();
     start_command.add_args("cvd");
     start_command.add_args("start");
@@ -158,9 +212,24 @@ class ConvertAcloudCreateCommand {
     start_command.add_args("report_anonymous_usage_stats");
     start_command.add_args("--report_anonymous_usage_stats");
     start_command.add_args("y");
+    if (launch_args) {
+      for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
+        start_command.add_args(arg);
+      }
+    }
+    static constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
     auto& start_env = *start_command.mutable_env();
-    start_env["ANDROID_HOST_OUT"] = dir;
-    start_env["ANDROID_PRODUCT_OUT"] = dir;
+    if (local_image) {
+      start_env[kAndroidHostOut] = host_artifacts_path->second;
+
+      auto product_out = request_command.env().find(kAndroidProductOut);
+      CF_EXPECT(product_out != request_command.env().end(),
+                "Missing " << kAndroidProductOut);
+      start_env[kAndroidProductOut] = product_out->second;
+    } else {
+      start_env[kAndroidHostOut] = dir;
+      start_env[kAndroidProductOut] = dir;
+    }
     start_env["CUTTLEFISH_INSTANCE"] = std::to_string(lock->Instance());
     start_env["HOME"] = dir;
 
@@ -176,7 +245,7 @@ class ConvertAcloudCreateCommand {
     ConvertedAcloudCreateCommand ret = {
         .lock = {std::move(*lock)},
     };
-    for (auto& request_proto : {fetch_request, start_request}) {
+    for (auto& request_proto : request_protos) {
       ret.requests.emplace_back(request_proto, fds, request.Credentials());
     }
     return ret;
