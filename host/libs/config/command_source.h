@@ -23,7 +23,7 @@
 
 namespace cuttlefish {
 
-class CommandSource : public virtual Feature {
+class CommandSource : public virtual SetupFeature {
  public:
   virtual ~CommandSource() = default;
   virtual std::vector<Command> Commands() = 0;
