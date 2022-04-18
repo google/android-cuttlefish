@@ -46,6 +46,7 @@ class InstanceManager {
 
   bool HasInstanceGroups() const;
   void SetInstanceGroup(const InstanceGroupDir&, const InstanceGroupInfo&);
+  void RemoveInstanceGroup(const InstanceGroupDir&);
   Result<InstanceGroupInfo> GetInstanceGroup(const InstanceGroupDir&) const;
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
