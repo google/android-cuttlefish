@@ -90,6 +90,91 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::make(
   return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
 }
 
+Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
+    CurlWrapper& curl, std::istream& stream) {
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+  Json::Value json;
+  std::string errorMessage;
+  CF_EXPECT(Json::parseFromStream(builder, stream, &json, &errorMessage),
+            "Failed to parse json: " << errorMessage);
+  CF_EXPECT(json.isMember("data"));
+  auto& data = json["data"];
+  CF_EXPECT(data.type() == Json::ValueType::arrayValue);
+
+  CF_EXPECT(data.size() == 1);
+  auto& data_first = data[0];
+  CF_EXPECT(data_first.type() == Json::ValueType::objectValue);
+
+  CF_EXPECT(data_first.isMember("credential"));
+  auto& credential = data_first["credential"];
+  CF_EXPECT(credential.type() == Json::ValueType::objectValue);
+
+  CF_EXPECT(credential.isMember("client_id"));
+  auto& client_id = credential["client_id"];
+  CF_EXPECT(client_id.type() == Json::ValueType::stringValue);
+
+  CF_EXPECT(credential.isMember("client_secret"));
+  auto& client_secret = credential["client_secret"];
+  CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
+
+  CF_EXPECT(credential.isMember("token_response"));
+  auto& token_response = credential["token_response"];
+  CF_EXPECT(token_response.type() == Json::ValueType::objectValue);
+
+  CF_EXPECT(token_response.isMember("refresh_token"));
+  auto& refresh_token = credential["refresh_token"];
+  CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
+
+  return RefreshCredentialSource(curl, client_id.asString(),
+                                 client_secret.asString(),
+                                 refresh_token.asString());
+}
+
+RefreshCredentialSource::RefreshCredentialSource(
+    CurlWrapper& curl, const std::string& client_id,
+    const std::string& client_secret, const std::string& refresh_token)
+    : curl_(curl),
+      client_id_(client_id),
+      client_secret_(client_secret),
+      refresh_token_(refresh_token) {}
+
+std::string RefreshCredentialSource::Credential() {
+  if (expiration_ - std::chrono::steady_clock::now() < REFRESH_WINDOW) {
+    UpdateLatestCredential();
+  }
+  return latest_credential_;
+}
+
+void RefreshCredentialSource::UpdateLatestCredential() {
+  std::vector<std::string> headers = {
+      "Content-Type: application/x-www-form-urlencoded"};
+  std::stringstream data;
+  data << "client_id=" << curl_.UrlEscape(client_id_) << "&";
+  data << "client_secret=" << curl_.UrlEscape(client_secret_) << "&";
+  data << "refresh_token=" << curl_.UrlEscape(refresh_token_) << "&";
+  data << "grant_type=refresh_token";
+
+  static constexpr char kUrl[] = "https://oauth2.googleapis.com/token";
+  auto response = curl_.PostToJson(kUrl, data.str(), headers);
+  CHECK(response.HttpSuccess()) << response.data;
+  auto& json = response.data;
+
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
+
+  bool has_access_token = json.isMember("access_token");
+  bool has_expires_in = json.isMember("expires_in");
+  CHECK(has_access_token && has_expires_in)
+      << "GCE credential was missing access_token or expires_in. "
+      << "Full response was " << json << "";
+
+  expiration_ = std::chrono::steady_clock::now() +
+                std::chrono::seconds(json["expires_in"].asInt());
+  latest_credential_ = json["access_token"].asString();
+}
+
 static std::string CollectSslErrors() {
   std::stringstream errors;
   auto callback = [](const char* str, size_t len, void* stream) {

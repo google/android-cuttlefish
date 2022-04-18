@@ -57,6 +57,29 @@ public:
   static std::unique_ptr<CredentialSource> make(const std::string& credential);
 };
 
+class RefreshCredentialSource : public CredentialSource {
+ public:
+  static Result<RefreshCredentialSource> FromOauth2ClientFile(
+      CurlWrapper& curl, std::istream& stream);
+
+  RefreshCredentialSource(CurlWrapper& curl, const std::string& client_id,
+                          const std::string& client_secret,
+                          const std::string& refresh_token);
+
+  std::string Credential() override;
+
+ private:
+  void UpdateLatestCredential();
+
+  CurlWrapper& curl_;
+  std::string client_id_;
+  std::string client_secret_;
+  std::string refresh_token_;
+
+  std::string latest_credential_;
+  std::chrono::steady_clock::time_point expiration_;
+};
+
 class ServiceAccountOauthCredentialSource : public CredentialSource {
  public:
   static Result<ServiceAccountOauthCredentialSource> FromJson(

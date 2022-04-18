@@ -67,6 +67,12 @@ void InstanceManager::SetInstanceGroup(
   instance_groups_[dir] = info;
 }
 
+void InstanceManager::RemoveInstanceGroup(
+    const InstanceManager::InstanceGroupDir& dir) {
+  std::lock_guard assemblies_lock(instance_groups_mutex_);
+  instance_groups_.erase(dir);
+}
+
 Result<InstanceManager::InstanceGroupInfo> InstanceManager::GetInstanceGroup(
     const InstanceManager::InstanceGroupDir& dir) const {
   std::lock_guard assemblies_lock(instance_groups_mutex_);
