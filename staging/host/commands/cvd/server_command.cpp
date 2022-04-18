@@ -42,6 +42,7 @@ namespace {
 constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 constexpr char kStartBin[] = "cvd_internal_start";
 constexpr char kFetchBin[] = "fetch_cvd";
+constexpr char kMkdirBin[] = "/bin/mkdir";
 
 constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
 constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
@@ -79,6 +80,7 @@ const std::map<std::string, std::string> CommandToBinaryMap = {
     {"clear", kClearBin},
     {"fetch", kFetchBin},
     {"fetch_cvd", kFetchBin},
+    {"mkdir", kMkdirBin},
     {"fleet", kFleetBin}};
 
 }  // namespace
@@ -186,8 +188,12 @@ Result<cvd::Response> CvdCommandHandler::Handle(
     instance_manager_.SetInstanceGroup(home, info);
   }
 
-  Command command(HostBinaryPath("fetch_cvd"));
-  if (bin != kFetchBin) {
+  Command command("(replaced)");
+  if (bin == kFetchBin) {
+    command.SetExecutable(HostBinaryPath("fetch_cvd"));
+  } else if (bin == kMkdirBin) {
+    command.SetExecutable(kMkdirBin);
+  } else {
     auto assembly_info = CF_EXPECT(instance_manager_.GetInstanceGroup(home));
     command.SetExecutable(assembly_info.host_binaries_dir + bin);
   }
@@ -243,6 +249,10 @@ Result<cvd::Response> CvdCommandHandler::Handle(
   // reach unexpected processes.
 
   subprocess_ = {};
+
+  if (infop.si_code == CLD_EXITED && bin == kStopBin) {
+    instance_manager_.RemoveInstanceGroup(home);
+  }
 
   if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
     response.mutable_status()->set_code(cvd::Status::OK);
