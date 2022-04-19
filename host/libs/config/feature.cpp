@@ -24,6 +24,16 @@ namespace cuttlefish {
 
 SetupFeature::~SetupFeature() {}
 
+Result<void> SetupFeature::ResultSetup() {
+  CF_EXPECT(Setup());
+  return {};
+}
+
+bool SetupFeature::Setup() {
+  LOG(ERROR) << "Missing ResultSetup implementation";
+  return false;
+}
+
 /* static */ Result<void> SetupFeature::RunSetup(
     const std::vector<SetupFeature*>& features) {
   std::unordered_set<SetupFeature*> enabled;
@@ -44,7 +54,7 @@ SetupFeature::~SetupFeature() {}
   // TODO(b/189153501): This can potentially be parallelized.
   for (auto& feature : ordered_features) {
     LOG(DEBUG) << "Running setup for " << feature->Name();
-    CF_EXPECT(feature->Setup(), "Setup failed for " << feature->Name());
+    CF_EXPECT(feature->ResultSetup(), "Setup failed for " << feature->Name());
   }
   return {};
 }
