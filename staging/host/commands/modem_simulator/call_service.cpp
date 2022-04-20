@@ -703,7 +703,7 @@ void CallService::HandleRemoteCall(const Client& client,
       call_status.is_voice_mode = mode;
       call_status.is_multi_party = mpty;
       call_status.is_mobile_terminated = true;
-      call_status.is_international = num_type;
+      call_status.is_international = (num_type == 145);
       call_status.remote_client = client.client_fd;
       call_status.call_state = CallStatus::CALL_STATE_INCOMING;
 
