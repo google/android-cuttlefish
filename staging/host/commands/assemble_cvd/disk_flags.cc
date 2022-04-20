@@ -352,71 +352,45 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
-Result<void> CreateOsCompositeDisk(const CuttlefishConfig& config) {
-  CF_EXPECT(
-      SharedFD::Open(config.os_composite_disk_path().c_str(),
-                     O_WRONLY | O_CREAT, 0644)
-          ->IsOpen(),
-      "Could not ensure \"" << config.os_composite_disk_path() << "\" exists");
-  if (config.vm_manager() == CrosvmManager::name()) {
-    // Check if filling in the sparse image would run out of disk space.
-    auto existing_sizes = SparseFileSizes(FLAGS_data_image);
-    CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
-              "Unable to determine size of \"" << FLAGS_data_image
-                                               << "\". Does this file exist?");
-    auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
-    if (available_space < existing_sizes.sparse_size - existing_sizes.disk_size) {
-      // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a separate machine
-      return CF_ERR("Not enough space remaining in fs containing \""
-                    << FLAGS_data_image << "\", wanted "
-                    << (existing_sizes.sparse_size - existing_sizes.disk_size)
-                    << ", got " << available_space);
-    } else {
-      LOG(DEBUG) << "Available space: " << available_space;
-      LOG(DEBUG) << "Sparse size of \"" << FLAGS_data_image << "\": "
-                 << existing_sizes.sparse_size;
-      LOG(DEBUG) << "Disk size of \"" << FLAGS_data_image << "\": "
-                 << existing_sizes.disk_size;
-    }
-    std::string header_path =
-        config.AssemblyPath("os_composite_gpt_header.img");
-    std::string footer_path =
-        config.AssemblyPath("os_composite_gpt_footer.img");
-    CreateCompositeDisk(GetOsCompositeDiskConfig(), AbsolutePath(header_path),
-                        AbsolutePath(footer_path),
-                        AbsolutePath(config.os_composite_disk_path()));
+Result<void> CreateCompositeDiskCommon(
+    const std::string& vm_manager, const std::string& header_path,
+    const std::string& footer_path,
+    const std::vector<ImagePartition> partitions,
+    const std::string& output_path) {
+  CF_EXPECT(SharedFD::Open(output_path, O_WRONLY | O_CREAT, 0644)->IsOpen(),
+            "Could not ensure \"" << output_path << "\" exists");
+  if (vm_manager == CrosvmManager::name()) {
+    CreateCompositeDisk(partitions, AbsolutePath(header_path),
+                        AbsolutePath(footer_path), AbsolutePath(output_path));
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(GetOsCompositeDiskConfig(), config.os_composite_disk_path());
+    AggregateImage(partitions, output_path);
   }
   return {};
 }
 
-bool CreatePersistentCompositeDisk(
+Result<void> CreateOsCompositeDisk(const CuttlefishConfig& config) {
+  auto header_path = config.AssemblyPath("os_composite_gpt_header.img");
+  auto footer_path = config.AssemblyPath("os_composite_gpt_footer.img");
+  CF_EXPECT(CreateCompositeDiskCommon(config.vm_manager(), header_path,
+                                      footer_path, GetOsCompositeDiskConfig(),
+                                      config.os_composite_disk_path()));
+  return {};
+}
+
+Result<void> CreatePersistentCompositeDisk(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!SharedFD::Open(instance.persistent_composite_disk_path().c_str(),
-                      O_WRONLY | O_CREAT, 0644)
-           ->IsOpen()) {
-    LOG(ERROR) << "Could not ensure "
-               << instance.persistent_composite_disk_path() << " exists";
-    return false;
-  }
-  if (config.vm_manager() == CrosvmManager::name()) {
-    std::string header_path =
-        instance.PerInstancePath("persistent_composite_gpt_header.img");
-    std::string footer_path =
-        instance.PerInstancePath("persistent_composite_gpt_footer.img");
-    CreateCompositeDisk(
-        persistent_composite_disk_config(config, instance),
-        AbsolutePath(header_path), AbsolutePath(footer_path),
-        AbsolutePath(instance.persistent_composite_disk_path()));
-  } else {
-    AggregateImage(persistent_composite_disk_config(config, instance),
-                   instance.persistent_composite_disk_path());
-  }
-  return true;
+  auto header_path =
+      instance.PerInstancePath("persistent_composite_gpt_header.img");
+  auto footer_path =
+      instance.PerInstancePath("persistent_composite_gpt_footer.img");
+  CF_EXPECT(CreateCompositeDiskCommon(
+      config.vm_manager(), header_path, footer_path,
+      persistent_composite_disk_config(config, instance),
+      instance.persistent_composite_disk_path()));
+  return {};
 }
 
 class BootImageRepacker : public SetupFeature {
@@ -1003,9 +977,10 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
                                   persistent_composite_disk_config(config_, instance_));
 
     if (!compositeMatchesDiskConfig || oldCompositeDisk) {
-      bool success = CreatePersistentCompositeDisk(config_, instance_);
-      if (!success) {
-        LOG(ERROR) << "Failed to create persistent composite disk";
+      auto result = CreatePersistentCompositeDisk(config_, instance_);
+      if (!result.ok()) {
+        LOG(ERROR) << "Failed to create persistent composite disk: \n"
+                   << result.error();
         return false;
       }
     }
@@ -1120,6 +1095,27 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         instance_injector.getMultibindings<SetupFeature>();
     CF_EXPECT(SetupFeature::RunSetup(instance_features),
               "instance = \"" << instance.instance_name() << "\"");
+  }
+
+  // Check if filling in the sparse image would run out of disk space.
+  auto existing_sizes = SparseFileSizes(FLAGS_data_image);
+  CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
+            "Unable to determine size of \"" << FLAGS_data_image
+                                             << "\". Does this file exist?");
+  auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
+  if (available_space < existing_sizes.sparse_size - existing_sizes.disk_size) {
+    // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a
+    // separate machine
+    return CF_ERR("Not enough space remaining in fs containing \""
+                  << FLAGS_data_image << "\", wanted "
+                  << (existing_sizes.sparse_size - existing_sizes.disk_size)
+                  << ", got " << available_space);
+  } else {
+    LOG(DEBUG) << "Available space: " << available_space;
+    LOG(DEBUG) << "Sparse size of \"" << FLAGS_data_image
+               << "\": " << existing_sizes.sparse_size;
+    LOG(DEBUG) << "Disk size of \"" << FLAGS_data_image
+               << "\": " << existing_sizes.disk_size;
   }
 
   bool oldOsCompositeDisk = ShouldCreateOsCompositeDisk(config);
