@@ -419,13 +419,13 @@ bool CreatePersistentCompositeDisk(
   return true;
 }
 
-class BootImageRepacker : public Feature {
+class BootImageRepacker : public SetupFeature {
  public:
   INJECT(BootImageRepacker(const CuttlefishConfig& config)) : config_(config) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "BootImageRepacker"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Enabled() const override {
     // If we are booting a protected VM, for now, assume that image repacking
     // isn't trusted. Repacking requires resigning the image and keys from an
@@ -507,7 +507,7 @@ class BootImageRepacker : public Feature {
   const CuttlefishConfig& config_;
 };
 
-class Gem5ImageUnpacker : public Feature {
+class Gem5ImageUnpacker : public SetupFeature {
  public:
   INJECT(Gem5ImageUnpacker(
       const CuttlefishConfig& config,
@@ -515,12 +515,12 @@ class Gem5ImageUnpacker : public Feature {
       : config_(config),
         bir_(bir) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "Gem5ImageUnpacker"; }
 
-  std::unordered_set<Feature*> Dependencies() const override {
+  std::unordered_set<SetupFeature*> Dependencies() const override {
     return {
-      static_cast<Feature*>(&bir_),
+        static_cast<SetupFeature*>(&bir_),
     };
   }
 
@@ -610,14 +610,14 @@ class Gem5ImageUnpacker : public Feature {
   BootImageRepacker& bir_;
 };
 
-class GeneratePersistentBootconfig : public Feature {
+class GeneratePersistentBootconfig : public SetupFeature {
  public:
   INJECT(GeneratePersistentBootconfig(
       const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override {
     return "GeneratePersistentBootconfig";
   }
@@ -626,7 +626,7 @@ class GeneratePersistentBootconfig : public Feature {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     //  Cuttlefish for the time being won't be able to support OTA from a
     //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
@@ -710,7 +710,7 @@ class GeneratePersistentBootconfig : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class GeneratePersistentVbmeta : public Feature {
+class GeneratePersistentVbmeta : public SetupFeature {
  public:
   INJECT(GeneratePersistentVbmeta(
       const CuttlefishConfig& config,
@@ -722,7 +722,7 @@ class GeneratePersistentVbmeta : public Feature {
         bootloader_env_(bootloader_env),
         bootconfig_(bootconfig) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override {
     return "GeneratePersistentVbmeta";
   }
@@ -731,10 +731,10 @@ class GeneratePersistentVbmeta : public Feature {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override {
+  std::unordered_set<SetupFeature*> Dependencies() const override {
     return {
-        static_cast<Feature*>(&bootloader_env_),
-        static_cast<Feature*>(&bootconfig_),
+        static_cast<SetupFeature*>(&bootloader_env_),
+        static_cast<SetupFeature*>(&bootconfig_),
     };
   }
 
@@ -791,16 +791,16 @@ class GeneratePersistentVbmeta : public Feature {
   GeneratePersistentBootconfig& bootconfig_;
 };
 
-class InitializeMetadataImage : public Feature {
+class InitializeMetadataImage : public SetupFeature {
  public:
   INJECT(InitializeMetadataImage()) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeMetadataImage"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     if (!FileExists(FLAGS_metadata_image)) {
       bool success = CreateBlankImage(FLAGS_metadata_image,
@@ -815,19 +815,19 @@ class InitializeMetadataImage : public Feature {
   }
 };
 
-class InitializeAccessKregistryImage : public Feature {
+class InitializeAccessKregistryImage : public SetupFeature {
  public:
   INJECT(InitializeAccessKregistryImage(
       const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeAccessKregistryImage"; }
   bool Enabled() const override { return !config_.protected_vm(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() {
     if (FileExists(instance_.access_kregistry_path())) {
       return true;
@@ -846,19 +846,19 @@ class InitializeAccessKregistryImage : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializeHwcomposerPmemImage : public Feature {
+class InitializeHwcomposerPmemImage : public SetupFeature {
  public:
   INJECT(InitializeHwcomposerPmemImage(
       const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeHwcomposerPmemImage"; }
   bool Enabled() const override { return !config_.protected_vm(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() {
     if (FileExists(instance_.hwcomposer_pmem_path())) {
       return true;
@@ -877,18 +877,18 @@ class InitializeHwcomposerPmemImage : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializePstore : public Feature {
+class InitializePstore : public SetupFeature {
  public:
   INJECT(InitializePstore(const CuttlefishConfig& config,
                           const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializePstore"; }
   bool Enabled() const override { return !config_.protected_vm(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() {
     if (FileExists(instance_.pstore_path())) {
       return true;
@@ -907,20 +907,20 @@ class InitializePstore : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializeSdCard : public Feature {
+class InitializeSdCard : public SetupFeature {
  public:
   INJECT(InitializeSdCard(const CuttlefishConfig& config,
                           const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeSdCard"; }
   bool Enabled() const override {
     return FLAGS_use_sdcard && !config_.protected_vm();
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() {
     if (FileExists(instance_.sdcard_path())) {
       return true;
@@ -939,19 +939,19 @@ class InitializeSdCard : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializeFactoryResetProtected : public Feature {
+class InitializeFactoryResetProtected : public SetupFeature {
  public:
   INJECT(InitializeFactoryResetProtected(
       const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeSdCard"; }
   bool Enabled() const override { return !config_.protected_vm(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() {
     if (FileExists(instance_.factory_reset_protected_path())) {
       return true;
@@ -970,7 +970,7 @@ class InitializeFactoryResetProtected : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializeInstanceCompositeDisk : public Feature {
+class InitializeInstanceCompositeDisk : public SetupFeature {
  public:
   INJECT(InitializeInstanceCompositeDisk(
       const CuttlefishConfig& config,
@@ -988,10 +988,10 @@ class InitializeInstanceCompositeDisk : public Feature {
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override {
+  std::unordered_set<SetupFeature*> Dependencies() const override {
     return {
-        static_cast<Feature*>(&frp_),
-        static_cast<Feature*>(&vbmeta_),
+        static_cast<SetupFeature*>(&frp_),
+        static_cast<SetupFeature*>(&vbmeta_),
     };
   }
   bool Setup() override {
@@ -1018,7 +1018,7 @@ class InitializeInstanceCompositeDisk : public Feature {
   GeneratePersistentVbmeta& vbmeta_;
 };
 
-class VbmetaEnforceMinimumSize : public Feature {
+class VbmetaEnforceMinimumSize : public SetupFeature {
  public:
   INJECT(VbmetaEnforceMinimumSize()) {}
 
@@ -1026,7 +1026,7 @@ class VbmetaEnforceMinimumSize : public Feature {
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     // libavb expects to be able to read the maximum vbmeta size, so we must
     // provide a partition which matches this or the read will fail
@@ -1047,7 +1047,7 @@ class VbmetaEnforceMinimumSize : public Feature {
   }
 };
 
-class BootloaderPresentCheck : public Feature {
+class BootloaderPresentCheck : public SetupFeature {
  public:
   INJECT(BootloaderPresentCheck()) {}
 
@@ -1055,7 +1055,7 @@ class BootloaderPresentCheck : public Feature {
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     if (!FileHasContent(FLAGS_bootloader)) {
       LOG(ERROR) << "File not found: " << FLAGS_bootloader;
@@ -1070,11 +1070,11 @@ static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
   return fruit::createComponent()
       .bindInstance(*fetcher)
       .bindInstance(*config)
-      .addMultibinding<Feature, InitializeMetadataImage>()
-      .addMultibinding<Feature, BootImageRepacker>()
-      .addMultibinding<Feature, VbmetaEnforceMinimumSize>()
-      .addMultibinding<Feature, BootloaderPresentCheck>()
-      .addMultibinding<Feature, Gem5ImageUnpacker>()
+      .addMultibinding<SetupFeature, InitializeMetadataImage>()
+      .addMultibinding<SetupFeature, BootImageRepacker>()
+      .addMultibinding<SetupFeature, VbmetaEnforceMinimumSize>()
+      .addMultibinding<SetupFeature, BootloaderPresentCheck>()
+      .addMultibinding<SetupFeature, Gem5ImageUnpacker>()
       .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
       .install(FixedDataImagePathComponent, &FLAGS_data_image)
@@ -1093,14 +1093,14 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*fetcher)
       .bindInstance(*config)
       .bindInstance(*instance)
-      .addMultibinding<Feature, InitializeAccessKregistryImage>()
-      .addMultibinding<Feature, InitializeHwcomposerPmemImage>()
-      .addMultibinding<Feature, InitializePstore>()
-      .addMultibinding<Feature, InitializeSdCard>()
-      .addMultibinding<Feature, InitializeFactoryResetProtected>()
-      .addMultibinding<Feature, GeneratePersistentBootconfig>()
-      .addMultibinding<Feature, GeneratePersistentVbmeta>()
-      .addMultibinding<Feature, InitializeInstanceCompositeDisk>()
+      .addMultibinding<SetupFeature, InitializeAccessKregistryImage>()
+      .addMultibinding<SetupFeature, InitializeHwcomposerPmemImage>()
+      .addMultibinding<SetupFeature, InitializePstore>()
+      .addMultibinding<SetupFeature, InitializeSdCard>()
+      .addMultibinding<SetupFeature, InitializeFactoryResetProtected>()
+      .addMultibinding<SetupFeature, GeneratePersistentBootconfig>()
+      .addMultibinding<SetupFeature, GeneratePersistentVbmeta>()
+      .addMultibinding<SetupFeature, InitializeInstanceCompositeDisk>()
       .install(InitBootloaderEnvPartitionComponent);
 }
 
@@ -1110,15 +1110,15 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // assemble_cvd.cpp
   fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config);
 
-  const auto& features = injector.getMultibindings<Feature>();
-  CF_EXPECT(Feature::RunSetup(features));
+  const auto& features = injector.getMultibindings<SetupFeature>();
+  CF_EXPECT(SetupFeature::RunSetup(features));
 
   for (const auto& instance : config.Instances()) {
     fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
                                         &fetcher_config, &config, &instance);
     const auto& instance_features =
-        instance_injector.getMultibindings<Feature>();
-    CF_EXPECT(Feature::RunSetup(instance_features),
+        instance_injector.getMultibindings<SetupFeature>();
+    CF_EXPECT(SetupFeature::RunSetup(instance_features),
               "instance = \"" << instance.instance_name() << "\"");
   }
 
