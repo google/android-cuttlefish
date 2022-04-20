@@ -111,7 +111,8 @@ Command SshCommand::Build() const {
 }
 
 Result<std::unique_ptr<ScopedGceInstance>> ScopedGceInstance::CreateDefault(
-    GceApi& gce, const std::string& zone, const std::string& instance_name) {
+    GceApi& gce, const std::string& zone, const std::string& instance_name,
+    bool internal) {
   auto ssh_key = KeyPair::CreateRsa(4096);
   if (!ssh_key.ok()) {
     return Error() << "Could not create ssh key pair: " << ssh_key.error();
@@ -152,7 +153,7 @@ Result<std::unique_ptr<ScopedGceInstance>> ScopedGceInstance::CreateDefault(
   fd_dup->Close();
 
   std::unique_ptr<ScopedGceInstance> instance(new ScopedGceInstance(
-      gce, default_instance_info, std::move(privkey_file)));
+      gce, default_instance_info, std::move(privkey_file), internal));
 
   auto created_info = gce.Get(default_instance_info).get();
   if (!created_info.ok()) {
@@ -194,8 +195,12 @@ Result<void> ScopedGceInstance::EnforceSshReady() {
 
 ScopedGceInstance::ScopedGceInstance(GceApi& gce,
                                      const GceInstanceInfo& instance,
-                                     std::unique_ptr<TemporaryFile> privkey)
-    : gce_(gce), instance_(instance), privkey_(std::move(privkey)) {}
+                                     std::unique_ptr<TemporaryFile> privkey,
+                                     bool use_internal_address)
+    : gce_(gce),
+      instance_(instance),
+      privkey_(std::move(privkey)),
+      use_internal_address_(use_internal_address) {}
 
 ScopedGceInstance::~ScopedGceInstance() {
   auto delete_ins = gce_.Delete(instance_).Future().get();
@@ -205,19 +210,16 @@ ScopedGceInstance::~ScopedGceInstance() {
 }
 
 Result<SshCommand> ScopedGceInstance::Ssh() {
+  const auto& network_interfaces = instance_.NetworkInterfaces();
+  CF_EXPECT(!network_interfaces.empty());
+  auto iface = network_interfaces[0];
+  auto ip = use_internal_address_ ? iface.InternalIp() : iface.ExternalIp();
+  CF_EXPECT(ip.has_value());
   return SshCommand()
       .PrivKey(privkey_->path)
       .WithoutKnownHosts()
       .Username("vsoc-01")
-      .Host(instance_.NetworkInterfaces()[0].ExternalIp().value());
-}
-
-Result<void> ScopedGceInstance::Reset() {
-  auto internal_reset = gce_.Reset(instance_).Future().get();
-  if (!internal_reset.ok()) {
-    return Error() << "GCE reset failed: " << internal_reset.error();
-  }
-  return EnforceSshReady();
+      .Host(*ip);
 }
 
 }  // namespace cuttlefish
