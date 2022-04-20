@@ -225,6 +225,10 @@ std::string ReadFile(const std::string& file) {
 
 std::string CurrentDirectory() {
   char* path = getcwd(nullptr, 0);
+  if (path == nullptr) {
+    PLOG(ERROR) << "`getcwd(nullptr, 0)` failed";
+    return "";
+  }
   std::string ret(path);
   free(path);
   return ret;
