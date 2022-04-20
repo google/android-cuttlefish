@@ -151,11 +151,10 @@ const CuttlefishConfig* FindConfigFromStdin() {
       return nullptr;
     }
   }
-  std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
-  bool found_config = false;
+  std::vector<std::string> input_files =
+      android::base::Split(input_files_str, "\n");
   for (const auto& file : input_files) {
     if (file.find("cuttlefish_config.json") != std::string::npos) {
-      found_config = true;
       setenv(kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
     }
   }
@@ -196,23 +195,22 @@ bool ChdirIntoRuntimeDir(const CuttlefishConfig::InstanceSpecific& instance) {
 
 }  // namespace
 
-int RunCvdMain(int argc, char** argv) {
+Result<void> RunCvdMain(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
-  CHECK(IsStdinValid()) << "Invalid stdin";
-  auto config = FindConfigFromStdin();
-  CHECK(config) << "Could not find config";
+  CF_EXPECT(IsStdinValid(), "Invalid stdin");
+  auto config = CF_EXPECT(FindConfigFromStdin());
   auto instance = config->ForDefaultInstance();
 
   ConfigureLogs(*config, instance);
-  CHECK(ChdirIntoRuntimeDir(instance)) << "Could not enter runtime dir";
+  CF_EXPECT(ChdirIntoRuntimeDir(instance));
 
   fruit::Injector<ServerLoop> injector(runCvdComponent, config, &instance);
 
   for (auto& fragment : injector.getMultibindings<ConfigFragment>()) {
-    CHECK(config->LoadFragment(*fragment)) << "Failed to load config fragment";
+    CF_EXPECT(config->LoadFragment(*fragment));
   }
 
   // One of the setup features can consume most output, so print this early.
@@ -220,7 +218,7 @@ int RunCvdMain(int argc, char** argv) {
       injector.getMultibindings<DiagnosticInformation>());
 
   const auto& features = injector.getMultibindings<SetupFeature>();
-  CHECK(SetupFeature::RunSetup(features)) << "Failed to run feature setup.";
+  CF_EXPECT(SetupFeature::RunSetup(features));
 
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
@@ -231,17 +229,17 @@ int RunCvdMain(int argc, char** argv) {
     }
   }
 
-  CHECK(process_monitor.StartAndMonitorProcesses())
-      << "Could not start subprocesses";
+  CF_EXPECT(process_monitor.StartAndMonitorProcesses());
 
   injector.get<ServerLoop&>().Run(process_monitor);  // Should not return
-  LOG(ERROR) << "The server loop returned, it should never happen!!";
 
-  return RunnerExitCodes::kServerError;
+  return CF_ERR("The server loop returned, it should never happen!!");
 }
 
 } // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::RunCvdMain(argc, argv);
+  auto result = cuttlefish::RunCvdMain(argc, argv);
+  CHECK(result.ok()) << result.error();
+  return 0;
 }
