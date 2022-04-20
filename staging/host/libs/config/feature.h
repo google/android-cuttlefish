@@ -24,11 +24,10 @@
 
 namespace cuttlefish {
 
-// TODO(schuffelen): Rename this "Feature"
 template <typename Subclass>
-class FeatureSuperclass {
+class Feature {
  public:
-  virtual ~FeatureSuperclass() = default;
+  virtual ~Feature() = default;
 
   virtual std::string Name() const = 0;
 
@@ -39,12 +38,11 @@ class FeatureSuperclass {
   virtual std::unordered_set<Subclass*> Dependencies() const = 0;
 };
 
-// TODO(schuffelen): Rename this "SetupFeature"
-class Feature : public virtual FeatureSuperclass<Feature> {
+class SetupFeature : public virtual Feature<SetupFeature> {
  public:
-  virtual ~Feature();
+  virtual ~SetupFeature();
 
-  static bool RunSetup(const std::vector<Feature*>& features);
+  static bool RunSetup(const std::vector<SetupFeature*>& features);
 
   virtual bool Enabled() const = 0;
 
@@ -52,7 +50,7 @@ class Feature : public virtual FeatureSuperclass<Feature> {
   virtual bool Setup() = 0;
 };
 
-class FlagFeature : public FeatureSuperclass<FlagFeature> {
+class FlagFeature : public Feature<FlagFeature> {
  public:
   static bool ProcessFlags(const std::vector<FlagFeature*>& features,
                            std::vector<std::string>& flags);
@@ -73,7 +71,7 @@ class FlagFeature : public FeatureSuperclass<FlagFeature> {
 };
 
 template <typename Subclass>
-bool FeatureSuperclass<Subclass>::TopologicalVisit(
+bool Feature<Subclass>::TopologicalVisit(
     const std::unordered_set<Subclass*>& features,
     const std::function<bool(Subclass*)>& callback) {
   enum class Status { UNVISITED, VISITING, VISITED };
@@ -97,7 +95,7 @@ bool FeatureSuperclass<Subclass>::TopologicalVisit(
     features_status[feature] = Status::VISITING;
     for (const auto& dependency : feature->Dependencies()) {
       CHECK(dependency != nullptr)
-          << "Feature " << feature->Name() << " has a null dependency.";
+          << "SetupFeature " << feature->Name() << " has a null dependency.";
       if (!visit(dependency)) {
         LOG(ERROR) << "Error detected while visiting " << feature->Name();
         return false;

@@ -51,7 +51,8 @@ namespace cuttlefish {
 
 namespace {
 
-class CuttlefishEnvironment : public Feature, public DiagnosticInformation {
+class CuttlefishEnvironment : public SetupFeature,
+                              public DiagnosticInformation {
  public:
   INJECT(
       CuttlefishEnvironment(const CuttlefishConfig& config,
@@ -68,12 +69,12 @@ class CuttlefishEnvironment : public Feature, public DiagnosticInformation {
     };
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "CuttlefishEnvironment"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto env =
         SharedFD::Open(config_.cuttlefish_env_path(), O_CREAT | O_RDWR, 0755);
@@ -104,7 +105,7 @@ fruit::Component<ServerLoop> runCvdComponent(
     const CuttlefishConfig::InstanceSpecific* instance) {
   return fruit::createComponent()
       .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
-      .addMultibinding<Feature, CuttlefishEnvironment>()
+      .addMultibinding<SetupFeature, CuttlefishEnvironment>()
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(AdbConfigComponent)
@@ -218,8 +219,8 @@ int RunCvdMain(int argc, char** argv) {
   DiagnosticInformation::PrintAll(
       injector.getMultibindings<DiagnosticInformation>());
 
-  const auto& features = injector.getMultibindings<Feature>();
-  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
+  const auto& features = injector.getMultibindings<SetupFeature>();
+  CHECK(SetupFeature::RunSetup(features)) << "Failed to run feature setup.";
 
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
