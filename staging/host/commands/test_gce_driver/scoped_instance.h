@@ -72,7 +72,7 @@ class ScopedGceInstance {
  public:
   static android::base::Result<std::unique_ptr<ScopedGceInstance>>
   CreateDefault(GceApi& gce, const std::string& zone,
-                const std::string& instance_name);
+                const std::string& instance_name, bool internal_addresses);
   ~ScopedGceInstance();
 
   android::base::Result<SshCommand> Ssh();
@@ -80,13 +80,15 @@ class ScopedGceInstance {
 
  private:
   ScopedGceInstance(GceApi& gce, const GceInstanceInfo& instance,
-                    std::unique_ptr<TemporaryFile> privkey);
+                    std::unique_ptr<TemporaryFile> privkey,
+                    bool internal_addresses);
 
   android::base::Result<void> EnforceSshReady();
 
   GceApi& gce_;
   GceInstanceInfo instance_;
   std::unique_ptr<TemporaryFile> privkey_;
+  bool use_internal_address_;
 };
 
 }  // namespace cuttlefish
