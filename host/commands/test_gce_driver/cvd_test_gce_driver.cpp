@@ -71,8 +71,13 @@ Result<Json::Value> ReadJsonFromFile(const std::string& path) {
 
 class ReadEvalPrintLoop {
  public:
-  ReadEvalPrintLoop(GceApi& gce, BuildApi& build, int in_fd, int out_fd)
-      : gce_(gce), build_(build), in_(in_fd), out_(out_fd) {}
+  ReadEvalPrintLoop(GceApi& gce, BuildApi& build, int in_fd, int out_fd,
+                    bool internal_addresses)
+      : gce_(gce),
+        build_(build),
+        in_(in_fd),
+        out_(out_fd),
+        internal_addresses_(internal_addresses) {}
 
   Result<void> Process() {
     while (true) {
@@ -139,7 +144,7 @@ class ReadEvalPrintLoop {
     CF_EXPECT(request.id().name() != "", "Instance name must be specified");
     CF_EXPECT(request.id().zone() != "", "Instance zone must be specified");
     auto instance = CF_EXPECT(ScopedGceInstance::CreateDefault(
-        gce_, request.id().zone(), request.id().name()));
+        gce_, request.id().zone(), request.id().name(), internal_addresses_));
     instances_.emplace(request.id().name(), std::move(instance));
     return {};
   }
@@ -348,6 +353,7 @@ class ReadEvalPrintLoop {
   BuildApi& build_;
   google::protobuf::io::FileInputStream in_;
   int out_;
+  bool internal_addresses_;
 
   std::unordered_map<std::string, std::unique_ptr<ScopedGceInstance>>
       instances_;
@@ -362,6 +368,9 @@ Result<void> TestGceDriverMain(int argc, char** argv) {
                                       service_account_json_private_key_path));
   std::string cloud_project = "";
   flags.emplace_back(GflagsCompatFlag("cloud-project", cloud_project));
+  bool internal_addresses = false;
+  flags.emplace_back(
+      GflagsCompatFlag("internal-addresses", internal_addresses));
 
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
@@ -385,7 +394,8 @@ Result<void> TestGceDriverMain(int argc, char** argv) {
 
   BuildApi build(*curl, &build_creds);
 
-  ReadEvalPrintLoop executor(gce, build, STDIN_FILENO, STDOUT_FILENO);
+  ReadEvalPrintLoop executor(gce, build, STDIN_FILENO, STDOUT_FILENO,
+                             internal_addresses);
   LOG(INFO) << "Starting processing";
   CF_EXPECT(executor.Process());
 
