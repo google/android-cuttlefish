@@ -129,6 +129,7 @@ class SharedFD {
   // Fcntl or Dup functions.
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const std::string& pathname, mode_t mode);
+  static int Fchdir(SharedFD);
   static SharedFD Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
@@ -260,6 +261,7 @@ class FileInstance {
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
+  int Fchdir();
   int Fcntl(int command, int value);
 
   int Flock(int operation);
