@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/image_aggregator/image_aggregator.h"
@@ -28,9 +29,10 @@
 namespace cuttlefish {
 
 Result<void> ResolveInstanceFiles();
-bool ShouldCreateOsCompositeDisk(const CuttlefishConfig& config);
+
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config);
 std::vector<ImagePartition> GetOsCompositeDiskConfig();
+DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config);
 
 } // namespace cuttlefish
