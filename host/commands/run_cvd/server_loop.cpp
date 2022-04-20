@@ -49,7 +49,7 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
   return true;
 }
 
-class ServerLoopImpl : public ServerLoop, public Feature {
+class ServerLoopImpl : public ServerLoop, public SetupFeature {
  public:
   INJECT(ServerLoopImpl(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance))
@@ -131,12 +131,12 @@ class ServerLoopImpl : public ServerLoop, public Feature {
     }
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "ServerLoop"; }
 
  private:
   bool Enabled() const override { return true; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() {
     auto launcher_monitor_path = instance_.launcher_monitor_socket_path();
     server_ = SharedFD::SocketLocalServer(launcher_monitor_path.c_str(), false,
@@ -251,7 +251,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
 serverLoopComponent() {
   return fruit::createComponent()
       .bind<ServerLoop, ServerLoopImpl>()
-      .addMultibinding<Feature, ServerLoopImpl>();
+      .addMultibinding<SetupFeature, ServerLoopImpl>();
 }
 
 }  // namespace cuttlefish
