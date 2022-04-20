@@ -25,7 +25,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
 PRODUCT_ENFORCE_RRO_TARGETS := frameworks-res
 
 # FIXME: Disable mainline path checks
-PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS :=
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
 
 #
 # All components inherited here go to system_ext image
