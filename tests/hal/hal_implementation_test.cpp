@@ -187,6 +187,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // No implementations of radio v2 on cuttlefish
     {"android.hardware.radio.config.", 2},
     {"android.hardware.radio.data.", 2},
+    {"android.hardware.radio.messaging.", 2},
     {"android.hardware.radio.modem.", 2},
     {"android.hardware.radio.network.", 2},
     {"android.hardware.radio.sim.", 2},
