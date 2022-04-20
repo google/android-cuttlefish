@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/result.h>
 
 #include "common/libs/utils/subprocess.h"
@@ -33,8 +34,8 @@ class SshCommand {
  public:
   SshCommand() = default;
 
-  SshCommand& PrivKey(const std::string& privkey) &;
-  SshCommand PrivKey(const std::string& privkey) &&;
+  SshCommand& PrivKey(const std::string& path) &;
+  SshCommand PrivKey(const std::string& path) &&;
 
   SshCommand& WithoutKnownHosts() &;
   SshCommand WithoutKnownHosts() &&;
@@ -51,8 +52,6 @@ class SshCommand {
   SshCommand& RemoteParameter(const std::string& param) &;
   SshCommand RemoteParameter(const std::string& param) &&;
 
-  android::base::Result<SharedFD> TcpServerStdin() &;
-
   Command Build() const;
 
  private:
@@ -61,7 +60,7 @@ class SshCommand {
     uint16_t local_port;
   };
 
-  std::optional<std::string> privkey_;
+  std::optional<std::string> privkey_path_;
   bool without_known_hosts_;
   std::optional<std::string> username_;
   std::optional<std::string> host_;
@@ -81,13 +80,13 @@ class ScopedGceInstance {
 
  private:
   ScopedGceInstance(GceApi& gce, const GceInstanceInfo& instance,
-                    std::unique_ptr<KeyPair> keypair);
+                    std::unique_ptr<TemporaryFile> privkey);
 
   android::base::Result<void> EnforceSshReady();
 
   GceApi& gce_;
   GceInstanceInfo instance_;
-  std::unique_ptr<KeyPair> keypair_;
+  std::unique_ptr<TemporaryFile> privkey_;
 };
 
 }  // namespace cuttlefish
