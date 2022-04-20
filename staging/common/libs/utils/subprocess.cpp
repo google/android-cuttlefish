@@ -264,6 +264,29 @@ Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
   return std::move(*this);
 }
 
+Command& Command::SetWorkingDirectory(std::string path) & {
+  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
+  CHECK(fd->IsOpen()) << "Could not open \"" << path
+                      << "\" dir fd: " << fd->StrError();
+  return SetWorkingDirectory(fd);
+}
+Command Command::SetWorkingDirectory(std::string path) && {
+  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
+  CHECK(fd->IsOpen()) << "Could not open \"" << path
+                      << "\" dir fd: " << fd->StrError();
+  return std::move(SetWorkingDirectory(fd));
+}
+Command& Command::SetWorkingDirectory(SharedFD dirfd) & {
+  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
+  working_directory_ = dirfd;
+  return *this;
+}
+Command Command::SetWorkingDirectory(SharedFD dirfd) && {
+  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
+  working_directory_ = dirfd;
+  return std::move(*this);
+}
+
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
 
@@ -289,6 +312,11 @@ Subprocess Command::Start(SubprocessOptions options) const {
       if (fcntl(entry.second, F_SETFD, 0)) {
         int error_num = errno;
         LOG(ERROR) << "fcntl failed: " << strerror(error_num);
+      }
+    }
+    if (working_directory_->IsOpen()) {
+      if (SharedFD::Fchdir(working_directory_) != 0) {
+        LOG(ERROR) << "Fchdir failed: " << working_directory_->StrError();
       }
     }
     int rval;
