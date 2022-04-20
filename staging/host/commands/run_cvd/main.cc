@@ -212,7 +212,7 @@ Result<void> RunCvdMain(int argc, char** argv) {
 
   for (auto& command_source : injector.getMultibindings<CommandSource>()) {
     if (command_source->Enabled()) {
-      process_monitor.AddCommands(command_source->Commands());
+      CF_EXPECT(process_monitor.AddCommands(command_source->Commands()));
     }
   }
 

@@ -63,16 +63,19 @@ class ServerLoopImpl : public ServerLoop, public SetupFeature {
       LauncherAction action;
       while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
         switch (action) {
-          case LauncherAction::kStop:
-            if (process_monitor.StopMonitoredProcesses()) {
+          case LauncherAction::kStop: {
+            auto stop = process_monitor.StopMonitoredProcesses();
+            if (stop.ok()) {
               auto response = LauncherResponse::kSuccess;
               client->Write(&response, sizeof(response));
               std::exit(0);
             } else {
+              LOG(ERROR) << "Failed to stop subprocesses:\n" << stop.error();
               auto response = LauncherResponse::kError;
               client->Write(&response, sizeof(response));
             }
             break;
+          }
           case LauncherAction::kStatus: {
             // TODO(schuffelen): Return more information on a side channel
             auto response = LauncherResponse::kSuccess;
@@ -81,8 +84,9 @@ class ServerLoopImpl : public ServerLoop, public SetupFeature {
           }
           case LauncherAction::kPowerwash: {
             LOG(INFO) << "Received a Powerwash request from the monitor socket";
-            if (!process_monitor.StopMonitoredProcesses()) {
-              LOG(ERROR) << "Stopping processes failed.";
+            auto stop = process_monitor.StopMonitoredProcesses();
+            if (!stop.ok()) {
+              LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
               auto response = LauncherResponse::kError;
               client->Write(&response, sizeof(response));
               break;
@@ -104,8 +108,9 @@ class ServerLoopImpl : public ServerLoop, public SetupFeature {
             break;
           }
           case LauncherAction::kRestart: {
-            if (!process_monitor.StopMonitoredProcesses()) {
-              LOG(ERROR) << "Stopping processes failed.";
+            auto stop = process_monitor.StopMonitoredProcesses();
+            if (!stop.ok()) {
+              LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
               auto response = LauncherResponse::kError;
               client->Write(&response, sizeof(response));
               break;
