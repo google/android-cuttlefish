@@ -15,7 +15,7 @@ class DataImagePath {
   virtual const std::string& Path() const = 0;
 };
 
-class InitializeDataImage : public Feature {};
+class InitializeDataImage : public SetupFeature {};
 
 fruit::Component<DataImagePath> FixedDataImagePathComponent(
     const std::string* path);
@@ -23,7 +23,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig, DataImagePath>,
                  InitializeDataImage>
 InitializeDataImageComponent();
 
-class InitializeEspImage : public Feature {};
+class InitializeEspImage : public SetupFeature {};
 
 fruit::Component<fruit::Required<const CuttlefishConfig>,
     InitializeEspImage> InitializeEspImageComponent(
@@ -40,7 +40,7 @@ class MiscImagePath {
   virtual const std::string& Path() const = 0;
 };
 
-class InitializeMiscImage : public Feature {};
+class InitializeMiscImage : public SetupFeature {};
 
 fruit::Component<MiscImagePath> FixedMiscImagePathComponent(
     const std::string* path);

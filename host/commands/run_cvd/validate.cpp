@@ -28,7 +28,7 @@ namespace {
 
 using vm_manager::ValidateHostConfiguration;
 
-class ValidateTapDevices : public Feature {
+class ValidateTapDevices : public SetupFeature {
  public:
   INJECT(ValidateTapDevices(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
@@ -37,7 +37,7 @@ class ValidateTapDevices : public Feature {
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto used_tap_devices = TapInterfacesInUse();
     if (used_tap_devices.count(instance_.wifi_tap_name())) {
@@ -57,7 +57,7 @@ class ValidateTapDevices : public Feature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class ValidateHostConfigurationFeature : public Feature {
+class ValidateHostConfigurationFeature : public SetupFeature {
  public:
   INJECT(ValidateHostConfigurationFeature()) {}
 
@@ -71,7 +71,7 @@ class ValidateHostConfigurationFeature : public Feature {
   std::string Name() const override { return "ValidateHostConfiguration"; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     // Check host configuration
     std::vector<std::string> config_commands;
@@ -94,8 +94,8 @@ class ValidateHostConfigurationFeature : public Feature {
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 validationComponent() {
   return fruit::createComponent()
-      .addMultibinding<Feature, ValidateHostConfigurationFeature>()
-      .addMultibinding<Feature, ValidateTapDevices>();
+      .addMultibinding<SetupFeature, ValidateHostConfigurationFeature>()
+      .addMultibinding<SetupFeature, ValidateTapDevices>();
 }
 
 }  // namespace cuttlefish
