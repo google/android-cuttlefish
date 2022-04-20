@@ -64,6 +64,10 @@ public final class GceInstanceRule implements TestRule {
 
   @Inject(optional = true) @SetOption("zone") private String zone = "us-west1-a";
 
+  @Inject(optional = true)
+  @SetOption("internal-addresses")
+  private boolean internal_addresses = false;
+
   @Inject private TestInformation testInfo;
   @Inject private BuildChooser buildChooser;
 
@@ -74,6 +78,7 @@ public final class GceInstanceRule implements TestRule {
     ImmutableList.Builder<String> cmdline = new ImmutableList.Builder();
     cmdline.add(gceDriver.toString());
     assumeNotNull(gceJsonKeyPath);
+    cmdline.add("--internal-addresses=" + internal_addresses);
     cmdline.add("--cloud-project=" + cloudProject);
     cmdline.add("--service-account-json-private-key-path=" + gceJsonKeyPath);
     ProcessBuilder processBuilder = new ProcessBuilder(cmdline.build());
