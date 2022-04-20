@@ -88,12 +88,12 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitBootloaderEnvPartitionImpl"; }
   bool Enabled() const override { return !config_.protected_vm(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto boot_env_image_path = instance_.uboot_env_image_path();
     auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
@@ -187,7 +187,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
 InitBootloaderEnvPartitionComponent() {
   return fruit::createComponent()
       .bind<InitBootloaderEnvPartition, InitBootloaderEnvPartitionImpl>()
-      .addMultibinding<Feature, InitBootloaderEnvPartition>();
+      .addMultibinding<SetupFeature, InitBootloaderEnvPartition>();
 }
 
 } // namespace cuttlefish

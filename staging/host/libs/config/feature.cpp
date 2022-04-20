@@ -20,10 +20,11 @@
 
 namespace cuttlefish {
 
-Feature::~Feature() {}
+SetupFeature::~SetupFeature() {}
 
-/* static */ bool Feature::RunSetup(const std::vector<Feature*>& features) {
-  std::unordered_set<Feature*> enabled;
+/* static */ bool SetupFeature::RunSetup(
+    const std::vector<SetupFeature*>& features) {
+  std::unordered_set<SetupFeature*> enabled;
   for (const auto& feature : features) {
     CHECK(feature != nullptr) << "Received null feature";
     if (feature->Enabled()) {
@@ -31,12 +32,12 @@ Feature::~Feature() {}
     }
   }
   // Collect these in a vector first to trigger any obvious dependency issues.
-  std::vector<Feature*> ordered_features;
-  auto add_feature = [&ordered_features](Feature* feature) -> bool {
+  std::vector<SetupFeature*> ordered_features;
+  auto add_feature = [&ordered_features](SetupFeature* feature) -> bool {
     ordered_features.push_back(feature);
     return true;
   };
-  if (!FeatureSuperclass<Feature>::TopologicalVisit(enabled, add_feature)) {
+  if (!Feature<SetupFeature>::TopologicalVisit(enabled, add_feature)) {
     LOG(ERROR) << "Dependency issue detected, not performing any setup.";
     return false;
   }
@@ -62,7 +63,7 @@ bool FlagFeature::ProcessFlags(const std::vector<FlagFeature*>& features,
   auto handle = [&flags](FlagFeature* feature) -> bool {
     return feature->Process(flags);
   };
-  if (!FeatureSuperclass<FlagFeature>::TopologicalVisit(features_set, handle)) {
+  if (!Feature<FlagFeature>::TopologicalVisit(features_set, handle)) {
     LOG(ERROR) << "Unable to parse flags.";
     return false;
   }

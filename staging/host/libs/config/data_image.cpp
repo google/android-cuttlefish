@@ -244,12 +244,12 @@ class InitializeDataImageImpl : public InitializeDataImage {
                                  DataImagePath& data_path))
       : config_(config), data_path_(data_path) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeDataImageImpl"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto action = ChooseAction();
     if (!action.ok()) {
@@ -335,7 +335,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig, DataImagePath>,
                  InitializeDataImage>
 InitializeDataImageComponent() {
   return fruit::createComponent()
-      .addMultibinding<Feature, InitializeDataImage>()
+      .addMultibinding<SetupFeature, InitializeDataImage>()
       .bind<InitializeDataImage, InitializeDataImageImpl>();
 }
 
@@ -357,12 +357,12 @@ class InitializeMiscImageImpl : public InitializeMiscImage {
   INJECT(InitializeMiscImageImpl(MiscImagePath& misc_path))
       : misc_path_(misc_path) {}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeMiscImageImpl"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     bool misc_exists = FileHasContent(misc_path_.Path());
 
@@ -395,7 +395,7 @@ fruit::Component<MiscImagePath> FixedMiscImagePathComponent(
 fruit::Component<fruit::Required<MiscImagePath>, InitializeMiscImage>
 InitializeMiscImageComponent() {
   return fruit::createComponent()
-      .addMultibinding<Feature, InitializeMiscImage>()
+      .addMultibinding<SetupFeature, InitializeMiscImage>()
       .bind<InitializeMiscImage, InitializeMiscImageImpl>();
 }
 
@@ -420,9 +420,9 @@ class InitializeEspImageImpl : public InitializeEspImage {
         rootfs_path_(rootfs_path),
         config_(config){}
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "InitializeEspImageImpl"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Enabled() const override { return !rootfs_path_.empty(); }
 
  protected:
@@ -553,7 +553,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig>,
     const std::string* initramfs_path, const std::string* rootfs_path,
     const CuttlefishConfig* config) {
   return fruit::createComponent()
-      .addMultibinding<Feature, InitializeEspImage>()
+      .addMultibinding<SetupFeature, InitializeEspImage>()
       .bind<InitializeEspImage, InitializeEspImageImpl>()
       .bindInstance<fruit::Annotated<EspImageTag, std::string>>(*esp_image)
       .bindInstance<fruit::Annotated<KernelPathTag, std::string>>(*kernel_path)

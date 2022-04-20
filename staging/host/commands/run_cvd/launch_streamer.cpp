@@ -83,7 +83,7 @@ std::vector<Command> LaunchCustomActionServers(
 
 // Creates the frame and input sockets and add the relevant arguments to
 // webrtc commands
-class StreamerSockets : public virtual Feature {
+class StreamerSockets : public virtual SetupFeature {
  public:
   INJECT(StreamerSockets(const CuttlefishConfig& config,
                          const CuttlefishConfig::InstanceSpecific& instance))
@@ -106,7 +106,7 @@ class StreamerSockets : public virtual Feature {
     }
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
   bool Enabled() const override {
     bool is_qemu = config_.vm_manager() == vm_manager::QemuManager::name();
@@ -115,7 +115,7 @@ class StreamerSockets : public virtual Feature {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
   bool Setup() override {
     auto use_vsockets = config_.vm_manager() == vm_manager::QemuManager::name();
@@ -267,16 +267,16 @@ class WebRtcServer : public virtual CommandSource,
     return commands;
   }
 
-  // Feature
+  // SetupFeature
   bool Enabled() const override {
     return sockets_.Enabled() && config_.enable_webrtc();
   }
 
  private:
   std::string Name() const override { return "WebRtcServer"; }
-  std::unordered_set<Feature*> Dependencies() const override {
-    return {static_cast<Feature*>(&sockets_),
-            static_cast<Feature*>(&log_pipe_provider_)};
+  std::unordered_set<SetupFeature*> Dependencies() const override {
+    return {static_cast<SetupFeature*>(&sockets_),
+            static_cast<SetupFeature*>(&log_pipe_provider_)};
   }
 
   bool Setup() override {
@@ -323,8 +323,8 @@ launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
       .addMultibinding<DiagnosticInformation, WebRtcServer>()
-      .addMultibinding<Feature, StreamerSockets>()
-      .addMultibinding<Feature, WebRtcServer>();
+      .addMultibinding<SetupFeature, StreamerSockets>()
+      .addMultibinding<SetupFeature, WebRtcServer>();
 }
 
 }  // namespace cuttlefish

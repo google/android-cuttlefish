@@ -22,7 +22,7 @@
 
 namespace cuttlefish {
 
-class KernelLogPipeProvider : public virtual Feature {
+class KernelLogPipeProvider : public virtual SetupFeature {
  public:
   virtual ~KernelLogPipeProvider() = default;
   virtual SharedFD KernelLogPipe() = 0;
