@@ -95,7 +95,6 @@ DECLARE_bool(protected_vm);
 
 namespace cuttlefish {
 
-using vm_manager::CrosvmManager;
 using vm_manager::Gem5Manager;
 
 Result<void> ResolveInstanceFiles() {
@@ -239,6 +238,18 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   return partitions;
 }
 
+DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config) {
+  return DiskBuilder()
+      .Partitions(GetOsCompositeDiskConfig())
+      .VmManager(config.vm_manager())
+      .CrosvmPath(config.crosvm_binary())
+      .ConfigPath(config.AssemblyPath("os_composite_disk_config.txt"))
+      .HeaderPath(config.AssemblyPath("os_composite_gpt_header.img"))
+      .FooterPath(config.AssemblyPath("os_composite_gpt_footer.img"))
+      .CompositeDiskPath(config.os_composite_disk_path())
+      .ResumeIfPossible(FLAGS_resume);
+}
+
 std::vector<ImagePartition> persistent_composite_disk_config(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
@@ -271,11 +282,6 @@ std::vector<ImagePartition> persistent_composite_disk_config(
   return partitions;
 }
 
-bool ShouldCreateOsCompositeDisk(const CuttlefishConfig& config) {
-  return ShouldCreateCompositeDisk(config.os_composite_disk_path(),
-                                   GetOsCompositeDiskConfig());
-}
-
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
   struct statvfs vfs;
   if (statvfs(path.c_str(), &vfs) != 0) {
@@ -286,29 +292,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> CreateOsCompositeDisk(const CuttlefishConfig& config) {
-  auto header_path = config.AssemblyPath("os_composite_gpt_header.img");
-  auto footer_path = config.AssemblyPath("os_composite_gpt_footer.img");
-  CF_EXPECT(CreateCompositeDiskCommon(config.vm_manager(), header_path,
-                                      footer_path, GetOsCompositeDiskConfig(),
-                                      config.os_composite_disk_path()));
-  return {};
-}
-
-Result<void> CreatePersistentCompositeDisk(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  auto header_path =
-      instance.PerInstancePath("persistent_composite_gpt_header.img");
-  auto footer_path =
-      instance.PerInstancePath("persistent_composite_gpt_footer.img");
-  CF_EXPECT(CreateCompositeDiskCommon(
-      config.vm_manager(), header_path, footer_path,
-      persistent_composite_disk_config(config, instance),
-      instance.persistent_composite_disk_path()));
-  return {};
 }
 
 class BootImageRepacker : public SetupFeature {
@@ -887,22 +870,25 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
     };
   }
   bool Setup() override {
-    bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
-        instance_.PerInstancePath("persistent_composite_disk_config.txt"),
-        persistent_composite_disk_config(config_, instance_));
-    bool oldCompositeDisk =
-        ShouldCreateCompositeDisk(instance_.persistent_composite_disk_path(),
-                                  persistent_composite_disk_config(config_, instance_));
+    auto ipath = [this](const std::string& path) -> std::string {
+      return instance_.PerInstancePath(path.c_str());
+    };
+    auto persistent_disk_builder =
+        DiskBuilder()
+            .Partitions(persistent_composite_disk_config(config_, instance_))
+            .VmManager(config_.vm_manager())
+            .CrosvmPath(config_.crosvm_binary())
+            .ConfigPath(ipath("persistent_composite_disk_config.txt"))
+            .HeaderPath(ipath("persistent_composite_gpt_header.img"))
+            .FooterPath(ipath("persistent_composite_gpt_footer.img"))
+            .CompositeDiskPath(instance_.persistent_composite_disk_path())
+            .ResumeIfPossible(FLAGS_resume);
 
-    if (!compositeMatchesDiskConfig || oldCompositeDisk) {
-      auto result = CreatePersistentCompositeDisk(config_, instance_);
-      if (!result.ok()) {
-        LOG(ERROR) << "Failed to create persistent composite disk: \n"
-                   << result.error();
-        return false;
-      }
+    auto res = persistent_disk_builder.BuildCompositeDiskIfNecessary();
+    if (!res.ok()) {
+      LOG(ERROR) << "Failed building persistent disk:\n" << res.error();
     }
-    return true;
+    return res.ok();
   }
 
   const CuttlefishConfig& config_;
@@ -1036,20 +1022,11 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                << "\": " << existing_sizes.disk_size;
   }
 
-  bool oldOsCompositeDisk = ShouldCreateOsCompositeDisk(config);
-  bool osCompositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
-      config.AssemblyPath("os_composite_disk_config.txt"),
-      GetOsCompositeDiskConfig());
-  if (!osCompositeMatchesDiskConfig || oldOsCompositeDisk || !FLAGS_resume) {
-    CF_EXPECT(CreateOsCompositeDisk(config));
-
+  auto os_disk_builder = OsCompositeDiskBuilder(config);
+  auto built_composite =
+      CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
+  if (built_composite) {
     for (auto instance : config.Instances()) {
-      if (FLAGS_resume) {
-        LOG(INFO) << "Requested to continue an existing session, (the default) "
-                  << "but the disk files have become out of date. Wiping the "
-                  << "old session files and starting a new session for device "
-                  << instance.serial_number();
-      }
       if (FileExists(instance.access_kregistry_path())) {
         CF_EXPECT(CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */,
                                    "none"),
@@ -1069,11 +1046,11 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
 
   if (!FLAGS_protected_vm) {
     for (auto instance : config.Instances()) {
-      create_overlay_image(config, instance.PerInstancePath("overlay.img"),
-                           FLAGS_resume);
+      os_disk_builder.OverlayPath(instance.PerInstancePath("overlay.img"));
+      CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
       if (instance.start_ap()) {
-        create_overlay_image(config, instance.PerInstancePath("ap_overlay.img"),
-                             FLAGS_resume);
+        os_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
+        CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
       }
     }
   }
