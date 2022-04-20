@@ -254,6 +254,11 @@ class Command {
   Command RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                         Subprocess::StdIOChannel parent_channel) &&;
 
+  Command& SetWorkingDirectory(std::string path) &;
+  Command SetWorkingDirectory(std::string path) &&;
+  Command& SetWorkingDirectory(SharedFD dirfd) &;
+  Command SetWorkingDirectory(SharedFD dirfd) &&;
+
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
   Subprocess Start(SubprocessOptions options = SubprocessOptions()) const;
@@ -276,6 +281,7 @@ class Command {
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   std::vector<std::string> env_{};
   SubprocessStopper subprocess_stopper_;
+  SharedFD working_directory_;
 };
 
 /*

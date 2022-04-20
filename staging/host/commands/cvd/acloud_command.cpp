@@ -186,6 +186,7 @@ class ConvertAcloudCreateCommand {
       mkdir_command.add_args(dir);
       auto& mkdir_env = *mkdir_command.mutable_env();
       mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
+      *mkdir_command.mutable_working_directory() = dir;
     } else {
       cvd::Request& fetch_request = request_protos.emplace_back();
       auto& fetch_command = *fetch_request.mutable_command_request();
@@ -199,6 +200,7 @@ class ConvertAcloudCreateCommand {
         auto build = build_id.value_or(branch.value_or("aosp-master"));
         fetch_command.add_args(build + target);
       }
+      *fetch_command.mutable_working_directory() = dir;
       auto& fetch_env = *fetch_command.mutable_env();
       fetch_env[kAndroidHostOut] = host_artifacts_path->second;
     }
@@ -232,6 +234,7 @@ class ConvertAcloudCreateCommand {
     }
     start_env["CUTTLEFISH_INSTANCE"] = std::to_string(lock->Instance());
     start_env["HOME"] = dir;
+    *start_command.mutable_working_directory() = dir;
 
     std::vector<SharedFD> fds;
     if (verbose) {
