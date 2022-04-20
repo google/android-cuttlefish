@@ -18,15 +18,17 @@
 
 #include <unordered_set>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 SetupFeature::~SetupFeature() {}
 
-/* static */ bool SetupFeature::RunSetup(
+/* static */ Result<void> SetupFeature::RunSetup(
     const std::vector<SetupFeature*>& features) {
   std::unordered_set<SetupFeature*> enabled;
   for (const auto& feature : features) {
-    CHECK(feature != nullptr) << "Received null feature";
+    CF_EXPECT(feature != nullptr, "Received null feature");
     if (feature->Enabled()) {
       enabled.insert(feature);
     }
@@ -37,37 +39,29 @@ SetupFeature::~SetupFeature() {}
     ordered_features.push_back(feature);
     return true;
   };
-  if (!Feature<SetupFeature>::TopologicalVisit(enabled, add_feature)) {
-    LOG(ERROR) << "Dependency issue detected, not performing any setup.";
-    return false;
-  }
+  CF_EXPECT(Feature<SetupFeature>::TopologicalVisit(enabled, add_feature),
+            "Dependency issue detected, not performing any setup.");
   // TODO(b/189153501): This can potentially be parallelized.
   for (auto& feature : ordered_features) {
     LOG(DEBUG) << "Running setup for " << feature->Name();
-    if (!feature->Setup()) {
-      LOG(ERROR) << "Setup failed for " << feature->Name();
-      return false;
-    }
+    CF_EXPECT(feature->Setup(), "Setup failed for " << feature->Name());
   }
-  return true;
+  return {};
 }
 
-bool FlagFeature::ProcessFlags(const std::vector<FlagFeature*>& features,
-                               std::vector<std::string>& flags) {
+Result<void> FlagFeature::ProcessFlags(
+    const std::vector<FlagFeature*>& features,
+    std::vector<std::string>& flags) {
   std::unordered_set<FlagFeature*> features_set(features.begin(),
                                                 features.end());
-  if (features_set.count(nullptr)) {
-    LOG(ERROR) << "Received null feature";
-    return false;
-  }
+  CF_EXPECT(features_set.count(nullptr) == 0, "Received null feature");
   auto handle = [&flags](FlagFeature* feature) -> bool {
     return feature->Process(flags);
   };
-  if (!Feature<FlagFeature>::TopologicalVisit(features_set, handle)) {
-    LOG(ERROR) << "Unable to parse flags.";
-    return false;
-  }
-  return true;
+  CF_EXPECT(
+      Feature<FlagFeature>::TopologicalVisit(features_set, handle),
+      "Unable to parse flags.");
+  return {};
 }
 
 bool FlagFeature::WriteGflagsHelpXml(const std::vector<FlagFeature*>& features,
