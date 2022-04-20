@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 /*
-** Copyright 2017, The Android Open Source Project.
+** Copyright 2022, The Android Open Source Project.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 */
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <bool name="config_showNavigationBar" translatable="false">true</bool>
-  <!--  Maximum number of supported users -->
-  <integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
+    <!-- Restricting eth1 for auto/pc/phone/tv -->
+    <string-array translatable="false" name="config_ethernet_interfaces">
+        <item>eth1;11,12,14;;</item>
+    </string-array>
 </resources>
