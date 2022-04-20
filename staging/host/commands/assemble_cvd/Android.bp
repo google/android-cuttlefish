@@ -25,6 +25,7 @@ cc_binary {
         "boot_config.cc",
         "boot_image_utils.cc",
         "clean.cc",
+        "disk_builder.cpp",
         "disk_flags.cc",
         "flags.cc",
         "flag_feature.cpp",
