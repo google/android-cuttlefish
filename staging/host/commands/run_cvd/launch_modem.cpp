@@ -95,7 +95,7 @@ class ModemSimulator : public CommandSource {
     return commands;
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "ModemSimulator"; }
   bool Enabled() const override {
     if (!config_.enable_modem_simulator()) {
@@ -105,7 +105,7 @@ class ModemSimulator : public CommandSource {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     int instance_number = config_.modem_simulator_instance_number();
     if (instance_number > 3 /* max value */ || instance_number < 0) {
@@ -139,7 +139,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
 launchModemComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, ModemSimulator>()
-      .addMultibinding<Feature, ModemSimulator>();
+      .addMultibinding<SetupFeature, ModemSimulator>();
 }
 
 }  // namespace cuttlefish

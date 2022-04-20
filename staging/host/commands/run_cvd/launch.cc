@@ -89,12 +89,12 @@ class KernelLogMonitor : public CommandSource,
   }
 
  private:
-  // Feature
+  // SetupFeature
   bool Enabled() const override { return true; }
   std::string Name() const override { return "KernelLogMonitor"; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto log_name = instance_.kernel_log_pipe_name();
     if (mkfifo(log_name.c_str(), 0600) != 0) {
@@ -194,14 +194,14 @@ class RootCanal : public CommandSource {
     return commands;
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "RootCanal"; }
   bool Enabled() const override {
     return config_.enable_host_bluetooth() && instance_.start_rootcanal();
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
   const CuttlefishConfig& config_;
@@ -224,12 +224,12 @@ class LogcatReceiver : public CommandSource, public DiagnosticInformation {
         Command(LogcatReceiverBinary()).AddParameter("-log_pipe_fd=", pipe_));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "LogcatReceiver"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto log_name = instance_.logcat_pipe_name();
     if (mkfifo(log_name.c_str(), 0600) != 0) {
@@ -264,12 +264,12 @@ class ConfigServer : public CommandSource {
         Command(ConfigServerBinary()).AddParameter("-server_fd=", socket_));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "ConfigServer"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto port = instance_.config_server_port();
     socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
@@ -299,12 +299,12 @@ class TombstoneReceiver : public CommandSource {
             .AddParameter("-tombstone_dir=", tombstone_dir_));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "TombstoneReceiver"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     tombstone_dir_ = instance_.PerInstancePath("tombstones");
     if (!DirectoryExists(tombstone_dir_.c_str())) {
@@ -341,14 +341,14 @@ class MetricsService : public CommandSource {
     return single_element_emplace(Command(MetricsBinary()));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "MetricsService"; }
   bool Enabled() const override {
     return config_.enable_metrics() == CuttlefishConfig::kYes;
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
  private:
@@ -379,7 +379,7 @@ class GnssGrpcProxyServer : public CommandSource {
     return single_element_emplace(std::move(gnss_grpc_proxy_cmd));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "GnssGrpcProxyServer"; }
   bool Enabled() const override {
     return config_.enable_gnss_grpc_proxy() &&
@@ -387,7 +387,7 @@ class GnssGrpcProxyServer : public CommandSource {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     std::vector<SharedFD> fifos;
     std::vector<std::string> fifo_paths = {
@@ -439,12 +439,12 @@ class BluetoothConnector : public CommandSource {
     return single_element_emplace(std::move(command));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "BluetoothConnector"; }
   bool Enabled() const override { return config_.enable_host_bluetooth(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
@@ -502,12 +502,12 @@ class SecureEnvironment : public CommandSource {
     return single_element_emplace(std::move(command));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "SecureEnvironment"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override {
+  std::unordered_set<SetupFeature*> Dependencies() const override {
     return {&kernel_log_pipe_provider_};
   }
   bool Setup() override {
@@ -580,7 +580,7 @@ class VehicleHalServer : public CommandSource {
     return single_element_emplace(std::move(grpc_server));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "VehicleHalServer"; }
   bool Enabled() const override {
     return config_.enable_vehicle_hal_grpc_server() &&
@@ -588,7 +588,7 @@ class VehicleHalServer : public CommandSource {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
  private:
@@ -621,12 +621,12 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
     return single_element_emplace(std::move(console_forwarder_cmd));
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "ConsoleForwarder"; }
   bool Enabled() const override { return config_.console(); }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     auto console_in_pipe_name = instance_.console_in_pipe_name();
     if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
@@ -690,7 +690,7 @@ class WmediumdServer : public CommandSource {
     return commands;
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "WmediumdServer"; }
   bool Enabled() const override {
 #ifndef ENFORCE_MAC80211_HWSIM
@@ -701,7 +701,7 @@ class WmediumdServer : public CommandSource {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     // If wmediumd configuration is given, use it
     if (!config_.wmediumd_config().empty()) {
@@ -740,12 +740,12 @@ class VmmCommands : public CommandSource {
     return vmm_.StartCommands(config_);
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "VirtualMachineManager"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
   const CuttlefishConfig& config_;
@@ -815,7 +815,7 @@ class OpenWrt : public CommandSource {
     return commands;
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "OpenWrt"; }
   bool Enabled() const override {
 #ifndef ENFORCE_MAC80211_HWSIM
@@ -827,7 +827,7 @@ class OpenWrt : public CommandSource {
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
   const CuttlefishConfig& config_;
@@ -842,7 +842,8 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
                                        const CuttlefishConfig::InstanceSpecific,
                                        KernelLogPipeProvider>;
   using Multi = Multibindings<InternalDeps>;
-  using Bases = Multi::Bases<CommandSource, DiagnosticInformation, Feature>;
+  using Bases =
+      Multi::Bases<CommandSource, DiagnosticInformation, SetupFeature>;
   return fruit::createComponent()
       .bind<KernelLogPipeProvider, KernelLogMonitor>()
       .install(Bases::Impls<BluetoothConnector>)

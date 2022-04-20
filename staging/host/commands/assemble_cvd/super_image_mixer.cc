@@ -298,7 +298,7 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     if (SuperImageNeedsRebuilding(fetcher_config_)) {
       bool success = RebuildSuperImage(fetcher_config_, config_, output_path_);
@@ -325,7 +325,7 @@ SuperImageRebuilderComponent(const std::string* output_path) {
       .bindInstance<fruit::Annotated<SuperImageOutputPathTag, std::string>>(
           *output_path)
       .bind<SuperImageRebuilder, SuperImageRebuilderImpl>()
-      .addMultibinding<Feature, SuperImageRebuilder>();
+      .addMultibinding<SetupFeature, SuperImageRebuilder>();
 }
 
 } // namespace cuttlefish
