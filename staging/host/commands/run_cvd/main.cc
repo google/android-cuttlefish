@@ -122,34 +122,23 @@ fruit::Component<ServerLoop> runCvdComponent(
       .install(vm_manager::VmManagerComponent);
 }
 
-bool IsStdinValid() {
-  if (isatty(0)) {
-    LOG(ERROR) << "stdin was a tty, expected to be passed the output of a "
-                  "previous stage. "
-               << "Did you mean to run launch_cvd?";
-    return false;
-  } else {
-    int error_num = errno;
-    if (error_num == EBADF) {
-      LOG(ERROR) << "stdin was not a valid file descriptor, expected to be "
-                    "passed the output "
-                 << "of assemble_cvd. Did you mean to run launch_cvd?";
-      return false;
-    }
-  }
-  return true;
+Result<void> StdinValid() {
+  CF_EXPECT(!isatty(0),
+            "stdin was a tty, expected to be passed the output of a"
+            " previous stage. Did you mean to run launch_cvd?");
+  CF_EXPECT(errno != EBADF,
+            "stdin was not a valid file descriptor, expected to be passed the "
+            "output of assemble_cvd. Did you mean to run launch_cvd?");
+  return {};
 }
 
-const CuttlefishConfig* FindConfigFromStdin() {
+Result<const CuttlefishConfig*> FindConfigFromStdin() {
   std::string input_files_str;
   {
     auto input_fd = SharedFD::Dup(0);
     auto bytes_read = ReadAll(input_fd, &input_files_str);
-    if (bytes_read < 0) {
-      LOG(ERROR) << "Failed to read input files. Error was \""
-                 << input_fd->StrError() << "\"";
-      return nullptr;
-    }
+    CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
+                                   << input_fd->StrError() << "\"");
   }
   std::vector<std::string> input_files =
       android::base::Split(input_files_str, "\n");
@@ -158,7 +147,7 @@ const CuttlefishConfig* FindConfigFromStdin() {
       setenv(kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
     }
   }
-  return CuttlefishConfig::Get();
+  return CF_EXPECT(CuttlefishConfig::Get());  // Null check
 }
 
 void ConfigureLogs(const CuttlefishConfig& config,
@@ -179,18 +168,16 @@ void ConfigureLogs(const CuttlefishConfig& config,
   ::android::base::SetLogger(LogToStderrAndFiles({log_path}, prefix));
 }
 
-bool ChdirIntoRuntimeDir(const CuttlefishConfig::InstanceSpecific& instance) {
+Result<void> ChdirIntoRuntimeDir(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
   // find the running processes when it can't establish a communication with the
   // launcher.
-  auto chdir_ret = chdir(instance.instance_dir().c_str());
-  if (chdir_ret != 0) {
-    PLOG(ERROR) << "Unable to change dir into instance directory ("
-                << instance.instance_dir() << "): ";
-    return false;
-  }
-  return true;
+  CF_EXPECT(chdir(instance.instance_dir().c_str()) == 0,
+            "Unable to change dir into instance directory \""
+                << instance.instance_dir() << "\": " << strerror(errno));
+  return {};
 }
 
 }  // namespace
@@ -200,7 +187,7 @@ Result<void> RunCvdMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
-  CF_EXPECT(IsStdinValid(), "Invalid stdin");
+  CF_EXPECT(StdinValid(), "Invalid stdin");
   auto config = CF_EXPECT(FindConfigFromStdin());
   auto instance = config->ForDefaultInstance();
 
