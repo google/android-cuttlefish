@@ -20,12 +20,10 @@
 #include <thread>
 #include <vector>
 
-#include <common/libs/utils/subprocess.h>
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
-
-struct MonitorEntry;
-using OnSocketReadyCb = std::function<bool(MonitorEntry*, int)>;
 
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
@@ -36,25 +34,24 @@ struct MonitorEntry {
 class ProcessMonitor {
  public:
   ProcessMonitor(bool restart_subprocesses);
-  // Adds a command to the list of commands to be run and monitored. The
-  // callback will be called when the subprocess has ended.  If the callback
-  // returns false the subprocess will no longer be monitored. Can only be
-  // called before StartAndMonitorProcesses is called. OnSocketReadyCb will be
-  // called inside a forked process.
-  void AddCommand(Command cmd);
+  // Adds a command to the list of commands to be run and monitored. Can only be
+  // called before StartAndMonitorProcesses is called.
+  Result<void> AddCommand(Command cmd);
   template <typename T>
-  void AddCommands(T&& commands) {
+  Result<void> AddCommands(T&& commands) {
     for (auto& command : commands) {
-      AddCommand(std::move(command));
+      CF_EXPECT(AddCommand(std::move(command)));
     }
+    return {};
   }
 
   // Start all processes given by AddCommand.
-  bool StartAndMonitorProcesses();
+  Result<void> StartAndMonitorProcesses();
   // Stops all monitored subprocesses.
-  bool StopMonitoredProcesses();
+  Result<void> StopMonitoredProcesses();
+
  private:
-  bool MonitorRoutine();
+  Result<void> MonitorRoutine();
 
   bool restart_subprocesses_;
   std::vector<MonitorEntry> monitored_processes_;
