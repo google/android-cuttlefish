@@ -87,6 +87,10 @@ Result<InstanceManager::InstanceGroupInfo> InstanceManager::GetInstanceGroup(
 cvd::Status InstanceManager::CvdFleet(const SharedFD& out,
                                       const std::string& env_config) const {
   std::lock_guard assemblies_lock(instance_groups_mutex_);
+  const char _GroupDeviceInfoStart[] = "[\n";
+  const char _GroupDeviceInfoSeparate[] = ",\n";
+  const char _GroupDeviceInfoEnd[] = "]\n";
+  WriteAll(out, _GroupDeviceInfoStart);
   for (const auto& [group_dir, group_info] : instance_groups_) {
     auto config_path = GetCuttlefishConfigPath(group_dir);
     if (FileExists(env_config)) {
@@ -98,20 +102,22 @@ cvd::Status InstanceManager::CvdFleet(const SharedFD& out,
       // version).
       auto config = CuttlefishConfig::GetFromFile(*config_path);
       if (config) {
-        for (const std::string& instance_name : config->instance_names()) {
-          Command command(group_info.host_binaries_dir + kStatusBin);
-          command.AddParameter("--print");
-          command.AddParameter("--instance_name=", instance_name);
-          command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-          command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
-                                         *config_path);
-          if (int wait_result = command.Start().Wait(); wait_result != 0) {
-            WriteAll(out, "      (unknown instance status error)");
-          }
+        Command command(group_info.host_binaries_dir + kStatusBin);
+        command.AddParameter("--print");
+        command.AddParameter("--all_instances");
+        command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+        command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName,
+                                       *config_path);
+        if (int wait_result = command.Start().Wait(); wait_result != 0) {
+          WriteAll(out, "      (unknown instance status error)");
         }
       }
     }
+    if (group_dir != instance_groups_.rbegin()->first) {
+      WriteAll(out, _GroupDeviceInfoSeparate);
+    }
   }
+  WriteAll(out, _GroupDeviceInfoEnd);
   cvd::Status status;
   status.set_code(cvd::Status::OK);
   return status;

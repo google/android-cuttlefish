@@ -78,6 +78,10 @@ int CvdStatusMain(int argc, char** argv) {
   flags.emplace_back(GflagsCompatFlag("print", print)
                          .Help("If provided, prints status and instance config "
                                "information to stdout instead of CHECK"));
+  bool all_instances;
+  flags.emplace_back(
+      GflagsCompatFlag("all_instances", all_instances)
+          .Help("List all instances status and instance config information."));
 
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(UnexpectedArgumentGuard());
@@ -89,72 +93,80 @@ int CvdStatusMain(int argc, char** argv) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Failed to obtain config object";
 
-  auto instance = instance_name.empty()
-                      ? config->ForDefaultInstance()
-                      : config->ForInstanceName(instance_name);
+  auto instance_names = all_instances ? config->instance_names()
+                                      : std::vector<std::string>{instance_name};
 
-  auto monitor_path = instance.launcher_monitor_socket_path();
-  CHECK_PRINT(print, !monitor_path.empty(),
-              "No path to launcher monitor found");
+  Json::Value devices_info;
+  for (int index = 0; index < instance_names.size(); index++) {
+    std::string instance_name = instance_names[index];
+    auto instance = instance_name.empty()
+                        ? config->ForDefaultInstance()
+                        : config->ForInstanceName(instance_name);
+    auto monitor_path = instance.launcher_monitor_socket_path();
+    CHECK_PRINT(print, !monitor_path.empty(),
+                "No path to launcher monitor found");
 
-  auto monitor_socket = SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
-  CHECK_PRINT(print, monitor_socket->IsOpen(),
-              "Unable to connect to launcher monitor at " + monitor_path +
-                  ": " + monitor_socket->StrError());
+    auto monitor_socket = SharedFD::SocketLocalClient(
+        monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
+    CHECK_PRINT(print, monitor_socket->IsOpen(),
+                "Unable to connect to launcher monitor at " + monitor_path +
+                    ": " + monitor_socket->StrError());
 
-  auto request = LauncherAction::kStatus;
-  auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
-  CHECK_PRINT(print, bytes_sent > 0,
-              "Error sending launcher monitor the status command: " +
-                  monitor_socket->StrError());
+    auto request = LauncherAction::kStatus;
+    auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
+    CHECK_PRINT(print, bytes_sent > 0,
+                "Error sending launcher monitor the status command: " +
+                    monitor_socket->StrError());
 
-  // Perform a select with a timeout to guard against launcher hanging
-  SharedFDSet read_set;
-  read_set.Set(monitor_socket);
-  struct timeval timeout = {wait_for_launcher, 0};
-  int selected = Select(&read_set, nullptr, nullptr,
-                        wait_for_launcher <= 0 ? nullptr : &timeout);
-  CHECK_PRINT(print, selected >= 0,
-              std::string("Failed communication with the launcher monitor: ") +
-                  strerror(errno));
-  CHECK_PRINT(print, selected > 0,
-              "Timeout expired waiting for launcher monitor to respond");
+    // Perform a select with a timeout to guard against launcher hanging
+    SharedFDSet read_set;
+    read_set.Set(monitor_socket);
+    struct timeval timeout = {wait_for_launcher, 0};
+    int selected = Select(&read_set, nullptr, nullptr,
+                          wait_for_launcher <= 0 ? nullptr : &timeout);
+    CHECK_PRINT(
+        print, selected >= 0,
+        std::string("Failed communication with the launcher monitor: ") +
+            strerror(errno));
+    CHECK_PRINT(print, selected > 0,
+                "Timeout expired waiting for launcher monitor to respond");
 
-  LauncherResponse response;
-  auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
-  CHECK_PRINT(print, bytes_recv > 0,
-              std::string("Error receiving response from launcher monitor: ") +
-                  monitor_socket->StrError());
-  CHECK_PRINT(print, response == LauncherResponse::kSuccess,
-              std::string("Received '") + static_cast<char>(response) +
-                  "' response from launcher monitor");
-
-  if (print) {
-    Json::Value device_info;
-    device_info["assembly_dir"] = config->assembly_dir();
-    device_info["instance_name"] = instance.instance_name();
-    device_info["instance_dir"] = instance.instance_dir();
-    device_info["web_access"] =
-        "https://" + config->sig_server_address() + ":" +
-        std::to_string(config->sig_server_port()) +
-        "/client.html?deviceId=" + instance.instance_name();
-    device_info["adb_serial"] = instance.adb_ip_and_port();
-    device_info["webrtc_port"] = std::to_string(config->sig_server_port());
-    for (int i = 0; i < config->display_configs().size(); i++) {
-      device_info["displays"][i] =
-          std::to_string(config->display_configs()[i].width) + " x " +
-          std::to_string(config->display_configs()[i].height) + " ( " +
-          std::to_string(config->display_configs()[i].dpi) + " )";
+    LauncherResponse response;
+    auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
+    CHECK_PRINT(
+        print, bytes_recv > 0,
+        std::string("Error receiving response from launcher monitor: ") +
+            monitor_socket->StrError());
+    CHECK_PRINT(print, response == LauncherResponse::kSuccess,
+                std::string("Received '") + static_cast<char>(response) +
+                    "' response from launcher monitor");
+    if (print) {
+      devices_info[index]["assembly_dir"] = config->assembly_dir();
+      devices_info[index]["instance_name"] = instance.instance_name();
+      devices_info[index]["instance_dir"] = instance.instance_dir();
+      devices_info[index]["web_access"] =
+          "https://" + config->sig_server_address() + ":" +
+          std::to_string(config->sig_server_port()) +
+          "/client.html?deviceId=" + instance.instance_name();
+      devices_info[index]["adb_serial"] = instance.adb_ip_and_port();
+      devices_info[index]["webrtc_port"] =
+          std::to_string(config->sig_server_port());
+      for (int i = 0; i < config->display_configs().size(); i++) {
+        devices_info[index]["displays"][i] =
+            std::to_string(config->display_configs()[i].width) + " x " +
+            std::to_string(config->display_configs()[i].height) + " ( " +
+            std::to_string(config->display_configs()[i].dpi) + " )";
+      }
+      devices_info[index]["status"] = "Running";
+      if (index == (instance_names.size() - 1)) {
+        std::cout << devices_info.toStyledString() << std::endl;
+      }
+    } else {
+      LOG(INFO) << "run_cvd is active.";
     }
-    device_info["status"] = "Running";
-    std::cout << device_info.toStyledString() << std::endl;
-  } else {
-    LOG(INFO) << "run_cvd is active.";
   }
   return 0;
 }
-
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
