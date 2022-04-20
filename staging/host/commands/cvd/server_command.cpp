@@ -225,6 +225,16 @@ Result<cvd::Response> CvdCommandHandler::Handle(
       cvd::WAIT_BEHAVIOR_START) {
     options.ExitWithParent(false);
   }
+
+  const auto& working_dir =
+      request.Message().command_request().working_directory();
+  if (!working_dir.empty()) {
+    auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
+    CF_EXPECT(fd->IsOpen(),
+              "Couldn't open \"" << working_dir << "\": " << fd->StrError());
+    command.SetWorkingDirectory(fd);
+  }
+
   subprocess_ = command.Start(options);
 
   if (request.Message().command_request().wait_behavior() ==
