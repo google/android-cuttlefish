@@ -21,7 +21,7 @@
 
 namespace cuttlefish {
 
-class SuperImageRebuilder : public Feature {};
+class SuperImageRebuilder : public SetupFeature {};
 
 fruit::Component<fruit::Required<const FetcherConfig, const CuttlefishConfig>,
                  SuperImageRebuilder>

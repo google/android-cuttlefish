@@ -24,7 +24,7 @@
 
 namespace cuttlefish {
 
-class InitBootloaderEnvPartition : public Feature {};
+class InitBootloaderEnvPartition : public SetupFeature {};
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>,

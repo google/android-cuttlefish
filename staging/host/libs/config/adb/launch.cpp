@@ -94,14 +94,14 @@ class AdbConnector : public CommandSource {
     return std::move(commands);
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "AdbConnector"; }
   bool Enabled() const override {
     return helper_.TcpConnectorEnabled() || helper_.VsockConnectorEnabled();
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
   const AdbHelper& helper_;
@@ -164,15 +164,15 @@ class SocketVsockProxy : public CommandSource {
     return commands;
   }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "SocketVsockProxy"; }
   bool Enabled() const override {
     return helper_.VsockTunnelEnabled() || helper_.VsockHalfTunnelEnabled();
   }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override {
-    return {static_cast<Feature*>(&log_pipe_provider_)};
+  std::unordered_set<SetupFeature*> Dependencies() const override {
+    return {static_cast<SetupFeature*>(&log_pipe_provider_)};
   }
   bool Setup() override {
     tcp_server_ =
@@ -201,8 +201,8 @@ LaunchAdbComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, AdbConnector>()
       .addMultibinding<CommandSource, SocketVsockProxy>()
-      .addMultibinding<Feature, AdbConnector>()
-      .addMultibinding<Feature, SocketVsockProxy>();
+      .addMultibinding<SetupFeature, AdbConnector>()
+      .addMultibinding<SetupFeature, SocketVsockProxy>();
 }
 
 }  // namespace cuttlefish

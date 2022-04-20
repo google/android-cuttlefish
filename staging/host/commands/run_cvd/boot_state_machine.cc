@@ -109,18 +109,18 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
   }
 }
 
-class ProcessLeader : public Feature {
+class ProcessLeader : public SetupFeature {
  public:
   INJECT(ProcessLeader(const CuttlefishConfig& config)) : config_(config) {}
 
   SharedFD ForegroundLauncherPipe() { return foreground_launcher_pipe_; }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "ProcessLeader"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
     /* These two paths result in pretty different process state, but both
      * achieve the same goal of making the current process the leader of a
@@ -151,7 +151,7 @@ class ProcessLeader : public Feature {
 // Maintains the state of the boot process, once a final state is reached
 // (success or failure) it sends the appropriate exit code to the foreground
 // launcher process
-class CvdBootStateMachine : public Feature {
+class CvdBootStateMachine : public SetupFeature {
  public:
   INJECT(CvdBootStateMachine(ProcessLeader& process_leader,
                              KernelLogPipeProvider& kernel_log_pipe_provider))
@@ -161,15 +161,15 @@ class CvdBootStateMachine : public Feature {
 
   ~CvdBootStateMachine() { boot_event_handler_.join(); }
 
-  // Feature
+  // SetupFeature
   std::string Name() const override { return "CvdBootStateMachine"; }
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<Feature*> Dependencies() const {
+  std::unordered_set<SetupFeature*> Dependencies() const {
     return {
-        static_cast<Feature*>(&process_leader_),
-        static_cast<Feature*>(&kernel_log_pipe_provider_),
+        static_cast<SetupFeature*>(&process_leader_),
+        static_cast<SetupFeature*>(&kernel_log_pipe_provider_),
     };
   }
   bool Setup() override {
@@ -282,8 +282,8 @@ class CvdBootStateMachine : public Feature {
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider>>
 bootStateMachineComponent() {
   return fruit::createComponent()
-      .addMultibinding<Feature, ProcessLeader>()
-      .addMultibinding<Feature, CvdBootStateMachine>();
+      .addMultibinding<SetupFeature, ProcessLeader>()
+      .addMultibinding<SetupFeature, CvdBootStateMachine>();
 }
 
 }  // namespace cuttlefish
