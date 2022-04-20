@@ -159,7 +159,14 @@ class CvdBootStateMachine : public SetupFeature {
         kernel_log_pipe_provider_(kernel_log_pipe_provider),
         state_(kBootStarted) {}
 
-  ~CvdBootStateMachine() { boot_event_handler_.join(); }
+  ~CvdBootStateMachine() {
+    if (interrupt_fd_->IsOpen()) {
+      CHECK(interrupt_fd_->EventfdWrite(1) >= 0);
+    }
+    if (boot_event_handler_.joinable()) {
+      boot_event_handler_.join();
+    }
+  }
 
   // SetupFeature
   std::string Name() const override { return "CvdBootStateMachine"; }
@@ -173,6 +180,11 @@ class CvdBootStateMachine : public SetupFeature {
     };
   }
   bool Setup() override {
+    interrupt_fd_ = SharedFD::Event();
+    if (!interrupt_fd_->IsOpen()) {
+      LOG(ERROR) << "Failed to open eventfd: " << interrupt_fd_->StrError();
+      return false;
+    }
     fg_launcher_pipe_ = process_leader_.ForegroundLauncherPipe();
     if (FLAGS_reboot_notification_fd >= 0) {
       reboot_notification_ = SharedFD::Dup(FLAGS_reboot_notification_fd);
@@ -194,23 +206,31 @@ class CvdBootStateMachine : public SetupFeature {
 
   void ThreadLoop(SharedFD boot_events_pipe) {
     while (true) {
-      PollSharedFd poll_shared_fd = {
-          .fd = boot_events_pipe,
-          .events = POLLIN | POLLHUP,
-      };
-      int result = SharedFD::Poll(&poll_shared_fd, 1, -1);
+      std::vector<PollSharedFd> poll_shared_fd = {
+          {
+              .fd = boot_events_pipe,
+              .events = POLLIN | POLLHUP,
+          },
+          {
+              .fd = interrupt_fd_,
+              .events = POLLIN | POLLHUP,
+          }};
+      int result = SharedFD::Poll(poll_shared_fd, -1);
+      if (poll_shared_fd[1].revents & POLLIN) {
+        return;
+      }
       if (result < 0) {
         PLOG(FATAL) << "Failed to call Select";
         return;
       }
-      if (poll_shared_fd.revents & POLLHUP) {
+      if (poll_shared_fd[0].revents & POLLHUP) {
         LOG(ERROR) << "Failed to read a complete kernel log boot event.";
         state_ |= kGuestBootFailed;
         if (MaybeWriteNotification()) {
           break;
         }
       }
-      if (!(poll_shared_fd.revents & POLLIN)) {
+      if (!(poll_shared_fd[0].revents & POLLIN)) {
         continue;
       }
       auto sent_code = OnBootEvtReceived(boot_events_pipe);
@@ -271,6 +291,7 @@ class CvdBootStateMachine : public SetupFeature {
   std::thread boot_event_handler_;
   SharedFD fg_launcher_pipe_;
   SharedFD reboot_notification_;
+  SharedFD interrupt_fd_;
   int state_;
   static const int kBootStarted = 0;
   static const int kGuestBootCompleted = 1 << 0;
