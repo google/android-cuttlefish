@@ -21,6 +21,7 @@
 #include <sstream>
 #include <string>
 
+#include <android-base/file.h>
 #include <android-base/result.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -30,12 +31,12 @@ using android::base::Result;
 
 namespace cuttlefish {
 
-SshCommand& SshCommand::PrivKey(const std::string& privkey) & {
-  privkey_ = privkey;
+SshCommand& SshCommand::PrivKey(const std::string& privkey_path) & {
+  privkey_path_ = privkey_path;
   return *this;
 }
-SshCommand SshCommand::PrivKey(const std::string& privkey) && {
-  privkey_ = privkey;
+SshCommand SshCommand::PrivKey(const std::string& privkey_path) && {
+  privkey_path_ = privkey_path;
   return *this;
 }
 
@@ -84,62 +85,11 @@ SshCommand SshCommand::RemoteParameter(const std::string& param) && {
   return *this;
 }
 
-static uint16_t RandomTcpPort() {
-  std::random_device rand_dev;
-  std::mt19937 generator(rand_dev());
-  std::uniform_int_distribution<uint16_t> distr(1024, 65535);
-  return distr(generator);
-}
-
-/*
- * Netcat is used here as part of a sequence of workarounds:
- *
- * `ssh` closes every file descriptor above stderr (2) on startup
- * ... so we pass the private key to `ssh` in a file descriptor 0, or /dev/stdin
- * ... so stdin is unavailable to pass data to the remote side
- * ... so we use `ssh`'s reverse port forward feature to send data over TCP
- * ... so we invoke netcat on the remote side to save this into a file.
- *
- * There is some room to generalize this in the future to support interactive
- * processes to recover the functionality lost with using stdin for other
- * purposes.
- */
-Result<SharedFD> SshCommand::TcpServerStdin() & {
-  if (parameters_.size() > 0 && parameters_.front() == "netcat") {
-    return Error() << "TcpServerStdin was already called";
-  }
-  auto server = SharedFD::SocketLocalServer(0, SOCK_STREAM);
-  if (!server->IsOpen()) {
-    return Error() << "Could not allocate TCP server: " << server->StrError();
-  }
-
-  struct sockaddr_in address;
-  struct sockaddr* untyped_addr = reinterpret_cast<struct sockaddr*>(&address);
-  socklen_t length = sizeof(address);
-  if (server->GetSockName(untyped_addr, &length) != 0) {
-    return Error() << "GetSockName failed: " << server->StrError();
-  }
-  auto local_port = ntohs(address.sin_port);  // sin_port has network byte order
-
-  auto remote_port = RandomTcpPort();
-  // SSH always creates a shell on the remote side, so we don't need to
-  // explicitly create it with `bash -c "..."`.
-  RemotePortForward(remote_port, local_port);
-  parameters_.insert(parameters_.begin(),
-                     {"netcat", "127.0.0.1", std::to_string(remote_port), "|"});
-  return server;
-}
-
 Command SshCommand::Build() const {
   Command remote_cmd{"/usr/bin/ssh"};
-  remote_cmd.AddParameter("-n");
-  if (privkey_) {
-    // OpenSSH closes file descriptors higher than stderr
-    // https://github.com/openssh/openssh-portable/blob/6b977f8080a32c5b3cbb9edb634b9d5789fb79be/ssh.c#L642
+  if (privkey_path_) {
     remote_cmd.AddParameter("-i");
-    remote_cmd.AddParameter("/proc/self/fd/0");
-    remote_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn,
-                             SharedFD::MemfdCreateWithData("", *privkey_));
+    remote_cmd.AddParameter(*privkey_path_);
   }
   if (without_known_hosts_) {
     remote_cmd.AddParameter("-o");
@@ -194,8 +144,15 @@ Result<std::unique_ptr<ScopedGceInstance>> ScopedGceInstance::CreateDefault(
     return Error() << "Failed to create instance: " << creation.error();
   }
 
-  std::unique_ptr<ScopedGceInstance> instance(
-      new ScopedGceInstance(gce, default_instance_info, std::move(*ssh_key)));
+  auto privkey = CF_EXPECT((*ssh_key)->PemPrivateKey());
+  std::unique_ptr<TemporaryFile> privkey_file(CF_EXPECT(new TemporaryFile()));
+  auto fd_dup = SharedFD::Dup(privkey_file->fd);
+  CF_EXPECT(fd_dup->IsOpen());
+  CF_EXPECT(WriteAll(fd_dup, privkey) == privkey.size());
+  fd_dup->Close();
+
+  std::unique_ptr<ScopedGceInstance> instance(new ScopedGceInstance(
+      gce, default_instance_info, std::move(privkey_file)));
 
   auto created_info = gce.Get(default_instance_info).get();
   if (!created_info.ok()) {
@@ -219,21 +176,13 @@ Result<void> ScopedGceInstance::EnforceSshReady() {
       return Error() << "Failed to create ssh command: " << ssh.error();
     }
 
-    /**
-     * Any command works here, so we might as well try a command to install
-     * netcat. Netcat is used later to compensate for stdin being unavailable
-     * on the SSH commands used here.
-     */
-    ssh->RemoteParameter("sudo");
-    ssh->RemoteParameter("apt-get");
-    ssh->RemoteParameter("install");
-    ssh->RemoteParameter("-y");
-    ssh->RemoteParameter("netcat");
-    auto getNetcat = ssh->Build();
+    ssh->RemoteParameter("ls");
+    ssh->RemoteParameter("/");
+    auto command = ssh->Build();
 
     out = "";
     err = "";
-    int ret = RunWithManagedStdio(std::move(getNetcat), nullptr, &out, &err);
+    int ret = RunWithManagedStdio(std::move(command), nullptr, &out, &err);
     if (ret == 0) {
       return {};
     }
@@ -245,8 +194,8 @@ Result<void> ScopedGceInstance::EnforceSshReady() {
 
 ScopedGceInstance::ScopedGceInstance(GceApi& gce,
                                      const GceInstanceInfo& instance,
-                                     std::unique_ptr<KeyPair> keypair)
-    : gce_(gce), instance_(instance), keypair_(std::move(keypair)) {}
+                                     std::unique_ptr<TemporaryFile> privkey)
+    : gce_(gce), instance_(instance), privkey_(std::move(privkey)) {}
 
 ScopedGceInstance::~ScopedGceInstance() {
   auto delete_ins = gce_.Delete(instance_).Future().get();
@@ -256,13 +205,8 @@ ScopedGceInstance::~ScopedGceInstance() {
 }
 
 Result<SshCommand> ScopedGceInstance::Ssh() {
-  auto ssh_privkey = keypair_->PemPrivateKey();
-  if (!ssh_privkey.ok()) {
-    return Error() << "Failed to get private key: " << ssh_privkey.error();
-  }
-
   return SshCommand()
-      .PrivKey(*ssh_privkey)
+      .PrivKey(privkey_->path)
       .WithoutKnownHosts()
       .Username("vsoc-01")
       .Host(instance_.NetworkInterfaces()[0].ExternalIp().value());
