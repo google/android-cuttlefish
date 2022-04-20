@@ -31,6 +31,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -142,16 +143,7 @@ Result<void> ResolveInstanceFiles() {
 
   return {};
 }
-void create_overlay_image(const CuttlefishConfig& config,
-                          std::string overlay_path) {
-  bool missingOverlay = !FileExists(overlay_path);
-  bool newOverlay = FileModificationTime(overlay_path) <
-                    FileModificationTime(config.os_composite_disk_path());
-  if (missingOverlay || !FLAGS_resume || newOverlay) {
-    CreateQcowOverlay(config.crosvm_binary(), config.os_composite_disk_path(),
-                      overlay_path);
-  }
-}
+
 std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition{
@@ -279,62 +271,6 @@ std::vector<ImagePartition> persistent_composite_disk_config(
   return partitions;
 }
 
-static std::chrono::system_clock::time_point LastUpdatedInputDisk(
-    const std::vector<ImagePartition>& partitions) {
-  std::chrono::system_clock::time_point ret;
-  for (auto& partition : partitions) {
-    if (partition.label == "frp") {
-      continue;
-    }
-
-    auto partition_mod_time = FileModificationTime(partition.image_file_path);
-    if (partition_mod_time > ret) {
-      ret = partition_mod_time;
-    }
-  }
-  return ret;
-}
-
-bool DoesCompositeMatchCurrentDiskConfig(
-    const std::string& prior_disk_config_path,
-    const std::vector<ImagePartition>& partitions) {
-  std::string current_disk_config_path = prior_disk_config_path + ".tmp";
-  std::ostringstream disk_conf;
-  for (auto& partition : partitions) {
-    disk_conf << partition.image_file_path << "\n";
-  }
-
-  {
-    // This file acts as a descriptor of the cuttlefish disk contents in a VMM agnostic way (VMMs
-    // used are QEMU and CrosVM at the time of writing). This file is used to determine if the
-    // disk config for the pending boot matches the disk from the past boot.
-    std::ofstream file_out(current_disk_config_path.c_str(), std::ios::binary);
-    file_out << disk_conf.str();
-    CHECK(file_out.good()) << "Disk config verification failed.";
-  }
-
-  if (!FileExists(prior_disk_config_path) ||
-      ReadFile(prior_disk_config_path) != ReadFile(current_disk_config_path)) {
-    CHECK(cuttlefish::RenameFile(current_disk_config_path, prior_disk_config_path))
-        << "Unable to delete the old disk config descriptor";
-    LOG(DEBUG) << "Disk Config has changed since last boot. Regenerating composite disk.";
-    return false;
-  } else {
-    RemoveFile(current_disk_config_path);
-    return true;
-  }
-}
-
-bool ShouldCreateCompositeDisk(const std::string& composite_disk_path,
-                               const std::vector<ImagePartition>& partitions) {
-  if (!FileExists(composite_disk_path)) {
-    return true;
-  }
-
-  auto composite_age = FileModificationTime(composite_disk_path);
-  return composite_age < LastUpdatedInputDisk(partitions);
-}
-
 bool ShouldCreateOsCompositeDisk(const CuttlefishConfig& config) {
   return ShouldCreateCompositeDisk(config.os_composite_disk_path(),
                                    GetOsCompositeDiskConfig());
@@ -350,24 +286,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> CreateCompositeDiskCommon(
-    const std::string& vm_manager, const std::string& header_path,
-    const std::string& footer_path,
-    const std::vector<ImagePartition> partitions,
-    const std::string& output_path) {
-  CF_EXPECT(SharedFD::Open(output_path, O_WRONLY | O_CREAT, 0644)->IsOpen(),
-            "Could not ensure \"" << output_path << "\" exists");
-  if (vm_manager == CrosvmManager::name()) {
-    CreateCompositeDisk(partitions, AbsolutePath(header_path),
-                        AbsolutePath(footer_path), AbsolutePath(output_path));
-  } else {
-    // If this doesn't fit into the disk, it will fail while aggregating. The
-    // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(partitions, output_path);
-  }
-  return {};
 }
 
 Result<void> CreateOsCompositeDisk(const CuttlefishConfig& config) {
@@ -1151,10 +1069,11 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
 
   if (!FLAGS_protected_vm) {
     for (auto instance : config.Instances()) {
-      create_overlay_image(config, instance.PerInstancePath("overlay.img"));
+      create_overlay_image(config, instance.PerInstancePath("overlay.img"),
+                           FLAGS_resume);
       if (instance.start_ap()) {
-        create_overlay_image(config,
-                             instance.PerInstancePath("ap_overlay.img"));
+        create_overlay_image(config, instance.PerInstancePath("ap_overlay.img"),
+                             FLAGS_resume);
       }
     }
   }
