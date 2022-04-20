@@ -15,12 +15,15 @@
  */
 #pragma once
 
-#include <android-base/logging.h>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include <android-base/logging.h>
+
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -31,8 +34,9 @@ class Feature {
 
   virtual std::string Name() const = 0;
 
-  static bool TopologicalVisit(const std::unordered_set<Subclass*>& features,
-                               const std::function<bool(Subclass*)>& callback);
+  static Result<void> TopologicalVisit(
+      const std::unordered_set<Subclass*>& features,
+      const std::function<bool(Subclass*)>& callback);
 
  private:
   virtual std::unordered_set<Subclass*> Dependencies() const = 0;
@@ -42,7 +46,7 @@ class SetupFeature : public virtual Feature<SetupFeature> {
  public:
   virtual ~SetupFeature();
 
-  static bool RunSetup(const std::vector<SetupFeature*>& features);
+  static Result<void> RunSetup(const std::vector<SetupFeature*>& features);
 
   virtual bool Enabled() const = 0;
 
@@ -52,8 +56,8 @@ class SetupFeature : public virtual Feature<SetupFeature> {
 
 class FlagFeature : public Feature<FlagFeature> {
  public:
-  static bool ProcessFlags(const std::vector<FlagFeature*>& features,
-                           std::vector<std::string>& flags);
+  static Result<void> ProcessFlags(const std::vector<FlagFeature*>& features,
+                                   std::vector<std::string>& flags);
   static bool WriteGflagsHelpXml(const std::vector<FlagFeature*>& features,
                                  std::ostream& out);
 
@@ -71,7 +75,7 @@ class FlagFeature : public Feature<FlagFeature> {
 };
 
 template <typename Subclass>
-bool Feature<Subclass>::TopologicalVisit(
+Result<void> Feature<Subclass>::TopologicalVisit(
     const std::unordered_set<Subclass*>& features,
     const std::function<bool(Subclass*)>& callback) {
   enum class Status { UNVISITED, VISITING, VISITED };
@@ -79,41 +83,34 @@ bool Feature<Subclass>::TopologicalVisit(
   for (const auto& feature : features) {
     features_status[feature] = Status::UNVISITED;
   }
-  std::function<bool(Subclass*)> visit;
-  visit = [&callback, &features_status, &visit](Subclass* feature) -> bool {
-    if (features_status.count(feature) == 0) {
-      LOG(ERROR) << "Dependency edge to " << feature->Name() << " but it is not"
-                 << " part of the feature graph. This feature is either "
-                 << "disabled or not correctly registered.";
-      return false;
-    } else if (features_status[feature] == Status::VISITED) {
-      return true;
-    } else if (features_status[feature] == Status::VISITING) {
-      LOG(ERROR) << "Cycle detected while visiting " << feature->Name();
-      return false;
+  std::function<Result<void>(Subclass*)> visit;
+  visit = [&callback, &features_status,
+           &visit](Subclass* feature) -> Result<void> {
+    CF_EXPECT(features_status.count(feature) > 0,
+              "Dependency edge to "
+                  << feature->Name() << " but it is not part of the feature "
+                  << "graph. This feature is either disabled or not correctly "
+                  << "registered.");
+    if (features_status[feature] == Status::VISITED) {
+      return {};
     }
+    CF_EXPECT(features_status[feature] != Status::VISITING,
+              "Cycle detected while visiting " << feature->Name());
     features_status[feature] = Status::VISITING;
     for (const auto& dependency : feature->Dependencies()) {
-      CHECK(dependency != nullptr)
-          << "SetupFeature " << feature->Name() << " has a null dependency.";
-      if (!visit(dependency)) {
-        LOG(ERROR) << "Error detected while visiting " << feature->Name();
-        return false;
-      }
+      CF_EXPECT(dependency != nullptr,
+                "SetupFeature " << feature->Name() << " has a null dependency.");
+      CF_EXPECT(visit(dependency),
+                "Error detected while visiting " << feature->Name());
     }
     features_status[feature] = Status::VISITED;
-    if (!callback(feature)) {
-      LOG(ERROR) << "Callback error on " << feature->Name();
-      return false;
-    }
-    return true;
+    CF_EXPECT(callback(feature), "Callback error on " << feature->Name());
+    return {};
   };
   for (const auto& feature : features) {
-    if (!visit(feature)) {  // `visit` will log the error chain.
-      return false;
-    }
+    CF_EXPECT(visit(feature));  // `visit` will log the error chain.
   }
-  return true;
+  return {};
 }
 
 }  // namespace cuttlefish
