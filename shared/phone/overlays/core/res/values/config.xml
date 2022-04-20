@@ -55,10 +55,6 @@
   <string name="config_mms_user_agent_profile_url" translatable="false">http://gsm.lge.com/html/gsm/Nexus5-M3.xml</string>
   <string name="config_wlan_data_service_package" translatable="false">com.android.ims</string>
   <string name="config_wlan_network_service_package" translatable="false">com.android.ims</string>
-  <!-- Restricting eth1 -->
-  <string-array translatable="false" name="config_ethernet_interfaces">
-    <item>eth1;11,12,14;;</item>
-  </string-array>
 
   <!-- List of biometric sensors on the device, in decreasing strength. Consumed by AuthService
   when registering authenticators with BiometricService. Format must be ID:Modality:Strength,
