@@ -348,10 +348,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   fruit::Injector<> injector(FlagsComponent);
   auto flag_features = injector.getMultibindings<FlagFeature>();
-  if (!FlagFeature::ProcessFlags(flag_features, args)) {
-    LOG(ERROR) << "Failed to parse flags.";
-    return 1;
-  }
+  CF_EXPECT(FlagFeature::ProcessFlags(flag_features, args),
+            "Failed to parse flags.");
 
   if (help || help_str != "") {
     LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
