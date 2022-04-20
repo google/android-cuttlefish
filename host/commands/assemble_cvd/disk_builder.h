@@ -25,20 +25,53 @@
 
 namespace cuttlefish {
 
-void create_overlay_image(const CuttlefishConfig& config,
-                          std::string overlay_path, bool resume);
+class DiskBuilder {
+ public:
+  DiskBuilder& Partitions(std::vector<ImagePartition> partitions) &;
+  DiskBuilder Partitions(std::vector<ImagePartition> partitions) &&;
 
-bool ShouldCreateCompositeDisk(const std::string& composite_disk_path,
-                               const std::vector<ImagePartition>& partitions);
+  DiskBuilder& HeaderPath(std::string header_path) &;
+  DiskBuilder HeaderPath(std::string header_path) &&;
 
-bool DoesCompositeMatchCurrentDiskConfig(
-    const std::string& prior_disk_config_path,
-    const std::vector<ImagePartition>& partitions);
+  DiskBuilder& FooterPath(std::string footer_path) &;
+  DiskBuilder FooterPath(std::string footer_path) &&;
 
-Result<void> CreateCompositeDiskCommon(
-    const std::string& vm_manager, const std::string& header_path,
-    const std::string& footer_path,
-    const std::vector<ImagePartition> partitions,
-    const std::string& output_path);
+  DiskBuilder& CrosvmPath(std::string crosvm_path) &;
+  DiskBuilder CrosvmPath(std::string crosvm_path) &&;
+
+  DiskBuilder& VmManager(std::string vm_manager) &;
+  DiskBuilder VmManager(std::string vm_manager) &&;
+
+  DiskBuilder& ConfigPath(std::string config_path) &;
+  DiskBuilder ConfigPath(std::string config_path) &&;
+
+  DiskBuilder& CompositeDiskPath(std::string composite_disk_path) &;
+  DiskBuilder CompositeDiskPath(std::string composite_disk_path) &&;
+
+  DiskBuilder& OverlayPath(std::string overlay_path) &;
+  DiskBuilder OverlayPath(std::string overlay_path) &&;
+
+  DiskBuilder& ResumeIfPossible(bool resume_if_possible) &;
+  DiskBuilder ResumeIfPossible(bool resume_if_possible) &&;
+
+  Result<bool> WillRebuildCompositeDisk();
+  /** Returns `true` if the file was actually rebuilt. */
+  Result<bool> BuildCompositeDiskIfNecessary();
+  /** Returns `true` if the file was actually rebuilt. */
+  Result<bool> BuildOverlayIfNecessary();
+
+ private:
+  Result<std::string> TextConfig();
+
+  std::vector<ImagePartition> partitions_;
+  std::string header_path_;
+  std::string footer_path_;
+  std::string vm_manager_;
+  std::string crosvm_path_;
+  std::string config_path_;
+  std::string composite_disk_path_;
+  std::string overlay_path_;
+  bool resume_if_possible_;
+};
 
 }  // namespace cuttlefish
