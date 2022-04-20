@@ -402,6 +402,16 @@ SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
+int SharedFD::Fchdir(SharedFD shared_fd) {
+  if (!shared_fd.value_) {
+    return -1;
+  }
+  errno = 0;
+  int rval = TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
+  shared_fd->errno_ = errno;
+  return rval;
+}
+
 SharedFD SharedFD::Fifo(const std::string& path, mode_t mode) {
   struct stat st;
   if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
