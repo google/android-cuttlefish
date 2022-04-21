@@ -23,6 +23,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -117,49 +118,32 @@ class StreamerSockets : public virtual SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     auto use_vsockets = config_.vm_manager() == vm_manager::QemuManager::name();
     for (int i = 0; i < config_.display_configs().size(); ++i) {
-      touch_servers_.push_back(
+      SharedFD touch_socket =
           use_vsockets ? SharedFD::VsockServer(instance_.touch_server_port(),
                                                SOCK_STREAM)
-                       : CreateUnixInputServer(instance_.touch_socket_path(i)));
-      if (!touch_servers_.back()->IsOpen()) {
-        LOG(ERROR) << "Could not open touch server: "
-                   << touch_servers_.back()->StrError();
-        return false;
-      }
+                       : CreateUnixInputServer(instance_.touch_socket_path(i));
+      CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
+      touch_servers_.emplace_back(std::move(touch_socket));
     }
-    if (use_vsockets) {
-      keyboard_server_ =
-          SharedFD::VsockServer(instance_.keyboard_server_port(), SOCK_STREAM);
-    } else {
-      keyboard_server_ =
-          CreateUnixInputServer(instance_.keyboard_socket_path());
-    }
-    if (!keyboard_server_->IsOpen()) {
-      LOG(ERROR) << "Failed to open keyboard server"
-                 << keyboard_server_->StrError();
-      return false;
-    }
+    keyboard_server_ =
+        use_vsockets ? SharedFD::VsockServer(instance_.keyboard_server_port(),
+                                             SOCK_STREAM)
+                     : CreateUnixInputServer(instance_.keyboard_socket_path());
+    CF_EXPECT(keyboard_server_->IsOpen(), keyboard_server_->StrError());
+
     frames_server_ = CreateUnixInputServer(instance_.frames_socket_path());
-    if (!frames_server_->IsOpen()) {
-      LOG(ERROR) << "Could not open frames server: "
-                 << frames_server_->StrError();
-      return false;
-    }
+    CF_EXPECT(frames_server_->IsOpen(), frames_server_->StrError());
     // TODO(schuffelen): Make this a separate optional feature?
     if (config_.enable_audio()) {
       auto path = config_.ForDefaultInstance().audio_server_path();
       audio_server_ =
           SharedFD::SocketLocalServer(path, false, SOCK_SEQPACKET, 0666);
-      if (!audio_server_->IsOpen()) {
-        LOG(ERROR) << "Could not create audio server: "
-                   << audio_server_->StrError();
-        return false;
-      }
+      CF_EXPECT(audio_server_->IsOpen(), audio_server_->StrError());
     }
-    return true;
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -279,28 +263,19 @@ class WebRtcServer : public virtual CommandSource,
             static_cast<SetupFeature*>(&log_pipe_provider_)};
   }
 
-  bool Setup() override {
-    if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &client_socket_,
-                              &host_socket_)) {
-      LOG(ERROR) << "Could not open command socket for webRTC";
-      return false;
-    }
+  Result<void> ResultSetup() override {
+    CF_EXPECT(SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &client_socket_,
+                                   &host_socket_),
+              client_socket_->StrError());
     if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
       switches_server_ =
           CreateUnixInputServer(instance_.switches_socket_path());
-      if (!switches_server_->IsOpen()) {
-        LOG(ERROR) << "Could not open switches server: "
-                   << switches_server_->StrError();
-        return false;
-      }
+      CF_EXPECT(switches_server_->IsOpen(), switches_server_->StrError());
     }
     kernel_log_events_pipe_ = log_pipe_provider_.KernelLogPipe();
-    if (!kernel_log_events_pipe_->IsOpen()) {
-      LOG(ERROR) << "Failed to get a kernel log events pipe: "
-                 << kernel_log_events_pipe_->StrError();
-      return false;
-    }
-    return true;
+    CF_EXPECT(kernel_log_events_pipe_->IsOpen(),
+              kernel_log_events_pipe_->StrError());
+    return {};
   }
 
   const CuttlefishConfig& config_;
