@@ -676,17 +676,16 @@ class InitializeMetadataImage : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
-    if (!FileExists(FLAGS_metadata_image)) {
-      bool success = CreateBlankImage(FLAGS_metadata_image,
-                                      FLAGS_blank_metadata_image_mb, "none");
-      if (!success) {
-        LOG(ERROR) << "Failed to create \"" << FLAGS_metadata_image
-                   << "\" with size " << FLAGS_blank_metadata_image_mb;
-      }
-      return success;
+  Result<void> ResultSetup() override {
+    if (FileExists(FLAGS_metadata_image)) {
+      return {};
     }
-    return true;
+
+    CF_EXPECT(CreateBlankImage(FLAGS_metadata_image,
+                               FLAGS_blank_metadata_image_mb, "none"),
+              "Failed to create \"" << FLAGS_metadata_image << "\" with size "
+                                    << FLAGS_blank_metadata_image_mb);
+    return {};
   }
 };
 
@@ -703,18 +702,14 @@ class InitializeAccessKregistryImage : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() {
-    if (FileExists(instance_.access_kregistry_path())) {
-      return true;
+  Result<void> ResultSetup() override {
+    auto access_kregistry = instance_.access_kregistry_path();
+    if (FileExists(access_kregistry)) {
+      return {};
     }
-    bool success =
-        CreateBlankImage(instance_.access_kregistry_path(), 2 /* mb */, "none");
-    if (!success) {
-      LOG(ERROR) << "Failed to create access_kregistry_path \""
-                 << instance_.access_kregistry_path() << "\"";
-      return false;
-    }
-    return true;
+    CF_EXPECT(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
+              "Failed to create \"" << access_kregistry << "\"");
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -734,18 +729,14 @@ class InitializeHwcomposerPmemImage : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() {
+  Result<void> ResultSetup() override {
     if (FileExists(instance_.hwcomposer_pmem_path())) {
-      return true;
+      return {};
     }
-    bool success =
-        CreateBlankImage(instance_.hwcomposer_pmem_path(), 2 /* mb */, "none");
-    if (!success) {
-      LOG(ERROR) << "Failed to create hwcomposer pmem image \""
-                 << instance_.hwcomposer_pmem_path() << "\"";
-      return false;
-    }
-    return true;
+    CF_EXPECT(
+        CreateBlankImage(instance_.hwcomposer_pmem_path(), 2 /* mb */, "none"),
+        "Failed creating \"" << instance_.hwcomposer_pmem_path() << "\"");
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -764,18 +755,14 @@ class InitializePstore : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() {
+  Result<void> ResultSetup() override {
     if (FileExists(instance_.pstore_path())) {
-      return true;
+      return {};
     }
-    bool success =
-        CreateBlankImage(instance_.pstore_path(), 2 /* mb */, "none");
-    if (!success) {
-      LOG(ERROR) << "Failed to create pstore_path \"" << instance_.pstore_path()
-                 << "\"";
-      return false;
-    }
-    return true;
+
+    CF_EXPECT(CreateBlankImage(instance_.pstore_path(), 2 /* mb */, "none"),
+              "Failed to create \"" << instance_.pstore_path() << "\"");
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -796,18 +783,14 @@ class InitializeSdCard : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() {
+  Result<void> ResultSetup() override {
     if (FileExists(instance_.sdcard_path())) {
-      return true;
+      return {};
     }
-    bool success = CreateBlankImage(instance_.sdcard_path(),
-                                    FLAGS_blank_sdcard_image_mb, "sdcard");
-    if (!success) {
-      LOG(ERROR) << "Failed to create sdcard \"" << instance_.sdcard_path()
-                 << "\"";
-      return false;
-    }
-    return true;
+    CF_EXPECT(CreateBlankImage(instance_.sdcard_path(),
+                               FLAGS_blank_sdcard_image_mb, "sdcard"),
+              "Failed to create \"" << instance_.sdcard_path() << "\"");
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -827,18 +810,14 @@ class InitializeFactoryResetProtected : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() {
-    if (FileExists(instance_.factory_reset_protected_path())) {
-      return true;
+  Result<void> ResultSetup() override {
+    auto frp = instance_.factory_reset_protected_path();
+    if (FileExists(frp)) {
+      return {};
     }
-    bool success = CreateBlankImage(instance_.factory_reset_protected_path(),
-                                    1 /* mb */, "none");
-    if (!success) {
-      LOG(ERROR) << "Failed to create FRP \""
-                 << instance_.factory_reset_protected_path() << "\"";
-      return false;
-    }
-    return true;
+    CF_EXPECT(CreateBlankImage(frp, 1 /* mb */, "none"),
+              "Failed to create \"" << frp << "\"");
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -869,7 +848,7 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
         static_cast<SetupFeature*>(&vbmeta_),
     };
   }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     auto ipath = [this](const std::string& path) -> std::string {
       return instance_.PerInstancePath(path.c_str());
     };
@@ -884,11 +863,8 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
             .CompositeDiskPath(instance_.persistent_composite_disk_path())
             .ResumeIfPossible(FLAGS_resume);
 
-    auto res = persistent_disk_builder.BuildCompositeDiskIfNecessary();
-    if (!res.ok()) {
-      LOG(ERROR) << "Failed building persistent disk:\n" << res.error();
-    }
-    return res.ok();
+    CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -906,23 +882,21 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     // libavb expects to be able to read the maximum vbmeta size, so we must
     // provide a partition which matches this or the read will fail
     for (const auto& vbmeta_image :
          {FLAGS_vbmeta_image, FLAGS_vbmeta_system_image}) {
       if (FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
         auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
-        bool success = fd->Truncate(VBMETA_MAX_SIZE) == 0;
-        if (!success) {
-          LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " "
-                     << vbmeta_image << "` "
-                     << "failed: " << fd->StrError();
-          return false;
-        }
+        CF_EXPECT(fd->IsOpen(), "Could not open \"" << vbmeta_image << "\": "
+                                                    << fd->StrError());
+        CF_EXPECT(fd->Truncate(VBMETA_MAX_SIZE) == 0,
+                  "`truncate --size=" << VBMETA_MAX_SIZE << " " << vbmeta_image
+                                      << "` failed: " << fd->StrError());
       }
     }
-    return true;
+    return {};
   }
 };
 
@@ -935,12 +909,10 @@ class BootloaderPresentCheck : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
-    if (!FileHasContent(FLAGS_bootloader)) {
-      LOG(ERROR) << "File not found: " << FLAGS_bootloader;
-      return false;
-    }
-    return true;
+  Result<void> ResultSetup() override {
+    CF_EXPECT(FileHasContent(FLAGS_bootloader),
+              "File not found: " << FLAGS_bootloader);
+    return {};
   }
 };
 
