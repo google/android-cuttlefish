@@ -24,6 +24,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/reporting.h"
@@ -95,38 +96,32 @@ class KernelLogMonitor : public CommandSource,
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     auto log_name = instance_.kernel_log_pipe_name();
-    if (mkfifo(log_name.c_str(), 0600) != 0) {
-      LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
-                 << strerror(errno);
-      return false;
-    }
+    CF_EXPECT(mkfifo(log_name.c_str(), 0600) == 0,
+              "Unable to create named pipe at " << log_name << ": "
+                                                << strerror(errno));
 
     // Open the pipe here (from the launcher) to ensure the pipe is not deleted
     // due to the usage counters in the kernel reaching zero. If this is not
     // done and the kernel_log_monitor crashes for some reason the VMM may get
     // SIGPIPE.
     fifo_ = SharedFD::Open(log_name, O_RDWR);
-    if (!fifo_->IsOpen()) {
-      LOG(ERROR) << "Unable to open \"" << log_name << "\"";
-      return false;
-    }
+    CF_EXPECT(fifo_->IsOpen(),
+              "Unable to open \"" << log_name << "\": " << fifo_->StrError());
 
     // TODO(schuffelen): Find a way to calculate this dynamically.
     int number_of_event_pipes = 4;
     if (number_of_event_pipes > 0) {
       for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
         SharedFD event_pipe_write_end, event_pipe_read_end;
-        if (!SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
-          PLOG(ERROR) << "Unable to create kernel log events pipe: ";
-          return false;
-        }
+        CF_EXPECT(SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end),
+                  "Failed creating kernel log pipe: " << strerror(errno));
         event_pipe_write_ends_.push_back(event_pipe_write_end);
         event_pipe_read_ends_.push_back(event_pipe_read_end);
       }
     }
-    return true;
+    return {};
   }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
@@ -230,23 +225,19 @@ class LogcatReceiver : public CommandSource, public DiagnosticInformation {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() {
     auto log_name = instance_.logcat_pipe_name();
-    if (mkfifo(log_name.c_str(), 0600) != 0) {
-      LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
-                 << strerror(errno);
-      return false;
-    }
+    CF_EXPECT(mkfifo(log_name.c_str(), 0600) == 0,
+              "Unable to create named pipe at " << log_name << ": "
+                                                << strerror(errno));
     // Open the pipe here (from the launcher) to ensure the pipe is not deleted
     // due to the usage counters in the kernel reaching zero. If this is not
     // done and the logcat_receiver crashes for some reason the VMM may get
     // SIGPIPE.
     pipe_ = SharedFD::Open(log_name.c_str(), O_RDWR);
-    if (!pipe_->IsOpen()) {
-      LOG(ERROR) << "Can't open \"" << log_name << "\": " << pipe_->StrError();
-      return false;
-    }
-    return true;
+    CF_EXPECT(pipe_->IsOpen(),
+              "Can't open \"" << log_name << "\": " << pipe_->StrError());
+    return {};
   }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
@@ -270,15 +261,13 @@ class ConfigServer : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     auto port = instance_.config_server_port();
     socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
-    if (!socket_->IsOpen()) {
-      LOG(ERROR) << "Unable to create configuration server socket: "
-                 << socket_->StrError();
-      return false;
-    }
-    return true;
+    CF_EXPECT(socket_->IsOpen(),
+              "Unable to create configuration server socket: "
+                  << socket_->StrError());
+    return {};
   }
 
  private:
@@ -305,26 +294,21 @@ class TombstoneReceiver : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     tombstone_dir_ = instance_.PerInstancePath("tombstones");
-    if (!DirectoryExists(tombstone_dir_.c_str())) {
+    if (!DirectoryExists(tombstone_dir_)) {
       LOG(DEBUG) << "Setting up " << tombstone_dir_;
-      if (mkdir(tombstone_dir_.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-          0) {
-        LOG(ERROR) << "Failed to create tombstone directory: " << tombstone_dir_
-                   << ". Error: " << errno;
-        return false;
-      }
+      CF_EXPECT(mkdir(tombstone_dir_.c_str(),
+                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
+                "Failed to create tombstone directory: "
+                    << tombstone_dir_ << ". Error: " << strerror(errno));
     }
 
     auto port = instance_.tombstone_receiver_port();
     socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
-    if (!socket_->IsOpen()) {
-      LOG(ERROR) << "Unable to create tombstone server socket: "
-                 << socket_->StrError();
-      return false;
-    }
-    return true;
+    CF_EXPECT(socket_->IsOpen(), "Unable to create tombstone server socket: "
+                                     << socket_->StrError());
+    return {};
   }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
@@ -388,7 +372,7 @@ class GnssGrpcProxyServer : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     std::vector<SharedFD> fifos;
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.in"),
@@ -398,21 +382,16 @@ class GnssGrpcProxyServer : public CommandSource {
     };
     for (const auto& path : fifo_paths) {
       unlink(path.c_str());
-      if (mkfifo(path.c_str(), 0660) < 0) {
-        PLOG(ERROR) << "Could not create " << path;
-        return false;
-      }
+      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
       auto fd = SharedFD::Open(path, O_RDWR);
-      if (!fd->IsOpen()) {
-        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-        return false;
-      }
+      CF_EXPECT(fd->IsOpen(),
+                "Could not open " << path << ": " << fd->StrError());
       fifos.push_back(fd);
     }
 
     gnss_grpc_proxy_in_wr_ = fifos[0];
     gnss_grpc_proxy_out_rd_ = fifos[1];
-    return true;
+    return {};
   }
 
  private:
@@ -445,25 +424,20 @@ class BluetoothConnector : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() {
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
         instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
     };
     for (const auto& path : fifo_paths) {
       unlink(path.c_str());
-      if (mkfifo(path.c_str(), 0660) < 0) {
-        PLOG(ERROR) << "Could not create " << path;
-        return false;
-      }
+      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
       auto fd = SharedFD::Open(path, O_RDWR);
-      if (!fd->IsOpen()) {
-        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-        return false;
-      }
+      CF_EXPECT(fd->IsOpen(),
+                "Could not open " << path << ": " << fd->StrError());
       fifos_.push_back(fd);
     }
-    return true;
+    return {};
   }
 
  private:
@@ -510,7 +484,7 @@ class SecureEnvironment : public CommandSource {
   std::unordered_set<SetupFeature*> Dependencies() const override {
     return {&kernel_log_pipe_provider_};
   }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
         instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
@@ -520,15 +494,10 @@ class SecureEnvironment : public CommandSource {
     std::vector<SharedFD> fifos;
     for (const auto& path : fifo_paths) {
       unlink(path.c_str());
-      if (mkfifo(path.c_str(), 0600) < 0) {
-        PLOG(ERROR) << "Could not create " << path;
-        return false;
-      }
+      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
       auto fd = SharedFD::Open(path, O_RDWR);
-      if (!fd->IsOpen()) {
-        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-        return false;
-      }
+      CF_EXPECT(fd->IsOpen(),
+                "Could not open " << path << ": " << fd->StrError());
       fifos_.push_back(fd);
     }
 
@@ -536,14 +505,12 @@ class SecureEnvironment : public CommandSource {
         instance_.PerInstanceInternalPath("confui_sign.sock");
     confui_server_fd_ = SharedFD::SocketLocalServer(confui_socket_path, false,
                                                     SOCK_STREAM, 0600);
-    if (!confui_server_fd_->IsOpen()) {
-      LOG(ERROR) << "Could not open " << confui_socket_path << ": "
-                 << confui_server_fd_->StrError();
-      return false;
-    }
+    CF_EXPECT(confui_server_fd_->IsOpen(),
+              "Could not open " << confui_socket_path << ": "
+                                << confui_server_fd_->StrError());
     kernel_log_pipe_ = kernel_log_pipe_provider_.KernelLogPipe();
 
-    return true;
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -627,41 +594,31 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     auto console_in_pipe_name = instance_.console_in_pipe_name();
-    if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create console input fifo for crosvm: "
-                 << strerror(error);
-      return false;
-    }
+    CF_EXPECT(
+        mkfifo(console_in_pipe_name.c_str(), 0600) == 0,
+        "Failed to create console input fifo for crosvm: " << strerror(errno));
 
     auto console_out_pipe_name = instance_.console_out_pipe_name();
-    if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create console output fifo for crosvm: "
-                 << strerror(error);
-      return false;
-    }
+    CF_EXPECT(
+        mkfifo(console_out_pipe_name.c_str(), 0660) == 0,
+        "Failed to create console output fifo for crosvm: " << strerror(errno));
 
     // These fds will only be read from or written to, but open them with
     // read and write access to keep them open in case the subprocesses exit
     console_forwarder_in_wr_ =
         SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-    if (!console_forwarder_in_wr_->IsOpen()) {
-      LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
-                 << console_forwarder_in_wr_->StrError();
-      return false;
-    }
+    CF_EXPECT(console_forwarder_in_wr_->IsOpen(),
+              "Failed to open console_forwarder input fifo for writes: "
+                  << console_forwarder_in_wr_->StrError());
 
     console_forwarder_out_rd_ =
         SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-    if (!console_forwarder_out_rd_->IsOpen()) {
-      LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
-                 << console_forwarder_out_rd_->StrError();
-      return false;
-    }
-    return true;
+    CF_EXPECT(console_forwarder_out_rd_->IsOpen(),
+              "Failed to open console_forwarder output fifo for reads: "
+                  << console_forwarder_out_rd_->StrError());
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -702,11 +659,11 @@ class WmediumdServer : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     // If wmediumd configuration is given, use it
     if (!config_.wmediumd_config().empty()) {
       config_path_ = config_.wmediumd_config();
-      return true;
+      return {};
     }
     // Otherwise, generate wmediumd configuration using the current wifi mac
     // prefix before start
@@ -716,12 +673,10 @@ class WmediumdServer : public CommandSource {
     gen_config_cmd.AddParameter("-p", instance_.wifi_mac_prefix());
 
     int success = gen_config_cmd.Start().Wait();
-    if (success != 0) {
-      LOG(ERROR) << "Unable to run " << gen_config_cmd.Executable()
-                 << ". Exited with status " << success;
-      return false;
-    }
-    return true;
+    CF_EXPECT(success == 0, "Unable to run " << gen_config_cmd.Executable()
+                                             << ". Exited with status "
+                                             << success);
+    return {};
   }
 
   const CuttlefishConfig& config_;
