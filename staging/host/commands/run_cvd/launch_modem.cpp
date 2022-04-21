@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -106,13 +107,10 @@ class ModemSimulator : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     int instance_number = config_.modem_simulator_instance_number();
-    if (instance_number > 3 /* max value */ || instance_number < 0) {
-      LOG(ERROR)
-          << "Modem simulator instance number should range between 1 and 3";
-      return false;
-    }
+    CF_EXPECT(instance_number >= 0 && instance_number < 4,
+              "Modem simulator instance number should range between 0 and 3");
     auto ports = instance_.modem_simulator_ports();
     for (int i = 0; i < instance_number; ++i) {
       auto pos = ports.find(',');
@@ -120,13 +118,11 @@ class ModemSimulator : public CommandSource {
       auto port = std::stoi(temp);
       ports = ports.substr(pos + 1);
 
-      auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
-      CHECK(socket->IsOpen())
-          << "Unable to create modem simulator server socket: "
-          << socket->StrError();
-      sockets_.push_back(socket);
+      auto modem_sim_socket = SharedFD::VsockServer(port, SOCK_STREAM);
+      CF_EXPECT(modem_sim_socket->IsOpen(), modem_sim_socket->StrError());
+      sockets_.emplace_back(std::move(modem_sim_socket));
     }
-    return true;
+    return {};
   }
 
   const CuttlefishConfig& config_;
