@@ -29,7 +29,9 @@
 #include <keymaster/operation.h>
 #include <keymaster/wrapped_key.h>
 
+#include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_attestation_record.h"
+#include "host/commands/secure_env/tpm_hmac.h"
 #include "host/commands/secure_env/tpm_key_blob_maker.h"
 #include "host/commands/secure_env/tpm_random_source.h"
 #include "host/commands/secure_env/tpm_remote_provisioning_context.h"
@@ -572,6 +574,36 @@ keymaster_error_t TpmKeymasterContext::UnwrapKey(
   }
 
   return error;
+}
+
+keymaster_error_t TpmKeymasterContext::CheckConfirmationToken(
+    const std::uint8_t* input_data, size_t input_data_size,
+    const uint8_t confirmation_token[keymaster::kConfirmationTokenSize]) const {
+  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(resource_manager_,
+                                                         "confirmation_token");
+  if (!signing_key) {
+    LOG(ERROR) << "Could not generate signing key";
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  auto hmac = TpmHmac(resource_manager_, signing_key->get(),
+                      TpmAuth(ESYS_TR_PASSWORD), input_data, input_data_size);
+
+  if (!hmac) {
+    LOG(ERROR) << "Could not calculate confirmation token hmac";
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  CHECK(hmac->size == keymaster::kConfirmationTokenSize)
+      << "Hmac size for confirmation UI must be "
+      << keymaster::kConfirmationTokenSize;
+
+  std::vector<std::uint8_t> hmac_buffer(hmac->buffer,
+                                        hmac->buffer + hmac->size);
+
+  const auto is_equal =
+      std::equal(hmac_buffer.cbegin(), hmac_buffer.cend(), confirmation_token);
+  return is_equal ? KM_ERROR_OK : KM_ERROR_NO_USER_CONFIRMATION;
 }
 
 keymaster::RemoteProvisioningContext*

@@ -113,6 +113,11 @@ private:
       keymaster_key_format_t* wrapped_key_format,
       keymaster::KeymasterKeyBlob* wrapped_key_material) const override;
 
+  keymaster_error_t CheckConfirmationToken(
+      const std::uint8_t* input_data, size_t input_data_size,
+      const uint8_t confirmation_token[keymaster::kConfirmationTokenSize])
+      const;
+
   keymaster::RemoteProvisioningContext* GetRemoteProvisioningContext()
       const override;
 
