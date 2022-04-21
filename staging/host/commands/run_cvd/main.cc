@@ -208,13 +208,17 @@ Result<void> RunCvdMain(int argc, char** argv) {
   CF_EXPECT(SetupFeature::RunSetup(features));
 
   // Monitor and restart host processes supporting the CVD
-  ProcessMonitor process_monitor(config->restart_subprocesses());
+  ProcessMonitor::Properties process_monitor_properties;
+  process_monitor_properties.RestartSubprocesses(
+      config->restart_subprocesses());
 
   for (auto& command_source : injector.getMultibindings<CommandSource>()) {
     if (command_source->Enabled()) {
-      CF_EXPECT(process_monitor.AddCommands(command_source->Commands()));
+      process_monitor_properties.AddCommands(command_source->Commands());
     }
   }
+
+  ProcessMonitor process_monitor(std::move(process_monitor_properties));
 
   CF_EXPECT(process_monitor.StartAndMonitorProcesses());
 
