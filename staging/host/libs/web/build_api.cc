@@ -81,12 +81,19 @@ DirectoryBuild::DirectoryBuild(const std::vector<std::string>& paths,
 }
 
 BuildApi::BuildApi(CurlWrapper& curl, CredentialSource* credential_source)
-    : curl(curl), credential_source(credential_source) {}
+    : BuildApi(curl, credential_source, "") {}
+
+BuildApi::BuildApi(CurlWrapper& curl, CredentialSource* credential_source,
+                   std::string api_key)
+    : curl(curl),
+      credential_source(credential_source),
+      api_key_(std::move(api_key)) {}
 
 std::vector<std::string> BuildApi::Headers() {
   std::vector<std::string> headers;
   if (credential_source) {
-    headers.push_back("Authorization:Bearer " + credential_source->Credential());
+    headers.push_back("Authorization: Bearer " +
+                      credential_source->Credential());
   }
   return headers;
 }
@@ -98,6 +105,9 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
       "&buildAttemptStatus=complete" +
       "&buildType=submitted&maxResults=1&successful=true&target=" +
       curl.UrlEscape(target);
+  if (!api_key_.empty()) {
+    url += "&key=" + curl.UrlEscape(api_key_);
+  }
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
   if (!curl_response.HttpSuccess()) {
@@ -121,6 +131,9 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
 std::string BuildApi::BuildStatus(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
                     curl.UrlEscape(build.target);
+  if (!api_key_.empty()) {
+    url += "?key=" + curl.UrlEscape(api_key_);
+  }
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
   if (!curl_response.HttpSuccess()) {
@@ -138,6 +151,9 @@ std::string BuildApi::BuildStatus(const DeviceBuild& build) {
 std::string BuildApi::ProductName(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
                     curl.UrlEscape(build.target);
+  if (!api_key_.empty()) {
+    url += "?key=" + curl.UrlEscape(api_key_);
+  }
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
   if (!curl_response.HttpSuccess()) {
@@ -162,6 +178,9 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
                       "/attempts/latest/artifacts?maxResults=100";
     if (page_token != "") {
       url += "&pageToken=" + curl.UrlEscape(page_token);
+    }
+    if (!api_key_.empty()) {
+      url += "&key=" + curl.UrlEscape(api_key_);
     }
     auto curl_response = curl.DownloadToJson(url, Headers());
     const auto& json = curl_response.data;
@@ -212,6 +231,9 @@ bool BuildApi::ArtifactToCallback(const DeviceBuild& build,
       BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
       curl.UrlEscape(build.target) + "/attempts/latest/artifacts/" +
       curl.UrlEscape(artifact) + "/url";
+  if (!api_key_.empty()) {
+    download_url_endpoint += "?key=" + curl.UrlEscape(api_key_);
+  }
   auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
   const auto& json = curl_response.data;
   if (!(curl_response.HttpSuccess() || curl_response.HttpRedirect())) {
@@ -240,6 +262,9 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
       BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
       curl.UrlEscape(build.target) + "/attempts/latest/artifacts/" +
       curl.UrlEscape(artifact) + "/url";
+  if (!api_key_.empty()) {
+    download_url_endpoint += "?key=" + curl.UrlEscape(api_key_);
+  }
   auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
   const auto& json = curl_response.data;
   if (!(curl_response.HttpSuccess() || curl_response.HttpRedirect())) {
