@@ -33,17 +33,37 @@ struct MonitorEntry {
 // Keeps track of launched subprocesses, restarts them if they unexpectedly exit
 class ProcessMonitor {
  public:
-  ProcessMonitor(bool restart_subprocesses);
-  // Adds a command to the list of commands to be run and monitored. Can only be
-  // called before StartAndMonitorProcesses is called.
-  Result<void> AddCommand(Command cmd);
-  template <typename T>
-  Result<void> AddCommands(T&& commands) {
-    for (auto& command : commands) {
-      CF_EXPECT(AddCommand(std::move(command)));
+  class Properties {
+   public:
+    Properties& RestartSubprocesses(bool) &;
+    Properties RestartSubprocesses(bool) &&;
+
+    Properties& AddCommand(Command) &;
+    Properties AddCommand(Command) &&;
+
+    template <typename T>
+    Properties& AddCommands(T commands) & {
+      for (auto& command : commands) {
+        AddCommand(std::move(command));
+      }
+      return *this;
     }
-    return {};
-  }
+
+    template <typename T>
+    Properties AddCommands(T commands) && {
+      for (auto& command : commands) {
+        AddCommand(std::move(command));
+      }
+      return std::move(*this);
+    }
+
+   private:
+    bool restart_subprocesses_;
+    std::vector<MonitorEntry> entries_;
+
+    friend class ProcessMonitor;
+  };
+  ProcessMonitor(Properties&&);
 
   // Start all processes given by AddCommand.
   Result<void> StartAndMonitorProcesses();
@@ -53,9 +73,9 @@ class ProcessMonitor {
  private:
   Result<void> MonitorRoutine();
 
-  bool restart_subprocesses_;
-  std::vector<MonitorEntry> monitored_processes_;
+  Properties properties_;
   pid_t monitor_;
   SharedFD monitor_socket_;
 };
+
 }  // namespace cuttlefish

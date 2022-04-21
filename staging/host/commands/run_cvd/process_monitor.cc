@@ -40,19 +40,34 @@ struct ParentToChildMessage {
   bool stop;
 };
 
-ProcessMonitor::ProcessMonitor(bool restart_subprocesses)
-    : restart_subprocesses_(restart_subprocesses), monitor_(-1) {
+ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
+    bool r) & {
+  restart_subprocesses_ = r;
+  return *this;
 }
 
-Result<void> ProcessMonitor::AddCommand(Command cmd) {
-  CF_EXPECT(monitor_ == -1, "The monitor process is already running.");
-  CF_EXPECT(!monitor_socket_->IsOpen(), "The monitor socket is already open.");
+ProcessMonitor::Properties ProcessMonitor::Properties::RestartSubprocesses(
+    bool r) && {
+  restart_subprocesses_ = r;
+  return std::move(*this);
+}
 
-  monitored_processes_.push_back(MonitorEntry());
-  auto& entry = monitored_processes_.back();
+ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
+    Command cmd) & {
+  auto& entry = entries_.emplace_back();
   entry.cmd.reset(new Command(std::move(cmd)));
-  return {};
+  return *this;
 }
+
+ProcessMonitor::Properties ProcessMonitor::Properties::AddCommand(
+    Command cmd) && {
+  auto& entry = entries_.emplace_back();
+  entry.cmd.reset(new Command(std::move(cmd)));
+  return std::move(*this);
+}
+
+ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties)
+    : properties_(std::move(properties)), monitor_(-1) {}
 
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
@@ -135,7 +150,8 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
 
   LOG(DEBUG) << "Starting monitoring subprocesses";
-  for (auto& monitored : monitored_processes_) {
+  for (auto& monitored : properties_.entries_) {
+    LOG(INFO) << monitored.cmd->GetShortName();
     auto options = SubprocessOptions().InGroup(true);
     monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
     CF_EXPECT(monitored.proc->Started(), "Failed to start process");
@@ -160,7 +176,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
     return {};
   });
 
-  auto& monitored = monitored_processes_;
+  auto& monitored = properties_.entries_;
 
   LOG(DEBUG) << "Monitoring subprocesses";
   while(running) {
@@ -182,11 +198,11 @@ Result<void> ProcessMonitor::MonitorRoutine() {
       LogSubprocessExit("(unknown)", pid, wstatus);
     } else {
       LogSubprocessExit(it->cmd->GetShortName(), it->proc->pid(), wstatus);
-      if (restart_subprocesses_) {
+      if (properties_.restart_subprocesses_) {
         auto options = SubprocessOptions().InGroup(true);
         it->proc.reset(new Subprocess(it->cmd->Start(options)));
       } else {
-        monitored_processes_.erase(it);
+        properties_.entries_.erase(it);
       }
     }
   }
