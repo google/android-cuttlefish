@@ -218,11 +218,8 @@ keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
     }
   }
 
-
-  auto signing_key_builder = PrimaryKeyBuilder();
-  signing_key_builder.SigningKey();
-  signing_key_builder.UniqueData(std::string(unique_data, sizeof(unique_data)));
-  auto signing_key = signing_key_builder.CreateKey(resource_manager_);
+  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
+      resource_manager_, std::string(unique_data, sizeof(unique_data)));
   if (!signing_key) {
     LOG(ERROR) << "Could not make signing key for key id";
     return KM_ERROR_UNKNOWN_ERROR;
@@ -266,10 +263,8 @@ VerifyAuthorizationResponse TpmKeymasterEnforcement::VerifyAuthorization(
     .security_level = response.token.security_level,
   };
 
-  auto signing_key_builder = PrimaryKeyBuilder();
-  signing_key_builder.SigningKey();
-  signing_key_builder.UniqueData("verify_authorization");
-  auto signing_key = signing_key_builder.CreateKey(resource_manager_);
+  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
+      resource_manager_, "verify_authorization");
   if (!signing_key) {
     LOG(ERROR) << "Could not make signing key for verifying authorization";
     return response;
@@ -300,10 +295,8 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
   token->security_level = SecurityLevel();
   token->mac = KeymasterBlob();
 
-  auto signing_key_builder = PrimaryKeyBuilder();
-  signing_key_builder.SigningKey();
-  signing_key_builder.UniqueData("timestamp_token");
-  auto signing_key = signing_key_builder.CreateKey(resource_manager_);
+  auto signing_key =
+      PrimaryKeyBuilder::CreateSigningKey(resource_manager_, "timestamp_token");
   if (!signing_key) {
     LOG(ERROR) << "Could not make signing key for verifying authorization";
     return KM_ERROR_UNKNOWN_ERROR;
@@ -326,10 +319,8 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
 
 bool TpmKeymasterEnforcement::CreateKeyId(
     const keymaster_key_blob_t& key_blob, km_id_t* keyid) const {
-  auto signing_key_builder = PrimaryKeyBuilder();
-  signing_key_builder.SigningKey();
-  signing_key_builder.UniqueData("key_id");
-  auto signing_key = signing_key_builder.CreateKey(resource_manager_);
+  auto signing_key =
+      PrimaryKeyBuilder::CreateSigningKey(resource_manager_, "key_id");
   if (!signing_key) {
     LOG(ERROR) << "Could not make signing key for key id";
     return false;
