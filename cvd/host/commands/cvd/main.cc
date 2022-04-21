@@ -100,16 +100,16 @@ class CvdClient {
       }
     }
     if (server_version.build() != android::build::GetBuildNumber()) {
-      std::cerr << "WARNING: cvd_server client version ("
-                << android::build::GetBuildNumber()
-                << ") does not match server version (" << server_version.build()
-                << std::endl;
+      LOG(VERBOSE) << "cvd_server client version ("
+                   << android::build::GetBuildNumber()
+                   << ") does not match server version ("
+                   << server_version.build() << std::endl;
     }
     auto self_crc32 = FileCrc("/proc/self/exe");
     if (server_version.crc32() != self_crc32) {
-      std::cerr << "WARNING: cvd_server client checksum (" << self_crc32
-                << ") doesn't match server checksum (" << server_version.crc32()
-                << std::endl;
+      LOG(VERBOSE) << "cvd_server client checksum (" << self_crc32
+                   << ") doesn't match server checksum ("
+                   << server_version.crc32() << std::endl;
     }
     return {};
   }
