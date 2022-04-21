@@ -46,6 +46,7 @@ const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_64_phone-userdebug";
 
 using cuttlefish::CurrentDirectory;
 
+DEFINE_string(api_key, "", "API key for the Android Build API");
 DEFINE_string(default_build, DEFAULT_BRANCH + "/" + DEFAULT_BUILD_TARGET,
               "source for the cuttlefish build to use (vendor.img + host)");
 DEFINE_string(system_build, "", "source for system.img and product.img");
@@ -252,6 +253,31 @@ std::string USAGE_MESSAGE =
     "\"branch\" - latest build of \"branch\" for \"aosp_cf_x86_phone-userdebug\"\n"
     "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
 
+std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
+    CurlWrapper& curl, const std::string& path) {
+  LOG(VERBOSE) << "Attempting to open service account file \"" << path << "\"";
+  Json::CharReaderBuilder builder;
+  std::ifstream ifs(path);
+  Json::Value content;
+  std::string errorMessage;
+  if (!Json::parseFromStream(builder, ifs, &content, &errorMessage)) {
+    LOG(VERBOSE) << "Could not read config file \"" << path
+                 << "\": " << errorMessage;
+    return {};
+  }
+  static constexpr char BUILD_SCOPE[] =
+      "https://www.googleapis.com/auth/androidbuild.internal";
+  auto result =
+      ServiceAccountOauthCredentialSource::FromJson(curl, content, BUILD_SCOPE);
+  if (!result.ok()) {
+    LOG(VERBOSE) << "Failed to load service account json file: \n"
+                 << result.error();
+    return {};
+  }
+  return std::unique_ptr<CredentialSource>(
+      new ServiceAccountOauthCredentialSource(std::move(*result)));
+}
+
 } // namespace
 
 int FetchCvdMain(int argc, char** argv) {
@@ -275,7 +301,9 @@ int FetchCvdMain(int argc, char** argv) {
     auto retrying_curl = CurlWrapper::WithServerErrorRetry(
         *curl, 10, std::chrono::milliseconds(5000));
     std::unique_ptr<CredentialSource> credential_source;
-    if (FLAGS_credential_source == "gce") {
+    if (auto crds = TryOpenServiceAccountFile(*curl, FLAGS_credential_source)) {
+      credential_source = std::move(crds);
+    } else if (FLAGS_credential_source == "gce") {
       credential_source = GceMetadataCredentialSource::make(*retrying_curl);
     } else if (FLAGS_credential_source == "") {
       std::string file = StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
@@ -297,7 +325,7 @@ int FetchCvdMain(int argc, char** argv) {
     } else {
       credential_source = FixedCredentialSource::make(FLAGS_credential_source);
     }
-    BuildApi build_api(*retrying_curl, credential_source.get());
+    BuildApi build_api(*retrying_curl, credential_source.get(), FLAGS_api_key);
 
     auto default_build = ArgumentToBuild(&build_api, FLAGS_default_build,
                                          DEFAULT_BUILD_TARGET,

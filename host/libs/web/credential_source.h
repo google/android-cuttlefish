@@ -85,6 +85,8 @@ class ServiceAccountOauthCredentialSource : public CredentialSource {
   static Result<ServiceAccountOauthCredentialSource> FromJson(
       CurlWrapper& curl, const Json::Value& service_account_json,
       const std::string& scope);
+  ServiceAccountOauthCredentialSource(ServiceAccountOauthCredentialSource&&) =
+      default;
 
   std::string Credential() override;
 
