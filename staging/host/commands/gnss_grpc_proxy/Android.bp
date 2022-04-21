@@ -17,21 +17,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "gnss_grpc_proxy",
-    srcs: [
-        "gnss_grpc_proxy.cpp",
-    ],
-    cflags: [
-        "-Wno-unused-parameter",
-        "-D_XOPEN_SOURCE",
-    ],
-    generated_headers: [
-        "GnssGrpcProxyStub_h",
-    ],
-    generated_sources: [
-        "GnssGrpcProxyStub_cc",
-    ],
+cc_library_static {
+    name: "libcvd_gnss_grpc_proxy",
     shared_libs: [
         "libext2_blkid",
         "libbase",
@@ -45,11 +32,50 @@ cc_binary {
         "libcuttlefish_host_config",
         "libgflags",
     ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
+    ],
+    generated_headers: [
+        "GnssGrpcProxyStub_h",
+    ],
+    generated_sources: [
+        "GnssGrpcProxyStub_cc",
+    ],
+    export_generated_headers: [
+        "GnssGrpcProxyStub_h",
+    ],
     defaults: ["cuttlefish_host"],
     include_dirs: [
         "external/grpc-grpc/include",
         "external/protobuf/src",
     ],
+}
+
+cc_binary {
+    name: "gnss_grpc_proxy",
+    shared_libs: [
+        "libext2_blkid",
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libjsoncpp",
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libcvd_gnss_grpc_proxy",
+    ],
+    srcs: [
+        "gnss_grpc_proxy.cpp",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
+    ],
+    defaults: ["cuttlefish_host"],
 }
 
 filegroup {
