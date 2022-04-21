@@ -28,6 +28,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
@@ -304,7 +305,24 @@ int FetchCvdMain(int argc, char** argv) {
       credential_source = std::move(crds);
     } else if (FLAGS_credential_source == "gce") {
       credential_source = GceMetadataCredentialSource::make(*retrying_curl);
-    } else if (FLAGS_credential_source != "") {
+    } else if (FLAGS_credential_source == "") {
+      std::string file = StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
+      LOG(VERBOSE) << "Probing acloud credentials at " << file;
+      if (FileExists(file)) {
+        std::ifstream stream(file);
+        auto attempt_load =
+            RefreshCredentialSource::FromOauth2ClientFile(*curl, stream);
+        if (attempt_load.ok()) {
+          credential_source.reset(
+              new RefreshCredentialSource(std::move(*attempt_load)));
+        } else {
+          LOG(VERBOSE) << "Failed to load acloud credentials: "
+                       << attempt_load.error();
+        }
+      } else {
+        LOG(INFO) << "\"" << file << "\" missing, running without credentials";
+      }
+    } else {
       credential_source = FixedCredentialSource::make(FLAGS_credential_source);
     }
     BuildApi build_api(*retrying_curl, credential_source.get(), FLAGS_api_key);
