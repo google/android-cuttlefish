@@ -136,4 +136,9 @@ ParentKeyCreator(const std::string& unique) {
   };
 }
 
+TpmObjectSlot PrimaryKeyBuilder::CreateSigningKey(
+    TpmResourceManager& resource_manager, const std::string& unique_data) {
+  return SigningKeyCreator(unique_data)(resource_manager);
+}
+
 }  // namespace cuttlefish
