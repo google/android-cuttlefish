@@ -43,11 +43,8 @@ TpmRemoteProvisioningContext::TpmRemoteProvisioningContext(
 
 std::vector<uint8_t> TpmRemoteProvisioningContext::DeriveBytesFromHbk(
     const std::string& context, size_t num_bytes) const {
-  PrimaryKeyBuilder key_builder;
-  key_builder.SigningKey();
-  key_builder.UniqueData("HardwareBoundKey");
-  TpmObjectSlot key = key_builder.CreateKey(resource_manager_);
-
+  auto key = PrimaryKeyBuilder::CreateSigningKey(resource_manager_,
+                                                 "HardwareBoundKey");
   auto hbk =
       TpmHmac(resource_manager_, key->get(), TpmAuth(ESYS_TR_PASSWORD),
               reinterpret_cast<const uint8_t*>(context.data()), context.size());
@@ -199,10 +196,8 @@ TpmRemoteProvisioningContext::BuildProtectedDataPayload(
 std::optional<cppcose::HmacSha256>
 TpmRemoteProvisioningContext::GenerateHmacSha256(
     const cppcose::bytevec& input) const {
-  auto signing_key_builder = PrimaryKeyBuilder();
-  signing_key_builder.SigningKey();
-  signing_key_builder.UniqueData("Public Key Authentication Key");
-  auto signing_key = signing_key_builder.CreateKey(resource_manager_);
+  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
+      resource_manager_, "Public Key Authentication Key");
   if (!signing_key) {
     LOG(ERROR) << "Could not make MAC key for authenticating the pubkey";
     return std::nullopt;
