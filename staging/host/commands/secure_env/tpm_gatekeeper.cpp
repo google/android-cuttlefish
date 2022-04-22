@@ -95,10 +95,8 @@ void TpmGatekeeper::ComputeSignature(
     uint32_t length) const {
   memset(signature, 0, signature_length);
   std::string key_unique(reinterpret_cast<const char*>(key), key_length);
-  PrimaryKeyBuilder key_builder;
-  key_builder.UniqueData(key_unique);
-  key_builder.SigningKey();
-  auto key_slot = key_builder.CreateKey(resource_manager_);
+  auto key_slot =
+      PrimaryKeyBuilder::CreateSigningKey(resource_manager_, key_unique);
   if (!key_slot) {
     LOG(ERROR) << "Unable to load signing key into TPM memory";
     return;

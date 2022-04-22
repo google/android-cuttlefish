@@ -54,10 +54,8 @@ ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
     auto request = request_opt.value();
 
     // get signing key
-    auto signing_key_builder = PrimaryKeyBuilder();
-    signing_key_builder.SigningKey();
-    signing_key_builder.UniqueData("confirmation_token");
-    auto signing_key = signing_key_builder.CreateKey(tpm_resource_manager_);
+    auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
+        tpm_resource_manager_, "confirmation_token");
     if (!signing_key) {
       LOG(ERROR) << "Could not generate signing key";
       sign_sender.Send(confui::SignMessageError::kUnknownError, {});
