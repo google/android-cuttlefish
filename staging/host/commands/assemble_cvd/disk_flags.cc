@@ -405,7 +405,7 @@ class Gem5ImageUnpacker : public SetupFeature {
   }
 
  protected:
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     /* Unpack the original or repacked boot and vendor boot ramdisks, so that
      * we have access to the baked bootconfig and raw compressed ramdisks.
      * This allows us to emulate what a bootloader would normally do, which
@@ -415,35 +415,23 @@ class Gem5ImageUnpacker : public SetupFeature {
      * does the parts which are instance agnostic.
      */
 
-    if (!FileHasContent(FLAGS_boot_image)) {
-      LOG(ERROR) << "File not found: " << FLAGS_boot_image;
-      return false;
-    }
+    CF_EXPECT(FileHasContent(FLAGS_boot_image), FLAGS_boot_image);
     // The init_boot partition is be optional for testing boot.img
     // with the ramdisk inside.
     if (!FileHasContent(FLAGS_init_boot_image)) {
       LOG(WARNING) << "File not found: " << FLAGS_init_boot_image;
     }
 
-    if (!FileHasContent(FLAGS_vendor_boot_image)) {
-      LOG(ERROR) << "File not found: " << FLAGS_vendor_boot_image;
-      return false;
-    }
+    CF_EXPECT(FileHasContent(FLAGS_vendor_boot_image), FLAGS_vendor_boot_image);
 
     const std::string unpack_dir = config_.assembly_dir();
 
-    bool success = UnpackBootImage(FLAGS_init_boot_image, unpack_dir);
-    if (!success) {
-      LOG(ERROR) << "Failed to extract the init boot image";
-      return false;
-    }
+    CF_EXPECT(UnpackBootImage(FLAGS_init_boot_image, unpack_dir),
+              "Failed to extract the init boot image");
 
-    success = UnpackVendorBootImageIfNotUnpacked(FLAGS_vendor_boot_image,
-                                                 unpack_dir);
-    if (!success) {
-      LOG(ERROR) << "Failed to extract the vendor boot image";
-      return false;
-    }
+    CF_EXPECT(
+        UnpackVendorBootImageIfNotUnpacked(FLAGS_vendor_boot_image, unpack_dir),
+        "Failed to extract the vendor boot image");
 
     // Assume the user specified a kernel manually which is a vmlinux
     std::ofstream kernel(unpack_dir + "/kernel", std::ios_base::binary |
@@ -455,11 +443,10 @@ class Gem5ImageUnpacker : public SetupFeature {
     // Gem5 needs the bootloader binary to be a specific directory structure
     // to find it. Create a 'binaries' directory and copy it into there
     const std::string binaries_dir = unpack_dir + "/binaries";
-    if (mkdir(binaries_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-        && errno != EEXIST) {
-      PLOG(ERROR) << "Failed to create dir: \"" << binaries_dir << "\" ";
-      return false;
-    }
+    CF_EXPECT(mkdir(binaries_dir.c_str(),
+                    S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0 ||
+                  errno == EEXIST,
+              "\"" << binaries_dir << "\": " << strerror(errno));
     std::ofstream bootloader(binaries_dir + "/" +
                              cpp_basename(FLAGS_bootloader),
                              std::ios_base::binary | std::ios_base::trunc);
@@ -477,7 +464,7 @@ class Gem5ImageUnpacker : public SetupFeature {
     boot_arm << src_boot_arm.rdbuf();
     boot_arm.close();
 
-    return true;
+    return {};
   }
 
  private:
@@ -502,55 +489,51 @@ class GeneratePersistentBootconfig : public SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     //  Cuttlefish for the time being won't be able to support OTA from a
     //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
     //  device is stopped (via stop_cvd). This is rarely an issue since OTA
     //  testing run on cuttlefish is done within one launch cycle of the device.
     //  If this ever becomes an issue, this code will have to be rewritten.
     if(!config_.bootconfig_supported()) {
-      return true;
+      return {};
     }
 
     const auto bootconfig_path = instance_.persistent_bootconfig_path();
     if (!FileExists(bootconfig_path)) {
-      if (!CreateBlankImage(bootconfig_path, 1 /* mb */, "none")) {
-        LOG(ERROR) << "Failed to create image at " << bootconfig_path;
-        return false;
-      }
+      CF_EXPECT(CreateBlankImage(bootconfig_path, 1 /* mb */, "none"),
+                "Failed to create image at " << bootconfig_path);
     }
 
     auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
-    if (!bootconfig_fd->IsOpen()) {
-      LOG(ERROR) << "Unable to open bootconfig file: "
-                 << bootconfig_fd->StrError();
-      return false;
-    }
+    CF_EXPECT(bootconfig_fd->IsOpen(),
+              "Unable to open bootconfig file: " << bootconfig_fd->StrError());
 
     const std::string bootconfig =
         android::base::Join(BootconfigArgsFromConfig(config_, instance_),
                             "\n") +
         "\n";
+    LOG(DEBUG) << "bootconfig size is " << bootconfig.size();
     ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
-    LOG(DEBUG) << "bootconfig size is " << bytesWritten;
-    if (bytesWritten != bootconfig.size()) {
-      LOG(ERROR) << "Failed to write contents of bootconfig to \""
-                 << bootconfig_path << "\"";
-      return false;
-    }
+    CF_EXPECT(WriteAll(bootconfig_fd, bootconfig) == bootconfig.size(),
+              "Failed to write bootconfig to \"" << bootconfig_path << "\"");
     LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
                << ReadFile(bootconfig_path);
 
-    if (bootconfig_fd->Truncate(bytesWritten) != 0) {
-      LOG(ERROR) << "`truncate --size=" << bytesWritten << " bytes "
-                 << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
-      return false;
-    }
+    CF_EXPECT(bootconfig_fd->Truncate(bootconfig.size()) == 0,
+              "`truncate --size=" << bootconfig.size() << " bytes "
+                                  << bootconfig_path
+                                  << "` failed:" << bootconfig_fd->StrError());
 
-    if (config_.vm_manager() != Gem5Manager::name()) {
+    if (config_.vm_manager() == Gem5Manager::name()) {
+      const off_t bootconfig_size_bytes_gem5 =
+          AlignToPowerOf2(bytesWritten, PARTITION_SIZE_SHIFT);
+      CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5) == 0);
+      bootconfig_fd->Close();
+    } else {
       bootconfig_fd->Close();
       const off_t bootconfig_size_bytes = AlignToPowerOf2(
-          MAX_AVB_METADATA_SIZE + bytesWritten, PARTITION_SIZE_SHIFT);
+          MAX_AVB_METADATA_SIZE + bootconfig.size(), PARTITION_SIZE_SHIFT);
 
       auto avbtool_path = HostBinaryPath("avbtool");
       Command bootconfig_hash_footer_cmd(avbtool_path);
@@ -567,18 +550,11 @@ class GeneratePersistentBootconfig : public SetupFeature {
       bootconfig_hash_footer_cmd.AddParameter("--algorithm");
       bootconfig_hash_footer_cmd.AddParameter("SHA256_RSA4096");
       int success = bootconfig_hash_footer_cmd.Start().Wait();
-      if (success != 0) {
-        LOG(ERROR) << "Unable to run append hash footer. Exited with status "
-                   << success;
-        return false;
-      }
-    } else {
-      const off_t bootconfig_size_bytes_gem5 = AlignToPowerOf2(
-          bytesWritten, PARTITION_SIZE_SHIFT);
-      bootconfig_fd->Truncate(bootconfig_size_bytes_gem5);
-      bootconfig_fd->Close();
+      CF_EXPECT(
+          success == 0,
+          "Unable to run append hash footer. Exited with status " << success);
     }
-    return true;
+    return {};
   }
 
   const CuttlefishConfig& config_;
