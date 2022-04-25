@@ -44,7 +44,6 @@ PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
     system/app/PlatformCaptivePortalLogin/PlatformCaptivePortalLogin.apk \
     system/priv-app/CellBroadcastServiceModulePlatform/CellBroadcastServiceModulePlatform.apk \
     system/priv-app/InProcessNetworkStack/InProcessNetworkStack.apk \
-    system/priv-app/PlatformNetworkPermissionConfig/PlatformNetworkPermissionConfig.apk \
 
 #
 # All components inherited here go to vendor image
