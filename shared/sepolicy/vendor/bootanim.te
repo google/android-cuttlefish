@@ -1,2 +1,1 @@
 allow bootanim self:process execmem;
-gpu_access(bootanim)
