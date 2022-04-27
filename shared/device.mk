@@ -660,13 +660,14 @@ PRODUCT_PACKAGES += \
 
 #
 # USB
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += \
-    com.android.hardware.usb
-else
+# TODO(b/227791019): Convert USB AIDL HAL to APEX
+# ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+# PRODUCT_PACKAGES += \
+#    com.android.hardware.usb
+#else
 PRODUCT_PACKAGES += \
     android.hardware.usb-service.example
-endif
+#endif
 
 # Vibrator HAL
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
