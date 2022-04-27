@@ -1,11 +1,6 @@
 <manifest version="1.0" type="device">
-    <hal format="hidl">
+    <hal format="aidl">
         <name>android.hardware.wifi.supplicant</name>
-        <transport>hwbinder</transport>
-        <version>1.4</version>
-        <interface>
-            <name>ISupplicant</name>
-            <instance>default</instance>
-        </interface>
+        <fqname>ISupplicant/default</fqname>
     </hal>
 </manifest>
