@@ -3,8 +3,5 @@ gpu_access(system_server)
 # Cuttlefish is still using the legacy wifi HAL (pre-HIDL)
 get_prop(system_server, wifi_hal_prop)
 
-# TODO(b/65201432): Swiftshader needs to create executable memory.
-allow system_server self:process execmem;
-
 # For com.android.tethering.inprocess
 dontaudit system_server { fs_bpf fs_bpf_tethering }:dir search;

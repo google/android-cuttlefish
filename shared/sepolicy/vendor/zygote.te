@@ -1,3 +1,0 @@
-# TODO(b/65201432): Remove once execmem issue due to OpenGL is resolved.
-# external/swiftshader commit 10e1f74a65e44daafb6c8f3b10ee69d39a6ca024 triggers execmem in zygote
-allow zygote self:process execmem;
