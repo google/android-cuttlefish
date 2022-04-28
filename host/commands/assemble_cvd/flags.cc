@@ -271,7 +271,10 @@ DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel 
 DEFINE_bool(start_gnss_proxy, false, "Whether to start the gnss proxy.");
 
 DEFINE_string(gnss_file_path, "",
-              "Local gnss file path for the gnss proxy");
+              "Local gnss raw measurement file path for the gnss proxy");
+
+DEFINE_string(fixed_location_file_path, "",
+              "Local fixed location file path for the gnss proxy");
 
 // by default, this modem-simulator is disabled
 DEFINE_bool(enable_modem_simulator, true,
@@ -733,11 +736,14 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_userdata_format(FLAGS_userdata_format);
 
   std::vector<std::string> gnss_file_paths = android::base::Split(FLAGS_gnss_file_path, ",");
+  std::vector<std::string> fixed_location_file_paths =
+      android::base::Split(FLAGS_fixed_location_file_path, ",");
 
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   CHECK(instance_nums.ok()) << instance_nums.error();
 
   bool is_first_instance = true;
+  int instance_index = 0;
   for (const auto& num : *instance_nums) {
     IfaceConfig iface_config;
     if (FLAGS_use_allocd) {
@@ -798,8 +804,13 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_gnss_grpc_proxy_server_port(7200 + num -1);
 
     if (num <= gnss_file_paths.size()) {
-      instance.set_gnss_file_path(gnss_file_paths[num-1]);
+      instance.set_gnss_file_path(gnss_file_paths[instance_index]);
     }
+    if (num <= fixed_location_file_paths.size()) {
+      instance.set_fixed_location_file_path(
+          fixed_location_file_paths[instance_index]);
+    }
+    instance_index++;
 
     instance.set_camera_server_port(FLAGS_camera_server_port);
 
