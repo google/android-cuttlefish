@@ -110,7 +110,6 @@
 /vendor/lib(64)?/hw/android\.hardware\.graphics\.mapper@4\.0-impl\.minigbm\.so u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libminigbm_gralloc.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/android\.hardware\.health@2\.0-impl-2\.1-cuttlefish\.so  u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/hw/vulkan.pastel.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libcuttlefish_fs.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/vsoc_lib.so  u:object_r:same_process_hal_file:s0
 
