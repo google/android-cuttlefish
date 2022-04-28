@@ -239,7 +239,6 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
       cuttlefish::SharedFDSet read_set;
       read_set.Set(gnss_out_);
       std::vector<char> buffer(GNSS_SERIAL_BUFFER_SIZE);
-      int total_read = 0;
       std::string gnss_cmd_str;
       int flags = gnss_out_->Fcntl(F_GETFL, 0);
       gnss_out_->Fcntl(F_SETFL, flags | O_NONBLOCK);
@@ -253,17 +252,14 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
           if (gnss_cmd_str.size() > GNSS_SERIAL_BUFFER_SIZE * 2) {
             gnss_cmd_str = gnss_cmd_str.substr(gnss_cmd_str.size() - GNSS_SERIAL_BUFFER_SIZE);
           }
-          total_read += bytes_read;
           if (gnss_cmd_str.find(CMD_GET_LOCATION) != std::string::npos) {
             sendToSerial();
             gnss_cmd_str = "";
-            total_read = 0;
           }
 
           if (gnss_cmd_str.find(CMD_GET_RAWMEASUREMENT) != std::string::npos) {
             sendGnssRawToSerial();
             gnss_cmd_str = "";
-            total_read = 0;
           }
         } else {
           if (gnss_out_->GetErrno() == EAGAIN|| gnss_out_->GetErrno() == EWOULDBLOCK) {

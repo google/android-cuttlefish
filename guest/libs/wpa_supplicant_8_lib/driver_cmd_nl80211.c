@@ -37,8 +37,6 @@ int wpa_driver_nl80211_driver_cmd(void* priv, char* cmd, char* buf,
                                   size_t buf_len) {
   struct i802_bss* bss = priv;
   struct wpa_driver_nl80211_data* drv = bss->drv;
-  struct ifreq ifr;
-  android_wifi_priv_cmd priv_cmd;
   int ret = 0;
 
   D("%s: called", __FUNCTION__);
