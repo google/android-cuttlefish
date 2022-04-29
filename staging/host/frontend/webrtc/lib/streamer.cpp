@@ -136,6 +136,7 @@ class AudioDeviceModuleWrapper : public AudioSource {
 
 
 class Streamer::Impl : public ServerConnectionObserver,
+                       public PeerConnectionBuilder,
                        public std::enable_shared_from_this<ServerConnectionObserver> {
  public:
   std::shared_ptr<ClientHandler> CreateClientHandler(int client_id);
@@ -154,6 +155,12 @@ class Streamer::Impl : public ServerConnectionObserver,
 
   void HandleConfigMessage(const Json::Value& msg);
   void HandleClientMessage(const Json::Value& server_message);
+
+  // PeerConnectionBuilder
+  rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
+      webrtc::PeerConnectionObserver* observer,
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          per_connection_servers) override;
 
   // All accesses to these variables happen from the signal_thread, so there is
   // no need for extra synchronization mechanisms (mutex)
@@ -474,39 +481,8 @@ void Streamer::Impl::OnError(const std::string& error) {
 void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
-  if (server_message.isMember("ice_servers") &&
-      server_message["ice_servers"].isArray()) {
-    auto servers = server_message["ice_servers"];
-    operator_config_.servers.clear();
-    for (int server_idx = 0; server_idx < servers.size(); server_idx++) {
-      auto server = servers[server_idx];
-      webrtc::PeerConnectionInterface::IceServer ice_server;
-      if (!server.isMember("urls") || !server["urls"].isArray()) {
-        // The urls field is required
-        LOG(WARNING)
-            << "Invalid ICE server specification obtained from server: "
-            << server.toStyledString();
-        continue;
-      }
-      auto urls = server["urls"];
-      for (int url_idx = 0; url_idx < urls.size(); url_idx++) {
-        auto url = urls[url_idx];
-        if (!url.isString()) {
-          LOG(WARNING) << "Non string 'urls' field in ice server: "
-                       << url.toStyledString();
-          continue;
-        }
-        ice_server.urls.push_back(url.asString());
-        if (server.isMember("credential") && server["credential"].isString()) {
-          ice_server.password = server["credential"].asString();
-        }
-        if (server.isMember("username") && server["username"].isString()) {
-          ice_server.username = server["username"].asString();
-        }
-        operator_config_.servers.push_back(ice_server);
-      }
-    }
-  }
+  operator_config_.servers =
+      ClientHandler::ParseIceServersMessage(server_message);
 }
 
 void Streamer::Impl::HandleClientMessage(const Json::Value& server_message) {
@@ -598,7 +574,7 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
   auto observer = connection_observer_factory_->CreateObserver();
 
   auto client_handler = ClientHandler::Create(
-      client_id, observer,
+      client_id, observer, *this,
       [this, client_id](const Json::Value& msg) {
         SendMessageToClient(client_id, msg);
       },
@@ -609,28 +585,6 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
           DestroyClientHandler(client_id);
         }
       });
-
-  webrtc::PeerConnectionInterface::RTCConfiguration config;
-  config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
-  config.enable_dtls_srtp = true;
-  config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
-                        operator_config_.servers.end());
-  webrtc::PeerConnectionDependencies dependencies(client_handler.get());
-  // PortRangeSocketFactory's super class' constructor needs to be called on the
-  // network thread or have it as a parameter
-  dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
-      network_thread_.get(), config_.udp_port_range, config_.tcp_port_range));
-  auto peer_connection = peer_connection_factory_->CreatePeerConnection(
-      config, std::move(dependencies));
-
-  if (!peer_connection) {
-    LOG(ERROR) << "Failed to create peer connection";
-    return nullptr;
-  }
-
-  if (!client_handler->SetPeerConnection(std::move(peer_connection))) {
-    return nullptr;
-  }
 
   for (auto& entry : displays_) {
     auto& label = entry.first;
@@ -650,6 +604,32 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
   }
 
   return client_handler;
+}
+
+rtc::scoped_refptr<webrtc::PeerConnectionInterface> Streamer::Impl::Build(
+    webrtc::PeerConnectionObserver* observer,
+    const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+        per_connection_servers) {
+  webrtc::PeerConnectionInterface::RTCConfiguration config;
+  config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
+  config.enable_dtls_srtp = true;
+  config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
+                        operator_config_.servers.end());
+  config.servers.insert(config.servers.end(), per_connection_servers.begin(),
+                        per_connection_servers.end());
+  webrtc::PeerConnectionDependencies dependencies(observer);
+  // PortRangeSocketFactory's super class' constructor needs to be called on the
+  // network thread or have it as a parameter
+  dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
+      network_thread_.get(), config_.udp_port_range, config_.tcp_port_range));
+  auto peer_connection = peer_connection_factory_->CreatePeerConnection(
+      config, std::move(dependencies));
+
+  if (!peer_connection) {
+    LOG(ERROR) << "Failed to create peer connection";
+    return nullptr;
+  }
+  return peer_connection;
 }
 
 void Streamer::Impl::SendMessageToClient(int client_id,
