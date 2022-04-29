@@ -23,24 +23,13 @@ func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 	return &Operation{}, nil
 }
 
-// TODO(b/226935747) Have more thorough validation error in Instance Manager.
-var ErrBadCreateCVDRequest = NewBadRequestError("invalid CreateCVDRequest", nil)
-
 func validateRequest(r *CreateCVDRequest) error {
-	if r.BuildInfo == nil {
-		return ErrBadCreateCVDRequest
-	}
-	if r.BuildInfo.BuildID == "" {
-		return ErrBadCreateCVDRequest
-	}
-	if r.BuildInfo.Target == "" {
-		return ErrBadCreateCVDRequest
-	}
-	if r.FetchCVDBuildID == "" {
-		return ErrBadCreateCVDRequest
-	}
-	if r.BuildAPIAccessToken == "" {
-		return ErrBadCreateCVDRequest
+	if r.BuildInfo == nil ||
+		r.BuildInfo.BuildID == "" ||
+		r.BuildInfo.Target == "" ||
+		r.FetchCVDBuildID == "" ||
+		r.BuildAPIAccessToken == "" {
+		return NewBadRequestError("invalid CreateCVDRequest", nil)
 	}
 	return nil
 }

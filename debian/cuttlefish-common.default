@@ -49,3 +49,7 @@
 # communication lives.
 # Defaults to "/etc/cuttlefish-common/host-orchestrator/cert".
 # orchestrator_tls_cert_dir=
+#
+# Indicate whether the instance manager operations are enabled or not.
+# Defaults to false.
+# orchestrator_instance_manager_enabled=

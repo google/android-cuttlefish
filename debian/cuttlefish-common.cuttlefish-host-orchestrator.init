@@ -37,6 +37,7 @@ fi
 orchestrator_http_port=${orchestrator_http_port:-1080}
 orchestrator_https_port=${orchestrator_https_port:-1443}
 orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host-orchestrator/cert"}
+orchestrator_instance_manager_enabled=${orchestrator_instance_manager_enabled:-false}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
@@ -73,6 +74,7 @@ start() {
   ORCHESTRATOR_HTTP_PORT="${orchestrator_http_port}" \
   ORCHESTRATOR_HTTPS_PORT="${orchestrator_https_port}" \
   ORCHESTRATOR_TLS_CERT_DIR="${orchestrator_tls_cert_dir}" \
+  ORCHESTRATOR_INSTANCE_MANAGER_ENABLED="${orchestrator_instance_manager_enabled}" \
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \

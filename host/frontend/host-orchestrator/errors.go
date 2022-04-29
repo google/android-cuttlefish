@@ -40,10 +40,6 @@ func (e *AppError) JSONResponse() ErrorMsg {
 	return ErrorMsg{Error: e.Msg}
 }
 
-func NewNotFoundError(msg string, e error) error {
-	return &AppError{Msg: msg, StatusCode: http.StatusNotFound, Err: e}
-}
-
 func NewBadRequestError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusBadRequest, Err: e}
 }

@@ -30,11 +30,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const defaultSocketPath = "/run/cuttlefish/operator"
-const defaultHttpPort = "1080"
-const defaultHttpsPort = "1443"
-
-const defaultTLSCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
+const (
+	defaultSocketPath             = "/run/cuttlefish/operator"
+	defaultHttpPort               = "1080"
+	defaultHttpsPort              = "1443"
+	defaultTLSCertDir             = "/etc/cuttlefish-common/host-orchestrator/cert"
+	defaultInstanceManagerEnabled = false
+)
 
 func startHttpServer() {
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
@@ -63,6 +65,7 @@ func startHttpsServer() {
 
 func main() {
 	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
+	imEnabled := fromEnvOrDefaultBool("ORCHESTRATOR_INSTANCE_MANAGER_ENABLED", defaultInstanceManagerEnabled)
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
@@ -75,7 +78,7 @@ func main() {
 	im := &InstanceManager{}
 
 	setupDeviceEndpoint(pool, config, socketPath)
-	r := setupServerRoutes(pool, polledSet, config, im)
+	r := setupServerRoutes(pool, polledSet, config, imEnabled, im)
 	http.Handle("/", r)
 
 	starters := []func(){startHttpServer, startHttpsServer}
@@ -122,7 +125,12 @@ func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
 	}()
 }
 
-func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfig, im *InstanceManager) *mux.Router {
+func setupServerRoutes(
+	pool *DevicePool,
+	polledSet *PolledSet,
+	config InfraConfig,
+	imEnabled bool,
+	im *InstanceManager) *mux.Router {
 	router := mux.NewRouter()
 	http.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
 		clientWs(w, r, pool, config)
@@ -134,9 +142,6 @@ func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfi
 	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 		listDevices(w, r, pool)
 	}).Methods("GET")
-	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
-		createDevices(w, r, im)
-	}).Methods("POST")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
 	}).Methods("POST")
@@ -149,6 +154,11 @@ func setupServerRoutes(pool *DevicePool, polledSet *PolledSet, config InfraConfi
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
 		replyJSONOK(w, config)
 	}).Methods("GET")
+	if imEnabled {
+		router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
+			createDevices(w, r, im)
+		}).Methods("POST")
+	}
 	fs := http.FileServer(http.Dir("static"))
 	router.PathPrefix("/").Handler(fs)
 	return router
@@ -461,9 +471,9 @@ type CreateCVDRequest struct {
 	// The number of CVDs to create. Use this field if creating more than one instance.
 	// Defaults to 1.
 	InstancesCount int `json:"instances_count"`
-	// REQUIRED. The Android build id used to download the fetch_cvd binary from.
+	// REQUIRED. The build id used to download the fetch_cvd binary from.
 	FetchCVDBuildID string `json:"fetch_cvd_build_id"`
-	// REQUIRED. Access token to required to communicate with the Android Build API.
+	// REQUIRED. Access token required to communicate with the Android Build API.
 	BuildAPIAccessToken string `json:"build_api_access_token"`
 }
 
@@ -489,13 +499,8 @@ type Operation struct {
 }
 
 type Result struct {
-	Error        Error       `json:"error,omitempty"`
+	Error        ErrorMsg    `json:"error,omitempty"`
 	ResultObject interface{} `json:"result,omitempty"`
-}
-
-type Error struct {
-	Code    string `json:"code,omitempty"`
-	Message string `json:"message,omitempty"`
 }
 
 // Utility functions
@@ -546,4 +551,16 @@ func fromEnvOrDefault(key string, def string) string {
 		return def
 	}
 	return val
+}
+
+func fromEnvOrDefaultBool(key string, def bool) bool {
+	val := os.Getenv(key)
+	if val == "" {
+		return def
+	}
+	b, err := strconv.ParseBool(val)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }

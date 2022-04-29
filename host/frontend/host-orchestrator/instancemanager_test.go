@@ -50,8 +50,9 @@ func TestCreateCVDInvalidRequests(t *testing.T) {
 		req := validRequest()
 		test.corruptRequest(req)
 		_, err := im.CreateCVD(req)
-		if !errors.Is(err, ErrBadCreateCVDRequest) {
-			t.Errorf("unexpected error <<\"%v\">>, want \"%v\"", err, ErrBadCreateCVDRequest)
+		var appErr *AppError
+		if !errors.As(err, &appErr) {
+			t.Errorf("unexpected error <<\"%v\">>, want \"%T\"", err, appErr)
 		}
 	}
 }
