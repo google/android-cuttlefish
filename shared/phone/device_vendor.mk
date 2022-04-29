@@ -26,6 +26,7 @@ PRODUCT_COPY_FILES += \
 endif
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
+$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 TARGET_PRODUCT_PROP := $(LOCAL_PATH)/product.prop
