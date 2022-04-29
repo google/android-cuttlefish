@@ -32,8 +32,7 @@ func TestCreateCVDInvalidRequests(t *testing.T) {
 		}
 	}
 	// Make sure the valid request is indeed valid.
-	_, err := im.CreateCVD(validRequest())
-	if err != nil {
+  if err := validateRequest(validRequest()); err != nil {
 		t.Fatalf("the valid request is not valid")
 	}
 	var tests = []struct {
