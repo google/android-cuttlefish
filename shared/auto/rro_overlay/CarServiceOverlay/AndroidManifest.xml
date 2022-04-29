@@ -17,7 +17,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.car.resources.cuttlefish">
     <application android:hasCode="false"/>
-    <overlay android:priority="10001"
+    <overlay android:priority="5001"
              android:targetPackage="com.android.car.updatable"
              android:targetName="CarServiceCustomization"
              android:resourcesMap="@xml/overlays"
