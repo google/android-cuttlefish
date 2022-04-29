@@ -141,6 +141,11 @@ std::vector<std::string> BootconfigArgsFromConfig(
                instance.audiocontrol_server_port()));
   }
 
+  if (!config.enable_audio()) {
+    bootconfig_args.push_back("androidboot.audio.tinyalsa.ignore_output=true");
+    bootconfig_args.push_back("androidboot.audio.tinyalsa.simulate_input=true");
+  }
+
   if (instance.camera_server_port()) {
     bootconfig_args.push_back(concat("androidboot.vsock_camera_port=",
                                      instance.camera_server_port()));
