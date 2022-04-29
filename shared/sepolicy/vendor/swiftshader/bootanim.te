@@ -1,0 +1,2 @@
+# TODO(b/65201432): Swiftshader needs to create executable memory.
+allow bootanim self:process execmem;
