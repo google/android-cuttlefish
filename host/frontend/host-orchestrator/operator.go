@@ -29,28 +29,27 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const defaultSocketPath = "/run/cuttlefish/operator"
-const defaultHttpPort = "1080"
-const defaultHttpsPort = "1443"
+const socketPath = "/run/cuttlefish/operator"
 
-const defaultTLSCertDir = "/etc/cuttlefish-common/host-orchestrator/cert"
+type Configuration struct {
+	HTTPPort   string `json:"http_port"`
+	HTTPSPort  string `json:"https_port"`
+	TLSCertDir string `json:"tls_cert_dir"`
+}
 
-func startHttpServer() {
-	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
-	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", httpPort))
+func startHttpServer(config *Configuration) {
+	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", config.HTTPPort))
 	log.Fatal(http.ListenAndServe(
-		fmt.Sprint(":", httpPort),
+		fmt.Sprint(":", config.HTTPPort),
 		// handler is nil, so DefaultServeMux is used.
 		nil))
 }
 
-func startHttpsServer() {
-	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", defaultTLSCertDir)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", defaultHttpsPort)
-	certPath := tlsCertDir + "/cert.pem"
-	keyPath := tlsCertDir + "/key.pem"
-	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", httpsPort))
-	log.Fatal(http.ListenAndServeTLS(fmt.Sprint(":", httpsPort),
+func startHttpsServer(config *Configuration) {
+	certPath := config.TLSCertDir + "/cert.pem"
+	keyPath := config.TLSCertDir + "/key.pem"
+	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", config.HTTPSPort))
+	log.Fatal(http.ListenAndServeTLS(fmt.Sprint(":", config.HTTPSPort),
 		certPath,
 		keyPath,
 		// handler is nil, so DefaultServeMux is used.
@@ -60,29 +59,48 @@ func startHttpsServer() {
 		nil))
 }
 
+func loadConfig() *Configuration {
+	path := fromEnvOrDefault("ORCHESTRATOR_CONFIG_PATH", "")
+	if path == "" {
+		panic("no configuration file provided")
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	config := Configuration{}
+	err = decoder.Decode(&config)
+	if err != nil {
+		panic(err)
+	}
+	return &config
+}
+
 func main() {
-	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
+	config := loadConfig()
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
-	config := InfraConfig{
+	infraConfig := InfraConfig{
 		Type: "config",
 		IceServers: []IceServer{
 			IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
 
-	setupDeviceEndpoint(pool, config, socketPath)
-	r := setupServerRoutes(pool, polledSet, config)
+	setupDeviceEndpoint(pool, infraConfig, socketPath)
+	r := setupServerRoutes(pool, polledSet, infraConfig)
 	http.Handle("/", r)
 
-	starters := []func(){startHttpServer, startHttpsServer}
+	starters := []func(*Configuration){startHttpServer, startHttpsServer}
 	wg := new(sync.WaitGroup)
 	wg.Add(len(starters))
 	for _, starter := range starters {
-		go func(f func()) {
+		go func(f func(*Configuration)) {
 			defer wg.Done()
-			f()
+			f(config)
 		}(starter)
 	}
 	wg.Wait()

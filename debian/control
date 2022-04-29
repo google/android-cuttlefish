@@ -33,6 +33,7 @@ Depends: adduser,
          python3,
          qemu-user-static [arm64],
          libc6:amd64 [arm64],
+         jq,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}

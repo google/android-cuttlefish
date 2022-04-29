@@ -1,0 +1,6 @@
+{
+  "socket_path": "/run/cuttlefish/operator",
+  "http_port": "1080",
+  "https_port": "1443",
+  "tls_cert_dir": "/etc/cuttlefish-common/host-orchestrator/cert"
+}

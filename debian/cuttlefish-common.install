@@ -4,4 +4,5 @@ host/deploy/capability_query.py /usr/lib/cuttlefish-common/bin/
 host/frontend/host-orchestrator/host-orchestrator /usr/lib/cuttlefish-common/bin/
 host/frontend/host-orchestrator/static /usr/share/cuttlefish-common/host-orchestrator/
 host/frontend/host-orchestrator/intercept /usr/share/cuttlefish-common/host-orchestrator/
+host/frontend/host-orchestrator/config /usr/share/cuttlefish-common/host-orchestrator/
 host/packages/cuttlefish-common/* /

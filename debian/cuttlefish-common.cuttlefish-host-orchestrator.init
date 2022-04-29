@@ -34,9 +34,13 @@
 if [ -f /etc/default/cuttlefish-common ]; then
     . /etc/default/cuttlefish-common
 fi
-orchestrator_http_port=${orchestrator_http_port:-1080}
-orchestrator_https_port=${orchestrator_https_port:-1443}
-orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host-orchestrator/cert"}
+
+orchestrator_config_path="/usr/share/cuttlefish-common/host-orchestrator/config/prod.json"
+orchestrator_config=$(cat $orchestrator_config_path)
+
+orchestrator_http_port=$(echo $orchestrator_config | jq -r .http_port)
+orchestrator_https_port=$(echo $orchestrator_config | jq -r .https_port)
+orchestrator_tls_cert_dir=$(echo $orchestrator_config | jq -r .tls_cert_dir)
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
@@ -70,10 +74,7 @@ start() {
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  ORCHESTRATOR_HTTP_PORT="${orchestrator_http_port}" \
-  ORCHESTRATOR_HTTPS_PORT="${orchestrator_https_port}" \
-  ORCHESTRATOR_TLS_CERT_DIR="${orchestrator_tls_cert_dir}" \
-  ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  ORCHESTRATOR_CONFIG_PATH="${orchestrator_config_path}" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
