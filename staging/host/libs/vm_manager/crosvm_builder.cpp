@@ -54,13 +54,10 @@ void CrosvmBuilder::AddHvcSink() {
   command_.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num_,
                         ",type=sink");
 }
-void CrosvmBuilder::AddHvcConsoleReadOnly(const std::string& output) {
+void CrosvmBuilder::AddHvcReadOnly(const std::string& output, bool console) {
   command_.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num_,
-                        ",type=file,path=", output, ",console=true");
-}
-void CrosvmBuilder::AddHvcReadOnly(const std::string& output) {
-  command_.AddParameter("--serial=hardware=virtio-console,num=", ++hvc_num_,
-                        ",type=file,path=", output);
+                        ",type=file,path=", output,
+                        console ? ",console=true" : "");
 }
 void CrosvmBuilder::AddHvcReadWrite(const std::string& output,
                                     const std::string& input) {
@@ -77,10 +74,11 @@ void CrosvmBuilder::AddSerialConsoleReadOnly(const std::string& output) {
                         ",type=file,path=", output, ",earlycon=true");
 }
 void CrosvmBuilder::AddSerialConsoleReadWrite(const std::string& output,
-                                              const std::string& input) {
+                                              const std::string& input,
+                                              bool earlycon) {
   command_.AddParameter("--serial=hardware=serial,num=", ++serial_num_,
                         ",type=file,path=", output, ",input=", input,
-                        ",earlycon=true");
+                        earlycon ? ",earlycon=true" : "");
 }
 void CrosvmBuilder::AddSerial(const std::string& output,
                               const std::string& input) {

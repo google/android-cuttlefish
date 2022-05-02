@@ -43,19 +43,26 @@ void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
 std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) {
   std::vector<std::string> vm_manager_cmdline;
   if (config.vm_manager() == QemuManager::name()) {
-    vm_manager_cmdline.push_back("console=hvc0");
     Arch target_arch = config.target_arch();
     if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
-      // To update the pl011 address:
-      // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
-      // $ dtc -O dts -o virt.dts -I dtb virt.dtb
-      // In the virt.dts file, look for a uart node
-      vm_manager_cmdline.push_back("earlycon=pl011,mmio32,0x9000000");
+      if (config.enable_kernel_log()) {
+        vm_manager_cmdline.push_back("console=hvc0");
+
+        // To update the pl011 address:
+        // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
+        // $ dtc -O dts -o virt.dts -I dtb virt.dtb
+        // In the virt.dts file, look for a uart node
+        vm_manager_cmdline.push_back("earlycon=pl011,mmio32,0x9000000");
+      }
     } else {
-      // To update the uart8250 address:
-      // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
-      // Only 'io' mode works; mmio and mmio32 do not
-      vm_manager_cmdline.push_back("earlycon=uart8250,io,0x3f8");
+      if (config.enable_kernel_log()) {
+        vm_manager_cmdline.push_back("console=hvc0");
+
+        // To update the uart8250 address:
+        // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
+        // Only 'io' mode works; mmio and mmio32 do not
+        vm_manager_cmdline.push_back("earlycon=uart8250,io,0x3f8");
+      }
 
       // crosvm doesn't support ACPI PNP, but QEMU does. We need to disable
       // it on QEMU so that the ISA serial ports aren't claimed by ACPI, so

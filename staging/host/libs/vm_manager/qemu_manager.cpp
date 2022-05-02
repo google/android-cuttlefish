@@ -382,17 +382,27 @@ std::vector<Command> QemuManager::StartCommands(
                         ",xres=", display_config.width,
                         ",yres=", display_config.height);
 
-  // In kgdb mode, earlycon is an interactive console, and so early
-  // dmesg will go there instead of the kernel.log. On QEMU, we do this
-  // bit of logic up before the hvc console is set up, so the command line
-  // flags appear in the right order and "append=on" does the right thing
-  if (!config.console() && (config.kgdb() || config.use_bootloader())) {
-    add_serial_console_ro(instance.kernel_log_pipe_name());
+  if (!config.console()) {
+    // In kgdb mode, earlycon is an interactive console, and so early
+    // dmesg will go there instead of the kernel.log. On QEMU, we do this
+    // bit of logic up before the hvc console is set up, so the command line
+    // flags appear in the right order and "append=on" does the right thing
+    if (config.enable_kernel_log() &&
+        (config.kgdb() || config.use_bootloader())) {
+      add_serial_console_ro(instance.kernel_log_pipe_name());
+    }
   }
 
-  // Use a virtio-console instance for the main kernel console. All
-  // messages will switch from earlycon to virtio-console after the driver
-  // is loaded, and QEMU will append to the kernel log automatically
+  // If kernel log is enabled, the virtio-console port will be specified as
+  // a true console for Linux, and kernel messages will be printed there.
+  // Otherwise, the port will still be set up for bootloader and userspace
+  // messages, but the kernel will not print anything here. This keeps our
+  // kernel log event features working. If an alternative "earlycon" boot
+  // console is configured above on a legacy serial port, it will control
+  // the main log until the virtio-console takes over.
+  // (Note that QEMU does not automatically generate console= parameters for
+  //  the bootloader/kernel cmdline, so the control of whether this pipe is
+  //  actually managed by the kernel as a console is handled elsewhere.)
   add_hvc_ro(instance.kernel_log_pipe_name());
 
   if (config.console()) {
