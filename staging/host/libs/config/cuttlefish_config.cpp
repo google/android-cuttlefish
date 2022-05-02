@@ -696,6 +696,14 @@ std::string CuttlefishConfig::console_dev() const {
   return console_dev;
 }
 
+static constexpr char kEnableKernelLog[] = "enable_kernel_log";
+void CuttlefishConfig::set_enable_kernel_log(bool enable_kernel_log) {
+  (*dictionary_)[kEnableKernelLog] = enable_kernel_log;
+}
+bool CuttlefishConfig::enable_kernel_log() const {
+  return (*dictionary_)[kEnableKernelLog].asBool();
+}
+
 static constexpr char kVhostNet[] = "vhost_net";
 void CuttlefishConfig::set_vhost_net(bool vhost_net) {
   (*dictionary_)[kVhostNet] = vhost_net;
