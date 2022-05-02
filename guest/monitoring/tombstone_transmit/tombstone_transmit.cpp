@@ -98,6 +98,35 @@ DEFINE_uint32(port,
 DEFINE_uint32(cid, 2, "VSOCK CID to send logcat output to");
 #define TOMBSTONE_BUFFER_SIZE (1024)
 
+static void tombstone_send_to_host(const std::string& ts_path) {
+  auto log_fd =
+      cuttlefish::SharedFD::VsockClient(FLAGS_cid, FLAGS_port, SOCK_STREAM);
+  std::ifstream ifs(ts_path);
+  char buffer[TOMBSTONE_BUFFER_SIZE];
+  size_t num_transfers = 0;
+  size_t num_bytes_read = 0;
+  while (log_fd->IsOpen() && ifs.is_open() && !ifs.eof()) {
+    ifs.read(buffer, sizeof(buffer));
+    num_bytes_read += ifs.gcount();
+    log_fd->Write(buffer, ifs.gcount());
+    num_transfers++;
+  }
+
+  if (!log_fd->IsOpen()) {
+    auto error = log_fd->StrError();
+    ALOGE("Unable to connect to vsock:%u:%u: %s", FLAGS_cid, FLAGS_port,
+          error.c_str());
+  } else if (!ifs.is_open()) {
+    ALOGE("%s closed in the middle of readout.", ts_path.c_str());
+  } else {
+    LOG(INFO) << num_bytes_read << " bytes transferred from "
+              << ts_path.c_str() << " over " << num_transfers << " "
+              << TOMBSTONE_BUFFER_SIZE << " byte sized transfers";
+  }
+
+  remove(ts_path.c_str());
+}
+
 int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -115,30 +144,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> ts_paths =
         get_next_tombstones_path_blocking(file_create_notification_handle);
     for (auto& ts_path : ts_paths) {
-      auto log_fd =
-          cuttlefish::SharedFD::VsockClient(FLAGS_cid, FLAGS_port, SOCK_STREAM);
-      std::ifstream ifs(ts_path);
-      char buffer[TOMBSTONE_BUFFER_SIZE];
-      uint num_transfers = 0;
-      int num_bytes_read = 0;
-      while (log_fd->IsOpen() && ifs.is_open() && !ifs.eof()) {
-        ifs.read(buffer, sizeof(buffer));
-        num_bytes_read += ifs.gcount();
-        log_fd->Write(buffer, ifs.gcount());
-        num_transfers++;
-      }
-
-      if (!log_fd->IsOpen()) {
-        auto error = log_fd->StrError();
-        ALOGE("Unable to connect to vsock:%u:%u: %s", FLAGS_cid, FLAGS_port,
-              error.c_str());
-      } else if (!ifs.is_open()) {
-        ALOGE("%s closed in the middle of readout.", ts_path.c_str());
-      } else {
-        LOG(INFO) << num_bytes_read << " chars transferred from "
-                  << ts_path.c_str() << " over " << num_transfers << " "
-                  << TOMBSTONE_BUFFER_SIZE << " byte sized transfers";
-      }
+      tombstone_send_to_host(ts_path);
     }
   }
 
