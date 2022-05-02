@@ -19,6 +19,7 @@
 #
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
 
 TARGET_BOARD_PLATFORM := vsoc_x86_64
 TARGET_ARCH := x86_64

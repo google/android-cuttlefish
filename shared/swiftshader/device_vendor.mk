@@ -1,5 +1,5 @@
 #
-# Copyright 2020 The Android Open-Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,10 @@
 # limitations under the License.
 #
 
-#
-# x86 (32-bit kernel) target for Cuttlefish
-#
+ifeq ($(TARGET_VULKAN_SUPPORT),true)
 
--include device/google/cuttlefish/shared/BoardConfig.mk
--include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
+# TODO(b/65201432): Swiftshader needs to create executable memory.
+PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
+PRODUCT_PACKAGES += vulkan.pastel
 
-TARGET_BOARD_PLATFORM := vsoc_x86
-TARGET_ARCH := x86
-TARGET_ARCH_VARIANT := x86
-TARGET_CPU_ABI := x86
-
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-i686/*.ko)
+endif
