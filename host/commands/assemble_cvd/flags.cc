@@ -326,8 +326,7 @@ DEFINE_bool(use_sdcard, true, "Create blank SD-Card image and expose to guest");
 
 DEFINE_bool(protected_vm, false, "Boot in Protected VM mode");
 
-DEFINE_bool(enable_audio, cuttlefish::HostArch() != cuttlefish::Arch::Arm64,
-            "Whether to play or capture audio");
+DEFINE_bool(enable_audio, true, "Whether to play or capture audio");
 
 DEFINE_uint32(camera_server_port, 0, "camera vsock port");
 
@@ -905,11 +904,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
-  // Audio is not available for Arm64
-  SetCommandLineOptionWithMode(
-      "enable_audio",
-      (cuttlefish::HostArch() == cuttlefish::Arch::Arm64) ? "false" : "true",
-      SET_FLAGS_DEFAULT);
   tmp_config_obj.set_enable_audio(FLAGS_enable_audio);
 
   return tmp_config_obj;
