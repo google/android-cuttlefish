@@ -246,10 +246,15 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
-  // Use a virtio-console instance for the main kernel console. All
-  // messages will switch from earlycon to virtio-console after the driver
-  // is loaded, and crosvm will append to the kernel log automatically
-  crosvm_cmd.AddHvcConsoleReadOnly(instance.kernel_log_pipe_name());
+  // If kernel log is enabled, the virtio-console port will be specified as
+  // a true console for Linux, and kernel messages will be printed there.
+  // Otherwise, the port will still be set up for bootloader and userspace
+  // messages, but the kernel will not print anything here. This keeps our
+  // kernel log event features working. If an alternative "earlycon" boot
+  // console is configured below on a legacy serial port, it will control
+  // the main log until the virtio-console takes over.
+  crosvm_cmd.AddHvcReadOnly(instance.kernel_log_pipe_name(),
+                            config.enable_kernel_log());
 
   if (config.console()) {
     // stdin is the only currently supported way to write data to a serial port in
@@ -258,7 +263,8 @@ std::vector<Command> CrosvmManager::StartCommands(
     // print other messages to stdout.
     if (config.kgdb() || config.use_bootloader()) {
       crosvm_cmd.AddSerialConsoleReadWrite(instance.console_out_pipe_name(),
-                                           instance.console_in_pipe_name());
+                                           instance.console_in_pipe_name(),
+                                           config.enable_kernel_log());
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
       // allocated to Android's serial console, and redirect it to a sink. This
@@ -275,7 +281,8 @@ std::vector<Command> CrosvmManager::StartCommands(
     // virtio-console driver may not be available for early messages
     // In kgdb mode, earlycon is an interactive console, and so early
     // dmesg will go there instead of the kernel.log
-    if (config.kgdb() || config.use_bootloader()) {
+    if (config.enable_kernel_log() &&
+        (config.kgdb() || config.use_bootloader())) {
       crosvm_cmd.AddSerialConsoleReadOnly(instance.kernel_log_pipe_name());
     }
 
