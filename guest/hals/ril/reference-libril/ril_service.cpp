@@ -13222,7 +13222,8 @@ int radio_1_6::reportPhysicalChannelConfigs(int slotId, int indicationType, int 
                     radioService[slotId]->mRadioIndicationV1_6->currentPhysicalChannelConfigs_1_6(
                             RadioIndicationType::UNSOLICITED, physChanConfig);
             radioService[slotId]->checkReturnStatus(retStatus);
-            {
+            // checkReturnStatus() call might set mRadioIndicationV1_6 to NULL
+            if (radioService[slotId]->mRadioIndicationV1_6 != NULL) {
                 // Just send the link estimate along with physical channel config, as it has
                 // at least the downlink bandwidth.
                 // Note: the bandwidth is just some hardcoded value, as there is not way to get
@@ -13252,7 +13253,8 @@ int radio_1_6::reportPhysicalChannelConfigs(int slotId, int indicationType, int 
                     radioService[slotId]->mRadioIndicationV1_4->currentPhysicalChannelConfigs_1_4(
                             RadioIndicationType::UNSOLICITED, physChanConfig);
             radioService[slotId]->checkReturnStatus(retStatus);
-            {
+            // checkReturnStatus() call might set mRadioIndicationV1_4 to NULL
+            if (radioService[slotId]->mRadioIndicationV1_4 != NULL) {
                 // Just send the link estimate along with physical channel config, as it has
                 // at least the downlink bandwidth.
                 // Note: the bandwidth is just some hardcoded value, as there is not way to get
@@ -13267,7 +13269,7 @@ int radio_1_6::reportPhysicalChannelConfigs(int slotId, int indicationType, int 
                                 RadioIndicationType::UNSOLICITED, lce);
                 radioService[slotId]->checkReturnStatus(retStatus);
             }
-        } else {
+        } else if (radioService[slotId]->mRadioIndicationV1_2 != NULL) {
             hidl_vec<V1_2::PhysicalChannelConfig> physChanConfig;
             physChanConfig.resize(1);
             physChanConfig[0].status = (V1_2::CellConnectionStatus)configs[0];
@@ -13277,7 +13279,8 @@ int radio_1_6::reportPhysicalChannelConfigs(int slotId, int indicationType, int 
                     radioService[slotId]->mRadioIndicationV1_2->currentPhysicalChannelConfigs(
                             RadioIndicationType::UNSOLICITED, physChanConfig);
             radioService[slotId]->checkReturnStatus(retStatus);
-            {
+            // checkReturnStatus() call might set mRadioIndicationV1_2 to NULL
+            if (radioService[slotId]->mRadioIndicationV1_2 != NULL) {
                 // Just send the link estimate along with physical channel config, as it has
                 // at least the downlink bandwidth.
                 // Note: the bandwidth is just some hardcoded value, as there is not way to get
