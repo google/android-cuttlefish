@@ -177,6 +177,33 @@ class ConvertAcloudCreateCommand {
               return true;
             }));
 
+    std::optional<std::string> kernel_branch;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--kernel-branch"})
+            .Setter([&kernel_branch](const FlagMatch& m) {
+              kernel_branch = m.value;
+              return true;
+            }));
+
+    std::optional<std::string> kernel_build_target;
+    flags.emplace_back(Flag()
+                           .Alias({FlagAliasMode::kFlagConsumesFollowing,
+                                   "--kernel-build-target"})
+                           .Setter([&kernel_build_target](const FlagMatch& m) {
+                             kernel_build_target = m.value;
+                             return true;
+                           }));
+
+    std::optional<std::string> kernel_build_id;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--kernel-build-id"})
+            .Setter([&kernel_build_id](const FlagMatch& m) {
+              kernel_build_id = m.value;
+              return true;
+            }));
+
     CF_EXPECT(ParseFlags(flags, arguments));
     CF_EXPECT(arguments.size() == 0,
               "Unrecognized arguments:'"
@@ -238,6 +265,13 @@ class ConvertAcloudCreateCommand {
         auto build =
             system_build_id.value_or(system_branch.value_or("aosp-master"));
         fetch_command.add_args(build + target);
+      }
+      if (kernel_branch || kernel_build_id || kernel_build_target) {
+        fetch_command.add_args("--kernel_build");
+        auto target = kernel_build_target.value_or("kernel_virt_x86_64");
+        auto build = kernel_build_id.value_or(
+            branch.value_or("aosp_kernel-common-android-mainline"));
+        fetch_command.add_args(build + "/" + target);
       }
       *fetch_command.mutable_working_directory() = dir;
       auto& fetch_env = *fetch_command.mutable_env();
