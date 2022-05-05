@@ -600,7 +600,3 @@ int FetchCvdMain(int argc, char** argv) {
 }
 
 } // namespace cuttlefish
-
-int main(int argc, char** argv) {
-  return cuttlefish::FetchCvdMain(argc, argv);
-}
