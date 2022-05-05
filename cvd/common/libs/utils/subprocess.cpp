@@ -264,27 +264,22 @@ Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
   return std::move(*this);
 }
 
-Command& Command::SetWorkingDirectory(std::string path) & {
+Command& Command::SetWorkingDirectory(const std::string& path) & {
   auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
   CHECK(fd->IsOpen()) << "Could not open \"" << path
                       << "\" dir fd: " << fd->StrError();
   return SetWorkingDirectory(fd);
 }
-Command Command::SetWorkingDirectory(std::string path) && {
-  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
-  CHECK(fd->IsOpen()) << "Could not open \"" << path
-                      << "\" dir fd: " << fd->StrError();
-  return std::move(SetWorkingDirectory(fd));
+Command Command::SetWorkingDirectory(const std::string& path) && {
+  return std::move(SetWorkingDirectory(path));
 }
 Command& Command::SetWorkingDirectory(SharedFD dirfd) & {
   CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
-  working_directory_ = dirfd;
+  working_directory_ = std::move(dirfd);
   return *this;
 }
 Command Command::SetWorkingDirectory(SharedFD dirfd) && {
-  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
-  working_directory_ = dirfd;
-  return std::move(*this);
+  return std::move(SetWorkingDirectory(std::move(dirfd)));
 }
 
 Subprocess Command::Start(SubprocessOptions options) const {
