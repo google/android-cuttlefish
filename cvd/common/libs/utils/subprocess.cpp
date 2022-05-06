@@ -205,12 +205,12 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
   return StopperResult::kStopSuccess;
 }
 
-Command::Command(const std::string& executable, SubprocessStopper stopper)
+Command::Command(std::string executable, SubprocessStopper stopper)
     : subprocess_stopper_(stopper) {
   for (char** env = environ; *env; env++) {
     env_.emplace_back(*env);
   }
-  command_.push_back(executable);
+  command_.emplace_back(std::move(executable));
 }
 
 Command::~Command() {
@@ -316,7 +316,8 @@ Subprocess Command::Start(SubprocessOptions options) const {
     }
     int rval;
     auto envp = ToCharPointers(env_);
-    rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+    const char* executable = executable_ ? executable_->c_str() : cmd[0];
+    rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
                    const_cast<char* const*>(envp.data()));
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
