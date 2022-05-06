@@ -15,7 +15,16 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -53,5 +62,160 @@ func TestCreateCVDInvalidRequests(t *testing.T) {
 		if !errors.As(err, &appErr) {
 			t.Errorf("unexpected error <<\"%v\">>, want \"%T\"", err, appErr)
 		}
+	}
+}
+
+type FakeFetchCVDDownloader struct {
+	t       *testing.T
+	content string
+}
+
+func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string, accessToken string) error {
+	r := strings.NewReader(d.content)
+	if _, err := io.Copy(dst, r); err != nil {
+		d.t.Fatal(err)
+	}
+	return nil
+}
+
+func TestFetchCVDHandler(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "fetch_cvd_1"), []byte(string("000")), 0644); err != nil {
+		t.Fatal(err)
+	}
+	downloader := &FakeFetchCVDDownloader{
+		t:       t,
+		content: "111",
+	}
+
+	t.Run("binary is not downloaded as it already exists", func(t *testing.T) {
+		h := NewFetchCVDHandler(dir, downloader)
+
+		err := h.Download("1", "tokenAbCDe")
+
+		if err != nil {
+			t.Errorf("epected <<nil>> error, got %#v", err)
+		}
+		content, err := ioutil.ReadFile(filepath.Join(dir, "fetch_cvd_1"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		actual := string(content)
+		expected := "000"
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+
+	t.Run("binary is downloaded", func(t *testing.T) {
+		h := NewFetchCVDHandler(dir, downloader)
+
+		h.Download("2", "tokenAbCDe")
+
+		content, _ := ioutil.ReadFile(filepath.Join(dir, "fetch_cvd_2"))
+		actual := string(content)
+		expected := "111"
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+
+	if err := os.Remove(filepath.Join(dir, "fetch_cvd_1")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(dir, "fetch_cvd_2")); err != nil {
+		t.Fatal(err)
+	}
+}
+
+type AlwaysFailsFetchCVDDownloader struct{}
+
+func (d *AlwaysFailsFetchCVDDownloader) Download(dst io.Writer, buildID string, accessToken string) error {
+	return fmt.Errorf("downloading failed")
+}
+
+func TestFetchCVDHandlerDownloadingFails(t *testing.T) {
+	dir := t.TempDir()
+	h := NewFetchCVDHandler(dir, &AlwaysFailsFetchCVDDownloader{})
+
+	err := h.Download("1", "tokenAbCDe")
+
+	if err == nil {
+		t.Errorf("expected an error")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "fetch_cvd_1")); err == nil {
+		t.Errorf("file must not have been created")
+	}
+}
+
+func TestABFetchCVDDownloaderDownload(t *testing.T) {
+	var req *http.Request
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		req = r
+		w.Write([]byte("OK"))
+	}))
+	defer ts.Close()
+
+	t.Run("request uri", func(t *testing.T) {
+		d := NewABFetchCVDDownloader(ts.Client(), ts.URL)
+
+		var b bytes.Buffer
+		d.Download(io.Writer(&b), "8541329", "tokenAbCDe")
+
+		expected := "/android/internal/build/v3/builds/8541329/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd?alt=media"
+		actual := req.URL.RequestURI()
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+
+	t.Run("request access token", func(t *testing.T) {
+		d := NewABFetchCVDDownloader(ts.Client(), ts.URL)
+
+		var b bytes.Buffer
+		d.Download(io.Writer(&b), "8541329", "tokenAbCDe")
+
+		expected := "tokenAbCDe"
+		actual := req.Header["Authorization"][0]
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+
+	t.Run("response content", func(t *testing.T) {
+		d := NewABFetchCVDDownloader(ts.Client(), ts.URL)
+
+		var b bytes.Buffer
+		d.Download(io.Writer(&b), "8541329", "tokenAbCDe")
+
+		expected := "OK"
+		actual := b.String()
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+}
+
+func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
+	errorMessage := "Request had invalid ..."
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		errJson := `{
+  "error": {
+    "code": 401,
+    "message": "` + errorMessage + `"
+  }
+}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(errJson))
+	}))
+	defer ts.Close()
+	d := NewABFetchCVDDownloader(ts.Client(), ts.URL)
+
+	var b bytes.Buffer
+	err := d.Download(io.Writer(&b), "8541329", "tokenAbCDe")
+
+	if !strings.Contains(err.Error(), errorMessage) {
+		t.Errorf("expected to contain <<%q>> in error: %#v", errorMessage, err)
 	}
 }

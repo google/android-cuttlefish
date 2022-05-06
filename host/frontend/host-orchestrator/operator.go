@@ -36,6 +36,8 @@ const (
 	defaultHttpsPort              = "1443"
 	defaultTLSCertDir             = "/etc/cuttlefish-common/host-orchestrator/cert"
 	defaultInstanceManagerEnabled = false
+	defaultAndroidBuildURL        = "https://androidbuildinternal.googleapis.com"
+	defaultBinDir                 = "/usr/lib/cuttlefish-common/bin"
 )
 
 func startHttpServer() {
@@ -75,7 +77,11 @@ func main() {
 			IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
-	im := &InstanceManager{}
+	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
+	binDir := fromEnvOrDefault("ORCHESTRATOR_BIN_DIR", defaultBinDir)
+	fetchCVDDownloader := NewABFetchCVDDownloader(http.DefaultClient, abURL)
+	fetchCVDHandler := NewFetchCVDHandler(binDir, fetchCVDDownloader)
+	im := NewInstanceManager(fetchCVDHandler)
 
 	setupDeviceEndpoint(pool, config, socketPath)
 	r := setupServerRoutes(pool, polledSet, config, imEnabled, im)
