@@ -37,6 +37,7 @@ func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 	if err := validateRequest(req); err != nil {
 		return nil, err
 	}
+  // This logic isn't complete yet, it's work in progress.
 	go func() {
 		err := m.fetchCVDHandler.Download(req.FetchCVDBuildID, req.BuildAPIAccessToken)
 		if err != nil {
