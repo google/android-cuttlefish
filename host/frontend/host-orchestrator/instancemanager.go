@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -95,7 +94,7 @@ func (h *FetchCVDHandler) Download(buildID, accessToken string) error {
 func (h *FetchCVDHandler) exist(buildID string) (bool, error) {
 	if _, err := os.Stat(h.buildFileName(buildID)); err == nil {
 		return true, nil
-	} else if errors.Is(err, fs.ErrNotExist) {
+	} else if errors.Is(err, os.ErrNotExist) {
 		return false, nil
 	} else {
 		return false, err
