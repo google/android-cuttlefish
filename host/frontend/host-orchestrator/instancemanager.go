@@ -78,7 +78,7 @@ func (h *FetchCVDHandler) Download(buildID, accessToken string) error {
 	if exist {
 		return nil
 	}
-	fileName := h.buildFileName(buildID)
+	fileName := BuildFetchCVDFileName(h.dir, buildID)
 	f, err := os.Create(fileName)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (h *FetchCVDHandler) Download(buildID, accessToken string) error {
 }
 
 func (h *FetchCVDHandler) exist(buildID string) (bool, error) {
-	if _, err := os.Stat(h.buildFileName(buildID)); err == nil {
+	if _, err := os.Stat(BuildFetchCVDFileName(h.dir, buildID)); err == nil {
 		return true, nil
 	} else if errors.Is(err, os.ErrNotExist) {
 		return false, nil
@@ -103,8 +103,8 @@ func (h *FetchCVDHandler) exist(buildID string) (bool, error) {
 	}
 }
 
-func (c *FetchCVDHandler) buildFileName(buildID string) string {
-	return fmt.Sprintf("%s/fetch_cvd_%s", c.dir, buildID)
+func BuildFetchCVDFileName(dir, buildID string) string {
+	return fmt.Sprintf("%s/fetch_cvd_%s", dir, buildID)
 }
 
 type FetchCVDDownloader interface {

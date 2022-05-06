@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -80,7 +79,7 @@ func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string, accessT
 
 func TestFetchCVDHandler(t *testing.T) {
 	dir := t.TempDir()
-	f, err := os.Create(filepath.Join(dir, "fetch_cvd_1"))
+	f, err := os.Create(BuildFetchCVDFileName(dir, "1"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +101,7 @@ func TestFetchCVDHandler(t *testing.T) {
 		if err != nil {
 			t.Errorf("epected <<nil>> error, got %#v", err)
 		}
-		content, err := ioutil.ReadFile(filepath.Join(dir, "fetch_cvd_1"))
+		content, err := ioutil.ReadFile(BuildFetchCVDFileName(dir, "1"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +117,7 @@ func TestFetchCVDHandler(t *testing.T) {
 
 		h.Download("2", "tokenAbCDe")
 
-		content, _ := ioutil.ReadFile(filepath.Join(dir, "fetch_cvd_2"))
+		content, _ := ioutil.ReadFile(BuildFetchCVDFileName(dir, "2"))
 		actual := string(content)
 		expected := "111"
 		if actual != expected {
@@ -142,8 +141,16 @@ func TestFetchCVDHandlerDownloadingFails(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected an error")
 	}
-	if _, err := os.Stat(filepath.Join(dir, "fetch_cvd_1")); err == nil {
+	if _, err := os.Stat(BuildFetchCVDFileName(dir, "1")); err == nil {
 		t.Errorf("file must not have been created")
+	}
+}
+
+func TestBuildFetchCVDFileName(t *testing.T) {
+	actual := BuildFetchCVDFileName("/usr/bin", "1")
+	expected := "/usr/bin/fetch_cvd_1"
+	if actual != expected {
+		t.Errorf("expected <<%q>>, got %q", expected, actual)
 	}
 }
 
