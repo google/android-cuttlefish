@@ -125,13 +125,6 @@ func TestFetchCVDHandler(t *testing.T) {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)
 		}
 	})
-
-	if err := os.Remove(filepath.Join(dir, "fetch_cvd_1")); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Remove(filepath.Join(dir, "fetch_cvd_2")); err != nil {
-		t.Fatal(err)
-	}
 }
 
 type AlwaysFailsFetchCVDDownloader struct{}

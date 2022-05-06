@@ -37,7 +37,7 @@ func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 	if err := validateRequest(req); err != nil {
 		return nil, err
 	}
-  // This logic isn't complete yet, it's work in progress.
+	// This logic isn't complete yet, it's work in progress.
 	go func() {
 		err := m.fetchCVDHandler.Download(req.FetchCVDBuildID, req.BuildAPIAccessToken)
 		if err != nil {
@@ -75,19 +75,20 @@ func (h *FetchCVDHandler) Download(buildID, accessToken string) error {
 	if err != nil {
 		return err
 	}
-	if !exist {
-		fileName := h.buildFileName(buildID)
-		f, err := os.Create(fileName)
-		if err != nil {
-			return err
+	if exist {
+		return nil
+	}
+	fileName := h.buildFileName(buildID)
+	f, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if err := h.fetchCVDDownloader.Download(f, buildID, accessToken); err != nil {
+		if removeErr := os.Remove(fileName); err != nil {
+			return fmt.Errorf("%w; %v", err, removeErr)
 		}
-		defer f.Close()
-		if err := h.fetchCVDDownloader.Download(f, buildID, accessToken); err != nil {
-			if err := os.Remove(fileName); err != nil {
-				return err
-			}
-			return err
-		}
+		return err
 	}
 	return nil
 }
