@@ -133,8 +133,7 @@ class Command {
   // Constructs a command object from the path to an executable binary and an
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
-  Command(const std::string& executable,
-          SubprocessStopper stopper = KillSubprocess);
+  Command(std::string executable, SubprocessStopper stopper = KillSubprocess);
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -146,11 +145,27 @@ class Command {
   const std::string& Executable() const { return command_[0]; }
 
   Command& SetExecutable(std::string executable) & {
-    command_[0] = std::move(executable);
+    executable_ = std::move(executable);
     return *this;
   }
   Command SetExecutable(std::string executable) && {
     return std::move(SetExecutable(executable));
+  }
+
+  Command& SetName(std::string name) & {
+    command_[0] = std::move(name);
+    return *this;
+  }
+  Command SetName(std::string name) && {
+    return std::move(SetName(std::move(name)));
+  }
+
+  Command& SetExecutableAndName(std::string name) & {
+    return SetExecutable(name).SetName(std::move(name));
+  }
+
+  Command SetExecutableAndName(std::string name) && {
+    return std::move(SetExecutableAndName(std::move(name)));
   }
 
   Command& SetStopper(SubprocessStopper stopper) & {
@@ -269,6 +284,7 @@ class Command {
   std::string AsBashScript(const std::string& redirected_stdio_path = "") const;
 
  private:
+  std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
