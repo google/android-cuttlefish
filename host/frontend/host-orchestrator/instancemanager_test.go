@@ -80,7 +80,13 @@ func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string, accessT
 
 func TestFetchCVDHandler(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "fetch_cvd_1"), []byte(string("000")), 0644); err != nil {
+	f, err := os.Create(filepath.Join(dir, "fetch_cvd_1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	_, err = f.Write([]byte(string("000")))
+	if err != nil {
 		t.Fatal(err)
 	}
 	downloader := &FakeFetchCVDDownloader{

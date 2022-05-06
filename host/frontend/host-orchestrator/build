@@ -9,8 +9,6 @@ mkdir -p /tmp/go
 export GOPATH=/tmp/go
 export GOCACHE=/tmp/go/go-build
 
-go version
-
 go build -v
 
 go test
