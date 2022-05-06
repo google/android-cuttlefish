@@ -12,9 +12,11 @@ jobs:
     - name: setup apt
       run: apt update -y && apt upgrade -y
     - name: Setup Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
-        go-version: ‘1.17.0’
+        go-version: '1.17.0'
+    - name: Go Version
+      run : go version
     - name: install debuild dependencies
       run: apt install -y git devscripts config-package-dev debhelper-compat golang
     - name: checkout repository
