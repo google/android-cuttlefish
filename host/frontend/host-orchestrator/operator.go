@@ -479,8 +479,6 @@ type CreateCVDRequest struct {
 	InstancesCount int `json:"instances_count"`
 	// REQUIRED. The build id used to download the fetch_cvd binary from.
 	FetchCVDBuildID string `json:"fetch_cvd_build_id"`
-	// REQUIRED. Access token required to communicate with the Android Build API.
-	BuildAPIAccessToken string `json:"build_api_access_token"`
 }
 
 type BuildInfo struct {

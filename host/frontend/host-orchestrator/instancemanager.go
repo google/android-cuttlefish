@@ -39,7 +39,7 @@ func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 	}
 	// This logic isn't complete yet, it's work in progress.
 	go func() {
-		err := m.fetchCVDHandler.Download(req.FetchCVDBuildID, req.BuildAPIAccessToken)
+		err := m.fetchCVDHandler.Download(req.FetchCVDBuildID)
 		if err != nil {
 			log.Printf("error downloading fetch_cvd: %v\n", err)
 		}
@@ -51,8 +51,7 @@ func validateRequest(r *CreateCVDRequest) error {
 	if r.BuildInfo == nil ||
 		r.BuildInfo.BuildID == "" ||
 		r.BuildInfo.Target == "" ||
-		r.FetchCVDBuildID == "" ||
-		r.BuildAPIAccessToken == "" {
+		r.FetchCVDBuildID == "" {
 		return NewBadRequestError("invalid CreateCVDRequest", nil)
 	}
 	return nil
@@ -68,7 +67,7 @@ func NewFetchCVDHandler(dir string, fetchCVDDownloader FetchCVDDownloader) *Fetc
 	return &FetchCVDHandler{dir, fetchCVDDownloader, sync.Mutex{}}
 }
 
-func (h *FetchCVDHandler) Download(buildID, accessToken string) error {
+func (h *FetchCVDHandler) Download(buildID string) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	exist, err := h.exist(buildID)
@@ -84,7 +83,7 @@ func (h *FetchCVDHandler) Download(buildID, accessToken string) error {
 		return err
 	}
 	defer f.Close()
-	if err := h.fetchCVDDownloader.Download(f, buildID, accessToken); err != nil {
+	if err := h.fetchCVDDownloader.Download(f, buildID); err != nil {
 		if removeErr := os.Remove(fileName); err != nil {
 			return fmt.Errorf("%w; %v", err, removeErr)
 		}
@@ -108,7 +107,7 @@ func BuildFetchCVDFileName(dir, buildID string) string {
 }
 
 type FetchCVDDownloader interface {
-	Download(dst io.Writer, buildID string, accessToken string) error
+	Download(dst io.Writer, buildID string) error
 }
 
 // Downloads fetch_cvd binary from Android Build.
@@ -121,20 +120,14 @@ func NewABFetchCVDDownloader(client *http.Client, URL string) *ABFetchCVDDownloa
 	return &ABFetchCVDDownloader{client, URL}
 }
 
-func (d *ABFetchCVDDownloader) Download(dst io.Writer, buildID string, accessToken string) error {
-	url := fmt.Sprintf("%s/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s?alt=media",
-		d.url,
-		buildID,
-		"aosp_cf_x86_64_phone-userdebug",
-		"latest",
-		"fetch_cvd")
-	req, err := http.NewRequest("GET", url, nil)
+func (d *ABFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
+	signedURL, err := d.getSignedURL(buildID)
 	if err != nil {
 		return err
 	}
-	req.Header = http.Header{
-		"Authorization": []string{accessToken},
-		"Accept":        []string{"application/json"},
+	req, err := http.NewRequest("GET", signedURL, nil)
+	if err != nil {
+		return err
 	}
 	res, err := d.client.Do(req)
 	if err != nil {
@@ -145,10 +138,34 @@ func (d *ABFetchCVDDownloader) Download(dst io.Writer, buildID string, accessTok
 		return d.parseErrorResponse(res.Body)
 	}
 	_, err = io.Copy(dst, res.Body)
+	return err
+}
+
+func (d *ABFetchCVDDownloader) getSignedURL(buildID string) (string, error) {
+	url := fmt.Sprintf("%s/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s/url?redirect=false",
+		d.url,
+		buildID,
+		"aosp_cf_x86_64_phone-userdebug",
+		"latest",
+		"fetch_cvd")
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	res, err := d.client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return "", d.parseErrorResponse(res.Body)
+	}
+	decoder := json.NewDecoder(res.Body)
+	body := struct {
+		SignedURL string `json:"signedUrl"`
+	}{}
+	err = decoder.Decode(&body)
+	return body.SignedURL, err
 }
 
 func (d *ABFetchCVDDownloader) parseErrorResponse(body io.ReadCloser) error {
