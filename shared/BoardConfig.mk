@@ -247,6 +247,11 @@ BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 BOARD_KERNEL_CMDLINE += init=/init
 
+# Enable KUnit for userdebug and eng builds
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+  BOARD_KERNEL_CMDLINE += kunit.enable=1
+endif
+
 BOARD_BOOTCONFIG += androidboot.hardware=cutf_cvm
 
 # TODO(b/182417593): Move all of these module options to modules.options
