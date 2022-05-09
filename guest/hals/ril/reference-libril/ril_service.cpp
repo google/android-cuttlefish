@@ -12652,6 +12652,11 @@ void convertRilCellInfoListToHal_1_6(void* response, size_t responseLen,
                         rillCellInfo->CellInfo.lte.cellIdentityLte.tac;
                 cellInfoLte.cellIdentityLte.base.base.earfcn =
                         rillCellInfo->CellInfo.lte.cellIdentityLte.earfcn;
+                cellInfoLte.cellIdentityLte.base.bandwidth = INT_MAX;
+                hidl_vec<V1_5::EutranBands> bands;
+                bands.resize(1);
+                bands[0] = V1_5::EutranBands::BAND_1;
+                cellInfoLte.cellIdentityLte.bands = bands;
                 cellInfoLte.signalStrengthLte.base.signalStrength =
                         rillCellInfo->CellInfo.lte.signalStrengthLte.signalStrength;
                 cellInfoLte.signalStrengthLte.base.rsrp =
