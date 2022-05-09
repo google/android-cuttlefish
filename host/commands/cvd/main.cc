@@ -299,7 +299,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
   CvdClient client;
 
   // TODO(b/206893146): Make this decision inside the server.
-  if (args[0] == "acloud") {
+  if (android::base::Basename(args[0]) == "acloud") {
     auto server_running = client.EnsureCvdServerRunning(
         android::base::Dirname(android::base::GetExecutableDirectory()));
     if (server_running.ok()) {
