@@ -1,6 +1,0 @@
-## Init files within the APEX do not support triggers (b/202731768)
-## By adding this as an init_rc parameter of the APEX the file will be installed
-## outside of the APEX and instead be installed under /vendor/etc/init.
-on post-fs-data
-    start bt_vhci_forwarder
-
