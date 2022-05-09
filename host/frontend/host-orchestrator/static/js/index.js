@@ -69,14 +69,17 @@ class DeviceListApp {
 
   #createDeviceEntry(devId, buttonId) {
     let li = document.createElement('li');
-    li.className = 'device_entry';
+    li.className = 'device-entry';
     li.title = 'Connect to ' + devId;
     let div = document.createElement('div');
     let span = document.createElement('span');
+    span.className = 'device-label';
     span.appendChild(document.createTextNode(devId));
-    let button = document.createElement('button');
+    span.title = devId;
+    let button = document.createElement('span');
+    button.appendChild(document.createTextNode('open_in_new'));
+    button.className = 'button material-icons';
     button.id = buttonId;
-    button.appendChild(document.createTextNode('Connect'));
     div.appendChild(span);
     div.appendChild(button);
     li.appendChild(div);
