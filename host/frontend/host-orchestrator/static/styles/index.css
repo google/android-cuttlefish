@@ -19,19 +19,51 @@ body {
   margin: 0;
 }
 
+.wrapper .sidebar{
+  background: rgb(1, 14, 21);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 225px;
+  height: 100%;
+  transition: all 0.5s ease;
+}
+
 #device-selector {
   color: whitesmoke;
 }
 
-#device-selector li.device-entry {
-  cursor: pointer;
+#device-selector ul {
+  list-style: none;
+  text-decoration: none;
+  padding: 0;
 }
 
+#device-selector li.device-entry  div {
+  display: flex;
+  margin: 0 10px 10px 10px;
+  border-radius: 5px;
+  padding: 3px;
+}
+
+#device-selector li.device-entry  div:hover {
+  background-color: rgb(2, 28, 42);
+}
+
+#device-selector .device-entry .device-label {
+  margin: auto;
+  overflow: hidden;
+}
+
+#device-selector .device-entry .button {
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+#device-selector > h1 {
+  text-align: center;
+}
 #refresh-list {
   cursor: pointer;
-}
-
-#device-list .device-entry button {
-  margin-left: 10px;
 }
 
