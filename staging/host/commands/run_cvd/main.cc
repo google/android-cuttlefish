@@ -45,6 +45,7 @@
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/custom_actions.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/inject.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
@@ -196,6 +197,10 @@ Result<void> RunCvdMain(int argc, char** argv) {
   CF_EXPECT(ChdirIntoRuntimeDir(instance));
 
   fruit::Injector<> injector(runCvdComponent, config, &instance);
+
+  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
+    CF_EXPECT(late_injected->LateInject(injector));
+  }
 
   for (auto& fragment : injector.getMultibindings<ConfigFragment>()) {
     CF_EXPECT(config->LoadFragment(*fragment));

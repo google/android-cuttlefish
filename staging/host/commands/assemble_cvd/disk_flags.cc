@@ -36,6 +36,7 @@
 #include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
+#include "host/libs/config/inject.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
@@ -937,12 +938,21 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // assemble_cvd.cpp
   fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config);
 
+  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
+    CF_EXPECT(late_injected->LateInject(injector));
+  }
+
   const auto& features = injector.getMultibindings<SetupFeature>();
   CF_EXPECT(SetupFeature::RunSetup(features));
 
   for (const auto& instance : config.Instances()) {
     fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
                                         &fetcher_config, &config, &instance);
+    for (auto& late_injected :
+         instance_injector.getMultibindings<LateInjected>()) {
+      CF_EXPECT(late_injected->LateInject(instance_injector));
+    }
+
     const auto& instance_features =
         instance_injector.getMultibindings<SetupFeature>();
     CF_EXPECT(SetupFeature::RunSetup(instance_features),
