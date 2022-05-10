@@ -16,8 +16,11 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
 #include <type_traits>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -74,6 +77,12 @@ struct Multibindings {
               OneBase<BaseTypes>::template Impls<ImplTypes...>)...);
     }
   };
+};
+
+class LateInjected {
+ public:
+  virtual ~LateInjected() = default;
+  virtual Result<void> LateInject(fruit::Injector<>& injector) = 0;
 };
 
 }  // namespace cuttlefish
