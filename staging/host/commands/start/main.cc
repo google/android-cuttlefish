@@ -17,8 +17,9 @@
 #include <sstream>
 #include <fstream>
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
+#include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -26,8 +27,9 @@
 #include "host/commands/start/filesystem_explorer.h"
 #include "host/commands/start/flag_forwarder.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/fetcher_config.h"
+#include "host/libs/config/host_tools_version.h"
+#include "host/libs/config/instance_nums.h"
 
 /**
  * If stdin is a tty, that means a user is invoking launch_cvd on the command
@@ -48,6 +50,9 @@ DEFINE_int32(base_instance_num,
              cuttlefish::GetInstance(),
              "The instance number of the device created. When `-num_instances N`"
              " is used, N instance numbers are claimed starting at this number.");
+DEFINE_string(instance_nums, "",
+              "A comma-separated list of instance numbers "
+              "to use. Mutually exclusive with base_instance_num.");
 DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE,"
                                  "DEBUG,INFO,WARNING,ERROR");
 DEFINE_string(file_verbosity, "DEBUG",
@@ -191,7 +196,12 @@ int main(int argc, char** argv) {
     cuttlefish::SharedFD::Pipe(&assembler_stdin, &launcher_report);
   }
 
-  auto instance_num_str = std::to_string(FLAGS_base_instance_num);
+  auto instance_nums =
+      cuttlefish::InstanceNumsCalculator().FromGlobalGflags().Calculate();
+  CHECK(instance_nums.ok()) << instance_nums.error();
+
+  CHECK(instance_nums->size() > 0) << "Expected at least one instance";
+  auto instance_num_str = std::to_string(*instance_nums->begin());
   setenv("CUTTLEFISH_INSTANCE", instance_num_str.c_str(), /* overwrite */ 1);
 
 #if defined(__BIONIC__)
@@ -228,11 +238,11 @@ int main(int argc, char** argv) {
   }
 
   std::vector<cuttlefish::Subprocess> runners;
-  for (int i = 0; i < FLAGS_num_instances; i++) {
+  for (const auto& instance_num : *instance_nums) {
     cuttlefish::SharedFD runner_stdin_in, runner_stdin_out;
     cuttlefish::SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
-    std::string instance_name = std::to_string(i + FLAGS_base_instance_num);
-    setenv("CUTTLEFISH_INSTANCE", instance_name.c_str(), /* overwrite */ 1);
+    std::string instance_num_str = std::to_string(instance_num);
+    setenv("CUTTLEFISH_INSTANCE", instance_num_str.c_str(), /* overwrite */ 1);
 
     auto run_proc = StartRunner(std::move(runner_stdin_out),
                                 forwarder.ArgvForSubprocess(kRunnerBin));
