@@ -70,6 +70,11 @@ body {
   cursor: pointer;
 }
 
+#device-selector #show-all {
+  display: block;
+  margin: auto;
+}
+
 /* end sidebar */
 
 /* begin devices */
@@ -98,6 +103,7 @@ body {
   width: 100%;
   border-bottom: 1px solid gray;
 }
+
 #devices .device-viewer iframe {
   width: 100%;
   height: 100%;
