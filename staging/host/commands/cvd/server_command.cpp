@@ -190,12 +190,12 @@ Result<cvd::Response> CvdCommandHandler::Handle(
 
   Command command("(replaced)");
   if (bin == kFetchBin) {
-    command.SetExecutable(HostBinaryPath("fetch_cvd"));
+    command.SetExecutableAndName(HostBinaryPath("fetch_cvd"));
   } else if (bin == kMkdirBin) {
-    command.SetExecutable(kMkdirBin);
+    command.SetExecutableAndName(kMkdirBin);
   } else {
     auto assembly_info = CF_EXPECT(instance_manager_.GetInstanceGroup(home));
-    command.SetExecutable(assembly_info.host_binaries_dir + bin);
+    command.SetExecutableAndName(assembly_info.host_binaries_dir + bin);
   }
   for (const std::string& arg : args_copy) {
     command.AddParameter(arg);
