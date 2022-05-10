@@ -54,7 +54,9 @@
         <permission name="android.permission.READ_CALL_LOG" fixed="false"/>
         <permission name="android.permission.WRITE_CALL_LOG" fixed="false"/>
         <!-- Used to set up a Wi-Fi P2P network -->
+        <!-- TODO(b/231966826): Remove the location permission after Restore targets to T. -->
         <permission name="android.permission.ACCESS_FINE_LOCATION" fixed="false"/>
+        <permission name="android.permission.NEARBY_WIFI_DEVICES" fixed="false"/>
     </exception>
 
     <exception
