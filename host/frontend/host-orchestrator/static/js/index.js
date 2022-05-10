@@ -30,6 +30,11 @@ class DeviceListApp {
     // Update the list at the user's request
     document.getElementById('refresh-list')
         .addEventListener('click', evt => this.#UpdateDeviceList());
+
+    // Show all devices
+    document.getElementById('show-all').addEventListener('click', evt => {
+      this.#showAll();
+    });
   }
 
   async #UpdateDeviceList() {
@@ -128,6 +133,15 @@ class DeviceListApp {
     let devices = document.getElementById('devices');
     devices.appendChild(viewer);
     return true;
+  }
+
+  #showAll() {
+    let buttons = document.querySelectorAll('#device-selector .button');
+    for (const button of buttons) {
+      if (button.textContent == 'visibility_off') {
+        button.click();
+      }
+    }
   }
 
   #deviceConnectUrl(deviceId) {
