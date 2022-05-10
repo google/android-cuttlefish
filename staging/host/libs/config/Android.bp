@@ -31,6 +31,7 @@ cc_library_static {
         "host_tools_version.cpp",
         "kernel_args.cpp",
         "known_paths.cpp",
+        "instance_nums.cpp",
         "logging.cpp",
     ],
     shared_libs: [

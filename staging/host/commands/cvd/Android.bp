@@ -43,6 +43,7 @@ cc_binary_host {
                 "libcuttlefish_utils",
                 "libext2_blkid",
                 "libfruit",
+                "libgflags",
                 "libjsoncpp",
                 "liblog",
                 "libprotobuf-cpp-lite",
