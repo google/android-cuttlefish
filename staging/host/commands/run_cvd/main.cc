@@ -100,12 +100,13 @@ class CuttlefishEnvironment : public SetupFeature,
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-fruit::Component<ServerLoop> runCvdComponent(
+fruit::Component<> runCvdComponent(
     const CuttlefishConfig* config,
     const CuttlefishConfig::InstanceSpecific* instance) {
   return fruit::createComponent()
       .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
       .addMultibinding<SetupFeature, CuttlefishEnvironment>()
+      .addMultibinding<ServerLoop, ServerLoop>()
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(AdbConfigComponent)
@@ -194,7 +195,7 @@ Result<void> RunCvdMain(int argc, char** argv) {
   ConfigureLogs(*config, instance);
   CF_EXPECT(ChdirIntoRuntimeDir(instance));
 
-  fruit::Injector<ServerLoop> injector(runCvdComponent, config, &instance);
+  fruit::Injector<> injector(runCvdComponent, config, &instance);
 
   for (auto& fragment : injector.getMultibindings<ConfigFragment>()) {
     CF_EXPECT(config->LoadFragment(*fragment));
@@ -222,7 +223,9 @@ Result<void> RunCvdMain(int argc, char** argv) {
 
   CF_EXPECT(process_monitor.StartAndMonitorProcesses());
 
-  injector.get<ServerLoop&>().Run(process_monitor);  // Should not return
+  auto server_loop_bindings = injector.getMultibindings<ServerLoop>();
+  CF_EXPECT(server_loop_bindings.size() == 1);
+  server_loop_bindings[0]->Run(process_monitor);  // Should not return
 
   return CF_ERR("The server loop returned, it should never happen!!");
 }
