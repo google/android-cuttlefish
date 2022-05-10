@@ -29,7 +29,7 @@ CrosvmBuilder::CrosvmBuilder() : command_("crosvm") {
 }
 
 void CrosvmBuilder::SetBinary(const std::string& binary) {
-  command_.SetExecutable(binary);
+  command_.SetExecutableAndName(binary);
 }
 
 void CrosvmBuilder::AddControlSocket(const std::string& control_socket) {
