@@ -24,8 +24,8 @@
 <audioPolicyConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
     <!-- Global configuration Decalaration -->
     <globalConfiguration speaker_drc_enabled="true"/>
-
-    <module name="primary" halVersion="2.0">
+    <modules>
+      <module name="primary" halVersion="2.0">
         <attachedDevices>
             <item>Speaker</item>
             <item>Built-In Mic</item>
@@ -61,7 +61,11 @@
             <route type="mix" sink="primary input"
                 sources="Built-In Mic"/>
         </routes>
-    </module>
+      </module>
+
+      <!-- Remote Submix Audio HAL -->
+      <xi:include href="r_submix_audio_policy_configuration.xml"/>
+    </modules>
 
     <xi:include href="audio_policy_volumes.xml"/>
     <xi:include href="default_volume_tables.xml"/>
