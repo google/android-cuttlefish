@@ -59,6 +59,10 @@ body {
 
 #device-selector .device-entry .button {
   cursor: pointer;
+#device-selector .device-entry .button-launch {
+  text-decoration: none;
+  color: inherit;
+}
   margin-right: 5px;
 }
 

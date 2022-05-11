@@ -79,19 +79,8 @@ class DeviceListApp {
       }
     });
     let launchBtn = entry.querySelector('.button-launch');
-    launchBtn.addEventListener('click', evt => {
-      this.#openDeviceInNewTab(devId);
-    });
+    launchBtn.href = this.#deviceConnectUrl(devId);
     return entry;
-  }
-
-  #openDeviceInNewTab(deviceId) {
-    return new Promise((resolve, reject) => {
-      let client = window.open(this.#deviceConnectUrl(deviceId), deviceId);
-      client.addEventListener('load', evt => {
-        resolve();
-      });
-    });
   }
 
   // Returns true if the device is visible
