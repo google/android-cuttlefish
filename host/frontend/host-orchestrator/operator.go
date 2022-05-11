@@ -37,7 +37,7 @@ const (
 	defaultTLSCertDir             = "/etc/cuttlefish-common/host-orchestrator/cert"
 	defaultInstanceManagerEnabled = false
 	defaultAndroidBuildURL        = "https://androidbuildinternal.googleapis.com"
-	defaultBinDir                 = "/usr/lib/cuttlefish-common/bin"
+	defaultCVDArtifactsDir        = "/mnt/cuttlefish"
 )
 
 func startHttpServer() {
@@ -78,9 +78,9 @@ func main() {
 		},
 	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
-	binDir := fromEnvOrDefault("ORCHESTRATOR_BIN_DIR", defaultBinDir)
+	cvdArtifactsDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	fetchCVDDownloader := NewABFetchCVDDownloader(http.DefaultClient, abURL)
-	fetchCVDHandler := NewFetchCVDHandler(binDir, fetchCVDDownloader)
+	fetchCVDHandler := NewFetchCVDHandler(cvdArtifactsDir, fetchCVDDownloader)
 	im := NewInstanceManager(fetchCVDHandler)
 
 	setupDeviceEndpoint(pool, config, socketPath)

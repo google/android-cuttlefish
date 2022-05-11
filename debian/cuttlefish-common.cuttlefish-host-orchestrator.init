@@ -39,7 +39,7 @@ orchestrator_https_port=${orchestrator_https_port:-1443}
 orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host-orchestrator/cert"}
 orchestrator_instance_manager_enabled=${orchestrator_instance_manager_enabled:-false}
 orchestrator_android_build_url=${orchestrator_android_build_url:-"https://androidbuildinternal.googleapis.com"}
-orchestrator_bin_dir=${orchestrator_bin_dir:-"/usr/lib/cuttlefish-common/bin"}
+orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/mnt/cuttlefish"}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
@@ -73,15 +73,15 @@ start() {
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  chown _cutf-operator:cvdnetwork "${orchestrator_bin_dir}"
-  chmod 775 "${orchestrator_bin_dir}"
+  mkdir -p  "${orchestrator_cvd_artifacts_dir}"
+  chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
   ORCHESTRATOR_HTTP_PORT="${orchestrator_http_port}" \
   ORCHESTRATOR_HTTPS_PORT="${orchestrator_https_port}" \
   ORCHESTRATOR_TLS_CERT_DIR="${orchestrator_tls_cert_dir}" \
   ORCHESTRATOR_INSTANCE_MANAGER_ENABLED="${orchestrator_instance_manager_enabled}" \
   ORCHESTRATOR_ANDROID_BUILD_URL="${orchestrator_android_build_url}" \
-  ORCHESTRATOR_BIN_DIR="${orchestrator_bin_dir}" \
+  ORCHESTRATOR_CVD_ARTIFACTS_DIR="${orchestrator_cvd_artifacts_dir}" \
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
