@@ -53,6 +53,7 @@ import m5
 from m5.util import addToPath
 from m5.objects import *
 from m5.options import *
+from m5.objects.Ethernet import NSGigE, IGbE_igb, IGbE_e1000, EtherTap
 from common import SysPaths
 from common import ObjectList
 from common import MemConfig
@@ -77,10 +78,14 @@ const std::string fs_mem_pci = R"CPP_STR_END(
     disk_image.child.image_file = SysPaths.disk(each_item)
     pci_devices.append(PciVirtIO(vio=VirtIOBlock(image=disk_image)))
 
+  nic = IGbE_e1000(pci_bus=0, pci_dev=0, pci_func=0, InterruptLine=1, InterruptPin=1)
+  pci_devices.append(nic)
   root.system.pci_devices = pci_devices
   for pci_device in root.system.pci_devices:
     root.system.attach_pci(pci_device)
 
+  root.tap = EtherTap(tun_clone_device='/dev/net/tun', tap_device_name='cvd-mtap-01')
+  root.tap.tap = nic.interface
   root.system.connect()
 )CPP_STR_END";
 
