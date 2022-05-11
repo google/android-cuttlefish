@@ -1,4 +1,2 @@
 allow adbd self:{ socket vsock_socket } {create listen accept rw_socket_perms_no_ioctl};
 allow adbd kernel:system module_request;
-
-gpu_access(adbd)
