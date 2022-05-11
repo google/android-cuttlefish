@@ -58,5 +58,5 @@
 # orchestrator_android_build_url=
 #
 # Directory used to store the CVD artifacts.
-# Defaults to "/mnt/cuttlefish"
+# Defaults to "/var/lib/cuttlefish-common"
 # orchestrator_cvd_artifacts_dir=

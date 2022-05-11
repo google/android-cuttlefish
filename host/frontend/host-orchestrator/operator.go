@@ -37,7 +37,7 @@ const (
 	defaultTLSCertDir             = "/etc/cuttlefish-common/host-orchestrator/cert"
 	defaultInstanceManagerEnabled = false
 	defaultAndroidBuildURL        = "https://androidbuildinternal.googleapis.com"
-	defaultCVDArtifactsDir        = "/mnt/cuttlefish"
+	defaultCVDArtifactsDir        = "/var/lib/cuttlefish-common"
 )
 
 func startHttpServer() {

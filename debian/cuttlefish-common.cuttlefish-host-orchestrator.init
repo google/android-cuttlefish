@@ -39,7 +39,7 @@ orchestrator_https_port=${orchestrator_https_port:-1443}
 orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host-orchestrator/cert"}
 orchestrator_instance_manager_enabled=${orchestrator_instance_manager_enabled:-false}
 orchestrator_android_build_url=${orchestrator_android_build_url:-"https://androidbuildinternal.googleapis.com"}
-orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/mnt/cuttlefish"}
+orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
