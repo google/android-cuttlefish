@@ -67,29 +67,24 @@ class DeviceListApp {
     let label = entry.querySelector('.device-label');
     label.textContent = devId;
     label.title = devId;
-    let showBtn = entry.querySelector('.button-show');
-    showBtn.addEventListener('click', evt => {
-      let shown = this.#toggleDevice(devId);
-      if (shown) {
-        showBtn.textContent = "visibility";
-        showBtn.title = 'Hide device';
-      } else {
-        showBtn.textContent = "visibility_off";
-        showBtn.title = 'Show device';
-      }
+    let showRadio = entry.querySelector('.radio');
+    showRadio.addEventListener('click', evt => {
+      this.#toggleDevice(devId);
     });
     let launchBtn = entry.querySelector('.button-launch');
     launchBtn.href = this.#deviceConnectUrl(devId);
     return entry;
   }
 
-  // Returns true if the device is visible
   #toggleDevice(devId) {
     let id = `device-${devId}`;
     let viewer = document.getElementById(id);
+    let showRadio = document.querySelector(`#entry-${devId} .radio`);
     if (viewer) {
       viewer.remove();
-      return false;
+      showRadio.classList.add('unchecked');
+      showRadio.classList.remove('checked');
+      return;
     }
     viewer = document.querySelector('#device-viewer-template').content.cloneNode(true);
     viewer.querySelector('.device-viewer').id = id;
@@ -100,15 +95,14 @@ class DeviceListApp {
     iframe.title = `Device ${devId}`
     let devices = document.getElementById('devices');
     devices.appendChild(viewer);
-    return true;
+    showRadio.classList.remove('unchecked');
+    showRadio.classList.add('checked');
   }
 
   #showAll() {
-    let buttons = document.querySelectorAll('#device-selector .button');
+    let buttons = document.querySelectorAll('#device-selector .radio.unchecked');
     for (const button of buttons) {
-      if (button.textContent == 'visibility_off') {
-        button.click();
-      }
+      button.click();
     }
   }
 

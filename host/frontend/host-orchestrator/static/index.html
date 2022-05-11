@@ -43,8 +43,11 @@
     <template id="device-entry-template">
       <li class="device-entry">
         <div>
-          <span class="device-label"></span>
-          <span title="Show device" class="button material-icons button-show">visibility_off</span>
+          <div class="radio unchecked">
+            <span title="Hide device" class="button material-icons button-hide">radio_button_checked</span>
+            <span title="Show device" class="button material-icons button-show">radio_button_unchecked</span>
+            <span class="device-label"></span>
+          </div>
           <a title="Launch in new tab" class="button material-icons button-launch"  target="_blank">open_in_new</a>
         </div>
       </li>

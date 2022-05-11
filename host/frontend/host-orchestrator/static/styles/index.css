@@ -41,8 +41,7 @@ body {
   padding: 0;
 }
 
-#device-selector li.device-entry  div {
-  display: flex;
+#device-selector li.device-entry > div {
   margin: 0 10px 10px 10px;
   border-radius: 5px;
   padding: 3px;
@@ -53,16 +52,40 @@ body {
 }
 
 #device-selector .device-entry .device-label {
-  margin: auto;
   overflow: hidden;
+  display: inline-block;
+  margin: 0 0 2px 0;
+}
+
+#device-selector .device-entry .radio {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.radio.checked .button-show {
+  display: none;
+}
+
+.radio.checked .button-hide {
+  display: inline;
+}
+
+.radio.unchecked .button-show {
+  display: inline;
+}
+
+.radio.unchecked .button-hide {
+  display: none;
+}
+
+#device-selector .device-entry .button-launch {
+  float: right;
+  text-decoration: none;
+  color: inherit;
+  margin-top: 3px;
 }
 
 #device-selector .device-entry .button {
-  cursor: pointer;
-#device-selector .device-entry .button-launch {
-  text-decoration: none;
-  color: inherit;
-}
   margin-right: 5px;
 }
 
