@@ -47,9 +47,6 @@ ifndef PRODUCT_ENFORCE_MAC80211_HWSIM
 PRODUCT_ENFORCE_MAC80211_HWSIM := true
 endif
 
-# Default to using vendor APEXes when available.
-LOCAL_PREFER_VENDOR_APEX ?= true
-
 PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
