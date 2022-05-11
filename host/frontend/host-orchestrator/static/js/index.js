@@ -55,52 +55,34 @@ class DeviceListApp {
     ul.innerHTML = '';
     let count = 1;
     for (const devId of device_ids) {
-      const showId = 'connect_' + count++;
-      const launchId = 'connect_' + count++;
-      let entry = this.#createDeviceEntry(devId, showId, launchId);
+      let entry = this.#createDeviceEntry(devId);
       ul.appendChild(entry);
-      let launchBtn = document.getElementById(launchId);
-      launchBtn.addEventListener('click', evt => {
-        this.#openDeviceInNewTab(devId);
-      });
-      let showBtn = document.getElementById(showId);
-      showBtn.addEventListener('click', evt => {
-        let shown = this.#toggleDevice(devId);
-        if (shown) {
-          showBtn.textContent = "visibility";
-          showBtn.title = 'Hide device';
-        } else {
-          showBtn.textContent = "visibility_off";
-          showBtn.title = 'Show device';
-        }
-      });
     }
   }
 
-  #createDeviceEntry(devId, showId, launchId) {
-    let li = document.createElement('li');
-    li.className = 'device-entry';
-    let div = document.createElement('div');
-    let span = document.createElement('span');
-    span.className = 'device-label';
-    span.appendChild(document.createTextNode(devId));
-    span.title = devId;
-    let showBtn = document.createElement('span');
-    showBtn.appendChild(document.createTextNode('visibility_off'));
-    showBtn.title = 'View device';
-    showBtn.className = 'button material-icons';
-    showBtn.id = showId;
-    showBtn.title = 'Show device';
-    let launchBtn = document.createElement('span');
-    launchBtn.appendChild(document.createTextNode('open_in_new'));
-    launchBtn.className = 'button material-icons';
-    launchBtn.id = launchId;
-    launchBtn.title = 'Launch in new tab';
-    div.appendChild(span);
-    div.appendChild(showBtn);
-    div.appendChild(launchBtn);
-    li.appendChild(div);
-    return li;
+  #createDeviceEntry(devId) {
+    let entry = document.querySelector('#device-entry-template')
+                    .content.cloneNode(true);
+    entry.querySelector('li').id = `entry-${devId}`;
+    let label = entry.querySelector('.device-label');
+    label.textContent = devId;
+    label.title = devId;
+    let showBtn = entry.querySelector('.button-show');
+    showBtn.addEventListener('click', evt => {
+      let shown = this.#toggleDevice(devId);
+      if (shown) {
+        showBtn.textContent = "visibility";
+        showBtn.title = 'Hide device';
+      } else {
+        showBtn.textContent = "visibility_off";
+        showBtn.title = 'Show device';
+      }
+    });
+    let launchBtn = entry.querySelector('.button-launch');
+    launchBtn.addEventListener('click', evt => {
+      this.#openDeviceInNewTab(devId);
+    });
+    return entry;
   }
 
   #openDeviceInNewTab(deviceId) {
@@ -120,16 +102,13 @@ class DeviceListApp {
       viewer.remove();
       return false;
     }
-    viewer = document.createElement('div');
-    viewer.id = id;
-    viewer.className = 'device-viewer';
-    let label = document.createElement('h3');
-    label.appendChild(document.createTextNode(devId));
-    viewer.appendChild(label);
-    let iframe = document.createElement('iframe');
+    viewer = document.querySelector('#device-viewer-template').content.cloneNode(true);
+    viewer.querySelector('.device-viewer').id = id;
+    let label = viewer.querySelector('h3');
+    label.textContent = devId;
+    let iframe = viewer.querySelector('iframe');
     iframe.src = this.#deviceConnectUrl(devId);
     iframe.title = `Device ${devId}`
-    viewer.appendChild(iframe);
     let devices = document.getElementById('devices');
     devices.appendChild(viewer);
     return true;
