@@ -445,10 +445,7 @@ class Controller {
 }
 
 function createPeerConnection(infra_config) {
-  let pc_config = {iceServers: []};
-  for (const stun of infra_config.ice_servers) {
-    pc_config.iceServers.push({urls: 'stun:' + stun});
-  }
+  let pc_config = {iceServers: infra_config.ice_servers};
   let pc = new RTCPeerConnection(pc_config);
 
   pc.addEventListener('icecandidate', evt => {
