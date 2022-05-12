@@ -155,7 +155,8 @@ class StreamerSockets : public virtual SetupFeature {
 };
 
 class WebRtcServer : public virtual CommandSource,
-                     public DiagnosticInformation {
+                     public DiagnosticInformation,
+                     public KernelLogPipeConsumer {
  public:
   INJECT(WebRtcServer(const CuttlefishConfig& config,
                       const CuttlefishConfig::InstanceSpecific& instance,
@@ -298,6 +299,7 @@ launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
       .addMultibinding<DiagnosticInformation, WebRtcServer>()
+      .addMultibinding<KernelLogPipeConsumer, WebRtcServer>()
       .addMultibinding<SetupFeature, StreamerSockets>()
       .addMultibinding<SetupFeature, WebRtcServer>();
 }
