@@ -36,6 +36,8 @@ const (
 	defaultHttpsPort              = "1443"
 	defaultTLSCertDir             = "/etc/cuttlefish-common/host-orchestrator/cert"
 	defaultInstanceManagerEnabled = false
+	defaultAndroidBuildURL        = "https://androidbuildinternal.googleapis.com"
+	defaultCVDArtifactsDir        = "/var/lib/cuttlefish-common"
 )
 
 func startHttpServer() {
@@ -75,7 +77,11 @@ func main() {
 			IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
-	im := &InstanceManager{}
+	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
+	cvdArtifactsDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
+	fetchCVDDownloader := NewABFetchCVDDownloader(http.DefaultClient, abURL)
+	fetchCVDHandler := NewFetchCVDHandler(cvdArtifactsDir, fetchCVDDownloader)
+	im := NewInstanceManager(fetchCVDHandler)
 
 	setupDeviceEndpoint(pool, config, socketPath)
 	r := setupServerRoutes(pool, polledSet, config, imEnabled, im)
@@ -473,8 +479,6 @@ type CreateCVDRequest struct {
 	InstancesCount int `json:"instances_count"`
 	// REQUIRED. The build id used to download the fetch_cvd binary from.
 	FetchCVDBuildID string `json:"fetch_cvd_build_id"`
-	// REQUIRED. Access token required to communicate with the Android Build API.
-	BuildAPIAccessToken string `json:"build_api_access_token"`
 }
 
 type BuildInfo struct {
