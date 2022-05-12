@@ -529,6 +529,7 @@ func replyJSONOK(w http.ResponseWriter, obj interface{}) error {
 
 // Send a JSON http response with error to the client
 func replyJSONErr(w http.ResponseWriter, err error) error {
+	log.Printf("response with error: %v\n", err)
 	var e *AppError
 	if errors.As(err, &e) {
 		return replyJSON(w, e.JSONResponse(), e.StatusCode)
