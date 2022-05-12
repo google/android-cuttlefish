@@ -1016,8 +1016,10 @@ window.addEventListener("load", async evt => {
   try {
     setupMessages();
     let connectorModule = await import('./server_connector.js');
-    let deviceConnection = await ConnectDevice(
-        connectorModule.deviceId(), await connectorModule.createConnector());
+    let deviceId = connectorModule.deviceId();
+    document.title = deviceId;
+    let deviceConnection =
+        await ConnectDevice(deviceId, await connectorModule.createConnector());
     let deviceControlApp = new DeviceControlApp(deviceConnection);
     deviceControlApp.start();
     document.getElementById('device-connection').style.display = 'block';
