@@ -181,36 +181,32 @@ std::vector<std::string> download_host_package(BuildApi* build_api,
   return files;
 }
 
-std::vector<std::string> download_ota_tools(BuildApi* build_api,
-                                            const Build& build,
-                                            const std::string& target_directory) {
-  auto artifacts = build_api->Artifacts(build);
+Result<std::vector<std::string>> DownloadOtaTools(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory) {
+  auto artifacts = build_api.Artifacts(build);
   bool has_host_package = false;
   for (const auto& artifact : artifacts) {
     has_host_package |= artifact.Name() == OTA_TOOLS;
   }
-  if (!has_host_package) {
-    LOG(ERROR) << "Target " << build << " did not have " << OTA_TOOLS;
-    return {};
-  }
+  CF_EXPECT(!!has_host_package,
+            "Target " << build << " did not have " << OTA_TOOLS);
   std::string local_path = target_directory + "/" + OTA_TOOLS;
 
-  if (!build_api->ArtifactToFile(build, OTA_TOOLS, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << OTA_TOOLS << " to "
-        << local_path;
-    return {};
-  }
+  CF_EXPECT(build_api.ArtifactToFile(build, OTA_TOOLS, local_path),
+            "Unable to download " << build << ":" << OTA_TOOLS << " to "
+                                  << local_path);
 
   std::string otatools_dir = target_directory + OTA_TOOLS_DIR;
-  if (!DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
-    LOG(ERROR) << "Could not create " << otatools_dir;
-    return {};
+  if (!DirectoryExists(otatools_dir)) {
+    CF_EXPECT(
+        mkdir(otatools_dir.c_str(), 0777) == 0,
+        "Could not create \"" << otatools_dir << "\": " << strerror(errno));
   }
   Archive archive(local_path);
-  if (!archive.ExtractAll(otatools_dir)) {
-    LOG(ERROR) << "Could not extract " << local_path;
-    return {};
-  }
+  CF_EXPECT(archive.ExtractAll(otatools_dir), "Failed to extract \""
+                                                  << local_path << "\" to \""
+                                                  << otatools_dir << "\"");
   std::vector<std::string> files = archive.Contents();
   for (auto& file : files) {
     file = target_directory + OTA_TOOLS_DIR + file;
@@ -351,7 +347,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                     DEFAULT_BUILD_TARGET, retry_period);
       }
       std::vector<std::string> ota_tools_files =
-          download_ota_tools(&build_api, ota_build, target_dir);
+          CF_EXPECT(DownloadOtaTools(build_api, ota_build, target_dir));
       CF_EXPECT(!ota_tools_files.empty(),
                 "Could not download ota tools for " << ota_build);
       CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
