@@ -21,6 +21,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sync"
 )
@@ -142,12 +143,7 @@ func (d *ABFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
 }
 
 func (d *ABFetchCVDDownloader) getSignedURL(buildID string) (string, error) {
-	url := fmt.Sprintf("%s/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s/url?redirect=false",
-		d.url,
-		buildID,
-		"aosp_cf_x86_64_phone-userdebug",
-		"latest",
-		"fetch_cvd")
+	url := BuildGetSignedURL(d.url, buildID)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
@@ -181,4 +177,13 @@ func (d *ABFetchCVDDownloader) parseErrorResponse(body io.ReadCloser) error {
 		return err
 	}
 	return fmt.Errorf(errRes.Error.Message)
+}
+
+func BuildGetSignedURL(baseURL, buildID string) string {
+	uri := fmt.Sprintf("/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s/url?redirect=false",
+		url.PathEscape(buildID),
+		"aosp_cf_x86_64_phone-userdebug",
+		"latest",
+		"fetch_cvd")
+	return baseURL + uri
 }

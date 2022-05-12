@@ -206,3 +206,27 @@ func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 		t.Errorf("expected to contain <<%q>> in error: %#v", errorMessage, err)
 	}
 }
+
+func TestBuildGetSignedURL(t *testing.T) {
+	baseURL := "http://localhost:1080"
+
+	t.Run("regular build id", func(t *testing.T) {
+		expected := "http://localhost:1080/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
+
+		actual := BuildGetSignedURL(baseURL, "1")
+
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+
+	t.Run("url-escaped build id", func(t *testing.T) {
+		expected := "http://localhost:1080/android/internal/build/v3/builds/latest%3F/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
+
+		actual := BuildGetSignedURL(baseURL, "latest?")
+
+		if actual != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, actual)
+		}
+	})
+}
