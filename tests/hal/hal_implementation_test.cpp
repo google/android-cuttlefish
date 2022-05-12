@@ -184,15 +184,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
     {"android.hardware.radio.", 1},
 
-    // No implementations of radio v2 on cuttlefish
-    {"android.hardware.radio.config.", 2},
-    {"android.hardware.radio.data.", 2},
-    {"android.hardware.radio.messaging.", 2},
-    {"android.hardware.radio.modem.", 2},
-    {"android.hardware.radio.network.", 2},
-    {"android.hardware.radio.sim.", 2},
-    {"android.hardware.radio.voice.", 2},
-
     // types-only packages, which never expect a default implementation
     {"android.hardware.uwb.fira_android.", 1},
 
