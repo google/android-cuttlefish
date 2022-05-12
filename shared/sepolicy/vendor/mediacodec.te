@@ -1,3 +1,1 @@
 allow mediacodec system_file:dir r_dir_perms;
-
-gpu_access(mediacodec)
