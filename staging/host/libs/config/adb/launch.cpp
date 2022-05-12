@@ -107,7 +107,7 @@ class AdbConnector : public CommandSource {
   const AdbHelper& helper_;
 };
 
-class SocketVsockProxy : public CommandSource {
+class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
  public:
   INJECT(SocketVsockProxy(const AdbHelper& helper,
                           const CuttlefishConfig::InstanceSpecific& instance,
@@ -202,6 +202,7 @@ LaunchAdbComponent() {
       .addMultibinding<CommandSource, AdbConnector>()
       .addMultibinding<CommandSource, SocketVsockProxy>()
       .addMultibinding<SetupFeature, AdbConnector>()
+      .addMultibinding<KernelLogPipeConsumer, SocketVsockProxy>()
       .addMultibinding<SetupFeature, SocketVsockProxy>();
 }
 
