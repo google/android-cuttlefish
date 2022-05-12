@@ -470,12 +470,6 @@ export async function Connect(deviceId, serverConnector) {
   let infraConfig = requestRet.infraConfig;
   console.debug('Device available:');
   console.debug(deviceInfo);
-  let pc_config = {iceServers: []};
-  if (infraConfig.ice_servers && infraConfig.ice_servers.length > 0) {
-    for (const server of infraConfig.ice_servers) {
-      pc_config.iceServers.push(server);
-    }
-  }
   let pc = createPeerConnection(infraConfig);
 
   let control = new Controller(serverConnector);
