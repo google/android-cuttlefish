@@ -422,7 +422,7 @@ class Controller {
     this.#pc.addIceCandidate(iceCandidate);
   }
 
-  ConnectDevice(pc) {
+  ConnectDevice(pc, infraConfig) {
     this.#pc = pc;
     console.debug('ConnectDevice');
     // ICE candidates will be generated when we add the offer. Adding it here
@@ -432,7 +432,8 @@ class Controller {
     this.#pc.addEventListener('icecandidate', evt => {
       if (evt.candidate) this.#sendIceCandidate(evt.candidate);
     });
-    this.#serverConnector.sendToDevice({type: 'request-offer'});
+    this.#serverConnector.sendToDevice(
+        {type: 'request-offer', ice_servers: infraConfig.ice_servers});
   }
 
   async renegotiateConnection() {
@@ -482,6 +483,6 @@ export async function Connect(deviceId, serverConnector) {
         reject(evt);
       }
     });
-    control.ConnectDevice(pc);
+    control.ConnectDevice(pc, infraConfig);
   });
 }
