@@ -101,13 +101,67 @@ class CuttlefishEnvironment : public SetupFeature,
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
+class InstanceLifecycle : public LateInjected {
+ public:
+  INJECT(InstanceLifecycle(const CuttlefishConfig& config,
+                           ServerLoop& server_loop))
+      : config_(config), server_loop_(server_loop) {}
+
+  Result<void> LateInject(fruit::Injector<>& injector) override {
+    config_fragments_ = injector.getMultibindings<ConfigFragment>();
+    setup_features_ = injector.getMultibindings<SetupFeature>();
+    command_sources_ = injector.getMultibindings<CommandSource>();
+    diagnostics_ = injector.getMultibindings<DiagnosticInformation>();
+    return {};
+  }
+
+  Result<void> Run() {
+    for (auto& fragment : config_fragments_) {
+      CF_EXPECT(config_.LoadFragment(*fragment));
+    }
+
+    // One of the setup features can consume most output, so print this early.
+    DiagnosticInformation::PrintAll(diagnostics_);
+
+    CF_EXPECT(SetupFeature::RunSetup(setup_features_));
+
+    // Monitor and restart host processes supporting the CVD
+    ProcessMonitor::Properties process_monitor_properties;
+    process_monitor_properties.RestartSubprocesses(
+        config_.restart_subprocesses());
+
+    for (auto& command_source : command_sources_) {
+      if (command_source->Enabled()) {
+        process_monitor_properties.AddCommands(command_source->Commands());
+      }
+    }
+
+    ProcessMonitor process_monitor(std::move(process_monitor_properties));
+
+    CF_EXPECT(process_monitor.StartAndMonitorProcesses());
+
+    server_loop_.Run(process_monitor);
+
+    return {};
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  ServerLoop& server_loop_;
+  std::vector<ConfigFragment*> config_fragments_;
+  std::vector<SetupFeature*> setup_features_;
+  std::vector<CommandSource*> command_sources_;
+  std::vector<DiagnosticInformation*> diagnostics_;
+};
+
 fruit::Component<> runCvdComponent(
     const CuttlefishConfig* config,
     const CuttlefishConfig::InstanceSpecific* instance) {
   return fruit::createComponent()
       .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
       .addMultibinding<SetupFeature, CuttlefishEnvironment>()
-      .addMultibinding<ServerLoop, ServerLoop>()
+      .addMultibinding<InstanceLifecycle, InstanceLifecycle>()
+      .addMultibinding<LateInjected, InstanceLifecycle>()
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(AdbConfigComponent)
@@ -202,35 +256,9 @@ Result<void> RunCvdMain(int argc, char** argv) {
     CF_EXPECT(late_injected->LateInject(injector));
   }
 
-  for (auto& fragment : injector.getMultibindings<ConfigFragment>()) {
-    CF_EXPECT(config->LoadFragment(*fragment));
-  }
-
-  // One of the setup features can consume most output, so print this early.
-  DiagnosticInformation::PrintAll(
-      injector.getMultibindings<DiagnosticInformation>());
-
-  const auto& features = injector.getMultibindings<SetupFeature>();
-  CF_EXPECT(SetupFeature::RunSetup(features));
-
-  // Monitor and restart host processes supporting the CVD
-  ProcessMonitor::Properties process_monitor_properties;
-  process_monitor_properties.RestartSubprocesses(
-      config->restart_subprocesses());
-
-  for (auto& command_source : injector.getMultibindings<CommandSource>()) {
-    if (command_source->Enabled()) {
-      process_monitor_properties.AddCommands(command_source->Commands());
-    }
-  }
-
-  ProcessMonitor process_monitor(std::move(process_monitor_properties));
-
-  CF_EXPECT(process_monitor.StartAndMonitorProcesses());
-
-  auto server_loop_bindings = injector.getMultibindings<ServerLoop>();
-  CF_EXPECT(server_loop_bindings.size() == 1);
-  server_loop_bindings[0]->Run(process_monitor);  // Should not return
+  auto instance_bindings = injector.getMultibindings<InstanceLifecycle>();
+  CF_EXPECT(instance_bindings.size() == 1);
+  CF_EXPECT(instance_bindings[0]->Run());  // Should not return
 
   return CF_ERR("The server loop returned, it should never happen!!");
 }
