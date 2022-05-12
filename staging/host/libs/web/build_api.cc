@@ -23,8 +23,8 @@
 #include <string>
 #include <thread>
 
-#include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
@@ -37,36 +37,33 @@ const std::string BUILD_API =
 
 bool StatusIsTerminal(const std::string& status) {
   const static std::set<std::string> terminal_statuses = {
-    "abandoned",
-    "complete",
-    "error",
-    "ABANDONED",
-    "COMPLETE",
-    "ERROR",
+      "abandoned", "complete", "error", "ABANDONED", "COMPLETE", "ERROR",
   };
   return terminal_statuses.count(status) > 0;
 }
 
-} // namespace
+}  // namespace
 
 Artifact::Artifact(const Json::Value& json_artifact) {
-  name = json_artifact["name"].asString();
-  size = std::stol(json_artifact["size"].asString());
-  last_modified_time = std::stol(json_artifact["lastModifiedTime"].asString());
-  md5 = json_artifact["md5"].asString();
-  content_type = json_artifact["contentType"].asString();
-  revision = json_artifact["revision"].asString();
-  creation_time = std::stol(json_artifact["creationTime"].asString());
-  crc32 = json_artifact["crc32"].asUInt();
+  name_ = json_artifact["name"].asString();
+  size_ = std::stol(json_artifact["size"].asString());
+  last_modified_time_ = std::stol(json_artifact["lastModifiedTime"].asString());
+  md5_ = json_artifact["md5"].asString();
+  content_type_ = json_artifact["contentType"].asString();
+  revision_ = json_artifact["revision"].asString();
+  creation_time_ = std::stol(json_artifact["creationTime"].asString());
+  crc32_ = json_artifact["crc32"].asUInt();
 }
 
 std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
-  return out << "(id=\"" << build.id << "\", target=\"" << build.target << "\")";
+  return out << "(id=\"" << build.id << "\", target=\"" << build.target
+             << "\")";
 }
 
 std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
   auto paths = android::base::Join(build.paths, ":");
-  return out << "(paths=\"" << paths << "\", target=\"" << build.target << "\")";
+  return out << "(paths=\"" << paths << "\", target=\"" << build.target
+             << "\")";
 }
 
 std::ostream& operator<<(std::ostream& out, const Build& build) {
@@ -74,9 +71,9 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
   return out;
 }
 
-DirectoryBuild::DirectoryBuild(const std::vector<std::string>& paths,
-                               const std::string& target)
-    : paths(paths), target(target), id("eng") {
+DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
+                               std::string target)
+    : paths(std::move(paths)), target(std::move(target)), id("eng") {
   product = StringFromEnv("TARGET_PRODUCT", "");
 }
 
@@ -205,9 +202,7 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
 }
 
 struct CloseDir {
-  void operator()(DIR* dir) {
-    closedir(dir);
-  }
+  void operator()(DIR* dir) { closedir(dir); }
 };
 
 using UniqueDir = std::unique_ptr<DIR, CloseDir>;
@@ -217,7 +212,8 @@ std::vector<Artifact> BuildApi::Artifacts(const DirectoryBuild& build) {
   for (const auto& path : build.paths) {
     auto dir = UniqueDir(opendir(path.c_str()));
     CHECK(dir != nullptr) << "Could not read files from \"" << path << "\"";
-    for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
+    for (auto entity = readdir(dir.get()); entity != nullptr;
+         entity = readdir(dir.get())) {
       artifacts.emplace_back(std::string(entity->d_name));
     }
   }
@@ -297,7 +293,7 @@ bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
     if (symlink(source.c_str(), destination.c_str())) {
       int error_num = errno;
       LOG(ERROR) << "Could not create symlink from " << source << " to "
-                  << destination << ": " << strerror(error_num);
+                 << destination << ": " << strerror(error_num);
       return false;
     }
     return true;
@@ -315,22 +311,23 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
     return DirectoryBuild(dirs, id);
   }
   size_t slash_pos = arg.find('/');
-  if (slash_pos != std::string::npos
-        && arg.find('/', slash_pos + 1) != std::string::npos) {
+  if (slash_pos != std::string::npos &&
+      arg.find('/', slash_pos + 1) != std::string::npos) {
     LOG(FATAL) << "Build argument cannot have more than one '/' slash. Was at "
-        << slash_pos << " and " << arg.find('/', slash_pos + 1);
+               << slash_pos << " and " << arg.find('/', slash_pos + 1);
   }
   std::string build_target = slash_pos == std::string::npos
-      ? default_build_target : arg.substr(slash_pos + 1);
-  std::string branch_or_id = slash_pos == std::string::npos
-      ? arg: arg.substr(0, slash_pos);
+                                 ? default_build_target
+                                 : arg.substr(slash_pos + 1);
+  std::string branch_or_id =
+      slash_pos == std::string::npos ? arg : arg.substr(0, slash_pos);
   std::string branch_latest_build_id =
       build_api->LatestBuildId(branch_or_id, build_target);
   std::string build_id = branch_or_id;
   if (branch_latest_build_id != "") {
     LOG(INFO) << "The latest good build on branch \"" << branch_or_id
-        << "\"with build target \"" << build_target
-        << "\" is \"" << branch_latest_build_id << "\"";
+              << "\"with build target \"" << build_target << "\" is \""
+              << branch_latest_build_id << "\"";
     build_id = branch_latest_build_id;
   }
   DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
@@ -339,9 +336,10 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
     LOG(FATAL) << proposed_build << " is not a valid branch or build id.";
   }
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
-  while (retry_period != std::chrono::seconds::zero() && !StatusIsTerminal(status)) {
-    LOG(INFO) << "Status is \"" << status << "\". Waiting for " << retry_period.count()
-        << " seconds.";
+  while (retry_period != std::chrono::seconds::zero() &&
+         !StatusIsTerminal(status)) {
+    LOG(INFO) << "Status is \"" << status << "\". Waiting for "
+              << retry_period.count() << " seconds.";
     std::this_thread::sleep_for(retry_period);
     status = build_api->BuildStatus(proposed_build);
   }
@@ -350,4 +348,4 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
   return proposed_build;
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
