@@ -3,3 +3,5 @@ hal_server_domain(hal_neuralnetworks_sample, hal_neuralnetworks)
 
 type hal_neuralnetworks_sample_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_neuralnetworks_sample)
+
+gpu_access(hal_neuralnetworks_sample)
