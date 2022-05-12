@@ -26,6 +26,12 @@ import (
 	"sync"
 )
 
+type EmptyFieldError string
+
+func (s EmptyFieldError) Error() string {
+	return fmt.Sprintf("field %v is empty", string(s))
+}
+
 type InstanceManager struct {
 	fetchCVDHandler *FetchCVDHandler
 }
@@ -36,7 +42,7 @@ func NewInstanceManager(fetchCVDHandler *FetchCVDHandler) *InstanceManager {
 
 func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 	if err := validateRequest(req); err != nil {
-		return nil, err
+		return nil, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
 	// This logic isn't complete yet, it's work in progress.
 	go func() {
@@ -49,11 +55,17 @@ func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 }
 
 func validateRequest(r *CreateCVDRequest) error {
-	if r.BuildInfo == nil ||
-		r.BuildInfo.BuildID == "" ||
-		r.BuildInfo.Target == "" ||
-		r.FetchCVDBuildID == "" {
-		return NewBadRequestError("invalid CreateCVDRequest", nil)
+	if r.BuildInfo == nil {
+		return EmptyFieldError("BuildInfo")
+	}
+	if r.BuildInfo.BuildID == "" {
+		return EmptyFieldError("BuildInfo.BuildID")
+	}
+	if r.BuildInfo.Target == "" {
+		return EmptyFieldError("BuildInfo.Target")
+	}
+	if r.FetchCVDBuildID == "" {
+		return EmptyFieldError("FetchCVDBuildID")
 	}
 	return nil
 }

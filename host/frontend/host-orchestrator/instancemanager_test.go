@@ -27,7 +27,7 @@ import (
 	"testing"
 )
 
-func TestCreateCVDInvalidRequests(t *testing.T) {
+func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &InstanceManager{}
 	var validRequest = func() *CreateCVDRequest {
 		return &CreateCVDRequest{
@@ -57,7 +57,11 @@ func TestCreateCVDInvalidRequests(t *testing.T) {
 		_, err := im.CreateCVD(req)
 		var appErr *AppError
 		if !errors.As(err, &appErr) {
-			t.Errorf("unexpected error <<\"%v\">>, want \"%T\"", err, appErr)
+			t.Errorf("error type <<\"%T\">> not found in error chain", appErr)
+		}
+		var emptyFieldErr EmptyFieldError
+		if !errors.As(err, &emptyFieldErr) {
+			t.Errorf("error type <<\"%T\">> not found in error chain", emptyFieldErr)
 		}
 	}
 }
