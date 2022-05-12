@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
-int FetchCvdMain(int argc, char** argv);
-
+Result<void> FetchCvdMain(int argc, char** argv);
 }
