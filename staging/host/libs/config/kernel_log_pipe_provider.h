@@ -28,4 +28,7 @@ class KernelLogPipeProvider : public virtual SetupFeature {
   virtual SharedFD KernelLogPipe() = 0;
 };
 
+/** Parent class tag for classes that inject KernelLogPipe. */
+class KernelLogPipeConsumer {};
+
 }  // namespace cuttlefish
