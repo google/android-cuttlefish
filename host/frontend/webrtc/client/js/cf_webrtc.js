@@ -422,7 +422,7 @@ class Controller {
     this.#pc.addIceCandidate(iceCandidate);
   }
 
-  ConnectDevice(pc) {
+  ConnectDevice(pc, infraConfig) {
     this.#pc = pc;
     console.debug('ConnectDevice');
     // ICE candidates will be generated when we add the offer. Adding it here
@@ -432,7 +432,8 @@ class Controller {
     this.#pc.addEventListener('icecandidate', evt => {
       if (evt.candidate) this.#sendIceCandidate(evt.candidate);
     });
-    this.#serverConnector.sendToDevice({type: 'request-offer'});
+    this.#serverConnector.sendToDevice(
+        {type: 'request-offer', ice_servers: infraConfig.ice_servers});
   }
 
   async renegotiateConnection() {
@@ -445,10 +446,7 @@ class Controller {
 }
 
 function createPeerConnection(infra_config) {
-  let pc_config = {iceServers: []};
-  for (const stun of infra_config.ice_servers) {
-    pc_config.iceServers.push({urls: 'stun:' + stun});
-  }
+  let pc_config = {iceServers: infra_config.ice_servers};
   let pc = new RTCPeerConnection(pc_config);
 
   pc.addEventListener('icecandidate', evt => {
@@ -470,12 +468,6 @@ export async function Connect(deviceId, serverConnector) {
   let infraConfig = requestRet.infraConfig;
   console.debug('Device available:');
   console.debug(deviceInfo);
-  let pc_config = {iceServers: []};
-  if (infraConfig.ice_servers && infraConfig.ice_servers.length > 0) {
-    for (const server of infraConfig.ice_servers) {
-      pc_config.iceServers.push(server);
-    }
-  }
   let pc = createPeerConnection(infraConfig);
 
   let control = new Controller(serverConnector);
@@ -491,6 +483,6 @@ export async function Connect(deviceId, serverConnector) {
         reject(evt);
       }
     });
-    control.ConnectDevice(pc);
+    control.ConnectDevice(pc, infraConfig);
   });
 }
