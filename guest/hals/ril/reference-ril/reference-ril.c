@@ -208,7 +208,7 @@ static int32_t net2pmask[] = {
 #define CDMA  (RAF_IS95A | RAF_IS95B | RAF_1xRTT)
 #define EVDO  (RAF_EVDO_0 | RAF_EVDO_A | RAF_EVDO_B | RAF_EHRPD)
 #define WCDMA (RAF_HSUPA | RAF_HSDPA | RAF_HSPA | RAF_HSPAP | RAF_UMTS)
-#define LTE   (RAF_LTE | RAF_LTE_CA)
+#define LTE   (RAF_LTE)
 #define NR    (RAF_NR)
 
 typedef struct {
