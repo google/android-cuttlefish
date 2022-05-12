@@ -151,7 +151,7 @@ class ProcessLeader : public SetupFeature {
 // Maintains the state of the boot process, once a final state is reached
 // (success or failure) it sends the appropriate exit code to the foreground
 // launcher process
-class CvdBootStateMachine : public SetupFeature {
+class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
  public:
   INJECT(CvdBootStateMachine(ProcessLeader& process_leader,
                              KernelLogPipeProvider& kernel_log_pipe_provider))
@@ -303,6 +303,7 @@ class CvdBootStateMachine : public SetupFeature {
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider>>
 bootStateMachineComponent() {
   return fruit::createComponent()
+      .addMultibinding<KernelLogPipeConsumer, CvdBootStateMachine>()
       .addMultibinding<SetupFeature, ProcessLeader>()
       .addMultibinding<SetupFeature, CvdBootStateMachine>();
 }
