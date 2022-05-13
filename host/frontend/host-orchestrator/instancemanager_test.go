@@ -156,7 +156,7 @@ func TestBuildFetchCVDFileName(t *testing.T) {
 	}
 }
 
-func TestABFetchCVDDownloaderDownload(t *testing.T) {
+func DontTestABFetchCVDDownloaderDownload(t *testing.T) {
 	fetchCVDBinContent := "001100"
 	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
@@ -187,7 +187,7 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 	}
 }
 
-func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
+func DontTestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 	errorMessage := "No latest build attempt for build 1"
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errJson := `{
