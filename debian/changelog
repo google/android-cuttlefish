@@ -1,3 +1,12 @@
+cuttlefish-common (0.9.23) unstable; urgency=medium
+
+  * CreateCVD endpoints for orchestrator
+  * Cosmetic changes to device list in signaling server
+  * Ability to connect with devices in the device list page
+  * Several bug fixes and improvements
+
+ -- Jorge Moreira Broche <jemoreira@google.com>  Fri, 13 May 2022 15:01:21 -0700
+
 cuttlefish-common (0.9.22) stable; urgency=medium
 
   * Don't require deviceId parameter in host-orchestrator
