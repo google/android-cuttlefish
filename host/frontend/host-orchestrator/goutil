@@ -9,6 +9,9 @@ mkdir -p /tmp/go
 export GOPATH=/tmp/go
 export GOCACHE=/tmp/go/go-build
 
-go build -v
-
-go test
+if [[ "$1" == "test" ]]; then
+  go test ./...
+else
+ # The default action is to build
+  go build -v
+fi

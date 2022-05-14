@@ -23,10 +23,39 @@
     </head>
 
     <body>
-      <section id='device-selector'>
-        <h1>Available devices <span id='refresh-list'>&#8635;</span></h1>
-        <ul id="device-list"></ul>
-      </section>
+      <div class="wrapper">
+        <div class="sidebar">
+          <section id='device-selector'>
+            <h1>Devices <span id='refresh-list' title='Refresh list'>&#8635;</span></h1>
+            <ul id="device-list"></ul>
+            <div>
+              <button id='show-all'>Show All </button>
+            </div>
+          </section>
+        </div>
+        <section id='devices'>
+          <div style="width:300px;background-color:white">
+        </section>
+      </div>
+
       <script src="js/index.js"></script>
     </body>
+    <template id="device-entry-template">
+      <li class="device-entry">
+        <div>
+          <div class="radio unchecked">
+            <span title="Hide device" class="button material-icons button-hide">radio_button_checked</span>
+            <span title="Show device" class="button material-icons button-show">radio_button_unchecked</span>
+            <span class="device-label"></span>
+          </div>
+          <a title="Launch in new tab" class="button material-icons button-launch"  target="_blank">open_in_new</a>
+        </div>
+      </li>
+    </template>
+    <template id="device-viewer-template">
+      <div class="device-viewer">
+        <h3></h3>
+        <iframe></iframe>
+      </div>
+    </template>
 </html>

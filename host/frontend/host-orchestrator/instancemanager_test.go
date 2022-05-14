@@ -21,7 +21,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -229,27 +228,41 @@ func TestBuildFetchCVDFileName(t *testing.T) {
 	}
 }
 
+type roundTripFunc func (r *http.Request) (*http.Response, error)
+
+func (s roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return s(r)
+}
+
+func newMockClient(rt roundTripFunc) *http.Client {
+	return &http.Client{Transport: rt}
+}
+
+func newResponseBody(content string) io.ReadCloser {
+	return ioutil.NopCloser(strings.NewReader(content))
+}
+
 func TestABFetchCVDDownloaderDownload(t *testing.T) {
 	fetchCVDBinContent := "001100"
 	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
-	var ts *httptest.Server
-	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		uri := r.URL.RequestURI()
-		if uri == getSignedURLRequestURI {
-			json := `{
-        "signedUrl": "` + ts.URL + downloadRequestURI + `" 
- }`
-			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(json))
-		} else if uri == downloadRequestURI {
-			w.Write([]byte(fetchCVDBinContent))
-		} else {
-			t.Fatalf("invalide request URI: %q\n", uri)
+	url := "https://someurl.fake"
+	mockClient := newMockClient(func (r *http.Request) (*http.Response, error) {
+		res := &http.Response{
+			StatusCode: http.StatusOK,
 		}
-	}))
-	defer ts.Close()
-	d := NewABFetchCVDDownloader(ts.Client(), ts.URL)
+		reqURI := r.URL.RequestURI()
+		if reqURI == getSignedURLRequestURI {
+			resURL := url + downloadRequestURI
+			res.Body = newResponseBody(`{"signedUrl": "` + resURL + `"}`)
+		} else if reqURI == downloadRequestURI {
+			res.Body = newResponseBody(fetchCVDBinContent)
+		} else {
+			t.Fatalf("invalide request URI: %q\n", reqURI)
+		}
+		return res, nil
+	})
+	d := NewABFetchCVDDownloader(mockClient, url)
 
 	var b bytes.Buffer
 	d.Download(io.Writer(&b), "1")
@@ -262,19 +275,20 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 
 func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 	errorMessage := "No latest build attempt for build 1"
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		errJson := `{
-  "error": {
-    "code": 401,
-    "message": "` + errorMessage + `"
-  }
-}`
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(errJson))
-	}))
-	defer ts.Close()
-	d := NewABFetchCVDDownloader(ts.Client(), ts.URL)
+	url := "https://something.fake"
+	mockClient := newMockClient(func (r *http.Request) (*http.Response, error) {
+		errJSON := `{
+			"error": {
+				"code": 401,
+				"message": "` + errorMessage + `"
+			}
+		}`
+		return &http.Response{
+			StatusCode: http.StatusNotFound,
+			Body: newResponseBody(errJSON),
+		}, nil
+	})
+	d := NewABFetchCVDDownloader(mockClient, url)
 
 	var b bytes.Buffer
 	err := d.Download(io.Writer(&b), "1")

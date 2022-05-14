@@ -18,11 +18,9 @@
 
 class DeviceListApp {
   #url;
-  #selectDeviceCb;
 
-  constructor({url, selectDeviceCb}) {
+  constructor({url}) {
     this.#url = url;
-    this.#selectDeviceCb = selectDeviceCb;
   }
 
   start() {
@@ -32,6 +30,11 @@ class DeviceListApp {
     // Update the list at the user's request
     document.getElementById('refresh-list')
         .addEventListener('click', evt => this.#UpdateDeviceList());
+
+    // Show all devices
+    document.getElementById('show-all').addEventListener('click', evt => {
+      this.#showAll();
+    });
   }
 
   async #UpdateDeviceList() {
@@ -51,51 +54,65 @@ class DeviceListApp {
     let ul = document.getElementById('device-list');
     ul.innerHTML = '';
     let count = 1;
-    let device_to_button_map = {};
     for (const devId of device_ids) {
-      const buttonId = 'connect_' + count++;
-      let entry = this.#createDeviceEntry(devId, buttonId);
+      let entry = this.#createDeviceEntry(devId);
       ul.appendChild(entry);
-      device_to_button_map[devId] = buttonId;
-    }
-
-    for (const [devId, buttonId] of Object.entries(device_to_button_map)) {
-      let button = document.getElementById(buttonId);
-      button.addEventListener('click', evt => {
-        this.#selectDeviceCb(devId);
-      });
     }
   }
 
-  #createDeviceEntry(devId, buttonId) {
-    let li = document.createElement('li');
-    li.className = 'device_entry';
-    li.title = 'Connect to ' + devId;
-    let div = document.createElement('div');
-    let span = document.createElement('span');
-    span.appendChild(document.createTextNode(devId));
-    let button = document.createElement('button');
-    button.id = buttonId;
-    button.appendChild(document.createTextNode('Connect'));
-    div.appendChild(span);
-    div.appendChild(button);
-    li.appendChild(div);
-    return li;
+  #createDeviceEntry(devId) {
+    let entry = document.querySelector('#device-entry-template')
+                    .content.cloneNode(true);
+    entry.querySelector('li').id = `entry-${devId}`;
+    let label = entry.querySelector('.device-label');
+    label.textContent = devId;
+    label.title = devId;
+    let showRadio = entry.querySelector('.radio');
+    showRadio.addEventListener('click', evt => {
+      this.#toggleDevice(devId);
+    });
+    let launchBtn = entry.querySelector('.button-launch');
+    launchBtn.href = this.#deviceConnectUrl(devId);
+    return entry;
+  }
+
+  #toggleDevice(devId) {
+    let id = `device-${devId}`;
+    let viewer = document.getElementById(id);
+    let showRadio = document.querySelector(`#entry-${devId} .radio`);
+    if (viewer) {
+      viewer.remove();
+      showRadio.classList.add('unchecked');
+      showRadio.classList.remove('checked');
+      return;
+    }
+    viewer = document.querySelector('#device-viewer-template').content.cloneNode(true);
+    viewer.querySelector('.device-viewer').id = id;
+    let label = viewer.querySelector('h3');
+    label.textContent = devId;
+    let iframe = viewer.querySelector('iframe');
+    iframe.src = this.#deviceConnectUrl(devId);
+    iframe.title = `Device ${devId}`
+    let devices = document.getElementById('devices');
+    devices.appendChild(viewer);
+    showRadio.classList.remove('unchecked');
+    showRadio.classList.add('checked');
+  }
+
+  #showAll() {
+    let buttons = document.querySelectorAll('#device-selector .radio.unchecked');
+    for (const button of buttons) {
+      button.click();
+    }
+  }
+
+  #deviceConnectUrl(deviceId) {
+    return `/devices/${deviceId}/files/client.html`;
   }
 }  // DeviceListApp
 
 window.addEventListener('load', e => {
   let listDevicesUrl = '/devices';
-  let selectDeviceCb = deviceId => {
-    return new Promise((resolve, reject) => {
-      let client =
-          window.open(`/devices/${deviceId}/files/client.html`, deviceId);
-      client.addEventListener('load', evt => {
-        console.log('loaded');
-        resolve();
-      });
-    });
-  };
-  let deviceListApp = new DeviceListApp({url: listDevicesUrl, selectDeviceCb});
+  let deviceListApp = new DeviceListApp({url: listDevicesUrl});
   deviceListApp.start();
 });
