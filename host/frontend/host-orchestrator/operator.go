@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -81,10 +82,11 @@ func main() {
 	cvdArtifactsDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	fetchCVDDownloader := NewABFetchCVDDownloader(http.DefaultClient, abURL)
 	fetchCVDHandler := NewFetchCVDHandler(cvdArtifactsDir, fetchCVDDownloader)
-	im := NewInstanceManager(fetchCVDHandler)
+	om := NewMapOM(func() string { return uuid.New().String() })
+	im := NewInstanceManager(fetchCVDHandler, om)
 
 	setupDeviceEndpoint(pool, config, socketPath)
-	r := setupServerRoutes(pool, polledSet, config, imEnabled, im)
+	r := setupServerRoutes(pool, polledSet, config, imEnabled, im, om)
 	http.Handle("/", r)
 
 	starters := []func(){startHttpServer, startHttpsServer}
@@ -136,7 +138,8 @@ func setupServerRoutes(
 	polledSet *PolledSet,
 	config InfraConfig,
 	imEnabled bool,
-	im *InstanceManager) *mux.Router {
+	im *InstanceManager,
+	om OperationManager) *mux.Router {
 	router := mux.NewRouter()
 	http.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
 		clientWs(w, r, pool, config)
@@ -164,6 +167,9 @@ func setupServerRoutes(
 		router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 			createDevices(w, r, im)
 		}).Methods("POST")
+		router.HandleFunc("/operations/{name}", func(w http.ResponseWriter, r *http.Request) {
+			getOperation(w, r, om)
+		}).Methods("GET")
 	}
 	fs := http.FileServer(http.Dir("static"))
 	router.PathPrefix("/").Handler(fs)
@@ -247,15 +253,25 @@ func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) 
 	var msg CreateCVDRequest
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
-		replyJSONErr(w, NewBadRequestError("Malformed JSON in request", err))
+		replyJSONErr(w, NewBadRequestError("malformed JSON in request", err))
 		return
 	}
-	op, err := im.CreateCVD(&msg)
+	op, err := im.CreateCVD(msg)
 	if err != nil {
 		replyJSONErr(w, err)
 		return
 	}
-	replyJSONOK(w, op)
+	replyJSONOK(w, BuildOperation(op))
+}
+
+func getOperation(w http.ResponseWriter, r *http.Request, om OperationManager) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	if op, ok := om.GetOperation(name); !ok {
+		replyJSONErr(w, NewNotFoundError("operation not found", nil))
+	} else {
+		replyJSONOK(w, BuildOperation(op))
+	}
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
@@ -491,20 +507,16 @@ type BuildInfo struct {
 
 type Operation struct {
 	Name string `json:"name"`
-	// Service-specific metadata associated with the operation.  It typically
-	// contains progress information and common metadata such as create time.
-	Metadata interface{} `json:"metadata,omitempty"`
 	// If the value is `false`, it means the operation is still in progress.
 	// If `true`, the operation is completed, and either `error` or `response` is
 	// available.
 	Done bool `json:"done"`
 	// Result will contain either an error or a result object but never both.
-	Result *Result `json:"result,omitempty"`
+	Result *OperationResult `json:"result,omitempty"`
 }
 
-type Result struct {
-	Error        ErrorMsg    `json:"error,omitempty"`
-	ResultObject interface{} `json:"result,omitempty"`
+type OperationResult struct {
+	Error *ErrorMsg `json:"error,omitempty"`
 }
 
 // Utility functions
@@ -568,4 +580,20 @@ func fromEnvOrDefaultBool(key string, def bool) bool {
 		panic(err)
 	}
 	return b
+}
+
+func BuildOperation(data OperationData) Operation {
+	op := Operation{
+		Name: data.Name,
+		Done: data.Done,
+	}
+	if !data.Done {
+		return op
+	}
+	if data.IsError() {
+		op.Result = &OperationResult{
+			Error: &ErrorMsg{data.Result.Error.ErrorMsg},
+		}
+	}
+	return op
 }

@@ -34,27 +34,41 @@ func (s EmptyFieldError) Error() string {
 
 type InstanceManager struct {
 	fetchCVDHandler *FetchCVDHandler
+	om              OperationManager
+	launchCVDWG     sync.WaitGroup // used for testing purposes only
 }
 
-func NewInstanceManager(fetchCVDHandler *FetchCVDHandler) *InstanceManager {
-	return &InstanceManager{fetchCVDHandler}
+func NewInstanceManager(fetchCVDHandler *FetchCVDHandler, om OperationManager) *InstanceManager {
+	return &InstanceManager{fetchCVDHandler, om, sync.WaitGroup{}}
 }
 
-func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
+func (m *InstanceManager) CreateCVD(req CreateCVDRequest) (OperationData, error) {
 	if err := validateRequest(req); err != nil {
-		return nil, NewBadRequestError("invalid CreateCVDRequest", err)
+		return OperationData{}, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
-	// This logic isn't complete yet, it's work in progress.
-	go func() {
-		err := m.fetchCVDHandler.Download(req.FetchCVDBuildID)
-		if err != nil {
-			log.Printf("error downloading fetch_cvd: %v\n", err)
-		}
-	}()
-	return &Operation{}, nil
+	op, err := m.om.NewOperation()
+	if err != nil {
+		return OperationData{}, NewInternalError("error creating new operation", err)
+	}
+	m.launchCVDWG.Add(1)
+	go m.LaunchCVD(req, op)
+	return op, nil
 }
 
-func validateRequest(r *CreateCVDRequest) error {
+// This logic isn't complete yet, it's work in progress.
+func (m *InstanceManager) LaunchCVD(req CreateCVDRequest, op OperationData) {
+	defer m.launchCVDWG.Done()
+	err := m.fetchCVDHandler.Download(req.FetchCVDBuildID)
+	if err != nil {
+		log.Printf("failed to download fetch_cvd with error: %v", err)
+		result := OperationResultData{
+			Error: OperationErrorData{"failed to download fetch_cvd"},
+		}
+		m.om.CompleteOperation(op.Name, result)
+	}
+}
+
+func validateRequest(r CreateCVDRequest) error {
 	if r.BuildInfo == nil {
 		return EmptyFieldError("BuildInfo")
 	}

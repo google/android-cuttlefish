@@ -47,3 +47,7 @@ func NewBadRequestError(msg string, e error) error {
 func NewInternalError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusInternalServerError, Err: e}
 }
+
+func NewNotFoundError(msg string, e error) error {
+	return &AppError{Msg: msg, StatusCode: http.StatusNotFound, Err: e}
+}

@@ -29,8 +29,8 @@ import (
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &InstanceManager{}
-	var validRequest = func() *CreateCVDRequest {
-		return &CreateCVDRequest{
+	var validRequest = func() CreateCVDRequest {
+		return CreateCVDRequest{
 			BuildInfo: &BuildInfo{
 				BuildID: "1234",
 				Target:  "aosp_cf_x86_64_phone-userdebug",
@@ -53,7 +53,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 
 	for _, test := range tests {
 		req := validRequest()
-		test.corruptRequest(req)
+		test.corruptRequest(&req)
 		_, err := im.CreateCVD(req)
 		var appErr *AppError
 		if !errors.As(err, &appErr) {
@@ -63,6 +63,79 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		if !errors.As(err, &emptyFieldErr) {
 			t.Errorf("error type <<\"%T\">> not found in error chain", emptyFieldErr)
 		}
+	}
+}
+
+func TestCreateCVDNewOperationFails(t *testing.T) {
+	dir := t.TempDir()
+	opName := "operation-1"
+	om := NewMapOM(func() string { return opName })
+	fetchCVDHandler := NewFetchCVDHandler(dir, &FakeFetchCVDDownloader{t: t})
+	im := NewInstanceManager(fetchCVDHandler, om)
+	req := CreateCVDRequest{
+		BuildInfo: &BuildInfo{
+			BuildID: "1234",
+			Target:  "aosp_cf_x86_64_phone-userdebug",
+		},
+		FetchCVDBuildID: "1",
+	}
+
+	im.CreateCVD(req)
+	_, err := im.CreateCVD(req)
+
+	var appErr *AppError
+	if !errors.As(err, &appErr) {
+		t.Errorf("error type <<\"%T\">> not found in error chain", appErr)
+	}
+	var newOperationErr NewOperationError
+	if !errors.As(err, &newOperationErr) {
+		t.Errorf("error type <<\"%T\">> not found in error chain", newOperationErr)
+	}
+	im.launchCVDWG.Wait()
+	expectedOp := OperationData{
+		Name: opName,
+		Done: false,
+	}
+	op, _ := om.GetOperation(opName)
+	if op != expectedOp {
+		t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+	}
+
+}
+
+func TestCreateCVDFetchCVDFails(t *testing.T) {
+	dir := t.TempDir()
+	opName := "operation-1"
+	om := NewMapOM(func() string { return opName })
+	fetchCVDHandler := NewFetchCVDHandler(dir, &AlwaysFailsFetchCVDDownloader{})
+	im := NewInstanceManager(fetchCVDHandler, om)
+	req := CreateCVDRequest{
+		BuildInfo: &BuildInfo{
+			BuildID: "1234",
+			Target:  "aosp_cf_x86_64_phone-userdebug",
+		},
+		FetchCVDBuildID: "1",
+	}
+	returnedOp := OperationData{
+		Name: opName,
+		Done: false,
+	}
+	completedOp := OperationData{
+		Name: opName,
+		Done: true,
+		Result: OperationResultData{
+			Error: OperationErrorData{"failed to download fetch_cvd"},
+		},
+	}
+
+	op, _ := im.CreateCVD(req)
+	if op != returnedOp {
+		t.Errorf("expected <<%+v>>, got %+v", returnedOp, op)
+	}
+	im.launchCVDWG.Wait()
+	op, _ = om.GetOperation(opName)
+	if op != completedOp {
+		t.Errorf("expected <<%+v>>, got %+v", completedOp, op)
 	}
 }
 
