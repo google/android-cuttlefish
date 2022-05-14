@@ -228,7 +228,7 @@ func TestBuildFetchCVDFileName(t *testing.T) {
 	}
 }
 
-type roundTripFunc func (r *http.Request) (*http.Response, error)
+type roundTripFunc func(r *http.Request) (*http.Response, error)
 
 func (s roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return s(r)
@@ -247,7 +247,7 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
 	url := "https://someurl.fake"
-	mockClient := newMockClient(func (r *http.Request) (*http.Response, error) {
+	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
 		res := &http.Response{
 			StatusCode: http.StatusOK,
 		}
@@ -276,7 +276,7 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 	errorMessage := "No latest build attempt for build 1"
 	url := "https://something.fake"
-	mockClient := newMockClient(func (r *http.Request) (*http.Response, error) {
+	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
 		errJSON := `{
 			"error": {
 				"code": 401,
@@ -285,7 +285,7 @@ func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 		}`
 		return &http.Response{
 			StatusCode: http.StatusNotFound,
-			Body: newResponseBody(errJSON),
+			Body:       newResponseBody(errJSON),
 		}, nil
 	})
 	d := NewABFetchCVDDownloader(mockClient, url)
