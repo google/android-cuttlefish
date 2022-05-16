@@ -34,4 +34,7 @@
       Handle volume keys directly in CarAudioService without passing them to the foreground app
     -->
     <bool name="config_handleVolumeKeysInWindowManager">true</bool>
+
+    <!-- Show the "Adaptive Brightness" toggle. -->
+    <bool name="config_automatic_brightness_available">true</bool>
 </resources>
