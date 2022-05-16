@@ -46,7 +46,7 @@ class MetricsService : public CommandSource {
   INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     return single_element_emplace(Command(MetricsBinary()));
   }
 
@@ -72,7 +72,7 @@ class GnssGrpcProxyServer : public CommandSource {
       : config_(config), instance_(instance) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command gnss_grpc_proxy_cmd(GnssGrpcProxyBinary());
     const unsigned gnss_grpc_proxy_server_port =
         instance_.gnss_grpc_proxy_server_port();
