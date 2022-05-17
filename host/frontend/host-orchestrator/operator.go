@@ -267,7 +267,7 @@ func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) 
 func getOperation(w http.ResponseWriter, r *http.Request, om OperationManager) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	if op, ok := om.GetOperation(name); !ok {
+	if op, ok := om.Get(name); !ok {
 		replyJSONErr(w, NewNotFoundError("operation not found", nil))
 	} else {
 		replyJSONOK(w, BuildOperation(op))

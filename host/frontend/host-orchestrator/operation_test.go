@@ -17,6 +17,7 @@ package main
 import (
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestMapOMNewOperation(t *testing.T) {
@@ -30,7 +31,7 @@ func TestMapOMNewOperation(t *testing.T) {
 			Done: false,
 		}
 
-		op, _ := om.NewOperation()
+		op, _ := om.New()
 
 		if op != expectedOp {
 			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
@@ -40,8 +41,8 @@ func TestMapOMNewOperation(t *testing.T) {
 	t.Run("fails", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 
-		om.NewOperation()
-		_, err := om.NewOperation()
+		om.New()
+		_, err := om.New()
 
 		var newOperationErr NewOperationError
 		if !errors.As(err, &newOperationErr) {
@@ -60,9 +61,9 @@ func TestMapOMGetOperation(t *testing.T) {
 			Name: opName,
 			Done: false,
 		}
-		om.NewOperation()
+		om.New()
 
-		op, ok := om.GetOperation(opName)
+		op, ok := om.Get(opName)
 
 		if ok != true {
 			t.Errorf("expected true")
@@ -75,7 +76,7 @@ func TestMapOMGetOperation(t *testing.T) {
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 
-		op, ok := om.GetOperation(opName)
+		op, ok := om.Get(opName)
 
 		if ok != false {
 			t.Errorf("expected false")
@@ -92,7 +93,7 @@ func TestMapOMCompleteOperation(t *testing.T) {
 
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
-		om.NewOperation()
+		om.New()
 		result := OperationResultData{
 			Error: OperationErrorData{"error"},
 		}
@@ -104,9 +105,9 @@ func TestMapOMCompleteOperation(t *testing.T) {
 			},
 		}
 
-		om.CompleteOperation(opName, result)
+		om.Complete(opName, result)
 
-		op, ok := om.GetOperation(opName)
+		op, ok := om.Get(opName)
 		if ok != true {
 			t.Errorf("expected true")
 		}
@@ -121,11 +122,60 @@ func TestMapOMCompleteOperation(t *testing.T) {
 			Error: OperationErrorData{"error"},
 		}
 
-		om.CompleteOperation(opName, result)
+		om.Complete(opName, result)
 
-		_, ok := om.GetOperation(opName)
+		_, ok := om.Get(opName)
 		if ok != false {
 			t.Errorf("expected false")
+		}
+	})
+}
+
+func TestMapOMWaitOperation(t *testing.T) {
+	opName := "operation-1"
+	uuidFactory := func() string { return opName }
+	result := OperationResultData{
+		Error: OperationErrorData{"error"},
+	}
+
+	t.Run("stops waiting", func(t *testing.T) {
+		om := NewMapOM(uuidFactory)
+		om.New()
+		waitDoneCh := make(chan struct{}, 1)
+
+		go func() {
+			om.Wait(opName)
+			om.Wait(opName)
+			waitDoneCh <- struct{}{}
+		}()
+
+		om.Complete(opName, result)
+
+		select {
+		case <-waitDoneCh:
+			return
+		case <-time.After(1 * time.Second):
+			t.Errorf("expected stop waiting as operatioin was completed")
+			return
+		}
+	})
+
+	t.Run("continues waiting", func(t *testing.T) {
+		om := NewMapOM(uuidFactory)
+		om.New()
+		waitDoneCh := make(chan struct{}, 1)
+
+		go func() {
+			om.Wait(opName)
+			waitDoneCh <- struct{}{}
+		}()
+
+		select {
+		case <-waitDoneCh:
+			t.Errorf("expected to continue waiting as operation was not completed")
+			return
+		case <-time.After(1 * time.Second):
+			return
 		}
 	})
 }

@@ -95,7 +95,7 @@ func TestCreateCVDNewOperationFails(t *testing.T) {
 		Name: opName,
 		Done: false,
 	}
-	op, _ := om.GetOperation(opName)
+	op, _ := om.Get(opName)
 	if op != expectedOp {
 		t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
 	}
@@ -132,7 +132,7 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 		t.Errorf("expected <<%+v>>, got %+v", returnedOp, op)
 	}
 	im.launchCVDWG.Wait()
-	op, _ = om.GetOperation(opName)
+	op, _ = om.Get(opName)
 	if op != completedOp {
 		t.Errorf("expected <<%+v>>, got %+v", completedOp, op)
 	}

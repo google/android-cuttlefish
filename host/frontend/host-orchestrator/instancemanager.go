@@ -46,7 +46,7 @@ func (m *InstanceManager) CreateCVD(req CreateCVDRequest) (OperationData, error)
 	if err := validateRequest(req); err != nil {
 		return OperationData{}, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
-	op, err := m.om.NewOperation()
+	op, err := m.om.New()
 	if err != nil {
 		return OperationData{}, NewInternalError("error creating new operation", err)
 	}
@@ -64,7 +64,7 @@ func (m *InstanceManager) LaunchCVD(req CreateCVDRequest, op OperationData) {
 		result := OperationResultData{
 			Error: OperationErrorData{"failed to download fetch_cvd"},
 		}
-		m.om.CompleteOperation(op.Name, result)
+		m.om.Complete(op.Name, result)
 	}
 }
 
