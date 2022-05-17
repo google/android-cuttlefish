@@ -24,6 +24,8 @@ import (
 	"net/url"
 	"os"
 	"sync"
+
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
 )
 
 type EmptyFieldError string
@@ -40,7 +42,7 @@ func NewInstanceManager(fetchCVDHandler *FetchCVDHandler) *InstanceManager {
 	return &InstanceManager{fetchCVDHandler}
 }
 
-func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
+func (m *InstanceManager) CreateCVD(req *apiv1.CreateCVDRequest) (*apiv1.Operation, error) {
 	if err := validateRequest(req); err != nil {
 		return nil, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
@@ -51,10 +53,10 @@ func (m *InstanceManager) CreateCVD(req *CreateCVDRequest) (*Operation, error) {
 			log.Printf("error downloading fetch_cvd: %v\n", err)
 		}
 	}()
-	return &Operation{}, nil
+	return &apiv1.Operation{}, nil
 }
 
-func validateRequest(r *CreateCVDRequest) error {
+func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.BuildInfo == nil {
 		return EmptyFieldError("BuildInfo")
 	}

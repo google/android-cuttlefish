@@ -24,13 +24,15 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &InstanceManager{}
-	var validRequest = func() *CreateCVDRequest {
-		return &CreateCVDRequest{
-			BuildInfo: &BuildInfo{
+	var validRequest = func() *apiv1.CreateCVDRequest {
+		return &apiv1.CreateCVDRequest{
+			BuildInfo: &apiv1.BuildInfo{
 				BuildID: "1234",
 				Target:  "aosp_cf_x86_64_phone-userdebug",
 			},
@@ -42,12 +44,12 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		t.Fatalf("the valid request is not valid")
 	}
 	var tests = []struct {
-		corruptRequest func(r *CreateCVDRequest)
+		corruptRequest func(r *apiv1.CreateCVDRequest)
 	}{
-		{func(r *CreateCVDRequest) { r.BuildInfo = nil }},
-		{func(r *CreateCVDRequest) { r.BuildInfo.BuildID = "" }},
-		{func(r *CreateCVDRequest) { r.BuildInfo.Target = "" }},
-		{func(r *CreateCVDRequest) { r.FetchCVDBuildID = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo = nil }},
+		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo.BuildID = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo.Target = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.FetchCVDBuildID = "" }},
 	}
 
 	for _, test := range tests {
@@ -155,7 +157,7 @@ func TestBuildFetchCVDFileName(t *testing.T) {
 	}
 }
 
-type roundTripFunc func (r *http.Request) (*http.Response, error)
+type roundTripFunc func(r *http.Request) (*http.Response, error)
 
 func (s roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return s(r)
@@ -174,7 +176,7 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
 	url := "https://someurl.fake"
-	mockClient := newMockClient(func (r *http.Request) (*http.Response, error) {
+	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
 		res := &http.Response{
 			StatusCode: http.StatusOK,
 		}
@@ -203,7 +205,7 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 	errorMessage := "No latest build attempt for build 1"
 	url := "https://something.fake"
-	mockClient := newMockClient(func (r *http.Request) (*http.Response, error) {
+	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
 		errJSON := `{
 			"error": {
 				"code": 401,
@@ -212,7 +214,7 @@ func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 		}`
 		return &http.Response{
 			StatusCode: http.StatusNotFound,
-			Body: newResponseBody(errJSON),
+			Body:       newResponseBody(errJSON),
 		}, nil
 	})
 	d := NewABFetchCVDDownloader(mockClient, url)
