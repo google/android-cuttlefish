@@ -27,6 +27,8 @@ import (
 	"sync"
 	"time"
 
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
+
 	"github.com/gorilla/mux"
 )
 
@@ -71,10 +73,10 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	pool := NewDevicePool()
 	polledSet := NewPolledSet()
-	config := InfraConfig{
+	config := apiv1.InfraConfig{
 		Type: "config",
-		IceServers: []IceServer{
-			IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
+		IceServers: []apiv1.IceServer{
+			apiv1.IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
@@ -99,7 +101,7 @@ func main() {
 	wg.Wait()
 }
 
-func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
+func setupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) {
 	if err := os.RemoveAll(path); err != nil {
 		log.Fatal("Failed to clean previous socket: ", err)
 	}
@@ -134,7 +136,7 @@ func setupDeviceEndpoint(pool *DevicePool, config InfraConfig, path string) {
 func setupServerRoutes(
 	pool *DevicePool,
 	polledSet *PolledSet,
-	config InfraConfig,
+	config apiv1.InfraConfig,
 	imEnabled bool,
 	im *InstanceManager) *mux.Router {
 	router := mux.NewRouter()
@@ -171,10 +173,10 @@ func setupServerRoutes(
 }
 
 // Device endpoint
-func deviceEndpoint(c *JSONUnix, pool *DevicePool, config InfraConfig) {
+func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 	log.Println("Device connected")
 	defer c.Close()
-	var msg RegisterMsg
+	var msg apiv1.RegisterMsg
 	if err := c.Recv(&msg); err != nil {
 		log.Println("Error reading from device: ", err)
 		return
@@ -205,7 +207,7 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config InfraConfig) {
 		return
 	}
 	for {
-		var msg ForwardMsg
+		var msg apiv1.ForwardMsg
 		if err := c.Recv(&msg); err != nil {
 			log.Println("Error reading from device: ", err)
 			return
@@ -244,7 +246,7 @@ func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 }
 
 func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) {
-	var msg CreateCVDRequest
+	var msg apiv1.CreateCVDRequest
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		replyJSONErr(w, NewBadRequestError("Malformed JSON in request", err))
@@ -277,7 +279,7 @@ func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 // Client websocket endpoint
 
-func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config InfraConfig) {
+func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config apiv1.InfraConfig) {
 	log.Println(r.URL)
 	ws := NewJSONWs(w, r)
 	if ws == nil {
@@ -286,7 +288,7 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 	// Serve the websocket in its own thread
 	go func() {
 		defer ws.Close()
-		var msg ConnectMsg
+		var msg apiv1.ConnectMsg
 		if err := ws.Recv(&msg); err != nil {
 			log.Println("Failed to receive from client: ", err)
 			return
@@ -320,7 +322,7 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 			return
 		}
 		for {
-			var msg ForwardMsg
+			var msg apiv1.ForwardMsg
 			if err := ws.Recv(&msg); err != nil {
 				log.Println("Client websocket closed")
 				return
@@ -334,7 +336,7 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 				replyError(ws, "Client forward message missing payload")
 				return
 			}
-			cMsg := ClientMsg{
+			cMsg := apiv1.ClientMsg{
 				Type:     "client_msg",
 				ClientId: id,
 				Payload:  payload,
@@ -349,7 +351,7 @@ func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config I
 // Http long polling client endpoints
 
 func createPolledConnection(w http.ResponseWriter, r *http.Request, pool *DevicePool, polledSet *PolledSet) {
-	var msg NewConnMsg
+	var msg apiv1.NewConnMsg
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		log.Println("Failed to parse json from client: ", err)
@@ -363,7 +365,7 @@ func createPolledConnection(w http.ResponseWriter, r *http.Request, pool *Device
 		return
 	}
 	conn := polledSet.NewConnection(device)
-	reply := NewConnReply{ConnId: conn.Id(), DeviceInfo: device.info}
+	reply := apiv1.NewConnReply{ConnId: conn.Id(), DeviceInfo: device.info}
 	replyJSONOK(w, reply)
 }
 
@@ -374,14 +376,14 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 		http.NotFound(w, r)
 		return
 	}
-	var msg ForwardMsg
+	var msg apiv1.ForwardMsg
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		log.Println("Failed to parse json from client: ", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	cMsg := ClientMsg{
+	cMsg := apiv1.ClientMsg{
 		Type:     "client_msg",
 		ClientId: conn.ClientId(),
 		Payload:  msg.Payload,
@@ -423,90 +425,6 @@ func messages(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 	replyJSONOK(w, conn.GetMessages(start, count))
 }
 
-// JSON objects schema
-
-type RegisterMsg struct {
-	Type     string      `json:"message_type"`
-	DeviceId string      `json:"device_id"`
-	Port     int         `json:"device_port"`
-	Info     interface{} `json:"device_info"`
-}
-
-type ConnectMsg struct {
-	Type     string `json:"message_type"`
-	DeviceId string `json:"device_id"`
-}
-
-type ForwardMsg struct {
-	Type    string      `json:"message_type"`
-	Payload interface{} `json:"payload"`
-	// This is used by the device message and ignored by the client
-	ClientId int `json:"client_id"`
-}
-
-type ClientMsg struct {
-	Type     string      `json:"message_type"`
-	ClientId int         `json:"client_id"`
-	Payload  interface{} `json:"payload"`
-}
-
-type ErrorMsg struct {
-	Error string `json:"error"`
-}
-
-type NewConnMsg struct {
-	DeviceId string `json:"device_id"`
-}
-
-type NewConnReply struct {
-	ConnId     string      `json:"connection_id"`
-	DeviceInfo interface{} `json:"device_info"`
-}
-
-type InfraConfig struct {
-	Type       string      `json:"message_type"`
-	IceServers []IceServer `json:"ice_servers"`
-}
-type IceServer struct {
-	URLs []string `json:"urls"`
-}
-
-type CreateCVDRequest struct {
-	// REQUIRED.
-	BuildInfo *BuildInfo `json:"build_info"`
-	// The number of CVDs to create. Use this field if creating more than one instance.
-	// Defaults to 1.
-	InstancesCount int `json:"instances_count"`
-	// REQUIRED. The build id used to download the fetch_cvd binary from.
-	FetchCVDBuildID string `json:"fetch_cvd_build_id"`
-}
-
-type BuildInfo struct {
-	// [REQUIRED] The Android build identifier.
-	BuildID string `json:"build_id"`
-	// [REQUIRED] A string to determine the specific product and flavor from
-	// the set of builds, e.g. aosp_cf_x86_64_phone-userdebug.
-	Target string `json:"target"`
-}
-
-type Operation struct {
-	Name string `json:"name"`
-	// Service-specific metadata associated with the operation.  It typically
-	// contains progress information and common metadata such as create time.
-	Metadata interface{} `json:"metadata,omitempty"`
-	// If the value is `false`, it means the operation is still in progress.
-	// If `true`, the operation is completed, and either `error` or `response` is
-	// available.
-	Done bool `json:"done"`
-	// Result will contain either an error or a result object but never both.
-	Result *Result `json:"result,omitempty"`
-}
-
-type Result struct {
-	Error        ErrorMsg    `json:"error,omitempty"`
-	ResultObject interface{} `json:"result,omitempty"`
-}
-
 // Utility functions
 
 // Interface implemented by any connection capable of sending in JSON format
@@ -517,7 +435,7 @@ type JSONConn interface {
 // Log and reply with an error
 func replyError(c JSONConn, msg string) {
 	log.Println(msg)
-	if err := c.Send(ErrorMsg{Error: msg}); err != nil {
+	if err := c.Send(apiv1.ErrorMsg{Error: msg}); err != nil {
 		log.Println("Failed to send error reply: ", err)
 	}
 }
@@ -534,7 +452,7 @@ func replyJSONErr(w http.ResponseWriter, err error) error {
 	if errors.As(err, &e) {
 		return replyJSON(w, e.JSONResponse(), e.StatusCode)
 	}
-	return replyJSON(w, ErrorMsg{Error: "Internal Server Error"}, http.StatusInternalServerError)
+	return replyJSON(w, apiv1.ErrorMsg{Error: "Internal Server Error"}, http.StatusInternalServerError)
 }
 
 // Send a JSON http response to the client

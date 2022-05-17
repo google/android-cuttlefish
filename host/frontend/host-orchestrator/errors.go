@@ -16,6 +16,8 @@ package main
 
 import (
 	"net/http"
+
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
 )
 
 type AppError struct {
@@ -34,10 +36,10 @@ func (e *AppError) Unwrap() error {
 	return e.Err
 }
 
-func (e *AppError) JSONResponse() ErrorMsg {
+func (e *AppError) JSONResponse() apiv1.ErrorMsg {
 	// Include only the high level error message in the error response, the
 	// lower level errors are just for logging
-	return ErrorMsg{Error: e.Msg}
+	return apiv1.ErrorMsg{Error: e.Msg}
 }
 
 func NewBadRequestError(msg string, e error) error {
