@@ -185,7 +185,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
 
   Command command("(replaced)");
   if (bin == kFetchBin) {
-    command.SetExecutableAndName(HostBinaryPath("fetch_cvd"));
+    command.SetExecutable("/proc/self/exe").SetName("fetch_cvd");
   } else if (bin == kMkdirBin) {
     command.SetExecutableAndName(kMkdirBin);
   } else {
