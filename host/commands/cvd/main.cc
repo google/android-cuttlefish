@@ -329,11 +329,14 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
   flags.emplace_back(GflagsCompatFlag("clean", clean));
   SharedFD internal_server_fd;
   flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
+  SharedFD carryover_client_fd;
+  flags.emplace_back(
+      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
 
   CF_EXPECT(ParseFlags(flags, args));
 
   if (internal_server_fd->IsOpen()) {
-    return CF_EXPECT(CvdServerMain(internal_server_fd));
+    return CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
   } else if (argv[0] == std::string("/proc/self/exe")) {
     return CF_ERR(
         "Expected to be in server mode, but didn't get a server "
