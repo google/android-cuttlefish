@@ -24,13 +24,15 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &InstanceManager{}
-	var validRequest = func() CreateCVDRequest {
-		return CreateCVDRequest{
-			BuildInfo: &BuildInfo{
+	var validRequest = func() apiv1.CreateCVDRequest {
+		return apiv1.CreateCVDRequest{
+			BuildInfo: &apiv1.BuildInfo{
 				BuildID: "1234",
 				Target:  "aosp_cf_x86_64_phone-userdebug",
 			},
@@ -42,12 +44,12 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		t.Fatalf("the valid request is not valid")
 	}
 	var tests = []struct {
-		corruptRequest func(r *CreateCVDRequest)
+		corruptRequest func(r *apiv1.CreateCVDRequest)
 	}{
-		{func(r *CreateCVDRequest) { r.BuildInfo = nil }},
-		{func(r *CreateCVDRequest) { r.BuildInfo.BuildID = "" }},
-		{func(r *CreateCVDRequest) { r.BuildInfo.Target = "" }},
-		{func(r *CreateCVDRequest) { r.FetchCVDBuildID = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo = nil }},
+		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo.BuildID = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo.Target = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.FetchCVDBuildID = "" }},
 	}
 
 	for _, test := range tests {
@@ -71,8 +73,8 @@ func TestCreateCVDNewOperationFails(t *testing.T) {
 	om := NewMapOM(func() string { return opName })
 	fetchCVDHandler := NewFetchCVDHandler(dir, &FakeFetchCVDDownloader{t: t})
 	im := NewInstanceManager(fetchCVDHandler, om)
-	req := CreateCVDRequest{
-		BuildInfo: &BuildInfo{
+	req := apiv1.CreateCVDRequest{
+		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",
 			Target:  "aosp_cf_x86_64_phone-userdebug",
 		},
@@ -108,8 +110,8 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 	om := NewMapOM(func() string { return opName })
 	fetchCVDHandler := NewFetchCVDHandler(dir, &AlwaysFailsFetchCVDDownloader{})
 	im := NewInstanceManager(fetchCVDHandler, om)
-	req := CreateCVDRequest{
-		BuildInfo: &BuildInfo{
+	req := apiv1.CreateCVDRequest{
+		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",
 			Target:  "aosp_cf_x86_64_phone-userdebug",
 		},

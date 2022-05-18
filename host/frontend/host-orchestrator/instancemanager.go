@@ -24,6 +24,8 @@ import (
 	"net/url"
 	"os"
 	"sync"
+
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
 )
 
 type EmptyFieldError string
@@ -42,7 +44,7 @@ func NewInstanceManager(fetchCVDHandler *FetchCVDHandler, om OperationManager) *
 	return &InstanceManager{fetchCVDHandler, om, sync.WaitGroup{}}
 }
 
-func (m *InstanceManager) CreateCVD(req CreateCVDRequest) (OperationData, error) {
+func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (OperationData, error) {
 	if err := validateRequest(req); err != nil {
 		return OperationData{}, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
@@ -56,7 +58,7 @@ func (m *InstanceManager) CreateCVD(req CreateCVDRequest) (OperationData, error)
 }
 
 // This logic isn't complete yet, it's work in progress.
-func (m *InstanceManager) LaunchCVD(req CreateCVDRequest, op OperationData) {
+func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op OperationData) {
 	defer m.launchCVDWG.Done()
 	err := m.fetchCVDHandler.Download(req.FetchCVDBuildID)
 	if err != nil {
@@ -68,7 +70,7 @@ func (m *InstanceManager) LaunchCVD(req CreateCVDRequest, op OperationData) {
 	}
 }
 
-func validateRequest(r CreateCVDRequest) error {
+func validateRequest(r apiv1.CreateCVDRequest) error {
 	if r.BuildInfo == nil {
 		return EmptyFieldError("BuildInfo")
 	}
