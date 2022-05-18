@@ -255,7 +255,7 @@ func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) 
 	var msg apiv1.CreateCVDRequest
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
-		replyJSONErr(w, NewBadRequestError("malformed JSON in request", err))
+		replyJSONErr(w, NewBadRequestError("Malformed JSON in request", err))
 		return
 	}
 	op, err := im.CreateCVD(msg)

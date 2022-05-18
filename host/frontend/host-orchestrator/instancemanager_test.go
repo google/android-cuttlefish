@@ -110,10 +110,7 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 		},
 		FetchCVDBuildID: "1",
 	}
-	returnedOp := Operation{
-		Name: opName,
-		Done: false,
-	}
+	returnedOp := Operation{Name: opName, Done: false}
 	completedOp := Operation{
 		Name: opName,
 		Done: true,
@@ -123,11 +120,13 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 	}
 
 	op, _ := im.CreateCVD(req)
+	op = Operation{Name: op.Name, Done: op.Done}
 	if op != returnedOp {
 		t.Errorf("expected <<%+v>>, got %+v", returnedOp, op)
 	}
 	om.Wait(opName)
 	op, _ = om.Get(opName)
+	op = Operation{Name: op.Name, Done: op.Done, Result: op.Result}
 	if op != completedOp {
 		t.Errorf("expected <<%+v>>, got %+v", completedOp, op)
 	}

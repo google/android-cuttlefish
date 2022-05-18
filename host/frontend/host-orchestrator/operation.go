@@ -81,7 +81,11 @@ func (m *MapOM) New() (Operation, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	op := &mapOMOperationEntry{
-		data:  Operation{name, false, OperationResult{}},
+		data: Operation{
+			Name:   name,
+			Done:   false,
+			Result: OperationResult{},
+		},
 		mutex: sync.RWMutex{},
 		wait:  wg,
 	}
