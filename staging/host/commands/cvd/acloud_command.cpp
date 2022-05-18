@@ -322,7 +322,8 @@ class ConvertAcloudCreateCommand {
         .lock = {std::move(*lock)},
     };
     for (auto& request_proto : request_protos) {
-      ret.requests.emplace_back(request_proto, fds, request.Credentials());
+      ret.requests.emplace_back(request.Client(), request_proto, fds,
+                                request.Credentials());
     }
     return ret;
   }

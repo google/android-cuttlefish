@@ -54,6 +54,7 @@ static fruit::Component<> RequestComponent(CvdServer* server,
       .bindInstance(*instance_manager)
       .install(AcloudCommandComponent)
       .install(cvdCommandComponent)
+      .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
       .install(cvdVersionComponent);
 }
@@ -122,6 +123,8 @@ void CvdServer::Stop() {
       }
       request->handler->Interrupt();
     }
+    auto wakeup = BestEffortWakeup();
+    CHECK(wakeup.ok()) << wakeup.error();
     std::scoped_lock lock(threads_mutex_);
     for (auto& thread : threads_) {
       auto current_thread = thread.get_id() == std::this_thread::get_id();
@@ -141,6 +144,31 @@ void CvdServer::Join() {
   }
 }
 
+Result<void> CvdServer::Exec(SharedFD new_exe, SharedFD client_fd) {
+  CF_EXPECT(server_fd_->IsOpen(), "Server not running");
+  Stop();
+  android::base::unique_fd server_dup{server_fd_->UNMANAGED_Dup()};
+  CF_EXPECT(server_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
+  android::base::unique_fd client_dup{client_fd->UNMANAGED_Dup()};
+  CF_EXPECT(client_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
+  std::vector<std::string> argv_str = {
+      "cvd_server",
+      "-INTERNAL_server_fd=" + std::to_string(server_dup.get()),
+      "-INTERNAL_carryover_client_fd=" + std::to_string(client_dup.get()),
+  };
+  std::vector<char*> argv_cstr;
+  for (const auto& argv : argv_str) {
+    argv_cstr.emplace_back(strdup(argv.c_str()));
+  }
+  android::base::unique_fd new_exe_dup{new_exe->UNMANAGED_Dup()};
+  CF_EXPECT(new_exe_dup.get() >= 0, "dup: \"" << new_exe->StrError() << "\"");
+  fexecve(new_exe_dup.get(), argv_cstr.data(), environ);
+  for (const auto& argv : argv_cstr) {
+    free(argv);
+  }
+  return CF_ERR("fexecve failed: \"" << strerror(errno) << "\"");
+}
+
 static Result<CvdServerHandler*> RequestHandler(
     const RequestWithStdio& request,
     const std::vector<CvdServerHandler*>& handlers) {
@@ -158,11 +186,27 @@ static Result<CvdServerHandler*> RequestHandler(
 }
 
 Result<void> CvdServer::StartServer(SharedFD server_fd) {
+  server_fd_ = server_fd;
   auto cb = [this](EpollEvent ev) -> Result<void> {
     CF_EXPECT(AcceptClient(ev));
     return {};
   };
   CF_EXPECT(epoll_pool_.Register(server_fd, EPOLLIN, cb));
+  return {};
+}
+
+Result<void> CvdServer::AcceptCarryoverClient(SharedFD client) {
+  cvd::Response success_message;
+  success_message.mutable_status()->set_code(cvd::Status::OK);
+  success_message.mutable_command_response();
+  CF_EXPECT(SendResponse(client, success_message));
+
+  auto self_cb = [this](EpollEvent ev) -> Result<void> {
+    CF_EXPECT(HandleMessage(ev));
+    return {};
+  };
+  CF_EXPECT(epoll_pool_.Register(client, EPOLLIN, self_cb));
+
   return {};
 }
 
@@ -272,7 +316,7 @@ static fruit::Component<CvdServer> ServerComponent() {
       .install(EpollLoopComponent);
 }
 
-Result<int> CvdServerMain(SharedFD server_fd) {
+Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client) {
   LOG(INFO) << "Starting server";
 
   signal(SIGPIPE, SIG_IGN);
@@ -282,6 +326,11 @@ Result<int> CvdServerMain(SharedFD server_fd) {
   fruit::Injector<CvdServer> injector(ServerComponent);
   CvdServer& server = injector.get<CvdServer&>();
   server.StartServer(server_fd);
+
+  if (carryover_client->IsOpen()) {
+    CF_EXPECT(server.AcceptCarryoverClient(carryover_client));
+  }
+
   server.Join();
 
   return 0;
