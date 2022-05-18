@@ -30,17 +30,15 @@ import (
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &InstanceManager{}
-	var validRequest = func() apiv1.CreateCVDRequest {
-		return apiv1.CreateCVDRequest{
-			BuildInfo: &apiv1.BuildInfo{
-				BuildID: "1234",
-				Target:  "aosp_cf_x86_64_phone-userdebug",
-			},
-			FetchCVDBuildID: "9999",
-		}
+	var validRequest = apiv1.CreateCVDRequest{
+		BuildInfo: &apiv1.BuildInfo{
+			BuildID: "1234",
+			Target:  "aosp_cf_x86_64_phone-userdebug",
+		},
+		FetchCVDBuildID: "9999",
 	}
 	// Make sure the valid request is indeed valid.
-	if err := validateRequest(validRequest()); err != nil {
+	if err := validateRequest(validRequest); err != nil {
 		t.Fatalf("the valid request is not valid")
 	}
 	var tests = []struct {
@@ -53,7 +51,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req := validRequest()
+		req := validRequest
 		test.corruptRequest(&req)
 		_, err := im.CreateCVD(req)
 		var appErr *AppError
