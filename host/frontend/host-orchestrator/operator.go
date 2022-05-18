@@ -504,18 +504,18 @@ func fromEnvOrDefaultBool(key string, def bool) bool {
 	return b
 }
 
-func BuildOperation(data OperationData) apiv1.Operation {
-	op := apiv1.Operation{
-		Name: data.Name,
-		Done: data.Done,
+func BuildOperation(op Operation) apiv1.Operation {
+	result := apiv1.Operation{
+		Name: op.Name,
+		Done: op.Done,
 	}
-	if !data.Done {
-		return op
+	if !op.Done {
+		return result
 	}
-	if data.IsError() {
-		op.Result = &apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{data.Result.Error.ErrorMsg},
+	if op.IsError() {
+		result.Result = &apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{op.Result.Error.ErrorMsg},
 		}
 	}
-	return op
+	return result
 }

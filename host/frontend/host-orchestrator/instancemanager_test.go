@@ -92,16 +92,11 @@ func TestCreateCVDNewOperationFails(t *testing.T) {
 	if !errors.As(err, &newOperationErr) {
 		t.Errorf("error type <<\"%T\">> not found in error chain", newOperationErr)
 	}
-	im.launchCVDWG.Wait()
-	expectedOp := OperationData{
-		Name: opName,
-		Done: false,
+	om.Wait(opName)
+	_, ok := om.Get(opName)
+	if !ok {
+		t.Error("operation should exists from the first CreateCVD call")
 	}
-	op, _ := om.Get(opName)
-	if op != expectedOp {
-		t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
-	}
-
 }
 
 func TestCreateCVDFetchCVDFails(t *testing.T) {
@@ -117,15 +112,15 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 		},
 		FetchCVDBuildID: "1",
 	}
-	returnedOp := OperationData{
+	returnedOp := Operation{
 		Name: opName,
 		Done: false,
 	}
-	completedOp := OperationData{
+	completedOp := Operation{
 		Name: opName,
 		Done: true,
-		Result: OperationResultData{
-			Error: OperationErrorData{"failed to download fetch_cvd"},
+		Result: OperationResult{
+			Error: OperationResultError{"failed to download fetch_cvd"},
 		},
 	}
 
@@ -133,7 +128,7 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 	if op != returnedOp {
 		t.Errorf("expected <<%+v>>, got %+v", returnedOp, op)
 	}
-	im.launchCVDWG.Wait()
+	om.Wait(opName)
 	op, _ = om.Get(opName)
 	if op != completedOp {
 		t.Errorf("expected <<%+v>>, got %+v", completedOp, op)

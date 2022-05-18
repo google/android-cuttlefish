@@ -26,36 +26,33 @@ func (s NewOperationError) Error() string {
 	return fmt.Sprintf("failure creating a new operation: %s", string(s))
 }
 
-type OperationData struct {
+type Operation struct {
 	Name   string
 	Done   bool
-	Result OperationResultData
+	Result OperationResult
 }
 
-type OperationResultData struct {
-	Error OperationErrorData
-	OK    OperationOKData
+type OperationResult struct {
+	Error OperationResultError
 }
 
-type OperationErrorData struct {
+type OperationResultError struct {
 	ErrorMsg string
 }
 
-type OperationOKData struct{}
-
 type OperationManager interface {
-	New() (OperationData, error)
+	New() (Operation, error)
 
-	Get(string) (OperationData, bool)
+	Get(string) (Operation, bool)
 
-	Complete(string, OperationResultData)
+	Complete(string, OperationResult)
 
 	// TODO(b/231319087) This should handle timeout.
 	Wait(string)
 }
 
 type mapOMOperationEntry struct {
-	data  OperationData
+	data  Operation
 	mutex sync.RWMutex
 	wait  sync.WaitGroup
 }
@@ -74,17 +71,17 @@ func NewMapOM(uuidFactory func() string) *MapOM {
 	}
 }
 
-func (m *MapOM) New() (OperationData, error) {
+func (m *MapOM) New() (Operation, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	name := m.uuidFactory()
 	if _, ok := m.operations[name]; ok {
-		return OperationData{}, NewOperationError("new operation name already exists")
+		return Operation{}, NewOperationError("new operation name already exists")
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	op := &mapOMOperationEntry{
-		data:  OperationData{name, false, OperationResultData{}},
+		data:  Operation{name, false, OperationResult{}},
 		mutex: sync.RWMutex{},
 		wait:  wg,
 	}
@@ -92,17 +89,17 @@ func (m *MapOM) New() (OperationData, error) {
 	return op.data, nil
 }
 
-func (m *MapOM) Get(name string) (OperationData, bool) {
+func (m *MapOM) Get(name string) (Operation, bool) {
 	op, ok := m.getOperationEntry(name)
 	if !ok {
-		return OperationData{}, false
+		return Operation{}, false
 	}
 	op.mutex.RLock()
 	defer op.mutex.RUnlock()
 	return op.data, true
 }
 
-func (m *MapOM) Complete(name string, result OperationResultData) {
+func (m *MapOM) Complete(name string, result OperationResult) {
 	op, ok := m.getOperationEntry(name)
 	if !ok {
 		log.Println("complete operation error: attempting to complete an operation which does not exist")
@@ -130,6 +127,6 @@ func (m *MapOM) getOperationEntry(name string) (*mapOMOperationEntry, bool) {
 	return op, ok
 }
 
-func (d *OperationData) IsError() bool {
-	return d.Done && (d.Result.Error != OperationErrorData{})
+func (d *Operation) IsError() bool {
+	return d.Done && (d.Result.Error != OperationResultError{})
 }

@@ -26,7 +26,7 @@ func TestMapOMNewOperation(t *testing.T) {
 
 	t.Run("succeeds", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
-		expectedOp := OperationData{
+		expectedOp := Operation{
 			Name: opName,
 			Done: false,
 		}
@@ -57,7 +57,7 @@ func TestMapOMGetOperation(t *testing.T) {
 
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
-		expectedOp := OperationData{
+		expectedOp := Operation{
 			Name: opName,
 			Done: false,
 		}
@@ -81,7 +81,7 @@ func TestMapOMGetOperation(t *testing.T) {
 		if ok != false {
 			t.Errorf("expected false")
 		}
-		if (op != OperationData{}) {
+		if (op != Operation{}) {
 			t.Errorf("expected zero value %T", op)
 		}
 	})
@@ -94,14 +94,14 @@ func TestMapOMCompleteOperation(t *testing.T) {
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 		om.New()
-		result := OperationResultData{
-			Error: OperationErrorData{"error"},
+		result := OperationResult{
+			Error: OperationResultError{"error"},
 		}
-		expectedOp := OperationData{
+		expectedOp := Operation{
 			Name: opName,
 			Done: true,
-			Result: OperationResultData{
-				Error: OperationErrorData{"error"},
+			Result: OperationResult{
+				Error: OperationResultError{"error"},
 			},
 		}
 
@@ -118,8 +118,8 @@ func TestMapOMCompleteOperation(t *testing.T) {
 
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
-		result := OperationResultData{
-			Error: OperationErrorData{"error"},
+		result := OperationResult{
+			Error: OperationResultError{"error"},
 		}
 
 		om.Complete(opName, result)
@@ -134,8 +134,8 @@ func TestMapOMCompleteOperation(t *testing.T) {
 func TestMapOMWaitOperation(t *testing.T) {
 	opName := "operation-1"
 	uuidFactory := func() string { return opName }
-	result := OperationResultData{
-		Error: OperationErrorData{"error"},
+	result := OperationResult{
+		Error: OperationResultError{"error"},
 	}
 
 	t.Run("stops waiting", func(t *testing.T) {
@@ -180,35 +180,35 @@ func TestMapOMWaitOperation(t *testing.T) {
 	})
 }
 
-func TestOperationDataIsError(t *testing.T) {
+func TestOperationIsError(t *testing.T) {
 	var tests = []struct {
-		op    OperationData
+		op    Operation
 		isErr bool
 	}{
 		{
-			op: OperationData{
+			op: Operation{
 				Name: "operation-1",
 				Done: false,
-				Result: OperationResultData{
-					Error: OperationErrorData{"error"},
+				Result: OperationResult{
+					Error: OperationResultError{"error"},
 				},
 			},
 			isErr: false,
 		},
 		{
-			op: OperationData{
+			op: Operation{
 				Name:   "operation-1",
 				Done:   true,
-				Result: OperationResultData{},
+				Result: OperationResult{},
 			},
 			isErr: false,
 		},
 		{
-			op: OperationData{
+			op: Operation{
 				Name: "operation-1",
 				Done: true,
-				Result: OperationResultData{
-					Error: OperationErrorData{"error"},
+				Result: OperationResult{
+					Error: OperationResultError{"error"},
 				},
 			},
 			isErr: true,
