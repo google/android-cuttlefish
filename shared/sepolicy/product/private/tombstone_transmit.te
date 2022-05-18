@@ -7,6 +7,9 @@ product_internal_prop(vsock_tombstone_port_prop)
 get_prop(tombstone_transmit, vsock_tombstone_port_prop)
 
 allow tombstone_transmit self:capability net_admin;
-r_dir_file(tombstone_transmit, tombstone_data_file)
+
+# permission required to read the file & remove it from directory
+allow tombstone_transmit tombstone_data_file:dir { r_dir_perms write remove_name };
+allow tombstone_transmit tombstone_data_file:file { r_file_perms unlink };
 
 allow tombstone_transmit self:{ vsock_socket } create_socket_perms_no_ioctl;
