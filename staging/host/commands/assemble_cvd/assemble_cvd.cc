@@ -97,10 +97,13 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 
 Result<void> CreateLegacySymlinks(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  std::string log_files[] = {
-      "kernel.log",  "launcher.log",        "logcat",
-      "metrics.log", "modem_simulator.log", "crosvm_openwrt.log",
-  };
+  std::string log_files[] = {"kernel.log",
+                             "launcher.log",
+                             "logcat",
+                             "metrics.log",
+                             "modem_simulator.log",
+                             "crosvm_openwrt.log",
+                             "crosvm_openwrt_boot.log"};
   for (const auto& log_file : log_files) {
     auto symlink_location = instance.PerInstancePath(log_file.c_str());
     auto log_target = "logs/" + log_file;  // Relative path
