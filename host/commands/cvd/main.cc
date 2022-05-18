@@ -38,6 +38,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/fetch_cvd.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -321,6 +322,8 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
       // Something is wrong with the server, fall back to python acloud
       CallPythonAcloud(args);
     }
+  } else if (android::base::Basename(args[0]) == "fetch_cvd") {
+    return FetchCvdMain(argc, argv);
   }
   bool clean = false;
   flags.emplace_back(GflagsCompatFlag("clean", clean));
