@@ -33,7 +33,6 @@ PRODUCT_PACKAGES += \
     clatd \
     clatd.conf \
     DownloadProvider \
-    ethernet-service \
     fsck.f2fs \
     FusedLocation \
     InputDevices \
@@ -59,7 +58,6 @@ PRODUCT_SYSTEM_SERVER_APPS += \
 
 PRODUCT_SYSTEM_SERVER_JARS += \
     services \
-    ethernet-service \
 
 PRODUCT_COPY_FILES += \
     system/core/rootdir/etc/public.libraries.wear.txt:system/etc/public.libraries.txt \
