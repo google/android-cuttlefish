@@ -20,6 +20,7 @@
 #include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_hmac.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "tpm_keymaster_context.h"
 
 namespace cuttlefish {
 ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
@@ -71,11 +72,9 @@ ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
       sign_sender.Send(confui::SignMessageError::kUnknownError, {});
       continue;
     }
-    if (hmac->size == 0) {
-      LOG(ERROR) << "hmac was too short";
-      sign_sender.Send(confui::SignMessageError::kUnknownError, {});
-      continue;
-    }
+    CHECK(hmac->size == keymaster::kConfirmationTokenSize)
+        << "Hmac size for confirmation UI must be "
+        << keymaster::kConfirmationTokenSize;
 
     // send hmac
     std::vector<std::uint8_t> hmac_buffer(hmac->buffer,
