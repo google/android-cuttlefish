@@ -41,7 +41,7 @@ type OperationResultError struct {
 }
 
 type OperationManager interface {
-	New() (Operation, error)
+	New() Operation
 
 	Get(string) (Operation, bool)
 
@@ -71,12 +71,19 @@ func NewMapOM(uuidFactory func() string) *MapOM {
 	}
 }
 
-func (m *MapOM) New() (Operation, error) {
+const mapOMNewUUIDRetryLimit = 100
+
+func (m *MapOM) New() Operation {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	name := m.uuidFactory()
-	if _, ok := m.operations[name]; ok {
-		return Operation{}, NewOperationError("new operation name already exists")
+	name, retryCount := m.uuidFactory(), 0
+	_, found := m.operations[name]
+	for found && retryCount < mapOMNewUUIDRetryLimit {
+		name, retryCount = m.uuidFactory(), retryCount+1
+		_, found = m.operations[name]
+	}
+	if retryCount == mapOMNewUUIDRetryLimit {
+		panic("uuid retry limit reached")
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -90,7 +97,7 @@ func (m *MapOM) New() (Operation, error) {
 		wait:  wg,
 	}
 	m.operations[name] = op
-	return op.data, nil
+	return op.data
 }
 
 func (m *MapOM) Get(name string) (Operation, bool) {

@@ -65,38 +65,6 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	}
 }
 
-func TestCreateCVDNewOperationFails(t *testing.T) {
-	dir := t.TempDir()
-	opName := "operation-1"
-	om := NewMapOM(func() string { return opName })
-	fetchCVDHandler := NewFetchCVDHandler(dir, &FakeFetchCVDDownloader{t: t})
-	im := NewInstanceManager(fetchCVDHandler, om)
-	req := apiv1.CreateCVDRequest{
-		BuildInfo: &apiv1.BuildInfo{
-			BuildID: "1234",
-			Target:  "aosp_cf_x86_64_phone-userdebug",
-		},
-		FetchCVDBuildID: "1",
-	}
-
-	im.CreateCVD(req)
-	_, err := im.CreateCVD(req)
-
-	var appErr *AppError
-	if !errors.As(err, &appErr) {
-		t.Errorf("error type <<\"%T\">> not found in error chain", appErr)
-	}
-	var newOperationErr NewOperationError
-	if !errors.As(err, &newOperationErr) {
-		t.Errorf("error type <<\"%T\">> not found in error chain", newOperationErr)
-	}
-	om.Wait(opName)
-	_, ok := om.Get(opName)
-	if !ok {
-		t.Error("operation should exists from the first CreateCVD call")
-	}
-}
-
 func TestCreateCVDFetchCVDFails(t *testing.T) {
 	dir := t.TempDir()
 	opName := "operation-1"

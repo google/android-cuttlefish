@@ -15,40 +15,33 @@
 package main
 
 import (
-	"errors"
 	"testing"
 	"time"
 )
 
 func TestMapOMNewOperation(t *testing.T) {
 	opName := "operation-1"
-	uuidFactory := func() string { return opName }
+	om := NewMapOM(func() string { return opName })
+	expectedOp := Operation{
+		Name: opName,
+		Done: false,
+	}
 
-	t.Run("succeeds", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
-		expectedOp := Operation{
-			Name: opName,
-			Done: false,
-		}
+	op := om.New()
 
-		op, _ := om.New()
+	if op != expectedOp {
+		t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+	}
+}
 
-		if op != expectedOp {
-			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
-		}
-	})
+func TestMapOMNewOperationNoNewUniqueUUIDsPanic(t *testing.T) {
+	defer func() { _ = recover() }()
+	om := NewMapOM(func() string { return "sameuuid" })
 
-	t.Run("fails", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
+	om.New()
+	om.New()
 
-		om.New()
-		_, err := om.New()
-
-		var newOperationErr NewOperationError
-		if !errors.As(err, &newOperationErr) {
-			t.Errorf("error type <<\"%T\">> not found in error chain", newOperationErr)
-		}
-	})
+	t.Error("did not panic")
 }
 
 func TestMapOMGetOperation(t *testing.T) {

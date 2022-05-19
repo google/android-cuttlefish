@@ -47,10 +47,7 @@ func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, erro
 	if err := validateRequest(req); err != nil {
 		return Operation{}, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
-	op, err := m.om.New()
-	if err != nil {
-		return Operation{}, NewInternalError("error creating new operation", err)
-	}
+	op := m.om.New()
 	go m.LaunchCVD(req, op)
 	return op, nil
 }
