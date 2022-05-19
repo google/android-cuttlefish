@@ -123,8 +123,6 @@ static void tombstone_send_to_host(const std::string& ts_path) {
               << ts_path.c_str() << " over " << num_transfers << " "
               << TOMBSTONE_BUFFER_SIZE << " byte sized transfers";
   }
-
-  remove(ts_path.c_str());
 }
 
 int main(int argc, char** argv) {
