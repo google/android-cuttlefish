@@ -201,6 +201,12 @@ PRODUCT_PACKAGES += \
     wificond \
 
 #
+# Package for AOSP QNS
+#
+PRODUCT_PACKAGES += \
+    QualifiedNetworksService
+
+#
 # Packages for the OpenGL implementation
 #
 
