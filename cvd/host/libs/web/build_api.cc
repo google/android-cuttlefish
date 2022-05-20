@@ -145,7 +145,7 @@ Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
   return json["buildAttemptStatus"].asString();
 }
 
-std::string BuildApi::ProductName(const DeviceBuild& build) {
+Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
                     curl.UrlEscape(build.target);
   if (!api_key_.empty()) {
@@ -153,16 +153,15 @@ std::string BuildApi::ProductName(const DeviceBuild& build) {
   }
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
-  if (!curl_response.HttpSuccess()) {
-    LOG(FATAL) << "Error fetching the product name of \"" << build
-               << "\". The server response was \"" << json
-               << "\", and code was " << curl_response.http_code;
-  }
-  CHECK(!json.isMember("error"))
-      << "Response had \"error\" but had http success status. Received \""
-      << json << "\"";
+  CF_EXPECT(curl_response.HttpSuccess(),
+            "Error fetching the product name of \""
+                << build << "\". The server response was \"" << json
+                << "\", and code was " << curl_response.http_code);
+  CF_EXPECT(!json.isMember("error"),
+            "Response had \"error\" but had http success status. Received \""
+                << json << "\"");
 
-  CHECK(json.isMember("target")) << "Build was missing target field.";
+  CF_EXPECT(json.isMember("target"), "Build was missing target field.");
   return json["target"]["product"].asString();
 }
 
@@ -343,7 +342,7 @@ Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
     status = CF_EXPECT(build_api.BuildStatus(proposed_build));
   }
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
-  proposed_build.product = build_api.ProductName(proposed_build);
+  proposed_build.product = CF_EXPECT(build_api.ProductName(proposed_build));
   return proposed_build;
 }
 
