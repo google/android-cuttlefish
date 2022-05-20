@@ -46,6 +46,7 @@ const (
 func startHttpServer() {
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
 	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", httpPort))
+
 	log.Fatal(http.ListenAndServe(
 		fmt.Sprint(":", httpPort),
 		// handler is nil, so DefaultServeMux is used.
@@ -269,8 +270,8 @@ func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) 
 func getOperation(w http.ResponseWriter, r *http.Request, om OperationManager) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	if op, ok := om.Get(name); !ok {
-		replyJSONErr(w, NewNotFoundError("operation not found", nil))
+	if op, err := om.Get(name); err != nil {
+		replyJSONErr(w, NewNotFoundError("operation not found", err))
 	} else {
 		replyJSONOK(w, BuildOperation(op))
 	}

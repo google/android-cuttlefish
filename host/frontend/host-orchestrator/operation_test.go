@@ -15,6 +15,7 @@
 package main
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -56,10 +57,10 @@ func TestMapOMGetOperation(t *testing.T) {
 		}
 		om.New()
 
-		op, ok := om.Get(opName)
+		op, err := om.Get(opName)
 
-		if ok != true {
-			t.Errorf("expected true")
+		if err != nil {
+			t.Errorf("expected no error")
 		}
 		if op != expectedOp {
 			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
@@ -69,10 +70,14 @@ func TestMapOMGetOperation(t *testing.T) {
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 
-		op, ok := om.Get(opName)
+		op, err := om.Get(opName)
 
-		if ok != false {
-			t.Errorf("expected false")
+		if err == nil {
+			t.Errorf("expected error")
+			var notFoundError *NotFoundOperationError
+			if !errors.As(err, &notFoundError) {
+				t.Errorf("error type <<\"%T\">> not found in error chain", notFoundError)
+			}
 		}
 		if (op != Operation{}) {
 			t.Errorf("expected zero value %T", op)
@@ -100,9 +105,9 @@ func TestMapOMCompleteOperation(t *testing.T) {
 
 		om.Complete(opName, result)
 
-		op, ok := om.Get(opName)
-		if ok != true {
-			t.Errorf("expected true")
+		op, err := om.Get(opName)
+		if err != nil {
+			t.Error("expected no error")
 		}
 		if op != expectedOp {
 			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
@@ -117,9 +122,9 @@ func TestMapOMCompleteOperation(t *testing.T) {
 
 		om.Complete(opName, result)
 
-		_, ok := om.Get(opName)
-		if ok != false {
-			t.Errorf("expected false")
+		_, err := om.Get(opName)
+		if err == nil {
+			t.Errorf("expected error")
 		}
 	})
 }

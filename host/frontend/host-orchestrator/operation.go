@@ -20,10 +20,10 @@ import (
 	"sync"
 )
 
-type NewOperationError string
+type NotFoundOperationError string
 
-func (s NewOperationError) Error() string {
-	return fmt.Sprintf("failure creating a new operation: %s", string(s))
+func (s NotFoundOperationError) Error() string {
+	return fmt.Sprintf("operation not found: %s", string(s))
 }
 
 type Operation struct {
@@ -43,7 +43,7 @@ type OperationResultError struct {
 type OperationManager interface {
 	New() Operation
 
-	Get(string) (Operation, bool)
+	Get(string) (Operation, error)
 
 	Complete(string, OperationResult)
 
@@ -100,14 +100,16 @@ func (m *MapOM) New() Operation {
 	return op.data
 }
 
-func (m *MapOM) Get(name string) (Operation, bool) {
-	op, ok := m.getOperationEntry(name)
+func (m *MapOM) Get(name string) (op Operation, err error) {
+	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		return Operation{}, false
+		err = NotFoundOperationError("map key didn't exist")
+		return
 	}
-	op.mutex.RLock()
-	defer op.mutex.RUnlock()
-	return op.data, true
+	entry.mutex.RLock()
+	defer entry.mutex.RUnlock()
+	op = entry.data
+	return
 }
 
 func (m *MapOM) Complete(name string, result OperationResult) {
