@@ -125,7 +125,7 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
   return json["builds"][0]["buildId"].asString();
 }
 
-std::string BuildApi::BuildStatus(const DeviceBuild& build) {
+Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
                     curl.UrlEscape(build.target);
   if (!api_key_.empty()) {
@@ -133,14 +133,13 @@ std::string BuildApi::BuildStatus(const DeviceBuild& build) {
   }
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
-  if (!curl_response.HttpSuccess()) {
-    LOG(FATAL) << "Error fetching the status of \"" << build
-               << "\". The server response was \"" << json
-               << "\", and code was " << curl_response.http_code;
-  }
-  CHECK(!json.isMember("error"))
-      << "Response had \"error\" but had http success status. Received \""
-      << json << "\"";
+  CF_EXPECT(curl_response.HttpSuccess(),
+            "Error fetching the status of \""
+                << build << "\". The server response was \"" << json
+                << "\", and code was " << curl_response.http_code);
+  CF_EXPECT(!json.isMember("error"),
+            "Response had \"error\" but had http success status. Received \""
+                << json << "\"");
 
   return json["buildAttemptStatus"].asString();
 }
@@ -331,7 +330,7 @@ Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
     build_id = branch_latest_build_id;
   }
   DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
-  std::string status = build_api.BuildStatus(proposed_build);
+  std::string status = CF_EXPECT(build_api.BuildStatus(proposed_build));
   CF_EXPECT(status != "",
             proposed_build << " is not a valid branch or build id.");
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
@@ -340,7 +339,7 @@ Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
     LOG(INFO) << "Status is \"" << status << "\". Waiting for "
               << retry_period.count() << " seconds.";
     std::this_thread::sleep_for(retry_period);
-    status = build_api.BuildStatus(proposed_build);
+    status = CF_EXPECT(build_api.BuildStatus(proposed_build));
   }
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
   proposed_build.product = build_api.ProductName(proposed_build);
