@@ -56,11 +56,18 @@ class CvdRestartHandler : public CvdServerHandler {
     WriteAll(request.Out(), "Stopping the cvd_server.\n");
     server_.Stop();
 
-    constexpr char kSelf[] = "/proc/self/exe";
-    SharedFD self = SharedFD::Open(kSelf, O_RDONLY);
-    CF_EXPECT(self->IsOpen(),
-              "Failed to open \"" << kSelf << "\": " << self->StrError());
-    CF_EXPECT(server_.Exec(self, request.Client()));
+    auto arguments = ParseInvocation(request.Message()).arguments;
+    SharedFD new_exe;
+    if (arguments.size() > 0 && arguments[0] == "match-client") {
+      CF_EXPECT(request.Extra(), "Missing executable file descriptor");
+      new_exe = *request.Extra();
+    } else {
+      constexpr char kSelf[] = "/proc/self/exe";
+      new_exe = SharedFD::Open(kSelf, O_RDONLY);
+      CF_EXPECT(new_exe->IsOpen(),
+                "Failed to open \"" << kSelf << "\": " << new_exe->StrError());
+    }
+    CF_EXPECT(server_.Exec(new_exe, request.Client()));
     return CF_ERR("Should be unreachable");
   }
 
