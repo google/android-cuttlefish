@@ -185,7 +185,16 @@ class CvdClient {
     command_request->set_working_directory(cwd.get());
     command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
 
-    auto response = CF_EXPECT(SendRequest(request));
+    std::optional<SharedFD> exe_fd;
+    if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
+        args[1] == "restart-server" && args[2] == "match-client") {
+      constexpr char kSelf[] = "/proc/self/exe";
+      exe_fd = SharedFD::Open(kSelf, O_RDONLY);
+      CF_EXPECT((*exe_fd)->IsOpen(), "Failed to open \""
+                                         << kSelf << "\": \""
+                                         << (*exe_fd)->StrError() << "\"");
+    }
+    auto response = CF_EXPECT(SendRequest(request, exe_fd));
     CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
     CF_EXPECT(response.has_command_response(),
               "HandleCommand call missing CommandResponse.");
