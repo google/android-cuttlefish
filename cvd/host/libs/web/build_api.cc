@@ -165,7 +165,7 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   return json["target"]["product"].asString();
 }
 
-std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
+Result<std::vector<Artifact>> BuildApi::Artifacts(const DeviceBuild& build) {
   std::string page_token = "";
   std::vector<Artifact> artifacts;
   do {
@@ -180,14 +180,13 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
     }
     auto curl_response = curl.DownloadToJson(url, Headers());
     const auto& json = curl_response.data;
-    if (!curl_response.HttpSuccess()) {
-      LOG(FATAL) << "Error fetching the artifacts of \"" << build
-                 << "\". The server response was \"" << json
-                 << "\", and code was " << curl_response.http_code;
-    }
-    CHECK(!json.isMember("error"))
-        << "Response had \"error\" but had http success status. Received \""
-        << json << "\"";
+    CF_EXPECT(curl_response.HttpSuccess(),
+              "Error fetching the artifacts of \""
+                  << build << "\". The server response was \"" << json
+                  << "\", and code was " << curl_response.http_code);
+    CF_EXPECT(!json.isMember("error"),
+              "Response had \"error\" but had http success status. Received \""
+                  << json << "\"");
     if (json.isMember("nextPageToken")) {
       page_token = json["nextPageToken"].asString();
     } else {
@@ -206,11 +205,11 @@ struct CloseDir {
 
 using UniqueDir = std::unique_ptr<DIR, CloseDir>;
 
-std::vector<Artifact> BuildApi::Artifacts(const DirectoryBuild& build) {
+Result<std::vector<Artifact>> BuildApi::Artifacts(const DirectoryBuild& build) {
   std::vector<Artifact> artifacts;
   for (const auto& path : build.paths) {
     auto dir = UniqueDir(opendir(path.c_str()));
-    CHECK(dir != nullptr) << "Could not read files from \"" << path << "\"";
+    CF_EXPECT(dir != nullptr, "Could not read files from \"" << path << "\"");
     for (auto entity = readdir(dir.get()); entity != nullptr;
          entity = readdir(dir.get())) {
       artifacts.emplace_back(std::string(entity->d_name));
