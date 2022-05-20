@@ -141,9 +141,6 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Enforce privapp permissions control.
 PRODUCT_VENDOR_PROPERTIES += ro.control_privapp_permissions?=enforce
 
-# aes-256-heh default is not supported in standard kernels.
-PRODUCT_VENDOR_PROPERTIES += ro.crypto.volume.filenames_mode=aes-256-cts
-
 # Copy preopted files from system_b on first boot
 PRODUCT_VENDOR_PROPERTIES += ro.cp_system_other_odex=1
 
