@@ -43,6 +43,9 @@ $(call inherit-product, device/google/cuttlefish/shared/tv/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
+# Stub SetupWizard for AOSP TV
+PRODUCT_PACKAGES += TvProvision
+
 # Exclude features that are not available on AOSP devices.
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
