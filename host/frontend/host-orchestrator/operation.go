@@ -100,16 +100,15 @@ func (m *MapOM) New() Operation {
 	return op.data
 }
 
-func (m *MapOM) Get(name string) (op Operation, err error) {
+func (m *MapOM) Get(name string) (Operation, error) {
 	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		err = NotFoundOperationError("map key didn't exist")
-		return
+		return Operation{}, NotFoundOperationError("map key didn't exist")
 	}
 	entry.mutex.RLock()
-	defer entry.mutex.RUnlock()
-	op = entry.data
-	return
+	op := entry.data
+	entry.mutex.RUnlock()
+	return op, nil
 }
 
 func (m *MapOM) Complete(name string, result OperationResult) {

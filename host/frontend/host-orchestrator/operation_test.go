@@ -136,44 +136,23 @@ func TestMapOMWaitOperation(t *testing.T) {
 		Error: OperationResultError{"error"},
 	}
 
-	t.Run("stops waiting", func(t *testing.T) {
+	t.Run("operation was completed", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 		om.New()
-		waitDoneCh := make(chan struct{}, 1)
-
-		go func() {
-			om.Wait(opName)
-			om.Wait(opName)
-			waitDoneCh <- struct{}{}
-		}()
 
 		om.Complete(opName, result)
 
-		select {
-		case <-waitDoneCh:
-			return
-		case <-time.After(1 * time.Second):
-			t.Errorf("expected stop waiting as operatioin was completed")
-			return
+		if om.waitForOperationTimedOut(opName, 1*time.Second) {
+			t.Errorf("expected to stop waiting as operation was completed")
 		}
 	})
 
-	t.Run("continues waiting", func(t *testing.T) {
+	t.Run("operation is not completed", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 		om.New()
-		waitDoneCh := make(chan struct{}, 1)
 
-		go func() {
-			om.Wait(opName)
-			waitDoneCh <- struct{}{}
-		}()
-
-		select {
-		case <-waitDoneCh:
-			t.Errorf("expected to continue waiting as operation was not completed")
-			return
-		case <-time.After(1 * time.Second):
-			return
+		if !om.waitForOperationTimedOut(opName, 1*time.Second) {
+			t.Errorf("expected to continue waiting as operation has not been completed yet")
 		}
 	})
 }
@@ -219,5 +198,21 @@ func TestOperationIsError(t *testing.T) {
 		if isErr != test.isErr {
 			t.Errorf("expected <<%v>>, got %v for operation %+v", test.isErr, isErr, test.op)
 		}
+	}
+}
+
+func (om *MapOM) waitForOperationTimedOut(name string, duration time.Duration) bool {
+	waitDoneCh := make(chan struct{}, 1)
+
+	go func() {
+		om.Wait(name)
+		waitDoneCh <- struct{}{}
+	}()
+
+	select {
+	case <-waitDoneCh:
+		return false
+	case <-time.After(duration):
+		return true
 	}
 }

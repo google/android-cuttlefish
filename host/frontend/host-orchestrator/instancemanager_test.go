@@ -38,7 +38,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		FetchCVDBuildID: "9999",
 	}
 	// Make sure the valid request is indeed valid.
-	if err := validateRequest(validRequest); err != nil {
+	if err := validateRequest(&validRequest); err != nil {
 		t.Fatalf("the valid request is not valid")
 	}
 	var tests = []struct {
@@ -83,7 +83,7 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 		Name: opName,
 		Done: true,
 		Result: OperationResult{
-			Error: OperationResultError{"failed to download fetch_cvd"},
+			Error: OperationResultError{ErrMsgDownloadFetchCVDFailed},
 		},
 	}
 

@@ -44,7 +44,7 @@ func NewInstanceManager(fetchCVDHandler *FetchCVDHandler, om OperationManager) *
 }
 
 func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
-	if err := validateRequest(req); err != nil {
+	if err := validateRequest(&req); err != nil {
 		return Operation{}, NewBadRequestError("invalid CreateCVDRequest", err)
 	}
 	op := m.om.New()
@@ -52,13 +52,15 @@ func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, erro
 	return op, nil
 }
 
+const ErrMsgDownloadFetchCVDFailed = "failed to download fetch_cvd"
+
 // This logic isn't complete yet, it's work in progress.
 func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
 	err := m.fetchCVDHandler.Download(req.FetchCVDBuildID)
 	if err != nil {
 		log.Printf("failed to download fetch_cvd with error: %v", err)
 		result := OperationResult{
-			Error: OperationResultError{"failed to download fetch_cvd"},
+			Error: OperationResultError{ErrMsgDownloadFetchCVDFailed},
 		}
 		m.om.Complete(op.Name, result)
 		return
@@ -66,7 +68,7 @@ func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
 	m.om.Complete(op.Name, OperationResult{})
 }
 
-func validateRequest(r apiv1.CreateCVDRequest) error {
+func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.BuildInfo == nil {
 		return EmptyFieldError("BuildInfo")
 	}
