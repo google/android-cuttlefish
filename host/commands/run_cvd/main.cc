@@ -110,7 +110,6 @@ class InstanceLifecycle : public LateInjected {
   Result<void> LateInject(fruit::Injector<>& injector) override {
     config_fragments_ = injector.getMultibindings<ConfigFragment>();
     setup_features_ = injector.getMultibindings<SetupFeature>();
-    command_sources_ = injector.getMultibindings<CommandSource>();
     diagnostics_ = injector.getMultibindings<DiagnosticInformation>();
     return {};
   }
@@ -125,22 +124,7 @@ class InstanceLifecycle : public LateInjected {
 
     CF_EXPECT(SetupFeature::RunSetup(setup_features_));
 
-    // Monitor and restart host processes supporting the CVD
-    ProcessMonitor::Properties process_monitor_properties;
-    process_monitor_properties.RestartSubprocesses(
-        config_.restart_subprocesses());
-
-    for (auto& command_source : command_sources_) {
-      if (command_source->Enabled()) {
-        process_monitor_properties.AddCommands(command_source->Commands());
-      }
-    }
-
-    ProcessMonitor process_monitor(std::move(process_monitor_properties));
-
-    CF_EXPECT(process_monitor.StartAndMonitorProcesses());
-
-    server_loop_.Run(process_monitor);
+    CF_EXPECT(server_loop_.Run());
 
     return {};
   }
@@ -150,7 +134,6 @@ class InstanceLifecycle : public LateInjected {
   ServerLoop& server_loop_;
   std::vector<ConfigFragment*> config_fragments_;
   std::vector<SetupFeature*> setup_features_;
-  std::vector<CommandSource*> command_sources_;
   std::vector<DiagnosticInformation*> diagnostics_;
 };
 
