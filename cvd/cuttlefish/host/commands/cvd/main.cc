@@ -300,7 +300,7 @@ class CvdClient {
   abort();
 }
 
-Result<int> CvdMain(int argc, char** argv, char** envp) {
+Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   std::vector<std::string> args = ArgsToVec(argc, argv);
@@ -323,7 +323,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
       if (attempt.ok()) {
         args[0] = "acloud";
         CF_EXPECT(client.HandleCommand(args, env));
-        return 0;
+        return {};
       } else {
         CallPythonAcloud(args);
       }
@@ -332,7 +332,8 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
       CallPythonAcloud(args);
     }
   } else if (android::base::Basename(args[0]) == "fetch_cvd") {
-    return FetchCvdMain(argc, argv);
+    CF_EXPECT(FetchCvdMain(argc, argv));
+    return {};
   }
   bool clean = false;
   flags.emplace_back(GflagsCompatFlag("clean", clean));
@@ -345,7 +346,8 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(ParseFlags(flags, args));
 
   if (internal_server_fd->IsOpen()) {
-    return CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
+    CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
+    return {};
   } else if (argv[0] == std::string("/proc/self/exe")) {
     return CF_ERR(
         "Expected to be in server mode, but didn't get a server "
@@ -357,7 +359,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
   // stopping the cvd_server.
   if (argc > 1 && strcmp("kill-server", argv[1]) == 0) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
-    return 0;
+    return {};
   }
 
   // Special case for --clean flag, used to clear any existing state.
@@ -378,7 +380,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
     env.emplace_back(*e);
   }
   CF_EXPECT(client.HandleCommand(args, env));
-  return 0;
+  return {};
 }
 
 }  // namespace
@@ -387,7 +389,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
 int main(int argc, char** argv, char** envp) {
   auto result = cuttlefish::CvdMain(argc, argv, envp);
   if (result.ok()) {
-    return *result;
+    return 0;
   } else {
     std::cerr << result.error() << std::endl;
     return -1;
