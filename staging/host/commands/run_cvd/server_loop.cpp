@@ -16,18 +16,22 @@
 
 #include "host/commands/run_cvd/server_loop.h"
 
+#include <unistd.h>
+
+#include <string>
+
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
-#include <unistd.h>
-#include <string>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/feature.h"
+#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
@@ -49,14 +53,36 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
   return true;
 }
 
-class ServerLoopImpl : public ServerLoop, public SetupFeature {
+class ServerLoopImpl : public ServerLoop,
+                       public SetupFeature,
+                       public LateInjected {
  public:
   INJECT(ServerLoopImpl(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  Result<void> LateInject(fruit::Injector<>& injector) override {
+    command_sources_ = injector.getMultibindings<CommandSource>();
+    return {};
+  }
+
   // ServerLoop
-  void Run(ProcessMonitor& process_monitor) override {
+  Result<void> Run() override {
+    // Monitor and restart host processes supporting the CVD
+    ProcessMonitor::Properties process_monitor_properties;
+    process_monitor_properties.RestartSubprocesses(
+        config_.restart_subprocesses());
+
+    for (auto& command_source : command_sources_) {
+      if (command_source->Enabled()) {
+        process_monitor_properties.AddCommands(command_source->Commands());
+      }
+    }
+
+    ProcessMonitor process_monitor(std::move(process_monitor_properties));
+
+    CF_EXPECT(process_monitor.StartAndMonitorProcesses());
+
     while (true) {
       // TODO: use select to handle simultaneous connections.
       auto client = SharedFD::Accept(*server_);
@@ -243,6 +269,7 @@ class ServerLoopImpl : public ServerLoop, public SetupFeature {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  std::vector<CommandSource*> command_sources_;
   SharedFD server_;
 };
 
@@ -256,6 +283,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
 serverLoopComponent() {
   return fruit::createComponent()
       .bind<ServerLoop, ServerLoopImpl>()
+      .addMultibinding<LateInjected, ServerLoopImpl>()
       .addMultibinding<SetupFeature, ServerLoopImpl>();
 }
 
