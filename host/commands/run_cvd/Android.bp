@@ -21,9 +21,9 @@ cc_binary {
     name: "run_cvd",
     srcs: [
         "boot_state_machine.cc",
-        "launch.cc",
-        "launch_modem.cpp",
-        "launch_streamer.cpp",
+        "launch/launch.cc",
+        "launch/modem.cpp",
+        "launch/streamer.cpp",
         "main.cc",
         "reporting.cpp",
         "process_monitor.cc",
