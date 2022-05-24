@@ -251,17 +251,21 @@ else
 	fi
 fi
 if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ]; then
-	# sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
 	# loader1
-	sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
+	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
+
+	# prebuilt
+	# sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
 fi
 if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
 	sudo dd if=${bootenv} of=${devicep}2 conv=fsync
 fi
 if [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
-	# sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
 	# loader2
-	sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
+	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
+
+	# prebuilt
+	# sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
 fi
 if [ ${USE_IMAGE} -eq 1 ]; then
 	sudo partx -v --delete ${device}
