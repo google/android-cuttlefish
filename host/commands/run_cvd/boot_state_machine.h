@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "host/commands/run_cvd/launch.h"
+#include "host/commands/run_cvd/launch/launch.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 
