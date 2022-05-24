@@ -34,7 +34,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/run_cvd/boot_state_machine.h"
-#include "host/commands/run_cvd/launch.h"
+#include "host/commands/run_cvd/launch/launch.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/commands/run_cvd/runner_defs.h"

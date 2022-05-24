@@ -45,4 +45,4 @@ fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
                                  const CustomActionConfigProvider>>
 launchStreamerComponent();
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
