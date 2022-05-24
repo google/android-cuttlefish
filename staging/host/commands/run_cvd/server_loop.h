@@ -27,7 +27,7 @@ namespace cuttlefish {
 class ServerLoop {
  public:
   virtual ~ServerLoop();
-  virtual void Run(ProcessMonitor& process_monitor) = 0;
+  virtual Result<void> Run() = 0;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
