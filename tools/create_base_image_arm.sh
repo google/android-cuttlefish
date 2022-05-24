@@ -159,6 +159,7 @@ if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
 	cd -
 
 	dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
+	dist_dir=$(realpath -e ${dist_dir})
 	${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh \
 		-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e \
 		-k ${dist_dir}/Image -i ${dist_dir}/initramfs.img \
