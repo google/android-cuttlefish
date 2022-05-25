@@ -114,37 +114,6 @@ class RootCanal : public CommandSource {
   LogTeeCreator& log_tee_;
 };
 
-class ConfigServer : public CommandSource {
- public:
-  INJECT(ConfigServer(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    return single_element_emplace(
-        Command(ConfigServerBinary()).AddParameter("-server_fd=", socket_));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "ConfigServer"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    auto port = instance_.config_server_port();
-    socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
-    CF_EXPECT(socket_->IsOpen(),
-              "Unable to create configuration server socket: "
-                  << socket_->StrError());
-    return {};
-  }
-
- private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD socket_;
-};
-
 class TombstoneReceiver : public CommandSource {
  public:
   INJECT(TombstoneReceiver(const CuttlefishConfig::InstanceSpecific& instance))
@@ -673,10 +642,10 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
   using Bases = Multi::Bases<CommandSource, DiagnosticInformation, SetupFeature,
                              LateInjected, KernelLogPipeConsumer>;
   return fruit::createComponent()
+      .install(ConfigServerComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
       .install(Bases::Impls<BluetoothConnector>)
-      .install(Bases::Impls<ConfigServer>)
       .install(Bases::Impls<ConsoleForwarder>)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
