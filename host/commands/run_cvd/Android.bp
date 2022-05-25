@@ -23,6 +23,7 @@ cc_binary {
         "boot_state_machine.cc",
         "launch/kernel_log_monitor.cpp",
         "launch/launch.cc",
+        "launch/logcat_receiver.cpp",
         "launch/modem.cpp",
         "launch/streamer.cpp",
         "main.cc",
