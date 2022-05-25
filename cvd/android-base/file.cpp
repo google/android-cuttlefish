@@ -468,18 +468,19 @@ std::string GetExecutableDirectory() {
   return Dirname(GetExecutablePath());
 }
 
+#if defined(_WIN32)
 std::string Basename(const std::string& path) {
+  // TODO: how much of this is actually necessary for mingw?
+
   // Copy path because basename may modify the string passed in.
   std::string result(path);
 
-#if !defined(__BIONIC__)
   // Use lock because basename() may write to a process global and return a
   // pointer to that. Note that this locking strategy only works if all other
   // callers to basename in the process also grab this same lock, but its
   // better than nothing.  Bionic's basename returns a thread-local buffer.
   static std::mutex& basename_lock = *new std::mutex();
   std::lock_guard<std::mutex> lock(basename_lock);
-#endif
 
   // Note that if std::string uses copy-on-write strings, &str[0] will cause
   // the copy to be made, so there is no chance of us accidentally writing to
@@ -492,6 +493,65 @@ std::string Basename(const std::string& path) {
 
   return result;
 }
+#else
+// Copied from bionic so that Basename() below can be portable and thread-safe.
+static int __basename_r(const char* path, char* buffer, size_t buffer_size) {
+  const char* startp = nullptr;
+  const char* endp = nullptr;
+  int len;
+  int result;
+
+  // Empty or NULL string gets treated as ".".
+  if (path == nullptr || *path == '\0') {
+    startp = ".";
+    len = 1;
+    goto Exit;
+  }
+
+  // Strip trailing slashes.
+  endp = path + strlen(path) - 1;
+  while (endp > path && *endp == '/') {
+    endp--;
+  }
+
+  // All slashes becomes "/".
+  if (endp == path && *endp == '/') {
+    startp = "/";
+    len = 1;
+    goto Exit;
+  }
+
+  // Find the start of the base.
+  startp = endp;
+  while (startp > path && *(startp - 1) != '/') {
+    startp--;
+  }
+
+  len = endp - startp +1;
+
+ Exit:
+  result = len;
+  if (buffer == nullptr) {
+    return result;
+  }
+  if (len > static_cast<int>(buffer_size) - 1) {
+    len = buffer_size - 1;
+    result = -1;
+    errno = ERANGE;
+  }
+
+  if (len >= 0) {
+    memcpy(buffer, startp, len);
+    buffer[len] = 0;
+  }
+  return result;
+}
+std::string Basename(const std::string& path) {
+  char buf[PATH_MAX];
+  __basename_r(path.c_str(), buf, sizeof(buf));
+  return buf;
+}
+#endif
 
 std::string Dirname(const std::string& path) {
   // Copy path because dirname may modify the string passed in.
