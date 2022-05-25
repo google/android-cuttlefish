@@ -24,8 +24,9 @@ func TestMapOMNewOperation(t *testing.T) {
 	opName := "operation-1"
 	om := NewMapOM(func() string { return opName })
 	expectedOp := Operation{
-		Name: opName,
-		Done: false,
+		Name:   opName,
+		Done:   false,
+		Result: OperationResult{},
 	}
 
 	op := om.New()
@@ -51,10 +52,6 @@ func TestMapOMGetOperation(t *testing.T) {
 
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
-		expectedOp := Operation{
-			Name: opName,
-			Done: false,
-		}
 		om.New()
 
 		op, err := om.Get(opName)
@@ -62,8 +59,8 @@ func TestMapOMGetOperation(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected no error")
 		}
-		if op != expectedOp {
-			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+		if op.Name != opName {
+			t.Errorf("expected <<%q>>, got %q", opName, op.Name)
 		}
 	})
 
@@ -95,13 +92,6 @@ func TestMapOMCompleteOperation(t *testing.T) {
 		result := OperationResult{
 			Error: OperationResultError{"error"},
 		}
-		expectedOp := Operation{
-			Name: opName,
-			Done: true,
-			Result: OperationResult{
-				Error: OperationResultError{"error"},
-			},
-		}
 
 		err := om.Complete(opName, result)
 
@@ -112,8 +102,11 @@ func TestMapOMCompleteOperation(t *testing.T) {
 		if err != nil {
 			t.Error("expected no error")
 		}
-		if op != expectedOp {
-			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+		if !op.Done {
+			t.Error("expected true")
+		}
+		if op.Result != result {
+			t.Errorf("expected <<%+v>>, got %+v", result, op.Result)
 		}
 	})
 
