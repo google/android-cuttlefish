@@ -16,7 +16,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"sync"
 )
 
@@ -45,16 +44,16 @@ type OperationManager interface {
 
 	Get(string) (Operation, error)
 
-	Complete(string, OperationResult)
+	Complete(string, OperationResult) error
 
 	// TODO(b/231319087) This should handle timeout.
-	Wait(string)
+	Wait(string) (Operation, error)
 }
 
 type mapOMOperationEntry struct {
-	data  Operation
-	mutex sync.RWMutex
-	wait  sync.WaitGroup
+	data      Operation
+	mutex     sync.RWMutex
+	waitGroup sync.WaitGroup
 }
 
 type MapOM struct {
@@ -85,19 +84,18 @@ func (m *MapOM) New() Operation {
 	if retryCount == mapOMNewUUIDRetryLimit {
 		panic("uuid retry limit reached")
 	}
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	op := &mapOMOperationEntry{
+	entry := &mapOMOperationEntry{
 		data: Operation{
 			Name:   name,
 			Done:   false,
 			Result: OperationResult{},
 		},
-		mutex: sync.RWMutex{},
-		wait:  wg,
+		mutex:     sync.RWMutex{},
+		waitGroup: sync.WaitGroup{},
 	}
-	m.operations[name] = op
-	return op.data
+	entry.waitGroup.Add(1)
+	m.operations[name] = entry
+	return entry.data
 }
 
 func (m *MapOM) Get(name string) (Operation, error) {
@@ -111,25 +109,29 @@ func (m *MapOM) Get(name string) (Operation, error) {
 	return op, nil
 }
 
-func (m *MapOM) Complete(name string, result OperationResult) {
+func (m *MapOM) Complete(name string, result OperationResult) error {
 	op, ok := m.getOperationEntry(name)
 	if !ok {
-		log.Println("complete operation error: attempting to complete an operation which does not exist")
-		return
+		return fmt.Errorf("attempting to complete an operation which does not exist")
 	}
 	op.mutex.Lock()
 	defer op.mutex.Unlock()
-	op.wait.Done()
+	op.waitGroup.Done()
 	op.data.Done = true
 	op.data.Result = result
+	return nil
 }
 
-func (m *MapOM) Wait(name string) {
-	op, ok := m.getOperationEntry(name)
+func (m *MapOM) Wait(name string) (Operation, error) {
+	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		return
+		return Operation{}, NotFoundOperationError("map key didn't exist")
 	}
-	op.wait.Wait()
+	entry.waitGroup.Wait()
+	entry.mutex.RLock()
+	op := entry.data
+	entry.mutex.RUnlock()
+	return op, nil
 }
 
 func (m *MapOM) getOperationEntry(name string) (*mapOMOperationEntry, bool) {

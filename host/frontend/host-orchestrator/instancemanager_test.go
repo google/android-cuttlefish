@@ -81,8 +81,7 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 
 	op, _ := im.CreateCVD(req)
 
-	om.Wait(opName)
-	op, _ = om.Get(opName)
+	op, _ = om.Wait(opName)
 	if !op.Done {
 		t.Error("expected operation to be done")
 	}

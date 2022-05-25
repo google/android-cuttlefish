@@ -62,10 +62,14 @@ func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
 		result := OperationResult{
 			Error: OperationResultError{ErrMsgDownloadFetchCVDFailed},
 		}
-		m.om.Complete(op.Name, result)
+		if err := m.om.Complete(op.Name, result); err != nil {
+			log.Printf("failed to complete operation with error: %v", err)
+		}
 		return
 	}
-	m.om.Complete(op.Name, OperationResult{})
+	if err := m.om.Complete(op.Name, OperationResult{}); err != nil {
+		log.Printf("failed to complete operation with error: %v", err)
+	}
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {

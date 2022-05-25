@@ -103,8 +103,11 @@ func TestMapOMCompleteOperation(t *testing.T) {
 			},
 		}
 
-		om.Complete(opName, result)
+		err := om.Complete(opName, result)
 
+		if err != nil {
+			t.Error("expected no error")
+		}
 		op, err := om.Get(opName)
 		if err != nil {
 			t.Error("expected no error")
@@ -120,11 +123,10 @@ func TestMapOMCompleteOperation(t *testing.T) {
 			Error: OperationResultError{"error"},
 		}
 
-		om.Complete(opName, result)
+		err := om.Complete(opName, result)
 
-		_, err := om.Get(opName)
 		if err == nil {
-			t.Errorf("expected error")
+			t.Error("expected error")
 		}
 	})
 }
@@ -139,11 +141,19 @@ func TestMapOMWaitOperation(t *testing.T) {
 	t.Run("operation was completed", func(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 		om.New()
-
 		om.Complete(opName, result)
 
-		if om.waitForOperationTimedOut(opName, 1*time.Second) {
-			t.Errorf("expected to stop waiting as operation was completed")
+		op, err, timeout := om.waitForOperation(opName, 1*time.Second)
+
+		if timeout {
+			t.Error("expected to stop waiting as operation was completed")
+		}
+		if err != nil {
+			t.Errorf("expected nil error, got %+v", err)
+		}
+		expectedOp, _ := om.Get(opName)
+		if op != expectedOp {
+			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
 		}
 	})
 
@@ -151,8 +161,32 @@ func TestMapOMWaitOperation(t *testing.T) {
 		om := NewMapOM(uuidFactory)
 		om.New()
 
-		if !om.waitForOperationTimedOut(opName, 1*time.Second) {
-			t.Errorf("expected to continue waiting as operation has not been completed yet")
+		op, err, timeout := om.waitForOperation(opName, 1*time.Second)
+
+		if !timeout {
+			t.Error("expected to continue waiting as operation has not been completed yet")
+		}
+		if err != nil {
+			t.Errorf("expected nil error, got %+v", err)
+		}
+		if (op != Operation{}) {
+			t.Error("expected empty operation")
+		}
+	})
+
+	t.Run("operation does not exist", func(t *testing.T) {
+		om := NewMapOM(uuidFactory)
+
+		op, err, timeout := om.waitForOperation(opName, 1*time.Second)
+
+		if timeout {
+			t.Error("expected to never wait as operation did not exist")
+		}
+		if err == nil {
+			t.Error("expected non nil error")
+		}
+		if (op != Operation{}) {
+			t.Error("expected empty operation")
 		}
 	})
 }
@@ -201,18 +235,25 @@ func TestOperationIsError(t *testing.T) {
 	}
 }
 
-func (om *MapOM) waitForOperationTimedOut(name string, duration time.Duration) bool {
-	waitDoneCh := make(chan struct{}, 1)
+func (om *MapOM) waitForOperation(name string, duration time.Duration) (op Operation, err error, timeout bool) {
+	okCh := make(chan Operation, 1)
+	errCh := make(chan error, 1)
 
 	go func() {
-		om.Wait(name)
-		waitDoneCh <- struct{}{}
+		if op, err := om.Wait(name); err != nil {
+			errCh <- err
+		} else {
+			okCh <- op
+		}
 	}()
 
 	select {
-	case <-waitDoneCh:
-		return false
+	case op = <-okCh:
+		return
+	case err = <-errCh:
+		return
 	case <-time.After(duration):
-		return true
+		timeout = true
+		return
 	}
 }
