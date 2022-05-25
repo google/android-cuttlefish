@@ -67,8 +67,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 
 func TestCreateCVDFetchCVDFails(t *testing.T) {
 	dir := t.TempDir()
-	opName := "operation-1"
-	om := NewMapOM(func() string { return opName })
+	om := NewMapOM()
 	fetchCVDHandler := NewFetchCVDHandler(dir, &AlwaysFailsFetchCVDDownloader{})
 	im := NewInstanceManager(fetchCVDHandler, om)
 	req := apiv1.CreateCVDRequest{
@@ -81,7 +80,7 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 
 	op, _ := im.CreateCVD(req)
 
-	op, _ = om.Wait(opName)
+	op, _ = om.Wait(op.Name)
 	if !op.Done {
 		t.Error("expected operation to be done")
 	}

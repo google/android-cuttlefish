@@ -29,7 +29,6 @@ import (
 
 	apiv1 "cuttlefish/host-orchestrator/api/v1"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -85,7 +84,7 @@ func main() {
 	cvdArtifactsDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	fetchCVDDownloader := NewABFetchCVDDownloader(http.DefaultClient, abURL)
 	fetchCVDHandler := NewFetchCVDHandler(cvdArtifactsDir, fetchCVDDownloader)
-	om := NewMapOM(func() string { return uuid.New().String() })
+	om := NewMapOM()
 	im := NewInstanceManager(fetchCVDHandler, om)
 
 	setupDeviceEndpoint(pool, config, socketPath)

@@ -21,16 +21,15 @@ import (
 )
 
 func TestMapOMNewOperation(t *testing.T) {
-	opName := "operation-1"
-	om := NewMapOM(func() string { return opName })
-	expectedOp := Operation{
-		Name:   opName,
-		Done:   false,
-		Result: OperationResult{},
-	}
+	om := NewMapOM()
 
 	op := om.New()
 
+	expectedOp := Operation{
+		Name:   op.Name,
+		Done:   false,
+		Result: OperationResult{},
+	}
 	if op != expectedOp {
 		t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
 	}
@@ -38,7 +37,8 @@ func TestMapOMNewOperation(t *testing.T) {
 
 func TestMapOMNewOperationNoNewUniqueUUIDsPanic(t *testing.T) {
 	defer func() { _ = recover() }()
-	om := NewMapOM(func() string { return "sameuuid" })
+	om := NewMapOM()
+	om.uuidFactory = func() string { return "sameuuid" }
 
 	om.New()
 	om.New()
@@ -47,27 +47,24 @@ func TestMapOMNewOperationNoNewUniqueUUIDsPanic(t *testing.T) {
 }
 
 func TestMapOMGetOperation(t *testing.T) {
-	opName := "operation-1"
-	uuidFactory := func() string { return opName }
-
 	t.Run("exists", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
-		om.New()
+		om := NewMapOM()
+		newOp := om.New()
 
-		op, err := om.Get(opName)
+		op, err := om.Get(newOp.Name)
 
 		if err != nil {
 			t.Errorf("expected no error")
 		}
-		if op.Name != opName {
-			t.Errorf("expected <<%q>>, got %q", opName, op.Name)
+		if op.Name != newOp.Name {
+			t.Errorf("expected <<%q>>, got %q", newOp.Name, op.Name)
 		}
 	})
 
 	t.Run("does not exist", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
+		om := NewMapOM()
 
-		op, err := om.Get(opName)
+		op, err := om.Get("foo")
 
 		if err == nil {
 			t.Errorf("expected error")
@@ -83,22 +80,19 @@ func TestMapOMGetOperation(t *testing.T) {
 }
 
 func TestMapOMCompleteOperation(t *testing.T) {
-	opName := "operation-1"
-	uuidFactory := func() string { return opName }
-
 	t.Run("exists", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
-		om.New()
+		om := NewMapOM()
+		newOp := om.New()
 		result := OperationResult{
 			Error: OperationResultError{"error"},
 		}
 
-		err := om.Complete(opName, result)
+		err := om.Complete(newOp.Name, result)
 
 		if err != nil {
 			t.Error("expected no error")
 		}
-		op, err := om.Get(opName)
+		op, err := om.Get(newOp.Name)
 		if err != nil {
 			t.Error("expected no error")
 		}
@@ -111,12 +105,12 @@ func TestMapOMCompleteOperation(t *testing.T) {
 	})
 
 	t.Run("does not exist", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
+		om := NewMapOM()
 		result := OperationResult{
 			Error: OperationResultError{"error"},
 		}
 
-		err := om.Complete(opName, result)
+		err := om.Complete("foo", result)
 
 		if err == nil {
 			t.Error("expected error")
@@ -125,18 +119,16 @@ func TestMapOMCompleteOperation(t *testing.T) {
 }
 
 func TestMapOMWaitOperation(t *testing.T) {
-	opName := "operation-1"
-	uuidFactory := func() string { return opName }
 	result := OperationResult{
 		Error: OperationResultError{"error"},
 	}
 
 	t.Run("operation was completed", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
-		om.New()
-		om.Complete(opName, result)
+		om := NewMapOM()
+		newOp := om.New()
+		om.Complete(newOp.Name, result)
 
-		op, err, timeout := om.waitForOperation(opName, 1*time.Second)
+		op, err, timeout := om.waitForOperation(newOp.Name, 1*time.Second)
 
 		if timeout {
 			t.Error("expected to stop waiting as operation was completed")
@@ -144,17 +136,17 @@ func TestMapOMWaitOperation(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected nil error, got %+v", err)
 		}
-		expectedOp, _ := om.Get(opName)
+		expectedOp, _ := om.Get(newOp.Name)
 		if op != expectedOp {
 			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
 		}
 	})
 
 	t.Run("operation is not completed", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
-		om.New()
+		om := NewMapOM()
+		newOp := om.New()
 
-		op, err, timeout := om.waitForOperation(opName, 1*time.Second)
+		op, err, timeout := om.waitForOperation(newOp.Name, 1*time.Second)
 
 		if !timeout {
 			t.Error("expected to continue waiting as operation has not been completed yet")
@@ -163,14 +155,14 @@ func TestMapOMWaitOperation(t *testing.T) {
 			t.Errorf("expected nil error, got %+v", err)
 		}
 		if (op != Operation{}) {
-			t.Error("expected empty operation")
+			t.Errorf("expected zero value %T", op)
 		}
 	})
 
 	t.Run("operation does not exist", func(t *testing.T) {
-		om := NewMapOM(uuidFactory)
+		om := NewMapOM()
 
-		op, err, timeout := om.waitForOperation(opName, 1*time.Second)
+		op, err, timeout := om.waitForOperation("foo", 1*time.Second)
 
 		if timeout {
 			t.Error("expected to never wait as operation did not exist")

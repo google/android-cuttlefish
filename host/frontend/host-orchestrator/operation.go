@@ -17,6 +17,8 @@ package main
 import (
 	"fmt"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type NotFoundOperationError string
@@ -62,9 +64,9 @@ type MapOM struct {
 	operations  map[string]*mapOMOperationEntry
 }
 
-func NewMapOM(uuidFactory func() string) *MapOM {
+func NewMapOM() *MapOM {
 	return &MapOM{
-		uuidFactory: uuidFactory,
+		uuidFactory: func() string { return uuid.New().String() },
 		mutex:       sync.RWMutex{},
 		operations:  make(map[string]*mapOMOperationEntry),
 	}
