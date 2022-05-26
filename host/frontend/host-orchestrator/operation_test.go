@@ -220,7 +220,7 @@ func TestOperationIsError(t *testing.T) {
 	}
 }
 
-func (om *MapOM) waitForOperation(name string, duration time.Duration) (op Operation, err error, timeout bool) {
+func (om *MapOM) waitForOperation(name string, duration time.Duration) (Operation, error, bool /*timeout hit*/) {
 	okCh := make(chan Operation, 1)
 	errCh := make(chan error, 1)
 
@@ -233,12 +233,11 @@ func (om *MapOM) waitForOperation(name string, duration time.Duration) (op Opera
 	}()
 
 	select {
-	case op = <-okCh:
-		return
-	case err = <-errCh:
-		return
+	case op := <-okCh:
+		return op, nil, false
+	case err := <-errCh:
+		return Operation{}, err, false
 	case <-time.After(duration):
-		timeout = true
-		return
+		return Operation{}, nil, true
 	}
 }
