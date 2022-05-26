@@ -50,7 +50,7 @@ genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim0/net u:object_r:sysfs_net:s
 genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim1/net u:object_r:sysfs_net:s0
 
 # crosvm (arm64)
-cf_pci_block_device(/devices/platform/10000.pci, 0xb, 10)
+cf_pci_block_device(/devices/platform/10000.pci/pci0000:00, 0xb, 10)
 cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00, 0x2)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
