@@ -42,6 +42,9 @@ fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
 KernelLogMonitorComponent();
 
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
+LogcatReceiverComponent();
+
 fruit::Component<fruit::Required<const CuttlefishConfig, vm_manager::VmManager,
                                  const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
