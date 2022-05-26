@@ -114,46 +114,6 @@ class RootCanal : public CommandSource {
   LogTeeCreator& log_tee_;
 };
 
-class LogcatReceiver : public CommandSource, public DiagnosticInformation {
- public:
-  INJECT(LogcatReceiver(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-  // DiagnosticInformation
-  std::vector<std::string> Diagnostics() const override {
-    return {"Logcat output: " + instance_.logcat_path()};
-  }
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    return single_element_emplace(
-        Command(LogcatReceiverBinary()).AddParameter("-log_pipe_fd=", pipe_));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "LogcatReceiver"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() {
-    auto log_name = instance_.logcat_pipe_name();
-    CF_EXPECT(mkfifo(log_name.c_str(), 0600) == 0,
-              "Unable to create named pipe at " << log_name << ": "
-                                                << strerror(errno));
-    // Open the pipe here (from the launcher) to ensure the pipe is not deleted
-    // due to the usage counters in the kernel reaching zero. If this is not
-    // done and the logcat_receiver crashes for some reason the VMM may get
-    // SIGPIPE.
-    pipe_ = SharedFD::Open(log_name.c_str(), O_RDWR);
-    CF_EXPECT(pipe_->IsOpen(),
-              "Can't open \"" << log_name << "\": " << pipe_->StrError());
-    return {};
-  }
-
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD pipe_;
-};
-
 class ConfigServer : public CommandSource {
  public:
   INJECT(ConfigServer(const CuttlefishConfig::InstanceSpecific& instance))
@@ -713,12 +673,12 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
   using Bases = Multi::Bases<CommandSource, DiagnosticInformation, SetupFeature,
                              LateInjected, KernelLogPipeConsumer>;
   return fruit::createComponent()
+      .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
       .install(Bases::Impls<BluetoothConnector>)
       .install(Bases::Impls<ConfigServer>)
       .install(Bases::Impls<ConsoleForwarder>)
       .install(Bases::Impls<GnssGrpcProxyServer>)
-      .install(Bases::Impls<LogcatReceiver>)
       .install(Bases::Impls<MetricsService>)
       .install(Bases::Impls<RootCanal>)
       .install(Bases::Impls<SecureEnvironment>)
