@@ -1555,8 +1555,8 @@ static void requestDeviceIdentity(int request __unused, void *data __unused,
     int count = 4;
 
     // Fixed values. TODO: Query modem
-    responseStr[0] = "----";
-    responseStr[1] = "----";
+    responseStr[0] ="358240051111110";
+    responseStr[1] =  "";
     responseStr[2] = "77777777";
     responseStr[3] = ""; // default empty for non-CDMA
 
