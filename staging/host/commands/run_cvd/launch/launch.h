@@ -31,6 +31,17 @@
 
 namespace cuttlefish {
 
+template <typename T>
+std::vector<T> single_element_emplace(T&& element) {
+  std::vector<T> vec;
+  vec.emplace_back(std::move(element));
+  return vec;
+}
+
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 KernelLogPipeProvider>
+KernelLogMonitorComponent();
+
 fruit::Component<fruit::Required<const CuttlefishConfig, vm_manager::VmManager,
                                  const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
