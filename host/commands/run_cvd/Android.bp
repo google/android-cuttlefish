@@ -27,6 +27,7 @@ cc_binary {
         "launch/logcat_receiver.cpp",
         "launch/modem.cpp",
         "launch/streamer.cpp",
+        "launch/tombstone_receiver.cpp",
         "main.cc",
         "reporting.cpp",
         "process_monitor.cc",
