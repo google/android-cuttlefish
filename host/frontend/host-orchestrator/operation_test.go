@@ -25,13 +25,14 @@ func TestMapOMNewOperation(t *testing.T) {
 
 	op := om.New()
 
-	expectedOp := Operation{
-		Name:   op.Name,
-		Done:   false,
-		Result: OperationResult{},
+	if op.Name == "" {
+		t.Error("expected non empty value")
 	}
-	if op != expectedOp {
-		t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+	if op.Done {
+		t.Error("expected false")
+	}
+	if (op.Result != OperationResult{}) {
+		t.Error("expected empty result")
 	}
 }
 
