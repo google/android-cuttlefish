@@ -48,6 +48,9 @@ LogcatReceiverComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 ConfigServerComponent();
 
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
+TombstoneReceiverComponent();
+
 fruit::Component<fruit::Required<const CuttlefishConfig, vm_manager::VmManager,
                                  const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
