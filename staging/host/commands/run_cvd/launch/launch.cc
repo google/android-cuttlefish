@@ -114,47 +114,6 @@ class RootCanal : public CommandSource {
   LogTeeCreator& log_tee_;
 };
 
-class TombstoneReceiver : public CommandSource {
- public:
-  INJECT(TombstoneReceiver(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    return single_element_emplace(
-        Command(TombstoneReceiverBinary())
-            .AddParameter("-server_fd=", socket_)
-            .AddParameter("-tombstone_dir=", tombstone_dir_));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "TombstoneReceiver"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    tombstone_dir_ = instance_.PerInstancePath("tombstones");
-    if (!DirectoryExists(tombstone_dir_)) {
-      LOG(DEBUG) << "Setting up " << tombstone_dir_;
-      CF_EXPECT(mkdir(tombstone_dir_.c_str(),
-                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
-                "Failed to create tombstone directory: "
-                    << tombstone_dir_ << ". Error: " << strerror(errno));
-    }
-
-    auto port = instance_.tombstone_receiver_port();
-    socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
-    CF_EXPECT(socket_->IsOpen(), "Unable to create tombstone server socket: "
-                                     << socket_->StrError());
-    return {};
-  }
-
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD socket_;
-  std::string tombstone_dir_;
-};
-
 class MetricsService : public CommandSource {
  public:
   INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
@@ -645,13 +604,13 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(ConfigServerComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
+      .install(TombstoneReceiverComponent)
       .install(Bases::Impls<BluetoothConnector>)
       .install(Bases::Impls<ConsoleForwarder>)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
       .install(Bases::Impls<RootCanal>)
       .install(Bases::Impls<SecureEnvironment>)
-      .install(Bases::Impls<TombstoneReceiver>)
       .install(Bases::Impls<VehicleHalServer>)
       .install(Bases::Impls<VmmCommands>)
       .install(Bases::Impls<WmediumdServer>)
