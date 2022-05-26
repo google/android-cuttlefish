@@ -133,7 +133,8 @@ class Command {
   // Constructs a command object from the path to an executable binary and an
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
-  Command(std::string executable, SubprocessStopper stopper = KillSubprocess);
+  Command(const std::string& executable,
+          SubprocessStopper stopper = KillSubprocess);
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -144,46 +145,33 @@ class Command {
 
   const std::string& Executable() const { return command_[0]; }
 
-  Command& SetExecutable(std::string executable) & {
-    executable_ = std::move(executable);
+  Command& SetExecutable(const std::string& executable) & {
+    command_[0] = executable;
     return *this;
   }
-  Command SetExecutable(std::string executable) && {
-    return std::move(SetExecutable(executable));
-  }
-
-  Command& SetName(std::string name) & {
-    command_[0] = std::move(name);
-    return *this;
-  }
-  Command SetName(std::string name) && {
-    return std::move(SetName(std::move(name)));
-  }
-
-  Command& SetExecutableAndName(std::string name) & {
-    return SetExecutable(name).SetName(std::move(name));
-  }
-
-  Command SetExecutableAndName(std::string name) && {
-    return std::move(SetExecutableAndName(std::move(name)));
+  Command SetExecutable(const std::string& executable) && {
+    SetExecutable(executable);
+    return std::move(*this);
   }
 
   Command& SetStopper(SubprocessStopper stopper) & {
-    subprocess_stopper_ = std::move(stopper);
+    subprocess_stopper_ = stopper;
     return *this;
   }
   Command SetStopper(SubprocessStopper stopper) && {
-    return std::move(SetStopper(std::move(stopper)));
+    SetStopper(stopper);
+    return std::move(*this);
   }
 
   // Specify the environment for the subprocesses to be started. By default
   // subprocesses inherit the parent's environment.
-  Command& SetEnvironment(std::vector<std::string> env) & {
-    env_ = std::move(env);
+  Command& SetEnvironment(const std::vector<std::string>& env) & {
+    env_ = env;
     return *this;
   }
-  Command SetEnvironment(std::vector<std::string> env) && {
-    return std::move(SetEnvironment(std::move(env)));
+  Command SetEnvironment(const std::vector<std::string>& env) && {
+    SetEnvironment(env);
+    return std::move(*this);
   }
 
   Command& AddEnvironmentVariable(const std::string& env_var,
@@ -196,12 +184,13 @@ class Command {
     return std::move(*this);
   }
 
-  Command& AddEnvironmentVariable(std::string env_var) & {
-    env_.emplace_back(std::move(env_var));
+  Command& AddEnvironmentVariable(const std::string& env_var) & {
+    env_.push_back(env_var);
     return *this;
   }
-  Command AddEnvironmentVariable(std::string env_var) && {
-    return std::move(AddEnvironmentVariable(std::move(env_var)));
+  Command AddEnvironmentVariable(const std::string& env_var) && {
+    AddEnvironmentVariable(env_var);
+    return std::move(*this);
   }
 
   // Specify an environment variable to be unset from the parent's
@@ -218,7 +207,8 @@ class Command {
     return *this;
   }
   Command UnsetFromEnvironment(const std::string& env_var) && {
-    return std::move(UnsetFromEnvironment(env_var));
+    UnsetFromEnvironment(env_var);
+    return std::move(*this);
   }
 
   // Adds a single parameter to the command. All arguments are concatenated into
@@ -235,7 +225,8 @@ class Command {
   }
   template <typename... Args>
   Command AddParameter(Args... args) && {
-    return std::move(AddParameter(std::forward<Args>(args)...));
+    AddParameter(std::forward<Args>(args)...);
+    return std::move(*this);
   }
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
@@ -249,7 +240,8 @@ class Command {
   }
   template <typename... Args>
   Command AppendToLastParameter(Args... args) && {
-    return std::move(AppendToLastParameter(std::forward<Args>(args)...));
+    AppendToLastParameter(std::forward<Args>(args)...);
+    return std::move(*this);
   }
 
   // Redirects the standard IO of the command.
@@ -262,8 +254,8 @@ class Command {
   Command RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                         Subprocess::StdIOChannel parent_channel) &&;
 
-  Command& SetWorkingDirectory(const std::string& path) &;
-  Command SetWorkingDirectory(const std::string& path) &&;
+  Command& SetWorkingDirectory(std::string path) &;
+  Command SetWorkingDirectory(std::string path) &&;
   Command& SetWorkingDirectory(SharedFD dirfd) &;
   Command SetWorkingDirectory(SharedFD dirfd) &&;
 
@@ -284,7 +276,6 @@ class Command {
   std::string AsBashScript(const std::string& redirected_stdio_path = "") const;
 
  private:
-  std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};

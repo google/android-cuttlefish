@@ -32,10 +32,8 @@ namespace cuttlefish {
 
 class RequestWithStdio {
  public:
-  RequestWithStdio(SharedFD, cvd::Request, std::vector<SharedFD>,
-                   std::optional<ucred>);
+  RequestWithStdio(cvd::Request, std::vector<SharedFD>, std::optional<ucred>);
 
-  SharedFD Client() const;
   const cvd::Request& Message() const;
   const std::vector<SharedFD>& FileDescriptors() const;
   SharedFD In() const;
@@ -45,7 +43,6 @@ class RequestWithStdio {
   std::optional<ucred> Credentials() const;
 
  private:
-  SharedFD client_fd_;
   cvd::Request message_;
   std::vector<SharedFD> fds_;
   std::optional<ucred> creds_;
