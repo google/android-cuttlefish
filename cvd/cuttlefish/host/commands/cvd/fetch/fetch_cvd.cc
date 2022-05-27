@@ -89,65 +89,53 @@ static bool ArtifactsContains(const std::vector<Artifact>& artifacts,
  * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
  * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
  */
-std::string TargetBuildZipFromArtifacts(
+Result<std::string> TargetBuildZipFromArtifacts(
     const Build& build, const std::string& name,
     const std::vector<Artifact>& artifacts) {
   std::string product = std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
   auto match = product + "-" + name + "-" + id + ".zip";
-  return ArtifactsContains(artifacts, match) ? match : "";
+  CF_EXPECT(ArtifactsContains(artifacts, match));
+  return match;
 }
 
-std::vector<std::string> download_images(BuildApi* build_api,
-                                         const Build& build,
-                                         const std::string& target_directory,
-                                         const std::vector<std::string>& images) {
-  auto artifacts = build_api->Artifacts(build);
-  std::string img_zip_name = TargetBuildZipFromArtifacts(build, "img", artifacts);
-  if (img_zip_name.size() == 0) {
-    LOG(ERROR) << "Target " << build << " did not have an img zip";
-    return {};
-  }
+Result<std::vector<std::string>> DownloadImages(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory,
+    const std::vector<std::string>& images) {
+  auto artifacts = build_api.Artifacts(build);
+  std::string img_zip_name =
+      CF_EXPECT(TargetBuildZipFromArtifacts(build, "img", artifacts));
   std::string local_path = target_directory + "/" + img_zip_name;
-  if (!build_api->ArtifactToFile(build, img_zip_name, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << img_zip_name << " to "
-               << local_path;
-    return {};
-  }
+  CF_EXPECT(build_api.ArtifactToFile(build, img_zip_name, local_path),
+            "Unable to download " << build << ":" << img_zip_name << " to "
+                                  << local_path);
 
   std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
-  if (files.empty()) {
-    LOG(ERROR) << "Could not extract " << local_path;
-    return {};
-  }
+  CF_EXPECT(!files.empty(), "Could not extract " << local_path);
   if (unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
     files.push_back(local_path);
   }
   return files;
 }
-std::vector<std::string> download_images(BuildApi* build_api,
-                                         const Build& build,
-                                         const std::string& target_directory) {
-  return download_images(build_api, build, target_directory, {});
+Result<std::vector<std::string>> DownloadImages(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory) {
+  return DownloadImages(build_api, build, target_directory, {});
 }
 
-std::vector<std::string> download_target_files(BuildApi* build_api,
-                                               const Build& build,
-                                               const std::string& target_directory) {
-  auto artifacts = build_api->Artifacts(build);
-  std::string target_zip = TargetBuildZipFromArtifacts(build, "target_files", artifacts);
-  if (target_zip.size() == 0) {
-    LOG(ERROR) << "Target " << build << " did not have a target files zip";
-    return {};
-  }
+Result<std::vector<std::string>> DownloadTargetFiles(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory) {
+  auto artifacts = build_api.Artifacts(build);
+  std::string target_zip =
+      CF_EXPECT(TargetBuildZipFromArtifacts(build, "target_files", artifacts));
   std::string local_path = target_directory + "/" + target_zip;
-  if (!build_api->ArtifactToFile(build, target_zip, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << target_zip << " to "
-               << local_path;
-    return {};
-  }
-  return {local_path};
+  CF_EXPECT(build_api.ArtifactToFile(build, target_zip, local_path),
+            "Unable to download " << build << ":" << target_zip << " to "
+                                  << local_path);
+  return {{local_path}};
 }
 
 Result<std::vector<std::string>> DownloadHostPackage(
@@ -347,7 +335,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
     if (FLAGS_download_img_zip) {
       std::vector<std::string> image_files =
-          download_images(&build_api, default_build, target_dir);
+          CF_EXPECT(DownloadImages(build_api, default_build, target_dir));
       CF_EXPECT(!image_files.empty(),
                 "Could not download images for " << default_build);
       LOG(INFO) << "Adding img-zip files for default build";
@@ -362,8 +350,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       CF_EXPECT(mkdir(default_target_dir.c_str(),
                       S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
                 "Could not create " << default_target_dir);
-      std::vector<std::string> target_files =
-          download_target_files(&build_api, default_build, default_target_dir);
+      std::vector<std::string> target_files = CF_EXPECT(
+          DownloadTargetFiles(build_api, default_build, default_target_dir));
       CF_EXPECT(!target_files.empty(),
                 "Could not download target files for " << default_build);
       LOG(INFO) << "Adding target files for default build";
@@ -378,8 +366,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       bool system_in_img_zip = true;
       if (FLAGS_download_img_zip) {
         std::vector<std::string> image_files =
-            download_images(&build_api, system_build, target_dir,
-                            {"system.img", "product.img"});
+            CF_EXPECT(DownloadImages(build_api, system_build, target_dir,
+                                     {"system.img", "product.img"}));
         if (image_files.empty()) {
           LOG(INFO) << "Could not find system image for " << system_build
                     << "in the img zip. Assuming a super image build, which will "
@@ -396,8 +384,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                       S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
                 "Could not create \"" << system_target_dir
                                       << "\": " << strerror(errno));
-      std::vector<std::string> target_files =
-          download_target_files(&build_api, system_build, system_target_dir);
+      std::vector<std::string> target_files = CF_EXPECT(
+          DownloadTargetFiles(build_api, system_build, system_target_dir));
       CF_EXPECT(!target_files.empty(),
                 "Could not download target files for " << system_build);
       CF_EXPECT(AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build,
