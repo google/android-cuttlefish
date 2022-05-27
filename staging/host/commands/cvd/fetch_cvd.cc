@@ -74,6 +74,16 @@ const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
 const std::string OTA_TOOLS = "otatools.zip";
 const std::string OTA_TOOLS_DIR = "/otatools/";
 
+static bool ArtifactsContains(const std::vector<Artifact>& artifacts,
+                              const std::string& name) {
+  for (const auto& artifact : artifacts) {
+    if (artifact.Name() == name) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Returns the name of one of the artifact target zip files.
  *
  * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
@@ -85,12 +95,7 @@ std::string TargetBuildZipFromArtifacts(
   std::string product = std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
   auto match = product + "-" + name + "-" + id + ".zip";
-  for (const auto& artifact : artifacts) {
-    if (artifact.Name() == match) {
-      return artifact.Name();
-    }
-  }
-  return "";
+  return ArtifactsContains(artifacts, match) ? match : "";
 }
 
 std::vector<std::string> download_images(BuildApi* build_api,
@@ -145,31 +150,22 @@ std::vector<std::string> download_target_files(BuildApi* build_api,
   return {local_path};
 }
 
-std::vector<std::string> download_host_package(BuildApi* build_api,
-                                               const Build& build,
-                                               const std::string& target_directory) {
-  auto artifacts = build_api->Artifacts(build);
-  bool has_host_package = false;
-  for (const auto& artifact : artifacts) {
-    has_host_package |= artifact.Name() == HOST_TOOLS;
-  }
-  if (!has_host_package) {
-    LOG(ERROR) << "Target " << build << " did not have " << HOST_TOOLS;
-    return {};
-  }
+Result<std::vector<std::string>> DownloadHostPackage(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory) {
+  auto artifacts = build_api.Artifacts(build);
+  CF_EXPECT(ArtifactsContains(artifacts, HOST_TOOLS),
+            "Target " << build << " did not have \"" << HOST_TOOLS << "\"");
   std::string local_path = target_directory + "/" + HOST_TOOLS;
 
-  if (!build_api->ArtifactToFile(build, HOST_TOOLS, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << HOST_TOOLS << " to "
-               << local_path;
-    return {};
-  }
+  CF_EXPECT(build_api.ArtifactToFile(build, HOST_TOOLS, local_path),
+            "Unable to download " << build << ":" << HOST_TOOLS << " to "
+                                  << local_path);
 
   Archive archive(local_path);
-  if (!archive.ExtractAll(target_directory)) {
-    LOG(ERROR) << "Could not extract " << local_path;
-    return {};
-  }
+  CF_EXPECT(archive.ExtractAll(target_directory),
+            "Could not extract \"" << local_path << "\" to \""
+                                   << target_directory << "\"");
   std::vector<std::string> files = archive.Contents();
   for (auto& file : files) {
     file = target_directory + "/" + file;
@@ -185,11 +181,7 @@ Result<std::vector<std::string>> DownloadOtaTools(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory) {
   auto artifacts = build_api.Artifacts(build);
-  bool has_host_package = false;
-  for (const auto& artifact : artifacts) {
-    has_host_package |= artifact.Name() == OTA_TOOLS;
-  }
-  CF_EXPECT(!!has_host_package,
+  CF_EXPECT(ArtifactsContains(artifacts, OTA_TOOLS),
             "Target " << build << " did not have " << OTA_TOOLS);
   std::string local_path = target_directory + "/" + OTA_TOOLS;
 
@@ -331,7 +323,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                          retry_period);
 
     std::vector<std::string> host_package_files =
-        download_host_package(&build_api, default_build, target_dir);
+        CF_EXPECT(DownloadHostPackage(build_api, default_build, target_dir));
     CF_EXPECT(!host_package_files.empty(),
               "Could not download host package for " << default_build);
     CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
