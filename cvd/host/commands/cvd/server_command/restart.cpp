@@ -25,15 +25,43 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
 namespace {
 
+Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
+  static constexpr char kBuild[] = "aosp-master";
+  static constexpr char kTarget[] = "aosp_cf_x86_64_phone-userdebug";
+  auto latest = CF_EXPECT(build_api.LatestBuildId(kBuild, kTarget));
+  DeviceBuild build{latest, kTarget};
+
+  auto fd = SharedFD::MemfdCreate("cvd");
+  CF_EXPECT(fd->IsOpen(), "MemfdCreate failed: " << fd->StrError());
+
+  auto write = [fd](char* data, size_t size) -> bool {
+    if (size == 0) {
+      return true;
+    }
+    auto written = WriteAll(fd, data, size);
+    if (written != size) {
+      LOG(ERROR) << "Failed to persist data: " << fd->StrError();
+      return false;
+    }
+    return true;
+  };
+  CF_EXPECT(build_api.ArtifactToCallback(build, "cvd", write));
+
+  return fd;
+}
+
 class CvdRestartHandler : public CvdServerHandler {
  public:
-  INJECT(CvdRestartHandler(CvdServer& server,
+  INJECT(CvdRestartHandler(BuildApi& build_api, CvdServer& server,
                            InstanceManager& instance_manager))
-      : server_(server), instance_manager_(instance_manager) {}
+      : build_api_(build_api),
+        server_(server),
+        instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
@@ -61,11 +89,15 @@ class CvdRestartHandler : public CvdServerHandler {
     if (arguments.size() > 0 && arguments[0] == "match-client") {
       CF_EXPECT(request.Extra(), "Missing executable file descriptor");
       new_exe = *request.Extra();
-    } else {
-      constexpr char kSelf[] = "/proc/self/exe";
+    } else if (arguments.size() > 0 && arguments[0] == "latest") {
+      new_exe = CF_EXPECT(LatestCvdAsFd(build_api_));
+    } else if (arguments.size() == 0) {
+      static constexpr char kSelf[] = "/proc/self/exe";
       new_exe = SharedFD::Open(kSelf, O_RDONLY);
       CF_EXPECT(new_exe->IsOpen(),
                 "Failed to open \"" << kSelf << "\": " << new_exe->StrError());
+    } else {
+      return CF_ERR("Unrecognized command line");
     }
     CF_EXPECT(server_.Exec(new_exe, request.Client()));
     return CF_ERR("Should be unreachable");
@@ -74,13 +106,14 @@ class CvdRestartHandler : public CvdServerHandler {
   Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
 
  private:
+  BuildApi& build_api_;
   CvdServer& server_;
   InstanceManager& instance_manager_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<CvdServer, InstanceManager>>
+fruit::Component<fruit::Required<BuildApi, CvdServer, InstanceManager>>
 CvdRestartComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdRestartHandler>();
