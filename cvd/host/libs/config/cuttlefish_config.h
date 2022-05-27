@@ -277,6 +277,10 @@ class CuttlefishConfig {
   bool console() const;
   std::string console_dev() const;
 
+  // Kernel and bootloader logging
+  void set_enable_kernel_log(bool enable_kernel_log);
+  bool enable_kernel_log() const;
+
   // Configuration flags for a minimal device
   bool enable_minimal_mode() const;
   void set_enable_minimal_mode(bool enable_minimal_mode);
