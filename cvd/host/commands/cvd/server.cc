@@ -41,6 +41,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/acloud_command.h"
+#include "host/commands/cvd/build_api.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/scope_guard.h"
@@ -51,23 +52,12 @@
 
 namespace cuttlefish {
 
-static fruit::Component<> RequestComponent(CvdServer* server,
-                                           InstanceManager* instance_manager) {
-  return fruit::createComponent()
-      .bindInstance(*server)
-      .bindInstance(*instance_manager)
-      .install(AcloudCommandComponent)
-      .install(CommandSequenceExecutorComponent)
-      .install(cvdCommandComponent)
-      .install(CvdRestartComponent)
-      .install(cvdShutdownComponent)
-      .install(cvdVersionComponent);
-}
-
 static constexpr int kNumThreads = 10;
 
-CvdServer::CvdServer(EpollPool& epoll_pool, InstanceManager& instance_manager)
-    : epoll_pool_(epoll_pool),
+CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
+                     InstanceManager& instance_manager)
+    : build_api_(build_api),
+      epoll_pool_(epoll_pool),
       instance_manager_(instance_manager),
       running_(true) {
   std::scoped_lock lock(threads_mutex_);
@@ -90,6 +80,19 @@ CvdServer::~CvdServer() {
   auto wakeup = BestEffortWakeup();
   CHECK(wakeup.ok()) << wakeup.error().message();
   Join();
+}
+
+fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
+  return fruit::createComponent()
+      .bindInstance(*server)
+      .bindInstance(server->instance_manager_)
+      .bindInstance(server->build_api_)
+      .install(AcloudCommandComponent)
+      .install(CommandSequenceExecutorComponent)
+      .install(cvdCommandComponent)
+      .install(CvdRestartComponent)
+      .install(cvdShutdownComponent)
+      .install(cvdVersionComponent);
 }
 
 Result<void> CvdServer::BestEffortWakeup() {
@@ -165,6 +168,7 @@ Result<void> CvdServer::Exec(SharedFD new_exe, SharedFD client_fd) {
   for (const auto& argv : argv_str) {
     argv_cstr.emplace_back(strdup(argv.c_str()));
   }
+  argv_cstr.emplace_back(nullptr);
   android::base::unique_fd new_exe_dup{new_exe->UNMANAGED_Dup()};
   CF_EXPECT(new_exe_dup.get() >= 0, "dup: \"" << new_exe->StrError() << "\"");
   fexecve(new_exe_dup.get(), argv_cstr.data(), environ);
@@ -274,7 +278,7 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
 
 Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
                                                SharedFD client) {
-  fruit::Injector<> injector(RequestComponent, this, &instance_manager_);
+  fruit::Injector<> injector(RequestComponent, this);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
     CF_EXPECT(late_injected->LateInject(injector));
@@ -324,6 +328,7 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
 static fruit::Component<> ServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServer, CvdServer>()
+      .install(BuildApiModule)
       .install(EpollLoopComponent);
 }
 
