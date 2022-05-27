@@ -21,6 +21,7 @@ cc_defaults {
     name: "cvd_and_fetch_cvd",
     srcs: [
         "acloud_command.cpp",
+        "build_api.cpp",
         "command_sequence.cpp",
         "epoll_loop.cpp",
         "fetch_cvd.cc",
