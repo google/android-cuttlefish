@@ -301,9 +301,9 @@ bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
   return false;
 }
 
-Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
-                      const std::string& default_build_target,
-                      const std::chrono::seconds& retry_period) {
+Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
+                              const std::string& default_build_target,
+                              const std::chrono::seconds& retry_period) {
   if (arg.find(':') != std::string::npos) {
     std::vector<std::string> dirs = android::base::Split(arg, ":");
     std::string id = dirs.back();
@@ -313,8 +313,8 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
   size_t slash_pos = arg.find('/');
   if (slash_pos != std::string::npos &&
       arg.find('/', slash_pos + 1) != std::string::npos) {
-    LOG(FATAL) << "Build argument cannot have more than one '/' slash. Was at "
-               << slash_pos << " and " << arg.find('/', slash_pos + 1);
+    return CF_ERR("Build argument cannot have more than one '/' slash. Was at "
+                  << slash_pos << " and " << arg.find('/', slash_pos + 1));
   }
   std::string build_target = slash_pos == std::string::npos
                                  ? default_build_target
@@ -322,7 +322,7 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
   std::string branch_or_id =
       slash_pos == std::string::npos ? arg : arg.substr(0, slash_pos);
   std::string branch_latest_build_id =
-      build_api->LatestBuildId(branch_or_id, build_target);
+      build_api.LatestBuildId(branch_or_id, build_target);
   std::string build_id = branch_or_id;
   if (branch_latest_build_id != "") {
     LOG(INFO) << "The latest good build on branch \"" << branch_or_id
@@ -331,20 +331,19 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
     build_id = branch_latest_build_id;
   }
   DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
-  std::string status = build_api->BuildStatus(proposed_build);
-  if (status == "") {
-    LOG(FATAL) << proposed_build << " is not a valid branch or build id.";
-  }
+  std::string status = build_api.BuildStatus(proposed_build);
+  CF_EXPECT(status != "",
+            proposed_build << " is not a valid branch or build id.");
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
   while (retry_period != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
     LOG(INFO) << "Status is \"" << status << "\". Waiting for "
               << retry_period.count() << " seconds.";
     std::this_thread::sleep_for(retry_period);
-    status = build_api->BuildStatus(proposed_build);
+    status = build_api.BuildStatus(proposed_build);
   }
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
-  proposed_build.product = build_api->ProductName(proposed_build);
+  proposed_build.product = build_api.ProductName(proposed_build);
   return proposed_build;
 }
 
