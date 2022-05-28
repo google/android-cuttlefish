@@ -201,20 +201,22 @@ function btUpdateDeviceList(devices) {
   return -1;
 }
 
-function createControlPanelButton(
-    command, title, icon_name, listener,
-    parent_id = 'control-panel-default-buttons') {
-  let button = document.createElement('button');
-  document.getElementById(parent_id).appendChild(button);
-  button.title = title;
-  button.dataset.command = command;
-  button.disabled = true;
+function addMouseListeners(button, listener) {
   // Capture mousedown/up/out commands instead of click to enable
   // hold detection. mouseout is used to catch if the user moves the
   // mouse outside the button while holding down.
   button.addEventListener('mousedown', listener);
   button.addEventListener('mouseup', listener);
   button.addEventListener('mouseout', listener);
+}
+
+function createControlPanelButton(
+    title, icon_name, listener, parent_id = 'control-panel-default-buttons') {
+  let button = document.createElement('button');
+  document.getElementById(parent_id).appendChild(button);
+  button.title = title;
+  button.disabled = true;
+  addMouseListeners(button, listener);
   // Set the button image using Material Design icons.
   // See http://google.github.io/material-design-icons
   // and https://material.io/resources/icons
