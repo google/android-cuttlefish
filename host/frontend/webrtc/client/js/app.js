@@ -98,7 +98,6 @@ class DeviceControlApp {
   #deviceConnection = {};
   #currentRotation = 0;
   #displayDescriptions = [];
-  #buttons = {};
   #recording = {};
   #phys = {};
   #deviceCount = 0;
@@ -138,34 +137,33 @@ class DeviceControlApp {
   #showDeviceUI() {
     window.onresize = evt => this.#resizeDeviceDisplays();
     // Set up control panel buttons
-    this.#buttons = {};
-    this.#buttons['power'] = createControlPanelButton(
-        'power', 'Power', 'power_settings_new',
-        evt => this.#onControlPanelButton(evt));
-    this.#buttons['home'] = createControlPanelButton(
-        'home', 'Home', 'home', evt => this.#onControlPanelButton(evt));
-    this.#buttons['menu'] = createControlPanelButton(
-        'menu', 'Menu', 'menu', evt => this.#onControlPanelButton(evt));
-    this.#buttons['rotate'] = createControlPanelButton(
-        'rotate', 'Rotate', 'screen_rotation',
-        evt => this.#onRotateButton(evt));
-    this.#buttons['rotate'].adb = true;
-    this.#buttons['volumedown'] = createControlPanelButton(
-        'volumedown', 'Volume Down', 'volume_down',
-        evt => this.#onControlPanelButton(evt));
-    this.#buttons['volumeup'] = createControlPanelButton(
-        'volumeup', 'Volume Up', 'volume_up',
-        evt => this.#onControlPanelButton(evt));
+    addMouseListeners(
+        document.querySelector('#power_btn'),
+        evt => this.#onControlPanelButton(evt, 'power'));
+    addMouseListeners(
+        document.querySelector('#home_btn'),
+        evt => this.#onControlPanelButton(evt, 'home'));
+    addMouseListeners(
+        document.querySelector('#menu_btn'),
+        evt => this.#onControlPanelButton(evt, 'menu'));
+    addMouseListeners(
+        document.querySelector('#rotate_btn'),
+        evt => this.#onRotateButton(evt, 'rotate'));
+    addMouseListeners(
+        document.querySelector('#volume_up_btn'),
+        evt => this.#onControlPanelButton(evt, 'volumeup'));
+    addMouseListeners(
+        document.querySelector('#volume_down_btn'),
+        evt => this.#onControlPanelButton(evt, 'volumedown'));
 
     createModalButton(
         'device-details-button', 'device-details-modal',
         'device-details-close');
     createModalButton(
-        'bluetooth-modal-button', 'bluetooth-prompt',
-        'bluetooth-prompt-close');
+        'bluetooth-modal-button', 'bluetooth-prompt', 'bluetooth-prompt-close');
     createModalButton(
-        'bluetooth-prompt-wizard', 'bluetooth-wizard',
-        'bluetooth-wizard-close', 'bluetooth-prompt');
+        'bluetooth-prompt-wizard', 'bluetooth-wizard', 'bluetooth-wizard-close',
+        'bluetooth-prompt');
     createModalButton(
         'bluetooth-wizard-device', 'bluetooth-wizard-confirm',
         'bluetooth-wizard-confirm-close', 'bluetooth-wizard');
@@ -173,14 +171,14 @@ class DeviceControlApp {
         'bluetooth-wizard-another', 'bluetooth-wizard',
         'bluetooth-wizard-close', 'bluetooth-wizard-confirm');
     createModalButton(
-        'bluetooth-prompt-list', 'bluetooth-list',
-        'bluetooth-list-close', 'bluetooth-prompt');
+        'bluetooth-prompt-list', 'bluetooth-list', 'bluetooth-list-close',
+        'bluetooth-prompt');
     createModalButton(
         'bluetooth-prompt-console', 'bluetooth-console',
         'bluetooth-console-close', 'bluetooth-prompt');
     createModalButton(
-        'bluetooth-wizard-cancel', 'bluetooth-prompt',
-        'bluetooth-wizard-close', 'bluetooth-wizard');
+        'bluetooth-wizard-cancel', 'bluetooth-prompt', 'bluetooth-wizard-close',
+        'bluetooth-wizard');
 
     positionModal('device-details-button', 'bluetooth-modal');
     positionModal('device-details-button', 'bluetooth-prompt');
@@ -208,14 +206,14 @@ class DeviceControlApp {
                .custom_control_panel_buttons) {
         if (button.shell_command) {
           // This button's command is handled by sending an ADB shell command.
-          this.#buttons[button.command] = createControlPanelButton(
+          let element = createControlPanelButton(
               button.command, button.title, button.icon_name,
               e => this.#onCustomShellButton(button.shell_command, e),
               'control-panel-custom-buttons');
-          this.#buttons[button.command].adb = true;
+          element.dataset.adb = true;
         } else if (button.device_states) {
           // This button corresponds to variable hardware device state(s).
-          this.#buttons[button.command] = createControlPanelButton(
+          let element = createControlPanelButton(
               button.command, button.title, button.icon_name,
               this.#getCustomDeviceStateButtonCb(button.device_states),
               'control-panel-custom-buttons');
@@ -223,14 +221,14 @@ class DeviceControlApp {
             // hinge_angle is currently injected via an adb shell command that
             // triggers a guest binary.
             if ('hinge_angle_value' in device_state) {
-              this.#buttons[button.command].adb = true;
+              element.dataset.adb = true;
             }
           }
         } else {
           // This button's command is handled by custom action server.
-          this.#buttons[button.command] = createControlPanelButton(
-              button.command, button.title, button.icon_name,
-              evt => this.#onControlPanelButton(evt),
+          createControlPanelButton(
+              button.title, button.icon_name,
+              evt => this.#onControlPanelButton(evt, button.command),
               'control-panel-custom-buttons');
         }
       }
@@ -334,9 +332,12 @@ class DeviceControlApp {
     document.getElementById('status-message').style.visibility = 'visible';
     const deviceDisplays = document.getElementById('device-displays');
     deviceDisplays.style.display = 'none';
-    for (const [_, button] of Object.entries(this.#buttons)) {
-      button.disabled = true;
-    }
+    this.#getControlPanelButtons().forEach(b => b.disabled = true);
+  }
+
+  #getControlPanelButtons(f) {
+    return [...document.querySelectorAll(
+        '#control-panel-default-buttons button')];
   }
 
   #takePhoto() {
@@ -622,11 +623,9 @@ class DeviceControlApp {
     setTimeout(() => {
       document.getElementById('status-message').style.visibility = 'hidden';
     }, 5000);
-    for (const [_, button] of Object.entries(this.#buttons)) {
-      if (button.adb) {
-        button.disabled = false;
-      }
-    }
+    this.#getControlPanelButtons()
+        .filter(b => b.dataset.adb)
+        .forEach(b => b.disabled = false);
   }
 
   #showAdbError() {
@@ -634,11 +633,9 @@ class DeviceControlApp {
     document.getElementById('status-message').textContent =
         'adb connection failed.';
     document.getElementById('status-message').style.visibility = 'visible';
-    for (const [_, button] of Object.entries(this.#buttons)) {
-      if (button.adb) {
-        button.disabled = true;
-      }
-    }
+    this.#getControlPanelButtons()
+        .filter(b => b.dataset.adb)
+        .forEach(b => b.disabled = true);
   }
 
   #onDeviceDisplayLoaded() {
@@ -652,11 +649,9 @@ class DeviceControlApp {
     }
 
     // Enable the buttons after the screen is visible.
-    for (const [key, button] of Object.entries(this.#buttons)) {
-      if (!button.adb) {
-        button.disabled = false;
-      }
-    }
+    this.#getControlPanelButtons()
+        .filter(b => !b.dataset.adb)
+        .forEach(b => b.disabled = false);
     // Start the adb connection if it is not already started.
     this.#initializeAdb();
   }
@@ -672,13 +667,13 @@ class DeviceControlApp {
     }
   }
 
-  #onControlPanelButton(e) {
+  #onControlPanelButton(e, command) {
     if (e.type == 'mouseout' && e.which == 0) {
       // Ignore mouseout events if no mouse button is pressed.
       return;
     }
     this.#deviceConnection.sendControlMessage(JSON.stringify({
-      command: e.target.dataset.command,
+      command: command,
       button_state: e.type == 'mousedown' ? 'down' : 'up',
     }));
   }
