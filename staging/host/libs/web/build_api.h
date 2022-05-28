@@ -126,8 +126,8 @@ class BuildApi {
   std::string api_key_;
 };
 
-Build ArgumentToBuild(BuildApi* api, const std::string& arg,
-                      const std::string& default_build_target,
-                      const std::chrono::seconds& retry_period);
+Result<Build> ArgumentToBuild(BuildApi& api, const std::string& arg,
+                              const std::string& default_build_target,
+                              const std::chrono::seconds& retry_period);
 
 }  // namespace cuttlefish
