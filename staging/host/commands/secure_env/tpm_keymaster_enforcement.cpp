@@ -25,11 +25,11 @@
 
 namespace cuttlefish {
 
-using keymaster::km_id_t;
 using keymaster::HmacSharingParameters;
 using keymaster::HmacSharingParametersArray;
 using keymaster::KeymasterBlob;
 using keymaster::KeymasterEnforcement;
+using keymaster::km_id_t;
 using keymaster::VerifyAuthorizationRequest;
 using keymaster::VerifyAuthorizationResponse;
 namespace {
@@ -46,9 +46,9 @@ bool operator==(const HmacSharingParameters& a,
 }
 }  // namespace
 class CompareHmacSharingParams {
-public:
-  bool operator()(
-      const HmacSharingParameters& a, const HmacSharingParameters& b) const {
+ public:
+  bool operator()(const HmacSharingParameters& a,
+                  const HmacSharingParameters& b) const {
     if (a.seed.data_length != b.seed.data_length) {
       return a.seed.data_length < b.seed.data_length;
     }
@@ -86,11 +86,9 @@ TpmKeymasterEnforcement::TpmKeymasterEnforcement(
     TpmResourceManager& resource_manager, TpmGatekeeper& gatekeeper)
     : KeymasterEnforcement(64, 64),
       resource_manager_(resource_manager),
-      gatekeeper_(gatekeeper) {
-}
+      gatekeeper_(gatekeeper) {}
 
-TpmKeymasterEnforcement::~TpmKeymasterEnforcement() {
-}
+TpmKeymasterEnforcement::~TpmKeymasterEnforcement() {}
 
 bool TpmKeymasterEnforcement::activation_date_valid(
     uint64_t activation_date) const {
@@ -102,10 +100,10 @@ bool TpmKeymasterEnforcement::expiration_date_passed(
   return expiration_date < get_wall_clock_time_ms();
 }
 
-bool TpmKeymasterEnforcement::auth_token_timed_out(
-    const hw_auth_token_t& token, uint32_t timeout) const {
+bool TpmKeymasterEnforcement::auth_token_timed_out(const hw_auth_token_t& token,
+                                                   uint32_t timeout) const {
   // timeout comes in seconds, token.timestamp comes in milliseconds
-  uint64_t timeout_ms = 1000 * (uint64_t) timeout;
+  uint64_t timeout_ms = 1000 * (uint64_t)timeout;
   return (be64toh(token.timestamp) + timeout_ms) < get_current_time_ms();
 }
 
@@ -132,32 +130,24 @@ bool TpmKeymasterEnforcement::ValidateTokenSignature(
    * GateKeeper::MintAuthToken
    */
 
-  const uint8_t *auth_token_key = nullptr;
+  const uint8_t* auth_token_key = nullptr;
   uint32_t auth_token_key_len = 0;
   if (!gatekeeper_.GetAuthTokenKey(&auth_token_key, &auth_token_key_len)) {
     LOG(WARNING) << "Unable to get gatekeeper auth token";
     return false;
   }
 
+  constexpr uint32_t hashable_length =
+      sizeof(token.version) + sizeof(token.challenge) + sizeof(token.user_id) +
+      sizeof(token.authenticator_id) + sizeof(token.authenticator_type) +
+      sizeof(token.timestamp);
 
-  constexpr uint32_t hashable_length = sizeof(token.version) +
-                                       sizeof(token.challenge) +
-                                       sizeof(token.user_id) +
-                                       sizeof(token.authenticator_id) +
-                                       sizeof(token.authenticator_type) +
-                                       sizeof(token.timestamp);
-
-  static_assert(
-      offsetof(hw_auth_token_t, hmac) == hashable_length,
-      "hw_auth_token_t does not appear to be packed");
-
+  static_assert(offsetof(hw_auth_token_t, hmac) == hashable_length,
+                "hw_auth_token_t does not appear to be packed");
 
   gatekeeper_.ComputeSignature(
-      comparison_token.hmac,
-      sizeof(comparison_token.hmac),
-      auth_token_key,
-      auth_token_key_len,
-      reinterpret_cast<uint8_t*>(&comparison_token),
+      comparison_token.hmac, sizeof(comparison_token.hmac), auth_token_key,
+      auth_token_key_len, reinterpret_cast<uint8_t*>(&comparison_token),
       hashable_length);
 
   static_assert(sizeof(token.hmac) == sizeof(comparison_token.hmac));
@@ -170,9 +160,8 @@ keymaster_error_t TpmKeymasterEnforcement::GetHmacSharingParameters(
   if (!have_saved_params_) {
     saved_params_.seed = {};
     TpmRandomSource random_source{resource_manager_.Esys()};
-    auto rc =
-        random_source.GenerateRandom(
-            saved_params_.nonce, sizeof(saved_params_.nonce));
+    auto rc = random_source.GenerateRandom(saved_params_.nonce,
+                                           sizeof(saved_params_.nonce));
     if (rc != KM_ERROR_OK) {
       LOG(ERROR) << "Failed to generate HmacSharingParameters nonce";
       return rc;
@@ -185,18 +174,15 @@ keymaster_error_t TpmKeymasterEnforcement::GetHmacSharingParameters(
 }
 
 keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
-    const HmacSharingParametersArray& hmac_array,
-    KeymasterBlob* sharingCheck) {
+    const HmacSharingParametersArray& hmac_array, KeymasterBlob* sharingCheck) {
   std::set<HmacSharingParameters, CompareHmacSharingParams> sorted_hmac_inputs;
   bool found_mine = false;
   for (int i = 0; i < hmac_array.num_params; i++) {
     HmacSharingParameters sharing_params;
     sharing_params.seed =
         keymaster::KeymasterBlob(hmac_array.params_array[i].seed);
-    memcpy(
-        sharing_params.nonce,
-        hmac_array.params_array[i].nonce,
-        sizeof(sharing_params.nonce));
+    memcpy(sharing_params.nonce, hmac_array.params_array[i].nonce,
+           sizeof(sharing_params.nonce));
     found_mine = found_mine || (sharing_params == saved_params_);
     sorted_hmac_inputs.emplace(std::move(sharing_params));
   }
@@ -227,12 +213,9 @@ keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
 
   static const uint8_t signing_input[] = "Keymaster HMAC Verification";
 
-  auto hmac = TpmHmac(
-      resource_manager_,
-      signing_key->get(),
-      TpmAuth(ESYS_TR_PASSWORD),
-      signing_input,
-      sizeof(signing_input));
+  auto hmac =
+      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
+              signing_input, sizeof(signing_input));
 
   if (!hmac) {
     LOG(ERROR) << "Unable to complete signing check";
@@ -257,10 +240,10 @@ VerifyAuthorizationResponse TpmKeymasterEnforcement::VerifyAuthorization(
   response.token.timestamp = get_current_time_ms();
   response.token.security_level = SecurityLevel();
 
-  VerificationData verify_data {
-    .challenge = response.token.challenge,
-    .timestamp = response.token.timestamp,
-    .security_level = response.token.security_level,
+  VerificationData verify_data{
+      .challenge = response.token.challenge,
+      .timestamp = response.token.timestamp,
+      .security_level = response.token.security_level,
   };
 
   auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
@@ -269,12 +252,9 @@ VerifyAuthorizationResponse TpmKeymasterEnforcement::VerifyAuthorization(
     LOG(ERROR) << "Could not make signing key for verifying authorization";
     return response;
   }
-  auto hmac = TpmHmac(
-      resource_manager_,
-      signing_key->get(),
-      TpmAuth(ESYS_TR_PASSWORD),
-      reinterpret_cast<uint8_t*>(&verify_data),
-      sizeof(verify_data));
+  auto hmac =
+      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
+              reinterpret_cast<uint8_t*>(&verify_data), sizeof(verify_data));
 
   if (!hmac) {
     LOG(ERROR) << "Could not calculate verification hmac";
@@ -317,8 +297,8 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
   return KM_ERROR_OK;
 }
 
-bool TpmKeymasterEnforcement::CreateKeyId(
-    const keymaster_key_blob_t& key_blob, km_id_t* keyid) const {
+bool TpmKeymasterEnforcement::CreateKeyId(const keymaster_key_blob_t& key_blob,
+                                          km_id_t* keyid) const {
   auto signing_key =
       PrimaryKeyBuilder::CreateSigningKey(resource_manager_, "key_id");
   if (!signing_key) {
