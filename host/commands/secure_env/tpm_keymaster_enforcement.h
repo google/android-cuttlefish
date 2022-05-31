@@ -28,22 +28,22 @@ namespace cuttlefish {
  * system/keymaster/include/keymaster/keymaster_enforcement.h
  */
 class TpmKeymasterEnforcement : public keymaster::KeymasterEnforcement {
-public:
-  TpmKeymasterEnforcement(
-      TpmResourceManager& resource_manager, TpmGatekeeper& gatekeeper);
+ public:
+  TpmKeymasterEnforcement(TpmResourceManager& resource_manager,
+                          TpmGatekeeper& gatekeeper);
   ~TpmKeymasterEnforcement();
 
   bool activation_date_valid(uint64_t activation_date) const override;
   bool expiration_date_passed(uint64_t expiration_date) const override;
-  bool auth_token_timed_out(
-      const hw_auth_token_t& token, uint32_t timeout) const override;
+  bool auth_token_timed_out(const hw_auth_token_t& token,
+                            uint32_t timeout) const override;
   uint64_t get_current_time_ms() const override;
 
   keymaster_security_level_t SecurityLevel() const override;
   bool ValidateTokenSignature(const hw_auth_token_t& token) const override;
 
   keymaster_error_t GetHmacSharingParameters(
-        keymaster::HmacSharingParameters* params) override;
+      keymaster::HmacSharingParameters* params) override;
   keymaster_error_t ComputeSharedHmac(
       const keymaster::HmacSharingParametersArray& params_array,
       keymaster::KeymasterBlob* sharingCheck) override;
@@ -54,11 +54,10 @@ public:
   keymaster_error_t GenerateTimestampToken(
       keymaster::TimestampToken* token) override;
 
-  bool CreateKeyId(
-      const keymaster_key_blob_t& key_blob,
-      keymaster::km_id_t* keyid) const override;
+  bool CreateKeyId(const keymaster_key_blob_t& key_blob,
+                   keymaster::km_id_t* keyid) const override;
 
-private:
+ private:
   TpmResourceManager& resource_manager_;
   TpmGatekeeper& gatekeeper_;
   bool have_saved_params_ = false;
