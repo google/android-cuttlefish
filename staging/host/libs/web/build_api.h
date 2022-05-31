@@ -90,7 +90,7 @@ class BuildApi {
 
   Result<std::string> BuildStatus(const DeviceBuild&);
 
-  std::string ProductName(const DeviceBuild&);
+  Result<std::string> ProductName(const DeviceBuild&);
 
   std::vector<Artifact> Artifacts(const DeviceBuild&);
 
