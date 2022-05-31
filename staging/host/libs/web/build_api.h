@@ -85,8 +85,8 @@ class BuildApi {
   BuildApi(CurlWrapper&, CredentialSource*, std::string api_key);
   ~BuildApi() = default;
 
-  std::string LatestBuildId(const std::string& branch,
-                            const std::string& target);
+  Result<std::string> LatestBuildId(const std::string& branch,
+                                    const std::string& target);
 
   Result<std::string> BuildStatus(const DeviceBuild&);
 
