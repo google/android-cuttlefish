@@ -95,8 +95,8 @@ std::vector<std::string> BuildApi::Headers() {
   return headers;
 }
 
-std::string BuildApi::LatestBuildId(const std::string& branch,
-                                    const std::string& target) {
+Result<std::string> BuildApi::LatestBuildId(const std::string& branch,
+                                            const std::string& target) {
   std::string url =
       BUILD_API + "/builds?branch=" + curl.UrlEscape(branch) +
       "&buildAttemptStatus=complete" +
@@ -107,19 +107,20 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
   }
   auto curl_response = curl.DownloadToJson(url, Headers());
   const auto& json = curl_response.data;
-  if (!curl_response.HttpSuccess()) {
-    LOG(FATAL) << "Error fetching the latest build of \"" << target
-               << "\" on \"" << branch << "\". The server response was \""
-               << json << "\", and code was " << curl_response.http_code;
-  }
-  CHECK(!json.isMember("error"))
-      << "Response had \"error\" but had http success status. Received \""
-      << json << "\"";
+  CF_EXPECT(curl_response.HttpSuccess(), "Error fetching the latest build of \""
+                                             << target << "\" on \"" << branch
+                                             << "\". The server response was \""
+                                             << json << "\", and code was "
+                                             << curl_response.http_code);
+  CF_EXPECT(!json.isMember("error"),
+            "Response had \"error\" but had http success status. Received \""
+                << json << "\"");
 
   if (!json.isMember("builds") || json["builds"].size() != 1) {
     LOG(WARNING) << "expected to receive 1 build for \"" << target << "\" on \""
                  << branch << "\", but received " << json["builds"].size()
                  << ". Full response was " << json;
+    // TODO(schuffelen): Return a failed Result here, and update ArgumentToBuild
     return "";
   }
   return json["builds"][0]["buildId"].asString();
@@ -321,7 +322,7 @@ Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
   std::string branch_or_id =
       slash_pos == std::string::npos ? arg : arg.substr(0, slash_pos);
   std::string branch_latest_build_id =
-      build_api.LatestBuildId(branch_or_id, build_target);
+      CF_EXPECT(build_api.LatestBuildId(branch_or_id, build_target));
   std::string build_id = branch_or_id;
   if (branch_latest_build_id != "") {
     LOG(INFO) << "The latest good build on branch \"" << branch_or_id
