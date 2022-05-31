@@ -20,10 +20,9 @@
 
 namespace cuttlefish {
 
-KeymasterResponder::KeymasterResponder(
-    cuttlefish::KeymasterChannel& channel, keymaster::AndroidKeymaster& keymaster)
-    : channel_(channel), keymaster_(keymaster) {
-}
+KeymasterResponder::KeymasterResponder(cuttlefish::KeymasterChannel& channel,
+                                       keymaster::AndroidKeymaster& keymaster)
+    : channel_(channel), keymaster_(keymaster) {}
 
 bool KeymasterResponder::ProcessMessage() {
   auto request = channel_.ReceiveMessage();
@@ -33,19 +32,19 @@ bool KeymasterResponder::ProcessMessage() {
   }
   const uint8_t* buffer = request->payload;
   const uint8_t* end = request->payload + request->payload_size;
-  switch(request->cmd) {
+  switch (request->cmd) {
     using namespace keymaster;
-#define HANDLE_MESSAGE(ENUM_NAME, METHOD_NAME) \
-    case ENUM_NAME: {\
-      METHOD_NAME##Request request(keymaster_.message_version()); \
-      if (!request.Deserialize(&buffer, end)) { \
-        LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
-        return false; \
-      } \
-      METHOD_NAME##Response response(keymaster_.message_version()); \
-      keymaster_.METHOD_NAME(request, &response); \
-      return channel_.SendResponse(ENUM_NAME, response); \
-    }
+#define HANDLE_MESSAGE(ENUM_NAME, METHOD_NAME)                       \
+  case ENUM_NAME: {                                                  \
+    METHOD_NAME##Request request(keymaster_.message_version());      \
+    if (!request.Deserialize(&buffer, end)) {                        \
+      LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
+      return false;                                                  \
+    }                                                                \
+    METHOD_NAME##Response response(keymaster_.message_version());    \
+    keymaster_.METHOD_NAME(request, &response);                      \
+    return channel_.SendResponse(ENUM_NAME, response);               \
+  }
     HANDLE_MESSAGE(GENERATE_KEY, GenerateKey)
     HANDLE_MESSAGE(BEGIN_OPERATION, BeginOperation)
     HANDLE_MESSAGE(UPDATE_OPERATION, UpdateOperation)
@@ -71,16 +70,16 @@ bool KeymasterResponder::ProcessMessage() {
     HANDLE_MESSAGE(GENERATE_CSR, GenerateCsr)
     HANDLE_MESSAGE(GENERATE_TIMESTAMP_TOKEN, GenerateTimestampToken)
 #undef HANDLE_MESSAGE
-#define HANDLE_MESSAGE_W_RETURN(ENUM_NAME, METHOD_NAME) \
-    case ENUM_NAME: {\
-    METHOD_NAME##Request request(keymaster_.message_version());     \
-      if (!request.Deserialize(&buffer, end)) { \
-        LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
-        return false; \
-      } \
-      auto response = keymaster_.METHOD_NAME(request); \
-      return channel_.SendResponse(ENUM_NAME, response); \
-    }
+#define HANDLE_MESSAGE_W_RETURN(ENUM_NAME, METHOD_NAME)              \
+  case ENUM_NAME: {                                                  \
+    METHOD_NAME##Request request(keymaster_.message_version());      \
+    if (!request.Deserialize(&buffer, end)) {                        \
+      LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
+      return false;                                                  \
+    }                                                                \
+    auto response = keymaster_.METHOD_NAME(request);                 \
+    return channel_.SendResponse(ENUM_NAME, response);               \
+  }
     HANDLE_MESSAGE_W_RETURN(COMPUTE_SHARED_HMAC, ComputeSharedHmac)
     HANDLE_MESSAGE_W_RETURN(VERIFY_AUTHORIZATION, VerifyAuthorization)
     HANDLE_MESSAGE_W_RETURN(DEVICE_LOCKED, DeviceLocked)
@@ -92,11 +91,12 @@ bool KeymasterResponder::ProcessMessage() {
                             ConfigureVerifiedBootInfo)
 #undef HANDLE_MESSAGE_W_RETURN
 #define HANDLE_MESSAGE_W_RETURN_NO_ARG(ENUM_NAME, METHOD_NAME) \
-    case ENUM_NAME: {\
-      auto response = keymaster_.METHOD_NAME(); \
-      return channel_.SendResponse(ENUM_NAME, response); \
-    }
-    HANDLE_MESSAGE_W_RETURN_NO_ARG(GET_HMAC_SHARING_PARAMETERS, GetHmacSharingParameters)
+  case ENUM_NAME: {                                            \
+    auto response = keymaster_.METHOD_NAME();                  \
+    return channel_.SendResponse(ENUM_NAME, response);         \
+  }
+    HANDLE_MESSAGE_W_RETURN_NO_ARG(GET_HMAC_SHARING_PARAMETERS,
+                                   GetHmacSharingParameters)
     HANDLE_MESSAGE_W_RETURN_NO_ARG(EARLY_BOOT_ENDED, EarlyBootEnded)
 #undef HANDLE_MESSAGE_W_RETURN_NO_ARG
     case ADD_RNG_ENTROPY: {
@@ -105,7 +105,8 @@ bool KeymasterResponder::ProcessMessage() {
         LOG(ERROR) << "Failed to deserialize AddEntropyRequest";
         return false;
       }
-      AddEntropyResponse response(keymaster_.message_version());;
+      AddEntropyResponse response(keymaster_.message_version());
+      ;
       keymaster_.AddRngEntropy(request, &response);
       return channel_.SendResponse(ADD_RNG_ENTROPY, response);
     }

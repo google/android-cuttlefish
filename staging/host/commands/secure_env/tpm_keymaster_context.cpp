@@ -84,10 +84,10 @@ TpmKeymasterContext::TpmKeymasterContext(
       attestation_context_(new TpmAttestationRecordContext),
       remote_provisioning_context_(
           new TpmRemoteProvisioningContext(resource_manager_)) {
-  key_factories_.emplace(
-      KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(*key_blob_maker_, *this));
-  key_factories_.emplace(
-      KM_ALGORITHM_EC, new keymaster::EcKeyFactory(*key_blob_maker_, *this));
+  key_factories_.emplace(KM_ALGORITHM_RSA,
+                         new keymaster::RsaKeyFactory(*key_blob_maker_, *this));
+  key_factories_.emplace(KM_ALGORITHM_EC,
+                         new keymaster::EcKeyFactory(*key_blob_maker_, *this));
   key_factories_.emplace(
       KM_ALGORITHM_AES,
       new keymaster::AesKeyFactory(*key_blob_maker_, *random_source_));
@@ -112,8 +112,8 @@ keymaster_error_t TpmKeymasterContext::SetSystemVersion(
   return KM_ERROR_OK;
 }
 
-void TpmKeymasterContext::GetSystemVersion(
-    uint32_t* os_version, uint32_t* os_patchlevel) const {
+void TpmKeymasterContext::GetSystemVersion(uint32_t* os_version,
+                                           uint32_t* os_patchlevel) const {
   *os_version = os_version_;
   *os_patchlevel = os_patchlevel_;
 }
@@ -133,7 +133,7 @@ OperationFactory* TpmKeymasterContext::GetOperationFactory(
   auto key_factory = GetKeyFactory(algorithm);
   if (key_factory == nullptr) {
     LOG(ERROR) << "Tried to get operation factory for " << purpose
-              << " for invalid algorithm " << algorithm;
+               << " for invalid algorithm " << algorithm;
     return nullptr;
   }
   auto operation_factory = key_factory->GetOperationFactory(purpose);
@@ -145,18 +145,16 @@ OperationFactory* TpmKeymasterContext::GetOperationFactory(
 }
 
 const keymaster_algorithm_t* TpmKeymasterContext::GetSupportedAlgorithms(
-      size_t* algorithms_count) const {
+    size_t* algorithms_count) const {
   *algorithms_count = supported_algorithms_.size();
   return supported_algorithms_.data();
 }
 
-// Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=44;drc=master
+// Based on
+// https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=44;drc=master
 
-static bool UpgradeIntegerTag(
-    keymaster_tag_t tag,
-    uint32_t value,
-    AuthorizationSet* set,
-    bool* set_changed) {
+static bool UpgradeIntegerTag(keymaster_tag_t tag, uint32_t value,
+                              AuthorizationSet* set, bool* set_changed) {
   int index = set->find(tag);
   if (index == -1) {
     keymaster_key_param_t param;
@@ -178,7 +176,8 @@ static bool UpgradeIntegerTag(
   return true;
 }
 
-// Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=310;drc=master
+// Based on
+// https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=310;drc=master
 
 keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
     const KeymasterKeyBlob& blob_to_upgrade,
@@ -232,8 +231,7 @@ keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
 }
 
 keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
-    const KeymasterKeyBlob& blob,
-    const AuthorizationSet& additional_params,
+    const KeymasterKeyBlob& blob, const AuthorizationSet& additional_params,
     keymaster::UniquePtr<keymaster::Key>* key) const {
   keymaster::AuthorizationSet hw_enforced;
   keymaster::AuthorizationSet sw_enforced;
@@ -260,21 +258,16 @@ keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
     LOG(ERROR) << "Unable to find key factory for " << algorithm;
     return KM_ERROR_UNSUPPORTED_ALGORITHM;
   }
-  rc =
-      factory->LoadKey(
-          std::move(key_material),
-          additional_params,
-          std::move(hw_enforced),
-          std::move(sw_enforced),
-          key);
+  rc = factory->LoadKey(std::move(key_material), additional_params,
+                        std::move(hw_enforced), std::move(sw_enforced), key);
   if (rc != KM_ERROR_OK) {
     LOG(ERROR) << "Unable to load unwrapped key: " << rc;
   }
   return rc;
 }
 
-keymaster_error_t TpmKeymasterContext::AddRngEntropy(
-    const uint8_t* buffer, size_t size) const {
+keymaster_error_t TpmKeymasterContext::AddRngEntropy(const uint8_t* buffer,
+                                                     size_t size) const {
   return random_source_->AddRngEntropy(buffer, size);
 }
 
@@ -282,7 +275,8 @@ keymaster::KeymasterEnforcement* TpmKeymasterContext::enforcement_policy() {
   return &enforcement_;
 }
 
-// Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/contexts/pure_soft_keymaster_context.cpp;l=261;drc=8367d5351c4d417a11f49b12394b63a413faa02d
+// Based on
+// https://cs.android.com/android/platform/superproject/+/master:system/keymaster/contexts/pure_soft_keymaster_context.cpp;l=261;drc=8367d5351c4d417a11f49b12394b63a413faa02d
 
 keymaster::CertificateChain TpmKeymasterContext::GenerateAttestation(
     const keymaster::Key& key, const keymaster::AuthorizationSet& attest_params,
@@ -339,22 +333,25 @@ keymaster::CertificateChain TpmKeymasterContext::GenerateSelfSignedCertificate(
     const keymaster::Key& key, const keymaster::AuthorizationSet& cert_params,
     bool fake_signature, keymaster_error_t* error) const {
   keymaster_algorithm_t key_algorithm;
-  if (!key.authorizations().GetTagValue(keymaster::TAG_ALGORITHM, &key_algorithm)) {
-      *error = KM_ERROR_UNKNOWN_ERROR;
-      return {};
+  if (!key.authorizations().GetTagValue(keymaster::TAG_ALGORITHM,
+                                        &key_algorithm)) {
+    *error = KM_ERROR_UNKNOWN_ERROR;
+    return {};
   }
 
   if ((key_algorithm != KM_ALGORITHM_RSA && key_algorithm != KM_ALGORITHM_EC)) {
-      *error = KM_ERROR_INCOMPATIBLE_ALGORITHM;
-      return {};
+    *error = KM_ERROR_INCOMPATIBLE_ALGORITHM;
+    return {};
   }
 
-  // We have established that the given key has the correct algorithm, and because this is the
-  // SoftKeymasterContext we can assume that the Key is an AsymmetricKey. So we can downcast.
+  // We have established that the given key has the correct algorithm, and
+  // because this is the SoftKeymasterContext we can assume that the Key is an
+  // AsymmetricKey. So we can downcast.
   const keymaster::AsymmetricKey& asymmetric_key =
       static_cast<const keymaster::AsymmetricKey&>(key);
 
-  return generate_self_signed_cert(asymmetric_key, cert_params, fake_signature, error);
+  return generate_self_signed_cert(asymmetric_key, cert_params, fake_signature,
+                                   error);
 }
 
 keymaster_error_t TpmKeymasterContext::UnwrapKey(
