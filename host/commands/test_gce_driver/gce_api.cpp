@@ -286,11 +286,11 @@ GceApi::GceApi(CurlWrapper& curl, CredentialSource& credentials,
                const std::string& project)
     : curl_(curl), credentials_(credentials), project_(project) {}
 
-std::vector<std::string> GceApi::Headers() {
-  return {
-      "Authorization:Bearer " + credentials_.Credential(),
+Result<std::vector<std::string>> GceApi::Headers() {
+  return {{
+      "Authorization:Bearer " + CF_EXPECT(credentials_.Credential()),
       "Content-Type: application/json",
-  };
+  }};
 }
 
 class GceApi::Operation::Impl {
@@ -315,8 +315,8 @@ class GceApi::Operation::Impl {
     running_ = true;
 
     while (running_) {
-      auto response =
-          gce_api_.curl_.PostToJson(*url, std::string{""}, gce_api_.Headers());
+      auto response = gce_api_.curl_.PostToJson(*url, std::string{""},
+                                                CF_EXPECT(gce_api_.Headers()));
       const auto& json = response.data;
       Json::Value errors;
       if (auto j_error = OptObjMember(json, "error"); j_error) {
@@ -410,7 +410,7 @@ std::future<Result<GceInstanceInfo>> GceApi::Get(const std::string& zone,
   url << "/zones/" << curl_.UrlEscape(SanitizeZone(zone));
   url << "/instances/" << curl_.UrlEscape(name);
   auto task = [this, url = url.str()]() -> Result<GceInstanceInfo> {
-    auto response = curl_.DownloadToJson(url, Headers());
+    auto response = curl_.DownloadToJson(url, CF_EXPECT(Headers()));
     if (!response.HttpSuccess()) {
       return Error() << "Failed to get instance info, received "
                      << response.data << " with code " << response.http_code;
@@ -439,7 +439,7 @@ GceApi::Operation GceApi::Insert(const Json::Value& request) {
   url << "/instances";
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
   auto task = [this, requestNoZone, url = url.str()]() -> Result<Json::Value> {
-    auto response = curl_.PostToJson(url, requestNoZone, Headers());
+    auto response = curl_.PostToJson(url, requestNoZone, CF_EXPECT(Headers()));
     if (!response.HttpSuccess()) {
       return Error() << "Failed to create instance: " << response.data
                      << ". Sent request " << requestNoZone;
@@ -464,7 +464,7 @@ GceApi::Operation GceApi::Reset(const std::string& zone,
   url << "/reset";
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
   auto task = [this, url = url.str()]() -> Result<Json::Value> {
-    auto response = curl_.PostToJson(url, Json::Value(), Headers());
+    auto response = curl_.PostToJson(url, Json::Value(), CF_EXPECT(Headers()));
     if (!response.HttpSuccess()) {
       return Error() << "Failed to create instance: " << response.data;
     }
@@ -503,7 +503,7 @@ GceApi::Operation GceApi::Delete(const std::string& zone,
   url << "/instances/" << curl_.UrlEscape(name);
   url << "?requestId=" << RandomUuid();  // Avoid duplication on request retry
   auto task = [this, url = url.str()]() -> Result<Json::Value> {
-    auto response = curl_.DeleteToJson(url, Headers());
+    auto response = curl_.DeleteToJson(url, CF_EXPECT(Headers()));
     if (!response.HttpSuccess()) {
       return Error() << "Failed to delete instance: " << response.data;
     }

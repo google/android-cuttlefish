@@ -137,7 +137,7 @@ class GceApi {
   Operation Delete(const GceInstanceInfo&);
 
  private:
-  std::vector<std::string> Headers();
+  Result<std::vector<std::string>> Headers();
 
   CurlWrapper& curl_;
   CredentialSource& credentials_;
