@@ -36,27 +36,3 @@
 #wifi_ipv6_prefix_length=
 #ethernet_ipv6_prefix=
 #ethernet_ipv6_prefix_length=
-
-# The port on which the orchestrator server should listen on for plain HTTP.
-# Defaults to 1080.
-# orchestrator_http_port=
-#
-# The port on which the orchestrator server should listen on for HTTPS.
-# Defaults to 1443.
-# orchestrator_https_port=
-#
-# The directory where the TLS certificate needed to establish the HTTPS
-# communication lives.
-# Defaults to "/etc/cuttlefish-common/host-orchestrator/cert".
-# orchestrator_tls_cert_dir=
-#
-# Indicate whether the instance manager operations are enabled or not.
-# Defaults to false.
-# orchestrator_instance_manager_enabled=
-# 
-# Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
-# orchestrator_android_build_url=
-#
-# Directory used to store the CVD artifacts.
-# Defaults to "/var/lib/cuttlefish-common"
-# orchestrator_cvd_artifacts_dir=

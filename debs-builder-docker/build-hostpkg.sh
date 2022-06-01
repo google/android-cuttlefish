@@ -31,6 +31,7 @@ function build() {
     popd > /dev/null 2>&1
 }
 #sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-base_*.deb
+#sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-common_*.deb
 
 build
 [[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/../*.deb ${outdir}/
