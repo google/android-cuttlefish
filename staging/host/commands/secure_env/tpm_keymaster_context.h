@@ -92,6 +92,10 @@ class TpmKeymasterContext : public keymaster::KeymasterContext {
 
   keymaster::KeymasterEnforcement* enforcement_policy() override;
 
+  keymaster::AttestationContext* attestation_context() override {
+    return attestation_context_.get();
+  }
+
   keymaster::CertificateChain GenerateAttestation(
       const keymaster::Key& key,
       const keymaster::AuthorizationSet& attest_params,

@@ -54,6 +54,9 @@ class TpmKeymasterEnforcement : public keymaster::KeymasterEnforcement {
   keymaster_error_t GenerateTimestampToken(
       keymaster::TimestampToken* token) override;
 
+  keymaster::KmErrorOr<std::array<uint8_t, 32>> ComputeHmac(
+      const std::vector<uint8_t>& data_to_mac) const override;
+
   bool CreateKeyId(const keymaster_key_blob_t& key_blob,
                    keymaster::km_id_t* keyid) const override;
 
