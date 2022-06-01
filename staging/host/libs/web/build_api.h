@@ -94,8 +94,9 @@ class BuildApi {
 
   Result<std::vector<Artifact>> Artifacts(const DeviceBuild&);
 
-  bool ArtifactToCallback(const DeviceBuild& build, const std::string& artifact,
-                          CurlWrapper::DataCallback callback);
+  Result<void> ArtifactToCallback(const DeviceBuild& build,
+                                  const std::string& artifact,
+                                  CurlWrapper::DataCallback callback);
 
   bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
                       const std::string& path);
