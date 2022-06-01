@@ -218,9 +218,9 @@ Result<std::vector<Artifact>> BuildApi::Artifacts(const DirectoryBuild& build) {
   return artifacts;
 }
 
-bool BuildApi::ArtifactToCallback(const DeviceBuild& build,
-                                  const std::string& artifact,
-                                  CurlWrapper::DataCallback callback) {
+Result<void> BuildApi::ArtifactToCallback(const DeviceBuild& build,
+                                          const std::string& artifact,
+                                          CurlWrapper::DataCallback callback) {
   std::string download_url_endpoint =
       BUILD_API + "/builds/" + curl.UrlEscape(build.id) + "/" +
       curl.UrlEscape(build.target) + "/attempts/latest/artifacts/" +
@@ -230,23 +230,19 @@ bool BuildApi::ArtifactToCallback(const DeviceBuild& build,
   }
   auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
   const auto& json = curl_response.data;
-  if (!(curl_response.HttpSuccess() || curl_response.HttpRedirect())) {
-    LOG(ERROR) << "Error fetching the url of \"" << artifact << "\" for \""
-               << build << "\". The server response was \"" << json
-               << "\", and code was " << curl_response.http_code;
-    return false;
-  }
-  if (json.isMember("error")) {
-    LOG(ERROR) << "Response had \"error\" but had http success status. "
-               << "Received \"" << json << "\"";
-    return false;
-  }
-  if (!json.isMember("signedUrl")) {
-    LOG(ERROR) << "URL endpoint did not have json path: " << json;
-    return false;
-  }
+  CF_EXPECT(curl_response.HttpSuccess() || curl_response.HttpRedirect(),
+            "Error fetching the url of \"" << artifact << "\" for \"" << build
+                                           << "\". The server response was \""
+                                           << json << "\", and code was "
+                                           << curl_response.http_code);
+  CF_EXPECT(!json.isMember("error"),
+            "Response had \"error\" but had http success status. "
+                << "Received \"" << json << "\"");
+  CF_EXPECT(json.isMember("signedUrl"),
+            "URL endpoint did not have json path: " << json);
   std::string url = json["signedUrl"].asString();
-  return curl.DownloadToCallback(callback, url).HttpSuccess();
+  CF_EXPECT(curl.DownloadToCallback(callback, url).HttpSuccess());
+  return {};
 }
 
 bool BuildApi::ArtifactToFile(const DeviceBuild& build,
