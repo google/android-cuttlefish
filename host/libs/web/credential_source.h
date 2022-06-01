@@ -29,7 +29,7 @@ namespace cuttlefish {
 class CredentialSource {
 public:
   virtual ~CredentialSource() = default;
-  virtual std::string Credential() = 0;
+  virtual Result<std::string> Credential() = 0;
 };
 
 class GceMetadataCredentialSource : public CredentialSource {
@@ -37,14 +37,15 @@ class GceMetadataCredentialSource : public CredentialSource {
   std::string latest_credential;
   std::chrono::steady_clock::time_point expiration;
 
-  void RefreshCredential();
-public:
- GceMetadataCredentialSource(CurlWrapper&);
- GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
+  Result<void> RefreshCredential();
 
- virtual std::string Credential();
+ public:
+  GceMetadataCredentialSource(CurlWrapper&);
+  GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
 
- static std::unique_ptr<CredentialSource> make(CurlWrapper&);
+  Result<std::string> Credential() override;
+
+  static std::unique_ptr<CredentialSource> make(CurlWrapper&);
 };
 
 class FixedCredentialSource : public CredentialSource {
@@ -52,7 +53,7 @@ class FixedCredentialSource : public CredentialSource {
 public:
   FixedCredentialSource(const std::string& credential);
 
-  virtual std::string Credential();
+  Result<std::string> Credential() override;
 
   static std::unique_ptr<CredentialSource> make(const std::string& credential);
 };
@@ -66,10 +67,10 @@ class RefreshCredentialSource : public CredentialSource {
                           const std::string& client_secret,
                           const std::string& refresh_token);
 
-  std::string Credential() override;
+  Result<std::string> Credential() override;
 
  private:
-  void UpdateLatestCredential();
+  Result<void> UpdateLatestCredential();
 
   CurlWrapper& curl_;
   std::string client_id_;
@@ -88,11 +89,11 @@ class ServiceAccountOauthCredentialSource : public CredentialSource {
   ServiceAccountOauthCredentialSource(ServiceAccountOauthCredentialSource&&) =
       default;
 
-  std::string Credential() override;
+  Result<std::string> Credential() override;
 
  private:
   ServiceAccountOauthCredentialSource(CurlWrapper& curl);
-  void RefreshCredential();
+  Result<void> RefreshCredential();
 
   CurlWrapper& curl_;
   std::string email_;
