@@ -125,7 +125,7 @@ class BuildApi {
   }
 
  private:
-  std::vector<std::string> Headers();
+  Result<std::vector<std::string>> Headers();
 
   CurlWrapper& curl;
   CredentialSource* credential_source;
