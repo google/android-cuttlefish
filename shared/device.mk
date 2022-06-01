@@ -645,8 +645,6 @@ endif
 # NeuralNetworks HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.neuralnetworks@1.3-service-sample-all \
-    android.hardware.neuralnetworks@1.3-service-sample-limited \
     android.hardware.neuralnetworks-service-sample-all \
     android.hardware.neuralnetworks-service-sample-limited \
     android.hardware.neuralnetworks-shim-service-sample
