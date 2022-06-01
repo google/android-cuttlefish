@@ -7,7 +7,7 @@ Build-Depends: config-package-dev,
                golang
 Standards-Version: 4.5.0
 
-Package: cuttlefish-common
+Package: cuttlefish-base
 Architecture: any
 Depends: adduser,
          binfmt-support [arm64],
@@ -41,7 +41,7 @@ Description: Cuttlefish Android Virtual Device companion package
 
 Package: cuttlefish-integration
 Architecture: any
-Depends: cuttlefish-common,
+Depends: cuttlefish-base,
          qemu-system-arm (>= 2.8.0),
          qemu-system-x86 (>= 2.8.0),
          ${shlibs:Depends},

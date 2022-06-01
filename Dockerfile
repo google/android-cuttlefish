@@ -53,8 +53,8 @@ RUN if test $(uname -m) == aarch64; then \
 COPY ./out/*.deb ./android-cuttlefish/out/
 
 RUN cd /root/android-cuttlefish/out \
-    && apt-get install --no-install-recommends -y -f ./cuttlefish-common_*.deb \
-    && rm -rvf ./cuttlefish-common_*.deb \
+    && apt-get install --no-install-recommends -y -f ./cuttlefish-base_*.deb \
+    && rm -rvf ./cuttlefish-base_*.deb \
     && cd /root
 
 # to share X with the local docker host
