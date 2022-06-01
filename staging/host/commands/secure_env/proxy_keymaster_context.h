@@ -97,6 +97,10 @@ class ProxyKeymasterContext : public keymaster::KeymasterContext {
     return wrapped_.enforcement_policy();
   }
 
+  keymaster::AttestationContext* attestation_context() override {
+    return wrapped_.attestation_context();
+  }
+
   keymaster::CertificateChain GenerateAttestation(
       const keymaster::Key& key,
       const keymaster::AuthorizationSet& attest_params,
