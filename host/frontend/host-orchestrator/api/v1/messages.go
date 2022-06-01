@@ -80,18 +80,14 @@ type BuildInfo struct {
 
 type Operation struct {
 	Name string `json:"name"`
-	// Service-specific metadata associated with the operation.  It typically
-	// contains progress information and common metadata such as create time.
-	Metadata interface{} `json:"metadata,omitempty"`
 	// If the value is `false`, it means the operation is still in progress.
 	// If `true`, the operation is completed, and either `error` or `response` is
 	// available.
 	Done bool `json:"done"`
 	// Result will contain either an error or a result object but never both.
-	Result *Result `json:"result,omitempty"`
+	Result *OperationResult `json:"result,omitempty"`
 }
 
-type Result struct {
-	Error        ErrorMsg    `json:"error,omitempty"`
-	ResultObject interface{} `json:"result,omitempty"`
+type OperationResult struct {
+	Error *ErrorMsg `json:"error,omitempty"`
 }

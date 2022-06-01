@@ -45,6 +45,7 @@ const (
 func startHttpServer() {
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", defaultHttpPort)
 	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", httpPort))
+
 	log.Fatal(http.ListenAndServe(
 		fmt.Sprint(":", httpPort),
 		// handler is nil, so DefaultServeMux is used.
@@ -83,10 +84,11 @@ func main() {
 	cvdArtifactsDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	fetchCVDDownloader := NewABFetchCVDDownloader(http.DefaultClient, abURL)
 	fetchCVDHandler := NewFetchCVDHandler(cvdArtifactsDir, fetchCVDDownloader)
-	im := NewInstanceManager(fetchCVDHandler)
+	om := NewMapOM()
+	im := NewInstanceManager(fetchCVDHandler, om)
 
 	setupDeviceEndpoint(pool, config, socketPath)
-	r := setupServerRoutes(pool, polledSet, config, imEnabled, im)
+	r := setupServerRoutes(pool, polledSet, config, imEnabled, im, om)
 	http.Handle("/", r)
 
 	starters := []func(){startHttpServer, startHttpsServer}
@@ -138,7 +140,8 @@ func setupServerRoutes(
 	polledSet *PolledSet,
 	config apiv1.InfraConfig,
 	imEnabled bool,
-	im *InstanceManager) *mux.Router {
+	im *InstanceManager,
+	om OperationManager) *mux.Router {
 	router := mux.NewRouter()
 	http.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
 		clientWs(w, r, pool, config)
@@ -166,6 +169,9 @@ func setupServerRoutes(
 		router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 			createDevices(w, r, im)
 		}).Methods("POST")
+		router.HandleFunc("/operations/{name}", func(w http.ResponseWriter, r *http.Request) {
+			getOperation(w, r, om)
+		}).Methods("GET")
 	}
 	fs := http.FileServer(http.Dir("static"))
 	router.PathPrefix("/").Handler(fs)
@@ -252,12 +258,22 @@ func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) 
 		replyJSONErr(w, NewBadRequestError("Malformed JSON in request", err))
 		return
 	}
-	op, err := im.CreateCVD(&msg)
+	op, err := im.CreateCVD(msg)
 	if err != nil {
 		replyJSONErr(w, err)
 		return
 	}
-	replyJSONOK(w, op)
+	replyJSONOK(w, BuildOperation(op))
+}
+
+func getOperation(w http.ResponseWriter, r *http.Request, om OperationManager) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	if op, err := om.Get(name); err != nil {
+		replyJSONErr(w, NewNotFoundError("operation not found", err))
+	} else {
+		replyJSONOK(w, BuildOperation(op))
+	}
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
@@ -486,4 +502,20 @@ func fromEnvOrDefaultBool(key string, def bool) bool {
 		panic(err)
 	}
 	return b
+}
+
+func BuildOperation(op Operation) apiv1.Operation {
+	result := apiv1.Operation{
+		Name: op.Name,
+		Done: op.Done,
+	}
+	if !op.Done {
+		return result
+	}
+	if op.IsError() {
+		result.Result = &apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{op.Result.Error.ErrorMsg},
+		}
+	}
+	return result
 }
