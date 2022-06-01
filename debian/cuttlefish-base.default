@@ -1,4 +1,4 @@
-# defaults for cuttlefish-common
+# defaults for cuttlefish-base
 
 # Maximum number of concurrent CVDs runnable on this machine.
 #num_cvd_accounts=10

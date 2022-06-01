@@ -31,8 +31,8 @@
 
 . /lib/lsb/init-functions
 
-if [ -f /etc/default/cuttlefish-common ]; then
-    . /etc/default/cuttlefish-common
+if [ -f /etc/default/cuttlefish-base ]; then
+    . /etc/default/cuttlefish-base
 fi
 orchestrator_http_port=${orchestrator_http_port:-1080}
 orchestrator_https_port=${orchestrator_https_port:-1443}
