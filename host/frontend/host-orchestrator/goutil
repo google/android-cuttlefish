@@ -13,5 +13,5 @@ if [[ "$1" == "test" ]]; then
   go test ./...
 else
  # The default action is to build
-  go build -v
+  go build -v -ldflags="-w"
 fi
