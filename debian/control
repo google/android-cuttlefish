@@ -29,7 +29,6 @@ Depends: adduser,
          libxext6,
          lsb-base,
          net-tools,
-         openssl,
          python3,
          qemu-user-static [arm64],
          ${misc:Depends},
@@ -38,6 +37,18 @@ Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.
+
+Package: cuttlefish-common
+Architecture: any
+Depends: cuttlefish-base,
+         adduser,
+         openssl,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Description: Cuttlefish Android Virtual Device companion package
+ Contains the host signaling server supporting multi-device flows
+ over WebRTC.
 
 Package: cuttlefish-integration
 Architecture: any
