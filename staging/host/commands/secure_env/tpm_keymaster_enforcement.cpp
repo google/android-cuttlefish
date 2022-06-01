@@ -297,6 +297,24 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
   return KM_ERROR_OK;
 }
 
+keymaster::KmErrorOr<std::array<uint8_t, 32>>
+TpmKeymasterEnforcement::ComputeHmac(
+    const std::vector<uint8_t>& data_to_mac) const {
+  std::array<uint8_t, 32> result;
+
+  const uint8_t* auth_token_key = nullptr;
+  uint32_t auth_token_key_len = 0;
+  if (!gatekeeper_.GetAuthTokenKey(&auth_token_key, &auth_token_key_len)) {
+    LOG(WARNING) << "Unable to get gatekeeper auth token";
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  gatekeeper_.ComputeSignature(result.data(), result.size(), auth_token_key,
+                               auth_token_key_len, data_to_mac.data(),
+                               data_to_mac.size());
+  return result;
+}
+
 bool TpmKeymasterEnforcement::CreateKeyId(const keymaster_key_blob_t& key_blob,
                                           km_id_t* keyid) const {
   auto signing_key =
