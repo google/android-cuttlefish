@@ -98,26 +98,30 @@ class BuildApi {
                                   const std::string& artifact,
                                   CurlWrapper::DataCallback callback);
 
-  bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
-                      const std::string& path);
+  Result<void> ArtifactToFile(const DeviceBuild& build,
+                              const std::string& artifact,
+                              const std::string& path);
 
   Result<std::vector<Artifact>> Artifacts(const DirectoryBuild&);
 
-  bool ArtifactToFile(const DirectoryBuild& build, const std::string& artifact,
-                      const std::string& path);
+  Result<void> ArtifactToFile(const DirectoryBuild& build,
+                              const std::string& artifact,
+                              const std::string& path);
 
   Result<std::vector<Artifact>> Artifacts(const Build& build) {
     auto res = std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
     return CF_EXPECT(std::move(res));
   }
 
-  bool ArtifactToFile(const Build& build, const std::string& artifact,
-                      const std::string& path) {
-    return std::visit(
+  Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
+                              const std::string& path) {
+    auto res = std::visit(
         [this, &artifact, &path](auto&& arg) {
           return ArtifactToFile(arg, artifact, path);
         },
         build);
+    CF_EXPECT(std::move(res));
+    return {};
   }
 
  private:
