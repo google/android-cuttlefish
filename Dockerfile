@@ -55,6 +55,8 @@ COPY ./out/*.deb ./android-cuttlefish/out/
 RUN cd /root/android-cuttlefish/out \
     && apt-get install --no-install-recommends -y -f ./cuttlefish-base_*.deb \
     && rm -rvf ./cuttlefish-base_*.deb \
+    && apt-get install --no-install-recommends -y -f ./cuttlefish-common_*.deb \
+    && rm -rvf ./cuttlefish-common_*.deb \
     && cd /root
 
 # to share X with the local docker host
