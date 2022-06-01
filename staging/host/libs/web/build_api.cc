@@ -86,11 +86,11 @@ BuildApi::BuildApi(CurlWrapper& curl, CredentialSource* credential_source,
       credential_source(credential_source),
       api_key_(std::move(api_key)) {}
 
-std::vector<std::string> BuildApi::Headers() {
+Result<std::vector<std::string>> BuildApi::Headers() {
   std::vector<std::string> headers;
   if (credential_source) {
     headers.push_back("Authorization: Bearer " +
-                      credential_source->Credential());
+                      CF_EXPECT(credential_source->Credential()));
   }
   return headers;
 }
@@ -105,7 +105,7 @@ Result<std::string> BuildApi::LatestBuildId(const std::string& branch,
   if (!api_key_.empty()) {
     url += "&key=" + curl.UrlEscape(api_key_);
   }
-  auto curl_response = curl.DownloadToJson(url, Headers());
+  auto curl_response = curl.DownloadToJson(url, CF_EXPECT(Headers()));
   const auto& json = curl_response.data;
   CF_EXPECT(curl_response.HttpSuccess(), "Error fetching the latest build of \""
                                              << target << "\" on \"" << branch
@@ -132,7 +132,7 @@ Result<std::string> BuildApi::BuildStatus(const DeviceBuild& build) {
   if (!api_key_.empty()) {
     url += "?key=" + curl.UrlEscape(api_key_);
   }
-  auto curl_response = curl.DownloadToJson(url, Headers());
+  auto curl_response = curl.DownloadToJson(url, CF_EXPECT(Headers()));
   const auto& json = curl_response.data;
   CF_EXPECT(curl_response.HttpSuccess(),
             "Error fetching the status of \""
@@ -151,7 +151,7 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   if (!api_key_.empty()) {
     url += "?key=" + curl.UrlEscape(api_key_);
   }
-  auto curl_response = curl.DownloadToJson(url, Headers());
+  auto curl_response = curl.DownloadToJson(url, CF_EXPECT(Headers()));
   const auto& json = curl_response.data;
   CF_EXPECT(curl_response.HttpSuccess(),
             "Error fetching the product name of \""
@@ -178,7 +178,7 @@ Result<std::vector<Artifact>> BuildApi::Artifacts(const DeviceBuild& build) {
     if (!api_key_.empty()) {
       url += "&key=" + curl.UrlEscape(api_key_);
     }
-    auto curl_response = curl.DownloadToJson(url, Headers());
+    auto curl_response = curl.DownloadToJson(url, CF_EXPECT(Headers()));
     const auto& json = curl_response.data;
     CF_EXPECT(curl_response.HttpSuccess(),
               "Error fetching the artifacts of \""
@@ -228,7 +228,8 @@ Result<void> BuildApi::ArtifactToCallback(const DeviceBuild& build,
   if (!api_key_.empty()) {
     download_url_endpoint += "?key=" + curl.UrlEscape(api_key_);
   }
-  auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
+  auto curl_response =
+      curl.DownloadToJson(download_url_endpoint, CF_EXPECT(Headers()));
   const auto& json = curl_response.data;
   CF_EXPECT(curl_response.HttpSuccess() || curl_response.HttpRedirect(),
             "Error fetching the url of \"" << artifact << "\" for \"" << build
@@ -255,7 +256,8 @@ Result<void> BuildApi::ArtifactToFile(const DeviceBuild& build,
   if (!api_key_.empty()) {
     download_url_endpoint += "?key=" + curl.UrlEscape(api_key_);
   }
-  auto curl_response = curl.DownloadToJson(download_url_endpoint, Headers());
+  auto curl_response =
+      curl.DownloadToJson(download_url_endpoint, CF_EXPECT(Headers()));
   const auto& json = curl_response.data;
   CF_EXPECT(curl_response.HttpSuccess() || curl_response.HttpRedirect(),
             "Error fetching the url of \"" << artifact << "\" for \"" << build
