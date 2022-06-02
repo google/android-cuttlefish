@@ -151,20 +151,12 @@ class GnssGrpcProxyServer : public CommandSource {
         instance_.gnss_grpc_proxy_server_port();
     gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr_);
     gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd_);
-    gnss_grpc_proxy_cmd.AddParameter("--fixed_location_in_fd=",
-                                     fixed_location_grpc_proxy_in_wr_);
-    gnss_grpc_proxy_cmd.AddParameter("--fixed_location_out_fd=",
-                                     fixed_location_grpc_proxy_out_rd_);
     gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=",
                                      gnss_grpc_proxy_server_port);
     if (!instance_.gnss_file_path().empty()) {
       // If path is provided, proxy will start as local mode.
       gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=",
                                        instance_.gnss_file_path());
-    }
-    if (!instance_.fixed_location_file_path().empty()) {
-      gnss_grpc_proxy_cmd.AddParameter("--fixed_location_file_path=",
-                                       instance_.fixed_location_file_path());
     }
     return single_element_emplace(std::move(gnss_grpc_proxy_cmd));
   }
@@ -197,8 +189,6 @@ class GnssGrpcProxyServer : public CommandSource {
 
     gnss_grpc_proxy_in_wr_ = fifos[0];
     gnss_grpc_proxy_out_rd_ = fifos[1];
-    fixed_location_grpc_proxy_in_wr_ = fifos[2];
-    fixed_location_grpc_proxy_out_rd_ = fifos[3];
     return {};
   }
 
@@ -207,8 +197,6 @@ class GnssGrpcProxyServer : public CommandSource {
   const CuttlefishConfig::InstanceSpecific& instance_;
   SharedFD gnss_grpc_proxy_in_wr_;
   SharedFD gnss_grpc_proxy_out_rd_;
-  SharedFD fixed_location_grpc_proxy_in_wr_;
-  SharedFD fixed_location_grpc_proxy_out_rd_;
 };
 
 class BluetoothConnector : public CommandSource {
