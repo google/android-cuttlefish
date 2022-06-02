@@ -43,6 +43,7 @@
 #include "host/commands/cvd/scope_guard.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -270,6 +271,11 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
 Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
                                                SharedFD client) {
   fruit::Injector<> injector(RequestComponent, this, &instance_manager_);
+
+  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
+    CF_EXPECT(late_injected->LateInject(injector));
+  }
+
   auto possible_handlers = injector.getMultibindings<CvdServerHandler>();
 
   // Even if the interrupt callback outlives the request handler, it'll only
@@ -311,8 +317,9 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
   return response;
 }
 
-static fruit::Component<CvdServer> ServerComponent() {
+static fruit::Component<> ServerComponent() {
   return fruit::createComponent()
+      .addMultibinding<CvdServer, CvdServer>()
       .install(EpollLoopComponent);
 }
 
@@ -323,8 +330,16 @@ Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client) {
 
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
-  fruit::Injector<CvdServer> injector(ServerComponent);
-  CvdServer& server = injector.get<CvdServer&>();
+  fruit::Injector<> injector(ServerComponent);
+
+  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
+    CF_EXPECT(late_injected->LateInject(injector));
+  }
+
+  auto server_bindings = injector.getMultibindings<CvdServer>();
+  CF_EXPECT(server_bindings.size() == 1,
+            "Expected 1 server binding, got " << server_bindings.size());
+  auto& server = *(server_bindings[0]);
   server.StartServer(server_fd);
 
   if (carryover_client->IsOpen()) {
