@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
@@ -92,10 +93,11 @@ type FetchCVDHandler struct {
 	dir                string
 	fetchCVDDownloader FetchCVDDownloader
 	mutex              sync.Mutex
+	osChmod            func(string, fs.FileMode) error
 }
 
 func NewFetchCVDHandler(dir string, fetchCVDDownloader FetchCVDDownloader) *FetchCVDHandler {
-	return &FetchCVDHandler{dir, fetchCVDDownloader, sync.Mutex{}}
+	return &FetchCVDHandler{dir, fetchCVDDownloader, sync.Mutex{}, os.Chmod}
 }
 
 func (h *FetchCVDHandler) Download(buildID string) error {
@@ -120,7 +122,7 @@ func (h *FetchCVDHandler) Download(buildID string) error {
 		}
 		return err
 	}
-	return nil
+	return h.osChmod(fileName, 0750)
 }
 
 func (h *FetchCVDHandler) exist(buildID string) (bool, error) {
