@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
@@ -93,7 +92,7 @@ type FetchCVDHandler struct {
 	dir                string
 	fetchCVDDownloader FetchCVDDownloader
 	mutex              sync.Mutex
-	osChmod            func(string, fs.FileMode) error
+	osChmod            func(string, os.FileMode) error
 }
 
 func NewFetchCVDHandler(dir string, fetchCVDDownloader FetchCVDDownloader) *FetchCVDHandler {

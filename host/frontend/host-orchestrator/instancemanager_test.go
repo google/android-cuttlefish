@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -156,7 +155,7 @@ func TestFetchCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
 	h.Download("1")
 
 	stats, _ := os.Stat(BuildFetchCVDFileName(dir, "1"))
-	var expected fs.FileMode = 0750
+	var expected os.FileMode = 0750
 	if stats.Mode() != expected {
 		t.Errorf("expected <<%+v>>, got %+v", expected, stats.Mode())
 	}
@@ -167,7 +166,7 @@ func TestFetchCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	downloader := &FakeFetchCVDDownloader{t, "foo"}
 	h := NewFetchCVDHandler(dir, downloader)
 	expectedErr := errors.New("error")
-	h.osChmod = func(_ string, _ fs.FileMode) error {
+	h.osChmod = func(_ string, _ os.FileMode) error {
 		return expectedErr
 	}
 
