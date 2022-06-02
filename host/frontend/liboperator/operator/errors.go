@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package operator
 
 import (
 	"net/http"
 
-	apiv1 "cuttlefish/host-orchestrator/api/v1"
+	apiv1 "cuttlefish/liboperator/api/v1"
 )
 
 type AppError struct {
