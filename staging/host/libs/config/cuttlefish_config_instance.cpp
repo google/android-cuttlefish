@@ -128,6 +128,16 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gnss_file_path(
   (*Dictionary())[kGnssFilePath] = gnss_file_path;
 }
 
+static constexpr char kFixedLocationFilePath[] = "fixed_location_file_path";
+std::string CuttlefishConfig::InstanceSpecific::fixed_location_file_path()
+    const {
+  return (*Dictionary())[kFixedLocationFilePath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_fixed_location_file_path(
+    const std::string& fixed_location_file_path) {
+  (*Dictionary())[kFixedLocationFilePath] = fixed_location_file_path;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("logcat-pipe"));
 }
