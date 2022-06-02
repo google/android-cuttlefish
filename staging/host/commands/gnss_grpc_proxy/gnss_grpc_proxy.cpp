@@ -21,7 +21,11 @@
 #include <memory>
 #include <string>
 
-#include <grpcpp.h>
+#include <grpc/grpc.h>
+#include <grpcpp/server.h>
+#include <grpcpp/server_builder.h>
+#include <grpcpp/server_context.h>
+#include <grpcpp/server_posix.h>
 
 #include "gnss_grpc_proxy.grpc.pb.h"
 
