@@ -312,4 +312,11 @@ ConfigureVerifiedBootInfoResponse RemoteKeymaster::ConfigureVerifiedBootInfo(
   return response;
 }
 
+GetRootOfTrustResponse RemoteKeymaster::GetRootOfTrust(
+    const GetRootOfTrustRequest& request) {
+  GetRootOfTrustResponse response(message_version());
+  ForwardCommand(GET_ROOT_OF_TRUST, request, &response);
+  return response;
+}
+
 }  // namespace keymaster
