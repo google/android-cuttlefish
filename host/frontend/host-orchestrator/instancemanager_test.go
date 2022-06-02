@@ -103,7 +103,7 @@ func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
 	return nil
 }
 
-func TestFetchCVDHandlerBinaryAlreadyExist(t *testing.T) {
+func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 	dir := t.TempDir()
 	f, err := os.Create(BuildFetchCVDFileName(dir, "1"))
 	if err != nil {
@@ -133,7 +133,7 @@ func TestFetchCVDHandlerBinaryAlreadyExist(t *testing.T) {
 	}
 }
 
-func TestFetchCVDHandlerBinaryIsDownloaded(t *testing.T) {
+func TestFetchCVDHandlerDownload(t *testing.T) {
 	dir := t.TempDir()
 	downloader := &FakeFetchCVDDownloader{t, "foo"}
 	h := NewFetchCVDHandler(dir, downloader)
@@ -148,7 +148,7 @@ func TestFetchCVDHandlerBinaryIsDownloaded(t *testing.T) {
 	}
 }
 
-func TestFetchCVDHandler0750FileAccessIsSet(t *testing.T) {
+func TestFetchCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
 	dir := t.TempDir()
 	downloader := &FakeFetchCVDDownloader{t, "foo"}
 	h := NewFetchCVDHandler(dir, downloader)
@@ -162,7 +162,7 @@ func TestFetchCVDHandler0750FileAccessIsSet(t *testing.T) {
 	}
 }
 
-func TestFetchCVDHandlerSettingFileAccessFails(t *testing.T) {
+func TestFetchCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	dir := t.TempDir()
 	downloader := &FakeFetchCVDDownloader{t, "foo"}
 	h := NewFetchCVDHandler(dir, downloader)
