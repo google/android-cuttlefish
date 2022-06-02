@@ -22,7 +22,6 @@ cc_library_static {
     srcs: [
         "StringParse.cpp",
         "GpxParser.cpp",
-        "KmlParser.cpp",
     ],
     export_include_dirs: ["."],
     shared_libs: [
