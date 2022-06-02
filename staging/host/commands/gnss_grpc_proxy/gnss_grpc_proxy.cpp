@@ -135,10 +135,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     void StartServer() {
       // Create a new thread to handle writes to the gnss and to the any client
       // connected to the socket.
-      measurement_read_thread_ =
-          std::thread([this]() { ReadMeasurementLoop(); });
-      fixed_location_read_thread_ =
-          std::thread([this]() { ReadFixedLocLoop(); });
+      read_thread_ = std::thread([this]() { ReadLoop(); });
     }
 
     void StartReadFixedLocationFileThread() {
@@ -238,11 +235,8 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
       if (measurement_file_read_thread_.joinable()) {
         measurement_file_read_thread_.join();
       }
-      if (measurement_read_thread_.joinable()) {
-        measurement_read_thread_.join();
-      }
-      if (fixed_location_read_thread_.joinable()) {
-        fixed_location_read_thread_.join();
+      if (read_thread_.joinable()) {
+        read_thread_.join();
       }
     }
 
@@ -284,23 +278,25 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
      }
    }
 
-   [[noreturn]] void ReadMeasurementLoop() {
-     int flags = gnss_out_->Fcntl(F_GETFL, 0);
-     gnss_out_->Fcntl(F_SETFL, flags | O_NONBLOCK);
+    [[noreturn]] void ReadLoop() {
+      cuttlefish::SharedFDSet read_set;
+      read_set.Set(gnss_out_);
+      int flags = gnss_out_->Fcntl(F_GETFL, 0);
+      gnss_out_->Fcntl(F_SETFL, flags | O_NONBLOCK);
 
-     while (true) {
-       SendCommand(CMD_GET_RAWMEASUREMENT, gnss_out_, FLAGS_gnss_out_fd);
-     }
-   }
+      cuttlefish::SharedFDSet read_set2;
+      read_set2.Set(fixed_location_out_);
+      int flags2 = fixed_location_out_->Fcntl(F_GETFL, 0);
+      fixed_location_out_->Fcntl(F_SETFL, flags2 | O_NONBLOCK);
 
-   [[noreturn]] void ReadFixedLocLoop() {
-     int flags2 = fixed_location_out_->Fcntl(F_GETFL, 0);
-     fixed_location_out_->Fcntl(F_SETFL, flags2 | O_NONBLOCK);
-     while (true) {
-       SendCommand(CMD_GET_LOCATION, fixed_location_out_,
-                   FLAGS_fixed_location_out_fd);
-     }
-   }
+      while (true) {
+        SendCommand(CMD_GET_RAWMEASUREMENT, gnss_out_, FLAGS_gnss_out_fd);
+
+        SendCommand(CMD_GET_LOCATION, fixed_location_out_,
+                    FLAGS_fixed_location_out_fd);
+      }
+    }
+
     std::string getTimeNanosFromLine(const std::string& line) {
       // TimeNanos is in column #3.
       std::vector<std::string> vals = android::base::Split(line, ",");
@@ -317,8 +313,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     cuttlefish::SharedFD fixed_location_in_;
     cuttlefish::SharedFD fixed_location_out_;
 
-    std::thread measurement_read_thread_;
-    std::thread fixed_location_read_thread_;
+    std::thread read_thread_;
     std::thread fixed_location_file_read_thread_;
     std::thread measurement_file_read_thread_;
 
