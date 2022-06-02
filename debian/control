@@ -50,6 +50,15 @@ Description: Cuttlefish Android Virtual Device companion package
  Contains the host signaling server supporting multi-device flows
  over WebRTC.
 
+Package: cuttlefish-common
+Architecture: any
+Depends: cuttlefish-base,
+         cuttlefish-user,
+         cuttlefish-common,
+Description: Cuttlefish Android Virtual Device companion package
+ Metapackage ensuring all packages needed to run and interact with
+ Cuttlefish device are installed.
+
 Package: cuttlefish-integration
 Architecture: any
 Depends: cuttlefish-base,
