@@ -449,9 +449,20 @@ ScopedAStatus RemoteKeyMintDevice::getRootOfTrustChallenge(
 }
 
 ScopedAStatus RemoteKeyMintDevice::getRootOfTrust(
-    const std::array<uint8_t, 16>& /* challenge */,
-    std::vector<uint8_t>* /* rootOfTrust */) {
-  return kmError2ScopedAStatus(KM_ERROR_UNIMPLEMENTED);
+    const std::array<uint8_t, 16>& challenge,
+    std::vector<uint8_t>* rootOfTrust) {
+  if (!rootOfTrust) {
+    return kmError2ScopedAStatus(KM_ERROR_UNEXPECTED_NULL_POINTER);
+  }
+  GetRootOfTrustRequest request(impl_.message_version(),
+                                {challenge.begin(), challenge.end()});
+  GetRootOfTrustResponse response = impl_.GetRootOfTrust(request);
+  if (response.error != KM_ERROR_OK) {
+    return kmError2ScopedAStatus(response.error);
+  }
+
+  *rootOfTrust = std::move(response.rootOfTrust);
+  return ScopedAStatus::ok();
 }
 
 ScopedAStatus RemoteKeyMintDevice::sendRootOfTrust(
