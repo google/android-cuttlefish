@@ -241,59 +241,76 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     }
 
   private:
-   void SendCommand(std::string command, cuttlefish::SharedFD source_out,
-                    int out_fd) {
-     std::vector<char> buffer(GNSS_SERIAL_BUFFER_SIZE);
-     std::string cmd_str;
-     auto bytes_read = source_out->Read(buffer.data(), buffer.size());
-     int total_read = 0;
-
-     if (bytes_read > 0) {
-       std::string s(buffer.data(), bytes_read);
-       cmd_str += s;
-       // In case random string sent though /dev/gnss1, cmd_str will
-       // auto resize, to get rid of first page.
-       if (cmd_str.size() > GNSS_SERIAL_BUFFER_SIZE * 2) {
-         cmd_str = cmd_str.substr(cmd_str.size() - GNSS_SERIAL_BUFFER_SIZE);
-       }
-       total_read += bytes_read;
-       if (cmd_str.find(command) != std::string::npos) {
-         if (command == CMD_GET_RAWMEASUREMENT) {
-           sendGnssRawToSerial();
-         } else if (command == CMD_GET_LOCATION) {
-           sendToSerial();
-         }
-         cmd_str = "";
-         total_read = 0;
-       }
-     } else {
-       if (source_out->GetErrno() == EAGAIN ||
-           source_out->GetErrno() == EWOULDBLOCK) {
-         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-       } else {
-         LOG(ERROR) << "Error reading fd " << out_fd << ": "
-                    << " Error code: " << source_out->GetErrno()
-                    << " Error sg:" << source_out->StrError();
-       }
-     }
-   }
-
     [[noreturn]] void ReadLoop() {
       cuttlefish::SharedFDSet read_set;
       read_set.Set(gnss_out_);
+      std::vector<char> buffer(GNSS_SERIAL_BUFFER_SIZE);
+      std::string gnss_cmd_str;
       int flags = gnss_out_->Fcntl(F_GETFL, 0);
       gnss_out_->Fcntl(F_SETFL, flags | O_NONBLOCK);
 
       cuttlefish::SharedFDSet read_set2;
       read_set2.Set(fixed_location_out_);
+      std::vector<char> buffer2(GNSS_SERIAL_BUFFER_SIZE);
+      int total_read2 = 0;
+      std::string fixed_location_cmd_str;
       int flags2 = fixed_location_out_->Fcntl(F_GETFL, 0);
       fixed_location_out_->Fcntl(F_SETFL, flags2 | O_NONBLOCK);
 
       while (true) {
-        SendCommand(CMD_GET_RAWMEASUREMENT, gnss_out_, FLAGS_gnss_out_fd);
+        auto bytes_read = gnss_out_->Read(buffer.data(), buffer.size());
+        if (bytes_read > 0) {
+          std::string s(buffer.data(), bytes_read);
+          gnss_cmd_str += s;
+          // In case random string sent though /dev/gnss0, gnss_cmd_str will auto resize,
+          // to get rid of first page.
+          if (gnss_cmd_str.size() > GNSS_SERIAL_BUFFER_SIZE * 2) {
+            gnss_cmd_str = gnss_cmd_str.substr(gnss_cmd_str.size() - GNSS_SERIAL_BUFFER_SIZE);
+          }
 
-        SendCommand(CMD_GET_LOCATION, fixed_location_out_,
-                    FLAGS_fixed_location_out_fd);
+          if (gnss_cmd_str.find(CMD_GET_RAWMEASUREMENT) != std::string::npos) {
+            sendGnssRawToSerial();
+            gnss_cmd_str = "";
+          }
+        } else {
+          if (gnss_out_->GetErrno() == EAGAIN|| gnss_out_->GetErrno() == EWOULDBLOCK) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          } else {
+            LOG(ERROR) << "Error reading fd " << FLAGS_gnss_out_fd << ": "
+              << " Error code: " << gnss_out_->GetErrno()
+              << " Error sg:" << gnss_out_->StrError();
+          }
+        }
+
+        auto bytes_read2 =
+            fixed_location_out_->Read(buffer2.data(), buffer2.size());
+        if (bytes_read2 > 0) {
+          std::string s(buffer2.data(), bytes_read2);
+          fixed_location_cmd_str += s;
+          // In case random string sent though /dev/gnss1, gnss_cmd_str will
+          // auto resize, to get rid of first page.
+          if (fixed_location_cmd_str.size() > GNSS_SERIAL_BUFFER_SIZE * 2) {
+            fixed_location_cmd_str = fixed_location_cmd_str.substr(
+                fixed_location_cmd_str.size() - GNSS_SERIAL_BUFFER_SIZE);
+          }
+          total_read2 += bytes_read2;
+          if (fixed_location_cmd_str.find(CMD_GET_LOCATION) !=
+              std::string::npos) {
+            sendToSerial();
+            fixed_location_cmd_str = "";
+            total_read2 = 0;
+          }
+        } else {
+          if (fixed_location_out_->GetErrno() == EAGAIN ||
+              fixed_location_out_->GetErrno() == EWOULDBLOCK) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          } else {
+            LOG(ERROR) << "Error reading fd " << FLAGS_fixed_location_out_fd
+                       << ": "
+                       << " Error code: " << fixed_location_out_->GetErrno()
+                       << " Error sg:" << fixed_location_out_->StrError();
+          }
+        }
       }
     }
 
