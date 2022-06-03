@@ -104,6 +104,9 @@ class DeviceConnection {
   #onControlMessage;
   #onBluetoothMessage;
 
+  #micRequested = false;
+  #cameraRequested = false;
+
   constructor(pc, control) {
     this.#pc = pc;
     this.#control = control;
@@ -248,16 +251,21 @@ class DeviceConnection {
     this.#controlChannel.send(msg);
   }
 
-  async #useDevice(in_use, senders_arr, device_opt) {
+  async #useDevice(
+      in_use, senders_arr, device_opt, requestedFn = () => {in_use}) {
     // An empty array means no tracks are currently in use
     if (senders_arr.length > 0 === !!in_use) {
-      console.warn('Device is already ' + (in_use ? '' : 'not ') + 'in use');
       return in_use;
     }
     let renegotiation_needed = false;
     if (in_use) {
       try {
         let stream = await navigator.mediaDevices.getUserMedia(device_opt);
+        // The user may have changed their mind by the time we obtain the
+        // stream, check again
+        if (!!in_use != requestedFn()) {
+          return requestedFn();
+        }
         stream.getTracks().forEach(track => {
           console.info(`Using ${track.kind} device: ${track.label}`);
           senders_arr.push(this.#pc.addTrack(track));
@@ -288,11 +296,23 @@ class DeviceConnection {
   }
 
   async useMic(in_use) {
-    return this.#useDevice(in_use, this.#micSenders, {audio: true, video: false});
+    if (this.#micRequested == !!in_use) {
+      return in_use;
+    }
+    this.#micRequested = !!in_use;
+    return this.#useDevice(
+        in_use, this.#micSenders, {audio: true, video: false},
+        () => this.#micRequested);
   }
 
   async useCamera(in_use) {
-    return this.#useDevice(in_use, this.#micSenders, {audio: false, video: true});
+    if (this.#cameraRequested == !!in_use) {
+      return in_use;
+    }
+    this.#cameraRequested = !!in_use;
+    return this.#useDevice(
+        in_use, this.#micSenders, {audio: false, video: true},
+        () => this.#cameraRequested);
   }
 
   sendCameraResolution(stream) {
