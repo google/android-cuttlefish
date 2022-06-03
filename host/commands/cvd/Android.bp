@@ -27,6 +27,7 @@ cc_defaults {
         "fetch_cvd.cc",
         "instance_lock.cpp",
         "instance_manager.cpp",
+        "help_command.cpp",
         "main.cc",
         "scope_guard.cpp",
         "server.cc",
