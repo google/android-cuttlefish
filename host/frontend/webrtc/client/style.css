@@ -263,6 +263,12 @@ body {
   background-color: #5f6368; /* Google grey 700 */
 }
 
+.control-panel-column button.pressed_down {
+  border: solid 1px #505050;
+  border-radius: 10px;
+  background-color: #303030;
+}
+
 #device-displays {
   /* Take up the remaining width of the window.*/
   flex-grow: 1;
