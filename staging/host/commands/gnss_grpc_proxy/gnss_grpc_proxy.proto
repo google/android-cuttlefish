@@ -7,16 +7,16 @@ option java_package = "com.android.cuttlefish.gnssproxy.proto";
 
 // The greeting service definition.
 service GnssGrpcProxy {
-  // Sends NmeaRequest
-  rpc SendNmea (SendNmeaRequest) returns (SendNmeaReply) {}
+  // Sends GpsRequest
+  rpc SendGps (SendGpsRequest) returns (SendGpsReply) {}
 }
 
-// The request message containing nmea
-message SendNmeaRequest {
-  string nmea = 1;
+// The request message containing gps
+message SendGpsRequest {
+  string gps = 1;
 }
 
 // The response message containing the return information
-message SendNmeaReply {
+message SendGpsReply {
   string reply = 1;
 }
