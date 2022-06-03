@@ -44,6 +44,7 @@
 #include "host/commands/cvd/build_api.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/epoll_loop.h"
+#include "host/commands/cvd/help_command.h"
 #include "host/commands/cvd/scope_guard.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -90,6 +91,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(AcloudCommandComponent)
       .install(CommandSequenceExecutorComponent)
       .install(cvdCommandComponent)
+      .install(CvdHelpComponent)
       .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
       .install(cvdVersionComponent);
