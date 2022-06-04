@@ -7,7 +7,8 @@ fetcher_bin := $(HOST_OUT)/$(bin_path)/fetch_cvd
 host_fetcher: $(fetcher_bin)
 
 # Build this by default when a developer types make
-droidcore: $(cvd bin) $(fetcher_bin)
+droidcore: $(cvd_bin) $(fetcher_bin)
 
 # Build and store them on the build server.
+$(call dist-for-goals, dist_files, $(cvd_bin))
 $(call dist-for-goals, dist_files, $(fetcher_bin))
