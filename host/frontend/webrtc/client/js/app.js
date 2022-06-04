@@ -207,14 +207,14 @@ class DeviceControlApp {
         if (button.shell_command) {
           // This button's command is handled by sending an ADB shell command.
           let element = createControlPanelButton(
-              button.command, button.title, button.icon_name,
+              button.title, button.icon_name,
               e => this.#onCustomShellButton(button.shell_command, e),
               'control-panel-custom-buttons');
           element.dataset.adb = true;
         } else if (button.device_states) {
           // This button corresponds to variable hardware device state(s).
           let element = createControlPanelButton(
-              button.command, button.title, button.icon_name,
+              button.title, button.icon_name,
               this.#getCustomDeviceStateButtonCb(button.device_states),
               'control-panel-custom-buttons');
           for (const device_state of button.device_states) {
