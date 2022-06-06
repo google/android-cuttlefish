@@ -389,7 +389,14 @@ public:
   static bool IsOk(const V& val) { return val.ok(); }
 
   // Turns V into a success value
-  static T Unwrap(V&& val) { return std::move(val.value()); }
+  static T Unwrap(V&& val) {
+    if constexpr (std::is_same_v<T, void>) {
+      assert(IsOk(val));
+      return;
+    } else {
+      return std::move(val.value());
+    }
+  }
 
   // Consumes V when it's a fail value
   static const OkOrFail<V> Fail(V&& v) {
