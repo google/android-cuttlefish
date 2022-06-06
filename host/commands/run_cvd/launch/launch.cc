@@ -211,51 +211,6 @@ class GnssGrpcProxyServer : public CommandSource {
   SharedFD fixed_location_grpc_proxy_out_rd_;
 };
 
-class BluetoothConnector : public CommandSource {
- public:
-  INJECT(BluetoothConnector(const CuttlefishConfig& config,
-                            const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    Command command(HostBinaryPath("bt_connector"));
-    command.AddParameter("-bt_out=", fifos_[0]);
-    command.AddParameter("-bt_in=", fifos_[1]);
-    command.AddParameter("-hci_port=", config_.rootcanal_hci_port());
-    command.AddParameter("-link_port=", config_.rootcanal_link_port());
-    command.AddParameter("-test_port=", config_.rootcanal_test_port());
-    return single_element_emplace(std::move(command));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "BluetoothConnector"; }
-  bool Enabled() const override { return config_.enable_host_bluetooth(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() {
-    std::vector<std::string> fifo_paths = {
-        instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
-    };
-    for (const auto& path : fifo_paths) {
-      unlink(path.c_str());
-      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
-      auto fd = SharedFD::Open(path, O_RDWR);
-      CF_EXPECT(fd->IsOpen(),
-                "Could not open " << path << ": " << fd->StrError());
-      fifos_.push_back(fd);
-    }
-    return {};
-  }
-
- private:
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  std::vector<SharedFD> fifos_;
-};
-
 class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
  public:
   INJECT(SecureEnvironment(const CuttlefishConfig& config,
@@ -613,11 +568,11 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
   using Bases = Multi::Bases<CommandSource, DiagnosticInformation, SetupFeature,
                              LateInjected, KernelLogPipeConsumer>;
   return fruit::createComponent()
+      .install(BluetoothConnectorComponent)
       .install(ConfigServerComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
       .install(TombstoneReceiverComponent)
-      .install(Bases::Impls<BluetoothConnector>)
       .install(Bases::Impls<ConsoleForwarder>)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
