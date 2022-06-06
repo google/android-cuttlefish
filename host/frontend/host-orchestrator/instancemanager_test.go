@@ -103,13 +103,14 @@ func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
 }
 
 func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
+	const fetchCVDContent = "bar"
 	dir := t.TempDir()
 	f, err := os.Create(BuildFetchCVDFileName(dir, "1"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	_, err = f.Write([]byte(string("bar")))
+	_, err = f.Write([]byte(fetchCVDContent))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,9 +127,8 @@ func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual := string(content)
-	expected := "bar"
-	if actual != expected {
-		t.Errorf("expected <<%q>>, got %q", expected, actual)
+	if actual != fetchCVDContent {
+		t.Errorf("expected <<%q>>, got %q", fetchCVDContent, actual)
 	}
 }
 
@@ -172,7 +172,7 @@ func TestFetchCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 
 	err := h.Download("1")
 
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
 	}
 }
