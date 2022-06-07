@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>
 #include <build/version.h>
+#include <google/protobuf/text_format.h>
 
 #include "cvd_server.pb.h"
 
@@ -62,10 +63,19 @@ Result<SharedFD> ConnectToServer() {
   return connection;
 }
 
+cvd::Version ClientVersion() {
+  cvd::Version client_version;
+  client_version.set_major(cvd::kVersionMajor);
+  client_version.set_minor(cvd::kVersionMinor);
+  client_version.set_build(android::build::GetBuildNumber());
+  client_version.set_crc32(FileCrc("/proc/self/exe"));
+  return client_version;
+}
+
 class CvdClient {
  public:
-  Result<void> EnsureCvdServerRunning(const std::string& host_tool_directory,
-                                      int num_retries = 1) {
+  Result<cvd::Version> GetServerVersion(
+      const std::string& host_tool_directory) {
     cvd::Request request;
     request.mutable_version_request();
     auto response = SendRequest(request);
@@ -79,7 +89,12 @@ class CvdClient {
     CF_EXPECT(response->has_version_response(),
               "GetVersion call missing VersionResponse.");
 
-    auto server_version = response->version_response().version();
+    return response->version_response().version();
+  }
+
+  Result<void> ValidateServerVersion(const std::string& host_tool_directory,
+                                     int num_retries = 1) {
+    auto server_version = CF_EXPECT(GetServerVersion(host_tool_directory));
     if (server_version.major() != cvd::kVersionMajor) {
       return CF_ERR("Major version difference: cvd("
                     << cvd::kVersionMajor << "." << cvd::kVersionMinor
@@ -93,7 +108,7 @@ class CvdClient {
       CF_EXPECT(StopCvdServer(/*clear=*/false));
       CF_EXPECT(StartCvdServer(host_tool_directory));
       if (num_retries > 0) {
-        CF_EXPECT(EnsureCvdServerRunning(host_tool_directory, num_retries - 1));
+        CF_EXPECT(ValidateServerVersion(host_tool_directory, num_retries - 1));
         return {};
       } else {
         return CF_ERR("Unable to start the cvd_server with version "
@@ -310,7 +325,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(args[0]) == "acloud") {
-    auto server_running = client.EnsureCvdServerRunning(
+    auto server_running = client.ValidateServerVersion(
         android::base::Dirname(android::base::GetExecutableDirectory()));
     if (server_running.ok()) {
       // TODO(schuffelen): Deduplicate when calls to setenv are removed.
@@ -369,10 +384,26 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
   }
 
+  auto dir = android::base::Dirname(android::base::GetExecutableDirectory());
+
   // Handle all remaining commands by forwarding them to the cvd_server.
-  CF_EXPECT(client.EnsureCvdServerRunning(android::base::Dirname(
-                android::base::GetExecutableDirectory())),
+  CF_EXPECT(client.ValidateServerVersion(dir),
             "Unable to ensure cvd_server is running.");
+
+  // Special case for `cvd version`, handled by using the version command.
+  if (argc > 1 && std::string(argv[0]) == "cvd" &&
+      std::string(argv[1]) == "version") {
+    using google::protobuf::TextFormat;
+
+    std::string output;
+    auto server_version = CF_EXPECT(client.GetServerVersion(dir));
+    TextFormat::PrintToString(server_version, &output);
+    std::cout << "Server version:\n\n" << output << "\n";
+
+    TextFormat::PrintToString(ClientVersion(), &output);
+    std::cout << "Client version:\n\n" << output << "\n";
+    return {};
+  }
 
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
   std::vector<std::string> env;
