@@ -211,48 +211,6 @@ class GnssGrpcProxyServer : public CommandSource {
   SharedFD fixed_location_grpc_proxy_out_rd_;
 };
 
-class VehicleHalServer : public CommandSource {
- public:
-  INJECT(VehicleHalServer(const CuttlefishConfig& config,
-                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    Command grpc_server(VehicleHalGrpcServerBinary());
-
-    const unsigned vhal_server_cid = 2;
-    const unsigned vhal_server_port = instance_.vehicle_hal_server_port();
-    const std::string vhal_server_power_state_file =
-        AbsolutePath(instance_.PerInstancePath("power_state"));
-    const std::string vhal_server_power_state_socket =
-        AbsolutePath(instance_.PerInstancePath("power_state_socket"));
-
-    grpc_server.AddParameter("--server_cid=", vhal_server_cid);
-    grpc_server.AddParameter("--server_port=", vhal_server_port);
-    grpc_server.AddParameter("--power_state_file=",
-                             vhal_server_power_state_file);
-    grpc_server.AddParameter("--power_state_socket=",
-                             vhal_server_power_state_socket);
-    return single_element_emplace(std::move(grpc_server));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "VehicleHalServer"; }
-  bool Enabled() const override {
-    return config_.enable_vehicle_hal_grpc_server() &&
-           FileExists(VehicleHalGrpcServerBinary());
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
-
- private:
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
 class WmediumdServer : public CommandSource {
  public:
   INJECT(WmediumdServer(const CuttlefishConfig& config,
@@ -436,10 +394,10 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(KernelLogMonitorComponent)
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
+      .install(VehicleHalServerComponent)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
       .install(Bases::Impls<RootCanal>)
-      .install(Bases::Impls<VehicleHalServer>)
       .install(Bases::Impls<VmmCommands>)
       .install(Bases::Impls<WmediumdServer>)
       .install(Bases::Impls<OpenWrt>);
