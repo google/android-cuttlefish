@@ -15,6 +15,7 @@
  */
 
 #include <android-base/logging.h>
+#include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
 #include <gflags/gflags.h>
 
@@ -44,7 +45,12 @@ const std::string usageMessage =
     "    stop_pcap\n"
     "      stop packet capture\n\n"
     "    list_stations\n"
-    "      listing stations connected to wmediumd\n\n";
+    "      listing stations connected to wmediumd\n\n"
+    "    set_position mac xpos ypos\n"
+    "      set X, Y positions of specific station\n"
+    "      use -- before set_position if you want to set the position with "
+    "negative values\n"
+    "        e.g. wmediumd_control -- set_position -1.0 -2.0\n\n";
 
 DEFINE_string(wmediumd_api_server, "",
               "Unix socket path of wmediumd api server");
@@ -201,6 +207,41 @@ bool HandleListStationsCommand(cuttlefish::WmediumdController& client,
   return true;
 }
 
+bool HandleSetPositionCommand(cuttlefish::WmediumdController& client,
+                              const std::vector<std::string>& args) {
+  if (args.size() != 4) {
+    LOG(ERROR) << "error: set_position must provide 3 options";
+    return false;
+  }
+
+  if (!ValidMacAddr(args[1])) {
+    LOG(ERROR) << "error: invalid mac address " << args[1];
+    return false;
+  }
+
+  double x = 0;
+  double y = 0;
+
+  auto parseResultX = android::base::ParseDouble(args[2].c_str(), &x);
+  auto parseResultY = android::base::ParseDouble(args[3].c_str(), &y);
+
+  if (!parseResultX) {
+    LOG(ERROR) << "error: cannot parse X: " << args[2];
+    return false;
+  }
+
+  if (!parseResultY) {
+    LOG(ERROR) << "error: cannot parse Y: " << args[3];
+    return false;
+  }
+
+  if (!client.SetPosition(args[1], x, y)) {
+    return false;
+  }
+
+  return true;
+}
+
 int main(int argc, char** argv) {
   gflags::SetUsageMessage(usageMessage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -246,6 +287,7 @@ int main(int argc, char** argv) {
           {"start_pcap", HandleStartPcapCommand},
           {"stop_pcap", HandleStopPcapCommand},
           {"list_stations", HandleListStationsCommand},
+          {"set_position", HandleSetPositionCommand},
       }};
 
   if (commandMap.find(args[0]) == std::end(commandMap)) {
