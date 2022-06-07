@@ -54,11 +54,13 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
   Command command("bash");
   command.AddParameter("-c");
   command.AddParameter("printf '%s\n' ", str);
-  std::string stdout;
-  std::string stderr;
-  auto ret = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
-  CF_EXPECT(ret == 0, "printf fail \"" << stdout << "\", \"" << stderr << "\"");
-  return android::base::Split(stdout, "\n");
+  std::string stdout_str;
+  std::string stderr_str;
+  auto ret = RunWithManagedStdio(std::move(command), nullptr, &stdout_str,
+                                 &stderr_str);
+  CF_EXPECT(ret == 0,
+            "printf fail \"" << stdout_str << "\", \"" << stderr_str << "\"");
+  return android::base::Split(stdout_str, "\n");
 }
 
 class ConvertAcloudCreateCommand {
