@@ -28,7 +28,7 @@ class VehicleHalServer : public CommandSource {
       : config_(config), instance_(instance) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command grpc_server(VehicleHalGrpcServerBinary());
 
     const unsigned vhal_server_cid = 2;

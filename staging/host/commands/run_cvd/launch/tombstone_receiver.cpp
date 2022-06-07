@@ -26,7 +26,7 @@ class TombstoneReceiver : public CommandSource {
       : instance_(instance) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     return single_element_emplace(
         Command(TombstoneReceiverBinary())
             .AddParameter("-server_fd=", socket_)

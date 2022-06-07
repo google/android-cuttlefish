@@ -42,7 +42,7 @@ class KernelLogMonitor : public CommandSource,
   }
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command command(KernelLogMonitorBinary());
     command.AddParameter("-log_pipe_fd=", fifo_);
 

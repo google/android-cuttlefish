@@ -33,7 +33,7 @@ class RootCanal : public CommandSource {
       : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     if (!Enabled()) {
       return {};
     }

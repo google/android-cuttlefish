@@ -75,7 +75,8 @@ class ServerLoopImpl : public ServerLoop,
 
     for (auto& command_source : command_sources_) {
       if (command_source->Enabled()) {
-        process_monitor_properties.AddCommands(command_source->Commands());
+        auto commands = CF_EXPECT(command_source->Commands());
+        process_monitor_properties.AddCommands(std::move(commands));
       }
     }
 
