@@ -102,53 +102,79 @@ func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
 	return nil
 }
 
-func TestFetchCVDHandler(t *testing.T) {
+func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
+	const fetchCVDContent = "bar"
 	dir := t.TempDir()
 	f, err := os.Create(BuildFetchCVDFileName(dir, "1"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	_, err = f.Write([]byte(string("000")))
+	_, err = f.Write([]byte(fetchCVDContent))
 	if err != nil {
 		t.Fatal(err)
 	}
-	downloader := &FakeFetchCVDDownloader{
-		t:       t,
-		content: "111",
+	downloader := &FakeFetchCVDDownloader{t, "foo"}
+	h := NewFetchCVDHandler(dir, downloader)
+
+	err = h.Download("1")
+
+	if err != nil {
+		t.Errorf("epected <<nil>> error, got %#v", err)
+	}
+	content, err := ioutil.ReadFile(BuildFetchCVDFileName(dir, "1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual := string(content)
+	if actual != fetchCVDContent {
+		t.Errorf("expected <<%q>>, got %q", fetchCVDContent, actual)
+	}
+}
+
+func TestFetchCVDHandlerDownload(t *testing.T) {
+	dir := t.TempDir()
+	downloader := &FakeFetchCVDDownloader{t, "foo"}
+	h := NewFetchCVDHandler(dir, downloader)
+
+	h.Download("1")
+
+	content, _ := ioutil.ReadFile(BuildFetchCVDFileName(dir, "1"))
+	actual := string(content)
+	expected := "foo"
+	if actual != expected {
+		t.Errorf("expected <<%q>>, got %q", expected, actual)
+	}
+}
+
+func TestFetchCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
+	dir := t.TempDir()
+	downloader := &FakeFetchCVDDownloader{t, "foo"}
+	h := NewFetchCVDHandler(dir, downloader)
+
+	h.Download("1")
+
+	stats, _ := os.Stat(BuildFetchCVDFileName(dir, "1"))
+	var expected os.FileMode = 0750
+	if stats.Mode() != expected {
+		t.Errorf("expected <<%+v>>, got %+v", expected, stats.Mode())
+	}
+}
+
+func TestFetchCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
+	dir := t.TempDir()
+	downloader := &FakeFetchCVDDownloader{t, "foo"}
+	h := NewFetchCVDHandler(dir, downloader)
+	expectedErr := errors.New("error")
+	h.osChmod = func(_ string, _ os.FileMode) error {
+		return expectedErr
 	}
 
-	t.Run("binary is not downloaded as it already exists", func(t *testing.T) {
-		h := NewFetchCVDHandler(dir, downloader)
+	err := h.Download("1")
 
-		err := h.Download("1")
-
-		if err != nil {
-			t.Errorf("epected <<nil>> error, got %#v", err)
-		}
-		content, err := ioutil.ReadFile(BuildFetchCVDFileName(dir, "1"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		actual := string(content)
-		expected := "000"
-		if actual != expected {
-			t.Errorf("expected <<%q>>, got %q", expected, actual)
-		}
-	})
-
-	t.Run("binary is downloaded", func(t *testing.T) {
-		h := NewFetchCVDHandler(dir, downloader)
-
-		h.Download("2")
-
-		content, _ := ioutil.ReadFile(BuildFetchCVDFileName(dir, "2"))
-		actual := string(content)
-		expected := "111"
-		if actual != expected {
-			t.Errorf("expected <<%q>>, got %q", expected, actual)
-		}
-	})
+	if !errors.Is(err, expectedErr) {
+		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
+	}
 }
 
 type AlwaysFailsFetchCVDDownloader struct{}
