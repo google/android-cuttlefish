@@ -35,6 +35,7 @@
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
@@ -82,6 +83,10 @@ class CvdServer {
   std::vector<std::thread> threads_;
 };
 
+Result<CvdServerHandler*> RequestHandler(
+    const RequestWithStdio& request,
+    const std::vector<CvdServerHandler*>& handlers);
+
 class CvdCommandHandler : public CvdServerHandler {
  public:
   INJECT(CvdCommandHandler(InstanceManager& instance_manager));
@@ -103,7 +108,6 @@ CvdRestartComponent();
 fruit::Component<fruit::Required<CvdServer, InstanceManager>>
 cvdShutdownComponent();
 fruit::Component<> cvdVersionComponent();
-fruit::Component<fruit::Required<CvdCommandHandler>> AcloudCommandComponent();
 
 struct CommandInvocation {
   std::string command;
