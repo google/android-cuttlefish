@@ -23,6 +23,7 @@ cc_binary {
         "boot_state_machine.cc",
         "launch/bluetooth_connector.cpp",
         "launch/config_server.cpp",
+        "launch/console_forwarder.cpp",
         "launch/kernel_log_monitor.cpp",
         "launch/launch.cc",
         "launch/logcat_receiver.cpp",
