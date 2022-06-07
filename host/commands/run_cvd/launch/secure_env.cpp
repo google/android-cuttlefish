@@ -28,7 +28,7 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
         kernel_log_pipe_provider_(kernel_log_pipe_provider) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command command(HostBinaryPath("secure_env"));
     command.AddParameter("-confui_server_fd=", confui_server_fd_);
     command.AddParameter("-keymaster_fd_out=", fifos_[0]);
