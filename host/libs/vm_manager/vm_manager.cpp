@@ -72,7 +72,7 @@ class VmmCommands : public CommandSource {
       : config_(config), vmm_(vmm) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     return vmm_.StartCommands(config_);
   }
 

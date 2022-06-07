@@ -36,7 +36,7 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
   }
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command console_forwarder_cmd(ConsoleForwarderBinary());
 
     console_forwarder_cmd.AddParameter("--console_in_fd=",
