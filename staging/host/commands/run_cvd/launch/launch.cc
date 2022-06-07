@@ -138,64 +138,6 @@ class GnssGrpcProxyServer : public CommandSource {
   SharedFD fixed_location_grpc_proxy_out_rd_;
 };
 
-class WmediumdServer : public CommandSource {
- public:
-  INJECT(WmediumdServer(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance,
-                        LogTeeCreator& log_tee))
-      : config_(config), instance_(instance), log_tee_(log_tee) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    Command cmd(WmediumdBinary());
-    cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
-    cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
-    cmd.AddParameter("-c", config_path_);
-
-    std::vector<Command> commands;
-    commands.emplace_back(log_tee_.CreateLogTee(cmd, "wmediumd"));
-    commands.emplace_back(std::move(cmd));
-    return commands;
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "WmediumdServer"; }
-  bool Enabled() const override {
-#ifndef ENFORCE_MAC80211_HWSIM
-    return false;
-#else
-    return instance_.start_wmediumd();
-#endif
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    // If wmediumd configuration is given, use it
-    if (!config_.wmediumd_config().empty()) {
-      config_path_ = config_.wmediumd_config();
-      return {};
-    }
-    // Otherwise, generate wmediumd configuration using the current wifi mac
-    // prefix before start
-    config_path_ = instance_.PerInstanceInternalPath("wmediumd.cfg");
-    Command gen_config_cmd(WmediumdGenConfigBinary());
-    gen_config_cmd.AddParameter("-o", config_path_);
-    gen_config_cmd.AddParameter("-p", instance_.wifi_mac_prefix());
-
-    int success = gen_config_cmd.Start().Wait();
-    CF_EXPECT(success == 0, "Unable to run " << gen_config_cmd.Executable()
-                                             << ". Exited with status "
-                                             << success);
-    return {};
-  }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  LogTeeCreator& log_tee_;
-  std::string config_path_;
-};
-
 class VmmCommands : public CommandSource {
  public:
   INJECT(VmmCommands(const CuttlefishConfig& config, VmManager& vmm))
@@ -323,10 +265,10 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
       .install(VehicleHalServerComponent)
+      .install(WmediumdServerComponent)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
       .install(Bases::Impls<VmmCommands>)
-      .install(Bases::Impls<WmediumdServer>)
       .install(Bases::Impls<OpenWrt>);
 }
 
