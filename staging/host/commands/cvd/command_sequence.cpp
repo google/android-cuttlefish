@@ -61,12 +61,21 @@ std::string FormattedCommand(const cvd::CommandRequest command) {
 
 }  // namespace
 
-CommandSequenceExecutor::CommandSequenceExecutor(
-    CvdCommandHandler& inner_handler)
-    : inner_handler_(inner_handler) {}
+CommandSequenceExecutor::CommandSequenceExecutor()
+    : current_handler_(nullptr) {}
+
+Result<void> CommandSequenceExecutor::LateInject(fruit::Injector<>& injector) {
+  server_handlers_ = injector.getMultibindings<CvdServerHandler>();
+  return {};
+}
 
 Result<void> CommandSequenceExecutor::Interrupt() {
-  CF_EXPECT(inner_handler_.Interrupt());
+  std::unique_lock interrupt_lock(interrupt_mutex_);
+  interrupted_ = true;
+  if (current_handler_ == nullptr) {
+    return {};
+  }
+  CF_EXPECT(current_handler_->Interrupt());
   return {};
 }
 
@@ -78,13 +87,15 @@ Result<void> CommandSequenceExecutor::Execute(
   }
   for (const auto& request : requests) {
     auto& inner_proto = request.Message();
-    CF_EXPECT(inner_proto.has_command_request());
-    auto& command = inner_proto.command_request();
-    std::string str = FormattedCommand(command);
-    CF_EXPECT(WriteAll(report, str) == str.size(), report->StrError());
+    if (inner_proto.has_command_request()) {
+      auto& command = inner_proto.command_request();
+      std::string str = FormattedCommand(command);
+      CF_EXPECT(WriteAll(report, str) == str.size(), report->StrError());
+    }
 
+    current_handler_ = CF_EXPECT(RequestHandler(request, server_handlers_));
     interrupt_lock.unlock();
-    auto response = CF_EXPECT(inner_handler_.Handle(request));
+    auto response = CF_EXPECT(current_handler_->Handle(request));
     interrupt_lock.lock();
     if (interrupted_) {
       return CF_ERR("Interrupted");
@@ -97,6 +108,11 @@ Result<void> CommandSequenceExecutor::Execute(
               request.Err()->StrError());
   }
   return {};
+}
+
+fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent() {
+  return fruit::createComponent()
+      .addMultibinding<LateInjected, CommandSequenceExecutor>();
 }
 
 }  // namespace cuttlefish

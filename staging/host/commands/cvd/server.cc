@@ -39,6 +39,8 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/acloud_command.h"
+#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/scope_guard.h"
 #include "host/commands/cvd/server_constants.h"
@@ -54,6 +56,7 @@ static fruit::Component<> RequestComponent(CvdServer* server,
       .bindInstance(*server)
       .bindInstance(*instance_manager)
       .install(AcloudCommandComponent)
+      .install(CommandSequenceExecutorComponent)
       .install(cvdCommandComponent)
       .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
@@ -170,7 +173,7 @@ Result<void> CvdServer::Exec(SharedFD new_exe, SharedFD client_fd) {
   return CF_ERR("fexecve failed: \"" << strerror(errno) << "\"");
 }
 
-static Result<CvdServerHandler*> RequestHandler(
+Result<CvdServerHandler*> RequestHandler(
     const RequestWithStdio& request,
     const std::vector<CvdServerHandler*>& handlers) {
   Result<cvd::Response> response;
