@@ -147,7 +147,7 @@ std::string Gem5Manager::ConfigureBootDevices(int /*num_disks*/) {
   }
 }
 
-std::vector<Command> Gem5Manager::StartCommands(
+Result<std::vector<Command>> Gem5Manager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
