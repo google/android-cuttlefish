@@ -253,70 +253,6 @@ class VehicleHalServer : public CommandSource {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
- public:
-  INJECT(ConsoleForwarder(const CuttlefishConfig& config,
-                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
-  // DiagnosticInformation
-  std::vector<std::string> Diagnostics() const override {
-    if (Enabled()) {
-      return {"To access the console run: screen " + instance_.console_path()};
-    } else {
-      return {"Serial console is disabled; use -console=true to enable it."};
-    }
-  }
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    Command console_forwarder_cmd(ConsoleForwarderBinary());
-
-    console_forwarder_cmd.AddParameter("--console_in_fd=",
-                                       console_forwarder_in_wr_);
-    console_forwarder_cmd.AddParameter("--console_out_fd=",
-                                       console_forwarder_out_rd_);
-    return single_element_emplace(std::move(console_forwarder_cmd));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "ConsoleForwarder"; }
-  bool Enabled() const override { return config_.console(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    auto console_in_pipe_name = instance_.console_in_pipe_name();
-    CF_EXPECT(
-        mkfifo(console_in_pipe_name.c_str(), 0600) == 0,
-        "Failed to create console input fifo for crosvm: " << strerror(errno));
-
-    auto console_out_pipe_name = instance_.console_out_pipe_name();
-    CF_EXPECT(
-        mkfifo(console_out_pipe_name.c_str(), 0660) == 0,
-        "Failed to create console output fifo for crosvm: " << strerror(errno));
-
-    // These fds will only be read from or written to, but open them with
-    // read and write access to keep them open in case the subprocesses exit
-    console_forwarder_in_wr_ =
-        SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-    CF_EXPECT(console_forwarder_in_wr_->IsOpen(),
-              "Failed to open console_forwarder input fifo for writes: "
-                  << console_forwarder_in_wr_->StrError());
-
-    console_forwarder_out_rd_ =
-        SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-    CF_EXPECT(console_forwarder_out_rd_->IsOpen(),
-              "Failed to open console_forwarder output fifo for reads: "
-                  << console_forwarder_out_rd_->StrError());
-    return {};
-  }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  SharedFD console_forwarder_in_wr_;
-  SharedFD console_forwarder_out_rd_;
-};
-
 class WmediumdServer : public CommandSource {
  public:
   INJECT(WmediumdServer(const CuttlefishConfig& config,
@@ -495,11 +431,11 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
   return fruit::createComponent()
       .install(BluetoothConnectorComponent)
       .install(ConfigServerComponent)
+      .install(ConsoleForwarderComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
-      .install(Bases::Impls<ConsoleForwarder>)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
       .install(Bases::Impls<RootCanal>)
