@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/server.h"
+
+#include "host/commands/cvd/acloud_command.h"
 
 #include <optional>
 #include <vector>
@@ -29,6 +30,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
@@ -400,7 +402,8 @@ class AcloudCreateCommand : public CvdServerHandler {
 
 }  // namespace
 
-fruit::Component<fruit::Required<CvdCommandHandler>> AcloudCommandComponent() {
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
+AcloudCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, AcloudCreateCommand>()
       .addMultibinding<CvdServerHandler, TryAcloudCreateCommand>();
