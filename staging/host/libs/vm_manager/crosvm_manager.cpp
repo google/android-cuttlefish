@@ -171,8 +171,11 @@ std::vector<Command> CrosvmManager::StartCommands(
       << "Provided too many disks (" << disk_num << "), maximum "
       << VmManager::kMaxDisks << "supported";
   for (const auto& disk : instance.virtual_disk_paths()) {
-    crosvm_cmd.Cmd().AddParameter(
-        config.protected_vm() ? "--disk=" : "--rwdisk=", disk);
+    if (config.protected_vm()) {
+      crosvm_cmd.AddReadOnlyDisk(disk);
+    } else {
+      crosvm_cmd.AddReadWriteDisk(disk);
+    }
   }
 
   if (config.enable_webrtc()) {
