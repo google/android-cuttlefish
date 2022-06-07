@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -43,7 +42,6 @@ enum class WmediumdMessageType : uint32_t {
   kStartPcap = 11,
   kStopPcap = 12,
   kStationsList = 13,
-  kSetPosition = 14,
 };
 
 class WmediumdMessage {
@@ -83,8 +81,8 @@ class WmediumdMessageSetSnr : public WmediumdMessage {
  private:
   void SerializeBody(std::string& out) const override;
 
-  std::array<uint8_t, 6> node1_mac_;
-  std::array<uint8_t, 6> node2_mac_;
+  uint8_t node1_mac_[6];
+  uint8_t node2_mac_[6];
   uint8_t snr_;
 };
 
@@ -177,22 +175,6 @@ class WmediumdMessageStationsList : public WmediumdMessage {
 
  private:
   std::vector<wmediumd_station_info> station_list_;
-};
-
-class WmediumdMessageSetPosition : public WmediumdMessage {
- public:
-  WmediumdMessageSetPosition(const std::string& node, double x, double y);
-
-  WmediumdMessageType Type() const override {
-    return WmediumdMessageType::kSetPosition;
-  }
-
- private:
-  void SerializeBody(std::string& out) const override;
-
-  std::array<uint8_t, 6> mac_;
-  double x_;
-  double y_;
 };
 
 }  // namespace cuttlefish
