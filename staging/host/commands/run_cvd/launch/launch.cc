@@ -26,6 +26,7 @@
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/reporting.h"
 #include "host/commands/run_cvd/runner_defs.h"
@@ -39,32 +40,6 @@
 namespace cuttlefish {
 
 using vm_manager::VmManager;
-
-class LogTeeCreator {
- public:
-  INJECT(LogTeeCreator(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  Command CreateLogTee(Command& cmd, const std::string& process_name) {
-    auto name_with_ext = process_name + "_logs.fifo";
-    auto logs_path = instance_.PerInstanceInternalPath(name_with_ext.c_str());
-    auto logs = SharedFD::Fifo(logs_path, 0666);
-    if (!logs->IsOpen()) {
-      LOG(FATAL) << "Failed to create fifo for " << process_name
-                 << " output: " << logs->StrError();
-    }
-
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, logs);
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, logs);
-
-    return Command(HostBinaryPath("log_tee"))
-        .AddParameter("--process_name=", process_name)
-        .AddParameter("--log_fd_in=", logs);
-  }
-
- private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
 
 class RootCanal : public CommandSource {
  public:
