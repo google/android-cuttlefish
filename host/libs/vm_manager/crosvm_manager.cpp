@@ -109,7 +109,7 @@ std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
 
 constexpr auto crosvm_socket = "crosvm_control.sock";
 
-std::vector<Command> CrosvmManager::StartCommands(
+Result<std::vector<Command>> CrosvmManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   CrosvmBuilder crosvm_cmd;
@@ -136,7 +136,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   }
 
   if (config.gdb_port() > 0) {
-    CHECK(config.cpus() == 1) << "CPUs must be 1 for crosvm gdb mode";
+    CF_EXPECT(config.cpus() == 1, "CPUs must be 1 for crosvm gdb mode");
     crosvm_cmd.Cmd().AddParameter("--gdb=", config.gdb_port());
   }
 
@@ -167,9 +167,9 @@ std::vector<Command> CrosvmManager::StartCommands(
   crosvm_cmd.Cmd().AddParameter("--cpus=", config.cpus());
 
   auto disk_num = instance.virtual_disk_paths().size();
-  CHECK_GE(VmManager::kMaxDisks, disk_num)
-      << "Provided too many disks (" << disk_num << "), maximum "
-      << VmManager::kMaxDisks << "supported";
+  CF_EXPECT(VmManager::kMaxDisks >= disk_num,
+            "Provided too many disks (" << disk_num << "), maximum "
+                                        << VmManager::kMaxDisks << "supported");
   for (const auto& disk : instance.virtual_disk_paths()) {
     if (config.protected_vm()) {
       crosvm_cmd.AddReadOnlyDisk(disk);
@@ -183,7 +183,7 @@ std::vector<Command> CrosvmManager::StartCommands(
         config.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
 
     auto display_configs = config.display_configs();
-    CHECK_GE(display_configs.size(), 1);
+    CF_EXPECT(display_configs.size() >= 1);
 
     for (int i = 0; i < display_configs.size(); ++i) {
       auto display_config = display_configs[i];
@@ -233,12 +233,11 @@ std::vector<Command> CrosvmManager::StartCommands(
     const bool seccomp_exists = DirectoryExists(config.seccomp_policy_dir());
     const std::string& var_empty_dir = kCrosvmVarEmptyDir;
     const bool var_empty_available = DirectoryExists(var_empty_dir);
-    if (!var_empty_available || !seccomp_exists) {
-      LOG(FATAL) << var_empty_dir << " is not an existing, empty directory."
-                 << "seccomp-policy-dir, " << config.seccomp_policy_dir()
-                 << " does not exist " << std::endl;
-      return {};
-    }
+    CF_EXPECT(var_empty_available && seccomp_exists,
+              var_empty_dir << " is not an existing, empty directory."
+                            << "seccomp-policy-dir, "
+                            << config.seccomp_policy_dir()
+                            << " does not exist");
     crosvm_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
                                   config.seccomp_policy_dir());
   } else {
@@ -297,11 +296,9 @@ std::vector<Command> CrosvmManager::StartCommands(
 
   auto crosvm_logs_path = instance.PerInstanceInternalPath("crosvm.fifo");
   auto crosvm_logs = SharedFD::Fifo(crosvm_logs_path, 0666);
-  if (!crosvm_logs->IsOpen()) {
-    LOG(FATAL) << "Failed to create log fifo for crosvm's stdout/stderr: "
-               << crosvm_logs->StrError();
-    return {};
-  }
+  CF_EXPECT(crosvm_logs->IsOpen(),
+            "Failed to create log fifo for crosvm's stdout/stderr: "
+                << crosvm_logs->StrError());
 
   Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
   crosvm_log_tee_cmd.AddParameter("--process_name=crosvm");
@@ -340,11 +337,12 @@ std::vector<Command> CrosvmManager::StartCommands(
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }
-  CHECK(crosvm_cmd.HvcNum() + disk_num ==
-        VmManager::kMaxDisks + VmManager::kDefaultNumHvcs)
-      << "HVC count (" << crosvm_cmd.HvcNum() << ") + disk count (" << disk_num
-      << ") is not the expected total of "
-      << VmManager::kMaxDisks + VmManager::kDefaultNumHvcs << " devices";
+  CF_EXPECT(crosvm_cmd.HvcNum() + disk_num ==
+                VmManager::kMaxDisks + VmManager::kDefaultNumHvcs,
+            "HVC count (" << crosvm_cmd.HvcNum() << ") + disk count ("
+                          << disk_num << ") is not the expected total of "
+                          << VmManager::kMaxDisks + VmManager::kDefaultNumHvcs
+                          << " devices");
 
   if (config.enable_audio()) {
     crosvm_cmd.Cmd().AddParameter(
@@ -391,12 +389,9 @@ std::vector<Command> CrosvmManager::StartCommands(
     auto gpu_capture_logs_path =
         instance.PerInstanceInternalPath("gpu_capture.fifo");
     auto gpu_capture_logs = SharedFD::Fifo(gpu_capture_logs_path, 0666);
-    if (!gpu_capture_logs->IsOpen()) {
-      LOG(FATAL)
-          << "Failed to create log fifo for gpu capture's stdout/stderr: "
-          << gpu_capture_logs->StrError();
-      return {};
-    }
+    CF_EXPECT(gpu_capture_logs->IsOpen(),
+              "Failed to create log fifo for gpu capture's stdout/stderr: "
+                  << gpu_capture_logs->StrError());
 
     Command gpu_capture_log_tee_cmd(HostBinaryPath("log_tee"));
     gpu_capture_log_tee_cmd.AddParameter("--process_name=",
@@ -414,9 +409,9 @@ std::vector<Command> CrosvmManager::StartCommands(
       const std::string crosvm_wrapper_content =
           crosvm_cmd.Cmd().AsBashScript(crosvm_logs_path);
 
-      CHECK(android::base::WriteStringToFile(crosvm_wrapper_content,
-                                             crosvm_wrapper_path));
-      CHECK(MakeFileExecutable(crosvm_wrapper_path));
+      CF_EXPECT(android::base::WriteStringToFile(crosvm_wrapper_content,
+                                                 crosvm_wrapper_path));
+      CF_EXPECT(MakeFileExecutable(crosvm_wrapper_path));
 
       gpu_capture_command.AddParameter("--exe=", crosvm_wrapper_path);
       gpu_capture_command.AddParameter("--launch-detached");
@@ -424,8 +419,8 @@ std::vector<Command> CrosvmManager::StartCommands(
       gpu_capture_command.AddParameter("--activity=Frame Debugger");
     } else {
       // TODO(natsu): renderdoc
-      LOG(FATAL) << "Unhandled GPU capture binary: "
-                 << config.gpu_capture_binary();
+      return CF_ERR(
+          "Unhandled GPU capture binary: " << config.gpu_capture_binary());
     }
 
     gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
