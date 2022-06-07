@@ -138,28 +138,6 @@ class GnssGrpcProxyServer : public CommandSource {
   SharedFD fixed_location_grpc_proxy_out_rd_;
 };
 
-class VmmCommands : public CommandSource {
- public:
-  INJECT(VmmCommands(const CuttlefishConfig& config, VmManager& vmm))
-      : config_(config), vmm_(vmm) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    return vmm_.StartCommands(config_);
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "VirtualMachineManager"; }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
-
-  const CuttlefishConfig& config_;
-  VmManager& vmm_;
-};
-
 using PublicDeps = fruit::Required<const CuttlefishConfig, VmManager,
                                    const CuttlefishConfig::InstanceSpecific>;
 fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
@@ -182,8 +160,7 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(VehicleHalServerComponent)
       .install(WmediumdServerComponent)
       .install(Bases::Impls<GnssGrpcProxyServer>)
-      .install(Bases::Impls<MetricsService>)
-      .install(Bases::Impls<VmmCommands>);
+      .install(Bases::Impls<MetricsService>);
 }
 
 }  // namespace cuttlefish
