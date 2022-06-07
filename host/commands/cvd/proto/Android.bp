@@ -23,8 +23,7 @@ cc_library_static {
     host_supported: true,
     proto: {
         export_proto_headers: true,
-        type: "lite",
-        //include_dirs: ["external/protobuf/src"],
+        type: "full",
     },
     srcs: ["cvd_server.proto"],
 }
