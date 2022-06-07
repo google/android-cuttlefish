@@ -33,6 +33,25 @@ static void AppendBinaryRepresentation(std::string& buf, const T& data) {
             std::back_inserter(buf));
 }
 
+static std::array<uint8_t, 6> ParseMacAddress(const std::string& node) {
+  auto split_mac = android::base::Split(node, ":");
+
+  if (split_mac.size() != 6) {
+    LOG(FATAL) << "invalid mac address length " << node;
+  }
+
+  std::array<uint8_t, 6> mac;
+  for (int i = 0; i < 6; i++) {
+    char* end_ptr;
+    mac[i] = (uint8_t)strtol(split_mac[i].c_str(), &end_ptr, 16);
+    if (end_ptr != split_mac[i].c_str() + split_mac[i].size()) {
+      LOG(FATAL) << "cannot parse " << split_mac[i] << " of " << node;
+    }
+  }
+
+  return mac;
+}
+
 namespace cuttlefish {
 
 std::string WmediumdMessage::Serialize(void) const {
@@ -57,30 +76,8 @@ void WmediumdMessageSetControl::SerializeBody(std::string& buf) const {
 WmediumdMessageSetSnr::WmediumdMessageSetSnr(const std::string& node1,
                                              const std::string& node2,
                                              uint8_t snr) {
-  auto splitted_mac1 = android::base::Split(node1, ":");
-  auto splitted_mac2 = android::base::Split(node2, ":");
-
-  if (splitted_mac1.size() != 6) {
-    LOG(FATAL) << "invalid mac address length " << node1;
-  }
-
-  if (splitted_mac2.size() != 6) {
-    LOG(FATAL) << "invalid mac address length " << node2;
-  }
-
-  for (int i = 0; i < 6; i++) {
-    char* end_ptr;
-    node1_mac_[i] = (uint8_t)strtol(splitted_mac1[i].c_str(), &end_ptr, 16);
-    if (end_ptr != splitted_mac1[i].c_str() + splitted_mac1[i].size()) {
-      LOG(FATAL) << "cannot parse " << splitted_mac1[i] << " of " << node1;
-    }
-
-    node2_mac_[i] = (uint8_t)strtol(splitted_mac2[i].c_str(), &end_ptr, 16);
-    if (end_ptr != splitted_mac2[i].c_str() + splitted_mac2[i].size()) {
-      LOG(FATAL) << "cannot parse " << splitted_mac2[i] << " of " << node1;
-    }
-  }
-
+  node1_mac_ = ParseMacAddress(node1);
+  node2_mac_ = ParseMacAddress(node2);
   snr_ = snr;
 }
 
@@ -102,6 +99,19 @@ void WmediumdMessageStartPcap::SerializeBody(std::string& buf) const {
   std::copy(std::begin(pcap_path_), std::end(pcap_path_),
             std::back_inserter(buf));
   buf.push_back('\0');
+}
+
+WmediumdMessageSetPosition::WmediumdMessageSetPosition(const std::string& node,
+                                                       double x, double y) {
+  mac_ = ParseMacAddress(node);
+  x_ = x;
+  y_ = y;
+}
+
+void WmediumdMessageSetPosition::SerializeBody(std::string& buf) const {
+  std::copy(std::begin(mac_), std::end(mac_), std::back_inserter(buf));
+  AppendBinaryRepresentation(buf, x_);
+  AppendBinaryRepresentation(buf, y_);
 }
 
 std::optional<WmediumdMessageStationsList> WmediumdMessageStationsList::Parse(
