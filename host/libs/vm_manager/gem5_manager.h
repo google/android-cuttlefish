@@ -39,7 +39,7 @@ class Gem5Manager : public VmManager {
       const CuttlefishConfig& config) override;
   std::string ConfigureBootDevices(int num_disks) override;
 
-  std::vector<cuttlefish::Command> StartCommands(
+  Result<std::vector<Command>> StartCommands(
       const CuttlefishConfig& config) override;
 
  private:
