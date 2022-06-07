@@ -65,6 +65,14 @@ void CrosvmBuilder::AddHvcReadWrite(const std::string& output,
                         ",type=file,path=", output, ",input=", input);
 }
 
+void CrosvmBuilder::AddReadOnlyDisk(const std::string& path) {
+  command_.AddParameter("--disk=", path);
+}
+
+void CrosvmBuilder::AddReadWriteDisk(const std::string& path) {
+  command_.AddParameter("--rwdisk=", path);
+}
+
 void CrosvmBuilder::AddSerialSink() {
   command_.AddParameter("--serial=hardware=serial,num=", ++serial_num_,
                         ",type=sink");
