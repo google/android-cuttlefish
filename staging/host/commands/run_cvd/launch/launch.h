@@ -74,6 +74,11 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 VehicleHalServerComponent();
 
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+WmediumdServerComponent();
+
 fruit::Component<fruit::Required<const CuttlefishConfig, vm_manager::VmManager,
                                  const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
