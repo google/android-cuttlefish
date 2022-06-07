@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <memory>
 
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
@@ -65,15 +66,39 @@ std::string ConfigureMultipleBootDevices(const std::string& pci_path,
   return {boot_devices_prop};
 }
 
+class VmmCommands : public CommandSource {
+ public:
+  INJECT(VmmCommands(const CuttlefishConfig& config, VmManager& vmm))
+      : config_(config), vmm_(vmm) {}
+
+  // CommandSource
+  std::vector<Command> Commands() override {
+    return vmm_.StartCommands(config_);
+  }
+
+  // SetupFeature
+  std::string Name() const override { return "VirtualMachineManager"; }
+  bool Enabled() const override { return true; }
+
+ private:
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
+  bool Setup() override { return true; }
+
+  const CuttlefishConfig& config_;
+  VmManager& vmm_;
+};
+
 fruit::Component<fruit::Required<const CuttlefishConfig>, VmManager>
 VmManagerComponent() {
-  return fruit::createComponent().registerProvider(
-      [](const CuttlefishConfig& config) {
+  return fruit::createComponent()
+      .registerProvider([](const CuttlefishConfig& config) {
         auto vmm = GetVmManager(config.vm_manager(), config.target_arch());
         CHECK(vmm) << "Invalid VMM/Arch: \"" << config.vm_manager() << "\""
                    << (int)config.target_arch() << "\"";
         return vmm.release();  // fruit takes ownership of raw pointers
-      });
+      })
+      .addMultibinding<CommandSource, VmmCommands>()
+      .addMultibinding<SetupFeature, VmmCommands>();
 }
 
 } // namespace vm_manager
