@@ -31,7 +31,7 @@ class LogcatReceiver : public CommandSource, public DiagnosticInformation {
   }
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     return single_element_emplace(
         Command(LogcatReceiverBinary()).AddParameter("-log_pipe_fd=", pipe_));
   }

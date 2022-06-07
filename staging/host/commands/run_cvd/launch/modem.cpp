@@ -66,7 +66,7 @@ class ModemSimulator : public CommandSource {
       : config_(config), instance_(instance) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command cmd(ModemSimulatorBinary(), [this](Subprocess* proc) {
       auto stopped = StopModemSimulator(instance_.modem_simulator_host_id());
       if (stopped) {
