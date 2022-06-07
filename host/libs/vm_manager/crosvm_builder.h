@@ -34,6 +34,9 @@ class CrosvmBuilder {
   void AddHvcReadOnly(const std::string& output, bool console = false);
   void AddHvcReadWrite(const std::string& output, const std::string& input);
 
+  void AddReadOnlyDisk(const std::string& path);
+  void AddReadWriteDisk(const std::string& path);
+
   void AddSerialSink();
   void AddSerialConsoleReadOnly(const std::string& output);
   void AddSerialConsoleReadWrite(const std::string& output,
