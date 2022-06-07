@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 
-#include "host/libs/vm_manager/vm_manager.h"
-
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -39,7 +39,7 @@ class QemuManager : public VmManager {
       const CuttlefishConfig& config) override;
   std::string ConfigureBootDevices(int num_disks) override;
 
-  std::vector<cuttlefish::Command> StartCommands(
+  Result<std::vector<cuttlefish::Command>> StartCommands(
       const CuttlefishConfig& config) override;
 
  private:

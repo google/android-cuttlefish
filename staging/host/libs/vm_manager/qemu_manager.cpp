@@ -85,8 +85,7 @@ bool Stop() {
   return true;
 }
 
-std::pair<int,int> GetQemuVersion(const std::string& qemu_binary)
-{
+Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
   Command qemu_version_cmd(qemu_binary);
   qemu_version_cmd.AddParameter("-version");
 
@@ -98,11 +97,10 @@ std::pair<int,int> GetQemuVersion(const std::string& qemu_binary)
                                       &qemu_version_input,
                                       &qemu_version_output,
                                       &qemu_version_error, options);
-  if (qemu_version_ret != 0) {
-    LOG(FATAL) << qemu_binary << " -version returned unexpected response "
-               << qemu_version_output << ". Stderr was " << qemu_version_error;
-    return { 0, 0 };
-  }
+  CF_EXPECT(qemu_version_ret == 0,
+            qemu_binary << " -version returned unexpected response "
+                        << qemu_version_output << ". Stderr was "
+                        << qemu_version_error);
 
   // Snip around the extra text we don't care about
   qemu_version_output.erase(0, std::string("QEMU emulator version ").length());
@@ -112,7 +110,7 @@ std::pair<int,int> GetQemuVersion(const std::string& qemu_binary)
   }
 
   auto qemu_version_bits = android::base::Split(qemu_version_output, ".");
-  return { std::stoi(qemu_version_bits[0]), std::stoi(qemu_version_bits[1]) };
+  return {{std::stoi(qemu_version_bits[0]), std::stoi(qemu_version_bits[1])}};
 }
 
 }  // namespace
@@ -167,7 +165,7 @@ std::string QemuManager::ConfigureBootDevices(int num_disks) {
   }
 }
 
-std::vector<Command> QemuManager::StartCommands(
+Result<std::vector<Command>> QemuManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
@@ -198,7 +196,7 @@ std::vector<Command> QemuManager::StartCommands(
       break;
   }
 
-  auto qemu_version = GetQemuVersion(qemu_binary);
+  auto qemu_version = CF_EXPECT(GetQemuVersion(qemu_binary));
   Command qemu_cmd(qemu_binary, stop);
 
   int hvc_num = 0;
@@ -271,25 +269,27 @@ std::vector<Command> QemuManager::StartCommands(
   auto access_kregistry_size_bytes = 0;
   if (FileExists(instance.access_kregistry_path())) {
     access_kregistry_size_bytes = FileSize(instance.access_kregistry_path());
-    CHECK((access_kregistry_size_bytes & (1024 * 1024 - 1)) == 0)
-        << instance.access_kregistry_path() <<  " file size ("
-        << access_kregistry_size_bytes << ") not a multiple of 1MB";
+    CF_EXPECT((access_kregistry_size_bytes & (1024 * 1024 - 1)) == 0,
+              instance.access_kregistry_path()
+                  << " file size (" << access_kregistry_size_bytes
+                  << ") not a multiple of 1MB");
   }
 
   auto hwcomposer_pmem_size_bytes = 0;
   if (FileExists(instance.hwcomposer_pmem_path())) {
     hwcomposer_pmem_size_bytes = FileSize(instance.hwcomposer_pmem_path());
-    CHECK((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0)
-        << instance.hwcomposer_pmem_path() << " file size ("
-        << hwcomposer_pmem_size_bytes << ") not a multiple of 1MB";
+    CF_EXPECT((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
+              instance.hwcomposer_pmem_path()
+                  << " file size (" << hwcomposer_pmem_size_bytes
+                  << ") not a multiple of 1MB");
   }
 
   auto pstore_size_bytes = 0;
   if (FileExists(instance.pstore_path())) {
     pstore_size_bytes = FileSize(instance.pstore_path());
-    CHECK((pstore_size_bytes & (1024 * 1024 - 1)) == 0)
-        << instance.pstore_path() <<  " file size ("
-        << pstore_size_bytes << ") not a multiple of 1MB";
+    CF_EXPECT((pstore_size_bytes & (1024 * 1024 - 1)) == 0,
+              instance.pstore_path() << " file size (" << pstore_size_bytes
+                                     << ") not a multiple of 1MB");
   }
 
   qemu_cmd.AddParameter("-name");
@@ -310,7 +310,7 @@ std::vector<Command> QemuManager::StartCommands(
       // devices with KVM and MTE, so MTE will always require TCG
       machine += ",mte=on";
     }
-    CHECK(config.cpus() <= 8) << "CPUs must be no more than 8 with GICv2";
+    CF_EXPECT(config.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
   }
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
@@ -330,8 +330,8 @@ std::vector<Command> QemuManager::StartCommands(
   // today is configured, and the way crosvm does it
   qemu_cmd.AddParameter("-smp");
   if (config.smt()) {
-    CHECK(config.cpus() % 2 == 0)
-        << "CPUs must be a multiple of 2 in SMT mode";
+    CF_EXPECT(config.cpus() % 2 == 0,
+              "CPUs must be a multiple of 2 in SMT mode");
     qemu_cmd.AddParameter(config.cpus(), ",cores=",
                           config.cpus() / 2, ",threads=2");
   } else {
@@ -371,7 +371,7 @@ std::vector<Command> QemuManager::StartCommands(
   }
 
   auto display_configs = config.display_configs();
-  CHECK_GE(display_configs.size(), 1);
+  CF_EXPECT(display_configs.size() >= 1);
   auto display_config = display_configs[0];
 
   qemu_cmd.AddParameter("-device");
@@ -458,14 +458,16 @@ std::vector<Command> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
-  CHECK(hvc_num + disk_num == VmManager::kMaxDisks + VmManager::kDefaultNumHvcs)
-      << "HVC count (" << hvc_num << ") + disk count (" << disk_num << ") "
-      << "is not the expected total of "
-      << VmManager::kMaxDisks + VmManager::kDefaultNumHvcs << " devices";
+  CF_EXPECT(
+      hvc_num + disk_num == VmManager::kMaxDisks + VmManager::kDefaultNumHvcs,
+      "HVC count (" << hvc_num << ") + disk count (" << disk_num << ") "
+                    << "is not the expected total of "
+                    << VmManager::kMaxDisks + VmManager::kDefaultNumHvcs
+                    << " devices");
 
-  CHECK_GE(VmManager::kMaxDisks, disk_num)
-      << "Provided too many disks (" << disk_num << "), maximum "
-      << VmManager::kMaxDisks << "supported";
+  CF_EXPECT(VmManager::kMaxDisks >= disk_num,
+            "Provided too many disks (" << disk_num << "), maximum "
+                                        << VmManager::kMaxDisks << "supported");
   auto readonly = config.protected_vm() ? ",readonly" : "";
   for (size_t i = 0; i < disk_num; i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
