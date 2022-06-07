@@ -105,6 +105,8 @@ class StreamerSockets : public virtual SetupFeature {
     if (config_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
     }
+    cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
+    cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
   }
 
   // SetupFeature
@@ -143,6 +145,27 @@ class StreamerSockets : public virtual SetupFeature {
           SharedFD::SocketLocalServer(path, false, SOCK_SEQPACKET, 0666);
       CF_EXPECT(audio_server_->IsOpen(), audio_server_->StrError());
     }
+    AddConfUiFifo();
+    return {};
+  }
+
+  Result<void> AddConfUiFifo() {
+    std::vector<std::string> fifo_files = {
+        instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("confui_fifo_vm.out")};
+    for (const auto& path : fifo_files) {
+      unlink(path.c_str());
+    }
+    std::vector<SharedFD> fds;
+    for (const auto& path : fifo_files) {
+      CF_EXPECT(mkfifo(path.c_str(), 0660) == 0, "Could not create " << path);
+      auto fd = SharedFD::Open(path, O_RDWR);
+      CF_EXPECT(fd->IsOpen(),
+                "Could not open " << path << ": " << fd->StrError());
+      fds.emplace_back(fd);
+    }
+    confui_in_fd_ = fds[0];
+    confui_out_fd_ = fds[1];
     return {};
   }
 
@@ -152,6 +175,8 @@ class StreamerSockets : public virtual SetupFeature {
   SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;
+  SharedFD confui_in_fd_;   // guest -> host
+  SharedFD confui_out_fd_;  // host -> guest
 };
 
 class WebRtcServer : public virtual CommandSource,
