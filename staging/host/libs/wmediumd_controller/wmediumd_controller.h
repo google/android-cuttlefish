@@ -44,6 +44,7 @@ class WmediumdController {
   bool StartPcap(const std::string& pcapPath);
   bool StopPcap(void);
   std::optional<WmediumdMessageStationsList> GetStations(void);
+  bool SetPosition(const std::string& node, double x, double y);
 
  private:
   WmediumdController() {}
