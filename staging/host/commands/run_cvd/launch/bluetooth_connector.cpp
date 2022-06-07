@@ -25,7 +25,7 @@ class BluetoothConnector : public CommandSource {
       : config_(config), instance_(instance) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command command(HostBinaryPath("bt_connector"));
     command.AddParameter("-bt_out=", fifos_[0]);
     command.AddParameter("-bt_in=", fifos_[1]);

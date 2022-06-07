@@ -18,6 +18,7 @@
 #include <fruit/fruit.h>
 #include <vector>
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/feature.h"
 
@@ -26,7 +27,7 @@ namespace cuttlefish {
 class CommandSource : public virtual SetupFeature {
  public:
   virtual ~CommandSource() = default;
-  virtual std::vector<Command> Commands() = 0;
+  virtual Result<std::vector<Command>> Commands() = 0;
 };
 
 }  // namespace cuttlefish
