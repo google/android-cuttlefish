@@ -33,7 +33,7 @@ class WmediumdServer : public CommandSource {
       : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command cmd(WmediumdBinary());
     cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
     cmd.AddParameter("-a", config_.wmediumd_api_server_socket());

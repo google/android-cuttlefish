@@ -208,7 +208,7 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     std::vector<Command> commands;
     if (instance_.start_webrtc_sig_server()) {
       Command sig_server(WebRtcSigServerBinary());

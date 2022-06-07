@@ -68,7 +68,7 @@ class AdbConnector : public CommandSource {
   INJECT(AdbConnector(const AdbHelper& helper)) : helper_(helper) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     Command console_forwarder_cmd(ConsoleForwarderBinary());
     Command adb_connector(AdbConnectorBinary());
     std::set<std::string> addresses;
@@ -117,7 +117,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
         log_pipe_provider_(log_pipe_provider) {}
 
   // CommandSource
-  std::vector<Command> Commands() override {
+  Result<std::vector<Command>> Commands() override {
     std::vector<Command> commands;
     if (helper_.VsockTunnelEnabled()) {
       Command adb_tunnel(SocketVsockProxyBinary());
