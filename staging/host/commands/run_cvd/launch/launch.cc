@@ -41,54 +41,6 @@ namespace cuttlefish {
 
 using vm_manager::VmManager;
 
-class RootCanal : public CommandSource {
- public:
-  INJECT(RootCanal(const CuttlefishConfig& config,
-                   const CuttlefishConfig::InstanceSpecific& instance,
-                   LogTeeCreator& log_tee))
-      : config_(config), instance_(instance), log_tee_(log_tee) {}
-
-  // CommandSource
-  std::vector<Command> Commands() override {
-    if (!Enabled()) {
-      return {};
-    }
-    Command command(RootCanalBinary());
-
-    // Test port
-    command.AddParameter(config_.rootcanal_test_port());
-    // HCI server port
-    command.AddParameter(config_.rootcanal_hci_port());
-    // Link server port
-    command.AddParameter(config_.rootcanal_link_port());
-    // Bluetooth controller properties file
-    command.AddParameter("--controller_properties_file=",
-                         config_.rootcanal_config_file());
-    // Default commands file
-    command.AddParameter("--default_commands_file=",
-                         config_.rootcanal_default_commands_file());
-
-    std::vector<Command> commands;
-    commands.emplace_back(log_tee_.CreateLogTee(command, "rootcanal"));
-    commands.emplace_back(std::move(command));
-    return commands;
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "RootCanal"; }
-  bool Enabled() const override {
-    return config_.enable_host_bluetooth() && instance_.start_rootcanal();
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  LogTeeCreator& log_tee_;
-};
-
 class MetricsService : public CommandSource {
  public:
   INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
@@ -367,12 +319,12 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(ConsoleForwarderComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
+      .install(RootCanalComponent)
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
       .install(VehicleHalServerComponent)
       .install(Bases::Impls<GnssGrpcProxyServer>)
       .install(Bases::Impls<MetricsService>)
-      .install(Bases::Impls<RootCanal>)
       .install(Bases::Impls<VmmCommands>)
       .install(Bases::Impls<WmediumdServer>)
       .install(Bases::Impls<OpenWrt>);
