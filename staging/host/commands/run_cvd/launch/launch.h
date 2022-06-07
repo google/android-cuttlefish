@@ -60,6 +60,11 @@ ConsoleForwarderComponent();
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+OpenWrtComponent();
+
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 RootCanalComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
