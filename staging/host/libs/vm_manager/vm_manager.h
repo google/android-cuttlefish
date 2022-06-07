@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 #pragma once
-#include <common/libs/utils/subprocess.h>
-#include <fruit/fruit.h>
-#include <host/libs/config/cuttlefish_config.h>
 
 #include <string>
 #include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -46,7 +49,7 @@ class VmManager {
   // HVC virtual console ports, block devices cannot be configured to be sinks,
   // so we once again leverage HVC virtual console ports to "bump up" the last
   // assigned virtual disk PCI ID (i.e. 2 disks = 7 hvcs, 1 disks = 8 hvcs)
-  static const int kMaxDisks = 3;
+  static constexpr int kMaxDisks = 3;
 
   // This is the number of virtual disks that contribute to the named partition
   // list (/dev/block/by-name/*) under Android. The partitions names from
@@ -66,7 +69,7 @@ class VmManager {
   // command_starter function, although it may start more than one. The
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
-  virtual std::vector<cuttlefish::Command> StartCommands(
+  virtual Result<std::vector<cuttlefish::Command>> StartCommands(
       const CuttlefishConfig& config) = 0;
 };
 
