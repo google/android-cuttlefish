@@ -121,6 +121,8 @@ struct VersionedAidlPackage {
 };
 
 static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
+    // TODO(227536004) Implement bootctrl AIDL
+    {"android.hardware.boot.", 1},
     // Cuttlefish Identity Credential HAL implementation is currently
     // stuck at version 3 while RKP support is being added. Will be
     // updated soon.
