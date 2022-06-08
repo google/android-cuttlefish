@@ -24,6 +24,7 @@ cc_binary {
         "launch/bluetooth_connector.cpp",
         "launch/config_server.cpp",
         "launch/console_forwarder.cpp",
+        "launch/gnss_grpc_proxy.cpp",
         "launch/kernel_log_monitor.cpp",
         "launch/launch.cc",
         "launch/logcat_receiver.cpp",
