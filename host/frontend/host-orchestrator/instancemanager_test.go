@@ -149,20 +149,20 @@ func TestCVDHandlerDownload(t *testing.T) {
 	}
 }
 
-// func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
-// 	dir := t.TempDir()
-// 	filename := dir + "/cvd"
-// 	downloader := &FakeArtifactDownloader{t, "foo"}
-// 	h := NewCVDHandler(dir, downloader)
-//
-// 	h.Download("1")
-//
-// 	stats, _ := os.Stat(filename)
-// 	var expected os.FileMode = 0750
-// 	if stats.Mode() != expected {
-// 		t.Errorf("expected <<%+v>>, got %+v", expected, stats.Mode())
-// 	}
-// }
+func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
+	dir := t.TempDir()
+	filename := dir + "/cvd"
+	downloader := &FakeArtifactDownloader{t, "foo"}
+	h := NewCVDHandler(dir, downloader)
+
+	h.Download("1")
+
+	stats, _ := os.Stat(filename)
+	var expected os.FileMode = 0750
+	if stats.Mode() != expected {
+		t.Errorf("expected <<%+v>>, got %+v", expected, stats.Mode())
+	}
+}
 
 func TestCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	dir := t.TempDir()
