@@ -39,40 +39,9 @@
 
 namespace cuttlefish {
 
-using vm_manager::VmManager;
-
-class MetricsService : public CommandSource {
- public:
-  INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
-
-  // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(Command(MetricsBinary()));
-  }
-
-  // SetupFeature
-  std::string Name() const override { return "MetricsService"; }
-  bool Enabled() const override {
-    return config_.enable_metrics() == CuttlefishConfig::kYes;
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
-
- private:
-  const CuttlefishConfig& config_;
-};
-
-using PublicDeps = fruit::Required<const CuttlefishConfig, VmManager,
+using PublicDeps = fruit::Required<const CuttlefishConfig,
                                    const CuttlefishConfig::InstanceSpecific>;
 fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
-  using InternalDeps = fruit::Required<const CuttlefishConfig, VmManager,
-                                       const CuttlefishConfig::InstanceSpecific,
-                                       KernelLogPipeProvider>;
-  using Multi = Multibindings<InternalDeps>;
-  using Bases = Multi::Bases<CommandSource, DiagnosticInformation, SetupFeature,
-                             LateInjected, KernelLogPipeConsumer>;
   return fruit::createComponent()
       .install(BluetoothConnectorComponent)
       .install(ConfigServerComponent)
@@ -80,13 +49,13 @@ fruit::Component<PublicDeps, KernelLogPipeProvider> launchComponent() {
       .install(GnssGrpcProxyServerComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)
+      .install(MetricsServiceComponent)
       .install(OpenWrtComponent)
       .install(RootCanalComponent)
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
       .install(VehicleHalServerComponent)
-      .install(WmediumdServerComponent)
-      .install(Bases::Impls<MetricsService>);
+      .install(WmediumdServerComponent);
 }
 
 }  // namespace cuttlefish
