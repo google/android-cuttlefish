@@ -61,6 +61,9 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 GnssGrpcProxyServerComponent();
 
+fruit::Component<fruit::Required<const CuttlefishConfig>>
+MetricsServiceComponent();
+
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
@@ -88,7 +91,7 @@ fruit::Component<
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 WmediumdServerComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig, vm_manager::VmManager,
+fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
 launchComponent();
