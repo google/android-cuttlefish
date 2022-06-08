@@ -68,8 +68,8 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 func TestCreateCVDFetchCVDFails(t *testing.T) {
 	dir := t.TempDir()
 	om := NewMapOM()
-	fetchCVDHandler := NewFetchCVDHandler(dir, &AlwaysFailsFetchCVDDownloader{})
-	im := NewInstanceManager(fetchCVDHandler, om)
+	cvdHandler := NewCVDHandler(dir, &AlwaysFailsArtifactDownloader{})
+	im := NewInstanceManager(cvdHandler, om)
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",
@@ -89,12 +89,12 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 	}
 }
 
-type FakeFetchCVDDownloader struct {
+type FakeArtifactDownloader struct {
 	t       *testing.T
 	content string
 }
 
-func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
+func (d *FakeArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
 	r := strings.NewReader(d.content)
 	if _, err := io.Copy(dst, r); err != nil {
 		d.t.Fatal(err)
@@ -102,10 +102,11 @@ func (d *FakeFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
 	return nil
 }
 
-func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
+func TestCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 	const fetchCVDContent = "bar"
 	dir := t.TempDir()
-	f, err := os.Create(BuildFetchCVDFileName(dir, "1"))
+	filename := dir + "/cvd"
+	f, err := os.Create(filename)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,15 +115,15 @@ func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	downloader := &FakeFetchCVDDownloader{t, "foo"}
-	h := NewFetchCVDHandler(dir, downloader)
+	downloader := &FakeArtifactDownloader{t, "foo"}
+	h := NewCVDHandler(dir, downloader)
 
 	err = h.Download("1")
 
 	if err != nil {
 		t.Errorf("epected <<nil>> error, got %#v", err)
 	}
-	content, err := ioutil.ReadFile(BuildFetchCVDFileName(dir, "1"))
+	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,14 +133,15 @@ func TestFetchCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 	}
 }
 
-func TestFetchCVDHandlerDownload(t *testing.T) {
+func TestCVDHandlerDownload(t *testing.T) {
 	dir := t.TempDir()
-	downloader := &FakeFetchCVDDownloader{t, "foo"}
-	h := NewFetchCVDHandler(dir, downloader)
+	filename := dir + "/cvd"
+	downloader := &FakeArtifactDownloader{t, "foo"}
+	h := NewCVDHandler(dir, downloader)
 
 	h.Download("1")
 
-	content, _ := ioutil.ReadFile(BuildFetchCVDFileName(dir, "1"))
+	content, _ := ioutil.ReadFile(filename)
 	actual := string(content)
 	expected := "foo"
 	if actual != expected {
@@ -147,24 +149,25 @@ func TestFetchCVDHandlerDownload(t *testing.T) {
 	}
 }
 
-func TestFetchCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
+func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
 	dir := t.TempDir()
-	downloader := &FakeFetchCVDDownloader{t, "foo"}
-	h := NewFetchCVDHandler(dir, downloader)
+	filename := dir + "/cvd"
+	downloader := &FakeArtifactDownloader{t, "foo"}
+	h := NewCVDHandler(dir, downloader)
 
 	h.Download("1")
 
-	stats, _ := os.Stat(BuildFetchCVDFileName(dir, "1"))
+	stats, _ := os.Stat(filename)
 	var expected os.FileMode = 0750
 	if stats.Mode() != expected {
 		t.Errorf("expected <<%+v>>, got %+v", expected, stats.Mode())
 	}
 }
 
-func TestFetchCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
+func TestCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	dir := t.TempDir()
-	downloader := &FakeFetchCVDDownloader{t, "foo"}
-	h := NewFetchCVDHandler(dir, downloader)
+	downloader := &FakeArtifactDownloader{t, "foo"}
+	h := NewCVDHandler(dir, downloader)
 	expectedErr := errors.New("error")
 	h.osChmod = func(_ string, _ os.FileMode) error {
 		return expectedErr
@@ -177,31 +180,24 @@ func TestFetchCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	}
 }
 
-type AlwaysFailsFetchCVDDownloader struct{}
+type AlwaysFailsArtifactDownloader struct{}
 
-func (d *AlwaysFailsFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
+func (d *AlwaysFailsArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
 	return fmt.Errorf("downloading failed")
 }
 
-func TestFetchCVDHandlerDownloadingFails(t *testing.T) {
+func TestCVDHandlerDownloadingFails(t *testing.T) {
 	dir := t.TempDir()
-	h := NewFetchCVDHandler(dir, &AlwaysFailsFetchCVDDownloader{})
+	filename := dir + "/cvd"
+	h := NewCVDHandler(dir, &AlwaysFailsArtifactDownloader{})
 
 	err := h.Download("1")
 
 	if err == nil {
 		t.Errorf("expected an error")
 	}
-	if _, err := os.Stat(BuildFetchCVDFileName(dir, "1")); err == nil {
+	if _, err := os.Stat(filename); err == nil {
 		t.Errorf("file must not have been created")
-	}
-}
-
-func TestBuildFetchCVDFileName(t *testing.T) {
-	actual := BuildFetchCVDFileName("/usr/bin", "1")
-	expected := "/usr/bin/fetch_cvd_1"
-	if actual != expected {
-		t.Errorf("expected <<%q>>, got %q", expected, actual)
 	}
 }
 
@@ -219,9 +215,9 @@ func newResponseBody(content string) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(content))
 }
 
-func TestABFetchCVDDownloaderDownload(t *testing.T) {
+func TestSignedURLArtifactDownloaderDownload(t *testing.T) {
 	fetchCVDBinContent := "001100"
-	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
+	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/foo/url?redirect=false"
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
 	url := "https://someurl.fake"
 	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
@@ -239,10 +235,10 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 		}
 		return res, nil
 	})
-	d := NewABFetchCVDDownloader(mockClient, url)
+	d := NewSignedURLArtifactDownloader(mockClient, url)
 
 	var b bytes.Buffer
-	d.Download(io.Writer(&b), "1")
+	d.Download(io.Writer(&b), "1", "foo")
 
 	actual := b.String()
 	if actual != fetchCVDBinContent {
@@ -250,7 +246,7 @@ func TestABFetchCVDDownloaderDownload(t *testing.T) {
 	}
 }
 
-func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
+func TestSignedURLArtifactDownloaderDownloadWithError(t *testing.T) {
 	errorMessage := "No latest build attempt for build 1"
 	url := "https://something.fake"
 	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
@@ -265,10 +261,10 @@ func TestABFetchCVDDownloaderDownloadWithError(t *testing.T) {
 			Body:       newResponseBody(errJSON),
 		}, nil
 	})
-	d := NewABFetchCVDDownloader(mockClient, url)
+	d := NewSignedURLArtifactDownloader(mockClient, url)
 
 	var b bytes.Buffer
-	err := d.Download(io.Writer(&b), "1")
+	err := d.Download(io.Writer(&b), "1", "foo")
 
 	if !strings.Contains(err.Error(), errorMessage) {
 		t.Errorf("expected to contain <<%q>> in error: %#v", errorMessage, err)
@@ -279,9 +275,9 @@ func TestBuildGetSignedURL(t *testing.T) {
 	baseURL := "http://localhost:1080"
 
 	t.Run("regular build id", func(t *testing.T) {
-		expected := "http://localhost:1080/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
+		expected := "http://localhost:1080/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/foo/url?redirect=false"
 
-		actual := BuildGetSignedURL(baseURL, "1")
+		actual := BuildGetSignedURL(baseURL, "1", "foo")
 
 		if actual != expected {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)
@@ -289,9 +285,9 @@ func TestBuildGetSignedURL(t *testing.T) {
 	})
 
 	t.Run("url-escaped build id", func(t *testing.T) {
-		expected := "http://localhost:1080/android/internal/build/v3/builds/latest%3F/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/fetch_cvd/url?redirect=false"
+		expected := "http://localhost:1080/android/internal/build/v3/builds/latest%3F/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/foo/url?redirect=false"
 
-		actual := BuildGetSignedURL(baseURL, "latest?")
+		actual := BuildGetSignedURL(baseURL, "latest?", "foo")
 
 		if actual != expected {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)

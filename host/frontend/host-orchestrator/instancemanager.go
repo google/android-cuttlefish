@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -35,12 +34,12 @@ func (s EmptyFieldError) Error() string {
 }
 
 type InstanceManager struct {
-	fetchCVDHandler *FetchCVDHandler
-	om              OperationManager
+	cvdHandler *CVDHandler
+	om         OperationManager
 }
 
-func NewInstanceManager(fetchCVDHandler *FetchCVDHandler, om OperationManager) *InstanceManager {
-	return &InstanceManager{fetchCVDHandler, om}
+func NewInstanceManager(cvdHandler *CVDHandler, om OperationManager) *InstanceManager {
+	return &InstanceManager{cvdHandler, om}
 }
 
 func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
@@ -56,7 +55,7 @@ const ErrMsgDownloadFetchCVDFailed = "failed to download fetch_cvd"
 
 // This logic isn't complete yet, it's work in progress.
 func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
-	err := m.fetchCVDHandler.Download(req.FetchCVDBuildID)
+	err := m.cvdHandler.Download(req.FetchCVDBuildID)
 	if err != nil {
 		log.Printf("failed to download fetch_cvd with error: %v", err)
 		result := OperationResult{
@@ -88,72 +87,69 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-type FetchCVDHandler struct {
-	dir                string
-	fetchCVDDownloader FetchCVDDownloader
-	mutex              sync.Mutex
-	osChmod            func(string, os.FileMode) error
+type CVDHandler struct {
+	dir        string
+	downloader ArtifactDownloader
+	mutex      sync.Mutex
+	osChmod    func(string, os.FileMode) error
 }
 
-func NewFetchCVDHandler(dir string, fetchCVDDownloader FetchCVDDownloader) *FetchCVDHandler {
-	return &FetchCVDHandler{dir, fetchCVDDownloader, sync.Mutex{}, os.Chmod}
+func NewCVDHandler(dir string, downloader ArtifactDownloader) *CVDHandler {
+	return &CVDHandler{dir, downloader, sync.Mutex{}, os.Chmod}
 }
 
-func (h *FetchCVDHandler) Download(buildID string) error {
+func (h *CVDHandler) Download(buildID string) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	exist, err := h.exist(buildID)
+	filename := h.dir + "/cvd"
+	exist, err := h.exist(filename)
 	if err != nil {
 		return err
 	}
 	if exist {
 		return nil
 	}
-	fileName := BuildFetchCVDFileName(h.dir, buildID)
-	f, err := os.Create(fileName)
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	if err := h.fetchCVDDownloader.Download(f, buildID); err != nil {
-		if removeErr := os.Remove(fileName); err != nil {
+	if err := h.downloader.Download(f, buildID, "cvd"); err != nil {
+		if removeErr := os.Remove(filename); err != nil {
 			return fmt.Errorf("%w; %v", err, removeErr)
 		}
 		return err
 	}
-	return h.osChmod(fileName, 0750)
+	return h.osChmod(filename, 0750)
 }
 
-func (h *FetchCVDHandler) exist(buildID string) (bool, error) {
-	if _, err := os.Stat(BuildFetchCVDFileName(h.dir, buildID)); err == nil {
+func (h *CVDHandler) exist(name string) (bool, error) {
+	if _, err := os.Stat(name); err == nil {
 		return true, nil
-	} else if errors.Is(err, os.ErrNotExist) {
+	} else if os.IsNotExist(err) {
 		return false, nil
 	} else {
 		return false, err
 	}
 }
 
-func BuildFetchCVDFileName(dir, buildID string) string {
-	return fmt.Sprintf("%s/fetch_cvd_%s", dir, buildID)
+// Represents a downloader of artifacts hosted in Android Build (https://ci.android.com).
+type ArtifactDownloader interface {
+	Download(dst io.Writer, buildID, name string) error
 }
 
-type FetchCVDDownloader interface {
-	Download(dst io.Writer, buildID string) error
-}
-
-// Downloads fetch_cvd binary from Android Build.
-type ABFetchCVDDownloader struct {
+// Downloads the artifacts using the signed URL returned by the Android Build service.
+type SignedURLArtifactDownloader struct {
 	client *http.Client
 	url    string
 }
 
-func NewABFetchCVDDownloader(client *http.Client, URL string) *ABFetchCVDDownloader {
-	return &ABFetchCVDDownloader{client, URL}
+func NewSignedURLArtifactDownloader(client *http.Client, URL string) *SignedURLArtifactDownloader {
+	return &SignedURLArtifactDownloader{client, URL}
 }
 
-func (d *ABFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
-	signedURL, err := d.getSignedURL(buildID)
+func (d *SignedURLArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
+	signedURL, err := d.getSignedURL(buildID, name)
 	if err != nil {
 		return err
 	}
@@ -173,8 +169,8 @@ func (d *ABFetchCVDDownloader) Download(dst io.Writer, buildID string) error {
 	return err
 }
 
-func (d *ABFetchCVDDownloader) getSignedURL(buildID string) (string, error) {
-	url := BuildGetSignedURL(d.url, buildID)
+func (d *SignedURLArtifactDownloader) getSignedURL(buildID, name string) (string, error) {
+	url := BuildGetSignedURL(d.url, buildID, name)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
@@ -195,7 +191,7 @@ func (d *ABFetchCVDDownloader) getSignedURL(buildID string) (string, error) {
 	return body.SignedURL, err
 }
 
-func (d *ABFetchCVDDownloader) parseErrorResponse(body io.ReadCloser) error {
+func (d *SignedURLArtifactDownloader) parseErrorResponse(body io.ReadCloser) error {
 	decoder := json.NewDecoder(body)
 	errRes := struct {
 		Error struct {
@@ -210,11 +206,11 @@ func (d *ABFetchCVDDownloader) parseErrorResponse(body io.ReadCloser) error {
 	return fmt.Errorf(errRes.Error.Message)
 }
 
-func BuildGetSignedURL(baseURL, buildID string) string {
+func BuildGetSignedURL(baseURL, buildID, name string) string {
 	uri := fmt.Sprintf("/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s/url?redirect=false",
 		url.PathEscape(buildID),
 		"aosp_cf_x86_64_phone-userdebug",
 		"latest",
-		"fetch_cvd")
+		name)
 	return baseURL + uri
 }
