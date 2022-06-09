@@ -17,12 +17,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"cuttlefish/host-orchestrator/orchestrator"
 	apiv1 "cuttlefish/liboperator/api/v1"
@@ -97,7 +95,6 @@ func maybeIntercept(path string) *string {
 
 func main() {
 	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", defaultSocketPath)
-	rand.Seed(time.Now().UnixNano())
 	pool := operator.NewDevicePool()
 	polledSet := operator.NewPolledSet()
 	config := apiv1.InfraConfig{
