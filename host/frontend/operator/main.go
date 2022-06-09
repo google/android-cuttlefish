@@ -21,25 +21,19 @@ import (
 	"os"
 	"sync"
 
-	"cuttlefish/host-orchestrator/orchestrator"
 	apiv1 "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
 )
 
-const (
-	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
-	defaultCVDArtifactsDir = "/var/lib/cuttlefish-common"
-)
-
 func startHttpServer(port string) error {
-	log.Println(fmt.Sprint("Host Orchestrator is listening at http://localhost:", port))
+	log.Println(fmt.Sprint("Operator is listening at http://localhost:", port))
 
 	// handler is nil, so DefaultServeMux is used.
 	return http.ListenAndServe(fmt.Sprint(":", port), nil)
 }
 
 func startHttpsServer(port string, certPath string, keyPath string) error {
-	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", port))
+	log.Println(fmt.Sprint("Operator is listening at https://localhost:", port))
 	return http.ListenAndServeTLS(fmt.Sprint(":", port),
 		certPath,
 		keyPath,
@@ -82,10 +76,10 @@ func start(starters []func() error) {
 }
 
 func main() {
-	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", operator.DefaultSocketPath)
-	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", operator.DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", operator.DefaultHttpsPort)
-	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", operator.DefaultTLSCertDir)
+	socketPath := fromEnvOrDefault("OPERATOR_SOCKET_PATH", operator.DefaultSocketPath)
+	httpPort := fromEnvOrDefault("OPERATOR_HTTP_PORT", operator.DefaultHttpPort)
+	httpsPort := fromEnvOrDefault("OPERATOR_HTTPS_PORT", operator.DefaultHttpsPort)
+	tlsCertDir := fromEnvOrDefault("OPERATOR_TLS_CERT_DIR", operator.DefaultTLSCertDir)
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"
 
@@ -97,22 +91,8 @@ func main() {
 			apiv1.IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
-	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
-	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
-	artifactDownloader := orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)
-	cvdDownloader := orchestrator.NewCVDDownloader(artifactDownloader)
-	om := orchestrator.NewMapOM()
-	im := orchestrator.NewInstanceManager(imRootDir, om, cvdDownloader)
 
-	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
-	go func() {
-		err := deviceServerLoop()
-		log.Fatal("Error with device endpoint: ", err)
-	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept, true /*acceptsWS*/)
-	orchestrator.SetupInstanceManagement(r, im, om)
-	// The host orchestrator currently has no use for this, since clients won't connect
-	// to it directly, however they probably will once the multi-device feature matures.
 	fs := http.FileServer(http.Dir(operator.DefaultStaticFilesDir))
 	r.PathPrefix("/").Handler(fs)
 	http.Handle("/", r)

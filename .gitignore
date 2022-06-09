@@ -11,6 +11,7 @@
 /debian/debhelper-build-stamp
 
 /host/frontend/host-orchestrator/host-orchestrator
+/host/frontend/operator/operator
 
 equivs.txt
 deps.txt
