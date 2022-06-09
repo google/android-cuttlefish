@@ -26,7 +26,6 @@ cc_binary {
         "launch/console_forwarder.cpp",
         "launch/gnss_grpc_proxy.cpp",
         "launch/kernel_log_monitor.cpp",
-        "launch/launch.cc",
         "launch/logcat_receiver.cpp",
         "launch/log_tee_creator.cpp",
         "launch/modem.cpp",
