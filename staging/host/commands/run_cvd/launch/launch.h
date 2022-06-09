@@ -92,11 +92,6 @@ fruit::Component<
 WmediumdServerComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 KernelLogPipeProvider>
-launchComponent();
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 launchModemComponent();
 
