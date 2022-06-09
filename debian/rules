@@ -19,13 +19,16 @@ include /usr/share/dpkg/buildflags.mk
 GOUTIL := host/frontend/goutil
 LIBOPERATOR_SOURCE_DIR := host/frontend/liboperator
 ORCHESTRATOR_SOURCE_DIR := host/frontend/host-orchestrator
+OPERATOR_SOURCE_DIR := host/frontend/host-orchestrator
 
 override_dh_auto_build:
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
+	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
 
 override_dh_auto_test:
 	$(GOUTIL) $(LIBOPERATOR_SOURCE_DIR) test ./...
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) test ./...
+	$(GOUTIL) $(OPERATOR_SOURCE_DIR) test ./...
 	dh_auto_test
 
 override_dh_installinit:

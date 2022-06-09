@@ -28,11 +28,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	DefaultSocketPath     = "/run/cuttlefish/operator"
+	DefaultHttpPort       = "1080"
+	DefaultHttpsPort      = "1443"
+	DefaultTLSCertDir     = "/etc/cuttlefish-common/host-orchestrator/cert"
+	DefaultStaticFilesDir = "static"    // relative path
+	DefaultInterceptDir   = "intercept" // relative path
+)
+
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
 // socket until an error occurrs.
 func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) func() error {
 	if err := os.RemoveAll(path); err != nil {
-		log.Fatal("Failed to clean previous socket: ", err)
+		return func() error { return fmt.Errorf("Failed to clean previous socket: %w", err)}
 	}
 	addr, err := net.ResolveUnixAddr("unixpacket", path)
 	if err != nil {
@@ -41,7 +50,7 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 	}
 	sock, err := net.ListenUnix("unixpacket", addr)
 	if err != nil {
-		log.Fatal("Failed to create unix socket: ", err)
+		return func() error { return fmt.Errorf("Failed to create unix socket: %w", err) }
 	}
 	// Make sure the socket is only accessible by owner and group
 	if err := os.Chmod(path, 0770); err != nil {
