@@ -106,13 +106,14 @@ func (c *PolledClient) ClientId() int {
 type PolledSet struct {
 	connections map[string]*PolledClient
 	mapMtx      sync.Mutex
+	rand        *rand.Rand
 }
 
 func (s *PolledSet) NewConnection(d *Device) *PolledClient {
 	s.mapMtx.Lock()
 	defer s.mapMtx.Unlock()
 	for {
-		id := randStr(64)
+		id := randStr(64, s.rand)
 		if _, ok := s.connections[id]; !ok {
 			conn := &PolledClient{
 				id:        id,
@@ -140,17 +141,19 @@ func (s *PolledSet) Destroy(id string) {
 }
 
 func NewPolledSet() *PolledSet {
-	rand.Seed(time.Now().UnixNano())
-	return &PolledSet{connections: make(map[string]*PolledClient)}
+	return &PolledSet{
+		connections: make(map[string]*PolledClient),
+		rand:        rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
 }
 
 // The available characters for the connection ids
 const runes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randStr(l int) string {
+func randStr(l int, r *rand.Rand) string {
 	var s strings.Builder
 	for i := 0; i < l; i++ {
-		s.WriteByte(runes[rand.Intn(len(runes))])
+		s.WriteByte(runes[r.Intn(len(runes))])
 	}
 	return s.String()
 }
