@@ -33,13 +33,23 @@ func (s EmptyFieldError) Error() string {
 	return fmt.Sprintf("field %v is empty", string(s))
 }
 
-type InstanceManager struct {
-	cvdHandler *CVDHandler
-	om         OperationManager
+type IMPaths struct {
+	CVDBin string
 }
 
-func NewInstanceManager(cvdHandler *CVDHandler, om OperationManager) *InstanceManager {
-	return &InstanceManager{cvdHandler, om}
+type InstanceManager struct {
+	paths            IMPaths
+	om               OperationManager
+	cvdDownloader    *CVDDownloader
+	downloadCVDMutex sync.Mutex
+}
+
+func NewInstanceManager(paths IMPaths, om OperationManager, cvdDownloader *CVDDownloader) *InstanceManager {
+	return &InstanceManager{
+		paths:         paths,
+		om:            om,
+		cvdDownloader: cvdDownloader,
+	}
 }
 
 func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
@@ -51,15 +61,14 @@ func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, erro
 	return op, nil
 }
 
-const ErrMsgDownloadFetchCVDFailed = "failed to download fetch_cvd"
+const ErrMsgDownloadCVDFailed = "failed to download cvd"
 
 // This logic isn't complete yet, it's work in progress.
 func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
-	err := m.cvdHandler.Download(req.FetchCVDBuildID)
-	if err != nil {
-		log.Printf("failed to download fetch_cvd with error: %v", err)
+	if err := m.downloadCVD(req.FetchCVDBuildID); err != nil {
+		log.Printf("failed to download cvd with error: %v", err)
 		result := OperationResult{
-			Error: OperationResultError{ErrMsgDownloadFetchCVDFailed},
+			Error: OperationResultError{ErrMsgDownloadCVDFailed},
 		}
 		if err := m.om.Complete(op.Name, result); err != nil {
 			log.Printf("failed to complete operation with error: %v", err)
@@ -69,6 +78,12 @@ func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
 	if err := m.om.Complete(op.Name, OperationResult{}); err != nil {
 		log.Printf("failed to complete operation with error: %v", err)
 	}
+}
+
+func (m *InstanceManager) downloadCVD(buildID string) error {
+	m.downloadCVDMutex.Lock()
+	defer m.downloadCVDMutex.Unlock()
+	return m.cvdDownloader.Download(m.paths.CVDBin, buildID)
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
@@ -87,21 +102,16 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-type CVDHandler struct {
-	dir        string
+type CVDDownloader struct {
 	downloader ArtifactDownloader
-	mutex      sync.Mutex
 	osChmod    func(string, os.FileMode) error
 }
 
-func NewCVDHandler(dir string, downloader ArtifactDownloader) *CVDHandler {
-	return &CVDHandler{dir, downloader, sync.Mutex{}, os.Chmod}
+func NewCVDDownloader(downloader ArtifactDownloader) *CVDDownloader {
+	return &CVDDownloader{downloader, os.Chmod}
 }
 
-func (h *CVDHandler) Download(buildID string) error {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-	filename := h.dir + "/cvd"
+func (h *CVDDownloader) Download(filename string, buildID string) error {
 	exist, err := h.exist(filename)
 	if err != nil {
 		return err
@@ -123,7 +133,7 @@ func (h *CVDHandler) Download(buildID string) error {
 	return h.osChmod(filename, 0750)
 }
 
-func (h *CVDHandler) exist(name string) (bool, error) {
+func (h *CVDDownloader) exist(name string) (bool, error) {
 	if _, err := os.Stat(name); err == nil {
 		return true, nil
 	} else if os.IsNotExist(err) {
