@@ -13,10 +13,6 @@
 # Defaults to "/etc/cuttlefish-common/host-orchestrator/cert".
 # orchestrator_tls_cert_dir=
 #
-# Indicate whether the instance manager operations are enabled or not.
-# Defaults to false.
-# orchestrator_instance_manager_enabled=
-# 
 # Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
 # orchestrator_android_build_url=
 #

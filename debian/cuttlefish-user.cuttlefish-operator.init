@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides: cuttlefish-operator
+# Required-Start: $network $remote_fs
+# Required-Stop: $network $remote_fs
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Cuttlefish Host Orchestrator service
+# Description: The Host Orchestrator service provides the signaling
+#              server used by all cuttlefish instances running in this
+#              host as well as orchestration capabilities.
+### END INIT INFO
+#
+# Copyright (C) 2021 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Make sure calls to this script get redirected to systemctl when
+# using systemd
+
+. /lib/lsb/init-functions
+
+if [ -f /etc/default/cuttlefish-operator ]; then
+    . /etc/default/cuttlefish-operator
+fi
+operator_http_port=${operator_http_port:-1080}
+operator_https_port=${operator_https_port:-1443}
+operator_tls_cert_dir=${operator_tls_cert_dir:-"/etc/cuttlefish-common/operator/cert"}
+
+RUN_DIR="/run/cuttlefish"
+ASSET_DIR="/usr/share/cuttlefish-common/operator"
+DAEMON="/usr/lib/cuttlefish-common/bin/operator"
+PIDFILE="${RUN_DIR}"/operator.pid
+
+gen_cert() {
+  CERT_FILE="${operator_tls_cert_dir}/cert.pem"
+  KEY_FILE="${operator_tls_cert_dir}/key.pem"
+  if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
+    echo "TLS certificate files for https communication already exist."
+  else
+    mkdir -p "${operator_tls_cert_dir}"
+    openssl req \
+      -newkey rsa:4096 \
+      -x509 \
+      -sha256 \
+      -days 36000 \
+      -nodes \
+      -out "${CERT_FILE}" \
+      -keyout "${KEY_FILE}" \
+      -subj "/C=US"
+    chown _cutf-operator:cvdnetwork "${CERT_FILE}"
+    chown _cutf-operator:cvdnetwork "${KEY_FILE}"
+  fi
+}
+
+start() {
+  gen_cert
+  mkdir -p "${RUN_DIR}"
+  chown _cutf-operator:cvdnetwork "${RUN_DIR}"
+  chmod 775 "${RUN_DIR}"
+
+  ORCHESTRATOR_HTTP_PORT="${operator_http_port}" \
+  ORCHESTRATOR_HTTPS_PORT="${operator_https_port}" \
+  ORCHESTRATOR_TLS_CERT_DIR="${operator_tls_cert_dir}" \
+  ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  start-stop-daemon --start \
+    --pidfile "${PIDFILE}" \
+    --chuid _cutf-operator:cvdnetwork \
+    --chdir "${ASSET_DIR}" \
+    --background --no-close \
+    --make-pidfile \
+    --exec "${DAEMON}"
+}
+
+stop() {
+  start-stop-daemon --stop \
+    --pidfile "${PIDFILE}" \
+    --remove-pidfile \
+    --exec "${DAEMON}"
+  # The presence of the socket will cause devices to try to connect to it
+  # instead of starting their own signaling servers, so it needs to be removed
+  # once the service isn't running.
+  unlink "${RUN_DIR}"/operator
+}
+
+status() {
+  # Return
+  #   0 if daemon is running
+  #   1 if daemon is dead and pid file exists
+  #   3 if daemon is not running
+  #   4 if daemon status is unknown
+  start-stop-daemon --start --quiet --pidfile "${PIDFILE}" --exec ${DAEMON} --test > /dev/null
+  case "${?}" in
+    0) [ -e "${PIDFILE}" ] && return 1 ; return 3 ;;
+    1) return 0 ;;
+    *) return 4 ;;
+  esac
+}
+
+usage() {
+    echo $0: start\|stop\|status
+}
+
+if test $# != 1; then
+    usage
+else
+    case "$1" in
+        --help)
+            usage 0
+            ;;
+        start|stop|status)
+            "$1"
+            ;;
+        restart|force-reload|condrestart|try-restart)
+            stop && start
+            ;;
+        reload)
+            # Nothing to do
+            ;;
+        shutdown)
+            stop
+            ;;
+        *)
+            usage
+            ;;
+    esac
+fi
+exit 0
