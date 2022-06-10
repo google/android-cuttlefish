@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cvd_script=1
+. $(dirname $(realpath $0))/setup.sh
+
+if [ -n "$1" ]; then
+	cvd_$1 "${@:2}"
+else
+	help_on_sourcing
+fi

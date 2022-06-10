@@ -66,8 +66,16 @@ function cvd_docker_list {
 	docker ps -a --filter="ancestor=cuttlefish"
 }
 
+function print_cvd_cmd {
+	if [ -n "$cvd_script" ]; then
+		echo $0 $1
+	else
+		echo cvd_$1
+	fi
+}
+
 function help_on_container_create {
-	echo "   cvd_docker_create <options> [NAME] # NAME is by default cuttlefish"
+	echo "   $(print_cvd_cmd docker_create) <options> [NAME] # NAME is by default cuttlefish"
 	echo "     Options:"
 	echo "       -s | --singleshot                : run the container, log in once, then delete it on logout"
 	echo "                                        : otherwise, the container is created as a daemon"
@@ -97,7 +105,7 @@ function help_on_sourcing {
 	help_on_container_create
 	echo ""
 	echo "To list existing Cuttlefish containers:"
-	echo "   cvd_docker_list"
+	echo "   $(print_cvd_cmd docker_list)"
 	echo ""
 	echo "Existing Cuttlefish containers:"
 	cvd_docker_list
@@ -106,16 +114,16 @@ function help_on_sourcing {
 function help_on_container_start {
 	local name=$1
 
-	echo "Log into container ${name}: $(__gen_login_func_name ${name})"
+	echo "Log into container ${name}: $(print_cvd_cmd login_${name})"
 	#  echo "Log into container ${name} with ssh:"
 	#  echo "    ssh vsoc-01@\${ip_${name}"}
 	#  echo "Log into container ${name} with docker:"
 	#  echo "    docker exec -it --user vsoc-01 $(cvd_get_id ${name}) /bin/bash"
-	echo "Start Cuttlefish: $(__gen_start_func_name ${name})"
-	echo "Stop Cuttlefish: $(__gen_stop_func_name ${name})"
+	echo "Start Cuttlefish: $(print_cvd_cmd start_${name})"
+	echo "Stop Cuttlefish: $(print_cvd_cmd stop_${name})"
 	echo "Delete container ${name}:"
-	[[ "${name}" == 'cuttlefish' ]] && echo "    cvd_docker_rm"
-	[[ "${name}" != 'cuttlefish' ]] && echo "    cvd_docker_rm ${name}"
+	[[ "${name}" == 'cuttlefish' ]] && echo "    $(print_cvd_cmd docker_rm)"
+	[[ "${name}" != 'cuttlefish' ]] && echo "    $(print_cvd_cmd docker_rm) ${name}"
 	echo "Delete all containers:"
 	echo "    cvd_docker_rm_all"
 }
@@ -416,7 +424,9 @@ function cvd_docker_create {
 	    echo "Done waiting for ${name} to boot."
 
 	    __gen_funcs ${name}
+	    help_on_container ${name}
 	    __gen_publish_funcs ${name}
+	   help_on_export_ports ${name}
         # define and export ip_${name} for the ip address
         local ip_addr_var_name="ip_${name}"
         declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
@@ -439,7 +449,9 @@ function cvd_docker_create {
 	    else
 		    echo "Container ${name} is already running.";
 		    __gen_funcs ${name}
+		    help_on_container ${name}
 		    __gen_publish_funcs ${name}
+		    help_on_export_ports ${name}
 		    help_on_container_start ${name}
 		    echo
 		    help_on_sourcing
@@ -554,14 +566,17 @@ EOF
 	eval "${gethome_func}"
 	eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
 
-	if [[ "$singleshot" == "true" ]]; then
+	if [[ "$singleshot" == "true" || -z "$cvd_script" ]]; then
 	  return
 	fi
+}
 
-	echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
-	echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
-	echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
-	echo "To get the home directory of container ${name}, call $(__gen_gethome_func_name ${name})"
+function help_on_container {
+	local name=$1
+	echo "To log into container ${name} without starting Android, call $(print_cvd_cmd login_${name})"
+	echo "To start Android in container ${name}, call $(print_cvd_cmd start_${name})"
+	echo "To stop Android in container ${name}, call $(print_cvd_cmd stop_${name})"
+	echo "To get the home directory of container ${name}, call $(print_cvd_cmd gethome_${name})"
 }
 
 function __gen_publish_func_name {
@@ -618,13 +633,19 @@ EOF
     if [[ "$singleshot" == "true" ]]; then
         return
     fi
-    echo "To export ports to container ${name}, $(__gen_publish_func_name ${name}) [host offset]"
-    echo "      e.g. $(__gen_publish_func_name ${name}) 0, to make the host ports same as default cuttlefish ports"
-    echo "      e.g. $(__gen_publish_func_name ${name})    to automatically find host ports"
-    echo "To undo the exported ports for container ${name}, $(__gen_unpublish_func_name ${name})"
 }
 
-help_on_sourcing
+function help_on_export_ports() {
+    local name=$1
+    echo "To export ports to container ${name}, $(print_cvd_cmd publish_${name}) [host offset]"
+    echo "      e.g. $(print_cvd_cmd publish_${name}) 0, to make the host ports same as default cuttlefish ports"
+    echo "      e.g. $(print_cvd_cmd publish_${name})    to automatically find host ports"
+    echo "To undo the exported ports for container ${name}, $(print_cvd_cmd unpublish_${name})"
+}
+
+if [ -z "$cvd_script" ]; then
+    help_on_sourcing
+fi
 
 function cvd_clean_autogens() {
 	for f in $(compgen -A function cvd_login_); do
@@ -647,5 +668,8 @@ unset -f cvd_clean_autogens
 
 for cf in $(docker ps -q -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
 	__gen_funcs "${cf}"
-    __gen_publish_funcs "${cf}"
+	if [ -z "$cvd_script" ]; then
+		help_on_container "${cf}"
+	fi
+	__gen_publish_funcs "${cf}"
 done
