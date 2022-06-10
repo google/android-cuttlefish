@@ -1,8 +1,0 @@
-Mmain.go	main.go	15
-Mmain.go	main.go	/^func main() {$/
-fromEnvOrDefault	main.go	/^func fromEnvOrDefault(key string, def string) stri/
-fromEnvOrDefaultBool	main.go	/^func fromEnvOrDefaultBool(key string, def bool) bo/
-maybeIntercept	main.go	/^func maybeIntercept(path string) *string {$/
-startHttpServer	main.go	/^func startHttpServer() {$/
-startHttpsServer	main.go	/^func startHttpsServer() {$/
-unpublished	go.mod	5

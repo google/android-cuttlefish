@@ -38,6 +38,18 @@ Description: Cuttlefish Android Virtual Device companion package
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.
 
+Package: cuttlefish-orchestration
+Architecture: any
+Depends: cuttlefish-base,
+         adduser,
+         openssl,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Breaks: cuttlefish-user
+Description: Cuttlefish Android Virtual Device companion package
+ Contains the host orchestrator.
+
 Package: cuttlefish-user
 Architecture: any
 Depends: cuttlefish-base,
@@ -46,6 +58,7 @@ Depends: cuttlefish-base,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
+Breaks: cuttlefish-orchestration
 Description: Cuttlefish Android Virtual Device companion package
  Contains the host signaling server supporting multi-device flows
  over WebRTC.

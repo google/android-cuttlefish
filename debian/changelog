@@ -1,8 +1,9 @@
-cuttlefish-common (0.9.24) unstable; urgency=medium
+cuttlefish-common (0.9.24) UNRELEASED; urgency=medium
 
   * Extract cuttlefish-base from cuttlefish-common
+  * Extract operator from host-orchestrator
 
- -- Jorge Moreira Broche <jemoreira@google.com>  Wed, 01 Jun 2022 12:27:34 -0700
+ -- Jorge Moreira Broche <jemoreira@google.com>  Wed, 09 Jun 2022 16:43:44 -0700
 
 cuttlefish-common (0.9.23) unstable; urgency=medium
 

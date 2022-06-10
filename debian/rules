@@ -19,7 +19,7 @@ include /usr/share/dpkg/buildflags.mk
 GOUTIL := host/frontend/goutil
 LIBOPERATOR_SOURCE_DIR := host/frontend/liboperator
 ORCHESTRATOR_SOURCE_DIR := host/frontend/host-orchestrator
-OPERATOR_SOURCE_DIR := host/frontend/host-orchestrator
+OPERATOR_SOURCE_DIR := host/frontend/operator
 
 override_dh_auto_build:
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
@@ -33,6 +33,7 @@ override_dh_auto_test:
 
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-host-resources
+	dh_installinit --name=cuttlefish-operator
 	dh_installinit --name=cuttlefish-host-orchestrator
 	dh_installinit
 
