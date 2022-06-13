@@ -67,10 +67,9 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 
 func TestCreateCVDFetchCVDFails(t *testing.T) {
 	dir := t.TempDir()
-	paths := IMPaths{dir + "/cvd"}
 	om := NewMapOM()
 	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{})
-	im := NewInstanceManager(paths, om, cvdDownloader)
+	im := NewInstanceManager(dir, om, cvdDownloader)
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",

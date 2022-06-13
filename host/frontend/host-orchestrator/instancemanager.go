@@ -38,17 +38,21 @@ type IMPaths struct {
 }
 
 type InstanceManager struct {
-	paths            IMPaths
+	rootDir          string
 	om               OperationManager
 	cvdDownloader    *CVDDownloader
 	downloadCVDMutex sync.Mutex
+	paths            IMPaths
 }
 
-func NewInstanceManager(paths IMPaths, om OperationManager, cvdDownloader *CVDDownloader) *InstanceManager {
+func NewInstanceManager(rootDir string, om OperationManager, cvdDownloader *CVDDownloader) *InstanceManager {
 	return &InstanceManager{
-		paths:         paths,
+		rootDir:       rootDir,
 		om:            om,
 		cvdDownloader: cvdDownloader,
+		paths: IMPaths{
+			CVDBin: rootDir + "/cvd",
+		},
 	}
 }
 
