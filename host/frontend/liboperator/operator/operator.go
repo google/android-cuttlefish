@@ -28,16 +28,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Sets up a unix socket for devices to connect to and starts a go routine to listen
-// for connections.
-func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) {
+// Sets up a unix socket for devices to connect to and returns a function that listens on the
+// socket until an error occurrs.
+func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) func() error {
 	if err := os.RemoveAll(path); err != nil {
 		log.Fatal("Failed to clean previous socket: ", err)
 	}
 	addr, err := net.ResolveUnixAddr("unixpacket", path)
 	if err != nil {
-		log.Println("Failed to create unix address from path: ", err)
-		return
+		// Returns a loop function that will immediately return an error when invoked
+		return func() error { return fmt.Errorf("Failed to create unix address from path: %w", err) }
 	}
 	sock, err := net.ListenUnix("unixpacket", addr)
 	if err != nil {
@@ -50,26 +50,19 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 	}
 	log.Println("Device endpoint created")
 	// Serve the register_device endpoint in a background thread
-	go func() {
+	return func() error {
 		defer sock.Close()
 		for {
 			c, err := sock.AcceptUnix()
 			if err != nil {
-				log.Fatal("Failed to accept: ", err)
+				return err
 			}
 			go deviceEndpoint(NewJSONUnix(c), pool, config)
 		}
-	}()
+	}
 }
 
-// Registers a handler for the signaling server's websocket endpoint at /connect_client.
-func SetupWebSocketEndpoint(router *mux.Router, pool *DevicePool, config apiv1.InfraConfig) {
-	router.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
-		clientWs(w, r, pool, config)
-	})
-}
-
-// Registers handlers for the signaling server HTTP endpoints:
+// Creates a router with handlers for the following endpoints:
 // GET  /infra_config
 // GET  /devices
 // GET  /devices/{deviceId}/files/{path}
@@ -79,12 +72,13 @@ func SetupWebSocketEndpoint(router *mux.Router, pool *DevicePool, config apiv1.I
 // The maybeIntercept parameter is a function that accepts the
 // requested device file and returns a path to a file to be returned instead or
 // nil if the request should be allowed to proceed to the device.
-func SetupHttpEndpoints(
-	router *mux.Router,
+func CreateHttpHandlers(
 	pool *DevicePool,
 	polledSet *PolledSet,
 	config apiv1.InfraConfig,
-	maybeIntercept func(string) *string) {
+	maybeIntercept func(string) *string,
+	acceptsWS bool) *mux.Router {
+	router := mux.NewRouter()
 	// The path parameter needs to include the leading '/'
 	router.HandleFunc("/devices/{deviceId}/files{path:/.+}", func(w http.ResponseWriter, r *http.Request) {
 		deviceFiles(w, r, pool, maybeIntercept)
@@ -104,6 +98,12 @@ func SetupHttpEndpoints(
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
 		ReplyJSONOK(w, config)
 	}).Methods("GET")
+	if acceptsWS {
+		router.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
+			clientWs(w, r, pool, config)
+		})
+	}
+	return router
 }
 
 // Device endpoint
