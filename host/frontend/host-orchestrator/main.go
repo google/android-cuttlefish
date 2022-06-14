@@ -27,8 +27,6 @@ import (
 	"cuttlefish/host-orchestrator/orchestrator"
 	apiv1 "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
-
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -115,10 +113,12 @@ func main() {
 	om := orchestrator.NewMapOM()
 	im := orchestrator.NewInstanceManager(cvdHandler, om)
 
-	operator.SetupDeviceEndpoint(pool, config, socketPath)
-	r := mux.NewRouter()
-	operator.SetupWebSocketEndpoint(r, pool, config)
-	operator.SetupHttpEndpoints(r, pool, polledSet, config, maybeIntercept)
+	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
+	go func() {
+		err := deviceServerLoop()
+		log.Fatal("Error with device endpoint: ", err)
+	}()
+	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept, true /*acceptsWS*/)
 	orchestrator.SetupInstanceManagement(r, im, om)
 	fs := http.FileServer(http.Dir(staticFilesDir))
 	r.PathPrefix("/").Handler(fs)
