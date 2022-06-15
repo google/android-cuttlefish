@@ -277,6 +277,10 @@ class CuttlefishConfig {
   bool console() const;
   std::string console_dev() const;
 
+  // Kernel and bootloader logging
+  void set_enable_kernel_log(bool enable_kernel_log);
+  bool enable_kernel_log() const;
+
   // Configuration flags for a minimal device
   bool enable_minimal_mode() const;
   void set_enable_minimal_mode(bool enable_minimal_mode);
@@ -411,6 +415,7 @@ class CuttlefishConfig {
 
     std::string adb_device_name() const;
     std::string gnss_file_path() const;
+    std::string fixed_location_file_path() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
@@ -557,6 +562,8 @@ class CuttlefishConfig {
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
     // Gnss grpc proxy local file path
     void set_gnss_file_path(const std::string &gnss_file_path);
+    void set_fixed_location_file_path(
+        const std::string& fixed_location_file_path);
   };
 
  private:
