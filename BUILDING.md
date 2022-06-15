@@ -26,22 +26,22 @@ Set up your environment:
 source setup.sh # once in each terminal window
 ```
 
-*Option 2*: Add the `cvd` script in this directory to your `$PATH`.
-Then any command beginning `cvd_foo` listed below may be invoked as
-`cvd foo`. Any references to `$ip_foo` must be replaced with `cvd
+*Option 2*: Add the `cf` script in this directory to your `$PATH`.
+Then any command beginning `cf_foo` listed below may be invoked as
+`cf foo`. Any references to `$ip_foo` must be replaced with `cf
 get_ip foo`. This option is ideal if you don't want to source the script
 in every terminal window, or if you use a shell other than bash.
 
 Create a container:
 
 ```bash
-cvd_docker_create <name> # <name defaults to cuttlefish>
+cf_docker_create <name> # <name defaults to cuttlefish>
 ```
 
 Note that a few options are provided in creating the container:
 
 ```bash
-cvd_docker_create -h
+cf_docker_create -h
 ```
 
 The options include but are not limited to:
@@ -51,13 +51,13 @@ The options include but are not limited to:
    1. have the guest applications (e.g. Cuttlefish) use the host X server
 
 ```bash
-cvd_docker_rm <name> # <name defaults to cuttlefish>
+cf_docker_rm <name> # <name defaults to cuttlefish>
 ```
 
 To list the Cuttlefish containers:
 
 ```bash
-cvd_docker_list
+cf_docker_list
 ```
 
 ## Installing the Cuttlefish and Android images on it
@@ -67,16 +67,16 @@ and Android images on it.)
 
 ### Re-using a locally built Android
 
-If cvd_docker_create detects an [Android build
+If cf_docker_create detects an [Android build
 environment](https://source.android.com/setup/build/building) that is set up to
 build Cuttlefish, it will automatically set up the container to point to all the
 binary artifacts.  Assuming you have downloaded, set up, and built a Cuttlefish
-device and Android from the sources, and you call cvd_docker_create in the same
+device and Android from the sources, and you call cf_docker_create in the same
 terminal, you can jump ahead to launching Cuttlefish by adding -A -C
-option to cvd_docker_create
+option to cf_docker_create
 
 ```
-cvd_docker_create -A -C <other options> <name>
+cf_docker_create -A -C <other options> <name>
 ```
 
 ### Building Android from the source with build-android-with-docker.sh
@@ -151,7 +151,7 @@ $HOME/android-src/out/target/product/vsoc_x86, the command would look like this:
 
 
 ```bash
-cvd_docker_create -C $HOME/android-src/out/host/linux-x86 -A
+cf_docker_create -C $HOME/android-src/out/host/linux-x86 -A
 $HOME/android-src/out/target/product/vsoc_x86 <other options> <name>
 ```
 
@@ -162,7 +162,7 @@ give -A -C with default values:
 export
 ANDROID_PRODUCT_OUT=$HOME/android-src/out/target/product/vsoc_x86
 export ANDROID_HOST_OUT=$HOME/android-src/out/host/linux-x86
-cvd_docker_create -A -C $HOME/android-src <name>
+cf_docker_create -A -C $HOME/android-src <name>
 ```
 
 ### Using pre-built cuttlefish image
@@ -175,7 +175,7 @@ obtained the image at step #8, you can copy it to your container as follows:
 
 ```bash
 # We assume the container is called 'cuttlefish' and
-# it was created with "cvd_docker_create cuttlefish"
+# it was created with "cf_docker_create cuttlefish"
 ssh vsoc-01@${ip_cuttlefish} -- 'tar xzvf -' < cvd-host_package.tar.gz
 scp *.img vsoc-01@${ip_cuttlefish}:~/
 ```
@@ -202,7 +202,7 @@ ssh vsoc-01@${ip_cuttlefish} -- './download-aosp  -A -C -a x86'
 To launch Cuttlefish within the container you've created:
 
 ```bash
-cvd_start_<name> options
+cf_start_<name> options
 ```
 
 For example, if you want to create acontainer named 'cf1' and launch Cuttlefish
@@ -210,15 +210,15 @@ with WebRTC support, 4GB of RAM and 4 CPUs:
 
 ```bash
 source setup.sh
-cvd_docker_create cf1
+cf_docker_create cf1
 ssh vsoc-01@$ip_cf1 -- './download-aosp $(uname -m)'
-cvd_start_cf1 --start_webrtc --cpus 4 --memory_mb 4096
+cf_start_cf1 --start_webrtc --cpus 4 --memory_mb 4096
 ```
 
 As of now, cuttlefish is connecting the adb server inside the docker container by default. If it is intended to adb running outside, --norun_adb_connector should be given and connected manually:
 
 ```bash
-cvd_start_cf --norun_adb_connector --start_webrtc --cpus 4 --memory_mb 4096
+cf_start_cf --norun_adb_connector --start_webrtc --cpus 4 --memory_mb 4096
 ```
 
 Following that, open a(nother) terminal, and type:
@@ -231,7 +231,7 @@ Once done, you stop cuttlefish as follows (in a new terminal)
 
 ```bash
 source setup.sh
-cvd_stop_cf1
+cf_stop_cf1
 ```
 
 Each container's IP address will be saved in variable $ip_<name>, where <name>
@@ -242,10 +242,10 @@ variable $ip_cf1.
 
 We recommend that each docker container should be assigned an ip address and that the users should access the contaienr via the ip. 
 
-If assigning a public IP is not feasible, we offer a environment variable, ```ip_${name}``` and a bash function, ```cvd_get_ip```.
+If assigning a public IP is not feasible, we offer a environment variable, ```ip_${name}``` and a bash function, ```cf_get_ip```.
 Those returns the internal IP valid on the docker host. 
 
-As the internal ip returned by ```cvd_get_ip``` and also stored in ```ip_${name}``` is not recognized outside the docker host, if
+As the internal ip returned by ```cf_get_ip``` and also stored in ```ip_${name}``` is not recognized outside the docker host, if
 remote access to the container is desired, extra steps are required. It is described in the [Port Forwarding](#port-forwarding) section.
 
 ## ADB
@@ -258,7 +258,7 @@ adb connect $ip_cf1:6520
 adb shell
 ```
 
-Please note that --norun_adb_connector should have been given to the cvd_start_<name> command. Also, ```$ip_cf1``` is the public or internal
+Please note that --norun_adb_connector should have been given to the cf_start_<name> command. Also, ```$ip_cf1``` is the public or internal
 ip address of the container. 
 
 Alternatively, you could run adb inside the container, and use the adb client over ssh:
@@ -270,10 +270,10 @@ ssh vsoc-01@$ip_cf1 -- ./bin/adb -e shell
 ## VNC
 
 Please note that VNC is not enabled by default. --start_vnc_server --nostart_webrtc should be given
-to cvd_start_<name>:
+to cf_start_<name>:
 
 ```bash
-cvd_start_cf1 --nostart_webrtc --start_vnc_server --cpus 4 --memory_mb 4096
+cf_start_cf1 --nostart_webrtc --start_vnc_server --cpus 4 --memory_mb 4096
 ```
 
 Here are how vnc server is connected with the vnc client.
@@ -326,14 +326,14 @@ As a result, the VNC client will act as if it was the host desktop X application
 will paint its windows on the host desktop. For that, the container should have been created with -x option:
 
 ```bash
-cvd_docker_create -x -A -C $HOME/android-src cf1
+cf_docker_create -x -A -C $HOME/android-src cf1
 ```
 
 Once cuttlefish is launched, the following command from another terminal will launch a VNC client:
 
 ```bash
 source setup.sh
-cvd_login_cf1 vncviewer
+cf_login_cf1 vncviewer
 ```
 
 The client will ask the VNC server address to connect, and this is the host ip and port to be used:
@@ -373,7 +373,7 @@ already running on the host.
 For that, the first step is to create the container with -x option:
 
 ```bash
-cvd_docker_create -x -A -C $HOME/android-src cf1
+cf_docker_create -x -A -C $HOME/android-src cf1
 ```
 
 
@@ -381,7 +381,7 @@ Once cuttlefish is launched, the following command from another terminal will la
 
 ```bash
 source setup.sh
-cvd_login_cf1 google-chrome-stable
+cf_login_cf1 google-chrome-stable
 ```
 
 This Google Chrome renders on the host but runs inside the container. Thus, use the following IP address and
@@ -406,15 +406,15 @@ remotely: from a client outside the docker host. Please let us remind the reader
 One way to do that is to use a bunch of -p options to expose the port. In ```setup.sh```, there is a single ```docker run```
 command. Feel free to add a bunch of -p options to exports host ports to the docker container. 
 
-Alternatively, we offer an optional, convenience function: ```cvd_publish_cf1``` where ```cf1``` is the name of the container.
+Alternatively, we offer an optional, convenience function: ```cf_publish_cf1``` where ```cf1``` is the name of the container.
 The function exposes a set of host ports to the docker container. Internally, it uses ```socat```. As an example, by default, 
-the adb port is 6520. Each container is automatically assigned a unique ```id``` when ```cvd_docker_create``` creates it. 
-```cvd_publish_cf1``` maps the host port, ```6520 + id```, to the docker container's adb port. 
+the adb port is 6520. Each container is automatically assigned a unique ```id``` when ```cf_docker_create``` creates it.
+```cf_publish_cf1``` maps the host port, ```6520 + id```, to the docker container's adb port.
 
-The ```cvd_get_instance_id``` bash function returns the ```id```:
+The ```cf_get_instance_id``` bash function returns the ```id```:
 
 ```bash
-$ cvd_get_instance_id "cf1"
+$ cf_get_instance_id "cf1"
 0
 ```
 

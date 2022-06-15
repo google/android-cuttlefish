@@ -8,46 +8,46 @@ source "$(dirname ${BASH_SOURCE[0]})"/expose-port.sh
 # set -o errexit
 # set -x
 
-function cvd_get_id {
+function cf_get_id {
 	echo "${1:-cuttlefish}"
 }
 
-function cvd_container_exists {
-	local name="$(cvd_get_id $1)"
+function cf_container_exists {
+	local name="$(cf_get_id $1)"
 	[[ $(docker ps -a --filter "name=^/${name}$" --format '{{.Names}}') == "${name}" ]] && echo "${name}";
 }
 
-function cvd_container_running {
-	local name="$(cvd_get_id $1)"
+function cf_container_running {
+	local name="$(cf_get_id $1)"
 	[[ $(docker inspect -f "{{.State.Running}}" ${name}) == 'true' ]] && echo "${name}"
 }
 
-function cvd_get_ip {
-	local name="$(cvd_container_exists $1)"
+function cf_get_ip {
+	local name="$(cf_container_exists $1)"
 	[[ -n "${name}" ]] && \
 		echo $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${name}")
 }
 
-function cvd_get_instance_id {
+function cf_get_instance_id {
     # $1 could be hash code or name for the container
     echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.cf_instance}}' "$1")"
 }
 
-function cvd_get_vsock_guest_cid {
+function cf_get_vsock_guest_cid {
     # $1 could be hash code or name for the container
     echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.vsock_guest_cid}}' "$1")"
 }
 
-function cvd_get_n_cf_instances {
+function cf_get_n_cf_instances {
     # $1 could be hash code or name for the container
     echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.n_cf_instances}}' "$1")"
 }
 
-function cvd_allocate_instance_id {
+function cf_allocate_instance_id {
 	local -a ids=()
 	for instance in $(docker ps -aq --filter="ancestor=cuttlefish"); do
 		local id;
-		id="$(cvd_get_instance_id "${instance}")"
+		id="$(cf_get_instance_id "${instance}")"
 		ids+=("${id}")
 	done
 	local sorted;
@@ -62,20 +62,20 @@ function cvd_allocate_instance_id {
 	echo "${prev}"
 }
 
-function cvd_docker_list {
+function cf_docker_list {
 	docker ps -a --filter="ancestor=cuttlefish"
 }
 
-function print_cvd_cmd {
-	if [ -n "$cvd_script" ]; then
+function print_cf_cmd {
+	if [ -n "$cf_script" ]; then
 		echo $0 $1
 	else
-		echo cvd_$1
+		echo cf_$1
 	fi
 }
 
 function help_on_container_create {
-	echo "   $(print_cvd_cmd docker_create) <options> [NAME] # NAME is by default cuttlefish"
+	echo "   $(print_cf_cmd docker_create) <options> [NAME] # NAME is by default cuttlefish"
 	echo "     Options:"
 	echo "       -s | --singleshot                : run the container, log in once, then delete it on logout"
 	echo "                                        : otherwise, the container is created as a daemon"
@@ -105,27 +105,27 @@ function help_on_sourcing {
 	help_on_container_create
 	echo ""
 	echo "To list existing Cuttlefish containers:"
-	echo "   $(print_cvd_cmd docker_list)"
+	echo "   $(print_cf_cmd docker_list)"
 	echo ""
 	echo "Existing Cuttlefish containers:"
-	cvd_docker_list
+	cf_docker_list
 }
 
 function help_on_container_start {
 	local name=$1
 
-	echo "Log into container ${name}: $(print_cvd_cmd login_${name})"
+	echo "Log into container ${name}: $(print_cf_cmd login_${name})"
 	#  echo "Log into container ${name} with ssh:"
 	#  echo "    ssh vsoc-01@\${ip_${name}"}
 	#  echo "Log into container ${name} with docker:"
-	#  echo "    docker exec -it --user vsoc-01 $(cvd_get_id ${name}) /bin/bash"
-	echo "Start Cuttlefish: $(print_cvd_cmd start_${name})"
-	echo "Stop Cuttlefish: $(print_cvd_cmd stop_${name})"
+	#  echo "    docker exec -it --user vsoc-01 $(cf_get_id ${name}) /bin/bash"
+	echo "Start Cuttlefish: $(print_cf_cmd start_${name})"
+	echo "Stop Cuttlefish: $(print_cf_cmd stop_${name})"
 	echo "Delete container ${name}:"
-	[[ "${name}" == 'cuttlefish' ]] && echo "    $(print_cvd_cmd docker_rm)"
-	[[ "${name}" != 'cuttlefish' ]] && echo "    $(print_cvd_cmd docker_rm) ${name}"
+	[[ "${name}" == 'cuttlefish' ]] && echo "    $(print_cf_cmd docker_rm)"
+	[[ "${name}" != 'cuttlefish' ]] && echo "    $(print_cf_cmd docker_rm) ${name}"
 	echo "Delete all containers:"
-	echo "    cvd_docker_rm_all"
+	echo "    cf_docker_rm_all"
 }
 
 function is_absolute_path {
@@ -215,7 +215,7 @@ function locate_default_host_pkg {
 
 singleshot="false"
 
-function cvd_docker_create {
+function cf_docker_create {
   local name=""
   local android=""
   local cuttlefish=""
@@ -235,7 +235,7 @@ function cvd_docker_create {
   # v | --vsock_guest_cid
   # h | --help
 
-  singleshot="false" # could've been updated to "true" by previous cvd_docker_create
+  singleshot="false" # could've been updated to "true" by previous cf_docker_create
 
   local params
   if params=$(getopt -o 'm:n:A::C::svxh' -l 'share_dir:,n_cf_instances:,android::,cuttlefish::,singleshot,vsock_guest_cid,with_host_x,help' --name "$0" -- "$@"); then
@@ -335,14 +335,14 @@ function cvd_docker_create {
     name="${_rest[0]}"
     unset _rest
 
-    local name="$(cvd_get_id $name)"
-    local container="$(cvd_container_exists $name)"
+    local name="$(cf_get_id $name)"
+    local container="$(cf_container_exists $name)"
 
 	local -a volumes=("-v $(pwd)/download-aosp.sh:/home/vsoc-01/download-aosp.sh:ro")
     if [[ -z "${container}" ]]; then
 	    echo "Container ${name} does not exist.";
 
-        local cf_instance=$(cvd_allocate_instance_id)
+        local cf_instance=$(cf_allocate_instance_id)
         if [ "${cf_instance}" -gt 7 ]; then
                 echo "Limit is maximum 8 Cuttlefish instances."
                 return
@@ -409,12 +409,12 @@ function cvd_docker_create {
 
 	    echo "Waiting for ${name} to boot."
 	    while true; do
-		    if [[ -z "$(cvd_container_exists ${name})" ]]; then
+		    if [[ -z "$(cf_container_exists ${name})" ]]; then
 			    echo "Container ${name}  does not exist yet.  Sleep 1 second"
 			    sleep 1
 			    continue
 		    fi
-		    if [[ -z "$(cvd_container_running ${name})" ]]; then
+		    if [[ -z "$(cf_container_running ${name})" ]]; then
 			    echo "Container ${name} is not running yet.  Sleep 1 second"
 			    sleep 1
 			    continue
@@ -429,12 +429,12 @@ function cvd_docker_create {
 	   help_on_export_ports ${name}
         # define and export ip_${name} for the ip address
         local ip_addr_var_name="ip_${name}"
-        declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
+        declare ${ip_addr_var_name}="$(cf_get_ip "${name}")"
         export ${ip_addr_var_name}
 
 	    if [[ "$singleshot" == "true" ]]; then
-		    cvd_login_${name}
-		    cvd_docker_rm ${name}
+		    cf_login_${name}
+		    cf_docker_rm ${name}
 		    return
 	    fi
 
@@ -444,7 +444,7 @@ function cvd_docker_create {
 
     else
 	    echo "Container ${name} exists";
-	    if [[ -z "$(cvd_container_running ${name})" ]]; then
+	    if [[ -z "$(cf_container_running ${name})" ]]; then
 		    echo "Container ${name} is not running.";
 	    else
 		    echo "Container ${name} is already running.";
@@ -459,14 +459,14 @@ function cvd_docker_create {
     fi
 }
 
-function cvd_docker_rm {
+function cf_docker_rm {
 	local name=${1:-cuttlefish}
 	while [ ! -z "${name}" ]; do
         local ip_addr_var_name="ip_${name}"
         unset ${ip_addr_var_name}
 
 		if [ -n "$(docker ps -q -a -f name=${name})" ]; then
-			homedir=$(cvd_gethome_${name})
+			homedir=$(cf_gethome_${name})
 			echo "Deleting container ${name}."
 			docker rm -f ${name}
 			echo "Cleaning up homedir ${homedir}."
@@ -486,48 +486,48 @@ function cvd_docker_rm {
 	done
 }
 
-function cvd_docker_rm_all {
+function cf_docker_rm_all {
 	for c in $(docker ps -qa --filter="ancestor=cuttlefish"); do
 		local name=$(docker inspect -f '{{.Name}}' ${c})
 		if [ "${name:0:1}" == "/" ]; then
 			# slice off the leading slash
 			name=("${name:1}")
 		fi
-		cvd_docker_rm "${name}"
+		cf_docker_rm "${name}"
 	done
 }
 
 function __gen_login_func_name {
 	local name=$1
-	echo -n "cvd_login_${name}"
+	echo -n "cf_login_${name}"
 }
 
 function __gen_start_func_name {
 	local name=$1
-	echo -n "cvd_start_${name}"
+	echo -n "cf_start_${name}"
 }
 
 function __gen_stop_func_name {
 	local name=$1
-	echo -n "cvd_stop_${name}"
+	echo -n "cf_stop_${name}"
 }
 
 function __gen_gethome_func_name {
 	local name=$1
-	echo -n "cvd_gethome_${name}"
+	echo -n "cf_gethome_${name}"
 }
 
 # $1 = container name; must not be empty
 function __gen_funcs {
 	local name=$1
-	local instance_id=$(cvd_get_instance_id ${name})
+	local instance_id=$(cf_get_instance_id ${name})
 	local vcid_opt="--base_instance_num=${instance_id}"
 	local login_func
 	local start_func
 	local stop_func
 	local gethome_func
 
-	if [[ "$(cvd_get_vsock_guest_cid ${name})" == "true" ]]; then
+	if [[ "$(cf_get_vsock_guest_cid ${name})" == "true" ]]; then
 	  local cid=$((instance_id + 2))
 	  vcid_opt+=("--vsock_guest_cid=${cid}")
 	fi
@@ -564,42 +564,42 @@ EOF
 	eval "${start_func}"
 	eval "${stop_func}"
 	eval "${gethome_func}"
-	eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
+	eval "export ip_${name}=$(cf_get_ip $(cf_get_id ${name}))"
 
-	if [[ "$singleshot" == "true" || -z "$cvd_script" ]]; then
+	if [[ "$singleshot" == "true" || -z "$cf_script" ]]; then
 	  return
 	fi
 }
 
 function help_on_container {
 	local name=$1
-	echo "To log into container ${name} without starting Android, call $(print_cvd_cmd login_${name})"
-	echo "To start Android in container ${name}, call $(print_cvd_cmd start_${name})"
-	echo "To stop Android in container ${name}, call $(print_cvd_cmd stop_${name})"
-	echo "To get the home directory of container ${name}, call $(print_cvd_cmd gethome_${name})"
+	echo "To log into container ${name} without starting Android, call $(print_cf_cmd login_${name})"
+	echo "To start Android in container ${name}, call $(print_cf_cmd start_${name})"
+	echo "To stop Android in container ${name}, call $(print_cf_cmd stop_${name})"
+	echo "To get the home directory of container ${name}, call $(print_cf_cmd gethome_${name})"
 }
 
 function __gen_publish_func_name {
     local name=$1
-    echo -n "cvd_publish_${name}"
+    echo -n "cf_publish_${name}"
 }
 function __gen_unpublish_func_name {
     local name=$1
-    echo -n "cvd_unpublish_${name}"
+    echo -n "cf_unpublish_${name}"
 }
 
 function __gen_publish_funcs {
     local name=$1
-    local sz=$(cvd_get_n_cf_instances ${name})
-    local instance_id=$(cvd_get_instance_id ${name})
+    local sz=$(cf_get_n_cf_instances ${name})
+    local instance_id=$(cf_get_instance_id ${name})
     local host_offset_default=$((instance_id * sz))
     local host_offset=${2:-$host_offset_default}
-    local guest_ip=$(cvd_get_ip ${name})
+    local guest_ip=$(cf_get_ip ${name})
     local guest_offset=0
     local publish_func
     local unpublish_func
 
-    if [[ "$(cvd_get_vsock_guest_cid ${name})" == "false" ]]; then
+    if [[ "$(cf_get_vsock_guest_cid ${name})" == "false" ]]; then
         # use instance_num
         guest_offset=${host_offset}
     fi
@@ -607,7 +607,7 @@ function __gen_publish_funcs {
     #
     # If not overriden, host offset port will be base + instance_id * sz
     # that is, 6444(vnc) + instance_id * no. of MAX instances in a container
-    # Host port offset can be overriden when cvd_publish_${name} is invoked
+    # Host port offset can be overriden when cf_publish_${name} is invoked
     #
     # guest port offset is independent from host offset
     # if vsock_guest_cid is given, the guest port offset is set to 0
@@ -624,7 +624,7 @@ EOF
 
 read -r -d '' unpublish_func <<EOF
 function $(__gen_unpublish_func_name ${name}) {
-  port_close $(cvd_get_ip ${name})
+  port_close $(cf_get_ip ${name})
 }
 EOF
 
@@ -637,38 +637,38 @@ EOF
 
 function help_on_export_ports() {
     local name=$1
-    echo "To export ports to container ${name}, $(print_cvd_cmd publish_${name}) [host offset]"
-    echo "      e.g. $(print_cvd_cmd publish_${name}) 0, to make the host ports same as default cuttlefish ports"
-    echo "      e.g. $(print_cvd_cmd publish_${name})    to automatically find host ports"
-    echo "To undo the exported ports for container ${name}, $(print_cvd_cmd unpublish_${name})"
+    echo "To export ports to container ${name}, $(print_cf_cmd publish_${name}) [host offset]"
+    echo "      e.g. $(print_cf_cmd publish_${name}) 0, to make the host ports same as default cuttlefish ports"
+    echo "      e.g. $(print_cf_cmd publish_${name})    to automatically find host ports"
+    echo "To undo the exported ports for container ${name}, $(print_cf_cmd unpublish_${name})"
 }
 
-if [ -z "$cvd_script" ]; then
+if [ -z "$cf_script" ]; then
     help_on_sourcing
 fi
 
-function cvd_clean_autogens() {
-	for f in $(compgen -A function cvd_login_); do
+function cf_clean_autogens() {
+	for f in $(compgen -A function cf_login_); do
 		unset -f ${f}
 	done
-	for f in $(compgen -A function cvd_start_); do
+	for f in $(compgen -A function cf_start_); do
 		unset -f ${f}
 	done
-	for f in $(compgen -A function cvd_stop_); do
+	for f in $(compgen -A function cf_stop_); do
 		unset -f ${f}
 	done
-	for f in $(compgen -A function cvd_gethome_); do
+	for f in $(compgen -A function cf_gethome_); do
 		unset -f ${f}
 	done
 }
 # If containers were removed in different shell sessions, this session might
 # have stale instances of the auto-generated functions.
-cvd_clean_autogens
-unset -f cvd_clean_autogens
+cf_clean_autogens
+unset -f cf_clean_autogens
 
 for cf in $(docker ps -q -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
 	__gen_funcs "${cf}"
-	if [ -z "$cvd_script" ]; then
+	if [ -z "$cf_script" ]; then
 		help_on_container "${cf}"
 	fi
 	__gen_publish_funcs "${cf}"
