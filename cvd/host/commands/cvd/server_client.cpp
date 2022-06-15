@@ -70,8 +70,7 @@ Result<std::optional<RequestWithStdio>> GetRequest(const SharedFD& client) {
     LOG(DEBUG) << "Has credentials, uid=" << creds->uid;
   }
 
-  return RequestWithStdio(client, std::move(request), std::move(fds),
-                          std::move(creds));
+  return RequestWithStdio(std::move(request), std::move(fds), std::move(creds));
 }
 
 Result<void> SendResponse(const SharedFD& client,
@@ -88,15 +87,10 @@ Result<void> SendResponse(const SharedFD& client,
   return {};
 }
 
-RequestWithStdio::RequestWithStdio(SharedFD client_fd, cvd::Request message,
+RequestWithStdio::RequestWithStdio(cvd::Request message,
                                    std::vector<SharedFD> fds,
                                    std::optional<ucred> creds)
-    : client_fd_(client_fd),
-      message_(message),
-      fds_(std::move(fds)),
-      creds_(creds) {}
-
-SharedFD RequestWithStdio::Client() const { return client_fd_; }
+    : message_(message), fds_(std::move(fds)), creds_(creds) {}
 
 const cvd::Request& RequestWithStdio::Message() const { return message_; }
 
