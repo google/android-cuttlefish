@@ -27,6 +27,13 @@ import (
 )
 
 const (
+	DefaultSocketPath     = "/run/cuttlefish/operator"
+	DefaultHttpPort       = "1080"
+	DefaultHttpsPort      = "1443"
+	DefaultTLSCertDir     = "/etc/cuttlefish-common/host-orchestrator/cert"
+	DefaultStaticFilesDir = "static"    // relative path
+	DefaultInterceptDir   = "intercept" // relative path
+
 	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
 	defaultCVDArtifactsDir = "/var/lib/cuttlefish-common"
 )
@@ -61,7 +68,7 @@ func fromEnvOrDefault(key string, def string) string {
 // Whether a device file request should be intercepted and served from the signaling server instead
 func maybeIntercept(path string) *string {
 	if path == "/js/server_connector.js" {
-		alt := fmt.Sprintf("%s%s", operator.DefaultInterceptDir, path)
+		alt := fmt.Sprintf("%s%s", DefaultInterceptDir, path)
 		return &alt
 	}
 	return nil
@@ -82,10 +89,10 @@ func start(starters []func() error) {
 }
 
 func main() {
-	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", operator.DefaultSocketPath)
-	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", operator.DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", operator.DefaultHttpsPort)
-	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", operator.DefaultTLSCertDir)
+	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", DefaultSocketPath)
+	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", DefaultHttpPort)
+	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", DefaultHttpsPort)
+	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"
 
@@ -113,7 +120,7 @@ func main() {
 	orchestrator.SetupInstanceManagement(r, im, om)
 	// The host orchestrator currently has no use for this, since clients won't connect
 	// to it directly, however they probably will once the multi-device feature matures.
-	fs := http.FileServer(http.Dir(operator.DefaultStaticFilesDir))
+	fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
 	r.PathPrefix("/").Handler(fs)
 	http.Handle("/", r)
 
