@@ -17,6 +17,7 @@
 #include "host/commands/cvd/server.h"
 
 #include <signal.h>
+#include <unistd.h>
 
 #include <atomic>
 #include <future>
@@ -328,6 +329,8 @@ static fruit::Component<> ServerComponent() {
 
 Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client) {
   LOG(INFO) << "Starting server";
+
+  CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
 
   signal(SIGPIPE, SIG_IGN);
 
