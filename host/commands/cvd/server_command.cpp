@@ -43,7 +43,8 @@ namespace {
 
 constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 constexpr char kStartBin[] = "cvd_internal_start";
-constexpr char kMkdirBin[] = "/bin/mkdir";
+constexpr char kLnBin[] = "ln";
+constexpr char kMkdirBin[] = "mkdir";
 
 constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
 constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
@@ -59,6 +60,7 @@ const std::map<std::string, std::string> CommandToBinaryMap = {
     {"stop_cvd", kStopBin},
     {"clear", kClearBin},
     {"mkdir", kMkdirBin},
+    {"ln", kLnBin},
     {"fleet", kFleetBin},
 };
 
@@ -233,8 +235,8 @@ class CvdCommandHandler : public CvdServerHandler {
     }
 
     Command command("(replaced)");
-    if (bin == kMkdirBin) {
-      command.SetExecutableAndName(kMkdirBin);
+    if (bin == kMkdirBin || bin == kLnBin) {
+      command.SetExecutableAndName(bin);
     } else {
       auto assembly_info = CF_EXPECT(instance_manager_.GetInstanceGroup(home));
       command.SetExecutableAndName(assembly_info.host_binaries_dir + bin);
@@ -269,15 +271,13 @@ class CvdCommandHandler : public CvdServerHandler {
       options.ExitWithParent(false);
     }
 
-    if (bin != kMkdirBin) {
-      const auto& working_dir =
-          request.Message().command_request().working_directory();
-      if (!working_dir.empty()) {
-        auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
-        CF_EXPECT(fd->IsOpen(), "Couldn't open \"" << working_dir
-                                                   << "\": " << fd->StrError());
-        command.SetWorkingDirectory(fd);
-      }
+    const auto& working_dir =
+        request.Message().command_request().working_directory();
+    if (!working_dir.empty()) {
+      auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
+      CF_EXPECT(fd->IsOpen(),
+                "Couldn't open \"" << working_dir << "\": " << fd->StrError());
+      command.SetWorkingDirectory(fd);
     }
 
     CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
