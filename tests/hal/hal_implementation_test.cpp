@@ -80,6 +80,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.media.bufferpool@1.0",
     "android.hardware.media.bufferpool@2.0",
     "android.hardware.memtrack@1.0",
+    "android.hardware.neuralnetworks@1.3", // converted to AIDL, see b/161428342
     "android.hardware.nfc@1.2",
     "android.hardware.oemlock@1.0",
     "android.hardware.power@1.3",
