@@ -33,6 +33,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
@@ -47,30 +48,8 @@ constexpr char kMkdirBin[] = "/bin/mkdir";
 
 constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
 constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
-constexpr char kHelpBin[] = "help_placeholder";  // Unused, prints kHelpMessage.
-constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
-
-usage: cvd <command> <args>
-
-Commands:
-  help                Print this message.
-  help <command>      Print help for a command.
-  start               Start a device.
-  stop                Stop a running device.
-  clear               Stop all running devices and delete all instance and assembly directories.
-  fleet               View the current fleet status.
-  kill-server         Kill the cvd_server background process.
-  restart-server      Restart the cvd_server background process.
-  status              Check and print the state of a running instance.
-  host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
-
-Args:
-  <command args>      Each command has its own set of args. See cvd help <command>.
-  --clean             If provided, runs cvd kill-server before the requested command.
-)";
 
 const std::map<std::string, std::string> CommandToBinaryMap = {
-    {"help", kHelpBin},
     {"host_bugreport", kHostBugreportBin},
     {"cvd_host_bugreport", kHostBugreportBin},
     {"start", kStartBin},
@@ -135,28 +114,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
     return response;
   }
 
-  if (bin == kHelpBin) {
-    // Handle `cvd help`
-    if (args.empty()) {
-      WriteAll(request.Out(), kHelpMessage);
-      response.mutable_status()->set_code(cvd::Status::OK);
-      return response;
-    }
-
-    // Certain commands have no detailed help text.
-    std::set<std::string> builtins = {"help", "clear", "kill-server"};
-    auto it = CommandToBinaryMap.find(args[0]);
-    if (it == CommandToBinaryMap.end() ||
-        builtins.find(args[0]) != builtins.end()) {
-      WriteAll(request.Out(), kHelpMessage);
-      response.mutable_status()->set_code(cvd::Status::OK);
-      return response;
-    }
-
-    // Handle `cvd help <subcommand>` by calling the subcommand with --help.
-    bin = it->second;
-    args_copy.push_back("--help");
-  } else if (bin == kClearBin) {
+  if (bin == kClearBin) {
     *response.mutable_status() =
         instance_manager_.CvdClear(request.Out(), request.Err());
     return response;
