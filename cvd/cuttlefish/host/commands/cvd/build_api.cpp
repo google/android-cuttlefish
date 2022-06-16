@@ -16,13 +16,16 @@
 
 #include "host/commands/cvd/build_api.h"
 
-#include "host/libs/web/http_client/http_client.h"
+#include "host/libs/web/curl_wrapper.h"
 
 namespace cuttlefish {
 
 fruit::Component<BuildApi> BuildApiModule() {
-  return fruit::createComponent().registerProvider(
-      []() { return new BuildApi(); });
+  return fruit::createComponent()
+      .registerProvider([]() { return CurlWrapper::Create().release(); })
+      .registerProvider([](CurlWrapper& curl_wrapper) {
+        return new BuildApi(curl_wrapper, /* credential_source */ nullptr);
+      });
 }
 
 }  // namespace cuttlefish
