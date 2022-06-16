@@ -195,7 +195,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.radio.network.", 2},
 
     // types-only packages, which never expect a default implementation
-    {"android.hardware.uwb.fira_android.", 1},
+    {"android.hardware.uwb.fira_android.", 2},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
