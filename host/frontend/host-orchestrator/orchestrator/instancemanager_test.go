@@ -69,8 +69,8 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 func TestCreateCVDFetchCVDFails(t *testing.T) {
 	dir := t.TempDir()
 	om := NewMapOM()
-	cvdHandler := NewCVDHandler(dir, &AlwaysFailsArtifactDownloader{})
-	im := NewInstanceManager(cvdHandler, om)
+	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{})
+	im := NewInstanceManager(dir, om, cvdDownloader)
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",
@@ -85,8 +85,8 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 	if !op.Done {
 		t.Error("expected operation to be done")
 	}
-	if op.Result.Error.ErrorMsg != ErrMsgDownloadFetchCVDFailed {
-		t.Errorf("expected <<%q>>, got %q", ErrMsgDownloadFetchCVDFailed, op.Result.Error.ErrorMsg)
+	if op.Result.Error.ErrorMsg != ErrMsgDownloadCVDFailed {
+		t.Errorf("expected <<%q>>, got %q", ErrMsgDownloadCVDFailed, op.Result.Error.ErrorMsg)
 	}
 }
 
@@ -116,10 +116,10 @@ func TestCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	downloader := &FakeArtifactDownloader{t, "foo"}
-	h := NewCVDHandler(dir, downloader)
+	ad := &FakeArtifactDownloader{t, "foo"}
+	cd := NewCVDDownloader(ad)
 
-	err = h.Download("1")
+	err = cd.Download(filename, "1")
 
 	if err != nil {
 		t.Errorf("epected <<nil>> error, got %#v", err)
@@ -137,10 +137,10 @@ func TestCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 func TestCVDHandlerDownload(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
-	downloader := &FakeArtifactDownloader{t, "foo"}
-	h := NewCVDHandler(dir, downloader)
+	ad := &FakeArtifactDownloader{t, "foo"}
+	cd := NewCVDDownloader(ad)
 
-	h.Download("1")
+	cd.Download(filename, "1")
 
 	content, _ := ioutil.ReadFile(filename)
 	actual := string(content)
@@ -153,10 +153,10 @@ func TestCVDHandlerDownload(t *testing.T) {
 func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
-	downloader := &FakeArtifactDownloader{t, "foo"}
-	h := NewCVDHandler(dir, downloader)
+	ad := &FakeArtifactDownloader{t, "foo"}
+	cd := NewCVDDownloader(ad)
 
-	h.Download("1")
+	cd.Download(filename, "1")
 
 	stats, _ := os.Stat(filename)
 	var expected os.FileMode = 0750
@@ -167,14 +167,15 @@ func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
 
 func TestCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	dir := t.TempDir()
-	downloader := &FakeArtifactDownloader{t, "foo"}
-	h := NewCVDHandler(dir, downloader)
+	filename := dir + "/cvd"
+	ad := &FakeArtifactDownloader{t, "foo"}
+	cd := NewCVDDownloader(ad)
 	expectedErr := errors.New("error")
-	h.osChmod = func(_ string, _ os.FileMode) error {
+	cd.osChmod = func(_ string, _ os.FileMode) error {
 		return expectedErr
 	}
 
-	err := h.Download("1")
+	err := cd.Download(filename, "1")
 
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
@@ -190,9 +191,9 @@ func (d *AlwaysFailsArtifactDownloader) Download(dst io.Writer, buildID, name st
 func TestCVDHandlerDownloadingFails(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
-	h := NewCVDHandler(dir, &AlwaysFailsArtifactDownloader{})
+	cd := NewCVDDownloader(&AlwaysFailsArtifactDownloader{})
 
-	err := h.Download("1")
+	err := cd.Download(filename, "1")
 
 	if err == nil {
 		t.Errorf("expected an error")

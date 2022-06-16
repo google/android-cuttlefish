@@ -107,11 +107,11 @@ func main() {
 		},
 	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
-	cvdArtifactsDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
+	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	artifactDownloader := orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)
-	cvdHandler := orchestrator.NewCVDHandler(cvdArtifactsDir, artifactDownloader)
+	cvdDownloader := orchestrator.NewCVDDownloader(artifactDownloader)
 	om := orchestrator.NewMapOM()
-	im := orchestrator.NewInstanceManager(cvdHandler, om)
+	im := orchestrator.NewInstanceManager(imRootDir, om, cvdDownloader)
 
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
