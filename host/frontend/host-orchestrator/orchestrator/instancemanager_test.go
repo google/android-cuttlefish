@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package orchestrator
 
 import (
 	"bytes"
@@ -25,7 +25,8 @@ import (
 	"strings"
 	"testing"
 
-	apiv1 "cuttlefish/host-orchestrator/api/v1"
+	apiv1 "cuttlefish/liboperator/api/v1"
+	"cuttlefish/liboperator/operator"
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
@@ -54,7 +55,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		req := validRequest
 		test.corruptRequest(&req)
 		_, err := im.CreateCVD(req)
-		var appErr *AppError
+		var appErr *operator.AppError
 		if !errors.As(err, &appErr) {
 			t.Errorf("error type <<\"%T\">> not found in error chain", appErr)
 		}

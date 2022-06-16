@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package orchestrator
 
 import (
 	"encoding/json"
@@ -24,7 +24,8 @@ import (
 	"os"
 	"sync"
 
-	apiv1 "cuttlefish/host-orchestrator/api/v1"
+	apiv1 "cuttlefish/liboperator/api/v1"
+	"cuttlefish/liboperator/operator"
 )
 
 type EmptyFieldError string
@@ -58,7 +59,7 @@ func NewInstanceManager(rootDir string, om OperationManager, cvdDownloader *CVDD
 
 func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
 	if err := validateRequest(&req); err != nil {
-		return Operation{}, NewBadRequestError("invalid CreateCVDRequest", err)
+		return Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
 	}
 	op := m.om.New()
 	go m.LaunchCVD(req, op)

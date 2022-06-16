@@ -21,9 +21,16 @@ cd android-cuttlefish
 
 Set up your environment:
 
+*Option 1*: Use `setup.sh`:
 ```bash
 source setup.sh # once in each terminal window
 ```
+
+*Option 2*: Add the `cvd` script in this directory to your `$PATH`.
+Then any command beginning `cvd_foo` listed below may be invoked as
+`cvd foo`. Any references to `$ip_foo` must be replaced with `cvd
+get_ip foo`. This option is ideal if you don't want to source the script
+in every terminal window, or if you use a shell other than bash.
 
 Create a container:
 
