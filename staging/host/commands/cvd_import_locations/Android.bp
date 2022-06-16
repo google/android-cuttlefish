@@ -58,3 +58,27 @@ cc_binary {
     ],
     defaults: ["cvd_import_locations_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_import_locations_test",
+    shared_libs: [
+        "libext2_blkid",
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+    ],
+    static_libs: [
+        "libxml2",
+        "liblocation",
+        "libgmock",
+    ],
+    srcs: [
+        "unittest/main_test.cc",
+        "unittest/kml_parser_test.cc",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
+    ],
+    defaults: ["cvd_import_locations_defaults"],
+}
