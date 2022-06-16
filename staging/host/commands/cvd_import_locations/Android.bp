@@ -75,6 +75,7 @@ cc_test_host {
     srcs: [
         "unittest/main_test.cc",
         "unittest/kml_parser_test.cc",
+        "unittest/gpx_parser_test.cc",
     ],
     cflags: [
         "-Wno-unused-parameter",
