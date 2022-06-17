@@ -18,25 +18,7 @@ package {
 }
 
 cc_defaults {
-    name: "cvd_and_fetch_cvd",
-    srcs: [
-        "acloud_command.cpp",
-        "build_api.cpp",
-        "command_sequence.cpp",
-        "epoll_loop.cpp",
-        "fetch_cvd.cc",
-        "instance_lock.cpp",
-        "instance_manager.cpp",
-        "help_command.cpp",
-        "main.cc",
-        "scope_guard.cpp",
-        "server.cc",
-        "server_client.cpp",
-        "server_command.cpp",
-        "server_restart.cpp",
-        "server_shutdown.cpp",
-        "server_version.cpp",
-    ],
+    name: "cvd_and_fetch_cvd_defaults",
     target: {
         host: {
             stl: "libc++_static",
@@ -92,6 +74,29 @@ cc_defaults {
     use_version_lib: true,
 }
 
+cc_library_host_static {
+    name: "cvd_and_fetch_cvd",
+    srcs: [
+        "acloud_command.cpp",
+        "build_api.cpp",
+        "command_sequence.cpp",
+        "epoll_loop.cpp",
+        "fetch_cvd.cc",
+        "instance_lock.cpp",
+        "instance_manager.cpp",
+        "help_command.cpp",
+        "main.cc",
+        "scope_guard.cpp",
+        "server.cc",
+        "server_client.cpp",
+        "server_command.cpp",
+        "server_restart.cpp",
+        "server_shutdown.cpp",
+        "server_version.cpp",
+    ],
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
+
 // These are set up as two separate executables rather than a symlink so that
 // either can be downloaded as a standalone statically linked executable from
 // the build system.
@@ -99,10 +104,16 @@ cc_defaults {
 cc_binary_host {
     name: "cvd",
     symlinks: ["acloud"],
-    defaults: ["cvd_and_fetch_cvd"],
+    static_libs: [
+        "cvd_and_fetch_cvd",
+    ],
+    defaults: ["cvd_and_fetch_cvd_defaults"],
 }
 
 cc_binary_host {
     name: "fetch_cvd",
-    defaults: ["cvd_and_fetch_cvd"],
+    static_libs: [
+        "cvd_and_fetch_cvd",
+    ],
+    defaults: ["cvd_and_fetch_cvd_defaults"],
 }
