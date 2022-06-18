@@ -64,18 +64,23 @@ static std::unique_ptr<ConfUiMessage> WrapWithSecureFlag(
 
 HostServer& HostServer::Get(
     HostModeCtrl& host_mode_ctrl,
-    cuttlefish::ScreenConnectorFrameRenderer& screen_connector) {
-  static HostServer host_server{host_mode_ctrl, screen_connector};
+    cuttlefish::ScreenConnectorFrameRenderer& screen_connector,
+    SharedFD from_guest_fd, SharedFD to_guest_fd) {
+  static HostServer host_server{host_mode_ctrl, screen_connector, from_guest_fd,
+                                to_guest_fd};
   return host_server;
 }
 
 HostServer::HostServer(
     cuttlefish::HostModeCtrl& host_mode_ctrl,
-    cuttlefish::ScreenConnectorFrameRenderer& screen_connector)
+    cuttlefish::ScreenConnectorFrameRenderer& screen_connector,
+    SharedFD from_guest_fd, SharedFD to_guest_fd)
     : display_num_(0),
       host_mode_ctrl_(host_mode_ctrl),
       screen_connector_{screen_connector},
-      hal_vsock_port_(HalHostVsockPort()) {
+      hal_vsock_port_(HalHostVsockPort()),
+      from_guest_fifo_fd_(from_guest_fd),
+      to_guest_fifo_fd_(to_guest_fd) {
   ConfUiLog(DEBUG) << "Confirmation UI Host session is listening on: "
                    << hal_vsock_port_;
   const size_t max_elements = 20;
