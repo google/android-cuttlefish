@@ -210,3 +210,14 @@ bool GpxParser::parseFile(const char *filePath, GpsFixArray *fixes,
   }
   return parse(doc, fixes, error);
 }
+
+bool GpxParser::parseString(const char *str, int len, GpsFixArray *fixes,
+                            string *error) {
+  xmlDocPtr doc = xmlReadMemory(str, len, NULL, NULL, 0);
+  if (doc == nullptr) {
+    cleanupXmlDoc(doc);
+    *error = "GPX document not parsed successfully.";
+    return false;
+  }
+  return parse(doc, fixes, error);
+}
