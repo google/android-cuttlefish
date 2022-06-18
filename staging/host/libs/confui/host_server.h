@@ -44,9 +44,9 @@ namespace cuttlefish {
 namespace confui {
 class HostServer : public HostVirtualInput {
  public:
-  static HostServer& Get(
-      HostModeCtrl& host_mode_ctrl,
-      cuttlefish::ScreenConnectorFrameRenderer& screen_connector);
+  static HostServer& Get(HostModeCtrl& host_mode_ctrl,
+                         ScreenConnectorFrameRenderer& screen_connector,
+                         SharedFD from_guest_fd, SharedFD to_guest_fd);
 
   void Start();  // start this server itself
   virtual ~HostServer() {}
@@ -57,9 +57,9 @@ class HostServer : public HostVirtualInput {
   bool IsConfUiActive() override;
 
  private:
-  explicit HostServer(
-      cuttlefish::HostModeCtrl& host_mode_ctrl,
-      cuttlefish::ScreenConnectorFrameRenderer& screen_connector);
+  explicit HostServer(HostModeCtrl& host_mode_ctrl,
+                      ScreenConnectorFrameRenderer& screen_connector,
+                      SharedFD from_guest_fd, SharedFD to_guest_fd);
   HostServer() = delete;
 
   /**
@@ -144,6 +144,8 @@ class HostServer : public HostVirtualInput {
   SharedFD guest_hal_socket_;
   // ACCEPTED fd on guest_hal_socket_
   SharedFD hal_cli_socket_;
+  SharedFD from_guest_fifo_fd_;
+  SharedFD to_guest_fifo_fd_;
 
   using Multiplexer =
       Multiplexer<std::unique_ptr<ConfUiMessage>,

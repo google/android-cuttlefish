@@ -216,8 +216,14 @@ int main(int argc, char** argv) {
   // create confirmation UI service, giving host_mode_ctrl and
   // screen_connector
   // keep this singleton object alive until the webRTC process ends
-  static auto& host_confui_server =
-      cuttlefish::confui::HostServer::Get(host_mode_ctrl, screen_connector);
+  auto confui_from_guest_fd = cuttlefish::SharedFD::Dup(FLAGS_confui_in_fd);
+  close(FLAGS_confui_in_fd);
+  auto confui_to_guest_fd = cuttlefish::SharedFD::Dup(FLAGS_confui_out_fd);
+  close(FLAGS_confui_out_fd);
+
+  auto& host_confui_server = cuttlefish::confui::HostServer::Get(
+      host_mode_ctrl, screen_connector, confui_from_guest_fd,
+      confui_to_guest_fd);
 
   StreamerConfig streamer_config;
 

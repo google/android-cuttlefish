@@ -334,6 +334,10 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     }
   }
 
+  crosvm_cmd.AddHvcReadWrite(
+      instance.PerInstanceInternalPath("confui_fifo_vm.out"),
+      instance.PerInstanceInternalPath("confui_fifo_vm.in"));
+
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }

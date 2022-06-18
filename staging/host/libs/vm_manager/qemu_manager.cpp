@@ -452,6 +452,8 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     }
   }
 
+  add_hvc(instance.PerInstanceInternalPath("confui_fifo_vm"));
+
   auto disk_num = instance.virtual_disk_paths().size();
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
