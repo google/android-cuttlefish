@@ -183,3 +183,31 @@ bool KmlParser::parseFile(const char* filePath, GpsFixArray* fixes,
 
   return isWellFormed;
 }
+
+bool KmlParser::parseString(const char* str, int len, GpsFixArray* fixes,
+                            string* error) {
+  // This initializes the library and checks potential ABI mismatches between
+  // the version it was compiled for and the actual shared library used.
+  LIBXML_TEST_VERSION
+
+  xmlDocPtr doc = xmlReadMemory(str, len, NULL, NULL, 0);
+  if (doc == nullptr) {
+    *error = "KML document not parsed successfully.";
+    xmlFreeDoc(doc);
+    return false;
+  }
+
+  xmlNodePtr cur = xmlDocGetRootElement(doc);
+  if (cur == nullptr) {
+    *error = "Could not get root element of parsed KML file.";
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+    return false;
+  }
+  bool isWellFormed = traverseSubtree(cur, fixes, error);
+
+  xmlFreeDoc(doc);
+  xmlCleanupParser();
+
+  return isWellFormed;
+}
