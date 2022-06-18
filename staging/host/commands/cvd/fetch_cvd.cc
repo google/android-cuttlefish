@@ -53,6 +53,8 @@ DEFINE_string(default_build, DEFAULT_BRANCH + "/" + DEFAULT_BUILD_TARGET,
               "source for the cuttlefish build to use (vendor.img + host)");
 DEFINE_string(system_build, "", "source for system.img and product.img");
 DEFINE_string(kernel_build, "", "source for the kernel or gki target");
+DEFINE_string(boot_build, "", "source for the boot or gki target");
+DEFINE_string(boot_artifact, "", "name of the boot image in boot_build");
 DEFINE_string(bootloader_build, "", "source for the bootloader target");
 DEFINE_string(otatools_build, "", "source for the host ota tools");
 
@@ -99,10 +101,8 @@ Result<std::string> TargetBuildZipFromArtifacts(
   return match;
 }
 
-Result<std::vector<std::string>> DownloadImages(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory,
-    const std::vector<std::string>& images) {
+Result<std::string> DownloadImageZip(BuildApi& build_api, const Build& build,
+                                     const std::string& target_directory) {
   auto artifacts = CF_EXPECT(build_api.Artifacts(build));
   std::string img_zip_name =
       CF_EXPECT(TargetBuildZipFromArtifacts(build, "img", artifacts));
@@ -110,6 +110,15 @@ Result<std::vector<std::string>> DownloadImages(
   CF_EXPECT(build_api.ArtifactToFile(build, img_zip_name, local_path),
             "Unable to download " << build << ":" << img_zip_name << " to "
                                   << local_path);
+  return local_path;
+}
+
+Result<std::vector<std::string>> DownloadImages(
+    BuildApi& build_api, const Build& build,
+    const std::string& target_directory,
+    const std::vector<std::string>& images) {
+  std::string local_path =
+      CF_EXPECT(DownloadImageZip(build_api, build, target_directory));
 
   std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
   CF_EXPECT(!files.empty(), "Could not extract " << local_path);
@@ -119,6 +128,7 @@ Result<std::vector<std::string>> DownloadImages(
   }
   return files;
 }
+
 Result<std::vector<std::string>> DownloadImages(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory) {
@@ -192,6 +202,50 @@ Result<std::vector<std::string>> DownloadOtaTools(
     file = target_directory + OTA_TOOLS_DIR + file;
   }
   files.push_back(local_path);
+  return files;
+}
+
+Result<std::vector<std::string>> DownloadBoot(
+    BuildApi& build_api, Build& build, const std::string& specified_artifact,
+    const std::string& target_dir) {
+  std::string target_boot = target_dir + "/boot.img";
+  const std::string& boot_artifact =
+      specified_artifact != "" ? specified_artifact : "boot.img";
+  if (specified_artifact != "") {
+    auto artifacts = CF_EXPECT(build_api.Artifacts(build));
+    if (ArtifactsContains(artifacts, boot_artifact)) {
+      CF_EXPECT(build_api.ArtifactToFile(build, boot_artifact, target_boot),
+                "Could not download " << build << ":" << boot_artifact << " to "
+                                      << target_boot);
+      return {{target_boot}};
+    }
+    LOG(INFO) << "Find " << boot_artifact << " in the img zip";
+  }
+
+  std::vector<std::string> files{target_boot};
+  std::string img_zip =
+      CF_EXPECT(DownloadImageZip(build_api, build, target_dir));
+  std::vector<std::string> extracted_boot =
+      ExtractImages(img_zip, target_dir, {boot_artifact});
+  CF_EXPECT(!extracted_boot.empty(),
+            "No " << boot_artifact << " in the img zip.");
+  if (extracted_boot[0] != target_boot) {
+    CF_EXPECT(rename(extracted_boot[0].c_str(), target_boot.c_str()) == 0,
+              "rename(\"" << extracted_boot[0] << "\", \"" << target_boot
+                          << "\") failed: " << strerror(errno));
+  }
+
+  std::vector<std::string> extracted_vendor_boot =
+      ExtractImages(img_zip, target_dir, {"vendor_boot.img"});
+  if (!extracted_vendor_boot.empty()) {
+    files.push_back(extracted_vendor_boot[0]);
+  } else {
+    LOG(INFO) << "No vendor_boot.img in the img zip.";
+  }
+
+  if (unlink(img_zip.c_str()) != 0) {
+    LOG(ERROR) << "Could not delete " << img_zip;
+  }
   return files;
 }
 
@@ -464,6 +518,15 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                    {target_dir + "/initramfs.img"}, &config,
                                    target_dir));
       }
+    }
+
+    if (FLAGS_boot_build != "") {
+      auto boot_build = CF_EXPECT(ArgumentToBuild(
+          build_api, FLAGS_boot_build, "gki_x86_64-user", retry_period));
+      std::vector<std::string> boot_files = CF_EXPECT(
+          DownloadBoot(build_api, boot_build, FLAGS_boot_artifact, target_dir));
+      CF_EXPECT(AddFilesToConfig(FileSource::BOOT_BUILD, boot_build, boot_files,
+                                 &config, target_dir, true));
     }
 
     if (FLAGS_bootloader_build != "") {
