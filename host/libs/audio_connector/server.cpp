@@ -349,7 +349,7 @@ bool AudioClientConnection::CmdReply(AudioStatus status, const void* data,
 
 const volatile uint8_t* AudioClientConnection::TxBufferAt(size_t offset,
                                                           size_t len) const {
-  CHECK(offset < tx_shm_.len() && tx_shm_.len() - offset > len)
+  CHECK(tx_shm_.WithinBounds(offset, len))
       << "Tx buffer bounds outside the buffer area: " << offset << " " << len;
   const void* ptr = tx_shm_.get();
   return &reinterpret_cast<const volatile uint8_t*>(ptr)[offset];
@@ -357,7 +357,7 @@ const volatile uint8_t* AudioClientConnection::TxBufferAt(size_t offset,
 
 volatile uint8_t* AudioClientConnection::RxBufferAt(size_t offset,
                                                     size_t len) {
-  CHECK(offset < rx_shm_.len() && rx_shm_.len() - offset > len)
+  CHECK(rx_shm_.WithinBounds(offset, len))
       << "Rx buffer bounds outside the buffer area: " << offset << " " << len;
   void* ptr = rx_shm_.get();
   return &reinterpret_cast<volatile uint8_t*>(ptr)[offset];
