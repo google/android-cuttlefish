@@ -28,4 +28,7 @@ class GpxParser {
    */
   static bool parseFile(const char *filePath, GpsFixArray *fixes,
                         std::string *error);
+
+  static bool parseString(const char *str, int len, GpsFixArray *fixes,
+                          std::string *error);
 };
