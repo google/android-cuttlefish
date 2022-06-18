@@ -214,6 +214,13 @@ class ScopedMMap {
 
   operator bool() const { return ptr_ != MAP_FAILED; }
 
+  // Checks whether the interval [offset, offset + length) is contained within
+  // [0, len_)
+  bool WithinBounds(size_t offset, size_t length) const {
+    // Don't add offset + len to avoid overflow
+    return offset < len_ && len_ - offset >= length;
+  }
+
  private:
   void* ptr_ = MAP_FAILED;
   size_t len_;
