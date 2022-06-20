@@ -89,6 +89,11 @@ std::optional<WmediumdMessageStationsList> WmediumdController::GetStations(
   return WmediumdMessageStationsList::Parse(*reply);
 }
 
+bool WmediumdController::SetPosition(const std::string& node, double x,
+                                     double y) {
+  return SendMessage(WmediumdMessageSetPosition(node, x, y));
+}
+
 bool WmediumdController::SendMessage(const WmediumdMessage& message) {
   auto reply = SendMessageWithReply(message);
 
