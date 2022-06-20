@@ -20,11 +20,15 @@
 #include <android-base/strings.h>
 
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "common/libs/fs/shared_buf.h"
+
+#define MAC_ADDR_LEN 6
+#define STR_MAC_ADDR_LEN 17
 
 template <class T>
 static void AppendBinaryRepresentation(std::string& buf, const T& data) {
@@ -33,7 +37,61 @@ static void AppendBinaryRepresentation(std::string& buf, const T& data) {
             std::back_inserter(buf));
 }
 
+static std::array<uint8_t, 6> ParseMacAddress(const std::string& macAddr) {
+  if (!cuttlefish::ValidMacAddr(macAddr)) {
+    LOG(FATAL) << "invalid mac address " << macAddr;
+  }
+
+  auto split_mac = android::base::Split(macAddr, ":");
+  std::array<uint8_t, 6> mac;
+  for (int i = 0; i < 6; i++) {
+    char* end_ptr;
+    mac[i] = (uint8_t)strtol(split_mac[i].c_str(), &end_ptr, 16);
+  }
+
+  return mac;
+}
+
 namespace cuttlefish {
+
+bool ValidMacAddr(const std::string& macAddr) {
+  if (macAddr.size() != STR_MAC_ADDR_LEN) {
+    return false;
+  }
+
+  if (macAddr[2] != ':' || macAddr[5] != ':' || macAddr[8] != ':' ||
+      macAddr[11] != ':' || macAddr[14] != ':') {
+    return false;
+  }
+
+  for (int i = 0; i < STR_MAC_ADDR_LEN; ++i) {
+    if ((i - 2) % 3 == 0) continue;
+    char c = macAddr[i];
+
+    if (isupper(c)) {
+      c = tolower(c);
+    }
+
+    if ((c < '0' || c > '9') && (c < 'a' || c > 'f')) return false;
+  }
+
+  return true;
+}
+
+std::string MacToString(const char* macAddr) {
+  std::stringstream result;
+
+  for (int i = 0; i < MAC_ADDR_LEN; i++) {
+    result << std::setfill('0') << std::setw(2) << std::right << std::hex
+           << static_cast<int>(static_cast<uint8_t>(macAddr[i]));
+
+    if (i != 5) {
+      result << ":";
+    }
+  }
+
+  return result.str();
+}
 
 std::string WmediumdMessage::Serialize(void) const {
   std::string result;
@@ -57,30 +115,8 @@ void WmediumdMessageSetControl::SerializeBody(std::string& buf) const {
 WmediumdMessageSetSnr::WmediumdMessageSetSnr(const std::string& node1,
                                              const std::string& node2,
                                              uint8_t snr) {
-  auto splitted_mac1 = android::base::Split(node1, ":");
-  auto splitted_mac2 = android::base::Split(node2, ":");
-
-  if (splitted_mac1.size() != 6) {
-    LOG(FATAL) << "invalid mac address length " << node1;
-  }
-
-  if (splitted_mac2.size() != 6) {
-    LOG(FATAL) << "invalid mac address length " << node2;
-  }
-
-  for (int i = 0; i < 6; i++) {
-    char* end_ptr;
-    node1_mac_[i] = (uint8_t)strtol(splitted_mac1[i].c_str(), &end_ptr, 16);
-    if (end_ptr != splitted_mac1[i].c_str() + splitted_mac1[i].size()) {
-      LOG(FATAL) << "cannot parse " << splitted_mac1[i] << " of " << node1;
-    }
-
-    node2_mac_[i] = (uint8_t)strtol(splitted_mac2[i].c_str(), &end_ptr, 16);
-    if (end_ptr != splitted_mac2[i].c_str() + splitted_mac2[i].size()) {
-      LOG(FATAL) << "cannot parse " << splitted_mac2[i] << " of " << node1;
-    }
-  }
-
+  node1_mac_ = ParseMacAddress(node1);
+  node2_mac_ = ParseMacAddress(node2);
   snr_ = snr;
 }
 
@@ -102,6 +138,19 @@ void WmediumdMessageStartPcap::SerializeBody(std::string& buf) const {
   std::copy(std::begin(pcap_path_), std::end(pcap_path_),
             std::back_inserter(buf));
   buf.push_back('\0');
+}
+
+WmediumdMessageSetPosition::WmediumdMessageSetPosition(const std::string& node,
+                                                       double x, double y) {
+  mac_ = ParseMacAddress(node);
+  x_ = x;
+  y_ = y;
+}
+
+void WmediumdMessageSetPosition::SerializeBody(std::string& buf) const {
+  std::copy(std::begin(mac_), std::end(mac_), std::back_inserter(buf));
+  AppendBinaryRepresentation(buf, x_);
+  AppendBinaryRepresentation(buf, y_);
 }
 
 std::optional<WmediumdMessageStationsList> WmediumdMessageStationsList::Parse(
