@@ -15,6 +15,7 @@
  */
 
 #include <android-base/logging.h>
+#include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
 #include <gflags/gflags.h>
 
@@ -27,6 +28,7 @@
 #include <vector>
 
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/wmediumd_controller/wmediumd_api_protocol.h"
 #include "host/libs/wmediumd_controller/wmediumd_controller.h"
 
 const std::string usageMessage =
@@ -44,51 +46,15 @@ const std::string usageMessage =
     "    stop_pcap\n"
     "      stop packet capture\n\n"
     "    list_stations\n"
-    "      listing stations connected to wmediumd\n\n";
+    "      listing stations connected to wmediumd\n\n"
+    "    set_position mac xpos ypos\n"
+    "      set X, Y positions of specific station\n"
+    "      use -- before set_position if you want to set the position with "
+    "negative values\n"
+    "        e.g. wmediumd_control -- set_position -1.0 -2.0\n\n";
 
 DEFINE_string(wmediumd_api_server, "",
               "Unix socket path of wmediumd api server");
-
-const int kMacAddrStringSize = 17;
-
-bool ValidMacAddr(const std::string& macAddr) {
-  if (macAddr.size() != kMacAddrStringSize) {
-    return false;
-  }
-
-  if (macAddr[2] != ':' || macAddr[5] != ':' || macAddr[8] != ':' ||
-      macAddr[11] != ':' || macAddr[14] != ':') {
-    return false;
-  }
-
-  for (int i = 0; i < kMacAddrStringSize; ++i) {
-    if ((i - 2) % 3 == 0) continue;
-    char c = macAddr[i];
-
-    if (isupper(c)) {
-      c = tolower(c);
-    }
-
-    if ((c < '0' || c > '9') && (c < 'a' || c > 'f')) return false;
-  }
-
-  return true;
-}
-
-std::string MacToString(const char* macAddr) {
-  std::stringstream result;
-
-  for (int i = 0; i < ETH_ALEN; i++) {
-    result << std::setfill('0') << std::setw(2) << std::right << std::hex
-           << static_cast<int>(static_cast<uint8_t>(macAddr[i]));
-
-    if (i != 5) {
-      result << ":";
-    }
-  }
-
-  return result.str();
-}
 
 bool HandleSetSnrCommand(cuttlefish::WmediumdController& client,
                          const std::vector<std::string>& args) {
@@ -97,12 +63,12 @@ bool HandleSetSnrCommand(cuttlefish::WmediumdController& client,
     return false;
   }
 
-  if (!ValidMacAddr(args[1])) {
+  if (!cuttlefish::ValidMacAddr(args[1])) {
     LOG(ERROR) << "error: invalid mac address " << args[1];
     return false;
   }
 
-  if (!ValidMacAddr(args[2])) {
+  if (!cuttlefish::ValidMacAddr(args[2])) {
     LOG(ERROR) << "error: invalid mac address " << args[2];
     return false;
   }
@@ -190,13 +156,48 @@ bool HandleListStationsCommand(cuttlefish::WmediumdController& client,
             << "TX Power" << std::endl;
 
   for (auto& station : stationList) {
-    std::cout << MacToString(station.addr) << "\t" << std::setprecision(1)
-              << std::fixed << station.x << "\t" << std::setprecision(1)
-              << std::fixed << station.y << "\t" << station.tx_power
-              << std::endl;
+    std::cout << cuttlefish::MacToString(station.addr) << "\t"
+              << std::setprecision(1) << std::fixed << station.x << "\t"
+              << std::setprecision(1) << std::fixed << station.y << "\t"
+              << station.tx_power << std::endl;
   }
 
   std::cout << std::endl;
+
+  return true;
+}
+
+bool HandleSetPositionCommand(cuttlefish::WmediumdController& client,
+                              const std::vector<std::string>& args) {
+  if (args.size() != 4) {
+    LOG(ERROR) << "error: set_position must provide 3 options";
+    return false;
+  }
+
+  if (!cuttlefish::ValidMacAddr(args[1])) {
+    LOG(ERROR) << "error: invalid mac address " << args[1];
+    return false;
+  }
+
+  double x = 0;
+  double y = 0;
+
+  auto parseResultX = android::base::ParseDouble(args[2].c_str(), &x);
+  auto parseResultY = android::base::ParseDouble(args[3].c_str(), &y);
+
+  if (!parseResultX) {
+    LOG(ERROR) << "error: cannot parse X: " << args[2];
+    return false;
+  }
+
+  if (!parseResultY) {
+    LOG(ERROR) << "error: cannot parse Y: " << args[3];
+    return false;
+  }
+
+  if (!client.SetPosition(args[1], x, y)) {
+    return false;
+  }
 
   return true;
 }
@@ -246,6 +247,7 @@ int main(int argc, char** argv) {
           {"start_pcap", HandleStartPcapCommand},
           {"stop_pcap", HandleStopPcapCommand},
           {"list_stations", HandleListStationsCommand},
+          {"set_position", HandleSetPositionCommand},
       }};
 
   if (commandMap.find(args[0]) == std::end(commandMap)) {
