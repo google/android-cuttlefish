@@ -168,6 +168,7 @@ function build_docker_image {
 
 function is_rebuild_debs() {
   local -a required_packages=("cuttlefish-base" \
+                              "cuttlefish-user" \
                               "cuttlefish-common" \
                               "cuttlefish-integration" \
                               "cuttlefish-integration-dbgsym")
