@@ -42,6 +42,8 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
+using cuttlefish::StringFromEnv;
+
 namespace cuttlefish {
 namespace vm_manager {
 namespace {
@@ -84,6 +86,7 @@ void GenerateGem5File(const CuttlefishConfig& config) {
   starter_fs_ofstream << "  parser.add_argument(\"--mem-channels\", type=int, default=" << mem_channels << ")\n";
   starter_fs_ofstream << "  parser.add_argument(\"--mem-ranks\", type=int, default=" << mem_ranks << ")\n";
   starter_fs_ofstream << "  parser.add_argument(\"--mem-size\", action=\"store\", type=str, default=\"" << config.memory_mb() << "MB\")\n";
+  starter_fs_ofstream << "  parser.add_argument(\"--restore\", type=str, default=None)\n";
   starter_fs_ofstream << "  args = parser.parse_args()\n";
 
   // instantiate system
@@ -102,6 +105,7 @@ void GenerateGem5File(const CuttlefishConfig& config) {
   starter_fs_ofstream << "  root.system.workload.dtb_filename = os.path.join(m5.options.outdir, 'system.dtb')\n";
   starter_fs_ofstream << "  root.system.generateDtb(root.system.workload.dtb_filename)\n";
   starter_fs_ofstream << "  root.system.workload.initrd_filename = \"" << instance.PerInstancePath("initrd.img") << "\"\n";
+  starter_fs_ofstream << "  root_dir = \"" << StringFromEnv("HOME", ".") << "\"\n";
 
   //kernel cmd
   starter_fs_ofstream << fs_kernel_cmd << "\n";
@@ -172,6 +176,12 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
 
   Command gem5_cmd(gem5_binary, stop);
   gem5_cmd.AddParameter(config.gem5_binary_dir(), "/configs/example/arm/starter_fs.py");
+
+  // restore checkpoint case
+  if(config.gem5_checkpoint_dir() != "") {
+    gem5_cmd.AddParameter("--restore=", config.gem5_checkpoint_dir());
+  }
+
   gem5_cmd.AddParameter("--mem-size=", config.memory_mb() * 1024ULL * 1024ULL);
   for (const auto& disk : instance.virtual_disk_paths()) {
     gem5_cmd.AddParameter("--disk-image=", disk);
