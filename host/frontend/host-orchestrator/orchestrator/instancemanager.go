@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"sync"
 
 	apiv1 "cuttlefish/liboperator/api/v1"
@@ -35,60 +36,38 @@ func (s EmptyFieldError) Error() string {
 }
 
 type IMPaths struct {
-	CVDBin string
+	RootDir string
+	CVDBin  string
 }
 
 type InstanceManager struct {
-	rootDir          string
-	om               OperationManager
-	cvdDownloader    *CVDDownloader
-	downloadCVDMutex sync.Mutex
-	paths            IMPaths
-}
-
-func NewInstanceManager(rootDir string, om OperationManager, cvdDownloader *CVDDownloader) *InstanceManager {
-	return &InstanceManager{
-		rootDir:       rootDir,
-		om:            om,
-		cvdDownloader: cvdDownloader,
-		paths: IMPaths{
-			CVDBin: rootDir + "/cvd",
-		},
-	}
+	OM                         OperationManager
+	LaunchCVDProcedureBuilding LaunchCVDProcedureBuilding
 }
 
 func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
 	if err := validateRequest(&req); err != nil {
 		return Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
 	}
-	op := m.om.New()
+	op := m.OM.New()
 	go m.LaunchCVD(req, op)
 	return op, nil
 }
 
-const ErrMsgDownloadCVDFailed = "failed to download cvd"
+const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
-// This logic isn't complete yet, it's work in progress.
+// TODO(b/236398043): Return more granular and informative errors.
 func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
-	if err := m.downloadCVD(req.FetchCVDBuildID); err != nil {
-		log.Printf("failed to download cvd with error: %v", err)
+	p := m.LaunchCVDProcedureBuilding.Build(req)
+	if err := p.Execute(); err != nil {
+		log.Printf("failed to launch cvd with error: %v", err)
 		result := OperationResult{
-			Error: OperationResultError{ErrMsgDownloadCVDFailed},
+			Error: OperationResultError{ErrMsgLaunchCVDFailed},
 		}
-		if err := m.om.Complete(op.Name, result); err != nil {
-			log.Printf("failed to complete operation with error: %v", err)
-		}
-		return
+		m.completeOperation(op.Name, result)
+	} else {
+		m.completeOperation(op.Name, OperationResult{})
 	}
-	if err := m.om.Complete(op.Name, OperationResult{}); err != nil {
-		log.Printf("failed to complete operation with error: %v", err)
-	}
-}
-
-func (m *InstanceManager) downloadCVD(buildID string) error {
-	m.downloadCVDMutex.Lock()
-	defer m.downloadCVDMutex.Unlock()
-	return m.cvdDownloader.Download(m.paths.CVDBin, buildID)
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
@@ -105,6 +84,88 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 		return EmptyFieldError("FetchCVDBuildID")
 	}
 	return nil
+}
+
+func (m *InstanceManager) completeOperation(opName string, result OperationResult) {
+	if err := m.OM.Complete(opName, result); err != nil {
+		log.Printf("failed to complete operation with error: %v", err)
+	}
+}
+
+type ProcedureStage interface {
+	Run() error
+}
+
+type Procedure []ProcedureStage
+
+func (p Procedure) Execute() error {
+	for _, s := range p {
+		if err := s.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type LaunchCVDProcedureBuilding interface {
+	Build(req apiv1.CreateCVDRequest) Procedure
+}
+
+type LaunchCVDProcedureBuilder struct {
+	Paths               IMPaths
+	CVDDownloader       *CVDDownloader
+	StartCVDServerCmd   StartCVDServerCmd
+	downloadCVDMutex    sync.Mutex
+	startCVDServerMutex sync.Mutex
+	cvdServerStarted    bool
+}
+
+func (b *LaunchCVDProcedureBuilder) Build(req apiv1.CreateCVDRequest) Procedure {
+	return []ProcedureStage{
+		&StageDownloadCVD{
+			CVDBin:     b.Paths.CVDBin,
+			BuildID:    req.FetchCVDBuildID,
+			Downloader: b.CVDDownloader,
+			Mutex:      &b.downloadCVDMutex,
+		},
+		&StageStartCVDServer{
+			StartCVDServerCmd: b.StartCVDServerCmd,
+			Mutex:             &b.startCVDServerMutex,
+			Started:           &b.cvdServerStarted,
+		},
+	}
+}
+
+type StageDownloadCVD struct {
+	CVDBin     string
+	BuildID    string
+	Downloader *CVDDownloader
+	Mutex      *sync.Mutex
+}
+
+func (s *StageDownloadCVD) Run() error {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	return s.Downloader.Download(s.CVDBin, s.BuildID)
+}
+
+type StageStartCVDServer struct {
+	StartCVDServerCmd StartCVDServerCmd
+	Mutex             *sync.Mutex
+	Started           *bool
+}
+
+func (s *StageStartCVDServer) Run() error {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	if *s.Started {
+		return nil
+	}
+	err := s.StartCVDServerCmd.Run(exec.Command)
+	if err == nil {
+		*s.Started = true
+	}
+	return err
 }
 
 type CVDDownloader struct {
@@ -228,4 +289,32 @@ func BuildGetSignedURL(baseURL, buildID, name string) string {
 		"latest",
 		name)
 	return baseURL + uri
+}
+
+const envVarAndroidHostOut = "ANDROID_HOST_OUT"
+
+type ExecContext = func(name string, arg ...string) *exec.Cmd
+
+type StartCVDServerCmd interface {
+	Run(execContext ExecContext) error
+}
+
+type CVDSubcmdStartCVDServer struct {
+	CVDBin string
+}
+
+func (c *CVDSubcmdStartCVDServer) Run(execContext ExecContext) error {
+	if err := os.Setenv("ANDROID_HOST_OUT", ""); err != nil {
+		return err
+	}
+	cmd := execContext(c.CVDBin)
+	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
+	// file descriptor to the null device (os.DevNull).
+	// Otherwise, pipes will be used instead and Run will never complete because
+	// the pipes will be passed over to `cvd_server` and will never reach EOF as
+	// `cvd_server` which is a daemon.
+	// Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
 }
