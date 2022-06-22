@@ -310,10 +310,10 @@ func (c *CVDSubcmdStartCVDServer) Run(execContext ExecContext) error {
 	cmd := execContext(c.CVDBin)
 	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
 	// file descriptor to the null device (os.DevNull).
-	// Otherwise, pipes will be used instead and Run will never complete because
-	// the pipes will be passed over to `cvd_server` and will never reach EOF as
-	// `cvd_server` which is a daemon.
-	// Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
+	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
+	// the data of the new process, this pipe will be passed over to `cvd_server`,
+	// which is a daemon, hence the pipe will never reach EOF and Run will never
+	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	return cmd.Run()
