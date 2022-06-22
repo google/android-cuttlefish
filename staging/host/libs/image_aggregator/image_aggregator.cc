@@ -571,7 +571,8 @@ void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& output_overlay_path) {
   Command cmd(crosvm_path);
   cmd.AddParameter("create_qcow2");
-  cmd.AddParameter("--backing_file=", backing_file);
+  cmd.AddParameter("--backing-file");
+  cmd.AddParameter(backing_file);
   cmd.AddParameter(output_overlay_path);
 
   std::string stdout_str;
@@ -581,7 +582,7 @@ void CreateQcowOverlay(const std::string& crosvm_path,
 
   if (success != 0) {
     LOG(ERROR) << "Failed to run `" << crosvm_path
-               << " create_qcow2 --backing_file=" << backing_file << " "
+               << " create_qcow2 --backing-file " << backing_file << " "
                << output_overlay_path << "`";
     LOG(ERROR) << "stdout:\n###\n" << stdout_str << "\n###";
     LOG(ERROR) << "stderr:\n###\n" << stderr_str << "\n###";
