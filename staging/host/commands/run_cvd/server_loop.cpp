@@ -42,7 +42,8 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& output_overlay_path) {
   Command crosvm_qcow2_cmd(crosvm_path);
   crosvm_qcow2_cmd.AddParameter("create_qcow2");
-  crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
+  crosvm_qcow2_cmd.AddParameter("--backing-file");
+  crosvm_qcow2_cmd.AddParameter(backing_file);
   crosvm_qcow2_cmd.AddParameter(output_overlay_path);
   int success = crosvm_qcow2_cmd.Start().Wait();
   if (success != 0) {
