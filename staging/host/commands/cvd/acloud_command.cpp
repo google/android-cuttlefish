@@ -246,7 +246,17 @@ class ConvertAcloudCreateCommand {
       mkdir_command.add_args(dir);
       auto& mkdir_env = *mkdir_command.mutable_env();
       mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
-      *mkdir_command.mutable_working_directory() = dir;
+
+      cvd::Request& ln_request = request_protos.emplace_back();
+      auto& ln_command = *ln_request.mutable_command_request();
+      ln_command.add_args("cvd");
+      ln_command.add_args("ln");
+      ln_command.add_args("-f");
+      ln_command.add_args("-s");
+      ln_command.add_args(host_artifacts_path->second);
+      ln_command.add_args(dir + "/host_bins");
+      auto& ln_env = *ln_command.mutable_env();
+      ln_env[kAndroidHostOut] = host_artifacts_path->second;
     } else {
       cvd::Request& fetch_request = request_protos.emplace_back();
       auto& fetch_command = *fetch_request.mutable_command_request();
@@ -277,9 +287,19 @@ class ConvertAcloudCreateCommand {
             branch.value_or("aosp_kernel-common-android-mainline"));
         fetch_command.add_args(build + "/" + target);
       }
-      *fetch_command.mutable_working_directory() = dir;
       auto& fetch_env = *fetch_command.mutable_env();
       fetch_env[kAndroidHostOut] = host_artifacts_path->second;
+
+      cvd::Request& ln_request = request_protos.emplace_back();
+      auto& ln_command = *ln_request.mutable_command_request();
+      ln_command.add_args("cvd");
+      ln_command.add_args("ln");
+      ln_command.add_args("-f");
+      ln_command.add_args("-s");
+      ln_command.add_args(dir);
+      ln_command.add_args(dir + "/host_bins");
+      auto& ln_env = *ln_command.mutable_env();
+      ln_env[kAndroidHostOut] = host_artifacts_path->second;
     }
 
     cvd::Request& start_request = request_protos.emplace_back();
