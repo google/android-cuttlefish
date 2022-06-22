@@ -92,21 +92,6 @@ Result<CvdServerHandler*> RequestHandler(
     const RequestWithStdio& request,
     const std::vector<CvdServerHandler*>& handlers);
 
-class CvdCommandHandler : public CvdServerHandler {
- public:
-  INJECT(CvdCommandHandler(InstanceManager& instance_manager));
-
-  Result<bool> CanHandle(const RequestWithStdio&) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio&) override;
-  Result<void> Interrupt() override;
-
- private:
-  InstanceManager& instance_manager_;
-  std::optional<Subprocess> subprocess_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
-};
-
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent();
 fruit::Component<fruit::Required<BuildApi, CvdServer, InstanceManager>>
 CvdRestartComponent();
