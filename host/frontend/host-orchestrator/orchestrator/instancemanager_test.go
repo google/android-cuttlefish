@@ -79,7 +79,7 @@ type testLaunchCVDProcedureBuilder struct {
 	err error
 }
 
-func (b *testLaunchCVDProcedureBuilder) Build(_ apiv1.CreateCVDRequest) Procedure {
+func (b *testLaunchCVDProcedureBuilder) Build(_ interface{}) Procedure {
 	return []ProcedureStage{
 		&testProcedureStage{
 			err: b.err,
@@ -90,8 +90,8 @@ func (b *testLaunchCVDProcedureBuilder) Build(_ apiv1.CreateCVDRequest) Procedur
 func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
 	om := NewMapOM()
 	im := InstanceManager{
-		OM:                         om,
-		LaunchCVDProcedureBuilding: &testLaunchCVDProcedureBuilder{err: errors.New("error")},
+		OM:                        om,
+		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{err: errors.New("error")},
 	}
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{
@@ -115,8 +115,8 @@ func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
 func TestCreateCVD(t *testing.T) {
 	om := NewMapOM()
 	im := InstanceManager{
-		OM:                         om,
-		LaunchCVDProcedureBuilding: &testLaunchCVDProcedureBuilder{},
+		OM:                        om,
+		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{},
 	}
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{

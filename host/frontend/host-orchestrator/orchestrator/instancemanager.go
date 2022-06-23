@@ -41,8 +41,8 @@ type IMPaths struct {
 }
 
 type InstanceManager struct {
-	OM                         OperationManager
-	LaunchCVDProcedureBuilding LaunchCVDProcedureBuilding
+	OM                        OperationManager
+	LaunchCVDProcedureBuilder ProcedureBuilder
 }
 
 func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
@@ -58,15 +58,16 @@ const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 // TODO(b/236398043): Return more granular and informative errors.
 func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
-	p := m.LaunchCVDProcedureBuilding.Build(req)
+	p := m.LaunchCVDProcedureBuilder.Build(req)
+	var result OperationResult
 	if err := p.Execute(); err != nil {
 		log.Printf("failed to launch cvd with error: %v", err)
-		result := OperationResult{
+		result = OperationResult{
 			Error: OperationResultError{ErrMsgLaunchCVDFailed},
 		}
-		m.completeOperation(op.Name, result)
-	} else {
-		m.completeOperation(op.Name, OperationResult{})
+	}
+	if err := m.OM.Complete(op.Name, result); err != nil {
+		log.Printf("failed to complete operation with error: %v", err)
 	}
 }
 
@@ -86,12 +87,6 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-func (m *InstanceManager) completeOperation(opName string, result OperationResult) {
-	if err := m.OM.Complete(opName, result); err != nil {
-		log.Printf("failed to complete operation with error: %v", err)
-	}
-}
-
 type ProcedureStage interface {
 	Run() error
 }
@@ -107,8 +102,9 @@ func (p Procedure) Execute() error {
 	return nil
 }
 
-type LaunchCVDProcedureBuilding interface {
-	Build(req apiv1.CreateCVDRequest) Procedure
+// TODO(b/236995709): Make it generic
+type ProcedureBuilder interface {
+	Build(input interface{}) Procedure
 }
 
 type LaunchCVDProcedureBuilder struct {
@@ -120,8 +116,12 @@ type LaunchCVDProcedureBuilder struct {
 	cvdServerStarted    bool
 }
 
-func (b *LaunchCVDProcedureBuilder) Build(req apiv1.CreateCVDRequest) Procedure {
-	return []ProcedureStage{
+func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
+	req, ok := input.(apiv1.CreateCVDRequest)
+	if !ok {
+		panic("invalid type")
+	}
+	return Procedure{
 		&StageDownloadCVD{
 			CVDBin:     b.Paths.CVDBin,
 			BuildID:    req.FetchCVDBuildID,

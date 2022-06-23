@@ -114,7 +114,7 @@ func main() {
 	om := orchestrator.NewMapOM()
 	im := &orchestrator.InstanceManager{
 		OM: om,
-		LaunchCVDProcedureBuilding: &orchestrator.LaunchCVDProcedureBuilder{
+		LaunchCVDProcedureBuilder: &orchestrator.LaunchCVDProcedureBuilder{
 			Paths:             imPaths,
 			CVDDownloader:     orchestrator.NewCVDDownloader(artifactDownloader),
 			StartCVDServerCmd: &orchestrator.CVDSubcmdStartCVDServer{CVDBin: imPaths.CVDBin},
