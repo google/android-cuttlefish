@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cvd_script=1
+cf_script=1
 . $(dirname $(realpath $0))/setup.sh
 
 if [ -n "$1" ]; then
