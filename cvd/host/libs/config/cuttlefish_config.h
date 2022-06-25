@@ -154,6 +154,12 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
+  void set_gem5_debug_file(const std::string& gem5_debug_file);
+  std::string gem5_debug_file() const;
+
+  void set_gem5_debug_flags(const std::string& gem5_debug_flags);
+  std::string gem5_debug_flags() const;
+
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
