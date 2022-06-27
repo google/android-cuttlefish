@@ -175,8 +175,8 @@ class StreamerSockets : public virtual SetupFeature {
   SharedFD keyboard_server_;
   SharedFD frames_server_;
   SharedFD audio_server_;
-  SharedFD confui_in_fd_;   // guest -> host
-  SharedFD confui_out_fd_;  // host -> guest
+  SharedFD confui_in_fd_;   // host -> guest
+  SharedFD confui_out_fd_;  // guest -> host
 };
 
 class WebRtcServer : public virtual CommandSource,
