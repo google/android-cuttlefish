@@ -17,12 +17,14 @@
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 #include <fstream>
+#include "host/libs/location/GpsFix.h"
 #include "host/libs/location/GpxParser.h"
+#include "host/libs/location/StringParse.h"
 
 namespace cuttlefish {
 
 namespace {
-bool ParseGpxData(GpsFixArray* locations, char* text, std::string* error) {
+bool ParseGpxFile(GpsFixArray* locations, char* text, std::string* error) {
   bool result;
   TemporaryDir myDir;
   std::string path = std::string(myDir.path) + "/" + "test.gpx";
@@ -34,6 +36,13 @@ bool ParseGpxData(GpsFixArray* locations, char* text, std::string* error) {
   result = GpxParser::parseFile(path.c_str(), locations, error);
   return result;
 }
+
+bool ParseGpxString(GpsFixArray* locations, char* text, std::string* error) {
+  bool result;
+  result = GpxParser::parseString(text, strlen(text), locations, error);
+  return result;
+}
+
 }  // namespace
 
 TEST(GpxParser, ParseFileNotFound) {
@@ -43,83 +52,100 @@ TEST(GpxParser, ParseFileNotFound) {
   EXPECT_FALSE(isOk);
 }
 
-TEST(GpxParser, ParseFileEmpty) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "</gpx>";
-
-  GpsFixArray locations;
+char kEmptyText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "</gpx>";
+TEST(GpxParser, ParseEmptyFile) {
   std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
-
+  bool isOk;
+  GpsFixArray locations;
+  isOk = ParseGpxFile(&locations, kEmptyText, &error);
   EXPECT_TRUE(isOk);
   EXPECT_EQ(0U, locations.size());
 }
 
-TEST(GpxParser, ParseFileEmptyRteTrk) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<rte>"
-      "</rte>"
-      "<trk>"
-      "<trkseg>"
-      "</trkseg>"
-      "</trk>"
-      "</gpx>";
-
-  GpsFixArray locations;
+TEST(GpxParser, ParseEmptyString) {
   std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  bool isOk;
+  GpsFixArray locations;
+  isOk = ParseGpxString(&locations, kEmptyText, &error);
   EXPECT_TRUE(isOk);
   EXPECT_EQ(0U, locations.size());
 }
 
-TEST(GpxParser, ParseFileValid) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lon=\"0\" lat=\"0\">"
-      "<name>Wpt 1</name>"
-      "</wpt>"
-      "<wpt lon=\"0\" lat=\"0\">"
-      "<name>Wpt 2</name>"
-      "</wpt>"
-      "<rte>"
-      "<rtept lon=\"0\" lat=\"0\">"
-      "<name>Rtept 1</name>"
-      "</rtept>"
-      "<rtept lon=\"0\" lat=\"0\">"
-      "<name>Rtept 2</name>"
-      "</rtept>"
-      "</rte>"
-      "<trk>"
-      "<trkseg>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 1-1</name>"
-      "</trkpt>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 1-2</name>"
-      "</trkpt>"
-      "</trkseg>"
-      "<trkseg>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 2-1</name>"
-      "</trkpt>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 2-2</name>"
-      "</trkpt>"
-      "</trkseg>"
-      "</trk>"
-      "</gpx>";
+char kEmptyRteTrkText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<rte>"
+    "</rte>"
+    "<trk>"
+    "<trkseg>"
+    "</trkseg>"
+    "</trk>"
+    "</gpx>";
+TEST(GpxParser, ParseEmptyRteTrkFile) {
+  std::string error;
+  bool isOk;
+  GpsFixArray locations;
+  isOk = ParseGpxFile(&locations, kEmptyRteTrkText, &error);
+  EXPECT_TRUE(isOk);
+  EXPECT_EQ(0U, locations.size());
+}
+
+TEST(GpxParser, ParseEmptyRteTrkString) {
+  std::string error;
+  bool isOk;
+  GpsFixArray locations;
+  isOk = ParseGpxString(&locations, kEmptyRteTrkText, &error);
+  EXPECT_TRUE(isOk);
+  EXPECT_EQ(0U, locations.size());
+}
+
+char kValidText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<wpt lon=\"0\" lat=\"0\">"
+    "<name>Wpt 1</name>"
+    "</wpt>"
+    "<wpt lon=\"0\" lat=\"0\">"
+    "<name>Wpt 2</name>"
+    "</wpt>"
+    "<rte>"
+    "<rtept lon=\"0\" lat=\"0\">"
+    "<name>Rtept 1</name>"
+    "</rtept>"
+    "<rtept lon=\"0\" lat=\"0\">"
+    "<name>Rtept 2</name>"
+    "</rtept>"
+    "</rte>"
+    "<trk>"
+    "<trkseg>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 1-1</name>"
+    "</trkpt>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 1-2</name>"
+    "</trkpt>"
+    "</trkseg>"
+    "<trkseg>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 2-1</name>"
+    "</trkpt>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 2-2</name>"
+    "</trkpt>"
+    "</trkseg>"
+    "</trk>"
+    "</gpx>";
+TEST(GpxParser, ParseValidFile) {
+  std::string error;
+  bool isOk;
 
   GpsFixArray locations;
-  std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  isOk = ParseGpxFile(&locations, kValidText, &error);
   EXPECT_TRUE(isOk);
   ASSERT_EQ(8U, locations.size());
-
   EXPECT_EQ("Wpt 1", locations[0].name);
   EXPECT_EQ("Wpt 2", locations[1].name);
   EXPECT_EQ("Rtept 1", locations[2].name);
@@ -130,19 +156,37 @@ TEST(GpxParser, ParseFileValid) {
   EXPECT_EQ("Trkpt 2-2", locations[7].name);
 }
 
-TEST(GpxParser, ParseFileNullAttribute) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lon=\"0\" lat=\"0\">"
-      "<name/>"
-      "</wpt>"
-      "</gpx>";
+TEST(GpxParser, ParseValidString) {
+  std::string error;
+  bool isOk;
 
   GpsFixArray locations;
-  std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  isOk = ParseGpxString(&locations, kValidText, &error);
+  EXPECT_TRUE(isOk);
+  ASSERT_EQ(8U, locations.size());
+  EXPECT_EQ("Wpt 1", locations[0].name);
+  EXPECT_EQ("Wpt 2", locations[1].name);
+  EXPECT_EQ("Rtept 1", locations[2].name);
+  EXPECT_EQ("Rtept 2", locations[3].name);
+  EXPECT_EQ("Trkpt 1-1", locations[4].name);
+  EXPECT_EQ("Trkpt 1-2", locations[5].name);
+  EXPECT_EQ("Trkpt 2-1", locations[6].name);
+  EXPECT_EQ("Trkpt 2-2", locations[7].name);
+}
 
+char kNullAttributeText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<wpt lon=\"0\" lat=\"0\">"
+    "<name/>"
+    "</wpt>"
+    "</gpx>";
+TEST(GpxParser, ParseFileNullAttributeFile) {
+  std::string error;
+  bool isOk;
+
+  GpsFixArray locations;
+  isOk = ParseGpxFile(&locations, kNullAttributeText, &error);
   // This test only checks if GpxParser doesn't crash on null attributes
   // So if we're here it's already Ok - these tests aren't that relevant.
   EXPECT_TRUE(isOk);
@@ -151,58 +195,94 @@ TEST(GpxParser, ParseFileNullAttribute) {
   EXPECT_TRUE(error.empty());
 }
 
-TEST(GpxParser, ParseLocationMissingLatitude) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lon=\"9.81\">"
-      "<ele>6.02</ele>"
-      "<name>Name</name>"
-      "<desc>Desc</desc>"
-      "</wpt>"
-      "</gpx>";
+TEST(GpxParser, ParseFileNullAttributeString) {
+  std::string error;
+  bool isOk;
 
   GpsFixArray locations;
+  isOk = ParseGpxString(&locations, kNullAttributeText, &error);
+  // This test only checks if GpxParser doesn't crash on null attributes
+  // So if we're here it's already Ok - these tests aren't that relevant.
+  EXPECT_TRUE(isOk);
+  EXPECT_EQ(1U, locations.size());
+  EXPECT_STREQ("", locations[0].name.c_str());
+  EXPECT_TRUE(error.empty());
+}
+
+char kLocationMissingLongitudeLatitudeText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<wpt lon=\"9.81\">"
+    "<ele>6.02</ele>"
+    "<name>Name</name>"
+    "<desc>Desc</desc>"
+    "</wpt>"
+    "</gpx>";
+TEST(GpxParser, ParseLocationMissingLatitudeFile) {
   std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  bool isOk;
+
+  GpsFixArray locations;
+  isOk =
+      ParseGpxFile(&locations, kLocationMissingLongitudeLatitudeText, &error);
   EXPECT_FALSE(isOk);
 }
 
-TEST(GpxParser, ParseLocationMissingLongitude) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lat=\"3.1415\">"
-      "<ele>6.02</ele>"
-      "<name>Name</name>"
-      "<desc>Desc</desc>"
-      "</wpt>"
-      "</gpx>";
+TEST(GpxParser, ParseLocationMissingLatitudeString) {
+  std::string error;
+  bool isOk;
 
   GpsFixArray locations;
-  std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  isOk =
+      ParseGpxString(&locations, kLocationMissingLongitudeLatitudeText, &error);
   EXPECT_FALSE(isOk);
 }
 
-TEST(GpxParser, ParseValidLocation) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lon=\"9.81\" lat=\"3.1415\">"
-      "<ele>6.02</ele>"
-      "<name>Name</name>"
-      "<desc>Desc</desc>"
-      "</wpt>"
-      "</gpx>";
+char kLocationMissingLongitudeText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<wpt lat=\"3.1415\">"
+    "<ele>6.02</ele>"
+    "<name>Name</name>"
+    "<desc>Desc</desc>"
+    "</wpt>"
+    "</gpx>";
+TEST(GpxParser, ParseLocationMissingLongitudeFile) {
+  std::string error;
+  bool isOk;
 
   GpsFixArray locations;
+  isOk = ParseGpxFile(&locations, kLocationMissingLongitudeText, &error);
+  EXPECT_FALSE(isOk);
+}
+
+TEST(GpxParser, ParseLocationMissingLongitudeString) {
   std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  bool isOk;
+
+  GpsFixArray locations;
+  isOk = ParseGpxString(&locations, kLocationMissingLongitudeText, &error);
+  EXPECT_FALSE(isOk);
+}
+
+char kValidLocationText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<wpt lon=\"9.81\" lat=\"3.1415\">"
+    "<ele>6.02</ele>"
+    "<name>Name</name>"
+    "<desc>Desc</desc>"
+    "</wpt>"
+    "</gpx>";
+TEST(GpxParser, ParseValidLocationFile) {
+  std::string error;
+  bool isOk;
+
+  GpsFixArray locations;
+  isOk = ParseGpxFile(&locations, kValidLocationText, &error);
   EXPECT_TRUE(isOk);
   EXPECT_EQ(1U, locations.size());
   const GpsFix& wpt = locations[0];
-
   EXPECT_EQ("Desc", wpt.description);
   EXPECT_FLOAT_EQ(6.02, wpt.elevation);
   EXPECT_FLOAT_EQ(3.1415, wpt.latitude);
@@ -210,26 +290,15 @@ TEST(GpxParser, ParseValidLocation) {
   EXPECT_EQ("Name", wpt.name);
 }
 
-// Flaky test; uses locale.
-TEST(GpxParser, DISABLED_ParseValidLocationCommaLocale) {
-  // auto scopedCommaLocale = setScopedCommaLocale();
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lon=\"9.81\" lat=\"3.1415\">"
-      "<ele>6.02</ele>"
-      "<name>Name</name>"
-      "<desc>Desc</desc>"
-      "</wpt>"
-      "</gpx>";
+TEST(GpxParser, ParseValidLocationString) {
+  std::string error;
+  bool isOk;
 
   GpsFixArray locations;
-  std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  isOk = ParseGpxString(&locations, kValidLocationText, &error);
   EXPECT_TRUE(isOk);
   EXPECT_EQ(1U, locations.size());
   const GpsFix& wpt = locations[0];
-
   EXPECT_EQ("Desc", wpt.description);
   EXPECT_FLOAT_EQ(6.02, wpt.elevation);
   EXPECT_FLOAT_EQ(3.1415, wpt.latitude);
@@ -237,49 +306,68 @@ TEST(GpxParser, DISABLED_ParseValidLocationCommaLocale) {
   EXPECT_EQ("Name", wpt.name);
 }
 
-TEST(GpxParser, ParseValidDocument) {
-  char text[] =
-      "<?xml version=\"1.0\"?>"
-      "<gpx>"
-      "<wpt lon=\"0\" lat=\"0\">"
-      "<name>Wpt 1</name>"
-      "</wpt>"
-      "<wpt lon=\"0\" lat=\"0\">"
-      "<name>Wpt 2</name>"
-      "</wpt>"
-      "<rte>"
-      "<rtept lon=\"0\" lat=\"0\">"
-      "<name>Rtept 1</name>"
-      "</rtept>"
-      "<rtept lon=\"0\" lat=\"0\">"
-      "<name>Rtept 2</name>"
-      "</rtept>"
-      "</rte>"
-      "<trk>"
-      "<trkseg>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 1-1</name>"
-      "</trkpt>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 1-2</name>"
-      "</trkpt>"
-      "</trkseg>"
-      "<trkseg>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 2-1</name>"
-      "</trkpt>"
-      "<trkpt lon=\"0\" lat=\"0\">"
-      "<name>Trkpt 2-2</name>"
-      "</trkpt>"
-      "</trkseg>"
-      "</trk>"
-      "</gpx>";
-  GpsFixArray locations;
+char kValidDocumentText[] =
+    "<?xml version=\"1.0\"?>"
+    "<gpx>"
+    "<wpt lon=\"0\" lat=\"0\">"
+    "<name>Wpt 1</name>"
+    "</wpt>"
+    "<wpt lon=\"0\" lat=\"0\">"
+    "<name>Wpt 2</name>"
+    "</wpt>"
+    "<rte>"
+    "<rtept lon=\"0\" lat=\"0\">"
+    "<name>Rtept 1</name>"
+    "</rtept>"
+    "<rtept lon=\"0\" lat=\"0\">"
+    "<name>Rtept 2</name>"
+    "</rtept>"
+    "</rte>"
+    "<trk>"
+    "<trkseg>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 1-1</name>"
+    "</trkpt>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 1-2</name>"
+    "</trkpt>"
+    "</trkseg>"
+    "<trkseg>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 2-1</name>"
+    "</trkpt>"
+    "<trkpt lon=\"0\" lat=\"0\">"
+    "<name>Trkpt 2-2</name>"
+    "</trkpt>"
+    "</trkseg>"
+    "</trk>"
+    "</gpx>";
+TEST(GpxParser, ParseValidDocumentFile) {
   std::string error;
-  bool isOk = ParseGpxData(&locations, text, &error);
+  bool isOk;
+
+  GpsFixArray locations;
+  isOk = ParseGpxFile(&locations, kValidDocumentText, &error);
   EXPECT_TRUE(isOk);
   EXPECT_EQ(8U, locations.size());
+  EXPECT_EQ("Wpt 1", locations[0].name);
+  EXPECT_EQ("Wpt 2", locations[1].name);
+  EXPECT_EQ("Rtept 1", locations[2].name);
+  EXPECT_EQ("Rtept 2", locations[3].name);
+  EXPECT_EQ("Trkpt 1-1", locations[4].name);
+  EXPECT_EQ("Trkpt 1-2", locations[5].name);
+  EXPECT_EQ("Trkpt 2-1", locations[6].name);
+  EXPECT_EQ("Trkpt 2-2", locations[7].name);
+}
 
+TEST(GpxParser, ParseValidDocumentString) {
+  std::string error;
+  bool isOk;
+
+  GpsFixArray locations;
+  isOk = ParseGpxString(&locations, kValidDocumentText, &error);
+  EXPECT_TRUE(isOk);
+  EXPECT_EQ(8U, locations.size());
   EXPECT_EQ("Wpt 1", locations[0].name);
   EXPECT_EQ("Wpt 2", locations[1].name);
   EXPECT_EQ("Rtept 1", locations[2].name);
