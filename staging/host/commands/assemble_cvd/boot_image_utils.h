@@ -38,5 +38,6 @@ bool UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir);
 void RepackGem5BootImage(const std::string& initrd_path,
                          const std::string& bootconfig_path,
-                         const std::string& unpack_dir);
+                         const std::string& unpack_dir,
+                         const std::string& input_ramdisk_path);
 }
