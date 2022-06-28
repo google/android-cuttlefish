@@ -136,7 +136,6 @@ class HostServer : public HostVirtualInput {
   HostModeCtrl& host_mode_ctrl_;
   ScreenConnectorFrameRenderer& screen_connector_;
 
-  std::string input_socket_path_;
   int hal_vsock_port_;
 
   std::shared_ptr<Session> curr_session_;
