@@ -268,7 +268,7 @@ DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel 
                          "with kgdb/kdb. The kernel must have been built with "
                          "kgdb support, and serial console must be enabled.");
 
-DEFINE_bool(start_gnss_proxy, false, "Whether to start the gnss proxy.");
+DEFINE_bool(start_gnss_proxy, true, "Whether to start the gnss proxy.");
 
 DEFINE_string(gnss_file_path, "",
               "Local gnss raw measurement file path for the gnss proxy");
