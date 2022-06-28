@@ -13,3 +13,4 @@ allow cuttlefish_sensor_injection devpts:chr_file { read write };
 
 # Grant cuttlefish_sensor_injection access to the ISensors HAL.
 hal_client_domain(cuttlefish_sensor_injection, hal_sensors)
+binder_use(cuttlefish_sensor_injection)

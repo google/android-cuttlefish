@@ -1,1 +1,3 @@
 allow hal_sensors_server sensors_hal_socket:sock_file { create setattr };
+
+allow hal_sensors_default system_server:binder call;
