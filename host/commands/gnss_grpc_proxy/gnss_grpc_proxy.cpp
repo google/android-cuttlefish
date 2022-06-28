@@ -252,8 +252,6 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
      std::vector<char> buffer(GNSS_SERIAL_BUFFER_SIZE);
      std::string cmd_str;
      auto bytes_read = source_out->Read(buffer.data(), buffer.size());
-     int total_read = 0;
-
      if (bytes_read > 0) {
        std::string s(buffer.data(), bytes_read);
        cmd_str += s;
@@ -262,7 +260,6 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
        if (cmd_str.size() > GNSS_SERIAL_BUFFER_SIZE * 2) {
          cmd_str = cmd_str.substr(cmd_str.size() - GNSS_SERIAL_BUFFER_SIZE);
        }
-       total_read += bytes_read;
        if (cmd_str.find(command) != std::string::npos) {
          if (command == CMD_GET_RAWMEASUREMENT) {
            sendGnssRawToSerial();
@@ -270,7 +267,6 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
            sendToSerial();
          }
          cmd_str = "";
-         total_read = 0;
        }
      } else {
        if (source_out->GetErrno() == EAGAIN ||
