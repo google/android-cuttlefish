@@ -336,7 +336,8 @@ bool RepackVendorBootImageWithEmptyRamdisk(
 
 void RepackGem5BootImage(const std::string& initrd_path,
                          const std::string& bootconfig_path,
-                         const std::string& unpack_dir) {
+                         const std::string& unpack_dir,
+                         const std::string& input_ramdisk_path) {
   // Simulate per-instance what the bootloader would usually do
   // Since on other devices this runs every time, just do it here every time
   std::ofstream final_rd(initrd_path,
@@ -344,7 +345,14 @@ void RepackGem5BootImage(const std::string& initrd_path,
 
   std::ifstream boot_ramdisk(unpack_dir + "/ramdisk",
                              std::ios_base::binary);
-  std::ifstream vendor_boot_ramdisk(unpack_dir +
+  std::string new_ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
+  // Test to make sure new ramdisk hasn't already been repacked if input ramdisk is provided
+  if (FileExists(input_ramdisk_path) && !FileExists(new_ramdisk_path)) {
+    RepackVendorRamdisk(input_ramdisk_path,
+                        unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK,
+                        new_ramdisk_path, unpack_dir);
+  }
+  std::ifstream vendor_boot_ramdisk(FileExists(new_ramdisk_path) ? new_ramdisk_path : unpack_dir +
                                     "/concatenated_vendor_ramdisk",
                                     std::ios_base::binary);
 

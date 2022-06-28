@@ -1026,7 +1026,8 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       RepackGem5BootImage(
           instance.PerInstancePath("initrd.img"),
           instance.persistent_bootconfig_path(),
-          config.assembly_dir());
+          config.assembly_dir(),
+          FLAGS_initramfs_path);
     }
   }
 
