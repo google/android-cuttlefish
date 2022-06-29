@@ -95,6 +95,16 @@ HostServer::HostServer(
       HostServer::Multiplexer::CreateQueue(max_elements, ignore_new));
 }
 
+bool HostServer::IsVirtioConsoleOpen() const {
+  return from_guest_fifo_fd_->IsOpen() && to_guest_fifo_fd_->IsOpen();
+}
+
+bool HostServer::CheckVirtioConsole() {
+  if (IsVirtioConsoleOpen()) return true;
+  ConfUiLog(FATAL) << "Virtio console is not open";
+  return false;
+}
+
 void HostServer::Start() {
   guest_hal_socket_ =
       cuttlefish::SharedFD::VsockServer(hal_vsock_port_, SOCK_STREAM);
