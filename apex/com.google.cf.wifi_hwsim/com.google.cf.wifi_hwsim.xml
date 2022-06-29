@@ -1,26 +1,16 @@
 <manifest version="1.0" type="device">
-    <hal format="hidl">
+    <hal format="aidl">
         <name>android.hardware.wifi.supplicant</name>
-        <transport>hwbinder</transport>
-        <version>1.4</version>
-        <interface>
-            <name>ISupplicant</name>
-            <instance>default</instance>
-        </interface>
+        <fqname>ISupplicant/default</fqname>
     </hal>
-    <hal format="hidl">
+    <hal format="aidl">
         <name>android.hardware.wifi.hostapd</name>
-        <transport>hwbinder</transport>
-        <version>1.3</version>
-        <interface>
-            <name>IHostapd</name>
-            <instance>default</instance>
-        </interface>
+        <fqname>IHostapd/default</fqname>
     </hal>
     <hal format="hidl">
         <name>android.hardware.wifi</name>
         <transport>hwbinder</transport>
-        <version>1.5</version>
+        <version>1.6</version>
         <interface>
             <name>IWifi</name>
             <instance>default</instance>

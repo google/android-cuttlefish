@@ -222,7 +222,6 @@ endif
 
 # GL/Vk implementation for gfxstream
 PRODUCT_PACKAGES += \
-    hwcomposer.ranchu \
     libandroidemu \
     libOpenglCodecCommon \
     libOpenglSystemCommon \
@@ -391,15 +390,26 @@ PRODUCT_PACKAGES += \
 #
 # Hardware Composer HAL
 #
+# The device needs to avoid having both hwcomposer2.4 and hwcomposer3
+# services running at the same time so make the user manually enables
+# in order to run with --gpu_mode=drm.
+ifeq ($(TARGET_ENABLE_DRMHWCOMPOSER),true)
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/shared/config/manifest_android.hardware.graphics.composer@2.4-service.xml
+
 PRODUCT_PACKAGES += \
-    hwcomposer.drm \
-    android.hardware.graphics.composer@2.4-service
+    android.hardware.graphics.composer@2.4-service \
+    hwcomposer.drm
+else
+PRODUCT_PACKAGES += \
+    android.hardware.graphics.composer3-service.ranchu
+endif
 
 #
 # Gralloc HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.graphics.allocator@4.0-service.minigbm \
+    android.hardware.graphics.allocator-V1-service.minigbm \
     android.hardware.graphics.mapper@4.0-impl.minigbm
 
 #
@@ -495,13 +505,13 @@ PRODUCT_PACKAGES += \
 # Contexthub HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.contexthub@1.2-service.mock
+    android.hardware.contexthub-service.example
 
 #
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.4-service.clearkey \
+    android.hardware.drm@latest-service.clearkey \
     android.hardware.drm@latest-service.widevine
 
 #
@@ -574,19 +584,23 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.identity-service.remote
 
-# Input Classifier HAL
 PRODUCT_PACKAGES += \
-    android.hardware.input.classifier@1.0-service.default
+    android.hardware.input.processor-service.example
+
+# Netlink Interceptor HAL
+PRODUCT_PACKAGES += \
+    android.hardware.net.nlinterceptor-service.default
 
 #
 # Sensors
 #
 ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-       LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
-else
-       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors@2.1-service.mock
-endif
+# TODO(b/210883464): Convert the sensors APEX to use the new AIDL impl.
+#ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
+#       LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
+#else
+       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors-service.example
+#endif
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_SENSOR_PRODUCT_PACKAGE)
@@ -774,13 +788,16 @@ endif
 
 endif
 
+# UWB HAL
+PRODUCT_PACKAGES += \
+    android.hardware.uwb-service
+
 ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 # Wifi Runtime Resource Overlay
 PRODUCT_PACKAGES += \
     CuttlefishTetheringOverlay \
     CuttlefishWifiOverlay
 endif
-
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy

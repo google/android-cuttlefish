@@ -1,0 +1,43 @@
+
+{
+  "car" : {
+    "width"  : 76.7,
+    "wheelBase" : 117.9,
+    "frontExtent" : 44.7,
+    "rearExtent" : 40
+  },
+  "displays" : [
+    {
+      "_comment": "Display0",
+      "displayPort" : 0,
+      "frontRange" : 100,
+      "rearRange" : 100
+    },
+    {
+      "_comment": "Display1",
+      "displayPort" : 1,
+      "frontRange" : 100,
+      "rearRange" : 100
+    }
+  ],
+  "graphic" : {
+    "frontPixel" : -20,
+    "rearPixel" : 260
+  },
+  "cameras" : [
+    {
+      "cameraId" : "/dev/video10",
+      "function" : "reverse",
+      "x" : 0.0,
+      "y" : 20.0,
+      "z" : 48,
+      "yaw" : 180,
+      "pitch" : -10,
+      "roll" : 0,
+      "hfov" : 115,
+      "vfov" : 80,
+      "hflip" : true,
+      "vflip" : false
+    }
+  ]
+}
