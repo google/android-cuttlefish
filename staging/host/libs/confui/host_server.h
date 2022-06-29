@@ -163,10 +163,6 @@ class HostServer : public HostVirtualInput {
 
   std::thread main_loop_thread_;
   std::thread hal_input_fetcher_thread_;
-
-  std::mutex socket_flag_mtx_;
-  std::condition_variable socket_flag_cv_;
-  bool is_socket_ok_;
 };
 
 }  // end of namespace confui
