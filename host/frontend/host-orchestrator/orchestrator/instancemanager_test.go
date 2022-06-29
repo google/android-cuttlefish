@@ -200,11 +200,15 @@ func TestProcedureExecuteInnerStageWithFails(t *testing.T) {
 
 func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	cvdBuildID := "1"
-	cvdBin := "bin/cvd"
+	paths := IMPaths{
+		CVDBin:           "bin/cvd",
+		ArtifactsRootDir: "ard",
+		HomesRootDir:     "hrd",
+	}
 	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: errors.New("error")})
 	startCVDServerCmd := &CVDSubcmdStartCVDServer{}
 	builder := LaunchCVDProcedureBuilder{
-		Paths:             IMPaths{CVDBin: cvdBin},
+		Paths:             paths,
 		CVDDownloader:     cvdDownloader,
 		StartCVDServerCmd: startCVDServerCmd,
 	}
@@ -223,8 +227,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 
 		s := p[0].(*StageDownloadCVD)
-		if s.CVDBin != cvdBin {
-			t.Errorf("expected <<%q>>, got %q", cvdBin, s.CVDBin)
+		if s.CVDBin != paths.CVDBin {
+			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
 		}
 		if s.BuildID != cvdBuildID {
 			t.Errorf("expected <<%q>>, got %q", cvdBuildID, s.BuildID)
@@ -313,6 +317,32 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 			t.Error("expected different mutexes")
 		}
 	})
+
+	t.Run("create artifacts root directory stage", func(t *testing.T) {
+		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
+		s, ok := p[2].(*StageCreateDirIfNotExist)
+
+		if !ok {
+			t.Errorf("expected <<%T>>, got %T", &StageCreateDirIfNotExist{}, p[2])
+		}
+		if s.Dir != paths.ArtifactsRootDir {
+			t.Errorf("expected <<%q>>, got %q", paths.ArtifactsRootDir, s.Dir)
+		}
+	})
+
+	t.Run("create homes root directory stage", func(t *testing.T) {
+		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
+		s, ok := p[3].(*StageCreateDirIfNotExist)
+
+		if !ok {
+			t.Errorf("expected <<%T>>, got %T", &StageCreateDirIfNotExist{}, p[3])
+		}
+		if s.Dir != paths.HomesRootDir {
+			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
+		}
+	})
 }
 
 func TestStageDownloadCVDDownloadFails(t *testing.T) {
@@ -357,6 +387,41 @@ func TestStageDownloadCVD(t *testing.T) {
 	actual := string(content)
 	if actual != cvdBinContent {
 		t.Errorf("expected <<%q>>, got %q", cvdBinContent, actual)
+	}
+}
+
+func TestStageCreateDirIfNotExist(t *testing.T) {
+	dir := t.TempDir() + "/foo"
+	s := StageCreateDirIfNotExist{Dir: dir}
+
+	err := s.Run()
+
+	if err != nil {
+		t.Errorf("expected nil error, got %+v", err)
+	}
+	stats, _ := os.Stat(dir)
+	expected := "drwxr-xr-x"
+	got := stats.Mode().String()
+	if got != expected {
+		t.Errorf("expected <<%q>, got %q", expected, got)
+	}
+}
+
+func TestStageCreateDirIfNotExistAndDirectoryExists(t *testing.T) {
+	dir := t.TempDir() + "/foo"
+	s := StageCreateDirIfNotExist{Dir: dir}
+
+	err := s.Run()
+	err = s.Run()
+
+	if err != nil {
+		t.Errorf("expected nil error, got %+v", err)
+	}
+	stats, _ := os.Stat(dir)
+	expected := "drwxr-xr-x"
+	got := stats.Mode().String()
+	if got != expected {
+		t.Errorf("expected <<%q>, got %q", expected, got)
 	}
 }
 

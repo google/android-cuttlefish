@@ -108,8 +108,10 @@ func main() {
 	artifactDownloader := orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)
 	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	imPaths := orchestrator.IMPaths{
-		RootDir: imRootDir,
-		CVDBin:  imRootDir + "/cvd",
+		RootDir:          imRootDir,
+		CVDBin:           imRootDir + "/cvd",
+		ArtifactsRootDir: imRootDir + "/artifacts",
+		HomesRootDir:     imRootDir + "/homes",
 	}
 	om := orchestrator.NewMapOM()
 	im := &orchestrator.InstanceManager{
