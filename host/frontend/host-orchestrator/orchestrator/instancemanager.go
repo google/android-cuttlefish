@@ -140,20 +140,6 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 	}
 }
 
-type StageCreateDirIfNotExist struct {
-	Dir string
-}
-
-func (s *StageCreateDirIfNotExist) Run() error {
-	if err := os.Mkdir(s.Dir, 0755); os.IsNotExist(err) {
-		return err
-	} else if err == nil {
-		// Mkdir set the permission bits (before umask)
-		return os.Chmod(s.Dir, 0755)
-	}
-	return nil
-}
-
 type StageDownloadCVD struct {
 	CVDBin     string
 	BuildID    string
@@ -184,6 +170,20 @@ func (s *StageStartCVDServer) Run() error {
 		*s.Started = true
 	}
 	return err
+}
+
+type StageCreateDirIfNotExist struct {
+	Dir string
+}
+
+func (s *StageCreateDirIfNotExist) Run() error {
+	if err := os.Mkdir(s.Dir, 0755); os.IsNotExist(err) {
+		return err
+	} else if err == nil {
+		// Mkdir set the permission bits (before umask)
+		return os.Chmod(s.Dir, 0755)
+	}
+	return nil
 }
 
 type CVDDownloader struct {

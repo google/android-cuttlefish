@@ -213,20 +213,11 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		StartCVDServerCmd: startCVDServerCmd,
 	}
 
-	t.Run("first stage is download cvd", func(t *testing.T) {
-		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
-
-		_, ok := p[0].(*StageDownloadCVD)
-
-		if !ok {
-			t.Errorf("expected <<%T>>, got %T", &StageDownloadCVD{}, p[0])
-		}
-	})
-
 	t.Run("download cvd stage", func(t *testing.T) {
 		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 
 		s := p[0].(*StageDownloadCVD)
+
 		if s.CVDBin != paths.CVDBin {
 			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
 		}
@@ -244,6 +235,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	t.Run("download cvd stages have same mutex", func(t *testing.T) {
 		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 		p2 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
 		first := p1[0].(*StageDownloadCVD)
 		second := p2[0].(*StageDownloadCVD)
 
@@ -255,20 +247,11 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		}
 	})
 
-	t.Run("second stage is start cvd server", func(t *testing.T) {
-		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
-
-		_, ok := p[1].(*StageStartCVDServer)
-
-		if !ok {
-			t.Errorf("expected <<%T>>, got %T", &StageStartCVDServer{}, p[1])
-		}
-	})
-
 	t.Run("start cvd server stage", func(t *testing.T) {
 		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 
 		s := p[1].(*StageStartCVDServer)
+
 		if s.StartCVDServerCmd != startCVDServerCmd {
 			t.Errorf("expected <<%q>>, got %q", startCVDServerCmd, s.StartCVDServerCmd)
 		}
@@ -283,6 +266,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	t.Run("start cvd server stages have same mutex", func(t *testing.T) {
 		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 		p2 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
 		first := p1[1].(*StageStartCVDServer)
 		second := p2[1].(*StageStartCVDServer)
 
@@ -297,6 +281,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	t.Run("start cvd server stages have same started pointer", func(t *testing.T) {
 		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 		p2 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
 		first := p1[1].(*StageStartCVDServer)
 		second := p2[1].(*StageStartCVDServer)
 
@@ -310,6 +295,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 
 	t.Run("download cvd and start cvd server stages have different mutexes", func(t *testing.T) {
 		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
 		download := p1[0].(*StageDownloadCVD)
 		startServer := p1[1].(*StageStartCVDServer)
 
@@ -321,11 +307,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	t.Run("create artifacts root directory stage", func(t *testing.T) {
 		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 
-		s, ok := p[2].(*StageCreateDirIfNotExist)
+		s := p[2].(*StageCreateDirIfNotExist)
 
-		if !ok {
-			t.Errorf("expected <<%T>>, got %T", &StageCreateDirIfNotExist{}, p[2])
-		}
 		if s.Dir != paths.ArtifactsRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.ArtifactsRootDir, s.Dir)
 		}
@@ -334,11 +317,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	t.Run("create homes root directory stage", func(t *testing.T) {
 		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
 
-		s, ok := p[3].(*StageCreateDirIfNotExist)
+		s := p[3].(*StageCreateDirIfNotExist)
 
-		if !ok {
-			t.Errorf("expected <<%T>>, got %T", &StageCreateDirIfNotExist{}, p[3])
-		}
 		if s.Dir != paths.HomesRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
 		}
