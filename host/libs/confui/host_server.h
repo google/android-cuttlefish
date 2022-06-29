@@ -113,7 +113,9 @@ class HostServer : public HostVirtualInput {
   void HalCmdFetcherLoop();
 
   SharedFD EstablishHalConnection();
-
+  bool IsVirtioConsoleOpen() const;
+  // If !IsVirtioConsoleOpen(), LOG(FATAL) and return false
+  bool CheckVirtioConsole();
   std::shared_ptr<Session> CreateSession(const std::string& session_name);
   void SendUserSelection(std::unique_ptr<ConfUiMessage>& input);
 
