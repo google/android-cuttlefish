@@ -118,6 +118,7 @@ class TrustyConfirmationUI : public IConfirmationUI {
     void HostMessageFetcherLoop();
     void RunSession(sp<IConfirmationResultCallback> resultCB, hidl_string promptText,
                     hidl_vec<uint8_t> extraData, hidl_string locale, hidl_vec<UIOption> uiOptions);
+    static const char* GetVirtioConsoleDevicePath();
 };
 
 }  // namespace implementation
