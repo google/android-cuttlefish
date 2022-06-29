@@ -452,7 +452,18 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     }
   }
 
-  add_hvc(instance.PerInstanceInternalPath("confui_fifo_vm"));
+  /* Added one for confirmation UI.
+   *
+   * b/237452165
+   *
+   * Confirmation UI is not supported with QEMU for now. In order
+   * to not conflict with confirmation UI-related configurations used
+   * w/ Crosvm, we should add one generic avc.
+   *
+   * confui_fifo_vm.{in/out} are created along with the streamer process,
+   * which is not created w/ QEMU.
+   */
+  add_hvc_sink();
 
   auto disk_num = instance.virtual_disk_paths().size();
 
