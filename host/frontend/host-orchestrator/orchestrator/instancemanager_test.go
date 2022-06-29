@@ -17,12 +17,13 @@ package orchestrator
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
+	"sync"
 	"testing"
 
 	apiv1 "cuttlefish/liboperator/api/v1"
@@ -66,11 +67,32 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	}
 }
 
-func TestCreateCVDFetchCVDFails(t *testing.T) {
-	dir := t.TempDir()
+type testProcedureStage struct {
+	err error
+}
+
+func (s *testProcedureStage) Run() error {
+	return s.err
+}
+
+type testLaunchCVDProcedureBuilder struct {
+	err error
+}
+
+func (b *testLaunchCVDProcedureBuilder) Build(_ interface{}) Procedure {
+	return []ProcedureStage{
+		&testProcedureStage{
+			err: b.err,
+		},
+	}
+}
+
+func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
 	om := NewMapOM()
-	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{})
-	im := NewInstanceManager(dir, om, cvdDownloader)
+	im := InstanceManager{
+		OM:                        om,
+		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{err: errors.New("error")},
+	}
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",
@@ -85,8 +107,256 @@ func TestCreateCVDFetchCVDFails(t *testing.T) {
 	if !op.Done {
 		t.Error("expected operation to be done")
 	}
-	if op.Result.Error.ErrorMsg != ErrMsgDownloadCVDFailed {
-		t.Errorf("expected <<%q>>, got %q", ErrMsgDownloadCVDFailed, op.Result.Error.ErrorMsg)
+	if op.Result.Error.ErrorMsg != ErrMsgLaunchCVDFailed {
+		t.Errorf("expected <<%q>>, got %q", ErrMsgLaunchCVDFailed, op.Result.Error.ErrorMsg)
+	}
+}
+
+func TestCreateCVD(t *testing.T) {
+	om := NewMapOM()
+	im := InstanceManager{
+		OM:                        om,
+		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{},
+	}
+	req := apiv1.CreateCVDRequest{
+		BuildInfo: &apiv1.BuildInfo{
+			BuildID: "1234",
+			Target:  "aosp_cf_x86_64_phone-userdebug",
+		},
+		FetchCVDBuildID: "1",
+	}
+
+	op, _ := im.CreateCVD(req)
+
+	op, _ = om.Wait(op.Name)
+	if !op.Done {
+		t.Error("expected operation to be done")
+	}
+	if (op.Result != OperationResult{}) {
+		t.Errorf("expected empty result, got %+v", op.Result)
+	}
+}
+
+type testCounterProcedureStage struct {
+	count *int
+	err   error
+}
+
+func (s *testCounterProcedureStage) Run() error {
+	*s.count++
+	return s.err
+}
+
+func TestProcedureExecuteOneStage(t *testing.T) {
+	count := 0
+	p := Procedure{&testCounterProcedureStage{count: &count}}
+
+	err := p.Execute()
+
+	if err != nil {
+		t.Errorf("epected <<nil>> error, got %#v", err)
+	}
+	if count != 1 {
+		t.Errorf("epected <<1>> error, got %#v", count)
+	}
+}
+
+func TestProcedureExecuteThreeStages(t *testing.T) {
+	count := 0
+	p := Procedure{
+		&testCounterProcedureStage{count: &count},
+		&testCounterProcedureStage{count: &count},
+		&testCounterProcedureStage{count: &count},
+	}
+
+	err := p.Execute()
+
+	if err != nil {
+		t.Errorf("epected <<nil>> error, got %#v", err)
+	}
+	if count != 3 {
+		t.Errorf("epected <<3>> error, got %#v", count)
+	}
+}
+
+func TestProcedureExecuteInnerStageWithFails(t *testing.T) {
+	count := 0
+	expectedErr := errors.New("error")
+	p := Procedure{
+		&testCounterProcedureStage{count: &count},
+		&testCounterProcedureStage{count: &count, err: expectedErr},
+		&testCounterProcedureStage{count: &count},
+	}
+
+	err := p.Execute()
+
+	if !errors.Is(err, expectedErr) {
+		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
+	}
+	if count != 2 {
+		t.Errorf("epected <<2>> error, got %#v", count)
+	}
+}
+
+func TestLaunchCVDProcedureBuilder(t *testing.T) {
+	cvdBuildID := "1"
+	cvdBin := "bin/cvd"
+	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: errors.New("error")})
+	startCVDServerCmd := &CVDSubcmdStartCVDServer{}
+	builder := LaunchCVDProcedureBuilder{
+		Paths:             IMPaths{CVDBin: cvdBin},
+		CVDDownloader:     cvdDownloader,
+		StartCVDServerCmd: startCVDServerCmd,
+	}
+
+	t.Run("first stage is download cvd", func(t *testing.T) {
+		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
+		_, ok := p[0].(*StageDownloadCVD)
+
+		if !ok {
+			t.Errorf("expected <<%T>>, got %T", &StageDownloadCVD{}, p[0])
+		}
+	})
+
+	t.Run("download cvd stage", func(t *testing.T) {
+		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
+		s := p[0].(*StageDownloadCVD)
+		if s.CVDBin != cvdBin {
+			t.Errorf("expected <<%q>>, got %q", cvdBin, s.CVDBin)
+		}
+		if s.BuildID != cvdBuildID {
+			t.Errorf("expected <<%q>>, got %q", cvdBuildID, s.BuildID)
+		}
+		if s.Downloader != cvdDownloader {
+			t.Errorf("expected <<%+v>>, got %+v", cvdDownloader, s.Downloader)
+		}
+		if s.Mutex == nil {
+			t.Error("expected non nil")
+		}
+	})
+
+	t.Run("download cvd stages have same mutex", func(t *testing.T) {
+		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		p2 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		first := p1[0].(*StageDownloadCVD)
+		second := p2[0].(*StageDownloadCVD)
+
+		if first == second {
+			t.Error("expected different stages")
+		}
+		if first.Mutex != second.Mutex {
+			t.Error("expected the same mutex")
+		}
+	})
+
+	t.Run("second stage is start cvd server", func(t *testing.T) {
+		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
+		_, ok := p[1].(*StageStartCVDServer)
+
+		if !ok {
+			t.Errorf("expected <<%T>>, got %T", &StageStartCVDServer{}, p[1])
+		}
+	})
+
+	t.Run("start cvd server stage", func(t *testing.T) {
+		p := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+
+		s := p[1].(*StageStartCVDServer)
+		if s.StartCVDServerCmd != startCVDServerCmd {
+			t.Errorf("expected <<%q>>, got %q", startCVDServerCmd, s.StartCVDServerCmd)
+		}
+		if s.Mutex == nil {
+			t.Error("expected non nil")
+		}
+		if s.Started == nil {
+			t.Error("expected non nil")
+		}
+	})
+
+	t.Run("start cvd server stages have same mutex", func(t *testing.T) {
+		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		p2 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		first := p1[1].(*StageStartCVDServer)
+		second := p2[1].(*StageStartCVDServer)
+
+		if first == second {
+			t.Error("expected different stages")
+		}
+		if first.Mutex != second.Mutex {
+			t.Error("expected the same mutex")
+		}
+	})
+
+	t.Run("start cvd server stages have same started pointer", func(t *testing.T) {
+		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		p2 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		first := p1[1].(*StageStartCVDServer)
+		second := p2[1].(*StageStartCVDServer)
+
+		if first == second {
+			t.Error("expected different stages")
+		}
+		if first.Started != second.Started {
+			t.Error("expected the same started pointer")
+		}
+	})
+
+	t.Run("download cvd and start cvd server stages have different mutexes", func(t *testing.T) {
+		p1 := builder.Build(apiv1.CreateCVDRequest{FetchCVDBuildID: cvdBuildID})
+		download := p1[0].(*StageDownloadCVD)
+		startServer := p1[1].(*StageStartCVDServer)
+
+		if download.Mutex == startServer.Mutex {
+			t.Error("expected different mutexes")
+		}
+	})
+}
+
+func TestStageDownloadCVDDownloadFails(t *testing.T) {
+	dir := t.TempDir()
+	cvdBin := dir + "/cvd"
+	expectedErr := errors.New("error")
+	s := StageDownloadCVD{
+		CVDBin:     cvdBin,
+		BuildID:    "1",
+		Downloader: NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr}),
+		Mutex:      &sync.Mutex{},
+	}
+
+	err := s.Run()
+
+	if !errors.Is(err, expectedErr) {
+		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
+	}
+}
+
+func TestStageDownloadCVD(t *testing.T) {
+	dir := t.TempDir()
+	cvdBin := dir + "/cvd"
+	cvdBinContent := "foo"
+	ad := &FakeArtifactDownloader{
+		t:       t,
+		content: cvdBinContent,
+	}
+	s := StageDownloadCVD{
+		CVDBin:     cvdBin,
+		BuildID:    "1",
+		Downloader: NewCVDDownloader(ad),
+		Mutex:      &sync.Mutex{},
+	}
+
+	err := s.Run()
+
+	if err != nil {
+		t.Errorf("expected <<nil>>, got %+v", err)
+	}
+	content, _ := ioutil.ReadFile(cvdBin)
+	actual := string(content)
+	if actual != cvdBinContent {
+		t.Errorf("expected <<%q>>, got %q", cvdBinContent, actual)
 	}
 }
 
@@ -103,7 +373,7 @@ func (d *FakeArtifactDownloader) Download(dst io.Writer, buildID, name string) e
 	return nil
 }
 
-func TestCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
+func TestCVDDownloaderDownloadBinaryAlreadyExist(t *testing.T) {
 	const fetchCVDContent = "bar"
 	dir := t.TempDir()
 	filename := dir + "/cvd"
@@ -134,7 +404,7 @@ func TestCVDHandlerDownloadBinaryAlreadyExist(t *testing.T) {
 	}
 }
 
-func TestCVDHandlerDownload(t *testing.T) {
+func TestCVDDownloaderDownload(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
 	ad := &FakeArtifactDownloader{t, "foo"}
@@ -150,7 +420,7 @@ func TestCVDHandlerDownload(t *testing.T) {
 	}
 }
 
-func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
+func TestCVDDownloaderDownload0750FileAccessIsSet(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
 	ad := &FakeArtifactDownloader{t, "foo"}
@@ -165,7 +435,7 @@ func TestCVDHandlerDownload0750FileAccessIsSet(t *testing.T) {
 	}
 }
 
-func TestCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
+func TestCVDDownloaderDownloadSettingFileAccessFails(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
 	ad := &FakeArtifactDownloader{t, "foo"}
@@ -182,24 +452,75 @@ func TestCVDHandlerDownloadSettingFileAccessFails(t *testing.T) {
 	}
 }
 
-type AlwaysFailsArtifactDownloader struct{}
-
-func (d *AlwaysFailsArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
-	return fmt.Errorf("downloading failed")
+type AlwaysFailsArtifactDownloader struct {
+	err error
 }
 
-func TestCVDHandlerDownloadingFails(t *testing.T) {
+func (d *AlwaysFailsArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
+	return d.err
+}
+
+func TestCVDDownloaderDownloadingFails(t *testing.T) {
 	dir := t.TempDir()
 	filename := dir + "/cvd"
-	cd := NewCVDDownloader(&AlwaysFailsArtifactDownloader{})
+	expectedErr := errors.New("error")
+	cd := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr})
 
 	err := cd.Download(filename, "1")
 
-	if err == nil {
-		t.Errorf("expected an error")
+	if !errors.Is(err, expectedErr) {
+		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
 	}
 	if _, err := os.Stat(filename); err == nil {
 		t.Errorf("file must not have been created")
+	}
+}
+
+func TestCVDSubcmdStartCVDServerVerifyArgs(t *testing.T) {
+	var usedCommand string
+	var usedArgs []string
+	cvdBin := "cvd"
+	execContext := func(command string, args ...string) *exec.Cmd {
+		usedCommand = command
+		usedArgs = args
+		return createMockGoTestCmd()
+	}
+	cmd := CVDSubcmdStartCVDServer{CVDBin: cvdBin}
+
+	cmd.Run(execContext)
+
+	if usedCommand != cvdBin {
+		t.Errorf("expected <<%q>>, got %q", cvdBin, usedCommand)
+	}
+	if len(usedArgs) > 0 {
+		t.Errorf("expected empty args, got %v", usedArgs)
+	}
+}
+
+func TestCVDSubcmdStartCVDServer(t *testing.T) {
+	execContext := func(command string, args ...string) *exec.Cmd {
+		return createMockGoTestCmd()
+	}
+	cmd := CVDSubcmdStartCVDServer{CVDBin: "cvd"}
+
+	err := cmd.Run(execContext)
+
+	if err != nil {
+		t.Errorf("epected <<nil>> error, got %+v", err)
+	}
+}
+
+func TestCVDSubcmdStartCVDServerExecutionFails(t *testing.T) {
+	execContext := func(command string, args ...string) *exec.Cmd {
+		return createFailingMockGoTestCmd()
+	}
+	cmd := CVDSubcmdStartCVDServer{CVDBin: "cvd"}
+
+	err := cmd.Run(execContext)
+
+	var execErr *exec.ExitError
+	if !errors.As(err, &execErr) {
+		t.Errorf("error type <<\"%T\">> not found in error chain", execErr)
 	}
 }
 
@@ -295,4 +616,35 @@ func TestBuildGetSignedURL(t *testing.T) {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)
 		}
 	})
+}
+
+// Creates a new exec.Cmd, which will call the `TestMockGoTestCmdHelperFunction`
+// function through the execution of the `go test` binary using the parameter `--test.run`.
+func createMockGoTestCmd() *exec.Cmd {
+	cs := []string{"--test.run=TestMockGoTestCmdHelperFunction"}
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"EXECUTED_AS_MOCK_GO_TEST_CMD=1"}
+	return cmd
+}
+
+// Creates a new exec.Cmd, which will call the `TestMockGoTestCmdHelperFunction`
+// function through the execution of the `go test` binary using the parameter `--test.run`.
+// The execution of this command will fail.
+func createFailingMockGoTestCmd() *exec.Cmd {
+	cs := []string{"--test.run=TestMockGoTestCmdHelperFunction"}
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"EXECUTED_AS_MOCK_GO_TEST_CMD=1", "EXECUTION_FAILS=1"}
+	return cmd
+}
+
+// NOTE: This is not a regular unit tests. This is a helper test meant to be called
+// when executing the command returned in `createTestCmd`.
+func TestMockGoTestCmdHelperFunction(t *testing.T) {
+	// Early exist if called as a regular unit test function.
+	if os.Getenv("EXECUTED_AS_MOCK_GO_TEST_CMD") != "1" {
+		return
+	}
+	if os.Getenv("EXECUTION_FAILS") == "1" {
+		panic("fails")
+	}
 }
