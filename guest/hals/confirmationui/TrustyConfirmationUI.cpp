@@ -17,6 +17,8 @@
 
 #include "TrustyConfirmationUI.h"
 
+#include <cutils/properties.h>
+
 namespace android {
 namespace hardware {
 namespace confirmationui {
@@ -67,6 +69,11 @@ TrustyConfirmationUI::TrustyConfirmationUI()
     CHECK(host_fd_->IsOpen()) << "ConfUI: " << GetVirtioConsoleDevicePath() << " is not open.";
     CHECK(host_fd_->SetTerminalRaw() >= 0)
         << "ConfUI: " << GetVirtioConsoleDevicePath() << " fail in SetTerminalRaw()";
+
+    constexpr static const auto enable_confirmationui_property = "ro.boot.enable_confirmationui";
+    const auto arg = property_get_int32(enable_confirmationui_property, -1);
+    is_supported_vm_ = (arg == 1);
+
     if (host_fd_->IsOpen()) {
         auto fetching_cmd = [this]() { HostMessageFetcherLoop(); };
         host_cmd_fetcher_thread_ = std::thread(fetching_cmd);
@@ -160,7 +167,9 @@ Return<ResponseCode> TrustyConfirmationUI::promptUserConfirmation(
     const hidl_vec<UIOption>& uiOptions) {
     std::unique_lock<std::mutex> stateLock(listener_state_lock_, std::defer_lock);
     ConfUiLog(INFO) << "promptUserConfirmation is called";
-
+    if (!is_supported_vm_) {
+        resultCB->result(ResponseCode::Unimplemented, {}, {});
+    }
     if (!stateLock.try_lock()) {
         return ResponseCode::OperationPending;
     }
@@ -180,8 +189,7 @@ Return<ResponseCode> TrustyConfirmationUI::promptUserConfirmation(
     }
     assert(listener_state_ == ListenerState::None);
     listener_state_ = ListenerState::Starting;
-    ConfUiLog(INFO) << "Per promptUserConfirmation, "
-                    << "an active TEE UI session starts";
+
     current_session_id_++;
     auto worker = [this](const sp<IConfirmationResultCallback>& resultCB,
                          const hidl_string& promptText, const hidl_vec<uint8_t>& extraData,
@@ -211,6 +219,9 @@ Return<ResponseCode>
 TrustyConfirmationUI::deliverSecureInputEvent(const HardwareAuthToken& auth_token) {
     ConfUiLog(INFO) << "deliverSecureInputEvent is called";
     ResponseCode rc = ResponseCode::Ignored;
+    if (!is_supported_vm_) {
+        return ResponseCode::Unimplemented;
+    }
     {
         std::unique_lock<std::mutex> lock(current_session_lock_);
         if (!current_session_) {
@@ -221,13 +232,12 @@ TrustyConfirmationUI::deliverSecureInputEvent(const HardwareAuthToken& auth_toke
 }
 
 Return<void> TrustyConfirmationUI::abort() {
-    {
-        std::unique_lock<std::mutex> lock(current_session_lock_);
-        if (!current_session_) {
-            return Void();
-        }
-        return current_session_->Abort();
+    if (!is_supported_vm_) return {};
+    std::unique_lock<std::mutex> lock(current_session_lock_);
+    if (!current_session_) {
+        return Void();
     }
+    return current_session_->Abort();
 }
 
 android::sp<IConfirmationUI> createTrustyConfirmationUI() {
