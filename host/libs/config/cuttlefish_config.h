@@ -442,8 +442,6 @@ class CuttlefishConfig {
     std::string switches_socket_path() const;
     std::string frames_socket_path() const;
 
-    int confui_host_vsock_port() const;
-
     std::string access_kregistry_path() const;
 
     std::string hwcomposer_pmem_path() const;
@@ -537,7 +535,6 @@ class CuttlefishConfig {
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
-    void set_confui_host_vsock_port(int confui_host_port);
     void set_camera_server_port(int camera_server_port);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
