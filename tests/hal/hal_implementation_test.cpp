@@ -112,6 +112,9 @@ struct VersionedAidlPackage {
 };
 
 static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
+    // No implementations on cuttlefish for wifi aidl hal
+    {"android.hardware.wifi.", 1},
+
     // TODO(227536004) Implement bootctrl AIDL
     {"android.hardware.boot.", 1},
     // Cuttlefish Identity Credential HAL implementation is currently
