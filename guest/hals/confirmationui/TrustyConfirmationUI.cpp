@@ -57,17 +57,9 @@ inline MsgVector<teeui::UIOption> hidl2MsgVector(const hidl_vec<UIOption>& v) {
 }
 }  // namespace
 
-cuttlefish::SharedFD TrustyConfirmationUI::ConnectToHost() {
-    using namespace std::chrono_literals;
-    while (true) {
-        auto host_fd = cuttlefish::SharedFD::VsockClient(2, host_vsock_port_, SOCK_STREAM);
-        if (host_fd->IsOpen()) {
-            ConfUiLog(INFO) << "Client connection is established";
-            return host_fd;
-        }
-        ConfUiLog(INFO) << "host service is not on. Sleep for 500 ms";
-        std::this_thread::sleep_for(500ms);
-    }
+const char* TrustyConfirmationUI::GetVirtioConsoleDevicePath() {
+    static char device_path[] = "/dev/hvc8";
+    return device_path;
 }
 
 TrustyConfirmationUI::TrustyConfirmationUI()
@@ -75,10 +67,9 @@ TrustyConfirmationUI::TrustyConfirmationUI()
       prompt_result_(ResponseCode::Ignored), host_vsock_port_{static_cast<int>(property_get_int64(
                                                  "ro.boot.vsock_confirmationui_port", 7700))},
       current_session_id_{10} {
-    ConfUiLog(INFO) << "Connecting to Confirmation UI host listening on port " << host_vsock_port_;
-    host_fd_ = ConnectToHost();
-    auto fetching_cmd = [this]() { HostMessageFetcherLoop(); };
+    host_fd_ = cuttlefish::SharedFD::Open(GetVirtioConsoleDevicePath(), O_RDWR);
     if (host_fd_->IsOpen()) {
+        auto fetching_cmd = [this]() { HostMessageFetcherLoop(); };
         host_cmd_fetcher_thread_ = std::thread(fetching_cmd);
     }
 }
