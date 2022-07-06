@@ -42,11 +42,6 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
-    <!-- Android remote display which need to work for all users-->
-    <install-in-user-type package="com.android.car.acast.source">
-        <install-in user-type="FULL" />
-        <install-in user-type="SYSTEM" />
-    </install-in-user-type>
     <!-- This application is needed in ModuleInfoProvider -->
     <install-in-user-type package="com.android.modulemetadata">
         <install-in user-type="FULL" />
