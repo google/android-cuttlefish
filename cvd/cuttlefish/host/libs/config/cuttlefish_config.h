@@ -154,6 +154,9 @@ class CuttlefishConfig {
   void set_gem5_binary_dir(const std::string& gem5_binary_dir);
   std::string gem5_binary_dir() const;
 
+  void set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir);
+  std::string gem5_checkpoint_dir() const;
+
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
