@@ -49,6 +49,7 @@ class Gem5Manager : public VmManager {
 const std::string fs_header = R"CPP_STR_END(import argparse
 import devices
 import os
+import shutil
 import m5
 from m5.util import addToPath
 from m5.objects import *
@@ -106,8 +107,30 @@ const std::string fs_kernel_cmd = R"CPP_STR_END(
     "androidboot.force_normal_boot=1",
   ]
   root.system.workload.command_line = " ".join(kernel_cmd)
-  m5.instantiate()
-  sys.exit(m5.simulate().getCode())
+  if args.restore is not None:
+    m5.instantiate(args.restore)
+  else:
+    m5.instantiate()
+
+  while True:
+    event = m5.simulate()
+    msg = event.getCause()
+    cur_tick = m5.curTick()
+    if msg == "checkpoint":
+      backup_path = backup_path = os.path.join(root_dir, "gem5_checkpoint")
+      if not os.path.isdir(backup_path):
+        os.mkdir(backup_path)
+
+      print("Checkpoint @", cur_tick)
+      src_dir = os.path.join(m5.options.outdir, "cpt.%d" % cur_tick)
+      backup_path = os.path.join(backup_path, "cpt.%d" % cur_tick)
+      m5.checkpoint(src_dir)
+      shutil.copytree(src_dir, backup_path)
+      print("Checkpoint done.")
+    else:
+      print("Exit msg: " + msg + " @", cur_tick)
+      break
+  sys.exit(event.getCode())
 )CPP_STR_END";
 
 const std::string fs_exe_main = R"CPP_STR_END(
