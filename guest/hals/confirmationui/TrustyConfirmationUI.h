@@ -104,8 +104,7 @@ class TrustyConfirmationUI : public IConfirmationUI {
     std::condition_variable listener_state_condv_;
     ResponseCode prompt_result_;
 
-    // client socket to the host
-    int host_vsock_port_;
+    // client virtio-console fd to the host
     cuttlefish::SharedFD host_fd_;
 
     // ack, response, command from the host, and the abort command from the guest
