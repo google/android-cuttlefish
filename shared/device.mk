@@ -213,6 +213,11 @@ PRODUCT_PACKAGES += \
     libGLESv1_CM_angle \
     libGLESv2_angle
 
+# Enable the ANGLE feature to prefer linear filtering for YUV AHBs
+# to pass android.media.decoder.cts.DecodeAccuracyTest.
+PRODUCT_VENDOR_PROPERTIES += \
+    debug.angle.feature_overrides_enabled=preferLinearFilterForYUV
+
 # GL implementation for virgl
 PRODUCT_PACKAGES += \
     libGLES_mesa \
