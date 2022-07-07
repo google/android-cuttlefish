@@ -18,14 +18,18 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- True if the firmware supports connected MAC randomization -->
-    <bool name="config_wifi_connected_mac_randomization_supported">true</bool>
+    <!-- TODO(b/238124637) Re-enable this flag when mac randomization support
+                           is back-ported to kernel-common-android12-5.4  -->
+    <bool name="config_wifi_connected_mac_randomization_supported">false</bool>
 
     <!-- True if the firmware supports p2p MAC randomization -->
     <!-- TODO(b/237945863) Re-enable this flag when mac randomization for
                            P2P is supported at Cloud Android -->
     <bool name="config_wifi_p2p_mac_randomization_supported">false</bool>
 
+    <!-- TODO(b/238124637) Re-enable this flag when mac randomization support
+                           is back-ported to kernel-common-android12-5.4  -->
     <!-- True if the firmware supports ap MAC randomization -->
-    <bool name="config_wifi_ap_mac_randomization_supported">true</bool>
+    <bool name="config_wifi_ap_mac_randomization_supported">false</bool>
 
 </resources>
