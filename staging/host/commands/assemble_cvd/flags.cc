@@ -127,6 +127,9 @@ DEFINE_bool(pause_in_bootloader, false,
             "to the device console and typing in \"boot\".");
 DEFINE_bool(enable_host_bluetooth, true,
             "Enable the root-canal which is Bluetooth emulator in the host.");
+DEFINE_bool(
+    rootcanal_attach_mode, false,
+    "Instead of running rootcanal, attach an existing rootcanal instance.");
 
 DEFINE_string(bluetooth_controller_properties_file,
               "etc/rootcanal/data/controller_properties.json",
@@ -899,10 +902,11 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_start_wmediumd(false);
     }
 
-    instance.set_start_rootcanal(is_first_instance);
+    instance.set_start_rootcanal(is_first_instance &&
+                                 !FLAGS_rootcanal_attach_mode);
 
     instance.set_start_ap(!FLAGS_ap_rootfs_image.empty() &&
-                          !FLAGS_ap_kernel_image.empty() && is_first_instance);
+                          !FLAGS_ap_kernel_image.empty() && start_wmediumd);
 
     is_first_instance = false;
 
