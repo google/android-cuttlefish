@@ -79,40 +79,17 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
                    extra_data_, locale_, ui_options_);
     ConfUiLog(INFO) << "Session " << GetSessionId() << " started on both the guest and the host";
 
-    auto clean_up_and_get_first = [&]() -> std::unique_ptr<ConfUiMessage> {
-        // blocking wait to get the first msg that belongs to this session
-        while (true) {
-            auto first_curr_session_msg = incoming_msg_queue_.Pop();
-            if (!first_curr_session_msg ||
-                first_curr_session_msg->GetSessionId() != GetSessionId()) {
-                continue;
-            }
-            return std::move(first_curr_session_msg);
-        }
-    };
+    auto first_msg = incoming_msg_queue_.Pop();
 
-    /*
-     * Unconditionally wait ack, or host abort
-     *
-     * First couple of messages could be from the previous session.
-     * We should clear them up.
-     *
-     * Even though the guest HAL sends kAbort to the host, the kAbort
-     * does not happen immediately. Between the incoming_msg_queue_.FlushAll()
-     * and the actual abort on the host, there could still be messages
-     * sent from the host to the guest. As these lines are the first read
-     * for the current session, we clear up the preceding messages
-     * from the previous session until we see the message for the current
-     * session.
-     *
-     * Note that abort() call puts the Abort command in the queue. So,
-     * it will also show up in incoming_msg_queue_
-     *
-     */
-    auto first_msg = std::move(clean_up_and_get_first());
+    // the logic must guarantee first_msg is kCliAck
+    CHECK(first_msg->GetType() == cuttlefish::confui::ConfUiCmd::kCliAck)
+        << "first message from the host in a new session must be kCliAck "
+        << "but is " << cuttlefish::confui::ToString(first_msg->GetType());
 
     cuttlefish::confui::ConfUiAckMessage& start_ack_msg =
         static_cast<cuttlefish::confui::ConfUiAckMessage&>(*first_msg);
+    // ack to kStart has been received
+
     if (!start_ack_msg.IsSuccess()) {
         // handle errors: MALFORMED_UTF8 or Message too long
         const std::string error_msg = start_ack_msg.GetStatusMessage();
@@ -126,6 +103,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
         }
         return error;
     }
+    // the ack to kStart was success.
 
     //  ############################## Start 2nd Phase #############################################
     listener_state_ = ListenerState::SetupDone;
