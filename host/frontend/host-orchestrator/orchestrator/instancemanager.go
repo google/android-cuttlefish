@@ -177,17 +177,13 @@ type StageCreateDirIfNotExist struct {
 }
 
 func (s *StageCreateDirIfNotExist) Run() error {
-	err := os.Mkdir(s.Dir, 0755)
-	if err == nil {
-		// Mkdir set the permission bits (before umask)
-		return os.Chmod(s.Dir, 0755)
-	}
 	// TODO(b/238431258) Use `errors.Is(err, fs.ErrNotExist)` instead of `os.IsNotExist(err)`
 	// once b/236976427 is addressed.
-	if !os.IsNotExist(err) {
-		err = nil
+	if err := os.Mkdir(s.Dir, 0755); os.IsNotExist(err) {
+		return err
 	}
-	return err
+	// Mkdir set the permission bits (before umask)
+	return os.Chmod(s.Dir, 0755)
 }
 
 type CVDDownloader struct {
