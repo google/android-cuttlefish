@@ -177,9 +177,9 @@ type StageCreateDirIfNotExist struct {
 }
 
 func (s *StageCreateDirIfNotExist) Run() error {
-	// TODO(b/238431258) Use `errors.Is(err, fs.ErrNotExist)` instead of `os.IsNotExist(err)`
+	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
 	// once b/236976427 is addressed.
-	if err := os.Mkdir(s.Dir, 0755); os.IsNotExist(err) {
+	if err := os.Mkdir(s.Dir, 0755); err != nil && !os.IsExist(err) {
 		return err
 	}
 	// Mkdir set the permission bits (before umask)

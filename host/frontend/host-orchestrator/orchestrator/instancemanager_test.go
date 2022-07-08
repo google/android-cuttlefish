@@ -405,6 +405,16 @@ func TestStageCreateDirIfNotExistAndDirectoryExists(t *testing.T) {
 	}
 }
 
+func TestStageCreateDirIfNotExistInvalidDir(t *testing.T) {
+	s := StageCreateDirIfNotExist{Dir: "///foo"}
+
+	err := s.Run().(*os.PathError)
+
+	if err.Op != "mkdir" {
+		t.Errorf("expected <<%q>, got %q", "mkdir", err.Op)
+	}
+}
+
 type FakeArtifactDownloader struct {
 	t       *testing.T
 	content string
