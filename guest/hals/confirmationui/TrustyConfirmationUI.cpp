@@ -17,8 +17,6 @@
 
 #include "TrustyConfirmationUI.h"
 
-#include <cutils/properties.h>
-
 namespace android {
 namespace hardware {
 namespace confirmationui {
@@ -64,10 +62,11 @@ const char* TrustyConfirmationUI::GetVirtioConsoleDevicePath() {
 
 TrustyConfirmationUI::TrustyConfirmationUI()
     : listener_state_(ListenerState::None),
-      prompt_result_(ResponseCode::Ignored), host_vsock_port_{static_cast<int>(property_get_int64(
-                                                 "ro.boot.vsock_confirmationui_port", 7700))},
-      current_session_id_{10} {
+      prompt_result_(ResponseCode::Ignored), current_session_id_{10} {
     host_fd_ = cuttlefish::SharedFD::Open(GetVirtioConsoleDevicePath(), O_RDWR);
+    CHECK(host_fd_->IsOpen()) << "ConfUI: " << GetVirtioConsoleDevicePath() << " is not open.";
+    CHECK(host_fd_->SetTerminalRaw() >= 0)
+        << "ConfUI: " << GetVirtioConsoleDevicePath() << " fail in SetTerminalRaw()";
     if (host_fd_->IsOpen()) {
         auto fetching_cmd = [this]() { HostMessageFetcherLoop(); };
         host_cmd_fetcher_thread_ = std::thread(fetching_cmd);
@@ -94,9 +93,12 @@ void TrustyConfirmationUI::HostMessageFetcherLoop() {
             ConfUiLog(ERROR) << "host_fd_ is not open";
             return;
         }
+        ConfUiLog(INFO) << "Trying to fetch command";
         auto msg = cuttlefish::confui::RecvConfUiMsg(host_fd_);
+        ConfUiLog(INFO) << "RecvConfUiMsg() returned";
         if (!msg) {
-            // socket is broken for now
+            // virtio-console is broken for now
+            ConfUiLog(ERROR) << "received message was null";
             return;
         }
         {
