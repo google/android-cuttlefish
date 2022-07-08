@@ -100,11 +100,6 @@ std::vector<std::string> BootconfigArgsFromConfig(
                                      instance.tombstone_receiver_port()));
   }
 
-  if (instance.confui_host_vsock_port()) {
-    bootconfig_args.push_back(concat("androidboot.vsock_confirmationui_port=",
-                                     instance.confui_host_vsock_port()));
-  }
-
   if (instance.config_server_port()) {
     bootconfig_args.push_back(
         concat("androidboot.cuttlefish_config_server_port=",
