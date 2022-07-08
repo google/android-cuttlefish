@@ -406,7 +406,7 @@ func TestStageCreateDirIfNotExistAndDirectoryExists(t *testing.T) {
 }
 
 func TestStageCreateDirIfNotExistInvalidDir(t *testing.T) {
-	s := StageCreateDirIfNotExist{Dir: "///foo"}
+	s := StageCreateDirIfNotExist{Dir: ""}
 
 	err := s.Run().(*os.PathError)
 
