@@ -802,7 +802,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_qemu_vnc_server_port(544 + num - 1);
     instance.set_adb_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
-    instance.set_confui_host_vsock_port(7700 + num - 1);
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
     instance.set_vehicle_hal_server_port(9300 + num - 1);
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
