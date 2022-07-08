@@ -38,8 +38,8 @@ static std::optional<std::vector<std::uint8_t>> ReadRawData(SharedFD s) {
   }
 
   if (p.payload_length_ >= packet::kMaxPayloadLength) {
-    ConfUiLog(ERROR) << "Payload length must be less than "
-                     << packet::kMaxPayloadLength;
+    ConfUiLog(ERROR) << "Payload length " << p.payload_length_
+                     << " must be less than " << packet::kMaxPayloadLength;
     return std::nullopt;
   }
 
