@@ -112,7 +112,6 @@ class HostServer : public HostVirtualInput {
   [[noreturn]] void MainLoop();
   void HalCmdFetcherLoop();
 
-  SharedFD EstablishHalConnection();
   bool IsVirtioConsoleOpen() const;
   // If !IsVirtioConsoleOpen(), LOG(FATAL) and return false
   bool CheckVirtioConsole();
@@ -138,13 +137,8 @@ class HostServer : public HostVirtualInput {
   HostModeCtrl& host_mode_ctrl_;
   ScreenConnectorFrameRenderer& screen_connector_;
 
-  int hal_vsock_port_;
-
   std::shared_ptr<Session> curr_session_;
 
-  SharedFD guest_hal_socket_;
-  // ACCEPTED fd on guest_hal_socket_
-  SharedFD hal_cli_socket_;
   SharedFD from_guest_fifo_fd_;
   SharedFD to_guest_fifo_fd_;
 
