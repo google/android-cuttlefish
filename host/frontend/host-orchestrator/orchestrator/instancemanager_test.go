@@ -201,9 +201,9 @@ func TestProcedureExecuteInnerStageWithFails(t *testing.T) {
 func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	cvdBuildID := "1"
 	paths := IMPaths{
-		CVDBin:           "bin/cvd",
-		ArtifactsRootDir: "ard",
-		HomesRootDir:     "hrd",
+		CVDBin:           "/bin/cvd",
+		ArtifactsRootDir: "/ard",
+		HomesRootDir:     "/hrd",
 	}
 	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: errors.New("error")})
 	startCVDServerCmd := &CVDSubcmdStartCVDServer{}
