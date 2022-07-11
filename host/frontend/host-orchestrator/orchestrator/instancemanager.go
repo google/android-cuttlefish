@@ -36,8 +36,10 @@ func (s EmptyFieldError) Error() string {
 }
 
 type IMPaths struct {
-	RootDir string
-	CVDBin  string
+	RootDir          string
+	CVDBin           string
+	ArtifactsRootDir string
+	HomesRootDir     string
 }
 
 type InstanceManager struct {
@@ -133,6 +135,8 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 			Mutex:             &b.startCVDServerMutex,
 			Started:           &b.cvdServerStarted,
 		},
+		&StageCreateDirIfNotExist{Dir: b.Paths.ArtifactsRootDir},
+		&StageCreateDirIfNotExist{Dir: b.Paths.HomesRootDir},
 	}
 }
 
@@ -166,6 +170,20 @@ func (s *StageStartCVDServer) Run() error {
 		*s.Started = true
 	}
 	return err
+}
+
+type StageCreateDirIfNotExist struct {
+	Dir string
+}
+
+func (s *StageCreateDirIfNotExist) Run() error {
+	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
+	// once b/236976427 is addressed.
+	if err := os.Mkdir(s.Dir, 0755); err != nil && !os.IsExist(err) {
+		return err
+	}
+	// Mkdir set the permission bits (before umask)
+	return os.Chmod(s.Dir, 0755)
 }
 
 type CVDDownloader struct {
