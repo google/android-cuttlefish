@@ -170,7 +170,7 @@ if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
 	fi
 	rm -f ${IMAGE}.initrd
 	truncate -s +3G ${IMAGE}
-	e2fsck -f ${IMAGE}
+	e2fsck -fy ${IMAGE}
 	resize2fs ${IMAGE}
 
 	# Turn on journaling
