@@ -29,6 +29,9 @@ import (
 	"cuttlefish/liboperator/operator"
 )
 
+// The Build Id used to download the cvd binary from.
+const CVDBinBuildID = "8817521"
+
 type EmptyFieldError string
 
 func (s EmptyFieldError) Error() string {
@@ -83,9 +86,6 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.BuildInfo.Target == "" {
 		return EmptyFieldError("BuildInfo.Target")
 	}
-	if r.FetchCVDBuildID == "" {
-		return EmptyFieldError("FetchCVDBuildID")
-	}
 	return nil
 }
 
@@ -119,14 +119,14 @@ type LaunchCVDProcedureBuilder struct {
 }
 
 func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
-	req, ok := input.(apiv1.CreateCVDRequest)
+	_, ok := input.(apiv1.CreateCVDRequest)
 	if !ok {
 		panic("invalid type")
 	}
 	return Procedure{
 		&StageDownloadCVD{
 			CVDBin:     b.Paths.CVDBin,
-			BuildID:    req.FetchCVDBuildID,
+			BuildID:    CVDBinBuildID,
 			Downloader: b.CVDDownloader,
 			Mutex:      &b.downloadCVDMutex,
 		},
