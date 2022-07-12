@@ -129,7 +129,7 @@ std::future<std::vector<char>> VsockConnection::ReadMessageAsync() {
 Json::Value VsockConnection::ReadJsonMessage() {
   auto msg = ReadMessage();
   Json::CharReaderBuilder builder;
-  Json::CharReader* reader = builder.newCharReader();
+  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   Json::Value json_msg;
   std::string errors;
   if (!reader->parse(msg.data(), msg.data() + msg.size(), &json_msg, &errors)) {
