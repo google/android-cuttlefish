@@ -18,40 +18,25 @@
 
 #include <android-base/logging.h>
 
-#include <dirent.h>
-#include <fcntl.h>
-#include <ftw.h>
-#include <libgen.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
 #include <array>
-#include <cerrno>
-#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
-#include <ios>
-#include <iosfwd>
-#include <istream>
-#include <memory>
-#include <ostream>
-#include <ratio>
-#include <string>
+#include <libgen.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <vector>
-
-#include <android-base/macros.h>
 
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 
-bool FileExists(const std::string& path, bool follow_symlinks) {
+bool FileExists(const std::string& path) {
   struct stat st;
-  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
+  return stat(path.c_str(), &st) == 0;
 }
 
 bool FileHasContent(const std::string& path) {
@@ -71,27 +56,15 @@ std::vector<std::string> DirectoryContents(const std::string& path) {
   return ret;
 }
 
-bool DirectoryExists(const std::string& path, bool follow_symlinks) {
+bool DirectoryExists(const std::string& path) {
   struct stat st;
-  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
+  if (stat(path.c_str(), &st) == -1) {
     return false;
   }
   if ((st.st_mode & S_IFMT) != S_IFDIR) {
     return false;
   }
   return true;
-}
-
-Result<void> EnsureDirectoryExists(const std::string& directory_path) {
-  if (!DirectoryExists(directory_path)) {
-    LOG(DEBUG) << "Setting up " << directory_path;
-    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-            0 &&
-        errno != EEXIST) {
-      return CF_ERRNO("Failed to create dir: \"" << directory_path);
-    }
-  }
-  return {};
 }
 
 bool IsDirectoryEmpty(const std::string& path) {
@@ -113,40 +86,6 @@ bool IsDirectoryEmpty(const std::string& path) {
     }
   }
   return true;
-}
-
-bool RecursivelyRemoveDirectory(const std::string& path) {
-  // Copied from libbase TemporaryDir destructor.
-  auto callback = [](const char* child, const struct stat*, int file_type,
-                     struct FTW*) -> int {
-    switch (file_type) {
-      case FTW_D:
-      case FTW_DP:
-      case FTW_DNR:
-        if (rmdir(child) == -1) {
-          PLOG(ERROR) << "rmdir " << child;
-        }
-        break;
-      case FTW_NS:
-      default:
-        if (rmdir(child) != -1) {
-          break;
-        }
-        // FALLTHRU (for gcc, lint, pcc, etc; and following for clang)
-        FALLTHROUGH_INTENDED;
-      case FTW_F:
-      case FTW_SL:
-      case FTW_SLN:
-        if (unlink(child) == -1) {
-          PLOG(ERROR) << "unlink " << child;
-        }
-        break;
-    }
-    return 0;
-  };
-
-  return nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) ==
-         0;
 }
 
 std::string AbsolutePath(const std::string& path) {
@@ -178,11 +117,6 @@ off_t FileSize(const std::string& path) {
   return st.st_size;
 }
 
-bool MakeFileExecutable(const std::string& path) {
-  LOG(DEBUG) << "Making " << path << " executable";
-  return chmod(path.c_str(), S_IRWXU) == 0;
-}
-
 // TODO(schuffelen): Use std::filesystem::last_write_time when on C++17
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path) {
   struct stat st;
@@ -204,18 +138,15 @@ bool RenameFile(const std::string& old_name, const std::string& new_name) {
 }
 
 bool RemoveFile(const std::string& file) {
-  LOG(DEBUG) << "Removing file " << file;
+  LOG(DEBUG) << "Removing " << file;
   return remove(file.c_str()) == 0;
 }
+
 
 std::string ReadFile(const std::string& file) {
   std::string contents;
   std::ifstream in(file, std::ios::in | std::ios::binary);
   in.seekg(0, std::ios::end);
-  if (in.fail()) {
-    // TODO(schuffelen): Return a failing Result instead
-    return "";
-  }
   contents.resize(in.tellg());
   in.seekg(0, std::ios::beg);
   in.read(&contents[0], contents.size());
@@ -225,10 +156,6 @@ std::string ReadFile(const std::string& file) {
 
 std::string CurrentDirectory() {
   char* path = getcwd(nullptr, 0);
-  if (path == nullptr) {
-    PLOG(ERROR) << "`getcwd(nullptr, 0)` failed";
-    return "";
-  }
   std::string ret(path);
   free(path);
   return ret;
@@ -294,11 +221,5 @@ std::string cpp_dirname(const std::string& str) {
   free(copy);
   return ret;
 }
-
-bool FileIsSocket(const std::string& path) {
-  struct stat st;
-  return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
-}
-
 
 }  // namespace cuttlefish

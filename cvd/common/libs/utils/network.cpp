@@ -16,41 +16,31 @@
 
 #include "common/libs/utils/network.h"
 
-// Kernel headers don't mix well with userspace headers, but there is no
-// userspace header that provides the if_tun.h #defines.  Include the kernel
-// header, but move conflicting definitions out of the way using macros.
-#define ethhdr __kernel_ethhdr
+#include <arpa/inet.h>
+#include <linux/if.h>
 #include <linux/if_tun.h>
-#undef ethhdr
-
-#include <endian.h>
-#include <fcntl.h>
-#include <linux/if_ether.h>
 #include <linux/types.h>
-#include <net/ethernet.h>
-#include <net/if.h>
+#include <linux/if_packet.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
+#include <netinet/ether.h>
+#include <string.h>
 
-#include <cstdlib>
-#include <cstring>
-#include <functional>
-#include <ios>
-#include <memory>
-#include <ostream>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "android-base/logging.h"
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace {
+
+static std::string DefaultHostArtifactsPath(const std::string& file_name) {
+  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+          "/") +
+         file_name;
+}
 
 // This should be the size of virtio_net_hdr_v1, from linux/virtio_net.h, but
 // the version of that header that ships with android in Pie does not include
@@ -106,28 +96,42 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
     return tap_fd;
   }
 
-  struct ifreq ifr;
-  memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
-  strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
+  if (HostArch() == Arch::Arm64) {
+    auto tapsetiff_path = DefaultHostArtifactsPath("bin/tapsetiff");
+    Command cmd(tapsetiff_path);
+    cmd.AddParameter(tap_fd);
+    cmd.AddParameter(interface_name.c_str());
+    int ret = cmd.Start().Wait();
+    if (ret != 0) {
+      LOG(ERROR) << "Unable to run tapsetiff.py. Exited with status " << ret;
+      tap_fd->Close();
+      return SharedFD();
+    }
+  } else {
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
+    strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
 
-  int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
-  if (err < 0) {
-    LOG(ERROR) << "Unable to connect to " << interface_name
-               << " tap interface: " << tap_fd->StrError();
-    tap_fd->Close();
-    return SharedFD();
+    int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
+    if (err < 0) {
+      LOG(ERROR) << "Unable to connect to " << interface_name
+                 << " tap interface: " << tap_fd->StrError();
+      tap_fd->Close();
+      return SharedFD();
+    }
+
+    // The interface's configuration may have been modified or just not set
+    // correctly on creation. While qemu checks this and enforces the right
+    // configuration, crosvm does not, so it needs to be set before it's passed to
+    // it.
+    tap_fd->Ioctl(TUNSETOFFLOAD,
+                  reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
+                                        TUN_F_TSO6));
+    int len = SIZE_OF_VIRTIO_NET_HDR_V1;
+    tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
   }
 
-  // The interface's configuration may have been modified or just not set
-  // correctly on creation. While qemu checks this and enforces the right
-  // configuration, crosvm does not, so it needs to be set before it's passed to
-  // it.
-  tap_fd->Ioctl(TUNSETOFFLOAD,
-                reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
-                                        TUN_F_TSO6));
-  int len = SIZE_OF_VIRTIO_NET_HDR_V1;
-  tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
   return tap_fd;
 }
 
@@ -135,9 +139,9 @@ std::set<std::string> TapInterfacesInUse() {
   Command cmd("/bin/bash");
   cmd.AddParameter("-c");
   cmd.AddParameter("egrep -h -e \"^iff:.*\" /proc/*/fdinfo/*");
-  std::string stdin_str, stdout_str, stderr_str;
-  RunWithManagedStdio(std::move(cmd), &stdin_str, &stdout_str, &stderr_str);
-  auto lines = android::base::Split(stdout_str, "\n");
+  std::string stdin, stdout, stderr;
+  RunWithManagedStdio(std::move(cmd), &stdin, &stdout, &stderr);
+  auto lines = android::base::Split(stdout, "\n");
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
     if (line == "") {
@@ -304,27 +308,6 @@ bool ReleaseDhcp4(SharedFD tap, const std::uint8_t mac_address[6],
     return false;
   }
   return true;
-}
-
-bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd,
-                       const std::uint8_t dhcp_server_ip[4]) {
-  auto lease_file_fd = SharedFD::Open(lease_path, O_RDONLY);
-  if (!lease_file_fd->IsOpen()) {
-    LOG(ERROR) << "Could not open leases file \"" << lease_path << '"';
-    return false;
-  }
-  bool success = true;
-  auto dhcp_leases = ParseDnsmasqLeases(lease_file_fd);
-  for (auto& lease : dhcp_leases) {
-    if (!ReleaseDhcp4(tap_fd, lease.mac_address, lease.ip_address,
-                      dhcp_server_ip)) {
-      LOG(ERROR) << "Failed to release " << lease;
-      success = false;
-    } else {
-      LOG(INFO) << "Successfully dropped " << lease;
-    }
-  }
-  return success;
 }
 
 }  // namespace cuttlefish

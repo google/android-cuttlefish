@@ -15,22 +15,9 @@
 
 #include "tee_logging.h"
 
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <inttypes.h>
 
-#include <cinttypes>
-#include <cstring>
-#include <ctime>
-#include <memory>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include <android-base/logging.h>
-#include <android-base/macros.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/threads.h>
@@ -90,9 +77,9 @@ LogSeverity LogFileSeverity() {
   return GuessSeverity("CF_FILE_SEVERITY", android::base::DEBUG);
 }
 
-TeeLogger::TeeLogger(const std::vector<SeverityTarget>& destinations,
-                     const std::string& prefix)
-    : destinations_(destinations), prefix_(prefix) {}
+TeeLogger::TeeLogger(const std::vector<SeverityTarget>& destinations)
+    : destinations_(destinations) {
+}
 
 // Copied from system/libbase/logging_splitters.h
 static std::pair<int, int> CountSizeAndNewLines(const char* message) {
@@ -188,17 +175,15 @@ void TeeLogger::operator()(
     unsigned int line,
     const char* message) {
   for (const auto& destination : destinations_) {
-    std::string msg_with_prefix = prefix_ + message;
     std::string output_string;
     if (destination.metadata_level == MetadataLevel::ONLY_MESSAGE) {
-      output_string = msg_with_prefix + std::string("\n");
+      output_string = message + std::string("\n");
     } else {
       struct tm now;
       time_t t = time(nullptr);
       localtime_r(&t, &now);
-      output_string =
-          StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag,
-                                file, line, msg_with_prefix.c_str());
+      output_string = StderrOutputGenerator(now, getpid(), GetThreadId(),
+                                            severity, tag, file, line, message);
     }
     if (severity >= destination.severity) {
       if (destination.target->IsATTY()) {
@@ -228,18 +213,16 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   return log_severities;
 }
 
-TeeLogger LogToFiles(const std::vector<std::string>& files,
-                     const std::string& prefix) {
-  return TeeLogger(SeverityTargetsForFiles(files), prefix);
+TeeLogger LogToFiles(const std::vector<std::string>& files) {
+  return TeeLogger(SeverityTargetsForFiles(files));
 }
 
-TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& prefix) {
+TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
   log_severities.push_back(SeverityTarget{ConsoleSeverity(),
                                           SharedFD::Dup(/* stderr */ 2),
                                           MetadataLevel::ONLY_MESSAGE});
-  return TeeLogger(log_severities, prefix);
+  return TeeLogger(log_severities);
 }
 
 } // namespace cuttlefish

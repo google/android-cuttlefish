@@ -33,15 +33,10 @@ void DefaultSubprocessLogging(char* argv[]) {
 
   auto instance = config->ForDefaultInstance();
 
-  std::string prefix = "";
-  if (config->Instances().size() > 1) {
-    prefix = instance.instance_name() + ": ";
-  }
-
   if (config->run_as_daemon()) {
     SetLogger(LogToFiles({instance.launcher_log_path()}));
   } else {
-    SetLogger(LogToStderrAndFiles({instance.launcher_log_path()}, prefix));
+    SetLogger(LogToStderrAndFiles({instance.launcher_log_path()}));
   }
 }
 

@@ -16,14 +16,13 @@
 
 #include "common/libs/utils/users.h"
 
-#include <grp.h>
-#include <unistd.h>
-
-#include <algorithm>
 #include <cerrno>
 #include <cstring>
-#include <ostream>
-#include <string>
+#include <sys/types.h>
+#include <unistd.h>
+#include <grp.h>
+
+#include <algorithm>
 #include <vector>
 
 #include <android-base/logging.h>
