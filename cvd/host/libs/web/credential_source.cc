@@ -40,32 +40,35 @@ GceMetadataCredentialSource::GceMetadataCredentialSource(CurlWrapper& curl)
   expiration = std::chrono::steady_clock::now();
 }
 
-Result<std::string> GceMetadataCredentialSource::Credential() {
+std::string GceMetadataCredentialSource::Credential() {
   if (expiration - std::chrono::steady_clock::now() < REFRESH_WINDOW) {
-    CF_EXPECT(RefreshCredential());
+    RefreshCredential();
   }
   return latest_credential;
 }
 
-Result<void> GceMetadataCredentialSource::RefreshCredential() {
+void GceMetadataCredentialSource::RefreshCredential() {
   auto curl_response =
       curl.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"});
   const auto& json = curl_response.data;
-  CF_EXPECT(curl_response.HttpSuccess(),
-            "Error fetching credentials. The server response was \""
-                << json << "\", and code was " << curl_response.http_code);
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. Received \""
-                << json << "\"");
+  if (!curl_response.HttpSuccess()) {
+    LOG(FATAL) << "Error fetching credentials. The server response was \""
+               << json << "\", and code was " << curl_response.http_code;
+  }
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
 
-  CF_EXPECT(json.isMember("access_token") && json.isMember("expires_in"),
-            "GCE credential was missing access_token or expires_in. "
-                << "Full response was " << json << "");
+  bool has_access_token = json.isMember("access_token");
+  bool has_expires_in = json.isMember("expires_in");
+  if (!has_access_token || !has_expires_in) {
+    LOG(FATAL) << "GCE credential was missing access_token or expires_in. "
+               << "Full response was " << json << "";
+  }
 
   expiration = std::chrono::steady_clock::now() +
                std::chrono::seconds(json["expires_in"].asInt());
   latest_credential = json["access_token"].asString();
-  return {};
 }
 
 std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make(
@@ -78,7 +81,9 @@ FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
   this->credential = credential;
 }
 
-Result<std::string> FixedCredentialSource::Credential() { return credential; }
+std::string FixedCredentialSource::Credential() {
+  return credential;
+}
 
 std::unique_ptr<CredentialSource> FixedCredentialSource::make(
     const std::string& credential) {
@@ -134,14 +139,14 @@ RefreshCredentialSource::RefreshCredentialSource(
       client_secret_(client_secret),
       refresh_token_(refresh_token) {}
 
-Result<std::string> RefreshCredentialSource::Credential() {
+std::string RefreshCredentialSource::Credential() {
   if (expiration_ - std::chrono::steady_clock::now() < REFRESH_WINDOW) {
-    CF_EXPECT(UpdateLatestCredential());
+    UpdateLatestCredential();
   }
   return latest_credential_;
 }
 
-Result<void> RefreshCredentialSource::UpdateLatestCredential() {
+void RefreshCredentialSource::UpdateLatestCredential() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   std::stringstream data;
@@ -152,21 +157,22 @@ Result<void> RefreshCredentialSource::UpdateLatestCredential() {
 
   static constexpr char kUrl[] = "https://oauth2.googleapis.com/token";
   auto response = curl_.PostToJson(kUrl, data.str(), headers);
-  CF_EXPECT(response.HttpSuccess(), response.data);
+  CHECK(response.HttpSuccess()) << response.data;
   auto& json = response.data;
 
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. Received \""
-                << json << "\"");
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
 
-  CF_EXPECT(json.isMember("access_token") && json.isMember("expires_in"),
-            "Refresh credential was missing access_token or expires_in."
-                << " Full response was " << json << "");
+  bool has_access_token = json.isMember("access_token");
+  bool has_expires_in = json.isMember("expires_in");
+  CHECK(has_access_token && has_expires_in)
+      << "GCE credential was missing access_token or expires_in. "
+      << "Full response was " << json << "";
 
   expiration_ = std::chrono::steady_clock::now() +
                 std::chrono::seconds(json["expires_in"].asInt());
   latest_credential_ = json["access_token"].asString();
-  return {};
 }
 
 static std::string CollectSslErrors() {
@@ -210,23 +216,22 @@ ServiceAccountOauthCredentialSource::ServiceAccountOauthCredentialSource(
     CurlWrapper& curl)
     : curl_(curl), private_key_(nullptr, EVP_PKEY_free) {}
 
-static Result<std::string> Base64Url(const char* data, std::size_t size) {
+static std::string Base64Url(const char* data, std::size_t size) {
   std::string base64;
-  CF_EXPECT(EncodeBase64(data, size, &base64));
+  CHECK(EncodeBase64(data, size, &base64));
   base64 = android::base::StringReplace(base64, "+", "-", /* all */ true);
   base64 = android::base::StringReplace(base64, "/", "_", /* all */ true);
   return base64;
 }
 
-static Result<std::string> JsonToBase64Url(const Json::Value& json) {
+static std::string JsonToBase64Url(const Json::Value& json) {
   Json::StreamWriterBuilder factory;
   auto serialized = Json::writeString(factory, json);
-  return CF_EXPECT(Base64Url(serialized.c_str(), serialized.size()));
+  return Base64Url(serialized.c_str(), serialized.size());
 }
 
-static Result<std::string> CreateJwt(const std::string& email,
-                                     const std::string& scope,
-                                     EVP_PKEY* private_key) {
+static std::string CreateJwt(const std::string& email, const std::string& scope,
+                             EVP_PKEY* private_key) {
   using std::chrono::duration_cast;
   using std::chrono::minutes;
   using std::chrono::seconds;
@@ -235,7 +240,7 @@ static Result<std::string> CreateJwt(const std::string& email,
   Json::Value header_json;
   header_json["alg"] = "RS256";
   header_json["typ"] = "JWT";
-  std::string header_str = CF_EXPECT(JsonToBase64Url(header_json));
+  std::string header_str = JsonToBase64Url(header_json);
 
   Json::Value claim_set_json;
   claim_set_json["iss"] = email;
@@ -247,58 +252,60 @@ static Result<std::string> CreateJwt(const std::string& email,
   auto exp = time + minutes(30);
   claim_set_json["exp"] =
       (uint64_t)duration_cast<seconds>(exp.time_since_epoch()).count();
-  std::string claim_set_str = CF_EXPECT(JsonToBase64Url(claim_set_json));
+  std::string claim_set_str = JsonToBase64Url(claim_set_json);
 
   std::string jwt_to_sign = header_str + "." + claim_set_str;
 
   std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> sign_ctx(
       EVP_MD_CTX_create(), EVP_MD_CTX_free);
-  CF_EXPECT(EVP_DigestSignInit(sign_ctx.get(), nullptr, EVP_sha256(), nullptr,
-                               private_key));
-  CF_EXPECT(EVP_DigestSignUpdate(sign_ctx.get(), jwt_to_sign.c_str(),
-                                 jwt_to_sign.size()));
+  CHECK(EVP_DigestSignInit(sign_ctx.get(), nullptr, EVP_sha256(), nullptr,
+                           private_key));
+  CHECK(EVP_DigestSignUpdate(sign_ctx.get(), jwt_to_sign.c_str(),
+                             jwt_to_sign.size()));
   size_t length;
-  CF_EXPECT(EVP_DigestSignFinal(sign_ctx.get(), nullptr, &length));
+  CHECK(EVP_DigestSignFinal(sign_ctx.get(), nullptr, &length));
   std::vector<uint8_t> sig_raw(length);
-  CF_EXPECT(EVP_DigestSignFinal(sign_ctx.get(), sig_raw.data(), &length));
+  CHECK(EVP_DigestSignFinal(sign_ctx.get(), sig_raw.data(), &length));
 
-  auto signature = CF_EXPECT(Base64Url((const char*)sig_raw.data(), length));
-  return jwt_to_sign + "." + signature;
+  return jwt_to_sign + "." + Base64Url((const char*)sig_raw.data(), length);
 }
 
-Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
+void ServiceAccountOauthCredentialSource::RefreshCredential() {
   static constexpr char URL[] = "https://oauth2.googleapis.com/token";
   static constexpr char GRANT[] = "urn:ietf:params:oauth:grant-type:jwt-bearer";
   std::stringstream content;
   content << "grant_type=" << curl_.UrlEscape(GRANT) << "&";
-  auto jwt = CF_EXPECT(CreateJwt(email_, scope_, private_key_.get()));
+  auto jwt = CreateJwt(email_, scope_, private_key_.get());
   content << "assertion=" << curl_.UrlEscape(jwt);
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   auto curl_response = curl_.PostToJson(URL, content.str(), headers);
-  CF_EXPECT(curl_response.HttpSuccess(),
-            "Error fetching credentials. The server response was \""
-                << curl_response.data << "\", and code was "
-                << curl_response.http_code);
+  if (!curl_response.HttpSuccess()) {
+    LOG(FATAL) << "Error fetching credentials. The server response was \""
+               << curl_response.data << "\", and code was "
+               << curl_response.http_code;
+  }
   Json::Value json = curl_response.data;
 
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. Received \""
-                << json << "\"");
+  CHECK(!json.isMember("error"))
+      << "Response had \"error\" but had http success status. Received \""
+      << json << "\"";
 
-  CF_EXPECT(json.isMember("access_token") && json.isMember("expires_in"),
-            "Service account credential was missing access_token or expires_in."
-                << " Full response was " << json << "");
+  bool has_access_token = json.isMember("access_token");
+  bool has_expires_in = json.isMember("expires_in");
+  if (!has_access_token || !has_expires_in) {
+    LOG(FATAL) << "GCE credential was missing access_token or expires_in. "
+               << "Full response was " << json << "";
+  }
 
   expiration_ = std::chrono::steady_clock::now() +
                 std::chrono::seconds(json["expires_in"].asInt());
   latest_credential_ = json["access_token"].asString();
-  return {};
 }
 
-Result<std::string> ServiceAccountOauthCredentialSource::Credential() {
+std::string ServiceAccountOauthCredentialSource::Credential() {
   if (expiration_ - std::chrono::steady_clock::now() < REFRESH_WINDOW) {
-    CF_EXPECT(RefreshCredential());
+    RefreshCredential();
   }
   return latest_credential_;
 }
