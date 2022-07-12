@@ -22,39 +22,39 @@
 #include <string>
 #include <variant>
 
-#include "host/libs/web/credential_source.h"
-#include "host/libs/web/curl_wrapper.h"
+#include "credential_source.h"
+#include "curl_wrapper.h"
 
 namespace cuttlefish {
 
 class Artifact {
- public:
+  std::string name;
+  size_t size;
+  unsigned long last_modified_time;
+  std::string md5;
+  std::string content_type;
+  std::string revision;
+  unsigned long creation_time;
+  unsigned int crc32;
+public:
   Artifact(const Json::Value&);
-  Artifact(std::string name) : name_(std::move(name)) {}
+  Artifact(const std::string& name) : name(name) {}
 
-  const std::string& Name() const { return name_; }
-  size_t Size() const { return size_; }
-  unsigned long LastModifiedTime() const { return last_modified_time_; }
-  const std::string& Md5() const { return md5_; }
-  const std::string& ContentType() const { return content_type_; }
-  const std::string& Revision() const { return revision_; }
-  unsigned long CreationTime() const { return creation_time_; }
-  unsigned int Crc32() const { return crc32_; }
-
- private:
-  std::string name_;
-  size_t size_;
-  unsigned long last_modified_time_;
-  std::string md5_;
-  std::string content_type_;
-  std::string revision_;
-  unsigned long creation_time_;
-  unsigned int crc32_;
+  const std::string& Name() const { return name; }
+  size_t Size() const { return size; }
+  unsigned long LastModifiedTime() const { return last_modified_time; }
+  const std::string& Md5() const { return md5; }
+  const std::string& ContentType() const { return content_type; }
+  const std::string& Revision() const { return revision; }
+  unsigned long CreationTime() const { return creation_time; }
+  unsigned int Crc32() const { return crc32; }
 };
 
 struct DeviceBuild {
-  DeviceBuild(std::string id, std::string target)
-      : id(std::move(id)), target(std::move(target)) {}
+  DeviceBuild(const std::string& id, const std::string& target) {
+    this->id = id;
+    this->target = target;
+  }
 
   std::string id;
   std::string target;
@@ -65,7 +65,8 @@ std::ostream& operator<<(std::ostream&, const DeviceBuild&);
 
 struct DirectoryBuild {
   // TODO(schuffelen): Support local builds other than "eng"
-  DirectoryBuild(std::vector<std::string> paths, std::string target);
+  DirectoryBuild(const std::vector<std::string>& paths,
+                 const std::string& target);
 
   std::vector<std::string> paths;
   std::string target;
@@ -85,55 +86,47 @@ class BuildApi {
   BuildApi(CurlWrapper&, CredentialSource*, std::string api_key);
   ~BuildApi() = default;
 
-  Result<std::string> LatestBuildId(const std::string& branch,
-                                    const std::string& target);
+  std::string LatestBuildId(const std::string& branch,
+                            const std::string& target);
 
-  Result<std::string> BuildStatus(const DeviceBuild&);
+  std::string BuildStatus(const DeviceBuild&);
 
-  Result<std::string> ProductName(const DeviceBuild&);
+  std::string ProductName(const DeviceBuild&);
 
-  Result<std::vector<Artifact>> Artifacts(const DeviceBuild&);
+  std::vector<Artifact> Artifacts(const DeviceBuild&);
 
-  Result<void> ArtifactToCallback(const DeviceBuild& build,
-                                  const std::string& artifact,
-                                  CurlWrapper::DataCallback callback);
+  bool ArtifactToCallback(const DeviceBuild& build, const std::string& artifact,
+                          CurlWrapper::DataCallback callback);
 
-  Result<void> ArtifactToFile(const DeviceBuild& build,
-                              const std::string& artifact,
-                              const std::string& path);
+  bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
+                      const std::string& path);
 
-  Result<std::vector<Artifact>> Artifacts(const DirectoryBuild&);
+  std::vector<Artifact> Artifacts(const DirectoryBuild&);
 
-  Result<void> ArtifactToFile(const DirectoryBuild& build,
-                              const std::string& artifact,
-                              const std::string& path);
+  bool ArtifactToFile(const DirectoryBuild& build, const std::string& artifact,
+                      const std::string& path);
 
-  Result<std::vector<Artifact>> Artifacts(const Build& build) {
-    auto res = std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
-    return CF_EXPECT(std::move(res));
+  std::vector<Artifact> Artifacts(const Build& build) {
+    return std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
   }
 
-  Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
-                              const std::string& path) {
-    auto res = std::visit(
-        [this, &artifact, &path](auto&& arg) {
-          return ArtifactToFile(arg, artifact, path);
-        },
-        build);
-    CF_EXPECT(std::move(res));
-    return {};
+  bool ArtifactToFile(const Build& build, const std::string& artifact,
+                      const std::string& path) {
+    return std::visit([this, &artifact, &path](auto&& arg) {
+      return ArtifactToFile(arg, artifact, path);
+    }, build);
   }
 
  private:
-  Result<std::vector<std::string>> Headers();
+  std::vector<std::string> Headers();
 
   CurlWrapper& curl;
   CredentialSource* credential_source;
   std::string api_key_;
 };
 
-Result<Build> ArgumentToBuild(BuildApi& api, const std::string& arg,
-                              const std::string& default_build_target,
-                              const std::chrono::seconds& retry_period);
+Build ArgumentToBuild(BuildApi* api, const std::string& arg,
+                      const std::string& default_build_target,
+                      const std::chrono::seconds& retry_period);
 
-}  // namespace cuttlefish
+} // namespace cuttlefish
