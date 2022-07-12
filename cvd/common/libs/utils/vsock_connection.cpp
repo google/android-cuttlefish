@@ -16,10 +16,25 @@
 
 #include "common/libs/utils/vsock_connection.h"
 
+#include <sys/socket.h>
+#include <sys/time.h>
+
+#include <functional>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <new>
+#include <ostream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
+#include <json/json.h>
+
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
-
-#include "android-base/logging.h"
 
 namespace cuttlefish {
 
