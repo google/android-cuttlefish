@@ -147,6 +147,10 @@ std::string ReadFile(const std::string& file) {
   std::string contents;
   std::ifstream in(file, std::ios::in | std::ios::binary);
   in.seekg(0, std::ios::end);
+  if (in.fail()) {
+    // TODO(schuffelen): Return a failing Result instead
+    return "";
+  }
   contents.resize(in.tellg());
   in.seekg(0, std::ios::beg);
   in.read(&contents[0], contents.size());
