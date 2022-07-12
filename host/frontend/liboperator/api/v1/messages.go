@@ -66,8 +66,6 @@ type CreateCVDRequest struct {
 	// The number of CVDs to create. Use this field if creating more than one instance.
 	// Defaults to 1.
 	InstancesCount int `json:"instances_count"`
-	// REQUIRED. The build id used to download the fetch_cvd binary from.
-	FetchCVDBuildID string `json:"fetch_cvd_build_id"`
 }
 
 type BuildInfo struct {

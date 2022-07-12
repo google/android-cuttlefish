@@ -200,12 +200,14 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		ArtifactsRootDir: "/ard",
 		HomesRootDir:     "/hrd",
 	}
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: errors.New("error")})
 	startCVDServerCmd := &CVDSubcmdStartCVDServer{}
 	builder := LaunchCVDProcedureBuilder{
-		Paths:             paths,
-		CVDDownloader:     cvdDownloader,
-		StartCVDServerCmd: startCVDServerCmd,
+		Paths:              paths,
+		CVDBinAndroidBuild: cvdBinAB,
+		CVDDownloader:      cvdDownloader,
+		StartCVDServerCmd:  startCVDServerCmd,
 	}
 
 	t.Run("download cvd stage", func(t *testing.T) {
@@ -216,8 +218,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		if s.CVDBin != paths.CVDBin {
 			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
 		}
-		if s.BuildID != CVDBinBuildID {
-			t.Errorf("expected <<%q>>, got %q", CVDBinBuildID, s.BuildID)
+		if s.Build != cvdBinAB {
+			t.Errorf("expected <<%+v>>, got %+v", cvdBinAB, s.Build)
 		}
 		if s.Downloader != cvdDownloader {
 			t.Errorf("expected <<%+v>>, got %+v", cvdDownloader, s.Downloader)
@@ -326,7 +328,7 @@ func TestStageDownloadCVDDownloadFails(t *testing.T) {
 	expectedErr := errors.New("error")
 	s := StageDownloadCVD{
 		CVDBin:     cvdBin,
-		BuildID:    "1",
+		Build:      AndroidBuild{ID: "1", Target: "xyzzy"},
 		Downloader: NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr}),
 		Mutex:      &sync.Mutex{},
 	}
@@ -348,7 +350,7 @@ func TestStageDownloadCVD(t *testing.T) {
 	}
 	s := StageDownloadCVD{
 		CVDBin:     cvdBin,
-		BuildID:    "1",
+		Build:      AndroidBuild{ID: "1", Target: "xyzzy"},
 		Downloader: NewCVDDownloader(ad),
 		Mutex:      &sync.Mutex{},
 	}
@@ -415,7 +417,7 @@ type FakeArtifactDownloader struct {
 	content string
 }
 
-func (d *FakeArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
+func (d *FakeArtifactDownloader) Download(dst io.Writer, _ AndroidBuild, name string) error {
 	r := strings.NewReader(d.content)
 	if _, err := io.Copy(dst, r); err != nil {
 		d.t.Fatal(err)
@@ -439,7 +441,7 @@ func TestCVDDownloaderDownloadBinaryAlreadyExist(t *testing.T) {
 	ad := &FakeArtifactDownloader{t, "foo"}
 	cd := NewCVDDownloader(ad)
 
-	err = cd.Download(filename, "1")
+	err = cd.Download(filename, AndroidBuild{ID: "1", Target: "xyzzy"})
 
 	if err != nil {
 		t.Errorf("epected <<nil>> error, got %#v", err)
@@ -460,7 +462,7 @@ func TestCVDDownloaderDownload(t *testing.T) {
 	ad := &FakeArtifactDownloader{t, "foo"}
 	cd := NewCVDDownloader(ad)
 
-	cd.Download(filename, "1")
+	cd.Download(filename, AndroidBuild{ID: "1", Target: "xyzzy"})
 
 	content, _ := ioutil.ReadFile(filename)
 	actual := string(content)
@@ -476,7 +478,7 @@ func TestCVDDownloaderDownload0750FileAccessIsSet(t *testing.T) {
 	ad := &FakeArtifactDownloader{t, "foo"}
 	cd := NewCVDDownloader(ad)
 
-	cd.Download(filename, "1")
+	cd.Download(filename, AndroidBuild{ID: "1", Target: "xyzzy"})
 
 	stats, _ := os.Stat(filename)
 	var expected os.FileMode = 0750
@@ -495,7 +497,7 @@ func TestCVDDownloaderDownloadSettingFileAccessFails(t *testing.T) {
 		return expectedErr
 	}
 
-	err := cd.Download(filename, "1")
+	err := cd.Download(filename, AndroidBuild{ID: "1", Target: "xyzzy"})
 
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
@@ -506,7 +508,7 @@ type AlwaysFailsArtifactDownloader struct {
 	err error
 }
 
-func (d *AlwaysFailsArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
+func (d *AlwaysFailsArtifactDownloader) Download(_ io.Writer, _ AndroidBuild, _ string) error {
 	return d.err
 }
 
@@ -516,7 +518,7 @@ func TestCVDDownloaderDownloadingFails(t *testing.T) {
 	expectedErr := errors.New("error")
 	cd := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr})
 
-	err := cd.Download(filename, "1")
+	err := cd.Download(filename, AndroidBuild{ID: "1", Target: "xyzzy"})
 
 	if !errors.Is(err, expectedErr) {
 		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
@@ -590,7 +592,7 @@ func newResponseBody(content string) io.ReadCloser {
 
 func TestSignedURLArtifactDownloaderDownload(t *testing.T) {
 	fetchCVDBinContent := "001100"
-	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/foo/url?redirect=false"
+	getSignedURLRequestURI := "/android/internal/build/v3/builds/1/xyzzy/attempts/latest/artifacts/foo/url?redirect=false"
 	downloadRequestURI := "/android-build/builds/X/Y/Z"
 	url := "https://someurl.fake"
 	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
@@ -611,7 +613,7 @@ func TestSignedURLArtifactDownloaderDownload(t *testing.T) {
 	d := NewSignedURLArtifactDownloader(mockClient, url)
 
 	var b bytes.Buffer
-	d.Download(io.Writer(&b), "1", "foo")
+	d.Download(io.Writer(&b), AndroidBuild{ID: "1", Target: "xyzzy"}, "foo")
 
 	actual := b.String()
 	if actual != fetchCVDBinContent {
@@ -637,7 +639,7 @@ func TestSignedURLArtifactDownloaderDownloadWithError(t *testing.T) {
 	d := NewSignedURLArtifactDownloader(mockClient, url)
 
 	var b bytes.Buffer
-	err := d.Download(io.Writer(&b), "1", "foo")
+	err := d.Download(io.Writer(&b), AndroidBuild{ID: "1", Target: "xyzzy"}, "foo")
 
 	if !strings.Contains(err.Error(), errorMessage) {
 		t.Errorf("expected to contain <<%q>> in error: %#v", errorMessage, err)
@@ -648,19 +650,19 @@ func TestBuildGetSignedURL(t *testing.T) {
 	baseURL := "http://localhost:1080"
 
 	t.Run("regular build id", func(t *testing.T) {
-		expected := "http://localhost:1080/android/internal/build/v3/builds/1/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/foo/url?redirect=false"
+		expected := "http://localhost:1080/android/internal/build/v3/builds/1/xyzzy/attempts/latest/artifacts/foo/url?redirect=false"
 
-		actual := BuildGetSignedURL(baseURL, "1", "foo")
+		actual := BuildGetSignedURL(baseURL, AndroidBuild{ID: "1", Target: "xyzzy"}, "foo")
 
 		if actual != expected {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)
 		}
 	})
 
-	t.Run("url-escaped build id", func(t *testing.T) {
-		expected := "http://localhost:1080/android/internal/build/v3/builds/latest%3F/aosp_cf_x86_64_phone-userdebug/attempts/latest/artifacts/foo/url?redirect=false"
+	t.Run("url-escaped android build params", func(t *testing.T) {
+		expected := "http://localhost:1080/android/internal/build/v3/builds/1%3F/xyzzy%3F/attempts/latest/artifacts/foo/url?redirect=false"
 
-		actual := BuildGetSignedURL(baseURL, "latest?", "foo")
+		actual := BuildGetSignedURL(baseURL, AndroidBuild{ID: "1?", Target: "xyzzy?"}, "foo")
 
 		if actual != expected {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)

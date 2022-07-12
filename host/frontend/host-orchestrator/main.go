@@ -34,8 +34,10 @@ const (
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
 
-	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
-	defaultCVDArtifactsDir = "/var/lib/cuttlefish-common"
+	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
+	defaultCVDBinAndroidBuildID     = "8817521"
+	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-userdebug"
+	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
 )
 
 func startHttpServer(port string) error {
@@ -105,6 +107,8 @@ func main() {
 		},
 	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
+	cvdBinAndroidBuildID := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID", defaultCVDBinAndroidBuildID)
+	cvdBinAndroidBuildTarget := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET", defaultCVDBinAndroidBuildTarget)
 	artifactDownloader := orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)
 	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	imPaths := orchestrator.IMPaths{
@@ -117,7 +121,11 @@ func main() {
 	im := &orchestrator.InstanceManager{
 		OM: om,
 		LaunchCVDProcedureBuilder: &orchestrator.LaunchCVDProcedureBuilder{
-			Paths:             imPaths,
+			Paths: imPaths,
+			CVDBinAndroidBuild: orchestrator.AndroidBuild{
+				ID:     cvdBinAndroidBuildID,
+				Target: cvdBinAndroidBuildTarget,
+			},
 			CVDDownloader:     orchestrator.NewCVDDownloader(artifactDownloader),
 			StartCVDServerCmd: &orchestrator.CVDSubcmdStartCVDServer{CVDBin: imPaths.CVDBin},
 		},
