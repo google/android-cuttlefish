@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>
 #include <build/version.h>
+#include <google/protobuf/text_format.h>
 
 #include "cvd_server.pb.h"
 
@@ -38,6 +39,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
+#include "host/commands/cvd/fetch_cvd.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -61,10 +63,19 @@ Result<SharedFD> ConnectToServer() {
   return connection;
 }
 
+cvd::Version ClientVersion() {
+  cvd::Version client_version;
+  client_version.set_major(cvd::kVersionMajor);
+  client_version.set_minor(cvd::kVersionMinor);
+  client_version.set_build(android::build::GetBuildNumber());
+  client_version.set_crc32(FileCrc("/proc/self/exe"));
+  return client_version;
+}
+
 class CvdClient {
  public:
-  Result<void> EnsureCvdServerRunning(const std::string& host_tool_directory,
-                                      int num_retries = 1) {
+  Result<cvd::Version> GetServerVersion(
+      const std::string& host_tool_directory) {
     cvd::Request request;
     request.mutable_version_request();
     auto response = SendRequest(request);
@@ -78,7 +89,12 @@ class CvdClient {
     CF_EXPECT(response->has_version_response(),
               "GetVersion call missing VersionResponse.");
 
-    auto server_version = response->version_response().version();
+    return response->version_response().version();
+  }
+
+  Result<void> ValidateServerVersion(const std::string& host_tool_directory,
+                                     int num_retries = 1) {
+    auto server_version = CF_EXPECT(GetServerVersion(host_tool_directory));
     if (server_version.major() != cvd::kVersionMajor) {
       return CF_ERR("Major version difference: cvd("
                     << cvd::kVersionMajor << "." << cvd::kVersionMinor
@@ -92,7 +108,7 @@ class CvdClient {
       CF_EXPECT(StopCvdServer(/*clear=*/false));
       CF_EXPECT(StartCvdServer(host_tool_directory));
       if (num_retries > 0) {
-        CF_EXPECT(EnsureCvdServerRunning(host_tool_directory, num_retries - 1));
+        CF_EXPECT(ValidateServerVersion(host_tool_directory, num_retries - 1));
         return {};
       } else {
         return CF_ERR("Unable to start the cvd_server with version "
@@ -184,7 +200,16 @@ class CvdClient {
     command_request->set_working_directory(cwd.get());
     command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
 
-    auto response = CF_EXPECT(SendRequest(request));
+    std::optional<SharedFD> exe_fd;
+    if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
+        args[1] == "restart-server" && args[2] == "match-client") {
+      constexpr char kSelf[] = "/proc/self/exe";
+      exe_fd = SharedFD::Open(kSelf, O_RDONLY);
+      CF_EXPECT((*exe_fd)->IsOpen(), "Failed to open \""
+                                         << kSelf << "\": \""
+                                         << (*exe_fd)->StrError() << "\"");
+    }
+    auto response = CF_EXPECT(SendRequest(request, exe_fd));
     CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
     CF_EXPECT(response.has_command_response(),
               "HandleCommand call missing CommandResponse.");
@@ -290,7 +315,7 @@ class CvdClient {
   abort();
 }
 
-Result<int> CvdMain(int argc, char** argv, char** envp) {
+Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   std::vector<std::string> args = ArgsToVec(argc, argv);
@@ -299,8 +324,8 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
   CvdClient client;
 
   // TODO(b/206893146): Make this decision inside the server.
-  if (args[0] == "acloud") {
-    auto server_running = client.EnsureCvdServerRunning(
+  if (android::base::Basename(args[0]) == "acloud") {
+    auto server_running = client.ValidateServerVersion(
         android::base::Dirname(android::base::GetExecutableDirectory()));
     if (server_running.ok()) {
       // TODO(schuffelen): Deduplicate when calls to setenv are removed.
@@ -313,7 +338,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
       if (attempt.ok()) {
         args[0] = "acloud";
         CF_EXPECT(client.HandleCommand(args, env));
-        return 0;
+        return {};
       } else {
         CallPythonAcloud(args);
       }
@@ -321,16 +346,23 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
       // Something is wrong with the server, fall back to python acloud
       CallPythonAcloud(args);
     }
+  } else if (android::base::Basename(args[0]) == "fetch_cvd") {
+    CF_EXPECT(FetchCvdMain(argc, argv));
+    return {};
   }
   bool clean = false;
   flags.emplace_back(GflagsCompatFlag("clean", clean));
   SharedFD internal_server_fd;
   flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
+  SharedFD carryover_client_fd;
+  flags.emplace_back(
+      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
 
   CF_EXPECT(ParseFlags(flags, args));
 
   if (internal_server_fd->IsOpen()) {
-    return CF_EXPECT(CvdServerMain(internal_server_fd));
+    CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
+    return {};
   } else if (argv[0] == std::string("/proc/self/exe")) {
     return CF_ERR(
         "Expected to be in server mode, but didn't get a server "
@@ -342,7 +374,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
   // stopping the cvd_server.
   if (argc > 1 && strcmp("kill-server", argv[1]) == 0) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
-    return 0;
+    return {};
   }
 
   // Special case for --clean flag, used to clear any existing state.
@@ -352,10 +384,26 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
   }
 
+  auto dir = android::base::Dirname(android::base::GetExecutableDirectory());
+
   // Handle all remaining commands by forwarding them to the cvd_server.
-  CF_EXPECT(client.EnsureCvdServerRunning(android::base::Dirname(
-                android::base::GetExecutableDirectory())),
+  CF_EXPECT(client.ValidateServerVersion(dir),
             "Unable to ensure cvd_server is running.");
+
+  // Special case for `cvd version`, handled by using the version command.
+  if (argc > 1 && std::string(argv[0]) == "cvd" &&
+      std::string(argv[1]) == "version") {
+    using google::protobuf::TextFormat;
+
+    std::string output;
+    auto server_version = CF_EXPECT(client.GetServerVersion(dir));
+    TextFormat::PrintToString(server_version, &output);
+    std::cout << "Server version:\n\n" << output << "\n";
+
+    TextFormat::PrintToString(ClientVersion(), &output);
+    std::cout << "Client version:\n\n" << output << "\n";
+    return {};
+  }
 
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
   std::vector<std::string> env;
@@ -363,7 +411,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
     env.emplace_back(*e);
   }
   CF_EXPECT(client.HandleCommand(args, env));
-  return 0;
+  return {};
 }
 
 }  // namespace
@@ -372,7 +420,7 @@ Result<int> CvdMain(int argc, char** argv, char** envp) {
 int main(int argc, char** argv, char** envp) {
   auto result = cuttlefish::CvdMain(argc, argv, envp);
   if (result.ok()) {
-    return *result;
+    return 0;
   } else {
     std::cerr << result.error() << std::endl;
     return -1;
