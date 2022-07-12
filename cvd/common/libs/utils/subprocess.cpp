@@ -16,7 +16,7 @@
 
 #include "common/libs/utils/subprocess.h"
 
-#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/prctl.h>
@@ -24,13 +24,25 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstring>
 #include <map>
+#include <memory>
+#include <ostream>
 #include <set>
+#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/files.h"
+
+extern char** environ;
 
 namespace cuttlefish {
 namespace {
@@ -74,13 +86,34 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   ret.push_back(NULL);
   return ret;
 }
-
-void UnsetEnvironment(const std::unordered_set<std::string>& unenv) {
-  for (auto it = unenv.cbegin(); it != unenv.cend(); ++it) {
-    unsetenv(it->c_str());
-  }
-}
 }  // namespace
+
+SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
+  verbose_ = verbose;
+  return *this;
+}
+SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
+  verbose_ = verbose;
+  return *this;
+}
+
+SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
+  exit_with_parent_ = v;
+  return *this;
+}
+SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
+  exit_with_parent_ = v;
+  return *this;
+}
+
+SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
+  in_group_ = in_group;
+  return *this;
+}
+SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
+  in_group_ = in_group;
+  return *this;
+}
 
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
@@ -110,7 +143,7 @@ int Subprocess::Wait() {
   }
   int wstatus = 0;
   auto pid = pid_;  // Wait will set pid_ to -1 after waiting
-  auto wait_ret = Wait(&wstatus, 0);
+  auto wait_ret = waitpid(pid, &wstatus, 0);
   if (wait_ret < 0) {
     auto error = errno;
     LOG(ERROR) << "Error on call to waitpid: " << strerror(error);
@@ -120,7 +153,7 @@ int Subprocess::Wait() {
   if (WIFEXITED(wstatus)) {
     retval = WEXITSTATUS(wstatus);
     if (retval) {
-      LOG(ERROR) << "Subprocess " << pid
+      LOG(DEBUG) << "Subprocess " << pid
                  << " exited with error code: " << retval;
     }
   } else if (WIFSIGNALED(wstatus)) {
@@ -130,20 +163,26 @@ int Subprocess::Wait() {
   }
   return retval;
 }
-pid_t Subprocess::Wait(int* wstatus, int options) {
+int Subprocess::Wait(siginfo_t* infop, int options) {
   if (pid_ < 0) {
     LOG(ERROR)
         << "Attempt to wait on invalid pid(has it been waited on already?): "
         << pid_;
     return -1;
   }
-  auto retval = waitpid(pid_, wstatus, options);
+  *infop = {};
+  auto retval = waitid(P_PID, pid_, infop, options);
   // We don't want to wait twice for the same process
-  pid_ = -1;
+  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED ||
+                infop->si_code == CLD_DUMPED;
+  bool reaped = !(options & WNOWAIT);
+  if (exited && reaped) {
+    pid_ = -1;
+  }
   return retval;
 }
 
-bool KillSubprocess(Subprocess* subprocess) {
+StopperResult KillSubprocess(Subprocess* subprocess) {
   auto pid = subprocess->pid();
   if (pid > 0) {
     auto pgid = getpgid(pid);
@@ -155,13 +194,23 @@ bool KillSubprocess(Subprocess* subprocess) {
       // to the process and not a (non-existent) group
     }
     bool is_group_head = pid == pgid;
-    if (is_group_head) {
-      return killpg(pid, SIGKILL) == 0;
-    } else {
-      return kill(pid, SIGKILL) == 0;
+    auto kill_ret = (is_group_head ? killpg : kill)(pid, SIGKILL);
+    if (kill_ret == 0) {
+      return StopperResult::kStopSuccess;
     }
+    auto kill_cmd = is_group_head ? "killpg(" : "kill(";
+    PLOG(ERROR) << kill_cmd << pid << ", SIGKILL) failed: ";
+    return StopperResult::kStopFailure;
   }
-  return true;
+  return StopperResult::kStopSuccess;
+}
+
+Command::Command(const std::string& executable, SubprocessStopper stopper)
+    : subprocess_stopper_(stopper) {
+  for (char** env = environ; *env; env++) {
+    env_.emplace_back(*env);
+  }
+  command_.push_back(executable);
 }
 
 Command::~Command() {
@@ -175,44 +224,67 @@ Command::~Command() {
   }
 }
 
-bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
+void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   int fd;
   if (inherited_fds_.count(shared_fd)) {
     fd = inherited_fds_[shared_fd];
   } else {
     fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
-    if (fd < 0) {
-      LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
-      return false;
-    }
+    CHECK(fd >= 0) << "Could not acquire a new file descriptor: "
+                   << shared_fd->StrError();
     inherited_fds_[shared_fd] = fd;
   }
   *stream << fd;
-  return true;
 }
 
-bool Command::RedirectStdIO(Subprocess::StdIOChannel channel,
-                            SharedFD shared_fd) {
-  if (!shared_fd->IsOpen()) {
-    return false;
-  }
-  if (redirects_.count(channel)) {
-    LOG(ERROR) << "Attempted multiple redirections of fd: "
-               << static_cast<int>(channel);
-    return false;
-  }
+Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+                                SharedFD shared_fd) & {
+  CHECK(shared_fd->IsOpen());
+  CHECK(redirects_.count(channel) == 0)
+      << "Attempted multiple redirections of fd: " << static_cast<int>(channel);
   auto dup_fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
-  if (dup_fd < 0) {
-    LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
-    return false;
-  }
+  CHECK(dup_fd >= 0) << "Could not acquire a new file descriptor: "
+                     << shared_fd->StrError();
   redirects_[channel] = dup_fd;
-  return true;
+  return *this;
 }
-bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                            Subprocess::StdIOChannel parent_channel) {
+Command Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+                               SharedFD shared_fd) && {
+  RedirectStdIO(channel, shared_fd);
+  return std::move(*this);
+}
+Command& Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                                Subprocess::StdIOChannel parent_channel) & {
   return RedirectStdIO(subprocess_channel,
                        SharedFD::Dup(static_cast<int>(parent_channel)));
+}
+Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                               Subprocess::StdIOChannel parent_channel) && {
+  RedirectStdIO(subprocess_channel, parent_channel);
+  return std::move(*this);
+}
+
+Command& Command::SetWorkingDirectory(std::string path) & {
+  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
+  CHECK(fd->IsOpen()) << "Could not open \"" << path
+                      << "\" dir fd: " << fd->StrError();
+  return SetWorkingDirectory(fd);
+}
+Command Command::SetWorkingDirectory(std::string path) && {
+  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
+  CHECK(fd->IsOpen()) << "Could not open \"" << path
+                      << "\" dir fd: " << fd->StrError();
+  return std::move(SetWorkingDirectory(fd));
+}
+Command& Command::SetWorkingDirectory(SharedFD dirfd) & {
+  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
+  working_directory_ = dirfd;
+  return *this;
+}
+Command Command::SetWorkingDirectory(SharedFD dirfd) && {
+  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
+  working_directory_ = dirfd;
+  return std::move(*this);
 }
 
 Subprocess Command::Start(SubprocessOptions options) const {
@@ -242,18 +314,15 @@ Subprocess Command::Start(SubprocessOptions options) const {
         LOG(ERROR) << "fcntl failed: " << strerror(error_num);
       }
     }
-    int rval;
-    // If use_parent_env_ is false, the current process's environment is used as
-    // the environment of the child process. To force an empty emvironment for
-    // the child process pass the address of a pointer to NULL
-    if (use_parent_env_) {
-      UnsetEnvironment(unenv_);
-      rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
-    } else {
-      auto envp = ToCharPointers(env_);
-      rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
-                    const_cast<char* const*>(envp.data()));
+    if (working_directory_->IsOpen()) {
+      if (SharedFD::Fchdir(working_directory_) != 0) {
+        LOG(ERROR) << "Fchdir failed: " << working_directory_->StrError();
+      }
     }
+    int rval;
+    auto envp = ToCharPointers(env_);
+    rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+                   const_cast<char* const*>(envp.data()));
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
                << ")";
@@ -276,6 +345,20 @@ Subprocess Command::Start(SubprocessOptions options) const {
   return Subprocess(pid, subprocess_stopper_);
 }
 
+std::string Command::AsBashScript(
+    const std::string& redirected_stdio_path) const {
+  CHECK(inherited_fds_.empty())
+      << "Bash wrapper will not have inheritied file descriptors.";
+  CHECK(redirects_.empty()) << "Bash wrapper will not have redirected stdio.";
+
+  std::string contents =
+      "#!/bin/bash\n\n" + android::base::Join(command_, " \\\n");
+  if (!redirected_stdio_path.empty()) {
+    contents += " &> " + AbsolutePath(redirected_stdio_path);
+  }
+  return contents;
+}
+
 // A class that waits for threads to exit in its destructor.
 class ThreadJoiner {
 std::vector<std::thread*> threads_;
@@ -290,8 +373,8 @@ public:
   }
 };
 
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
-                        std::string* stdout, std::string* stderr,
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
+                        std::string* stdout_str, std::string* stderr_str,
                         SubprocessOptions options) {
   /*
    * The order of these declarations is necessary for safety. If the function
@@ -308,60 +391,48 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
   ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
   Command cmd = std::move(cmd_tmp);
   bool io_error = false;
-  if (stdin != nullptr) {
+  if (stdin_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to write the stdin of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read)) {
-      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
-                << "\", was already set.";
-      return -1;
-    }
-    stdin_thread = std::thread([pipe_write, stdin, &io_error]() {
-      int written = WriteAll(pipe_write, *stdin);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
+    stdin_thread = std::thread([pipe_write, stdin_str, &io_error]() {
+      int written = WriteAll(pipe_write, *stdin_str);
       if (written < 0) {
         io_error = true;
         LOG(ERROR) << "Error in writing stdin to process";
       }
     });
   }
-  if (stdout != nullptr) {
+  if (stdout_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stdout of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write)) {
-      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
-                << "\", was already set.";
-      return -1;
-    }
-    stdout_thread = std::thread([pipe_read, stdout, &io_error]() {
-      int read = ReadAll(pipe_read, stdout);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
+    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
+      int read = ReadAll(pipe_read, stdout_str);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stdout from process";
       }
     });
   }
-  if (stderr != nullptr) {
+  if (stderr_str != nullptr) {
     SharedFD pipe_read, pipe_write;
     if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stderr of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write)) {
-      LOG(ERROR) << "Could not set stderr of \"" << cmd.GetShortName()
-                << "\", was already set.";
-      return -1;
-    }
-    stderr_thread = std::thread([pipe_read, stderr, &io_error]() {
-      int read = ReadAll(pipe_read, stderr);
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
+    stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
+      int read = ReadAll(pipe_read, stderr_str);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stderr from process";
@@ -379,12 +450,8 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
     // This is necessary to close the write end of the pipe.
     Command forceDelete = std::move(cmd);
   }
-  int wstatus;
-  subprocess.Wait(&wstatus, 0);
-  if (WIFSIGNALED(wstatus)) {
-    LOG(ERROR) << "Command was interrupted by a signal: " << WTERMSIG(wstatus);
-    return -1;
-  }
+
+  int code = subprocess.Wait();
   {
     auto join_threads = std::move(thread_joiner);
   }
@@ -392,7 +459,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
     LOG(ERROR) << "IO error communicating with " << cmd_short_name;
     return -1;
   }
-  return WEXITSTATUS(wstatus);
+  return code;
 }
 
 int execute(const std::vector<std::string>& command,
