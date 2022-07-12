@@ -35,6 +35,11 @@ func (s EmptyFieldError) Error() string {
 	return fmt.Sprintf("field %v is empty", string(s))
 }
 
+type AndroidBuild struct {
+	ID     string
+	Target string
+}
+
 type IMPaths struct {
 	RootDir          string
 	CVDBin           string
@@ -83,9 +88,6 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.BuildInfo.Target == "" {
 		return EmptyFieldError("BuildInfo.Target")
 	}
-	if r.FetchCVDBuildID == "" {
-		return EmptyFieldError("FetchCVDBuildID")
-	}
 	return nil
 }
 
@@ -111,6 +113,7 @@ type ProcedureBuilder interface {
 
 type LaunchCVDProcedureBuilder struct {
 	Paths               IMPaths
+	CVDBinAndroidBuild  AndroidBuild
 	CVDDownloader       *CVDDownloader
 	StartCVDServerCmd   StartCVDServerCmd
 	downloadCVDMutex    sync.Mutex
@@ -119,14 +122,14 @@ type LaunchCVDProcedureBuilder struct {
 }
 
 func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
-	req, ok := input.(apiv1.CreateCVDRequest)
+	_, ok := input.(apiv1.CreateCVDRequest)
 	if !ok {
 		panic("invalid type")
 	}
 	return Procedure{
 		&StageDownloadCVD{
 			CVDBin:     b.Paths.CVDBin,
-			BuildID:    req.FetchCVDBuildID,
+			Build:      b.CVDBinAndroidBuild,
 			Downloader: b.CVDDownloader,
 			Mutex:      &b.downloadCVDMutex,
 		},
@@ -142,7 +145,7 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 
 type StageDownloadCVD struct {
 	CVDBin     string
-	BuildID    string
+	Build      AndroidBuild
 	Downloader *CVDDownloader
 	Mutex      *sync.Mutex
 }
@@ -150,7 +153,7 @@ type StageDownloadCVD struct {
 func (s *StageDownloadCVD) Run() error {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
-	return s.Downloader.Download(s.CVDBin, s.BuildID)
+	return s.Downloader.Download(s.CVDBin, s.Build)
 }
 
 type StageStartCVDServer struct {
@@ -195,7 +198,7 @@ func NewCVDDownloader(downloader ArtifactDownloader) *CVDDownloader {
 	return &CVDDownloader{downloader, os.Chmod}
 }
 
-func (h *CVDDownloader) Download(filename string, buildID string) error {
+func (h *CVDDownloader) Download(filename string, build AndroidBuild) error {
 	exist, err := h.exist(filename)
 	if err != nil {
 		return err
@@ -208,7 +211,7 @@ func (h *CVDDownloader) Download(filename string, buildID string) error {
 		return err
 	}
 	defer f.Close()
-	if err := h.downloader.Download(f, buildID, "cvd"); err != nil {
+	if err := h.downloader.Download(f, build, "cvd"); err != nil {
 		if removeErr := os.Remove(filename); err != nil {
 			return fmt.Errorf("%w; %v", err, removeErr)
 		}
@@ -229,7 +232,7 @@ func (h *CVDDownloader) exist(name string) (bool, error) {
 
 // Represents a downloader of artifacts hosted in Android Build (https://ci.android.com).
 type ArtifactDownloader interface {
-	Download(dst io.Writer, buildID, name string) error
+	Download(dst io.Writer, build AndroidBuild, name string) error
 }
 
 // Downloads the artifacts using the signed URL returned by the Android Build service.
@@ -242,8 +245,8 @@ func NewSignedURLArtifactDownloader(client *http.Client, URL string) *SignedURLA
 	return &SignedURLArtifactDownloader{client, URL}
 }
 
-func (d *SignedURLArtifactDownloader) Download(dst io.Writer, buildID, name string) error {
-	signedURL, err := d.getSignedURL(buildID, name)
+func (d *SignedURLArtifactDownloader) Download(dst io.Writer, build AndroidBuild, name string) error {
+	signedURL, err := d.getSignedURL(&build, name)
 	if err != nil {
 		return err
 	}
@@ -263,8 +266,8 @@ func (d *SignedURLArtifactDownloader) Download(dst io.Writer, buildID, name stri
 	return err
 }
 
-func (d *SignedURLArtifactDownloader) getSignedURL(buildID, name string) (string, error) {
-	url := BuildGetSignedURL(d.url, buildID, name)
+func (d *SignedURLArtifactDownloader) getSignedURL(build *AndroidBuild, name string) (string, error) {
+	url := BuildGetSignedURL(d.url, *build, name)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
@@ -300,10 +303,10 @@ func (d *SignedURLArtifactDownloader) parseErrorResponse(body io.ReadCloser) err
 	return fmt.Errorf(errRes.Error.Message)
 }
 
-func BuildGetSignedURL(baseURL, buildID, name string) string {
+func BuildGetSignedURL(baseURL string, build AndroidBuild, name string) string {
 	uri := fmt.Sprintf("/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s/url?redirect=false",
-		url.PathEscape(buildID),
-		"aosp_cf_x86_64_phone-userdebug",
+		url.PathEscape(build.ID),
+		url.PathEscape(build.Target),
 		"latest",
 		name)
 	return baseURL + uri

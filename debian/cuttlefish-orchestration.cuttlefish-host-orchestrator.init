@@ -39,6 +39,8 @@ orchestrator_https_port=${orchestrator_https_port:-1443}
 orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host-orchestrator/cert"}
 orchestrator_instance_manager_enabled=${orchestrator_instance_manager_enabled:-false}
 orchestrator_android_build_url=${orchestrator_android_build_url:-"https://androidbuildinternal.googleapis.com"}
+orchestrator_cvdbin_android_build_id=${orchestrator_cvdbin_android_build_id:-"8817521"}
+orchestrator_cvdbin_android_build_target=${orchestrator_cvdbin_android_build_target:-"aosp_cf_x86_64_phone-userdebug"}
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
 RUN_DIR="/run/cuttlefish"
@@ -81,6 +83,8 @@ start() {
   ORCHESTRATOR_TLS_CERT_DIR="${orchestrator_tls_cert_dir}" \
   ORCHESTRATOR_INSTANCE_MANAGER_ENABLED="${orchestrator_instance_manager_enabled}" \
   ORCHESTRATOR_ANDROID_BUILD_URL="${orchestrator_android_build_url}" \
+  ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID="${orchestrator_cvdbin_android_build_id}" \
+  ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET="${orchestrator_cvdbin_android_build_target}" \
   ORCHESTRATOR_CVD_ARTIFACTS_DIR="${orchestrator_cvd_artifacts_dir}" \
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   start-stop-daemon --start \
