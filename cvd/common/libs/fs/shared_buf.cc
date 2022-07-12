@@ -33,32 +33,34 @@ const size_t BUFF_SIZE = 1 << 14;
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;
   ssize_t written = 0;
-  while ((written = fd->Write((void*)&(buf[total_written]), size - total_written)) > 0) {
-    if (written < 0) {
-      errno = fd->GetErrno();
-      return written;
+  do {
+    written = fd->Write((void*)&(buf[total_written]), size - total_written);
+    if (written <= 0) {
+      if (written < 0) {
+        errno = fd->GetErrno();
+        return written;
+      }
+      return total_written;
     }
     total_written += written;
-    if (total_written == size) {
-      break;
-    }
-  }
+  } while (total_written < size);
   return total_written;
 }
 
 ssize_t ReadExact(SharedFD fd, char* buf, size_t size) {
   size_t total_read = 0;
   ssize_t read = 0;
-  while ((read = fd->Read((void*)&(buf[total_read]), size - total_read)) > 0) {
-    if (read < 0) {
-      errno = fd->GetErrno();
-      return read;
+  do {
+    read = fd->Read((void*)&(buf[total_read]), size - total_read);
+    if (read <= 0) {
+      if (read < 0) {
+        errno = fd->GetErrno();
+        return read;
+      }
+      return total_read;
     }
     total_read += read;
-    if (total_read == size) {
-      break;
-    }
-  }
+  } while (total_read < size);
   return total_read;
 }
 

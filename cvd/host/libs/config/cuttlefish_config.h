@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "common/libs/utils/environment.h"
-#include "host/libs/config/custom_actions.h"
+#include "host/libs/config/config_fragment.h"
 
 namespace Json {
 class Value;
@@ -35,13 +35,11 @@ class Value;
 namespace cuttlefish {
 constexpr char kLogcatSerialMode[] = "serial";
 constexpr char kLogcatVsockMode[] = "vsock";
-}
-
-namespace cuttlefish {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 constexpr char kVsocUserPrefix[] = "vsoc-";
+constexpr char kCvdNamePrefix[] = "cvd-";
 constexpr char kBootStartedMessage[] ="VIRTUAL_DEVICE_BOOT_STARTED";
 constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
 constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
@@ -52,16 +50,14 @@ constexpr char kWifiConnectedMessage[] =
 constexpr char kEthernetConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_ETHERNET_CONNECTED";
 constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
+constexpr char kDisplayPowerModeChangedMessage[] =
+    "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
+constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
-
-enum class AdbMode {
-  VsockTunnel,
-  VsockHalfTunnel,
-  NativeVsock,
-  Unknown,
-};
+constexpr char kKernelLoadedMessage[] = "] Linux version";
+constexpr char kBootloaderLoadedMessage[] = "U-Boot 20";
 
 enum class SecureHal {
   Unknown,
@@ -73,6 +69,8 @@ enum class SecureHal {
 class CuttlefishConfig {
  public:
   static const CuttlefishConfig* Get();
+  static std::unique_ptr<const CuttlefishConfig> GetFromFile(
+      const std::string& path);
   static bool ConfigExists();
 
   CuttlefishConfig();
@@ -84,10 +82,19 @@ class CuttlefishConfig {
   // processes by passing the --config_file option.
   bool SaveToFile(const std::string& file) const;
 
-  std::string assembly_dir() const;
-  void set_assembly_dir(const std::string& assembly_dir);
+  bool SaveFragment(const ConfigFragment&);
+  bool LoadFragment(ConfigFragment&) const;
 
+  std::string root_dir() const;
+  void set_root_dir(const std::string& root_dir);
+
+  std::string instances_dir() const;
+  std::string InstancesPath(const std::string&) const;
+
+  std::string assembly_dir() const;
   std::string AssemblyPath(const std::string&) const;
+
+  std::string os_composite_disk_path() const;
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
@@ -95,21 +102,29 @@ class CuttlefishConfig {
   std::string gpu_mode() const;
   void set_gpu_mode(const std::string& name);
 
+  std::string gpu_capture_binary() const;
+  void set_gpu_capture_binary(const std::string&);
+
+  std::string hwcomposer() const;
+  void set_hwcomposer(const std::string&);
+
+  void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
+  bool enable_gpu_udmabuf() const;
+
+  void set_enable_gpu_angle(const bool enable_gpu_angle);
+  bool enable_gpu_angle() const;
+
   int cpus() const;
   void set_cpus(int cpus);
 
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
-  int dpi() const;
-  void set_dpi(int dpi);
-
-  int refresh_rate_hz() const;
-  void set_refresh_rate_hz(int refresh_rate_hz);
-
   struct DisplayConfig {
     int width;
     int height;
+    int dpi;
+    int refresh_rate_hz;
   };
 
   std::vector<DisplayConfig> display_configs() const;
@@ -124,9 +139,6 @@ class CuttlefishConfig {
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
 
-  void set_adb_mode(const std::set<std::string>& modes);
-  std::set<AdbMode> adb_mode() const;
-
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
 
@@ -139,11 +151,8 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
-  void set_tpm_device(const std::string& tpm_device);
-  std::string tpm_device() const;
-
-  void set_enable_vnc_server(bool enable_vnc_server);
-  bool enable_vnc_server() const;
+  void set_gem5_binary_dir(const std::string& gem5_binary_dir);
+  std::string gem5_binary_dir() const;
 
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
@@ -163,17 +172,8 @@ class CuttlefishConfig {
   void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
   bool enable_vehicle_hal_grpc_server() const;
 
-  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
-  std::string vehicle_hal_grpc_server_binary() const;
-
-  void set_custom_actions(const std::vector<CustomActionConfig>& actions);
-  std::vector<CustomActionConfig> custom_actions() const;
-
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
-
-  void set_run_adb_connector(bool run_adb_connector);
-  bool run_adb_connector() const;
 
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
@@ -186,9 +186,6 @@ class CuttlefishConfig {
 
   void set_blank_data_image_mb(int blank_data_image_mb);
   int blank_data_image_mb() const;
-
-  void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
-  std::string blank_data_image_fmt() const;
 
   void set_bootloader(const std::string& bootloader_path);
   std::string bootloader() const;
@@ -205,9 +202,6 @@ class CuttlefishConfig {
   void set_guest_enforce_security(bool guest_enforce_security);
   bool guest_enforce_security() const;
 
-  void set_guest_audit_security(bool guest_audit_security);
-  bool guest_audit_security() const;
-
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
@@ -223,8 +217,11 @@ class CuttlefishConfig {
   void set_metrics_binary(const std::string& metrics_binary);
   std::string metrics_binary() const;
 
-  void set_extra_kernel_cmdline(std::string extra_cmdline);
+  void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
+
+  void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
+  std::vector<std::string> extra_bootconfig_args() const;
 
   // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
@@ -251,6 +248,11 @@ class CuttlefishConfig {
   // the signaling server
   void set_sig_server_path(const std::string& path);
   std::string sig_server_path() const;
+
+  // Whether the webrtc process should use a secure connection (WSS) to the
+  // signaling server.
+  void set_sig_server_secure(bool secure);
+  bool sig_server_secure() const;
 
   // Whether the webrtc process should attempt to verify the authenticity of the
   // signaling server (reject self signed certificates)
@@ -294,8 +296,36 @@ class CuttlefishConfig {
   void set_vhost_net(bool vhost_net);
   bool vhost_net() const;
 
-  void set_ethernet(bool ethernet);
-  bool ethernet() const;
+  void set_vhost_user_mac80211_hwsim(const std::string& path);
+  std::string vhost_user_mac80211_hwsim() const;
+
+  void set_wmediumd_api_server_socket(const std::string& path);
+  std::string wmediumd_api_server_socket() const;
+
+  void set_ap_rootfs_image(const std::string& path);
+  std::string ap_rootfs_image() const;
+
+  void set_ap_kernel_image(const std::string& path);
+  std::string ap_kernel_image() const;
+
+  void set_wmediumd_config(const std::string& path);
+  std::string wmediumd_config() const;
+
+  void set_rootcanal_hci_port(int rootcanal_hci_port);
+  int rootcanal_hci_port() const;
+
+  void set_rootcanal_link_port(int rootcanal_link_port);
+  int rootcanal_link_port() const;
+
+  void set_rootcanal_test_port(int rootcanal_test_port);
+  int rootcanal_test_port() const;
+
+  void set_rootcanal_config_file(const std::string& rootcanal_config_file);
+  std::string rootcanal_config_file() const;
+
+  void set_rootcanal_default_commands_file(
+      const std::string& rootcanal_default_commands_file);
+  std::string rootcanal_default_commands_file() const;
 
   void set_record_screen(bool record_screen);
   bool record_screen() const;
@@ -315,21 +345,32 @@ class CuttlefishConfig {
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
 
+  void set_userdata_format(const std::string& userdata_format);
+  std::string userdata_format() const;
+
+  // The path of an AP image in composite disk
+  std::string ap_image_dev_path() const;
+  void set_ap_image_dev_path(const std::string& dev_path);
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
   MutableInstanceSpecific ForInstance(int instance_num);
   InstanceSpecific ForInstance(int instance_num) const;
+  InstanceSpecific ForInstanceName(const std::string& name) const;
   InstanceSpecific ForDefaultInstance() const;
 
   std::vector<InstanceSpecific> Instances() const;
+  std::vector<std::string> instance_dirs() const;
+
+  void set_instance_names(const std::vector<std::string>& instance_names);
+  std::vector<std::string> instance_names() const;
 
   // A view into an existing CuttlefishConfig object for a particular instance.
   class InstanceSpecific {
     const CuttlefishConfig* config_;
     std::string id_;
     friend InstanceSpecific CuttlefishConfig::ForInstance(int num) const;
-    friend InstanceSpecific CuttlefishConfig::ForDefaultInstance() const;
     friend std::vector<InstanceSpecific> CuttlefishConfig::Instances() const;
 
     InstanceSpecific(const CuttlefishConfig* config, const std::string& id)
@@ -342,8 +383,8 @@ class CuttlefishConfig {
     // If any of the following port numbers is 0, the relevant service is not
     // running on the guest.
 
-    // Port number to connect to vnc server on the host
-    int vnc_server_port() const;
+    // Port number for qemu to run a vnc server on the host
+    int qemu_vnc_server_port() const;
     // Port number to connect to the tombstone receiver on the host
     int tombstone_receiver_port() const;
     // Port number to connect to the config server on the host
@@ -354,27 +395,21 @@ class CuttlefishConfig {
     // Port number to connect to the touch server on the host. (Only
     // operational if QEMU is the vmm.)
     int touch_server_port() const;
-    // Port number to connect to the frame server on the host. (Only
-    // operational if using swiftshader as the GPU.)
-    int frames_server_port() const;
     // Port number to connect to the vehicle HAL server on the host
     int vehicle_hal_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
-    int host_port() const;
+    int adb_host_port() const;
+    // Device-specific ID to distinguish modem simulators. Must be 4 digits.
+    int modem_simulator_host_id() const;
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
     std::string adb_ip_and_port() const;
-    // Port number to connect to the root-canal on the host
-    int rootcanal_hci_port() const;
-    int rootcanal_link_port() const;
-    int rootcanal_test_port() const;
-    std::string rootcanal_config_file() const;
-    std::string rootcanal_default_commands_file() const;
+    // Port number to connect to the camera hal on the guest
+    int camera_server_port() const;
 
     std::string adb_device_name() const;
-    std::string device_title() const;
     std::string gnss_file_path() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
@@ -391,20 +426,22 @@ class CuttlefishConfig {
     // directory..
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
+    std::string PerInstanceLogPath(const std::string& file_name) const;
 
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
 
-    std::string touch_socket_path() const;
+    std::string touch_socket_path(int screen_idx) const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
     std::string frames_socket_path() const;
 
-    // mock hal guest socket that will be vsock/virtio later on
-    std::string confui_hal_guest_socket_path() const;
+    int confui_host_vsock_port() const;
 
     std::string access_kregistry_path() const;
+
+    std::string hwcomposer_pmem_path() const;
 
     std::string pstore_path() const;
 
@@ -430,13 +467,9 @@ class CuttlefishConfig {
 
     std::string sdcard_path() const;
 
-    std::string os_composite_disk_path() const;
-
     std::string persistent_composite_disk_path() const;
 
     std::string uboot_env_image_path() const;
-
-    std::string vendor_boot_image_path() const;
 
     std::string audio_server_path() const;
 
@@ -450,12 +483,29 @@ class CuttlefishConfig {
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
 
+    // Whether to start a reverse proxy to the webrtc signaling server already
+    // running in the host
+    bool start_webrtc_sig_server_proxy() const;
+
+    // Whether this instance should start the wmediumd process
+    bool start_wmediumd() const;
+
+    // Whether this instance should start a rootcanal instance
+    bool start_rootcanal() const;
+
+    // Whether this instance should start an ap instance
+    bool start_ap() const;
+
     // Wifi MAC address inside the guest
-    std::array<unsigned char, 6> wifi_mac_address() const;
+    int wifi_mac_prefix() const;
 
     std::string factory_reset_protected_path() const;
 
     std::string persistent_bootconfig_path() const;
+
+    std::string vbmeta_path() const;
+
+    std::string id() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -464,13 +514,12 @@ class CuttlefishConfig {
     std::string id_;
     friend MutableInstanceSpecific CuttlefishConfig::ForInstance(int num);
 
-    MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id)
-        : config_(config), id_(id) {}
+    MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id);
 
     Json::Value* Dictionary();
   public:
     void set_serial_number(const std::string& serial_number);
-    void set_vnc_server_port(int vnc_server_port);
+    void set_qemu_vnc_server_port(int qemu_vnc_server_port);
     void set_tombstone_receiver_port(int tombstone_receiver_port);
     void set_config_server_port(int config_server_port);
     void set_frames_server_port(int config_server_port);
@@ -480,15 +529,11 @@ class CuttlefishConfig {
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
-    void set_host_port(int host_port);
+    void set_adb_host_port(int adb_host_port);
+    void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
-    void set_rootcanal_hci_port(int rootcanal_hci_port);
-    void set_rootcanal_link_port(int rootcanal_link_port);
-    void set_rootcanal_test_port(int rootcanal_test_port);
-    void set_rootcanal_config_file(const std::string& rootcanal_config_file);
-    void set_rootcanal_default_commands_file(
-        const std::string& rootcanal_default_commands_file);
-    void set_device_title(const std::string& title);
+    void set_confui_host_vsock_port(int confui_host_port);
+    void set_camera_server_port(int camera_server_port);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
@@ -497,14 +542,17 @@ class CuttlefishConfig {
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
-    void set_instance_dir(const std::string& instance_dir);
     // modem simulator related
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
+    void set_start_webrtc_sig_server_proxy(bool start);
+    void set_start_wmediumd(bool start);
+    void set_start_rootcanal(bool start);
+    void set_start_ap(bool start);
     // Wifi MAC address inside the guest
-    void set_wifi_mac_address(const std::array<unsigned char, 6>&);
+    void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
     // Gnss grpc proxy local file path
@@ -516,7 +564,7 @@ class CuttlefishConfig {
 
   void SetPath(const std::string& key, const std::string& path);
   bool LoadFromFile(const char* file);
-  static CuttlefishConfig* BuildConfigImpl();
+  static CuttlefishConfig* BuildConfigImpl(const std::string& path);
 
   CuttlefishConfig(const CuttlefishConfig&) = delete;
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
@@ -563,4 +611,9 @@ extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;
+
+// HwComposer modes
+extern const char* const kHwComposerAuto;
+extern const char* const kHwComposerDrm;
+extern const char* const kHwComposerRanchu;
 }  // namespace cuttlefish
