@@ -321,6 +321,14 @@ void CuttlefishConfig::set_gem5_binary_dir(const std::string& gem5_binary_dir) {
   (*dictionary_)[kGem5BinaryDir] = gem5_binary_dir;
 }
 
+static constexpr char kGem5CheckpointDir[] = "gem5_checkpoint_dir";
+std::string CuttlefishConfig::gem5_checkpoint_dir() const {
+  return (*dictionary_)[kGem5CheckpointDir].asString();
+}
+void CuttlefishConfig::set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir) {
+  (*dictionary_)[kGem5CheckpointDir] = gem5_checkpoint_dir;
+}
+
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
 void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
@@ -694,6 +702,14 @@ std::string CuttlefishConfig::console_dev() const {
     }
   }
   return console_dev;
+}
+
+static constexpr char kEnableKernelLog[] = "enable_kernel_log";
+void CuttlefishConfig::set_enable_kernel_log(bool enable_kernel_log) {
+  (*dictionary_)[kEnableKernelLog] = enable_kernel_log;
+}
+bool CuttlefishConfig::enable_kernel_log() const {
+  return (*dictionary_)[kEnableKernelLog].asBool();
 }
 
 static constexpr char kVhostNet[] = "vhost_net";
