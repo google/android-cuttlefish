@@ -29,9 +29,6 @@ import (
 	"cuttlefish/liboperator/operator"
 )
 
-// The Build Id used to download the cvd binary from.
-const CVDBinBuildID = "8817521"
-
 type EmptyFieldError string
 
 func (s EmptyFieldError) Error() string {
