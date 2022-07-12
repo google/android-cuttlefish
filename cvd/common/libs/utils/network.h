@@ -15,8 +15,7 @@
  */
 #pragma once
 
-#include <cstdint>
-#include <ostream>
+#include <cstddef>
 #include <set>
 #include <string>
 #include <vector>
@@ -50,6 +49,4 @@ bool ReleaseDhcp4(SharedFD tap, const std::uint8_t mac_address[6],
                   const std::uint8_t ip_address[4],
                   const std::uint8_t dhcp_server_ip[4]);
 
-bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd,
-                       const std::uint8_t dhcp_server_ip[4]);
 }

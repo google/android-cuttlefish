@@ -42,21 +42,19 @@ class TeeLogger {
 private:
   std::vector<SeverityTarget> destinations_;
 public:
- TeeLogger(const std::vector<SeverityTarget>& destinations,
-           const std::string& log_prefix = "");
- ~TeeLogger() = default;
+  TeeLogger(const std::vector<SeverityTarget>& destinations);
+  ~TeeLogger() = default;
 
- void operator()(android::base::LogId log_id,
-                 android::base::LogSeverity severity, const char* tag,
-                 const char* file, unsigned int line, const char* message);
-
-private:
- std::string prefix_;
+  void operator()(
+      android::base::LogId log_id,
+      android::base::LogSeverity severity,
+      const char* tag,
+      const char* file,
+      unsigned int line,
+      const char* message);
 };
 
-TeeLogger LogToFiles(const std::vector<std::string>& files,
-                     const std::string& log_prefix = "");
-TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& log_prefix = "");
+TeeLogger LogToFiles(const std::vector<std::string>& files);
+TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files);
 
 } // namespace cuttlefish

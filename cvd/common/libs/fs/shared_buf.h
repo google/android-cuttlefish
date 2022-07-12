@@ -30,7 +30,6 @@ namespace cuttlefish {
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
- *
  */
 ssize_t ReadAll(SharedFD fd, std::string* buf);
 
@@ -41,11 +40,6 @@ ssize_t ReadAll(SharedFD fd, std::string* buf);
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
- *
- * If the size of buf is 0, read(fd, buf, 0) is effectively called, which means
- * error(s) might be detected. If detected, the return value would be -1.
- * If not detected, the return value will be 0.
- *
  */
 ssize_t ReadExact(SharedFD fd, std::string* buf);
 
@@ -56,11 +50,6 @@ ssize_t ReadExact(SharedFD fd, std::string* buf);
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
- *
- * If the size of buf is 0, read(fd, buf, 0) is effectively called, which means
- * error(s) might be detected. If detected, the return value would be -1.
- * If not detected, the return value will be 0.
- *
  */
 ssize_t ReadExact(SharedFD fd, std::vector<char>* buf);
 
@@ -71,11 +60,6 @@ ssize_t ReadExact(SharedFD fd, std::vector<char>* buf);
  *
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
- *
- * When the size is 0, read(fd, buf, 0) is effectively called, which means
- * error(s) might be detected. If detected, the return value would be -1.
- * If not detected, the return value will be 0.
- *
  */
 ssize_t ReadExact(SharedFD fd, char* buf, size_t size);
 
@@ -99,12 +83,6 @@ ssize_t ReadExactBinary(SharedFD fd, T* binary_data) {
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
- *
- * If the size of buf is 0, WriteAll returns 0 with no error set unless
- * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
- * effectively called. It may detect errors; if detected, errno is set and
- * -1 is returned. If not detected, 0 is returned with errno unchanged.
- *
  */
 ssize_t WriteAll(SharedFD fd, const std::string& buf);
 
@@ -115,12 +93,6 @@ ssize_t WriteAll(SharedFD fd, const std::string& buf);
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
- *
- * If the size of buf is 0, WriteAll returns 0 with no error set unless
- * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
- * effectively called. It may detect errors; if detected, errno is set and
- * -1 is returned. If not detected, 0 is returned with errno unchanged.
- *
  */
 ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf);
 
@@ -131,12 +103,6 @@ ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf);
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
- *
- * If size is 0, WriteAll returns 0 with no error set unless
- * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
- * effectively called. It may detect errors; if detected, errno is set and
- * -1 is returned. If not detected, 0 is returned with errno unchanged.
- *
  */
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size);
 
@@ -147,12 +113,6 @@ ssize_t WriteAll(SharedFD fd, const char* buf, size_t size);
  *
  * If a write error is encountered, returns -1. Some data may have already been
  * written to fd at that point.
- *
- * If ever sizeof(T) is 0, WriteAll returns 0 with no error set unless
- * the fd is a regular file. If fd is a regular file, write(fd, buf, 0) is
- * effectively called. It may detect errors; if detected, errno is set and
- * -1 is returned. If not detected, 0 is returned with errno unchanged.
- *
  */
 template<typename T>
 ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {

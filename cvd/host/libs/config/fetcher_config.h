@@ -34,7 +34,6 @@ enum FileSource {
   LOCAL_FILE,
   GENERATED,
   BOOTLOADER_BUILD,
-  BOOT_BUILD,
 };
 
 /*

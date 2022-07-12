@@ -16,25 +16,19 @@
 
 #include "common/libs/utils/base64.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <string>
-#include <vector>
-
 #include <openssl/base64.h>
 
 namespace cuttlefish {
 
-bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
-  std::size_t enc_len = 0;
+bool EncodeBase64(const void *data, size_t size, std::string *out) {
+  size_t enc_len = 0;
   auto len_res = EVP_EncodedLength(&enc_len, size);
   if (!len_res) {
     return false;
   }
   out->resize(enc_len);
-  auto enc_res =
-      EVP_EncodeBlock(reinterpret_cast<std::uint8_t *>(out->data()),
-                      reinterpret_cast<const std::uint8_t *>(data), size);
+  auto enc_res = EVP_EncodeBlock(reinterpret_cast<uint8_t *>(out->data()),
+                                 reinterpret_cast<const uint8_t *>(data), size);
   if (enc_res < 0) {
     return false;
   }
@@ -42,15 +36,15 @@ bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
   return true;
 }
 
-bool DecodeBase64(const std::string &data, std::vector<std::uint8_t> *buffer) {
-  std::size_t out_len;
+bool DecodeBase64(const std::string &data, std::vector<uint8_t> *buffer) {
+  size_t out_len;
   auto len_res = EVP_DecodedLength(&out_len, data.size());
   if (!len_res) {
     return false;
   }
   buffer->resize(out_len);
   return EVP_DecodeBase64(buffer->data(), &out_len, out_len,
-                          reinterpret_cast<const std::uint8_t *>(data.data()),
+                          reinterpret_cast<const uint8_t *>(data.data()),
                           data.size());
 }
 

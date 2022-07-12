@@ -15,16 +15,13 @@
  */
 
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <memory>
-#include <ostream>
-#include <string>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
 
 #include <android-base/logging.h>
-
-#include "common/libs/utils/files.h"
 
 namespace cuttlefish {
 
