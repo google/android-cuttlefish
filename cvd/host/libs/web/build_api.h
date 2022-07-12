@@ -81,12 +81,9 @@ using Build = std::variant<DeviceBuild, DirectoryBuild>;
 std::ostream& operator<<(std::ostream&, const Build&);
 
 class BuildApi {
-  CurlWrapper curl;
-  std::unique_ptr<CredentialSource> credential_source;
-
-  std::vector<std::string> Headers();
-public:
-  BuildApi(std::unique_ptr<CredentialSource> credential_source);
+ public:
+  BuildApi(CurlWrapper&, CredentialSource*);
+  BuildApi(CurlWrapper&, CredentialSource*, std::string api_key);
   ~BuildApi() = default;
 
   std::string LatestBuildId(const std::string& branch,
@@ -97,6 +94,9 @@ public:
   std::string ProductName(const DeviceBuild&);
 
   std::vector<Artifact> Artifacts(const DeviceBuild&);
+
+  bool ArtifactToCallback(const DeviceBuild& build, const std::string& artifact,
+                          CurlWrapper::DataCallback callback);
 
   bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
                       const std::string& path);
@@ -116,6 +116,13 @@ public:
       return ArtifactToFile(arg, artifact, path);
     }, build);
   }
+
+ private:
+  std::vector<std::string> Headers();
+
+  CurlWrapper& curl;
+  CredentialSource* credential_source;
+  std::string api_key_;
 };
 
 Build ArgumentToBuild(BuildApi* api, const std::string& arg,
