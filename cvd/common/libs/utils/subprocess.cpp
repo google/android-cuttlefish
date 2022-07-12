@@ -205,12 +205,12 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
   return StopperResult::kStopSuccess;
 }
 
-Command::Command(const std::string& executable, SubprocessStopper stopper)
+Command::Command(std::string executable, SubprocessStopper stopper)
     : subprocess_stopper_(stopper) {
   for (char** env = environ; *env; env++) {
     env_.emplace_back(*env);
   }
-  command_.push_back(executable);
+  command_.emplace_back(std::move(executable));
 }
 
 Command::~Command() {
@@ -264,27 +264,22 @@ Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
   return std::move(*this);
 }
 
-Command& Command::SetWorkingDirectory(std::string path) & {
+Command& Command::SetWorkingDirectory(const std::string& path) & {
   auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
   CHECK(fd->IsOpen()) << "Could not open \"" << path
                       << "\" dir fd: " << fd->StrError();
   return SetWorkingDirectory(fd);
 }
-Command Command::SetWorkingDirectory(std::string path) && {
-  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
-  CHECK(fd->IsOpen()) << "Could not open \"" << path
-                      << "\" dir fd: " << fd->StrError();
-  return std::move(SetWorkingDirectory(fd));
+Command Command::SetWorkingDirectory(const std::string& path) && {
+  return std::move(SetWorkingDirectory(path));
 }
 Command& Command::SetWorkingDirectory(SharedFD dirfd) & {
   CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
-  working_directory_ = dirfd;
+  working_directory_ = std::move(dirfd);
   return *this;
 }
 Command Command::SetWorkingDirectory(SharedFD dirfd) && {
-  CHECK(dirfd->IsOpen()) << "Dir fd invalid: " << dirfd->StrError();
-  working_directory_ = dirfd;
-  return std::move(*this);
+  return std::move(SetWorkingDirectory(std::move(dirfd)));
 }
 
 Subprocess Command::Start(SubprocessOptions options) const {
@@ -321,7 +316,8 @@ Subprocess Command::Start(SubprocessOptions options) const {
     }
     int rval;
     auto envp = ToCharPointers(env_);
-    rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+    const char* executable = executable_ ? executable_->c_str() : cmd[0];
+    rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
                    const_cast<char* const*>(envp.data()));
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
