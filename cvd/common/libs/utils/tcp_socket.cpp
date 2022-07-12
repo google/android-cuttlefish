@@ -18,12 +18,9 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include <cerrno>
-#include <cstring>
-#include <memory>
-#include <ostream>
-#include <string>
 
 #include <android-base/logging.h>
 

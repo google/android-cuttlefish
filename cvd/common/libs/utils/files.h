@@ -19,28 +19,20 @@
 
 #include <chrono>
 #include <string>
-#include <vector>
-
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-bool FileExists(const std::string& path, bool follow_symlinks = true);
+bool FileExists(const std::string& path);
 bool FileHasContent(const std::string& path);
 std::vector<std::string> DirectoryContents(const std::string& path);
-bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
-Result<void> EnsureDirectoryExists(const std::string& directory_path);
+bool DirectoryExists(const std::string& path);
 bool IsDirectoryEmpty(const std::string& path);
-bool RecursivelyRemoveDirectory(const std::string& path);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);
 bool RenameFile(const std::string& old_name, const std::string& new_name);
 std::string ReadFile(const std::string& file);
-bool MakeFileExecutable(const std::string& path);
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
 std::string cpp_dirname(const std::string& str);
 std::string cpp_basename(const std::string& str);
-// Whether a file exists and is a unix socket
-bool FileIsSocket(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
