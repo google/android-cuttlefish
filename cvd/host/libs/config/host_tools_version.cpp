@@ -29,7 +29,7 @@ using std::uint32_t;
 
 namespace cuttlefish {
 
-static uint32_t FileCrc(const std::string& path) {
+uint32_t FileCrc(const std::string& path) {
   uint32_t crc = crc32(0, (unsigned char*) path.c_str(), path.size());
   std::ifstream file_stream(path, std::ifstream::binary);
   std::vector<char> data(1024, 0);

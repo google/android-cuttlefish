@@ -26,7 +26,17 @@ namespace {
 
 const char* kInstances = "instances";
 
+std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
+
 }  // namespace
+
+static constexpr char kInstanceDir[] = "instance_dir";
+CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
+    CuttlefishConfig* config, const std::string& id)
+    : config_(config), id_(id) {
+  // Legacy for acloud
+  (*Dictionary())[kInstanceDir] = config_->InstancesPath(IdToName(id));
+}
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
   return &(*config_->dictionary_)[kInstances][id_];
@@ -36,13 +46,8 @@ const Json::Value* CuttlefishConfig::InstanceSpecific::Dictionary() const {
   return &(*config_->dictionary_)[kInstances][id_];
 }
 
-static constexpr char kInstanceDir[] = "instance_dir";
 std::string CuttlefishConfig::InstanceSpecific::instance_dir() const {
-  return (*Dictionary())[kInstanceDir].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_instance_dir(
-    const std::string& instance_dir) {
-  (*Dictionary())[kInstanceDir] = instance_dir;
+  return config_->InstancesPath(IdToName(id_));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_internal_dir() const {
@@ -131,6 +136,10 @@ std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
   return AbsolutePath(PerInstancePath("access-kregistry"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::hwcomposer_pmem_path() const {
+  return AbsolutePath(PerInstancePath("hwcomposer-pmem"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
   return AbsolutePath(PerInstancePath("pstore"));
 }
@@ -140,7 +149,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_path() const {
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
-  return AbsolutePath(PerInstancePath("logcat"));
+  return AbsolutePath(PerInstanceLogPath("logcat"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
@@ -158,15 +167,11 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
-  return AbsolutePath(PerInstancePath("launcher.log"));
+  return AbsolutePath(PerInstanceLogPath("launcher.log"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path() const {
-  return AbsolutePath(PerInstancePath("os_composite.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
@@ -174,12 +179,12 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
-  return AbsolutePath(PerInstancePath("uboot_env.img"));
+std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
+  return AbsolutePath(PerInstancePath("vbmeta.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image_path() const {
-  return AbsolutePath(PerInstancePath("vendor_boot_repacked.img"));
+std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
+  return AbsolutePath(PerInstancePath("uboot_env.img"));
 }
 
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
@@ -205,9 +210,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_mobile_tap_name(
   (*Dictionary())[kMobileTapName] = mobile_tap_name;
 }
 
-std::string CuttlefishConfig::InstanceSpecific::confui_hal_guest_socket_path()
-    const {
-  return PerInstanceInternalPath("confui_mock_hal_guest.sock");
+static constexpr char kConfUiHostPort[] = "confirmation_ui_host_port";
+int CuttlefishConfig::InstanceSpecific::confui_host_vsock_port() const {
+  return (*Dictionary())[kConfUiHostPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_confui_host_vsock_port(
+    int port) {
+  (*Dictionary())[kConfUiHostPort] = port;
 }
 
 static constexpr char kWifiTapName[] = "wifi_tap_name";
@@ -263,12 +273,21 @@ void CuttlefishConfig::MutableInstanceSpecific::set_uuid(const std::string& uuid
   (*Dictionary())[kUuid] = uuid;
 }
 
-static constexpr char kHostPort[] = "host_port";
-int CuttlefishConfig::InstanceSpecific::host_port() const {
+static constexpr char kHostPort[] = "adb_host_port";
+int CuttlefishConfig::InstanceSpecific::adb_host_port() const {
   return (*Dictionary())[kHostPort].asInt();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_host_port(int host_port) {
-  (*Dictionary())[kHostPort] = host_port;
+void CuttlefishConfig::MutableInstanceSpecific::set_adb_host_port(int port) {
+  (*Dictionary())[kHostPort] = port;
+}
+
+static constexpr char kModemSimulatorId[] = "modem_simulator_host_id";
+int CuttlefishConfig::InstanceSpecific::modem_simulator_host_id() const {
+  return (*Dictionary())[kModemSimulatorId].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_host_id(
+    int id) {
+  (*Dictionary())[kModemSimulatorId] = id;
 }
 
 static constexpr char kAdbIPAndPort[] = "adb_ip_and_port";
@@ -288,29 +307,13 @@ std::string CuttlefishConfig::InstanceSpecific::adb_device_name() const {
   return "NO_ADB_MODE_SET_NO_VALID_DEVICE_NAME";
 }
 
-static constexpr char kDeviceTitle[] = "device_title";
-std::string CuttlefishConfig::InstanceSpecific::device_title() const {
-  return (*Dictionary())[kDeviceTitle].asString();
+static constexpr char kQemuVncServerPort[] = "qemu_vnc_server_port";
+int CuttlefishConfig::InstanceSpecific::qemu_vnc_server_port() const {
+  return (*Dictionary())[kQemuVncServerPort].asInt();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_device_title(
-    const std::string& title) {
-  (*Dictionary())[kDeviceTitle] = title;
-}
-
-static constexpr char kVncServerPort[] = "vnc_server_port";
-int CuttlefishConfig::InstanceSpecific::vnc_server_port() const {
-  return (*Dictionary())[kVncServerPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_server_port) {
-  (*Dictionary())[kVncServerPort] = vnc_server_port;
-}
-
-static constexpr char kFramesServerPort[] = "frames_server_port";
-int CuttlefishConfig::InstanceSpecific::frames_server_port() const {
-  return (*Dictionary())[kFramesServerPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_frames_server_port(int frames_server_port) {
-  (*Dictionary())[kFramesServerPort] = frames_server_port;
+void CuttlefishConfig::MutableInstanceSpecific::set_qemu_vnc_server_port(
+    int qemu_vnc_server_port) {
+  (*Dictionary())[kQemuVncServerPort] = qemu_vnc_server_port;
 }
 
 static constexpr char kTouchServerPort[] = "touch_server_port";
@@ -362,54 +365,13 @@ void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int confi
   (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
-static constexpr char kRootcanalHciPort[] = "rootcanal_hci_port";
-int CuttlefishConfig::InstanceSpecific::rootcanal_hci_port() const {
-  return (*Dictionary())[kRootcanalHciPort].asInt();
+static constexpr char kCameraServerPort[] = "camera_server_port";
+int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
+  return (*Dictionary())[kCameraServerPort].asInt();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_hci_port(
-    int rootcanal_hci_port) {
-  (*Dictionary())[kRootcanalHciPort] = rootcanal_hci_port;
-}
-
-static constexpr char kRootcanalLinkPort[] = "rootcanal_link_port";
-int CuttlefishConfig::InstanceSpecific::rootcanal_link_port() const {
-  return (*Dictionary())[kRootcanalLinkPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_link_port(
-    int rootcanal_link_port) {
-  (*Dictionary())[kRootcanalLinkPort] = rootcanal_link_port;
-}
-
-static constexpr char kRootcanalTestPort[] = "rootcanal_test_port";
-int CuttlefishConfig::InstanceSpecific::rootcanal_test_port() const {
-  return (*Dictionary())[kRootcanalTestPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_test_port(
-    int rootcanal_test_port) {
-  (*Dictionary())[kRootcanalTestPort] = rootcanal_test_port;
-}
-
-static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
-std::string CuttlefishConfig::InstanceSpecific::rootcanal_config_file() const {
-  return (*Dictionary())[kRootcanalConfigFile].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_config_file(
-    const std::string& rootcanal_config_file) {
-  (*Dictionary())[kRootcanalConfigFile] =
-      DefaultHostArtifactsPath(rootcanal_config_file);
-}
-
-static constexpr char kRootcanalDefaultCommandsFile[] =
-    "rootcanal_default_commands_file";
-std::string
-CuttlefishConfig::InstanceSpecific::rootcanal_default_commands_file() const {
-  return (*Dictionary())[kRootcanalDefaultCommandsFile].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_rootcanal_default_commands_file(
-        const std::string& rootcanal_default_commands_file) {
-  (*Dictionary())[kRootcanalDefaultCommandsFile] =
-      DefaultHostArtifactsPath(rootcanal_default_commands_file);
+void CuttlefishConfig::MutableInstanceSpecific::set_camera_server_port(
+    int camera_server_port) {
+  (*Dictionary())[kCameraServerPort] = camera_server_port;
 }
 
 static constexpr char kWebrtcDeviceId[] = "webrtc_device_id";
@@ -429,8 +391,44 @@ bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
   return (*Dictionary())[kStartSigServer].asBool();
 }
 
-std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
-  return PerInstanceInternalPath("touch.sock");
+static constexpr char kStartSigServerProxy[] = "webrtc_start_sig_server_proxy";
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_start_webrtc_sig_server_proxy(bool start) {
+  (*Dictionary())[kStartSigServerProxy] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server_proxy() const {
+  return (*Dictionary())[kStartSigServerProxy].asBool();
+}
+
+static constexpr char kStartWmediumd[] = "start_wmediumd";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_wmediumd(bool start) {
+  (*Dictionary())[kStartWmediumd] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_wmediumd() const {
+  return (*Dictionary())[kStartWmediumd].asBool();
+}
+
+static constexpr char kStartRootcanal[] = "start_rootcanal";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_rootcanal(
+    bool start) {
+  (*Dictionary())[kStartRootcanal] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
+  return (*Dictionary())[kStartRootcanal].asBool();
+}
+
+static constexpr char kStartAp[] = "start_ap";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_ap(bool start) {
+  (*Dictionary())[kStartAp] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_ap() const {
+  return (*Dictionary())[kStartAp].asBool();
+}
+
+std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
+    int screen_idx) const {
+  return PerInstanceInternalPath(
+      ("touch_" + std::to_string(screen_idx) + ".sock").c_str());
 }
 
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
@@ -445,26 +443,13 @@ std::string CuttlefishConfig::InstanceSpecific::frames_socket_path() const {
   return PerInstanceInternalPath("frames.sock");
 }
 
-static constexpr char kWifiMacAddress[] = "wifi_mac_address";
-void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_address(
-    const std::array<unsigned char, 6>& mac_address) {
-  Json::Value mac_address_obj(Json::arrayValue);
-  for (const auto& num : mac_address) {
-    mac_address_obj.append(num);
-  }
-  (*Dictionary())[kWifiMacAddress] = mac_address_obj;
+static constexpr char kWifiMacPrefix[] = "wifi_mac_prefix";
+int CuttlefishConfig::InstanceSpecific::wifi_mac_prefix() const {
+  return (*Dictionary())[kWifiMacPrefix].asInt();
 }
-std::array<unsigned char, 6> CuttlefishConfig::InstanceSpecific::wifi_mac_address() const {
-  std::array<unsigned char, 6> mac_address{0, 0, 0, 0, 0, 0};
-  auto mac_address_obj = (*Dictionary())[kWifiMacAddress];
-  if (mac_address_obj.size() != 6) {
-    LOG(ERROR) << kWifiMacAddress << " entry had wrong size";
-    return {};
-  }
-  for (int i = 0; i < 6; i++) {
-    mac_address[i] = mac_address_obj[i].asInt();
-  }
-  return mac_address;
+void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_prefix(
+    int wifi_mac_prefix) {
+  (*Dictionary())[kWifiMacPrefix] = wifi_mac_prefix;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() const {
@@ -491,8 +476,20 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
   return PerInstancePath(relative_path.c_str());
 }
 
-std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
-  return "cvd-" + id_;
+std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
+    const std::string& file_name) const {
+  if (file_name.size() == 0) {
+    // Don't append a / if file_name is empty.
+    return PerInstancePath(kLogDirName);
+  }
+  auto relative_path = (std::string(kLogDirName) + "/") + file_name;
+  return PerInstancePath(relative_path.c_str());
 }
+
+std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
+  return IdToName(id_);
+}
+
+std::string CuttlefishConfig::InstanceSpecific::id() const { return id_; }
 
 }  // namespace cuttlefish
