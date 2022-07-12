@@ -826,7 +826,7 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 # Enable GPU-intensive background blur support on Cuttlefish when requested by apps
 PRODUCT_VENDOR_PROPERTIES += \
-    ro.surface_flinger.supports_background_blur?=1
+    ro.surface_flinger.supports_background_blur=1
 
 # Set support one-handed mode
 PRODUCT_PRODUCT_PROPERTIES += \
