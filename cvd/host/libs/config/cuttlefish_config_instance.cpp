@@ -128,6 +128,16 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gnss_file_path(
   (*Dictionary())[kGnssFilePath] = gnss_file_path;
 }
 
+static constexpr char kFixedLocationFilePath[] = "fixed_location_file_path";
+std::string CuttlefishConfig::InstanceSpecific::fixed_location_file_path()
+    const {
+  return (*Dictionary())[kFixedLocationFilePath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_fixed_location_file_path(
+    const std::string& fixed_location_file_path) {
+  (*Dictionary())[kFixedLocationFilePath] = fixed_location_file_path;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("logcat-pipe"));
 }
@@ -208,16 +218,6 @@ std::string CuttlefishConfig::InstanceSpecific::mobile_tap_name() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_mobile_tap_name(
     const std::string& mobile_tap_name) {
   (*Dictionary())[kMobileTapName] = mobile_tap_name;
-}
-
-static constexpr char kConfUiHostPort[] = "confirmation_ui_host_port";
-int CuttlefishConfig::InstanceSpecific::confui_host_vsock_port() const {
-  return (*Dictionary())[kConfUiHostPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_confui_host_vsock_port(
-    int port) {
-  (*Dictionary())[kConfUiHostPort] = port;
 }
 
 static constexpr char kWifiTapName[] = "wifi_tap_name";
