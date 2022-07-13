@@ -70,7 +70,9 @@ std::string HostArchStr() {
         decltype(len) upper = len + 1;
         std::string format("%");
         format.append(std::to_string(upper)).append("s");
-        std::shared_ptr<char> buf(new char[upper],
+        // 1 extra character needed for the terminating null
+        // character added by fscanf.
+        std::shared_ptr<char> buf(new char[upper + 1],
                                   std::default_delete<char[]>());
         if (fscanf(fp, format.c_str(), buf.get()) == EOF) {
           return std::string{};
