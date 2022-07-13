@@ -51,7 +51,8 @@ const std::string usageMessage =
     "      set X, Y positions of specific station\n"
     "      use -- before set_position if you want to set the position with "
     "negative values\n"
-    "        e.g. wmediumd_control -- set_position -1.0 -2.0\n\n";
+    "        e.g. wmediumd_control -- set_position 42:00:00:00:00:00 -1.0 "
+    "-2.0\n\n";
 
 DEFINE_string(wmediumd_api_server, "",
               "Unix socket path of wmediumd api server");
