@@ -20,6 +20,9 @@
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/gem5_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -53,6 +56,14 @@ std::string CuttlefishConfig::InstanceSpecific::instance_dir() const {
 std::string CuttlefishConfig::InstanceSpecific::instance_internal_dir() const {
   return PerInstancePath(kInternalDirName);
 }
+
+// TODO (b/163575714) add virtio console support to the bootloader so the
+// virtio console path for the console device can be taken again. When that
+// happens, this function can be deleted along with all the code paths it
+// forces.
+bool CuttlefishConfig::InstanceSpecific::use_bootloader() const {
+  return true;
+};
 
 static constexpr char kSerialNumber[] = "serial_number";
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
@@ -136,6 +147,70 @@ std::string CuttlefishConfig::InstanceSpecific::fixed_location_file_path()
 void CuttlefishConfig::MutableInstanceSpecific::set_fixed_location_file_path(
     const std::string& fixed_location_file_path) {
   (*Dictionary())[kFixedLocationFilePath] = fixed_location_file_path;
+}
+
+static constexpr char kGem5BinaryDir[] = "gem5_binary_dir";
+std::string CuttlefishConfig::InstanceSpecific::gem5_binary_dir() const {
+  return (*Dictionary())[kGem5BinaryDir].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gem5_binary_dir(
+    const std::string& gem5_binary_dir) {
+  (*Dictionary())[kGem5BinaryDir] = gem5_binary_dir;
+}
+
+static constexpr char kGem5CheckpointDir[] = "gem5_checkpoint_dir";
+std::string CuttlefishConfig::InstanceSpecific::gem5_checkpoint_dir() const {
+  return (*Dictionary())[kGem5CheckpointDir].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gem5_checkpoint_dir(
+    const std::string& gem5_checkpoint_dir) {
+  (*Dictionary())[kGem5CheckpointDir] = gem5_checkpoint_dir;
+}
+
+static constexpr char kKgdb[] = "kgdb";
+void CuttlefishConfig::MutableInstanceSpecific::set_kgdb(bool kgdb) {
+  (*Dictionary())[kKgdb] = kgdb;
+}
+bool CuttlefishConfig::InstanceSpecific::kgdb() const {
+  return (*Dictionary())[kKgdb].asBool();
+}
+
+static constexpr char kTargetArch[] = "target_arch";
+void CuttlefishConfig::MutableInstanceSpecific::set_target_arch(
+    Arch target_arch) {
+  (*Dictionary())[kTargetArch] = static_cast<int>(target_arch);
+}
+Arch CuttlefishConfig::InstanceSpecific::target_arch() const {
+  return static_cast<Arch>((*Dictionary())[kTargetArch].asInt());
+}
+
+static constexpr char kConsole[] = "console";
+void CuttlefishConfig::MutableInstanceSpecific::set_console(bool console) {
+  (*Dictionary())[kConsole] = console;
+}
+bool CuttlefishConfig::InstanceSpecific::console() const {
+  return (*Dictionary())[kConsole].asBool();
+}
+std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
+  auto can_use_virtio_console = !kgdb() && !use_bootloader();
+  std::string console_dev;
+  if (can_use_virtio_console ||
+      config_->vm_manager() == vm_manager::Gem5Manager::name()) {
+    // If kgdb and the bootloader are disabled, the Android serial console
+    // spawns on a virtio-console port. If the bootloader is enabled, virtio
+    // console can't be used since uboot doesn't support it.
+    console_dev = "hvc1";
+  } else {
+    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
+    Arch target = target_arch();
+    if ((target == Arch::Arm64 || target == Arch::Arm) &&
+        config_->vm_manager() != vm_manager::CrosvmManager::name()) {
+      console_dev = "ttyAMA0";
+    } else {
+      console_dev = "ttyS0";
+    }
+  }
+  return console_dev;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
