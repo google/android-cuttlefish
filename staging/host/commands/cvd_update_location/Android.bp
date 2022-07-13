@@ -46,6 +46,7 @@ cc_binary {
         "libcuttlefish_host_config",
         "libgflags",
         "libcvd_gnss_grpc_proxy",
+        "liblocation",
     ],
     srcs: [
         "main.cc",
