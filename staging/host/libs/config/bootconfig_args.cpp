@@ -100,6 +100,11 @@ std::vector<std::string> BootconfigArgsFromConfig(
                                      instance.tombstone_receiver_port()));
   }
 
+  const auto enable_confui =
+      (config.vm_manager() == QemuManager::name() ? 0 : 1);
+  bootconfig_args.push_back(
+      concat("androidboot.enable_confirmationui=", enable_confui));
+
   if (instance.config_server_port()) {
     bootconfig_args.push_back(
         concat("androidboot.cuttlefish_config_server_port=",
