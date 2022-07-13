@@ -23,18 +23,32 @@ cc_library_static {
         "StringParse.cpp",
         "GpxParser.cpp",
         "KmlParser.cpp",
+        "GnssClient.cpp",
     ],
     export_include_dirs: ["."],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libjsoncpp",
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
     ],
     static_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libjsoncpp",
         "libxml2",
+        "libcvd_gnss_grpc_proxy",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
     ],
     defaults: ["cuttlefish_host"],
+    include_dirs: [
+        "external/grpc-grpc/include",
+        "external/protobuf/src",
+    ],
 }
