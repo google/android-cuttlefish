@@ -112,6 +112,7 @@ class TrustyConfirmationUI : public IConfirmationUI {
     std::mutex current_session_lock_;
     std::unique_ptr<GuestSession> current_session_;
     std::thread host_cmd_fetcher_thread_;
+    bool is_supported_vm_;
 
     cuttlefish::SharedFD ConnectToHost();
     void HostMessageFetcherLoop();
