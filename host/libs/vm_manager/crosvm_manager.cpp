@@ -269,12 +269,12 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   crosvm_cmd.AddHvcReadOnly(instance.kernel_log_pipe_name(),
                             config.enable_kernel_log());
 
-  if (config.console()) {
+  if (instance.console()) {
     // stdin is the only currently supported way to write data to a serial port in
     // crosvm. A file (named pipe) is used here instead of stdout to ensure only
     // the serial port output is received by the console forwarder as crosvm may
     // print other messages to stdout.
-    if (config.kgdb() || config.use_bootloader()) {
+    if (instance.kgdb() || instance.use_bootloader()) {
       crosvm_cmd.AddSerialConsoleReadWrite(instance.console_out_pipe_name(),
                                            instance.console_in_pipe_name(),
                                            config.enable_kernel_log());
@@ -295,7 +295,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     // In kgdb mode, earlycon is an interactive console, and so early
     // dmesg will go there instead of the kernel.log
     if (config.enable_kernel_log() &&
-        (config.kgdb() || config.use_bootloader())) {
+        (instance.kgdb() || instance.use_bootloader())) {
       crosvm_cmd.AddSerialConsoleReadOnly(instance.kernel_log_pipe_name());
     }
 
@@ -360,8 +360,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                           << " devices");
 
   if (config.enable_audio()) {
-    crosvm_cmd.Cmd().AddParameter(
-        "--sound=", config.ForDefaultInstance().audio_server_path());
+    crosvm_cmd.Cmd().AddParameter("--sound=", instance.audio_server_path());
   }
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
@@ -459,5 +458,4 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 }
 
 } // namespace vm_manager
-} // namespace cuttlefish
-
+}  // namespace cuttlefish

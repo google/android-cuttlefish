@@ -53,7 +53,8 @@ void LogAndSetEnv(const char* key, const std::string& value) {
   LOG(INFO) << key << "=" << value;
 }
 
-void GenerateGem5File(const CuttlefishConfig& config) {
+void GenerateGem5File(const CuttlefishConfig& config,
+                      const CuttlefishConfig::InstanceSpecific& instance) {
   // Gem5 specific config, currently users have to change these config locally (without throug launch_cvd input flag) to meet their design
   // TODO: Add these config into launch_cvd input flag or parse from one json file
   std::string cpu_class = "AtomicSimpleCPU";
@@ -68,7 +69,8 @@ void GenerateGem5File(const CuttlefishConfig& config) {
   std::string mem_ranks = "None";
 
   // start generating starter_fs.py
-  std::string fs_path = config.gem5_binary_dir() + "/configs/example/arm/starter_fs.py";
+  std::string fs_path = instance.gem5_binary_dir() +
+                        "/configs/example/arm/starter_fs.py";
   std::ofstream starter_fs_ofstream(fs_path.c_str());
   starter_fs_ofstream << fs_header << "\n";
 
@@ -79,7 +81,6 @@ void GenerateGem5File(const CuttlefishConfig& config) {
   starter_fs_ofstream << "def main():\n";
 
   // args
-  auto instance = config.ForDefaultInstance();
   starter_fs_ofstream << "  parser = argparse.ArgumentParser(epilog=__doc__)\n";
   starter_fs_ofstream << "  parser.add_argument(\"--disk-image\", action=\"append\", type=str, default=[])\n";
   starter_fs_ofstream << "  parser.add_argument(\"--mem-type\", default=\"" << mem_type << "\", choices=ObjectList.mem_list.get_names())\n";
@@ -160,7 +161,7 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
                ? StopperResult::kStopCrash
                : StopperResult::kStopFailure;
   };
-  std::string gem5_binary = config.gem5_binary_dir();
+  std::string gem5_binary = instance.gem5_binary_dir();
   switch (arch_) {
     case Arch::Arm:
     case Arch::Arm64:
@@ -172,14 +173,16 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
       break;
   }
   // generate Gem5 starter_fs.py before we execute it
-  GenerateGem5File(config);
+  GenerateGem5File(config, instance);
 
   Command gem5_cmd(gem5_binary, stop);
-  gem5_cmd.AddParameter(config.gem5_binary_dir(), "/configs/example/arm/starter_fs.py");
+  gem5_cmd.AddParameter(instance.gem5_binary_dir(),
+                        "/configs/example/arm/starter_fs.py");
 
   // restore checkpoint case
-  if(config.gem5_checkpoint_dir() != "") {
-    gem5_cmd.AddParameter("--restore=", config.gem5_checkpoint_dir());
+  if (instance.gem5_checkpoint_dir() != "") {
+    gem5_cmd.AddParameter("--restore=",
+                          instance.gem5_checkpoint_dir());
   }
 
   gem5_cmd.AddParameter("--mem-size=", config.memory_mb() * 1024ULL * 1024ULL);
