@@ -24,6 +24,9 @@ is_mv_debs="true"
 #end of preparation
 
 function build() {
+    pushd $cuttlefish_root/host/frontend/operator/webui > /dev/null 2>&1
+    ng build
+    popd > /dev/null 2>&1
     pushd $cuttlefish_root > /dev/null 2>&1
     yes | sudo mk-build-deps -i -r -B \
         && sudo dpkg-buildpackage -uc -us \
