@@ -297,6 +297,14 @@ void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
   (*dictionary_)[kSetupWizardMode] = mode;
 }
 
+static constexpr char kEnableBootAnimation[] = "enable_bootanimation";
+bool CuttlefishConfig::enable_bootanimation() const {
+  return (*dictionary_)[kEnableBootAnimation].asBool();
+}
+void CuttlefishConfig::set_enable_bootanimation(bool enable_bootanimation) {
+  (*dictionary_)[kEnableBootAnimation] = enable_bootanimation;
+}
+
 static constexpr char kQemuBinaryDir[] = "qemu_binary_dir";
 std::string CuttlefishConfig::qemu_binary_dir() const {
   return (*dictionary_)[kQemuBinaryDir].asString();
