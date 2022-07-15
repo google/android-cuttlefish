@@ -1,3 +1,4 @@
 host/frontend/operator/operator /usr/lib/cuttlefish-common/bin/
 host/frontend/operator/static /usr/share/cuttlefish-common/operator/
+host/frontend/operator/webui/dist/webui /usr/share/cuttlefish-common/operator/
 host/frontend/operator/intercept /usr/share/cuttlefish-common/operator/
