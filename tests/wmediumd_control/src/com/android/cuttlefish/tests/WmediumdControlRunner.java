@@ -52,4 +52,14 @@ abstract class WmediumdControlRunner {
         }
         return stationInfoList;
     }
+
+    public void setSnr(String macAddress1, String macAddress2, int snr) throws Exception {
+        CommandResult result = run(10000, wmediumdControlCommand, "set_snr", macAddress1, macAddress2, Integer.toString(snr));
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+    }
+
+    public void setPosition(String macAddress, double xPosition, double yPosition) throws Exception {
+        CommandResult result = run(10000, wmediumdControlCommand, "--", "set_position", macAddress, Double.toString(xPosition), Double.toString(yPosition));
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+    }
 }
