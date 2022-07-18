@@ -45,7 +45,7 @@
 #include "host/commands/test_gce_driver/scoped_instance.h"
 #include "host/libs/web/build_api.h"
 #include "host/libs/web/credential_source.h"
-#include "host/libs/web/curl_wrapper.h"
+#include "host/libs/web/http_client.h"
 #include "host/libs/web/install_zip.h"
 
 #include "test_gce_driver.pb.h"
@@ -381,7 +381,7 @@ Result<void> TestGceDriverMain(int argc, char** argv) {
 
   static constexpr char COMPUTE_SCOPE[] =
       "https://www.googleapis.com/auth/compute";
-  auto curl = CurlWrapper::Create();
+  auto curl = HttpClient::CurlClient();
   auto gce_creds = CF_EXPECT(ServiceAccountOauthCredentialSource::FromJson(
       *curl, service_json, COMPUTE_SCOPE));
 
