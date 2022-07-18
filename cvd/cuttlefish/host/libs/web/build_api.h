@@ -23,7 +23,7 @@
 #include <variant>
 
 #include "host/libs/web/credential_source.h"
-#include "host/libs/web/curl_wrapper.h"
+#include "host/libs/web/http_client.h"
 
 namespace cuttlefish {
 
@@ -81,8 +81,8 @@ std::ostream& operator<<(std::ostream&, const Build&);
 
 class BuildApi {
  public:
-  BuildApi(CurlWrapper&, CredentialSource*);
-  BuildApi(CurlWrapper&, CredentialSource*, std::string api_key);
+  BuildApi(HttpClient&, CredentialSource*);
+  BuildApi(HttpClient&, CredentialSource*, std::string api_key);
   ~BuildApi() = default;
 
   Result<std::string> LatestBuildId(const std::string& branch,
@@ -96,7 +96,7 @@ class BuildApi {
 
   Result<void> ArtifactToCallback(const DeviceBuild& build,
                                   const std::string& artifact,
-                                  CurlWrapper::DataCallback callback);
+                                  HttpClient::DataCallback callback);
 
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
@@ -127,7 +127,7 @@ class BuildApi {
  private:
   Result<std::vector<std::string>> Headers();
 
-  CurlWrapper& curl;
+  HttpClient& http_client;
   CredentialSource* credential_source;
   std::string api_key_;
 };
