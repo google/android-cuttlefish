@@ -22,7 +22,7 @@ cc_library {
     srcs: [
         "build_api.cc",
         "credential_source.cc",
-        "curl_wrapper.cc",
+        "http_client.cc",
         "install_zip.cc",
     ],
     static_libs: [

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/curl_wrapper.h"
+#include "host/libs/web/http_client.h"
 
 #include <stdio.h>
 
@@ -31,15 +31,15 @@ namespace cuttlefish {
 namespace {
 
 size_t curl_to_function_cb(char* ptr, size_t, size_t nmemb, void* userdata) {
-  CurlWrapper::DataCallback* callback = (CurlWrapper::DataCallback*)userdata;
+  HttpClient::DataCallback* callback = (HttpClient::DataCallback*)userdata;
   if (!(*callback)(ptr, nmemb)) {
     return 0;  // Signals error to curl
   }
   return nmemb;
 }
 
-size_t file_write_callback(char *ptr, size_t, size_t nmemb, void *userdata) {
-  std::stringstream* stream = (std::stringstream*) userdata;
+size_t file_write_callback(char* ptr, size_t, size_t nmemb, void* userdata) {
+  std::stringstream* stream = (std::stringstream*)userdata;
   stream->write(ptr, nmemb);
   return nmemb;
 }
@@ -60,18 +60,18 @@ curl_slist* build_slist(const std::vector<std::string>& strings) {
   return curl_headers;
 }
 
-class CurlWrapperImpl : public CurlWrapper {
+class CurlClient : public HttpClient {
  public:
-  CurlWrapperImpl() {
+  CurlClient() {
     curl_ = curl_easy_init();
     if (!curl_) {
       LOG(ERROR) << "failed to initialize curl";
       return;
     }
   }
-  ~CurlWrapperImpl() { curl_easy_cleanup(curl_); }
+  ~CurlClient() { curl_easy_cleanup(curl_); }
 
-  CurlResponse<std::string> PostToString(
+  HttpResponse<std::string> PostToString(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -110,10 +110,10 @@ class CurlWrapperImpl : public CurlWrapper {
     return {data_to_read.str(), http_code};
   }
 
-  CurlResponse<Json::Value> PostToJson(
+  HttpResponse<Json::Value> PostToJson(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
-    CurlResponse<std::string> response =
+    HttpResponse<std::string> response =
         PostToString(url, data_to_write, headers);
     const std::string& contents = response.data;
     Json::CharReaderBuilder builder;
@@ -129,7 +129,7 @@ class CurlWrapperImpl : public CurlWrapper {
     return {json, response.http_code};
   }
 
-  CurlResponse<Json::Value> PostToJson(
+  HttpResponse<Json::Value> PostToJson(
       const std::string& url, const Json::Value& data_to_write,
       const std::vector<std::string>& headers) override {
     std::stringstream json_str;
@@ -137,7 +137,7 @@ class CurlWrapperImpl : public CurlWrapper {
     return PostToJson(url, json_str.str(), headers);
   }
 
-  CurlResponse<bool> DownloadToCallback(
+  HttpResponse<bool> DownloadToCallback(
       DataCallback callback, const std::string& url,
       const std::vector<std::string>& headers) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -177,7 +177,7 @@ class CurlWrapperImpl : public CurlWrapper {
     return {true, http_code};
   }
 
-  CurlResponse<std::string> DownloadToFile(
+  HttpResponse<std::string> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) {
     LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
@@ -202,7 +202,7 @@ class CurlWrapperImpl : public CurlWrapper {
     }
   }
 
-  CurlResponse<std::string> DownloadToString(
+  HttpResponse<std::string> DownloadToString(
       const std::string& url, const std::vector<std::string>& headers) {
     std::stringstream stream;
     auto callback = [&stream](char* data, size_t size) -> bool {
@@ -220,9 +220,9 @@ class CurlWrapperImpl : public CurlWrapper {
     return {stream.str(), callback_res.http_code};
   }
 
-  CurlResponse<Json::Value> DownloadToJson(
+  HttpResponse<Json::Value> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers) {
-    CurlResponse<std::string> response = DownloadToString(url, headers);
+    HttpResponse<std::string> response = DownloadToString(url, headers);
     const std::string& contents = response.data;
     Json::CharReaderBuilder builder;
     std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
@@ -237,7 +237,7 @@ class CurlWrapperImpl : public CurlWrapper {
     return {json, response.http_code};
   }
 
-  CurlResponse<Json::Value> DeleteToJson(
+  HttpResponse<Json::Value> DeleteToJson(
       const std::string& url,
       const std::vector<std::string>& headers) override {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -299,75 +299,77 @@ class CurlWrapperImpl : public CurlWrapper {
   std::mutex mutex_;
 };
 
-class CurlServerErrorRetryingWrapper : public CurlWrapper {
+class ServerErrorRetryClient : public HttpClient {
  public:
-  CurlServerErrorRetryingWrapper(CurlWrapper& inner, int retry_attempts,
-                                 std::chrono::milliseconds retry_delay)
-      : inner_curl_(inner),
+  ServerErrorRetryClient(HttpClient& inner, int retry_attempts,
+                         std::chrono::milliseconds retry_delay)
+      : inner_client_(inner),
         retry_attempts_(retry_attempts),
         retry_delay_(retry_delay) {}
 
-  CurlResponse<std::string> PostToString(
+  HttpResponse<std::string> PostToString(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers) override {
     return RetryImpl<std::string>(
-        [&, this]() { return inner_curl_.PostToString(url, data, headers); });
+        [&, this]() { return inner_client_.PostToString(url, data, headers); });
   }
 
-  CurlResponse<Json::Value> PostToJson(
+  HttpResponse<Json::Value> PostToJson(
       const std::string& url, const Json::Value& data,
       const std::vector<std::string>& headers) override {
     return RetryImpl<Json::Value>(
-        [&, this]() { return inner_curl_.PostToJson(url, data, headers); });
+        [&, this]() { return inner_client_.PostToJson(url, data, headers); });
   }
 
-  CurlResponse<Json::Value> PostToJson(
+  HttpResponse<Json::Value> PostToJson(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers) override {
     return RetryImpl<Json::Value>(
-        [&, this]() { return inner_curl_.PostToJson(url, data, headers); });
+        [&, this]() { return inner_client_.PostToJson(url, data, headers); });
   }
 
-  CurlResponse<std::string> DownloadToFile(
+  HttpResponse<std::string> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) {
-    return RetryImpl<std::string>(
-        [&, this]() { return inner_curl_.DownloadToFile(url, path, headers); });
+    return RetryImpl<std::string>([&, this]() {
+      return inner_client_.DownloadToFile(url, path, headers);
+    });
   }
 
-  CurlResponse<std::string> DownloadToString(
+  HttpResponse<std::string> DownloadToString(
       const std::string& url, const std::vector<std::string>& headers) {
     return RetryImpl<std::string>(
-        [&, this]() { return inner_curl_.DownloadToString(url, headers); });
+        [&, this]() { return inner_client_.DownloadToString(url, headers); });
   }
 
-  CurlResponse<Json::Value> DownloadToJson(
+  HttpResponse<Json::Value> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers) {
     return RetryImpl<Json::Value>(
-        [&, this]() { return inner_curl_.DownloadToJson(url, headers); });
+        [&, this]() { return inner_client_.DownloadToJson(url, headers); });
   }
 
-  CurlResponse<bool> DownloadToCallback(
+  HttpResponse<bool> DownloadToCallback(
       DataCallback cb, const std::string& url,
       const std::vector<std::string>& hdrs) override {
-    return RetryImpl<bool>(
-        [&, this]() { return inner_curl_.DownloadToCallback(cb, url, hdrs); });
+    return RetryImpl<bool>([&, this]() {
+      return inner_client_.DownloadToCallback(cb, url, hdrs);
+    });
   }
-  CurlResponse<Json::Value> DeleteToJson(
+  HttpResponse<Json::Value> DeleteToJson(
       const std::string& url,
       const std::vector<std::string>& headers) override {
     return RetryImpl<Json::Value>(
-        [&, this]() { return inner_curl_.DeleteToJson(url, headers); });
+        [&, this]() { return inner_client_.DeleteToJson(url, headers); });
   }
 
   std::string UrlEscape(const std::string& text) override {
-    return inner_curl_.UrlEscape(text);
+    return inner_client_.UrlEscape(text);
   }
 
  private:
   template <typename T>
-  CurlResponse<T> RetryImpl(std::function<CurlResponse<T>()> attempt_fn) {
-    CurlResponse<T> response;
+  HttpResponse<T> RetryImpl(std::function<HttpResponse<T>()> attempt_fn) {
+    HttpResponse<T> response;
     for (int attempt = 0; attempt != retry_attempts_; ++attempt) {
       if (attempt != 0) {
         std::this_thread::sleep_for(retry_delay_);
@@ -381,23 +383,23 @@ class CurlServerErrorRetryingWrapper : public CurlWrapper {
   }
 
  private:
-  CurlWrapper& inner_curl_;
+  HttpClient& inner_client_;
   int retry_attempts_;
   std::chrono::milliseconds retry_delay_;
 };
 
 }  // namespace
 
-/* static */ std::unique_ptr<CurlWrapper> CurlWrapper::Create() {
-  return std::unique_ptr<CurlWrapper>(new CurlWrapperImpl());
+/* static */ std::unique_ptr<HttpClient> HttpClient::CurlClient() {
+  return std::unique_ptr<HttpClient>(new class CurlClient());
 }
 
-/* static */ std::unique_ptr<CurlWrapper> CurlWrapper::WithServerErrorRetry(
-    CurlWrapper& inner, int retry_attempts,
+/* static */ std::unique_ptr<HttpClient> HttpClient::ServerErrorRetryClient(
+    HttpClient& inner, int retry_attempts,
     std::chrono::milliseconds retry_delay) {
-  return std::unique_ptr<CurlWrapper>(
-      new CurlServerErrorRetryingWrapper(inner, retry_attempts, retry_delay));
+  return std::unique_ptr<HttpClient>(
+      new class ServerErrorRetryClient(inner, retry_attempts, retry_delay));
 }
 
-CurlWrapper::~CurlWrapper() = default;
-}
+HttpClient::~HttpClient() = default;
+}  // namespace cuttlefish
