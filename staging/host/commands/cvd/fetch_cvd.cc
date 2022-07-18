@@ -286,7 +286,7 @@ std::string USAGE_MESSAGE =
     "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
 
 std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
-    CurlWrapper& curl, const std::string& path) {
+    HttpClient& http_client, const std::string& path) {
   LOG(VERBOSE) << "Attempting to open service account file \"" << path << "\"";
   Json::CharReaderBuilder builder;
   std::ifstream ifs(path);
@@ -299,8 +299,8 @@ std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
   }
   static constexpr char BUILD_SCOPE[] =
       "https://www.googleapis.com/auth/androidbuild.internal";
-  auto result =
-      ServiceAccountOauthCredentialSource::FromJson(curl, content, BUILD_SCOPE);
+  auto result = ServiceAccountOauthCredentialSource::FromJson(
+      http_client, content, BUILD_SCOPE);
   if (!result.ok()) {
     LOG(VERBOSE) << "Failed to load service account json file: \n"
                  << result.error();
@@ -330,14 +330,15 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
-    auto curl = CurlWrapper::Create();
-    auto retrying_curl = CurlWrapper::WithServerErrorRetry(
+    auto curl = HttpClient::CurlClient();
+    auto retrying_http_client = HttpClient::ServerErrorRetryClient(
         *curl, 10, std::chrono::milliseconds(5000));
     std::unique_ptr<CredentialSource> credential_source;
     if (auto crds = TryOpenServiceAccountFile(*curl, FLAGS_credential_source)) {
       credential_source = std::move(crds);
     } else if (FLAGS_credential_source == "gce") {
-      credential_source = GceMetadataCredentialSource::make(*retrying_curl);
+      credential_source =
+          GceMetadataCredentialSource::make(*retrying_http_client);
     } else if (FLAGS_credential_source == "") {
       std::string file = StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
       LOG(VERBOSE) << "Probing acloud credentials at " << file;
@@ -358,7 +359,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     } else {
       credential_source = FixedCredentialSource::make(FLAGS_credential_source);
     }
-    BuildApi build_api(*retrying_curl, credential_source.get(), FLAGS_api_key);
+    BuildApi build_api(*retrying_http_client, credential_source.get(),
+                       FLAGS_api_key);
 
     auto default_build = CF_EXPECT(ArgumentToBuild(
         build_api, FLAGS_default_build, DEFAULT_BUILD_TARGET, retry_period));

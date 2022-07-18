@@ -34,8 +34,9 @@ std::string REFRESH_URL = "http://metadata.google.internal/computeMetadata/"
 
 } // namespace
 
-GceMetadataCredentialSource::GceMetadataCredentialSource(CurlWrapper& curl)
-    : curl(curl) {
+GceMetadataCredentialSource::GceMetadataCredentialSource(
+    HttpClient& http_client)
+    : http_client(http_client) {
   latest_credential = "";
   expiration = std::chrono::steady_clock::now();
 }
@@ -48,12 +49,12 @@ Result<std::string> GceMetadataCredentialSource::Credential() {
 }
 
 Result<void> GceMetadataCredentialSource::RefreshCredential() {
-  auto curl_response =
-      curl.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"});
-  const auto& json = curl_response.data;
-  CF_EXPECT(curl_response.HttpSuccess(),
+  auto response =
+      http_client.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"});
+  const auto& json = response.data;
+  CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
-                << json << "\", and code was " << curl_response.http_code);
+                << json << "\", and code was " << response.http_code);
   CF_EXPECT(!json.isMember("error"),
             "Response had \"error\" but had http success status. Received \""
                 << json << "\"");
@@ -69,9 +70,9 @@ Result<void> GceMetadataCredentialSource::RefreshCredential() {
 }
 
 std::unique_ptr<CredentialSource> GceMetadataCredentialSource::make(
-    CurlWrapper& curl) {
+    HttpClient& http_client) {
   return std::unique_ptr<CredentialSource>(
-      new GceMetadataCredentialSource(curl));
+      new GceMetadataCredentialSource(http_client));
 }
 
 FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
@@ -86,7 +87,7 @@ std::unique_ptr<CredentialSource> FixedCredentialSource::make(
 }
 
 Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
-    CurlWrapper& curl, std::istream& stream) {
+    HttpClient& http_client, std::istream& stream) {
   Json::CharReaderBuilder builder;
   std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   Json::Value json;
@@ -121,15 +122,15 @@ Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
   auto& refresh_token = credential["refresh_token"];
   CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
 
-  return RefreshCredentialSource(curl, client_id.asString(),
+  return RefreshCredentialSource(http_client, client_id.asString(),
                                  client_secret.asString(),
                                  refresh_token.asString());
 }
 
 RefreshCredentialSource::RefreshCredentialSource(
-    CurlWrapper& curl, const std::string& client_id,
+    HttpClient& http_client, const std::string& client_id,
     const std::string& client_secret, const std::string& refresh_token)
-    : curl_(curl),
+    : http_client_(http_client),
       client_id_(client_id),
       client_secret_(client_secret),
       refresh_token_(refresh_token) {}
@@ -145,13 +146,13 @@ Result<void> RefreshCredentialSource::UpdateLatestCredential() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   std::stringstream data;
-  data << "client_id=" << curl_.UrlEscape(client_id_) << "&";
-  data << "client_secret=" << curl_.UrlEscape(client_secret_) << "&";
-  data << "refresh_token=" << curl_.UrlEscape(refresh_token_) << "&";
+  data << "client_id=" << http_client_.UrlEscape(client_id_) << "&";
+  data << "client_secret=" << http_client_.UrlEscape(client_secret_) << "&";
+  data << "refresh_token=" << http_client_.UrlEscape(refresh_token_) << "&";
   data << "grant_type=refresh_token";
 
   static constexpr char kUrl[] = "https://oauth2.googleapis.com/token";
-  auto response = curl_.PostToJson(kUrl, data.str(), headers);
+  auto response = http_client_.PostToJson(kUrl, data.str(), headers);
   CF_EXPECT(response.HttpSuccess(), response.data);
   auto& json = response.data;
 
@@ -180,10 +181,10 @@ static std::string CollectSslErrors() {
 }
 
 Result<ServiceAccountOauthCredentialSource>
-ServiceAccountOauthCredentialSource::FromJson(CurlWrapper& curl,
+ServiceAccountOauthCredentialSource::FromJson(HttpClient& http_client,
                                               const Json::Value& json,
                                               const std::string& scope) {
-  ServiceAccountOauthCredentialSource source(curl);
+  ServiceAccountOauthCredentialSource source(http_client);
   source.scope_ = scope;
 
   CF_EXPECT(json.isMember("client_email"));
@@ -207,8 +208,8 @@ ServiceAccountOauthCredentialSource::FromJson(CurlWrapper& curl,
 }
 
 ServiceAccountOauthCredentialSource::ServiceAccountOauthCredentialSource(
-    CurlWrapper& curl)
-    : curl_(curl), private_key_(nullptr, EVP_PKEY_free) {}
+    HttpClient& http_client)
+    : http_client_(http_client), private_key_(nullptr, EVP_PKEY_free) {}
 
 static Result<std::string> Base64Url(const char* data, std::size_t size) {
   std::string base64;
@@ -270,17 +271,16 @@ Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
   static constexpr char URL[] = "https://oauth2.googleapis.com/token";
   static constexpr char GRANT[] = "urn:ietf:params:oauth:grant-type:jwt-bearer";
   std::stringstream content;
-  content << "grant_type=" << curl_.UrlEscape(GRANT) << "&";
+  content << "grant_type=" << http_client_.UrlEscape(GRANT) << "&";
   auto jwt = CF_EXPECT(CreateJwt(email_, scope_, private_key_.get()));
-  content << "assertion=" << curl_.UrlEscape(jwt);
+  content << "assertion=" << http_client_.UrlEscape(jwt);
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
-  auto curl_response = curl_.PostToJson(URL, content.str(), headers);
-  CF_EXPECT(curl_response.HttpSuccess(),
+  auto response = http_client_.PostToJson(URL, content.str(), headers);
+  CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
-                << curl_response.data << "\", and code was "
-                << curl_response.http_code);
-  Json::Value json = curl_response.data;
+                << response.data << "\", and code was " << response.http_code);
+  Json::Value json = response.data;
 
   CF_EXPECT(!json.isMember("error"),
             "Response had \"error\" but had http success status. Received \""
