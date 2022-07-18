@@ -22,7 +22,7 @@
 #include <openssl/evp.h>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/web/curl_wrapper.h"
+#include "host/libs/web/http_client.h"
 
 namespace cuttlefish {
 
@@ -33,19 +33,19 @@ public:
 };
 
 class GceMetadataCredentialSource : public CredentialSource {
-  CurlWrapper& curl;
+  HttpClient& http_client;
   std::string latest_credential;
   std::chrono::steady_clock::time_point expiration;
 
   Result<void> RefreshCredential();
 
  public:
-  GceMetadataCredentialSource(CurlWrapper&);
+  GceMetadataCredentialSource(HttpClient&);
   GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
 
   Result<std::string> Credential() override;
 
-  static std::unique_ptr<CredentialSource> make(CurlWrapper&);
+  static std::unique_ptr<CredentialSource> make(HttpClient&);
 };
 
 class FixedCredentialSource : public CredentialSource {
@@ -61,9 +61,9 @@ public:
 class RefreshCredentialSource : public CredentialSource {
  public:
   static Result<RefreshCredentialSource> FromOauth2ClientFile(
-      CurlWrapper& curl, std::istream& stream);
+      HttpClient& http_client, std::istream& stream);
 
-  RefreshCredentialSource(CurlWrapper& curl, const std::string& client_id,
+  RefreshCredentialSource(HttpClient& http_client, const std::string& client_id,
                           const std::string& client_secret,
                           const std::string& refresh_token);
 
@@ -72,7 +72,7 @@ class RefreshCredentialSource : public CredentialSource {
  private:
   Result<void> UpdateLatestCredential();
 
-  CurlWrapper& curl_;
+  HttpClient& http_client_;
   std::string client_id_;
   std::string client_secret_;
   std::string refresh_token_;
@@ -84,7 +84,7 @@ class RefreshCredentialSource : public CredentialSource {
 class ServiceAccountOauthCredentialSource : public CredentialSource {
  public:
   static Result<ServiceAccountOauthCredentialSource> FromJson(
-      CurlWrapper& curl, const Json::Value& service_account_json,
+      HttpClient& http_client, const Json::Value& service_account_json,
       const std::string& scope);
   ServiceAccountOauthCredentialSource(ServiceAccountOauthCredentialSource&&) =
       default;
@@ -92,10 +92,10 @@ class ServiceAccountOauthCredentialSource : public CredentialSource {
   Result<std::string> Credential() override;
 
  private:
-  ServiceAccountOauthCredentialSource(CurlWrapper& curl);
+  ServiceAccountOauthCredentialSource(HttpClient& http_client);
   Result<void> RefreshCredential();
 
-  CurlWrapper& curl_;
+  HttpClient& http_client_;
   std::string email_;
   std::string scope_;
   std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
