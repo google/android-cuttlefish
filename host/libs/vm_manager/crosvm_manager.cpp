@@ -79,7 +79,8 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=drm",
       "androidboot.hardware.egl=mesa",
-    };
+      // No "hardware" Vulkan support, yet
+      "androidboot.opengles.version=196608"};  // OpenGL ES 3.0
   }
   if (config.gpu_mode() == kGpuModeGfxStream) {
     std::string gles_impl = config.enable_gpu_angle() ? "angle" : "emulation";
