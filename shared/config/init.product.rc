@@ -1,6 +1,9 @@
 on early-init
     setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
+on early-init && property:ro.boot.enable_bootanimation=0
+    setprop debug.sf.nobootanimation 1
+
 service tombstone_transmit /product/bin/tombstone_transmit
     # Start tombstone_transmit after /data is mounted.
     class late_start
