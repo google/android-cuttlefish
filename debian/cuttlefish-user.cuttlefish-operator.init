@@ -70,10 +70,10 @@ start() {
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  ORCHESTRATOR_HTTP_PORT="${operator_http_port}" \
-  ORCHESTRATOR_HTTPS_PORT="${operator_https_port}" \
-  ORCHESTRATOR_TLS_CERT_DIR="${operator_tls_cert_dir}" \
-  ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  OPERATOR_HTTP_PORT="${operator_http_port}" \
+  OPERATOR_HTTPS_PORT="${operator_https_port}" \
+  OPERATOR_TLS_CERT_DIR="${operator_tls_cert_dir}" \
+  OPERATOR_SOCKET_PATH="${RUN_DIR}"/operator \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
