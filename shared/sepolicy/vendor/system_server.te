@@ -1,5 +1,2 @@
 # Cuttlefish is still using the legacy wifi HAL (pre-HIDL)
 get_prop(system_server, wifi_hal_prop)
-
-# For com.android.tethering.inprocess
-dontaudit system_server { fs_bpf fs_bpf_tethering }:dir search;
