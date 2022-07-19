@@ -145,6 +145,9 @@ class CuttlefishConfig {
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
 
+  void set_enable_bootanimation(const bool enable_bootanimation);
+  bool enable_bootanimation() const;
+
   void set_qemu_binary_dir(const std::string& qemu_binary_dir);
   std::string qemu_binary_dir() const;
 
