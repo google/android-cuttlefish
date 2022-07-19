@@ -131,7 +131,7 @@ std::vector<std::string> QemuManager::ConfigureGraphics(
     // with properities lead to non-deterministic behavior while loading the
     // HALs.
     return {
-        "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
+        "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
         "androidboot.hardware.egl=angle",
