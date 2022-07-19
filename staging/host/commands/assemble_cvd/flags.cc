@@ -245,6 +245,8 @@ DEFINE_bool(daemon, false,
 
 DEFINE_string(setupwizard_mode, "DISABLED",
             "One of DISABLED,OPTIONAL,REQUIRED");
+DEFINE_bool(enable_bootanimation, true,
+            "Whether to enable the boot animation.");
 
 DEFINE_string(qemu_binary_dir, "/usr/bin",
               "Path to the directory containing the qemu binary to use");
@@ -642,6 +644,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
+  tmp_config_obj.set_enable_bootanimation(FLAGS_enable_bootanimation);
 
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(
