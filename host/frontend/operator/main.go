@@ -29,7 +29,7 @@ const (
 	DefaultSocketPath     = "/run/cuttlefish/operator"
 	DefaultHttpPort       = "1080"
 	DefaultHttpsPort      = "1443"
-	DefaultTLSCertDir     = "/etc/cuttlefish-common/host-orchestrator/cert"
+	DefaultTLSCertDir     = "/etc/cuttlefish-common/operator/cert"
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
 )
