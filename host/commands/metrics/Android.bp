@@ -20,18 +20,28 @@ package {
 cc_binary {
     name: "metrics",
     srcs: [
+        "host_receiver.cc",
         "metrics.cc",
     ],
     shared_libs: [
-        "libext2_blkid",
+        "cf_proto",
+        "libbase",
+        "libcurl",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
+        "libext2_blkid",
+        "libfruit",
         "libjsoncpp",
+        "liblog",
+        "libprotobuf-cpp-lite",
+        "libz",
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libcuttlefish_msg_queue",
         "libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
+
+subdirs = ["proto"]
