@@ -33,6 +33,7 @@
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/metrics/metrics_receiver.h"
 #include "host/libs/msg_queue/msg_queue.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -40,13 +41,6 @@
 using cuttlefish::MetricsExitCodes;
 
 namespace cuttlefish {
-
-static const int kMaxMsgSize = 200;
-
-typedef struct msg_buffer {
-  long mesg_type;
-  char mesg_text[kMaxMsgSize];
-} msg_buffer;
 
 MetricsHostReceiver::MetricsHostReceiver(
     const cuttlefish::CuttlefishConfig& config)
@@ -62,7 +56,7 @@ void MetricsHostReceiver::ServerLoop() {
 
   struct msg_buffer msg = {0, {0}};
   while (1) {
-    int rc = msg_queue->Receive(&msg, kMaxMsgSize, 1, true);
+    int rc = msg_queue->Receive(&msg, MAX_MSG_SIZE, 1, true);
     if (rc == -1) {
       LOG(FATAL) << "receive: failed to receive any messages";
     }
