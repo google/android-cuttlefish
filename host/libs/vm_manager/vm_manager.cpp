@@ -88,13 +88,16 @@ class VmmCommands : public CommandSource {
   VmManager& vmm_;
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig>, VmManager>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 VmManager>
 VmManagerComponent() {
   return fruit::createComponent()
-      .registerProvider([](const CuttlefishConfig& config) {
-        auto vmm = GetVmManager(config.vm_manager(), config.target_arch());
+      .registerProvider([](const CuttlefishConfig& config,
+                           const CuttlefishConfig::InstanceSpecific& instance) {
+        auto vmm = GetVmManager(config.vm_manager(), instance.target_arch());
         CHECK(vmm) << "Invalid VMM/Arch: \"" << config.vm_manager() << "\""
-                   << (int)config.target_arch() << "\"";
+                   << (int)instance.target_arch() << "\"";
         return vmm.release();  // fruit takes ownership of raw pointers
       })
       .addMultibinding<CommandSource, VmmCommands>()
