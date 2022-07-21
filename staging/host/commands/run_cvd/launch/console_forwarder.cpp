@@ -23,9 +23,8 @@ namespace {
 
 class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
  public:
-  INJECT(ConsoleForwarder(const CuttlefishConfig& config,
-                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+  INJECT(ConsoleForwarder(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
     if (Enabled()) {
@@ -48,7 +47,7 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
 
   // SetupFeature
   std::string Name() const override { return "ConsoleForwarder"; }
-  bool Enabled() const override { return config_.console(); }
+  bool Enabled() const override { return instance_.console(); }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
@@ -79,7 +78,6 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
     return {};
   }
 
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   SharedFD console_forwarder_in_wr_;
   SharedFD console_forwarder_out_rd_;
@@ -87,8 +85,7 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 ConsoleForwarderComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, ConsoleForwarder>()
