@@ -1,1 +1,24 @@
-<p style="position:relative; text-align:center;">Devices</p>
+<div
+  class="list-pane-title"
+  style="margin: 10% auto; position: relative; text-align: center"
+>
+  Devices
+  <span id="refresh-list" title="Refresh list" (click)="onRefresh()"
+    >&#8635;</span
+  >
+</div>
+<div>
+  <ul class="devices">
+    <li
+      *ngFor="let device of devices"
+      [class.selected]="device === selectedDevice"
+      (click)="onSelect(device)"
+    >
+      <label>
+        <!--Implemented with checkbox, not radio button as current page-->
+        <input type="checkbox" class="badge" />
+        {{ device.id }}
+      </label>
+    </li>
+  </ul>
+</div>
