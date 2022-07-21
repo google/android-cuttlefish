@@ -20,6 +20,7 @@ package {
 cc_binary {
     name: "metrics",
     srcs: [
+        "events.cc",
         "host_receiver.cc",
         "metrics.cc",
     ],

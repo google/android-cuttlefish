@@ -29,6 +29,7 @@
 #include <iostream>
 
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/metrics/events.h"
 #include "host/commands/metrics/host_receiver.h"
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/commands/metrics/proto/cf_metrics_proto.h"
@@ -61,7 +62,20 @@ void MetricsHostReceiver::ServerLoop() {
       LOG(FATAL) << "receive: failed to receive any messages";
     }
     std::string text(msg.mesg_text);
-    LOG(INFO) << "host receiver: " << text;
+    LOG(INFO) << "Metrics host received: " << text;
+    auto hostDev = cuttlefish::CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST;
+    if (text == "VMStart") {
+      rc = Clearcut::SendVMStart(hostDev);
+    } else if (text == "VMStop") {
+      rc = Clearcut::SendVMStop(hostDev);
+    } else if (text == "DeviceBoot") {
+      rc = Clearcut::SendDeviceBoot(hostDev);
+    } else if (text == "LockScreen") {
+      rc = Clearcut::SendLockScreen(hostDev);
+    }
+    if (rc != MetricsExitCodes::kSuccess) {
+      LOG(ERROR) << "Message failed to send to ClearCut: " << text;
+    }
     sleep(1);
   }
 }
