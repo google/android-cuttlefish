@@ -468,6 +468,8 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio.service \
     android.hardware.audio@7.1-impl.ranchu \
     android.hardware.audio.effect@7.0-impl
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/guest/hals/audio/effects/manifest.xml
 endif
 
 ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES

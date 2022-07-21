@@ -18,15 +18,6 @@
 -->
 <manifest version="1.0" type="device" target-level="7">
     <hal format="hidl">
-        <name>android.hardware.audio.effect</name>
-        <transport>hwbinder</transport>
-        <version>7.0</version>
-        <interface>
-            <name>IEffectsFactory</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
         <name>android.hardware.authsecret</name>
         <transport>hwbinder</transport>
         <version>1.0</version>
