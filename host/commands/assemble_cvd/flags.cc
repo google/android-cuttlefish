@@ -501,7 +501,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_root_dir(root_dir);
 
-  tmp_config_obj.set_target_arch(kernel_config.target_arch);
   tmp_config_obj.set_bootconfig_supported(kernel_config.bootconfig_supported);
   auto vmm = GetVmManager(FLAGS_vm_manager, kernel_config.target_arch);
   if (!vmm) {
@@ -651,9 +650,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     SetCommandLineOptionWithMode("enable_sandbox", "false", SET_FLAGS_DEFAULT);
   }
 
-  tmp_config_obj.set_console(FLAGS_console);
   tmp_config_obj.set_enable_kernel_log(FLAGS_enable_kernel_log);
-  tmp_config_obj.set_kgdb(FLAGS_console && FLAGS_kgdb);
 
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
 
@@ -661,8 +658,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary_dir(FLAGS_qemu_binary_dir);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
-  tmp_config_obj.set_gem5_binary_dir(FLAGS_gem5_binary_dir);
-  tmp_config_obj.set_gem5_checkpoint_dir(FLAGS_gem5_checkpoint_dir);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
@@ -748,6 +743,12 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   std::vector<std::string> fixed_location_file_paths =
       android::base::Split(FLAGS_fixed_location_file_path, ",");
 
+  // new instance specific flags (moved from common flags)
+  std::vector<std::string> gem5_binary_dirs =
+      android::base::Split(FLAGS_gem5_binary_dir, ",");
+  std::vector<std::string> gem5_checkpoint_dirs =
+      android::base::Split(FLAGS_gem5_checkpoint_dir, ",");
+
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   CHECK(instance_nums.ok()) << instance_nums.error();
 
@@ -783,6 +784,24 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       return cuttlefish::GetVsockServerPort(base_port, vsock_guest_cid);
     };
     instance.set_session_id(iface_config.mobile_tap.session_id);
+
+    // new instance specific flags (moved from common flags)
+    instance.set_target_arch(kernel_config.target_arch);
+    instance.set_console(FLAGS_console);
+    instance.set_kgdb(FLAGS_console && FLAGS_kgdb);
+
+    if (instance_index < gem5_binary_dirs.size()) {
+      instance.set_gem5_binary_dir(gem5_binary_dirs[instance_index]);
+    } else if (gem5_binary_dirs.size() == 1) {
+      // support legacy flag input in multi-device which set one and same flag to all instances
+      instance.set_gem5_binary_dir(gem5_binary_dirs[0]);
+    }
+    if (instance_index < gem5_checkpoint_dirs.size()) {
+      instance.set_gem5_checkpoint_dir(gem5_checkpoint_dirs[instance_index]);
+    } else if (gem5_checkpoint_dirs.size() == 1) {
+      // support legacy flag input in multi-device which set one and same flag to all instances
+      instance.set_gem5_checkpoint_dir(gem5_checkpoint_dirs[0]);
+    }
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
