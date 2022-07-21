@@ -384,13 +384,13 @@ Result<std::vector<Command>> QemuManager::StartCommands(
                         ",xres=", display_config.width,
                         ",yres=", display_config.height);
 
-  if (!config.console()) {
+  if (!instance.console()) {
     // In kgdb mode, earlycon is an interactive console, and so early
     // dmesg will go there instead of the kernel.log. On QEMU, we do this
     // bit of logic up before the hvc console is set up, so the command line
     // flags appear in the right order and "append=on" does the right thing
     if (config.enable_kernel_log() &&
-        (config.kgdb() || config.use_bootloader())) {
+        (instance.kgdb() || instance.use_bootloader())) {
       add_serial_console_ro(instance.kernel_log_pipe_name());
     }
   }
@@ -407,8 +407,8 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   //  actually managed by the kernel as a console is handled elsewhere.)
   add_hvc_ro(instance.kernel_log_pipe_name());
 
-  if (config.console()) {
-    if (config.kgdb() || config.use_bootloader()) {
+  if (instance.console()) {
+    if (instance.kgdb() || instance.use_bootloader()) {
       add_serial_console(instance.console_pipe_prefix());
 
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
@@ -422,7 +422,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
       add_hvc(instance.console_pipe_prefix());
     }
   } else {
-    if (config.kgdb() || config.use_bootloader()) {
+    if (instance.kgdb() || instance.use_bootloader()) {
       // The add_serial_console_ro() call above was applied by the time we reach
       // this code, so we don't need another add_serial_*() call
     }
@@ -610,5 +610,4 @@ Result<std::vector<Command>> QemuManager::StartCommands(
 }
 
 } // namespace vm_manager
-} // namespace cuttlefish
-
+}  // namespace cuttlefish

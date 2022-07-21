@@ -40,10 +40,12 @@ void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
 
 // TODO(schuffelen): Move more of this into host/libs/vm_manager, as a
 // substitute for the vm_manager comparisons.
-std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) {
+std::vector<std::string> VmManagerKernelCmdline(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> vm_manager_cmdline;
   if (config.vm_manager() == QemuManager::name()) {
-    Arch target_arch = config.target_arch();
+    Arch target_arch = instance.target_arch();
     if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
       if (config.enable_kernel_log()) {
         vm_manager_cmdline.push_back("console=hvc0");
@@ -80,9 +82,9 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
     }
   }
 
-  if (config.console() && config.kgdb()) {
+  if (instance.console() && instance.kgdb()) {
     AppendVector(&vm_manager_cmdline, {"kgdboc_earlycon", "kgdbcon",
-                                       "kgdboc=" + config.console_dev()});
+                                       "kgdboc=" + instance.console_dev()});
   }
   return vm_manager_cmdline;
 }
@@ -90,9 +92,10 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
 } // namespace
 
 std::vector<std::string> KernelCommandLineFromConfig(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> kernel_cmdline;
-  AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
+  AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config, instance));
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
   return kernel_cmdline;
 }
