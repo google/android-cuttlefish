@@ -23,6 +23,7 @@ cc_binary {
         "events.cc",
         "host_receiver.cc",
         "metrics.cc",
+        "utils.cc",
     ],
     shared_libs: [
         "cf_proto",
