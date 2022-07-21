@@ -321,22 +321,6 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
-static constexpr char kGem5BinaryDir[] = "gem5_binary_dir";
-std::string CuttlefishConfig::gem5_binary_dir() const {
-  return (*dictionary_)[kGem5BinaryDir].asString();
-}
-void CuttlefishConfig::set_gem5_binary_dir(const std::string& gem5_binary_dir) {
-  (*dictionary_)[kGem5BinaryDir] = gem5_binary_dir;
-}
-
-static constexpr char kGem5CheckpointDir[] = "gem5_checkpoint_dir";
-std::string CuttlefishConfig::gem5_checkpoint_dir() const {
-  return (*dictionary_)[kGem5CheckpointDir].asString();
-}
-void CuttlefishConfig::set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir) {
-  (*dictionary_)[kGem5CheckpointDir] = gem5_checkpoint_dir;
-}
-
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
 void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
@@ -667,49 +651,12 @@ std::string CuttlefishConfig::ril_dns() const {
   return (*dictionary_)[kRilDns].asString();
 }
 
-static constexpr char kKgdb[] = "kgdb";
-void CuttlefishConfig::set_kgdb(bool kgdb) {
-  (*dictionary_)[kKgdb] = kgdb;
-}
-bool CuttlefishConfig::kgdb() const {
-  return (*dictionary_)[kKgdb].asBool();
-}
-
 static constexpr char kEnableMinimalMode[] = "enable_minimal_mode";
 bool CuttlefishConfig::enable_minimal_mode() const {
   return (*dictionary_)[kEnableMinimalMode].asBool();
 }
 void CuttlefishConfig::set_enable_minimal_mode(bool enable_minimal_mode) {
   (*dictionary_)[kEnableMinimalMode] = enable_minimal_mode;
-}
-
-static constexpr char kConsole[] = "console";
-void CuttlefishConfig::set_console(bool console) {
-  (*dictionary_)[kConsole] = console;
-}
-bool CuttlefishConfig::console() const {
-  return (*dictionary_)[kConsole].asBool();
-}
-std::string CuttlefishConfig::console_dev() const {
-  auto can_use_virtio_console = !kgdb() && !use_bootloader();
-  std::string console_dev;
-  if (can_use_virtio_console ||
-      vm_manager() == vm_manager::Gem5Manager::name()) {
-    // If kgdb and the bootloader are disabled, the Android serial console
-    // spawns on a virtio-console port. If the bootloader is enabled, virtio
-    // console can't be used since uboot doesn't support it.
-    console_dev = "hvc1";
-  } else {
-    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
-    Arch target = target_arch();
-    if ((target == Arch::Arm64 || target == Arch::Arm) &&
-        vm_manager() != vm_manager::CrosvmManager::name()) {
-      console_dev = "ttyAMA0";
-    } else {
-      console_dev = "ttyS0";
-    }
-  }
-  return console_dev;
 }
 
 static constexpr char kEnableKernelLog[] = "enable_kernel_log";
@@ -843,14 +790,6 @@ void CuttlefishConfig::set_protected_vm(bool protected_vm) {
 }
 bool CuttlefishConfig::protected_vm() const {
   return (*dictionary_)[kProtectedVm].asBool();
-}
-
-static constexpr char kTargetArch[] = "target_arch";
-void CuttlefishConfig::set_target_arch(Arch target_arch) {
-  (*dictionary_)[kTargetArch] = static_cast<int>(target_arch);
-}
-Arch CuttlefishConfig::target_arch() const {
-  return static_cast<Arch>((*dictionary_)[kTargetArch].asInt());
 }
 
 static constexpr char kBootconfigSupported[] = "bootconfig_supported";
