@@ -98,8 +98,8 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     auto boot_env_image_path = instance_.uboot_env_image_path();
     auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
     auto uboot_env_path = instance_.PerInstancePath("mkenvimg_input");
-    auto kernel_cmdline =
-        android::base::Join(KernelCommandLineFromConfig(config_), " ");
+    auto kernel_cmdline = android::base::Join(
+        KernelCommandLineFromConfig(config_, instance_), " ");
     // If the bootconfig isn't supported in the guest kernel, the bootconfig
     // args need to be passed in via the uboot env. This won't be an issue for
     // protect kvm which is running a kernel with bootconfig support.

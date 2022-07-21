@@ -73,7 +73,9 @@ class VmManager {
       const CuttlefishConfig& config) = 0;
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig>, VmManager>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 VmManager>
 VmManagerComponent();
 
 std::unique_ptr<VmManager> GetVmManager(const std::string&, Arch arch);

@@ -50,10 +50,12 @@ std::string concat(const S& s, const T& t) {
 
 // TODO(schuffelen): Move more of this into host/libs/vm_manager, as a
 // substitute for the vm_manager comparisons.
-std::vector<std::string> VmManagerBootconfig(const CuttlefishConfig& config) {
+std::vector<std::string> VmManagerBootconfig(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> vm_manager_cmdline;
-  if (config.console()) {
-    vm_manager_cmdline.push_back("androidboot.console=" + config.console_dev());
+  if (instance.console()) {
+    vm_manager_cmdline.push_back("androidboot.console=" +
+                                 instance.console_dev());
   } else {
     // Specify an invalid path under /dev, so the init process will disable the
     // console service due to the console not being found. On physical devices,
@@ -74,8 +76,9 @@ std::vector<std::string> BootconfigArgsFromConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> bootconfig_args;
 
-  AppendVector(&bootconfig_args, VmManagerBootconfig(config));
-  auto vmm = vm_manager::GetVmManager(config.vm_manager(), config.target_arch());
+  AppendVector(&bootconfig_args, VmManagerBootconfig(instance));
+  auto vmm =
+      vm_manager::GetVmManager(config.vm_manager(), instance.target_arch());
   bootconfig_args.push_back(
       vmm->ConfigureBootDevices(instance.virtual_disk_paths().size()));
   AppendVector(&bootconfig_args, vmm->ConfigureGraphics(config));
@@ -170,13 +173,13 @@ std::vector<std::string> BootconfigArgsFromConfig(
 
   // Non-native architecture implies a significantly slower execution speed, so
   // set a large timeout multiplier.
-  if (!IsHostCompatible(config.target_arch())) {
+  if (!IsHostCompatible(instance.target_arch())) {
     bootconfig_args.push_back("androidboot.hw_timeout_multiplier=50");
   }
 
   // TODO(b/217564326): improve this checks for a hypervisor in the VM.
-  if (config.target_arch() == Arch::X86 ||
-      config.target_arch() == Arch::X86_64) {
+  if (instance.target_arch() == Arch::X86 ||
+      instance.target_arch() == Arch::X86_64) {
     bootconfig_args.push_back(
         concat("androidboot.hypervisor.version=cf-", config.vm_manager()));
     bootconfig_args.push_back("androidboot.hypervisor.vm.supported=1");

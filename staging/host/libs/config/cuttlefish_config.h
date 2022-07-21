@@ -154,12 +154,6 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
-  void set_gem5_binary_dir(const std::string& gem5_binary_dir);
-  std::string gem5_binary_dir() const;
-
-  void set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir);
-  std::string gem5_checkpoint_dir() const;
-
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
@@ -195,12 +189,6 @@ class CuttlefishConfig {
 
   void set_bootloader(const std::string& bootloader_path);
   std::string bootloader() const;
-
-  // TODO (b/163575714) add virtio console support to the bootloader so the
-  // virtio console path for the console device can be taken again. When that
-  // happens, this function can be deleted along with all the code paths it
-  // forces.
-  bool use_bootloader() const { return true; };
 
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
@@ -274,15 +262,6 @@ class CuttlefishConfig {
   void set_ril_dns(const std::string& ril_dns);
   std::string ril_dns() const;
 
-  // KGDB configuration for kernel debugging
-  void set_kgdb(bool kgdb);
-  bool kgdb() const;
-
-  // Serial console
-  void set_console(bool console);
-  bool console() const;
-  std::string console_dev() const;
-
   // Kernel and bootloader logging
   void set_enable_kernel_log(bool enable_kernel_log);
   bool enable_kernel_log() const;
@@ -348,9 +327,6 @@ class CuttlefishConfig {
 
   void set_protected_vm(bool protected_vm);
   bool protected_vm() const;
-
-  void set_target_arch(Arch target_arch);
-  Arch target_arch() const;
 
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
@@ -515,6 +491,25 @@ class CuttlefishConfig {
     std::string vbmeta_path() const;
 
     std::string id() const;
+
+    std::string gem5_binary_dir() const;
+
+    std::string gem5_checkpoint_dir() const;
+
+    // Serial console
+    bool console() const;
+    std::string console_dev() const;
+
+    // KGDB configuration for kernel debugging
+    bool kgdb() const;
+
+    // TODO (b/163575714) add virtio console support to the bootloader so the
+    // virtio console path for the console device can be taken again. When that
+    // happens, this function can be deleted along with all the code paths it
+    // forces.
+    bool use_bootloader() const;
+
+    Arch target_arch() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -567,6 +562,12 @@ class CuttlefishConfig {
     void set_gnss_file_path(const std::string &gnss_file_path);
     void set_fixed_location_file_path(
         const std::string& fixed_location_file_path);
+    void set_gem5_binary_dir(const std::string& gem5_binary_dir);
+    void set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir);
+    // Serial console
+    void set_console(bool console);
+    void set_kgdb(bool kgdb);
+    void set_target_arch(Arch target_arch);
   };
 
  private:
