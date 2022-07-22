@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"testing"
 
 	apiv1 "cuttlefish/liboperator/api/v1"
@@ -195,20 +194,14 @@ func TestProcedureExecuteInnerStageWithFails(t *testing.T) {
 }
 
 func TestLaunchCVDProcedureBuilder(t *testing.T) {
+	abURL := "http://ab.test"
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           "/bin/cvd",
 		ArtifactsRootDir: "/ard",
 		HomesRootDir:     "/hrd",
 	}
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	cvdDownloader := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: errors.New("error")})
-	startCVDServerCmd := &CVDSubcmdStartCVDServer{}
-	builder := LaunchCVDProcedureBuilder{
-		Paths:              paths,
-		CVDBinAndroidBuild: cvdBinAB,
-		CVDDownloader:      cvdDownloader,
-		StartCVDServerCmd:  startCVDServerCmd,
-	}
+	builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 
 	t.Run("download cvd stage", func(t *testing.T) {
 		p := builder.Build(apiv1.CreateCVDRequest{})
@@ -221,26 +214,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		if s.Build != cvdBinAB {
 			t.Errorf("expected <<%+v>>, got %+v", cvdBinAB, s.Build)
 		}
-		if s.Downloader != cvdDownloader {
-			t.Errorf("expected <<%+v>>, got %+v", cvdDownloader, s.Downloader)
-		}
-		if s.Mutex == nil {
-			t.Error("expected non nil")
-		}
-	})
-
-	t.Run("download cvd stages have same mutex", func(t *testing.T) {
-		p1 := builder.Build(apiv1.CreateCVDRequest{})
-		p2 := builder.Build(apiv1.CreateCVDRequest{})
-
-		first := p1[0].(*StageDownloadCVD)
-		second := p2[0].(*StageDownloadCVD)
-
-		if first == second {
-			t.Error("expected different stages")
-		}
-		if first.Mutex != second.Mutex {
-			t.Error("expected the same mutex")
+		if s.Downloader == nil {
+			t.Error("expected not nil")
 		}
 	})
 
@@ -249,55 +224,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 
 		s := p[1].(*StageStartCVDServer)
 
-		if s.StartCVDServerCmd != startCVDServerCmd {
-			t.Errorf("expected <<%q>>, got %q", startCVDServerCmd, s.StartCVDServerCmd)
-		}
-		if s.Mutex == nil {
-			t.Error("expected non nil")
-		}
-		if s.Started == nil {
-			t.Error("expected non nil")
-		}
-	})
-
-	t.Run("start cvd server stages have same mutex", func(t *testing.T) {
-		p1 := builder.Build(apiv1.CreateCVDRequest{})
-		p2 := builder.Build(apiv1.CreateCVDRequest{})
-
-		first := p1[1].(*StageStartCVDServer)
-		second := p2[1].(*StageStartCVDServer)
-
-		if first == second {
-			t.Error("expected different stages")
-		}
-		if first.Mutex != second.Mutex {
-			t.Error("expected the same mutex")
-		}
-	})
-
-	t.Run("start cvd server stages have same started pointer", func(t *testing.T) {
-		p1 := builder.Build(apiv1.CreateCVDRequest{})
-		p2 := builder.Build(apiv1.CreateCVDRequest{})
-
-		first := p1[1].(*StageStartCVDServer)
-		second := p2[1].(*StageStartCVDServer)
-
-		if first == second {
-			t.Error("expected different stages")
-		}
-		if first.Started != second.Started {
-			t.Error("expected the same started pointer")
-		}
-	})
-
-	t.Run("download cvd and start cvd server stages have different mutexes", func(t *testing.T) {
-		p1 := builder.Build(apiv1.CreateCVDRequest{})
-
-		download := p1[0].(*StageDownloadCVD)
-		startServer := p1[1].(*StageStartCVDServer)
-
-		if download.Mutex == startServer.Mutex {
-			t.Error("expected different mutexes")
+		if s.StartCVDServerCmd == nil {
+			t.Error("expected not nil")
 		}
 	})
 
@@ -330,7 +258,6 @@ func TestStageDownloadCVDDownloadFails(t *testing.T) {
 		CVDBin:     cvdBin,
 		Build:      AndroidBuild{ID: "1", Target: "xyzzy"},
 		Downloader: NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr}),
-		Mutex:      &sync.Mutex{},
 	}
 
 	err := s.Run()
@@ -352,7 +279,6 @@ func TestStageDownloadCVD(t *testing.T) {
 		CVDBin:     cvdBin,
 		Build:      AndroidBuild{ID: "1", Target: "xyzzy"},
 		Downloader: NewCVDDownloader(ad),
-		Mutex:      &sync.Mutex{},
 	}
 
 	err := s.Run()

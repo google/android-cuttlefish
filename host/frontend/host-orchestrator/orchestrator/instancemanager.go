@@ -112,13 +112,28 @@ type ProcedureBuilder interface {
 }
 
 type LaunchCVDProcedureBuilder struct {
-	Paths               IMPaths
-	CVDBinAndroidBuild  AndroidBuild
-	CVDDownloader       *CVDDownloader
-	StartCVDServerCmd   StartCVDServerCmd
-	downloadCVDMutex    sync.Mutex
-	startCVDServerMutex sync.Mutex
-	cvdServerStarted    bool
+	stageDownloadCVD        *StageDownloadCVD
+	stageStartCVDServer     *StageStartCVDServer
+	stageCreateArtifactsDir *StageCreateDirIfNotExist
+	stageCreateHomesDir     *StageCreateDirIfNotExist
+}
+
+func NewLaunchCVDProcedureBuilder(
+	abURL string,
+	cvdBinAB AndroidBuild,
+	paths IMPaths) *LaunchCVDProcedureBuilder {
+	return &LaunchCVDProcedureBuilder{
+		stageDownloadCVD: &StageDownloadCVD{
+			CVDBin:     paths.CVDBin,
+			Build:      cvdBinAB,
+			Downloader: NewCVDDownloader(NewSignedURLArtifactDownloader(http.DefaultClient, abURL)),
+		},
+		stageStartCVDServer: &StageStartCVDServer{
+			StartCVDServerCmd: &CVDSubcmdStartCVDServer{CVDBin: paths.CVDBin},
+		},
+		stageCreateArtifactsDir: &StageCreateDirIfNotExist{Dir: paths.ArtifactsRootDir},
+		stageCreateHomesDir:     &StageCreateDirIfNotExist{Dir: paths.HomesRootDir},
+	}
 }
 
 func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
@@ -127,19 +142,10 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 		panic("invalid type")
 	}
 	return Procedure{
-		&StageDownloadCVD{
-			CVDBin:     b.Paths.CVDBin,
-			Build:      b.CVDBinAndroidBuild,
-			Downloader: b.CVDDownloader,
-			Mutex:      &b.downloadCVDMutex,
-		},
-		&StageStartCVDServer{
-			StartCVDServerCmd: b.StartCVDServerCmd,
-			Mutex:             &b.startCVDServerMutex,
-			Started:           &b.cvdServerStarted,
-		},
-		&StageCreateDirIfNotExist{Dir: b.Paths.ArtifactsRootDir},
-		&StageCreateDirIfNotExist{Dir: b.Paths.HomesRootDir},
+		b.stageDownloadCVD,
+		b.stageStartCVDServer,
+		b.stageCreateArtifactsDir,
+		b.stageCreateHomesDir,
 	}
 }
 
@@ -147,30 +153,30 @@ type StageDownloadCVD struct {
 	CVDBin     string
 	Build      AndroidBuild
 	Downloader *CVDDownloader
-	Mutex      *sync.Mutex
+	mutex      sync.Mutex
 }
 
 func (s *StageDownloadCVD) Run() error {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	return s.Downloader.Download(s.CVDBin, s.Build)
 }
 
 type StageStartCVDServer struct {
 	StartCVDServerCmd StartCVDServerCmd
-	Mutex             *sync.Mutex
-	Started           *bool
+	mutex             sync.Mutex
+	completed         bool
 }
 
 func (s *StageStartCVDServer) Run() error {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	if *s.Started {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.completed {
 		return nil
 	}
 	err := s.StartCVDServerCmd.Run(exec.Command)
 	if err == nil {
-		*s.Started = true
+		s.completed = true
 	}
 	return err
 }
