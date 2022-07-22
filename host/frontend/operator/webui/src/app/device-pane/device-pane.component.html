@@ -9,16 +9,16 @@
 </div>
 <div>
   <ul class="devices">
-    <li
-      *ngFor="let device of devices"
-      [class.selected]="device === selectedDevice"
-      (click)="onSelect(device)"
-    >
-      <label>
+    <section class="device-list">
+      <li *ngFor="let device of devices | async">
         <!--Implemented with checkbox, not radio button as current page-->
-        <input type="checkbox" class="badge" />
-        {{ device.id }}
-      </label>
-    </li>
+        <mat-checkbox
+          class="checkbox"
+          [checked]="device.isVisible"
+          (change)="onSelect(device)"
+          >{{ device.id }}</mat-checkbox
+        >
+      </li>
+    </section>
   </ul>
 </div>

@@ -1,0 +1,14 @@
+<div>
+  <div class="view-pane" *ngIf="displaysService.displays.length">
+    <div class="device-viewer" *ngFor="let display of displaysService.displays">
+      <h3>
+        {{ display }}
+      </h3>
+      <iframe
+        style="margin: 10px 0 0 10px"
+        [src]="deviceConnectURL(display) | safe"
+        [title]="display"
+      ></iframe>
+    </div>
+  </div>
+</div>

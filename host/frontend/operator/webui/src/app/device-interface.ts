@@ -1,3 +1,4 @@
 export interface Device {
-    id: string;
+  id: string;
+  isVisible: boolean;
 }

@@ -2,7 +2,6 @@
     margin: 0 0 2em 0
     list-style-type: none
     padding: 0
-    width: 15em
 
 .devices li
     font-size: 60%
@@ -13,9 +12,21 @@
     padding: .1em
     height: 1.6em
 
+.devices mat-checkbox
+    margin: 10px
+
+::ng-deep .mat-checkbox .mat-checkbox-frame
+    border-color: #fff
+
+::ng-deep .mat-checkbox-checked.mat-accent .mat-checkbox-ripple .mat-ripple-element
+    opacity: 0.03 !important
+    background-color: #3DDC84!important
+
+::ng-deep .mat-checkbox-checked.mat-accent .mat-checkbox-background,.mat-checkbox-indeterminate.mat-accent .mat-checkbox-background
+    background-color: #3DDC84
+
 #refresh-list
     cursor: pointer
-
 
 .drawer-container
     position: absolute
@@ -25,7 +36,6 @@
     right: 0
     background: #2a2a2a
     color: #eee
-
 
 .device-pane
     margin: 0 auto
