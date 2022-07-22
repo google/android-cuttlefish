@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -198,13 +199,16 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           "/bin/cvd",
-		ArtifactsRootDir: "/ard",
-		HomesRootDir:     "/hrd",
+		ArtifactsRootDir: "/artifacts",
+		HomesRootDir:     "/homes",
 	}
 	builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
+	req := apiv1.CreateCVDRequest{
+		BuildInfo: &apiv1.BuildInfo{BuildID: "256", Target: "waldo"},
+	}
 
 	t.Run("download cvd stage", func(t *testing.T) {
-		p := builder.Build(apiv1.CreateCVDRequest{})
+		p := builder.Build(req)
 
 		s := p[0].(*StageDownloadCVD)
 
@@ -220,7 +224,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("start cvd server stage", func(t *testing.T) {
-		p := builder.Build(apiv1.CreateCVDRequest{})
+		p := builder.Build(req)
 
 		s := p[1].(*StageStartCVDServer)
 
@@ -230,7 +234,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("create artifacts root directory stage", func(t *testing.T) {
-		p := builder.Build(apiv1.CreateCVDRequest{})
+		p := builder.Build(req)
 
 		s := p[2].(*StageCreateDirIfNotExist)
 
@@ -239,10 +243,49 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		}
 	})
 
-	t.Run("create homes root directory stage", func(t *testing.T) {
-		p := builder.Build(apiv1.CreateCVDRequest{})
+	t.Run("create cvd artifacts directory stage", func(t *testing.T) {
+		p := builder.Build(req)
 
 		s := p[3].(*StageCreateDirIfNotExist)
+
+		expected := "/artifacts/256_waldo"
+		if s.Dir != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
+		}
+	})
+
+	t.Run("fetch cvd artifacts stage", func(t *testing.T) {
+		p := builder.Build(req)
+
+		s := p[4].(*StageFetchCVD)
+
+		if s.CVDCmd == nil {
+			t.Error("expected not nil")
+		}
+		if s.Paths != paths {
+			t.Errorf("expected <<%+v>>, got %+v", paths, s.Paths)
+		}
+		if s.BuildInfo != *req.BuildInfo {
+			t.Errorf("expected <<%+v>>, got %+v", *req.BuildInfo, s.BuildInfo)
+		}
+	})
+
+	t.Run("fetch cvd artifacts stages with same build info", func(t *testing.T) {
+		firstBuilder := builder.Build(req)
+		secondBuilder := builder.Build(req)
+
+		first := firstBuilder[4].(*StageFetchCVD)
+		second := secondBuilder[4].(*StageFetchCVD)
+
+		if first != second {
+			t.Errorf("expected <<%+v>>, got %+v", first, second)
+		}
+	})
+
+	t.Run("create homes root directory stage", func(t *testing.T) {
+		p := builder.Build(req)
+
+		s := p[5].(*StageCreateDirIfNotExist)
 
 		if s.Dir != paths.HomesRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
@@ -496,6 +539,66 @@ func TestCVDSubcmdStartCVDServerExecutionFails(t *testing.T) {
 
 	err := cmd.Run(execContext)
 
+	var execErr *exec.ExitError
+	if !errors.As(err, &execErr) {
+		t.Errorf("error type <<\"%T\">> not found in error chain", execErr)
+	}
+}
+
+func TestCVDSubcmdFecthCVDVerifyArgs(t *testing.T) {
+	var usedCommand string
+	var usedArgs []string
+	execContext := func(command string, args ...string) *exec.Cmd {
+		usedCommand = command
+		usedArgs = args
+		return createMockGoTestCmd()
+	}
+	cmd := CVDSubcmdFetchCVD{}
+	cvdBin := "cvd"
+	paths := IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"}
+	buildInfo := apiv1.BuildInfo{BuildID: "123", Target: "foo"}
+
+	cmd.Run(execContext, paths, buildInfo)
+
+	if usedCommand != cvdBin {
+		t.Errorf("expected <<%q>>, got %q", cvdBin, usedCommand)
+	}
+	expectedArgs := []string{"fetch", "--default_build=123/foo", "--directory=/artifacts/123_foo"}
+	if !reflect.DeepEqual(usedArgs, expectedArgs) {
+		t.Errorf("expected <<%+v>>, got %+v", expectedArgs, usedArgs)
+	}
+}
+
+func TestCVDSubcmdFetchCVDCommandSucceeds(t *testing.T) {
+	execContext := func(command string, args ...string) *exec.Cmd {
+		return createMockGoTestCmd()
+	}
+	cmd := CVDSubcmdFetchCVD{}
+	cvdBin := "cvd"
+	paths := IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"}
+	buildInfo := apiv1.BuildInfo{BuildID: "123", Target: "foo"}
+
+	_, err := cmd.Run(execContext, paths, buildInfo)
+
+	if err != nil {
+		t.Errorf("expected <<nil>> error, got %+v", err)
+	}
+}
+
+func TestCVDSubcmdFetchCVDCommandFails(t *testing.T) {
+	execContext := func(command string, args ...string) *exec.Cmd {
+		return createFailingMockGoTestCmd()
+	}
+	cvdBin := "cvd"
+	paths := IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"}
+	buildInfo := apiv1.BuildInfo{BuildID: "123", Target: "foo"}
+	cmd := CVDSubcmdFetchCVD{}
+
+	stdoutStderr, err := cmd.Run(execContext, paths, buildInfo)
+
+	if len(stdoutStderr) == 0 {
+		t.Error("expected a non empty combined standard output and standard error")
+	}
 	var execErr *exec.ExitError
 	if !errors.As(err, &execErr) {
 		t.Errorf("error type <<\"%T\">> not found in error chain", execErr)

@@ -112,10 +112,13 @@ type ProcedureBuilder interface {
 }
 
 type LaunchCVDProcedureBuilder struct {
+	paths                   IMPaths
 	stageDownloadCVD        *StageDownloadCVD
 	stageStartCVDServer     *StageStartCVDServer
 	stageCreateArtifactsDir *StageCreateDirIfNotExist
 	stageCreateHomesDir     *StageCreateDirIfNotExist
+	stageFetchCVDMap        map[string]*StageFetchCVD
+	stageFetchCVDMapMutex   sync.Mutex
 }
 
 func NewLaunchCVDProcedureBuilder(
@@ -123,6 +126,7 @@ func NewLaunchCVDProcedureBuilder(
 	cvdBinAB AndroidBuild,
 	paths IMPaths) *LaunchCVDProcedureBuilder {
 	return &LaunchCVDProcedureBuilder{
+		paths: paths,
 		stageDownloadCVD: &StageDownloadCVD{
 			CVDBin:     paths.CVDBin,
 			Build:      cvdBinAB,
@@ -133,11 +137,12 @@ func NewLaunchCVDProcedureBuilder(
 		},
 		stageCreateArtifactsDir: &StageCreateDirIfNotExist{Dir: paths.ArtifactsRootDir},
 		stageCreateHomesDir:     &StageCreateDirIfNotExist{Dir: paths.HomesRootDir},
+		stageFetchCVDMap:        make(map[string]*StageFetchCVD),
 	}
 }
 
 func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
-	_, ok := input.(apiv1.CreateCVDRequest)
+	req, ok := input.(apiv1.CreateCVDRequest)
 	if !ok {
 		panic("invalid type")
 	}
@@ -145,8 +150,28 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 		b.stageDownloadCVD,
 		b.stageStartCVDServer,
 		b.stageCreateArtifactsDir,
+		&StageCreateDirIfNotExist{
+			Dir: buildArtifactsDir(b.paths.ArtifactsRootDir, *req.BuildInfo),
+		},
+		b.buildFetchCVDStage(req.BuildInfo),
 		b.stageCreateHomesDir,
 	}
+}
+
+func (b *LaunchCVDProcedureBuilder) buildFetchCVDStage(info *apiv1.BuildInfo) *StageFetchCVD {
+	b.stageFetchCVDMapMutex.Lock()
+	defer b.stageFetchCVDMapMutex.Unlock()
+	key := fmt.Sprintf("%s_%s", info.BuildID, info.Target)
+	value := b.stageFetchCVDMap[key]
+	if value == nil {
+		value = &StageFetchCVD{
+			CVDCmd:    &CVDSubcmdFetchCVD{},
+			Paths:     b.paths,
+			BuildInfo: *info,
+		}
+		b.stageFetchCVDMap[key] = value
+	}
+	return value
 }
 
 type StageDownloadCVD struct {
@@ -193,6 +218,27 @@ func (s *StageCreateDirIfNotExist) Run() error {
 	}
 	// Mkdir set the permission bits (before umask)
 	return os.Chmod(s.Dir, 0755)
+}
+
+type StageFetchCVD struct {
+	CVDCmd    CVDCmd
+	Paths     IMPaths
+	BuildInfo apiv1.BuildInfo
+	mutex     sync.Mutex
+	completed bool
+}
+
+func (s *StageFetchCVD) Run() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.completed {
+		return nil
+	}
+	_, err := s.CVDCmd.Run(exec.Command, s.Paths, s.BuildInfo)
+	if err == nil {
+		s.completed = true
+	}
+	return err
 }
 
 type CVDDownloader struct {
@@ -344,4 +390,29 @@ func (c *CVDSubcmdStartCVDServer) Run(execContext ExecContext) error {
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	return cmd.Run()
+}
+
+type CVDCmd interface {
+	// Runs the command and returns its combined standard output and standard error.
+	Run(execContext ExecContext, paths IMPaths, buildInfo apiv1.BuildInfo) ([]byte, error)
+}
+
+type CVDSubcmdFetchCVD struct{}
+
+func (c *CVDSubcmdFetchCVD) Run(
+	execContext ExecContext,
+	paths IMPaths,
+	buildInfo apiv1.BuildInfo) ([]byte, error) {
+	outDir := buildArtifactsDir(paths.ArtifactsRootDir, buildInfo)
+	if err := os.Setenv("ANDROID_HOST_OUT", outDir); err != nil {
+		return nil, err
+	}
+	buildFlag := fmt.Sprintf("--default_build=%s/%s", buildInfo.BuildID, buildInfo.Target)
+	dirFlag := fmt.Sprintf("--directory=%s", outDir)
+	cmd := execContext(paths.CVDBin, "fetch", buildFlag, dirFlag)
+	return cmd.CombinedOutput()
+}
+
+func buildArtifactsDir(baseDir string, info apiv1.BuildInfo) string {
+	return fmt.Sprintf("%s/%s_%s", baseDir, info.BuildID, info.Target)
 }
