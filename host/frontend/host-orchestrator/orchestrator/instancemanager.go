@@ -167,9 +167,11 @@ func (b *LaunchCVDProcedureBuilder) buildFetchCVDStage(info *apiv1.BuildInfo) *S
 	value := b.stageFetchCVDMap[key]
 	if value == nil {
 		value = &StageFetchCVD{
-			FetchCVDCmd: &CVDSubcmdFetchCVD{},
-			Paths:       b.paths,
-			BuildInfo:   *info,
+			FetchCVDCmd: &FetchCVDCmd{
+				ExecContext: exec.Command,
+				Paths:       b.paths,
+				BuildInfo:   *info,
+			},
 		}
 		b.stageFetchCVDMap[key] = value
 	}
@@ -223,9 +225,7 @@ func (s *StageCreateDirIfNotExist) Run() error {
 }
 
 type StageFetchCVD struct {
-	FetchCVDCmd CVDCmd
-	Paths       IMPaths
-	BuildInfo   apiv1.BuildInfo
+	FetchCVDCmd *FetchCVDCmd
 	mutex       sync.Mutex
 	completed   bool
 }
@@ -236,7 +236,7 @@ func (s *StageFetchCVD) Run() error {
 	if s.completed {
 		return nil
 	}
-	stdoutStderr, err := s.FetchCVDCmd.Run(exec.Command, s.Paths, s.BuildInfo)
+	stdoutStderr, err := s.FetchCVDCmd.Run()
 	// NOTE: The stage is only completed when no error occurs. It's ok for this
 	// stage to be retried if an error happened before.
 	if err == nil {
@@ -398,24 +398,21 @@ func (c *CVDSubcmdStartCVDServer) Run(execContext ExecContext) error {
 	return cmd.Run()
 }
 
-type CVDCmd interface {
-	// Runs the command and returns its combined standard output and standard error.
-	Run(execContext ExecContext, paths IMPaths, buildInfo apiv1.BuildInfo) ([]byte, error)
+type FetchCVDCmd struct {
+	ExecContext ExecContext
+	Paths       IMPaths
+	BuildInfo   apiv1.BuildInfo
 }
 
-type CVDSubcmdFetchCVD struct{}
-
-func (c *CVDSubcmdFetchCVD) Run(
-	execContext ExecContext,
-	paths IMPaths,
-	buildInfo apiv1.BuildInfo) ([]byte, error) {
-	outDir := buildArtifactsDir(paths.ArtifactsRootDir, buildInfo)
+// Runs the command and returns its combined standard output and standard error.
+func (c *FetchCVDCmd) Run() ([]byte, error) {
+	outDir := buildArtifactsDir(c.Paths.ArtifactsRootDir, c.BuildInfo)
 	if err := os.Setenv("ANDROID_HOST_OUT", outDir); err != nil {
 		return nil, err
 	}
-	buildFlag := fmt.Sprintf("--default_build=%s/%s", buildInfo.BuildID, buildInfo.Target)
+	buildFlag := fmt.Sprintf("--default_build=%s/%s", c.BuildInfo.BuildID, c.BuildInfo.Target)
 	dirFlag := fmt.Sprintf("--directory=%s", outDir)
-	cmd := execContext(paths.CVDBin, "fetch", buildFlag, dirFlag)
+	cmd := c.ExecContext(c.Paths.CVDBin, "fetch", buildFlag, dirFlag)
 	return cmd.CombinedOutput()
 }
 

@@ -259,14 +259,11 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 
 		s := p[4].(*StageFetchCVD)
 
-		if s.FetchCVDCmd == nil {
-			t.Error("expected not nil")
+		if s.FetchCVDCmd.Paths != paths {
+			t.Errorf("expected <<%+v>>, got %+v", paths, s.FetchCVDCmd.Paths)
 		}
-		if s.Paths != paths {
-			t.Errorf("expected <<%+v>>, got %+v", paths, s.Paths)
-		}
-		if s.BuildInfo != *req.BuildInfo {
-			t.Errorf("expected <<%+v>>, got %+v", *req.BuildInfo, s.BuildInfo)
+		if s.FetchCVDCmd.BuildInfo != *req.BuildInfo {
+			t.Errorf("expected <<%+v>>, got %+v", *req.BuildInfo, s.FetchCVDCmd.Paths)
 		}
 	})
 
@@ -545,7 +542,7 @@ func TestCVDSubcmdStartCVDServerExecutionFails(t *testing.T) {
 	}
 }
 
-func TestCVDSubcmdFecthCVDVerifyArgs(t *testing.T) {
+func TestFetchCVDCmdVerifyArgs(t *testing.T) {
 	var usedCommand string
 	var usedArgs []string
 	execContext := func(command string, args ...string) *exec.Cmd {
@@ -553,12 +550,14 @@ func TestCVDSubcmdFecthCVDVerifyArgs(t *testing.T) {
 		usedArgs = args
 		return createMockGoTestCmd()
 	}
-	cmd := CVDSubcmdFetchCVD{}
 	cvdBin := "cvd"
-	paths := IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"}
-	buildInfo := apiv1.BuildInfo{BuildID: "123", Target: "foo"}
+	cmd := FetchCVDCmd{
+		ExecContext: execContext,
+		Paths:       IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"},
+		BuildInfo:   apiv1.BuildInfo{BuildID: "123", Target: "foo"},
+	}
 
-	cmd.Run(execContext, paths, buildInfo)
+	cmd.Run()
 
 	if usedCommand != cvdBin {
 		t.Errorf("expected <<%q>>, got %q", cvdBin, usedCommand)
@@ -569,32 +568,36 @@ func TestCVDSubcmdFecthCVDVerifyArgs(t *testing.T) {
 	}
 }
 
-func TestCVDSubcmdFetchCVDCommandSucceeds(t *testing.T) {
+func TestFetchCVDCmdSucceeds(t *testing.T) {
 	execContext := func(command string, args ...string) *exec.Cmd {
 		return createMockGoTestCmd()
 	}
-	cmd := CVDSubcmdFetchCVD{}
 	cvdBin := "cvd"
-	paths := IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"}
-	buildInfo := apiv1.BuildInfo{BuildID: "123", Target: "foo"}
+	cmd := FetchCVDCmd{
+		ExecContext: execContext,
+		Paths:       IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"},
+		BuildInfo:   apiv1.BuildInfo{BuildID: "123", Target: "foo"},
+	}
 
-	_, err := cmd.Run(execContext, paths, buildInfo)
+	_, err := cmd.Run()
 
 	if err != nil {
 		t.Errorf("expected <<nil>> error, got %+v", err)
 	}
 }
 
-func TestCVDSubcmdFetchCVDCommandFails(t *testing.T) {
+func TestFetchCVDCmdFails(t *testing.T) {
 	execContext := func(command string, args ...string) *exec.Cmd {
 		return createFailingMockGoTestCmd()
 	}
 	cvdBin := "cvd"
-	paths := IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"}
-	buildInfo := apiv1.BuildInfo{BuildID: "123", Target: "foo"}
-	cmd := CVDSubcmdFetchCVD{}
+	cmd := FetchCVDCmd{
+		ExecContext: execContext,
+		Paths:       IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"},
+		BuildInfo:   apiv1.BuildInfo{BuildID: "123", Target: "foo"},
+	}
 
-	stdoutStderr, err := cmd.Run(execContext, paths, buildInfo)
+	stdoutStderr, err := cmd.Run()
 
 	if len(stdoutStderr) == 0 {
 		t.Error("expected a non empty combined standard output and standard error")
