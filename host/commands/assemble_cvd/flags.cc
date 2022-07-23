@@ -131,6 +131,10 @@ DEFINE_bool(
     rootcanal_attach_mode, false,
     "Instead of running rootcanal, attach an existing rootcanal instance.");
 
+DEFINE_bool(netsim, false, "[Experimental] Connect all radios to netsim.");
+
+DEFINE_bool(netsim_bt, false, "[Experimental] Connect Bluetooth radio to netsim.");
+
 DEFINE_string(bluetooth_controller_properties_file,
               "etc/rootcanal/data/controller_properties.json",
               "The configuartion file path for root-canal which is a Bluetooth "
@@ -733,7 +737,20 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_record_screen(FLAGS_record_screen);
 
-  tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth);
+  // netsim flags allow all radios or selecting a specific radio
+  bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt;
+  bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
+
+  // crosvm should create fifos for Bluetooth
+  tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth || is_bt_netsim);
+
+  // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
+  tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
+
+  // These flags inform NetsimServer::ResultSetup which radios it owns.
+  if (is_bt_netsim) {
+    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
+  }
 
   tmp_config_obj.set_protected_vm(FLAGS_protected_vm);
 
@@ -914,7 +931,9 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_start_wmediumd(false);
     }
 
-    instance.set_start_rootcanal(is_first_instance &&
+    instance.set_start_netsim(is_first_instance && is_any_netsim);
+
+    instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
                                  !FLAGS_rootcanal_attach_mode);
 
     instance.set_start_ap(!FLAGS_ap_rootfs_image.empty() &&
