@@ -259,7 +259,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 
 		s := p[4].(*StageFetchCVD)
 
-		if s.CVDCmd == nil {
+		if s.FetchCVDCmd == nil {
 			t.Error("expected not nil")
 		}
 		if s.Paths != paths {

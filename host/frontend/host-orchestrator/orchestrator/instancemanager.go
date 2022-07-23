@@ -137,7 +137,9 @@ func NewLaunchCVDProcedureBuilder(
 		},
 		stageCreateArtifactsDir: &StageCreateDirIfNotExist{Dir: paths.ArtifactsRootDir},
 		stageCreateHomesDir:     &StageCreateDirIfNotExist{Dir: paths.HomesRootDir},
-		stageFetchCVDMap:        make(map[string]*StageFetchCVD),
+		// Fetch CVD stages will be reused to avoid downloading the artifacts of the same
+		// target multiple times.
+		stageFetchCVDMap: make(map[string]*StageFetchCVD),
 	}
 }
 
@@ -165,9 +167,9 @@ func (b *LaunchCVDProcedureBuilder) buildFetchCVDStage(info *apiv1.BuildInfo) *S
 	value := b.stageFetchCVDMap[key]
 	if value == nil {
 		value = &StageFetchCVD{
-			CVDCmd:    &CVDSubcmdFetchCVD{},
-			Paths:     b.paths,
-			BuildInfo: *info,
+			FetchCVDCmd: &CVDSubcmdFetchCVD{},
+			Paths:       b.paths,
+			BuildInfo:   *info,
 		}
 		b.stageFetchCVDMap[key] = value
 	}
@@ -221,11 +223,11 @@ func (s *StageCreateDirIfNotExist) Run() error {
 }
 
 type StageFetchCVD struct {
-	CVDCmd    CVDCmd
-	Paths     IMPaths
-	BuildInfo apiv1.BuildInfo
-	mutex     sync.Mutex
-	completed bool
+	FetchCVDCmd CVDCmd
+	Paths       IMPaths
+	BuildInfo   apiv1.BuildInfo
+	mutex       sync.Mutex
+	completed   bool
 }
 
 func (s *StageFetchCVD) Run() error {
@@ -234,9 +236,13 @@ func (s *StageFetchCVD) Run() error {
 	if s.completed {
 		return nil
 	}
-	_, err := s.CVDCmd.Run(exec.Command, s.Paths, s.BuildInfo)
+	stdoutStderr, err := s.FetchCVDCmd.Run(exec.Command, s.Paths, s.BuildInfo)
+	// NOTE: The stage is only completed when no error occurs. It's ok for this
+	// stage to be retried if an error happened before.
 	if err == nil {
 		s.completed = true
+	} else {
+		log.Printf("`cvd fetch` failed with combined stdout and stderr: %q", string(stdoutStderr))
 	}
 	return err
 }
