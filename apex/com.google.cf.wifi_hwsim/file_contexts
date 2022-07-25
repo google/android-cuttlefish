@@ -5,4 +5,4 @@
 /bin/hw/hostapd_cf           u:object_r:hal_wifi_hostapd_default_exec:s0
 /bin/mac80211_create_radios  u:object_r:mac80211_create_radios_exec:s0
 /etc/permissions(/.*)?       u:object_r:vendor_configs_file:s0
-/bin/hw/android\.hardware\.wifi@1\.0-service_cf      u:object_r:hal_wifi_default_exec:s0
+/bin/hw/android\.hardware\.wifi@1\.0-service      u:object_r:hal_wifi_default_exec:s0
