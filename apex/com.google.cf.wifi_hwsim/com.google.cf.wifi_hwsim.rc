@@ -28,7 +28,7 @@ service hostapd /apex/com.android.wifi.hal/bin/hw/hostapd_cf
     disabled
     oneshot
 
-service vendor.wifi_hal_legacy /apex/com.android.wifi.hal/bin/hw/android.hardware.wifi@1.0-service_cf
+service vendor.wifi_hal_legacy /apex/com.android.wifi.hal/bin/hw/android.hardware.wifi@1.0-service
     interface android.hardware.wifi@1.0::IWifi default
     interface android.hardware.wifi@1.1::IWifi default
     interface android.hardware.wifi@1.2::IWifi default
