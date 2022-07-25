@@ -31,20 +31,14 @@ prebuilt_etc {
 cc_binary {
     name: "android.hardware.wifi@1.0-service_cf",
     defaults: ["android.hardware.wifi@1.0-service_default"],
-    shared_libs: ["libwifi-hal_cf"],
+    shared_libs: ["libwifi-hal"],
     static_libs: ["android.hardware.wifi@1.0-service-lib_cf"],
 }
 
 cc_library_static {
     name: "android.hardware.wifi@1.0-service-lib_cf",
     defaults: ["android.hardware.wifi@1.0-service-lib_defaults"],
-    shared_libs: ["libwifi-hal_cf"],
-}
-
-cc_library_shared {
-    name: "libwifi-hal_cf",
-    defaults: ["libwifi-hal_defaults"],
-    whole_static_libs: ["libwifi-hal-emu"],
+    shared_libs: ["libwifi-hal"],
 }
 
 apex {
