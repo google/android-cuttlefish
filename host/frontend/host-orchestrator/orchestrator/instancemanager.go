@@ -111,6 +111,8 @@ type ProcedureBuilder interface {
 	Build(input interface{}) Procedure
 }
 
+// Fetch CVD stages will be reused to avoid downloading the artifacts of the same
+// target multiple times.
 type LaunchCVDProcedureBuilder struct {
 	paths                   IMPaths
 	stageDownloadCVD        *StageDownloadCVD
@@ -137,9 +139,7 @@ func NewLaunchCVDProcedureBuilder(
 		},
 		stageCreateArtifactsDir: &StageCreateDirIfNotExist{Dir: paths.ArtifactsRootDir},
 		stageCreateHomesDir:     &StageCreateDirIfNotExist{Dir: paths.HomesRootDir},
-		// Fetch CVD stages will be reused to avoid downloading the artifacts of the same
-		// target multiple times.
-		stageFetchCVDMap: make(map[string]*StageFetchCVD),
+		stageFetchCVDMap:        make(map[string]*StageFetchCVD),
 	}
 }
 
