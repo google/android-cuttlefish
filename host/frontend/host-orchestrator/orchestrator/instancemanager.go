@@ -111,11 +111,16 @@ type ProcedureBuilder interface {
 	Build(input interface{}) Procedure
 }
 
+// Fetch CVD stages will be reused to avoid downloading the artifacts of the same
+// target multiple times.
 type LaunchCVDProcedureBuilder struct {
+	paths                   IMPaths
 	stageDownloadCVD        *StageDownloadCVD
 	stageStartCVDServer     *StageStartCVDServer
 	stageCreateArtifactsDir *StageCreateDirIfNotExist
 	stageCreateHomesDir     *StageCreateDirIfNotExist
+	stageFetchCVDMap        map[string]*StageFetchCVD
+	stageFetchCVDMapMutex   sync.Mutex
 }
 
 func NewLaunchCVDProcedureBuilder(
@@ -123,6 +128,7 @@ func NewLaunchCVDProcedureBuilder(
 	cvdBinAB AndroidBuild,
 	paths IMPaths) *LaunchCVDProcedureBuilder {
 	return &LaunchCVDProcedureBuilder{
+		paths: paths,
 		stageDownloadCVD: &StageDownloadCVD{
 			CVDBin:     paths.CVDBin,
 			Build:      cvdBinAB,
@@ -133,11 +139,12 @@ func NewLaunchCVDProcedureBuilder(
 		},
 		stageCreateArtifactsDir: &StageCreateDirIfNotExist{Dir: paths.ArtifactsRootDir},
 		stageCreateHomesDir:     &StageCreateDirIfNotExist{Dir: paths.HomesRootDir},
+		stageFetchCVDMap:        make(map[string]*StageFetchCVD),
 	}
 }
 
 func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
-	_, ok := input.(apiv1.CreateCVDRequest)
+	req, ok := input.(apiv1.CreateCVDRequest)
 	if !ok {
 		panic("invalid type")
 	}
@@ -145,8 +152,30 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 		b.stageDownloadCVD,
 		b.stageStartCVDServer,
 		b.stageCreateArtifactsDir,
+		&StageCreateDirIfNotExist{
+			Dir: buildArtifactsDir(b.paths.ArtifactsRootDir, *req.BuildInfo),
+		},
+		b.buildFetchCVDStage(req.BuildInfo),
 		b.stageCreateHomesDir,
 	}
+}
+
+func (b *LaunchCVDProcedureBuilder) buildFetchCVDStage(info *apiv1.BuildInfo) *StageFetchCVD {
+	b.stageFetchCVDMapMutex.Lock()
+	defer b.stageFetchCVDMapMutex.Unlock()
+	key := fmt.Sprintf("%s_%s", info.BuildID, info.Target)
+	value := b.stageFetchCVDMap[key]
+	if value == nil {
+		value = &StageFetchCVD{
+			FetchCVDCmd: &FetchCVDCmd{
+				ExecContext: exec.Command,
+				Paths:       b.paths,
+				BuildInfo:   *info,
+			},
+		}
+		b.stageFetchCVDMap[key] = value
+	}
+	return value
 }
 
 type StageDownloadCVD struct {
@@ -193,6 +222,29 @@ func (s *StageCreateDirIfNotExist) Run() error {
 	}
 	// Mkdir set the permission bits (before umask)
 	return os.Chmod(s.Dir, 0755)
+}
+
+type StageFetchCVD struct {
+	FetchCVDCmd *FetchCVDCmd
+	mutex       sync.Mutex
+	completed   bool
+}
+
+func (s *StageFetchCVD) Run() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.completed {
+		return nil
+	}
+	stdoutStderr, err := s.FetchCVDCmd.Run()
+	// NOTE: The stage is only completed when no error occurs. It's ok for this
+	// stage to be retried if an error happened before.
+	if err == nil {
+		s.completed = true
+	} else {
+		log.Printf("`cvd fetch` failed with combined stdout and stderr: %q", string(stdoutStderr))
+	}
+	return err
 }
 
 type CVDDownloader struct {
@@ -344,4 +396,26 @@ func (c *CVDSubcmdStartCVDServer) Run(execContext ExecContext) error {
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	return cmd.Run()
+}
+
+type FetchCVDCmd struct {
+	ExecContext ExecContext
+	Paths       IMPaths
+	BuildInfo   apiv1.BuildInfo
+}
+
+// Runs the command and returns its combined standard output and standard error.
+func (c *FetchCVDCmd) Run() ([]byte, error) {
+	outDir := buildArtifactsDir(c.Paths.ArtifactsRootDir, c.BuildInfo)
+	if err := os.Setenv("ANDROID_HOST_OUT", outDir); err != nil {
+		return nil, err
+	}
+	buildFlag := fmt.Sprintf("--default_build=%s/%s", c.BuildInfo.BuildID, c.BuildInfo.Target)
+	dirFlag := fmt.Sprintf("--directory=%s", outDir)
+	cmd := c.ExecContext(c.Paths.CVDBin, "fetch", buildFlag, dirFlag)
+	return cmd.CombinedOutput()
+}
+
+func buildArtifactsDir(baseDir string, info apiv1.BuildInfo) string {
+	return fmt.Sprintf("%s/%s_%s", baseDir, info.BuildID, info.Target)
 }
