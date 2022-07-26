@@ -92,6 +92,9 @@ class DeviceConnection {
   #inputChannel;
   #adbChannel;
   #bluetoothChannel;
+  #locationChannel;
+  #kmlLocationsChannel;
+  #gpxLocationsChannel;
 
   #streams;
   #streamPromiseResolvers;
@@ -103,6 +106,9 @@ class DeviceConnection {
   #onAdbMessage;
   #onControlMessage;
   #onBluetoothMessage;
+  #onLocationMessage;
+  #onKmlLocationsMessage;
+  #onGpxLocationsMessage;
 
   #micRequested = false;
   #cameraRequested = false;
@@ -141,6 +147,32 @@ class DeviceConnection {
           } else {
             console.error('Received unexpected Bluetooth message');
           }
+        });
+    this.#locationChannel =
+        createDataChannel(pc, 'location-channel', (msg) => {
+          if (!this.#onLocationMessage) {
+            console.error('Received unexpected Location message');
+            return;
+          }
+          this.#onLocationMessage(msg.data);
+        });
+
+    this.#kmlLocationsChannel =
+        createDataChannel(pc, 'kml-locations-channel', (msg) => {
+          if (!this.#onKmlLocationsMessage) {
+            console.error('Received unexpected KML Locations message');
+            return;
+          }
+          this.#onKmlLocationsMessage(msg.data);
+        });
+
+    this.#gpxLocationsChannel =
+        createDataChannel(pc, 'gpx-locations-channel', (msg) => {
+          if (!this.#onGpxLocationsMessage) {
+            console.error('Received unexpected KML Locations message');
+            return;
+          }
+          this.#onGpxLocationsMessage(msg.data);
         });
     this.#streams = {};
     this.#streamPromiseResolvers = {};
@@ -361,6 +393,30 @@ class DeviceConnection {
 
   onBluetoothMessage(cb) {
     this.#onBluetoothMessage = cb;
+  }
+
+  sendLocationMessage(msg) {
+    this.#locationChannel.send(msg);
+  }
+
+  onLocationMessage(cb) {
+    this.#onLocationMessage = cb;
+  }
+
+  sendKmlLocationsMessage(msg) {
+    this.#kmlLocationsChannel.send(msg);
+  }
+
+  onKmlLocationsMessage(cb) {
+    this.#kmlLocationsChannel = cb;
+  }
+
+  sendGpxLocationsMessage(msg) {
+    this.#gpxLocationsChannel.send(msg);
+  }
+
+  onGpxLocationsMessage(cb) {
+    this.#gpxLocationsChannel = cb;
   }
 
   // Provide a callback to receive connectionstatechange states.
