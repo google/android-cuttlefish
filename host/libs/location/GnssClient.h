@@ -32,8 +32,7 @@ class GnssClient {
   Result<grpc::Status> SendGps(const std::string& user);
   std::string FormatGps(const std::string& latitude,
                         const std::string& longitude,
-                        const std::string& elevation,
-                        const std::string& timestamp, bool inject_time);
+                        const std::string& elevation);
 
  private:
   std::unique_ptr<gnss_grpc_proxy::GnssGrpcProxy::Stub> stub_;
