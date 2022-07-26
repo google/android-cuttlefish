@@ -111,7 +111,7 @@ int ImportLocationsCvdMain(int argc, char** argv) {
 
     std::string formatted_location =
         gpsclient.FormatGps(latitude, longitude, elevation);
-    auto status = gpsclient.SendGps(formatted_location);
+    auto status = gpsclient.SendSingleGpsLoc(formatted_location);
     CHECK(status.ok()) << "Failed to send gps location data \n";
     if (!status.ok()) {
       return 1;

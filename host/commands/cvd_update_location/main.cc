@@ -48,7 +48,7 @@ int UpdateLocationCvdMain(int argc, char** argv) {
       grpc::CreateChannel(socket_name, grpc::InsecureChannelCredentials()));
   std::string formatted_location =
       gpsclient.FormatGps(FLAGS_latitude, FLAGS_longitude, FLAGS_elevation);
-  auto status = gpsclient.SendGps(formatted_location);
+  auto status = gpsclient.SendSingleGpsLoc(formatted_location);
   CHECK(status.ok()) << "Failed to send gps location data \n";
   if (!status.ok()) {
     return 1;

@@ -30,9 +30,9 @@ namespace cuttlefish {
 GnssClient::GnssClient(std::shared_ptr<grpc::Channel> channel)
     : stub_(GnssGrpcProxy::NewStub(channel)) {}
 
-// Assambles the client's payload, sends it and presents the response back
+// Aseembles the client's payload, sends it and presents the response back
 // from the server.
-Result<grpc::Status> GnssClient::SendGps(const std::string& user) {
+Result<grpc::Status> GnssClient::SendSingleGpsLoc(const std::string& user) {
   // Data we are sending to the server.
   SendGpsRequest request;
   request.set_gps(user);

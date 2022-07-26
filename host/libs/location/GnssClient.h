@@ -27,9 +27,9 @@ class GnssClient {
  public:
   GnssClient(std::shared_ptr<grpc::Channel> channel);
 
-  // Assambles the client's payload, sends it and presents the response back
+  // Aseembles the client's payload, sends it and presents the response back
   // from the server.
-  Result<grpc::Status> SendGps(const std::string& user);
+  Result<grpc::Status> SendSingleGpsLoc(const std::string& user);
   std::string FormatGps(const std::string& latitude,
                         const std::string& longitude,
                         const std::string& elevation);
