@@ -17,7 +17,6 @@ package orchestrator
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +28,6 @@ import (
 
 	apiv1 "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
-	"github.com/google/uuid"
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
@@ -293,7 +291,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 }
 
 func TestStageDownloadCVDDownloadFails(t *testing.T) {
-	cvdBin := "/tmp/cvd"
+	cvdBin := os.TempDir() + "/cvd"
 	expectedErr := errors.New("error")
 	s := StageDownloadCVD{
 		CVDBin:     cvdBin,
@@ -717,8 +715,7 @@ func TestBuildGetSignedURL(t *testing.T) {
 // Each subsequent call creates a unique directory; if the directory creation
 // fails, `tempDir` terminates the test by calling Fatal.
 func tempDir(t *testing.T) string {
-	name := fmt.Sprintf("%s/cuttlefishTestDir-%s", os.TempDir(), uuid.New().String())
-	err := os.Mkdir(name, 0700)
+	name, err := ioutil.TempDir("", "cuttlefishTestDir")
 	if err != nil {
 		t.Fatal(err)
 	}
