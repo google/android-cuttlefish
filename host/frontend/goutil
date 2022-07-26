@@ -11,4 +11,10 @@ mkdir -p /tmp/go
 export GOPATH=/tmp/go
 export GOCACHE=/tmp/go/go-build
 
-go "$@"
+GOBIN=go
+if ! command -v go &> /dev/null
+then
+  GOBIN=/usr/lib/go-1.13/bin/go
+fi
+
+$GOBIN "$@"
