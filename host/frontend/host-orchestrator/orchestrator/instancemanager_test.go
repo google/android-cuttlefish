@@ -291,8 +291,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 }
 
 func TestStageDownloadCVDDownloadFails(t *testing.T) {
-	dir := t.TempDir()
-	cvdBin := dir + "/cvd"
+	cvdBin := os.TempDir() + "/cvd"
 	expectedErr := errors.New("error")
 	s := StageDownloadCVD{
 		CVDBin:     cvdBin,
@@ -308,7 +307,8 @@ func TestStageDownloadCVDDownloadFails(t *testing.T) {
 }
 
 func TestStageDownloadCVD(t *testing.T) {
-	dir := t.TempDir()
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	cvdBin := dir + "/cvd"
 	cvdBinContent := "foo"
 	ad := &FakeArtifactDownloader{
@@ -334,7 +334,9 @@ func TestStageDownloadCVD(t *testing.T) {
 }
 
 func TestStageCreateDirIfNotExist(t *testing.T) {
-	dir := t.TempDir() + "/foo"
+	tmpDir := tempDir(t)
+	defer removeDir(t, tmpDir)
+	dir := tmpDir + "/foo"
 	s := StageCreateDirIfNotExist{Dir: dir}
 
 	err := s.Run()
@@ -351,7 +353,9 @@ func TestStageCreateDirIfNotExist(t *testing.T) {
 }
 
 func TestStageCreateDirIfNotExistAndDirectoryExists(t *testing.T) {
-	dir := t.TempDir() + "/foo"
+	tmpDir := tempDir(t)
+	defer removeDir(t, tmpDir)
+	dir := tmpDir + "/foo"
 	s := StageCreateDirIfNotExist{Dir: dir}
 
 	err := s.Run()
@@ -393,7 +397,8 @@ func (d *FakeArtifactDownloader) Download(dst io.Writer, _ AndroidBuild, name st
 
 func TestCVDDownloaderDownloadBinaryAlreadyExist(t *testing.T) {
 	const fetchCVDContent = "bar"
-	dir := t.TempDir()
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	filename := dir + "/cvd"
 	f, err := os.Create(filename)
 	if err != nil {
@@ -423,7 +428,8 @@ func TestCVDDownloaderDownloadBinaryAlreadyExist(t *testing.T) {
 }
 
 func TestCVDDownloaderDownload(t *testing.T) {
-	dir := t.TempDir()
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	filename := dir + "/cvd"
 	ad := &FakeArtifactDownloader{t, "foo"}
 	cd := NewCVDDownloader(ad)
@@ -439,7 +445,8 @@ func TestCVDDownloaderDownload(t *testing.T) {
 }
 
 func TestCVDDownloaderDownload0750FileAccessIsSet(t *testing.T) {
-	dir := t.TempDir()
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	filename := dir + "/cvd"
 	ad := &FakeArtifactDownloader{t, "foo"}
 	cd := NewCVDDownloader(ad)
@@ -454,7 +461,8 @@ func TestCVDDownloaderDownload0750FileAccessIsSet(t *testing.T) {
 }
 
 func TestCVDDownloaderDownloadSettingFileAccessFails(t *testing.T) {
-	dir := t.TempDir()
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	filename := dir + "/cvd"
 	ad := &FakeArtifactDownloader{t, "foo"}
 	cd := NewCVDDownloader(ad)
@@ -479,7 +487,8 @@ func (d *AlwaysFailsArtifactDownloader) Download(_ io.Writer, _ AndroidBuild, _ 
 }
 
 func TestCVDDownloaderDownloadingFails(t *testing.T) {
-	dir := t.TempDir()
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	filename := dir + "/cvd"
 	expectedErr := errors.New("error")
 	cd := NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr})
@@ -700,6 +709,25 @@ func TestBuildGetSignedURL(t *testing.T) {
 			t.Errorf("expected <<%q>>, got %q", expected, actual)
 		}
 	})
+}
+
+// Creates a temporary directory for the test to use returning its path.
+// Each subsequent call creates a unique directory; if the directory creation
+// fails, `tempDir` terminates the test by calling Fatal.
+func tempDir(t *testing.T) string {
+	name, err := ioutil.TempDir("", "cuttlefishTestDir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return name
+}
+
+// Removes the directory at the passed path.
+// If deletion fails, `removeDir` terminates the test by calling Fatal.
+func removeDir(t *testing.T, name string) {
+	if err := os.RemoveAll(name); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // Creates a new exec.Cmd, which will call the `TestMockGoTestCmdHelperFunction`
