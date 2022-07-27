@@ -12,9 +12,7 @@ jobs:
     - name: setup apt
       run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat
-    - name: install golang-1.13
-      run : add-apt-repository ppa:longsleep/golang-backports && apt upgrade -y && apt install -y golang-1.13
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang-1.13
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
