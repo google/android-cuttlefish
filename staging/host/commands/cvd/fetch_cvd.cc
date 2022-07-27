@@ -432,10 +432,9 @@ Result<void> FetchCvdMain(int argc, char** argv) {
           build_api, FLAGS_system_build, DEFAULT_BUILD_TARGET, retry_period));
       bool system_in_img_zip = true;
       if (FLAGS_download_img_zip) {
-        std::vector<std::string> image_files =
-            CF_EXPECT(DownloadImages(build_api, system_build, target_dir,
-                                     {"system.img", "product.img"}));
-        if (image_files.empty()) {
+        auto image_files = DownloadImages(build_api, system_build, target_dir,
+                                          {"system.img", "product.img"});
+        if (!image_files.ok() || image_files->empty()) {
           LOG(INFO) << "Could not find system image for " << system_build
                     << "in the img zip. Assuming a super image build, which will "
                     << "get the system image from the target zip.";
@@ -443,7 +442,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         } else {
           LOG(INFO) << "Adding img-zip files for system build";
           CF_EXPECT(AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build,
-                                     image_files, &config, target_dir, true));
+                                     *image_files, &config, target_dir, true));
         }
       }
       std::string system_target_dir = target_dir + "/system";
