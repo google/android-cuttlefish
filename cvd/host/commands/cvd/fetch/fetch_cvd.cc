@@ -70,6 +70,7 @@ DEFINE_string(directory, CurrentDirectory(), "Target directory to fetch "
 DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
 DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
                                        "in seconds. Set to 0 to not wait.");
+DEFINE_bool(keep_downloaded_archives, false, "Keep downloaded zip/tar.");
 
 namespace cuttlefish {
 namespace {
@@ -124,7 +125,7 @@ Result<std::vector<std::string>> DownloadImages(
 
   std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
   CF_EXPECT(!files.empty(), "Could not extract " << local_path);
-  if (unlink(local_path.c_str()) != 0) {
+  if (!FLAGS_keep_downloaded_archives && unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
     files.push_back(local_path);
   }
@@ -170,7 +171,7 @@ Result<std::vector<std::string>> DownloadHostPackage(
   for (auto& file : files) {
     file = target_directory + "/" + file;
   }
-  if (unlink(local_path.c_str()) != 0) {
+  if (!FLAGS_keep_downloaded_archives && unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
     files.push_back(local_path);
   }
@@ -245,7 +246,7 @@ Result<std::vector<std::string>> DownloadBoot(
     LOG(INFO) << "No vendor_boot.img in the img zip.";
   }
 
-  if (unlink(img_zip.c_str()) != 0) {
+  if (!FLAGS_keep_downloaded_archives && unlink(img_zip.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << img_zip;
   }
   return files;
