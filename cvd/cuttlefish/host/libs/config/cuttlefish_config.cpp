@@ -321,6 +321,21 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
+static constexpr char kGem5DebugFile[] = "gem5_debug_file";
+std::string CuttlefishConfig::gem5_debug_file() const {
+  return (*dictionary_)[kGem5DebugFile].asString();
+}
+void CuttlefishConfig::set_gem5_debug_file(const std::string& gem5_debug_file) {
+  (*dictionary_)[kGem5DebugFile] = gem5_debug_file;
+}
+static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
+std::string CuttlefishConfig::gem5_debug_flags() const {
+  return (*dictionary_)[kGem5DebugFlags].asString();
+}
+void CuttlefishConfig::set_gem5_debug_flags(const std::string& gem5_debug_flags) {
+  (*dictionary_)[kGem5DebugFlags] = gem5_debug_flags;
+}
+
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
 void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
