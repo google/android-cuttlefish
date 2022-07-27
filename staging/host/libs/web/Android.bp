@@ -23,6 +23,7 @@ cc_library {
         "build_api.cc",
         "credential_source.cc",
         "http_client.cc",
+        "http_client/sso_client.cc",
         "install_zip.cc",
     ],
     static_libs: [
@@ -57,5 +58,26 @@ cc_library {
             ],
         },
     },
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "libcuttlefish_web_test",
+    srcs: [
+        "http_client/unittest/main_test.cc",
+        "http_client/unittest/sso_client_test.cc",
+    ],
+    static_libs: [
+       "libbase",
+       "libcuttlefish_fs",
+       "libcuttlefish_utils",
+       "libcurl",
+       "libcrypto",
+       "liblog",
+       "libssl",
+       "libz",
+       "libjsoncpp",
+       "libcuttlefish_web",
+    ],
     defaults: ["cuttlefish_host"],
 }
