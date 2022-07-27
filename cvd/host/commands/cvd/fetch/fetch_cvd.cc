@@ -21,9 +21,11 @@
 #include <curl/curl.h>
 
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <thread>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -68,6 +70,7 @@ DEFINE_string(directory, CurrentDirectory(), "Target directory to fetch "
 DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
 DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
                                        "in seconds. Set to 0 to not wait.");
+DEFINE_bool(keep_downloaded_archives, false, "Keep downloaded zip/tar.");
 
 namespace cuttlefish {
 namespace {
@@ -122,7 +125,7 @@ Result<std::vector<std::string>> DownloadImages(
 
   std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
   CF_EXPECT(!files.empty(), "Could not extract " << local_path);
-  if (unlink(local_path.c_str()) != 0) {
+  if (!FLAGS_keep_downloaded_archives && unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
     files.push_back(local_path);
   }
@@ -168,7 +171,7 @@ Result<std::vector<std::string>> DownloadHostPackage(
   for (auto& file : files) {
     file = target_directory + "/" + file;
   }
-  if (unlink(local_path.c_str()) != 0) {
+  if (!FLAGS_keep_downloaded_archives && unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
     files.push_back(local_path);
   }
@@ -243,7 +246,7 @@ Result<std::vector<std::string>> DownloadBoot(
     LOG(INFO) << "No vendor_boot.img in the img zip.";
   }
 
-  if (unlink(img_zip.c_str()) != 0) {
+  if (!FLAGS_keep_downloaded_archives && unlink(img_zip.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << img_zip;
   }
   return files;
@@ -310,6 +313,18 @@ std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
       new ServiceAccountOauthCredentialSource(std::move(*result)));
 }
 
+Result<void> ProcessHostPackage(BuildApi& build_api, const Build& default_build,
+                                const std::string& target_dir,
+                                FetcherConfig* config) {
+  std::vector<std::string> host_package_files =
+      CF_EXPECT(DownloadHostPackage(build_api, default_build, target_dir));
+  CF_EXPECT(!host_package_files.empty(),
+            "Could not download host package for " << default_build);
+  CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
+                             host_package_files, config, target_dir));
+  return {};
+}
+
 } // namespace
 
 Result<void> FetchCvdMain(int argc, char** argv) {
@@ -365,12 +380,9 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     auto default_build = CF_EXPECT(ArgumentToBuild(
         build_api, FLAGS_default_build, DEFAULT_BUILD_TARGET, retry_period));
 
-    std::vector<std::string> host_package_files =
-        CF_EXPECT(DownloadHostPackage(build_api, default_build, target_dir));
-    CF_EXPECT(!host_package_files.empty(),
-              "Could not download host package for " << default_build);
-    CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
-                               host_package_files, &config, target_dir));
+    auto process_pkg_ret =
+        std::async(std::launch::async, ProcessHostPackage, std::ref(build_api),
+                   std::cref(default_build), std::cref(target_dir), &config);
 
     if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
       auto ota_build = default_build;
@@ -548,6 +560,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       CF_EXPECT(AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build,
                                  {local_path}, &config, target_dir, true));
     }
+
+    // Wait for ProcessHostPackage to return.
+    CF_EXPECT(process_pkg_ret.get(),
+              "Could not download host package for " << default_build);
   }
   curl_global_cleanup();
 
