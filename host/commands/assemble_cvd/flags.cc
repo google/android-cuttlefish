@@ -256,6 +256,9 @@ DEFINE_string(gem5_binary_dir, HostBinaryPath("gem5"),
               "Path to the gem5 build tree root");
 DEFINE_string(gem5_checkpoint_dir, "",
               "Path to the gem5 restore checkpoint directory");
+DEFINE_string(gem5_debug_file, "", "The file name where gem5 saves debug prints and logs");
+DEFINE_string(gem5_debug_flags, "", "The debug flags gem5 uses to print debugs to file");
+
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
             "emulation gRPC server on the host");
@@ -658,6 +661,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary_dir(FLAGS_qemu_binary_dir);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
+  tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
+  tmp_config_obj.set_gem5_debug_file(FLAGS_gem5_debug_file);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
