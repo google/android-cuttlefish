@@ -264,6 +264,11 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path()
+    const {
+  return AbsolutePath(PerInstancePath("os_composite.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
   return AbsolutePath(PerInstancePath("vbmeta.img"));
 }
@@ -490,14 +495,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_start_rootcanal(
 }
 bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
   return (*Dictionary())[kStartRootcanal].asBool();
-}
-
-static constexpr char kStartNetsim[] = "start_netsim";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_netsim(bool start) {
-  (*Dictionary())[kStartNetsim] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_netsim() const {
-  return (*Dictionary())[kStartNetsim].asBool();
 }
 
 static constexpr char kStartAp[] = "start_ap";
