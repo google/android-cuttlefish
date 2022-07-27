@@ -46,7 +46,8 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.automotive.evs@1.1",
     "android.hardware.automotive.sv@1.0",
     "android.hardware.automotive.vehicle@2.0",
-    "android.hardware.biometrics.fingerprint@2.3",
+    "android.hardware.biometrics.fingerprint@2.3", // converted to AIDL, see b/152416783
+    "android.hardware.biometrics.face@1.0", // converted to AIDL, see b/168730443
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.bluetooth.audio@2.1", // converted to AIDL, see b/203490261
     "android.hardware.boot@1.2", // converted to AIDL, see b/227536004
