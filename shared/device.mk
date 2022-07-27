@@ -473,18 +473,6 @@ PRODUCT_COPY_FILES += $(LOCAL_AUDIO_PRODUCT_COPY_FILES)
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS)
 
 #
-# BiometricsFace HAL (HIDL)
-#
-PRODUCT_PACKAGES += \
-    android.hardware.biometrics.face@1.0-service.example
-
-#
-# BiometricsFingerprint HAL (HIDL)
-#
-PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint@2.2-service.example
-
-#
 # BiometricsFace HAL (AIDL)
 #
 PRODUCT_PACKAGES += \
