@@ -71,6 +71,11 @@ class CurlClient : public HttpClient {
   }
   ~CurlClient() { curl_easy_cleanup(curl_); }
 
+  Result<HttpResponse<std::string>> GetToString(
+      const std::string&, const std::vector<std::string>&) override {
+    return CF_ERR("Not implemented");
+  }
+
   HttpResponse<std::string> PostToString(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
@@ -307,6 +312,11 @@ class ServerErrorRetryClient : public HttpClient {
         retry_attempts_(retry_attempts),
         retry_delay_(retry_delay) {}
 
+  Result<HttpResponse<std::string>> GetToString(
+      const std::string&, const std::vector<std::string>&) override {
+    return CF_ERR("Not implemented");
+  }
+
   HttpResponse<std::string> PostToString(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers) override {
@@ -402,4 +412,5 @@ class ServerErrorRetryClient : public HttpClient {
 }
 
 HttpClient::~HttpClient() = default;
+
 }  // namespace cuttlefish
