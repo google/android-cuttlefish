@@ -176,6 +176,16 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
   GenerateGem5File(config, instance);
 
   Command gem5_cmd(gem5_binary, stop);
+
+  // Add debug-flags and debug-file before the script (i.e. starter_fs.py).
+  // We check the flags are not empty first since they are optional
+  if(!config.gem5_debug_flags().empty()) {
+    gem5_cmd.AddParameter("--debug-flags=", config.gem5_debug_flags());
+    if(!config.gem5_debug_file().empty()) {
+      gem5_cmd.AddParameter("--debug-file=", config.gem5_debug_file());
+    }
+  }
+
   gem5_cmd.AddParameter(instance.gem5_binary_dir(),
                         "/configs/example/arm/starter_fs.py");
 
