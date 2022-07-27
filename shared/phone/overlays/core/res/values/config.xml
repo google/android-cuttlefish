@@ -56,15 +56,6 @@
   <string name="config_wlan_data_service_package" translatable="false">com.android.ims</string>
   <string name="config_wlan_network_service_package" translatable="false">com.android.ims</string>
 
-  <!-- List of biometric sensors on the device, in decreasing strength. Consumed by AuthService
-  when registering authenticators with BiometricService. Format must be ID:Modality:Strength,
-  where: IDs are unique per device, Modality as defined in BiometricAuthenticator.java,
-  and Strength as defined in Authenticators.java -->
-  <string-array name="config_biometric_sensors" translatable="false" >
-    <item>2:2:255</item> <!-- ID2:Fingerprint(HIDL):Weak -->
-    <item>3:8:255</item> <!-- ID3:Face(HIDL):Weak -->
-  </string-array>
-
   <!-- Enable Night display, which requires HWC 2.0. -->
   <bool name="config_nightDisplayAvailable">true</bool>
   <!-- Let ColorFade use a color layer to avoid deadlocking in WM CTS. See b/233386717. -->
