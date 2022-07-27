@@ -4,6 +4,8 @@
 *.log
 *.pyc
 
+!/.github/
+
 /debian/cuttlefish-*/
 /debian/*.substvars
 /debian/files
