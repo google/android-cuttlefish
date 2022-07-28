@@ -8,11 +8,16 @@ jobs:
     steps:
     - name: go version first
       run: go version
+    - name: remove golang
+      run: sudo apt-get remove golang
+    - name: go version second 
+      run: go version
+
       # - name: setup apt
       #   run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
-      run: sudo apt install -y config-package-dev debhelper-compat golang-1.13
-    - name: go version second
+      run: sudo apt install -y devscripts config-package-dev debhelper-compat golang-1.13
+    - name: go version third 
       run: go version
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
