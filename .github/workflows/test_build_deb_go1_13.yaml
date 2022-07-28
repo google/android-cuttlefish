@@ -4,18 +4,18 @@ on: [pull_request, push]
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       # - name: setup apt
       #   run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
-      run: sudo apt install -y git devscripts config-package-dev debhelper-compat golang
+      run: sudo apt install -y git devscripts config-package-dev debhelper-compat golang-1.13
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         path: "android-cuttlefish"
-    - name: go version
-      run: go version
+          # - name: go version
+          #   run: go version
     - name: build debian package
       run: cd android-cuttlefish && debuild -i -us -uc -b
     - name: install base debian package
