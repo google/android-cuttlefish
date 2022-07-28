@@ -4,17 +4,12 @@ on: [pull_request, push]
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04
     steps:
-    - name: go version first
-      run: go version
-    - name: remove golang
-      run: sudo apt-get remove golang
-    - name: go version second 
-      run: go version
-
-      # - name: setup apt
-      #   run: apt update -y && apt upgrade -y
+    - name: setup apt
+      run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
       run: sudo apt install -y devscripts config-package-dev debhelper-compat golang-1.13
     - name: go version third 
