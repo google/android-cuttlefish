@@ -16,7 +16,7 @@
 #pragma once
 
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/web/http_client/http_client.h"
+#include "host/libs/web/http_client.h"
 
 namespace cuttlefish {
 namespace http_client {
@@ -37,35 +37,35 @@ class SsoClient : public HttpClient {
       const std::string& url,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<std::string>> PostToString(
+  HttpResponse<std::string> PostToString(
       const std::string&, const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<std::string>> DeleteToString(
-      const std::string& url,
-      const std::vector<std::string>& headers = {}) override;
-
-  Result<HttpResponse<Json::Value>> PostToJson(
+  HttpResponse<Json::Value> PostToJson(
       const std::string&, const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<Json::Value>> PostToJson(
+  HttpResponse<Json::Value> PostToJson(
       const std::string&, const Json::Value&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<std::string>> DownloadToFile(
+  HttpResponse<std::string> DownloadToFile(
       const std::string&, const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<Json::Value>> DownloadToJson(
+  HttpResponse<std::string> DownloadToString(
       const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<void>> DownloadToCallback(
+  HttpResponse<Json::Value> DownloadToJson(
+      const std::string&,
+      const std::vector<std::string>& headers = {}) override;
+
+  HttpResponse<bool> DownloadToCallback(
       DataCallback, const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<HttpResponse<Json::Value>> DeleteToJson(
+  HttpResponse<Json::Value> DeleteToJson(
       const std::string&,
       const std::vector<std::string>& headers = {}) override;
 

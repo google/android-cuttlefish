@@ -21,6 +21,8 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 template <typename T>
@@ -35,6 +37,7 @@ struct HttpResponse {
   long http_code;
 };
 
+// TODO(b/239963496): Use Result<T> return type in relevant methods.
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
@@ -42,8 +45,13 @@ class HttpClient {
   static std::unique_ptr<HttpClient> CurlClient();
   static std::unique_ptr<HttpClient> ServerErrorRetryClient(
       HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
+
   virtual ~HttpClient();
 
+  // NOTE: `GetToString` and `DownloadToString` should be merged into a single
+  // method once b/239963496 is addressed.
+  virtual Result<HttpResponse<std::string>> GetToString(
+      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
   virtual HttpResponse<std::string> PostToString(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers = {}) = 0;
