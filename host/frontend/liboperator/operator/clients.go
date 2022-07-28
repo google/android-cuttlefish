@@ -28,23 +28,6 @@ type Client interface {
 	OnDeviceDisconnected()
 }
 
-// Implements the client interface using a websocket connection
-type WsClient struct {
-	ws *JSONWs
-}
-
-func NewWsClient(ws *JSONWs) *WsClient {
-	return &WsClient{ws: ws}
-}
-
-// From IClient
-func (c *WsClient) Send(msg interface{}) error {
-	return c.ws.Send(msg)
-}
-func (c *WsClient) OnDeviceDisconnected() {
-	// Do nothing
-}
-
 // Implements the client interface using a polled connection
 type PolledClient struct {
 	// The polled connection id
@@ -101,8 +84,7 @@ func (c *PolledClient) ClientId() int {
 	return c.clientId
 }
 
-// Basically a map of polled clients by id. This is necessary because polled
-// connections are not handled in an exclusive thread like those based on websockets.
+// Basically a map of polled clients by id.
 type PolledSet struct {
 	connections map[string]*PolledClient
 	mapMtx      sync.Mutex

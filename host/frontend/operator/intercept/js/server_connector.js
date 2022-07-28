@@ -43,15 +43,6 @@ export function deviceId() {
 
 // Creates a connector capable of communicating with the signaling server.
 export async function createConnector() {
-  try {
-    let ws = await connectWs();
-    console.debug(`Connected to ${ws.url}`);
-    return new WebsocketConnector(ws);
-  } catch (e) {
-    console.error('WebSocket error:', e);
-  }
-  console.warn('Failed to connect websocket, trying polling instead');
-
   return new PollingConnector();
 }
 
@@ -102,24 +93,6 @@ function httpUrl(path) {
   return location.protocol + '//' + location.host + '/' + path;
 }
 
-function websocketUrl(path) {
-  return ((location.protocol == 'http:') ? 'ws://' : 'wss://') + location.host +
-      '/' + path;
-}
-
-async function connectWs() {
-  return new Promise((resolve, reject) => {
-    let url = websocketUrl('connect_client');
-    let ws = new WebSocket(url);
-    ws.onopen = () => {
-      resolve(ws);
-    };
-    ws.onerror = evt => {
-      reject(evt);
-    };
-  });
-}
-
 async function ajaxPostJson(url, data) {
   const response = await fetch(url, {
     method: 'POST',
@@ -131,80 +104,7 @@ async function ajaxPostJson(url, data) {
   return response.json();
 }
 
-// Implementation of the connector interface using websockets
-class WebsocketConnector extends Connector {
-  #websocket;
-  #futures = {};
-  #onDeviceMsgCb = msg =>
-      console.error('Received device message without registered listener');
-
-  onDeviceMsg(cb) {
-    this.#onDeviceMsgCb = cb;
-  }
-
-  constructor(ws) {
-    super();
-    ws.onmessage = e => {
-      let data = JSON.parse(e.data);
-      this.#onWebsocketMessage(data);
-    };
-    this.#websocket = ws;
-  }
-
-  async requestDevice(deviceId) {
-    return new Promise((resolve, reject) => {
-      this.#futures.onDeviceAvailable = (device) => resolve(device);
-      this.#futures.onConnectionFailed = (error) => reject(error);
-      this.#wsSendJson({
-        message_type: 'connect',
-        device_id: deviceId,
-      });
-    });
-  }
-
-  async sendToDevice(msg) {
-    return this.#wsSendJson({message_type: 'forward', payload: msg});
-  }
-
-  #onWebsocketMessage(message) {
-    const type = message.message_type;
-    if (message.error) {
-      console.error(message.error);
-      this.#futures.onConnectionFailed(message.error);
-      return;
-    }
-    switch (type) {
-      case 'config':
-        this.#futures.infraConfig = message;
-        break;
-      case 'device_info':
-        if (this.#futures.onDeviceAvailable) {
-          this.#futures.onDeviceAvailable({
-            deviceInfo: message.device_info,
-            infraConfig: this.#futures.infraConfig,
-          });
-          delete this.#futures.onDeviceAvailable;
-        } else {
-          console.error('Received unsolicited device info');
-        }
-        break;
-      case 'device_msg':
-        this.#onDeviceMsgCb(message.payload);
-        break;
-      default:
-        console.error('Unrecognized message type from server: ', type);
-        this.#futures.onConnectionFailed(
-            'Unrecognized message type from server: ' + type);
-        console.error(message);
-    }
-  }
-
-  async #wsSendJson(obj) {
-    return this.#websocket.send(JSON.stringify(obj));
-  }
-}
-
-// Implementation of the Connector interface using HTTP long polling
+// Implementation of the Connector interface using HTTP polling
 class PollingConnector extends Connector {
   #configUrl = httpUrl('infra_config');
   #connectUrl = httpUrl('polled_connections');

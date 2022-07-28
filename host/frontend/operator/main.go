@@ -101,7 +101,7 @@ func main() {
 		},
 	}
 
-	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept, true /*acceptsWS*/)
+	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
 	r.PathPrefix("/").Handler(fs)
 	http.Handle("/", r)

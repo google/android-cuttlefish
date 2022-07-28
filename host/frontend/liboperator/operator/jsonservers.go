@@ -18,49 +18,11 @@ import (
 	"encoding/json"
 	"log"
 	"net"
-	"net/http"
 	"sync"
 	"syscall"
-
-	"github.com/gorilla/websocket"
 )
 
-// A websocket connection that can send and receive JSON objects.
-// Only one thread should call Recv() at a time, Send() and Close() are thread safe
-type JSONWs struct {
-	conn     *websocket.Conn
-	writeMtx sync.Mutex
-}
-
-var upgrader = websocket.Upgrader{} // default options
-
-func NewJSONWs(w http.ResponseWriter, r *http.Request) *JSONWs {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	return &JSONWs{conn: conn}
-}
-
-func (ws *JSONWs) Send(val interface{}) error {
-	ws.writeMtx.Lock()
-	defer ws.writeMtx.Unlock()
-	return ws.conn.WriteJSON(val)
-}
-
-func (ws *JSONWs) Recv(val interface{}) error {
-	return ws.conn.ReadJSON(val)
-}
-
-func (ws *JSONWs) Close() {
-	ws.writeMtx.Lock()
-	defer ws.writeMtx.Unlock()
-	ws.conn.WriteMessage(websocket.CloseMessage, []byte{})
-	ws.conn.Close()
-}
-
-// A Unix socket connection (as returned by Accept) that can send recieve JSON objects.
+// A Unix socket connection (as returned by Accept) that can send and receive JSON objects.
 // Only one thread should call Recv() at a time, Send and Close are thread safe
 type JSONUnix struct {
 	conn     *net.UnixConn
