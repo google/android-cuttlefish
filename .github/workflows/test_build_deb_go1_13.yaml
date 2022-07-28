@@ -11,7 +11,7 @@ jobs:
     - name: setup apt
       run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
-      run: sudo apt install -y devscripts config-package-dev debhelper-compat golang-1.13
+      run: apt install -y devscripts config-package-dev debhelper-compat golang-1.13
     - name: go version third 
       run: go version
     - name: checkout repository
@@ -21,6 +21,6 @@ jobs:
     - name: build debian package
       run: cd android-cuttlefish && debuild -i -us -uc -b
     - name: install base debian package
-      run: sudo dpkg -i cuttlefish-base_*_*64.deb || sudo apt-get install -f -y
+      run: dpkg -i cuttlefish-base_*_*64.deb || apt-get install -f -y
     - name: install common debian package
-      run: sudo dpkg -i cuttlefish-common_*_*64.deb || sudo apt-get install -f -y
+      run: dpkg -i cuttlefish-common_*_*64.deb || apt-get install -f -y
