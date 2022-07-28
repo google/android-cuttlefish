@@ -10,12 +10,12 @@ jobs:
       #   run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
       run: sudo apt install -y git devscripts config-package-dev debhelper-compat golang-1.13
+    - name: go version
+      run: go version
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         path: "android-cuttlefish"
-          # - name: go version
-          #   run: go version
     - name: build debian package
       run: cd android-cuttlefish && debuild -i -us -uc -b
     - name: install base debian package
