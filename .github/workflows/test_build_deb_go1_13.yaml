@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     steps:
     - name: go version first
       run: go version
