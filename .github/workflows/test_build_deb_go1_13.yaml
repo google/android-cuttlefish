@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:22.04
+      image: ubuntu:focal-20220531 # Ubuntu 20.04
     steps:
     - name: setup apt
       run: apt update -y && apt upgrade -y
