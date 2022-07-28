@@ -134,7 +134,7 @@ func main() {
 		err := deviceServerLoop()
 		log.Fatal("Error with device endpoint: ", err)
 	}()
-	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept, true /*acceptsWS*/)
+	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	orchestrator.SetupInstanceManagement(r, im, om)
 	// The host orchestrator currently has no use for this, since clients won't connect
 	// to it directly, however they probably will once the multi-device feature matures.

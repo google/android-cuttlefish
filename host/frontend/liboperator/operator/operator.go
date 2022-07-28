@@ -76,8 +76,7 @@ func CreateHttpHandlers(
 	pool *DevicePool,
 	polledSet *PolledSet,
 	config apiv1.InfraConfig,
-	maybeIntercept func(string) *string,
-	acceptsWS bool) *mux.Router {
+	maybeIntercept func(string) *string) *mux.Router {
 	router := mux.NewRouter()
 	// The path parameter needs to include the leading '/'
 	router.HandleFunc("/devices/{deviceId}/files{path:/.+}", func(w http.ResponseWriter, r *http.Request) {
@@ -98,11 +97,6 @@ func CreateHttpHandlers(
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
 		ReplyJSONOK(w, config)
 	}).Methods("GET")
-	if acceptsWS {
-		router.HandleFunc("/connect_client", func(w http.ResponseWriter, r *http.Request) {
-			clientWs(w, r, pool, config)
-		})
-	}
 	return router
 }
 
@@ -194,77 +188,6 @@ func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybe
 		r.URL.Path = path
 		dev.Proxy.ServeHTTP(w, r)
 	}
-}
-
-// Client websocket endpoint
-
-func clientWs(w http.ResponseWriter, r *http.Request, pool *DevicePool, config apiv1.InfraConfig) {
-	log.Println(r.URL)
-	ws := NewJSONWs(w, r)
-	if ws == nil {
-		return
-	}
-	// Serve the websocket in its own thread
-	go func() {
-		defer ws.Close()
-		var msg apiv1.ConnectMsg
-		if err := ws.Recv(&msg); err != nil {
-			log.Println("Failed to receive from client: ", err)
-			return
-		}
-		if msg.Type != "connect" {
-			ReplyError(ws, "First client message must be 'connect'")
-			return
-		}
-		deviceId := msg.DeviceId
-		if deviceId == "" {
-			ReplyError(ws, "Missing or invalid device_id")
-			return
-		}
-		device := pool.GetDevice(deviceId)
-		if device == nil {
-			ReplyError(ws, fmt.Sprintln("Unknown device id: ", deviceId))
-			return
-		}
-		client := NewWsClient(ws)
-		id := device.Register(client)
-		defer device.Unregister(id)
-		if err := client.Send(config); err != nil {
-			log.Println("Failed to send config to client: ", err)
-			return
-		}
-		infoMsg := make(map[string]interface{})
-		infoMsg["message_type"] = "device_info"
-		infoMsg["device_info"] = device.info
-		if err := client.Send(infoMsg); err != nil {
-			log.Println("Failed to send device info to client: ", err)
-			return
-		}
-		for {
-			var msg apiv1.ForwardMsg
-			if err := ws.Recv(&msg); err != nil {
-				log.Println("Client websocket closed")
-				return
-			}
-			if msg.Type != "forward" {
-				ReplyError(ws, fmt.Sprintln("Unrecognized message type: ", msg.Type))
-				return
-			}
-			payload := msg.Payload
-			if payload == nil {
-				ReplyError(ws, "Client forward message missing payload")
-				return
-			}
-			cMsg := apiv1.ClientMsg{
-				Type:     "client_msg",
-				ClientId: id,
-				Payload:  payload,
-			}
-			if err := device.Send(cMsg); err != nil {
-				ReplyError(ws, "Device disconnected")
-			}
-		}
-	}()
 }
 
 // Http long polling client endpoints
