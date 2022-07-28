@@ -20,5 +20,5 @@ jobs:
       run: cd android-cuttlefish && debuild -i -us -uc -b
     - name: install base debian package
       run: dpkg -i cuttlefish-base_*_*64.deb || apt-get install -f -y
-    - name: install common debian package
-      run: dpkg -i cuttlefish-common_*_*64.deb || apt-get install -f -y
+    - name: install cuttlefish-orchestration debian package
+      run: dpkg -i cuttlefish-orchestration_*_*64.deb || apt-get install -f -y
