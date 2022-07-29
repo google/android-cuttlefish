@@ -162,6 +162,7 @@ fruit::Component<> runCvdComponent(
       .install(MetricsServiceComponent)
       .install(OpenWrtComponent)
       .install(RootCanalComponent)
+      .install(NetsimServerComponent)
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
       .install(VehicleHalServerComponent)
