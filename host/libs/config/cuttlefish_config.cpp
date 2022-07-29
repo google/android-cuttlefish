@@ -596,6 +596,29 @@ bool CuttlefishConfig::enable_host_bluetooth() const {
   return (*dictionary_)[kenableHostBluetooth].asBool();
 }
 
+static constexpr char kenableHostBluetoothConnector[] = "enable_host_bluetooth_connector";
+void CuttlefishConfig::set_enable_host_bluetooth_connector(bool enable_host_bluetooth) {
+  (*dictionary_)[kenableHostBluetoothConnector] = enable_host_bluetooth;
+}
+bool CuttlefishConfig::enable_host_bluetooth_connector() const {
+  return (*dictionary_)[kenableHostBluetoothConnector].asBool();
+}
+
+static constexpr char kNetsimRadios[] = "netsim_radios";
+
+void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
+  if (dictionary_->isMember(kNetsimRadios)) {
+    // OR the radio to current set of radios
+    (*dictionary_)[kNetsimRadios] = (*dictionary_)[kNetsimRadios].asInt() | flag;
+  } else {
+    (*dictionary_)[kNetsimRadios] = flag;
+  }
+}
+
+bool CuttlefishConfig::netsim_radio_enabled(NetsimRadio flag) const {
+  return (*dictionary_)[kNetsimRadios].asInt() & flag;
+}
+
 static constexpr char kEnableMetrics[] = "enable_metrics";
 void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
   (*dictionary_)[kEnableMetrics] = kUnknown;
