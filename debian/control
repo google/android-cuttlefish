@@ -4,7 +4,8 @@ Section: misc
 Priority: optional
 Build-Depends: config-package-dev,
                debhelper-compat (= 12),
-               golang (>= 2:1.13~) | golang-1.13
+               golang (>= 2:1.13~) | golang-1.13,
+               nodejs (>= 16)
 Standards-Version: 4.5.0
 
 Package: cuttlefish-base

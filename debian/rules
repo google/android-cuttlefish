@@ -20,10 +20,12 @@ GOUTIL := host/frontend/goutil
 LIBOPERATOR_SOURCE_DIR := host/frontend/liboperator
 ORCHESTRATOR_SOURCE_DIR := host/frontend/host-orchestrator
 OPERATOR_SOURCE_DIR := host/frontend/operator
+BUILD_WEBUI := ./build-webui.sh
 
 override_dh_auto_build:
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
+	$(BUILD_WEBUI)
 
 override_dh_auto_test:
 	$(GOUTIL) $(LIBOPERATOR_SOURCE_DIR) test ./...
