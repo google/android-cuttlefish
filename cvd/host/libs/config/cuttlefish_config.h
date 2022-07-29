@@ -152,6 +152,12 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
+  void set_gem5_debug_file(const std::string& gem5_debug_file);
+  std::string gem5_debug_file() const;
+
+  void set_gem5_debug_flags(const std::string& gem5_debug_flags);
+  std::string gem5_debug_flags() const;
+
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
@@ -196,6 +202,20 @@ class CuttlefishConfig {
 
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
+
+  // Bluetooth is enabled by bt_connector and rootcanal
+  void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
+  bool enable_host_bluetooth_connector() const;
+
+  // Flags for the set of radios that are connected to netsim
+  enum NetsimRadio {
+    Bluetooth = 0b00000001,
+    Wifi      = 0b00000010,
+    Uwb       = 0b00000100,
+  };
+
+  void netsim_radio_enable(NetsimRadio flag);
+  bool netsim_radio_enabled(NetsimRadio flag) const;
 
   enum Answer {
     kUnknown = 0,
@@ -478,6 +498,9 @@ class CuttlefishConfig {
     // Whether this instance should start a rootcanal instance
     bool start_rootcanal() const;
 
+    // Whether this instance should start a netsim instance
+    bool start_netsim() const;
+
     // Whether this instance should start an ap instance
     bool start_ap() const;
 
@@ -553,6 +576,7 @@ class CuttlefishConfig {
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
     void set_start_rootcanal(bool start);
+    void set_start_netsim(bool start);
     void set_start_ap(bool start);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
