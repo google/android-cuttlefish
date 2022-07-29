@@ -74,6 +74,10 @@ fruit::Component<
 RootCanalComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>>
+NetsimServerComponent();
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific,
                                  KernelLogPipeProvider>>
 SecureEnvComponent();
