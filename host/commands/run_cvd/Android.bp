@@ -37,6 +37,7 @@ cc_binary {
         "launch/tombstone_receiver.cpp",
         "launch/vehicle_hal_server.cpp",
         "launch/wmediumd_server.cpp",
+        "launch/netsim_server.cpp",
         "main.cc",
         "reporting.cpp",
         "process_monitor.cc",
