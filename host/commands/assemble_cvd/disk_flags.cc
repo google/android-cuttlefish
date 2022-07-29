@@ -239,7 +239,8 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   return partitions;
 }
 
-DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config) {
+DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   return DiskBuilder()
       .Partitions(GetOsCompositeDiskConfig())
       .VmManager(config.vm_manager())
@@ -247,7 +248,7 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config) {
       .ConfigPath(config.AssemblyPath("os_composite_disk_config.txt"))
       .HeaderPath(config.AssemblyPath("os_composite_gpt_header.img"))
       .FooterPath(config.AssemblyPath("os_composite_gpt_footer.img"))
-      .CompositeDiskPath(config.os_composite_disk_path())
+      .CompositeDiskPath(instance.os_composite_disk_path())
       .ResumeIfPossible(FLAGS_resume);
 }
 
@@ -980,11 +981,11 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                << "\": " << existing_sizes.disk_size;
   }
 
-  auto os_disk_builder = OsCompositeDiskBuilder(config);
-  auto built_composite =
-      CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
-  if (built_composite) {
-    for (auto instance : config.Instances()) {
+  for (const auto& instance : config.Instances()) {
+    auto os_disk_builder = OsCompositeDiskBuilder(config, instance);
+    auto built_composite =
+        CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
+    if (built_composite) {
       if (FileExists(instance.access_kregistry_path())) {
         CF_EXPECT(CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */,
                                    "none"),
@@ -1000,10 +1001,8 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                   "Failed for\"" << instance.pstore_path() << "\"");
       }
     }
-  }
 
-  if (!FLAGS_protected_vm) {
-    for (auto instance : config.Instances()) {
+    if (!FLAGS_protected_vm) {
       os_disk_builder.OverlayPath(instance.PerInstancePath("overlay.img"));
       CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
       if (instance.start_ap()) {
