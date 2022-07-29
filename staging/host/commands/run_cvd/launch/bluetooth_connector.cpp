@@ -37,7 +37,7 @@ class BluetoothConnector : public CommandSource {
 
   // SetupFeature
   std::string Name() const override { return "BluetoothConnector"; }
-  bool Enabled() const override { return config_.enable_host_bluetooth(); }
+  bool Enabled() const override { return config_.enable_host_bluetooth_connector(); }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
