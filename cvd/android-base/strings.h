@@ -16,9 +16,13 @@
 
 #pragma once
 
+#include <ctype.h>
+
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace android {
@@ -46,8 +50,48 @@ std::vector<std::string> Split(const std::string& s,
 // The empty string is not a valid delimiter list.
 std::vector<std::string> Tokenize(const std::string& s, const std::string& delimiters);
 
-// Trims whitespace off both ends of the given string.
-std::string Trim(const std::string& s);
+namespace internal {
+template <typename>
+constexpr bool always_false_v = false;
+}
+
+template <typename T>
+std::string Trim(T&& t) {
+  std::string_view sv;
+  std::string s;
+  if constexpr (std::is_convertible_v<T, std::string_view>) {
+    sv = std::forward<T>(t);
+  } else if constexpr (std::is_convertible_v<T, std::string>) {
+    // The previous version of this function allowed for types which are implicitly convertible
+    // to std::string but not to std::string_view. For these types we go through std::string first
+    // here in order to retain source compatibility.
+    s = t;
+    sv = s;
+  } else {
+    static_assert(internal::always_false_v<T>,
+                  "Implicit conversion to std::string or std::string_view not possible");
+  }
+
+  // Skip initial whitespace.
+  while (!sv.empty() && isspace(sv.front())) {
+    sv.remove_prefix(1);
+  }
+
+  // Skip terminating whitespace.
+  while (!sv.empty() && isspace(sv.back())) {
+    sv.remove_suffix(1);
+  }
+
+  return std::string(sv);
+}
+
+// We instantiate the common cases in strings.cpp.
+extern template std::string Trim(const char*&);
+extern template std::string Trim(const char*&&);
+extern template std::string Trim(const std::string&);
+extern template std::string Trim(const std::string&&);
+extern template std::string Trim(std::string_view&);
+extern template std::string Trim(std::string_view&&);
 
 // Joins a container of things into a single string, using the given separator.
 template <typename ContainerT, typename SeparatorT>
