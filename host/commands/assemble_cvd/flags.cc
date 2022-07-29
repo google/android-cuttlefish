@@ -876,7 +876,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       } else {
         // Gem5 already uses CoW wrappers around disk images
         virtual_disk_paths.insert(virtual_disk_paths.begin(),
-            tmp_config_obj.os_composite_disk_path());
+            const_instance.os_composite_disk_path());
       }
       if (FLAGS_use_sdcard) {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
