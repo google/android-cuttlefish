@@ -240,7 +240,7 @@ class ServerLoopImpl : public ServerLoop,
       auto overlay_path = instance_.PerInstancePath(overlay_file);
       unlink(overlay_path.c_str());
       if (!CreateQcowOverlay(config_.crosvm_binary(),
-                             config_.os_composite_disk_path(), overlay_path)) {
+                             instance_.os_composite_disk_path(), overlay_path)) {
         LOG(ERROR) << "CreateQcowOverlay failed";
         return false;
       }
