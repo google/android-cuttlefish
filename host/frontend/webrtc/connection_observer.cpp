@@ -36,7 +36,6 @@
 #include "host/frontend/webrtc/adb_handler.h"
 #include "host/frontend/webrtc/bluetooth_handler.h"
 #include "host/frontend/webrtc/lib/camera_controller.h"
-#include "host/frontend/webrtc/lib/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 DECLARE_bool(write_virtio_input);
@@ -235,7 +234,7 @@ class ConnectionObserverImpl
                          buffer->size());
   }
 
-  void OnSwitchEvent(uint16_t code, bool state) override {
+  void OnSwitchEvent(uint16_t code, bool state) {
     auto buffer = GetEventBuffer();
     if (!buffer) {
       LOG(ERROR) << "Failed to allocate event buffer";
@@ -269,64 +268,35 @@ class ConnectionObserverImpl
     kernel_log_subscription_id_ =
         kernel_log_events_handler_->AddSubscriber(control_message_sender);
   }
-  void OnControlMessage(const uint8_t* msg, size_t size) override {
-    Json::Value evt;
-    const char* msg_str = reinterpret_cast<const char*>(msg);
-    Json::CharReaderBuilder builder;
-    std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
-    std::string errorMessage;
-    if (!json_reader->parse(msg_str, msg_str + size, &evt, &errorMessage)) {
-      LOG(ERROR) << "Received invalid JSON object over control channel: " << errorMessage;
-      return;
-    }
 
-    auto result = webrtc_streaming::ValidationResult::ValidateJsonObject(
-        evt, "command",
-        /*required_fields=*/{{"command", Json::ValueType::stringValue}},
-        /*optional_fields=*/
-        {
-            {"button_state", Json::ValueType::stringValue},
-            {"lid_switch_open", Json::ValueType::booleanValue},
-            {"hinge_angle_value", Json::ValueType::intValue},
-        });
-    if (!result.ok()) {
-      LOG(ERROR) << result.error();
-      return;
-    }
-    auto command = evt["command"].asString();
-
-    if (command == "device_state") {
-      if (evt.isMember("lid_switch_open")) {
-        // InputManagerService treats a value of 0 as open and 1 as closed, so
-        // invert the lid_switch_open value that is sent to the input device.
-        OnSwitchEvent(SW_LID, !evt["lid_switch_open"].asBool());
-      }
-      if (evt.isMember("hinge_angle_value")) {
-        // TODO(b/181157794) Propagate hinge angle sensor data using a custom
-        // Sensor HAL.
-      }
-      return;
-    } else if (command.rfind("camera_", 0) == 0 && camera_controller_) {
-      // Handle commands starting with "camera_" by camera controller
-      camera_controller_->HandleMessage(evt);
-      return;
-    }
-
-    auto button_state = evt["button_state"].asString();
-    LOG(VERBOSE) << "Control command: " << command << " (" << button_state
-                 << ")";
-    if (command == "power") {
-      OnKeyboardEvent(KEY_POWER, button_state == "down");
-    } else if (command == "home") {
-      OnKeyboardEvent(KEY_HOMEPAGE, button_state == "down");
-    } else if (command == "menu") {
-      OnKeyboardEvent(KEY_MENU, button_state == "down");
-    } else if (command == "volumedown") {
-      OnKeyboardEvent(KEY_VOLUMEDOWN, button_state == "down");
-    } else if (command == "volumeup") {
-      OnKeyboardEvent(KEY_VOLUMEUP, button_state == "down");
-    } else if (commands_to_custom_action_servers_.find(command) !=
-               commands_to_custom_action_servers_.end()) {
+  void OnLidStateChange(bool lid_open) override {
+    // InputManagerService treats a value of 0 as open and 1 as closed, so
+    // invert the lid_switch_open value that is sent to the input device.
+    OnSwitchEvent(SW_LID, !lid_open);
+  }
+  void OnHingeAngleChange(int /*hinge_angle*/) override {
+    // TODO(b/181157794) Propagate hinge angle sensor data using a custom
+    // Sensor HAL.
+  }
+  void OnPowerButton(bool button_down) override {
+    OnKeyboardEvent(KEY_POWER, button_down);
+  }
+  void OnHomeButton(bool button_down) override {
+    OnKeyboardEvent(KEY_HOMEPAGE, button_down);
+  }
+  void OnMenuButton(bool button_down) override {
+    OnKeyboardEvent(KEY_MENU, button_down);
+  }
+  void OnVolumeDownButton(bool button_down) override {
+    OnKeyboardEvent(KEY_VOLUMEDOWN, button_down);
+  }
+  void OnVolumeUpButton(bool button_down) override {
+    OnKeyboardEvent(KEY_VOLUMEUP, button_down);
+  }
+  void OnCustomActionButton(const std::string &command,
+                            const std::string &button_state) override {
+    if (commands_to_custom_action_servers_.find(command) !=
+        commands_to_custom_action_servers_.end()) {
       // Simple protocol for commands forwarded to action servers:
       //   - Always 128 bytes
       //   - Format:   command:button_state
@@ -353,9 +323,21 @@ class ConnectionObserverImpl
     bluetooth_handler_->handleMessage(msg, size);
   }
 
+  void OnCameraControlMsg(const Json::Value& msg) override {
+    if (camera_controller_) {
+      camera_controller_->HandleMessage(msg);
+    } else {
+      LOG(VERBOSE) << "Camera control message received but no camera "
+                      "controller is available";
+    }
+  }
+
   void OnCameraData(const std::vector<char> &data) override {
     if (camera_controller_) {
       camera_controller_->HandleMessage(data);
+    } else {
+      LOG(VERBOSE)
+          << "Camera data received but no camera controller is available";
     }
   }
 
