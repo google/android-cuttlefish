@@ -20,6 +20,6 @@ jobs:
     - name: build debian package
       run: cd android-cuttlefish && debuild -i -us -uc -b
     - name: install base debian package
-      run: apt-get install -y ../cuttlefish-base_*_*64.deb 
+      run: apt-get install -y cuttlefish-base_*_*64.deb 
     - name: install common debian package
-      run: apt-get install -y ../cuttlefish-common_*_*64.deb
+      run: apt-get install -y cuttlefish-common_*_*64.deb
