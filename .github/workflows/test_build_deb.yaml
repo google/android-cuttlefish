@@ -24,4 +24,4 @@ jobs:
     - name: pwd_2
       run: pwd
     - name: install common debian package
-      run: apt-get install -y '../cuttlefish-common_*_*64.deb'
+      run: apt-get install -y ./cuttlefish-common_*_*64.deb
