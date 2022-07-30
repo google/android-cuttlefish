@@ -25,9 +25,11 @@
 #include <cstring>
 #include <functional>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 

@@ -16,8 +16,6 @@
 
 #include "common/libs/utils/files.h"
 
-#include <android-base/logging.h>
-
 #include <dirent.h>
 #include <fcntl.h>
 #include <ftw.h>
@@ -43,9 +41,11 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/macros.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
