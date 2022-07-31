@@ -275,4 +275,18 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
                                                  << "\nIn client");
 }
 
+Result<std::string> CvdClient::HandleVersion(
+    const std::string& host_tool_directory) {
+  using google::protobuf::TextFormat;
+  std::stringstream result;
+  std::string output;
+  auto server_version = CF_EXPECT(GetServerVersion(host_tool_directory));
+  TextFormat::PrintToString(server_version, &output);
+  result << "Server version:" << std::endl << std::endl << output << std::endl;
+
+  TextFormat::PrintToString(CvdClient::GetClientVersion(), &output);
+  result << "Client version:" << std::endl << std::endl << output << std::endl;
+  return {result.str()};
+}
+
 }  // end of namespace cuttlefish
