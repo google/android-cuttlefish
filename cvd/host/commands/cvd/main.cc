@@ -323,6 +323,11 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   CvdClient client;
 
+  if (android::base::Basename(args[0]) == "fetch_cvd") {
+    CF_EXPECT(FetchCvdMain(argc, argv));
+    return {};
+  }
+
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(args[0]) == "acloud") {
     auto server_running = client.ValidateServerVersion(
@@ -346,10 +351,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
       // Something is wrong with the server, fall back to python acloud
       CallPythonAcloud(args);
     }
-  } else if (android::base::Basename(args[0]) == "fetch_cvd") {
-    CF_EXPECT(FetchCvdMain(argc, argv));
-    return {};
   }
+
   bool clean = false;
   flags.emplace_back(GflagsCompatFlag("clean", clean));
   SharedFD internal_server_fd;
