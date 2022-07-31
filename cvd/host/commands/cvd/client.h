@@ -37,8 +37,7 @@ class CvdClient {
   Result<void> StopCvdServer(bool clear);
   Result<void> HandleCommand(std::vector<std::string> args,
                              std::vector<std::string> env);
-  Result<cvd::Version> GetServerVersion(const std::string& host_tool_directory);
-  static cvd::Version GetClientVersion();
+  Result<std::string> HandleVersion(const std::string& host_tool_directory);
 
  private:
   std::optional<UnixMessageSocket> server_;
@@ -48,5 +47,9 @@ class CvdClient {
                                     std::optional<SharedFD> extra_fd = {});
   Result<void> StartCvdServer(const std::string& host_tool_directory);
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
+  Result<cvd::Version> GetServerVersion(const std::string& host_tool_directory);
+
+  static cvd::Version GetClientVersion();
 };
+
 }  // end of namespace cuttlefish
