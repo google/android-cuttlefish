@@ -35,6 +35,9 @@ class CvdClient {
   Result<void> ValidateServerVersion(const std::string& host_tool_directory,
                                      int num_retries = 1);
   Result<void> StopCvdServer(bool clear);
+  Result<void> HandleAcloud(std::vector<std::string>& args,
+                            const std::vector<std::string>& env,
+                            const std::string& host_tool_directory);
   Result<void> HandleCommand(std::vector<std::string> args,
                              std::vector<std::string> env);
   Result<std::string> HandleVersion(const std::string& host_tool_directory);
