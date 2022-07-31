@@ -75,6 +75,14 @@ cc_defaults {
 }
 
 cc_library_host_static {
+    name: "libcvd_client",
+    srcs: [
+        "client.cpp",
+    ],
+    defaults: ["cvd_lib_defaults"],
+}
+
+cc_library_host_static {
     name: "libfetch_cvd",
     srcs: [
         "fetch_cvd.cc",
@@ -85,6 +93,7 @@ cc_library_host_static {
 cc_defaults {
     name: "cvd_and_fetch_cvd_defaults",
     static_libs: [
+        "libcvd_client",
         "libfetch_cvd",
     ],
     defaults: ["cvd_lib_defaults"],
