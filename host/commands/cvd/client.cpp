@@ -16,6 +16,8 @@
 
 #include "client.h"
 
+#include <stdlib.h>
+
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -44,6 +46,26 @@ Result<SharedFD> ConnectToServer() {
     return CF_ERR("Failed to connect to server" << connection->StrError());
   }
   return connection;
+}
+
+[[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
+  auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
+  if (android_top == "") {
+    LOG(FATAL) << "Could not find android environment. Please run "
+               << "\"source build/envsetup.sh\".";
+    abort();
+  }
+  // TODO(b/206893146): Detect what the platform actually is.
+  auto py_acloud_path =
+      android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
+  char** new_argv = new char*[args.size() + 1];
+  for (size_t i = 0; i < args.size(); i++) {
+    new_argv[i] = args[i].data();
+  }
+  new_argv[args.size()] = nullptr;
+  execv(py_acloud_path.data(), new_argv);
+  PLOG(FATAL) << "execv(" << py_acloud_path << ", ...) failed";
+  abort();
 }
 
 }  // end of namespace
@@ -273,6 +295,30 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
   return CF_ERR("Received error response for \"" << rpc << "\":\n"
                                                  << status.message()
                                                  << "\nIn client");
+}
+
+Result<void> CvdClient::HandleAcloud(std::vector<std::string>& args,
+                                     const std::vector<std::string>& env,
+                                     const std::string& host_tool_directory) {
+  auto server_running =
+      ValidateServerVersion(android::base::Dirname(host_tool_directory));
+
+  // TODO(b/206893146): Make this decision inside the server.
+  if (!server_running.ok()) {
+    CallPythonAcloud(args);
+    // no return
+  }
+
+  args[0] = "try-acloud";
+  auto attempt = HandleCommand(args, env);
+  if (!attempt.ok()) {
+    CallPythonAcloud(args);
+    // no return
+  }
+
+  args[0] = "acloud";
+  CF_EXPECT(HandleCommand(args, env));
+  return {};
 }
 
 Result<std::string> CvdClient::HandleVersion(

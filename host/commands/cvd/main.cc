@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-
 #include <iostream>
 #include <optional>
 #include <string>
@@ -26,11 +24,9 @@
 #include <android-base/result.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
-#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/fetch_cvd.h"
 #include "host/commands/cvd/server.h"
@@ -40,62 +36,30 @@
 namespace cuttlefish {
 namespace {
 
-[[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
-  auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-  if (android_top == "") {
-    LOG(FATAL) << "Could not find android environment. Please run "
-               << "\"source build/envsetup.sh\".";
-    abort();
-  }
-  // TODO(b/206893146): Detect what the platform actually is.
-  auto py_acloud_path =
-      android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
-  char** new_argv = new char*[args.size() + 1];
-  for (size_t i = 0; i < args.size(); i++) {
-    new_argv[i] = args[i].data();
-  }
-  new_argv[args.size()] = nullptr;
-  execv(py_acloud_path.data(), new_argv);
-  PLOG(FATAL) << "execv(" << py_acloud_path << ", ...) failed";
-  abort();
-}
-
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   std::vector<std::string> args = ArgsToVec(argc, argv);
   std::vector<Flag> flags;
 
-  CvdClient client;
-
   if (android::base::Basename(args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
     return {};
   }
 
+  std::vector<std::string> env;
+  for (char** e = envp; *e != 0; e++) {
+    env.emplace_back(*e);
+  }
+
+  CvdClient client;
+
+  auto host_tool_dir =
+      android::base::Dirname(android::base::GetExecutableDirectory());
+
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(args[0]) == "acloud") {
-    auto server_running = client.ValidateServerVersion(
-        android::base::Dirname(android::base::GetExecutableDirectory()));
-    if (server_running.ok()) {
-      // TODO(schuffelen): Deduplicate when calls to setenv are removed.
-      std::vector<std::string> env;
-      for (char** e = envp; *e != 0; e++) {
-        env.emplace_back(*e);
-      }
-      args[0] = "try-acloud";
-      auto attempt = client.HandleCommand(args, env);
-      if (attempt.ok()) {
-        args[0] = "acloud";
-        CF_EXPECT(client.HandleCommand(args, env));
-        return {};
-      } else {
-        CallPythonAcloud(args);
-      }
-    } else {
-      // Something is wrong with the server, fall back to python acloud
-      CallPythonAcloud(args);
-    }
+    return client.HandleAcloud(args, env, host_tool_dir);
   }
 
   bool clean = false;
@@ -132,25 +96,19 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
   }
 
-  auto dir = android::base::Dirname(android::base::GetExecutableDirectory());
-
   // Handle all remaining commands by forwarding them to the cvd_server.
-  CF_EXPECT(client.ValidateServerVersion(dir),
+  CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
             "Unable to ensure cvd_server is running.");
 
   // Special case for `cvd version`, handled by using the version command.
   if (args.size() > 1 && android::base::Basename(args[0]) == "cvd" &&
       args[1] == "version") {
-    auto version_msg = CF_EXPECT(client.HandleVersion(dir));
+    auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
     std::cout << version_msg;
     return {};
   }
 
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
-  std::vector<std::string> env;
-  for (char** e = envp; *e != 0; e++) {
-    env.emplace_back(*e);
-  }
   CF_EXPECT(client.HandleCommand(args, env));
   return {};
 }
