@@ -24,7 +24,6 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/result.h>
-#include <google/protobuf/text_format.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
@@ -140,17 +139,10 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
             "Unable to ensure cvd_server is running.");
 
   // Special case for `cvd version`, handled by using the version command.
-  if (argc > 1 && std::string(argv[0]) == "cvd" &&
-      std::string(argv[1]) == "version") {
-    using google::protobuf::TextFormat;
-
-    std::string output;
-    auto server_version = CF_EXPECT(client.GetServerVersion(dir));
-    TextFormat::PrintToString(server_version, &output);
-    std::cout << "Server version:\n\n" << output << "\n";
-
-    TextFormat::PrintToString(client.GetClientVersion(), &output);
-    std::cout << "Client version:\n\n" << output << "\n";
+  if (args.size() > 1 && android::base::Basename(args[0]) == "cvd" &&
+      args[1] == "version") {
+    auto version_msg = CF_EXPECT(client.HandleVersion(dir));
+    std::cout << version_msg;
     return {};
   }
 
