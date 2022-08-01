@@ -7,6 +7,6 @@ rust_binary_host {
     crate_name: "append_squashfs_overlay",
     srcs: ["src/main.rs"],
     rustlibs: [
-        "libclap_deprecated",
+        "libclap",
     ],
 }
