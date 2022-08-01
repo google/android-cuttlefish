@@ -78,7 +78,7 @@ fn main() -> Result<()> {
         .arg(Arg::with_name("dest").required(true))
         .arg(
             Arg::with_name("overwrite")
-                .short("w")
+                .short('w')
                 .required(false)
                 .takes_value(false)
                 .help("whether the tool overwrite dest or not"),
