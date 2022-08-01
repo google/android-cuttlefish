@@ -1,0 +1,24 @@
+name: CI (with go1.13)
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:jammy-20220531 # Ubuntu 22.04
+    steps:
+    - name: setup apt
+      run: apt update -y && apt upgrade -y
+    - name: install debuild dependencies
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang-1.13
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      with:
+        path: "android-cuttlefish"
+    - name: build debian package
+      run: cd android-cuttlefish && debuild -i -us -uc -b
+    - name: install base debian package
+      run: apt-get install -y ./cuttlefish-base_*_*64.deb 
+    - name: install cuttlefish-orchestration debian package
+      run: apt-get install -y ./cuttlefish-orchestration_*_*64.deb
