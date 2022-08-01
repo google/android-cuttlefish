@@ -20,6 +20,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -97,7 +99,43 @@ func CreateHttpHandlers(
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
 		ReplyJSONOK(w, config)
 	}).Methods("GET")
+	remoteUrl, proxy, err := getOpenWrtProxy()
+	if err == nil {
+		router.HandleFunc("/openwrt", forwardWithoutUrl(remoteUrl, proxy))
+		// We cannot set up the base url for luci, so just add necessary paths as well.
+		router.HandleFunc("/cgi-bin/{rest:.*}", forwardWithPreservedUrl(remoteUrl, proxy))
+		router.HandleFunc("/luci-static/{rest:.*}", forwardWithPreservedUrl(remoteUrl, proxy))
+	}
 	return router
+}
+
+func getOpenWrtProxy() (*url.URL, *httputil.ReverseProxy, error) {
+	luciUrl := "http://192.168.96.2"
+	remoteUrl, err := url.Parse(luciUrl)
+	if err != nil {
+		log.Fatal(err)
+		return nil, nil, err
+	}
+	return remoteUrl, httputil.NewSingleHostReverseProxy(remoteUrl), nil
+}
+
+func forwardWithoutUrl(ur *url.URL, p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Host = ur.Host
+		r.URL.Scheme = ur.Scheme
+		r.Host = ur.Host
+		r.URL.Path = ""
+		p.ServeHTTP(w, r)
+	}
+}
+
+func forwardWithPreservedUrl(ur *url.URL, p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Host = ur.Host
+		r.URL.Scheme = ur.Scheme
+		r.Host = ur.Host
+		p.ServeHTTP(w, r)
+	}
 }
 
 // Device endpoint
