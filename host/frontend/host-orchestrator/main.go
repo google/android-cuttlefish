@@ -35,7 +35,7 @@ const (
 	DefaultInterceptDir   = "intercept" // relative path
 
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
-	defaultCVDBinAndroidBuildID     = "8817521"
+	defaultCVDBinAndroidBuildID     = "8687975"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-userdebug"
 	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
 )
