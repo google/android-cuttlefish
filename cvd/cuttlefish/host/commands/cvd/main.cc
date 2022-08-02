@@ -35,12 +35,48 @@
 
 namespace cuttlefish {
 namespace {
+bool IsServerModeExpected(const SharedFD& internal_server_fd,
+                          const std::string& exec_file) {
+  return internal_server_fd->IsOpen() || exec_file == "/proc/self/exe";
+}
+
+Result<void> RunServer(const SharedFD& internal_server_fd,
+                       const SharedFD& carryover_client_fd) {
+  if (!internal_server_fd->IsOpen()) {
+    return CF_ERR(
+        "Expected to be in server mode, but didn't get a server "
+        "fd: "
+        << internal_server_fd->StrError());
+  }
+  CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
+  return {};
+}
+
+struct ParseResult {
+  bool clean_;
+  SharedFD internal_server_fd_;
+  SharedFD carryover_client_fd_;
+};
+
+Result<ParseResult> Parse(std::vector<std::string>& args) {
+  std::vector<Flag> flags;
+  bool clean = false;
+  flags.emplace_back(GflagsCompatFlag("clean", clean));
+  SharedFD internal_server_fd;
+  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
+  SharedFD carryover_client_fd;
+  flags.emplace_back(
+      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
+
+  CF_EXPECT(ParseFlags(flags, args));
+  ParseResult result = {clean, internal_server_fd, carryover_client_fd};
+  return {result};
+}
 
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   std::vector<std::string> args = ArgsToVec(argc, argv);
-  std::vector<Flag> flags;
 
   if (android::base::Basename(args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
@@ -62,29 +98,16 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return client.HandleAcloud(args, env, host_tool_dir);
   }
 
-  bool clean = false;
-  flags.emplace_back(GflagsCompatFlag("clean", clean));
-  SharedFD internal_server_fd;
-  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
-  SharedFD carryover_client_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
+  auto [clean, internal_server_fd, carryover_client_fd] =
+      CF_EXPECT(Parse(args));
 
-  CF_EXPECT(ParseFlags(flags, args));
-
-  if (internal_server_fd->IsOpen()) {
-    CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
-    return {};
-  } else if (argv[0] == std::string("/proc/self/exe")) {
-    return CF_ERR(
-        "Expected to be in server mode, but didn't get a server "
-        "fd: "
-        << internal_server_fd->StrError());
+  if (IsServerModeExpected(internal_server_fd, args[0])) {
+    return RunServer(internal_server_fd, carryover_client_fd);
   }
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
-  if (argc > 1 && strcmp("kill-server", argv[1]) == 0) {
+  if (args.size() > 1 && args[1] == "kill-server") {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
     return {};
   }
