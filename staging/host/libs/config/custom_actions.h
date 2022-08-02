@@ -37,16 +37,26 @@ struct DeviceState {
   std::optional<int> hinge_angle_value;
 };
 
-struct CustomActionConfig {
+struct CustomShellActionConfig {
+  ControlPanelButton button;
+  std::string shell_command;
+};
+
+struct CustomActionServerConfig {
+  std::string server;
   std::vector<ControlPanelButton> buttons;
-  std::optional<std::string> shell_command;
-  std::optional<std::string> server;
+};
+
+struct CustomDeviceStateActionConfig {
+  ControlPanelButton button;
   std::vector<DeviceState> device_states;
 };
 
 class CustomActionConfigProvider : public FlagFeature, public ConfigFragment {
  public:
-  virtual const std::vector<CustomActionConfig>& CustomActions() const = 0;
+  virtual const std::vector<CustomShellActionConfig>& CustomShellActions() const = 0;
+  virtual const std::vector<CustomActionServerConfig>& CustomActionServers() const = 0;
+  virtual const std::vector<CustomDeviceStateActionConfig>& CustomDeviceStateActions() const = 0;
 };
 
 fruit::Component<fruit::Required<ConfigFlag>, CustomActionConfigProvider>

@@ -373,7 +373,61 @@ void ControlChannelHandler::OnStateChange() {
 }
 
 void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
-  observer_->OnControlMessage(msg.data.cdata(), msg.size());
+  auto msg_str = msg.data.cdata<char>();
+  auto size = msg.size();
+  Json::Value evt;
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
+  std::string errorMessage;
+  if (!json_reader->parse(msg_str, msg_str + size, &evt, &errorMessage)) {
+    LOG(ERROR) << "Received invalid JSON object over control channel: "
+               << errorMessage;
+    return;
+  }
+
+  auto result = ValidationResult::ValidateJsonObject(
+      evt, "command",
+      /*required_fields=*/{{"command", Json::ValueType::stringValue}},
+      /*optional_fields=*/
+      {
+          {"button_state", Json::ValueType::stringValue},
+          {"lid_switch_open", Json::ValueType::booleanValue},
+          {"hinge_angle_value", Json::ValueType::intValue},
+      });
+  if (!result.ok()) {
+    LOG(ERROR) << result.error();
+    return;
+  }
+  auto command = evt["command"].asString();
+
+  if (command == "device_state") {
+    if (evt.isMember("lid_switch_open")) {
+      observer_->OnLidStateChange(evt["lid_switch_open"].asBool());
+    }
+    if (evt.isMember("hinge_angle_value")) {
+      observer_->OnHingeAngleChange(evt["hinge_angle_value"].asInt());
+    }
+    return;
+  } else if (command.rfind("camera_", 0) == 0) {
+    observer_->OnCameraControlMsg(evt);
+    return;
+  }
+
+  auto button_state = evt["button_state"].asString();
+  LOG(VERBOSE) << "Control command: " << command << " (" << button_state << ")";
+  if (command == "power") {
+    observer_->OnPowerButton(button_state == "down");
+  } else if (command == "home") {
+    observer_->OnHomeButton(button_state == "down");
+  } else if (command == "menu") {
+    observer_->OnMenuButton(button_state == "down");
+  } else if (command == "volumedown") {
+    observer_->OnVolumeDownButton(button_state == "down");
+  } else if (command == "volumeup") {
+    observer_->OnVolumeUpButton(button_state == "down");
+  } else {
+    observer_->OnCustomActionButton(command, button_state);
+  }
 }
 
 void ControlChannelHandler::Send(const Json::Value& message) {
