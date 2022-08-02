@@ -78,54 +78,48 @@ void FindImports(Archive* archive, const std::string& build_prop_file) {
   }
 }
 
-bool CombineTargetZipFiles(const std::string& default_target_zip,
-                           const std::string& system_target_zip,
-                           const std::string& output_path) {
+Result<void> CombineTargetZipFiles(const std::string& default_target_zip,
+                                   const std::string& system_target_zip,
+                                   const std::string& output_path) {
   Archive default_target_archive(default_target_zip);
-  Archive system_target_archive(system_target_zip);
-
   auto default_target_contents = default_target_archive.Contents();
-  if (default_target_contents.size() == 0) {
-    LOG(ERROR) << "Could not open " << default_target_zip;
-    return false;
-  }
-  auto system_target_contents = system_target_archive.Contents();
-  if (system_target_contents.size() == 0) {
-    LOG(ERROR) << "Could not open " << system_target_zip;
-    return false;
-  }
-  if (mkdir(output_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
-    LOG(ERROR) << "Could not create directory " << output_path;
-    return false;
-  }
-  std::string output_meta = output_path + "/META";
-  if (mkdir(output_meta.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
-    LOG(ERROR) << "Could not create directory " << output_meta;
-    return false;
-  }
+  CF_EXPECT(default_target_contents.size() != 0,
+            "Could not open " << default_target_zip);
 
-  if (std::find(default_target_contents.begin(), default_target_contents.end(), kMiscInfoPath)
-      == default_target_contents.end()) {
-    LOG(ERROR) << "Default target files zip does not have " << kMiscInfoPath;
-    return false;
-  }
-  if (std::find(system_target_contents.begin(), system_target_contents.end(), kMiscInfoPath)
-      == system_target_contents.end()) {
-    LOG(ERROR) << "System target files zip does not have " << kMiscInfoPath;
-    return false;
-  }
+  Archive system_target_archive(system_target_zip);
+  auto system_target_contents = system_target_archive.Contents();
+  CF_EXPECT(system_target_contents.size() != 0,
+            "Could not open " << system_target_zip);
+
+  CF_EXPECT(
+      mkdir(output_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) >= 0,
+      "Could not create directory " << output_path);
+
+  std::string output_meta = output_path + "/META";
+  CF_EXPECT(
+      mkdir(output_meta.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) >= 0,
+      "Could not create directory " << output_meta);
+
+  CF_EXPECT(
+      std::find(default_target_contents.begin(), default_target_contents.end(),
+                kMiscInfoPath) != default_target_contents.end(),
+      "Default target files zip does not have " << kMiscInfoPath);
+
+  CF_EXPECT(
+      std::find(system_target_contents.begin(), system_target_contents.end(),
+                kMiscInfoPath) != system_target_contents.end(),
+      "System target files zip does not have " << kMiscInfoPath);
+
   const auto default_misc =
       ParseMiscInfo(default_target_archive.ExtractToMemory(kMiscInfoPath));
-  if (default_misc.size() == 0) {
-    LOG(ERROR) << "Could not read the default misc_info.txt file.";
-    return false;
-  }
+  CF_EXPECT(default_misc.size() != 0,
+            "Could not read the default misc_info.txt file.");
+
   const auto system_misc =
       ParseMiscInfo(system_target_archive.ExtractToMemory(kMiscInfoPath));
-  if (system_misc.size() == 0) {
-    LOG(ERROR) << "Could not read the system misc_info.txt file.";
-    return false;
-  }
+  CF_EXPECT(system_misc.size() != 0,
+            "Could not read the system misc_info.txt file.");
+
   auto output_misc = default_misc;
   auto system_super_partitions = SuperPartitionComponents(system_misc);
   // Ensure specific skipped partitions end up in the misc_info.txt
@@ -136,24 +130,18 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       system_super_partitions.push_back(partition);
     }
   }
-  if (!SetSuperPartitionComponents(system_super_partitions, &output_misc)) {
-    LOG(ERROR) << "Failed to update super partitions components for misc_info";
-    return false;
-  }
+  CF_EXPECT(SetSuperPartitionComponents(system_super_partitions, &output_misc),
+            "Failed to update super partitions components for misc_info");
 
   auto misc_output_path = output_path + "/" + kMiscInfoPath;
   SharedFD misc_output_file =
       SharedFD::Creat(misc_output_path.c_str(), 0644);
-  if (!misc_output_file->IsOpen()) {
-    LOG(ERROR) << "Failed to open output misc file: "
-               << misc_output_file->StrError();
-    return false;
-  }
-  if (WriteAll(misc_output_file, WriteMiscInfo(output_misc)) < 0) {
-    LOG(ERROR) << "Failed to write output misc file contents: "
-               << misc_output_file->StrError();
-    return false;
-  }
+  CF_EXPECT(misc_output_file->IsOpen(), "Failed to open output misc file: "
+                                            << misc_output_file->StrError());
+
+  CF_EXPECT(WriteAll(misc_output_file, WriteMiscInfo(output_misc)) >= 0,
+            "Failed to write output misc file contents: "
+                << misc_output_file->StrError());
 
   for (const auto& name : default_target_contents) {
     if (!android::base::StartsWith(name, "IMAGES/")) {
@@ -164,10 +152,8 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       continue;
     }
     LOG(INFO) << "Writing " << name;
-    if (!default_target_archive.ExtractFiles({name}, output_path)) {
-      LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
-      return false;
-    }
+    CF_EXPECT(default_target_archive.ExtractFiles({name}, output_path),
+              "Failed to extract " << name << " from the default target zip");
   }
   for (const auto& name : default_target_contents) {
     if (!android::base::EndsWith(name, "build.prop")) {
@@ -177,10 +163,8 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
     }
     FindImports(&default_target_archive, name);
     LOG(INFO) << "Writing " << name;
-    if (!default_target_archive.ExtractFiles({name}, output_path)) {
-      LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
-      return false;
-    }
+    CF_EXPECT(default_target_archive.ExtractFiles({name}, output_path),
+              "Failed to extract " << name << " from the default target zip");
   }
 
   for (const auto& name : system_target_contents) {
@@ -192,10 +176,8 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       continue;
     }
     LOG(INFO) << "Writing " << name;
-    if (!system_target_archive.ExtractFiles({name}, output_path)) {
-      LOG(ERROR) << "Failed to extract " << name << " from the system target zip";
-      return false;
-    }
+    CF_EXPECT(system_target_archive.ExtractFiles({name}, output_path),
+              "Failed to extract " << name << " from the system target zip");
   }
   for (const auto& name : system_target_contents) {
     if (!android::base::EndsWith(name, "build.prop")) {
@@ -205,13 +187,11 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
     }
     FindImports(&system_target_archive, name);
     LOG(INFO) << "Writing " << name;
-    if (!system_target_archive.ExtractFiles({name}, output_path)) {
-      LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
-      return false;
-    }
+    CF_EXPECT(system_target_archive.ExtractFiles({name}, output_path),
+              "Failed to extract " << name << " from the default target zip");
   }
 
-  return true;
+  return {};
 }
 
 bool BuildSuperImage(const std::string& combined_target_zip,
@@ -251,35 +231,29 @@ bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config) {
   return has_default_build && has_system_build;
 }
 
-bool RebuildSuperImage(const FetcherConfig& fetcher_config,
-                       const CuttlefishConfig& config,
-                       const std::string& output_path) {
+Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
+                               const CuttlefishConfig& config,
+                               const std::string& output_path) {
   std::string default_target_zip =
       TargetFilesZip(fetcher_config, FileSource::DEFAULT_BUILD);
-  if (default_target_zip == "") {
-    LOG(ERROR) << "Unable to find default target zip file.";
-    return false;
-  }
+  CF_EXPECT(default_target_zip != "",
+            "Unable to find default target zip file.");
+
   std::string system_target_zip =
       TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
-  if (system_target_zip == "") {
-    LOG(ERROR) << "Unable to find system target zip file.";
-    return false;
-  }
+  CF_EXPECT(system_target_zip != "", "Unable to find system target zip file.");
+
   auto instance = config.ForDefaultInstance();
   // TODO(schuffelen): Use cuttlefish_assembly
   std::string combined_target_path = instance.PerInstanceInternalPath("target_combined");
   // TODO(schuffelen): Use otatools/bin/merge_target_files
-  if (!CombineTargetZipFiles(default_target_zip, system_target_zip,
-                             combined_target_path)) {
-    LOG(ERROR) << "Could not combine target zip files.";
-    return false;
-  }
-  bool success = BuildSuperImage(combined_target_path, output_path);
-  if (!success) {
-    LOG(ERROR) << "Could not write the final output super image.";
-  }
-  return success;
+  CF_EXPECT(CombineTargetZipFiles(default_target_zip, system_target_zip,
+                                  combined_target_path),
+            "Could not combine target zip files.");
+
+  CF_EXPECT(BuildSuperImage(combined_target_path, output_path),
+            "Could not write the final output super image.");
+  return {};
 }
 
 class SuperImageOutputPathTag {};
@@ -299,16 +273,11 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     if (SuperImageNeedsRebuilding(fetcher_config_)) {
-      bool success = RebuildSuperImage(fetcher_config_, config_, output_path_);
-      if (!success) {
-        LOG(ERROR)
-            << "Super image rebuilding requested but could not be completed.";
-        return false;
-      }
+      CF_EXPECT(RebuildSuperImage(fetcher_config_, config_, output_path_));
     }
-    return true;
+    return {};
   }
 
   const FetcherConfig& fetcher_config_;
