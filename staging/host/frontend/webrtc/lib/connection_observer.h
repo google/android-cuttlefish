@@ -23,6 +23,18 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
+// The ConnectionObserver is the boundary between device specific code and
+// general WebRTC streaming code. Device specific code should be left to
+// implementations of this class while code that could be shared between any
+// device using this streaming library should remain in the library.
+// For example:
+// - Parsing JSON messages to obtain input events is common to all android
+// devices and should stay in the library.
+// - Sending input events to the device by writing to a socket is cuttlefish
+// specific and should be done in the ConnectionObserver implementation. Other
+// devices could choose to send those events over ADB for example. A good rule
+// of thumb is: if it was encoded client side in cf_webrtc.js it should be
+// decoded in the library.
 class ConnectionObserver {
  public:
   ConnectionObserver() = default;
@@ -30,21 +42,37 @@ class ConnectionObserver {
 
   virtual void OnConnected(
       std::function<void(const uint8_t*, size_t, bool)> ctrl_msg_sender) = 0;
+
   virtual void OnTouchEvent(const std::string& display_label, int x, int y,
                             bool down) = 0;
-  virtual void OnMultiTouchEvent(const std::string& label, Json::Value id, Json::Value slot,
-                                 Json::Value x, Json::Value y, bool down, int size) = 0;
+  virtual void OnMultiTouchEvent(const std::string& label, Json::Value id,
+                                 Json::Value slot, Json::Value x, Json::Value y,
+                                 bool down, int size) = 0;
+
   virtual void OnKeyboardEvent(uint16_t keycode, bool down) = 0;
-  virtual void OnSwitchEvent(uint16_t code, bool state) = 0;
+
   virtual void OnAdbChannelOpen(
       std::function<bool(const uint8_t*, size_t)> adb_message_sender) = 0;
   virtual void OnAdbMessage(const uint8_t* msg, size_t size) = 0;
+
   virtual void OnControlChannelOpen(
       std::function<bool(const Json::Value)> control_message_sender) = 0;
-  virtual void OnControlMessage(const uint8_t* msg, size_t size) = 0;
+  virtual void OnLidStateChange(bool lid_open) = 0;
+  virtual void OnHingeAngleChange(int hinge_angle) = 0;
+  virtual void OnPowerButton(bool button_down) = 0;
+  virtual void OnHomeButton(bool button_down) = 0;
+  virtual void OnMenuButton(bool button_down) = 0;
+  virtual void OnVolumeDownButton(bool button_down) = 0;
+  virtual void OnVolumeUpButton(bool button_down) = 0;
+  virtual void OnCustomActionButton(const std::string& command,
+                                    const std::string& button_state) = 0;
+
+  virtual void OnCameraControlMsg(const Json::Value& msg) = 0;
+
   virtual void OnBluetoothChannelOpen(
       std::function<bool(const uint8_t*, size_t)> bluetooth_message_sender) = 0;
   virtual void OnBluetoothMessage(const uint8_t* msg, size_t size) = 0;
+
   virtual void OnCameraData(const std::vector<char>& data) = 0;
 };
 
