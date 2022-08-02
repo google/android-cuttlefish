@@ -144,25 +144,19 @@ DEFINE_string(
     "The default commands which root-canal executes when it launches.");
 
 /**
- *
  * crosvm sandbox feature requires /var/empty and seccomp directory
  *
- * --enable-sandbox: will enforce the sandbox feature
- *                   failing to meet the requirements result in assembly_cvd termination
- *
- * --enable-sandbox=no, etc: will disable sandbox
- *
- * no option given: it is enabled if /var/empty exists and an empty directory
- *                             or if it does not exist and can be created
- *
- * if seccomp dir doesn't exist, assembly_cvd will terminate
- *
- * See SetDefaultFlagsForCrosvm()
- *
+ * Also see SetDefaultFlagsForCrosvm()
  */
-DEFINE_bool(enable_sandbox,
-            false,
-            "Enable crosvm sandbox. Use this when you are sure about what you are doing.");
+DEFINE_bool(
+    enable_sandbox, false,
+    "Enable crosvm sandbox assuming /var/empty and seccomp directories exist. "
+    "--noenable-sandbox will disable crosvm sandbox. "
+    "When no option is given, sandbox is disabled if Cuttlefish is running "
+    "inside a container, or if GPU is enabled (b/152323505), "
+    "or if the empty /var/empty directory either does not exist and "
+    "cannot be created. Otherwise, sandbox is enabled on the supported "
+    "architecture when no option is given.");
 
 static const std::string kSeccompDir =
     std::string("usr/share/crosvm/") + cuttlefish::HostArchStr() + "-linux-gnu/seccomp";
