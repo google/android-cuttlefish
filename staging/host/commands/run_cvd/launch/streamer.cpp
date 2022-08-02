@@ -46,37 +46,35 @@ SharedFD CreateUnixInputServer(const std::string& path) {
 
 std::vector<Command> LaunchCustomActionServers(
     Command& webrtc_cmd,
-    const std::vector<CustomActionConfig>& custom_actions) {
+    const std::vector<CustomActionServerConfig>& custom_actions) {
   bool first = true;
   std::vector<Command> commands;
   for (const auto& custom_action : custom_actions) {
-    if (custom_action.server) {
-      // Create a socket pair that will be used for communication between
-      // WebRTC and the action server.
-      SharedFD webrtc_socket, action_server_socket;
-      if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
-                                &action_server_socket)) {
-        LOG(ERROR) << "Unable to create custom action server socket pair: "
-                   << strerror(errno);
-        continue;
-      }
+    // Create a socket pair that will be used for communication between
+    // WebRTC and the action server.
+    SharedFD webrtc_socket, action_server_socket;
+    if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
+          &action_server_socket)) {
+      LOG(ERROR) << "Unable to create custom action server socket pair: "
+        << strerror(errno);
+      continue;
+    }
 
-      // Launch the action server, providing its socket pair fd as the only
-      // argument.
-      auto binary = HostBinaryPath(*(custom_action.server));
-      Command command(binary);
-      command.AddParameter(action_server_socket);
-      commands.emplace_back(std::move(command));
+    // Launch the action server, providing its socket pair fd as the only
+    // argument.
+    auto binary = HostBinaryPath(custom_action.server);
+    Command command(binary);
+    command.AddParameter(action_server_socket);
+    commands.emplace_back(std::move(command));
 
-      // Pass the WebRTC socket pair fd to WebRTC.
-      if (first) {
-        first = false;
-        webrtc_cmd.AddParameter("-action_servers=", *custom_action.server, ":",
-                                webrtc_socket);
-      } else {
-        webrtc_cmd.AppendToLastParameter(",", *custom_action.server, ":",
-                                         webrtc_socket);
-      }
+    // Pass the WebRTC socket pair fd to WebRTC.
+    if (first) {
+      first = false;
+      webrtc_cmd.AddParameter("-action_servers=", custom_action.server, ":",
+          webrtc_socket);
+    } else {
+      webrtc_cmd.AppendToLastParameter(",", custom_action.server, ":",
+          webrtc_socket);
     }
   }
   return commands;
@@ -267,7 +265,7 @@ class WebRtcServer : public virtual CommandSource,
                         DefaultHostArtifactsPath("usr/share/webrtc/assets"));
 
     // TODO get from launcher params
-    const auto& actions = custom_action_config_.CustomActions();
+    const auto& actions = custom_action_config_.CustomActionServers();
     for (auto& action : LaunchCustomActionServers(webrtc, actions)) {
       commands.emplace_back(std::move(action));
     }
