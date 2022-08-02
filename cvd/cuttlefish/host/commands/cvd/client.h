@@ -18,7 +18,6 @@
 
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -26,67 +25,34 @@
 #include <build/version.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "cvd_server.pb.h"
-#include "host/commands/cvd/server_constants.h"
-#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-
-struct OverrideFd {
-  std::optional<SharedFD> stdin_override_fd;
-  std::optional<SharedFD> stdout_override_fd;
-  std::optional<SharedFD> stderr_override_fd;
-};
-
 class CvdClient {
  public:
-  CvdClient(const android::base::LogSeverity verbosity,
-            const std::string& server_socket_path = ServerSocketPath());
-  Result<void> ValidateServerVersion(const int num_retries = 1);
+  Result<void> ValidateServerVersion(const std::string& host_tool_directory,
+                                     int num_retries = 1);
   Result<void> StopCvdServer(bool clear);
-  Result<void> HandleAcloud(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env);
-  Result<void> HandleCvdCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env);
-  Result<cvd::Response> HandleCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args,
-      const OverrideFd& control_fds);
-  Result<cvd::Response> HandleCommand(
-      const std::vector<std::string>& args,
-      const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args) {
-    auto response = CF_EXPECT(
-        HandleCommand(args, env, selector_args,
-                      OverrideFd{std::nullopt, std::nullopt, std::nullopt}));
-    return response;
-  }
-  Result<std::string> HandleVersion();
-  Result<cvd_common::Args> ValidSubcmdsList(const cvd_common::Envs& envs);
+  Result<void> HandleAcloud(std::vector<std::string>& args,
+                            const std::vector<std::string>& env,
+                            const std::string& host_tool_directory);
+  Result<void> HandleCommand(std::vector<std::string> args,
+                             std::vector<std::string> env);
+  Result<std::string> HandleVersion(const std::string& host_tool_directory);
 
  private:
   std::optional<UnixMessageSocket> server_;
 
   Result<void> SetServer(const SharedFD& server);
   Result<cvd::Response> SendRequest(const cvd::Request& request,
-                                    const OverrideFd& new_control_fds = {},
                                     std::optional<SharedFD> extra_fd = {});
-  Result<void> StartCvdServer();
+  Result<void> StartCvdServer(const std::string& host_tool_directory);
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
-  Result<cvd::Version> GetServerVersion();
+  Result<cvd::Version> GetServerVersion(const std::string& host_tool_directory);
 
-  Result<Json::Value> ListSubcommands(const cvd_common::Envs& envs);
-  Result<SharedFD> ConnectToServer();
   static cvd::Version GetClientVersion();
-
-  std::string server_socket_path_;
-  android::base::LogSeverity verbosity_;
 };
 
 }  // end of namespace cuttlefish
