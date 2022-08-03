@@ -11,7 +11,7 @@ import { Observable, of } from "rxjs";
 })
 export class DevicePaneComponent implements OnInit {
   devices: Observable<Device[]> = of([]);
-  deviceTemp: Device[] = [];
+  deviceList: Device[] = [];
   selectedDevice?: Device;
 
   constructor(
@@ -33,7 +33,6 @@ export class DevicePaneComponent implements OnInit {
     }
   }
 
-  //Needs to be fixed.
   onRefresh(): void {
     this.getDevices();
   }
@@ -41,11 +40,25 @@ export class DevicePaneComponent implements OnInit {
   getDevices(): void {
     this.deviceService.getDevices().subscribe((info) => {
       info.forEach((id) => {
-        this.deviceTemp.push({ id: id, isVisible: false });
+        if (
+          !this.deviceList.some((device) => {
+            return device.id === id;
+          })
+        ) {
+          this.deviceList.push({ id: id, isVisible: false });
+        }
       });
-      this.devices = of(this.deviceTemp);
+      this.devices = of(this.deviceList);
     });
+  }
 
-    this.deviceTemp = [];
+  showAll(): void {
+    this.devices.subscribe((deviceArray) => {
+      deviceArray.forEach((device) => {
+        if (device.isVisible == false) {
+          this.onSelect(device);
+        }
+      });
+    });
   }
 }

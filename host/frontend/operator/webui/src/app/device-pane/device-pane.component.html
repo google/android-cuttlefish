@@ -18,7 +18,22 @@
           (change)="onSelect(device)"
           >{{ device.id }}</mat-checkbox
         >
+        <a
+          style="color: #eee"
+          href="{{ '/devices/' + device.id + '/files/client.html' }}"
+          title="Launch in new tab"
+          target="_blank"
+        >
+          <button mat-icon-button id="pop-up">
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        </a>
       </li>
     </section>
   </ul>
+</div>
+<div>
+  <button mat-raised-button class="Show-All" (click)="showAll()">
+    Show All
+  </button>
 </div>
