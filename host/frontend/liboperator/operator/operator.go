@@ -30,6 +30,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	DefaultOpenWrtLuciUrl = "http://192.168.96.2"
+)
+
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
 // socket until an error occurrs.
 func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string) func() error {
@@ -99,18 +103,17 @@ func CreateHttpHandlers(
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
 		ReplyJSONOK(w, config)
 	}).Methods("GET")
-	remoteUrl, proxy, err := getOpenWrtProxy()
+	remoteUrl, proxy, err := getOpenWrtProxy(DefaultOpenWrtLuciUrl)
 	if err == nil {
-		router.HandleFunc("/openwrt", forwardWithoutUrl(remoteUrl, proxy))
+		router.HandleFunc("/openwrt", getForwarder(remoteUrl, proxy, false /* urlPreserved */))
 		// We cannot set up the base url for luci, so just add necessary paths as well.
-		router.HandleFunc("/cgi-bin/{rest:.*}", forwardWithPreservedUrl(remoteUrl, proxy))
-		router.HandleFunc("/luci-static/{rest:.*}", forwardWithPreservedUrl(remoteUrl, proxy))
+		router.PathPrefix("/cgi-bin").HandlerFunc(getForwarder(remoteUrl, proxy, true /* urlPreserved */))
+		router.PathPrefix("/luci-static").HandlerFunc(getForwarder(remoteUrl, proxy, true /* urlPreserved */))
 	}
 	return router
 }
 
-func getOpenWrtProxy() (*url.URL, *httputil.ReverseProxy, error) {
-	luciUrl := "http://192.168.96.2"
+func getOpenWrtProxy(luciUrl string) (*url.URL, *httputil.ReverseProxy, error) {
 	remoteUrl, err := url.Parse(luciUrl)
 	if err != nil {
 		log.Fatal(err)
@@ -119,21 +122,14 @@ func getOpenWrtProxy() (*url.URL, *httputil.ReverseProxy, error) {
 	return remoteUrl, httputil.NewSingleHostReverseProxy(remoteUrl), nil
 }
 
-func forwardWithoutUrl(ur *url.URL, p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
+func getForwarder(ur *url.URL, p *httputil.ReverseProxy, urlPreserved bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Host = ur.Host
 		r.URL.Scheme = ur.Scheme
 		r.Host = ur.Host
-		r.URL.Path = ""
-		p.ServeHTTP(w, r)
-	}
-}
-
-func forwardWithPreservedUrl(ur *url.URL, p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Host = ur.Host
-		r.URL.Scheme = ur.Scheme
-		r.Host = ur.Host
+		if !urlPreserved {
+			r.URL.Path = ""
+		}
 		p.ServeHTTP(w, r)
 	}
 }
