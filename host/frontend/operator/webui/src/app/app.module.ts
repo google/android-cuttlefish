@@ -8,6 +8,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { HttpClientModule } from "@angular/common/http";
 import { MatSidenavModule } from "@angular/material/sidenav";
 import { MatCheckboxModule } from "@angular/material/checkbox";
+import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
 import { ViewPaneComponent } from "./view-pane/view-pane.component";
 import { SafePipe } from "./safe.pipe";
@@ -25,6 +26,7 @@ import { SafePipe } from "./safe.pipe";
     MatSidenavModule,
     MatCheckboxModule,
     MatButtonModule,
+    MatIconModule,
     FormsModule,
     HttpClientModule,
   ],
