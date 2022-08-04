@@ -369,8 +369,9 @@ struct NumericConversions<T,
 };
 
 #ifdef __cpp_concepts
-template<class U>
-concept Trivial = std::is_same_v<U, U>;
+template <class U>
+// Define a concept which **any** type matches to
+concept Universal = std::is_same_v<U, U>;
 #endif
 } // namespace impl
 
@@ -410,11 +411,16 @@ public:
     return unexpected(std::move(this->error_));
   }
 #ifdef __cpp_concepts
-  template <impl::Trivial U>
+  // The idea here is to match this template method to any type (not simply trivial types).
+  // The reason for including a constraint is to take advantage of the fact that a constrained
+  // method always has strictly lower precedence than a non-constrained method in template
+  // specialization rules (thus avoiding ambiguity). So we use a universally matching constraint to
+  // mark this function as less preferable (but still accepting of all types).
+  template <impl::Universal U>
 #else
   template <typename U>
 #endif
-  operator const Result<U, E, include_message>() const && {
+  operator const Result<U, E, include_message>() const&& {
     return unexpected(std::move(this->error_));
   }
 
