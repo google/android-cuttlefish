@@ -19,7 +19,6 @@
           >{{ device.id }}</mat-checkbox
         >
         <a
-          style="color: #eee"
           href="{{ '/devices/' + device.id + '/files/client.html' }}"
           title="Launch in new tab"
           target="_blank"
@@ -33,7 +32,7 @@
   </ul>
 </div>
 <div>
-  <button mat-raised-button class="Show-All" (click)="showAll()">
+  <button mat-raised-button class="show-all" (click)="showAll()">
     Show All
   </button>
 </div>
