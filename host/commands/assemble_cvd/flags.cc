@@ -347,6 +347,10 @@ DEFINE_uint32(camera_server_port, 0, "camera vsock port");
 
 DEFINE_string(userdata_format, "f2fs", "The userdata filesystem format");
 
+DEFINE_bool(use_overlay, true,
+            "Capture disk writes an overlay. This is a "
+            "prerequisite for powerwash_cvd or multiple instances.");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -768,6 +772,9 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   CHECK(instance_nums.ok()) << instance_nums.error();
 
+  CHECK(FLAGS_use_overlay || instance_nums->size() == 1)
+      << "`--use_overlay=false` is incompatible with multiple instances";
+
   bool is_first_instance = true;
   int instance_index = 0;
   for (const auto& num : *instance_nums) {
@@ -863,6 +870,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     os_overlay &= !FLAGS_protected_vm;
     // Gem5 already uses CoW wrappers around disk images
     os_overlay &= FLAGS_vm_manager != Gem5Manager::name();
+    os_overlay &= FLAGS_use_overlay;
     if (os_overlay) {
       auto path = const_instance.PerInstancePath("overlay.img");
       virtual_disk_paths.push_back(path);
