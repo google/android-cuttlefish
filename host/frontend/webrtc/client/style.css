@@ -72,7 +72,12 @@ body {
 }
 
 #error-message-div {
-  flex-grow: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  opacity: 0.97;
 }
 #error-message {
   color: white;
