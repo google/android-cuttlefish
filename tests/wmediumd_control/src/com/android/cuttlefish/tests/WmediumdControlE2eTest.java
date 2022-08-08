@@ -24,6 +24,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 
+import java.util.stream.Collectors;
 import java.util.List;
 
 import org.junit.Assert;
@@ -52,6 +53,18 @@ public class WmediumdControlE2eTest extends BaseHostJUnit4Test {
         return 0;
     }
 
+    private String getStationMacAddress(List<StationInfo> stationInfoList) {
+        List<String> stationMacAddressList = stationInfoList.stream().map(x -> x.macAddress).filter(addr -> addr.substring(0, 6).equals("02:15:")).collect(Collectors.toList());
+        Assert.assertTrue(stationMacAddressList.size() > 0);
+        return stationMacAddressList.get(0);
+    }
+
+    private String getApMacAddress(List<StationInfo> stationInfoList) {
+        List<String> apMacAddressList = stationInfoList.stream().map(x -> x.macAddress).filter(addr -> addr.substring(0, 6).equals("42:00:")).collect(Collectors.toList());
+        Assert.assertTrue(apMacAddressList.size() > 0);
+        return apMacAddressList.get(0);
+    }
+
     @Before
     public void setUp() throws Exception {
         testDevice = getDevice();
@@ -77,16 +90,17 @@ public class WmediumdControlE2eTest extends BaseHostJUnit4Test {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
         List<StationInfo> stationInfoList = runner.listStations();
-        Assert.assertTrue(stationInfoList.size() >= 2);
+        String stationMacAddress = getStationMacAddress(stationInfoList);
+        String apMacAddress = getApMacAddress(stationInfoList);
         int rssiDefault = getRSSI();
         int rssiSnr11, rssiSnr88;
 
-        runner.setSnr(stationInfoList.get(0).macAddress, stationInfoList.get(1).macAddress, 11);
+        runner.setSnr(apMacAddress, stationMacAddress, 11);
         while ((rssiSnr11 = getRSSI()) == rssiDefault) {
             Thread.sleep(1000);
         }
 
-        runner.setSnr(stationInfoList.get(0).macAddress, stationInfoList.get(1).macAddress, 88);
+        runner.setSnr(apMacAddress, stationMacAddress, 88);
         while ((rssiSnr88 = getRSSI()) == rssiSnr11) {
             Thread.sleep(1000);
         }
@@ -99,22 +113,23 @@ public class WmediumdControlE2eTest extends BaseHostJUnit4Test {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
         List<StationInfo> stationInfoList = runner.listStations();
-        Assert.assertTrue(stationInfoList.size() >= 2);
+        String stationMacAddress = getStationMacAddress(stationInfoList);
+        String apMacAddress = getApMacAddress(stationInfoList);
         int rssiDefault = getRSSI();
         int rssiDistance1000, rssiDistance100, rssiDistance10;
 
-        runner.setPosition(stationInfoList.get(0).macAddress, 0.0, 0.0);
-        runner.setPosition(stationInfoList.get(1).macAddress, 0.0, -1000.0);
+        runner.setPosition(apMacAddress, 0.0, 0.0);
+        runner.setPosition(stationMacAddress, 0.0, -1000.0);
         while ((rssiDistance1000 = getRSSI()) == rssiDefault) {
             Thread.sleep(1000);
         }
 
-        runner.setPosition(stationInfoList.get(1).macAddress, 0.0, 100.0);
+        runner.setPosition(stationMacAddress, 0.0, 100.0);
         while ((rssiDistance100 = getRSSI()) == rssiDistance1000) {
             Thread.sleep(1000);
         }
 
-        runner.setPosition(stationInfoList.get(1).macAddress, -10.0, 0.0);
+        runner.setPosition(stationMacAddress, -10.0, 0.0);
         while ((rssiDistance10 = getRSSI()) == rssiDistance100) {
             Thread.sleep(1000);
         }
