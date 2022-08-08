@@ -417,6 +417,8 @@ void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   LOG(VERBOSE) << "Control command: " << command << " (" << button_state << ")";
   if (command == "power") {
     observer_->OnPowerButton(button_state == "down");
+  } else if (command == "back") {
+    observer_->OnBackButton(button_state == "down");
   } else if (command == "home") {
     observer_->OnHomeButton(button_state == "down");
   } else if (command == "menu") {
