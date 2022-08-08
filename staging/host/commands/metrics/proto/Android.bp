@@ -21,7 +21,10 @@ cc_library_shared {
     vendor_available: true,
 
     srcs: [
-        "*.proto",
+        "cf_log.proto",
+        "cf_metrics_event.proto",
+        "clientanalytics.proto",
+        "common.proto",
     ],
 
     shared_libs: [

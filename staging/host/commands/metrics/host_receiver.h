@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 #pragma once
 
-#include <string>
+#include <thread>
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-class SysVMessageQueue {
- public:
-  static std::unique_ptr<SysVMessageQueue> Create(const std::string& path,
-                                                  char proj_id,
-                                                  bool auto_close = true);
-  ~SysVMessageQueue();
 
-  int Send(void* data, size_t size, bool block);
-  ssize_t Receive(void* data, size_t size, long msgtyp, bool block);
-
+class MetricsHostReceiver {
  private:
-  SysVMessageQueue(int msgid, bool auto_close);
-  int msgid_;
-  bool auto_close_;
+  const CuttlefishConfig& config_;
+  std::thread thread_;
+  void ServerLoop();
+
+ public:
+  MetricsHostReceiver(const cuttlefish::CuttlefishConfig& config);
+  ~MetricsHostReceiver();
+  bool Initialize();
+  void Join();
 };
+
 }  // namespace cuttlefish
