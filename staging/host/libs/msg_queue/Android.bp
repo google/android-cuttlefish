@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library_host_static {
+cc_library_static {
     name: "libcuttlefish_msg_queue",
     srcs: [
         "msg_queue.cc",
