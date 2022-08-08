@@ -1,0 +1,15 @@
+type metrics_helper, domain;
+type metrics_helper_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(metrics_helper)
+
+# set sys.powerctl
+# TODO(b/241398817) powerctl_prop is probably not the best domain for this
+# purpose. Keep it as a workaroung and check later if it's worth creating a new
+# one.
+set_prop(metrics_helper, powerctl_prop)
+
+type metrics_helper_device, file_type;
+
+allow metrics_helper device:dir r_dir_perms;
+allow metrics_helper metrics_helper_device:chr_file rw_file_perms;
