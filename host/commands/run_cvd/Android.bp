@@ -58,6 +58,8 @@ cc_binary {
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
         "libcuttlefish_vm_manager",
+        "libcuttlefish_msg_queue",
+        "libcuttlefish_metrics",
         "libgflags",
     ],
     defaults: [
