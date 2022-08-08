@@ -139,6 +139,9 @@ class DeviceControlApp {
         document.querySelector('#power_btn'),
         evt => this.#onControlPanelButton(evt, 'power'));
     addMouseListeners(
+        document.querySelector('#back_btn'),
+        evt => this.#onControlPanelButton(evt, 'back'));
+    addMouseListeners(
         document.querySelector('#home_btn'),
         evt => this.#onControlPanelButton(evt, 'home'));
     addMouseListeners(
