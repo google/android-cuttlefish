@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,25 @@
 #include <string>
 
 namespace cuttlefish {
-class SysVMessageQueue {
- public:
-  static std::unique_ptr<SysVMessageQueue> Create(const std::string& path,
-                                                  char proj_id,
-                                                  bool auto_close = true);
-  ~SysVMessageQueue();
 
-  int Send(void* data, size_t size, bool block);
-  ssize_t Receive(void* data, size_t size, long msgtyp, bool block);
+const uint32_t MAX_MSG_SIZE = 200;
 
+typedef struct msg_buffer {
+  long mesg_type;
+  char mesg_text[MAX_MSG_SIZE];
+} msg_buffer;
+
+class MetricsReceiver {
  private:
-  SysVMessageQueue(int msgid, bool auto_close);
-  int msgid_;
-  bool auto_close_;
+  static void SendHelper(const std::string &message);
+
+ public:
+  MetricsReceiver();
+  ~MetricsReceiver();
+  static void LogMetricsVMStart();
+  static void LogMetricsVMStop();
+  static void LogMetricsDeviceBoot();
+  static void LogMetricsLockScreen();
 };
+
 }  // namespace cuttlefish
