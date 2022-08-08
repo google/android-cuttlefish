@@ -12,6 +12,7 @@ on early-init
     setprop ro.hw_timeout_multiplier ${ro.boot.hw_timeout_multiplier}
     setprop ro.opengles.version ${ro.boot.opengles.version}
 
+    start metrics_helper
     # start module load in the background
     start vendor.dlkm_loader
 
@@ -105,6 +106,9 @@ service vendor.dlkm_loader /vendor/bin/dlkm_loader
     group root system
     disabled
     oneshot
+
+service metrics_helper /vendor/bin/metrics_helper
+    group system
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server=vsock -tcp_port=5555 -vsock_port=6520
 

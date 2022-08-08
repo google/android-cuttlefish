@@ -46,6 +46,7 @@
 #include "host/libs/config/custom_actions.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
+#include "host/libs/metrics/metrics_receiver.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
@@ -251,6 +252,8 @@ Result<void> RunCvdMain(int argc, char** argv) {
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
     CF_EXPECT(late_injected->LateInject(injector));
   }
+
+  MetricsReceiver::LogMetricsVMStart();
 
   auto instance_bindings = injector.getMultibindings<InstanceLifecycle>();
   CF_EXPECT(instance_bindings.size() == 1);
