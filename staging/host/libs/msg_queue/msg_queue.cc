@@ -33,10 +33,11 @@ namespace cuttlefish {
 // class holds `msgid` returned from msg_queue_create, and match the lifetime of
 // the message queue to the lifetime of the object.
 
-SysVMessageQueue::SysVMessageQueue(int id) { msgid = id; }
+SysVMessageQueue::SysVMessageQueue(int id, bool auto_close)
+    : msgid_(id), auto_close_(auto_close) {}
 
 SysVMessageQueue::~SysVMessageQueue(void) {
-  if (msgctl(msgid, IPC_RMID, NULL) < 0) {
+  if (auto_close_ && msgctl(msgid_, IPC_RMID, NULL) < 0) {
     int error_num = errno;
     LOG(ERROR) << "Could not remove message queue: " << strerror(error_num);
   }
@@ -45,7 +46,7 @@ SysVMessageQueue::~SysVMessageQueue(void) {
 // SysVMessageQueue::Create would return an empty/null std::unique_ptr if
 // initialization failed.
 std::unique_ptr<SysVMessageQueue> SysVMessageQueue::Create(
-    const std::string& path, char proj_id) {
+    const std::string& path, char proj_id, bool auto_close) {
   // key file must exist before calling ftok
   std::fstream fs;
   fs.open(path, std::ios::out);
@@ -62,13 +63,14 @@ std::unique_ptr<SysVMessageQueue> SysVMessageQueue::Create(
   if (queue_id < 0) {
     queue_id = msgget(key, IPC_CREAT | IPC_EXCL | 0600);
   }
-  auto msg = std::unique_ptr<SysVMessageQueue>(new SysVMessageQueue(queue_id));
+  auto msg = std::unique_ptr<SysVMessageQueue>(
+      new SysVMessageQueue(queue_id, auto_close));
   return msg;
 }
 
 int SysVMessageQueue::Send(void* data, size_t size, bool block) {
   int msgflg = block ? 0 : IPC_NOWAIT;
-  if (msgsnd(msgid, data, size, msgflg) < 0) {
+  if (msgsnd(msgid_, data, size, msgflg) < 0) {
     int error_num = errno;
     if (error_num == EAGAIN) {
       // returns EAGAIN if queue is full and non-blocking
@@ -90,7 +92,7 @@ ssize_t SysVMessageQueue::Receive(void* data, size_t size, long msgtyp,
   // System call fails with errno set to ENOMSG if queue is empty and
   // non-blocking.
   int msgflg = block ? 0 : IPC_NOWAIT;
-  return msgrcv(msgid, data, size, msgtyp, msgflg);
+  return msgrcv(msgid_, data, size, msgtyp, msgflg);
 }
 
 }  // namespace cuttlefish
