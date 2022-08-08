@@ -281,6 +281,9 @@ class ConnectionObserverImpl
   void OnPowerButton(bool button_down) override {
     OnKeyboardEvent(KEY_POWER, button_down);
   }
+  void OnBackButton(bool button_down) override {
+    OnKeyboardEvent(KEY_BACK, button_down);
+  }
   void OnHomeButton(bool button_down) override {
     OnKeyboardEvent(KEY_HOMEPAGE, button_down);
   }
