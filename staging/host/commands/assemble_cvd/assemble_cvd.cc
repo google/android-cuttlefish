@@ -50,6 +50,8 @@ DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
 DEFINE_int32(modem_simulator_count, 1,
              "Modem simulator count corresponding to maximum sim number");
 
+DECLARE_bool(use_overlay);
+
 namespace cuttlefish {
 namespace {
 
@@ -173,6 +175,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       auto os_builder = OsCompositeDiskBuilder(config, instance);
       creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
     }
+    // TODO(schuffelen): Add smarter decision for when to delete runtime files.
+    // Files like NVChip are tightly bound to Android keymint and should be
+    // deleted when userdata is reset. However if the user has ever run without
+    // the overlay, then we want to keep this until userdata.img was externally
+    // replaced.
+    creating_os_disk &= FLAGS_use_overlay;
     if (FLAGS_resume && creating_os_disk) {
       LOG(INFO) << "Requested resuming a previous session (the default behavior) "
                 << "but the base images have changed under the overlay, making the "
