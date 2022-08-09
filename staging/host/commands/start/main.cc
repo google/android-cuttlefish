@@ -58,6 +58,9 @@ DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE
 DEFINE_string(file_verbosity, "DEBUG",
               "Log file logging verbosity. Options are VERBOSE,DEBUG,INFO,"
               "WARNING,ERROR");
+DEFINE_bool(use_overlay, true,
+            "Capture disk writes an overlay. This is a "
+            "prerequisite for powerwash_cvd or multiple instances.");
 
 namespace {
 
@@ -199,6 +202,22 @@ int main(int argc, char** argv) {
   auto instance_nums =
       cuttlefish::InstanceNumsCalculator().FromGlobalGflags().Calculate();
   CHECK(instance_nums.ok()) << instance_nums.error();
+
+  if (cuttlefish::CuttlefishConfig::ConfigExists()) {
+    auto previous_config = cuttlefish::CuttlefishConfig::Get();
+    CHECK(previous_config);
+    CHECK(previous_config->Instances().size() > 0);
+    auto previous_instance = previous_config->Instances()[0];
+    const auto& disks = previous_instance.virtual_disk_paths();
+    auto overlay = previous_instance.PerInstancePath("overlay.img");
+    auto used_overlay =
+        std::find(disks.begin(), disks.end(), overlay) != disks.end();
+    CHECK(used_overlay == FLAGS_use_overlay)
+        << "Cannot transition between different values of --use_overlay "
+        << "(Previous = " << used_overlay << ", current = " << FLAGS_use_overlay
+        << "). To fix this, delete \"" << previous_config->root_dir()
+        << "\" and any image files.";
+  }
 
   CHECK(instance_nums->size() > 0) << "Expected at least one instance";
   auto instance_num_str = std::to_string(*instance_nums->begin());

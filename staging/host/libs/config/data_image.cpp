@@ -282,10 +282,15 @@ class InitializeDataImageImpl : public InitializeDataImage {
       }
       return DataImageAction::kCreateImage;
     }
-    if (GetFsType(data_path_.Path()) != config_.userdata_format()) {
+    if (config_.data_policy() == kDataPolicyUseExisting) {
+      return DataImageAction::kNoAction;
+    }
+    auto current_fs_type = GetFsType(data_path_.Path());
+    if (current_fs_type != config_.userdata_format()) {
       CF_EXPECT(config_.data_policy() == kDataPolicyResizeUpTo,
                 "Changing the fs format is incompatible with -data_policy="
-                    << kDataPolicyResizeUpTo);
+                    << kDataPolicyResizeUpTo << " (\"" << current_fs_type
+                    << "\" != \"" << config_.userdata_format() << "\")");
       return DataImageAction::kCreateImage;
     }
     if (config_.data_policy() == kDataPolicyResizeUpTo) {

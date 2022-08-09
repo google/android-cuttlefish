@@ -93,6 +93,7 @@ DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
 DECLARE_bool(protected_vm);
+DECLARE_bool(use_overlay);
 
 namespace cuttlefish {
 
@@ -149,91 +150,91 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig() {
   partitions.push_back(ImagePartition{
       .label = "misc",
       .image_file_path = AbsolutePath(FLAGS_misc_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_a",
       .image_file_path = AbsolutePath(FLAGS_boot_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_b",
       .image_file_path = AbsolutePath(FLAGS_boot_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "init_boot_a",
       .image_file_path = AbsolutePath(FLAGS_init_boot_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "init_boot_b",
       .image_file_path = AbsolutePath(FLAGS_init_boot_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_a",
       .image_file_path = AbsolutePath(FLAGS_vendor_boot_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_b",
       .image_file_path = AbsolutePath(FLAGS_vendor_boot_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_a",
       .image_file_path = AbsolutePath(FLAGS_vbmeta_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_b",
       .image_file_path = AbsolutePath(FLAGS_vbmeta_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_a",
       .image_file_path = AbsolutePath(FLAGS_vbmeta_system_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_b",
       .image_file_path = AbsolutePath(FLAGS_vbmeta_system_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "super",
       .image_file_path = AbsolutePath(FLAGS_super_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "userdata",
       .image_file_path = AbsolutePath(FLAGS_data_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "metadata",
       .image_file_path = AbsolutePath(FLAGS_metadata_image),
-      .read_only = true,
+      .read_only = FLAGS_use_overlay,
   });
   if (!FLAGS_otheros_root_image.empty()) {
     partitions.push_back(ImagePartition{
         .label = "otheros_esp",
         .image_file_path = AbsolutePath(FLAGS_otheros_esp_image),
         .type = kEfiSystemPartition,
-        .read_only = true,
+        .read_only = FLAGS_use_overlay,
     });
     partitions.push_back(ImagePartition{
         .label = "otheros_root",
         .image_file_path = AbsolutePath(FLAGS_otheros_root_image),
-        .read_only = true,
+        .read_only = FLAGS_use_overlay,
     });
   }
   if (!FLAGS_ap_rootfs_image.empty()) {
     partitions.push_back(ImagePartition{
         .label = "ap_rootfs",
         .image_file_path = AbsolutePath(FLAGS_ap_rootfs_image),
-        .read_only = true,
+        .read_only = FLAGS_use_overlay,
     });
   }
   return partitions;
