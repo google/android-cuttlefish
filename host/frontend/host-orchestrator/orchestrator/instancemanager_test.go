@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -228,8 +229,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 
 		s := p[1].(*StageStartCVDServer)
 
-		if s.StartCVDServerCmd == nil {
-			t.Error("expected not nil")
+		if s.CVDBin != paths.CVDBin {
+			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
 		}
 	})
 
@@ -259,11 +260,15 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 
 		s := p[4].(*StageFetchCVD)
 
-		if s.FetchCVDCmd.Paths != paths {
-			t.Errorf("expected <<%+v>>, got %+v", paths, s.FetchCVDCmd.Paths)
+		if s.CVDBin != paths.CVDBin {
+			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
 		}
-		if s.FetchCVDCmd.BuildInfo != *req.BuildInfo {
-			t.Errorf("expected <<%+v>>, got %+v", *req.BuildInfo, s.FetchCVDCmd.Paths)
+		if s.BuildInfo != *req.BuildInfo {
+			t.Errorf("expected <<%+v>>, got %+v", *req.BuildInfo, s.BuildInfo)
+		}
+		expectedOutDir := "/artifacts/256_waldo"
+		if s.OutDir != expectedOutDir {
+			t.Errorf("expected <<%q>>, got %q", expectedOutDir, s.OutDir)
 		}
 	})
 
@@ -330,6 +335,76 @@ func TestStageDownloadCVD(t *testing.T) {
 	actual := string(content)
 	if actual != cvdBinContent {
 		t.Errorf("expected <<%q>>, got %q", cvdBinContent, actual)
+	}
+}
+
+func TestStageStartCVDServerSucceeds(t *testing.T) {
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return createFakeCmd(TestFakeCVDMain, name, args, t)
+	}
+	s := &StageStartCVDServer{
+		ExecContext: execContext,
+		CVDBin:      "/bin/foo",
+	}
+
+	err := s.Run()
+
+	if err != nil {
+		t.Errorf("expected <<nil>>, got %+v", err)
+	}
+}
+
+// NOTE: This test is not a regular unit tests. It simulates a fake `cvd` alone execution.
+// It validates the environment variables and arguments `cvd` should be called with.
+func TestFakeCVDMain(t *testing.T) {
+	// Early exist if called as a regular unit test function.
+	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
+		return
+	}
+	val, ok := os.LookupEnv(envVarAndroidHostOut)
+	if !ok || val != "" {
+		panic("invalid env var: " + envVarAndroidHostOut)
+	}
+	if os.Args[3] != "/bin/foo" {
+		panic("invalid binary path")
+	}
+}
+
+func TestStageFetchCVDSucceeds(t *testing.T) {
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return createFakeCmd(TestFakeCVDFetchMain, name, args, t)
+	}
+	s := &StageFetchCVD{
+		ExecContext: execContext,
+		CVDBin:      "/bin/foo",
+		BuildInfo:   apiv1.BuildInfo{BuildID: "256", Target: "bar"},
+		OutDir:      "/tmp/baz",
+	}
+
+	err := s.Run()
+
+	if err != nil {
+		t.Errorf("expected <<nil>>, got %+v", err)
+	}
+}
+
+// NOTE: This test is not a regular unit tests. It simulates a fake `cvd fetch` execution.
+// It validates the environment variables and arguments `cvd fetch` should be called with.
+func TestFakeCVDFetchMain(t *testing.T) {
+	// Early exist if called as a regular unit test function.
+	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
+		return
+	}
+	val, ok := os.LookupEnv(envVarAndroidHostOut)
+	if !ok || val != "" {
+		panic("invalid env var: " + envVarAndroidHostOut)
+	}
+	if os.Args[3] != "/bin/foo" {
+		panic("invalid binary path")
+	}
+	expectedArgs := []string{"fetch", "--default_build=256/bar", "--directory=/tmp/baz"}
+	if !reflect.DeepEqual(os.Args[4:], expectedArgs) {
+		panic("invalid arguments")
 	}
 }
 
@@ -503,120 +578,6 @@ func TestCVDDownloaderDownloadingFails(t *testing.T) {
 	}
 }
 
-func TestCVDSubcmdStartCVDServerVerifyArgs(t *testing.T) {
-	var usedCommand string
-	var usedArgs []string
-	cvdBin := "cvd"
-	execContext := func(command string, args ...string) *exec.Cmd {
-		usedCommand = command
-		usedArgs = args
-		return createMockGoTestCmd()
-	}
-	cmd := CVDSubcmdStartCVDServer{CVDBin: cvdBin}
-
-	cmd.Run(execContext)
-
-	if usedCommand != cvdBin {
-		t.Errorf("expected <<%q>>, got %q", cvdBin, usedCommand)
-	}
-	if len(usedArgs) > 0 {
-		t.Errorf("expected empty args, got %v", usedArgs)
-	}
-}
-
-func TestCVDSubcmdStartCVDServer(t *testing.T) {
-	execContext := func(command string, args ...string) *exec.Cmd {
-		return createMockGoTestCmd()
-	}
-	cmd := CVDSubcmdStartCVDServer{CVDBin: "cvd"}
-
-	err := cmd.Run(execContext)
-
-	if err != nil {
-		t.Errorf("epected <<nil>> error, got %+v", err)
-	}
-}
-
-func TestCVDSubcmdStartCVDServerExecutionFails(t *testing.T) {
-	execContext := func(command string, args ...string) *exec.Cmd {
-		return createFailingMockGoTestCmd()
-	}
-	cmd := CVDSubcmdStartCVDServer{CVDBin: "cvd"}
-
-	err := cmd.Run(execContext)
-
-	var execErr *exec.ExitError
-	if !errors.As(err, &execErr) {
-		t.Errorf("error type <<\"%T\">> not found in error chain", execErr)
-	}
-}
-
-func TestFetchCVDCmdVerifyArgs(t *testing.T) {
-	var usedCommand string
-	var usedArgs []string
-	execContext := func(command string, args ...string) *exec.Cmd {
-		usedCommand = command
-		usedArgs = args
-		return createMockGoTestCmd()
-	}
-	cvdBin := "cvd"
-	cmd := FetchCVDCmd{
-		ExecContext: execContext,
-		Paths:       IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"},
-		BuildInfo:   apiv1.BuildInfo{BuildID: "123", Target: "foo"},
-	}
-
-	cmd.Run()
-
-	if usedCommand != cvdBin {
-		t.Errorf("expected <<%q>>, got %q", cvdBin, usedCommand)
-	}
-	expectedArgs := []string{"fetch", "--default_build=123/foo", "--directory=/artifacts/123_foo"}
-	if !reflect.DeepEqual(usedArgs, expectedArgs) {
-		t.Errorf("expected <<%+v>>, got %+v", expectedArgs, usedArgs)
-	}
-}
-
-func TestFetchCVDCmdSucceeds(t *testing.T) {
-	execContext := func(command string, args ...string) *exec.Cmd {
-		return createMockGoTestCmd()
-	}
-	cvdBin := "cvd"
-	cmd := FetchCVDCmd{
-		ExecContext: execContext,
-		Paths:       IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"},
-		BuildInfo:   apiv1.BuildInfo{BuildID: "123", Target: "foo"},
-	}
-
-	_, err := cmd.Run()
-
-	if err != nil {
-		t.Errorf("expected <<nil>> error, got %+v", err)
-	}
-}
-
-func TestFetchCVDCmdFails(t *testing.T) {
-	execContext := func(command string, args ...string) *exec.Cmd {
-		return createFailingMockGoTestCmd()
-	}
-	cvdBin := "cvd"
-	cmd := FetchCVDCmd{
-		ExecContext: execContext,
-		Paths:       IMPaths{CVDBin: cvdBin, ArtifactsRootDir: "/artifacts"},
-		BuildInfo:   apiv1.BuildInfo{BuildID: "123", Target: "foo"},
-	}
-
-	stdoutStderr, err := cmd.Run()
-
-	if len(stdoutStderr) == 0 {
-		t.Error("expected a non empty combined standard output and standard error")
-	}
-	var execErr *exec.ExitError
-	if !errors.As(err, &execErr) {
-		t.Errorf("error type <<\"%T\">> not found in error chain", execErr)
-	}
-}
-
 type roundTripFunc func(r *http.Request) (*http.Response, error)
 
 func (s roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -730,33 +691,28 @@ func removeDir(t *testing.T, name string) {
 	}
 }
 
-// Creates a new exec.Cmd, which will call the `TestMockGoTestCmdHelperFunction`
-// function through the execution of the `go test` binary using the parameter `--test.run`.
-func createMockGoTestCmd() *exec.Cmd {
-	cs := []string{"--test.run=TestMockGoTestCmdHelperFunction"}
-	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"EXECUTED_AS_MOCK_GO_TEST_CMD=1"}
-	return cmd
-}
+type fakeMainFunc func(*testing.T)
+
+const executedAsFakeMainArg = "executed_as_fake_main"
 
 // Creates a new exec.Cmd, which will call the `TestMockGoTestCmdHelperFunction`
 // function through the execution of the `go test` binary using the parameter `--test.run`.
-// The execution of this command will fail.
-func createFailingMockGoTestCmd() *exec.Cmd {
-	cs := []string{"--test.run=TestMockGoTestCmdHelperFunction"}
+func createFakeCmd(fn fakeMainFunc, name string, args []string, t *testing.T) *exec.Cmd {
+	cs := []string{"--test.run=" + funcName(fn), executedAsFakeMainArg}
+	verifyCmd := exec.Command(os.Args[0], cs...)
+	err := verifyCmd.Run()
+	if err == nil {
+		// Makes sure the test function used as `fakeMainFunc` is picked by `go test`, otherwise the
+		// execution will always succeed as no test was actually ran.
+		t.Fatalf("execution of %s with no arguments or env variables set must fail", funcName(fn))
+	}
+	cs = append(cs, name)
+	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"EXECUTED_AS_MOCK_GO_TEST_CMD=1", "EXECUTION_FAILS=1"}
 	return cmd
 }
 
-// NOTE: This is not a regular unit tests. This is a helper test meant to be called
-// when executing the command returned in `createTestCmd`.
-func TestMockGoTestCmdHelperFunction(t *testing.T) {
-	// Early exist if called as a regular unit test function.
-	if os.Getenv("EXECUTED_AS_MOCK_GO_TEST_CMD") != "1" {
-		return
-	}
-	if os.Getenv("EXECUTION_FAILS") == "1" {
-		panic("fails")
-	}
+func funcName(fn fakeMainFunc) string {
+	name := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
+	return name[strings.LastIndex(name, ".")+1:]
 }
