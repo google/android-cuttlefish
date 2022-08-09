@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
 #include <fruit/fruit.h>
@@ -23,6 +22,6 @@
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<CommandSequenceExecutor>>
-AcloudCommandComponent();
+DemoMultiVdComponent();
 
 }
