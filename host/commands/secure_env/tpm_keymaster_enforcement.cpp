@@ -282,6 +282,8 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
     return KM_ERROR_UNKNOWN_ERROR;
   }
   std::vector<uint8_t> token_buf_to_sign(token->SerializedSize(), 0);
+  token->Serialize(token_buf_to_sign.data(),
+                   token_buf_to_sign.data() + token_buf_to_sign.size());
   auto hmac =
       TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
               token_buf_to_sign.data(), token_buf_to_sign.size());
