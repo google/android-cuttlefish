@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+#include <cmath>
+#include <thread>
+
 #include <android-base/chrono_utils.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <utils/SystemClock.h>
-
-#include <thread>
 
 #include <aidl/android/hardware/sensors/BnSensors.h>
 
@@ -79,8 +80,9 @@ void endSensorInjection(const std::shared_ptr<ISensors> sensors) {
 }
 
 // Inject ACCELEROMETER events to corresponding to a given physical
-// device orientation: portrait or landscape.
-void InjectOrientation(bool portrait) {
+// device position.
+void InjectOrientation(int rotationDeg) {
+  auto rad = M_PI * rotationDeg / 180.0;
   auto sensors = startSensorInjection();
   int handle = getSensorHandle(SensorType::ACCELEROMETER, sensors);
 
@@ -89,13 +91,11 @@ void InjectOrientation(bool portrait) {
   event.sensorHandle = handle;
   event.sensorType = SensorType::ACCELEROMETER;
   Event::EventPayload::Vec3 vec3;
-  if (portrait) {
-    vec3.x = 0;
-    vec3.y = 9.2;
-  } else {
-    vec3.x = 9.2;
-    vec3.y = 0;
-  }
+  // (x^2 + y^2 + z^2)^1/2 = ~9.8 = 1G
+  vec3.x = 9.2 * std::sin(rad);
+  vec3.y = 9.2 * std::cos(rad);
+  // z is fixed at 3.5, meaning the device is positioned vertically with a
+  // slight inclination backwards.
   vec3.z = 3.5;
   vec3.status = SensorStatus::ACCURACY_HIGH;
   event.payload.set<Event::EventPayload::Tag::vec3>(vec3);
@@ -138,21 +138,14 @@ void InjectHingeAngle(int angle) {
 }
 
 int main(int argc, char** argv) {
-  if (argc == 2) {
-    LOG(FATAL) << "Expected command line args 'rotate <portrait|landscape>' or "
-                  "'hinge_angle <value>'";
+  if (argc != 3) {
+    LOG(FATAL) << "Expected command line args 'rotate <angle>' or 'hinge_angle "
+                  "<value>'";
   }
 
   if (!strcmp(argv[1], "rotate")) {
-    bool portrait = true;
-    if (!strcmp(argv[2], "portrait")) {
-      portrait = true;
-    } else if (!strcmp(argv[2], "landscape")) {
-      portrait = false;
-    } else {
-      LOG(FATAL) << "Expected command line arg 'portrait' or 'landscape'";
-    }
-    InjectOrientation(portrait);
+    int rotationDeg = std::stoi(argv[2]);
+    InjectOrientation(rotationDeg);
   } else if (!strcmp(argv[1], "hinge_angle")) {
     int angle = std::stoi(argv[2]);
     if (angle < 0 || angle > 360) {

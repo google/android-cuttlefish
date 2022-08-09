@@ -442,7 +442,7 @@ class DeviceControlApp {
       let deviceDisplayInfo = deviceDisplayInfoList[i];
       let deviceDisplayDescription = this.#displayDescriptions[i];
 
-      let rotated = this.#currentRotation == 1 ? ' (Rotated)' : '';
+      let rotated = this.#currentRotation != 0 ? ' (Rotated)' : '';
       deviceDisplayInfo.textContent = `Display ${i} - ` +
           `${deviceDisplayDescription.x_res}x` +
           `${deviceDisplayDescription.y_res} ` +
@@ -660,7 +660,7 @@ class DeviceControlApp {
     if (e.type == 'mousedown') {
       adbShell(
           '/vendor/bin/cuttlefish_sensor_injection rotate ' +
-          (this.#currentRotation == 0 ? 'landscape' : 'portrait'))
+          (this.#currentRotation == 0 ? '90' : '0'));
     }
   }
 
