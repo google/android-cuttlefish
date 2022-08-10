@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/http_client.h"
+#include "host/libs/web/http_client/http_client.h"
 
 #include <stdio.h>
 
