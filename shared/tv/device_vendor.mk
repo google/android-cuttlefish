@@ -42,8 +42,9 @@ PRODUCT_PACKAGES += android.hardware.tv.cec@1.1-service
 # Setup HDMI CEC as Playback Device
 PRODUCT_PROPERTY_OVERRIDES += ro.hdmi.device_type=4
 
-# Tuner HAL
-PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example
+# Tuner lazy HAL
+PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example-lazy
+PRODUCT_VENDOR_PROPERTIES += ro.tuner.lazyhal=true
 
 # Sample Tuner Input for testing
 #PRODUCT_PACKAGES += LiveTv sampletunertvinput
