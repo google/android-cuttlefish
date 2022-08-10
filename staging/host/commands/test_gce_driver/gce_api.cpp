@@ -24,7 +24,6 @@
 #include <android-base/strings.h>
 
 #include "host/libs/web/credential_source.h"
-#include "host/libs/web/http_client.h"
 
 using android::base::Error;
 using android::base::Result;
