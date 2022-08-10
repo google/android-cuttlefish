@@ -1,24 +1,31 @@
-import { Component, OnInit, SecurityContext } from "@angular/core";
+import { Component, OnInit, OnDestroy, SecurityContext } from "@angular/core";
 import { DisplaysService } from "../displays.service";
-import { Pipe, PipeTransform } from "@angular/core";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
+import { Subscription } from "rxjs";
 
 @Component({
   selector: "app-view-pane",
   templateUrl: "./view-pane.component.html",
   styleUrls: ["./view-pane.component.sass"],
 })
-export class ViewPaneComponent implements OnInit {
+export class ViewPaneComponent implements OnInit, OnDestroy {
   deviceURL: string = "";
   visibleDevices: string[] = [];
+  private subscription! : Subscription;
 
   constructor(
     public displaysService: DisplaysService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
   ) {}
 
   ngOnInit(): void {
-    this.visibleDevices = this.displaysService.displays;
+    this.subscription = this.displaysService.getVisibleDevices().subscribe((display) => {
+      this.visibleDevices = display;
+    })
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   deviceConnectURL(display: string): string {

@@ -1,6 +1,6 @@
 <div>
-  <div class="view-pane" *ngIf="displaysService.displays.length">
-    <div class="device-viewer" *ngFor="let display of displaysService.displays">
+  <div class="view-pane" *ngIf="visibleDevices.length">
+    <div class="device-viewer" *ngFor="let display of visibleDevices">
       <h3>
         {{ display }}
       </h3>

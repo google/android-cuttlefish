@@ -12,7 +12,6 @@ import { Observable, of } from "rxjs";
 export class DevicePaneComponent implements OnInit {
   devices: Observable<Device[]> = of([]);
   deviceList: Device[] = [];
-  selectedDevice?: Device;
 
   constructor(
     private deviceService: DeviceService,
@@ -24,12 +23,10 @@ export class DevicePaneComponent implements OnInit {
   }
 
   onSelect(device: Device): void {
-    device.isVisible = !device.isVisible;
-    this.selectedDevice = device;
-    if (this.selectedDevice.isVisible == false) {
-      this.displaysService.remove(`${this.selectedDevice.id}`);
+    if (device.isVisible == false) {
+      this.displaysService.remove(device.id);
     } else {
-      this.displaysService.add(`${this.selectedDevice.id}`);
+      this.displaysService.add(device.id);
     }
   }
 
@@ -56,6 +53,7 @@ export class DevicePaneComponent implements OnInit {
     this.devices.subscribe((deviceArray) => {
       deviceArray.forEach((device) => {
         if (device.isVisible == false) {
+          device.isVisible = true;
           this.onSelect(device);
         }
       });
