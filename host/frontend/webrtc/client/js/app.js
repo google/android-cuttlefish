@@ -570,30 +570,23 @@ class DeviceControlApp {
     let anyDisplayLoaded = false;
     const deviceDisplays = document.getElementById('device-displays');
     for (const deviceDisplayDescription of this.#displayDescriptions) {
-      let deviceDisplay = document.createElement('div');
-      deviceDisplay.classList.add('device-display');
-      // Start the screen as hidden. Only show when data is ready.
-      deviceDisplay.style.visibility = 'hidden';
+      let displayFragment =
+          document.querySelector('#display-template').content.cloneNode(true);
 
-      let deviceDisplayInfo = document.createElement("div");
-      deviceDisplayInfo.classList.add("device-display-info");
+      let deviceDisplayInfo =
+          displayFragment.querySelector('.device-display-info');
       deviceDisplayInfo.id = deviceDisplayDescription.stream_id + '_info';
-      deviceDisplay.appendChild(deviceDisplayInfo);
 
-      let deviceDisplayVideo = document.createElement('video');
-      deviceDisplayVideo.autoplay = true;
-      deviceDisplayVideo.muted = true;
+      let deviceDisplayVideo = displayFragment.querySelector('video');
       deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
-      deviceDisplayVideo.classList.add('device-display-video');
       deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
         if (!anyDisplayLoaded) {
           anyDisplayLoaded = true;
           this.#onDeviceDisplayLoaded();
         }
       });
-      deviceDisplay.appendChild(deviceDisplayVideo);
 
-      deviceDisplays.appendChild(deviceDisplay);
+      deviceDisplays.appendChild(displayFragment);
 
       let stream_id = deviceDisplayDescription.stream_id;
       this.#deviceConnection.getStream(stream_id)

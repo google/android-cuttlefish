@@ -291,6 +291,7 @@ body {
 .device-display {
   /* Prevents #device-displays from using this element when computing flex size. */
   position: absolute;
+  visibility: hidden;
 }
 
 /* Container <div> to show info about the individual display. */
