@@ -16,7 +16,7 @@
 #pragma once
 
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/web/http_client.h"
+#include "host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 namespace http_client {
