@@ -18,7 +18,7 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/web/http_client.h"
+#include "host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
