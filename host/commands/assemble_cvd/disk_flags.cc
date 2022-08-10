@@ -656,7 +656,8 @@ class InitializeMetadataImage : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    if (FileExists(FLAGS_metadata_image)) {
+    if (FileExists(FLAGS_metadata_image) &&
+        FileSize(FLAGS_metadata_image) == FLAGS_blank_metadata_image_mb << 20) {
       return {};
     }
 
