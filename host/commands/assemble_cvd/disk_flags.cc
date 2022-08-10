@@ -81,7 +81,7 @@ DEFINE_string(otheros_initramfs_path, "",
 DEFINE_string(otheros_root_image, "",
               "Location of cuttlefish otheros root filesystem image.");
 
-DEFINE_int32(blank_metadata_image_mb, 16,
+DEFINE_int32(blank_metadata_image_mb, 64,
              "The size of the blank metadata image to generate, MB.");
 DEFINE_int32(blank_sdcard_image_mb, 2048,
              "If enabled, the size of the blank sdcard image to generate, MB.");
