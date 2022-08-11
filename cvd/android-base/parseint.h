@@ -44,6 +44,9 @@ bool ParseUint(const char* s, T* out, T max = std::numeric_limits<T>::max(),
     return false;
   }
 
+  // This is never out of bounds. If string is zero-sized, s[0] == '\0'
+  // so the second condition is not checked. If string is "0",
+  // s[1] will compare against the '\0'.
   int base = (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) ? 16 : 10;
   errno = 0;
   char* end;
