@@ -63,7 +63,6 @@ TARGET_USE_BTLINUX_HAL_IMPL ?= true
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     boot \
-    init_boot \
     odm \
     odm_dlkm \
     product \
@@ -75,6 +74,11 @@ AB_OTA_PARTITIONS += \
     vendor \
     vendor_boot \
     vendor_dlkm \
+
+TARGET_USES_INITBOOT ?= true
+ifeq ($(TARGET_USES_INITBOOT),true)
+AB_OTA_PARTITIONS += init_boot
+endif
 
 # Enable Virtual A/B
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/android_t_baseline.mk)
