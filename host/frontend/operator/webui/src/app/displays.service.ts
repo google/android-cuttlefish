@@ -1,8 +1,8 @@
-import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable } from "rxjs";
+import {Injectable} from '@angular/core';
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class DisplaysService {
   private displays: string[] = [];
@@ -14,7 +14,7 @@ export class DisplaysService {
   }
 
   remove(display: string) {
-    this.displays = this.displays.filter((element) => element !== display);
+    this.displays = this.displays.filter(element => element !== display);
     this.visibleDevicesChanged.next(this.displays);
   }
 

@@ -1,14 +1,14 @@
-import { Injectable } from "@angular/core";
-import { Observable, of, tap, map } from "rxjs";
-import { HttpClient } from "@angular/common/http";
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {HttpClient} from '@angular/common/http';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class DeviceService {
   constructor(private readonly httpClient: HttpClient) {}
 
   getDevices(): Observable<string[]> {
-    return this.httpClient.get<string[]>("/devices");
+    return this.httpClient.get<string[]>('/devices');
   }
 }
