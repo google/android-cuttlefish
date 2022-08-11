@@ -6,7 +6,6 @@ import { HttpClient } from "@angular/common/http";
   providedIn: "root",
 })
 export class DeviceService {
-
   constructor(private readonly httpClient: HttpClient) {}
 
   getDevices(): Observable<string[]> {
