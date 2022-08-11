@@ -10,7 +10,7 @@
 <div>
   <ul class="devices">
     <section class="device-list">
-      <li *ngFor="let device of (devices | async)">
+      <li *ngFor="let device of devices | async">
         <!--Implemented with checkbox, not radio button as current page-->
         <mat-checkbox
           class="checkbox"

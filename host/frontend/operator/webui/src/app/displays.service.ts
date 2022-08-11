@@ -8,7 +8,6 @@ export class DisplaysService {
   private displays: string[] = [];
   private visibleDevicesChanged = new BehaviorSubject<string[]>([]);
 
-
   add(display: string) {
     this.displays.push(display);
     this.visibleDevicesChanged.next(this.displays);

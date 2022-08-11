@@ -11,17 +11,19 @@ import { Subscription } from "rxjs";
 export class ViewPaneComponent implements OnInit, OnDestroy {
   deviceURL: string = "";
   visibleDevices: string[] = [];
-  private subscription! : Subscription;
+  private subscription!: Subscription;
 
   constructor(
     public displaysService: DisplaysService,
-    private sanitizer: DomSanitizer,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
-    this.subscription = this.displaysService.getVisibleDevices().subscribe((display) => {
-      this.visibleDevices = display;
-    })
+    this.subscription = this.displaysService
+      .getVisibleDevices()
+      .subscribe((display) => {
+        this.visibleDevices = display;
+      });
   }
 
   ngOnDestroy(): void {
