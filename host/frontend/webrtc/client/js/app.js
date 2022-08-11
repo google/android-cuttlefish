@@ -726,7 +726,7 @@ class DeviceControlApp {
       }
     }
 
-    let deviceDisplayList = document.getElementsByClassName('device-display');
+    let deviceDisplayList = document.getElementsByClassName('device-display-video');
     if (window.PointerEvent) {
       for (const deviceDisplay of deviceDisplayList) {
         deviceDisplay.addEventListener('pointerdown', onStartDrag);
