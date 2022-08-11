@@ -759,50 +759,9 @@ class DeviceControlApp {
     // A click at that position is not more dangerous than anywhere else since
     // the user is clicking blind anyways.
     const videoWidth = deviceDisplay.videoWidth ? deviceDisplay.videoWidth : 1;
-    const videoHeight =
-        deviceDisplay.videoHeight ? deviceDisplay.videoHeight : 1;
     const elementWidth =
         deviceDisplay.offsetWidth ? deviceDisplay.offsetWidth : 1;
-    const elementHeight =
-        deviceDisplay.offsetHeight ? deviceDisplay.offsetHeight : 1;
-
-    // vh*ew > eh*vw? then scale h instead of w
-    const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
-    let elementScaling = 0, videoScaling = 0;
-    if (scaleHeight) {
-      elementScaling = elementHeight;
-      videoScaling = videoHeight;
-    } else {
-      elementScaling = elementWidth;
-      videoScaling = videoWidth;
-    }
-
-    // The screen uses the 'object-fit: cover' property in order to completely
-    // fill the element while maintaining the screen content's aspect ratio.
-    // Therefore:
-    // - If vh*ew > eh*vw, w is scaled so that content width == element width
-    // - Otherwise,        h is scaled so that content height == element height
-    const scaleWidth = videoHeight * elementWidth > videoWidth * elementHeight;
-
-    // Convert to coordinates relative to the video by scaling.
-    // (This matches the scaling used by 'object-fit: cover'.)
-    //
-    // This scaling is needed to translate from the in-browser x/y to the
-    // on-device x/y.
-    //   - When the device screen has not been resized, this is simple: scale
-    //     the coordinates based on the ratio between the input video size and
-    //     the in-browser size.
-    //   - When the device screen has been resized, this scaling is still needed
-    //     even though the in-browser size and device size are identical. This
-    //     is due to the way WindowManager handles a resized screen, resized via
-    //     `adb shell wm size`:
-    //       - The ABS_X and ABS_Y max values of the screen retain their
-    //         original values equal to the value set when launching the device
-    //         (which equals the video size here).
-    //       - The sent ABS_X and ABS_Y values need to be scaled based on the
-    //         ratio between the max size (video size) and in-browser size.
-    const scaling =
-        scaleWidth ? videoWidth / elementWidth : videoHeight / elementHeight;
+    const scaling = videoWidth / elementWidth;
 
     let xArr = [];
     let yArr = [];
@@ -875,21 +834,8 @@ class DeviceControlApp {
     }
 
     for (let i = 0; i < xArr.length; i++) {
-      xArr[i] = xArr[i] * scaling;
-      yArr[i] = yArr[i] * scaling;
-
-      // Substract the offset produced by the difference in aspect ratio, if
-      // any.
-      if (scaleWidth) {
-        // Width was scaled, leaving excess content height, so subtract from y.
-        yArr[i] -= (elementHeight * scaling - videoHeight) / 2;
-      } else {
-        // Height was scaled, leaving excess content width, so subtract from x.
-        xArr[i] -= (elementWidth * scaling - videoWidth) / 2;
-      }
-
-      xArr[i] = Math.trunc(xArr[i]);
-      yArr[i] = Math.trunc(yArr[i]);
+      xArr[i] = Math.trunc(xArr[i] * scaling);
+      yArr[i] = Math.trunc(yArr[i] * scaling);
     }
 
     // NOTE: Rotation is handled automatically because the CSS rotation through
