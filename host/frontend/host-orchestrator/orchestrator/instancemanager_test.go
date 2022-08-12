@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -203,12 +204,12 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		ArtifactsRootDir: "/artifacts",
 		HomesRootDir:     "/homes",
 	}
-	builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 	req := apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{BuildID: "256", Target: "waldo"},
 	}
 
 	t.Run("download cvd stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
 		s := p[0].(*StageDownloadCVD)
@@ -225,6 +226,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("start cvd server stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
 		s := p[1].(*StageStartCVDServer)
@@ -235,6 +237,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("create artifacts root directory stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
 		s := p[2].(*StageCreateDirIfNotExist)
@@ -245,6 +248,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("create cvd artifacts directory stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
 		s := p[3].(*StageCreateDirIfNotExist)
@@ -256,6 +260,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("fetch cvd artifacts stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
 		s := p[4].(*StageFetchCVD)
@@ -273,11 +278,12 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("fetch cvd artifacts stages with same build info", func(t *testing.T) {
-		firstBuilder := builder.Build(req)
-		secondBuilder := builder.Build(req)
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
+		pFirst := builder.Build(req)
+		pSecond := builder.Build(req)
 
-		first := firstBuilder[4].(*StageFetchCVD)
-		second := secondBuilder[4].(*StageFetchCVD)
+		first := pFirst[4].(*StageFetchCVD)
+		second := pSecond[4].(*StageFetchCVD)
 
 		if first != second {
 			t.Errorf("expected <<%+v>>, got %+v", first, second)
@@ -285,12 +291,64 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 	})
 
 	t.Run("create homes root directory stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
 		s := p[5].(*StageCreateDirIfNotExist)
 
 		if s.Dir != paths.HomesRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
+		}
+	})
+
+	t.Run("create cvd home directory stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
+		p := builder.Build(req)
+
+		s := p[6].(*StageCreateDirIfNotExist)
+
+		expected := "/homes/cvd-1"
+		if s.Dir != expected {
+			t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
+		}
+	})
+
+	t.Run("create cvd home directory multiple times", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
+		for i := 0; i < 10; i++ {
+			p := builder.Build(req)
+
+			s := p[6].(*StageCreateDirIfNotExist)
+
+			expected := fmt.Sprintf("/homes/cvd-%d", i+1)
+			if s.Dir != expected {
+				t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
+			}
+		}
+	})
+
+	t.Run("launch cvd stage", func(t *testing.T) {
+		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
+		for i := 0; i < 10; i++ {
+			p := builder.Build(req)
+
+			s := p[7].(*StageLaunchCVD)
+
+			if s.CVDBin != paths.CVDBin {
+				t.Errorf("expected <<%q>>, got %+q", paths.CVDBin, s.CVDBin)
+			}
+			var expectedN uint32 = uint32(i + 1)
+			if s.InstanceNumber != expectedN {
+				t.Errorf("expected <<%d>>, got %d", expectedN, s.InstanceNumber)
+			}
+			expectedArtDir := "/artifacts/256_waldo"
+			if s.ArtifactsDir != expectedArtDir {
+				t.Errorf("expected <<%q>>, got %+q", expectedArtDir, s.ArtifactsDir)
+			}
+			expectedHomeDir := fmt.Sprintf("/homes/cvd-%d", expectedN)
+			if s.HomeDir != expectedHomeDir {
+				t.Errorf("expected <<%q>>, got %+q", expectedHomeDir, s.HomeDir)
+			}
 		}
 	})
 }
@@ -403,6 +461,72 @@ func TestFakeCVDFetchMain(t *testing.T) {
 		panic("invalid binary path")
 	}
 	expectedArgs := []string{"fetch", "--default_build=256/bar", "--directory=/tmp/baz"}
+	if !reflect.DeepEqual(os.Args[4:], expectedArgs) {
+		panic("invalid arguments")
+	}
+}
+
+const envVarCuttlefishTestEnvVar = "CUTTLEFISH_TEST_ENV_VAR"
+
+func TestStageLaunchCVDSucceeds(t *testing.T) {
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return createFakeCmd(TestFakeCVDStartMain, name, args, t)
+	}
+	s := &StageLaunchCVD{
+		ExecContext:    execContext,
+		CVDBin:         "/bin/foo",
+		InstanceNumber: 1,
+		ArtifactsDir:   "/tmp/bar",
+		HomeDir:        "/tmp/baz",
+	}
+	// Tests that the current environment gets inherited.
+	if err := os.Setenv(envVarCuttlefishTestEnvVar, ""); err != nil {
+		t.Fatal(err)
+	}
+	// Test that the relevant environment variables values are overwritten.
+	if err := os.Setenv(envVarAndroidHostOut, "FOO"); err != nil {
+		t.Fatal(err)
+	}
+
+	err := s.Run()
+
+	if err != nil {
+		t.Errorf("expected <<nil>>, got %+v", err)
+	}
+
+	// Cleanup environment
+	if err := os.Unsetenv(envVarCuttlefishTestEnvVar); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Unsetenv(envVarAndroidHostOut); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// NOTE: This test is not a regular unit tests. It simulates a fake `cvd start` execution.
+// It validates the environment variables and arguments `cvd start` should be called with.
+func TestFakeCVDStartMain(t *testing.T) {
+	// Early exist if called as a regular unit test function.
+	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
+		return
+	}
+	if _, ok := os.LookupEnv(envVarCuttlefishTestEnvVar); !ok {
+		panic("invalid env var: " + envVarCuttlefishTestEnvVar)
+	}
+	if os.Args[3] != "/bin/foo" {
+		panic("invalid binary path")
+	}
+	if os.Getenv(envVarAndroidHostOut) != "/tmp/bar" {
+		panic("invalid env var: " + envVarAndroidHostOut)
+	}
+	if os.Getenv(envVarHome) != "/tmp/baz" {
+		panic("invalid env var: " + envVarAndroidHostOut)
+	}
+	expectedArgs := []string{
+		"start",
+		daemonArg, reportAnonymousUsageStatsArg,
+		"--base_instance_num=1", "--system_image_dir=/tmp/bar",
+	}
 	if !reflect.DeepEqual(os.Args[4:], expectedArgs) {
 		panic("invalid arguments")
 	}
