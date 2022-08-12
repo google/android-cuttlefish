@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
+import {map, Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 
 @Injectable({
@@ -9,6 +9,6 @@ export class DeviceService {
   constructor(private readonly httpClient: HttpClient) {}
 
   getDevices(): Observable<string[]> {
-    return this.httpClient.get<string[]>('/devices');
+    return this.httpClient.get<string[]>('/devices').pipe(map((devices) => devices.sort()));
   }
 }
