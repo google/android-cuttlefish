@@ -1,4 +1,3 @@
 host/frontend/host-orchestrator/host-orchestrator /usr/lib/cuttlefish-common/bin/
-host/frontend/operator/static /usr/share/cuttlefish-common/host-orchestrator/
-host/frontend/operator/webui/dist/webui /usr/share/cuttlefish-common/host-orchestrator/
+host/frontend/operator/webui/dist/static /usr/share/cuttlefish-common/host-orchestrator/
 host/frontend/operator/intercept /usr/share/cuttlefish-common/host-orchestrator/

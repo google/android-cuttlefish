@@ -31,7 +31,7 @@ const (
 	DefaultHttpPort       = "1080"
 	DefaultHttpsPort      = "1443"
 	DefaultTLSCertDir     = "/etc/cuttlefish-common/host-orchestrator/cert"
-	DefaultStaticFilesDir = "webui"     // relative path
+	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
 
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
