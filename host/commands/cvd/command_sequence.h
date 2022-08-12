@@ -37,7 +37,7 @@ class CommandSequenceExecutor : public LateInjected {
 
  private:
   std::vector<CvdServerHandler*> server_handlers_;
-  CvdServerHandler* current_handler_;
+  std::vector<CvdServerHandler*> handler_stack_;
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
 };
