@@ -1,0 +1,11 @@
+{
+	"enable_audio": false,
+	"enable_host_bluetooth": false,
+	"enable_modem_simulator": false,
+	"enable_vehicle_hal_grpc_server": false,
+	"gpu_mode" : "none",
+	"memory_mb" : 256,
+	"start_gnss_proxy": false,
+	"start_webrtc": false,
+	"use_sdcard" : false
+}
