@@ -148,8 +148,11 @@ class DeviceControlApp {
         document.querySelector('#menu_btn'),
         evt => this.#onControlPanelButton(evt, 'menu'));
     addMouseListeners(
-        document.querySelector('#rotate_btn'),
-        evt => this.#onRotateButton(evt, 'rotate'));
+        document.querySelector('#rotate_left_btn'),
+        evt => this.#onRotateLeftButton(evt, 'rotate'));
+    addMouseListeners(
+        document.querySelector('#rotate_right_btn'),
+        evt => this.#onRotateRightButton(evt, 'rotate'));
     addMouseListeners(
         document.querySelector('#volume_up_btn'),
         evt => this.#onControlPanelButton(evt, 'volumeup'));
@@ -387,7 +390,7 @@ class DeviceControlApp {
   }
 
   #rotateDisplays(rotation) {
-    if (rotation == this.#currentRotation) {
+    if ((rotation - this.#currentRotation) % 360 == 0) {
       return;
     }
 
@@ -420,7 +423,7 @@ class DeviceControlApp {
           `${deviceDisplayDescription.y_res} ` +
           `(${deviceDisplayDescription.dpi} DPI)`;
       if (this.#currentRotation != 0) {
-        text += ` (Rotated ${this.currentRotation}deg)`
+        text += ` (Rotated ${this.#currentRotation}deg)`
       }
       l.textContent = text;
     });
@@ -565,15 +568,24 @@ class DeviceControlApp {
     this.#initializeAdb();
   }
 
-  #onRotateButton(e) {
+  #onRotateLeftButton(e) {
+    if (e.type == 'mousedown') {
+      this.#onRotateButton(this.#currentRotation + 90);
+    }
+  }
+
+  #onRotateRightButton(e) {
+    if (e.type == 'mousedown') {
+      this.#onRotateButton(this.#currentRotation - 90);
+    }
+  }
+
+  #onRotateButton(rotation) {
     // Attempt to init adb again, in case the initial connection failed.
     // This succeeds immediately if already connected.
     this.#initializeAdb();
-    if (e.type == 'mousedown') {
-      adbShell(
-          '/vendor/bin/cuttlefish_sensor_injection rotate ' +
-          (this.#currentRotation == 0 ? '90' : '0'));
-    }
+    this.#rotateDisplays(rotation);
+    adbShell(`/vendor/bin/cuttlefish_sensor_injection rotate ${rotation}`);
   }
 
   #onControlPanelButton(e, command) {
