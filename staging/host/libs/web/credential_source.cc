@@ -49,8 +49,8 @@ Result<std::string> GceMetadataCredentialSource::Credential() {
 }
 
 Result<void> GceMetadataCredentialSource::RefreshCredential() {
-  auto response =
-      http_client.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"});
+  auto response = CF_EXPECT(
+      http_client.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"}));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
@@ -152,7 +152,7 @@ Result<void> RefreshCredentialSource::UpdateLatestCredential() {
   data << "grant_type=refresh_token";
 
   static constexpr char kUrl[] = "https://oauth2.googleapis.com/token";
-  auto response = http_client_.PostToJson(kUrl, data.str(), headers);
+  auto response = CF_EXPECT(http_client_.PostToJson(kUrl, data.str(), headers));
   CF_EXPECT(response.HttpSuccess(), response.data);
   auto& json = response.data;
 
@@ -276,7 +276,8 @@ Result<void> ServiceAccountOauthCredentialSource::RefreshCredential() {
   content << "assertion=" << http_client_.UrlEscape(jwt);
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
-  auto response = http_client_.PostToJson(URL, content.str(), headers);
+  auto response =
+      CF_EXPECT(http_client_.PostToJson(URL, content.str(), headers));
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
                 << response.data << "\", and code was " << response.http_code);
