@@ -72,19 +72,27 @@ class CurlClient : public HttpClient {
   ~CurlClient() { curl_easy_cleanup(curl_); }
 
   Result<HttpResponse<std::string>> GetToString(
-      const std::string&, const std::vector<std::string>&) override {
-    return CF_ERR("Not implemented");
+      const std::string& url,
+      const std::vector<std::string>& headers) override {
+    std::stringstream stream;
+    auto callback = [&stream](char* data, size_t size) -> bool {
+      if (data == nullptr) {
+        stream = std::stringstream();
+        return true;
+      }
+      stream.write(data, size);
+      return true;
+    };
+    long http_code = CF_EXPECT(DownloadToCallback(callback, url, headers));
+    return HttpResponse<std::string>{stream.str(), http_code};
   }
 
-  HttpResponse<std::string> PostToString(
+  Result<HttpResponse<std::string>> PostToString(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO) << "Attempting to download \"" << url << "\"";
-    if (!curl_) {
-      LOG(ERROR) << "curl was not initialized\n";
-      return {"", -1};
-    }
+    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     curl_slist* curl_headers = build_slist(headers);
     curl_easy_reset(curl_);
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
@@ -103,23 +111,20 @@ class CurlClient : public HttpClient {
     if (curl_headers) {
       curl_slist_free_all(curl_headers);
     }
-    if (res != CURLE_OK) {
-      LOG(ERROR) << "curl_easy_perform() failed. "
-                 << "Code was \"" << res << "\". "
-                 << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                 << "Error buffer was \"" << error_buf << "\".";
-      return {"", -1};
-    }
+    CF_EXPECT(res == CURLE_OK,
+              "curl_easy_perform() failed. "
+                  << "Code was \"" << res << "\". "
+                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                  << "Error buffer was \"" << error_buf << "\".");
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return {data_to_read.str(), http_code};
+    return HttpResponse<std::string>{data_to_read.str(), http_code};
   }
 
-  HttpResponse<Json::Value> PostToJson(
+  Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
-    HttpResponse<std::string> response =
-        PostToString(url, data_to_write, headers);
+    auto response = CF_EXPECT(PostToString(url, data_to_write, headers));
     const std::string& contents = response.data;
     Json::CharReaderBuilder builder;
     std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
@@ -131,10 +136,10 @@ class CurlClient : public HttpClient {
       json["error"] = "Failed to parse json.";
       json["response"] = contents;
     }
-    return {json, response.http_code};
+    return HttpResponse<Json::Value>{json, response.http_code};
   }
 
-  HttpResponse<Json::Value> PostToJson(
+  Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const Json::Value& data_to_write,
       const std::vector<std::string>& headers) override {
     std::stringstream json_str;
@@ -142,19 +147,13 @@ class CurlClient : public HttpClient {
     return PostToJson(url, json_str.str(), headers);
   }
 
-  HttpResponse<bool> DownloadToCallback(
-      DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers) {
+  Result<long> DownloadToCallback(DataCallback callback, const std::string& url,
+                                  const std::vector<std::string>& headers) {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO) << "Attempting to download \"" << url << "\"";
-    if (!curl_) {
-      LOG(ERROR) << "curl was not initialized\n";
-      return {false, -1};
-    }
-    if (!callback(nullptr, 0)) {  // Signal start of data
-      LOG(ERROR) << "Callback failure\n";
-      return {false, -1};
-    }
+    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
+    CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
+              "callback failure");
     curl_slist* curl_headers = build_slist(headers);
     curl_easy_reset(curl_);
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
@@ -170,19 +169,17 @@ class CurlClient : public HttpClient {
     if (curl_headers) {
       curl_slist_free_all(curl_headers);
     }
-    if (res != CURLE_OK) {
-      LOG(ERROR) << "curl_easy_perform() failed. "
-                 << "Code was \"" << res << "\". "
-                 << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                 << "Error buffer was \"" << error_buf << "\".";
-      return {false, -1};
-    }
+    CF_EXPECT(res == CURLE_OK,
+              "curl_easy_perform() failed. "
+                  << "Code was \"" << res << "\". "
+                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                  << "Error buffer was \"" << error_buf << "\".");
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return {true, http_code};
+    return http_code;
   }
 
-  HttpResponse<std::string> DownloadToFile(
+  Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) {
     LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
@@ -195,40 +192,14 @@ class CurlClient : public HttpClient {
       stream.write(data, size);
       return !stream.fail();
     };
-    auto callback_res = DownloadToCallback(callback, url, headers);
-    if (!callback_res.data) {
-      return {"", callback_res.http_code};
-    }
-    return {path, callback_res.http_code};
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!curl_) {
-      LOG(ERROR) << "curl was not initialized\n";
-      return {"", -1};
-    }
+    long http_code = CF_EXPECT(DownloadToCallback(callback, url, headers));
+    return HttpResponse<std::string>{path, http_code};
   }
 
-  HttpResponse<std::string> DownloadToString(
+  Result<HttpResponse<Json::Value>> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers) {
-    std::stringstream stream;
-    auto callback = [&stream](char* data, size_t size) -> bool {
-      if (data == nullptr) {
-        stream = std::stringstream();
-        return true;
-      }
-      stream.write(data, size);
-      return true;
-    };
-    auto callback_res = DownloadToCallback(callback, url, headers);
-    if (!callback_res.data) {
-      return {"", callback_res.http_code};
-    }
-    return {stream.str(), callback_res.http_code};
-  }
-
-  HttpResponse<Json::Value> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers) {
-    HttpResponse<std::string> response = DownloadToString(url, headers);
-    const std::string& contents = response.data;
+    auto result = CF_EXPECT(GetToString(url, headers));
+    const std::string& contents = result.data;
     Json::CharReaderBuilder builder;
     std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
     Json::Value json;
@@ -239,18 +210,15 @@ class CurlClient : public HttpClient {
       json["error"] = "Failed to parse json.";
       json["response"] = contents;
     }
-    return {json, response.http_code};
+    return HttpResponse<Json::Value>{json, result.http_code};
   }
 
-  HttpResponse<Json::Value> DeleteToJson(
+  Result<HttpResponse<Json::Value>> DeleteToJson(
       const std::string& url,
       const std::vector<std::string>& headers) override {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO) << "Attempting to download \"" << url << "\"";
-    if (!curl_) {
-      LOG(ERROR) << "curl was not initialized\n";
-      return {"", -1};
-    }
+    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     curl_slist* curl_headers = build_slist(headers);
     curl_easy_reset(curl_);
     curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -268,13 +236,11 @@ class CurlClient : public HttpClient {
     if (curl_headers) {
       curl_slist_free_all(curl_headers);
     }
-    if (res != CURLE_OK) {
-      LOG(ERROR) << "curl_easy_perform() failed. "
-                 << "Code was \"" << res << "\". "
-                 << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                 << "Error buffer was \"" << error_buf << "\".";
-      return {"", -1};
-    }
+    CF_EXPECT(res == CURLE_OK,
+              "curl_easy_perform() failed. "
+                  << "Code was \"" << res << "\". "
+                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                  << "Error buffer was \"" << error_buf << "\".");
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
 
@@ -289,7 +255,7 @@ class CurlClient : public HttpClient {
       json["error"] = "Failed to parse json.";
       json["response"] = contents;
     }
-    return {json, http_code};
+    return HttpResponse<Json::Value>{json, http_code};
   }
 
   std::string UrlEscape(const std::string& text) override {
@@ -313,63 +279,68 @@ class ServerErrorRetryClient : public HttpClient {
         retry_delay_(retry_delay) {}
 
   Result<HttpResponse<std::string>> GetToString(
-      const std::string&, const std::vector<std::string>&) override {
-    return CF_ERR("Not implemented");
+      const std::string& url, const std::vector<std::string>& headers) {
+    auto fn = [&, this]() { return inner_client_.GetToString(url, headers); };
+    return CF_EXPECT(RetryImpl<std::string>(fn));
   }
 
-  HttpResponse<std::string> PostToString(
+  Result<HttpResponse<std::string>> PostToString(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers) override {
-    return RetryImpl<std::string>(
-        [&, this]() { return inner_client_.PostToString(url, data, headers); });
+    auto fn = [&, this]() {
+      return inner_client_.PostToString(url, data, headers);
+    };
+    return CF_EXPECT(RetryImpl<std::string>(fn));
   }
 
-  HttpResponse<Json::Value> PostToJson(
+  Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const Json::Value& data,
       const std::vector<std::string>& headers) override {
-    return RetryImpl<Json::Value>(
-        [&, this]() { return inner_client_.PostToJson(url, data, headers); });
+    auto fn = [&, this]() {
+      return inner_client_.PostToJson(url, data, headers);
+    };
+    return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
-  HttpResponse<Json::Value> PostToJson(
+  Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers) override {
-    return RetryImpl<Json::Value>(
-        [&, this]() { return inner_client_.PostToJson(url, data, headers); });
+    auto fn = [&, this]() {
+      return inner_client_.PostToJson(url, data, headers);
+    };
+    return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
-  HttpResponse<std::string> DownloadToFile(
+  Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) {
-    return RetryImpl<std::string>([&, this]() {
+    auto fn = [&, this]() {
       return inner_client_.DownloadToFile(url, path, headers);
-    });
+    };
+    return CF_EXPECT(RetryImpl<std::string>(fn));
   }
 
-  HttpResponse<std::string> DownloadToString(
+  Result<HttpResponse<Json::Value>> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers) {
-    return RetryImpl<std::string>(
-        [&, this]() { return inner_client_.DownloadToString(url, headers); });
+    auto fn = [&, this]() {
+      return inner_client_.DownloadToJson(url, headers);
+    };
+    return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
-  HttpResponse<Json::Value> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers) {
-    return RetryImpl<Json::Value>(
-        [&, this]() { return inner_client_.DownloadToJson(url, headers); });
-  }
-
-  HttpResponse<bool> DownloadToCallback(
+  Result<long> DownloadToCallback(
       DataCallback cb, const std::string& url,
       const std::vector<std::string>& hdrs) override {
-    return RetryImpl<bool>([&, this]() {
-      return inner_client_.DownloadToCallback(cb, url, hdrs);
-    });
+    auto fn = [&, this]() { return DownloadToCallbackHelper(cb, url, hdrs); };
+    auto response = CF_EXPECT(RetryImpl<bool>(fn));
+    return response.http_code;
   }
-  HttpResponse<Json::Value> DeleteToJson(
+
+  Result<HttpResponse<Json::Value>> DeleteToJson(
       const std::string& url,
       const std::vector<std::string>& headers) override {
-    return RetryImpl<Json::Value>(
-        [&, this]() { return inner_client_.DeleteToJson(url, headers); });
+    auto fn = [&, this]() { return inner_client_.DeleteToJson(url, headers); };
+    return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
   std::string UrlEscape(const std::string& text) override {
@@ -378,18 +349,28 @@ class ServerErrorRetryClient : public HttpClient {
 
  private:
   template <typename T>
-  HttpResponse<T> RetryImpl(std::function<HttpResponse<T>()> attempt_fn) {
+  Result<HttpResponse<T>> RetryImpl(
+      std::function<Result<HttpResponse<T>>()> attempt_fn) {
     HttpResponse<T> response;
     for (int attempt = 0; attempt != retry_attempts_; ++attempt) {
       if (attempt != 0) {
         std::this_thread::sleep_for(retry_delay_);
       }
-      response = attempt_fn();
+      response = CF_EXPECT(attempt_fn());
       if (!response.HttpServerError()) {
         return response;
       }
     }
     return response;
+  }
+
+  // Wraps the http_code into an HttpResponse<bool> instance in order to be
+  // reused in the RetryImpl function.
+  Result<HttpResponse<bool>> DownloadToCallbackHelper(
+      DataCallback cb, const std::string& url,
+      const std::vector<std::string>& hdrs) {
+    long http_code = CF_EXPECT(inner_client_.DownloadToCallback(cb, url, hdrs));
+    return HttpResponse<bool>{false /* irrelevant */, http_code};
   }
 
  private:
