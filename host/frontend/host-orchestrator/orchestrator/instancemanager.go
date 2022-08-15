@@ -291,7 +291,8 @@ func (s *StageFetchCVD) Run() error {
 }
 
 const (
-	daemonArg                    = "--daemon"
+	daemonArg = "--daemon"
+	// TODO(b/242599859): Add report_anonymous_usage_stats as a parameter to the Create CVD API.
 	reportAnonymousUsageStatsArg = "--report_anonymous_usage_stats=y"
 )
 
