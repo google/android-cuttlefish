@@ -41,11 +41,11 @@ cc_binary {
         "libjsoncpp",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libxml2",
     ],
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
-        "libxml2",
         "libcvd_gnss_grpc_proxy",
         "liblocation",
     ],
@@ -66,9 +66,9 @@ cc_test_host {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libxml2",
     ],
     static_libs: [
-        "libxml2",
         "liblocation",
         "libgmock",
     ],
