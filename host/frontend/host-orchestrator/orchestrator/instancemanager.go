@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"sync/atomic"
 
 	apiv1 "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
@@ -121,6 +122,7 @@ type LaunchCVDProcedureBuilder struct {
 	stageCreateHomesDir     *StageCreateDirIfNotExist
 	stageFetchCVDMap        map[string]*StageFetchCVD
 	stageFetchCVDMapMutex   sync.Mutex
+	instanceNumberCounter   uint32
 }
 
 func NewLaunchCVDProcedureBuilder(
@@ -149,8 +151,10 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 	if !ok {
 		panic("invalid type")
 	}
+	instanceNumber := atomic.AddUint32(&b.instanceNumberCounter, 1)
 	artifactsDir :=
 		fmt.Sprintf("%s/%s_%s", b.paths.ArtifactsRootDir, req.BuildInfo.BuildID, req.BuildInfo.Target)
+	homeDir := fmt.Sprintf("%s/cvd-%d", b.paths.HomesRootDir, instanceNumber)
 	return Procedure{
 		b.stageDownloadCVD,
 		b.stageStartCVDServer,
@@ -158,6 +162,8 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 		&StageCreateDirIfNotExist{Dir: artifactsDir},
 		b.buildFetchCVDStage(req.BuildInfo, artifactsDir),
 		b.stageCreateHomesDir,
+		&StageCreateDirIfNotExist{Dir: homeDir},
+		b.buildLaunchCVDStage(instanceNumber, artifactsDir, homeDir),
 	}
 }
 
@@ -179,6 +185,17 @@ func (b *LaunchCVDProcedureBuilder) buildFetchCVDStage(
 	return value
 }
 
+func (b *LaunchCVDProcedureBuilder) buildLaunchCVDStage(
+	instanceNumber uint32, artifactsDir, homeDir string) *StageLaunchCVD {
+	return &StageLaunchCVD{
+		ExecContext:    exec.Command,
+		CVDBin:         b.paths.CVDBin,
+		InstanceNumber: instanceNumber,
+		ArtifactsDir:   artifactsDir,
+		HomeDir:        homeDir,
+	}
+}
+
 type StageDownloadCVD struct {
 	CVDBin     string
 	Build      AndroidBuild
@@ -194,7 +211,10 @@ func (s *StageDownloadCVD) Run() error {
 
 type ExecContext = func(name string, arg ...string) *exec.Cmd
 
-const envVarAndroidHostOut = "ANDROID_HOST_OUT"
+const (
+	envVarAndroidHostOut = "ANDROID_HOST_OUT"
+	envVarHome           = "HOME"
+)
 
 type StageStartCVDServer struct {
 	ExecContext ExecContext
@@ -268,6 +288,41 @@ func (s *StageFetchCVD) Run() error {
 		log.Printf("`cvd fetch` failed with combined stdout and stderr: %q", string(stdoutStderr))
 	}
 	return err
+}
+
+const (
+	daemonArg = "--daemon"
+	// TODO(b/242599859): Add report_anonymous_usage_stats as a parameter to the Create CVD API.
+	reportAnonymousUsageStatsArg = "--report_anonymous_usage_stats=y"
+)
+
+type StageLaunchCVD struct {
+	ExecContext    ExecContext
+	CVDBin         string
+	InstanceNumber uint32
+	ArtifactsDir   string
+	HomeDir        string
+}
+
+func (s *StageLaunchCVD) Run() error {
+	instanceNumArg := fmt.Sprintf("--base_instance_num=%d", s.InstanceNumber)
+	imgDirArg := fmt.Sprintf("--system_image_dir=%s", s.ArtifactsDir)
+	cmd := s.ExecContext(s.CVDBin, "start",
+		daemonArg,
+		reportAnonymousUsageStatsArg,
+		instanceNumArg,
+		imgDirArg,
+	)
+	cmd.Env = append(os.Environ(),
+		fmt.Sprintf("%s=%s", envVarAndroidHostOut, s.ArtifactsDir),
+		fmt.Sprintf("%s=%s", envVarHome, s.HomeDir),
+	)
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("`cvd start` failed with combined stdout and stderr: %s", string(stdoutStderr))
+		return fmt.Errorf("launch cvd stage failed: %w", err)
+	}
+	return nil
 }
 
 type CVDDownloader struct {
