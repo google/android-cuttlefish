@@ -25,10 +25,14 @@
 
 namespace cuttlefish {
 
+static inline bool IsHttpSuccess(int http_code) {
+  return http_code >= 200 && http_code <= 299;
+};
+
 template <typename T>
 struct HttpResponse {
   bool HttpInfo() { return http_code >= 100 && http_code <= 199; }
-  bool HttpSuccess() { return http_code >= 200 && http_code <= 299; }
+  bool HttpSuccess() { return IsHttpSuccess(http_code); }
   bool HttpRedirect() { return http_code >= 300 && http_code <= 399; }
   bool HttpClientError() { return http_code >= 400 && http_code <= 499; }
   bool HttpServerError() { return http_code >= 500 && http_code <= 599; }
@@ -37,7 +41,6 @@ struct HttpResponse {
   long http_code;
 };
 
-// TODO(b/239963496): Use Result<T> return type in relevant methods.
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
@@ -48,33 +51,39 @@ class HttpClient {
 
   virtual ~HttpClient();
 
-  // NOTE: `GetToString` and `DownloadToString` should be merged into a single
-  // method once b/239963496 is addressed.
   virtual Result<HttpResponse<std::string>> GetToString(
       const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-  virtual HttpResponse<std::string> PostToString(
+  virtual Result<HttpResponse<std::string>> PostToString(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers = {}) = 0;
-  virtual HttpResponse<Json::Value> PostToJson(
+
+  // Returns the json object contained in the response's body.
+  //
+  // NOTE: In case of a parsing error a successful `result` will be returned
+  // with the relevant http status code and a json object with the next format:
+  // {
+  //   "error": "Failed to parse json",
+  //   "response: "<THE RESPONSE BODY>"
+  // }
+  virtual Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers = {}) = 0;
-  virtual HttpResponse<Json::Value> PostToJson(
+  virtual Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const Json::Value& data,
       const std::vector<std::string>& headers = {}) = 0;
+  virtual Result<HttpResponse<Json::Value>> DownloadToJson(
+      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
+  virtual Result<HttpResponse<Json::Value>> DeleteToJson(
+      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
 
-  virtual HttpResponse<std::string> DownloadToFile(
+  virtual Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers = {}) = 0;
-  virtual HttpResponse<std::string> DownloadToString(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-  virtual HttpResponse<Json::Value> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-  virtual HttpResponse<bool> DownloadToCallback(
+
+  // Returns response's status code.
+  virtual Result<long> DownloadToCallback(
       DataCallback callback, const std::string& url,
       const std::vector<std::string>& headers = {}) = 0;
-
-  virtual HttpResponse<Json::Value> DeleteToJson(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
 
   virtual std::string UrlEscape(const std::string&) = 0;
 };
