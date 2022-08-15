@@ -105,14 +105,13 @@ int ImportLocationsCvdMain(int argc, char** argv) {
 
   int delay = (int)(1000 * FLAGS_delay);
   for (auto itr : gps_locations) {
-    std::string timestamp = " ";
     std::string latitude = std::to_string(itr.latitude);
     std::string longitude = std::to_string(itr.longitude);
     std::string elevation = std::to_string(itr.elevation);
 
     std::string formatted_location =
-        gpsclient.FormatGps(latitude, longitude, elevation, timestamp, true);
-    auto status = gpsclient.SendGps(formatted_location);
+        gpsclient.FormatGps(latitude, longitude, elevation);
+    auto status = gpsclient.SendSingleGpsLoc(formatted_location);
     CHECK(status.ok()) << "Failed to send gps location data \n";
     if (!status.ok()) {
       return 1;
