@@ -30,9 +30,9 @@ namespace cuttlefish {
 GnssClient::GnssClient(std::shared_ptr<grpc::Channel> channel)
     : stub_(GnssGrpcProxy::NewStub(channel)) {}
 
-// Assambles the client's payload, sends it and presents the response back
+// Aseembles the client's payload, sends it and presents the response back
 // from the server.
-Result<grpc::Status> GnssClient::SendGps(const std::string& user) {
+Result<grpc::Status> GnssClient::SendSingleGpsLoc(const std::string& user) {
   // Data we are sending to the server.
   SendGpsRequest request;
   request.set_gps(user);
@@ -61,18 +61,11 @@ LatitudeDegrees,LongitudeDegrees,AltitudeMeters,SpeedMps,AccuracyMeters,BearingD
 */
 std::string GnssClient::FormatGps(const std::string& latitude,
                                   const std::string& longitude,
-                                  const std::string& elevation,
-                                  const std::string& timestamp,
-                                  bool inject_time) {
-  std::string unix_time_millis;
-  if (inject_time) {
-    unix_time_millis =
-        std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
-                           std::chrono::system_clock::now().time_since_epoch())
-                           .count());
-  } else {
-    unix_time_millis = timestamp;
-  }
+                                  const std::string& elevation) {
+  std::string unix_time_millis =
+      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::system_clock::now().time_since_epoch())
+                         .count());
   std::string formatted_location =
       std::string("Fix,GPS,") + latitude + "," + longitude + "," + elevation +
       "," + std::string("0.000000,3.790092,0.000000,") + unix_time_millis +
