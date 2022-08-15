@@ -33,13 +33,13 @@ cc_library_static {
         "libjsoncpp",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
+        "libxml2",
     ],
     static_libs: [
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libjsoncpp",
-        "libxml2",
         "libcvd_gnss_grpc_proxy",
     ],
     cflags: [
