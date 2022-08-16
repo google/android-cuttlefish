@@ -8,6 +8,10 @@ jobs:
     container:
       image: ubuntu:jammy-20220531 # Ubuntu 22.04
     steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
     - name: setup apt
       run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
