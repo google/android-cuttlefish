@@ -324,6 +324,9 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 			if s.Dir != expected {
 				t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
 			}
+			if !s.FailIfExist {
+				t.Errorf("expected true")
+			}
 		}
 	})
 
