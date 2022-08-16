@@ -115,14 +115,14 @@ type ProcedureBuilder interface {
 // Fetch CVD stages will be reused to avoid downloading the artifacts of the same
 // target multiple times.
 type LaunchCVDProcedureBuilder struct {
-	paths                   IMPaths
-	stageDownloadCVD        *StageDownloadCVD
-	stageStartCVDServer     *StageStartCVDServer
-	stageCreateArtifactsDir *StageCreateDirIfNotExist
-	stageCreateHomesDir     *StageCreateDirIfNotExist
-	stageFetchCVDMap        map[string]*StageFetchCVD
-	stageFetchCVDMapMutex   sync.Mutex
-	instanceNumberCounter   uint32
+	paths                       IMPaths
+	stageDownloadCVD            *StageDownloadCVD
+	stageStartCVDServer         *StageStartCVDServer
+	stageCreateArtifactsRootDir *StageCreateDir
+	stageCreateHomesRootDir     *StageCreateDir
+	stageFetchCVDMap            map[string]*StageFetchCVD
+	stageFetchCVDMapMutex       sync.Mutex
+	instanceNumberCounter       uint32
 }
 
 func NewLaunchCVDProcedureBuilder(
@@ -140,9 +140,9 @@ func NewLaunchCVDProcedureBuilder(
 			ExecContext: exec.Command,
 			CVDBin:      paths.CVDBin,
 		},
-		stageCreateArtifactsDir: &StageCreateDirIfNotExist{Dir: paths.ArtifactsRootDir},
-		stageCreateHomesDir:     &StageCreateDirIfNotExist{Dir: paths.HomesRootDir},
-		stageFetchCVDMap:        make(map[string]*StageFetchCVD),
+		stageCreateArtifactsRootDir: &StageCreateDir{Dir: paths.ArtifactsRootDir},
+		stageCreateHomesRootDir:     &StageCreateDir{Dir: paths.HomesRootDir},
+		stageFetchCVDMap:            make(map[string]*StageFetchCVD),
 	}
 }
 
@@ -151,18 +151,18 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 	if !ok {
 		panic("invalid type")
 	}
-	instanceNumber := atomic.AddUint32(&b.instanceNumberCounter, 1)
 	artifactsDir :=
 		fmt.Sprintf("%s/%s_%s", b.paths.ArtifactsRootDir, req.BuildInfo.BuildID, req.BuildInfo.Target)
+	instanceNumber := atomic.AddUint32(&b.instanceNumberCounter, 1)
 	homeDir := fmt.Sprintf("%s/cvd-%d", b.paths.HomesRootDir, instanceNumber)
 	return Procedure{
 		b.stageDownloadCVD,
 		b.stageStartCVDServer,
-		b.stageCreateArtifactsDir,
-		&StageCreateDirIfNotExist{Dir: artifactsDir},
+		b.stageCreateArtifactsRootDir,
+		&StageCreateDir{Dir: artifactsDir},
 		b.buildFetchCVDStage(req.BuildInfo, artifactsDir),
-		b.stageCreateHomesDir,
-		&StageCreateDirIfNotExist{Dir: homeDir},
+		b.stageCreateHomesRootDir,
+		&StageCreateDir{Dir: homeDir, FailIfExist: true},
 		b.buildLaunchCVDStage(instanceNumber, artifactsDir, homeDir),
 	}
 }
@@ -246,14 +246,16 @@ func (s *StageStartCVDServer) Run() error {
 	return err
 }
 
-type StageCreateDirIfNotExist struct {
-	Dir string
+type StageCreateDir struct {
+	Dir         string
+	FailIfExist bool
 }
 
-func (s *StageCreateDirIfNotExist) Run() error {
+func (s *StageCreateDir) Run() error {
 	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
 	// once b/236976427 is addressed.
-	if err := os.Mkdir(s.Dir, 0755); err != nil && !os.IsExist(err) {
+	err := os.Mkdir(s.Dir, 0755)
+	if err != nil && ((s.FailIfExist && os.IsExist(err)) || (!os.IsExist(err))) {
 		return err
 	}
 	// Mkdir set the permission bits (before umask)
@@ -335,7 +337,7 @@ func NewCVDDownloader(downloader ArtifactDownloader) *CVDDownloader {
 }
 
 func (h *CVDDownloader) Download(filename string, build AndroidBuild) error {
-	exist, err := h.exist(filename)
+	exist, err := fileExist(filename)
 	if err != nil {
 		return err
 	}
@@ -354,16 +356,6 @@ func (h *CVDDownloader) Download(filename string, build AndroidBuild) error {
 		return err
 	}
 	return h.osChmod(filename, 0750)
-}
-
-func (h *CVDDownloader) exist(name string) (bool, error) {
-	if _, err := os.Stat(name); err == nil {
-		return true, nil
-	} else if os.IsNotExist(err) {
-		return false, nil
-	} else {
-		return false, err
-	}
 }
 
 // Represents a downloader of artifacts hosted in Android Build (https://ci.android.com).
@@ -446,4 +438,14 @@ func BuildGetSignedURL(baseURL string, build AndroidBuild, name string) string {
 		"latest",
 		name)
 	return baseURL + uri
+}
+
+func fileExist(name string) (bool, error) {
+	if _, err := os.Stat(name); err == nil {
+		return true, nil
+	} else if os.IsNotExist(err) {
+		return false, nil
+	} else {
+		return false, err
+	}
 }
