@@ -167,14 +167,14 @@ Return<void> RadioConfigImpl::setSimSlotsMapping(int32_t serial, const hidl_vec<
     }
     size_t slotNum = slotMap.size();
 
-    if (slotNum > RIL_SOCKET_NUM) {
+    if (slotNum > MAX_LOGICAL_MODEM_NUM) {
         RLOGE("setSimSlotsMapping: invalid parameter");
         sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
         return Void();
     }
 
     for (size_t socket_id = 0; socket_id < slotNum; socket_id++) {
-        if (slotMap[socket_id] >= RIL_SOCKET_NUM) {
+        if (slotMap[socket_id] >= MAX_LOGICAL_MODEM_NUM) {
             RLOGE("setSimSlotsMapping: invalid parameter[%zu]", socket_id);
             sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
             return Void();

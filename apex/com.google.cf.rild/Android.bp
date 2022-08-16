@@ -22,6 +22,12 @@ prebuilt_etc {
     installable: false,
 }
 
+prebuilt_etc {
+    name: "ld.config.txt",
+    src: "ld.config.txt",
+    installable: false,
+}
+
 apex {
     name: "com.google.cf.rild",
     manifest: "apex_manifest.json",
@@ -42,6 +48,7 @@ apex {
         "android.hardware.telephony.gsm.prebuilt.xml",
         "android.hardware.telephony.ims.prebuilt.xml",
         "com.google.cf.rild.rc",
+        "ld.config.txt",
     ],
     vintf_fragments: [":libril-modem-lib-manifests"],
     overrides: [

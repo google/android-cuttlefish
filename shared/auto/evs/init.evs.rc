@@ -1,0 +1,11 @@
+on late-init
+    start automotive_display
+    start vendor.evs-hal-mock
+    start evs_manager_cf
+
+service evs_manager_cf /system/bin/evsmanagerd --target hw/0
+    class hal
+    priority -20
+    user automotive_evs
+    group automotive_evs system
+    disabled # will not automatically start with its class; must be explicitly started.
