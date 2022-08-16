@@ -85,7 +85,8 @@ func getServiceLogs(w http.ResponseWriter, _ *http.Request) {
 	cmd := exec.Command("journalctl", "-u", "cuttlefish-host-orchestrator.service")
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(w, "error fetching logs: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "error retrieving logs: %v\n", err)
 		return
 	}
 	w.Write(stdoutStderr)
