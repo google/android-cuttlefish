@@ -208,7 +208,7 @@ static int32_t net2pmask[] = {
 #define CDMA  (RAF_IS95A | RAF_IS95B | RAF_1xRTT)
 #define EVDO  (RAF_EVDO_0 | RAF_EVDO_A | RAF_EVDO_B | RAF_EHRPD)
 #define WCDMA (RAF_HSUPA | RAF_HSDPA | RAF_HSPA | RAF_HSPAP | RAF_UMTS)
-#define LTE   (RAF_LTE | RAF_LTE_CA)
+#define LTE   (RAF_LTE)
 #define NR    (RAF_NR)
 
 typedef struct {
@@ -713,6 +713,18 @@ static void requestShutdown(RIL_Token t)
     at_response_free(p_response);
     RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
     return;
+}
+
+static void requestNvResetConfig(void* data, size_t datalen __unused, RIL_Token t) {
+    assert(datalen >= sizeof(int*));
+    int nvConfig = ((int*)data)[0];
+    if (nvConfig == 1 /* ResetNvType::RELOAD */) {
+        setRadioState(RADIO_STATE_OFF);
+        // Wait for FW to process radio off before sending radio on for reboot
+        sleep(5);
+        setRadioState(RADIO_STATE_ON);
+    }
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
 static void requestOrSendDataCallList(int cid, RIL_Token *t);
@@ -1543,8 +1555,8 @@ static void requestDeviceIdentity(int request __unused, void *data __unused,
     int count = 4;
 
     // Fixed values. TODO: Query modem
-    responseStr[0] = "----";
-    responseStr[1] = "----";
+    responseStr[0] ="358240051111110";
+    responseStr[1] =  "";
     responseStr[2] = "77777777";
     responseStr[3] = ""; // default empty for non-CDMA
 
@@ -3329,29 +3341,32 @@ static void requestGetCellInfoList(void *data __unused, size_t datalen __unused,
 }
 
 static void requestGetCellInfoList_1_6(void* data __unused, size_t datalen __unused, RIL_Token t) {
-    uint64_t curTime = ril_nano_time();
     RIL_CellInfo_v16 ci[1] = {{    // ci[0]
-                               1,  // cellInfoType
+                               3,  // cellInfoType
                                1,  // registered
                                CELL_CONNECTION_PRIMARY_SERVING,
-                               { // union CellInfo
-                                {// RIL_CellInfoGsm gsm
-                                 {
-                                         // gsm.cellIdneityGsm
-                                         s_mcc,  // mcc
-                                         s_mnc,  // mnc
-                                         s_lac,  // lac
-                                         s_cid,  // cid
-                                         0,      // arfcn unknown
-                                         0x1,    // Base Station Identity Code set to arbitrarily 1
-                                 },
-                                 {
-                                         // gsm.signalStrengthGsm
-                                         10,  // signalStrength
-                                         0    // bitErrorRate
-                                         ,
-                                         INT_MAX  // timingAdvance invalid value
-                                 }}}}};
+                               {        // union CellInfo
+                                .lte = {// RIL_CellInfoLte_v12 lte
+                                        {
+                                                // RIL_CellIdentityLte_v12
+                                                // lte.cellIdentityLte
+                                                s_mcc,  // mcc
+                                                s_mnc,  // mnc
+                                                s_cid,  // ci
+                                                0,      // pci
+                                                s_lac,  // tac
+                                                7,      // earfcn
+                                        },
+                                        {
+                                                // RIL_LTE_SignalStrength_v8
+                                                // lte.signalStrengthLte
+                                                10,      // signalStrength
+                                                44,      // rsrp
+                                                3,       // rsrq
+                                                30,      // rssnr
+                                                0,       // cqi
+                                                INT_MAX  // timingAdvance invalid value
+                                        }}}}};
 
     RIL_onRequestComplete(t, RIL_E_SUCCESS, ci, sizeof(ci));
 }
@@ -4817,6 +4832,10 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_SET_TTY_MODE:
         case RIL_REQUEST_CDMA_SET_PREFERRED_VOICE_PRIVACY_MODE:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
+
+        case RIL_REQUEST_NV_RESET_CONFIG:
+            requestNvResetConfig(data, datalen, t);
             break;
 
         case RIL_REQUEST_BASEBAND_VERSION:

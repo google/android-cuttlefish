@@ -16,55 +16,52 @@
 
 #include <android-base/chrono_utils.h>
 #include <android-base/logging.h>
-#include <binder/IServiceManager.h>
-#include <utils/StrongPointer.h>
+#include <android/binder_manager.h>
 #include <utils/SystemClock.h>
 
 #include <thread>
 
-#include "android/hardware/sensors/2.1/ISensors.h"
+#include <aidl/android/hardware/sensors/BnSensors.h>
 
-using android::sp;
-using android::hardware::sensors::V1_0::OperationMode;
-using android::hardware::sensors::V1_0::Result;
-using android::hardware::sensors::V1_0::SensorStatus;
-using android::hardware::sensors::V2_1::Event;
-using android::hardware::sensors::V2_1::ISensors;
-using android::hardware::sensors::V2_1::SensorInfo;
-using android::hardware::sensors::V2_1::SensorType;
+using aidl::android::hardware::sensors::Event;
+using aidl::android::hardware::sensors::ISensors;
+using aidl::android::hardware::sensors::SensorInfo;
+using aidl::android::hardware::sensors::SensorStatus;
+using aidl::android::hardware::sensors::SensorType;
 
-sp<ISensors> startSensorInjection() {
-  const sp<ISensors> sensors = ISensors::getService();
+std::shared_ptr<ISensors> startSensorInjection() {
+  auto sensors = ISensors::fromBinder(ndk::SpAIBinder(
+      AServiceManager_getService("android.hardware.sensors.ISensors/default")));
   if (sensors == nullptr) {
     LOG(FATAL) << "Unable to get ISensors.";
   }
 
   // Place the ISensors HAL into DATA_INJECTION mode so that we can
   // inject events.
-  Result result = sensors->setOperationMode(OperationMode::DATA_INJECTION);
-  if (result != Result::OK) {
+  auto result =
+      sensors->setOperationMode(ISensors::OperationMode::DATA_INJECTION);
+  if (!result.isOk()) {
     LOG(FATAL) << "Unable to set ISensors operation mode to DATA_INJECTION: "
-               << toString(result);
+               << result.getDescription();
   }
 
   return sensors;
 }
 
-int getSensorHandle(SensorType type, const sp<ISensors> sensors) {
+int getSensorHandle(SensorType type, const std::shared_ptr<ISensors> sensors) {
   // Find the first available sensor of the given type.
   int handle = -1;
-  const auto& getSensorsList_result =
-      sensors->getSensorsList_2_1([&](const auto& list) {
-        for (const SensorInfo& sensor : list) {
-          if (sensor.type == type) {
-            handle = sensor.sensorHandle;
-            break;
-          }
-        }
-      });
-  if (!getSensorsList_result.isOk()) {
+  std::vector<SensorInfo> sensors_list;
+  auto result = sensors->getSensorsList(&sensors_list);
+  if (!result.isOk()) {
     LOG(FATAL) << "Unable to get ISensors sensors list: "
-               << getSensorsList_result.description();
+               << result.getDescription();
+  }
+  for (const SensorInfo& sensor : sensors_list) {
+    if (sensor.type == type) {
+      handle = sensor.sensorHandle;
+      break;
+    }
   }
   if (handle == -1) {
     LOG(FATAL) << "Unable to find sensor.";
@@ -72,45 +69,46 @@ int getSensorHandle(SensorType type, const sp<ISensors> sensors) {
   return handle;
 }
 
-void endSensorInjection(const sp<ISensors> sensors) {
+void endSensorInjection(const std::shared_ptr<ISensors> sensors) {
   // Return the ISensors HAL back to NORMAL mode.
-  Result result = sensors->setOperationMode(OperationMode::NORMAL);
-  if (result != Result::OK) {
+  auto result = sensors->setOperationMode(ISensors::OperationMode::NORMAL);
+  if (!result.isOk()) {
     LOG(FATAL) << "Unable to set sensors operation mode to NORMAL: "
-               << toString(result);
+               << result.getDescription();
   }
 }
 
 // Inject ACCELEROMETER events to corresponding to a given physical
 // device orientation: portrait or landscape.
 void InjectOrientation(bool portrait) {
-  sp<ISensors> sensors = startSensorInjection();
+  auto sensors = startSensorInjection();
   int handle = getSensorHandle(SensorType::ACCELEROMETER, sensors);
 
   // Create a base ISensors accelerometer event.
   Event event;
   event.sensorHandle = handle;
   event.sensorType = SensorType::ACCELEROMETER;
+  Event::EventPayload::Vec3 vec3;
   if (portrait) {
-    event.u.vec3.x = 0;
-    event.u.vec3.y = 9.2;
+    vec3.x = 0;
+    vec3.y = 9.2;
   } else {
-    event.u.vec3.x = 9.2;
-    event.u.vec3.y = 0;
+    vec3.x = 9.2;
+    vec3.y = 0;
   }
-  event.u.vec3.z = 3.5;
-  event.u.vec3.status = SensorStatus::ACCURACY_HIGH;
+  vec3.z = 3.5;
+  vec3.status = SensorStatus::ACCURACY_HIGH;
+  event.payload.set<Event::EventPayload::Tag::vec3>(vec3);
 
   // Repeatedly inject accelerometer events. The WindowManager orientation
   // listener responds to sustained accelerometer data, not just a single event.
   android::base::Timer timer;
-  Result result;
   while (timer.duration() < 1s) {
     event.timestamp = android::elapsedRealtimeNano();
-    result = sensors->injectSensorData_2_1(event);
-    if (result != Result::OK) {
+    auto result = sensors->injectSensorData(event);
+    if (!result.isOk()) {
       LOG(FATAL) << "Unable to inject ISensors accelerometer event: "
-                 << toString(result);
+                 << result.getDescription();
     }
     std::this_thread::sleep_for(10ms);
   }
@@ -120,19 +118,20 @@ void InjectOrientation(bool portrait) {
 
 // Inject a single HINGE_ANGLE event at the given angle.
 void InjectHingeAngle(int angle) {
-  sp<ISensors> sensors = startSensorInjection();
+  auto sensors = startSensorInjection();
   int handle = getSensorHandle(SensorType::HINGE_ANGLE, sensors);
 
   // Create a base ISensors hinge_angle event.
   Event event;
   event.sensorHandle = handle;
   event.sensorType = SensorType::HINGE_ANGLE;
-  event.u.scalar = angle;
-  event.u.vec3.status = SensorStatus::ACCURACY_HIGH;
+  event.payload.set<Event::EventPayload::Tag::scalar>((float)angle);
   event.timestamp = android::elapsedRealtimeNano();
-  Result result = sensors->injectSensorData_2_1(event);
-  if (result != Result::OK) {
-    LOG(FATAL) << "Unable to inject HINGE_ANGLE data: " << toString(result);
+
+  auto result = sensors->injectSensorData(event);
+  if (!result.isOk()) {
+    LOG(FATAL) << "Unable to inject HINGE_ANGLE data"
+               << result.getDescription();
   }
 
   endSensorInjection(sensors);
