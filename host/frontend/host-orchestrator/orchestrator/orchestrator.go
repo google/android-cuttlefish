@@ -16,7 +16,9 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os/exec"
 
 	apiv1 "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
@@ -24,12 +26,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func SetupInstanceManagement(router *mux.Router, im *InstanceManager, om OperationManager) {
+func SetupRoutes(router *mux.Router, im *InstanceManager, om OperationManager) {
+	// Instance Manager routes
 	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 		createDevices(w, r, im)
 	}).Methods("POST")
 	router.HandleFunc("/operations/{name}", func(w http.ResponseWriter, r *http.Request) {
 		getOperation(w, r, om)
+	}).Methods("GET")
+	// _debug routes
+	router.HandleFunc("/_debug/logs", func(w http.ResponseWriter, r *http.Request) {
+		getServiceLogs(w, r)
 	}).Methods("GET")
 }
 
@@ -72,4 +79,14 @@ func BuildOperation(op Operation) apiv1.Operation {
 		}
 	}
 	return result
+}
+
+func getServiceLogs(w http.ResponseWriter, _ *http.Request) {
+	cmd := exec.Command("journalctl", "-u", "cuttlefish-host-orchestrator.service")
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Fprintf(w, "error fetching logs: %v\n", err)
+		return
+	}
+	w.Write(stdoutStderr)
 }

@@ -135,7 +135,7 @@ func main() {
 		log.Fatal("Error with device endpoint: ", err)
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	orchestrator.SetupInstanceManagement(r, im, om)
+	orchestrator.SetupRoutes(r, im, om)
 	// The host orchestrator currently has no use for this, since clients won't connect
 	// to it directly, however they probably will once the multi-device feature matures.
 	fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
