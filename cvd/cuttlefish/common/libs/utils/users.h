@@ -15,15 +15,12 @@
  */
 #pragma once
 
-#include <grp.h>
-
 #include <string>
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-gid_t GroupIdFromName(const std::string& group_name);
 bool InGroup(const std::string& group);
 
 /**
