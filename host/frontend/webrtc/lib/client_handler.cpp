@@ -177,8 +177,8 @@ class ControlChannelHandler : public webrtc::DataChannelObserver {
   void OnStateChange() override;
   void OnMessage(const webrtc::DataBuffer &msg) override;
 
-  void Send(const Json::Value &message);
-  void Send(const uint8_t *msg, size_t size, bool binary);
+  bool Send(const Json::Value &message);
+  bool Send(const uint8_t *msg, size_t size, bool binary);
 
  private:
   rtc::scoped_refptr<webrtc::DataChannelInterface> control_channel_;
@@ -343,8 +343,7 @@ void AdbChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
       // messages are buffered up to 16MB, when the buffer is full the channel
       // is abruptly closed. Keep track of the buffered data to avoid losing the
       // adb data channel.
-      adb_channel_->Send(buffer);
-      return true;
+      return adb_channel_->Send(buffer);
     });
     channel_open_reported_ = true;
   }
@@ -356,10 +355,6 @@ ControlChannelHandler::ControlChannelHandler(
     std::shared_ptr<ConnectionObserver> observer)
     : control_channel_(control_channel), observer_(observer) {
   control_channel->RegisterObserver(this);
-  observer_->OnControlChannelOpen([this](const Json::Value& message) {
-    this->Send(message);
-    return true;
-  });
 }
 
 ControlChannelHandler::~ControlChannelHandler() {
@@ -367,9 +362,13 @@ ControlChannelHandler::~ControlChannelHandler() {
 }
 
 void ControlChannelHandler::OnStateChange() {
+  auto state = control_channel_->state();
   LOG(VERBOSE) << "Control channel state changed to "
-               << webrtc::DataChannelInterface::DataStateString(
-                      control_channel_->state());
+               << webrtc::DataChannelInterface::DataStateString(state);
+  if (state == webrtc::DataChannelInterface::kOpen) {
+    observer_->OnControlChannelOpen(
+        [this](const Json::Value &message) { return this->Send(message); });
+  }
 }
 
 void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
@@ -432,16 +431,16 @@ void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   }
 }
 
-void ControlChannelHandler::Send(const Json::Value& message) {
+bool ControlChannelHandler::Send(const Json::Value& message) {
   Json::StreamWriterBuilder factory;
   std::string message_string = Json::writeString(factory, message);
-  Send(reinterpret_cast<const uint8_t*>(message_string.c_str()),
+  return Send(reinterpret_cast<const uint8_t*>(message_string.c_str()),
        message_string.size(), /*binary=*/false);
 }
 
-void ControlChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {
+bool ControlChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {
   webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size), binary);
-  control_channel_->Send(buffer);
+  return control_channel_->Send(buffer);
 }
 
 BluetoothChannelHandler::BluetoothChannelHandler(
@@ -474,8 +473,7 @@ void BluetoothChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
       // messages are buffered up to 16MB, when the buffer is full the channel
       // is abruptly closed. Keep track of the buffered data to avoid losing the
       // adb data channel.
-      bluetooth_channel_->Send(buffer);
-      return true;
+      return bluetooth_channel_->Send(buffer);
     });
   }
 
