@@ -20,6 +20,7 @@
 #include <android-base/chrono_utils.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
+#include <android-base/parseint.h>
 #include <utils/SystemClock.h>
 
 #include <aidl/android/hardware/sensors/BnSensors.h>
@@ -33,18 +34,15 @@ using aidl::android::hardware::sensors::SensorType;
 std::shared_ptr<ISensors> startSensorInjection() {
   auto sensors = ISensors::fromBinder(ndk::SpAIBinder(
       AServiceManager_getService("android.hardware.sensors.ISensors/default")));
-  if (sensors == nullptr) {
-    LOG(FATAL) << "Unable to get ISensors.";
-  }
+  CHECK(sensors != nullptr) << "Unable to get ISensors.";
 
   // Place the ISensors HAL into DATA_INJECTION mode so that we can
   // inject events.
   auto result =
       sensors->setOperationMode(ISensors::OperationMode::DATA_INJECTION);
-  if (!result.isOk()) {
-    LOG(FATAL) << "Unable to set ISensors operation mode to DATA_INJECTION: "
-               << result.getDescription();
-  }
+  CHECK(result.isOk())
+      << "Unable to set ISensors operation mode to DATA_INJECTION: "
+      << result.getDescription();
 
   return sensors;
 }
@@ -54,29 +52,23 @@ int getSensorHandle(SensorType type, const std::shared_ptr<ISensors> sensors) {
   int handle = -1;
   std::vector<SensorInfo> sensors_list;
   auto result = sensors->getSensorsList(&sensors_list);
-  if (!result.isOk()) {
-    LOG(FATAL) << "Unable to get ISensors sensors list: "
-               << result.getDescription();
-  }
+  CHECK(result.isOk()) << "Unable to get ISensors sensors list: "
+                        << result.getDescription();
   for (const SensorInfo& sensor : sensors_list) {
     if (sensor.type == type) {
       handle = sensor.sensorHandle;
       break;
     }
   }
-  if (handle == -1) {
-    LOG(FATAL) << "Unable to find sensor.";
-  }
+  CHECK(handle != -1) << "Unable to find sensor.";
   return handle;
 }
 
 void endSensorInjection(const std::shared_ptr<ISensors> sensors) {
   // Return the ISensors HAL back to NORMAL mode.
   auto result = sensors->setOperationMode(ISensors::OperationMode::NORMAL);
-  if (!result.isOk()) {
-    LOG(FATAL) << "Unable to set sensors operation mode to NORMAL: "
-               << result.getDescription();
-  }
+  CHECK(result.isOk()) << "Unable to set sensors operation mode to NORMAL: "
+                       << result.getDescription();
 }
 
 // Inject ACCELEROMETER events to corresponding to a given physical
@@ -106,10 +98,8 @@ void InjectOrientation(int rotationDeg) {
   while (timer.duration() < 1s) {
     event.timestamp = android::elapsedRealtimeNano();
     auto result = sensors->injectSensorData(event);
-    if (!result.isOk()) {
-      LOG(FATAL) << "Unable to inject ISensors accelerometer event: "
-                 << result.getDescription();
-    }
+    CHECK(result.isOk()) << "Unable to inject ISensors accelerometer event: "
+                         << result.getDescription();
     std::this_thread::sleep_for(10ms);
   }
 
@@ -129,28 +119,26 @@ void InjectHingeAngle(int angle) {
   event.timestamp = android::elapsedRealtimeNano();
 
   auto result = sensors->injectSensorData(event);
-  if (!result.isOk()) {
-    LOG(FATAL) << "Unable to inject HINGE_ANGLE data"
-               << result.getDescription();
-  }
+  CHECK(result.isOk()) << "Unable to inject HINGE_ANGLE data"
+                       << result.getDescription();
 
   endSensorInjection(sensors);
 }
 
 int main(int argc, char** argv) {
-  if (argc != 3) {
-    LOG(FATAL) << "Expected command line args 'rotate <angle>' or 'hinge_angle "
-                  "<value>'";
-  }
+  CHECK(argc == 3)
+      << "Expected command line args 'rotate <angle>' or 'hinge_angle <value>'";
 
   if (!strcmp(argv[1], "rotate")) {
-    int rotationDeg = std::stoi(argv[2]);
+    int rotationDeg;
+    CHECK(android::base::ParseInt(argv[2], &rotationDeg))
+        << "Rotation angle must be an integer";
     InjectOrientation(rotationDeg);
   } else if (!strcmp(argv[1], "hinge_angle")) {
-    int angle = std::stoi(argv[2]);
-    if (angle < 0 || angle > 360) {
-      LOG(FATAL) << "Bad hinge_angle value: " << argv[2];
-    }
+    int angle;
+    CHECK(android::base::ParseInt(argv[2], &angle))
+        << "Hinge angle must be an integer";
+    CHECK(angle >= 0 && angle <= 360) << "Bad hinge_angle value: " << argv[2];
     InjectHingeAngle(angle);
   } else {
     LOG(FATAL) << "Unknown arg: " << argv[1];
