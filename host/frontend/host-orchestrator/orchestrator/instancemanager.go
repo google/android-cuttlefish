@@ -26,7 +26,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	apiv1 "cuttlefish/liboperator/api/v1"
+	apiv1 "cuttlefish/host-orchestrator/api/v1"
 	"cuttlefish/liboperator/operator"
 )
 

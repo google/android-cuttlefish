@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"cuttlefish/host-orchestrator/orchestrator"
-	apiv1 "cuttlefish/liboperator/api/v1"
+	opapi "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
 )
 
@@ -100,10 +100,10 @@ func main() {
 
 	pool := operator.NewDevicePool()
 	polledSet := operator.NewPolledSet()
-	config := apiv1.InfraConfig{
+	config := opapi.InfraConfig{
 		Type: "config",
-		IceServers: []apiv1.IceServer{
-			apiv1.IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
+		IceServers: []opapi.IceServer{
+			opapi.IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
