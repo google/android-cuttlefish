@@ -177,6 +177,10 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
 
   Command gem5_cmd(gem5_binary, stop);
 
+  // Always enable listeners, because auto mode will disable once it detects
+  // gem5 is not run interactively
+  gem5_cmd.AddParameter("--listener-mode=on");
+
   // Add debug-flags and debug-file before the script (i.e. starter_fs.py).
   // We check the flags are not empty first since they are optional
   if(!config.gem5_debug_flags().empty()) {
