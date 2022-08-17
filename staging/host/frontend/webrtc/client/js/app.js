@@ -97,6 +97,7 @@ class DeviceDetailsUpdater {
 class DeviceControlApp {
   #deviceConnection = {};
   #currentRotation = 0;
+  #currentScreenStyles = {};
   #displayDescriptions = [];
   #recording = {};
   #phys = {};
@@ -133,7 +134,6 @@ class DeviceControlApp {
   }
 
   #showDeviceUI() {
-    window.onresize = evt => this.#resizeDeviceDisplays();
     // Set up control panel buttons
     addMouseListeners(
         document.querySelector('#power_btn'),
@@ -148,8 +148,11 @@ class DeviceControlApp {
         document.querySelector('#menu_btn'),
         evt => this.#onControlPanelButton(evt, 'menu'));
     addMouseListeners(
-        document.querySelector('#rotate_btn'),
-        evt => this.#onRotateButton(evt, 'rotate'));
+        document.querySelector('#rotate_left_btn'),
+        evt => this.#onRotateLeftButton(evt, 'rotate'));
+    addMouseListeners(
+        document.querySelector('#rotate_right_btn'),
+        evt => this.#onRotateRightButton(evt, 'rotate'));
     addMouseListeners(
         document.querySelector('#volume_up_btn'),
         evt => this.#onControlPanelButton(evt, 'volumeup'));
@@ -386,108 +389,44 @@ class DeviceControlApp {
     }
   }
 
-  #resizeDeviceDisplays() {
-    // Padding between displays.
-    const deviceDisplayWidthPadding = 10;
-    // Padding for the display info above each display video.
-    const deviceDisplayHeightPadding = 38;
-
-    let deviceDisplayList = document.getElementsByClassName('device-display');
-    let deviceDisplayVideoList =
-        document.getElementsByClassName('device-display-video');
-    let deviceDisplayInfoList =
-        document.getElementsByClassName('device-display-info');
-
-    const deviceDisplays = document.getElementById('device-displays');
-    const rotationDegrees = this.#getTransformRotation(deviceDisplays);
-    const rotationRadians = rotationDegrees * Math.PI / 180;
-
-    // Auto-scale the screen based on window size.
-    let availableWidth = deviceDisplays.clientWidth;
-    let availableHeight = deviceDisplays.clientHeight - deviceDisplayHeightPadding;
-
-    // Reserve space for padding between the displays.
-    availableWidth = availableWidth -
-        (this.#displayDescriptions.length * deviceDisplayWidthPadding);
-
-    // Loop once over all of the displays to compute the total space needed.
-    let neededWidth = 0;
-    let neededHeight = 0;
-    for (let i = 0; i < deviceDisplayList.length; i++) {
-      let deviceDisplayDescription = this.#displayDescriptions[i];
-      let deviceDisplayVideo = deviceDisplayVideoList[i];
-
-      const originalDisplayWidth = deviceDisplayDescription.x_res;
-      const originalDisplayHeight = deviceDisplayDescription.y_res;
-
-      const neededBoundingBoxWidth =
-          Math.abs(Math.cos(rotationRadians) * originalDisplayWidth) +
-          Math.abs(Math.sin(rotationRadians) * originalDisplayHeight);
-      const neededBoundingBoxHeight =
-          Math.abs(Math.sin(rotationRadians) * originalDisplayWidth) +
-          Math.abs(Math.cos(rotationRadians) * originalDisplayHeight);
-
-      neededWidth = neededWidth + neededBoundingBoxWidth;
-      neededHeight = Math.max(neededHeight, neededBoundingBoxHeight);
+  #rotateDisplays(rotation) {
+    if ((rotation - this.#currentRotation) % 360 == 0) {
+      return;
     }
 
-    const scaling =
-        Math.min(availableWidth / neededWidth, availableHeight / neededHeight);
+    document.querySelectorAll('.device-display-video').forEach(v => {
+      let aspectRatio = v.videoWidth / v.videoHeight;
 
-    // Loop again over all of the displays to set the sizes and positions.
-    let deviceDisplayLeftOffset = 0;
-    for (let i = 0; i < deviceDisplayList.length; i++) {
-      let deviceDisplay = deviceDisplayList[i];
-      let deviceDisplayVideo = deviceDisplayVideoList[i];
-      let deviceDisplayInfo = deviceDisplayInfoList[i];
-      let deviceDisplayDescription = this.#displayDescriptions[i];
+      let keyFrames = [];
+      let from = this.#currentScreenStyles[v.id];
+      if (from) {
+        // If the screen was already rotated, use that state as starting point,
+        // otherwise the animation will start at the element's default state.
+        keyFrames.push(from);
+      }
+      let to = getStyleAfterRotation(rotation, aspectRatio);
+      keyFrames.push(to);
+      v.animate(keyFrames, {duration: 400 /*ms*/, fill: 'forwards'});
+      this.#currentScreenStyles[v.id] = to;
+    });
 
-      let rotated = this.#currentRotation != 0 ? ' (Rotated)' : '';
-      deviceDisplayInfo.textContent = `Display ${i} - ` +
-          `${deviceDisplayDescription.x_res}x` +
-          `${deviceDisplayDescription.y_res} ` +
-          `(${deviceDisplayDescription.dpi} DPI)${rotated}`;
-
-      const originalDisplayWidth = deviceDisplayDescription.x_res;
-      const originalDisplayHeight = deviceDisplayDescription.y_res;
-
-      const scaledDisplayWidth = originalDisplayWidth * scaling;
-      const scaledDisplayHeight = originalDisplayHeight * scaling;
-
-      const neededBoundingBoxWidth =
-          Math.abs(Math.cos(rotationRadians) * originalDisplayWidth) +
-          Math.abs(Math.sin(rotationRadians) * originalDisplayHeight);
-      const neededBoundingBoxHeight =
-          Math.abs(Math.sin(rotationRadians) * originalDisplayWidth) +
-          Math.abs(Math.cos(rotationRadians) * originalDisplayHeight);
-
-      const scaledBoundingBoxWidth = neededBoundingBoxWidth * scaling;
-      const scaledBoundingBoxHeight = neededBoundingBoxHeight * scaling;
-
-      const offsetX = (scaledBoundingBoxWidth - scaledDisplayWidth) / 2;
-      const offsetY = (scaledBoundingBoxHeight - scaledDisplayHeight) / 2;
-
-      deviceDisplayVideo.style.width = scaledDisplayWidth;
-      deviceDisplayVideo.style.height = scaledDisplayHeight;
-      deviceDisplayVideo.style.transform = `translateX(${offsetX}px) ` +
-          `translateY(${offsetY}px) ` +
-          `rotateZ(${rotationDegrees}deg) `;
-
-      deviceDisplay.style.left = `${deviceDisplayLeftOffset}px`;
-      deviceDisplay.style.width = scaledBoundingBoxWidth;
-      deviceDisplay.style.height = scaledBoundingBoxHeight;
-
-      deviceDisplayLeftOffset = deviceDisplayLeftOffset + deviceDisplayWidthPadding +
-          scaledBoundingBoxWidth;
-    }
+    this.#currentRotation = rotation;
+    this.#updateDeviceDisplaysInfo();
   }
 
-  #getTransformRotation(element) {
-    if (!element.style.textIndent) {
-      return 0;
-    }
-    // Remove 'px' and convert to float.
-    return parseFloat(element.style.textIndent.slice(0, -2));
+  #updateDeviceDisplaysInfo() {
+    let labels = document.querySelectorAll('.device-display-info');
+    labels.forEach((l, i) => {
+      let deviceDisplayDescription = this.#displayDescriptions[i];
+      let text = `Display ${i} - ` +
+          `${deviceDisplayDescription.x_res}x` +
+          `${deviceDisplayDescription.y_res} ` +
+          `(${deviceDisplayDescription.dpi} DPI)`;
+      if (this.#currentRotation != 0) {
+        text += ` (Rotated ${this.#currentRotation}deg)`
+      }
+      l.textContent = text;
+    });
   }
 
   #onControlMessage(message) {
@@ -501,24 +440,7 @@ class DeviceControlApp {
       this.#initializeAdb();
     }
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
-      if (metadata.rotation != this.#currentRotation) {
-        // Animate the screen rotation.
-        const targetRotation = metadata.rotation == 0 ? 0 : -90;
-
-        $('#device-displays')
-            .animate(
-                {
-                  textIndent: targetRotation,
-                },
-                {
-                  duration: 1000,
-                  step: (now, tween) => {
-                    this.#resizeDeviceDisplays();
-                  },
-                });
-      }
-
-      this.#currentRotation = metadata.rotation;
+      this.#rotateDisplays(+metadata.rotation);
     }
     if (message_data.event == 'VIRTUAL_DEVICE_CAPTURE_IMAGE') {
       if (this.#deviceConnection.cameraEnabled) {
@@ -570,30 +492,23 @@ class DeviceControlApp {
     let anyDisplayLoaded = false;
     const deviceDisplays = document.getElementById('device-displays');
     for (const deviceDisplayDescription of this.#displayDescriptions) {
-      let deviceDisplay = document.createElement('div');
-      deviceDisplay.classList.add('device-display');
-      // Start the screen as hidden. Only show when data is ready.
-      deviceDisplay.style.visibility = 'hidden';
+      let displayFragment =
+          document.querySelector('#display-template').content.cloneNode(true);
 
-      let deviceDisplayInfo = document.createElement("div");
-      deviceDisplayInfo.classList.add("device-display-info");
+      let deviceDisplayInfo =
+          displayFragment.querySelector('.device-display-info');
       deviceDisplayInfo.id = deviceDisplayDescription.stream_id + '_info';
-      deviceDisplay.appendChild(deviceDisplayInfo);
 
-      let deviceDisplayVideo = document.createElement('video');
-      deviceDisplayVideo.autoplay = true;
-      deviceDisplayVideo.muted = true;
+      let deviceDisplayVideo = displayFragment.querySelector('video');
       deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
-      deviceDisplayVideo.classList.add('device-display-video');
       deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
         if (!anyDisplayLoaded) {
           anyDisplayLoaded = true;
           this.#onDeviceDisplayLoaded();
         }
       });
-      deviceDisplay.appendChild(deviceDisplayVideo);
 
-      deviceDisplays.appendChild(deviceDisplay);
+      deviceDisplays.appendChild(displayFragment);
 
       let stream_id = deviceDisplayDescription.stream_id;
       this.#deviceConnection.getStream(stream_id)
@@ -638,7 +553,7 @@ class DeviceControlApp {
   #onDeviceDisplayLoaded() {
     document.getElementById('status-message').textContent =
         'Awaiting bootup and adb connection. Please wait...';
-    this.#resizeDeviceDisplays();
+    this.#updateDeviceDisplaysInfo();
 
     let deviceDisplayList = document.getElementsByClassName('device-display');
     for (const deviceDisplay of deviceDisplayList) {
@@ -653,15 +568,24 @@ class DeviceControlApp {
     this.#initializeAdb();
   }
 
-  #onRotateButton(e) {
+  #onRotateLeftButton(e) {
+    if (e.type == 'mousedown') {
+      this.#onRotateButton(this.#currentRotation + 90);
+    }
+  }
+
+  #onRotateRightButton(e) {
+    if (e.type == 'mousedown') {
+      this.#onRotateButton(this.#currentRotation - 90);
+    }
+  }
+
+  #onRotateButton(rotation) {
     // Attempt to init adb again, in case the initial connection failed.
     // This succeeds immediately if already connected.
     this.#initializeAdb();
-    if (e.type == 'mousedown') {
-      adbShell(
-          '/vendor/bin/cuttlefish_sensor_injection rotate ' +
-          (this.#currentRotation == 0 ? '90' : '0'));
-    }
+    this.#rotateDisplays(rotation);
+    adbShell(`/vendor/bin/cuttlefish_sensor_injection rotate ${rotation}`);
   }
 
   #onControlPanelButton(e, command) {
@@ -759,50 +683,9 @@ class DeviceControlApp {
     // A click at that position is not more dangerous than anywhere else since
     // the user is clicking blind anyways.
     const videoWidth = deviceDisplay.videoWidth ? deviceDisplay.videoWidth : 1;
-    const videoHeight =
-        deviceDisplay.videoHeight ? deviceDisplay.videoHeight : 1;
     const elementWidth =
         deviceDisplay.offsetWidth ? deviceDisplay.offsetWidth : 1;
-    const elementHeight =
-        deviceDisplay.offsetHeight ? deviceDisplay.offsetHeight : 1;
-
-    // vh*ew > eh*vw? then scale h instead of w
-    const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
-    let elementScaling = 0, videoScaling = 0;
-    if (scaleHeight) {
-      elementScaling = elementHeight;
-      videoScaling = videoHeight;
-    } else {
-      elementScaling = elementWidth;
-      videoScaling = videoWidth;
-    }
-
-    // The screen uses the 'object-fit: cover' property in order to completely
-    // fill the element while maintaining the screen content's aspect ratio.
-    // Therefore:
-    // - If vh*ew > eh*vw, w is scaled so that content width == element width
-    // - Otherwise,        h is scaled so that content height == element height
-    const scaleWidth = videoHeight * elementWidth > videoWidth * elementHeight;
-
-    // Convert to coordinates relative to the video by scaling.
-    // (This matches the scaling used by 'object-fit: cover'.)
-    //
-    // This scaling is needed to translate from the in-browser x/y to the
-    // on-device x/y.
-    //   - When the device screen has not been resized, this is simple: scale
-    //     the coordinates based on the ratio between the input video size and
-    //     the in-browser size.
-    //   - When the device screen has been resized, this scaling is still needed
-    //     even though the in-browser size and device size are identical. This
-    //     is due to the way WindowManager handles a resized screen, resized via
-    //     `adb shell wm size`:
-    //       - The ABS_X and ABS_Y max values of the screen retain their
-    //         original values equal to the value set when launching the device
-    //         (which equals the video size here).
-    //       - The sent ABS_X and ABS_Y values need to be scaled based on the
-    //         ratio between the max size (video size) and in-browser size.
-    const scaling =
-        scaleWidth ? videoWidth / elementWidth : videoHeight / elementHeight;
+    const scaling = videoWidth / elementWidth;
 
     let xArr = [];
     let yArr = [];
@@ -875,21 +758,8 @@ class DeviceControlApp {
     }
 
     for (let i = 0; i < xArr.length; i++) {
-      xArr[i] = xArr[i] * scaling;
-      yArr[i] = yArr[i] * scaling;
-
-      // Substract the offset produced by the difference in aspect ratio, if
-      // any.
-      if (scaleWidth) {
-        // Width was scaled, leaving excess content height, so subtract from y.
-        yArr[i] -= (elementHeight * scaling - videoHeight) / 2;
-      } else {
-        // Height was scaled, leaving excess content width, so subtract from x.
-        xArr[i] -= (elementWidth * scaling - videoWidth) / 2;
-      }
-
-      xArr[i] = Math.trunc(xArr[i]);
-      yArr[i] = Math.trunc(yArr[i]);
+      xArr[i] = Math.trunc(xArr[i] * scaling);
+      yArr[i] = Math.trunc(yArr[i] * scaling);
     }
 
     // NOTE: Rotation is handled automatically because the CSS rotation through
@@ -1033,3 +903,56 @@ window.addEventListener("load", async evt => {
   }
   document.getElementById('loader').style.display = 'none';
 });
+
+// The formulas in this function are derived from the following facts:
+// * The video element's aspect ratio (ar) is fixed.
+// * CSS rotations are centered on the geometrical center of the element.
+// * The aspect ratio is the tangent of the angle between the left-top to
+// right-bottom diagonal (d) and the left side.
+// * d = w/sin(arctan(ar)) = h/cos(arctan(ar)), with w = width and h = height.
+// * After any rotation, the element's total width is the maximum size of the
+// projection of the diagonals on the X axis (Y axis for height).
+// Deriving the formulas is left as an exercise to the reader.
+function getStyleAfterRotation(rotationDeg, ar) {
+  // Convert the rotation angle to radians
+  let r = Math.PI * rotationDeg / 180;
+
+  // width <= parent_with / abs(cos(r) + sin(r)/ar)
+  // and
+  // width <= parent_with / abs(cos(r) - sin(r)/ar)
+  let den1 = Math.abs((Math.sin(r) / ar) + Math.cos(r));
+  let den2 = Math.abs((Math.sin(r) / ar) - Math.cos(r));
+  let denominator = Math.max(den1, den2);
+  let maxWidth = `calc(100% / ${denominator})`;
+
+  // height <= parent_height / abs(cos(r) + sin(r)*ar)
+  // and
+  // height <= parent_height / abs(cos(r) - sin(r)*ar)
+  den1 = Math.abs(Math.cos(r) - (Math.sin(r) * ar));
+  den2 = Math.abs(Math.cos(r) + (Math.sin(r) * ar));
+  denominator = Math.max(den1, den2);
+  let maxHeight = `calc(100% / ${denominator})`;
+
+  // rotated_left >= left * (abs(cos(r)+sin(r)/ar)-1)/2
+  // and
+  // rotated_left >= left * (abs(cos(r)-sin(r)/ar)-1)/2
+  let tmp1 = Math.max(
+      Math.abs(Math.cos(r) + (Math.sin(r) / ar)),
+      Math.abs(Math.cos(r) - (Math.sin(r) / ar)));
+  let leftFactor = (tmp1 - 1) / 2;
+  // rotated_top >= top * (abs(cos(r)+sin(r)*ar)-1)/2
+  // and
+  // rotated_top >= top * (abs(cos(r)-sin(r)*ar)-1)/2
+  let tmp2 = Math.max(
+      Math.abs(Math.cos(r) - (Math.sin(r) * ar)),
+      Math.abs(Math.cos(r) + (Math.sin(r) * ar)));
+  let rightFactor = (tmp2 - 1) / 2;
+
+  // CSS rotations are in the opposite direction as Android screen rotations
+  rotationDeg = -rotationDeg;
+
+  let transform = `translate(calc(100% * ${leftFactor}), calc(100% * ${
+      rightFactor})) rotate(${rotationDeg}deg)`;
+
+  return {transform, maxWidth, maxHeight};
+}
