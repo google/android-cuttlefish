@@ -27,6 +27,7 @@ var dest_image string
 var dest_family string
 var dest_project string
 var launch_instance string
+var arch string
 var source_image_family string
 var source_image_project string
 var repository_url string
@@ -48,17 +49,37 @@ func init() {
     username+"-build", "Instance name to create for the build")
   flag.StringVar(&build_project, "build_project",
     mustShell("gcloud config get-value project"), "Project to use for scratch")
+  // The new get-value output format is different. The result is in 2nd line.
+  str_list := strings.Split(build_project, "\n")
+  if len(str_list) == 2 {
+    build_project = str_list[1]
+  }
+
   flag.StringVar(&build_zone, "build_zone",
     mustShell("gcloud config get-value compute/zone"),
     "Zone to use for scratch resources")
+  // The new get-value output format is different. The result is in 2nd line.
+  str_list = strings.Split(build_zone, "\n")
+  if len(str_list) == 2 {
+    build_zone = str_list[1]
+  }
+
   flag.StringVar(&dest_image, "dest_image",
     "vsoc-host-scratch-"+username, "Image to create")
   flag.StringVar(&dest_family, "dest_family", "",
     "Image family to add the image to")
   flag.StringVar(&dest_project, "dest_project",
     mustShell("gcloud config get-value project"), "Project to use for the new image")
+  // The new get-value output format is different. The result is in 2nd line.
+  str_list = strings.Split(dest_project, "\n")
+  if len(str_list) == 2 {
+    dest_project = str_list[1]
+  }
+
   flag.StringVar(&launch_instance, "launch_instance", "",
     "Name of the instance to launch with the new image")
+  flag.StringVar(&arch, "arch", "gce_x86_64",
+    "Which CPU arch, arm/x86_64/gce_x86_64")
   flag.StringVar(&source_image_family, "source_image_family", "debian-11",
     "Image familty to use as the base")
   flag.StringVar(&source_image_project, "source_image_project", "debian-cloud",
@@ -162,6 +183,71 @@ func createInstance(instance string, arg string) {
 func main() {
   gpu_type := "nvidia-tesla-p100-vws"
   PZ := "--project=" + build_project + " --zone=" + build_zone
+
+  if arch != "gce_x86_64" {
+    // new path that generate image locally without creating GCE instance
+
+    abt := os.Getenv("ANDROID_BUILD_TOP")
+    cmd := `"` + abt + `/device/google/cuttlefish/tools/create_base_image_combined.sh"`
+    cmd += " " + arch
+    out, err := shell(cmd)
+    if out != "" {
+      fmt.Println(out)
+    }
+    if err != nil {
+      fmt.Println("create_base_image arch %s error occurred: %s", arch, err)
+    }
+
+    // gce operations
+    delete_instances := build_instance + " " + dest_image
+    if launch_instance != "" {
+      delete_instances += " " + launch_instance
+    }
+    zip_file := "disk_"+username+".raw.tar.gz"
+    gs_file := "gs://cloud-android-testing-esp/"+zip_file
+    cloud_storage_file := "https://storage.googleapis.com/cloud-android-testing-esp/"+zip_file
+    location := "us"
+
+    // delete all previous instances, images and disks
+    gce(WarnOnFail, `compute instances delete -q `+PZ+` `+delete_instances, `Not running`)
+    gce(WarnOnFail, `compute disks delete -q `+PZ+` "`+dest_image+`"`, `No scratch disk`)
+    gce(WarnOnFail, `compute images delete -q --project="`+build_project+`" "`+dest_image+`"`,
+      `Not respinning`)
+    gce(WarnOnFail, `alpha storage rm `+gs_file)
+
+    // upload new local host image into GCE storage
+    gce(WarnOnFail, `alpha storage cp `+abt+`/`+zip_file+` gs://cloud-android-testing-esp`)
+
+    // create GCE image based on new uploaded host image
+    gce(WarnOnFail, `compute images create "`+dest_image+`" --project="`+build_project+
+      `" --family="`+source_image_family+`" --source-uri="`+cloud_storage_file+
+      `" --storage-location="`+location+`" --guest-os-features=UEFI_COMPATIBLE`)
+
+    // find Nvidia GPU and then create GCE instance
+    gce(ExitOnFail, `compute accelerator-types describe "`+gpu_type+`" `+PZ,
+      `Please use a zone with `+gpu_type+` GPUs available.`)
+    createInstance(build_instance, PZ+
+      ` --machine-type=n1-standard-16 --network-interface=network-tier=PREMIUM,subnet=default`+
+      ` --accelerator="type=`+gpu_type+
+      `,count=1" --maintenance-policy=TERMINATE --provisioning-model=STANDARD`+
+      ` --service-account=204446994883-compute@developer.gserviceaccount.com`+
+      ` --scopes=https://www.googleapis.com/auth/devstorage.read_only,`+
+      `https://www.googleapis.com/auth/logging.write,`+
+      `https://www.googleapis.com/auth/monitoring.write,`+
+      `https://www.googleapis.com/auth/servicecontrol,`+
+      `https://www.googleapis.com/auth/service.management.readonly,`+
+      `https://www.googleapis.com/auth/trace.append`+
+      ` --tags=http-server --create-disk=auto-delete=yes,boot=yes,device-name=`+build_instance+
+      `,image=projects/cloud-android-testing/global/images/`+dest_image+
+      `,mode=rw,size=200,type=projects/cloud-android-testing/zones/`+build_zone+
+      `/diskTypes/pd-balanced --no-shielded-secure-boot --shielded-vtpm`+
+      ` --shielded-integrity-monitoring --reservation-affinity=any`)
+
+    // enable serial-port (console)
+    gce(WarnOnFail, `compute instances add-metadata `+build_instance+
+      ` --metadata serial-port-enable=TRUE`)
+    return
+  }
 
   dest_family_flag := ""
   if dest_family != "" {
