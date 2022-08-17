@@ -190,6 +190,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // These types are only used in TV.
     {"android.hardware.tv.tuner.", 1},
+    {"android.hardware.tv.input.", 1},
 
     // types-only packages, which never expect a default implementation
     {"android.hardware.radio.", 1},
