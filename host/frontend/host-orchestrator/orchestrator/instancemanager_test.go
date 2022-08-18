@@ -240,7 +240,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[2].(*StageCreateDirIfNotExist)
+		s := p[2].(*StageCreateDir)
 
 		if s.Dir != paths.ArtifactsRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.ArtifactsRootDir, s.Dir)
@@ -251,7 +251,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[3].(*StageCreateDirIfNotExist)
+		s := p[3].(*StageCreateDir)
 
 		expected := "/artifacts/256_waldo"
 		if s.Dir != expected {
@@ -294,7 +294,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[5].(*StageCreateDirIfNotExist)
+		s := p[5].(*StageCreateDir)
 
 		if s.Dir != paths.HomesRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
@@ -305,7 +305,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[6].(*StageCreateDirIfNotExist)
+		s := p[6].(*StageCreateDir)
 
 		expected := "/homes/cvd-1"
 		if s.Dir != expected {
@@ -318,11 +318,14 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			p := builder.Build(req)
 
-			s := p[6].(*StageCreateDirIfNotExist)
+			s := p[6].(*StageCreateDir)
 
 			expected := fmt.Sprintf("/homes/cvd-%d", i+1)
 			if s.Dir != expected {
 				t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
+			}
+			if !s.FailIfExist {
+				t.Errorf("expected true")
 			}
 		}
 	})
@@ -532,11 +535,11 @@ func TestFakeCVDStartMain(t *testing.T) {
 	}
 }
 
-func TestStageCreateDirIfNotExist(t *testing.T) {
+func TestStageCreateDir(t *testing.T) {
 	tmpDir := tempDir(t)
 	defer removeDir(t, tmpDir)
 	dir := tmpDir + "/foo"
-	s := StageCreateDirIfNotExist{Dir: dir}
+	s := StageCreateDir{Dir: dir}
 
 	err := s.Run()
 
@@ -551,11 +554,11 @@ func TestStageCreateDirIfNotExist(t *testing.T) {
 	}
 }
 
-func TestStageCreateDirIfNotExistAndDirectoryExists(t *testing.T) {
+func TestStageCreateDirAndDirectoryExists(t *testing.T) {
 	tmpDir := tempDir(t)
 	defer removeDir(t, tmpDir)
 	dir := tmpDir + "/foo"
-	s := StageCreateDirIfNotExist{Dir: dir}
+	s := StageCreateDir{Dir: dir}
 
 	err := s.Run()
 	err = s.Run()
@@ -571,8 +574,24 @@ func TestStageCreateDirIfNotExistAndDirectoryExists(t *testing.T) {
 	}
 }
 
-func TestStageCreateDirIfNotExistInvalidDir(t *testing.T) {
-	s := StageCreateDirIfNotExist{Dir: ""}
+func TestStageCreateDirAndDirectoryExistsFailIfExist(t *testing.T) {
+	tmpDir := tempDir(t)
+	defer removeDir(t, tmpDir)
+	dir := tmpDir + "/foo"
+	s := StageCreateDir{Dir: dir, FailIfExist: true}
+	if err := s.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	err := s.Run()
+
+	if !os.IsExist(err) {
+		t.Errorf("expected <<%+v>>, got: <%+v>", os.ErrExist, err)
+	}
+}
+
+func TestStageCreateDirInvalidDir(t *testing.T) {
+	s := StageCreateDir{Dir: ""}
 
 	err := s.Run().(*os.PathError)
 
