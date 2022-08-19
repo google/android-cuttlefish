@@ -1,62 +1,51 @@
-import {Component, OnInit} from '@angular/core';
-import {Device} from '../device-interface';
-import {DeviceService} from '../device.service';
-import {DisplaysService} from '../displays.service';
-import {Observable, of} from 'rxjs';
+import { Component, OnInit } from "@angular/core";
+import { Device } from "../device-interface";
+import { DeviceService } from "../device.service";
+import { DisplaysService } from "../displays.service";
+import { Observable, of, map, BehaviorSubject } from "rxjs";
 
 @Component({
-  selector: 'app-device-pane',
-  templateUrl: './device-pane.component.html',
-  styleUrls: ['./device-pane.component.sass'],
+  selector: "app-device-pane",
+  templateUrl: "./device-pane.component.html",
+  styleUrls: ["./device-pane.component.sass"],
 })
 export class DevicePaneComponent implements OnInit {
-  devices: Observable<Device[]> = of([]);
-  deviceList: Device[] = [];
+  devices = new BehaviorSubject<string[]>([]);
+  private currentDevices: string[] = [];
 
   constructor(
     private deviceService: DeviceService,
-    private displaysService: DisplaysService
+    public displaysService: DisplaysService
   ) {}
 
   ngOnInit(): void {
-    this.getDevices();
+    this.deviceService.refresh().subscribe((devices) => {
+      this.devices.next(devices);
+    });
   }
 
-  onSelect(device: Device): void {
-    if (device.isVisible === false) {
-      this.displaysService.remove(device.id);
+  onSelect(device: string): void {
+    if (this.displaysService.visibleValidate(device)) {
+      this.displaysService.remove(device);
     } else {
-      this.displaysService.add(device.id);
+      this.displaysService.add(device);
     }
   }
 
   onRefresh(): void {
-    this.getDevices();
-  }
-
-  getDevices(): void {
-    this.deviceService.getDevices().subscribe(info => {
-      info.forEach(id => {
-        if (
-          !this.deviceList.some(device => {
-            return device.id === id;
-          })
-        ) {
-          this.deviceList.push({id: id, isVisible: false});
-        }
-      });
-      this.devices = of(this.deviceList);
+    this.deviceService.refresh().subscribe((devices) => {
+      this.devices.next(devices);
     });
   }
 
   showAll(): void {
-    this.devices.subscribe(deviceArray => {
-      deviceArray.forEach(device => {
-        if (device.isVisible === false) {
-          device.isVisible = true;
-          this.onSelect(device);
-        }
-      });
+    this.devices.subscribe((devices) => {
+      this.currentDevices = devices;
+    })
+    this.currentDevices.forEach((device) => {
+      if(!this.displaysService.visibleValidate(device)) {
+        this.onSelect(device);
+      }
     });
   }
 }
