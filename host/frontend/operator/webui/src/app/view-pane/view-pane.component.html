@@ -6,7 +6,7 @@
       </h3>
       <iframe
         style="margin: 10px 0 0 10px"
-        [src]="deviceConnectURL(display) | safe"
+        [src]="displaysService.deviceConnectURL(display) | safe"
         [title]="display"
       ></iframe>
     </div>
