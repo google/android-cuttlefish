@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
+/* Dark theme (default) */
+body, body.dark-theme {
+  --control-checkbox-checked-bg: #1c4587;
+  --control-checkbox-checked-boxshadow: #2196F3;
+}
+/* Light theme */
+body.light-theme {
+  --control-checkbox-checked-bg: #2196F3;
+  --control-checkbox-checked-boxshadow: #1c4587;
+}
+
 .toggle-control {
   padding-left: 2px;
   padding-right: 7px;
   border-radius: 10px;
-  background-color: #5f6368; /* Google grey 700 */
+  background-color: var(--modal-bg);
   width: 80px;
   height: 44px;
 }
@@ -28,7 +39,7 @@
   display: inline-block;
   float: left;
   font-size: 44px;
-  color: #e8eaed;
+  color: var(--button-fg);
 }
 
 .toggle-control .toggle-control-switch {
@@ -57,7 +68,7 @@
   transition: .4s;
   border-radius: 21px;
   border: solid 4px;
-  border-color: #e8eaed;
+  border-color: var(--button-fg);
 }
 
 .toggle-control .toggle-control-slider:before {
@@ -67,18 +78,18 @@
   width: 12px;
   left: 1px;
   bottom: 1px;
-  background-color: #e8eaed;
+  background-color: var(--button-fg);
   -webkit-transition: .4s;
   transition: .4s;
   border-radius: 50%;
 }
 
 .toggle-control input:checked + .toggle-control-slider {
-  background-color: #1c4587;
+  background-color: var(--control-checkbox-checked-bg);
 }
 
 .toggle-control input:focus + .toggle-control-slider {
-  box-shadow: 0 0 1px #2196F3;
+  box-shadow: 0 0 1px var(--control-checkbox-focus-boxshadow);
 }
 
 .toggle-control input:checked + .toggle-control-slider:before {
