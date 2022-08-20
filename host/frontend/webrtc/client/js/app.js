@@ -112,9 +112,6 @@ class DeviceControlApp {
     console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
     createToggleControl(
-        document.getElementById('keyboard-capture-control'), 'keyboard',
-        enabled => this.#onKeyboardCaptureToggle(enabled));
-    createToggleControl(
         document.getElementById('camera-control'), 'videocam',
         enabled => this.#onCameraCaptureToggle(enabled));
     createToggleControl(
@@ -257,6 +254,9 @@ class DeviceControlApp {
 
     // Set up touch input
     this.#startMouseTracking();
+
+    // Set up keyboard capture
+    this.#startKeyboardCapture();
 
     this.#updateDeviceHardwareDetails(
         this.#deviceConnection.description.hardware);
@@ -600,18 +600,13 @@ class DeviceControlApp {
     }));
   }
 
-  #onKeyboardCaptureToggle(enabled) {
-    if (enabled) {
-      document.addEventListener('keydown', evt => this.#onKeyEvent(evt));
-      document.addEventListener('keyup', evt => this.#onKeyEvent(evt));
-    } else {
-      document.removeEventListener('keydown', evt => this.#onKeyEvent(evt));
-      document.removeEventListener('keyup', evt => this.#onKeyEvent(evt));
-    }
+  #startKeyboardCapture() {
+    const deviceArea = document.querySelector('#device-displays');
+    deviceArea.addEventListener('keydown', evt => this.#onKeyEvent(evt));
+    deviceArea.addEventListener('keyup', evt => this.#onKeyEvent(evt));
   }
 
   #onKeyEvent(e) {
-    e.preventDefault();
     this.#deviceConnection.sendKeyEvent(e.code, e.type);
   }
 
@@ -624,8 +619,8 @@ class DeviceControlApp {
       touchSlots: [],
     };
     function onStartDrag(e) {
-      e.preventDefault();
-
+      // Can't prevent event default behavior to allow the element gain focus
+      // when touched and start capturing keyboard input in the parent.
       // console.debug("mousedown at " + e.pageX + " / " + e.pageY);
       mouseCtx.down = true;
 
@@ -633,8 +628,8 @@ class DeviceControlApp {
     }
 
     function onEndDrag(e) {
-      e.preventDefault();
-
+      // Can't prevent event default behavior to allow the element gain focus
+      // when touched and start capturing keyboard input in the parent.
       // console.debug("mouseup at " + e.pageX + " / " + e.pageY);
       mouseCtx.down = false;
 
@@ -642,8 +637,8 @@ class DeviceControlApp {
     }
 
     function onContinueDrag(e) {
-      e.preventDefault();
-
+      // Can't prevent event default behavior to allow the element gain focus
+      // when touched and start capturing keyboard input in the parent.
       // console.debug("mousemove at " + e.pageX + " / " + e.pageY + ", down=" +
       // mouseIsDown);
       if (mouseCtx.down) {

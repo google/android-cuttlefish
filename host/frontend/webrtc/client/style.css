@@ -336,6 +336,8 @@ body {
   position: relative;
   display: flex;
   flex-direction: row;
+  /* Don't show an outline when using the keyboard */
+  outline: 0px solid transparent;
 }
 
 /*
