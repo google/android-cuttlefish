@@ -394,8 +394,9 @@ class DeviceControlApp {
       return;
     }
 
-    document.querySelectorAll('.device-display-video').forEach(v => {
-      let aspectRatio = v.videoWidth / v.videoHeight;
+    document.querySelectorAll('.device-display-video').forEach((v, i) => {
+      let displayDesc = this.#displayDescriptions[i];
+      let aspectRatio = displayDesc.x_res / displayDesc.y_res;
 
       let keyFrames = [];
       let from = this.#currentScreenStyles[v.id];
