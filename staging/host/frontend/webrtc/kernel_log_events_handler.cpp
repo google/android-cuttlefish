@@ -99,6 +99,11 @@ void KernelLogEventsHandler::ReadLoop() {
 int KernelLogEventsHandler::AddSubscriber(
     std::function<void(const Json::Value&)> subscriber) {
   std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  for (const auto& event : last_events_) {
+    // Deliver the last event of each type to the new subscriber so that it can
+    // show the correct state.
+    subscriber(event);
+  }
   subscribers_[++last_subscriber_id_] = subscriber;
   return last_subscriber_id_;
 }
@@ -110,6 +115,18 @@ void KernelLogEventsHandler::Unsubscribe(int subscriber_id) {
 
 void KernelLogEventsHandler::DeliverEvent(const Json::Value& event) {
   std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  // event["event"] is actually the type of the event.
+  // This would be more efficient with a set, but a list maintains the order in
+  // which events arrived. And for just a handful of elements the list can
+  // actually perform better.
+  for (auto it = last_events_.begin();
+       it != last_events_.end(); it++) {
+    if ((*it)["event"].asString() == event["event"].asString()) {
+      last_events_.erase(it);
+      break;
+    }
+  }
+  last_events_.push_back(event);
   for (const auto& entry : subscribers_) {
     entry.second(event);
   }
