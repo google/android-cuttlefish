@@ -17,10 +17,11 @@
 #pragma once
 
 #include <atomic>
+#include <list>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <map>
 
 #include <json/json.h>
 
@@ -47,6 +48,7 @@ struct KernelLogEventsHandler {
   std::map<int, std::function<void(const Json::Value&)>> subscribers_;
   int last_subscriber_id_ = 0;
   std::mutex subscribers_mtx_;
+  std::list<Json::Value> last_events_;
 };
 
 }  // namespace cuttlefish
