@@ -11,10 +11,8 @@ jobs:
     steps:
     - name: setup apt
       run: apt update -y && apt upgrade -y
-    - name: setup nodejs
-      run: apt install -y curl && curl -s https://deb.nodesource.com/setup_16.x | bash
     - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang nodejs
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
