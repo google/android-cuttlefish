@@ -793,11 +793,6 @@ class DeviceControlApp {
 
   #onMicButton(evt) {
     let nextState = evt.type == 'mousedown';
-    if (nextState) {
-      evt.target.classList.add('pressed_down');
-    } else {
-      evt.target.classList.remove('pressed_down');
-    }
     if (this.#micActive == nextState) {
       return;
     }

@@ -304,20 +304,26 @@ body {
 
   color: var(--button-fg);
   border: none;
+  border-radius: 10px;
   outline: none;
   background-color: var(--button-bg);
 }
-.control-panel-column button:disabled {
-  color: var(--button-disabled-fg);
-}
+
 .control-panel-column button.modal-button-opened {
-  border-radius: 10px;
   background-color: var(--modal-bg);
 }
 
-.control-panel-column button.pressed_down {
+.control-panel-column button:disabled {
+  color: var(--button-disabled-fg);
+  cursor: not-allowed;
+}
+
+.control-panel-column button:enabled {
+  cursor: pointer;
+}
+
+.control-panel-column button:active {
   border: solid 1px var(--button-pressed-border);
-  border-radius: 10px;
   background-color: var(--button-pressed-bg);
 }
 
