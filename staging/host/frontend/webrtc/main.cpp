@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
 
   uint32_t display_index = 0;
   std::vector<std::shared_ptr<VideoSink>> displays;
-  for (const auto& display_config : cvd_config->display_configs()) {
+  for (const auto& display_config : instance.display_configs()) {
     const std::string display_id = "display_" + std::to_string(display_index);
 
     auto display =
@@ -296,7 +296,7 @@ int main(int argc, char** argv) {
 
   observer_factory->SetDisplayHandler(display_handler);
 
-  streamer->SetHardwareSpec("CPUs", cvd_config->cpus());
+  streamer->SetHardwareSpec("CPUs", instance.cpus());
   streamer->SetHardwareSpec("RAM", std::to_string(cvd_config->memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;

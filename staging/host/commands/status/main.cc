@@ -151,11 +151,11 @@ int CvdStatusMain(int argc, char** argv) {
       devices_info[index]["adb_serial"] = instance.adb_ip_and_port();
       devices_info[index]["webrtc_port"] =
           std::to_string(config->sig_server_port());
-      for (int i = 0; i < config->display_configs().size(); i++) {
+      for (int i = 0; i < instance.display_configs().size(); i++) {
         devices_info[index]["displays"][i] =
-            std::to_string(config->display_configs()[i].width) + " x " +
-            std::to_string(config->display_configs()[i].height) + " ( " +
-            std::to_string(config->display_configs()[i].dpi) + " )";
+            std::to_string(instance.display_configs()[i].width) + " x " +
+            std::to_string(instance.display_configs()[i].height) + " ( " +
+            std::to_string(instance.display_configs()[i].dpi) + " )";
       }
       devices_info[index]["status"] = "Running";
       if (index == (instance_names.size() - 1)) {
