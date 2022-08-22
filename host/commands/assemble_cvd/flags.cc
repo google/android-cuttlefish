@@ -74,10 +74,10 @@ DEFINE_string(display3, "", kDisplayHelp);
 
 // TODO(b/171305898): mark these as deprecated after multi-display is fully
 // enabled.
-DEFINE_int32(x_res, 0, "Width of the screen in pixels");
-DEFINE_int32(y_res, 0, "Height of the screen in pixels");
-DEFINE_int32(dpi, 0, "Pixels per inch for the screen");
-DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
+DEFINE_string(x_res, "0", "Width of the screen in pixels");
+DEFINE_string(y_res, "0", "Height of the screen in pixels");
+DEFINE_string(dpi, "0", "Pixels per inch for the screen");
+DEFINE_string(refresh_rate_hz, "60", "Screen refresh rate in Hertz");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(initramfs_path, "", "Path to the initramfs");
@@ -513,40 +513,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
 
-  std::vector<CuttlefishConfig::DisplayConfig> display_configs;
-
-  auto display0 = ParseDisplayConfig(FLAGS_display0);
-  if (display0) {
-    display_configs.push_back(*display0);
-  }
-  auto display1 = ParseDisplayConfig(FLAGS_display1);
-  if (display1) {
-    display_configs.push_back(*display1);
-  }
-  auto display2 = ParseDisplayConfig(FLAGS_display2);
-  if (display2) {
-    display_configs.push_back(*display2);
-  }
-  auto display3 = ParseDisplayConfig(FLAGS_display3);
-  if (display3) {
-    display_configs.push_back(*display3);
-  }
-
-  if (FLAGS_x_res > 0 && FLAGS_y_res > 0) {
-    if (display_configs.empty()) {
-      display_configs.push_back({
-          .width = FLAGS_x_res,
-          .height = FLAGS_y_res,
-          .dpi = FLAGS_dpi,
-          .refresh_rate_hz = FLAGS_refresh_rate_hz,
-      });
-    } else {
-      LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
-    }
-  }
-
-  tmp_config_obj.set_display_configs(display_configs);
-
   const GraphicsAvailability graphics_availability =
     GetGraphicsAvailabilityWithSubprocessCheck();
 
@@ -642,7 +608,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   CHECK(!FLAGS_smt || FLAGS_cpus % 2 == 0)
       << "CPUs must be a multiple of 2 in SMT mode";
-  tmp_config_obj.set_cpus(FLAGS_cpus);
   tmp_config_obj.set_smt(FLAGS_smt);
 
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
@@ -653,8 +618,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(
       std::set<std::string>(secure_hals.begin(), secure_hals.end()));
-
-  tmp_config_obj.set_gdb_port(FLAGS_gdb_port);
 
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
@@ -768,9 +731,15 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_userdata_format(FLAGS_userdata_format);
 
+  // old flags but vectorized for multi-device instances
   std::vector<std::string> gnss_file_paths = android::base::Split(FLAGS_gnss_file_path, ",");
   std::vector<std::string> fixed_location_file_paths =
       android::base::Split(FLAGS_fixed_location_file_path, ",");
+  std::vector<std::string> x_res_vec = android::base::Split(FLAGS_x_res, ",");
+  std::vector<std::string> y_res_vec = android::base::Split(FLAGS_y_res, ",");
+  std::vector<std::string> dpi_vec = android::base::Split(FLAGS_dpi, ",");
+  std::vector<std::string> refresh_rate_hz_vec =
+      android::base::Split(FLAGS_refresh_rate_hz, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -821,6 +790,88 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_target_arch(kernel_config.target_arch);
     instance.set_console(FLAGS_console);
     instance.set_kgdb(FLAGS_console && FLAGS_kgdb);
+    instance.set_cpus(FLAGS_cpus);
+    instance.set_gdb_port(FLAGS_gdb_port);
+
+    std::vector<CuttlefishConfig::DisplayConfig> display_configs;
+    auto display0 = ParseDisplayConfig(FLAGS_display0);
+    if (display0) {
+      display_configs.push_back(*display0);
+    }
+    auto display1 = ParseDisplayConfig(FLAGS_display1);
+    if (display1) {
+      display_configs.push_back(*display1);
+    }
+    auto display2 = ParseDisplayConfig(FLAGS_display2);
+    if (display2) {
+      display_configs.push_back(*display2);
+    }
+    auto display3 = ParseDisplayConfig(FLAGS_display3);
+    if (display3) {
+      display_configs.push_back(*display3);
+    }
+
+    int x_res = 0;
+    if (instance_index < x_res_vec.size()) {
+      if (!android::base::ParseInt(x_res_vec[instance_index].c_str(), &x_res)) {
+        LOG(ERROR) << "Failed to parse value \"" << x_res_vec[instance_index]
+                   << "\" for x_res";
+      }
+    } else if (x_res_vec.size() == 1) {
+      if (!android::base::ParseInt(x_res_vec[0].c_str(), &x_res)) {
+        LOG(ERROR) << "Failed to parse value \"" << x_res_vec[0]
+                   << "\" for x_res";
+      }
+    }
+    int y_res = 0;
+    if (instance_index < y_res_vec.size()) {
+      if (!android::base::ParseInt(y_res_vec[instance_index].c_str(), &y_res)) {
+        LOG(ERROR) << "Failed to parse value \"" << y_res_vec[instance_index]
+                   << "\" for y_res";
+      }
+    } else if (y_res_vec.size() == 1) {
+      if (!android::base::ParseInt(y_res_vec[0].c_str(), &y_res)) {
+        LOG(ERROR) << "Failed to parse value \"" << y_res_vec[0]
+                   << "\" for y_res";
+      }
+    }
+    int dpi = 0;
+    if (instance_index < dpi_vec.size()) {
+      if (!android::base::ParseInt(dpi_vec[instance_index].c_str(), &dpi)) {
+        LOG(ERROR) << "Failed to parse value \"" << dpi_vec[instance_index]
+                   << "\" for dpi";
+      }
+    } else if (dpi_vec.size() == 1) {
+      if (!android::base::ParseInt(dpi_vec[0].c_str(), &dpi)) {
+        LOG(ERROR) << "Failed to parse value \"" << dpi_vec[0]
+                   << "\" for dpi";
+      }
+    }
+    int refresh_rate_hz = 0;
+    if (instance_index < refresh_rate_hz_vec.size()) {
+      if (!android::base::ParseInt(refresh_rate_hz_vec[instance_index].c_str(), &refresh_rate_hz)) {
+        LOG(ERROR) << "Failed to parse value \"" << refresh_rate_hz_vec[instance_index]
+                   << "\" for refresh_rate_hz";
+      }
+    } else if (refresh_rate_hz_vec.size() == 1) {
+      if (!android::base::ParseInt(refresh_rate_hz_vec[0].c_str(), &refresh_rate_hz)) {
+        LOG(ERROR) << "Failed to parse value \"" << refresh_rate_hz_vec[0]
+                   << "\" for refresh_rate_hz";
+      }
+    }
+    if (x_res > 0 && y_res > 0) {
+      if (display_configs.empty()) {
+        display_configs.push_back({
+            .width = x_res,
+            .height = y_res,
+            .dpi = dpi,
+            .refresh_rate_hz = refresh_rate_hz,
+          });
+      } else {
+        LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
+      }
+    }
+    instance.set_display_configs(display_configs);
 
     if (instance_index < gem5_binary_dirs.size()) {
       instance.set_gem5_binary_dir(gem5_binary_dirs[instance_index]);
