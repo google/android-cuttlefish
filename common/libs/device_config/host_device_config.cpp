@@ -157,7 +157,8 @@ bool InitializeNetworkConfiguration(const CuttlefishConfig& cuttlefish_config,
 
 void InitializeScreenConfiguration(const CuttlefishConfig& cuttlefish_config,
                                    DeviceConfig* device_config) {
-  for (const auto& cuttlefish_display_config : cuttlefish_config.display_configs()) {
+  auto instance = cuttlefish_config.ForDefaultInstance();
+  for (const auto& cuttlefish_display_config : instance.display_configs()) {
     DeviceConfig::DisplayConfig* device_display_config =
       device_config->add_display_config();
 
