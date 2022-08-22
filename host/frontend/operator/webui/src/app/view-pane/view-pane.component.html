@@ -1,13 +1,13 @@
 <div>
-  <div class="view-pane" *ngIf="visibleDevices.length">
-    <div class="device-viewer" *ngFor="let display of visibleDevices">
+  <div class="view-pane">
+    <div class="device-viewer" *ngFor="let display of visibleDevices | async; trackBy: trackById">
       <h3>
-        {{ display }}
+        {{ display.deviceId }}
       </h3>
       <iframe
         style="margin: 10px 0 0 10px"
-        [src]="displaysService.deviceConnectURL(display) | safe"
-        [title]="display"
+        [src]="display.deviceUrl | safe"
+        [title]="display.deviceId"
       ></iframe>
     </div>
   </div>

@@ -10,15 +10,15 @@
 <div>
   <ul class="devices">
     <section class="device-list">
-      <li *ngFor="let device of devices | async">
+      <li *ngFor="let device of devices | async; trackBy: trackById">
         <mat-checkbox
           class="checkbox"
           [ngModel]="displaysService.visibleValidate(device)"
           (change)="onSelect(device)"
-          >{{ device }}</mat-checkbox
+          >{{ device.deviceId }}</mat-checkbox
         >
         <a
-          [href]="displaysService.deviceConnectURL(device) | safe"
+          [href]="device.deviceUrl | safe"
           title="Launch in new tab"
           target="_blank"
         >
