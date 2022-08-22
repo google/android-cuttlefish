@@ -136,9 +136,9 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--protected-vm");
   }
 
-  if (config.gdb_port() > 0) {
-    CF_EXPECT(config.cpus() == 1, "CPUs must be 1 for crosvm gdb mode");
-    crosvm_cmd.Cmd().AddParameter("--gdb=", config.gdb_port());
+  if (instance.gdb_port() > 0) {
+    CF_EXPECT(instance.cpus() == 1, "CPUs must be 1 for crosvm gdb mode");
+    crosvm_cmd.Cmd().AddParameter("--gdb=", instance.gdb_port());
   }
 
   const auto gpu_capture_enabled = !config.gpu_capture_binary().empty();
@@ -165,7 +165,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                                   gpu_common_3d_string, gpu_angle_string);
   }
 
-  for (const auto& display_config : config.display_configs()) {
+  for (const auto& display_config : instance.display_configs()) {
     crosvm_cmd.Cmd().AddParameter(
         "--gpu-display=", "width=", display_config.width, ",",
         "height=", display_config.height);
@@ -176,7 +176,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", config.memory_mb());
-  crosvm_cmd.Cmd().AddParameter("--cpus=", config.cpus());
+  crosvm_cmd.Cmd().AddParameter("--cpus=", instance.cpus());
 
   auto disk_num = instance.virtual_disk_paths().size();
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
@@ -194,7 +194,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     auto touch_type_parameter =
         config.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
 
-    auto display_configs = config.display_configs();
+    auto display_configs = instance.display_configs();
     CF_EXPECT(display_configs.size() >= 1);
 
     for (int i = 0; i < display_configs.size(); ++i) {
