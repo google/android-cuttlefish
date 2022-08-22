@@ -47,7 +47,8 @@ std::unique_ptr<ConfUiRenderer> ConfUiRenderer::GenerateRenderer(
 static int GetDpi(const int display_num = 0) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Config is Missing";
-  auto display_configs = config->display_configs();
+  auto instance = config->ForDefaultInstance();
+  auto display_configs = instance.display_configs();
   CHECK_GT(display_configs.size(), display_num)
       << "Invalid display number " << display_num;
   return display_configs[display_num].dpi;

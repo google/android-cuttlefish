@@ -311,7 +311,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
       // devices with KVM and MTE, so MTE will always require TCG
       machine += ",mte=on";
     }
-    CF_EXPECT(config.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
+    CF_EXPECT(instance.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
   }
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
@@ -331,13 +331,13 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   // today is configured, and the way crosvm does it
   qemu_cmd.AddParameter("-smp");
   if (config.smt()) {
-    CF_EXPECT(config.cpus() % 2 == 0,
+    CF_EXPECT(instance.cpus() % 2 == 0,
               "CPUs must be a multiple of 2 in SMT mode");
-    qemu_cmd.AddParameter(config.cpus(), ",cores=",
-                          config.cpus() / 2, ",threads=2");
+    qemu_cmd.AddParameter(instance.cpus(), ",cores=",
+                          instance.cpus() / 2, ",threads=2");
   } else {
-    qemu_cmd.AddParameter(config.cpus(), ",cores=",
-                          config.cpus(), ",threads=1");
+    qemu_cmd.AddParameter(instance.cpus(), ",cores=",
+                          instance.cpus(), ",threads=1");
   }
 
   qemu_cmd.AddParameter("-uuid");
@@ -371,7 +371,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("none");
   }
 
-  auto display_configs = config.display_configs();
+  auto display_configs = instance.display_configs();
   CF_EXPECT(display_configs.size() >= 1);
   auto display_config = display_configs[0];
 
@@ -596,10 +596,10 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-bios");
   qemu_cmd.AddParameter(config.bootloader());
 
-  if (config.gdb_port() > 0) {
+  if (instance.gdb_port() > 0) {
     qemu_cmd.AddParameter("-S");
     qemu_cmd.AddParameter("-gdb");
-    qemu_cmd.AddParameter("tcp::", config.gdb_port());
+    qemu_cmd.AddParameter("tcp::", instance.gdb_port());
   }
 
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
