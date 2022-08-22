@@ -1,5 +1,5 @@
 import {Injectable, SecurityContext} from '@angular/core';
-import {BehaviorSubject, map, mergeMap, Observable, of, ReplaySubject, shareReplay, Subject} from 'rxjs';
+import {map, ReplaySubject, Subject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {Device} from './device-interface';
 import {DomSanitizer} from '@angular/platform-browser';

@@ -10,26 +10,13 @@ import {Device} from '../device-interface';
 })
 export class ViewPaneComponent implements OnInit, OnDestroy {
   deviceURL = '';
-  visibleDevices = new BehaviorSubject<Device[]>([]);
-  private subscription!: Subscription;
+  visibleDevices = this.displaysService.getVisibleDevices();
 
   constructor(
     public displaysService: DisplaysService,
   ) {}
 
-  trackById(index : number, device : Device) {
-    return device.deviceId;
-  }
+  ngOnInit(): void {}
 
-  ngOnInit(): void {
-    this.displaysService
-      .getVisibleDevices()
-      .subscribe(display => {
-        this.visibleDevices.next(display);
-      });
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-  }
+  ngOnDestroy(): void {}
 }

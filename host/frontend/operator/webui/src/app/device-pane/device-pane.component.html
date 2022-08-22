@@ -10,10 +10,10 @@
 <div>
   <ul class="devices">
     <section class="device-list">
-      <li *ngFor="let device of devices | async; trackBy: trackById">
+      <li *ngFor="let device of devices | async">
         <mat-checkbox
           class="checkbox"
-          [ngModel]="displaysService.visibleValidate(device)"
+          [ngModel]="displaysService.isVisibleDevice(device)"
           (change)="onSelect(device)"
           >{{ device.deviceId }}</mat-checkbox
         >

@@ -1,6 +1,6 @@
 <div>
   <div class="view-pane">
-    <div class="device-viewer" *ngFor="let display of visibleDevices | async; trackBy: trackById">
+    <div class="device-viewer" *ngFor="let display of visibleDevices | async">
       <h3>
         {{ display.deviceId }}
       </h3>
