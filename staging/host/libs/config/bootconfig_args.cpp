@@ -87,7 +87,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
       concat("androidboot.serialno=", instance.serial_number()));
 
   // TODO(b/131884992): update to specify multiple once supported.
-  const auto display_configs = config.display_configs();
+  const auto display_configs = instance.display_configs();
   CHECK_GE(display_configs.size(), 1);
   bootconfig_args.push_back(
       concat("androidboot.lcd_density=", display_configs[0].dpi));
