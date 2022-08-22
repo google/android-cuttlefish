@@ -41,4 +41,13 @@
   <bool name="config_supportsSplitScreenMultiWindow">true</bool>
   <!-- Radius of the software rounded corners. -->
   <dimen name="rounded_corner_radius">34px</dimen>
+
+  <!-- List of the labels of requestable device state config values -->
+  <string-array name="config_deviceStatesAvailableForAppRequests">
+    <item>config_deviceStateRearDisplay</item>
+  </string-array>
+
+  <!-- Device state that corresponds to rear display mode, feature provided
+         through Jetpack WindowManager -->
+  <integer name="config_deviceStateRearDisplay">0</integer>
 </resources>
