@@ -7,30 +7,40 @@ import {Device} from './device-interface';
   providedIn: 'root',
 })
 export class DisplaysService {
-  private displays: Device[] = [];
+  private visibleDevices: Device[] = [];
   private visibleDevicesChanged = new BehaviorSubject<Device[]>([]);
-  
+
   constructor(private deviceService: DeviceService) {
-    this.deviceService.getDevices().subscribe((devices) => {
-      this.displays = this.displays.filter((display) => devices.some((device) => device.deviceId == display.deviceId))
-      this.visibleDevicesChanged.next(this.displays);
+    this.deviceService.getDevices().subscribe((allDevices: Device[]) => {
+      this.visibleDevices = this.visibleDevices.filter(visibleDevice =>
+        allDevices.some(aDevice => aDevice.deviceId === visibleDevice.deviceId)
+      );
+      this.visibleDevicesChanged.next(this.visibleDevices);
     });
   }
 
-  add(display: Device) {
-    if (!this.displays.find((device) => device.deviceId == display.deviceId)) {
-      this.displays.push(display);
+  add(addedDevice: Device) {
+    if (
+      !this.visibleDevices.some(
+        visibleDevice => visibleDevice.deviceId === addedDevice.deviceId
+      )
+    ) {
+      this.visibleDevices.push(addedDevice);
     }
-    this.visibleDevicesChanged.next(this.displays);
+    this.visibleDevicesChanged.next(this.visibleDevices);
   }
 
-  remove(display: Device) {
-    this.displays = this.displays.filter((device) => device.deviceId != display.deviceId);
-    this.visibleDevicesChanged.next(this.displays);
+  remove(removedDevice: Device) {
+    this.visibleDevices = this.visibleDevices.filter(
+      visibleDevice => visibleDevice.deviceId !== removedDevice.deviceId
+    );
+    this.visibleDevicesChanged.next(this.visibleDevices);
   }
 
-  isVisibleDevice(display: Device) : boolean {
-    return this.displays.some((device) => display.deviceId == device.deviceId)
+  isVisibleDevice(display: Device): boolean {
+    return this.visibleDevices.some(
+      device => display.deviceId === device.deviceId
+    );
   }
 
   getVisibleDevices() {

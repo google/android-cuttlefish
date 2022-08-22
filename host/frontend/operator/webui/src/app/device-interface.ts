@@ -1,6 +1,6 @@
 export class Device {
-  private id: string = "";
-  private url: string = "";
+  private id = '';
+  private url = '';
 
   constructor(id: string, url: string) {
     this.id = id;
