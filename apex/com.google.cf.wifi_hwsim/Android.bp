@@ -28,25 +28,6 @@ prebuilt_etc {
     installable: false,
 }
 
-cc_binary {
-    name: "android.hardware.wifi@1.0-service_cf",
-    defaults: ["android.hardware.wifi@1.0-service_default"],
-    shared_libs: ["libwifi-hal_cf"],
-    static_libs: ["android.hardware.wifi@1.0-service-lib_cf"],
-}
-
-cc_library_static {
-    name: "android.hardware.wifi@1.0-service-lib_cf",
-    defaults: ["android.hardware.wifi@1.0-service-lib_defaults"],
-    shared_libs: ["libwifi-hal_cf"],
-}
-
-cc_library_shared {
-    name: "libwifi-hal_cf",
-    defaults: ["libwifi-hal_defaults"],
-    whole_static_libs: ["libwifi-hal-emu"],
-}
-
 apex {
     name: "com.google.cf.wifi_hwsim",
     // Name expected by wpa_supplicant when it looks for config files.
@@ -64,7 +45,7 @@ apex {
         "rename_netiface",
         "wpa_supplicant_cf",
         "hostapd_cf",
-        "android.hardware.wifi@1.0-service_cf",
+        "android.hardware.wifi@1.0-service",
     ],
     sh_binaries: ["init.wifi.sh_apex"],
     prebuilts: [
