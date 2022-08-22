@@ -112,15 +112,15 @@ class DeviceControlApp {
     console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
     createToggleControl(
-        document.getElementById('camera-control'), 'videocam',
+        document.getElementById('camera_off_btn'),
         enabled => this.#onCameraCaptureToggle(enabled));
     createToggleControl(
-        document.getElementById('record-video-control'), 'movie_creation',
+        document.getElementById('record_video_btn'),
         enabled => this.#onVideoCaptureToggle(enabled));
     const audioElm = document.getElementById('device-audio');
 
     let audioPlaybackCtrl = createToggleControl(
-        document.getElementById('audio-playback-control'), 'speaker',
+        document.getElementById('volume_off_btn'),
         enabled => this.#onAudioPlaybackToggle(enabled), !audioElm.paused);
     // The audio element may start or stop playing at any time, this ensures the
     // audio control always show the right state.

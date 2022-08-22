@@ -104,23 +104,11 @@ body {
   align-items: center;
 }
 
-#camera-control {
+#camera_off_btn {
   display: none !important;
 }
-#record-video-control {
+#record_video_btn {
   display: none !important;
-}
-
-#app-controls {
-  margin-left: 10px;
-}
-#app-controls > div {
-  display: inline-block;
-  position: relative;
-  margin-right: 6px;
-}
-#device-audio {
-  height: 44px;
 }
 
 #error-message-div {
