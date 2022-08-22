@@ -1,31 +1,40 @@
 import {Injectable, SecurityContext} from '@angular/core';
 import {DomSanitizer} from '@angular/platform-browser';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, map} from 'rxjs';
+import {DeviceService} from './device.service';
+import {Device} from './device-interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DisplaysService {
-  private displays: string[] = [];
-  private visibleDevicesChanged = new BehaviorSubject<string[]>([]);
+  private displays: Device[] = [];
+  private visibleDevicesChanged = new BehaviorSubject<Device[]>([]);
   
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(private deviceService: DeviceService, private sanitizer: DomSanitizer) {}
 
-  add(display: string) {
+  refresh() {
+    this.deviceService.getDevices().subscribe((devices) => {
+      this.displays = this.displays.filter((display) => devices.includes(display))
+      this.visibleDevicesChanged.next(this.displays);
+    });
+  }
+
+  add(display: Device) {
     if (!this.displays.includes(display)) {
       this.displays.push(display);
     }
     this.visibleDevicesChanged.next(this.displays);
   }
 
-  remove(display: string) {
+  remove(display: Device) {
     if (this.displays.includes(display)){
       this.displays = this.displays.filter(element => element !== display);
     }
     this.visibleDevicesChanged.next(this.displays);
   }
 
-  visibleValidate(display: string) : boolean {
+  visibleValidate(display: Device) : boolean {
     return this.displays.includes(display);
   }
 
@@ -33,12 +42,12 @@ export class DisplaysService {
     return this.visibleDevicesChanged.asObservable();
   }
 
-  deviceConnectURL(display: string): string {
-    return this.sanitizer.sanitize(
-      SecurityContext.RESOURCE_URL,
-      this.sanitizer.bypassSecurityTrustResourceUrl(
-        `/devices/${display}/files/client.html`
-      )
-    ) as string;
-  }
+  // deviceConnectURL(display: Device) {
+  //   display.url = this.sanitizer.sanitize(
+  //     SecurityContext.RESOURCE_URL,
+  //     this.sanitizer.bypassSecurityTrustResourceUrl(
+  //       `/devices/${display}/files/client.html`
+  //     )
+  //   ) as string;
+  // }
 }

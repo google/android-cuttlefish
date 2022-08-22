@@ -10,8 +10,8 @@ import { Observable, of, map, BehaviorSubject } from "rxjs";
   styleUrls: ["./device-pane.component.sass"],
 })
 export class DevicePaneComponent implements OnInit {
-  devices = new BehaviorSubject<string[]>([]);
-  private currentDevices: string[] = [];
+  devices = new BehaviorSubject<Device[]>([]);
+  private currentDevices: Device[] = [];
 
   constructor(
     private deviceService: DeviceService,
@@ -19,12 +19,16 @@ export class DevicePaneComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.deviceService.refresh().subscribe((devices) => {
+    this.deviceService.getDevices().subscribe((devices) => {
       this.devices.next(devices);
     });
   }
 
-  onSelect(device: string): void {
+  trackById(index : number, device : Device) {
+    return device.deviceId;
+  }
+
+  onSelect(device: Device): void {
     if (this.displaysService.visibleValidate(device)) {
       this.displaysService.remove(device);
     } else {
@@ -33,9 +37,8 @@ export class DevicePaneComponent implements OnInit {
   }
 
   onRefresh(): void {
-    this.deviceService.refresh().subscribe((devices) => {
-      this.devices.next(devices);
-    });
+    this.deviceService.refresh();
+    this.displaysService.refresh();
   }
 
   showAll(): void {
