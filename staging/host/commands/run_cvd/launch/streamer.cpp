@@ -120,7 +120,7 @@ class StreamerSockets : public virtual SetupFeature {
 
   Result<void> ResultSetup() override {
     auto use_vsockets = config_.vm_manager() == vm_manager::QemuManager::name();
-    for (int i = 0; i < config_.display_configs().size(); ++i) {
+    for (int i = 0; i < instance_.display_configs().size(); ++i) {
       SharedFD touch_socket =
           use_vsockets ? SharedFD::VsockServer(instance_.touch_server_port(),
                                                SOCK_STREAM)

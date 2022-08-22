@@ -46,18 +46,21 @@ struct ScreenConnectorInfo {
   static constexpr std::uint32_t BytesPerPixel() { return 4; }
   static std::uint32_t ScreenCount() {
     auto config = ChkAndGetConfig();
-    auto display_configs = config->display_configs();
+    auto instance = config->ForDefaultInstance();
+    auto display_configs = instance.display_configs();
     return static_cast<std::uint32_t>(display_configs.size());
   }
   static std::uint32_t ScreenHeight(std::uint32_t display_number) {
     auto config = ChkAndGetConfig();
-    auto display_configs = config->display_configs();
+    auto instance = config->ForDefaultInstance();
+    auto display_configs = instance.display_configs();
     CHECK_GT(display_configs.size(), display_number);
     return display_configs[display_number].height;
   }
   static std::uint32_t ScreenWidth(std::uint32_t display_number) {
     auto config = ChkAndGetConfig();
-    auto display_configs = config->display_configs();
+    auto instance = config->ForDefaultInstance();
+    auto display_configs = instance.display_configs();
     CHECK_GE(display_configs.size(), display_number);
     return display_configs[display_number].width;
   }

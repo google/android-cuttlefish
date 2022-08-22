@@ -175,6 +175,54 @@ bool CuttlefishConfig::InstanceSpecific::kgdb() const {
   return (*Dictionary())[kKgdb].asBool();
 }
 
+static constexpr char kCpus[] = "cpus";
+void CuttlefishConfig::MutableInstanceSpecific::set_cpus(int cpus) { (*Dictionary())[kCpus] = cpus; }
+int CuttlefishConfig::InstanceSpecific::cpus() const { return (*Dictionary())[kCpus].asInt(); }
+
+static constexpr char kGdbPort[] = "gdb_port";
+void CuttlefishConfig::MutableInstanceSpecific::set_gdb_port(int port) {
+  (*Dictionary())[kGdbPort] = port;
+}
+int CuttlefishConfig::InstanceSpecific::gdb_port() const {
+  return (*Dictionary())[kGdbPort].asInt();
+}
+
+static constexpr char kDisplayConfigs[] = "display_configs";
+static constexpr char kXRes[] = "x_res";
+static constexpr char kYRes[] = "y_res";
+static constexpr char kDpi[] = "dpi";
+static constexpr char kRefreshRateHz[] = "refresh_rate_hz";
+std::vector<CuttlefishConfig::DisplayConfig>
+CuttlefishConfig::InstanceSpecific::display_configs() const {
+  std::vector<DisplayConfig> display_configs;
+  for (auto& display_config_json : (*Dictionary())[kDisplayConfigs]) {
+    DisplayConfig display_config = {};
+    display_config.width = display_config_json[kXRes].asInt();
+    display_config.height = display_config_json[kYRes].asInt();
+    display_config.dpi = display_config_json[kDpi].asInt();
+    display_config.refresh_rate_hz =
+        display_config_json[kRefreshRateHz].asInt();
+    display_configs.emplace_back(display_config);
+  }
+  return display_configs;
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_display_configs(
+    const std::vector<DisplayConfig>& display_configs) {
+  Json::Value display_configs_json(Json::arrayValue);
+
+  for (const DisplayConfig& display_configs : display_configs) {
+    Json::Value display_config_json(Json::objectValue);
+    display_config_json[kXRes] = display_configs.width;
+    display_config_json[kYRes] = display_configs.height;
+    display_config_json[kDpi] = display_configs.dpi;
+    display_config_json[kRefreshRateHz] = display_configs.refresh_rate_hz;
+    display_configs_json.append(display_config_json);
+  }
+
+  (*Dictionary())[kDisplayConfigs] = display_configs_json;
+}
+
+
 static constexpr char kTargetArch[] = "target_arch";
 void CuttlefishConfig::MutableInstanceSpecific::set_target_arch(
     Arch target_arch) {
