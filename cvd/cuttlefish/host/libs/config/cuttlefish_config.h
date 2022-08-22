@@ -112,9 +112,6 @@ class CuttlefishConfig {
   void set_enable_gpu_angle(const bool enable_gpu_angle);
   bool enable_gpu_angle() const;
 
-  int cpus() const;
-  void set_cpus(int cpus);
-
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
@@ -124,12 +121,6 @@ class CuttlefishConfig {
     int dpi;
     int refresh_rate_hz;
   };
-
-  std::vector<DisplayConfig> display_configs() const;
-  void set_display_configs(const std::vector<DisplayConfig>& display_configs);
-
-  int gdb_port() const;
-  void set_gdb_port(int gdb_port);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
@@ -533,6 +524,12 @@ class CuttlefishConfig {
     bool use_bootloader() const;
 
     Arch target_arch() const;
+
+    int cpus() const;
+
+    int gdb_port() const;
+
+    std::vector<DisplayConfig> display_configs() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -592,6 +589,9 @@ class CuttlefishConfig {
     void set_console(bool console);
     void set_kgdb(bool kgdb);
     void set_target_arch(Arch target_arch);
+    void set_cpus(int cpus);
+    void set_gdb_port(int gdb_port);
+    void set_display_configs(const std::vector<DisplayConfig>& display_configs);
   };
 
  private:
