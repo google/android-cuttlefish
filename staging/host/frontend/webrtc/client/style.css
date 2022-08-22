@@ -14,8 +14,60 @@
  * limitations under the License.
  */
 
+/* Dark theme, the default if none specified */
+body, body.dark-theme {
+  --main-bg: black;
+  --main-fg: white;
+  --error-bg: #900000; /* dark red */
+  --alert-bg: #927836; /* dark yellow */
+  --info-bg: #007000; /* dark green */
+  --modal-bg: #5f6368ea; /* Semi-transparent Google grey 500 */
+  --modal-button-bg: #e8eaed; /* Google grey 200 */
+  --modal-button-shadow: #444444;
+  --modal-button-fg: black;
+  --modal-button-border: black;
+  --modal-button-invalid-border: red;
+  --modal-button-highlight-bg: #f4cccc; /* light red */
+  --bt-label-fg: green;
+  --bt-label-invalid-fg: red;
+  --bt-action-bg: transparent;
+  --custom-button-bg: #1c4587ff; /* blue */
+  --button-fg: #e8eaed; /* Google grey 200 */
+  --button-bg: transparent;
+  --button-disabled-fg: #9aa0a6; /* Google grey 500 */
+  --button-pressed-border: #505050;
+  --button-pressed-bg: #303030;
+}
+/* End of dark theme */
+
+/* Light theme */
+body.light-theme {
+  --main-bg: #fafafa;
+  --main-fg: black;
+  --error-bg: #ea9da0; /* light red */
+  --alert-bg: #f3ef9e; /* light yellow */
+  --info-bg: #a5d5a5; /* light green */
+  --modal-bg: #d9d9d9ea; /* Semi-transparent Google grey 200 */
+  --modal-button-bg: #7b7b7b; /* Google grey 500 */
+  --modal-button-shadow: #666666;
+  --modal-button-fg: #fafafa;
+  --modal-button-border: #c4c4c4; /* Google grey 300 */
+  --modal-button-invalid-border: #c3413d; /*light red */
+  --modal-button-highlight-bg: #a05555; /* dark red-ish */
+  --bt-label-fg: green;
+  --bt-label-invalid-fg: #c3413d; /* light red */
+  --bt-action-bg: transparent;
+  --custom-button-bg: #8fc3ea; /* light blue */
+  --button-fg: #555555; /* Google grey 600 */
+  --button-bg: transparent;
+  --button-disabled-fg: #c4c4c4; /* Google grey 300 */
+  --button-pressed-border: #c4c4c4; /* Google grey 300 */
+  --button-pressed-bg: #d9d9d9; /* Google grey 200 */
+}
+/* End of light theme */
+
 body {
-  background-color:black;
+  background-color: var(--main-bg);
   margin: 0;
   touch-action: none;
   overscroll-behavior: none;
@@ -80,7 +132,7 @@ body {
   opacity: 0.97;
 }
 #error-message {
-  color: white;
+  color: var(--main-fg);
   font-family: 'Open Sans', sans-serif;
   padding: 10px;
   margin: 10px;
@@ -94,33 +146,28 @@ body {
   display: none;
 }
 #error-message.warning {
-  /* dark red */
-  background-color: #927836;
+  background-color: var(--alert-bg);
 }
 #error-message.error {
-  /* dark red */
-  background-color: #900000;
+  background-color: var(--error-bg);
 }
 #status-div {
   flex-grow: 1;
 }
 #status-message {
-  color: white;
+  color: var(--main-fg);
   font-family: 'Open Sans', sans-serif;
   padding: 10px;
   margin: 10px;
 }
 #status-message.connecting {
-  /* dark yellow */
-  background-color: #927836;
+  background-color: var(--alert-bg);
 }
 #status-message.error {
-  /* dark red */
-  background-color: #900000;
+  background-color: var(--error-bg);
 }
 #status-message.connected {
-  /* dark green */
-  background-color: #007000;
+  background-color: var(--info-bg);
 }
 
 /* Control panel buttons and device screen(s). */
@@ -146,8 +193,8 @@ body {
   padding: 20px;
   padding-top: 1px;
 
-  background-color: #5f6368ea; /* Semi-transparent Google grey 500 */
-  color: white;
+  background-color: var(--modal-bg);
+  color: var(--main-fg);
   font-family: 'Open Sans', sans-serif;
 }
 .modal-header {
@@ -157,42 +204,42 @@ body {
   justify-content: space-between;
 }
 .modal-close {
-  color: white;
+  color: var(--main-fg);
   border: none;
   outline: none;
   background-color: transparent;
 }
 .modal-button, .modal-button-highlight {
-  background:    #e8eaed; /* Google grey 200 */
+  background:    var(--modal-button-bg)
   border-radius: 10px;
-  box-shadow:    1px 1px #444444;
+  box-shadow:    1px 1px var(--modal-button-shadow);
   padding:       10px 20px;
-  color:         #000000;
+  color:         var(--modal-button-fg);
   display:       inline-block;
   font:          normal bold 14px/1 "Open Sans", sans-serif;
   text-align:    center;
 }
 #bluetooth-wizard-mac:valid {
-  border: 2px solid black;
+  border: 2px solid var(--modal-button-border);
 }
 #bluetooth-wizard-mac:invalid {
-  border: 2px solid red;
+  border: 2px solid var(--modal-button-invalid-border);
 }
 #bluetooth-wizard-mac:invalid + span::before {
   font-weight: bold;
   content: 'X';
-  color: red;
+  color: var(--bt-label-invalid-fg);
 }
 #bluetooth-wizard-mac:valid + span::before {
   font-weight: bold;
   content: 'OK';
-  color: green;
+  color: var(--bt-label-fg);
 }
 .modal-button {
-  background:    #e8eaed; /* Google grey 200 */
+  background: var(--modal-button-bg);
 }
 .modal-button-highlight {
-  background:    #f4cccc;
+  background: var(--modal-button-highlight-bg);
 }
 #device-details-modal span {
   white-space: pre;
@@ -201,13 +248,13 @@ body {
   width: 100%;
 }
 #bluetooth-console-cmd-label {
-  color: white;
+  color: var(--main-fg);
 }
 .bluetooth-text, .bluetooth-text-bold, .bluetooth-text-field input {
   font: normal 18px/1 "Open Sans", sans-serif;
 }
 .bluetooth-text, .bluetooth-text-bold {
-  color: white;
+  color: var(--main-fg);
 }
 .bluetooth-text-bold {
   font: bold;
@@ -217,23 +264,23 @@ body {
 }
 .bluetooth-drop-down select {
   font: normal 18px/1 "Open Sans", sans-serif;
-  color: black;
+  color: var(--modal-button-fg);
   width: 500px;
   margin: 5px;
   rows: 10;
   columns: 60;
 }
 .bluetooth-text-field input {
-  color: black;
+  color: var(--modal-button-fg);
   width: 500px;
   margin: 5px;
   rows: 10;
   columns: 60;
 }
 .bluetooth-list-trash {
-  background:    #00000000;
+  background:    var(--bt-action-bg);
   border:        0px;
-  color:         #ffffff;
+  color:         var(--main-fg);
 }
 
 .control-panel-column {
@@ -245,7 +292,7 @@ body {
 #control-panel-custom-buttons {
   display: none;
   /* Give the custom buttons column a blue background. */
-  background-color: #1c4587ff;
+  background-color: var(--custom-button-bg);
   height: fit-content;
   border-radius: 10px;
 }
@@ -255,23 +302,23 @@ body {
   height: 50px;
   font-size: 32px;
 
-  color: #e8eaed; /* Google grey 200 */
+  color: var(--button-fg);
   border: none;
   outline: none;
-  background-color: transparent;
+  background-color: var(--button-bg);
 }
 .control-panel-column button:disabled {
-  color: #9aa0a6; /* Google grey 500 */
+  color: var(--button-disabled-fg);
 }
 .control-panel-column button.modal-button-opened {
   border-radius: 10px;
-  background-color: #5f6368; /* Google grey 700 */
+  background-color: var(--modal-bg);
 }
 
 .control-panel-column button.pressed_down {
-  border: solid 1px #505050;
+  border: solid 1px var(--button-pressed-border);
   border-radius: 10px;
-  background-color: #303030;
+  background-color: var(--button-pressed-bg);
 }
 
 #device-displays {
@@ -306,9 +353,9 @@ body {
 
 /* Container <div> to show info about the individual display. */
 .device-display-info {
-  color: white;
+  color: var(--main-fg);
   /* dark green */
-  background-color: #007000;
+  background-color: var(--info-bg);
   font-family: 'Open Sans', sans-serif;
   text-indent: 0px;
   border-radius: 10px;
