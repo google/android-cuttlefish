@@ -183,10 +183,6 @@ bool CuttlefishConfig::enable_gpu_angle() const {
   return (*dictionary_)[kEnableGpuAngle].asBool();
 }
 
-static constexpr char kCpus[] = "cpus";
-int CuttlefishConfig::cpus() const { return (*dictionary_)[kCpus].asInt(); }
-void CuttlefishConfig::set_cpus(int cpus) { (*dictionary_)[kCpus] = cpus; }
-
 static constexpr char kMemoryMb[] = "memory_mb";
 int CuttlefishConfig::memory_mb() const {
   return (*dictionary_)[kMemoryMb].asInt();
@@ -195,54 +191,11 @@ void CuttlefishConfig::set_memory_mb(int memory_mb) {
   (*dictionary_)[kMemoryMb] = memory_mb;
 }
 
-static constexpr char kDisplayConfigs[] = "display_configs";
-static constexpr char kXRes[] = "x_res";
-static constexpr char kYRes[] = "y_res";
-static constexpr char kDpi[] = "dpi";
-static constexpr char kRefreshRateHz[] = "refresh_rate_hz";
-std::vector<CuttlefishConfig::DisplayConfig>
-CuttlefishConfig::display_configs() const {
-  std::vector<DisplayConfig> display_configs;
-  for (auto& display_config_json : (*dictionary_)[kDisplayConfigs]) {
-    DisplayConfig display_config = {};
-    display_config.width = display_config_json[kXRes].asInt();
-    display_config.height = display_config_json[kYRes].asInt();
-    display_config.dpi = display_config_json[kDpi].asInt();
-    display_config.refresh_rate_hz =
-        display_config_json[kRefreshRateHz].asInt();
-    display_configs.emplace_back(std::move(display_config));
-  }
-  return display_configs;
-}
-void CuttlefishConfig::set_display_configs(
-    const std::vector<DisplayConfig>& display_configs) {
-  Json::Value display_configs_json(Json::arrayValue);
-
-  for (const DisplayConfig& display_configs : display_configs) {
-    Json::Value display_config_json(Json::objectValue);
-    display_config_json[kXRes] = display_configs.width;
-    display_config_json[kYRes] = display_configs.height;
-    display_config_json[kDpi] = display_configs.dpi;
-    display_config_json[kRefreshRateHz] = display_configs.refresh_rate_hz;
-    display_configs_json.append(display_config_json);
-  }
-
-  (*dictionary_)[kDisplayConfigs] = display_configs_json;
-}
-
 void CuttlefishConfig::SetPath(const std::string& key,
                                const std::string& path) {
   if (!path.empty()) {
     (*dictionary_)[key] = AbsolutePath(path);
   }
-}
-
-static constexpr char kGdbPort[] = "gdb_port";
-int CuttlefishConfig::gdb_port() const {
-  return (*dictionary_)[kGdbPort].asInt();
-}
-void CuttlefishConfig::set_gdb_port(int port) {
-  (*dictionary_)[kGdbPort] = port;
 }
 
 static constexpr char kDeprecatedBootCompleted[] = "deprecated_boot_completed";
