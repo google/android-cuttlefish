@@ -1,5 +1,3 @@
-import { Input } from "@angular/core";
-
 export class Device {
   private id: string = "";
   private url: string = "";
