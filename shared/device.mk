@@ -205,10 +205,18 @@ PRODUCT_PACKAGES += \
     libGLESv1_CM_angle \
     libGLESv2_angle
 
-# Enable the ANGLE feature to prefer linear filtering for YUV AHBs
-# to pass android.media.decoder.cts.DecodeAccuracyTest.
+# ANGLE options:
+#
+# * preferLinearFilterForYUV
+#     Prefer linear filtering for YUV AHBs to pass
+#     android.media.decoder.cts.DecodeAccuracyTest.
+#
+# * mapUnspecifiedColorSpaceToPassThrough
+#     Map unspecified color spaces to PASS_THROUGH to pass
+#     android.media.codec.cts.DecodeEditEncodeTest and
+#     android.media.codec.cts.EncodeDecodeTest.
 PRODUCT_VENDOR_PROPERTIES += \
-    debug.angle.feature_overrides_enabled=preferLinearFilterForYUV
+    debug.angle.feature_overrides_enabled=preferLinearFilterForYUV:mapUnspecifiedColorSpaceToPassThrough
 
 # GL implementation for virgl
 PRODUCT_PACKAGES += \
