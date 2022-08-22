@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <atomic>
 #include <future>
 #include <thread>
 
@@ -82,15 +83,15 @@ Result<void> StartSubprocesses(std::vector<MonitorEntry>& entries) {
   return {};
 }
 
-Result<void> ReadMonitorSocketLoopForStop(bool& running,
+Result<void> ReadMonitorSocketLoopForStop(std::atomic_bool& running,
                                           SharedFD& monitor_socket) {
   LOG(DEBUG) << "Waiting for a `stop` message from the parent";
-  while (running) {
+  while (running.load()) {
     ParentToChildMessage message;
     CF_EXPECT(ReadExactBinary(monitor_socket, &message) == sizeof(message),
               "Could not read message from parent");
     if (message.stop) {
-      running = false;
+      running.store(false);
       // Wake up the wait() loop by giving it an exited child process
       if (fork() == 0) {
         std::exit(0);
@@ -100,9 +101,10 @@ Result<void> ReadMonitorSocketLoopForStop(bool& running,
   return {};
 }
 
-Result<void> MonitorLoop(const bool& running, const bool restart_subprocesses,
+Result<void> MonitorLoop(const std::atomic_bool& running,
+                         const bool restart_subprocesses,
                          std::vector<MonitorEntry>& monitored) {
-  while(running) {
+  while (running.load()) {
     int wstatus;
     pid_t pid = wait(&wstatus);
     int error_num = errno;
@@ -112,7 +114,7 @@ Result<void> MonitorLoop(const bool& running, const bool restart_subprocesses,
                   << " for pid " << pid;
       continue;
     }
-    if (!running) { // Avoid extra restarts near the end
+    if (!running.load()) {  // Avoid extra restarts near the end
       break;
     }
     auto matches = [pid](const auto& it) { return it.proc->pid() == pid; };
@@ -242,8 +244,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   LOG(DEBUG) << "Monitoring subprocesses";
   StartSubprocesses(properties_.entries_);
 
-  // TODO(chadreynolds) bool -> std::atomic_bool due to shared usage with async
-  bool running = true;
+  std::atomic_bool running(true);
   auto parent_comms =
       std::async(std::launch::async, ReadMonitorSocketLoopForStop,
                  std::ref(running), std::ref(monitor_socket_));
