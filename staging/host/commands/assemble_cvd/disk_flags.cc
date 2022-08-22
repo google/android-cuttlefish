@@ -950,6 +950,7 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   for (const auto& instance : config.Instances()) {
     fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
                                         &fetcher_config, &config, &instance);
+
     for (auto& late_injected :
          instance_injector.getMultibindings<LateInjected>()) {
       CF_EXPECT(late_injected->LateInject(instance_injector));
