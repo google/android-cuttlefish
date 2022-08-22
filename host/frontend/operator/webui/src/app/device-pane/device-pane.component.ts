@@ -1,13 +1,13 @@
-import {Component} from "@angular/core";
-import {Device} from "../device-interface";
-import {DeviceService} from "../device.service";
-import {DisplaysService} from "../displays.service";
-import {first} from "rxjs";
+import {Component} from '@angular/core';
+import {Device} from '../device-interface';
+import {DeviceService} from '../device.service';
+import {DisplaysService} from '../displays.service';
+import {first} from 'rxjs';
 
 @Component({
-  selector: "app-device-pane",
-  templateUrl: "./device-pane.component.html",
-  styleUrls: ["./device-pane.component.sass"],
+  selector: 'app-device-pane',
+  templateUrl: './device-pane.component.html',
+  styleUrls: ['./device-pane.component.sass'],
 })
 export class DevicePaneComponent {
   devices = this.deviceService.getDevices();
@@ -30,12 +30,12 @@ export class DevicePaneComponent {
   }
 
   showAll(): void {
-    this.devices.pipe(first()).subscribe((devices) => {
-      devices.forEach((device) => {
-        if(!this.displaysService.isVisibleDevice(device)) {
+    this.devices.pipe(first()).subscribe((devices: Device[]) => {
+      devices.forEach(device => {
+        if (!this.displaysService.isVisibleDevice(device)) {
           this.onSelect(device);
         }
-      })
-    })
+      });
+    });
   }
 }

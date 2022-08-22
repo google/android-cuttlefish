@@ -8,24 +8,36 @@ import {DomSanitizer} from '@angular/platform-browser';
   providedIn: 'root',
 })
 export class DeviceService {
-
-  private devicesSubject : Subject<Device[]> = new ReplaySubject<Device[]>(1);
+  private devicesSubject: Subject<Device[]> = new ReplaySubject<Device[]>(1);
   private devicesObservable = this.devicesSubject.asObservable();
 
-  constructor(private readonly httpClient: HttpClient, private sanitizer:DomSanitizer) {}
+  constructor(
+    private readonly httpClient: HttpClient,
+    private sanitizer: DomSanitizer
+  ) {}
 
   refresh(): void {
-    this.httpClient.get<string[]>('./devices').pipe(map((devices) => devices.sort()))
-    .pipe(map((data) => data.map((deviceId) => new Device(deviceId, this.deviceConnectURL(deviceId))))).subscribe((devices) => this.devicesSubject.next(devices));
+    this.httpClient
+      .get<string[]>('./devices')
+      .pipe(
+        map((deviceIds: string[]) =>
+          deviceIds.sort().map(this.createDevice.bind(this))
+        )
+      )
+      .subscribe((devices: Device[]) => this.devicesSubject.next(devices));
   }
 
-  deviceConnectURL(display: string) : string{
+  deviceConnectURL(display: string): string {
     return this.sanitizer.sanitize(
       SecurityContext.RESOURCE_URL,
       this.sanitizer.bypassSecurityTrustResourceUrl(
         `/devices/${display}/files/client.html`
       )
     ) as string;
+  }
+
+  createDevice(deviceId: string): Device {
+    return new Device(deviceId, this.deviceConnectURL(deviceId));
   }
 
   getDevices() {
