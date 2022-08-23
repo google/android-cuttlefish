@@ -37,5 +37,48 @@ LocalInstanceGroup::LocalInstanceGroup(const std::string& home_dir,
       host_binaries_dir_{host_binaries_dir},
       internal_group_name_(GenInternalGroupName()) {}
 
+Result<void> LocalInstanceGroup::AddInstance(const int instance_id) {
+  if (HasInstance(instance_id)) {
+    return CF_ERR("Instance Id " << instance_id << " is taken");
+  }
+  auto new_instance = LocalInstance::Create(instance_id, *this);
+  instances_.emplace_back(std::move(new_instance));
+  return {};
+}
+
+Result<void> LocalInstanceGroup::AddInstance(LocalInstancePtr instance) {
+  if (!instance) {
+    CF_ERR("instance to add is nullptr");
+  }
+  const auto instance_id = instance->InstanceId();
+  if (HasInstance(instance_id)) {
+    return CF_ERR("Instance Id " << instance_id << " is taken");
+  }
+  instances_.emplace_back(std::move(instance));
+  return {};
+}
+
+bool LocalInstanceGroup::HasInstance(const int instance_id) const {
+  for (const auto& instance : instances_) {
+    if (instance_id == instance->InstanceId()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
+  std::string home_realpath;
+  if (DirectoryExists(HomeDir())) {
+    CF_EXPECT(android::base::Realpath(HomeDir(), &home_realpath));
+    static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
+    std::string config_path = AbsolutePath(home_realpath + kSuffix);
+    if (FileExists(config_path)) {
+      return config_path;
+    }
+  }
+  return {};
+}
+
 }  // namespace instance_db
 }  // namespace cuttlefish
