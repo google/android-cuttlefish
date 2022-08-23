@@ -37,6 +37,7 @@ export class DeviceService {
     ) as string;
   }
 
+  //Create device feature naming may conflict. Maybe buildDevice?
   createDevice(deviceId: string): Device {
     return new Device(deviceId, this.deviceConnectURL(deviceId));
   }

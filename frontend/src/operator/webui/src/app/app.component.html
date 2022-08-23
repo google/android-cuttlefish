@@ -1,6 +1,13 @@
-<mat-drawer-container class="drawer-container">
-  <mat-drawer class="device-pane" mode="side" opened>
-    <app-device-pane></app-device-pane>
-  </mat-drawer>
-  <mat-drawer-content><app-view-pane></app-view-pane></mat-drawer-content>
-</mat-drawer-container>
+<div class="container">
+  <mat-toolbar class="cloud-android-toolbar">
+    <button mat-icon-button id="device-pane-toggle" (click)="snav.toggle()"><mat-icon>menu</mat-icon></button>
+    <h1 class="cloud-android-title">Cloud Android</h1>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="drawer-container">
+    <mat-sidenav #snav class="device-pane" mode="side" opened>
+      <app-device-pane></app-device-pane>
+    </mat-sidenav>
+    <mat-sidenav-content><app-view-pane></app-view-pane></mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
