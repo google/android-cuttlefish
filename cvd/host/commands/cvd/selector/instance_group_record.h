@@ -37,10 +37,25 @@ class LocalInstanceGroup {
  public:
   using LocalInstanceGroupPtr = std::unique_ptr<LocalInstanceGroup>;
 
+  template <typename... Args>
+  static LocalInstanceGroupPtr Create(Args&&... args) {
+    auto new_group = new LocalInstanceGroup(std::forward<Args>(args)...);
+    return std::unique_ptr<LocalInstanceGroup>(new_group);
+  }
+
   const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostBinariesDir() const { return host_binaries_dir_; }
   const std::vector<LocalInstancePtr>& Instances() const { return instances_; }
+
+  /**
+   * return error if instance id of instance is taken AND that taken id
+   * belongs to this group
+   */
+  Result<void> AddInstance(const int instance_id);
+  Result<void> AddInstance(LocalInstancePtr instance);
+  bool HasInstance(const int instance_id) const;
+  Result<std::string> GetCuttlefishConfigPath() const;
 
  private:
   LocalInstanceGroup(const std::string& home_dir,
