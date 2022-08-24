@@ -28,9 +28,9 @@ source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
 
 UBOOT_REPO=
 KERNEL_REPO=
-IMAGE=
+OUTPUT_IMAGE=
 
-FLAGS_HELP="USAGE: $0 <UBOOT_REPO> <KERNEL_REPO> [IMAGE] [flags]"
+FLAGS_HELP="USAGE: $0 <UBOOT_REPO> <KERNEL_REPO> [OUTPUT_IMAGE] [flags]"
 
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
@@ -40,16 +40,14 @@ for arg in "$@" ; do
 		UBOOT_REPO=$arg
 	elif [ -z $KERNEL_REPO ]; then
 		KERNEL_REPO=$arg
-	elif [ -z $IMAGE ]; then
-		IMAGE=$arg
+	elif [ -z $OUTPUT_IMAGE ]; then
+		OUTPUT_IMAGE=$arg
 	else
 		flags_help
 		exit 1
 	fi
 done
 
-USE_IMAGE=`[ -z "${IMAGE}" ] && echo "0" || echo "1"`
-OVERWRITE=`[ -e "${IMAGE}" ] && echo "1" || echo "0"`
 if [ -z $KERNEL_REPO -o -z $UBOOT_REPO ]; then
 	flags_help
 	exit 1
@@ -62,12 +60,10 @@ if [ ! -e "${KERNEL_REPO}" ]; then
 	echo "error: can't find '${KERNEL_REPO}'. aborting..."
 	exit 1
 fi
-if [ $OVERWRITE -eq 1 ]; then
-	OVERWRITE_IMAGE=${IMAGE}
-	IMAGE=`mktemp`
-fi
 
-if [ $USE_IMAGE -eq 0 ]; then
+WRITE_TO_IMAGE=`[ -z "${OUTPUT_IMAGE}" ] && echo "0" || echo "1"`
+
+if [ $WRITE_TO_IMAGE -eq 0 ]; then
 	init_devs=`lsblk --nodeps -oNAME -n`
 	echo "Reinsert device (to write to) into PC"
 	while true; do
@@ -102,9 +98,9 @@ if [ $USE_IMAGE -eq 0 ]; then
 	echo "Detected device at /dev/${mmc_dev}"
 fi
 
-tmpfile=`mktemp`
+bootenv_src=`mktemp`
 bootenv=`mktemp`
-cat > ${tmpfile} << "EOF"
+cat > ${bootenv_src} << "EOF"
 bootdelay=2
 baudrate=1500000
 scriptaddr=0x00500000
@@ -118,8 +114,9 @@ scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devpli
 find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/boot.scr; then echo Found U-Boot script /boot/boot.scr; run run_scr; fi
 run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/boot.scr; source ${scriptaddr}
 EOF
-echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_REPO} --kernel ${KERNEL_REPO}`" >> ${tmpfile}
-${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_tools/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
+echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_REPO} --kernel ${KERNEL_REPO}`" >> ${bootenv_src}
+${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_tools/mkenvimage -s 32768 -o ${bootenv} - < ${bootenv_src}
+rm -f ${bootenv_src}
 
 cd ${UBOOT_REPO}
 BUILD_CONFIG=u-boot/build.config.rockpi4 build/build.sh -j1
@@ -130,57 +127,54 @@ rm -rf out
 BUILD_CONFIG=common/build.config.rockpi4 build/build.sh -j`nproc`
 cd -
 
-dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
-dist_dir=$(realpath -e ${dist_dir})
+IMAGE=`mktemp`
+kernel_dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
+kernel_dist_dir=$(realpath -e ${kernel_dist_dir})
 ${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh \
-	-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e \
-	-k ${dist_dir}/Image -i ${dist_dir}/initramfs.img \
-	-d ${dist_dir}/rk3399-rock-pi-4b.dtb:rockchip
+	-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e -g \
+	-k ${kernel_dist_dir}/Image -i ${kernel_dist_dir}/initramfs.img \
+	-d ${kernel_dist_dir}/rk3399-rock-pi-4b.dtb:rockchip
 if [ $? -ne 0 ]; then
 	echo "error: failed to build rootfs. exiting..."
+	rm -f ${IMAGE}
 	exit 1
 fi
 rm -f ${IMAGE}.initrd
-truncate -s +3G ${IMAGE}
-e2fsck -fy ${IMAGE}
-resize2fs ${IMAGE}
 
-# Turn on journaling
-tune2fs -O ^has_journal ${IMAGE}
-e2fsck -fy ${IMAGE} >/dev/null 2>&1
-
-if [ ${USE_IMAGE} -eq 0 ]; then
+if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
 	device=/dev/${mmc_dev}
 	devicep=${device}
 
-	# 32GB eMMC size
+	# Burn the whole disk image with partition table
+	sudo dd if=${IMAGE} of=${device} bs=1M conv=fsync
+
+	# Update partition table for 32GB eMMC
 	end_sector=61071326
+	sudo sgdisk --delete=6 ${device}
+	sudo sgdisk --new=6:144M:${end_sector} --typecode=6:8305 --change-name=6:rootfs --attributes=6:set:2 ${device}
 
-	sudo sgdisk --zap-all --set-alignment=1 ${device}
-	sudo sgdisk --set-alignment=1 --new=1:64:8127 --typecode=1:8301 --change-name=1:loader1 ${device}
-	sudo sgdisk --set-alignment=1 --new=2:8128:8191 --typecode=2:8301 --change-name=2:env ${device}
-	sudo sgdisk --set-alignment=1 --new=3:16384:24575 --typecode=3:8301 --change-name=3:loader2 ${device}
-	sudo sgdisk --set-alignment=1 --new=4:24576:32767 --typecode=4:8301 --change-name=4:trust ${device}
-	sudo sgdisk --set-alignment=1 --new=5:32768:${end_sector} --typecode=5:8305 --change-name=5:rootfs --attributes=5:set:2 ${device}
-
-	sudo dd if=${IMAGE} of=${devicep}5 bs=1M conv=fsync
-	sudo resize2fs ${devicep}5 >/dev/null 2>&1
+	# Rescan the partition table and resize the rootfs
+	sudo partx -v --add ${device}
+	sudo resize2fs ${devicep}6 >/dev/null 2>&1
 else
 	device=$(sudo losetup -f)
 	devicep=${device}p
 
+	# Set up loop device for whole disk image
+	sudo losetup -P ${device} ${IMAGE}
+
 	# Minimize rootfs filesystem
 	while true; do
-		out=`sudo resize2fs -M ${IMAGE} 2>&1`
+		out=`sudo resize2fs -M ${devicep}6 2>&1`
 		if [[ $out =~ "Nothing to do" ]]; then
 			break
 		fi
 	done
 	# Minimize rootfs file size
-	block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
-	block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
+	block_count=`sudo tune2fs -l ${devicep}6 | grep "Block count:" | sed 's/.*: *//'`
+	block_size=`sudo tune2fs -l ${devicep}6 | grep "Block size:" | sed 's/.*: *//'`
 	sector_size=512
-	start_sector=32768
+	start_sector=294912
 	fs_size=$(( block_count*block_size ))
 	fs_sectors=$(( fs_size/sector_size ))
 	part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
@@ -188,47 +182,32 @@ else
 	secondary_gpt_sectors=33
 	fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
 	image_size=$(( part_sectors*sector_size ))
-	truncate -s ${image_size} ${IMAGE}
-	e2fsck -fy ${IMAGE} >/dev/null 2>&1
 
-	# Create final image
-	if [ $OVERWRITE -eq 1 ]; then
-		tmpimg=${OVERWRITE_IMAGE}
-	else
-		tmpimg=`mktemp`
-	fi
-	truncate -s ${fs_end} ${tmpimg}
+        # Disable ext3/4 journal for flashing to SD-Card
+	sudo tune2fs -O ^has_journal ${devicep}6
+	sudo e2fsck -fy ${devicep}6 >/dev/null 2>&1
 
-	# Create GPT
-	sgdisk --zap-all --set-alignment=1 ${tmpimg}
-	sgdisk --set-alignment=1 --new=1:64:8127 --typecode=1:8301 --change-name=1:loader1 ${tmpimg}
-	sgdisk --set-alignment=1 --new=2:8128:8191 --typecode=2:8301 --change-name=2:env ${tmpimg}
-	sgdisk --set-alignment=1 --new=3:16384:24575 --typecode=3:8301 --change-name=3:loader2 ${tmpimg}
-	sgdisk --set-alignment=1 --new=4:24576:32767 --typecode=4:8301 --change-name=4:trust ${tmpimg}
-	sgdisk --set-alignment=1 --new=5:32768:${end_sector} --typecode=5:8305 --change-name=5:rootfs --attributes=5:set:2 ${tmpimg}
-
-	sudo losetup ${device} ${tmpimg}
-	sudo partx -v --add ${device}
-
-	sudo dd if=${IMAGE} of=${devicep}5 bs=1M conv=fsync
+	# Update partition table
+	sudo sgdisk --delete=6 ${device}
+	sudo sgdisk --new=6:144M:${end_sector} --typecode=6:8305 --change-name=6:rootfs --attributes=6:set:2 ${device}
 fi
 
-# loader1
+# idbloader
 sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
 # prebuilt
 # sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
 
+# uboot_env
 sudo dd if=${bootenv} of=${devicep}2 conv=fsync
 
-# loader2
+# uboot
 sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
 # prebuilt
 # sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
 
-if [ ${USE_IMAGE} -eq 1 ]; then
-	sudo partx -v --delete ${device}
+if [ ${WRITE_TO_IMAGE} -eq 1 ]; then
 	sudo losetup -d ${device}
-	if [ $OVERWRITE -eq 0 ]; then
-		mv ${tmpimg} ${IMAGE}
-	fi
+	truncate -s ${fs_end} ${IMAGE}
+	sgdisk --move-second-header ${IMAGE}
+	mv -f ${IMAGE} ${OUTPUT_IMAGE}
 fi
