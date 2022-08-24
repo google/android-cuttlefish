@@ -26,17 +26,6 @@ fi
 
 source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
 
-DEFINE_boolean p1 \
-	false "Only generate/write the 1st partition (loader1)" "1"
-DEFINE_boolean p2 \
-	false "Only generate/write the 2nd partition (env)" "2"
-DEFINE_boolean p3 \
-	false "Only generate/write the 3rd partition (loader2)" "3"
-DEFINE_boolean p4 \
-	false "Only generate/write the 4th partition (trust)" "4"
-DEFINE_boolean p5 \
-	false "Only generate/write the 5th partition (rootfs)" "5"
-
 UBOOT_REPO=
 KERNEL_REPO=
 IMAGE=
@@ -45,18 +34,6 @@ FLAGS_HELP="USAGE: $0 <UBOOT_REPO> <KERNEL_REPO> [IMAGE] [flags]"
 
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
-
-if [ ${FLAGS_p1} -eq ${FLAGS_FALSE} ] &&
-   [ ${FLAGS_p2} -eq ${FLAGS_FALSE} ] &&
-   [ ${FLAGS_p3} -eq ${FLAGS_FALSE} ] &&
-   [ ${FLAGS_p4} -eq ${FLAGS_FALSE} ] &&
-   [ ${FLAGS_p5} -eq ${FLAGS_FALSE} ]; then
-	FLAGS_p1=${FLAGS_TRUE}
-	FLAGS_p2=${FLAGS_TRUE}
-	FLAGS_p3=${FLAGS_TRUE}
-	FLAGS_p4=${FLAGS_TRUE}
-	FLAGS_p5=${FLAGS_TRUE}
-fi
 
 for arg in "$@" ; do
 	if [ -z $UBOOT_REPO ]; then
@@ -125,10 +102,9 @@ if [ $USE_IMAGE -eq 0 ]; then
 	echo "Detected device at /dev/${mmc_dev}"
 fi
 
-if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
-	tmpfile=`mktemp`
-	bootenv=`mktemp`
-	cat > ${tmpfile} << "EOF"
+tmpfile=`mktemp`
+bootenv=`mktemp`
+cat > ${tmpfile} << "EOF"
 bootdelay=2
 baudrate=1500000
 scriptaddr=0x00500000
@@ -142,41 +118,36 @@ scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devpli
 find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/boot.scr; then echo Found U-Boot script /boot/boot.scr; run run_scr; fi
 run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/boot.scr; source ${scriptaddr}
 EOF
-	echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_REPO} --kernel ${KERNEL_REPO}`" >> ${tmpfile}
-	${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_tools/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
+echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_REPO} --kernel ${KERNEL_REPO}`" >> ${tmpfile}
+${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_tools/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
+
+cd ${UBOOT_REPO}
+BUILD_CONFIG=u-boot/build.config.rockpi4 build/build.sh -j1
+cd -
+
+cd ${KERNEL_REPO}
+rm -rf out
+BUILD_CONFIG=common/build.config.rockpi4 build/build.sh -j`nproc`
+cd -
+
+dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
+dist_dir=$(realpath -e ${dist_dir})
+${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh \
+	-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e \
+	-k ${dist_dir}/Image -i ${dist_dir}/initramfs.img \
+	-d ${dist_dir}/rk3399-rock-pi-4b.dtb:rockchip
+if [ $? -ne 0 ]; then
+	echo "error: failed to build rootfs. exiting..."
+	exit 1
 fi
+rm -f ${IMAGE}.initrd
+truncate -s +3G ${IMAGE}
+e2fsck -fy ${IMAGE}
+resize2fs ${IMAGE}
 
-if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ] || [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
-	cd ${UBOOT_REPO}
-	BUILD_CONFIG=u-boot/build.config.rockpi4 build/build.sh -j1
-	cd -
-fi
-
-if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
-	cd ${KERNEL_REPO}
-	rm -rf out
-	BUILD_CONFIG=common/build.config.rockpi4 build/build.sh -j`nproc`
-	cd -
-
-	dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
-	dist_dir=$(realpath -e ${dist_dir})
-	${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh \
-		-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e \
-		-k ${dist_dir}/Image -i ${dist_dir}/initramfs.img \
-		-d ${dist_dir}/rk3399-rock-pi-4b.dtb:rockchip
-	if [ $? -ne 0 ]; then
-		echo "error: failed to build rootfs. exiting..."
-		exit 1
-	fi
-	rm -f ${IMAGE}.initrd
-	truncate -s +3G ${IMAGE}
-	e2fsck -fy ${IMAGE}
-	resize2fs ${IMAGE}
-
-	# Turn on journaling
-	tune2fs -O ^has_journal ${IMAGE}
-	e2fsck -fy ${IMAGE} >/dev/null 2>&1
-fi
+# Turn on journaling
+tune2fs -O ^has_journal ${IMAGE}
+e2fsck -fy ${IMAGE} >/dev/null 2>&1
 
 if [ ${USE_IMAGE} -eq 0 ]; then
 	device=/dev/${mmc_dev}
@@ -191,41 +162,34 @@ if [ ${USE_IMAGE} -eq 0 ]; then
 	sudo sgdisk --set-alignment=1 --new=3:16384:24575 --typecode=3:8301 --change-name=3:loader2 ${device}
 	sudo sgdisk --set-alignment=1 --new=4:24576:32767 --typecode=4:8301 --change-name=4:trust ${device}
 	sudo sgdisk --set-alignment=1 --new=5:32768:${end_sector} --typecode=5:8305 --change-name=5:rootfs --attributes=5:set:2 ${device}
-	if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
-		sudo dd if=${IMAGE} of=${devicep}5 bs=1M conv=fsync
-		sudo resize2fs ${devicep}5 >/dev/null 2>&1
-	fi
+
+	sudo dd if=${IMAGE} of=${devicep}5 bs=1M conv=fsync
+	sudo resize2fs ${devicep}5 >/dev/null 2>&1
 else
 	device=$(sudo losetup -f)
 	devicep=${device}p
 
-	if [ ${FLAGS_p5} -eq ${FLAGS_FALSE} ]; then
-		fs_end=3G
-		end_sector=-
-	fi
-	if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
-		# Minimize rootfs filesystem
-		while true; do
-			out=`sudo resize2fs -M ${IMAGE} 2>&1`
-			if [[ $out =~ "Nothing to do" ]]; then
-				break
-			fi
-		done
-		# Minimize rootfs file size
-		block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
-		block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
-		sector_size=512
-		start_sector=32768
-		fs_size=$(( block_count*block_size ))
-		fs_sectors=$(( fs_size/sector_size ))
-		part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
-		end_sector=$(( start_sector+part_sectors-1 ))
-		secondary_gpt_sectors=33
-		fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
-		image_size=$(( part_sectors*sector_size ))
-		truncate -s ${image_size} ${IMAGE}
-		e2fsck -fy ${IMAGE} >/dev/null 2>&1
-	fi
+	# Minimize rootfs filesystem
+	while true; do
+		out=`sudo resize2fs -M ${IMAGE} 2>&1`
+		if [[ $out =~ "Nothing to do" ]]; then
+			break
+		fi
+	done
+	# Minimize rootfs file size
+	block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
+	block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
+	sector_size=512
+	start_sector=32768
+	fs_size=$(( block_count*block_size ))
+	fs_sectors=$(( fs_size/sector_size ))
+	part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
+	end_sector=$(( start_sector+part_sectors-1 ))
+	secondary_gpt_sectors=33
+	fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
+	image_size=$(( part_sectors*sector_size ))
+	truncate -s ${image_size} ${IMAGE}
+	e2fsck -fy ${IMAGE} >/dev/null 2>&1
 
 	# Create final image
 	if [ $OVERWRITE -eq 1 ]; then
@@ -246,27 +210,21 @@ else
 	sudo losetup ${device} ${tmpimg}
 	sudo partx -v --add ${device}
 
-	if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
-		sudo dd if=${IMAGE} of=${devicep}5 bs=1M conv=fsync
-	fi
+	sudo dd if=${IMAGE} of=${devicep}5 bs=1M conv=fsync
 fi
-if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ]; then
-	# loader1
-	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
 
-	# prebuilt
-	# sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
-fi
-if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
-	sudo dd if=${bootenv} of=${devicep}2 conv=fsync
-fi
-if [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
-	# loader2
-	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
+# loader1
+sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
+# prebuilt
+# sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
 
-	# prebuilt
-	# sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
-fi
+sudo dd if=${bootenv} of=${devicep}2 conv=fsync
+
+# loader2
+sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
+# prebuilt
+# sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
+
 if [ ${USE_IMAGE} -eq 1 ]; then
 	sudo partx -v --delete ${device}
 	sudo losetup -d ${device}
