@@ -124,6 +124,41 @@ struct VersionedAidlPackage {
   }
 };
 
+/*
+ * Always missing AIDL packages that are not served on Cuttlefish.
+ * These are typically ypes-only packages.
+ */
+static const std::set<std::string> kAlwaysMissingAidl = {
+
+    // types-only packages, which never expect a default implementation
+    "android.hardware.audio.common.",
+    "android.hardware.biometrics.common.",
+    "android.hardware.biometrics.common.",
+    "android.hardware.common.",
+    "android.hardware.common.",
+    "android.hardware.common.fmq.",
+    "android.hardware.graphics.common.",
+    "android.hardware.graphics.common.",
+    "android.hardware.graphics.common.",
+    "android.hardware.input.common.",
+    "android.media.audio.common.",
+    "android.hardware.radio.",
+    "android.hardware.uwb.fira_android.",
+
+    // android.hardware.camera.device is an interface returned by
+    // android.hardware.camera.provider.
+    // android.hardware.camera.common and android.hardware.camera.metadata are
+    // types used by android.hardware.camera.provider and
+    // android.hardware.camera.device.
+    "android.hardware.camera.common.",
+    "android.hardware.camera.device.",
+    "android.hardware.camera.metadata.",
+};
+
+/*
+ * These packages should have implementations but currently do not.
+ * These should be accompanied by a bug and expected to be here temporarily.
+ */
 static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // No implementations on cuttlefish for wifi aidl hal
     {"android.hardware.wifi.", 1},
@@ -133,30 +168,8 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // updated soon.
     {"android.hardware.identity.", 4},
 
-    // types-only packages, which never expect a default implementation
-    {"android.hardware.audio.common.", 1},
-    {"android.hardware.biometrics.common.", 1},
-    {"android.hardware.biometrics.common.", 2},
-    {"android.hardware.common.", 1},
-    {"android.hardware.common.", 2},
-    {"android.hardware.common.fmq.", 1},
-
     // The interface is in development (b/205884982)
     {"android.hardware.audio.core.", 1},
-
-    {"android.hardware.graphics.common.", 1},
-    {"android.hardware.graphics.common.", 2},
-    {"android.hardware.graphics.common.", 3},
-    {"android.hardware.input.common.", 1},
-
-    // android.hardware.camera.device is an interface returned by
-    // android.hardware.camera.provider.
-    // android.hardware.camera.common and android.hardware.camera.metadata are
-    // types used by android.hardware.camera.provider and
-    // android.hardware.camera.device.
-    {"android.hardware.camera.common.", 1},
-    {"android.hardware.camera.device.", 1},
-    {"android.hardware.camera.metadata.", 1},
 
     // No implementations on cuttlefish for omapi aidl hal
     {"android.se.omapi.", 1},
@@ -171,7 +184,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // Sound trigger doesn't have a default implementation.
     {"android.hardware.soundtrigger3.", 1},
     {"android.media.soundtrigger.", 1},
-    {"android.media.audio.common.", 1},
 
     // These types are only used in Automotive.
     {"android.automotive.computepipe.registry.", 1},
@@ -190,12 +202,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // These types are only used in TV.
     {"android.hardware.tv.tuner.", 1},
-
-    // types-only packages, which never expect a default implementation
-    {"android.hardware.radio.", 1},
-
-    // types-only packages, which never expect a default implementation
-    {"android.hardware.uwb.fira_android.", 1},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
@@ -215,6 +221,13 @@ static bool isHidlPackageConsidered(const FQName& name) {
     }
   }
   return true;
+}
+
+// android.hardware.foo.IFoo -> android.hardware.foo.
+std::string getAidlPackage(const std::string& aidlType) {
+  size_t lastDot = aidlType.rfind('.');
+  CHECK(lastDot != std::string::npos);
+  return aidlType.substr(0, lastDot + 1);
 }
 
 static bool isAospHidlInterface(const FQName& name) {
@@ -260,6 +273,11 @@ static bool isAospAidlInterface(const std::string& name) {
   return base::StartsWith(name, "android.") &&
          !base::StartsWith(name, "android.hardware.tests.") &&
          !base::StartsWith(name, "android.aidl.tests");
+}
+
+static bool isAlwaysMissingAidl(const std::string& name) {
+  return kAlwaysMissingAidl.find(getAidlPackage(name)) !=
+         kAlwaysMissingAidl.end();
 }
 
 static std::set<VersionedAidlPackage> allAidlManifestInterfaces() {
@@ -347,13 +365,6 @@ TEST(Hal, AllAidlInterfacesAreInAosp) {
   }
 }
 
-// android.hardware.foo.IFoo -> android.hardware.foo.
-std::string getAidlPackage(const std::string& aidlType) {
-  size_t lastDot = aidlType.rfind('.');
-  CHECK(lastDot != std::string::npos);
-  return aidlType.substr(0, lastDot + 1);
-}
-
 struct AidlPackageCheck {
   bool hasRegistration;
   bool knownMissing;
@@ -367,7 +378,9 @@ TEST(Hal, AidlInterfacesImplemented) {
   for (const auto& treePackage : AidlInterfaceMetadata::all()) {
     ASSERT_FALSE(treePackage.types.empty()) << treePackage.name;
     if (std::none_of(treePackage.types.begin(), treePackage.types.end(),
-                     isAospAidlInterface))
+                     isAospAidlInterface) ||
+        std::any_of(treePackage.types.begin(), treePackage.types.end(),
+                    isAlwaysMissingAidl))
       continue;
     if (treePackage.stability != "vintf") continue;
 
