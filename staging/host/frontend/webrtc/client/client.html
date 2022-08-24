@@ -44,8 +44,6 @@
       <section id="device-connection">
         <div id='header'>
           <div id='app-controls'>
-            <div id="keyboard-capture-control" title="Capture Keyboard"></div>
-            <div id="mic-capture-control" title="Capture Microphone"></div>
             <div id="camera-control" title="Capture Camera"></div>
             <div id="audio-playback-control" title="Play audio">
               <audio id="device-audio"></audio>
@@ -75,7 +73,8 @@
             <button id='mic_btn' title='Microphone' disabled='true' class='material-icons'>mic</button>
           </div>
           <div id='control-panel-custom-buttons' class='control-panel-column'></div>
-          <div id='device-displays'>
+          <!-- tabindex="-1" allows this element to capture keyboard events -->
+          <div id='device-displays' tabindex="-1">
           </div>
         </div>
       </section>
