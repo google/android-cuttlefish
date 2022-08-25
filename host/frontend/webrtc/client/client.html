@@ -42,18 +42,7 @@
         </h3>
       </div>
       <section id="device-connection">
-        <div id='header'>
-          <div id='app-controls'>
-            <div id="camera-control" title="Capture Camera"></div>
-            <div id="audio-playback-control" title="Play audio">
-              <audio id="device-audio"></audio>
-            </div>
-            <div id="record-video-control" title="Capture Display as Webm"></div>
-          </div>
-          <div id='status-div'>
-            <h3 id='status-message' class='connecting'>Connecting to device</h3>
-          </div>
-        </div>
+        <audio id="device-audio"></audio>
         <div id='controls-and-displays'>
           <div id='control-panel-default-buttons' class='control-panel-column'>
             <button id='power_btn' title='Power' disabled='true' class='material-icons'>power_settings_new</button>
@@ -70,6 +59,9 @@
             <button id='rotate_right_btn' title='Rotate right' disabled='true' class='material-icons' data-adb="true">rotate_90_degrees_cw</button>
             <button id='volume_up_btn' title='Volume up' disabled='true' class='material-icons'>volume_up</button>
             <button id='volume_down_btn' title='Volume down' disabled='true' class='material-icons'>volume_down</button>
+            <button id='volume_off_btn' title='Volume off' class='material-icons'>volume_off</button>
+            <button id='camera_off_btn' title='Capture camera' class='material-icons'>videocam_off</button>
+            <button id='record_video_btn' title='Record screen' class='material-icons'>movie_creation</button>
             <button id='mic_btn' title='Microphone' disabled='true' class='material-icons'>mic</button>
           </div>
           <div id='control-panel-custom-buttons' class='control-panel-column'></div>
