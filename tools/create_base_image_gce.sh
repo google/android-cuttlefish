@@ -60,7 +60,6 @@ sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
 sudo chroot /mnt/image /usr/bin/apt install -t bullseye-backports -y linux-image-cloud-amd64
-sudo chroot /mnt/image /usr/bin/apt --purge -y remove linux-image-5.10.0-10-cloud-amd64
 
 # update QEMU version to most recent backport
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bullseye-backports
