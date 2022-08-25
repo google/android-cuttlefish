@@ -20,6 +20,40 @@ const (
 	ExitOnFail
 )
 
+type arrayFlags []string
+
+// Implemented for flag#Value interface
+func (s *arrayFlags) String() string {
+	if s == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", *s)
+}
+
+// Implemented for flag#Value interface
+func (s *arrayFlags) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
+// Returns `"foo" "bar"`
+func (s *arrayFlags) AsArgs() string {
+	var result []string
+	for _, value := range *s {
+		result = append(result, fmt.Sprintf("%q", value))
+	}
+	return strings.Join(result, " ")
+}
+
+// Returns `--flag="foo" --flag="bar"`
+func (s *arrayFlags) AsRepeatedFlag(name string) string {
+	var result []string
+	for _, value := range *s {
+		result = append(result, fmt.Sprintf(`--%s="%s"`, name, value))
+	}
+	return strings.Join(result, " ")
+}
+
 var build_instance string
 var build_project string
 var build_zone string
@@ -33,10 +67,15 @@ var source_image_project string
 var repository_url string
 var repository_branch string
 var version string
-var SSH_FLAGS string
+var internal_ip_flag string
 var INTERNAL_extra_source string
 var verbose bool
 var username string
+
+// NOTE: For `gcloud compute ssh` command, `ssh_flags` will be used as SSH_ARGS rather than
+// as `--ssh_flag` repeated flag. Why? because --ssh_flag is not parsed as expected when
+// containing quotes and spaces.
+var ssh_flags arrayFlags
 
 func init() {
 	user, err := user.Current()
@@ -90,12 +129,14 @@ func init() {
 	flag.StringVar(&repository_branch, "repository_branch",
 		"main", "Branch to check out")
 	flag.StringVar(&version, "version", "", "cuttlefish-common version")
-	flag.StringVar(&SSH_FLAGS, "INTERNAL_IP", "",
+	flag.StringVar(&internal_ip_flag, "INTERNAL_IP", "",
 		"INTERNAL_IP can be set to --internal-ip run on a GCE instance."+
 			"The instance will need --scope compute-rw.")
 	flag.StringVar(&INTERNAL_extra_source, "INTERNAL_extra_source", "",
 		"INTERNAL_extra_source may be set to a directory containing the source for extra packages to build.")
 	flag.BoolVar(&verbose, "verbose", true, "print commands and output (default: true)")
+	flag.Var(&ssh_flags, "ssh_flag",
+		"Values for --ssh-flag and --scp_flag for gcloud compute ssh/scp respectively. This flag may be repeated")
 	flag.Parse()
 }
 
@@ -152,8 +193,8 @@ func gce(action OnFail, gceArg string, errorStr ...string) (string, error) {
 func waitForInstance(PZ string) {
 	for {
 		time.Sleep(5 * time.Second)
-		_, err := gce(WarnOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` `+
-			build_instance+` -- uptime`)
+		_, err := gce(WarnOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` `+
+			build_instance+` -- `+ssh_flags.AsArgs()+` uptime `)
 		if err == nil {
 			break
 		}
@@ -304,24 +345,24 @@ func main() {
 	gce(WarnOnFail, `compute instances attach-disk `+PZ+` "`+build_instance+
 		`" --disk="`+dest_image+`"`)
 
-	// beta for the --internal-ip flag that may be passed via SSH_FLAGS
-	gce(ExitOnFail, `beta compute scp `+SSH_FLAGS+` `+PZ+` `+source_files+
-		` "`+build_instance+`:"`)
+	// beta for the --internal-ip flag that may be passed via internal_ip_flag
+	gce(ExitOnFail, `beta compute scp `+internal_ip_flag+` `+PZ+` `+source_files+
+		` "`+build_instance+`:" `+ssh_flags.AsRepeatedFlag("scp-flag"))
 
 	// Update the host kernel before installing any kernel modules
 	// Needed to guarantee that the modules in the chroot aren't built for the
 	// wrong kernel
-	gce(WarnOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` "`+build_instance+
-		`" -- ./update_gce_kernel.sh`)
+	gce(WarnOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
+		`"`+` -- `+ssh_flags.AsArgs()+` ./update_gce_kernel.sh`)
 	// TODO rammuthiah if the instance is clobbered with ssh commands within
 	// 5 seconds of reboot, it becomes inaccessible. Workaround that by sleeping
 	// 50 seconds.
 	time.Sleep(50 * time.Second)
-	gce(ExitOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` "`+build_instance+
-		`" -- ./remove_old_gce_kernel.sh`)
+	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
+		`"`+` -- `+ssh_flags.AsArgs()+` ./remove_old_gce_kernel.sh`)
 
-	gce(ExitOnFail, `compute ssh `+SSH_FLAGS+` `+PZ+` "`+build_instance+
-		`" -- ./create_base_image_gce.sh`)
+	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
+		`"`+` -- `+ssh_flags.AsArgs()+` ./create_base_image_gce.sh`)
 	gce(ExitOnFail, `compute instances delete -q `+PZ+` "`+build_instance+`"`)
 	gce(ExitOnFail, `compute images create --project="`+build_project+
 		`" --source-disk="`+dest_image+`" --source-disk-zone="`+build_zone+
