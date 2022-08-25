@@ -67,7 +67,6 @@ Package: cuttlefish-common
 Architecture: any
 Depends: cuttlefish-base,
          cuttlefish-user,
-         cuttlefish-common,
 Description: Cuttlefish Android Virtual Device companion package
  Metapackage ensuring all packages needed to run and interact with
  Cuttlefish device are installed.
