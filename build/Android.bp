@@ -75,6 +75,7 @@ cvd_host_tools = [
     "mcopy",
     "mmd",
     "mtools",
+    "netsim",
     "newfs_msdos",
     "powerwash_cvd",
     "restart_cvd",
