@@ -121,14 +121,21 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
   if (ch != 'n') {
     std::cout << "===================================================================\n";
     std::cout << "NOTICE:\n\n";
-    std::cout << "We collect usage statistics in accordance with our\n"
-                 "Content Licenses (https://source.android.com/setup/start/licenses),\n"
-                 "Contributor License Agreement (https://cla.developers.google.com/),\n"
-                 "Privacy Policy (https://policies.google.com/privacy) and\n"
-                 "Terms of Service (https://policies.google.com/terms).\n";
-    std::cout << "===================================================================\n\n";
+    std::cout << "By using this Android Virtual Device, you agree to\n";
+    std::cout << "Google Terms of Service (https://policies.google.com/terms).\n";
+    std::cout << "The Google Privacy Policy (https://policies.google.com/privacy)\n";
+    std::cout << "describes how Google handles information generated as you use\n";
+    std::cout << "Google Services.";
+
     if (use_metrics.empty()) {
-      std::cout << "Do you accept anonymous usage statistics reporting (Y/n)?: ";
+      std::cout << "\n";
+      std::cout << "===================================================================\n";
+      std::cout << "Automatically send diagnostic information to Google, such as crash\n";
+      std::cout << "reports and usage data from this Android Virtual Device (Y/n)?:";
+    } else {
+      std::cout << " You can adjust these permission at any time by\n";
+      std::cout << "\"launch_cvd -report_anonymous_usage_stats=n\"\n";
+      std::cout << "===================================================================\n\n";
     }
   }
   for (;;) {
