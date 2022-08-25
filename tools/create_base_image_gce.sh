@@ -2,6 +2,7 @@
 
 set -x
 set -o errexit
+shopt -s extglob
 
 sudo apt-get update
 
@@ -30,8 +31,8 @@ for dsc in *.dsc; do
   popd
 done
 
-# Now gather all of the *.deb files to copy them into the image
-debs=(*.deb)
+# Now gather all of the relevant .deb files to copy them into the image
+debs=(!(cuttlefish-orchestration*).deb)
 
 tmp_debs=()
 for i in "${debs[@]}"; do
