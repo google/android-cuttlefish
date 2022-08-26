@@ -1,14 +1,42 @@
 <div>
-  <div class="view-pane">
-    <div class="device-viewer" *ngFor="let display of visibleDevices | async">
-      <h3>
-        {{ display.deviceId }}
-      </h3>
-      <iframe
-        style="margin: 10px 0 0 10px"
-        [src]="display.deviceUrl | safe"
-        [title]="display.deviceId"
-      ></iframe>
-    </div>
-  </div>
+  <ktd-grid
+    *ngIf="layout.length"
+    class="view-pane"
+    [cols]="cols"
+    [rowHeight]="rowHeight"
+    [layout]="layout"
+    [compactType]="compactType"
+    [preventCollision]="preventCollision"
+    [scrollableParent]="autoScroll ? document : null"
+    scrollSpeed="4"
+    (dragStarted)="onDragStarted($event)"
+    (resizeStarted)="onResizeStarted($event)"
+    (dragEnded)="onDragEnded($event)"
+    (resizeEnded)="onResizeEnded($event)"
+  >
+    <ktd-grid-item
+      class="device-viewer"
+      *ngFor="let display of visibleDevices | async"
+      [id]="display.deviceId"
+      [transition]="currentTransition"
+      [dragStartThreshold]="dragStartThreshold"
+      [draggable]="!disableDrag"
+      [resizable]="!disableResize"
+    >
+      <div class="device-viewer-display">
+        <div ktdGridDragHandle class="viewer-header">
+          {{ display.deviceId }}
+          <div class="grid-item-remove-handle"
+          *ngIf="!disableRemove"
+          (click)="displaysService.onToggle(display)"></div>
+        </div>
+        <div class="fit-iframe">
+          <iframe
+            [src]="display.deviceUrl | safe"
+            [title]="display.deviceId"
+          ></iframe>
+        </div>
+      </div>
+    </ktd-grid-item>
+  </ktd-grid>
 </div>

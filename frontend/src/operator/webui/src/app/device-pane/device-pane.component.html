@@ -12,8 +12,9 @@
     <section class="device-list">
       <li *ngFor="let device of devices | async">
         <mat-slide-toggle
-          [ngModel]="displaysService.isVisibleDevice(device)"
-          (change)="onSelect(device)"
+          color="primary"
+          [checked]="displaysService.isVisibleDevice(device)"
+          (change)="displaysService.onToggle(device)"
           >{{ device.deviceId }}</mat-slide-toggle
         >
         <!-- <a

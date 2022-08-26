@@ -1,18 +1,58 @@
+ktd-grid
+    transition: height 500ms ease
+    margin: 20px
+
 .view-pane .device-viewer
     display: inline-block
-    margin: 10px
     width: 622px
     max-width: 100%
     height: 1000px
-    max-height: 80%
 
-.view-pane .device-viewer h3
-    color: white
-    margin: 20px 0 0 20px
+.view-pane .device-viewer .device-viewer-display
+    display: flex
+    flex-direction: column
+    height: 98%
+    width: 98%
+    background-color: #000
+    border-radius: 10px 10px 10px 10px
+
+.view-pane .device-viewer .device-viewer-display .viewer-header
+    display: flex
+    align-items: center
+    background-color: #073042
+    border-style: solid
+    border-color: #073042
+    border-radius: 10px 10px 0px 0px
+    font-size: 20px
+    font-weight: 400
+    color: #eee
+    height: 40px
+    padding-left: 20px
+
+.view-pane .device-viewer .device-viewer-display .viewer-header .grid-item-remove-handle
+    position: absolute
+    cursor: pointer
+    display: flex
+    justify-content: center
+    align-content: center
+    width: 20px
+    height: 20px
+    top: auto
+    right: 4%
+
+    &::after
+        content: "\00d7"
+        color: #eee
+        font-size: 22px
+
+.view-pane .device-viewer .device-viewer-display .fit-iframe
     width: 100%
-    border-bottom: 1px solid gray
+    height: 100%
+    align-content: center
+    border-radius: inherit
+    overflow: hidden
 
-.view-pane .device-viewer iframe
+.view-pane .device-viewer .device-viewer-display .fit-iframe iframe
     width: 100%
     height: 100%
     border: none
