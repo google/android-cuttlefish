@@ -47,8 +47,12 @@ function setupMessages() {
   });
 }
 
-function showMessage(msg, className) {
+function showMessage(msg, className, duration) {
   let element = document.getElementById('error-message');
+  let previousTimeout = element.dataset.timeout;
+  if (previousTimeout !== undefined) {
+    clearTimeout(previousTimeout);
+  }
   if (element.childNodes.length < 2) {
     // First time, no text node yet
     element.insertAdjacentText('afterBegin', msg);
@@ -56,14 +60,24 @@ function showMessage(msg, className) {
     element.childNodes[0].data = msg;
   }
   element.className = className;
+
+  if (duration !== undefined) {
+    element.dataset.timeout = setTimeout(() => {
+      element.className = 'hidden';
+    }, duration);
+  }
 }
 
-function showWarning(msg) {
-  showMessage(msg, 'warning');
+function showInfo(msg, duration) {
+  showMessage(msg, 'info', duration);
 }
 
-function showError(msg) {
-  showMessage(msg, 'error');
+function showWarning(msg, duration) {
+  showMessage(msg, 'warning', duration);
+}
+
+function showError(msg, duration) {
+  showMessage(msg, 'error', duration);
 }
 
 
@@ -103,6 +117,7 @@ class DeviceControlApp {
   #phys = {};
   #deviceCount = 0;
   #micActive = false;
+  #adbConnected = false;
 
   constructor(deviceConnection) {
     this.#deviceConnection = deviceConnection;
@@ -112,15 +127,15 @@ class DeviceControlApp {
     console.debug('Device description: ', this.#deviceConnection.description);
     this.#deviceConnection.onControlMessage(msg => this.#onControlMessage(msg));
     createToggleControl(
-        document.getElementById('camera-control'), 'videocam',
+        document.getElementById('camera_off_btn'),
         enabled => this.#onCameraCaptureToggle(enabled));
     createToggleControl(
-        document.getElementById('record-video-control'), 'movie_creation',
+        document.getElementById('record_video_btn'),
         enabled => this.#onVideoCaptureToggle(enabled));
     const audioElm = document.getElementById('device-audio');
 
     let audioPlaybackCtrl = createToggleControl(
-        document.getElementById('audio-playback-control'), 'speaker',
+        document.getElementById('volume_off_btn'),
         enabled => this.#onAudioPlaybackToggle(enabled), !audioElm.paused);
     // The audio element may start or stop playing at any time, this ensures the
     // audio control always show the right state.
@@ -325,11 +340,9 @@ class DeviceControlApp {
   }
 
   #showWebrtcError() {
-    document.getElementById('status-message').className = 'error';
-    document.getElementById('status-message').textContent =
-        'No connection to the guest device. ' +
-        'Please ensure the WebRTC process on the host machine is active.';
-    document.getElementById('status-message').style.visibility = 'visible';
+    showError(
+        'No connection to the guest device.  Please ensure the WebRTC' +
+        'process on the host machine is active.');
     const deviceDisplays = document.getElementById('device-displays');
     deviceDisplays.style.display = 'none';
     this.#getControlPanelButtons().forEach(b => b.disabled = true);
@@ -530,30 +543,25 @@ class DeviceControlApp {
     // Screen changed messages are not reported until after boot has completed.
     // Certain default adb buttons change screen state, so wait for boot
     // completion before enabling these buttons.
-    document.getElementById('status-message').className = 'connected';
-    document.getElementById('status-message').textContent =
-        'adb connection established successfully.';
-    setTimeout(() => {
-      document.getElementById('status-message').style.visibility = 'hidden';
-    }, 5000);
+    showInfo('adb connection established successfully.', 5000);
+    this.#adbConnected = true;
     this.#getControlPanelButtons()
         .filter(b => b.dataset.adb)
         .forEach(b => b.disabled = false);
   }
 
   #showAdbError() {
-    document.getElementById('status-message').className = 'error';
-    document.getElementById('status-message').textContent =
-        'adb connection failed.';
-    document.getElementById('status-message').style.visibility = 'visible';
+    showError('adb connection failed.');
     this.#getControlPanelButtons()
         .filter(b => b.dataset.adb)
         .forEach(b => b.disabled = true);
   }
 
   #onDeviceDisplayLoaded() {
-    document.getElementById('status-message').textContent =
-        'Awaiting bootup and adb connection. Please wait...';
+    if (!this.#adbConnected) {
+      // ADB may have connected before, don't show this message in that case
+      showInfo('Awaiting bootup and adb connection. Please wait...', 10000);
+    }
     this.#updateDeviceDisplaysInfo();
 
     let deviceDisplayList = document.getElementsByClassName('device-display');
