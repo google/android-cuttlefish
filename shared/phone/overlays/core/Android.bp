@@ -5,4 +5,5 @@ package {
 runtime_resource_overlay {
     name: "cuttlefish_phone_overlay_frameworks_base_core",
     soc_specific: true,
+    sdk_version: "current",
 }
