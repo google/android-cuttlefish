@@ -16,84 +16,18 @@
 
 /* Dark theme (default) */
 body, body.dark-theme {
-  --control-checkbox-checked-bg: #1c4587;
-  --control-checkbox-checked-boxshadow: #2196F3;
+  --toggle-off-bg: red;
+  --toggle-off-fg: white;
 }
 /* Light theme */
 body.light-theme {
-  --control-checkbox-checked-bg: #2196F3;
-  --control-checkbox-checked-boxshadow: #1c4587;
+  --toggle-off-bg: red;
+  --toggle-off-fg: white;
 }
 
-.toggle-control {
-  padding-left: 2px;
-  padding-right: 7px;
+.toggle-control.toggle-off {
+  background-color: var(--toggle-off-bg);
+  color: var(--toggle-off-fg);
   border-radius: 10px;
-  background-color: var(--modal-bg);
-  width: 80px;
-  height: 44px;
 }
 
-.toggle-control .toggle-control-icon {
-  position: relative;
-  display: inline-block;
-  float: left;
-  font-size: 44px;
-  color: var(--button-fg);
-}
-
-.toggle-control .toggle-control-switch {
-  position: relative;
-  display: inline-block;
-  float:left;
-  width: 36px;
-  height: 21px;
-  top: 11px;
-}
-
-.toggle-control .toggle-control-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-control .toggle-control-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  -webkit-transition: .4s;
-  transition: .4s;
-  border-radius: 21px;
-  border: solid 4px;
-  border-color: var(--button-fg);
-}
-
-.toggle-control .toggle-control-slider:before {
-  position: absolute;
-  content: "";
-  height: 12px;
-  width: 12px;
-  left: 1px;
-  bottom: 1px;
-  background-color: var(--button-fg);
-  -webkit-transition: .4s;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-.toggle-control input:checked + .toggle-control-slider {
-  background-color: var(--control-checkbox-checked-bg);
-}
-
-.toggle-control input:focus + .toggle-control-slider {
-  box-shadow: 0 0 1px var(--control-checkbox-focus-boxshadow);
-}
-
-.toggle-control input:checked + .toggle-control-slider:before {
-  -webkit-transform: translateX(15px);
-  -ms-transform: translateX(15px);
-  transform: translateX(15px);
-}
