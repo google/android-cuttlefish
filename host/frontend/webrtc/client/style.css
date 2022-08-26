@@ -104,23 +104,11 @@ body {
   align-items: center;
 }
 
-#camera-control {
+#camera_off_btn {
   display: none !important;
 }
-#record-video-control {
+#record_video_btn {
   display: none !important;
-}
-
-#app-controls {
-  margin-left: 10px;
-}
-#app-controls > div {
-  display: inline-block;
-  position: relative;
-  margin-right: 6px;
-}
-#device-audio {
-  height: 44px;
 }
 
 #error-message-div {
@@ -145,31 +133,15 @@ body {
 #error-message.hidden {
   display: none;
 }
+#error-message.info {
+  background-color: var(--info-bg);
+}
 #error-message.warning {
   background-color: var(--alert-bg);
 }
 #error-message.error {
   background-color: var(--error-bg);
 }
-#status-div {
-  flex-grow: 1;
-}
-#status-message {
-  color: var(--main-fg);
-  font-family: 'Open Sans', sans-serif;
-  padding: 10px;
-  margin: 10px;
-}
-#status-message.connecting {
-  background-color: var(--alert-bg);
-}
-#status-message.error {
-  background-color: var(--error-bg);
-}
-#status-message.connected {
-  background-color: var(--info-bg);
-}
-
 /* Control panel buttons and device screen(s). */
 
 #controls-and-displays {
