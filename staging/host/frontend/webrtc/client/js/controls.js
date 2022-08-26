@@ -14,45 +14,44 @@
  * limitations under the License.
  */
 
-// Creates a "toggle control", which is a stylized checkbox with an icon. The
-// onToggleCb callback is called every time the control changes state with the
-// new toggle position (true for ON) and is expected to return a promise of the
-// new toggle position which can resolve to the opposite position of the one
-// received if there was error.
-function createToggleControl(elm, iconName, onToggleCb, initialState = false) {
-  let icon = document.createElement('span');
-  icon.classList.add('toggle-control-icon');
-  icon.classList.add('material-icons-outlined');
-  if (iconName) {
-    icon.appendChild(document.createTextNode(iconName));
-  }
-  elm.appendChild(icon);
-  let toggle = document.createElement('label');
-  toggle.classList.add('toggle-control-switch');
-  let input = document.createElement('input');
-  input.type = 'checkbox';
-  input.checked = !!initialState;
-  input.onchange = e => {
-    let nextPr = onToggleCb(e.target.checked);
-    if (nextPr && 'then' in nextPr) {
-      nextPr.then(checked => {
-        e.target.checked = !!checked;
-      });
-    }
-  };
-  toggle.appendChild(input);
-  let slider = document.createElement('span');
-  slider.classList.add('toggle-control-slider');
-  toggle.appendChild(slider);
+// Creates a "toggle control". The onToggleCb callback is called every time the
+// control changes state with the new toggle position (true for ON) and is
+// expected to return a promise of the new toggle position which can resolve to
+// the opposite position of the one received if there was error.
+function createToggleControl(elm, onToggleCb, initialState = false) {
   elm.classList.add('toggle-control');
-  elm.appendChild(toggle);
-  return {
+  let offClass = 'toggle-off';
+  let onClass = 'toggle-on';
+  let state = !!initialState;
+  let toggle = {
     // Sets the state of the toggle control. This only affects the
     // visible state of the control in the UI, it doesn't affect the
     // state of the underlying resources. It's most useful to make
     // changes of said resources visible to the user.
-    Set: checked => input.checked = !!checked,
+    Set: enabled => {
+      state = enabled;
+      if (enabled) {
+        elm.classList.remove(offClass);
+        elm.classList.add(onClass);
+      } else {
+        elm.classList.add(offClass);
+        elm.classList.remove(onClass);
+      }
+    }
   };
+  toggle.Set(initialState);
+  addMouseListeners(elm, e => {
+    if (e.type != 'mousedown') {
+      return;
+    }
+    // Enable it if it's currently disabled
+    let enableNow = !state;
+    let nextPr = onToggleCb(enableNow);
+    if (nextPr && 'then' in nextPr) {
+      nextPr.then(enabled => toggle.Set(enabled));
+    }
+  });
+  return toggle;
 }
 
 function createButtonListener(button_id_class, func,
