@@ -16,15 +16,17 @@
 
 #pragma once
 
-#include <optional>
+#include <memory>
 #include <string>
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-namespace selector {
+namespace instance_db {
 
-class LocalInstanceGroup;
+class LocalInstanceGroup {
+  /* will be implemented */
+};
 
 /**
  * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
@@ -33,12 +35,24 @@ class LocalInstanceGroup;
  */
 class LocalInstance {
   friend class LocalInstanceGroup;
-  friend class InstanceDatabase;
 
  public:
+  using LocalInstancePtr = std::unique_ptr<LocalInstance>;
+
+  template <typename... Args>
+  static LocalInstancePtr Create(Args&&... args) {
+    auto new_instance = new LocalInstance(std::forward<Args>(args)...);
+    return std::unique_ptr<LocalInstance>(new_instance);
+  }
+
   /* names:
    *
-   * Many components in Cuttlefish traditionally expect the name to be "cvd-N,"
+   *  As of 08/21/2022, the name of a cuttlefish instance is cvd-N. For now,
+   * instance groups share the "cvd-" prefix. So, "cvd" is the group name, and
+   * "N" is the instance specific name. "cvd-N" is the device name.
+   *
+   * There will be another name the user specify for each instance. However,
+   * many components in Cuttlefish traditionally expect the name to be "cvd-N,"
    * and rely on "N" to avoid conflicts in the global resource uses.
    *
    * Thus, we will eventually maintain the internal device name for those
@@ -46,87 +60,19 @@ class LocalInstance {
    *
    */
   const std::string& InternalName() const;
-  std::string InternalDeviceName() const;
 
-  unsigned InstanceId() const;
-  const std::string& PerInstanceName() const;
-  std::string DeviceName() const;
-
-  const LocalInstanceGroup& ParentGroup() const;
-
-  class Copy {
-    friend class LocalInstance;
-    struct MockParentParam {
-      std::string home_dir;
-      std::string host_artifacts_path;
-      std::string internal_group_name;
-      std::string group_name;
-      std::optional<std::string> build_id;
-    };
-
-   public:
-    /* when Copy is used, it is already disconnected from the original parent
-     * group. Thus, it should carry the snapshot of needed information about
-     * the parent group
-     */
-    class MockParent {
-     public:
-      MockParent(const MockParentParam&);
-      const std::string& InternalGroupName() const {
-        return internal_group_name_;
-      }
-      const std::string& GroupName() const { return group_name_; }
-      const std::string& HomeDir() const { return home_dir_; }
-      const std::string& HostArtifactsPath() const {
-        return host_artifacts_path_;
-      }
-      const std::optional<std::string>& BuildId() const { return build_id_; }
-
-     private:
-      std::string home_dir_;
-      std::string host_artifacts_path_;
-      std::string internal_group_name_;
-      std::string group_name_;
-      std::optional<std::string> build_id_;
-    };
-    Copy(const LocalInstance& src);
-    const std::string& InternalName() const { return internal_name_; }
-    const std::string& InternalDeviceName() const {
-      return internal_device_name_;
-    }
-    unsigned InstanceId() const { return instance_id_; }
-    const std::string& PerInstanceName() const { return per_instance_name_; }
-    const std::string& DeviceName() const { return device_name_; }
-    const MockParent& ParentGroup() const { return mock_group_; }
-
-   private:
-    std::string internal_name_;
-    std::string internal_device_name_;
-    unsigned instance_id_;
-    std::string per_instance_name_;
-    std::string device_name_;
-    MockParent mock_group_;
-  };
-  Copy GetCopy() const;
+  int InstanceId() const;
+  const LocalInstanceGroup& Parent() const;
 
  private:
-  LocalInstance(const LocalInstanceGroup& parent_group,
-                const unsigned instance_id, const std::string& instance_name);
+  LocalInstance(const int instance_id, LocalInstanceGroup& parent);
 
-  static constexpr const char kJsonInstanceId[] = "Instance Id";
-  static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
-
-  const LocalInstanceGroup& parent_group_;
-  unsigned instance_id_;
-  std::string internal_name_;  ///< for now, it is to_string(instance_id_)
-  /** the instance specific name to be appended to the group name
-   *
-   * by default, to_string(instance_id_). The default value is decided by
-   * InstanceGroupRecord, as that's the only class that will create this
-   * instance
-   */
-  std::string per_instance_name_;
+  const int instance_id_;
+  const std::string internal_name_;  ///< for now, it is to_string(instance_id_)
+  LocalInstanceGroup& parent_;
 };
 
-}  // namespace selector
+using LocalInstancePtr = LocalInstance::LocalInstancePtr;
+
+}  // namespace instance_db
 }  // namespace cuttlefish
