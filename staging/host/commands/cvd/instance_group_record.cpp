@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_record.h"
-
 #include "host/commands/cvd/instance_group_record.h"
+
+#include <android-base/file.h>
+#include <android-base/logging.h>
+
+#include "common/libs/utils/files.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace instance_db {
 
-LocalInstance::LocalInstance(const int instance_id, LocalInstanceGroup& parent)
-    : instance_id_(instance_id),
-      internal_name_(std::to_string(instance_id_)),
-      parent_(parent) {}
-
-int LocalInstance::InstanceId() const { return instance_id_; }
-
-std::string LocalInstance::InternalDeviceName() const {
-  return parent_.InternalGroupName() + "-" + internal_name_;
+static std::string GenInternalGroupName() {
+  std::string_view internal_name{kCvdNamePrefix};  // "cvd-"
+  internal_name.remove_suffix(1);                  // "cvd"
+  return std::string(internal_name);
 }
 
-const std::string& LocalInstance::InternalName() const {
-  return internal_name_;
-}
-
-const LocalInstanceGroup& LocalInstance::Parent() const { return parent_; }
+LocalInstanceGroup::LocalInstanceGroup(const std::string& home_dir,
+                                       const std::string& host_binaries_dir)
+    : home_dir_{home_dir},
+      host_binaries_dir_{host_binaries_dir},
+      internal_group_name_(GenInternalGroupName()) {}
 
 }  // namespace instance_db
 }  // namespace cuttlefish
