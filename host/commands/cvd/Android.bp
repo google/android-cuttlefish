@@ -85,6 +85,7 @@ cc_library_host_static {
 cc_library_host_static {
     name: "libcvd_instance_db",
     srcs: [
+        "instance_group_record.cpp",
         "instance_record.cpp",
     ],
     defaults: ["cvd_lib_defaults"],
