@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/instance_record.h"
 
+#include "host/commands/cvd/instance_group_record.h"
+
 namespace cuttlefish {
 namespace instance_db {
 
@@ -25,6 +27,10 @@ LocalInstance::LocalInstance(const int instance_id, LocalInstanceGroup& parent)
       parent_(parent) {}
 
 int LocalInstance::InstanceId() const { return instance_id_; }
+
+std::string LocalInstance::InternalDeviceName() const {
+  return parent_.InternalGroupName() + "-" + internal_name_;
+}
 
 const std::string& LocalInstance::InternalName() const {
   return internal_name_;

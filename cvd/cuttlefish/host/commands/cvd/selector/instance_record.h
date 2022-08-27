@@ -24,15 +24,12 @@
 namespace cuttlefish {
 namespace instance_db {
 
-class LocalInstanceGroup {
-  /* will be implemented */
-};
-
 /**
  * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
  *
  * Needs design changes to support both Remote and Local Instances
  */
+class LocalInstanceGroup;
 class LocalInstance {
   friend class LocalInstanceGroup;
 
@@ -60,6 +57,7 @@ class LocalInstance {
    *
    */
   const std::string& InternalName() const;
+  std::string InternalDeviceName() const;
 
   int InstanceId() const;
   const LocalInstanceGroup& Parent() const;
