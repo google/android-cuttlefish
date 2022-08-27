@@ -83,6 +83,14 @@ cc_library_host_static {
 }
 
 cc_library_host_static {
+    name: "libcvd_instance_db",
+    srcs: [
+        "instance_record.cpp",
+    ],
+    defaults: ["cvd_lib_defaults"],
+}
+
+cc_library_host_static {
     name: "libcvd_server",
     srcs: [
         "acloud_command.cpp",
@@ -115,6 +123,7 @@ cc_defaults {
     name: "cvd_and_fetch_cvd_defaults",
     static_libs: [
         "libcvd_client",
+        "libcvd_instance_db",
         "libcvd_server",
         "libfetch_cvd",
     ],
