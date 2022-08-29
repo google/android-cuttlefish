@@ -88,7 +88,7 @@ body {
 /* Control panel buttons and device screen(s). */
 
 #controls-and-displays {
-  height: calc(100% - 84px);
+  height: 100%;
 
   /* Items inside this use a row Flexbox.*/
   display: flex;
