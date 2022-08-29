@@ -76,6 +76,7 @@ var username string
 // as `--ssh_flag` repeated flag. Why? because --ssh_flag is not parsed as expected when
 // containing quotes and spaces.
 var ssh_flags arrayFlags
+var host_orchestration_flag bool
 
 func init() {
 	user, err := user.Current()
@@ -137,6 +138,8 @@ func init() {
 	flag.BoolVar(&verbose, "verbose", true, "print commands and output (default: true)")
 	flag.Var(&ssh_flags, "ssh_flag",
 		"Values for --ssh-flag and --scp_flag for gcloud compute ssh/scp respectively. This flag may be repeated")
+	flag.BoolVar(&host_orchestration_flag, "host_orchestration", false,
+		"assembles image with host orchestration capabilities")
 	flag.Parse()
 }
 
@@ -361,8 +364,12 @@ func main() {
 	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
 		`"`+` -- `+ssh_flags.AsArgs()+` ./remove_old_gce_kernel.sh`)
 
+	ho_arg := ""
+	if host_orchestration_flag {
+		ho_arg = "-o"
+	}
 	gce(ExitOnFail, `compute ssh `+internal_ip_flag+` `+PZ+` "`+build_instance+
-		`"`+` -- `+ssh_flags.AsArgs()+` ./create_base_image_gce.sh`)
+		`"`+` -- `+ssh_flags.AsArgs()+` ./create_base_image_gce.sh `+ho_arg)
 	gce(ExitOnFail, `compute instances delete -q `+PZ+` "`+build_instance+`"`)
 	gce(ExitOnFail, `compute images create --project="`+build_project+
 		`" --source-disk="`+dest_image+`" --source-disk-zone="`+build_zone+
