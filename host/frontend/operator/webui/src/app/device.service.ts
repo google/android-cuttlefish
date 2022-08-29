@@ -2,6 +2,7 @@ import {Injectable, SecurityContext} from '@angular/core';
 import {map, ReplaySubject, Subject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {Device} from './device-interface';
+import {DeviceInfo} from './device-info-interface';
 import {DomSanitizer} from '@angular/platform-browser';
 
 @Injectable({
@@ -43,5 +44,11 @@ export class DeviceService {
   getDevices() {
     this.refresh();
     return this.devicesObservable;
+  }
+
+  getDeviceInfo(deviceId: string) {
+    return this.httpClient
+      .get('./devices/' + deviceId)
+      .pipe(map(res => res as DeviceInfo));
   }
 }
