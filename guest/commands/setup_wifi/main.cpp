@@ -33,6 +33,7 @@
 #include "common/libs/net/network_interface_manager.h"
 
 DEFINE_string(mac_prefix, "", "mac prefix to use for wlan0");
+DEFINE_string(interface, "eth2", "interface to create wlan wrapper on");
 
 static std::array<unsigned char, 6> prefix_to_mac(
     const std::string& mac_prefix) {
@@ -138,9 +139,9 @@ int main(int argc, char** argv) {
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  int renamed_eth2 = RenameNetwork("eth2", "buried_eth2");
-  if (renamed_eth2 != 0) {
-    return renamed_eth2;
+  int renamed_if = RenameNetwork(FLAGS_interface, "buried_" + FLAGS_interface);
+  if (renamed_if != 0) {
+    return renamed_if;
   }
-  return CreateWifiWrapper("buried_eth2", "wlan0");
+  return CreateWifiWrapper("buried_" + FLAGS_interface, "wlan0");
 }
