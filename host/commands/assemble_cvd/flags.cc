@@ -582,15 +582,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       }
   }
 
-  // The device needs to avoid having both hwcomposer2.4 and hwcomposer3
-  // services running at the same time so warn the user to manually build
-  // in drm_hwcomposer when needed.
-  if (tmp_config_obj.hwcomposer() == kHwComposerAuto) {
-    LOG(WARNING) << "In order to run with --hwcomposer=drm. Please make sure "
-                    "Cuttlefish was built with "
-                    "TARGET_ENABLE_DRMHWCOMPOSER=true.";
-  }
-
   tmp_config_obj.set_enable_gpu_udmabuf(FLAGS_enable_gpu_udmabuf);
   tmp_config_obj.set_enable_gpu_angle(FLAGS_enable_gpu_angle);
 
