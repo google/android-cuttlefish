@@ -24,6 +24,7 @@
 
 #include <unistd.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/adb_connector/adb_connection_maintainer.h"
 
@@ -52,37 +53,6 @@ std::string MakeDisconnectMessage(const std::string& address) {
   return MakeMessage("host:disconnect:" + address);
 }
 
-// returns true if successfully sent the whole message
-bool SendAll(cuttlefish::SharedFD sock, const std::string& msg) {
-  ssize_t total_written{};
-  while (total_written < static_cast<ssize_t>(msg.size())) {
-    if (!sock->IsOpen()) {
-      return false;
-    }
-    auto just_written = sock->Send(msg.c_str() + total_written,
-                                   msg.size() - total_written, MSG_NOSIGNAL);
-    if (just_written <= 0) {
-      return false;
-    }
-    total_written += just_written;
-  }
-  return true;
-}
-
-std::string RecvAll(cuttlefish::SharedFD sock, const size_t count) {
-  size_t total_read{};
-  std::unique_ptr<char[]> data(new char[count]);
-  while (total_read < count) {
-    auto just_read = sock->Read(data.get() + total_read, count - total_read);
-    if (just_read <= 0) {
-      LOG(WARNING) << "adb daemon socket closed early";
-      return {};
-    }
-    total_read += just_read;
-  }
-  return {data.get(), count};
-}
-
 // Response will either be OKAY or FAIL
 constexpr char kAdbOkayStatusResponse[] = "OKAY";
 constexpr std::size_t kAdbStatusResponseLength =
@@ -97,11 +67,12 @@ bool AdbSendMessage(cuttlefish::SharedFD sock, const std::string& message) {
   if (!sock->IsOpen()) {
     return false;
   }
-  if (!SendAll(sock, message)) {
+  if (!cuttlefish::SendAll(sock, message)) {
     LOG(WARNING) << "failed to send all bytes to adb daemon";
     return false;
   }
-  return RecvAll(sock, kAdbStatusResponseLength) == kAdbOkayStatusResponse;
+  return cuttlefish::RecvAll(sock, kAdbStatusResponseLength) ==
+         kAdbOkayStatusResponse;
 }
 
 bool AdbSendMessage(const std::string& message) {
@@ -124,12 +95,12 @@ bool IsInteger(const std::string& str) {
 
 // assumes the OKAY/FAIL status has already been read
 std::string RecvAdbResponse(cuttlefish::SharedFD sock) {
-  auto length_as_hex_str = RecvAll(sock, kAdbMessageLengthLength);
+  auto length_as_hex_str = cuttlefish::RecvAll(sock, kAdbMessageLengthLength);
   if (!IsInteger(length_as_hex_str)) {
     return {};
   }
   auto length = std::stoi(length_as_hex_str, nullptr, 16);
-  return RecvAll(sock, length);
+  return cuttlefish::RecvAll(sock, length);
 }
 
 // Returns a negative value if uptime result couldn't be read for
