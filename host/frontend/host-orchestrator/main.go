@@ -18,7 +18,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"strconv"
 	"sync"
 
 	"cuttlefish/host-orchestrator/orchestrator"
@@ -33,6 +36,7 @@ const (
 	DefaultTLSCertDir     = "/etc/cuttlefish-common/host-orchestrator/cert"
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
+	DefaultNgServe        = false
 
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
 	defaultCVDBinAndroidBuildID     = "8687975"
@@ -67,6 +71,16 @@ func fromEnvOrDefault(key string, def string) string {
 	return val
 }
 
+func fromEnvOrDefaultBool(key string, def bool) bool {
+	val, err := strconv.ParseBool(os.Getenv(key))
+
+	if err != nil {
+		return def
+	}
+
+	return val
+}
+
 // Whether a device file request should be intercepted and served from the signaling server instead
 func maybeIntercept(path string) *string {
 	if path == "/js/server_connector.js" {
@@ -95,6 +109,7 @@ func main() {
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", DefaultHttpPort)
 	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", DefaultHttpsPort)
 	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
+	use_ng_serve := fromEnvOrDefaultBool("ORCHESTRATOR_USE_NG_SERVE", DefaultNgServe)
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"
 
@@ -138,8 +153,14 @@ func main() {
 	orchestrator.SetupInstanceManagement(r, im, om)
 	// The host orchestrator currently has no use for this, since clients won't connect
 	// to it directly, however they probably will once the multi-device feature matures.
-	fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
-	r.PathPrefix("/").Handler(fs)
+	if use_ng_serve {
+		angularUrl, _ := url.Parse("http://localhost:4200")
+		proxy := httputil.NewSingleHostReverseProxy(angularUrl)
+		r.PathPrefix("/").Handler(proxy)
+	} else {
+		fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
+		r.PathPrefix("/").Handler(fs)
+	}
 	http.Handle("/", r)
 
 	starters := []func() error{

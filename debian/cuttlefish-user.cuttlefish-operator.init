@@ -37,6 +37,7 @@ fi
 operator_http_port=${operator_http_port:-1080}
 operator_https_port=${operator_https_port:-1443}
 operator_tls_cert_dir=${operator_tls_cert_dir:-"/etc/cuttlefish-common/operator/cert"}
+operator_use_ng_serve=${operator_use_ng_serve:-false}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
@@ -74,6 +75,7 @@ start() {
   OPERATOR_HTTPS_PORT="${operator_https_port}" \
   OPERATOR_TLS_CERT_DIR="${operator_tls_cert_dir}" \
   OPERATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  OPERATOR_USE_NG_SERVE="${operator_use_ng_serve}" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
