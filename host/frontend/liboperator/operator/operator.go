@@ -65,6 +65,7 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 // Creates a router with handlers for the following endpoints:
 // GET  /infra_config
 // GET  /devices
+// GET  /devices/{deviceId}
 // GET  /devices/{deviceId}/files/{path}
 // GET  /polled_connections
 // GET  /polled_connections/{connId}/messages
@@ -84,6 +85,9 @@ func CreateHttpHandlers(
 	}).Methods("GET")
 	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 		listDevices(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}", func (w http.ResponseWriter, r *http.Request) {
+		deviceInfo(w, r, pool);
 	}).Methods("GET")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
@@ -171,6 +175,19 @@ func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	if err := ReplyJSONOK(w, pool.DeviceIds()); err != nil {
 		log.Println(err)
 	}
+}
+
+// Get device info
+
+func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.NotFound(w, r)
+		return
+	}
+	ReplyJSONOK(w, dev.info)
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybeIntercept func(string) *string) {
