@@ -4,6 +4,15 @@ set -x
 set -o errexit
 shopt -s extglob
 
+# If "true" install host orchestration capabilities.
+host_orchestration_flag="false"
+
+while getopts ":o" flag; do
+    case "${flag}" in
+        o) host_orchestration_flag="true";;
+    esac
+done
+
 sudo apt-get update
 
 # Stuff we need to get build support
@@ -32,7 +41,12 @@ for dsc in *.dsc; do
 done
 
 # Now gather all of the relevant .deb files to copy them into the image
-debs=(!(cuttlefish-orchestration*).deb)
+debs=()
+if [[ "${host_orchestration_flag}" == "true" ]]; then
+  debs=(!(cuttlefish-@(common|user)*).deb)
+else
+  debs=(!(cuttlefish-orchestration*).deb)
+fi
 
 tmp_debs=()
 for i in "${debs[@]}"; do
