@@ -18,7 +18,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"strconv"
 	"sync"
 
 	apiv1 "cuttlefish/liboperator/api/v1"
@@ -32,6 +35,7 @@ const (
 	DefaultTLSCertDir     = "/etc/cuttlefish-common/operator/cert"
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
+	DefaultNgServe        = false
 )
 
 func startHttpServer(port string) error {
@@ -58,6 +62,16 @@ func fromEnvOrDefault(key string, def string) string {
 	if val == "" {
 		return def
 	}
+	return val
+}
+
+func fromEnvOrDefaultBool(key string, def bool) bool {
+	val, err := strconv.ParseBool(os.Getenv(key))
+
+	if err != nil {
+		return def
+	}
+
 	return val
 }
 
@@ -89,6 +103,8 @@ func main() {
 	httpPort := fromEnvOrDefault("OPERATOR_HTTP_PORT", DefaultHttpPort)
 	httpsPort := fromEnvOrDefault("OPERATOR_HTTPS_PORT", DefaultHttpsPort)
 	tlsCertDir := fromEnvOrDefault("OPERATOR_TLS_CERT_DIR", DefaultTLSCertDir)
+	use_ng_serve := fromEnvOrDefaultBool("OPERATOR_USE_NG_SERVE", DefaultNgServe)
+
 	certPath := tlsCertDir + "/cert.pem"
 	keyPath := tlsCertDir + "/key.pem"
 
@@ -102,8 +118,14 @@ func main() {
 	}
 
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
-	r.PathPrefix("/").Handler(fs)
+	if use_ng_serve {
+		angularUrl, _ := url.Parse("http://localhost:4200")
+		proxy := httputil.NewSingleHostReverseProxy(angularUrl)
+		r.PathPrefix("/").Handler(proxy)
+	} else {
+		fs := http.FileServer(http.Dir(DefaultStaticFilesDir))
+		r.PathPrefix("/").Handler(fs)
+	}
 	http.Handle("/", r)
 
 	starters := []func() error{
