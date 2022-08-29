@@ -61,7 +61,6 @@ cc_binary {
         "keymint_use_latest_hal_aidl_ndk_shared",
     ],
     required: [
-        "RemoteProvisioner",
         "android.hardware.hardware_keystore.remote-keymint.xml",
     ],
 }
