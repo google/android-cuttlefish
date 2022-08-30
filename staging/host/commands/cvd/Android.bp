@@ -97,6 +97,7 @@ cc_library_host_static {
         "acloud_command.cpp",
         "build_api.cpp",
         "command_sequence.cpp",
+        "demo_multi_vd.cpp",
         "epoll_loop.cpp",
         "instance_lock.cpp",
         "instance_manager.cpp",
