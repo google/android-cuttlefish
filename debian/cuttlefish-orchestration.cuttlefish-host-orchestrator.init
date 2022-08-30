@@ -42,7 +42,7 @@ orchestrator_android_build_url=${orchestrator_android_build_url:-"https://androi
 orchestrator_cvdbin_android_build_id=${orchestrator_cvdbin_android_build_id:-"8687975"}
 orchestrator_cvdbin_android_build_target=${orchestrator_cvdbin_android_build_target:-"aosp_cf_x86_64_phone-userdebug"}
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
-orchestrator_use_ng_serve=${orchestrator_use_ng_serve:-false}
+orchestrator_webui_url=${orchestrator_webui_url:-""}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host-orchestrator"
@@ -88,7 +88,7 @@ start() {
   ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET="${orchestrator_cvdbin_android_build_target}" \
   ORCHESTRATOR_CVD_ARTIFACTS_DIR="${orchestrator_cvd_artifacts_dir}" \
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
-  ORCHESTRATOR_USE_NG_SERVE="${orchestrator_use_ng_serve}" \
+  ORCHESTRATOR_WEBUI_URL="${orchestrator_webui_url}" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
