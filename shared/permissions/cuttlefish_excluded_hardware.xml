@@ -15,5 +15,4 @@
 -->
 <permissions>
     <unavailable-feature name="android.software.print" />
-    <unavailable-feature name="android.software.voice_recognizers" />
 </permissions>
