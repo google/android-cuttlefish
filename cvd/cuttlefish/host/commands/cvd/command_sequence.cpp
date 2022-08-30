@@ -61,8 +61,7 @@ std::string FormattedCommand(const cvd::CommandRequest command) {
 
 }  // namespace
 
-CommandSequenceExecutor::CommandSequenceExecutor()
-    : current_handler_(nullptr) {}
+CommandSequenceExecutor::CommandSequenceExecutor() {}
 
 Result<void> CommandSequenceExecutor::LateInject(fruit::Injector<>& injector) {
   server_handlers_ = injector.getMultibindings<CvdServerHandler>();
@@ -72,10 +71,10 @@ Result<void> CommandSequenceExecutor::LateInject(fruit::Injector<>& injector) {
 Result<void> CommandSequenceExecutor::Interrupt() {
   std::unique_lock interrupt_lock(interrupt_mutex_);
   interrupted_ = true;
-  if (current_handler_ == nullptr) {
+  if (handler_stack_.empty()) {
     return {};
   }
-  CF_EXPECT(current_handler_->Interrupt());
+  CF_EXPECT(handler_stack_.back()->Interrupt());
   return {};
 }
 
@@ -93,10 +92,13 @@ Result<void> CommandSequenceExecutor::Execute(
       CF_EXPECT(WriteAll(report, str) == str.size(), report->StrError());
     }
 
-    current_handler_ = CF_EXPECT(RequestHandler(request, server_handlers_));
+    auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
+    handler_stack_.push_back(handler);
     interrupt_lock.unlock();
-    auto response = CF_EXPECT(current_handler_->Handle(request));
+    auto response = CF_EXPECT(handler->Handle(request));
     interrupt_lock.lock();
+    handler_stack_.pop_back();
+
     if (interrupted_) {
       return CF_ERR("Interrupted");
     }
