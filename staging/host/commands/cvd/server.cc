@@ -43,6 +43,7 @@
 #include "host/commands/cvd/acloud_command.h"
 #include "host/commands/cvd/build_api.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/help_command.h"
 #include "host/commands/cvd/scope_guard.h"
@@ -94,7 +95,8 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CvdHelpComponent)
       .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
-      .install(cvdVersionComponent);
+      .install(cvdVersionComponent)
+      .install(DemoMultiVdComponent);
 }
 
 Result<void> CvdServer::BestEffortWakeup() {
