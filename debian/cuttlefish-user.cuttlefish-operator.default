@@ -13,8 +13,8 @@
 # Defaults to "/etc/cuttlefish-common/operator/cert".
 # operator_tls_cert_dir=
 #
-# Whether a web application is served by `ng serve`.
-# If true, it uses web pages served by `ng serve`,
-# else, it uses built web pages.
-# Defaults to false
-# operator_use_ng_serve=
+# Where web UI in the application is from
+# If it isn't empty, the application uses web UI from the url,
+# else, it uses web pages which is generated during the build
+# Defaults to ""
+# operator_webui_url=
