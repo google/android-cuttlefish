@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -35,41 +36,54 @@ namespace instance_db {
  */
 class LocalInstanceGroup {
  public:
-  using LocalInstanceGroupPtr = std::unique_ptr<LocalInstanceGroup>;
-
-  template <typename... Args>
-  static LocalInstanceGroupPtr Create(Args&&... args) {
-    auto new_group = new LocalInstanceGroup(std::forward<Args>(args)...);
-    return std::unique_ptr<LocalInstanceGroup>(new_group);
+  LocalInstanceGroup(const std::string& home_dir,
+                     const std::string& host_binaries_dir);
+  LocalInstanceGroup(LocalInstanceGroup&&) = default;
+  LocalInstanceGroup(const LocalInstanceGroup&) = default;
+  LocalInstanceGroup& operator=(LocalInstanceGroup&&) = default;
+  LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
+  // TODO(stephenkim): Replace with default operator== in C++20
+  bool operator==(const LocalInstanceGroup& target) const {
+    return Compare(target);
   }
 
   const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostBinariesDir() const { return host_binaries_dir_; }
-  const std::vector<LocalInstancePtr>& Instances() const { return instances_; }
-
+  Result<std::string> GetCuttlefishConfigPath() const;
+  const std::vector<LocalInstance> Instances() const { return instances_; }
   /**
    * return error if instance id of instance is taken AND that taken id
    * belongs to this group
    */
   Result<void> AddInstance(const int instance_id);
-  Result<void> AddInstance(LocalInstancePtr instance);
+  Result<void> AddInstance(const LocalInstance& instance);
   bool HasInstance(const int instance_id) const;
-  Result<std::string> GetCuttlefishConfigPath() const;
+  std::size_t HashCode() const noexcept;
 
  private:
-  LocalInstanceGroup(const std::string& home_dir,
-                     const std::string& host_binaries_dir);
-
-  const std::string home_dir_;
-  const std::string host_binaries_dir_;
+  bool Compare(const LocalInstanceGroup& target) const {
+    // list all fields
+    return (home_dir_ == target.home_dir_) &&
+           (host_binaries_dir_ == target.host_binaries_dir_) &&
+           (internal_group_name_ == target.internal_group_name_) &&
+           (instances_ == target.instances_);
+  }
+  std::string home_dir_;
+  std::string host_binaries_dir_;
 
   // for now, "cvd", which is "cvd-".remove_suffix(1)
-  const std::string internal_group_name_;
-  std::vector<LocalInstancePtr> instances_;
+  std::string internal_group_name_;
+  std::vector<LocalInstance> instances_;
 };
-
-using LocalInstanceGroupPtr = LocalInstanceGroup::LocalInstanceGroupPtr;
 
 }  // namespace instance_db
 }  // namespace cuttlefish
+
+template <>
+struct std::hash<cuttlefish::instance_db::LocalInstanceGroup> {
+  using LocalInstanceGroup = cuttlefish::instance_db::LocalInstanceGroup;
+  std::size_t operator()(const LocalInstanceGroup& group) const noexcept {
+    return group.HashCode();
+  }
+};

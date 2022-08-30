@@ -20,52 +20,16 @@
 #include <android-base/logging.h>
 
 #include "common/libs/utils/files.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/commands/cvd/instance_database_utils.h"
 
 namespace cuttlefish {
 namespace instance_db {
-
-static std::string GenInternalGroupName() {
-  std::string_view internal_name{kCvdNamePrefix};  // "cvd-"
-  internal_name.remove_suffix(1);                  // "cvd"
-  return std::string(internal_name);
-}
 
 LocalInstanceGroup::LocalInstanceGroup(const std::string& home_dir,
                                        const std::string& host_binaries_dir)
     : home_dir_{home_dir},
       host_binaries_dir_{host_binaries_dir},
       internal_group_name_(GenInternalGroupName()) {}
-
-Result<void> LocalInstanceGroup::AddInstance(const int instance_id) {
-  if (HasInstance(instance_id)) {
-    return CF_ERR("Instance Id " << instance_id << " is taken");
-  }
-  auto new_instance = LocalInstance::Create(instance_id, *this);
-  instances_.emplace_back(std::move(new_instance));
-  return {};
-}
-
-Result<void> LocalInstanceGroup::AddInstance(LocalInstancePtr instance) {
-  if (!instance) {
-    CF_ERR("instance to add is nullptr");
-  }
-  const auto instance_id = instance->InstanceId();
-  if (HasInstance(instance_id)) {
-    return CF_ERR("Instance Id " << instance_id << " is taken");
-  }
-  instances_.emplace_back(std::move(instance));
-  return {};
-}
-
-bool LocalInstanceGroup::HasInstance(const int instance_id) const {
-  for (const auto& instance : instances_) {
-    if (instance_id == instance->InstanceId()) {
-      return true;
-    }
-  }
-  return false;
-}
 
 Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
   std::string home_realpath;
@@ -78,6 +42,32 @@ Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
     }
   }
   return {};
+}
+
+std::size_t LocalInstanceGroup::HashCode() const noexcept {
+  auto hash_function = std::hash<decltype(home_dir_)>();
+  return hash_function(home_dir_);
+}
+
+Result<void> LocalInstanceGroup::AddInstance(const int instance_id) {
+  if (HasInstance(instance_id)) {
+    return CF_ERR("Instance Id " << instance_id << " is taken");
+  }
+  instances_.emplace_back(instance_id, internal_group_name_);
+  return {};
+}
+
+Result<void> LocalInstanceGroup::AddInstance(const LocalInstance& instance) {
+  return AddInstance(instance.InstanceId());
+}
+
+bool LocalInstanceGroup::HasInstance(const int instance_id) const {
+  for (const auto& instance : instances_) {
+    if (instance_id == instance.InstanceId()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace instance_db
