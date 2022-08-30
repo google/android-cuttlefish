@@ -29,6 +29,7 @@
         <attachedDevices>
             <item>Speaker</item>
             <item>Built-In Mic</item>
+            <item>FM Tuner</item>
         </attachedDevices>
         <defaultOutputDevice>Speaker</defaultOutputDevice>
         <mixPorts>
@@ -39,6 +40,10 @@
             <mixPort name="primary input" role="sink">
                 <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                     samplingRates="8000,16000" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
+            </mixPort>
+            <mixPort name="mixport_tuner0" role="sink">
+                <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                    samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
             </mixPort>
         </mixPorts>
         <devicePorts>
@@ -54,12 +59,24 @@
 
             <devicePort tagName="Built-In Mic" type="AUDIO_DEVICE_IN_BUILTIN_MIC" role="source">
             </devicePort>
+
+            <devicePort tagName="FM Tuner" type="AUDIO_DEVICE_IN_FM_TUNER" role="source"
+                address="tuner0">
+                <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                    samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                <gains>
+                    <gain name="" mode="AUDIO_GAIN_MODE_JOINT"
+                        minValueMB="-3200" maxValueMB="600" defaultValueMB="0" stepValueMB="100"/>
+                </gains>
+            </devicePort>
         </devicePorts>
         <routes>
             <route type="mix" sink="Speaker"
                 sources="primary output"/>
             <route type="mix" sink="primary input"
                 sources="Built-In Mic"/>
+            <route type="mix" sink="mixport_tuner0"
+                sources="FM Tuner"/>
         </routes>
       </module>
 
