@@ -8,8 +8,10 @@ function get_script_dir {
   echo "$(dirname ${BASH_SOURCE[0]})"
 }
 
+cd "$(get_script_dir)"
+
 source "shflags"
-source $(get_script_dir)/utils.sh
+source utils.sh
 
 DEFINE_boolean verbose true "verbose mode"
 DEFINE_boolean detect_gpu \
@@ -22,7 +24,7 @@ DEFINE_boolean rebuild_debs_verbose false \
 DEFINE_boolean build_debs_only false \
                "To build host .deb packages only, not the cuttlefish docker images" "p"
 DEFINE_boolean download_chrome false \
-               "force to download chrome to the ./out directory" "d"
+               "force to download chrome to the out directory" "d"
 
 
 FLAGS "$@" || exit 1
@@ -67,8 +69,6 @@ function calc_oem() {
     echo "###"
   fi
 }
-
-source utils.sh
 
 # $1 = package name
 # $2 = OEM
@@ -199,8 +199,7 @@ function get_google_chrome_deb_name() {
 }
 
 function is_download_chrome() {
-  local script_dir=$(get_script_dir)
-  if ! [[ -f $script_dir/out/"$(get_google_chrome_deb_name)" ]]; then
+  if ! [[ -f out/"$(get_google_chrome_deb_name)" ]]; then
     return 0
   fi
   if [[ ${FLAGS_download_chrome} -eq ${FLAGS_TRUE} ]]; then
@@ -210,7 +209,10 @@ function is_download_chrome() {
 }
 
 function download_chrome() {
-  local dest_dir=$(get_script_dir)/out
+  echo "###"
+  echo "### Downloading chrome"
+  echo "###"
+  local dest_dir=out
   local deb_file_name="$(get_google_chrome_deb_name)"
   # clean up $dest_dir
   rm -f $dest_dir/google-chrome*.deb || /bin/true
