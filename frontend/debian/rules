@@ -1,0 +1,43 @@
+#!/usr/bin/make -f
+
+# Start build by executing:
+# $ debuild --no-tgz-check -us -uc
+
+# Uncomment this line out to make installation process more chatty.
+# Keep it on until we know there's no outstanding problems with installation.
+# export DH_VERBOSE=1
+
+# There's a bug here
+export DEB_BUILD_MAINT_OPTIONS=hardening=-format
+
+include /usr/share/dpkg/buildflags.mk
+
+
+%:
+	dh $@ --with=config-package
+
+GOUTIL := src/goutil
+LIBOPERATOR_SOURCE_DIR := src/liboperator
+ORCHESTRATOR_SOURCE_DIR := src/host-orchestrator
+OPERATOR_SOURCE_DIR := src/operator
+BUILD_WEBUI := ./build-webui.sh
+
+override_dh_auto_build:
+	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
+	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
+	$(BUILD_WEBUI)
+
+override_dh_auto_test:
+	$(GOUTIL) $(LIBOPERATOR_SOURCE_DIR) test ./...
+	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) test ./...
+	$(GOUTIL) $(OPERATOR_SOURCE_DIR) test ./...
+	dh_auto_test
+
+override_dh_installinit:
+	dh_installinit --name=cuttlefish-operator
+	dh_installinit --name=cuttlefish-host-orchestrator
+	dh_installinit
+
+override_dh_auto_clean:
+	rm -f $(ORCHESTRATOR_SOURCE_DIR)/host-orchestrator
+	dh_auto_clean

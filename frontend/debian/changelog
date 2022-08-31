@@ -1,0 +1,5 @@
+cuttlefish-frontend (0.9.25) UNRELEASED; urgency=medium
+
+  * Split source package into common and frontend
+
+ -- Jorge Moreira Broche <jemoreira@google.com>  Wed, 31 Aug 2022 14:42:34 -0700
