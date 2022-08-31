@@ -36,6 +36,7 @@ cc_library_static {
     cflags: [
         // libwebrtc headers need this
         "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
         "-DWEBRTC_POSIX",
         "-DWEBRTC_LINUX",
     ],
@@ -60,6 +61,8 @@ cc_library_static {
         "libwebrtc",
         "libwebrtc_absl_base",
         "libwebrtc_absl_types",
+        "libcvd_gnss_grpc_proxy",
+        "liblocation",
     ],
     shared_libs: [
         "libbase",
@@ -69,6 +72,9 @@ cc_library_static {
         "libjsoncpp",
         "libssl",
         "libwebm_mkvmuxer",
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
+        "libxml2",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
@@ -79,12 +85,20 @@ cc_binary_host {
         "adb_handler.cpp",
         "audio_handler.cpp",
         "bluetooth_handler.cpp",
+        "location_handler.cpp",
         "client_server.cpp",
         "connection_observer.cpp",
         "cvd_video_frame_buffer.cpp",
         "display_handler.cpp",
         "kernel_log_events_handler.cpp",
         "main.cpp",
+    ],
+    cflags: [
+        // libwebrtc headers need this
+        "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
+        "-DWEBRTC_POSIX",
+        "-DWEBRTC_LINUX",
     ],
     header_libs: [
         "webrtc_signaling_headers",
@@ -131,6 +145,8 @@ cc_binary_host {
         "libcuttlefish_webrtc",
         "libwebsockets",
         "libyuv",
+        "libcvd_gnss_grpc_proxy",
+        "liblocation",
     ],
     shared_libs: [
         "libext2_blkid",
@@ -146,6 +162,9 @@ cc_binary_host {
         "libvpx",
         "libyuv",
         "libwebm_mkvmuxer",
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
+        "libxml2",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
