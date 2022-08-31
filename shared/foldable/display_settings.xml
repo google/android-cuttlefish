@@ -3,6 +3,6 @@
     <config identifier="0" />
     <!-- Allow rotation of fixed-orientation activities on the inner screen. -->
     <display
-        name="local:4619827259835644672"
+        name="local:4619827353912518656"
         ignoreOrientationRequest="true"/>
 </display-settings>
