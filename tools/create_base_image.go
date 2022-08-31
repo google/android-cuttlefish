@@ -313,6 +313,7 @@ func main() {
 
 	abt := os.Getenv("ANDROID_BUILD_TOP")
 	source_files := `"` + abt + `/device/google/cuttlefish/tools/create_base_image_gce.sh"`
+	source_files += " " + `"` + abt + `/device/google/cuttlefish/tools/install_nvidia.sh"`
 	source_files += " " + `"` + abt + `/device/google/cuttlefish/tools/update_gce_kernel.sh"`
 	source_files += " " + `"` + abt + `/device/google/cuttlefish/tools/remove_old_gce_kernel.sh"`
 	source_files += " " + scratch_dir + "/*"
