@@ -1,24 +1,20 @@
 .*
 *.o
+*.buildinfo
+*.build
+*.changes
 *.deb
+*.dsc
 *.log
 *.pyc
 
+cuttlefish-*_*.*.*.tar.xz
+
 !/.github/
 
-/debian/cuttlefish-*/
-/debian/*.substvars
-/debian/files
-/debian/*.debhelper
-/debian/debhelper-build-stamp
+/*/debian/cuttlefish-*/
+/*/debian/*.substvars
+/*/debian/files
+/*/debian/*.debhelper
+/*/debian/debhelper-build-stamp
 
-/host/frontend/host-orchestrator/host-orchestrator
-/host/frontend/operator/operator
-
-equivs.txt
-deps.txt
-ignore-depends-for-*.txt
-*/*/driver-deps
-*/*/driver.txt
-
-!out/.gitkeep

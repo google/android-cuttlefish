@@ -2,7 +2,7 @@
 
 # start preparation
 script_location=`realpath -s $(dirname ${BASH_SOURCE[0]})`
-cuttlefish_root=$(realpath -s $script_location/..)
+cuttlefish_root=$(realpath -s $script_location/../..)
 
 # intended to make "path/ to path"
 # while leaving "path" or "/" as is
@@ -24,7 +24,7 @@ is_mv_debs="true"
 #end of preparation
 
 function build() {
-    pushd $cuttlefish_root > /dev/null 2>&1
+    pushd $cuttlefish_root/base > /dev/null 2>&1
     yes | sudo mk-build-deps -i -r -B \
         && sudo dpkg-buildpackage -uc -us \
         && sudo chown $(id -u) ../*.deb
@@ -34,4 +34,4 @@ function build() {
 #sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-common_*.deb
 
 build
-[[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/../*.deb ${outdir}/
+[[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/*.deb ${outdir}/

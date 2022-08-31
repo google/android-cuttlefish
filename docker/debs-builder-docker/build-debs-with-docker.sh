@@ -42,6 +42,7 @@ function build_host_debian_pkg {
   local host_dir_on_guest="$guest_home/host"
   local src_on_guest="$host_dir_on_guest/android-cuttlefish"
   local out_on_guest="$host_dir_on_guest/out"
+  local android_cuttlefish_on_host="$(realpath ..)"
 
   local container_name="meow_yumi"
   # in case of previous failure, we ensure we restart a new container
@@ -57,7 +58,7 @@ function build_host_debian_pkg {
       exit 1
   fi
 
-  if ! docker cp . $container_name:$src_on_guest > /dev/null 2>&1; then
+  if ! docker cp $android_cuttlefish_on_host $container_name:$host_dir_on_guest > /dev/null 2>&1; then
       >&2 echo "fail to copy android-cuttlefish/* to the container, $container_name"
       exit 2
   fi
@@ -65,7 +66,7 @@ function build_host_debian_pkg {
   # run the script inside the guest
   # the script figures out its location in the guest file system
   # then, it does cd to the location, cd .., and run commands
-  local script_on_guest="$src_on_guest/$resource_subdir/build-hostpkg.sh"
+  local script_on_guest="$src_on_guest/docker/$resource_subdir/build-hostpkg.sh"
   if ! docker exec \
        --privileged \
        --user="vsoc-01" -w "$guest_home" \
