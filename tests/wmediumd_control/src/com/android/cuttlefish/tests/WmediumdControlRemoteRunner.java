@@ -19,14 +19,26 @@ package com.android.cuttlefish.tests;
 import com.android.tradefed.device.TestDeviceOptions;
 import com.android.tradefed.device.cloud.GceAvdInfo;
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
+import com.android.tradefed.device.cloud.RemoteFileUtil;
 import com.android.tradefed.device.cloud.RemoteSshUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.CommandResult;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.Assert;
 
 public class WmediumdControlRemoteRunner extends WmediumdControlRunner {
     private RemoteAndroidVirtualDevice testDevice;
     private GceAvdInfo gceAvd;
     private TestDeviceOptions options;
+
+    private static final String WMEDIUMD_CONTROL_SUBPATH = "/bin/wmediumd_control";
+    private static final String WMEDIUMD_API_SERVER_SUBPATH =
+            "/cuttlefish_runtime/internal/wmediumd_api_server";
+    private static final int TIMEOUT_MILLIS = 10000;
 
     public WmediumdControlRemoteRunner(RemoteAndroidVirtualDevice testDevice) throws Exception {
         super();
@@ -34,9 +46,30 @@ public class WmediumdControlRemoteRunner extends WmediumdControlRunner {
         this.gceAvd = testDevice.getAvdInfo();
         this.options = testDevice.getOptions();
 
-        String username = this.options.getInstanceUser();
-        this.wmediumdControlCommand = "/home/" + username + "/bin/wmediumd_control --wmediumd_api_server=/home/" + username + "/cuttlefish_runtime/internal/wmediumd_api_server";
+        List<String> basePathCandidates =
+                Arrays.asList("/home/" + this.options.getInstanceUser(), "/tmp/cfbase/3");
+        Optional<String> basePath =
+                basePathCandidates.stream().filter(x -> remoteExists(x)).findFirst();
+        Assert.assertTrue(basePath.isPresent());
+
+        this.wmediumdControlCommand =
+                basePath.get()
+                        + WMEDIUMD_CONTROL_SUBPATH
+                        + " --wmediumd_api_server="
+                        + basePath.get()
+                        + WMEDIUMD_API_SERVER_SUBPATH;
         CLog.i("Wmediumd Control Command Path: " + this.wmediumdControlCommand);
+    }
+
+    private boolean remoteExists(String path) {
+        return RemoteFileUtil.doesRemoteFileExist(
+                        gceAvd, options, runUtil, TIMEOUT_MILLIS, path + WMEDIUMD_CONTROL_SUBPATH)
+                && RemoteFileUtil.doesRemoteFileExist(
+                        gceAvd,
+                        options,
+                        runUtil,
+                        TIMEOUT_MILLIS,
+                        path + WMEDIUMD_API_SERVER_SUBPATH);
     }
 
     @Override
