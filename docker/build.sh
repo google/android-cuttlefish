@@ -118,6 +118,9 @@ function process_one {
 #1: "true" or "false", "true" means "--no-cache"
 #2: x$OEM, note that $OEM could be empty
 function build_docker_image {
+  echo "###"
+  echo "### Building docker image"
+  echo "###"
   local no_cache=$1
   local oem=${2:1} # cut 'x' from $2
   shift 2
@@ -238,13 +241,13 @@ function build_main() {
   if is_rebuild_debs; then
     if do_rebuild_debs; then
       no_cache="true"
+    else
+      echo "Failed to build .deb host packages, rerun with --rebuild_debs_verbose for details"
+      exit 1
     fi
   fi
 
   if [[ ${FLAGS_build_debs_only} -eq ${FLAGS_TRUE} ]]; then
-    echo "###"
-    echo "### Building .deb Host Packages"
-    echo "###"
     exit 0
   fi
 
