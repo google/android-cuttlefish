@@ -187,7 +187,7 @@ func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		http.NotFound(w, r)
 		return
 	}
-	ReplyJSONOK(w, dev.info)
+	ReplyJSONOK(w, apiv1.DeviceInfoReply {DeviceId: devId, RegistrationInfo: dev.info})
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybeIntercept func(string) *string) {

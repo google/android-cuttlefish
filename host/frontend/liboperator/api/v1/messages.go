@@ -89,3 +89,8 @@ type Operation struct {
 type OperationResult struct {
 	Error *ErrorMsg `json:"error,omitempty"`
 }
+
+type DeviceInfoReply struct {
+	DeviceId string `json:"device_id"`
+	RegistrationInfo interface{} `json:"registration_info"`
+}

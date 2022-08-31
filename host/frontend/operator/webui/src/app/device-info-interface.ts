@@ -4,6 +4,11 @@ export interface DisplayInfo {
   y_res: number;
 }
 
-export interface DeviceInfo {
+export interface RegistrationInfo {
   displays: DisplayInfo[];
+}
+
+export interface DeviceInfo {
+  device_id: string;
+  registration_info: RegistrationInfo;
 }
