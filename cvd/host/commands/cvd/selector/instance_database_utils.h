@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 
+#include "common/libs/utils/collect.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_database_types.h"
 
@@ -28,6 +29,23 @@ namespace instance_db {
 std::string GenInternalGroupName();
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name);
+
+/**
+ * simply returns:
+ *
+ * "Only up to n must match" or
+ * "Only up to n must match by field " + FieldName
+ *
+ */
+std::string TooManyInstancesFound(const int n, const std::string& field_name);
+
+// effectively partial specialization of cuttlefish::Collect
+// with instance_db::Set<T>
+template <typename T, typename Container>
+Set<T> CollectToSet(Container&& container,
+                    std::function<bool(const T&)> predicate) {
+  return Collect<T, Set<T>>(std::forward<Container>(container), predicate);
+}
 
 /**
  * Specialized version of cuttlefish::Flatten
@@ -48,6 +66,13 @@ Set<Element> CollectAllElements(
     output.insert(subset.cbegin(), subset.cend());
   }
   return output;
+}
+
+template <typename S>
+Result<typename std::remove_reference<S>::type> AtMostOne(
+    S&& s, const std::string& err_msg) {
+  CF_EXPECT(AtMostN(s, 1), err_msg);
+  return {std::forward<S>(s)};
 }
 
 }  // namespace instance_db
