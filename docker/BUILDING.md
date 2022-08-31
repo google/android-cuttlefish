@@ -12,7 +12,7 @@ Then the Docker image can be built as follows:
 
 ```bash
 git clone https://github.com/google/android-cuttlefish.git
-cd android-cuttlefish
+cd android-cuttlefish/docker
 ./build.sh
 ```
 # Starting and provisioning the container

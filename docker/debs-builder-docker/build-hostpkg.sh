@@ -24,11 +24,14 @@ is_mv_debs="true"
 #end of preparation
 
 function build() {
-    pushd $cuttlefish_root/base > /dev/null 2>&1
-    yes | sudo mk-build-deps -i -r -B \
-        && sudo dpkg-buildpackage -uc -us \
-        && sudo chown $(id -u) ../*.deb
-    popd > /dev/null 2>&1
+    local pkg_dirs=( base frontend )
+    for dir in "${pkg_dirs[@]}"; do
+        pushd $cuttlefish_root/$dir > /dev/null 2>&1
+        yes | sudo mk-build-deps -i -r -B \
+            && sudo dpkg-buildpackage -uc -us \
+            && sudo chown $(id -u) ../*.deb
+        popd > /dev/null 2>&1
+    done
 }
 #sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-base_*.deb
 #sudo apt-get install --no-install-recommends -y -f ${outdir}/cuttlefish-common_*.deb

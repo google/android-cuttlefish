@@ -1,4 +1,10 @@
-cuttlefish-common (0.9.24) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.25) UNRELEASED; urgency=medium
+
+  * Split source package into common and frontend
+
+ -- Jorge Moreira Broche <jemoreira@google.com>  Wed, 31 Aug 2022 14:42:34 -0700
+
+cuttlefish-common (0.9.24) unstable; urgency=medium
 
   * Extract cuttlefish-base from cuttlefish-common
   * Extract operator from host-orchestrator
