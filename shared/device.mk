@@ -448,7 +448,8 @@ ifndef LOCAL_AUDIO_PRODUCT_PACKAGE
 LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio.service \
     android.hardware.audio@7.1-impl.ranchu \
-    android.hardware.audio.effect@7.0-impl
+    android.hardware.audio.effect@7.0-impl \
+    android.hardware.audio.effect.service-aidl.example
 endif
 
 ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
