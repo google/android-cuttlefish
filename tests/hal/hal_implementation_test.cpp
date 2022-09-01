@@ -209,6 +209,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.automotive.audiocontrol.", 2},
     {"android.hardware.automotive.evs.", 1},
     {"android.hardware.automotive.occupant_awareness.", 1},
+    {"android.hardware.automotive.remoteaccess.", 1},
     {"android.hardware.automotive.vehicle.", 1},
 
     // These types are only used in TV.
