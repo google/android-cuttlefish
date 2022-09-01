@@ -17,16 +17,16 @@ package {
 }
 
 genrule {
-    name: "init.wifi.sh_apex_srcs",
+    name: "init.wifi_apex_srcs",
     srcs: ["init.wifi.sh"],
-    out: ["init.wifi.sh_apex"],
+    out: ["init.wifi_apex.sh"],
     cmd: "sed -E 's/\\/vendor\\/bin\\/mac802/\\/apex\\/com.android.wifi.hal\\/bin\\/mac802/' $(in) > $(out)",
 }
 
 sh_binary {
-    name: "init.wifi.sh_apex",
-    src: ":init.wifi.sh_apex_srcs",
-    filename: "init.wifi.sh",
+    name: "init.wifi_apex",
+    src: ":init.wifi_apex_srcs",
+    filename: "init.wifi",
     vendor: true,
     installable: false,
     init_rc: [
@@ -35,7 +35,7 @@ sh_binary {
 }
 
 sh_binary {
-    name: "init.wifi.sh",
+    name: "init.wifi",
     src: "init.wifi.sh",
     vendor: true,
     init_rc: [
