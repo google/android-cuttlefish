@@ -127,10 +127,13 @@ DEFINE_bool(pause_in_bootloader, false,
             "to the device console and typing in \"boot\".");
 DEFINE_bool(enable_host_bluetooth, true,
             "Enable the root-canal which is Bluetooth emulator in the host.");
-DEFINE_bool(
-    rootcanal_attach_mode, false,
-    "Instead of running rootcanal, attach an existing rootcanal instance.");
-
+DEFINE_bool(rootcanal_attach_mode, false,
+            "[DEPRECATED] Ignored, use rootcanal_instance_num instead");
+DEFINE_int32(
+    rootcanal_instance_num, 0,
+    "If it is greater than 0, use an existing rootcanal instance which is "
+    "launched from cuttlefish instance "
+    "with rootcanal_instance_num. Else, launch a new rootcanal instance");
 DEFINE_bool(netsim, false, "[Experimental] Connect all radios to netsim.");
 
 DEFINE_bool(netsim_bt, false, "[Experimental] Connect Bluetooth radio to netsim.");
@@ -693,9 +696,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);
 
-  tmp_config_obj.set_rootcanal_hci_port(7300);
-  tmp_config_obj.set_rootcanal_link_port(7400);
-  tmp_config_obj.set_rootcanal_test_port(7500);
   tmp_config_obj.set_rootcanal_config_file(
       FLAGS_bluetooth_controller_properties_file);
   tmp_config_obj.set_rootcanal_default_commands_file(
@@ -743,7 +743,16 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   CHECK(FLAGS_use_overlay || instance_nums->size() == 1)
       << "`--use_overlay=false` is incompatible with multiple instances";
-
+  CHECK(instance_nums->size() > 0) << "Require at least one instance.";
+  auto rootcanal_instance_num = *instance_nums->begin() - 1;
+  if (FLAGS_rootcanal_instance_num > 0) {
+    rootcanal_instance_num = FLAGS_rootcanal_instance_num - 1;
+  }
+  tmp_config_obj.set_rootcanal_hci_port(7300 + rootcanal_instance_num);
+  tmp_config_obj.set_rootcanal_link_port(7400 + rootcanal_instance_num);
+  tmp_config_obj.set_rootcanal_test_port(7500 + rootcanal_instance_num);
+  LOG(DEBUG) << "rootcanal_instance_num: " << rootcanal_instance_num;
+  LOG(DEBUG) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
   bool is_first_instance = true;
   int instance_index = 0;
   for (const auto& num : *instance_nums) {
@@ -1001,7 +1010,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_start_netsim(is_first_instance && is_any_netsim);
 
     instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
-                                 !FLAGS_rootcanal_attach_mode);
+                                 (FLAGS_rootcanal_instance_num <= 0));
 
     instance.set_start_ap(!FLAGS_ap_rootfs_image.empty() &&
                           !FLAGS_ap_kernel_image.empty() && start_wmediumd);
