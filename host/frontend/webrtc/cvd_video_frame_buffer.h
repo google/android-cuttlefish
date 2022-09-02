@@ -27,8 +27,9 @@ class CvdVideoFrameBuffer : public webrtc_streaming::VideoFrameBuffer {
   CvdVideoFrameBuffer(int width, int height);
   CvdVideoFrameBuffer(CvdVideoFrameBuffer&& cvd_frame_buf) = default;
   CvdVideoFrameBuffer(const CvdVideoFrameBuffer& cvd_frame_buf) = default;
-  CvdVideoFrameBuffer& operator=(CvdVideoFrameBuffer&& cvd_frame_buf) = default;
-  CvdVideoFrameBuffer& operator=(const CvdVideoFrameBuffer& cvd_frame_buf) = default;
+  CvdVideoFrameBuffer& operator=(CvdVideoFrameBuffer&& cvd_frame_buf) = delete;
+  CvdVideoFrameBuffer& operator=(const CvdVideoFrameBuffer& cvd_frame_buf) =
+      delete;
   CvdVideoFrameBuffer() = delete;
 
   ~CvdVideoFrameBuffer() override;
