@@ -284,12 +284,20 @@ func (s *StageFetchCVD) Run() error {
 	stdoutStderr, err := cmd.CombinedOutput()
 	// NOTE: The stage is only completed when no error occurs. It's ok for this
 	// stage to be retried if an error happened before.
-	if err == nil {
-		s.completed = true
-	} else {
-		log.Printf("`cvd fetch` failed with combined stdout and stderr: %q", string(stdoutStderr))
+	if err != nil {
+		msg := "`cvd fetch` failed with combined stdout and stderr:\n" +
+			"############################################\n" +
+			"## BEGIN \n" +
+			"############################################\n" +
+			"\n%s\n\n" +
+			"############################################\n" +
+			"## END \n" +
+			"############################################\n"
+		log.Printf(msg, string(stdoutStderr))
+		return fmt.Errorf("fetch cvd stage failed: %w", err)
 	}
-	return err
+	s.completed = true
+	return nil
 }
 
 const (
@@ -321,7 +329,15 @@ func (s *StageLaunchCVD) Run() error {
 	)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("`cvd start` failed with combined stdout and stderr: %s", string(stdoutStderr))
+		msg := "`cvd start` failed with combined stdout and stderr:\n" +
+			"############################################\n" +
+			"## BEGIN \n" +
+			"############################################\n" +
+			"\n%s\n\n" +
+			"############################################\n" +
+			"## END \n" +
+			"############################################\n"
+		log.Printf(msg, string(stdoutStderr))
 		return fmt.Errorf("launch cvd stage failed: %w", err)
 	}
 	return nil
