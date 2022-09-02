@@ -113,7 +113,7 @@
 /vendor/bin/hw/android\.hardware\.authsecret-service.example u:object_r:hal_authsecret_default_exec:s0
 /vendor/bin/hw/android\.hardware\.rebootescrow-service\.default  u:object_r:hal_rebootescrow_default_exec:s0
 /vendor/bin/dlkm_loader  u:object_r:dlkm_loader_exec:s0
-/vendor/bin/init\.wifi\.sh    u:object_r:init_wifi_sh_exec:s0
+/vendor/bin/init\.wifi    u:object_r:init_wifi_sh_exec:s0
 
 /vendor/lib(64)?/libdrm.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libglapi.so  u:object_r:same_process_hal_file:s0

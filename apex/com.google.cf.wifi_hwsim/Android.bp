@@ -47,7 +47,7 @@ apex {
         "hostapd_cf",
         "android.hardware.wifi@1.0-service",
     ],
-    sh_binaries: ["init.wifi.sh_apex"],
+    sh_binaries: ["init.wifi_apex"],
     prebuilts: [
         "android.hardware.wifi.direct.prebuilt.xml",
         "android.hardware.wifi.passpoint.prebuilt.xml",
