@@ -1,6 +1,5 @@
-<div>
+<div #viewPane>
   <ktd-grid
-    *ngIf="layout.length"
     class="view-pane"
     [cols]="cols"
     [rowHeight]="rowHeight"
@@ -13,6 +12,7 @@
     (resizeStarted)="onResizeStarted($event)"
     (dragEnded)="onDragEnded($event)"
     (resizeEnded)="onResizeEnded($event)"
+    (layoutUpdated)="onLayoutUpdated($event)"
   >
     <ktd-grid-item
       class="device-viewer"
