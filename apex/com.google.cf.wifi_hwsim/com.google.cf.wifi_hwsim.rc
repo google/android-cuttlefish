@@ -2,7 +2,7 @@
 service rename_eth0 /apex/com.android.wifi.hal/bin/rename_netiface eth0 buried_eth0
     oneshot
 
-service init_wifi_sh /apex/com.android.wifi.hal/bin/init.wifi.sh
+service init_wifi_sh /apex/com.android.wifi.hal/bin/init.wifi
     class late_start
     user root
     group root wakelock wifi
