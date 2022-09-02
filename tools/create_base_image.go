@@ -204,15 +204,16 @@ func waitForInstance(PZ string) {
 	}
 }
 
-func packageSource(url string, branch string, version string, subdir string) {
+func packageSource(url string, branch string, subdir string) {
 	repository_dir := url[strings.LastIndex(url, "/")+1:]
-	debian_dir := mustShell(`basename "` + repository_dir + `" .git`)
+	repository_dir = mustShell(`basename "` + repository_dir + `" .git`)
+	debian_dir := repository_dir
 	if subdir != "" {
 		debian_dir = repository_dir + "/" + subdir
 	}
 	mustShell("git clone " + url + " -b " + branch)
 	mustShell("dpkg-source -b " + debian_dir)
-	mustShell("rm -rf " + debian_dir)
+	mustShell("rm -rf " + repository_dir)
 	mustShell("ls -l")
 	mustShell("pwd")
 }
@@ -308,7 +309,8 @@ func main() {
 		log.Fatal(err)
 	}
 	os.Chdir(scratch_dir)
-	packageSource(repository_url, repository_branch, "cuttlefish-common_"+version, "")
+	packageSource(repository_url, repository_branch, "base")
+	packageSource(repository_url, repository_branch, "frontend")
 	os.Chdir(oldDir)
 
 	abt := os.Getenv("ANDROID_BUILD_TOP")
