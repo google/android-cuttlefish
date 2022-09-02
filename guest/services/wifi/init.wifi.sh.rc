@@ -1,5 +1,5 @@
 
-service init_wifi_sh /vendor/bin/init.wifi.sh
+service init_wifi_sh /vendor/bin/init.wifi
     class late_start
     user root
     group root wakelock wifi
