@@ -18,11 +18,9 @@
 
 #include <map>
 #include <mutex>
-#include <optional>
 #include <thread>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
 
 #include "cvd_server.pb.h"
@@ -39,10 +37,13 @@
 
 namespace cuttlefish {
 
-std::optional<std::string> GetCuttlefishConfigPath(const std::string& home) {
+Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   std::string home_realpath;
   if (DirectoryExists(home)) {
-    CHECK(android::base::Realpath(home, &home_realpath));
+    if (!android::base::Realpath(home, &home_realpath)) {
+      return CF_ERR(home << " does not point to any existing directory/file"
+                         << " while it must do");
+    }
     static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
     std::string config_path = AbsolutePath(home_realpath + kSuffix);
     if (FileExists(config_path)) {
@@ -96,7 +97,7 @@ cvd::Status InstanceManager::CvdFleet(const SharedFD& out,
     if (FileExists(env_config)) {
       config_path = env_config;
     }
-    if (config_path) {
+    if (config_path.ok()) {
       // Reads CuttlefishConfig::instance_names(), which must remain stable
       // across changes to config file format (within server_constants.h major
       // version).
@@ -129,7 +130,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   cvd::Status status;
   for (const auto& [group_dir, group_info] : instance_groups_) {
     auto config_path = GetCuttlefishConfigPath(group_dir);
-    if (config_path) {
+    if (config_path.ok()) {
       // Stop all instances that are using this group dir.
       Command command(group_info.host_binaries_dir + kStopBin);
       // Delete the instance dirs.
