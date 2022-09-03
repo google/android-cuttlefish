@@ -18,7 +18,6 @@
 
 #include <map>
 #include <mutex>
-#include <optional>
 #include <string>
 
 #include <fruit/fruit.h>
@@ -59,7 +58,6 @@ class InstanceManager {
   std::map<InstanceGroupDir, InstanceGroupInfo> instance_groups_;
 };
 
-std::optional<std::string> GetCuttlefishConfigPath(
-    const std::string& assembly_dir);
+Result<std::string> GetCuttlefishConfigPath(const std::string& assembly_dir);
 
 }  // namespace cuttlefish
