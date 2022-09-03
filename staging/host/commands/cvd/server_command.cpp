@@ -330,6 +330,7 @@ class CvdFetchHandler : public CvdServerHandler {
 
     Command command("/proc/self/exe");
     command.SetName("fetch_cvd");
+    command.SetExecutable("/proc/self/exe");
 
     for (const auto& argument : ParseInvocation(request.Message()).arguments) {
       command.AddParameter(argument);
