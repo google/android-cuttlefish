@@ -322,8 +322,8 @@ Subprocess Command::Start(SubprocessOptions options) const {
     rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
                    const_cast<char* const*>(envp.data()));
     // No need for an if: if exec worked it wouldn't have returned
-    LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
-               << ")";
+    LOG(ERROR) << "exec of " << cmd[0] << " with path \"" << executable
+               << "\" failed (" << strerror(errno) << ")";
     exit(rval);
   }
   if (pid == -1) {
