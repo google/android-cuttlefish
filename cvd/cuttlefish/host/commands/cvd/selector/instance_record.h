@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -29,18 +30,14 @@ namespace instance_db {
  *
  * Needs design changes to support both Remote and Local Instances
  */
-class LocalInstanceGroup;
 class LocalInstance {
-  friend class LocalInstanceGroup;
-
  public:
-  using LocalInstancePtr = std::unique_ptr<LocalInstance>;
-
-  template <typename... Args>
-  static LocalInstancePtr Create(Args&&... args) {
-    auto new_instance = new LocalInstance(std::forward<Args>(args)...);
-    return std::unique_ptr<LocalInstance>(new_instance);
-  }
+  LocalInstance(const int instance_id, const std::string& internal_group_name);
+  LocalInstance(const LocalInstance&) = default;
+  LocalInstance(LocalInstance&&) = default;
+  LocalInstance& operator=(const LocalInstance&) = default;
+  LocalInstance& operator=(LocalInstance&&) = default;
+  bool operator==(const LocalInstance& target) const { return Compare(target); }
 
   /* names:
    *
@@ -60,17 +57,26 @@ class LocalInstance {
   std::string InternalDeviceName() const;
 
   int InstanceId() const;
-  const LocalInstanceGroup& Parent() const;
 
  private:
-  LocalInstance(const int instance_id, LocalInstanceGroup& parent);
-
-  const int instance_id_;
-  const std::string internal_name_;  ///< for now, it is to_string(instance_id_)
-  LocalInstanceGroup& parent_;
+  bool Compare(const LocalInstance& target) const {
+    // list all fields here
+    return (instance_id_ == target.instance_id_) &&
+           (internal_name_ == target.internal_name_) &&
+           (internal_group_name_ == target.internal_group_name_);
+  }
+  int instance_id_;
+  std::string internal_name_;  ///< for now, it is to_string(instance_id_)
+  std::string internal_group_name_;
 };
-
-using LocalInstancePtr = LocalInstance::LocalInstancePtr;
 
 }  // namespace instance_db
 }  // namespace cuttlefish
+
+template <>
+struct std::hash<cuttlefish::instance_db::LocalInstance> {
+  using LocalInstance = cuttlefish::instance_db::LocalInstance;
+  std::size_t operator()(const LocalInstance& instance) const noexcept {
+    return std::hash<int>()(instance.InstanceId());
+  }
+};
