@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_record.h"
-
 #include "host/commands/cvd/instance_database_utils.h"
+
+#include <string_view>
+
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace instance_db {
 
-LocalInstance::LocalInstance(const int instance_id,
-                             const std::string& internal_group_name)
-    : instance_id_(instance_id),
-      internal_name_(std::to_string(instance_id_)),
-      internal_group_name_(internal_group_name) {}
-
-int LocalInstance::InstanceId() const { return instance_id_; }
-
-std::string LocalInstance::InternalDeviceName() const {
-  return LocalDeviceNameRule(internal_group_name_, internal_name_);
+std::string GenInternalGroupName() {
+  std::string_view internal_name{kCvdNamePrefix};  // "cvd-"
+  internal_name.remove_suffix(1);                  // "cvd"
+  return std::string(internal_name);
 }
 
-const std::string& LocalInstance::InternalName() const {
-  return internal_name_;
+std::string LocalDeviceNameRule(const std::string& group_name,
+                                const std::string& instance_name) {
+  return group_name + "-" + instance_name;
 }
 
 }  // namespace instance_db
