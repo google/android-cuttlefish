@@ -1,5 +1,5 @@
 # start bt_vhci_forwarder when apex is ready
-on apex-ready
+on property:apex.all.ready=true
     start bt_vhci_forwarder
 
 service bt_vhci_forwarder /apex/com.google.cf.bt/bin/bt_vhci_forwarder -virtio_console_dev=${vendor.ser.bt-uart}
