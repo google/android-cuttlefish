@@ -58,7 +58,7 @@ function build_host_debian_pkg {
       exit 1
   fi
 
-  if ! docker cp $android_cuttlefish_on_host $container_name:$host_dir_on_guest > /dev/null 2>&1; then
+  if ! docker cp $android_cuttlefish_on_host/. $container_name:$src_on_guest > /dev/null 2>&1; then
       >&2 echo "fail to copy android-cuttlefish/* to the container, $container_name"
       exit 2
   fi
