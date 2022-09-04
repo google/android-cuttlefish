@@ -174,7 +174,7 @@ function is_rebuild_debs() {
                               "cuttlefish-user" \
                               "cuttlefish-common" \
                               "cuttlefish-integration" \
-                              "cuttlefish-integration-dbgsym")
+                              "cuttlefish-orchestration")
   if [[ ${FLAGS_rebuild_debs} -eq ${FLAGS_TRUE} ]]; then
       return 0
   fi
