@@ -53,7 +53,7 @@ Result<void> LocalInstanceGroup::AddInstance(const int instance_id) {
   if (HasInstance(instance_id)) {
     return CF_ERR("Instance Id " << instance_id << " is taken");
   }
-  instances_.emplace_back(instance_id, internal_group_name_);
+  instances_.emplace(instance_id, internal_group_name_);
   return {};
 }
 
