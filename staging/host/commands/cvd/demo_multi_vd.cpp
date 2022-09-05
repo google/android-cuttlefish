@@ -186,11 +186,12 @@ class SerialLaunchCommand : public CvdServerHandler {
         continue;
       }
       const auto& first = devices[0];
+      const auto& first_instance_num =
+          std::to_string(first.ins_lock.Instance());
       auto hwsim_path = first.home_dir + "cuttlefish_runtime." +
-                        std::to_string(first.ins_lock.Instance()) +
-                        "/internal/vhost_user_mac80211";
+                        first_instance_num + "/internal/vhost_user_mac80211";
       launch_cmd.add_args("--vhost_user_mac80211_hwsim=" + hwsim_path);
-      launch_cmd.add_args("--rootcanal_attach_mode");
+      launch_cmd.add_args("--rootcanal_instance_num=" + first_instance_num);
     }
 
     std::vector<SharedFD> fds;
