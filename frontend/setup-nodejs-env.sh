@@ -17,3 +17,21 @@ export NODE_ROOT=/tmp/nodejs
 export NODE_VERSION=v16.17.0
 export NODE_HOME=$NODE_ROOT/node-$NODE_VERSION-$NODE_DISTRO
 export PATH=$NODE_HOME/bin:$PATH
+
+uninstall_nodejs() {
+  rm -rf $NODE_ROOT
+}
+
+install_nodejs() {
+  uninstall_nodejs
+  mkdir -p $NODE_ROOT
+  pushd $NODE_ROOT >/dev/null
+  curl https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-$NODE_DISTRO.tar.xz -O
+  curl https://nodejs.org/dist/$NODE_VERSION/SHASUMS256.txt -O
+  if ! echo "$NODE_SHA256SUM node-$NODE_VERSION-$NODE_DISTRO.tar.xz" | sha256sum -c ; then
+    echo "** ERROR: KEY MISMATCH **"; popd >/dev/null; exit 1;
+  fi
+
+  tar xvf node-$NODE_VERSION-$NODE_DISTRO.tar.xz >/dev/null
+  popd >/dev/null
+}
