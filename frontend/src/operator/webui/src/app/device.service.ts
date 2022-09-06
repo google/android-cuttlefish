@@ -47,7 +47,7 @@ export class DeviceService {
     return this.devicesObservable;
   }
 
-  getDeviceInfo(deviceId: string) : Observable<DeviceInfo> {
+  getDeviceInfo(deviceId: string): Observable<DeviceInfo> {
     return this.httpClient
       .get('./devices/' + deviceId)
       .pipe(map(res => res as DeviceInfo));

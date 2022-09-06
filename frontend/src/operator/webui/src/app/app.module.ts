@@ -36,7 +36,7 @@ import {KtdGridModule} from '@katoid/angular-grid-layout';
     MatToolbarModule,
     FormsModule,
     HttpClientModule,
-    KtdGridModule
+    KtdGridModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
