@@ -19,25 +19,30 @@ include /usr/share/dpkg/buildflags.mk
 GOUTIL := src/goutil
 LIBOPERATOR_SOURCE_DIR := src/liboperator
 ORCHESTRATOR_SOURCE_DIR := src/host-orchestrator
+CVDSERVER_BOOTSTRAPPER_SOURCE_DIR := src/host-orchestrator/cmd/cvdserver-bootstrapper
 OPERATOR_SOURCE_DIR := src/operator
 BUILD_WEBUI := ./build-webui.sh
 
 override_dh_auto_build:
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
+	$(GOUTIL) $(CVDSERVER_BOOTSTRAPPER_SOURCE_DIR) build -v -ldflags="-w"
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(BUILD_WEBUI)
 
 override_dh_auto_test:
 	$(GOUTIL) $(LIBOPERATOR_SOURCE_DIR) test ./...
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) test ./...
+	$(GOUTIL) $(CVDSERVER_BOOTSTRAPPER_SOURCE_DIR) test ./...
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) test ./...
 	dh_auto_test
 
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-operator
 	dh_installinit --name=cuttlefish-host-orchestrator
+	dh_installinit --name=cuttlefish-cvdserver-bootstrapper
 	dh_installinit
 
 override_dh_auto_clean:
 	rm -f $(ORCHESTRATOR_SOURCE_DIR)/host-orchestrator
+	rm -f $(CVDSERVER_BOOTSTRAPPER_SOURCE_DIR)/cvdserver-bootstrapper
 	dh_auto_clean

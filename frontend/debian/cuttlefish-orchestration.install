@@ -1,3 +1,4 @@
 src/host-orchestrator/host-orchestrator /usr/lib/cuttlefish-common/bin/
 src/operator/webui/dist/static /usr/share/cuttlefish-common/host-orchestrator/
 src/operator/intercept /usr/share/cuttlefish-common/host-orchestrator/
+src/host-orchestrator/cmd/cvdserver-bootstrapper/cvdserver-bootstrapper /usr/lib/cuttlefish-common/bin/
