@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 ### BEGIN INIT INFO
-# Provides: cuttlefish-host-orchestrator
+# Provides: cuttlefish-cvdserver-bootstrapper
 # Required-Start: $network $remote_fs
 # Required-Stop: $network $remote_fs
 # Default-Start: 2 3 4 5
@@ -45,9 +45,6 @@ start() {
   mkdir -p "${RUN_DIR}"
   chown _cvd-executor:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
-
-  mkdir -p  "${download_dir}"
-  chown _cvd-executor:cvdnetwork "${download_dir}"
 
   HTTP_PORT="${http_port}" \
   start-stop-daemon --start \
