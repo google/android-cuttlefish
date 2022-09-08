@@ -85,18 +85,17 @@ Result<InstanceManager::InstanceGroupInfo> InstanceManager::GetInstanceGroup(
   }
 }
 
-cvd::Status InstanceManager::CvdFleet(const SharedFD& out,
-                                      const std::string& env_config) const {
+cvd::Status InstanceManager::CvdFleetImpl(
+    const SharedFD& out, const std::optional<std::string>& env_config) const {
   std::lock_guard assemblies_lock(instance_groups_mutex_);
   const char _GroupDeviceInfoStart[] = "[\n";
   const char _GroupDeviceInfoSeparate[] = ",\n";
   const char _GroupDeviceInfoEnd[] = "]\n";
   WriteAll(out, _GroupDeviceInfoStart);
   for (const auto& [group_dir, group_info] : instance_groups_) {
-    auto config_path = GetCuttlefishConfigPath(group_dir);
-    if (FileExists(env_config)) {
-      config_path = env_config;
-    }
+    auto config_path = (env_config && FileExists(*env_config))
+                           ? *env_config
+                           : GetCuttlefishConfigPath(group_dir);
     if (config_path.ok()) {
       // Reads CuttlefishConfig::instance_names(), which must remain stable
       // across changes to config file format (within server_constants.h major
@@ -122,6 +121,38 @@ cvd::Status InstanceManager::CvdFleet(const SharedFD& out,
   cvd::Status status;
   status.set_code(cvd::Status::OK);
   return status;
+}
+
+cvd::Status InstanceManager::CvdFleetHelp(
+    const SharedFD& out, const SharedFD& err,
+    const std::string& host_tool_dir) const {
+  Command command(host_tool_dir + kStatusBin);
+  command.AddParameter("--help");
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
+  if (int wait_result = command.Start().Wait(); wait_result != 0) {
+    WriteAll(out, "      (unknown instance status error)");
+  }
+  WriteAll(out, "\n");
+  cvd::Status status;
+  status.set_code(cvd::Status::OK);
+  return status;
+}
+
+cvd::Status InstanceManager::CvdFleet(
+    const SharedFD& out, const SharedFD& err,
+    const std::optional<std::string>& env_config,
+    const std::string& host_tool_dir,
+    const std::vector<std::string>& args) const {
+  bool is_help = false;
+  for (const auto& arg : args) {
+    if (arg == "--help" || arg == "-help") {
+      is_help = true;
+      break;
+    }
+  }
+  return (is_help ? CvdFleetHelp(out, err, host_tool_dir + "/bin/")
+                  : CvdFleetImpl(out, env_config));
 }
 
 cvd::Status InstanceManager::CvdClear(const SharedFD& out,
