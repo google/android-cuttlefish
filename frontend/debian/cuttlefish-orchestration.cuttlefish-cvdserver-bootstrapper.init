@@ -63,17 +63,10 @@ stop() {
 }
 
 status() {
-  # Return
-  #   0 if daemon is running
-  #   1 if daemon is dead and pid file exists
-  #   3 if daemon is not running
-  #   4 if daemon status is unknown
-  start-stop-daemon --start --quiet --pidfile "${PIDFILE}" --exec ${DAEMON} --test > /dev/null
-  case "${?}" in
-    0) [ -e "${PIDFILE}" ] && return 1 ; return 3 ;;
-    1) return 0 ;;
-    *) return 4 ;;
-  esac
+  start-stop-daemon --status \
+    --quiet \
+    --pidfile "${PIDFILE}" \
+    --exec "${DAEMON}"
 }
 
 usage() {
