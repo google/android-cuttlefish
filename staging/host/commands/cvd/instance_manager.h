@@ -18,7 +18,9 @@
 
 #include <map>
 #include <mutex>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include <fruit/fruit.h>
 
@@ -49,9 +51,17 @@ class InstanceManager {
   Result<InstanceGroupInfo> GetInstanceGroup(const InstanceGroupDir&) const;
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
-  cvd::Status CvdFleet(const SharedFD& out, const std::string& envconfig) const;
+  cvd::Status CvdFleet(const SharedFD& out, const SharedFD& err,
+                       const std::optional<std::string>& env_config,
+                       const std::string& host_tool_dir,
+                       const std::vector<std::string>& args) const;
 
  private:
+  cvd::Status CvdFleetImpl(const SharedFD& out,
+                           const std::optional<std::string>& env_config) const;
+  cvd::Status CvdFleetHelp(const SharedFD& out, const SharedFD& err,
+                           const std::string& host_tool_dir) const;
+
   InstanceLockFileManager& lock_manager_;
 
   mutable std::mutex instance_groups_mutex_;
