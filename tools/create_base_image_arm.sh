@@ -150,12 +150,12 @@ if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
 
 	# Update partition table for 32GB eMMC
 	end_sector=61071326
-	sudo sgdisk --delete=6 ${device}
-	sudo sgdisk --new=6:144M:${end_sector} --typecode=6:8305 --change-name=6:rootfs --attributes=6:set:2 ${device}
+	sudo sgdisk --delete=7 ${device}
+	sudo sgdisk --new=7:145M:${end_sector} --typecode=7:8305 --change-name=7:rootfs --attributes=7:set:2 ${device}
 
 	# Rescan the partition table and resize the rootfs
 	sudo partx -v --add ${device}
-	sudo resize2fs ${devicep}6 >/dev/null 2>&1
+	sudo resize2fs ${devicep}7 >/dev/null 2>&1
 else
 	device=$(sudo losetup -f)
 	devicep=${device}p
@@ -164,17 +164,18 @@ else
 	sudo losetup -P ${device} ${IMAGE}
 
 	# Minimize rootfs filesystem
+	sudo e2fsck -fy ${devicep}7 >/dev/null 2>&1
 	while true; do
-		out=`sudo resize2fs -M ${devicep}6 2>&1`
+		out=`sudo resize2fs -M ${devicep}7 2>&1`
 		if [[ $out =~ "Nothing to do" ]]; then
 			break
 		fi
 	done
 	# Minimize rootfs file size
-	block_count=`sudo tune2fs -l ${devicep}6 | grep "Block count:" | sed 's/.*: *//'`
-	block_size=`sudo tune2fs -l ${devicep}6 | grep "Block size:" | sed 's/.*: *//'`
+	block_count=`sudo tune2fs -l ${devicep}7 | grep "Block count:" | sed 's/.*: *//'`
+	block_size=`sudo tune2fs -l ${devicep}7 | grep "Block size:" | sed 's/.*: *//'`
 	sector_size=512
-	start_sector=294912
+	start_sector=296960
 	fs_size=$(( block_count*block_size ))
 	fs_sectors=$(( fs_size/sector_size ))
 	part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
@@ -184,12 +185,12 @@ else
 	image_size=$(( part_sectors*sector_size ))
 
         # Disable ext3/4 journal for flashing to SD-Card
-	sudo tune2fs -O ^has_journal ${devicep}6
-	sudo e2fsck -fy ${devicep}6 >/dev/null 2>&1
+	sudo tune2fs -O ^has_journal ${devicep}7
+	sudo e2fsck -fy ${devicep}7 >/dev/null 2>&1
 
 	# Update partition table
-	sudo sgdisk --delete=6 ${device}
-	sudo sgdisk --new=6:144M:${end_sector} --typecode=6:8305 --change-name=6:rootfs --attributes=6:set:2 ${device}
+	sudo sgdisk --delete=7 ${device}
+	sudo sgdisk --new=7:145M:${end_sector} --typecode=7:8305 --change-name=7:rootfs --attributes=7:set:2 ${device}
 fi
 
 # idbloader
