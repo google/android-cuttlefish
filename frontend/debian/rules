@@ -19,7 +19,7 @@ include /usr/share/dpkg/buildflags.mk
 GOUTIL := src/goutil
 LIBOPERATOR_SOURCE_DIR := src/liboperator
 ORCHESTRATOR_SOURCE_DIR := src/host-orchestrator
-CVDSERVER_BOOTSTRAPPER_SOURCE_DIR := src/host-orchestrator/cmd/cvdserver-bootstrapper
+CVDSERVER_BOOTSTRAPPER_SOURCE_DIR := src/cvdserver-bootstrapper
 OPERATOR_SOURCE_DIR := src/operator
 BUILD_WEBUI := ./build-webui.sh
 

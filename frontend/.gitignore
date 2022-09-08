@@ -1,5 +1,5 @@
 /src/host-orchestrator/host-orchestrator
-/src/host-orchestrator/cmd/cvdserver-bootstrapper/cvdserver-bootstrapper
+/src/cvdserver-bootstrapper/cvdserver-bootstrapper
 /src/operator/operator
 
 
