@@ -164,6 +164,7 @@ else
 	sudo losetup -P ${device} ${IMAGE}
 
 	# Minimize rootfs filesystem
+	sudo e2fsck -fy ${devicep}7 >/dev/null 2>&1
 	while true; do
 		out=`sudo resize2fs -M ${devicep}7 2>&1`
 		if [[ $out =~ "Nothing to do" ]]; then
