@@ -209,17 +209,15 @@ class CvdCommandHandler : public CvdServerHandler {
       *response.mutable_status() =
           instance_manager_.CvdClear(request.Out(), request.Err());
       return response;
-    } else if (bin == kFleetBin) {
-      auto env_config = request.Message().command_request().env().find(
-          kCuttlefishConfigEnvVarName);
-      std::string config_path;
-      if (env_config != request.Message().command_request().env().end()) {
-        config_path = env_config->second;
-      }
+    }
+
+    if (bin == kFleetBin) {
       *response.mutable_status() =
-          instance_manager_.CvdFleet(request.Out(), config_path);
+          HandleCvdFleet(request, args, host_artifacts_path->second);
       return response;
-    } else if (bin == kStartBin) {
+    }
+
+    if (bin == kStartBin) {
       InstanceNumsCalculator calculator;
       auto instance_env =
           request.Message().command_request().env().find("CUTTLEFISH_INSTANCE");
@@ -306,6 +304,18 @@ class CvdCommandHandler : public CvdServerHandler {
   }
 
  private:
+  cvd::Status HandleCvdFleet(const RequestWithStdio& request,
+                             const std::vector<std::string>& args,
+                             const std::string& host_artifacts_path) {
+    auto env_config = request.Message().command_request().env().find(
+        kCuttlefishConfigEnvVarName);
+    std::optional<std::string> config_path = std::nullopt;
+    if (env_config != request.Message().command_request().env().end()) {
+      config_path = env_config->second;
+    }
+    return instance_manager_.CvdFleet(request.Out(), request.Err(), config_path,
+                                      host_artifacts_path, args);
+  }
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
