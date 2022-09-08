@@ -171,6 +171,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // The interface is in development (b/205884982)
     {"android.hardware.audio.core.", 1},
 
+    // The implementation is on the way.
+    {"android.hardware.security.keymint.", 3},
+
     // No implementations on cuttlefish for omapi aidl hal
     {"android.se.omapi.", 1},
 
