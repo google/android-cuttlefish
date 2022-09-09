@@ -35,100 +35,12 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command_impl.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
-
-class SubprocessWaiter {
- public:
-  INJECT(SubprocessWaiter()) {}
-
-  Result<void> Setup(Subprocess subprocess) {
-    std::unique_lock interrupt_lock(interruptible_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    if (subprocess_) {
-      return CF_ERR("Already running");
-    }
-
-    subprocess_ = std::move(subprocess);
-
-    return {};
-  }
-
-  Result<siginfo_t> Wait() {
-    std::unique_lock interrupt_lock(interruptible_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    CF_EXPECT(subprocess_.has_value());
-
-    siginfo_t infop{};
-
-    interrupt_lock.unlock();
-
-    // This blocks until the process exits, but doesn't reap it.
-    auto result = subprocess_->Wait(&infop, WEXITED | WNOWAIT);
-    CF_EXPECT(result != -1, "Lost track of subprocess pid");
-    interrupt_lock.lock();
-    // Perform a reaping wait on the process (which should already have exited).
-    result = subprocess_->Wait(&infop, WEXITED);
-    CF_EXPECT(result != -1, "Lost track of subprocess pid");
-    // The double wait avoids a race around the kernel reusing pids. Waiting
-    // with WNOWAIT won't cause the child process to be reaped, so the kernel
-    // won't reuse the pid until the Wait call below, and any kill signals won't
-    // reach unexpected processes.
-
-    subprocess_ = {};
-
-    return infop;
-  }
-  Result<void> Interrupt() {
-    std::scoped_lock interrupt_lock(interruptible_);
-    if (subprocess_) {
-      auto stop_result = subprocess_->Stop();
-      switch (stop_result) {
-        case StopperResult::kStopFailure:
-          return CF_ERR("Failed to stop subprocess");
-        case StopperResult::kStopCrash:
-          return CF_ERR("Stopper caused process to crash");
-        case StopperResult::kStopSuccess:
-          return {};
-        default:
-          return CF_ERR("Unknown stop result: " << (uint64_t)stop_result);
-      }
-    }
-    return {};
-  }
-
- private:
-  std::optional<Subprocess> subprocess_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
-};
-
-static cvd::Response ResponseFromSiginfo(siginfo_t infop) {
-  cvd::Response response;
-  response.mutable_command_response();  // set oneof field
-  auto& status = *response.mutable_status();
-  if (infop.si_code == CLD_EXITED && infop.si_status == 0) {
-    status.set_code(cvd::Status::OK);
-    return response;
-  }
-
-  status.set_code(cvd::Status::INTERNAL);
-  std::string status_code_str = std::to_string(infop.si_status);
-  if (infop.si_code == CLD_EXITED) {
-    status.set_message("Exited with code " + status_code_str);
-  } else if (infop.si_code == CLD_KILLED) {
-    status.set_message("Exited with signal " + status_code_str);
-  } else {
-    status.set_message("Quit with code " + status_code_str);
-  }
-  return response;
-}
+namespace cvd_cmd_impl {
 
 class CvdCommandHandler : public CvdServerHandler {
  public:
@@ -394,6 +306,8 @@ class CvdFetchHandler : public CvdServerHandler {
   bool interrupted_ = false;
 };
 
+}  // namespace cvd_cmd_impl
+
 CommandInvocation ParseInvocation(const cvd::Request& request) {
   CommandInvocation invocation;
   if (request.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
@@ -425,8 +339,8 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
 
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdCommandHandler>()
-      .addMultibinding<CvdServerHandler, CvdFetchHandler>();
+      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdCommandHandler>()
+      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdFetchHandler>();
 }
 
 }  // namespace cuttlefish
