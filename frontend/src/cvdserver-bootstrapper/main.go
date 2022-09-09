@@ -12,26 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// cvd-server-bootstrapper is a companion tool for the host orchestrator 
+// cvd-server-bootstrapper is a companion tool for the host orchestrator
 // for bootstrapping AOSP cvd server.
 package main
 
 import (
-	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"net/rpc"
 	"os"
 )
 
-func hello(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "bootstrapping cvd server is not implemented yet\n")
-}
+type Service struct{}
 
-func main() {
-	httpPort := getRequiredEnvVar("HTTP_PORT")
-	http.HandleFunc("/bootstrap", hello)
-	log.Println("cvdserver-bootstrapper is listening at http://localhost:" + httpPort)
-	http.ListenAndServe(":"+httpPort, nil)
+func (s *Service) Bootstrap(_ int, reply *string) error {
+	*reply = "not implemented"
+	return nil
 }
 
 func getRequiredEnvVar(key string) string {
@@ -40,4 +37,24 @@ func getRequiredEnvVar(key string) string {
 		log.Fatalf("missing env variable: %q", key)
 	}
 	return val
+}
+
+func main() {
+	sockAddr := getRequiredEnvVar("RPC_SOCK_ADDR")
+	if err := os.RemoveAll(sockAddr); err != nil {
+		log.Fatal(err)
+	}
+	l, e := net.Listen("unix", sockAddr)
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	// Make sure the socket is only accessible by owner and group
+	if err := os.Chmod(sockAddr, 0770); err != nil {
+		log.Fatal(err)
+	}
+	srv := &Service{}
+	rpc.Register(srv)
+	rpc.HandleHTTP()
+	log.Println("serving...")
+	http.Serve(l, nil)
 }

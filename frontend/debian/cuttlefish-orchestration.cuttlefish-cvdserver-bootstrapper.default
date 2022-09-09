@@ -1,5 +1,5 @@
 # defaults for cuttlefish-cvdserver-bootstrapper
 
-# The port on which the server should listen on for plain HTTP.
-# Defaults to 16993.
-# http_port=
+# Socket address for RPC communication.
+# Defaults to "/run/cuttlefish-cvdserver-bootstrapper/rpc.sock"
+# rpc_sock_addr=

@@ -35,7 +35,7 @@ if [ -f /etc/default/cuttlefish-cvdserver-bootstrapper ]; then
     . /etc/default/cuttlefish-cvdserver-bootstrapper
 fi
 
-http_port=${http_port:-16993}
+rpc_sock_addr=${rpc_sock_addr:-"/run/cuttlefish-cvdserver-bootstrapper/rpc.sock"}
 
 RUN_DIR="/run/cuttlefish-cvdserver-bootstrapper"
 DAEMON="/usr/lib/cuttlefish-common/bin/cvdserver-bootstrapper"
@@ -46,7 +46,7 @@ start() {
   chown _cvd-executor:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  HTTP_PORT="${http_port}" \
+  RPC_SOCK_ADDR="${rpc_sock_addr}" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cvd-executor:cvdnetwork \
