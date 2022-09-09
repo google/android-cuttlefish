@@ -35,6 +35,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command_fetch_impl.h"
 #include "host/commands/cvd/server_command_impl.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
@@ -234,76 +235,6 @@ const std::map<std::string, std::string>
         {"mkdir", kMkdirBin},
         {"ln", kLnBin},
         {"fleet", kFleetBin},
-};
-
-class CvdFetchHandler : public CvdServerHandler {
- public:
-  INJECT(CvdFetchHandler(SubprocessWaiter& subprocess_waiter))
-      : subprocess_waiter_(subprocess_waiter) {}
-
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
-    return invocation.command == "fetch" || invocation.command == "fetch_cvd";
-  }
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interruptible_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    CF_EXPECT(CanHandle(request));
-
-    Command command("/proc/self/exe");
-    command.SetName("fetch_cvd");
-    command.SetExecutable("/proc/self/exe");
-
-    for (const auto& argument : ParseInvocation(request.Message()).arguments) {
-      command.AddParameter(argument);
-    }
-
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, request.In());
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, request.Out());
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, request.Err());
-    SubprocessOptions options;
-
-    const auto& command_request = request.Message().command_request();
-    if (command_request.wait_behavior() == cvd::WAIT_BEHAVIOR_START) {
-      options.ExitWithParent(false);
-    }
-
-    const auto& working_dir = command_request.working_directory();
-    if (!working_dir.empty()) {
-      auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
-      if (fd->IsOpen()) {
-        command.SetWorkingDirectory(fd);
-      }
-    }
-
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
-
-    if (command_request.wait_behavior() == cvd::WAIT_BEHAVIOR_START) {
-      cvd::Response response;
-      response.mutable_command_response();
-      response.mutable_status()->set_code(cvd::Status::OK);
-      return response;
-    }
-
-    interrupt_lock.unlock();
-
-    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-
-    return ResponseFromSiginfo(infop);
-  }
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interruptible_);
-    interrupted_ = true;
-    CF_EXPECT(subprocess_waiter_.Interrupt());
-    return {};
-  }
-
- private:
-  SubprocessWaiter& subprocess_waiter_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
 };
 
 }  // namespace cvd_cmd_impl
