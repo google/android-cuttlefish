@@ -21,24 +21,15 @@
 
 #include <fruit/fruit.h>
 
+#include "cvd_server.pb.h"
+
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
+namespace cvd_cmd_impl {
 
-struct RunWithManagedIoParam {
-  Command cmd_;
-  const bool redirect_stdout_ = false;
-  const bool redirect_stderr_ = false;
-  const std::string* stdin_;
-  std::function<Result<void>(void)> callback_;
-  const SubprocessOptions options_ = SubprocessOptions();
-};
-
-struct RunOutput { // a better name please
-  std::string stdout_;
-  std::string stderr_;
-};
+cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
 class SubprocessWaiter {
  public:
@@ -48,12 +39,11 @@ class SubprocessWaiter {
   Result<siginfo_t> Wait();
   Result<void> Interrupt();
 
-  Result<RunOutput> RunWithManagedStdioInterruptable(RunWithManagedIoParam& param);
-
  private:
   std::optional<Subprocess> subprocess_;
   std::mutex interruptible_;
   bool interrupted_ = false;
 };
 
+}  // namespace cvd_cmd_impl
 }  // namespace cuttlefish
