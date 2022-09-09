@@ -39,32 +39,6 @@
 #include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
-namespace {
-
-constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-constexpr char kStartBin[] = "cvd_internal_start";
-constexpr char kLnBin[] = "ln";
-constexpr char kMkdirBin[] = "mkdir";
-
-constexpr char kClearBin[] = "clear_placeholder";  // Unused, runs CvdClear()
-constexpr char kFleetBin[] = "fleet_placeholder";  // Unused, runs CvdFleet()
-
-const std::map<std::string, std::string> CommandToBinaryMap = {
-    {"host_bugreport", kHostBugreportBin},
-    {"cvd_host_bugreport", kHostBugreportBin},
-    {"start", kStartBin},
-    {"launch_cvd", kStartBin},
-    {"status", kStatusBin},
-    {"cvd_status", kStatusBin},
-    {"stop", kStopBin},
-    {"stop_cvd", kStopBin},
-    {"clear", kClearBin},
-    {"mkdir", kMkdirBin},
-    {"ln", kLnBin},
-    {"fleet", kFleetBin},
-};
-
-}  // namespace
 
 class SubprocessWaiter {
  public:
@@ -165,8 +139,8 @@ class CvdCommandHandler : public CvdServerHandler {
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
-    return CommandToBinaryMap.find(invocation.command) !=
-           CommandToBinaryMap.end();
+    return command_to_binary_map_.find(invocation.command) !=
+           command_to_binary_map_.end();
   }
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interruptible_);
@@ -179,8 +153,8 @@ class CvdCommandHandler : public CvdServerHandler {
 
     auto invocation = ParseInvocation(request.Message());
 
-    auto subcommand_bin = CommandToBinaryMap.find(invocation.command);
-    CF_EXPECT(subcommand_bin != CommandToBinaryMap.end());
+    auto subcommand_bin = command_to_binary_map_.find(invocation.command);
+    CF_EXPECT(subcommand_bin != command_to_binary_map_.end());
     auto bin = subcommand_bin->second;
 
     // HOME is used to possibly set CuttlefishConfig path env variable later.
@@ -320,6 +294,34 @@ class CvdCommandHandler : public CvdServerHandler {
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
   bool interrupted_ = false;
+
+  static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
+  static constexpr char kStartBin[] = "cvd_internal_start";
+  static constexpr char kLnBin[] = "ln";
+  static constexpr char kMkdirBin[] = "mkdir";
+
+  static constexpr char kClearBin[] =
+      "clear_placeholder";  // Unused, runs CvdClear()
+  static constexpr char kFleetBin[] =
+      "fleet_placeholder";  // Unused, runs CvdFleet()
+
+  static const std::map<std::string, std::string> command_to_binary_map_;
+};
+
+const std::map<std::string, std::string>
+    CvdCommandHandler::command_to_binary_map_ = {
+        {"host_bugreport", kHostBugreportBin},
+        {"cvd_host_bugreport", kHostBugreportBin},
+        {"start", kStartBin},
+        {"launch_cvd", kStartBin},
+        {"status", kStatusBin},
+        {"cvd_status", kStatusBin},
+        {"stop", kStopBin},
+        {"stop_cvd", kStopBin},
+        {"clear", kClearBin},
+        {"mkdir", kMkdirBin},
+        {"ln", kLnBin},
+        {"fleet", kFleetBin},
 };
 
 class CvdFetchHandler : public CvdServerHandler {
