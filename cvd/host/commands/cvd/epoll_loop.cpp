@@ -88,10 +88,15 @@ Result<void> EpollPool::Remove(SharedFD fd) {
 }
 
 fruit::Component<EpollPool> EpollLoopComponent() {
-  return fruit::createComponent()
-      .registerProvider([]() -> EpollPool {
-        return EpollPool(OR_FATAL(Epoll::Create()));
-      });
+  return fruit::createComponent().registerProvider([]() -> EpollPool {
+    auto epoll = Epoll::Create();
+    if (epoll.ok()) {
+      return EpollPool(std::move(*epoll));
+    }
+    LOG(ERROR) << epoll.error().Message();
+    LOG(DEBUG) << epoll.error().Trace();
+    abort();
+  });
 }
 
 }  // namespace cuttlefish
