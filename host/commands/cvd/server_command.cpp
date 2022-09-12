@@ -37,6 +37,7 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command_fetch_impl.h"
 #include "host/commands/cvd/server_command_impl.h"
+#include "host/commands/cvd/server_command_start_impl.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 
@@ -102,21 +103,6 @@ class CvdCommandHandler : public CvdServerHandler {
       *response.mutable_status() =
           HandleCvdFleet(request, args, host_artifacts_path->second);
       return response;
-    }
-
-    if (bin == kStartBin) {
-      InstanceNumsCalculator calculator;
-      auto instance_env =
-          request.Message().command_request().env().find("CUTTLEFISH_INSTANCE");
-      if (instance_env != request.Message().command_request().env().end()) {
-        calculator.BaseInstanceNum(std::stoi(instance_env->second));
-      }
-
-      // Track this assembly_dir in the fleet.
-      InstanceManager::InstanceGroupInfo info;
-      info.host_binaries_dir = host_artifacts_path->second + "/bin/";
-      info.instances = CF_EXPECT(calculator.Calculate());
-      instance_manager_.SetInstanceGroup(home, info);
     }
 
     Command command("(replaced)");
@@ -209,7 +195,6 @@ class CvdCommandHandler : public CvdServerHandler {
   bool interrupted_ = false;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-  static constexpr char kStartBin[] = "cvd_internal_start";
   static constexpr char kLnBin[] = "ln";
   static constexpr char kMkdirBin[] = "mkdir";
 
@@ -225,8 +210,6 @@ const std::map<std::string, std::string>
     CvdCommandHandler::command_to_binary_map_ = {
         {"host_bugreport", kHostBugreportBin},
         {"cvd_host_bugreport", kHostBugreportBin},
-        {"start", kStartBin},
-        {"launch_cvd", kStartBin},
         {"status", kStatusBin},
         {"cvd_status", kStatusBin},
         {"stop", kStopBin},
@@ -271,6 +254,7 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdCommandHandler>()
+      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdStartCommandHandler>()
       .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdFetchHandler>();
 }
 
