@@ -30,6 +30,10 @@ InstanceDatabase::InstanceDatabase() {
       [this](const Value& field_value) {
         return FindInstancesById(field_value);
       };
+  instance_handlers_[selector::kInstanceNameField] =
+      [this](const Value& field_value) {
+        return FindInstancesByInstanceName(field_value);
+      };
 }
 
 bool InstanceDatabase::IsEmpty() const {
