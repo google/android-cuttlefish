@@ -31,6 +31,8 @@ namespace {
 
 int Main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+
   if (FLAGS_service_url == "") {
     LOG(ERROR) << "Missing host-url flag";
     return -1;
@@ -42,7 +44,8 @@ int Main(int argc, char** argv) {
   CloudOrchestratorApi api(FLAGS_service_url, FLAGS_zone, *http_client);
   auto hosts = api.ListHosts();
   if (!hosts.ok()) {
-    LOG(ERROR) << hosts.error().message();
+    LOG(ERROR) << hosts.error().Message();
+    LOG(DEBUG) << hosts.error().Trace();
     return -1;
   }
   for (auto host : *hosts) {
