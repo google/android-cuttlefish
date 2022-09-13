@@ -24,19 +24,12 @@
 
 namespace cuttlefish {
 
-CrosvmBuilder::CrosvmBuilder() : command_("crosvm") {
-  command_.AddParameter("run");
-}
+CrosvmBuilder::CrosvmBuilder() : command_("crosvm") {}
 
-void CrosvmBuilder::SetBinary(const std::string& binary) {
-  command_.SetExecutableAndName(binary);
-}
-
-void CrosvmBuilder::AddControlSocket(const std::string& control_socket) {
-  // Store this value so it persists after std::move(this->Cmd())
-  auto crosvm = command_.Executable();
-  command_.SetStopper([crosvm, control_socket](Subprocess* proc) {
-    Command stop_cmd(crosvm);
+void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
+                                     const std::string& executable_path) {
+  command_.SetStopper([executable_path, control_socket](Subprocess* proc) {
+    Command stop_cmd(executable_path);
     stop_cmd.AddParameter("stop");
     stop_cmd.AddParameter(control_socket);
     if (stop_cmd.Start().Wait() == 0) {
