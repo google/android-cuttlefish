@@ -40,6 +40,9 @@ class CrosvmManager : public VmManager {
 
   Result<std::vector<cuttlefish::Command>> StartCommands(
       const CuttlefishConfig& config) override;
+
+ private:
+  static constexpr int kCrosvmVmResetExitCode = 32;
 };
 
 } // namespace vm_manager
