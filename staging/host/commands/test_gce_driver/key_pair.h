@@ -18,19 +18,18 @@
 #include <memory>
 #include <string>
 
-#include <android-base/result.h>
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
 struct KeyPair {
  public:
-  static android::base::Result<std::unique_ptr<KeyPair>> CreateRsa(
-      size_t bytes);
+  static Result<std::unique_ptr<KeyPair>> CreateRsa(size_t bytes);
   virtual ~KeyPair() = default;
 
-  virtual android::base::Result<std::string> PemPrivateKey() const = 0;
-  virtual android::base::Result<std::string> PemPublicKey() const = 0;
-  virtual android::base::Result<std::string> OpenSshPublicKey() const = 0;
+  virtual Result<std::string> PemPrivateKey() const = 0;
+  virtual Result<std::string> PemPublicKey() const = 0;
+  virtual Result<std::string> OpenSshPublicKey() const = 0;
 };
 
 };  // namespace cuttlefish

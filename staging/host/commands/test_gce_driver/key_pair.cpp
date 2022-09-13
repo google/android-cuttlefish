@@ -24,12 +24,9 @@
 #include <string>
 
 #include <android-base/logging.h>
-#include <android-base/result.h>
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-
-using android::base::Error;
-using android::base::Result;
 
 namespace cuttlefish {
 
@@ -55,21 +52,21 @@ class BoringSslKeyPair : public KeyPair {
     std::string error;
     if (!ctx) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "EVP_PKEY_CTX_new_id failed: " << error;
+      return CF_ERR("EVP_PKEY_CTX_new_id failed: " << error);
     }
     if (EVP_PKEY_keygen_init(ctx.get()) <= 0) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "EVP_PKEY_keygen_init failed: " << error;
+      return CF_ERR("EVP_PKEY_keygen_init failed: " << error);
     }
     if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), bytes) <= 0) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "EVP_PKEY_CTX_set_rsa_keygen_bits failed: " << error;
+      return CF_ERR("EVP_PKEY_CTX_set_rsa_keygen_bits failed: " << error);
     }
 
     EVP_PKEY* pkey = nullptr;
     if (EVP_PKEY_keygen(ctx.get(), &pkey) <= 0) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "EVP_PKEY_keygen failed: " << error;
+      return CF_ERR("EVP_PKEY_keygen failed: " << error);
     }
     return std::unique_ptr<KeyPair>{new BoringSslKeyPair(pkey)};
   }
@@ -79,18 +76,18 @@ class BoringSslKeyPair : public KeyPair {
     std::string error;
     if (!bo) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "BIO_new failed: " << error;
+      return CF_ERR("BIO_new failed: " << error);
     }
     if (!PEM_write_bio_PrivateKey(bo.get(), pkey_.get(), NULL, NULL, 0, 0,
                                   NULL)) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "PEM_write_bio_PrivateKey failed: " << error;
+      return CF_ERR("PEM_write_bio_PrivateKey failed: " << error);
     }
     std::string priv(BIO_pending(bo.get()), ' ');
     auto written = BIO_read(bo.get(), priv.data(), priv.size());
     if (written != priv.size()) {
-      return Error() << "Unexpected amount of data written: " << written
-                     << " != " << priv.size();
+      return CF_ERR("Unexpected amount of data written: " << written << " != "
+                                                          << priv.size());
     }
     return priv;
   }
@@ -100,18 +97,18 @@ class BoringSslKeyPair : public KeyPair {
     std::string error;
     if (!bo) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "BIO_new failed: " << error;
+      return CF_ERR("BIO_new failed: " << error);
     }
     if (!PEM_write_bio_PUBKEY(bo.get(), pkey_.get())) {
       ERR_print_errors_cb(SslRecordErrCallback, &error);
-      return Error() << "PEM_write_bio_PUBKEY failed: " << error;
+      return CF_ERR("PEM_write_bio_PUBKEY failed: " << error);
     }
 
     std::string priv(BIO_pending(bo.get()), ' ');
     auto written = BIO_read(bo.get(), priv.data(), priv.size());
     if (written != priv.size()) {
-      return Error() << "Unexpected amount of data written: " << written
-                     << " != " << priv.size();
+      return CF_ERR("Unexpected amount of data written: " << written << " != "
+                                                          << priv.size());
     }
     return priv;
   }
@@ -122,14 +119,11 @@ class BoringSslKeyPair : public KeyPair {
    * to convert the BoringSSL-generated RSA key without touching the filesystem.
    */
   Result<std::string> OpenSshPublicKey() const override {
-    auto pem_pubkey = PemPublicKey();
-    if (!pem_pubkey.ok()) {
-      return Error() << "Failed to get pem public key: " << pem_pubkey.error();
-    }
-    auto fd = SharedFD::MemfdCreateWithData("", *pem_pubkey);
-    if (!fd->IsOpen()) {
-      return Error() << "Could not create pubkey memfd: " << fd->StrError();
-    }
+    auto pem_pubkey =
+        CF_EXPECT(PemPublicKey(), "Failed to get pem public key: ");
+    auto fd = SharedFD::MemfdCreateWithData("", pem_pubkey);
+    CF_EXPECT(fd->IsOpen(),
+              "Could not create pubkey memfd: " << fd->StrError());
     Command cmd("/usr/bin/ssh-keygen");
     cmd.AddParameter("-i");
     cmd.AddParameter("-f");
@@ -139,11 +133,9 @@ class BoringSslKeyPair : public KeyPair {
     cmd.AddParameter("PKCS8");
     std::string out;
     std::string err;
-    auto ret = RunWithManagedStdio(std::move(cmd), nullptr, &out, &err);
-    if (ret != 0) {
-      return Error() << "Could not convert pem key to openssh key. "
-                     << "stdout=\"" << out << "\", stderr=\"" << err << "\"";
-    }
+    CF_EXPECT(RunWithManagedStdio(std::move(cmd), nullptr, &out, &err) == 0,
+              "Could not convert pem key to openssh key. "
+                  << "stdout=\"" << out << "\", stderr=\"" << err << "\"");
     return out;
   }
 

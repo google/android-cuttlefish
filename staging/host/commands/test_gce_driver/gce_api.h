@@ -19,9 +19,9 @@
 #include <optional>
 #include <string>
 
-#include <android-base/result.h>
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -110,7 +110,7 @@ class GceApi {
     ~Operation();
     void StopWaiting();
     /// `true` means it waited to completion, `false` means it was cancelled
-    std::future<android::base::Result<bool>>& Future();
+    std::future<Result<bool>>& Future();
 
    private:
     class Impl;
@@ -122,10 +122,9 @@ class GceApi {
   GceApi(HttpClient&, CredentialSource& credentials,
          const std::string& project);
 
-  std::future<android::base::Result<GceInstanceInfo>> Get(
-      const GceInstanceInfo&);
-  std::future<android::base::Result<GceInstanceInfo>> Get(
-      const std::string& zone, const std::string& name);
+  std::future<Result<GceInstanceInfo>> Get(const GceInstanceInfo&);
+  std::future<Result<GceInstanceInfo>> Get(const std::string& zone,
+                                           const std::string& name);
 
   Operation Insert(const Json::Value&);
   Operation Insert(const GceInstanceInfo&);
