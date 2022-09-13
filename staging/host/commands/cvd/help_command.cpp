@@ -51,7 +51,8 @@ class CvdHelpHandler : public CvdServerHandler {
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
-    return invocation.command == "help";
+    return (invocation.command == "help" || invocation.command == "--help" ||
+            invocation.command == "-h");
   }
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interruptible_);
