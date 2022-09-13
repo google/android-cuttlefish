@@ -78,6 +78,7 @@ cvd_host_tools = [
     "netsim",
     "newfs_msdos",
     "powerwash_cvd",
+    "process_restarter",
     "restart_cvd",
     "root-canal",
     "run_cvd",
