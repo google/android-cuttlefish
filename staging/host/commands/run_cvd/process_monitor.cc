@@ -225,7 +225,10 @@ Result<void> ProcessMonitor::StartAndMonitorProcesses() {
     host_pipe->Close();
     auto monitor_result = MonitorRoutine();
     if (!monitor_result.ok()) {
-      LOG(ERROR) << "Monitoring processes failed:\n" << monitor_result.error();
+      LOG(ERROR) << "Monitoring processes failed:\n"
+                 << monitor_result.error().Message();
+      LOG(DEBUG) << "Monitoring processes failed:\n"
+                 << monitor_result.error().Trace();
     }
     std::exit(monitor_result.ok() ? 0 : 1);
   } else {
