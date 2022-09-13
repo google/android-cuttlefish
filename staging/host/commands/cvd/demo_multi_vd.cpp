@@ -105,7 +105,7 @@ class SerialLaunchCommand : public CvdServerHandler {
     device_flag.Setter([this, time, &devices, &request](const FlagMatch& mat) {
       auto lock = lock_file_manager_.TryAcquireUnusedLock();
       if (!lock.ok()) {
-        WriteAll(request.Err(), lock.error().message());
+        WriteAll(request.Err(), lock.error().Message());
         return false;
       } else if (!lock->has_value()) {
         constexpr char kError[] = "could not acquire instance lock";

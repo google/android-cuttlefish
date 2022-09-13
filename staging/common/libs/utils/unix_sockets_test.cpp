@@ -44,10 +44,10 @@ TEST(UnixSocketMessage, ExtractFileDescriptors) {
 
   UnixSocketMessage message;
   auto control1 = ControlMessage::FromFileDescriptors({memfd1});
-  ASSERT_TRUE(control1.ok()) << control1.error();
+  ASSERT_TRUE(control1.ok()) << control1.error().Trace();
   message.control.emplace_back(std::move(*control1));
   auto control2 = ControlMessage::FromFileDescriptors({memfd2});
-  ASSERT_TRUE(control2.ok()) << control2.error();
+  ASSERT_TRUE(control2.ok()) << control2.error().Trace();
   message.control.emplace_back(std::move(*control2));
 
   ASSERT_TRUE(message.HasFileDescriptors());
@@ -67,10 +67,10 @@ TEST(UnixMessageSocket, SendPlainMessage) {
   auto [writer, reader] = UnixMessageSocketPair();
   UnixSocketMessage message_in = {{1, 2, 3}, {}};
   auto write_result = writer.WriteMessage(message_in);
-  ASSERT_TRUE(write_result.ok()) << write_result.error();
+  ASSERT_TRUE(write_result.ok()) << write_result.error().Trace();
 
   auto message_out = reader.ReadMessage();
-  ASSERT_TRUE(message_out.ok()) << message_out.error();
+  ASSERT_TRUE(message_out.ok()) << message_out.error().Trace();
   ASSERT_EQ(message_in.data, message_out->data);
   ASSERT_EQ(0, message_out->control.size());
 }
@@ -81,18 +81,18 @@ TEST(UnixMessageSocket, SendFileDescriptor) {
   UnixSocketMessage message_in = {{4, 5, 6}, {}};
   auto control_in =
       ControlMessage::FromFileDescriptors({CreateMemFDWithData("abc")});
-  ASSERT_TRUE(control_in.ok()) << control_in.error();
+  ASSERT_TRUE(control_in.ok()) << control_in.error().Trace();
   message_in.control.emplace_back(std::move(*control_in));
   auto write_result = writer.WriteMessage(message_in);
-  ASSERT_TRUE(write_result.ok()) << write_result.error();
+  ASSERT_TRUE(write_result.ok()) << write_result.error().Trace();
 
   auto message_out = reader.ReadMessage();
-  ASSERT_TRUE(message_out.ok()) << message_out.error();
+  ASSERT_TRUE(message_out.ok()) << message_out.error().Trace();
   ASSERT_EQ(message_in.data, message_out->data);
 
   ASSERT_EQ(1, message_out->control.size());
   auto fds_out = message_out->control[0].AsSharedFDs();
-  ASSERT_TRUE(fds_out.ok()) << fds_out.error();
+  ASSERT_TRUE(fds_out.ok()) << fds_out.error().Trace();
   ASSERT_EQ(1, fds_out->size());
   ASSERT_EQ("abc", ReadAllFDData((*fds_out)[0]));
 }
@@ -104,18 +104,18 @@ TEST(UnixMessageSocket, SendTwoFileDescriptors) {
   auto [writer, reader] = UnixMessageSocketPair();
   UnixSocketMessage message_in = {{7, 8, 9}, {}};
   auto control_in = ControlMessage::FromFileDescriptors({memfd1, memfd2});
-  ASSERT_TRUE(control_in.ok()) << control_in.error();
+  ASSERT_TRUE(control_in.ok()) << control_in.error().Trace();
   message_in.control.emplace_back(std::move(*control_in));
   auto write_result = writer.WriteMessage(message_in);
-  ASSERT_TRUE(write_result.ok()) << write_result.error();
+  ASSERT_TRUE(write_result.ok()) << write_result.error().Trace();
 
   auto message_out = reader.ReadMessage();
-  ASSERT_TRUE(message_out.ok()) << message_out.error();
+  ASSERT_TRUE(message_out.ok()) << message_out.error().Trace();
   ASSERT_EQ(message_in.data, message_out->data);
 
   ASSERT_EQ(1, message_out->control.size());
   auto fds_out = message_out->control[0].AsSharedFDs();
-  ASSERT_TRUE(fds_out.ok()) << fds_out.error();
+  ASSERT_TRUE(fds_out.ok()) << fds_out.error().Trace();
   ASSERT_EQ(2, fds_out->size());
 
   ASSERT_EQ("abc", ReadAllFDData((*fds_out)[0]));
@@ -125,9 +125,9 @@ TEST(UnixMessageSocket, SendTwoFileDescriptors) {
 TEST(UnixMessageSocket, SendCredentials) {
   auto [writer, reader] = UnixMessageSocketPair();
   auto writer_creds_status = writer.EnableCredentials(true);
-  ASSERT_TRUE(writer_creds_status.ok()) << writer_creds_status.error();
+  ASSERT_TRUE(writer_creds_status.ok()) << writer_creds_status.error().Trace();
   auto reader_creds_status = reader.EnableCredentials(true);
-  ASSERT_TRUE(reader_creds_status.ok()) << reader_creds_status.error();
+  ASSERT_TRUE(reader_creds_status.ok()) << reader_creds_status.error().Trace();
 
   ucred credentials_in;
   credentials_in.pid = getpid();
@@ -137,15 +137,15 @@ TEST(UnixMessageSocket, SendCredentials) {
   auto control_in = ControlMessage::FromCredentials(credentials_in);
   message_in.control.emplace_back(std::move(control_in));
   auto write_result = writer.WriteMessage(message_in);
-  ASSERT_TRUE(write_result.ok()) << write_result.error();
+  ASSERT_TRUE(write_result.ok()) << write_result.error().Trace();
 
   auto message_out = reader.ReadMessage();
-  ASSERT_TRUE(message_out.ok()) << message_out.error();
+  ASSERT_TRUE(message_out.ok()) << message_out.error().Trace();
   ASSERT_EQ(message_in.data, message_out->data);
 
   ASSERT_EQ(1, message_out->control.size());
   auto credentials_out = message_out->control[0].AsCredentials();
-  ASSERT_TRUE(credentials_out.ok()) << credentials_out.error();
+  ASSERT_TRUE(credentials_out.ok()) << credentials_out.error().Trace();
   ASSERT_EQ(credentials_in.pid, credentials_out->pid);
   ASSERT_EQ(credentials_in.uid, credentials_out->uid);
   ASSERT_EQ(credentials_in.gid, credentials_out->gid);
@@ -154,9 +154,9 @@ TEST(UnixMessageSocket, SendCredentials) {
 TEST(UnixMessageSocket, BadCredentialsBlocked) {
   auto [writer, reader] = UnixMessageSocketPair();
   auto writer_creds_status = writer.EnableCredentials(true);
-  ASSERT_TRUE(writer_creds_status.ok()) << writer_creds_status.error();
+  ASSERT_TRUE(writer_creds_status.ok()) << writer_creds_status.error().Trace();
   auto reader_creds_status = reader.EnableCredentials(true);
-  ASSERT_TRUE(reader_creds_status.ok()) << reader_creds_status.error();
+  ASSERT_TRUE(reader_creds_status.ok()) << reader_creds_status.error().Trace();
 
   ucred credentials_in;
   // This assumes the test is running without root privileges
@@ -168,27 +168,27 @@ TEST(UnixMessageSocket, BadCredentialsBlocked) {
   auto control_in = ControlMessage::FromCredentials(credentials_in);
   message_in.control.emplace_back(std::move(control_in));
   auto write_result = writer.WriteMessage(message_in);
-  ASSERT_FALSE(write_result.ok()) << write_result.error();
+  ASSERT_FALSE(write_result.ok()) << write_result.error().Trace();
 }
 
 TEST(UnixMessageSocket, AutoCredentials) {
   auto [writer, reader] = UnixMessageSocketPair();
   auto writer_creds_status = writer.EnableCredentials(true);
-  ASSERT_TRUE(writer_creds_status.ok()) << writer_creds_status.error();
+  ASSERT_TRUE(writer_creds_status.ok()) << writer_creds_status.error().Trace();
   auto reader_creds_status = reader.EnableCredentials(true);
-  ASSERT_TRUE(reader_creds_status.ok()) << reader_creds_status.error();
+  ASSERT_TRUE(reader_creds_status.ok()) << reader_creds_status.error().Trace();
 
   UnixSocketMessage message_in = {{3, 6, 9}, {}};
   auto write_result = writer.WriteMessage(message_in);
-  ASSERT_TRUE(write_result.ok()) << write_result.error();
+  ASSERT_TRUE(write_result.ok()) << write_result.error().Trace();
 
   auto message_out = reader.ReadMessage();
-  ASSERT_TRUE(message_out.ok()) << message_out.error();
+  ASSERT_TRUE(message_out.ok()) << message_out.error().Trace();
   ASSERT_EQ(message_in.data, message_out->data);
 
   ASSERT_EQ(1, message_out->control.size());
   auto credentials_out = message_out->control[0].AsCredentials();
-  ASSERT_TRUE(credentials_out.ok()) << credentials_out.error();
+  ASSERT_TRUE(credentials_out.ok()) << credentials_out.error().Trace();
   ASSERT_EQ(getpid(), credentials_out->pid);
   ASSERT_EQ(getuid(), credentials_out->uid);
   ASSERT_EQ(getgid(), credentials_out->gid);
