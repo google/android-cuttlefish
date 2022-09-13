@@ -636,7 +636,9 @@ endif
 
 # BootControl HAL
 PRODUCT_PACKAGES += \
-    android.hardware.boot-service.default
+    android.hardware.boot-service.default \
+    android.hardware.boot-service.default_recovery
+
 
 # RebootEscrow HAL
 PRODUCT_PACKAGES += \
