@@ -21,11 +21,10 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/result.h>
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/test_gce_driver/gce_api.h"
-#include "host/commands/test_gce_driver/key_pair.h"
 
 namespace cuttlefish {
 
@@ -70,20 +69,20 @@ class SshCommand {
 
 class ScopedGceInstance {
  public:
-  static android::base::Result<std::unique_ptr<ScopedGceInstance>>
-  CreateDefault(GceApi& gce, const std::string& zone,
-                const std::string& instance_name, bool internal_addresses);
+  static Result<std::unique_ptr<ScopedGceInstance>> CreateDefault(
+      GceApi& gce, const std::string& zone, const std::string& instance_name,
+      bool internal_addresses);
   ~ScopedGceInstance();
 
-  android::base::Result<SshCommand> Ssh();
-  android::base::Result<void> Reset();
+  Result<SshCommand> Ssh();
+  Result<void> Reset();
 
  private:
   ScopedGceInstance(GceApi& gce, const GceInstanceInfo& instance,
                     std::unique_ptr<TemporaryFile> privkey,
                     bool internal_addresses);
 
-  android::base::Result<void> EnforceSshReady();
+  Result<void> EnforceSshReady();
 
   GceApi& gce_;
   GceInstanceInfo instance_;

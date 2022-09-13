@@ -89,7 +89,7 @@ class ReadEvalPrintLoop {
       if (clean_eof) {
         return {};
       } else if (!parsed) {
-        return Error() << "Failed to parse input message";
+        return CF_ERR("Failed to parse input message");
       }
       Result<void> handler_result;
       switch (msg.contents_case()) {
@@ -97,7 +97,7 @@ class ReadEvalPrintLoop {
           test_gce_driver::TestMessage stream_end_msg;
           stream_end_msg.mutable_exit();  // Set this in the oneof
           if (!SerializeDelimitedToFileDescriptor(stream_end_msg, out_)) {
-            return Error() << "Failure while writing stream end message";
+            return CF_ERR("Failure while writing stream end message");
           }
           return {};
         }
@@ -118,10 +118,10 @@ class ReadEvalPrintLoop {
         default: {
           std::string msg_txt;
           if (google::protobuf::TextFormat::PrintToString(msg, &msg_txt)) {
-            handler_result = Error()
-                             << "Unexpected message: \"" << msg_txt << "\"";
+            handler_result =
+                CF_ERR("Unexpected message: \"" << msg_txt << "\"");
           } else {
-            handler_result = Error() << "Unexpected message: (unprintable)";
+            handler_result = CF_ERR("Unexpected message: (unprintable)");
           }
         }
       }
@@ -130,7 +130,7 @@ class ReadEvalPrintLoop {
         error_msg.mutable_error()->set_text(handler_result.error().message());
         CF_EXPECT(SerializeDelimitedToFileDescriptor(error_msg, out_),
                   "Failure while writing error message: (\n"
-                      << handler_result.error() << "\n)");
+                      << handler_result.error().message() << "\n)");
       }
       test_gce_driver::TestMessage stream_end_msg;
       stream_end_msg.mutable_stream_end();  // Set this in the oneof
@@ -242,7 +242,8 @@ class ReadEvalPrintLoop {
       if (data == nullptr) {
         auto ssh = callback_state.instance->Ssh();
         if (!ssh.ok()) {
-          callback_state.result = CF_ERR("ssh command failed\n" << ssh.error());
+          callback_state.result = CF_ERR("ssh command failed\n"
+                                         << ssh.error().message());
           return false;
         }
 
@@ -406,5 +407,8 @@ Result<void> TestGceDriverMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto res = cuttlefish::TestGceDriverMain(argc, argv);
-  CHECK(res.ok()) << "cvd_test_gce_driver failed: " << res.error();
+  if (res.ok()) {
+    return 0;
+  }
+  LOG(ERROR) << "cvd_test_gce_driver failed: " << res.error().message();
 }
