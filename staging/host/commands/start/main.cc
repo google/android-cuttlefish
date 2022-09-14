@@ -213,11 +213,7 @@ int main(int argc, char** argv) {
 
   auto instance_nums =
       cuttlefish::InstanceNumsCalculator().FromGlobalGflags().Calculate();
-  if (!instance_nums.ok()) {
-    LOG(ERROR) << instance_nums.error().Message();
-    LOG(DEBUG) << instance_nums.error().Trace();
-    abort();
-  }
+  CHECK(instance_nums.ok()) << instance_nums.error();
 
   if (cuttlefish::CuttlefishConfig::ConfigExists()) {
     auto previous_config = cuttlefish::CuttlefishConfig::Get();
