@@ -4,7 +4,7 @@ import {DisplaysService} from '../displays.service';
 @Component({
   selector: 'app-view-pane',
   templateUrl: './view-pane.component.html',
-  styleUrls: ['./view-pane.component.sass'],
+  styleUrls: ['./view-pane.component.scss'],
 })
 export class ViewPaneComponent {
   visibleDevices = this.displaysService.getVisibleDevices();

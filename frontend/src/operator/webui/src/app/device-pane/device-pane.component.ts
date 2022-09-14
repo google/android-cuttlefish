@@ -7,7 +7,7 @@ import {first} from 'rxjs';
 @Component({
   selector: 'app-device-pane',
   templateUrl: './device-pane.component.html',
-  styleUrls: ['./device-pane.component.sass'],
+  styleUrls: ['./device-pane.component.scss'],
 })
 export class DevicePaneComponent {
   devices = this.deviceService.getDevices();
