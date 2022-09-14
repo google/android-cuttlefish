@@ -254,17 +254,12 @@ class InitializeDataImageImpl : public InitializeDataImage {
     auto action = ChooseAction();
     if (!action.ok()) {
       LOG(ERROR) << "Failed to select a userdata processing action: "
-                 << action.error().Message();
-      LOG(DEBUG) << "Failed to select a userdata processing action: "
-                 << action.error().Trace();
+                 << action.error();
       return false;
     }
     auto result = EvaluateAction(*action);
     if (!result.ok()) {
-      LOG(ERROR) << "Failed to evaluate userdata action: "
-                 << result.error().Message();
-      LOG(DEBUG) << "Failed to evaluate userdata action: "
-                 << result.error().Trace();
+      LOG(ERROR) << "Failed to evaluate userdata action: " << result.error();
       return false;
     }
     return true;
