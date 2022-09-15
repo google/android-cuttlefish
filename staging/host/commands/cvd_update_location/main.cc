@@ -20,9 +20,9 @@
 #include "host/libs/location/GnssClient.h"
 
 DEFINE_int32(instance_num, 1, "Which instance to read the configs from");
-DEFINE_string(latitude, "37.8000064", "location latitude");
-DEFINE_string(longitude, "-122.3989209", "location longitude");
-DEFINE_string(elevation, "2.5", "location elevation/altitude");
+DEFINE_double(latitude, 37.8000064, "location latitude");
+DEFINE_double(longitude, -122.3989209, "location longitude");
+DEFINE_double(elevation, 2.5, "location elevation/altitude");
 
 namespace cuttlefish {
 namespace {
@@ -46,9 +46,14 @@ int UpdateLocationCvdMain(int argc, char** argv) {
 
   GnssClient gpsclient(
       grpc::CreateChannel(socket_name, grpc::InsecureChannelCredentials()));
-  std::string formatted_location =
-      gpsclient.FormatGps(FLAGS_latitude, FLAGS_longitude, FLAGS_elevation);
-  auto status = gpsclient.SendSingleGpsLoc(formatted_location);
+
+  GpsFixArray coordinates;
+  GpsFix location;
+  location.longitude=FLAGS_longitude;
+  location.latitude=FLAGS_latitude;
+  location.elevation=FLAGS_elevation;
+  coordinates.push_back(location);
+  auto status = gpsclient.SendGpsLocations(1000,coordinates);
   CHECK(status.ok()) << "Failed to send gps location data \n";
   if (!status.ok()) {
     return 1;
