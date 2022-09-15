@@ -35,7 +35,10 @@
 #include "common/libs/fs/shared_buf.h"
 #include "host/frontend/webrtc/adb_handler.h"
 #include "host/frontend/webrtc/bluetooth_handler.h"
+#include "host/frontend/webrtc/gpx_locations_handler.h"
+#include "host/frontend/webrtc/kml_locations_handler.h"
 #include "host/frontend/webrtc/lib/camera_controller.h"
+#include "host/frontend/webrtc/location_handler.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 DECLARE_bool(write_virtio_input);
@@ -325,6 +328,57 @@ class ConnectionObserverImpl
   void OnBluetoothMessage(const uint8_t *msg, size_t size) override {
     bluetooth_handler_->handleMessage(msg, size);
   }
+  void OnLocationChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                                 location_message_sender) override {
+    LOG(VERBOSE) << "Location channel open";
+    auto config = cuttlefish::CuttlefishConfig::Get();
+    CHECK(config) << "Failed to get config";
+    location_handler_.reset(new cuttlefish::webrtc_streaming::LocationHandler(
+        location_message_sender));
+  }
+  void OnLocationMessage(const uint8_t *msg, size_t size) override {
+    std::stringstream s_stream;
+    s_stream << msg;
+    std::string msgstr = s_stream.str();
+
+    std::vector<std::string> inputs = android::base::Split(msgstr, ",");
+
+    if(inputs.size() != 3){
+      LOG(WARNING) << "Invalid location length , length = " << inputs.size();
+      return;
+    }
+
+    float longitude = std::stod(inputs.at(0));
+    float latitude  = std::stod(inputs.at(1));
+    float elevation = std::stod(inputs.at(2));
+    location_handler_->HandleMessage(longitude, latitude, elevation);
+  }
+
+  void OnKmlLocationsChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                                     kml_locations_message_sender) override {
+    LOG(VERBOSE) << "Kml Locations channel open";
+    auto config = cuttlefish::CuttlefishConfig::Get();
+    CHECK(config) << "Failed to get config";
+    kml_locations_handler_.reset(
+        new cuttlefish::webrtc_streaming::KmlLocationsHandler(
+            kml_locations_message_sender));
+  }
+  void OnKmlLocationsMessage(const uint8_t *msg, size_t size) override {
+    kml_locations_handler_->HandleMessage(msg, size);
+  }
+
+  void OnGpxLocationsChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                                     gpx_locations_message_sender) override {
+    LOG(VERBOSE) << "Gpx Locations channel open";
+    auto config = cuttlefish::CuttlefishConfig::Get();
+    CHECK(config) << "Failed to get config";
+    gpx_locations_handler_.reset(
+        new cuttlefish::webrtc_streaming::GpxLocationsHandler(
+            gpx_locations_message_sender));
+  }
+  void OnGpxLocationsMessage(const uint8_t *msg, size_t size) override {
+    gpx_locations_handler_->HandleMessage(msg, size);
+  }
 
   void OnCameraControlMsg(const Json::Value& msg) override {
     if (camera_controller_) {
@@ -351,6 +405,12 @@ class ConnectionObserverImpl
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
   std::shared_ptr<cuttlefish::webrtc_streaming::BluetoothHandler>
       bluetooth_handler_;
+  std::shared_ptr<cuttlefish::webrtc_streaming::LocationHandler>
+      location_handler_;
+  std::shared_ptr<cuttlefish::webrtc_streaming::KmlLocationsHandler>
+      kml_locations_handler_;
+  std::shared_ptr<cuttlefish::webrtc_streaming::GpxLocationsHandler>
+      gpx_locations_handler_;
   std::map<std::string, cuttlefish::SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   std::set<int32_t> active_touch_slots_;

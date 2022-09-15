@@ -40,6 +40,9 @@ static constexpr auto kInputChannelLabel = "input-channel";
 static constexpr auto kAdbChannelLabel = "adb-channel";
 static constexpr auto kBluetoothChannelLabel = "bluetooth-channel";
 static constexpr auto kCameraDataChannelLabel = "camera-data-channel";
+static constexpr auto kLocationDataChannelLabel = "location-channel";
+static constexpr auto kKmlLocationsDataChannelLabel = "kml-locations-channel";
+static constexpr auto kGpxLocationsDataChannelLabel = "gpx-locations-channel";
 static constexpr auto kCameraDataEof = "EOF";
 
 class CvdCreateSessionDescriptionObserver
@@ -197,6 +200,54 @@ class BluetoothChannelHandler : public webrtc::DataChannelObserver {
 
  private:
   rtc::scoped_refptr<webrtc::DataChannelInterface> bluetooth_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+  bool channel_open_reported_ = false;
+};
+
+class LocationChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  LocationChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> location_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~LocationChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> location_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+  bool channel_open_reported_ = false;
+};
+
+class KmlLocationsChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  KmlLocationsChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> kml_locations_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~KmlLocationsChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> kml_locations_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+  bool channel_open_reported_ = false;
+};
+
+class GpxLocationsChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  GpxLocationsChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> gpx_locations_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~GpxLocationsChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> gpx_locations_channel_;
   std::shared_ptr<ConnectionObserver> observer_;
   bool channel_open_reported_ = false;
 };
@@ -478,6 +529,113 @@ void BluetoothChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   }
 
   observer_->OnBluetoothMessage(msg.data.cdata(), msg.size());
+}
+
+LocationChannelHandler::LocationChannelHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> location_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : location_channel_(location_channel), observer_(observer) {
+  location_channel_->RegisterObserver(this);
+}
+
+LocationChannelHandler::~LocationChannelHandler() {
+  location_channel_->UnregisterObserver();
+}
+
+void LocationChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "Location channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      location_channel_->state());
+}
+
+void LocationChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  // Notify location channel opening when actually using the channel,
+  // it has the same reason with AdbChannelHandler::OnMessage,
+  // to avoid unnecessarily connection for Rootcanal.
+  if (channel_open_reported_ == false) {
+    channel_open_reported_ = true;
+    observer_->OnLocationChannelOpen([this](const uint8_t *msg, size_t size) {
+      webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size),
+                                true /*binary*/);
+      // messages are buffered up to 16MB, when the buffer is full the channel
+      // is abruptly closed. Keep track of the buffered data to avoid losing the
+      // adb data channel.
+      location_channel_->Send(buffer);
+      return true;
+    });
+  }
+
+  observer_->OnLocationMessage(msg.data.cdata(), msg.size());
+}
+
+KmlLocationsChannelHandler::KmlLocationsChannelHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> kml_locations_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : kml_locations_channel_(kml_locations_channel), observer_(observer) {
+  kml_locations_channel_->RegisterObserver(this);
+}
+
+KmlLocationsChannelHandler::~KmlLocationsChannelHandler() {
+  kml_locations_channel_->UnregisterObserver();
+}
+
+void KmlLocationsChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "KmlLocations channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      kml_locations_channel_->state());
+}
+
+void KmlLocationsChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  // Notify kml_locations channel opening when actually using the channel,
+  // it has the same reason with AdbChannelHandler::OnMessage,
+  // to avoid unnecessarily connection for Rootcanal.
+  if (channel_open_reported_ == false) {
+    channel_open_reported_ = true;
+    observer_->OnKmlLocationsChannelOpen(
+        [this](const uint8_t *msg, size_t size) {
+          webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size),
+                                    true /*binary*/);
+          kml_locations_channel_->Send(buffer);
+          return true;
+        });
+  }
+
+  observer_->OnKmlLocationsMessage(msg.data.cdata(), msg.size());
+}
+
+GpxLocationsChannelHandler::GpxLocationsChannelHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> gpx_locations_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : gpx_locations_channel_(gpx_locations_channel), observer_(observer) {
+  gpx_locations_channel_->RegisterObserver(this);
+}
+
+GpxLocationsChannelHandler::~GpxLocationsChannelHandler() {
+  gpx_locations_channel_->UnregisterObserver();
+}
+
+void GpxLocationsChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "GpxLocations channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      gpx_locations_channel_->state());
+}
+
+void GpxLocationsChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  // Notify gpx_locations channel opening when actually using the channel,
+  // it has the same reason with AdbChannelHandler::OnMessage,
+  // to avoid unnecessarily connection for Rootcanal.
+  if (channel_open_reported_ == false) {
+    channel_open_reported_ = true;
+    observer_->OnGpxLocationsChannelOpen(
+        [this](const uint8_t *msg, size_t size) {
+          webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size),
+                                    true /*binary*/);
+          gpx_locations_channel_->Send(buffer);
+          return true;
+        });
+  }
+
+  observer_->OnGpxLocationsMessage(msg.data.cdata(), msg.size());
 }
 
 CameraChannelHandler::CameraChannelHandler(
@@ -955,6 +1113,15 @@ void ClientHandler::OnDataChannel(
   } else if (label == kCameraDataChannelLabel) {
     camera_data_handler_.reset(
         new CameraChannelHandler(data_channel, observer_));
+  } else if (label == kLocationDataChannelLabel) {
+    location_handler_.reset(
+        new LocationChannelHandler(data_channel, observer_));
+  } else if (label == kKmlLocationsDataChannelLabel) {
+    kml_location_handler_.reset(
+        new KmlLocationsChannelHandler(data_channel, observer_));
+  } else if (label == kGpxLocationsDataChannelLabel) {
+    gpx_location_handler_.reset(
+        new GpxLocationsChannelHandler(data_channel, observer_));
   } else {
     LOG(VERBOSE) << "Data channel connected: " << label;
     data_channels_.push_back(data_channel);

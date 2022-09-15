@@ -73,6 +73,19 @@ class ConnectionObserver {
   virtual void OnBluetoothChannelOpen(
       std::function<bool(const uint8_t*, size_t)> bluetooth_message_sender) = 0;
   virtual void OnBluetoothMessage(const uint8_t* msg, size_t size) = 0;
+  virtual void OnLocationChannelOpen(
+      std::function<bool(const uint8_t*, size_t)> location_message_sender) = 0;
+  virtual void OnLocationMessage(const uint8_t* msg, size_t size) = 0;
+
+  virtual void OnKmlLocationsChannelOpen(
+      std::function<bool(const uint8_t*, size_t)>
+          kml_locations_message_sender) = 0;
+
+  virtual void OnGpxLocationsChannelOpen(
+      std::function<bool(const uint8_t*, size_t)>
+          gpx_locations_message_sender) = 0;
+  virtual void OnKmlLocationsMessage(const uint8_t* msg, size_t size) = 0;
+  virtual void OnGpxLocationsMessage(const uint8_t* msg, size_t size) = 0;
 
   virtual void OnCameraData(const std::vector<char>& data) = 0;
 };

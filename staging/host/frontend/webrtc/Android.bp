@@ -86,6 +86,8 @@ cc_binary_host {
         "audio_handler.cpp",
         "bluetooth_handler.cpp",
         "location_handler.cpp",
+        "gpx_locations_handler.cpp",
+        "kml_locations_handler.cpp",
         "client_server.cpp",
         "connection_observer.cpp",
         "cvd_video_frame_buffer.cpp",
