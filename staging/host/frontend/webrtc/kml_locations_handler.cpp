@@ -14,27 +14,39 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/location_handler.h"
+#include "host/frontend/webrtc/kml_locations_handler.h"
 #include <android-base/logging.h>
 #include <unistd.h>
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/location/GnssClient.h"
+#include "host/libs/location/KmlParser.h"
+#include "string.h"
 
+#include <chrono>
+#include <iostream>
 #include <sstream>
+#include <thread>
 #include <vector>
-using namespace std;
 
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-LocationHandler::LocationHandler(
+KmlLocationsHandler::KmlLocationsHandler(
     std::function<void(const uint8_t *, size_t)> send_to_client) {}
 
-LocationHandler::~LocationHandler() {}
+KmlLocationsHandler::~KmlLocationsHandler() {}
 
-void LocationHandler::HandleMessage(const float longitude,
-                                          const float latitude,
-                                          const float elevation) {
+void KmlLocationsHandler::HandleMessage(const uint8_t *msg, size_t len) {
+  LOG(DEBUG) << "ENTER KmlLocationsHandler handleMessage , size: " << len;
+  std::string error;
+  GpsFixArray coordinates;
+  if (!KmlParser::parseString((const char *)&msg[0], len, &coordinates,
+                              &error)) {
+    LOG(ERROR) << " Parsing Error: " << error << std::endl;
+    return;
+  }
+
+  LOG(DEBUG) << "Number of parsed points: " << coordinates.size() << std::endl;
   auto config = CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
@@ -44,19 +56,15 @@ void LocationHandler::HandleMessage(const float longitude,
   auto server_port = instance.gnss_grpc_proxy_server_port();
   std::string socket_name =
       std::string("localhost:") + std::to_string(server_port);
+  LOG(DEBUG) << "Server port: " << server_port << " socket: " << socket_name
+             << std::endl;
+
+
   GnssClient gpsclient(
       grpc::CreateChannel(socket_name, grpc::InsecureChannelCredentials()));
 
-  GpsFixArray coordinates;
-  GpsFix location;
-  location.longitude=longitude;
-  location.latitude=latitude;
-  location.elevation=elevation;
-  coordinates.push_back(location);
 
   auto reply = gpsclient.SendGpsLocations(1000,coordinates);
-  LOG(INFO) << "Server port: " << server_port << " socket: " << socket_name
-            << std::endl;
 }
 
 }  // namespace webrtc_streaming

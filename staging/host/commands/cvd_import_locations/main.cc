@@ -25,7 +25,7 @@
 #include "host/libs/location/KmlParser.h"
 
 DEFINE_int32(instance_num, 1, "Which instance to read the configs from");
-DEFINE_double(delay, 1.0, "delay interval between different gps_locations");
+DEFINE_double(delay, 1.0, "delay interval between different coordinates");
 
 DEFINE_string(format, "", "gnss raw measurement file path for gnss grpc");
 DEFINE_string(file_path, "", "gnss raw measurement file path for gnss grpc");
@@ -82,7 +82,7 @@ int ImportLocationsCvdMain(int argc, char** argv) {
   GnssClient gpsclient(
       grpc::CreateChannel(socket_name, grpc::InsecureChannelCredentials()));
 
-  GpsFixArray gps_locations;
+  GpsFixArray coordinates;
   std::string error;
   bool isOk = false;
 
@@ -90,13 +90,13 @@ int ImportLocationsCvdMain(int argc, char** argv) {
             << std::endl;
   if (FLAGS_format == "gpx" || FLAGS_format == "GPX") {
     isOk =
-        GpxParser::parseFile(FLAGS_file_path.c_str(), &gps_locations, &error);
+        GpxParser::parseFile(FLAGS_file_path.c_str(), &coordinates, &error);
   } else if (FLAGS_format == "kml" || FLAGS_format == "KML") {
     isOk =
-        KmlParser::parseFile(FLAGS_file_path.c_str(), &gps_locations, &error);
+        KmlParser::parseFile(FLAGS_file_path.c_str(), &coordinates, &error);
   }
 
-  LOG(INFO) << "Number of parsed points: " << gps_locations.size() << std::endl;
+  LOG(INFO) << "Number of parsed points: " << coordinates.size() << std::endl;
 
   if (!isOk) {
     LOG(ERROR) << " Parsing Error: " << error << std::endl;
@@ -104,20 +104,12 @@ int ImportLocationsCvdMain(int argc, char** argv) {
   }
 
   int delay = (int)(1000 * FLAGS_delay);
-  for (auto itr : gps_locations) {
-    std::string latitude = std::to_string(itr.latitude);
-    std::string longitude = std::to_string(itr.longitude);
-    std::string elevation = std::to_string(itr.elevation);
-
-    std::string formatted_location =
-        gpsclient.FormatGps(latitude, longitude, elevation);
-    auto status = gpsclient.SendSingleGpsLoc(formatted_location);
-    CHECK(status.ok()) << "Failed to send gps location data \n";
-    if (!status.ok()) {
-      return 1;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+  auto status = gpsclient.SendGpsLocations(delay,coordinates);
+  CHECK(status.ok()) << "Failed to send gps location data \n";
+  if (!status.ok()) {
+    return 1;
   }
+  std::this_thread::sleep_for(std::chrono::milliseconds(delay));
   return 0;
 }
 
