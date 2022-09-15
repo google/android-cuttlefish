@@ -21,15 +21,11 @@
 
 #include <fruit/fruit.h>
 
-#include "cvd_server.pb.h"
-
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
-
-cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
 class SubprocessWaiter {
  public:
