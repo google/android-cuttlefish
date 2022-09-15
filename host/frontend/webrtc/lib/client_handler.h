@@ -39,6 +39,9 @@ class AdbChannelHandler;
 class ControlChannelHandler;
 class BluetoothChannelHandler;
 class CameraChannelHandler;
+class LocationChannelHandler;
+class KmlLocationsChannelHandler;
+class GpxLocationsChannelHandler;
 
 class ClientVideoTrackInterface;
 class ClientVideoTrackImpl;
@@ -141,6 +144,9 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::unique_ptr<AdbChannelHandler> adb_handler_;
   std::unique_ptr<ControlChannelHandler> control_handler_;
   std::unique_ptr<BluetoothChannelHandler> bluetooth_handler_;
+  std::unique_ptr<LocationChannelHandler> location_handler_;
+  std::unique_ptr<KmlLocationsChannelHandler> kml_location_handler_;
+  std::unique_ptr<GpxLocationsChannelHandler> gpx_location_handler_;
   std::unique_ptr<CameraChannelHandler> camera_data_handler_;
   std::unique_ptr<ClientVideoTrackImpl> camera_track_;
   bool remote_description_added_ = false;
