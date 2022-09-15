@@ -16,12 +16,24 @@
 
 #include "host/commands/cvd/server_command_impl.h"
 
-#include <string>
-
-#include "cvd_server.pb.h"
+#include "common/libs/utils/files.h"
+#include "host/commands/cvd/server.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
+namespace {
+
+Envs ConvertMap(
+    const google::protobuf::Map<std::string, std::string>& proto_map) {
+  Envs envs;
+  for (const auto& entry : proto_map) {
+    envs[entry.first] = entry.second;
+  }
+  return envs;
+}
+
+}  // namespace
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
   cvd::Response response;
@@ -44,64 +56,70 @@ cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
   return response;
 }
 
-Result<void> SubprocessWaiter::Setup(Subprocess subprocess) {
-  std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
+std::optional<CommandInvocationInfo> ExtractInfo(
+    const std::map<std::string, std::string>& command_to_binary_map,
+    const RequestWithStdio& request) {
+  auto [command, args] = ParseInvocation(request.Message());
+  auto subcommand_bin = command_to_binary_map.find(command);
+  if (subcommand_bin == command_to_binary_map.end()) {
+    return std::nullopt;
   }
-  if (subprocess_) {
-    return CF_ERR("Already running");
+  auto bin = subcommand_bin->second;
+  Envs envs = ConvertMap(request.Message().command_request().env());
+  auto request_home = envs.find("HOME");
+  std::string home = request_home != envs.end() ? request_home->second
+                                                : StringFromEnv("HOME", ".");
+  auto host_out_itr = envs.find("ANDROID_HOST_OUT");
+  if (host_out_itr == envs.end() && !DirectoryExists(host_out_itr->second)) {
+    return std::nullopt;
   }
-
-  subprocess_ = std::move(subprocess);
-
-  return {};
+  const auto host_artifacts_path = host_out_itr->second;
+  // TODO(kwstephenkim): eat --base_instance_num and --num_instances
+  // or --instance_nums, and override/delete CUTTLEFISH_INSTANCE in envs
+  CommandInvocationInfo result = {.command = command,
+                                  .bin = bin,
+                                  .home = home,
+                                  .host_artifacts_path = host_artifacts_path,
+                                  .args = args,
+                                  .envs = envs};
+  return {result};
 }
 
-Result<siginfo_t> SubprocessWaiter::Wait() {
-  std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
+Result<Command> ConstructCommand(const std::string& bin_path,
+                                 const std::string& home,
+                                 const std::vector<std::string>& args,
+                                 const Envs& envs,
+                                 const std::string& working_dir,
+                                 const std::string& command_name, SharedFD in,
+                                 SharedFD out, SharedFD err) {
+  Command command(bin_path);
+  command.SetName(command_name);
+  for (const std::string& arg : args) {
+    command.AddParameter(arg);
   }
-  CF_EXPECT(subprocess_.has_value());
-
-  siginfo_t infop{};
-
-  interrupt_lock.unlock();
-
-  // This blocks until the process exits, but doesn't reap it.
-  auto result = subprocess_->Wait(&infop, WEXITED | WNOWAIT);
-  CF_EXPECT(result != -1, "Lost track of subprocess pid");
-  interrupt_lock.lock();
-  // Perform a reaping wait on the process (which should already have exited).
-  result = subprocess_->Wait(&infop, WEXITED);
-  CF_EXPECT(result != -1, "Lost track of subprocess pid");
-  // The double wait avoids a race around the kernel reusing pids. Waiting
-  // with WNOWAIT won't cause the child process to be reaped, so the kernel
-  // won't reuse the pid until the Wait call below, and any kill signals won't
-  // reach unexpected processes.
-
-  subprocess_ = {};
-
-  return infop;
-}
-
-Result<void> SubprocessWaiter::Interrupt() {
-  std::scoped_lock interrupt_lock(interruptible_);
-  if (subprocess_) {
-    auto stop_result = subprocess_->Stop();
-    switch (stop_result) {
-      case StopperResult::kStopFailure:
-        return CF_ERR("Failed to stop subprocess");
-      case StopperResult::kStopCrash:
-        return CF_ERR("Stopper caused process to crash");
-      case StopperResult::kStopSuccess:
-        return {};
-      default:
-        return CF_ERR("Unknown stop result: " << (uint64_t)stop_result);
+  // Set CuttlefishConfig path based on assembly dir,
+  // used by subcommands when locating the CuttlefishConfig.
+  if (envs.count(kCuttlefishConfigEnvVarName) == 0) {
+    auto config_path = GetCuttlefishConfigPath(home);
+    if (config_path.ok()) {
+      command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, *config_path);
     }
   }
-  return {};
+  for (auto& it : envs) {
+    command.UnsetFromEnvironment(it.first);
+    command.AddEnvironmentVariable(it.first, it.second);
+  }
+  // Redirect stdin, stdout, stderr back to the cvd client
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, std::move(in));
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, std::move(out));
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, std::move(err));
+  if (!working_dir.empty()) {
+    auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
+    CF_EXPECT(fd->IsOpen(),
+              "Couldn't open \"" << working_dir << "\": " << fd->StrError());
+    command.SetWorkingDirectory(fd);
+  }
+  return {std::move(command)};
 }
 
 }  // namespace cvd_cmd_impl
