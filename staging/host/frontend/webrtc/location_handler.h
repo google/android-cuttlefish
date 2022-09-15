@@ -27,9 +27,9 @@ struct LocationHandler {
 
   ~LocationHandler();
 
-  void handleSetLocMessage(const std::string &longitude,
-                           const std::string &latitude,
-                           const std::string &elevation);
+  void HandleMessage(const float longitude,
+                           const float latitude,
+                           const float elevation);
 };
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish

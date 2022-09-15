@@ -15,23 +15,19 @@
  */
 
 #pragma once
-#include <grpc/grpc.h>
-#include <grpcpp/channel.h>
-#include <grpcpp/client_context.h>
-#include <grpcpp/create_channel.h>
-#include "common/libs/utils/result.h"
-#include "gnss_grpc_proxy.grpc.pb.h"
-#include "host/libs/location/GpsFix.h"
+
+#include "common/libs/fs/shared_select.h"
 
 namespace cuttlefish {
-class GnssClient {
- public:
-  GnssClient(std::shared_ptr<grpc::Channel> channel);
+namespace webrtc_streaming {
 
-  Result<grpc::Status> SendGpsLocations(
-      int delay, const GpsFixArray& coordinates);
+struct KmlLocationsHandler {
+  explicit KmlLocationsHandler(
+      std::function<void(const uint8_t *, size_t)> send_to_client);
 
- private:
-  std::unique_ptr<gnss_grpc_proxy::GnssGrpcProxy::Stub> stub_;
+  ~KmlLocationsHandler();
+
+  void HandleMessage(const uint8_t *msg, size_t len);
 };
+}  // namespace webrtc_streaming
 }  // namespace cuttlefish

@@ -47,10 +47,13 @@
 #include <common/libs/fs/shared_select.h>
 #include <host/libs/config/cuttlefish_config.h>
 #include <host/libs/config/logging.h>
+#include <queue>
 
 using gnss_grpc_proxy::GnssGrpcProxy;
 using gnss_grpc_proxy::SendGpsReply;
 using gnss_grpc_proxy::SendGpsRequest;
+using gnss_grpc_proxy::SendGpsCoordinatesReply;
+using gnss_grpc_proxy::SendGpsCoordinatesRequest;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -82,6 +85,19 @@ constexpr char CMD_GET_RAWMEASUREMENT[] = "CMD_GET_RAWMEASUREMENT";
 constexpr char END_OF_MSG_MARK[] = "\n\n\n\n";
 
 constexpr uint32_t GNSS_SERIAL_BUFFER_SIZE = 4096;
+
+std::string GenerateGpsLine(const std::string& dataPoint) {
+  std::string unix_time_millis =
+      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::system_clock::now().time_since_epoch())
+                         .count());
+  std::string formatted_location =
+      std::string("Fix,GPS,") + dataPoint + "," +
+      std::string("0.000000,3.790092,0.000000,") + unix_time_millis + "," +
+      std::string("0.086023256,0.0,11529389988248");
+
+  return formatted_location;
+}
 // Logic and data behind the server's behavior.
 class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
   public:
@@ -92,13 +108,44 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
        : gnss_in_(gnss_in),
          gnss_out_(gnss_out),
          fixed_location_in_(fixed_location_in),
-         fixed_location_out_(fixed_location_out) {}
+         fixed_location_out_(fixed_location_out) {
+          //Set the default GPS delay to 1 second
+          fixed_locations_delay_=1000;
+         }
+
+
    Status SendGps(ServerContext* context, const SendGpsRequest* request,
                   SendGpsReply* reply) override {
-     reply->set_reply("Received gps record.");
-     auto buffer = request->gps();
+     reply->set_reply("Received gps record");
      std::lock_guard<std::mutex> lock(cached_fixed_location_mutex);
      cached_fixed_location = request->gps();
+     return Status::OK;
+   }
+
+
+  std::string ConvertCoordinate(gnss_grpc_proxy::GpsCoordinates coordinate){
+    std::string latitude = std::to_string(coordinate.latitude());
+    std::string longitude = std::to_string(coordinate.longitude());
+    std::string elevation = std::to_string(coordinate.elevation());
+    std::string result = latitude + "," + longitude + "," + elevation;
+    return result;
+  }
+
+   Status SendGpsVector(ServerContext* context,
+                        const SendGpsCoordinatesRequest* request,
+                        SendGpsCoordinatesReply* reply) override {
+     reply->set_status(SendGpsCoordinatesReply::OK);//update protobuf reply
+     {
+       std::lock_guard<std::mutex> lock(fixed_locations_queue_mutex_);
+       // Reset local buffers
+       fixed_locations_queue_ = {};
+       // Make a local copy of the input buffers
+       for (auto loc : request->coordinates()) {
+         fixed_locations_queue_.push(ConvertCoordinate(loc));
+       }
+       fixed_locations_delay_ = request->delay();
+     }
+
      return Status::OK;
    }
 
@@ -135,6 +182,8 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     void StartServer() {
       // Create a new thread to handle writes to the gnss and to the any client
       // connected to the socket.
+      fixed_location_write_thread_ =
+          std::thread([this]() { WriteFixedLocationFromQueue(); });
       measurement_read_thread_ =
           std::thread([this]() { ReadMeasurementLoop(); });
       fixed_location_read_thread_ =
@@ -235,6 +284,9 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
       if (fixed_location_file_read_thread_.joinable()) {
         fixed_location_file_read_thread_.join();
       }
+      if (fixed_location_write_thread_.joinable()) {
+        fixed_location_write_thread_.join();
+      }
       if (measurement_file_read_thread_.joinable()) {
         measurement_file_read_thread_.join();
       }
@@ -297,6 +349,23 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
                    FLAGS_fixed_location_out_fd);
      }
    }
+
+   [[noreturn]] void WriteFixedLocationFromQueue() {
+      while (true) {
+         if (!fixed_locations_queue_.empty()) {
+         std::string dataPoint = fixed_locations_queue_.front();
+         std::string line = GenerateGpsLine(dataPoint);
+         std::lock_guard<std::mutex> lock(cached_fixed_location_mutex);
+         cached_fixed_location = line;
+         {
+           std::lock_guard<std::mutex> lock(fixed_locations_queue_mutex_);
+           fixed_locations_queue_.pop();
+         }
+       }
+       std::this_thread::sleep_for(std::chrono::milliseconds(fixed_locations_delay_));
+     }
+   }
+
     std::string getTimeNanosFromLine(const std::string& line) {
       // TimeNanos is in column #3.
       std::vector<std::string> vals = android::base::Split(line, ",");
@@ -316,6 +385,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     std::thread measurement_read_thread_;
     std::thread fixed_location_read_thread_;
     std::thread fixed_location_file_read_thread_;
+    std::thread fixed_location_write_thread_;
     std::thread measurement_file_read_thread_;
 
     std::string cached_fixed_location;
@@ -324,6 +394,10 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     std::string cached_gnss_raw;
     std::string previous_cached_gnss_raw;
     std::mutex cached_gnss_raw_mutex;
+
+    std::queue<std::string> fixed_locations_queue_;
+    std::mutex fixed_locations_queue_mutex_;
+    int fixed_locations_delay_;
 };
 
 void RunServer() {
