@@ -17,30 +17,26 @@
 #pragma once
 
 #include <mutex>
+#include <optional>
 
 #include <fruit/fruit.h>
 
-#include "cvd_server.pb.h"
-
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/server.h"
-#include "host/commands/cvd/server_command_impl.h"
-#include "host/commands/cvd/server_command_subprocess_waiter.h"
+#include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
-class CvdFetchHandler : public CvdServerHandler {
+class SubprocessWaiter {
  public:
-  INJECT(CvdFetchHandler(SubprocessWaiter& subprocess_waiter))
-      : subprocess_waiter_(subprocess_waiter) {}
+  INJECT(SubprocessWaiter()) {}
 
-  Result<bool> CanHandle(const RequestWithStdio& request) const override;
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
-  Result<void> Interrupt() override;
+  Result<void> Setup(Subprocess subprocess);
+  Result<siginfo_t> Wait();
+  Result<void> Interrupt();
 
  private:
-  SubprocessWaiter& subprocess_waiter_;
+  std::optional<Subprocess> subprocess_;
   std::mutex interruptible_;
   bool interrupted_ = false;
 };
