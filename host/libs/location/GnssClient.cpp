@@ -23,6 +23,9 @@
 using gnss_grpc_proxy::GnssGrpcProxy;
 using gnss_grpc_proxy::SendGpsReply;
 using gnss_grpc_proxy::SendGpsRequest;
+using gnss_grpc_proxy::SendGpsCoordinatesReply;
+using gnss_grpc_proxy::SendGpsCoordinatesRequest;
+using gnss_grpc_proxy::GpsCoordinates;
 using grpc::ClientContext;
 
 namespace cuttlefish {
@@ -30,48 +33,33 @@ namespace cuttlefish {
 GnssClient::GnssClient(std::shared_ptr<grpc::Channel> channel)
     : stub_(GnssGrpcProxy::NewStub(channel)) {}
 
-// Aseembles the client's payload, sends it and presents the response back
-// from the server.
-Result<grpc::Status> GnssClient::SendSingleGpsLoc(const std::string& user) {
+Result<grpc::Status> GnssClient::SendGpsLocations(
+    int delay, const GpsFixArray& coordinates) {
   // Data we are sending to the server.
-  SendGpsRequest request;
-  request.set_gps(user);
+  SendGpsCoordinatesRequest request;
+  request.set_delay(delay);
+  for (const auto& loc : coordinates) {
+    GpsCoordinates* curr = request.add_coordinates();
+    curr->set_longitude(loc.longitude);
+    curr->set_latitude(loc.latitude);
+    curr->set_elevation(loc.elevation);
+  }
+
   // Container for the data we expect from the server.
-  SendGpsReply reply;
+  SendGpsCoordinatesReply reply;
   // Context for the client. It could be used to convey extra information to
   // the server and/or tweak certain RPC behaviors.
   ClientContext context;
   // The actual RPC.
-  grpc::Status status = stub_->SendGps(&context, request, &reply);
+  grpc::Status status = stub_->SendGpsVector(&context, request, &reply);
   // Act upon its status.
   CF_EXPECT(status.ok(), "GPS data sending failed" << status.error_code()
                                                    << ": "
                                                    << status.error_message());
 
-  LOG(INFO) << reply.reply();
+  LOG(DEBUG) << reply.status();
 
   return status;
 }
 
-/*
-Fix,GPS,      37.8000064,     -122.3989209,   -42.139252, 0.000000,3.790092,
-0.000000,     1622580024000,  0.086023256,    0.0, 11529389988248"
-Fix,Provider,
-LatitudeDegrees,LongitudeDegrees,AltitudeMeters,SpeedMps,AccuracyMeters,BearingDegrees,UnixTimeMillis,SpeedAccuracyMps,BearingAccuracyDegrees,elapsedRealtimeNanos
-*/
-std::string GnssClient::FormatGps(const std::string& latitude,
-                                  const std::string& longitude,
-                                  const std::string& elevation) {
-  std::string unix_time_millis =
-      std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
-                         std::chrono::system_clock::now().time_since_epoch())
-                         .count());
-  std::string formatted_location =
-      std::string("Fix,GPS,") + latitude + "," + longitude + "," + elevation +
-      "," + std::string("0.000000,3.790092,0.000000,") + unix_time_millis +
-      "," + std::string("0.086023256,0.0,11529389988248");
-  LOG(INFO) << "Location: " << formatted_location << std::endl;
-
-  return formatted_location;
-}
 }  // namespace cuttlefish
