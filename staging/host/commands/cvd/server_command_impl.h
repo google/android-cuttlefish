@@ -16,34 +16,44 @@
 
 #pragma once
 
-#include <mutex>
 #include <optional>
-
-#include <fruit/fruit.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "cvd_server.pb.h"
 
-#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
+// methods shared by CvdCommandHandler and CvdStartCommandHandler
+
+using Envs = std::unordered_map<std::string, std::string>;
+struct CommandInvocationInfo {
+  std::string command;
+  std::string bin;
+  std::string home;
+  std::string host_artifacts_path;
+  std::vector<std::string> args;
+  Envs envs;
+};
+
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
-class SubprocessWaiter {
- public:
-  INJECT(SubprocessWaiter()) {}
+std::optional<CommandInvocationInfo> ExtractInfo(
+    const std::map<std::string, std::string>& command_to_binary_map,
+    const RequestWithStdio& request);
 
-  Result<void> Setup(Subprocess subprocess);
-  Result<siginfo_t> Wait();
-  Result<void> Interrupt();
-
- private:
-  std::optional<Subprocess> subprocess_;
-  std::mutex interruptible_;
-  bool interrupted_ = false;
-};
+Result<Command> ConstructCommand(const std::string& bin_path,
+                                 const std::string& home,
+                                 const std::vector<std::string>& args,
+                                 const Envs& envs,
+                                 const std::string& working_dir,
+                                 const std::string& command_name, SharedFD in,
+                                 SharedFD out, SharedFD err);
 
 }  // namespace cvd_cmd_impl
 }  // namespace cuttlefish

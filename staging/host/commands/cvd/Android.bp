@@ -111,6 +111,7 @@ cc_library_host_static {
         "server_command_fetch_impl.cpp",
         "server_command_impl.cpp",
         "server_command_start_impl.cpp",
+        "server_command_subprocess_waiter.cpp",
         "server_restart.cpp",
         "server_shutdown.cpp",
         "server_version.cpp",
