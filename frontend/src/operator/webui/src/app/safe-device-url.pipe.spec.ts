@@ -1,8 +1,8 @@
-import {SafePipe} from './safe.pipe';
+import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser';
 import {TestBed} from '@angular/core/testing';
 
-describe('SafePipe', () => {
+describe('SafeDeviceUrlPipe', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [BrowserModule],
@@ -11,7 +11,7 @@ describe('SafePipe', () => {
 
   it('create an instance', () => {
     const domSanitizer = TestBed.inject(DomSanitizer);
-    const pipe = new SafePipe(domSanitizer);
+    const pipe = new SafeDeviceUrlPipe(domSanitizer);
     expect(pipe).toBeTruthy();
   });
 });

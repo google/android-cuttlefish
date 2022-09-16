@@ -11,14 +11,14 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {ViewPaneComponent} from './view-pane/view-pane.component';
-import {SafePipe} from './safe.pipe';
+import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
 
 @NgModule({
   declarations: [
     AppComponent,
     DevicePaneComponent,
     ViewPaneComponent,
-    SafePipe,
+    SafeDeviceUrlPipe,
   ],
   imports: [
     BrowserModule,
