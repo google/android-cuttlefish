@@ -45,6 +45,10 @@ int Main(int argc, char** argv) {
     LOG(ERROR) << hosts.error().message();
     return -1;
   }
+  if ((*hosts).empty()) {
+    std::cerr << "~ No hosts found ~" << std::endl;
+    return 0;
+  }
   for (auto host : *hosts) {
     std::cout << host << std::endl;
   }
