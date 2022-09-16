@@ -1,5 +1,5 @@
-import {Injectable, SecurityContext} from '@angular/core';
-import {map} from 'rxjs/operators'
+import {Injectable} from '@angular/core';
+import {map} from 'rxjs/operators';
 import {Observable, ReplaySubject, Subject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {Device} from './device-interface';
@@ -38,7 +38,7 @@ export class DeviceService {
     return this.devicesObservable;
   }
 
-  getDeviceInfo(deviceId: string) : Observable<DeviceInfo> {
+  getDeviceInfo(deviceId: string): Observable<DeviceInfo> {
     return this.httpClient
       .get('./devices/' + deviceId)
       .pipe(map(res => res as DeviceInfo));
