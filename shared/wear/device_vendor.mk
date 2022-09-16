@@ -26,7 +26,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/wearable_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/wearable_core_hardware.xml \
 
 $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 PRODUCT_VENDOR_PROPERTIES += \
@@ -56,6 +55,9 @@ PRODUCT_PACKAGES += \
     cuttlefish_phone_overlay_frameworks_base_core \
     cuttlefish_wear_overlay_frameworks_base_core \
     cuttlefish_wear_overlay_settings_provider \
+
+PRODUCT_PRODUCT_PROPERTIES += \
+    config.disable_cameraservice=true
 
 PRODUCT_CHARACTERISTICS := nosdcard,watch
 
