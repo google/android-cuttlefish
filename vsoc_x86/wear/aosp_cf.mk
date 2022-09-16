@@ -19,10 +19,6 @@
 #
 $(call inherit-product, device/google/cuttlefish/shared/wear/aosp_system.mk)
 
-# Allowed for wearables, but not installed to /system by default
-PRODUCT_PACKAGES += \
-    cameraserver \
-
 # Cuttlefish uses A/B with system_b preopt, so we must install these
 PRODUCT_PACKAGES += \
     cppreopts.sh \
