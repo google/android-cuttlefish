@@ -28,17 +28,8 @@ export class DeviceService {
       .subscribe((devices: Device[]) => this.devicesSubject.next(devices));
   }
 
-  deviceConnectURL(display: string): string {
-    return this.sanitizer.sanitize(
-      SecurityContext.RESOURCE_URL,
-      this.sanitizer.bypassSecurityTrustResourceUrl(
-        `/devices/${display}/files/client.html`
-      )
-    ) as string;
-  }
-
   createDevice(deviceId: string): Device {
-    return new Device(deviceId, this.deviceConnectURL(deviceId));
+    return new Device(deviceId);
   }
 
   getDevices() {
