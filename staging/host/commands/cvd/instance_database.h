@@ -40,6 +40,7 @@ class InstanceDatabase {
   bool IsEmpty() const;
   Result<Set<LocalInstanceGroup>> FindGroups(const Query& query) const;
   Result<Set<LocalInstance>> FindInstances(const Query& query) const;
+  const auto& InstanceGroups() const { return local_instance_groups_; }
 
  private:
   template <typename T>
