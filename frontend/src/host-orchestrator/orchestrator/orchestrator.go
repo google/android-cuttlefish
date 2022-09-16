@@ -25,7 +25,7 @@ import (
 )
 
 func SetupInstanceManagement(router *mux.Router, im *InstanceManager, om OperationManager) {
-	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
 		createDevices(w, r, im)
 	}).Methods("POST")
 	router.HandleFunc("/operations/{name}", func(w http.ResponseWriter, r *http.Request) {
