@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {Device} from '../device-interface';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
-import {first} from 'rxjs';
+import {first} from 'rxjs/operators';
 
 @Component({
   selector: 'app-device-pane',

@@ -1,5 +1,6 @@
 import {Injectable, SecurityContext} from '@angular/core';
-import {map, Observable, ReplaySubject, Subject} from 'rxjs';
+import {map} from 'rxjs/operators'
+import {Observable, ReplaySubject, Subject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {Device} from './device-interface';
 import {DeviceInfo} from './device-info-interface';
