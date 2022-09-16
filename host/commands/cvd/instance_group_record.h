@@ -19,10 +19,9 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/instance_database_types.h"
 #include "host/commands/cvd/instance_record.h"
 
 namespace cuttlefish {
@@ -50,9 +49,7 @@ class LocalInstanceGroup {
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostBinariesDir() const { return host_binaries_dir_; }
   Result<std::string> GetCuttlefishConfigPath() const;
-  const std::unordered_set<LocalInstance> Instances() const {
-    return instances_;
-  }
+  const Set<LocalInstance> Instances() const { return instances_; }
   /**
    * return error if instance id of instance is taken AND that taken id
    * belongs to this group
@@ -75,7 +72,7 @@ class LocalInstanceGroup {
 
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
-  std::unordered_set<LocalInstance> instances_;
+  Set<LocalInstance> instances_;
 };
 
 }  // namespace instance_db
