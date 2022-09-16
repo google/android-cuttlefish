@@ -125,7 +125,6 @@ TpmRemoteProvisioningContext::GenerateBcc(bool testMode) const {
                      .add(CoseKey::KEY_TYPE, OCTET_KEY_PAIR)
                      .add(CoseKey::ALGORITHM, EDDSA)
                      .add(CoseKey::CURVE, ED25519)
-                     .add(CoseKey::KEY_OPS, VERIFY)
                      .add(CoseKey::PUBKEY_X, pubKey)
                      .canonicalize();
   auto sign1Payload =
