@@ -16,7 +16,11 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
+
+#include "common/libs/utils/result.h"
+#include "host/commands/cvd/instance_database_types.h"
 
 namespace cuttlefish {
 namespace instance_db {
@@ -24,6 +28,27 @@ namespace instance_db {
 std::string GenInternalGroupName();
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name);
+
+/**
+ * Specialized version of cuttlefish::Flatten
+ *
+ *  a. The result is stored in instance_db::Set<T>
+ *  b. As not all Container candidate supports iterator over
+ *    the elements, collect is responsible for gathering all
+ *    elements in each container.
+ *
+ */
+template <typename Element, typename Container, typename Containers>
+Set<Element> CollectAllElements(
+    std::function<Set<Element>(const Container&)> collector,
+    const Containers& inputs) {
+  Set<Element> output;
+  for (const auto& container : inputs) {
+    auto subset = collector(container);
+    output.insert(subset.cbegin(), subset.cend());
+  }
+  return output;
+}
 
 }  // namespace instance_db
 }  // namespace cuttlefish
