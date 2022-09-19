@@ -17,10 +17,10 @@
 #include "host/commands/cvd/instance_group_record.h"
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/instance_database_utils.h"
+#include "host/commands/cvd/selector_constants.h"
 
 namespace cuttlefish {
 namespace instance_db {
@@ -59,6 +59,15 @@ Result<void> LocalInstanceGroup::AddInstance(const int instance_id) {
 
 Result<void> LocalInstanceGroup::AddInstance(const LocalInstance& instance) {
   return AddInstance(instance.InstanceId());
+}
+
+Result<Set<LocalInstance>> LocalInstanceGroup::FindById(const int id) const {
+  auto subset = CollectToSet<LocalInstance>(
+      instances_, [id](const LocalInstance& instance) {
+        return instance.InstanceId() == id;
+      });
+  return AtMostOne(subset,
+                   TooManyInstancesFound(1, selector::kInstanceIdField));
 }
 
 bool LocalInstanceGroup::HasInstance(const int instance_id) const {
