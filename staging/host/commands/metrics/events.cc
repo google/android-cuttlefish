@@ -122,8 +122,7 @@ int Clearcut::SendEvent(cuttlefish::CuttlefishLogEvent::DeviceType device_type,
     LOG(ERROR) << "SerializeToString failed for log_request";
     return kMetricsError;
   }
-  // TODO: send message to ClearCut
-  return metrics::postReq(logRequestStr, metrics::kLocal);
+  return metrics::postReq(logRequestStr, metrics::kProd);
 }
 
 int Clearcut::SendVMStart(cuttlefish::CuttlefishLogEvent::DeviceType device) {
