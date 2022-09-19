@@ -1,4 +1,4 @@
-# defaults for cuttlefish-host-orchestrator
+# defaults for cuttlefish-host_orchestrator
 
 # The port on which the orchestrator server should listen on for plain HTTP.
 # Defaults to 1080.
@@ -10,7 +10,7 @@
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.
-# Defaults to "/etc/cuttlefish-common/host-orchestrator/cert".
+# Defaults to "/etc/cuttlefish-common/host_orchestrator/cert".
 # orchestrator_tls_cert_dir=
 #
 # Android Build URL. Defaults to "https://androidbuildinternal.googleapis.com"
