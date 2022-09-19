@@ -126,6 +126,10 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   crosvm_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_socket),
                               config.crosvm_binary());
 
+  if (HostArch() == Arch::X86_64) {
+    crosvm_cmd.Cmd().AddParameter("--no-i8042");
+  }
+
   if (!config.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
