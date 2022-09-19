@@ -72,7 +72,10 @@ cuttlefish::MetricsEvent::OsType osType() {
   return cuttlefish::MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
 }
 
-std::string sessionId(uint64_t now) { return hashing(std::to_string(now)); }
+std::string sessionId(uint64_t now_ms) {
+  uint64_t now_day = now_ms / 1000 / 60 / 60 / 24;
+  return hashing(macAddress() + std::to_string(now_day));
+}
 
 std::string cfVersion() {
   // TODO: per ellisr@ leave empty for now
@@ -130,8 +133,6 @@ std::string macAddress() {
   return mac;
 }
 
-std::string hostId() { return hashing(macAddress()); }
-
 std::string company() {
   // TODO: per ellisr@ leave hard-coded for now
   return "GOOGLE";
@@ -155,11 +156,11 @@ std::string vmmVersion() {
   return "";
 }
 
-uint64_t epochTime() {
+uint64_t epochTimeMs() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
-  uint64_t microseconds_since_epoch =
-      std::chrono::duration_cast<std::chrono::microseconds>(now).count();
-  return microseconds_since_epoch;
+  uint64_t milliseconds_since_epoch =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+  return milliseconds_since_epoch;
 }
 
 cuttlefish::CuttlefishLogEvent* sampleEvent() {
