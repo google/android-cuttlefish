@@ -16,8 +16,20 @@
 
 #include "host/commands/cvd/instance_database.h"
 
+#include "host/commands/cvd/selector_constants.h"
+
 namespace cuttlefish {
 namespace instance_db {
+
+InstanceDatabase::InstanceDatabase() {
+  group_handlers_[selector::kHomeField] = [this](const Value& field_value) {
+    return FindGroupsByHome(field_value);
+  };
+  instance_handlers_[selector::kInstanceIdField] =
+      [this](const Value& field_value) {
+        return FindInstancesById(field_value);
+      };
+}
 
 bool InstanceDatabase::IsEmpty() const {
   return local_instance_groups_.empty();
