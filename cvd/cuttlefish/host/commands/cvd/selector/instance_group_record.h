@@ -17,7 +17,6 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 #include <string>
 
 #include "common/libs/utils/result.h"
@@ -57,6 +56,8 @@ class LocalInstanceGroup {
   Result<void> AddInstance(const int instance_id);
   Result<void> AddInstance(const LocalInstance& instance);
   bool HasInstance(const int instance_id) const;
+
+  Result<Set<LocalInstance>> FindById(const int id) const;
   std::size_t HashCode() const noexcept;
 
  private:
