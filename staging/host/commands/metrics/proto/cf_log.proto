@@ -28,9 +28,6 @@ message CuttlefishLogEvent {
   // The type of device this log event originated from.
   optional DeviceType device_type = 2;
 
-  // The identifier for this device.
-  optional string device_id = 3;
-
   // The identifier for this session.
   optional string session_id = 6;
 

@@ -30,11 +30,10 @@ std::string osVersion();
 std::string sessionId(uint64_t now);
 std::string cfVersion();
 std::string macAddress();
-std::string hostId();
 std::string company();
 cuttlefish::MetricsEvent::VmmType vmmManager();
 std::string vmmVersion();
-uint64_t epochTime();
+uint64_t epochTimeMs();
 std::string protoToStr(LogEvent* event);
 cuttlefish::MetricsExitCodes postReq(std::string output, ClearcutServer server);
 }  // namespace metrics
