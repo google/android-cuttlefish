@@ -44,6 +44,7 @@ cvd_host_tools = [
     "console_forwarder",
     "crosvm",
     "cvd",
+    "cvd_internal_display",
     "cvd_internal_host_bugreport",
     "cvd_internal_start",
     "cvd_internal_status",
