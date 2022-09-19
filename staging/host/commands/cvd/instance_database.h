@@ -36,7 +36,7 @@ class InstanceDatabase {
   using ConstInstanceHandler = ConstHandler<LocalInstance>;
 
  public:
-  InstanceDatabase() = default;
+  InstanceDatabase();
   bool IsEmpty() const;
   Result<Set<LocalInstanceGroup>> FindGroups(const Query& query) const;
   Result<Set<LocalInstance>> FindInstances(const Query& query) const;
@@ -46,6 +46,10 @@ class InstanceDatabase {
   template <typename T>
   Result<Set<T>> Find(const Query& query,
                       const Map<FieldName, ConstHandler<T>>& handler_map) const;
+
+  // actual Find implementations
+  Result<Set<LocalInstanceGroup>> FindGroupsByHome(const Value& home) const;
+  Result<Set<LocalInstance>> FindInstancesById(const Value& id) const;
 
   std::vector<LocalInstanceGroup> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
