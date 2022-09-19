@@ -23,7 +23,7 @@ import (
 	"os"
 	"sync"
 
-	"cuttlefish/host-orchestrator/orchestrator"
+	"cuttlefish/host_orchestrator/orchestrator"
 	apiv1 "cuttlefish/liboperator/api/v1"
 	"cuttlefish/liboperator/operator"
 )
@@ -32,7 +32,7 @@ const (
 	DefaultSocketPath     = "/run/cuttlefish/operator"
 	DefaultHttpPort       = "1080"
 	DefaultHttpsPort      = "1443"
-	DefaultTLSCertDir     = "/etc/cuttlefish-common/host-orchestrator/cert"
+	DefaultTLSCertDir     = "/etc/cuttlefish-common/host_orchestrator/cert"
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
 	DefaultWebUIUrl       = ""
