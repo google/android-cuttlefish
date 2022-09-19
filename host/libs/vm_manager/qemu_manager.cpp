@@ -297,7 +297,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
   qemu_cmd.AddParameter("-machine");
-  std::string machine = is_arm ? "virt" : "pc-i440fx-2.8,nvdimm=on";
+  std::string machine = is_arm ? "virt" : "pc-i440fx-2.8,nvdimm=on,i8042=off";
   if (IsHostCompatible(arch_)) {
     machine += ",accel=kvm";
     if (is_arm) {
