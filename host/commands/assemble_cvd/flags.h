@@ -27,5 +27,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(const std::string& root_dir,
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 std::string GetCuttlefishEnvPath();
+std::string GetSeccompPolicyDir();
 
 } // namespace cuttlefish
