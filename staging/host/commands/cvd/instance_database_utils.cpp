@@ -16,7 +16,7 @@
 
 #include "host/commands/cvd/instance_database_utils.h"
 
-#include <string_view>
+#include <sstream>
 
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -32,6 +32,15 @@ std::string GenInternalGroupName() {
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name) {
   return group_name + "-" + instance_name;
+}
+
+std::string TooManyInstancesFound(const int n, const std::string& field_name) {
+  std::stringstream s;
+  s << "Only up to " << n << " must match";
+  if (!field_name.empty()) {
+    s << " by the field " << field_name;
+  }
+  return s.str();
 }
 
 }  // namespace instance_db
