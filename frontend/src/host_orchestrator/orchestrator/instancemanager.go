@@ -26,8 +26,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	apiv1 "cuttlefish/liboperator/api/v1"
-	"cuttlefish/liboperator/operator"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type EmptyFieldError string

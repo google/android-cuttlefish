@@ -1,4 +1,4 @@
-module cuttlefish/liboperator
+module github.com/google/android-cuttlefish/frontend/src/liboperator
 
 go 1.17
 

@@ -28,8 +28,8 @@ import (
 	"strings"
 	"testing"
 
-	apiv1 "cuttlefish/liboperator/api/v1"
-	"cuttlefish/liboperator/operator"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {

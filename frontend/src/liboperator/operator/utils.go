@@ -20,7 +20,7 @@ import (
 	"log"
 	"net/http"
 
-	apiv1 "cuttlefish/liboperator/api/v1"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
 // Interface implemented by any connection capable of sending in JSON format
