@@ -23,9 +23,9 @@ import (
 	"os"
 	"sync"
 
-	"cuttlefish/host_orchestrator/orchestrator"
-	apiv1 "cuttlefish/liboperator/api/v1"
-	"cuttlefish/liboperator/operator"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 const (
