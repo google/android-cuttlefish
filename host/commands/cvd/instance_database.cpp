@@ -17,7 +17,7 @@
 #include "host/commands/cvd/instance_database.h"
 
 #include "host/commands/cvd/instance_database_utils.h"
-#include "host/commands/cvd/selector_constants.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace instance_db {
