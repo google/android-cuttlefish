@@ -39,7 +39,8 @@ class CvdClient {
                             const std::vector<std::string>& env,
                             const std::string& host_tool_directory);
   Result<void> HandleCommand(std::vector<std::string> args,
-                             std::vector<std::string> env);
+                             std::vector<std::string> env,
+                             const std::vector<std::string>& selector_args);
   Result<std::string> HandleVersion(const std::string& host_tool_directory);
 
  private:

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -29,6 +30,7 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/fetch_cvd.h"
+#include "host/commands/cvd/selector/selector_cmdline_parser.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/host_tools_version.h"
@@ -76,12 +78,17 @@ Result<ParseResult> Parse(std::vector<std::string>& args) {
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
-  std::vector<std::string> args = ArgsToVec(argc, argv);
+  std::vector<std::string> all_args = ArgsToVec(argc, argv);
 
-  if (android::base::Basename(args[0]) == "fetch_cvd") {
+  if (android::base::Basename(all_args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
     return {};
   }
+
+  auto separated_args = CF_EXPECT(selector::SeparateArguments(all_args));
+  auto [pre, selector_args, post] = std::move(separated_args);
+  std::vector<std::string> args = std::move(pre);
+  std::move(post.begin(), post.end(), std::back_inserter(args));
 
   std::vector<std::string> env;
   for (char** e = envp; *e != 0; e++) {
@@ -132,7 +139,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   }
 
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
-  CF_EXPECT(client.HandleCommand(args, env));
+  CF_EXPECT(client.HandleCommand(args, env, selector_args));
   return {};
 }
 
@@ -144,7 +151,7 @@ int main(int argc, char** argv, char** envp) {
   if (result.ok()) {
     return 0;
   } else {
-    std::cerr << result.error().Message() << std::endl;
+    std::cerr << result.error() << std::endl;
     return -1;
   }
 }
