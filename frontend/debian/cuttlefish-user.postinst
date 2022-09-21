@@ -10,11 +10,7 @@ case "$1" in
         adduser --system --disabled-password --disabled-login --home /var/empty \
                 --no-create-home --quiet --force-badname --ingroup cvdnetwork _cutf-operator
     fi
-    if ! getent passwd _cvd-executor > /dev/null 2>&1
-    then
-        adduser --system --disabled-password --disabled-login --home /var/empty \
-                --no-create-home --quiet --force-badname --ingroup cvdnetwork _cvd-executor
-    fi
 esac
 
 #DEBHELPER#
+
