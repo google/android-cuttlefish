@@ -13,49 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.gatekeeper@1.0-service.remote"
+#define LOG_TAG "android.hardware.gatekeeper-service.remote"
 
 #include <android-base/logging.h>
-#include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 #include <cutils/properties.h>
 #include <gflags/gflags.h>
-
-#include <hidl/LegacySupport.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/security/gatekeeper_channel.h"
 #include "guest/hals/gatekeeper/remote/remote_gatekeeper.h"
+#include "remote_gatekeeper.h"
 
-// Generated HIDL files
-using android::hardware::gatekeeper::V1_0::IGatekeeper;
-using gatekeeper::RemoteGateKeeperDevice;
+using aidl::android::hardware::gatekeeper::RemoteGateKeeperDevice;
 
 const char device[] = "/dev/hvc4";
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, ::android::base::KernelLogger);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::android::hardware::configureRpcThreadpool(1, true /* willJoinThreadpool */);
+    ::android::base::InitLogging(argv, ::android::base::KernelLogger);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
 
-  auto fd = cuttlefish::SharedFD::Open(device, O_RDWR);
-  if (!fd->IsOpen()) {
-    LOG(FATAL) << "Could not connect to gatekeeper: " << fd->StrError();
-  }
+    auto fd = cuttlefish::SharedFD::Open(device, O_RDWR);
+    if (!fd->IsOpen()) {
+        LOG(FATAL) << "Could not connect to gatekeeper: " << fd->StrError();
+    }
 
-  if (fd->SetTerminalRaw() < 0) {
-    LOG(FATAL) << "Could not make " << device << " a raw terminal: "
-                << fd->StrError();
-  }
+    if (fd->SetTerminalRaw() < 0) {
+        LOG(FATAL) << "Could not make " << device << " a raw terminal: " << fd->StrError();
+    }
 
-  cuttlefish::GatekeeperChannel gatekeeperChannel(fd, fd);
+    cuttlefish::GatekeeperChannel gatekeeperChannel(fd, fd);
 
-  android::sp<RemoteGateKeeperDevice> gatekeeper(
-    new RemoteGateKeeperDevice(&gatekeeperChannel));
-  auto status = gatekeeper->registerAsService();
-  if (status != android::OK) {
-    LOG(FATAL) << "Could not register service for Gatekeeper 1.0 (remote) (" << status << ")";
-  }
+    std::shared_ptr<RemoteGateKeeperDevice> gatekeeper =
+        ndk::SharedRefBase::make<RemoteGateKeeperDevice>(&gatekeeperChannel);
 
-  android::hardware::joinRpcThreadpool();
-  return -1;  // Should never get here.
+    const std::string instance = std::string() + RemoteGateKeeperDevice::descriptor + "/default";
+    binder_status_t status =
+        AServiceManager_addService(gatekeeper->asBinder().get(), instance.c_str());
+    CHECK_EQ(status, STATUS_OK);
+
+    ABinderProcess_joinThreadPool();
+    return -1;  // Should never get here.
 }

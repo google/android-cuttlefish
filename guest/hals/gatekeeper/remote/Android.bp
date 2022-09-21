@@ -17,11 +17,11 @@ package {
 }
 
 cc_binary {
-    name: "android.hardware.gatekeeper@1.0-service.remote",
-    defaults: ["cuttlefish_guest_only", "hidl_defaults"],
+    name: "android.hardware.gatekeeper-service.remote",
+    defaults: ["cuttlefish_guest_only"],
     vendor: true,
     relative_install_path: "hw",
-    init_rc: ["android.hardware.gatekeeper@1.0-service.remote.rc"],
+    init_rc: ["android.hardware.gatekeeper-service.remote.rc"],
 
     srcs: [
         "remote_gatekeeper.cpp",
@@ -39,7 +39,9 @@ cc_binary {
     ],
 
     shared_libs: [
-        "android.hardware.gatekeeper@1.0",
+        "android.hardware.gatekeeper-V1-ndk",
+        "libbinder_ndk",
+        "libhardware",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_security",
@@ -51,5 +53,5 @@ cc_binary {
         "libtrusty",
     ],
 
-    vintf_fragments: ["android.hardware.gatekeeper@1.0-service.remote.xml"],
+    vintf_fragments: ["android.hardware.gatekeeper-service.remote.xml"],
 }
