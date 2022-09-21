@@ -13,38 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef TRUSTY_GATEKEEPER_H
-#define TRUSTY_GATEKEEPER_H
+#pragma once
 
 #include <memory>
 
-#include <android/hardware/gatekeeper/1.0/IGatekeeper.h>
-#include <hidl/Status.h>
+#include <aidl/android/hardware/gatekeeper/BnGatekeeper.h>
 #include <gatekeeper/gatekeeper_messages.h>
 
 #include "common/libs/security/gatekeeper_channel.h"
 
-namespace gatekeeper {
+namespace aidl::android::hardware::gatekeeper {
 
-class RemoteGateKeeperDevice : public ::android::hardware::gatekeeper::V1_0::IGatekeeper {
+using aidl::android::hardware::gatekeeper::GatekeeperEnrollResponse;
+using aidl::android::hardware::gatekeeper::GatekeeperVerifyResponse;
+using aidl::android::hardware::gatekeeper::IGatekeeper;
+using ::gatekeeper::ENROLL;
+using ::gatekeeper::EnrollRequest;
+using ::gatekeeper::EnrollResponse;
+using ::gatekeeper::gatekeeper_error_t;
+using ::gatekeeper::GateKeeperMessage;
+using ::gatekeeper::VERIFY;
+using ::gatekeeper::VerifyRequest;
+using ::gatekeeper::VerifyResponse;
+
+class RemoteGateKeeperDevice : public BnGatekeeper {
   public:
     explicit RemoteGateKeeperDevice(cuttlefish::GatekeeperChannel* gatekeeper_channel);
     ~RemoteGateKeeperDevice();
     /**
-     * Enrolls password_payload, which should be derived from a user selected pin or password,
-     * with the authentication factor private key used only for enrolling authentication
-     * factor data.
+     * Enrolls password_payload, which should be derived from a user selected pin
+     * or password, with the authentication factor private key used only for
+     * enrolling authentication factor data.
      *
      * Returns: 0 on success or an error code less than 0 on error.
      * On error, enrolled_password_handle will not be allocated.
      */
-    ::android::hardware::Return<void> enroll(
-            uint32_t uid, const ::android::hardware::hidl_vec<uint8_t>& currentPasswordHandle,
-            const ::android::hardware::hidl_vec<uint8_t>& currentPassword,
-            const ::android::hardware::hidl_vec<uint8_t>& desiredPassword,
-            enroll_cb _hidl_cb) override;
-
+    ::ndk::ScopedAStatus enroll(int32_t uid, const std::vector<uint8_t>& currentPasswordHandle,
+                                const std::vector<uint8_t>& currentPassword,
+                                const std::vector<uint8_t>& desiredPassword,
+                                GatekeeperEnrollResponse* _aidl_return) override;
     /**
      * Verifies provided_password matches enrolled_password_handle.
      *
@@ -58,33 +65,30 @@ class RemoteGateKeeperDevice : public ::android::hardware::gatekeeper::V1_0::IGa
      * Returns: 0 on success or an error code less than 0 on error
      * On error, verification token will not be allocated
      */
-    ::android::hardware::Return<void> verify(
-            uint32_t uid, uint64_t challenge,
-            const ::android::hardware::hidl_vec<uint8_t>& enrolledPasswordHandle,
-            const ::android::hardware::hidl_vec<uint8_t>& providedPassword,
-            verify_cb _hidl_cb) override;
+    ::ndk::ScopedAStatus verify(int32_t uid, int64_t challenge,
+                                const std::vector<uint8_t>& enrolledPasswordHandle,
+                                const std::vector<uint8_t>& providedPassword,
+                                GatekeeperVerifyResponse* _aidl_return) override;
 
-    ::android::hardware::Return<void> deleteUser(uint32_t uid, deleteUser_cb _hidl_cb) override;
+    ::ndk::ScopedAStatus deleteAllUsers() override;
 
-    ::android::hardware::Return<void> deleteAllUsers(deleteAllUsers_cb _hidl_cb) override;
+    ::ndk::ScopedAStatus deleteUser(int32_t uid) override;
 
   private:
     cuttlefish::GatekeeperChannel* gatekeeper_channel_;
 
     gatekeeper_error_t Send(uint32_t command, const GateKeeperMessage& request,
-                           GateKeeperMessage* response);
+                            GateKeeperMessage* response);
 
-    gatekeeper_error_t Send(const EnrollRequest& request, EnrollResponse *response) {
+    gatekeeper_error_t Send(const EnrollRequest& request, EnrollResponse* response) {
         return Send(ENROLL, request, response);
     }
 
-    gatekeeper_error_t Send(const VerifyRequest& request, VerifyResponse *response) {
+    gatekeeper_error_t Send(const VerifyRequest& request, VerifyResponse* response) {
         return Send(VERIFY, request, response);
     }
 
     int error_;
 };
 
-}  // namespace gatekeeper
-
-#endif
+}  // namespace aidl::android::hardware::gatekeeper
