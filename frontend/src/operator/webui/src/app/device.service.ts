@@ -1,5 +1,6 @@
-import {Injectable, SecurityContext} from '@angular/core';
-import {map, Observable, ReplaySubject, Subject} from 'rxjs';
+import {Injectable} from '@angular/core';
+import {map} from 'rxjs/operators';
+import {Observable, ReplaySubject, Subject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {Device} from './device-interface';
 import {DeviceInfo} from './device-info-interface';
@@ -28,18 +29,8 @@ export class DeviceService {
       .subscribe((devices: Device[]) => this.devicesSubject.next(devices));
   }
 
-  deviceConnectURL(display: string): string {
-    return this.sanitizer.sanitize(
-      SecurityContext.RESOURCE_URL,
-      this.sanitizer.bypassSecurityTrustResourceUrl(
-        `/devices/${display}/files/client.html`
-      )
-    ) as string;
-  }
-
-  //Create device feature naming may conflict. Maybe buildDevice?
   createDevice(deviceId: string): Device {
-    return new Device(deviceId, this.deviceConnectURL(deviceId));
+    return new Device(deviceId);
   }
 
   getDevices() {

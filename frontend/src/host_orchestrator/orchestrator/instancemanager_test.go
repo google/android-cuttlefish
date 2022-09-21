@@ -547,7 +547,7 @@ func TestStageCreateDir(t *testing.T) {
 		t.Errorf("expected nil error, got %+v", err)
 	}
 	stats, _ := os.Stat(dir)
-	expected := "drwxr-xr-x"
+	expected := "drwxrwxr--"
 	got := stats.Mode().String()
 	if got != expected {
 		t.Errorf("expected <<%q>, got %q", expected, got)
@@ -567,7 +567,7 @@ func TestStageCreateDirAndDirectoryExists(t *testing.T) {
 		t.Errorf("expected nil error, got %+v", err)
 	}
 	stats, _ := os.Stat(dir)
-	expected := "drwxr-xr-x"
+	expected := "drwxrwxr--"
 	got := stats.Mode().String()
 	if got != expected {
 		t.Errorf("expected <<%q>, got %q", expected, got)

@@ -14,7 +14,7 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {ViewPaneComponent} from './view-pane/view-pane.component';
-import {SafePipe} from './safe.pipe';
+import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
 import {KtdGridModule} from '@katoid/angular-grid-layout';
 
 @NgModule({
@@ -22,7 +22,7 @@ import {KtdGridModule} from '@katoid/angular-grid-layout';
     AppComponent,
     DevicePaneComponent,
     ViewPaneComponent,
-    SafePipe,
+    SafeDeviceUrlPipe,
   ],
   imports: [
     BrowserModule,

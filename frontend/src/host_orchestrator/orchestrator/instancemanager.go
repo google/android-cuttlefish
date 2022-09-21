@@ -254,12 +254,12 @@ type StageCreateDir struct {
 func (s *StageCreateDir) Run() error {
 	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
 	// once b/236976427 is addressed.
-	err := os.Mkdir(s.Dir, 0755)
+	err := os.Mkdir(s.Dir, 0774)
 	if err != nil && ((s.FailIfExist && os.IsExist(err)) || (!os.IsExist(err))) {
 		return err
 	}
 	// Mkdir set the permission bits (before umask)
-	return os.Chmod(s.Dir, 0755)
+	return os.Chmod(s.Dir, 0774)
 }
 
 type StageFetchCVD struct {

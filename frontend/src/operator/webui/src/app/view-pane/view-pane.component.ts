@@ -33,7 +33,7 @@ import {Device} from '../device-interface';
 @Component({
   selector: 'app-view-pane',
   templateUrl: './view-pane.component.html',
-  styleUrls: ['./view-pane.component.sass'],
+  styleUrls: ['./view-pane.component.scss'],
 })
 export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(KtdGridComponent, {static: true}) grid!: KtdGridComponent;

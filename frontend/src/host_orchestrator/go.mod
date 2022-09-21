@@ -1,4 +1,4 @@
-module cuttlefish/host-orchestrator
+module cuttlefish/host_orchestrator
 
 go 1.19
 

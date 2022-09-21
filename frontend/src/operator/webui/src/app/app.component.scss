@@ -1,0 +1,37 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  color: #eee;
+}
+
+.cloud-android-toolbar {
+  background: #073042;
+  color: #eee;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.cloud-android-title {
+  margin: 0 auto;
+}
+
+.drawer-container {
+  flex: 1;
+  background: #cfcfcf;
+}
+
+.device-pane {
+  margin: 0 auto;
+  font-size: 200%;
+  width: 250px;
+  background: rgba(245, 245, 245, 0.8);
+  color: #073042;
+  filter: drop-shadow(4px 4px 10px rgba(0, 0, 0, 0.25));
+  border-radius: 0px 16px 16px 0px;
+}

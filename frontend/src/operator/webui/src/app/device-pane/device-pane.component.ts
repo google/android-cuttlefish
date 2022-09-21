@@ -2,12 +2,12 @@ import {Component} from '@angular/core';
 import {Device} from '../device-interface';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
-import {first} from 'rxjs';
+import {first} from 'rxjs/operators';
 
 @Component({
   selector: 'app-device-pane',
   templateUrl: './device-pane.component.html',
-  styleUrls: ['./device-pane.component.sass'],
+  styleUrls: ['./device-pane.component.scss'],
 })
 export class DevicePaneComponent {
   devices = this.deviceService.getDevices();

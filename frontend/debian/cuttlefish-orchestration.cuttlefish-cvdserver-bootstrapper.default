@@ -1,0 +1,5 @@
+# defaults for cuttlefish-cvdserver_bootstrapper
+
+# Socket address for RPC communication.
+# Defaults to "/run/cuttlefish-cvdserver_bootstrapper/rpc.sock"
+# rpc_sock_addr=
