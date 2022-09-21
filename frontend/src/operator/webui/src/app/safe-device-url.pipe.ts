@@ -8,8 +8,9 @@ export class SafeDeviceUrlPipe implements PipeTransform {
   constructor(private sanitizer: DomSanitizer) {}
 
   transform(deviceId: string) {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(
-      `/devices/${deviceId}/files/client.html`
-    );
+    /* eslint-disable */
+    // DO NOT FORMAT THIS LINE
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`/devices/${deviceId}/files/client.html`);
+    /* eslint-enable */
   }
 }
