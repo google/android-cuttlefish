@@ -75,5 +75,22 @@ Result<typename std::remove_reference<S>::type> AtMostOne(
   return {std::forward<S>(s)};
 }
 
+template <typename RetSet, typename AnyContainer>
+RetSet Intersection(const RetSet& u, AnyContainer&& v) {
+  RetSet result;
+  for (auto const& e : v) {
+    if (u.find(e) != u.end()) {
+      result.insert(e);
+    }
+  }
+  return result;
+}
+
+template <typename RetSet, typename AnyContainer, typename... Containers>
+RetSet Intersection(const RetSet& u, AnyContainer&& v, Containers&&... s) {
+  RetSet first = Intersection(u, std::forward<AnyContainer>(v));
+  return Intersection(first, std::forward<Containers>(s)...);
+}
+
 }  // namespace instance_db
 }  // namespace cuttlefish
