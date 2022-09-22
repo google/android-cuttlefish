@@ -72,8 +72,6 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--disable-sandbox");
     }
     ap_cmd.AddReadWriteDisk(instance_.PerInstancePath("ap_overlay.img"));
-    ap_cmd.AddReadOnlyDisk(
-        instance_.PerInstancePath("persistent_composite.img"));
 
     ap_cmd.Cmd().AddParameter("--params=\"root=" + config_.ap_image_dev_path() +
                               "\"");
