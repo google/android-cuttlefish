@@ -176,12 +176,6 @@ class CuttlefishConfig {
   void set_run_as_daemon(bool run_as_daemon);
   bool run_as_daemon() const;
 
-  void set_data_policy(const std::string& data_policy);
-  std::string data_policy() const;
-
-  void set_blank_data_image_mb(int blank_data_image_mb);
-  int blank_data_image_mb() const;
-
   void set_bootloader(const std::string& bootloader_path);
   std::string bootloader() const;
 
@@ -527,9 +521,35 @@ class CuttlefishConfig {
 
     int cpus() const;
 
+    std::string data_policy() const;
+
+    int blank_data_image_mb() const;
+
     int gdb_port() const;
 
     std::vector<DisplayConfig> display_configs() const;
+
+    // system image files
+    std::string boot_image() const;
+    std::string new_boot_image() const;
+    std::string init_boot_image() const;
+    std::string data_image() const;
+    std::string super_image() const;
+    std::string misc_image() const;
+    std::string metadata_image() const;
+    std::string vendor_boot_image() const;
+    std::string new_vendor_boot_image() const;
+    std::string vbmeta_image() const;
+    std::string vbmeta_system_image() const;
+    std::string otheros_esp_image() const;
+    std::string otheros_kernel_path() const;
+    std::string otheros_initramfs_path() const;
+    std::string otheros_root_image() const;
+    int blank_metadata_image_mb() const;
+    int blank_sdcard_image_mb() const;
+    std::string bootloader() const;
+    std::string initramfs_path() const;
+    std::string kernel_path() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -590,8 +610,32 @@ class CuttlefishConfig {
     void set_kgdb(bool kgdb);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
+    void set_data_policy(const std::string& data_policy);
+    void set_blank_data_image_mb(int blank_data_image_mb);
     void set_gdb_port(int gdb_port);
     void set_display_configs(const std::vector<DisplayConfig>& display_configs);
+
+    // system image files
+    void set_boot_image(const std::string& boot_image);
+    void set_new_boot_image(const std::string& new_boot_image);
+    void set_init_boot_image(const std::string& init_boot_image);
+    void set_data_image(const std::string& data_image);
+    void set_super_image(const std::string& super_image);
+    void set_misc_image(const std::string& misc_image);
+    void set_metadata_image(const std::string& metadata_image);
+    void set_vendor_boot_image(const std::string& vendor_boot_image);
+    void set_new_vendor_boot_image(const std::string& new_vendor_boot_image);
+    void set_vbmeta_image(const std::string& vbmeta_image);
+    void set_vbmeta_system_image(const std::string& vbmeta_system_image);
+    void set_otheros_esp_image(const std::string& otheros_esp_image);
+    void set_otheros_kernel_path(const std::string& otheros_kernel_path);
+    void set_otheros_initramfs_path(const std::string& otheros_initramfs_path);
+    void set_otheros_root_image(const std::string& otheros_root_image);
+    void set_blank_metadata_image_mb(int blank_metadata_image_mb);
+    void set_blank_sdcard_image_mb(int blank_sdcard_image_mb);
+    void set_bootloader(const std::string& bootloader);
+    void set_initramfs_path(const std::string& initramfs_path);
+    void set_kernel_path(const std::string& kernel_path);
   };
 
  private:
