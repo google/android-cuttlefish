@@ -15,28 +15,35 @@
 
 #pragma once
 
+#include <sstream>
 #include <string>
-
-#include "common/libs/utils/result.h"
-#include "host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
-class CloudOrchestratorApi {
- public:
-  CloudOrchestratorApi(const std::string& service_url, const std::string& zone,
-                       HttpClient& http_client);
-  ~CloudOrchestratorApi();
+struct CVDOutput {
+  bool verbose;
+  const std::string& service_url;
+  const std::string& zone;
+  const std::string& host;
+  const std::string& name;
 
-  Result<std::vector<std::string>> ListHosts();
-
-  Result<std::vector<std::string>> ListCVDWebRTCStreams(
-      const std::string& host);
+  std::string ToString() { return verbose ? Verbose() : Name(); }
 
  private:
-  const std::string& service_url_;
-  const std::string& zone_;
-  HttpClient& http_client_;
+  std::string Name() { return name + " " + "(" + host + ")"; }
+
+  std::string Verbose() {
+    std::stringstream stream;
+    stream << name + " " + "(" + host + ")" << std::endl;
+    stream << "  "
+           << "webrtcstream_url: " << WebRTCStreamURL() << std::endl;
+    return stream.str();
+  }
+
+  std::string WebRTCStreamURL() {
+    return service_url + "/v1/zones/" + zone + "/hosts/" + host + "/devices/" +
+           name + "/files/client.html";
+  }
 };
 
 }  // namespace cuttlefish

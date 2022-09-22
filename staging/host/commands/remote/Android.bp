@@ -54,3 +54,24 @@ cc_binary {
     defaults: ["cvdremote_defaults"],
 }
 
+cc_binary {
+    name: "cvdremote_list_cvds",
+    srcs: [
+        "cvdremote_list_cvds.cc"
+    ],
+    static_libs: [
+        "libgflags",
+        "libcvdremote",
+    ],
+    defaults: ["cvdremote_defaults"],
+}
+
+cc_test_host {
+    name: "libcvdremote_test",
+    srcs: [
+        "unittest/main_test.cc",
+        "unittest/output_test.cc",
+    ],
+    defaults: ["cuttlefish_host", "cvdremote_defaults"],
+}
+
