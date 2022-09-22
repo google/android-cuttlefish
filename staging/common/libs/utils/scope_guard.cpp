@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/scope_guard.h"
+#include "common/libs/utils/scope_guard.h"
 
 #include <functional>
 
