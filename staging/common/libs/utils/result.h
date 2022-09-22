@@ -23,11 +23,132 @@
 
 namespace cuttlefish {
 
-using android::base::Result;
+class StackTraceError;
 
-#define CF_ERR_MSG()                             \
-  "  at " << __FILE__ << ":" << __LINE__ << "\n" \
-          << "  in " << __PRETTY_FUNCTION__
+class StackTraceEntry {
+ public:
+  StackTraceEntry(std::string file, size_t line, std::string pretty_function)
+      : file_(std::move(file)),
+        line_(line),
+        pretty_function_(std::move(pretty_function)) {}
+
+  StackTraceEntry(std::string file, size_t line, std::string pretty_function,
+                  std::string expression)
+      : file_(std::move(file)),
+        line_(line),
+        pretty_function_(std::move(pretty_function)),
+        expression_(std::move(expression)) {}
+
+  StackTraceEntry(const StackTraceEntry& other)
+      : file_(other.file_),
+        line_(other.line_),
+        pretty_function_(other.pretty_function_),
+        expression_(other.expression_),
+        message_(other.message_.str()) {}
+
+  StackTraceEntry(StackTraceEntry&&) = default;
+  StackTraceEntry& operator=(const StackTraceEntry& other) {
+    file_ = other.file_;
+    line_ = other.line_;
+    pretty_function_ = other.pretty_function_;
+    expression_ = other.expression_;
+    message_.str(other.message_.str());
+    return *this;
+  }
+  StackTraceEntry& operator=(StackTraceEntry&&) = default;
+
+  template <typename T>
+  StackTraceEntry& operator<<(T&& message_ext) & {
+    message_ << message_ext;
+    return *this;
+  }
+  template <typename T>
+  StackTraceEntry operator<<(T&& message_ext) && {
+    message_ << message_ext;
+    return std::move(*this);
+  }
+
+  operator StackTraceError() &&;
+  template <typename T>
+  operator android::base::expected<T, StackTraceError>() &&;
+
+  bool HasMessage() const { return !message_.str().empty(); }
+
+  void Write(std::ostream& stream) const { stream << message_.str(); }
+  void WriteVerbose(std::ostream& stream) const {
+    auto str = message_.str();
+    if (str.empty()) {
+      stream << "Failure\n";
+    } else {
+      stream << message_.str() << "\n";
+    }
+    stream << " at " << file_ << ":" << line_ << "\n";
+    stream << " in " << pretty_function_;
+    if (!expression_.empty()) {
+      stream << " for CF_EXPECT(" << expression_ << ")\n";
+    }
+  }
+
+ private:
+  std::string file_;
+  size_t line_;
+  std::string pretty_function_;
+  std::string expression_;
+  std::stringstream message_;
+};
+
+#define CF_STACK_TRACE_ENTRY(expression) \
+  StackTraceEntry(__FILE__, __LINE__, __PRETTY_FUNCTION__, expression)
+
+class StackTraceError {
+ public:
+  StackTraceError& PushEntry(StackTraceEntry entry) & {
+    stack_.emplace_back(std::move(entry));
+    return *this;
+  }
+  StackTraceError PushEntry(StackTraceEntry entry) && {
+    stack_.emplace_back(std::move(entry));
+    return std::move(*this);
+  }
+  const std::vector<StackTraceEntry>& Stack() const { return stack_; }
+
+  std::string Message() const {
+    std::stringstream writer;
+    for (const auto& entry : stack_) {
+      entry.Write(writer);
+    }
+    return writer.str();
+  }
+
+  std::string Trace() const {
+    std::stringstream writer;
+    for (const auto& entry : stack_) {
+      entry.WriteVerbose(writer);
+    }
+    return writer.str();
+  }
+
+  template <typename T>
+  operator android::base::expected<T, StackTraceError>() && {
+    return android::base::unexpected(std::move(*this));
+  }
+
+ private:
+  std::vector<StackTraceEntry> stack_;
+};
+
+inline StackTraceEntry::operator StackTraceError() && {
+  return StackTraceError().PushEntry(std::move(*this));
+}
+
+template <typename T>
+inline StackTraceEntry::operator android::base::expected<T,
+                                                         StackTraceError>() && {
+  return android::base::unexpected(std::move(*this));
+}
+
+template <typename T>
+using Result = android::base::expected<T, StackTraceError>;
 
 /**
  * Error return macro that includes the location in the file in the error
@@ -47,10 +168,8 @@ using android::base::Result;
  *       at path/to/file.cpp:50
  *       in Result<std::string> MyFunction()
  */
-#define CF_ERR(MSG) android::base::Error() << MSG << "\n" << CF_ERR_MSG()
-#define CF_ERRNO(MSG)                        \
-  android::base::ErrnoError() << MSG << "\n" \
-                              << CF_ERR_MSG() << "\n  with errno " << errno
+#define CF_ERR(MSG) (CF_STACK_TRACE_ENTRY("") << MSG)
+#define CF_ERRNO(MSG) (CF_STACK_TRACE_ENTRY("") << MSG)
 
 template <typename T>
 T OutcomeDereference(std::optional<T>&& value) {
@@ -90,13 +209,11 @@ bool TypeIsSuccess(Result<T>&& value) {
   return value.ok();
 }
 
-inline auto ErrorFromType(bool) {
-  return (android::base::Error() << "Received `false`").str();
-}
+inline auto ErrorFromType(bool) { return StackTraceError(); }
 
 template <typename T>
 inline auto ErrorFromType(std::optional<T>) {
-  return (android::base::Error() << "Received empty optional").str();
+  return StackTraceError();
 }
 
 template <typename T>
@@ -111,20 +228,20 @@ auto ErrorFromType(Result<T>&& value) {
 
 #define CF_EXPECT_OVERLOAD(_1, _2, NAME, ...) NAME
 
-#define CF_EXPECT2(RESULT, MSG)                                  \
-  ({                                                             \
-    decltype(RESULT)&& macro_intermediate_result = RESULT;       \
-    if (!TypeIsSuccess(macro_intermediate_result)) {             \
-      return android::base::Error()                              \
-             << ErrorFromType(macro_intermediate_result) << "\n" \
-             << MSG << "\n"                                      \
-             << CF_ERR_MSG() << "\n"                             \
-             << "  for CF_EXPECT(" << #RESULT << ")";            \
-    };                                                           \
-    OutcomeDereference(std::move(macro_intermediate_result));    \
+#define CF_EXPECT2(RESULT, MSG)                               \
+  ({                                                          \
+    decltype(RESULT)&& macro_intermediate_result = RESULT;    \
+    if (!TypeIsSuccess(macro_intermediate_result)) {          \
+      auto current_entry = CF_STACK_TRACE_ENTRY(#RESULT);     \
+      current_entry << MSG;                                   \
+      auto error = ErrorFromType(macro_intermediate_result);  \
+      error.PushEntry(std::move(current_entry));              \
+      return error;                                           \
+    };                                                        \
+    OutcomeDereference(std::move(macro_intermediate_result)); \
   })
 
-#define CF_EXPECT1(RESULT) CF_EXPECT2(RESULT, "Received error")
+#define CF_EXPECT1(RESULT) CF_EXPECT2(RESULT, "")
 
 /**
  * Error propagation macro that can be used as an expression.

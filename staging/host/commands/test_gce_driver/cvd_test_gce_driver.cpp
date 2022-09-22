@@ -127,10 +127,10 @@ class ReadEvalPrintLoop {
       }
       if (!handler_result.ok()) {
         test_gce_driver::TestMessage error_msg;
-        error_msg.mutable_error()->set_text(handler_result.error().message());
+        error_msg.mutable_error()->set_text(handler_result.error().Trace());
         CF_EXPECT(SerializeDelimitedToFileDescriptor(error_msg, out_),
                   "Failure while writing error message: (\n"
-                      << handler_result.error().message() << "\n)");
+                      << handler_result.error().Trace() << "\n)");
       }
       test_gce_driver::TestMessage stream_end_msg;
       stream_end_msg.mutable_stream_end();  // Set this in the oneof
@@ -243,7 +243,7 @@ class ReadEvalPrintLoop {
         auto ssh = callback_state.instance->Ssh();
         if (!ssh.ok()) {
           callback_state.result = CF_ERR("ssh command failed\n"
-                                         << ssh.error().message());
+                                         << ssh.error().Trace());
           return false;
         }
 
@@ -272,7 +272,7 @@ class ReadEvalPrintLoop {
         "Failed to send file: (\n"
             << (callback_state.result.ok()
                     ? "Unknown failure"
-                    : callback_state.result.error().message() + "\n)"));
+                    : callback_state.result.error().Trace() + "\n)"));
 
     callback_state.ssh_in->Close();
 
@@ -410,5 +410,6 @@ int main(int argc, char** argv) {
   if (res.ok()) {
     return 0;
   }
-  LOG(ERROR) << "cvd_test_gce_driver failed: " << res.error().message();
+  LOG(ERROR) << "cvd_test_gce_driver failed: " << res.error().Message();
+  LOG(DEBUG) << "cvd_test_gce_driver failed: " << res.error().Trace();
 }
