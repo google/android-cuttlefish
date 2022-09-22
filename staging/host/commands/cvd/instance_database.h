@@ -63,10 +63,21 @@ class InstanceDatabase {
   Result<Set<LocalInstance>> FindInstances(const Query& query) const;
   const auto& InstanceGroups() const { return local_instance_groups_; }
 
+  /*
+   * FindGroup/Instance method must be used when exactly one instance/group
+   * is expected to match the query
+   */
+  Result<LocalInstanceGroup> FindGroup(const Query& query) const;
+  Result<LocalInstance> FindInstance(const Query& query) const;
+
  private:
   template <typename T>
   Result<Set<T>> Find(const Query& query,
                       const Map<FieldName, ConstHandler<T>>& handler_map) const;
+
+  template <typename T>
+  Result<T> FindOne(const Query& query,
+                    const Map<FieldName, ConstHandler<T>>& handler_map) const;
 
   // actual Find implementations
   Result<Set<LocalInstanceGroup>> FindGroupsByHome(const Value& home) const;
