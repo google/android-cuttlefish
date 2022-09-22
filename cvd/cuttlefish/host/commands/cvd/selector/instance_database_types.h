@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace cuttlefish {
 namespace instance_db {
@@ -31,6 +32,7 @@ struct Query {
   FieldName field_name_;
   Value field_value_;
 };
+using Queries = std::vector<Query>;
 
 template <typename T>
 using Set = std::unordered_set<T>;
