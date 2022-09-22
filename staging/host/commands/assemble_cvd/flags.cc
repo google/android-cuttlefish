@@ -260,7 +260,7 @@ DEFINE_string(gem5_checkpoint_dir, "",
 DEFINE_string(gem5_debug_file, "", "The file name where gem5 saves debug prints and logs");
 DEFINE_string(gem5_debug_flags, "", "The debug flags gem5 uses to print debugs to file");
 
-DEFINE_bool(restart_subprocesses, false, "Restart any crashed host process");
+DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
             "emulation gRPC server on the host");
 DEFINE_string(bootloader, "", "Bootloader binary path");
