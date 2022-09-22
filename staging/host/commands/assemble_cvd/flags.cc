@@ -1,6 +1,7 @@
 #include "host/commands/assemble_cvd/flags.h"
 
 #include <android-base/logging.h>
+#include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
@@ -660,9 +661,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
-  tmp_config_obj.set_data_policy(FLAGS_data_policy);
-  tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
-
   tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
 
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(
@@ -690,8 +688,14 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
                   "set or neither should be set.";
   }
+  // If user input multiple values, we only take the 1st value and shared with
+  // all instances
+  std::string ap_rootfs_image = "";
+  if (!FLAGS_ap_rootfs_image.empty()) {
+    ap_rootfs_image = android::base::Split(FLAGS_ap_rootfs_image, ",")[0];
+  }
 
-  tmp_config_obj.set_ap_rootfs_image(FLAGS_ap_rootfs_image);
+  tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);
@@ -737,6 +741,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_gem5_binary_dir, ",");
   std::vector<std::string> gem5_checkpoint_dirs =
       android::base::Split(FLAGS_gem5_checkpoint_dir, ",");
+  std::vector<std::string> data_policies =
+      android::base::Split(FLAGS_data_policy, ",");
 
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   CHECK(instance_nums.ok()) << instance_nums.error();
@@ -791,6 +797,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_console(FLAGS_console);
     instance.set_kgdb(FLAGS_console && FLAGS_kgdb);
     instance.set_cpus(FLAGS_cpus);
+    instance.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
     instance.set_gdb_port(FLAGS_gdb_port);
 
     std::vector<CuttlefishConfig::DisplayConfig> display_configs;
@@ -885,6 +892,13 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       // support legacy flag input in multi-device which set one and same flag to all instances
       instance.set_gem5_checkpoint_dir(gem5_checkpoint_dirs[0]);
     }
+    if (instance_index < data_policies.size()) {
+      instance.set_data_policy(data_policies[instance_index]);
+    } else if (data_policies.size() == 1) {
+      // support legacy flag input in multi-device which set one and same flag
+      // to all instances
+      instance.set_data_policy(data_policies[0]);
+    }
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
@@ -913,14 +927,13 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
     instance.set_gnss_grpc_proxy_server_port(7200 + num -1);
 
-    if (num <= gnss_file_paths.size()) {
+    if (instance_index < gnss_file_paths.size()) {
       instance.set_gnss_file_path(gnss_file_paths[instance_index]);
     }
-    if (num <= fixed_location_file_paths.size()) {
+    if (instance_index < fixed_location_file_paths.size()) {
       instance.set_fixed_location_file_path(
           fixed_location_file_paths[instance_index]);
     }
-    instance_index++;
 
     instance.set_camera_server_port(FLAGS_camera_server_port);
 
@@ -1031,6 +1044,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     } else {
       instance.set_modem_simulator_ports("");
     }
+    instance_index++;
   }  // end of num_instances loop
 
   std::vector<std::string> names;
@@ -1042,6 +1056,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
   tmp_config_obj.set_enable_audio(FLAGS_enable_audio);
+
+  DiskImageFlagsVectorization(tmp_config_obj);
 
   return tmp_config_obj;
 }
