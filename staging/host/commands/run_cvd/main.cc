@@ -266,10 +266,6 @@ Result<void> RunCvdMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::RunCvdMain(argc, argv);
-  if (result.ok()) {
-    return 0;
-  }
-  LOG(ERROR) << result.error().Message();
-  LOG(DEBUG) << result.error().Trace();
-  abort();
+  CHECK(result.ok()) << result.error();
+  return 0;
 }
