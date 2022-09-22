@@ -58,6 +58,14 @@ class GceNetworkInterface {
 
   static GceNetworkInterface Default();
 
+  std::optional<std::string> Network() const;
+  GceNetworkInterface& Network(const std::string&) &;
+  GceNetworkInterface Network(const std::string&) &&;
+
+  std::optional<std::string> Subnetwork() const;
+  GceNetworkInterface& Subnetwork(const std::string&) &;
+  GceNetworkInterface Subnetwork(const std::string&) &&;
+
   std::optional<std::string> ExternalIp() const;
   std::optional<std::string> InternalIp() const;
 
