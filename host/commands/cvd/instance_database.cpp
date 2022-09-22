@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/instance_database.h"
 
+#include "host/commands/cvd/instance_database_utils.h"
 #include "host/commands/cvd/selector_constants.h"
 
 namespace cuttlefish {
@@ -50,10 +51,39 @@ Result<Set<T>> InstanceDatabase::Find(
 }
 
 template <typename T>
+Result<Set<T>> InstanceDatabase::Find(
+    const Queries& queries,
+    const Map<FieldName, ConstHandler<T>>& handler_map) const {
+  static_assert(std::is_same<T, LocalInstance>::value ||
+                std::is_same<T, LocalInstanceGroup>::value);
+  if (queries.empty()) {
+    return CF_ERR("Queries must not be empty");
+  }
+  auto first_set = CF_EXPECT(Find<T>(queries[0], handler_map));
+  for (int i = 1; i < queries.size(); i++) {
+    auto subset = CF_EXPECT(Find<T>(queries[i], handler_map));
+    first_set = Intersection(first_set, subset);
+  }
+  return {first_set};
+}
+
+template <typename T>
 Result<T> InstanceDatabase::FindOne(
     const Query& query,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(query, handler_map));
+  if (set.size() != 1) {
+    return CF_ERR("Only one Instance (Group) is expected but "
+                  << set.size() << " was found.");
+  }
+  return {*set.cbegin()};
+}
+
+template <typename T>
+Result<T> InstanceDatabase::FindOne(
+    const Queries& queries,
+    const Map<FieldName, ConstHandler<T>>& handler_map) const {
+  auto set = CF_EXPECT(Find<T>(queries, handler_map));
   if (set.size() != 1) {
     return CF_ERR("Only one Instance (Group) is expected but "
                   << set.size() << " was found.");
@@ -66,9 +96,19 @@ Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroups(
   return Find<LocalInstanceGroup>(query, group_handlers_);
 }
 
+Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroups(
+    const Queries& queries) const {
+  return Find<LocalInstanceGroup>(queries, group_handlers_);
+}
+
 Result<Set<LocalInstance>> InstanceDatabase::FindInstances(
     const Query& query) const {
   return Find<LocalInstance>(query, instance_handlers_);
+}
+
+Result<Set<LocalInstance>> InstanceDatabase::FindInstances(
+    const Queries& queries) const {
+  return Find<LocalInstance>(queries, instance_handlers_);
 }
 
 Result<LocalInstanceGroup> InstanceDatabase::FindGroup(
@@ -76,8 +116,18 @@ Result<LocalInstanceGroup> InstanceDatabase::FindGroup(
   return FindOne<LocalInstanceGroup>(query, group_handlers_);
 }
 
+Result<LocalInstanceGroup> InstanceDatabase::FindGroup(
+    const Queries& queries) const {
+  return FindOne<LocalInstanceGroup>(queries, group_handlers_);
+}
+
 Result<LocalInstance> InstanceDatabase::FindInstance(const Query& query) const {
   return FindOne<LocalInstance>(query, instance_handlers_);
+}
+
+Result<LocalInstance> InstanceDatabase::FindInstance(
+    const Queries& queries) const {
+  return FindOne<LocalInstance>(queries, instance_handlers_);
 }
 
 }  // namespace instance_db
