@@ -28,9 +28,9 @@ constexpr char kSsoClientBin[] = "/usr/bin/sso_client";
 
 // Matches the sso_client output when it succeeds.
 static std::regex stdout_regex(
-    "HTTP/\\d+\\.\\d+\\s(\\d+)\\s\\w+\r\n" /* status */
-    "(?:.+\r\n)+\r\n"                      /* headers */
-    "(.+)?"                                /* body */
+    "HTTP/\\d+\\.\\d+\\s(\\d+)\\s.+\r\n" /* status */
+    "(?:.+\r\n)+\r\n"                    /* headers */
+    "(.+)?"                              /* body */
     "\n" /* new line added by the sso_client */);
 
 }  // namespace
