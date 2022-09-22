@@ -169,8 +169,7 @@ int StopInstance(const CuttlefishConfig& config,
                  std::int32_t wait_for_launcher) {
   auto res = CleanStopInstance(instance, wait_for_launcher);
   if (!res.ok()) {
-    LOG(ERROR) << "Clean stop failed: " << res.error().Message();
-    LOG(DEBUG) << "Clean stop failed: " << res.error().Trace();
+    LOG(ERROR) << "Clean stop failed: " << res.error();
     return FallBackStop(DirsForInstance(config, instance));
   }
   return 0;
