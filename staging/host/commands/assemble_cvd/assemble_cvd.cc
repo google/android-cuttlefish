@@ -15,8 +15,10 @@
 
 #include <iostream>
 
-#include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <android-base/parsebool.h>
+#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -229,7 +231,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                   << ": " << log->StrError();
     }
 
-    auto disk_config = GetOsCompositeDiskConfig();
+    // use 1st instance to setup ap image dev
+    auto disk_config = GetOsCompositeDiskConfig(config.Instances()[0]);
     if (auto it = std::find_if(disk_config.begin(), disk_config.end(),
                                [](const auto& partition) {
                                  return partition.label == "ap_rootfs";
@@ -256,7 +259,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
   }
 
-  // Do this early so that the config object is ready for anything that needs it
+  // Do this early so that the config object is ready for anything that needs
+  // it
   auto config = CuttlefishConfig::Get();
   CF_EXPECT(config != nullptr, "Failed to obtain config singleton");
 
@@ -267,7 +271,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(RemoveFile(FLAGS_assembly_dir),
               "Failed to remove file" << FLAGS_assembly_dir);
   }
-  if (symlink(config->assembly_dir().c_str(), FLAGS_assembly_dir.c_str())) {
+  if (symlink(config->assembly_dir().c_str(),
+              FLAGS_assembly_dir.c_str())) {
     return CF_ERRNO("symlink(\"" << config->assembly_dir() << "\", \""
                                  << FLAGS_assembly_dir << "\") failed");
   }
@@ -280,7 +285,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
   }
   if (symlink(first_instance.c_str(), double_legacy_instance_dir.c_str())) {
     return CF_ERRNO("symlink(\"" << first_instance << "\", \""
-                                 << double_legacy_instance_dir << "\") failed");
+                                 << double_legacy_instance_dir
+                                 << "\") failed");
   }
 
   CF_EXPECT(CreateDynamicDiskFiles(fetcher_config, *config));
