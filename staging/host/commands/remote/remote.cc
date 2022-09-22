@@ -48,4 +48,20 @@ Result<std::vector<std::string>> CloudOrchestratorApi::ListHosts() {
   return result;
 }
 
+Result<std::vector<std::string>> CloudOrchestratorApi::ListCVDWebRTCStreams(
+    const std::string& host) {
+  std::string url =
+      service_url_ + "/v1/zones/" + zone_ + "/hosts/" + host + "/devices";
+  auto resp = CF_EXPECT(http_client_.GetToString(url), "Http client failed");
+  CF_EXPECT(resp.HttpSuccess(), "Http request failed with status code: "
+                                    << resp.http_code << ", server response:\n"
+                                    << resp.data);
+  auto root = CF_EXPECT(ParseJson(resp.data), "Failed parsing response body");
+  std::vector<std::string> result;
+  for (int index = 0; index < root.size(); index++) {
+    result.push_back(root[index].asString());
+  }
+  return result;
+}
+
 }  // namespace cuttlefish
