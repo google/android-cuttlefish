@@ -17,6 +17,8 @@
 #include "host/commands/assemble_cvd/disk_flags.h"
 
 #include <android-base/logging.h>
+#include <android-base/parsebool.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
@@ -37,6 +39,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/inject.h"
+#include "host/libs/config/instance_nums.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
@@ -80,11 +83,11 @@ DEFINE_string(otheros_initramfs_path, "",
               "Location of cuttlefish otheros initramfs.img.");
 DEFINE_string(otheros_root_image, "",
               "Location of cuttlefish otheros root filesystem image.");
-
-DEFINE_int32(blank_metadata_image_mb, 64,
-             "The size of the blank metadata image to generate, MB.");
-DEFINE_int32(blank_sdcard_image_mb, 2048,
-             "If enabled, the size of the blank sdcard image to generate, MB.");
+DEFINE_string(blank_metadata_image_mb, "64",
+              "The size of the blank metadata image to generate, MB.");
+DEFINE_string(
+    blank_sdcard_image_mb, "2048",
+    "If enabled, the size of the blank sdcard image to generate, MB.");
 
 DECLARE_string(ap_rootfs_image);
 DECLARE_string(bootloader);
@@ -145,95 +148,100 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-std::vector<ImagePartition> GetOsCompositeDiskConfig() {
+std::vector<ImagePartition> GetOsCompositeDiskConfig(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition{
       .label = "misc",
-      .image_file_path = AbsolutePath(FLAGS_misc_image),
+      .image_file_path = AbsolutePath(instance.misc_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_a",
-      .image_file_path = AbsolutePath(FLAGS_boot_image),
+      .image_file_path = AbsolutePath(instance.new_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_b",
-      .image_file_path = AbsolutePath(FLAGS_boot_image),
+      .image_file_path = AbsolutePath(instance.new_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "init_boot_a",
-      .image_file_path = AbsolutePath(FLAGS_init_boot_image),
+      .image_file_path = AbsolutePath(instance.init_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "init_boot_b",
-      .image_file_path = AbsolutePath(FLAGS_init_boot_image),
+      .image_file_path = AbsolutePath(instance.init_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_a",
-      .image_file_path = AbsolutePath(FLAGS_vendor_boot_image),
+      .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_b",
-      .image_file_path = AbsolutePath(FLAGS_vendor_boot_image),
+      .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_a",
-      .image_file_path = AbsolutePath(FLAGS_vbmeta_image),
+      .image_file_path = AbsolutePath(instance.vbmeta_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_b",
-      .image_file_path = AbsolutePath(FLAGS_vbmeta_image),
+      .image_file_path = AbsolutePath(instance.vbmeta_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_a",
-      .image_file_path = AbsolutePath(FLAGS_vbmeta_system_image),
+      .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_b",
-      .image_file_path = AbsolutePath(FLAGS_vbmeta_system_image),
+      .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "super",
-      .image_file_path = AbsolutePath(FLAGS_super_image),
+      .image_file_path = AbsolutePath(instance.super_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "userdata",
-      .image_file_path = AbsolutePath(FLAGS_data_image),
+      .image_file_path = AbsolutePath(instance.data_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "metadata",
-      .image_file_path = AbsolutePath(FLAGS_metadata_image),
+      .image_file_path = AbsolutePath(instance.metadata_image()),
       .read_only = FLAGS_use_overlay,
   });
-  if (!FLAGS_otheros_root_image.empty()) {
+  if (!instance.otheros_root_image().empty()) {
     partitions.push_back(ImagePartition{
         .label = "otheros_esp",
-        .image_file_path = AbsolutePath(FLAGS_otheros_esp_image),
+        .image_file_path = AbsolutePath(instance.otheros_esp_image()),
         .type = kEfiSystemPartition,
         .read_only = FLAGS_use_overlay,
     });
     partitions.push_back(ImagePartition{
         .label = "otheros_root",
-        .image_file_path = AbsolutePath(FLAGS_otheros_root_image),
+        .image_file_path = AbsolutePath(instance.otheros_root_image()),
         .read_only = FLAGS_use_overlay,
     });
   }
   if (!FLAGS_ap_rootfs_image.empty()) {
+    // In case if there are multiple ap_rootfs_image input
+    // we could only take 1st one and shared by all instances
+    std::string ap_rootfs_image =
+      android::base::Split(FLAGS_ap_rootfs_image, ",")[0];
     partitions.push_back(ImagePartition{
         .label = "ap_rootfs",
-        .image_file_path = AbsolutePath(FLAGS_ap_rootfs_image),
+        .image_file_path = AbsolutePath(ap_rootfs_image),
         .read_only = FLAGS_use_overlay,
     });
   }
@@ -243,7 +251,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig() {
 DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   return DiskBuilder()
-      .Partitions(GetOsCompositeDiskConfig())
+      .Partitions(GetOsCompositeDiskConfig(instance))
       .VmManager(config.vm_manager())
       .CrosvmPath(config.crosvm_binary())
       .ConfigPath(config.AssemblyPath("os_composite_disk_config.txt"))
@@ -299,7 +307,9 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
 
 class BootImageRepacker : public SetupFeature {
  public:
-  INJECT(BootImageRepacker(const CuttlefishConfig& config)) : config_(config) {}
+  INJECT(BootImageRepacker(const CuttlefishConfig& config,
+                           const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
 
   // SetupFeature
   std::string Name() const override { return "BootImageRepacker"; }
@@ -313,18 +323,18 @@ class BootImageRepacker : public SetupFeature {
 
  protected:
   bool Setup() override {
-    if (!FileHasContent(FLAGS_boot_image)) {
-      LOG(ERROR) << "File not found: " << FLAGS_boot_image;
+    if (!FileHasContent(instance_.boot_image())) {
+      LOG(ERROR) << "File not found: " << instance_.boot_image();
       return false;
     }
     // The init_boot partition is be optional for testing boot.img
     // with the ramdisk inside.
-    if (!FileHasContent(FLAGS_init_boot_image)) {
-      LOG(WARNING) << "File not found: " << FLAGS_init_boot_image;
+    if (!FileHasContent(instance_.init_boot_image())) {
+      LOG(WARNING) << "File not found: " << instance_.init_boot_image();
     }
 
-    if (!FileHasContent(FLAGS_vendor_boot_image)) {
-      LOG(ERROR) << "File not found: " << FLAGS_vendor_boot_image;
+    if (!FileHasContent(instance_.vendor_boot_image())) {
+      LOG(ERROR) << "File not found: " << instance_.vendor_boot_image();
       return false;
     }
 
@@ -333,13 +343,12 @@ class BootImageRepacker : public SetupFeature {
     // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
     // able to extract the ramdisk.img in a later stage and so this step must
     // not fail (..and the repacked kernel wouldn't be used anyway).
-    if (FLAGS_kernel_path.size() &&
+    if (instance_.kernel_path().size() &&
         config_.vm_manager() != Gem5Manager::name()) {
-      const std::string new_boot_image_path =
-          config_.AssemblyPath("boot_repacked.img");
+      const std::string new_boot_image_path = instance_.new_boot_image();
       bool success =
-          RepackBootImage(FLAGS_kernel_path, FLAGS_boot_image,
-                          new_boot_image_path, config_.assembly_dir());
+          RepackBootImage(instance_.kernel_path(), instance_.boot_image(),
+                          new_boot_image_path, instance_.instance_dir());
       if (!success) {
         LOG(ERROR) << "Failed to regenerate the boot image with the new kernel";
         return false;
@@ -348,13 +357,13 @@ class BootImageRepacker : public SetupFeature {
                                    google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
 
-    if (FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
+    if (instance_.kernel_path().size() || instance_.initramfs_path().size()) {
       const std::string new_vendor_boot_image_path =
-          config_.AssemblyPath("vendor_boot_repacked.img");
+          instance_.new_vendor_boot_image();
       // Repack the vendor boot images if kernels and/or ramdisks are passed in.
-      if (FLAGS_initramfs_path.size()) {
+      if (instance_.initramfs_path().size()) {
         bool success = RepackVendorBootImage(
-            FLAGS_initramfs_path, FLAGS_vendor_boot_image,
+            instance_.initramfs_path(), instance_.vendor_boot_image(),
             new_vendor_boot_image_path, config_.assembly_dir(),
             config_.bootconfig_supported());
         if (!success) {
@@ -365,7 +374,7 @@ class BootImageRepacker : public SetupFeature {
           // If it's just the kernel, repack the vendor boot image without a
           // ramdisk.
           bool success = RepackVendorBootImageWithEmptyRamdisk(
-              FLAGS_vendor_boot_image, new_vendor_boot_image_path,
+              instance_.vendor_boot_image(), new_vendor_boot_image_path,
               config_.assembly_dir(), config_.bootconfig_supported());
           if (!success) {
             LOG(ERROR) << "Failed to regenerate the vendor boot image without "
@@ -383,6 +392,7 @@ class BootImageRepacker : public SetupFeature {
 
  private:
   const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 class Gem5ImageUnpacker : public SetupFeature {
@@ -409,6 +419,9 @@ class Gem5ImageUnpacker : public SetupFeature {
 
  protected:
   Result<void> ResultSetup() override {
+    const CuttlefishConfig::InstanceSpecific& instance_ =
+        config_.ForDefaultInstance();
+
     /* Unpack the original or repacked boot and vendor boot ramdisks, so that
      * we have access to the baked bootconfig and raw compressed ramdisks.
      * This allows us to emulate what a bootloader would normally do, which
@@ -418,28 +431,29 @@ class Gem5ImageUnpacker : public SetupFeature {
      * does the parts which are instance agnostic.
      */
 
-    CF_EXPECT(FileHasContent(FLAGS_boot_image), FLAGS_boot_image);
+    CF_EXPECT(FileHasContent(instance_.boot_image()), instance_.boot_image());
     // The init_boot partition is be optional for testing boot.img
     // with the ramdisk inside.
-    if (!FileHasContent(FLAGS_init_boot_image)) {
-      LOG(WARNING) << "File not found: " << FLAGS_init_boot_image;
+    if (!FileHasContent(instance_.init_boot_image())) {
+      LOG(WARNING) << "File not found: " << instance_.init_boot_image();
     }
 
-    CF_EXPECT(FileHasContent(FLAGS_vendor_boot_image), FLAGS_vendor_boot_image);
+    CF_EXPECT(FileHasContent(instance_.vendor_boot_image()),
+              instance_.vendor_boot_image());
 
     const std::string unpack_dir = config_.assembly_dir();
 
-    CF_EXPECT(UnpackBootImage(FLAGS_init_boot_image, unpack_dir),
+    CF_EXPECT(UnpackBootImage(instance_.init_boot_image(), unpack_dir),
               "Failed to extract the init boot image");
 
-    CF_EXPECT(
-        UnpackVendorBootImageIfNotUnpacked(FLAGS_vendor_boot_image, unpack_dir),
-        "Failed to extract the vendor boot image");
+    CF_EXPECT(UnpackVendorBootImageIfNotUnpacked(instance_.vendor_boot_image(),
+                                                 unpack_dir),
+              "Failed to extract the vendor boot image");
 
     // Assume the user specified a kernel manually which is a vmlinux
     std::ofstream kernel(unpack_dir + "/kernel", std::ios_base::binary |
                                                  std::ios_base::trunc);
-    std::ifstream vmlinux(FLAGS_kernel_path, std::ios_base::binary);
+    std::ifstream vmlinux(instance_.kernel_path(), std::ios_base::binary);
     kernel << vmlinux.rdbuf();
     kernel.close();
 
@@ -450,10 +464,10 @@ class Gem5ImageUnpacker : public SetupFeature {
                     S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0 ||
                   errno == EEXIST,
               "\"" << binaries_dir << "\": " << strerror(errno));
-    std::ofstream bootloader(binaries_dir + "/" +
-                             cpp_basename(FLAGS_bootloader),
-                             std::ios_base::binary | std::ios_base::trunc);
-    std::ifstream src_bootloader(FLAGS_bootloader, std::ios_base::binary);
+    std::ofstream bootloader(
+        binaries_dir + "/" + cpp_basename(instance_.bootloader()),
+        std::ios_base::binary | std::ios_base::trunc);
+    std::ifstream src_bootloader(instance_.bootloader(), std::ios_base::binary);
     bootloader << src_bootloader.rdbuf();
     bootloader.close();
 
@@ -462,8 +476,9 @@ class Gem5ImageUnpacker : public SetupFeature {
     // Work around this by copying such a named file from the same directory
     std::ofstream boot_arm(binaries_dir + "/boot.arm",
                            std::ios_base::binary | std::ios_base::trunc);
-    std::ifstream src_boot_arm(cpp_dirname(FLAGS_bootloader) + "/boot.arm",
-                               std::ios_base::binary);
+    std::ifstream src_boot_arm(
+        cpp_dirname(instance_.bootloader()) + "/boot.arm",
+        std::ios_base::binary);
     boot_arm << src_boot_arm.rdbuf();
     boot_arm.close();
 
@@ -647,7 +662,9 @@ class GeneratePersistentVbmeta : public SetupFeature {
 
 class InitializeMetadataImage : public SetupFeature {
  public:
-  INJECT(InitializeMetadataImage()) {}
+  INJECT(InitializeMetadataImage(
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   // SetupFeature
   std::string Name() const override { return "InitializeMetadataImage"; }
@@ -656,17 +673,19 @@ class InitializeMetadataImage : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    if (FileExists(FLAGS_metadata_image) &&
-        FileSize(FLAGS_metadata_image) == FLAGS_blank_metadata_image_mb << 20) {
+    if (FileExists(instance_.metadata_image()) &&
+        FileSize(instance_.metadata_image()) == instance_.blank_metadata_image_mb() << 20) {
       return {};
     }
 
-    CF_EXPECT(CreateBlankImage(FLAGS_metadata_image,
-                               FLAGS_blank_metadata_image_mb, "none"),
-              "Failed to create \"" << FLAGS_metadata_image << "\" with size "
-                                    << FLAGS_blank_metadata_image_mb);
+    CF_EXPECT(CreateBlankImage(instance_.metadata_image(),
+                               instance_.blank_metadata_image_mb(), "none"),
+              "Failed to create \"" << instance_.metadata_image()
+                                    << "\" with size "
+                                    << instance_.blank_metadata_image_mb());
     return {};
   }
+  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 class InitializeAccessKregistryImage : public SetupFeature {
@@ -768,7 +787,7 @@ class InitializeSdCard : public SetupFeature {
       return {};
     }
     CF_EXPECT(CreateBlankImage(instance_.sdcard_path(),
-                               FLAGS_blank_sdcard_image_mb, "sdcard"),
+                               instance_.blank_sdcard_image_mb(), "sdcard"),
               "Failed to create \"" << instance_.sdcard_path() << "\"");
     return {};
   }
@@ -855,7 +874,9 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
 
 class VbmetaEnforceMinimumSize : public SetupFeature {
  public:
-  INJECT(VbmetaEnforceMinimumSize()) {}
+  INJECT(VbmetaEnforceMinimumSize(
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   std::string Name() const override { return "VbmetaEnforceMinimumSize"; }
   bool Enabled() const override { return true; }
@@ -866,7 +887,7 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
     // libavb expects to be able to read the maximum vbmeta size, so we must
     // provide a partition which matches this or the read will fail
     for (const auto& vbmeta_image :
-         {FLAGS_vbmeta_image, FLAGS_vbmeta_system_image}) {
+         {instance_.vbmeta_image(), instance_.vbmeta_system_image()}) {
       if (FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
         auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
         CF_EXPECT(fd->IsOpen(), "Could not open \"" << vbmeta_image << "\": "
@@ -878,11 +899,15 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
     }
     return {};
   }
+
+  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 class BootloaderPresentCheck : public SetupFeature {
  public:
-  INJECT(BootloaderPresentCheck()) {}
+  INJECT(BootloaderPresentCheck(
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   std::string Name() const override { return "BootloaderPresentCheck"; }
   bool Enabled() const override { return true; }
@@ -890,31 +915,30 @@ class BootloaderPresentCheck : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    CF_EXPECT(FileHasContent(FLAGS_bootloader),
-              "File not found: " << FLAGS_bootloader);
+    CF_EXPECT(FileHasContent(instance_.bootloader()),
+              "File not found: " << instance_.bootloader());
     return {};
   }
+
+  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-static fruit::Component<> DiskChangesComponent(const FetcherConfig* fetcher,
-                                               const CuttlefishConfig* config) {
+static fruit::Component<> DiskChangesComponent(
+    const FetcherConfig* fetcher, const CuttlefishConfig* config,
+    const CuttlefishConfig::InstanceSpecific* instance) {
   return fruit::createComponent()
       .bindInstance(*fetcher)
       .bindInstance(*config)
+      .bindInstance(*instance)
       .addMultibinding<SetupFeature, InitializeMetadataImage>()
       .addMultibinding<SetupFeature, BootImageRepacker>()
       .addMultibinding<SetupFeature, VbmetaEnforceMinimumSize>()
       .addMultibinding<SetupFeature, BootloaderPresentCheck>()
       .addMultibinding<SetupFeature, Gem5ImageUnpacker>()
-      .install(FixedMiscImagePathComponent, &FLAGS_misc_image)
       .install(InitializeMiscImageComponent)
-      .install(FixedDataImagePathComponent, &FLAGS_data_image)
-      .install(InitializeDataImageComponent)
       // Create esp if necessary
-      .install(InitializeEspImageComponent, &FLAGS_otheros_esp_image,
-               &FLAGS_otheros_kernel_path, &FLAGS_otheros_initramfs_path,
-               &FLAGS_otheros_root_image, config)
-      .install(SuperImageRebuilderComponent, &FLAGS_super_image);
+      .install(InitializeEspImageComponent)
+      .install(SuperImageRebuilderComponent);
 }
 
 static fruit::Component<> DiskChangesPerInstanceComponent(
@@ -932,26 +956,212 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<SetupFeature, GeneratePersistentBootconfig>()
       .addMultibinding<SetupFeature, GeneratePersistentVbmeta>()
       .addMultibinding<SetupFeature, InitializeInstanceCompositeDisk>()
+      .install(InitializeDataImageComponent)
       .install(InitBootloaderEnvPartitionComponent);
+}
+
+Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config) {
+  std::vector<std::string> boot_image =
+      android::base::Split(FLAGS_boot_image, ",");
+  std::vector<std::string> init_boot_image =
+      android::base::Split(FLAGS_init_boot_image, ",");
+  std::vector<std::string> data_image =
+      android::base::Split(FLAGS_data_image, ",");
+  std::vector<std::string> super_image =
+      android::base::Split(FLAGS_super_image, ",");
+  std::vector<std::string> misc_image =
+      android::base::Split(FLAGS_misc_image, ",");
+  std::vector<std::string> metadata_image =
+      android::base::Split(FLAGS_metadata_image, ",");
+  std::vector<std::string> vendor_boot_image =
+      android::base::Split(FLAGS_vendor_boot_image, ",");
+  std::vector<std::string> vbmeta_image =
+      android::base::Split(FLAGS_vbmeta_image, ",");
+  std::vector<std::string> vbmeta_system_image =
+      android::base::Split(FLAGS_vbmeta_system_image, ",");
+  std::vector<std::string> otheros_esp_image =
+      android::base::Split(FLAGS_otheros_esp_image, ",");
+  std::vector<std::string> otheros_kernel_path =
+      android::base::Split(FLAGS_otheros_kernel_path, ",");
+  std::vector<std::string> otheros_initramfs_path =
+      android::base::Split(FLAGS_otheros_initramfs_path, ",");
+  std::vector<std::string> otheros_root_image =
+      android::base::Split(FLAGS_otheros_root_image, ",");
+  std::vector<std::string> bootloader =
+      android::base::Split(FLAGS_bootloader, ",");
+  std::vector<std::string> initramfs_path =
+      android::base::Split(FLAGS_initramfs_path, ",");
+  std::vector<std::string> kernel_path =
+      android::base::Split(FLAGS_kernel_path, ",");
+
+  std::vector<std::string> blank_metadata_image_mb =
+      android::base::Split(FLAGS_blank_metadata_image_mb, ",");
+  std::vector<std::string> blank_sdcard_image_mb =
+      android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
+
+  std::string cur_kernel_path;
+  std::string cur_initramfs_path;
+  std::string cur_boot_image;
+  std::string cur_vendor_boot_image;
+  int value;
+  int instance_index = 0;
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  for (const auto& num : instance_nums) {
+    auto instance = config.ForInstance(num);
+    if (instance_index >= misc_image.size()) {
+      // legacy variable. Vectorize by copy [0] to all instances
+      instance.set_misc_image(misc_image[0]);
+    } else {
+      instance.set_misc_image(misc_image[instance_index]);
+    }
+    if (instance_index >= boot_image.size()) {
+      cur_boot_image = boot_image[0];
+    } else {
+      cur_boot_image = boot_image[instance_index];
+    }
+    instance.set_boot_image(cur_boot_image);
+    instance.set_new_boot_image(cur_boot_image);
+
+    if (instance_index >= init_boot_image.size()) {
+      instance.set_init_boot_image(init_boot_image[0]);
+    } else {
+      instance.set_init_boot_image(init_boot_image[instance_index]);
+    }
+    if (instance_index >= vendor_boot_image.size()) {
+      cur_vendor_boot_image = vendor_boot_image[0];
+    } else {
+      cur_vendor_boot_image = vendor_boot_image[instance_index];
+    }
+    instance.set_vendor_boot_image(cur_vendor_boot_image);
+    instance.set_new_vendor_boot_image(cur_vendor_boot_image);
+
+    if (instance_index >= vbmeta_image.size()) {
+      instance.set_vbmeta_image(vbmeta_image[0]);
+    } else {
+      instance.set_vbmeta_image(vbmeta_image[instance_index]);
+    }
+    if (instance_index >= vbmeta_system_image.size()) {
+      instance.set_vbmeta_system_image(vbmeta_system_image[0]);
+    } else {
+      instance.set_vbmeta_system_image(vbmeta_system_image[instance_index]);
+    }
+    if (instance_index >= super_image.size()) {
+      instance.set_super_image(super_image[0]);
+    } else {
+      instance.set_super_image(super_image[instance_index]);
+    }
+    if (instance_index >= data_image.size()) {
+      instance.set_data_image(data_image[0]);
+    } else {
+      instance.set_data_image(data_image[instance_index]);
+    }
+    if (instance_index >= metadata_image.size()) {
+      instance.set_metadata_image(metadata_image[0]);
+    } else {
+      instance.set_metadata_image(metadata_image[instance_index]);
+    }
+    if (instance_index >= otheros_root_image.size()) {
+      instance.set_otheros_root_image(otheros_root_image[0]);
+    } else {
+      instance.set_otheros_root_image(otheros_root_image[instance_index]);
+    }
+    if (instance_index >= otheros_esp_image.size()) {
+      instance.set_otheros_esp_image(otheros_esp_image[0]);
+    } else {
+      instance.set_otheros_esp_image(otheros_esp_image[instance_index]);
+    }
+    if (instance_index >= otheros_kernel_path.size()) {
+      instance.set_otheros_kernel_path(otheros_kernel_path[0]);
+    } else {
+      instance.set_otheros_kernel_path(otheros_kernel_path[instance_index]);
+    }
+    if (instance_index >= otheros_initramfs_path.size()) {
+      instance.set_otheros_initramfs_path(otheros_initramfs_path[0]);
+    } else {
+      instance.set_otheros_initramfs_path(
+          otheros_initramfs_path[instance_index]);
+    }
+    if (instance_index >= bootloader.size()) {
+      instance.set_bootloader(bootloader[0]);
+    } else {
+      instance.set_bootloader(bootloader[instance_index]);
+    }
+    if (instance_index >= kernel_path.size()) {
+      cur_kernel_path = kernel_path[0];
+    } else {
+      cur_kernel_path = kernel_path[instance_index];
+    }
+    instance.set_kernel_path(cur_kernel_path);
+    if (instance_index >= initramfs_path.size()) {
+      cur_initramfs_path = initramfs_path[0];
+    } else {
+      cur_initramfs_path = initramfs_path[instance_index];
+    }
+    instance.set_initramfs_path(cur_initramfs_path);
+
+    if (instance_index >= blank_metadata_image_mb.size()) {
+      value = 16;
+    } else {
+      CHECK(android::base::ParseInt(blank_metadata_image_mb[instance_index],
+                                    &value))
+          << "Invalid 'blank_metadata_image_mb' "
+          << blank_metadata_image_mb[instance_index];
+    }
+    instance.set_blank_metadata_image_mb(value);
+
+    if (instance_index >= blank_sdcard_image_mb.size()) {
+      value = 2048;
+    } else {
+      CHECK(android::base::ParseInt(blank_sdcard_image_mb[instance_index],
+                                    &value))
+          << "Invalid 'blank_sdcard_image_mb' "
+          << blank_sdcard_image_mb[instance_index];
+    }
+    instance.set_blank_sdcard_image_mb(value);
+
+    // Repacking a boot.img changes boot_image and vendor_boot_image paths
+    const CuttlefishConfig& const_config = const_cast<const CuttlefishConfig&>(config);
+    const CuttlefishConfig::InstanceSpecific const_instance = const_config.ForInstance(num);
+    if (cur_kernel_path.size() &&
+        config.vm_manager() != Gem5Manager::name()) {
+      const std::string new_boot_image_path =
+          const_instance.PerInstancePath("boot_repacked.img");
+      // change the new flag value to corresponding instance
+      instance.set_new_boot_image(new_boot_image_path.c_str());
+    }
+
+    if (cur_kernel_path.size() || cur_initramfs_path.size()) {
+      const std::string new_vendor_boot_image_path =
+          const_instance.PerInstancePath("vendor_boot_repacked.img");
+      // Repack the vendor boot images if kernels and/or ramdisks are passed in.
+      if (cur_initramfs_path.size()) {
+        // change the new flag value to corresponding instance
+        instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
+      }
+    }
+    instance_index++;
+  }
+  return {};
 }
 
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config) {
-  // TODO(schuffelen): Unify this with the other injector created in
-  // assemble_cvd.cpp
-  fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config);
-
-  for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
-    CF_EXPECT(late_injected->LateInject(injector));
-  }
-
-  const auto& features = injector.getMultibindings<SetupFeature>();
-  CF_EXPECT(SetupFeature::RunSetup(features));
-
   for (const auto& instance : config.Instances()) {
+    // TODO(schuffelen): Unify this with the other injector created in
+    // assemble_cvd.cpp
+    int index;
+    CF_EXPECT(android::base::ParseInt(instance.id().c_str(), &index));
+    fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config,
+                               &instance);
+    for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
+      CF_EXPECT(late_injected->LateInject(injector));
+    }
+
+    const auto& features = injector.getMultibindings<SetupFeature>();
+    CF_EXPECT(SetupFeature::RunSetup(features));
     fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
                                         &fetcher_config, &config, &instance);
-
     for (auto& late_injected :
          instance_injector.getMultibindings<LateInjected>()) {
       CF_EXPECT(late_injected->LateInject(instance_injector));
@@ -961,30 +1171,29 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         instance_injector.getMultibindings<SetupFeature>();
     CF_EXPECT(SetupFeature::RunSetup(instance_features),
               "instance = \"" << instance.instance_name() << "\"");
-  }
 
-  // Check if filling in the sparse image would run out of disk space.
-  auto existing_sizes = SparseFileSizes(FLAGS_data_image);
-  CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
-            "Unable to determine size of \"" << FLAGS_data_image
-                                             << "\". Does this file exist?");
-  auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
-  if (available_space < existing_sizes.sparse_size - existing_sizes.disk_size) {
-    // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a
-    // separate machine
-    return CF_ERR("Not enough space remaining in fs containing \""
-                  << FLAGS_data_image << "\", wanted "
-                  << (existing_sizes.sparse_size - existing_sizes.disk_size)
-                  << ", got " << available_space);
-  } else {
-    LOG(DEBUG) << "Available space: " << available_space;
-    LOG(DEBUG) << "Sparse size of \"" << FLAGS_data_image
-               << "\": " << existing_sizes.sparse_size;
-    LOG(DEBUG) << "Disk size of \"" << FLAGS_data_image
-               << "\": " << existing_sizes.disk_size;
-  }
+    // Check if filling in the sparse image would run out of disk space.
+    auto existing_sizes = SparseFileSizes(instance.data_image());
+    CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
+              "Unable to determine size of \"" << instance.data_image()
+                                               << "\". Does this file exist?");
+    auto available_space = AvailableSpaceAtPath(instance.data_image());
+    if (available_space <
+        existing_sizes.sparse_size - existing_sizes.disk_size) {
+      // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a
+      // separate machine
+      return CF_ERR("Not enough space remaining in fs containing \""
+                    << instance.data_image() << "\", wanted "
+                    << (existing_sizes.sparse_size - existing_sizes.disk_size)
+                    << ", got " << available_space);
+    } else {
+      LOG(DEBUG) << "Available space: " << available_space;
+      LOG(DEBUG) << "Sparse size of \"" << instance.data_image()
+                 << "\": " << existing_sizes.sparse_size;
+      LOG(DEBUG) << "Disk size of \"" << instance.data_image()
+                 << "\": " << existing_sizes.disk_size;
+    }
 
-  for (const auto& instance : config.Instances()) {
     auto os_disk_builder = OsCompositeDiskBuilder(config, instance);
     auto built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
@@ -1025,11 +1234,9 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
     if (config.vm_manager() == Gem5Manager::name()) {
-      RepackGem5BootImage(
-          instance.PerInstancePath("initrd.img"),
-          instance.persistent_bootconfig_path(),
-          config.assembly_dir(),
-          FLAGS_initramfs_path);
+      RepackGem5BootImage(instance.PerInstancePath("initrd.img"),
+                          instance.persistent_bootconfig_path(),
+                          config.assembly_dir(), instance.initramfs_path());
     }
   }
 
