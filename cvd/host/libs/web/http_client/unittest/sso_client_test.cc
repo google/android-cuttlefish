@@ -122,8 +122,8 @@ TEST(SsoClientTest, GetToStringFailsExecutionFails) {
   auto result = client.GetToString("https://some.url");
 
   EXPECT_FALSE(result.ok());
-  EXPECT_TRUE(result.error().Message().find(stdout_) != std::string::npos);
-  EXPECT_TRUE(result.error().Message().find(stderr_) != std::string::npos);
+  EXPECT_TRUE(result.error().message().find(stdout_) != std::string::npos);
+  EXPECT_TRUE(result.error().message().find(stderr_) != std::string::npos);
 }
 
 }  // namespace http_client
