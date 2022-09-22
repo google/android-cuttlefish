@@ -65,14 +65,23 @@ DEFINE_bool(use_sso_client, false,
 namespace cuttlefish {
 namespace {
 
+void PrintCVDs(const std::string& host, const std::vector<std::string>& cvds) {
+  for (const std::string& cvd : cvds) {
+    CVDOutput o{
+      service_url : FLAGS_service_url,
+      zone : FLAGS_zone,
+      host : host,
+      verbose : FLAGS_verbose,
+      name : cvd
+    };
+    std::cout << o.ToString() << std::endl;
+  }
+}
+
 int Main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   if (FLAGS_service_url == "") {
     LOG(ERROR) << "Missing service url flag";
-    return -1;
-  }
-  if (FLAGS_host == "") {
-    LOG(ERROR) << "Instances from all hosts is not implemented yet";
     return -1;
   }
   auto http_client =
@@ -80,20 +89,31 @@ int Main(int argc, char** argv) {
           ? std::unique_ptr<HttpClient>(new http_client::SsoClient())
           : HttpClient::CurlClient();
   CloudOrchestratorApi api(FLAGS_service_url, FLAGS_zone, *http_client);
-  auto cvd_streams = api.ListCVDWebRTCStreams(FLAGS_host);
-  if (!cvd_streams.ok()) {
-    LOG(ERROR) << cvd_streams.error().message();
-    return -1;
-  }
-  for (auto s : *cvd_streams) {
-    CVDOutput o{
-      service_url : FLAGS_service_url,
-      zone : FLAGS_zone,
-      host : FLAGS_host,
-      verbose : FLAGS_verbose,
-      name : s
-    };
-    std::cout << o.ToString() << std::endl;
+  // TODO(b/248087309): Implements list cvds with multiple hosts asynchronously.
+  if (FLAGS_host == "") {
+    auto hosts = api.ListHosts();
+    if (!hosts.ok()) {
+      LOG(ERROR) << hosts.error().message();
+      return -1;
+    }
+    if ((*hosts).empty()) {
+      std::cerr << "~ No cvds found ~" << std::endl;
+      return 0;
+    }
+    for (const std::string& host : *hosts) {
+      auto cvd_streams = api.ListCVDWebRTCStreams(host);
+      if (!cvd_streams.ok()) {
+        continue;
+      }
+      PrintCVDs(host, *cvd_streams);
+    }
+  } else {
+    auto cvd_streams = api.ListCVDWebRTCStreams(FLAGS_host);
+    if (!cvd_streams.ok()) {
+      LOG(ERROR) << cvd_streams.error().message();
+      return -1;
+    }
+    PrintCVDs(FLAGS_host, *cvd_streams);
   }
   return 0;
 }
