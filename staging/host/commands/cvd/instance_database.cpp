@@ -49,6 +49,18 @@ Result<Set<T>> InstanceDatabase::Find(
   return (itr->second)(value);
 }
 
+template <typename T>
+Result<T> InstanceDatabase::FindOne(
+    const Query& query,
+    const Map<FieldName, ConstHandler<T>>& handler_map) const {
+  auto set = CF_EXPECT(Find<T>(query, handler_map));
+  if (set.size() != 1) {
+    return CF_ERR("Only one Instance (Group) is expected but "
+                  << set.size() << " was found.");
+  }
+  return {*set.cbegin()};
+}
+
 Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroups(
     const Query& query) const {
   return Find<LocalInstanceGroup>(query, group_handlers_);
@@ -57,6 +69,15 @@ Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroups(
 Result<Set<LocalInstance>> InstanceDatabase::FindInstances(
     const Query& query) const {
   return Find<LocalInstance>(query, instance_handlers_);
+}
+
+Result<LocalInstanceGroup> InstanceDatabase::FindGroup(
+    const Query& query) const {
+  return FindOne<LocalInstanceGroup>(query, group_handlers_);
+}
+
+Result<LocalInstance> InstanceDatabase::FindInstance(const Query& query) const {
+  return FindOne<LocalInstance>(query, instance_handlers_);
 }
 
 }  // namespace instance_db
