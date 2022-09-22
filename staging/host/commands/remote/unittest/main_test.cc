@@ -13,30 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include <gtest/gtest.h>
 
-#include <string>
-
-#include "common/libs/utils/result.h"
-#include "host/libs/web/http_client/http_client.h"
-
-namespace cuttlefish {
-
-class CloudOrchestratorApi {
- public:
-  CloudOrchestratorApi(const std::string& service_url, const std::string& zone,
-                       HttpClient& http_client);
-  ~CloudOrchestratorApi();
-
-  Result<std::vector<std::string>> ListHosts();
-
-  Result<std::vector<std::string>> ListCVDWebRTCStreams(
-      const std::string& host);
-
- private:
-  const std::string& service_url_;
-  const std::string& zone_;
-  HttpClient& http_client_;
-};
-
-}  // namespace cuttlefish
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
