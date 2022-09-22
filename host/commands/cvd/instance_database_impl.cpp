@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/instance_database.h"
 
+#include <algorithm>
+
 #include <android-base/parseint.h>
 
 #include "host/commands/cvd/instance_database_utils.h"
@@ -23,6 +25,45 @@
 
 namespace cuttlefish {
 namespace instance_db {
+
+Result<void> InstanceDatabase::AddInstanceGroup(
+    const std::string& home_dir, const std::string& host_binaries_dir) {
+  Query query = {selector::kHomeField, home_dir};
+  auto instance_groups =
+      CF_EXPECT(Find<LocalInstanceGroup>(query, group_handlers_));
+  if (!instance_groups.empty()) {
+    return CF_ERR(home_dir << " is already taken");
+  }
+  local_instance_groups_.emplace_back(home_dir, host_binaries_dir);
+  return {};
+}
+
+Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup& group,
+                                           const int id) {
+  auto itr = std::find(local_instance_groups_.begin(),
+                       local_instance_groups_.end(), group);
+  if (itr == local_instance_groups_.end()) {
+    return CF_ERR("Group at " << group.HomeDir() << " does not exist "
+                              << "inside the Instance Database");
+  }
+
+  auto instances = CF_EXPECT(
+      FindInstances({selector::kInstanceIdField, std::to_string(id)}));
+  if (instances.size() != 0) {
+    return CF_ERR("instance id " << id << " is taken");
+  }
+  return itr->AddInstance(id);
+}
+
+bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
+  auto itr = std::find(local_instance_groups_.begin(),
+                       local_instance_groups_.end(), group);
+  if (itr == local_instance_groups_.end()) {
+    return false;
+  }
+  local_instance_groups_.erase(itr);
+  return true;
+}
 
 Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroupsByHome(
     const std::string& home) const {
