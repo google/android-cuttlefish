@@ -81,7 +81,7 @@ DEFINE_string(otheros_initramfs_path, "",
 DEFINE_string(otheros_root_image, "",
               "Location of cuttlefish otheros root filesystem image.");
 
-DEFINE_int32(blank_metadata_image_mb, 16,
+DEFINE_int32(blank_metadata_image_mb, 64,
              "The size of the blank metadata image to generate, MB.");
 DEFINE_int32(blank_sdcard_image_mb, 2048,
              "If enabled, the size of the blank sdcard image to generate, MB.");
@@ -656,7 +656,8 @@ class InitializeMetadataImage : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    if (FileExists(FLAGS_metadata_image)) {
+    if (FileExists(FLAGS_metadata_image) &&
+        FileSize(FLAGS_metadata_image) == FLAGS_blank_metadata_image_mb << 20) {
       return {};
     }
 
