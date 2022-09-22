@@ -25,6 +25,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/test_gce_driver/gce_api.h"
 #include "host/commands/test_gce_driver/key_pair.h"
 
 namespace cuttlefish {
@@ -116,13 +117,24 @@ Result<std::unique_ptr<ScopedGceInstance>> ScopedGceInstance::CreateDefault(
   auto ssh_pubkey =
       CF_EXPECT(ssh_key->OpenSshPublicKey(), "Could get openssh format key: ");
 
+  // TODO(schuffelen): Pass this through more layers to make it more general.
+  auto network_interface = GceNetworkInterface::Default();
+  if (internal) {
+    network_interface.Network(
+        "https://www.googleapis.com/compute/v1/projects/android-treehugger/"
+        "global/networks/cloud-tf-vpc");
+    network_interface.Subnetwork(
+        "https://www.googleapis.com/compute/v1/projects/android-treehugger/"
+        "regions/us-west1/subnetworks/cloud-tf-vpc");
+  }
+
   auto default_instance_info =
       GceInstanceInfo()
           .Name(instance_name)
           .Zone(zone)
           .MachineType("zones/us-west1-a/machineTypes/n1-standard-4")
           .AddMetadata("ssh-keys", "vsoc-01:" + ssh_pubkey)
-          .AddNetworkInterface(GceNetworkInterface::Default())
+          .AddNetworkInterface(std::move(network_interface))
           .AddDisk(
               GceInstanceDisk::EphemeralBootDisk()
                   .SourceImage(
