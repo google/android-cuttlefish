@@ -99,7 +99,10 @@ class ServerLoopImpl : public ServerLoop,
               client->Write(&response, sizeof(response));
               std::exit(0);
             } else {
-              LOG(ERROR) << "Failed to stop subprocesses:\n" << stop.error();
+              LOG(ERROR) << "Failed to stop subprocesses:\n"
+                         << stop.error().Message();
+              LOG(DEBUG) << "Failed to stop subprocesses:\n"
+                         << stop.error().Trace();
               auto response = LauncherResponse::kError;
               client->Write(&response, sizeof(response));
             }
@@ -124,7 +127,10 @@ class ServerLoopImpl : public ServerLoop,
 
             auto stop = process_monitor.StopMonitoredProcesses();
             if (!stop.ok()) {
-              LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
+              LOG(ERROR) << "Stopping processes failed:\n"
+                         << stop.error().Message();
+              LOG(DEBUG) << "Stopping processes failed:\n"
+                         << stop.error().Trace();
               auto response = LauncherResponse::kError;
               client->Write(&response, sizeof(response));
               break;
@@ -148,7 +154,10 @@ class ServerLoopImpl : public ServerLoop,
           case LauncherAction::kRestart: {
             auto stop = process_monitor.StopMonitoredProcesses();
             if (!stop.ok()) {
-              LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
+              LOG(ERROR) << "Stopping processes failed:\n"
+                         << stop.error().Message();
+              LOG(DEBUG) << "Stopping processes failed:\n"
+                         << stop.error().Trace();
               auto response = LauncherResponse::kError;
               client->Write(&response, sizeof(response));
               break;

@@ -199,7 +199,8 @@ ScopedGceInstance::ScopedGceInstance(GceApi& gce,
 ScopedGceInstance::~ScopedGceInstance() {
   auto delete_ins = gce_.Delete(instance_).Future().get();
   if (!delete_ins.ok()) {
-    LOG(ERROR) << "Failed to delete instance: " << delete_ins.error().message();
+    LOG(ERROR) << "Failed to delete instance: " << delete_ins.error().Message();
+    LOG(DEBUG) << "Failed to delete instance: " << delete_ins.error().Trace();
   }
 }
 
