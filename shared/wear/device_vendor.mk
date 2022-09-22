@@ -26,29 +26,13 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/wearable_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/wearable_core_hardware.xml \
 
 $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
-
-PRODUCT_VENDOR_PROPERTIES += \
-    keyguard.no_require_sim=true \
-    ro.cdma.home.operator.alpha=Android \
-    ro.cdma.home.operator.numeric=302780 \
-    ro.com.android.dataroaming=true \
-    ro.telephony.default_network=9 \
-
-TARGET_USES_CF_RILD ?= true
-ifeq ($(TARGET_USES_CF_RILD),true)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
-PRODUCT_PACKAGES += \
-    libcuttlefish-ril-2 \
-    libcuttlefish-rild
-endif
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.output.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.output.xml \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
     frameworks/native/data/etc/android.hardware.location.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.xml \
-    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml \
-    frameworks/native/data/etc/android.hardware.telephony.ims.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.ims.xml \
 
 # Runtime Resource Overlays
 PRODUCT_PACKAGES += \
