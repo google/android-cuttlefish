@@ -24,7 +24,7 @@ namespace http_client {
 
 TEST(SsoClientTest, GetToStringSucceeds) {
   std::string stdout_ =
-      "HTTP/1.1 222 Bad Request\r\n"
+      "HTTP/1.1 222 OK\r\n"
       "Content-Type: application/json\r\n"
       "Vary: Accept-Encoding\r\n"
       "Date: Tue, 19 Jul 2022 00:00:54 GMT\r\n"
@@ -122,8 +122,8 @@ TEST(SsoClientTest, GetToStringFailsExecutionFails) {
   auto result = client.GetToString("https://some.url");
 
   EXPECT_FALSE(result.ok());
-  EXPECT_TRUE(result.error().message().find(stdout_) != std::string::npos);
-  EXPECT_TRUE(result.error().message().find(stderr_) != std::string::npos);
+  EXPECT_TRUE(result.error().Message().find(stdout_) != std::string::npos);
+  EXPECT_TRUE(result.error().Message().find(stderr_) != std::string::npos);
 }
 
 }  // namespace http_client

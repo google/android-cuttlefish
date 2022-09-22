@@ -38,7 +38,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/acloud_command.h"
@@ -47,6 +46,7 @@
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/help_command.h"
+#include "host/commands/cvd/scope_guard.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
@@ -68,11 +68,12 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
       while (running_) {
         auto result = epoll_pool_.HandleEvent();
         if (!result.ok()) {
-          LOG(ERROR) << "Epoll worker error:\n" << result.error();
+          LOG(ERROR) << "Epoll worker error:\n" << result.error().Message();
+          LOG(DEBUG) << "Epoll worker error:\n" << result.error().Trace();
         }
       }
       auto wakeup = BestEffortWakeup();
-      CHECK(wakeup.ok()) << wakeup.error().message();
+      CHECK(wakeup.ok()) << wakeup.error().Trace();
     });
   }
 }
@@ -80,7 +81,7 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
 CvdServer::~CvdServer() {
   running_ = false;
   auto wakeup = BestEffortWakeup();
-  CHECK(wakeup.ok()) << wakeup.error().message();
+  CHECK(wakeup.ok()) << wakeup.error().Trace();
   Join();
 }
 
@@ -136,7 +137,7 @@ void CvdServer::Stop() {
       request->handler->Interrupt();
     }
     auto wakeup = BestEffortWakeup();
-    CHECK(wakeup.ok()) << wakeup.error();
+    CHECK(wakeup.ok()) << wakeup.error().Trace();
     std::scoped_lock lock(threads_mutex_);
     for (auto& thread : threads_) {
       auto current_thread = thread.get_id() == std::this_thread::get_id();
@@ -264,7 +265,7 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   if (!response.ok()) {
     cvd::Response failure_message;
     failure_message.mutable_status()->set_code(cvd::Status::INTERNAL);
-    failure_message.mutable_status()->set_message(response.error().message());
+    failure_message.mutable_status()->set_message(response.error().Message());
     CF_EXPECT(SendResponse(event.fd, failure_message));
     return {};  // Error already sent to the client, don't repeat on the server
   }
