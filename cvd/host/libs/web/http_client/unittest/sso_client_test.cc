@@ -24,7 +24,7 @@ namespace http_client {
 
 TEST(SsoClientTest, GetToStringSucceeds) {
   std::string stdout_ =
-      "HTTP/1.1 222 OK\r\n"
+      "HTTP/1.1 222 Bad Request\r\n"
       "Content-Type: application/json\r\n"
       "Vary: Accept-Encoding\r\n"
       "Date: Tue, 19 Jul 2022 00:00:54 GMT\r\n"
