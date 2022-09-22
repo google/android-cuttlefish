@@ -65,6 +65,169 @@ bool CuttlefishConfig::InstanceSpecific::use_bootloader() const {
   return true;
 };
 
+// vectorized and moved system image files into instance specific
+static constexpr char kBootImage[] = "boot_image";
+std::string CuttlefishConfig::InstanceSpecific::boot_image() const {
+  return (*Dictionary())[kBootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_boot_image(
+    const std::string& boot_image) {
+  (*Dictionary())[kBootImage] = boot_image;
+}
+static constexpr char kNewBootImage[] = "new_boot_image";
+std::string CuttlefishConfig::InstanceSpecific::new_boot_image() const {
+  return (*Dictionary())[kNewBootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_boot_image(
+    const std::string& new_boot_image) {
+  (*Dictionary())[kNewBootImage] = new_boot_image;
+}
+static constexpr char kInitBootImage[] = "init_boot_image";
+std::string CuttlefishConfig::InstanceSpecific::init_boot_image() const {
+  return (*Dictionary())[kInitBootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_init_boot_image(
+    const std::string& init_boot_image) {
+  (*Dictionary())[kInitBootImage] = init_boot_image;
+}
+static constexpr char kDataImage[] = "data_image";
+std::string CuttlefishConfig::InstanceSpecific::data_image() const {
+  return (*Dictionary())[kDataImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_data_image(
+    const std::string& data_image) {
+  (*Dictionary())[kDataImage] = data_image;
+}
+static constexpr char kSuperImage[] = "super_image";
+std::string CuttlefishConfig::InstanceSpecific::super_image() const {
+  return (*Dictionary())[kSuperImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_super_image(
+    const std::string& super_image) {
+  (*Dictionary())[kSuperImage] = super_image;
+}
+static constexpr char kMiscImage[] = "misc_image";
+std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
+  return (*Dictionary())[kMiscImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_misc_image(
+    const std::string& misc_image) {
+  (*Dictionary())[kMiscImage] = misc_image;
+}
+static constexpr char kMetadataImage[] = "metadata_image";
+std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
+  return (*Dictionary())[kMetadataImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_metadata_image(
+    const std::string& metadata_image) {
+  (*Dictionary())[kMetadataImage] = metadata_image;
+}
+static constexpr char kVendorBootImage[] = "vendor_boot_image";
+std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image() const {
+  return (*Dictionary())[kVendorBootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vendor_boot_image(
+    const std::string& vendor_boot_image) {
+  (*Dictionary())[kVendorBootImage] = vendor_boot_image;
+}
+static constexpr char kNewVendorBootImage[] = "new_vendor_boot_image";
+std::string CuttlefishConfig::InstanceSpecific::new_vendor_boot_image() const {
+  return (*Dictionary())[kNewVendorBootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_vendor_boot_image(
+    const std::string& new_vendor_boot_image) {
+  (*Dictionary())[kNewVendorBootImage] = new_vendor_boot_image;
+}
+static constexpr char kVbmetaImage[] = "vbmeta_image";
+std::string CuttlefishConfig::InstanceSpecific::vbmeta_image() const {
+  return (*Dictionary())[kVbmetaImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_image(
+    const std::string& vbmeta_image) {
+  (*Dictionary())[kVbmetaImage] = vbmeta_image;
+}
+static constexpr char kVbmetaSystemImage[] = "vbmeta_system_image";
+std::string CuttlefishConfig::InstanceSpecific::vbmeta_system_image() const {
+  return (*Dictionary())[kVbmetaSystemImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_system_image(
+    const std::string& vbmeta_system_image) {
+  (*Dictionary())[kVbmetaSystemImage] = vbmeta_system_image;
+}
+static constexpr char kOtherosEspImage[] = "otheros_esp_image";
+std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
+  return (*Dictionary())[kOtherosEspImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_otheros_esp_image(
+    const std::string& otheros_esp_image) {
+  (*Dictionary())[kOtherosEspImage] = otheros_esp_image;
+}
+static constexpr char kOtherosKernelPath[] = "otheros_kernel_path";
+std::string CuttlefishConfig::InstanceSpecific::otheros_kernel_path() const {
+  return (*Dictionary())[kOtherosKernelPath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_otheros_kernel_path(
+    const std::string& otheros_kernel_path) {
+  (*Dictionary())[kOtherosKernelPath] = otheros_kernel_path;
+}
+static constexpr char kOtherosInitramfsPath[] = "otheros_initramfs_path";
+std::string CuttlefishConfig::InstanceSpecific::otheros_initramfs_path() const {
+  return (*Dictionary())[kOtherosInitramfsPath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_otheros_initramfs_path(
+    const std::string& otheros_initramfs_path) {
+  (*Dictionary())[kOtherosInitramfsPath] = otheros_initramfs_path;
+}
+static constexpr char kOtherosRootImage[] = "otheros_root_image";
+std::string CuttlefishConfig::InstanceSpecific::otheros_root_image() const {
+  return (*Dictionary())[kOtherosRootImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_otheros_root_image(
+    const std::string& otheros_root_image) {
+  (*Dictionary())[kOtherosRootImage] = otheros_root_image;
+}
+static constexpr char kBlankMetadataImageMb[] = "blank_metadata_image_mb";
+int CuttlefishConfig::InstanceSpecific::blank_metadata_image_mb() const {
+  return (*Dictionary())[kBlankMetadataImageMb].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_blank_metadata_image_mb(
+    int blank_metadata_image_mb) {
+  (*Dictionary())[kBlankMetadataImageMb] = blank_metadata_image_mb;
+}
+static constexpr char kBlankSdcardImageMb[] = "blank_sdcard_image_mb";
+int CuttlefishConfig::InstanceSpecific::blank_sdcard_image_mb() const {
+  return (*Dictionary())[kBlankSdcardImageMb].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_blank_sdcard_image_mb(
+    int blank_sdcard_image_mb) {
+  (*Dictionary())[kBlankSdcardImageMb] = blank_sdcard_image_mb;
+}
+static constexpr char kBootloader[] = "bootloader";
+std::string CuttlefishConfig::InstanceSpecific::bootloader() const {
+  return (*Dictionary())[kBootloader].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_bootloader(
+    const std::string& bootloader) {
+  (*Dictionary())[kBootloader] = bootloader;
+}
+static constexpr char kInitramfsPath[] = "initramfs_path";
+std::string CuttlefishConfig::InstanceSpecific::initramfs_path() const {
+  return (*Dictionary())[kInitramfsPath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_initramfs_path(
+    const std::string& initramfs_path) {
+  (*Dictionary())[kInitramfsPath] = initramfs_path;
+}
+static constexpr char kKernelPath[] = "kernel_path";
+std::string CuttlefishConfig::InstanceSpecific::kernel_path() const {
+  return (*Dictionary())[kKernelPath].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_kernel_path(
+    const std::string& kernel_path) {
+  (*Dictionary())[kKernelPath] = kernel_path;
+}
+// end of system image files
+
 static constexpr char kSerialNumber[] = "serial_number";
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
   return (*Dictionary())[kSerialNumber].asString();
@@ -178,6 +341,24 @@ bool CuttlefishConfig::InstanceSpecific::kgdb() const {
 static constexpr char kCpus[] = "cpus";
 void CuttlefishConfig::MutableInstanceSpecific::set_cpus(int cpus) { (*Dictionary())[kCpus] = cpus; }
 int CuttlefishConfig::InstanceSpecific::cpus() const { return (*Dictionary())[kCpus].asInt(); }
+
+static constexpr char kDataPolicy[] = "data_policy";
+void CuttlefishConfig::MutableInstanceSpecific::set_data_policy(
+    const std::string& data_policy) {
+  (*Dictionary())[kDataPolicy] = data_policy;
+}
+std::string CuttlefishConfig::InstanceSpecific::data_policy() const {
+  return (*Dictionary())[kDataPolicy].asString();
+}
+
+static constexpr char kBlankDataImageMb[] = "blank_data_image_mb";
+void CuttlefishConfig::MutableInstanceSpecific::set_blank_data_image_mb(
+    int blank_data_image_mb) {
+  (*Dictionary())[kBlankDataImageMb] = blank_data_image_mb;
+}
+int CuttlefishConfig::InstanceSpecific::blank_data_image_mb() const {
+  return (*Dictionary())[kBlankDataImageMb].asInt();
+}
 
 static constexpr char kGdbPort[] = "gdb_port";
 void CuttlefishConfig::MutableInstanceSpecific::set_gdb_port(int port) {

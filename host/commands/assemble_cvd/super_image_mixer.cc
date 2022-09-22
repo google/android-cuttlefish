@@ -256,17 +256,12 @@ Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
   return {};
 }
 
-class SuperImageOutputPathTag {};
-
 class SuperImageRebuilderImpl : public SuperImageRebuilder {
  public:
-  INJECT(SuperImageRebuilderImpl(const FetcherConfig& fetcher_config,
-                                 const CuttlefishConfig& config,
-                                 ANNOTATED(SuperImageOutputPathTag, std::string)
-                                     output_path))
-      : fetcher_config_(fetcher_config),
-        config_(config),
-        output_path_(output_path) {}
+  INJECT(SuperImageRebuilderImpl(
+      const FetcherConfig& fetcher_config, const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : fetcher_config_(fetcher_config), config_(config), instance_(instance) {}
 
   std::string Name() const override { return "SuperImageRebuilderImpl"; }
   bool Enabled() const override { return true; }
@@ -275,24 +270,24 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
     if (SuperImageNeedsRebuilding(fetcher_config_)) {
-      CF_EXPECT(RebuildSuperImage(fetcher_config_, config_, output_path_));
+      CF_EXPECT(
+          RebuildSuperImage(fetcher_config_, config_, instance_.super_image()));
     }
     return {};
   }
 
   const FetcherConfig& fetcher_config_;
   const CuttlefishConfig& config_;
-  std::string output_path_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const FetcherConfig, const CuttlefishConfig>,
+fruit::Component<fruit::Required<const FetcherConfig, const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
                  SuperImageRebuilder>
-SuperImageRebuilderComponent(const std::string* output_path) {
+SuperImageRebuilderComponent() {
   return fruit::createComponent()
-      .bindInstance<fruit::Annotated<SuperImageOutputPathTag, std::string>>(
-          *output_path)
       .bind<SuperImageRebuilder, SuperImageRebuilderImpl>()
       .addMultibinding<SetupFeature, SuperImageRebuilder>();
 }
