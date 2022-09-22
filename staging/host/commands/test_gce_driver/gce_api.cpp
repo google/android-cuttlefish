@@ -126,15 +126,45 @@ const Json::Value& GceInstanceDisk::AsJson() const { return data_; }
 GceNetworkInterface::GceNetworkInterface(const Json::Value& data)
     : data_(data) {}
 
+constexpr char kNetwork[] = "network";
 constexpr char kGceNetworkAccessConfigs[] = "accessConfigs";
 GceNetworkInterface GceNetworkInterface::Default() {
   Json::Value json{Json::ValueType::objectValue};
-  json["network"] = "global/networks/default";
+  json[kNetwork] = "global/networks/default";
   Json::Value accessConfig{Json::ValueType::objectValue};
   accessConfig["type"] = "ONE_TO_ONE_NAT";
   accessConfig["name"] = "External NAT";
   EnsureArrayMember(json, kGceNetworkAccessConfigs).append(accessConfig);
   return GceNetworkInterface(json);
+}
+
+std::optional<std::string> GceNetworkInterface::Network() const {
+  return OptStringMember(data_, kNetwork);
+}
+GceNetworkInterface& GceNetworkInterface::Network(
+    const std::string& network) & {
+  data_[kNetwork] = network;
+  return *this;
+}
+GceNetworkInterface GceNetworkInterface::Network(
+    const std::string& network) && {
+  data_[kNetwork] = network;
+  return *this;
+}
+
+constexpr char kSubnetwork[] = "network";
+std::optional<std::string> GceNetworkInterface::Subnetwork() const {
+  return OptStringMember(data_, kSubnetwork);
+}
+GceNetworkInterface& GceNetworkInterface::Subnetwork(
+    const std::string& subnetwork) & {
+  data_[kSubnetwork] = subnetwork;
+  return *this;
+}
+GceNetworkInterface GceNetworkInterface::Subnetwork(
+    const std::string& subnetwork) && {
+  data_[kSubnetwork] = subnetwork;
+  return *this;
 }
 
 constexpr char kGceNetworkExternalIp[] = "natIP";
