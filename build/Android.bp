@@ -51,6 +51,8 @@ cvd_host_tools = [
     "cvd_host_bugreport",
     "cvd_status",
     "cvd_test_gce_driver",
+    "cvdremote_list_cvds",
+    "cvdremote_list_hosts",
     "extract-ikconfig",
     "extract-vmlinux",
     "fsck.f2fs",
