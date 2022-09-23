@@ -26,7 +26,7 @@
 namespace cuttlefish {
 class GnssClient {
  public:
-  GnssClient(std::shared_ptr<grpc::Channel> channel);
+  GnssClient(const std::shared_ptr<grpc::Channel>& channel);
 
   Result<grpc::Status> SendGpsLocations(
       int delay, const GpsFixArray& coordinates);
