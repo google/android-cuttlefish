@@ -31,26 +31,16 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/instance_database_utils.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
-Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
-  std::string home_realpath;
-  if (DirectoryExists(home)) {
-    if (!android::base::Realpath(home, &home_realpath)) {
-      return CF_ERR(home << " does not point to any existing directory/file"
-                         << " while it must do");
-    }
-    static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
-    std::string config_path = AbsolutePath(home_realpath + kSuffix);
-    if (FileExists(config_path)) {
-      return config_path;
-    }
-  }
-  return {};
+Result<std::string> InstanceManager::GetCuttlefishConfigPath(
+    const std::string& home) {
+  return instance_db::GetCuttlefishConfigPath(home);
 }
 
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager)
