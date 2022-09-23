@@ -33,6 +33,7 @@ java_test_host {
         "tradefed",
     ],
     static_libs: [
+        "cuttlefish_host_test_utils",
         "platform-test-annotations",
     ],
     jni_libs: [
