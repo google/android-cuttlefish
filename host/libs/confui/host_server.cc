@@ -33,8 +33,7 @@ namespace {
 
 template <typename Derived, typename Base>
 std::unique_ptr<Derived> DowncastTo(std::unique_ptr<Base>&& base) {
-  Base* tmp = base.get();
-  base.reset();
+  Base* tmp = base.release();
   Derived* derived = static_cast<Derived*>(tmp);
   return std::unique_ptr<Derived>(derived);
 }
@@ -144,6 +143,12 @@ void HostServer::HalCmdFetcherLoop() {
   }
 }
 
+/**
+ * Send inputs generated not by auto-tester but by the human users
+ *
+ * Send such inputs into the command queue consumed by the state machine
+ * in the main loop/current session.
+ */
 void HostServer::SendUserSelection(std::unique_ptr<ConfUiMessage>& input) {
   if (!curr_session_ ||
       curr_session_->GetState() != MainLoopState::kInSession ||
@@ -162,9 +167,7 @@ void HostServer::TouchEvent(const int x, const int y, const bool is_down) {
   }
   std::unique_ptr<ConfUiMessage> input =
       std::make_unique<ConfUiUserTouchMessage>(GetCurrentSessionId(), x, y);
-  constexpr bool is_secure = true;
-  auto secure_input = WrapWithSecureFlag(std::move(input), is_secure);
-  SendUserSelection(secure_input);
+  SendUserSelection(input);
 }
 
 void HostServer::UserAbortEvent() {
@@ -174,9 +177,7 @@ void HostServer::UserAbortEvent() {
   std::unique_ptr<ConfUiMessage> input =
       std::make_unique<ConfUiUserSelectionMessage>(GetCurrentSessionId(),
                                                    UserResponse::kUserAbort);
-  constexpr bool is_secure = true;
-  auto secure_input = WrapWithSecureFlag(std::move(input), is_secure);
-  SendUserSelection(secure_input);
+  SendUserSelection(input);
 }
 
 bool HostServer::IsConfUiActive() {
