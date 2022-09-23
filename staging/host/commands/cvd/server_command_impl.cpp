@@ -100,7 +100,7 @@ Result<Command> ConstructCommand(const std::string& bin_path,
   // Set CuttlefishConfig path based on assembly dir,
   // used by subcommands when locating the CuttlefishConfig.
   if (envs.count(kCuttlefishConfigEnvVarName) == 0) {
-    auto config_path = GetCuttlefishConfigPath(home);
+    auto config_path = InstanceManager::GetCuttlefishConfigPath(home);
     if (config_path.ok()) {
       command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, *config_path);
     }
