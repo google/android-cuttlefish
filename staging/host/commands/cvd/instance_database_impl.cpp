@@ -26,6 +26,8 @@
 namespace cuttlefish {
 namespace instance_db {
 
+void InstanceDatabase::Clear() { local_instance_groups_.clear(); }
+
 Result<void> InstanceDatabase::AddInstanceGroup(
     const std::string& home_dir, const std::string& host_binaries_dir) {
   Query query = {selector::kHomeField, home_dir};
