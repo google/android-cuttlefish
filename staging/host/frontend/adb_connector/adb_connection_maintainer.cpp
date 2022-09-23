@@ -64,7 +64,7 @@ constexpr std::size_t kAdbMessageLengthLength = 4;
 
 constexpr int kAdbDaemonPort = 5037;
 
-bool AdbSendMessage(SharedFD sock, const std::string& message) {
+bool AdbSendMessage(const SharedFD& sock, const std::string& message) {
   if (!sock->IsOpen()) {
     return false;
   }
@@ -94,7 +94,7 @@ bool IsInteger(const std::string& str) {
 }
 
 // assumes the OKAY/FAIL status has already been read
-std::string RecvAdbResponse(SharedFD sock) {
+std::string RecvAdbResponse(const SharedFD& sock) {
   auto length_as_hex_str = RecvAll(sock, kAdbMessageLengthLength);
   if (!IsInteger(length_as_hex_str)) {
     return {};
@@ -105,7 +105,7 @@ std::string RecvAdbResponse(SharedFD sock) {
 
 // Returns a negative value if uptime result couldn't be read for
 // any reason.
-int RecvUptimeResult(SharedFD sock) {
+int RecvUptimeResult(const SharedFD& sock) {
   std::vector<char> uptime_vec{};
   std::vector<char> just_read(16);
   do {
@@ -179,7 +179,7 @@ void WaitForAdbDisconnection(const std::string& address) {
 
 }  // namespace
 
-[[noreturn]] void EstablishAndMaintainConnection(std::string address) {
+[[noreturn]] void EstablishAndMaintainConnection(const std::string& address) {
   while (true) {
     EstablishConnection(address);
     WaitForAdbDisconnection(address);
