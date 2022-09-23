@@ -55,6 +55,7 @@ class InstanceManager {
                        const std::optional<std::string>& env_config,
                        const std::string& host_tool_dir,
                        const std::vector<std::string>& args) const;
+  static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
  private:
   cvd::Status CvdFleetImpl(const SharedFD& out,
@@ -67,7 +68,5 @@ class InstanceManager {
   mutable std::mutex instance_groups_mutex_;
   std::map<InstanceGroupDir, InstanceGroupInfo> instance_groups_;
 };
-
-Result<std::string> GetCuttlefishConfigPath(const std::string& assembly_dir);
 
 }  // namespace cuttlefish
