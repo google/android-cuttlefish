@@ -68,11 +68,12 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
       while (running_) {
         auto result = epoll_pool_.HandleEvent();
         if (!result.ok()) {
-          LOG(ERROR) << "Epoll worker error:\n" << result.error();
+          LOG(ERROR) << "Epoll worker error:\n" << result.error().Message();
+          LOG(DEBUG) << "Epoll worker error:\n" << result.error().Trace();
         }
       }
       auto wakeup = BestEffortWakeup();
-      CHECK(wakeup.ok()) << wakeup.error().message();
+      CHECK(wakeup.ok()) << wakeup.error().Trace();
     });
   }
 }
@@ -80,7 +81,7 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
 CvdServer::~CvdServer() {
   running_ = false;
   auto wakeup = BestEffortWakeup();
-  CHECK(wakeup.ok()) << wakeup.error().message();
+  CHECK(wakeup.ok()) << wakeup.error().Trace();
   Join();
 }
 
@@ -136,7 +137,7 @@ void CvdServer::Stop() {
       request->handler->Interrupt();
     }
     auto wakeup = BestEffortWakeup();
-    CHECK(wakeup.ok()) << wakeup.error();
+    CHECK(wakeup.ok()) << wakeup.error().Trace();
     std::scoped_lock lock(threads_mutex_);
     for (auto& thread : threads_) {
       auto current_thread = thread.get_id() == std::this_thread::get_id();
@@ -264,7 +265,7 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   if (!response.ok()) {
     cvd::Response failure_message;
     failure_message.mutable_status()->set_code(cvd::Status::INTERNAL);
-    failure_message.mutable_status()->set_message(response.error().message());
+    failure_message.mutable_status()->set_message(response.error().Message());
     CF_EXPECT(SendResponse(event.fd, failure_message));
     return {};  // Error already sent to the client, don't repeat on the server
   }
