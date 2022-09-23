@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <string>
+
 namespace cuttlefish {
 
 [[noreturn]] void EstablishAndMaintainConnection(std::string address);
