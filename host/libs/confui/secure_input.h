@@ -61,7 +61,7 @@ class ConfUiSecureUserTouchMessage : public ConfUiMessage {
   ConfUiCmd GetType() const override { return msg_.GetType(); }
   auto GetResponse() const { return msg_.GetResponse(); }
   bool SendOver(SharedFD fd) override { return msg_.SendOver(fd); }
-  std::pair<int, int> GetLocation() { return msg_.GetLocation(); }
+  std::pair<int, int> GetLocation() const { return msg_.GetLocation(); }
   bool IsSecure() const { return is_secure_; }
 
  private:
