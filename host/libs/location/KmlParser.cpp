@@ -145,7 +145,7 @@ static bool traverseSubtree(xmlNode* current, GpsFixArray* fixes,
         return false;
       }
     } else if (current->name != nullptr &&
-               strcmp((const char*)current->name, "text")) {
+               strcmp((const char*)current->name, "text") != 0) {
       // if it's not a Placemark we must go deeper
       if (!traverseSubtree(current->xmlChildrenNode, fixes, error)) {
         return false;
