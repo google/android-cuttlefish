@@ -26,6 +26,8 @@
 namespace cuttlefish {
 namespace instance_db {
 
+Result<std::string> GetCuttlefishConfigPath(const std::string& home);
+
 std::string GenInternalGroupName();
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name);

@@ -18,10 +18,25 @@
 
 #include <sstream>
 
+#include <android-base/file.h>
+
+#include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace instance_db {
+Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
+  std::string home_realpath;
+  if (DirectoryExists(home)) {
+    CF_EXPECT(android::base::Realpath(home, &home_realpath));
+    static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
+    std::string config_path = AbsolutePath(home_realpath + kSuffix);
+    if (FileExists(config_path)) {
+      return config_path;
+    }
+  }
+  return {};
+}
 
 std::string GenInternalGroupName() {
   std::string_view internal_name{kCvdNamePrefix};  // "cvd-"
