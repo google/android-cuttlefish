@@ -17,6 +17,7 @@
 #include "host/libs/confui/host_server.h"
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <tuple>
 
@@ -28,23 +29,34 @@
 
 namespace cuttlefish {
 namespace confui {
+namespace {
+
+template <typename Derived, typename Base>
+std::unique_ptr<Derived> DowncastTo(std::unique_ptr<Base>&& base) {
+  Base* tmp = base.get();
+  base.reset();
+  Derived* derived = static_cast<Derived*>(tmp);
+  return std::unique_ptr<Derived>(derived);
+}
+
+}  // namespace
+
 /**
  * null if not user/touch, or wrap it and ConfUiSecure{Selection,Touch}Message
  *
  * ConfUiMessage must NOT ConfUiSecure{Selection,Touch}Message types
  */
 static std::unique_ptr<ConfUiMessage> WrapWithSecureFlag(
-    const ConfUiMessage& base_msg, const bool secure) {
-  switch (base_msg.GetType()) {
+    std::unique_ptr<ConfUiMessage>&& base_msg, const bool secure) {
+  switch (base_msg->GetType()) {
     case ConfUiCmd::kUserInputEvent: {
-      const ConfUiUserSelectionMessage& as_selection =
-          static_cast<const ConfUiUserSelectionMessage&>(base_msg);
-      return ToSecureSelectionMessage(as_selection, secure);
+      auto as_selection =
+          DowncastTo<ConfUiUserSelectionMessage>(std::move(base_msg));
+      return ToSecureSelectionMessage(std::move(as_selection), secure);
     }
     case ConfUiCmd::kUserTouchEvent: {
-      const ConfUiUserTouchMessage& as_touch =
-          static_cast<const ConfUiUserTouchMessage&>(base_msg);
-      return ToSecureTouchMessage(as_touch, secure);
+      auto as_touch = DowncastTo<ConfUiUserTouchMessage>(std::move(base_msg));
+      return ToSecureTouchMessage(std::move(as_touch), secure);
     }
     default:
       return nullptr;
@@ -123,7 +135,8 @@ void HostServer::HalCmdFetcherLoop() {
      * always guaranteed to be picked up reasonably soon.
      */
     constexpr bool is_secure = false;
-    auto to_override_if_user_input = WrapWithSecureFlag(*msg, is_secure);
+    auto to_override_if_user_input =
+        WrapWithSecureFlag(std::move(msg), is_secure);
     if (to_override_if_user_input) {
       msg = std::move(to_override_if_user_input);
     }
@@ -139,7 +152,7 @@ void HostServer::SendUserSelection(std::unique_ptr<ConfUiMessage>& input) {
     return;
   }
   constexpr bool is_secure = true;
-  auto secure_input = WrapWithSecureFlag(*input, is_secure);
+  auto secure_input = WrapWithSecureFlag(std::move(input), is_secure);
   input_multiplexer_.Push(user_input_evt_q_id_, std::move(secure_input));
 }
 
@@ -150,7 +163,7 @@ void HostServer::TouchEvent(const int x, const int y, const bool is_down) {
   std::unique_ptr<ConfUiMessage> input =
       std::make_unique<ConfUiUserTouchMessage>(GetCurrentSessionId(), x, y);
   constexpr bool is_secure = true;
-  auto secure_input = WrapWithSecureFlag(*input, is_secure);
+  auto secure_input = WrapWithSecureFlag(std::move(input), is_secure);
   SendUserSelection(secure_input);
 }
 
@@ -162,7 +175,7 @@ void HostServer::UserAbortEvent() {
       std::make_unique<ConfUiUserSelectionMessage>(GetCurrentSessionId(),
                                                    UserResponse::kUserAbort);
   constexpr bool is_secure = true;
-  auto secure_input = WrapWithSecureFlag(*input, is_secure);
+  auto secure_input = WrapWithSecureFlag(std::move(input), is_secure);
   SendUserSelection(secure_input);
 }
 
@@ -215,7 +228,8 @@ bool HostServer::IsConfUiActive() {
           std::make_unique<ConfUiUserSelectionMessage>(
               GetCurrentSessionId(),
               (is_confirm ? UserResponse::kConfirm : UserResponse::kCancel));
-      input_ptr = WrapWithSecureFlag(*tmp_input_ptr, touch_event.IsSecure());
+      input_ptr =
+          WrapWithSecureFlag(std::move(tmp_input_ptr), touch_event.IsSecure());
     }
     Transition(input_ptr);
 
