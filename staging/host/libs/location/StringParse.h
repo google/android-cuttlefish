@@ -40,14 +40,12 @@ extern "C" {
 int SscanfWithCLocale(const char* string, const char* format, ...);
 }
 namespace cuttlefish {
-namespace {
 
 template <class... Args>
 int SscanfWithCLocale(const char* string, const char* format, Args... args) {
   return ::SscanfWithCLocale(string, format, std::forward<Args>(args)...);
 }
 
-}  // namespace
 }  // namespace cuttlefish
 
 #endif  // __cplusplus
