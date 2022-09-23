@@ -47,4 +47,27 @@ ScopedAStatus RefRadioNetwork::getUsageSetting(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RefRadioNetwork::setEmergencyMode(int32_t serial,
+                                                network::EmergencyMode emergencyMode) {
+    network::EmergencyRegResult regState;
+    respond()->setEmergencyModeResponse(responseInfo(serial), regState);
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::triggerEmergencyNetworkScan(
+        int32_t serial, const network::EmergencyNetworkScanTrigger& request) {
+    respond()->triggerEmergencyNetworkScanResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::exitEmergencyMode(int32_t serial) {
+    respond()->exitEmergencyModeResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::cancelEmergencyNetworkScan(int32_t serial) {
+    respond()->cancelEmergencyNetworkScanResponse(responseInfo(serial));
+    return ok();
+}
+
 }  // namespace cf::ril

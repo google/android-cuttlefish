@@ -30,6 +30,19 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
             int32_t serial,
             ::aidl::android::hardware::radio::network::UsageSetting usageSetting) override;
     ::ndk::ScopedAStatus getUsageSetting(int32_t serial) override;
+
+    ::ndk::ScopedAStatus setEmergencyMode(
+            int32_t serial,
+            ::aidl::android::hardware::radio::network::EmergencyMode emergencyMode) override;
+
+    ::ndk::ScopedAStatus triggerEmergencyNetworkScan(
+            int32_t serial,
+            const ::aidl::android::hardware::radio::network::EmergencyNetworkScanTrigger& request)
+            override;
+
+    ::ndk::ScopedAStatus exitEmergencyMode(int32_t serial) override;
+
+    ::ndk::ScopedAStatus cancelEmergencyNetworkScan(int32_t serial) override;
 };
 
 }  // namespace cf::ril
