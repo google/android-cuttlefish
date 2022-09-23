@@ -58,12 +58,13 @@ class InstanceDatabase {
    *  RemoveInstanceGroup(group)
    */
   bool RemoveInstanceGroup(const LocalInstanceGroup& group);
+  void Clear();
 
   Result<Set<LocalInstanceGroup>> FindGroups(const Query& query) const;
   Result<Set<LocalInstanceGroup>> FindGroups(const Queries& queries) const;
   Result<Set<LocalInstance>> FindInstances(const Query& query) const;
-  const auto& InstanceGroups() const { return local_instance_groups_; }
   Result<Set<LocalInstance>> FindInstances(const Queries& queries) const;
+  const auto& InstanceGroups() const { return local_instance_groups_; }
 
   /*
    * FindGroup/Instance method must be used when exactly one instance/group
