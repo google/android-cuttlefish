@@ -21,16 +21,14 @@
 #include <string>
 
 using gnss_grpc_proxy::GnssGrpcProxy;
-using gnss_grpc_proxy::SendGpsReply;
-using gnss_grpc_proxy::SendGpsRequest;
+using gnss_grpc_proxy::GpsCoordinates;
 using gnss_grpc_proxy::SendGpsCoordinatesReply;
 using gnss_grpc_proxy::SendGpsCoordinatesRequest;
-using gnss_grpc_proxy::GpsCoordinates;
 using grpc::ClientContext;
 
 namespace cuttlefish {
 
-GnssClient::GnssClient(std::shared_ptr<grpc::Channel> channel)
+GnssClient::GnssClient(const std::shared_ptr<grpc::Channel>& channel)
     : stub_(GnssGrpcProxy::NewStub(channel)) {}
 
 Result<grpc::Status> GnssClient::SendGpsLocations(
