@@ -16,9 +16,6 @@
 
 #include "host/commands/cvd/instance_group_record.h"
 
-#include <android-base/file.h>
-
-#include "common/libs/utils/files.h"
 #include "host/commands/cvd/instance_database_utils.h"
 #include "host/commands/cvd/selector_constants.h"
 
@@ -32,16 +29,7 @@ LocalInstanceGroup::LocalInstanceGroup(const std::string& home_dir,
       internal_group_name_(GenInternalGroupName()) {}
 
 Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
-  std::string home_realpath;
-  if (DirectoryExists(HomeDir())) {
-    CF_EXPECT(android::base::Realpath(HomeDir(), &home_realpath));
-    static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
-    std::string config_path = AbsolutePath(home_realpath + kSuffix);
-    if (FileExists(config_path)) {
-      return config_path;
-    }
-  }
-  return {};
+  return cuttlefish::instance_db::GetCuttlefishConfigPath(HomeDir());
 }
 
 std::size_t LocalInstanceGroup::HashCode() const noexcept {
