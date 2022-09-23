@@ -19,6 +19,6 @@
 
 namespace cuttlefish {
 
-[[noreturn]] void EstablishAndMaintainConnection(std::string address);
+[[noreturn]] void EstablishAndMaintainConnection(const std::string& address);
 
 }  // namespace cuttlefish

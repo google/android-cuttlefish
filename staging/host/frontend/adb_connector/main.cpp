@@ -62,7 +62,7 @@ int AdbConnectorMain(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   CHECK(!FLAGS_addresses.empty()) << "Must specify --addresses flag";
 
-  for (auto address : ParseAddressList(FLAGS_addresses)) {
+  for (const auto& address : ParseAddressList(FLAGS_addresses)) {
     LaunchConnectionMaintainerThread(address);
   }
 
