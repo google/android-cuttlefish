@@ -23,9 +23,9 @@ class ScopeGuard {
  public:
   ScopeGuard();
   explicit ScopeGuard(std::function<void()> fn);
-  ScopeGuard(ScopeGuard&&);
+  ScopeGuard(ScopeGuard&&) noexcept;
   ~ScopeGuard();
-  ScopeGuard& operator=(ScopeGuard&&);
+  ScopeGuard& operator=(ScopeGuard&&) noexcept;
 
   void Cancel();
 
