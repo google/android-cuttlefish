@@ -27,15 +27,12 @@ namespace cuttlefish {
 namespace instance_db {
 Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   std::string home_realpath;
-  if (DirectoryExists(home)) {
-    CF_EXPECT(android::base::Realpath(home, &home_realpath));
-    static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
-    std::string config_path = AbsolutePath(home_realpath + kSuffix);
-    if (FileExists(config_path)) {
-      return config_path;
-    }
-  }
-  return {};
+  CF_EXPECT(DirectoryExists(home), "Invalid Home Directory");
+  CF_EXPECT(android::base::Realpath(home, &home_realpath));
+  static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
+  std::string config_path = AbsolutePath(home_realpath + kSuffix);
+  CF_EXPECT(FileExists(config_path));
+  return CF_ERR("No config file exists.");
 }
 
 std::string GenInternalGroupName() {
