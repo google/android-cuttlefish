@@ -1101,7 +1101,10 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config) {
     instance.set_initramfs_path(cur_initramfs_path);
 
     if (instance_index >= blank_metadata_image_mb.size()) {
-      value = 16;
+      CHECK(android::base::ParseInt(blank_metadata_image_mb[0],
+                                    &value))
+          << "Invalid 'blank_metadata_image_mb' "
+          << blank_metadata_image_mb[0];
     } else {
       CHECK(android::base::ParseInt(blank_metadata_image_mb[instance_index],
                                     &value))
@@ -1111,7 +1114,10 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config) {
     instance.set_blank_metadata_image_mb(value);
 
     if (instance_index >= blank_sdcard_image_mb.size()) {
-      value = 2048;
+      CHECK(android::base::ParseInt(blank_sdcard_image_mb[0],
+                                    &value))
+          << "Invalid 'blank_sdcard_image_mb' "
+          << blank_sdcard_image_mb[0];
     } else {
       CHECK(android::base::ParseInt(blank_sdcard_image_mb[instance_index],
                                     &value))
@@ -1150,8 +1156,6 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   for (const auto& instance : config.Instances()) {
     // TODO(schuffelen): Unify this with the other injector created in
     // assemble_cvd.cpp
-    int index;
-    CF_EXPECT(android::base::ParseInt(instance.id().c_str(), &index));
     fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config,
                                &instance);
     for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
