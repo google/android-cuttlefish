@@ -21,11 +21,11 @@ namespace cuttlefish {
 
 ScopeGuard::ScopeGuard() = default;
 
-ScopeGuard::ScopeGuard(std::function<void()> fn) : fn_(fn) {}
+ScopeGuard::ScopeGuard(std::function<void()> fn) : fn_(std::move(fn)) {}
 
-ScopeGuard::ScopeGuard(ScopeGuard&&) = default;
+ScopeGuard::ScopeGuard(ScopeGuard&&) noexcept = default;
 
-ScopeGuard& ScopeGuard::operator=(ScopeGuard&&) = default;
+ScopeGuard& ScopeGuard::operator=(ScopeGuard&&) noexcept = default;
 
 ScopeGuard::~ScopeGuard() {
   if (fn_) {
