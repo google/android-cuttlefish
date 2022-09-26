@@ -16,12 +16,15 @@
 #ifndef COMMON_LIBS_NET_NETLINK_REQUEST_H_
 #define COMMON_LIBS_NET_NETLINK_REQUEST_H_
 
-#include <linux/netlink.h>
 #include <stddef.h>
 
+#include <linux/netlink.h>
+
 #include <array>
-#include <memory>
+#include <cstdint>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace cuttlefish {

@@ -15,16 +15,25 @@
  */
 #include "common/libs/net/network_interface_manager.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <arpa/inet.h>
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <net/if.h>
+#include <netinet/in.h>
 
 #include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
 
 #include "android-base/logging.h"
+#include "common/libs/net/netlink_client.h"
+#include "common/libs/net/netlink_request.h"
 #include "common/libs/net/network_interface.h"
 
 namespace cuttlefish {
