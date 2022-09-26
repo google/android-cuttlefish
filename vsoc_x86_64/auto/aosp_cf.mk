@@ -49,6 +49,9 @@ $(call inherit-product, device/google/cuttlefish/shared/auto/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
+# Increase auto userdata size to 21GB to accommodate GAS requirements
+TARGET_USERDATAIMAGE_PARTITION_SIZE ?= 22548578304
+
 # Exclude features that are not available on AOSP devices.
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
