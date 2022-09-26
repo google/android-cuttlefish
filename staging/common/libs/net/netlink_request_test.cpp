@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/net/netlink_client.h"
 
+#include "common/libs/net/netlink_request.h"
+
+#include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+
+#include <cstring>
+#include <ios>
+#include <ostream>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <android-base/logging.h>
-
-#include <iostream>
-#include <memory>
 
 using ::testing::ElementsAreArray;
 using ::testing::MatchResultListener;

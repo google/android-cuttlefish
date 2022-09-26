@@ -16,9 +16,8 @@
 #ifndef COMMON_LIBS_NET_NETLINK_CLIENT_H_
 #define COMMON_LIBS_NET_NETLINK_CLIENT_H_
 
-#include <stddef.h>
 #include <memory>
-#include <string>
+
 #include "common/libs/net/netlink_request.h"
 
 namespace cuttlefish {

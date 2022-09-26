@@ -20,6 +20,7 @@
 #include <string>
 
 #include "common/libs/net/netlink_client.h"
+#include "common/libs/net/netlink_request.h"
 #include "common/libs/net/network_interface.h"
 
 namespace cuttlefish {

@@ -16,13 +16,20 @@
 #include "common/libs/net/netlink_client.h"
 
 #include <errno.h>
-#include <linux/rtnetlink.h>
-#include <linux/sockios.h>
-#include <net/if.h>
+#include <linux/netlink.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
+
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <string>
+#include "ostream"  // for operator<<, basic_ostream
+
+#include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "android-base/logging.h"
+#include "common/libs/net/netlink_request.h"
 
 namespace cuttlefish {
 namespace {
