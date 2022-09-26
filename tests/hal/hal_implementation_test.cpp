@@ -202,6 +202,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.automotive.audiocontrol.", 1},
     {"android.hardware.automotive.audiocontrol.", 2},
     {"android.hardware.automotive.evs.", 1},
+    {"android.hardware.broadcastradio.", 1},
     {"android.hardware.automotive.occupant_awareness.", 1},
     {"android.hardware.automotive.vehicle.", 2},
 

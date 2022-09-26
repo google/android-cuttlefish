@@ -74,7 +74,7 @@ endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
 # Broadcast Radio
-PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
+PRODUCT_PACKAGES += android.hardware.broadcastradio-service.default
 
 # AudioControl HAL
 ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
