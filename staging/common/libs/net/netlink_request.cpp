@@ -15,13 +15,21 @@
  */
 #include "common/libs/net/netlink_request.h"
 
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <net/if.h>
-#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include <algorithm>
+#include <array>
+#include <cstdint>  // for int32_t
+#include <ostream>  // for operator<<, basic_ostream
 #include <string>
+#include <type_traits>  // for swap
+#include <utility>
 #include <vector>
 
 #include "android-base/logging.h"
