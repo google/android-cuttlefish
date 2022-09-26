@@ -56,7 +56,7 @@ int CvdHostBugreportMain(int argc, char** argv) {
   CHECK(config) << "Unable to find the config";
 
   auto out_path = FLAGS_output.c_str();
-  std::unique_ptr<FILE, decltype(&fclose)> out(fopen(out_path, "wb"), &fclose);
+  std::unique_ptr<FILE, decltype(&fclose)> out(fopen(out_path, "wbe"), &fclose);
   ZipWriter writer(out.get());
 
   auto save = [&writer, config](const std::string& path) {
