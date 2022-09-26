@@ -33,45 +33,43 @@ namespace cuttlefish {
 namespace confui {
 class ConfUiSecureUserSelectionMessage : public ConfUiMessage {
  public:
-  ConfUiSecureUserSelectionMessage(const ConfUiUserSelectionMessage& msg,
-                                   const bool secure)
-      : ConfUiMessage(msg.GetSessionId()), msg_(msg), is_secure_(secure) {}
+  ConfUiSecureUserSelectionMessage(
+      std::unique_ptr<ConfUiUserSelectionMessage>&& msg, const bool secure);
   ConfUiSecureUserSelectionMessage() = delete;
   virtual ~ConfUiSecureUserSelectionMessage() = default;
-  std::string ToString() const override { return msg_.ToString(); }
-  ConfUiCmd GetType() const override { return msg_.GetType(); }
-  auto GetResponse() const { return msg_.GetResponse(); }
+  std::string ToString() const override { return msg_->ToString(); }
+  ConfUiCmd GetType() const override { return msg_->GetType(); }
+  auto GetResponse() const { return msg_->GetResponse(); }
   // SendOver is between guest and host, so it doesn't send the is_secure_
-  bool SendOver(SharedFD fd) override { return msg_.SendOver(fd); }
+  bool SendOver(SharedFD fd) override { return msg_->SendOver(fd); }
   bool IsSecure() const { return is_secure_; }
   // SetSecure() might be needed later on but not now.
 
  private:
-  ConfUiUserSelectionMessage msg_;
+  std::unique_ptr<ConfUiUserSelectionMessage> msg_;
   bool is_secure_;
 };
 
 class ConfUiSecureUserTouchMessage : public ConfUiMessage {
  public:
-  ConfUiSecureUserTouchMessage(const ConfUiUserTouchMessage& msg,
-                               const bool secure)
-      : ConfUiMessage(msg.GetSessionId()), msg_(msg), is_secure_(secure) {}
+  ConfUiSecureUserTouchMessage(std::unique_ptr<ConfUiUserTouchMessage>&& msg,
+                               const bool secure);
   virtual ~ConfUiSecureUserTouchMessage() = default;
-  std::string ToString() const override { return msg_.ToString(); }
-  ConfUiCmd GetType() const override { return msg_.GetType(); }
-  auto GetResponse() const { return msg_.GetResponse(); }
-  bool SendOver(SharedFD fd) override { return msg_.SendOver(fd); }
-  std::pair<int, int> GetLocation() { return msg_.GetLocation(); }
+  std::string ToString() const override { return msg_->ToString(); }
+  ConfUiCmd GetType() const override { return msg_->GetType(); }
+  auto GetResponse() const { return msg_->GetResponse(); }
+  bool SendOver(SharedFD fd) override { return msg_->SendOver(fd); }
+  std::pair<int, int> GetLocation() const { return msg_->GetLocation(); }
   bool IsSecure() const { return is_secure_; }
 
  private:
-  ConfUiUserTouchMessage msg_;
+  std::unique_ptr<ConfUiUserTouchMessage> msg_;
   bool is_secure_;
 };
 
 std::unique_ptr<ConfUiSecureUserSelectionMessage> ToSecureSelectionMessage(
-    const ConfUiUserSelectionMessage& msg, const bool secure);
+    std::unique_ptr<ConfUiUserSelectionMessage>&& msg, const bool secure);
 std::unique_ptr<ConfUiSecureUserTouchMessage> ToSecureTouchMessage(
-    const ConfUiUserTouchMessage& msg, const bool secure);
+    std::unique_ptr<ConfUiUserTouchMessage>&& msg, const bool secure);
 }  // end of namespace confui
 }  // end of namespace cuttlefish

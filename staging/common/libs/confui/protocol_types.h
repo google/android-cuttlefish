@@ -217,7 +217,7 @@ class ConfUiUserTouchMessage : public ConfUiMessage {
   ConfUiCmd GetType() const override { return ConfUiCmd::kUserTouchEvent; }
   auto GetResponse() const { return response_; }
   bool SendOver(SharedFD fd) override;
-  std::pair<int, int> GetLocation() { return {x_, y_}; }
+  std::pair<int, int> GetLocation() const { return {x_, y_}; }
 
  private:
   int x_;
