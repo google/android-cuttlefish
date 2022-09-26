@@ -21,13 +21,13 @@
 namespace cuttlefish {
 namespace instance_db {
 
-LocalInstance::LocalInstance(const int instance_id,
+LocalInstance::LocalInstance(const unsigned instance_id,
                              const std::string& internal_group_name)
     : instance_id_(instance_id),
       internal_name_(std::to_string(instance_id_)),
       internal_group_name_(internal_group_name) {}
 
-int LocalInstance::InstanceId() const { return instance_id_; }
+unsigned LocalInstance::InstanceId() const { return instance_id_; }
 
 std::string LocalInstance::InternalDeviceName() const {
   return LocalDeviceNameRule(internal_group_name_, internal_name_);
