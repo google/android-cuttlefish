@@ -18,15 +18,37 @@
 
 namespace cuttlefish {
 namespace confui {
+namespace {
+
+template <typename T>
+auto CheckAndReturnSessionId(const std::unique_ptr<T>& msg) {
+  CHECK(msg) << "ConfUiUserSelectionMessage must not be null";
+  return msg->GetSessionId();
+}
+
+}  // end of namespace
+
+ConfUiSecureUserSelectionMessage::ConfUiSecureUserSelectionMessage(
+    std::unique_ptr<ConfUiUserSelectionMessage>&& msg, const bool secure)
+    : ConfUiMessage(CheckAndReturnSessionId(msg)),
+      msg_(std::move(msg)),
+      is_secure_(secure) {}
+
+ConfUiSecureUserTouchMessage::ConfUiSecureUserTouchMessage(
+    std::unique_ptr<ConfUiUserTouchMessage>&& msg, const bool secure)
+    : ConfUiMessage(CheckAndReturnSessionId(msg)),
+      msg_(std::move(msg)),
+      is_secure_(secure) {}
 
 std::unique_ptr<ConfUiSecureUserSelectionMessage> ToSecureSelectionMessage(
-    const ConfUiUserSelectionMessage& msg, const bool secure) {
-  return std::make_unique<ConfUiSecureUserSelectionMessage>(msg, secure);
+    std::unique_ptr<ConfUiUserSelectionMessage>&& msg, const bool secure) {
+  return std::make_unique<ConfUiSecureUserSelectionMessage>(std::move(msg),
+                                                            secure);
 }
 
 std::unique_ptr<ConfUiSecureUserTouchMessage> ToSecureTouchMessage(
-    const ConfUiUserTouchMessage& msg, const bool secure) {
-  return std::make_unique<ConfUiSecureUserTouchMessage>(msg, secure);
+    std::unique_ptr<ConfUiUserTouchMessage>&& msg, const bool secure) {
+  return std::make_unique<ConfUiSecureUserTouchMessage>(std::move(msg), secure);
 }
 
 }  // end of namespace confui
