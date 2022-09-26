@@ -147,8 +147,9 @@ class ConnectionObserverImpl
   void OnTouchEvent(const std::string &display_label, int x, int y,
                     bool down) override {
     if (confui_input_.IsConfUiActive()) {
-      ConfUiLog(DEBUG) << "delivering a touch event in confirmation UI mode";
-      confui_input_.TouchEvent(x, y, down);
+      if (down) {
+        confui_input_.TouchEvent(x, y, down);
+      }
       return;
     }
     auto buffer = GetEventBuffer();
@@ -182,10 +183,8 @@ class ConnectionObserverImpl
 
       if (confui_input_.IsConfUiActive()) {
         if (down) {
-          ConfUiLog(DEBUG) << "Delivering event (" << x << ", " << y
-                           << ") to conf ui";
+          confui_input_.TouchEvent(this_x, this_y, down);
         }
-        confui_input_.TouchEvent(this_x, this_y, down);
         continue;
       }
 
@@ -221,7 +220,7 @@ class ConnectionObserverImpl
 
   void OnKeyboardEvent(uint16_t code, bool down) override {
     if (confui_input_.IsConfUiActive()) {
-      ConfUiLog(DEBUG) << "keyboard event ignored in confirmation UI mode";
+      ConfUiLog(VERBOSE) << "keyboard event ignored in confirmation UI mode";
       return;
     }
 
