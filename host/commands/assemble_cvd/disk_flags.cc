@@ -254,9 +254,9 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
       .Partitions(GetOsCompositeDiskConfig(instance))
       .VmManager(config.vm_manager())
       .CrosvmPath(config.crosvm_binary())
-      .ConfigPath(config.AssemblyPath("os_composite_disk_config.txt"))
-      .HeaderPath(config.AssemblyPath("os_composite_gpt_header.img"))
-      .FooterPath(config.AssemblyPath("os_composite_gpt_footer.img"))
+      .ConfigPath(instance.PerInstancePath("os_composite_disk_config.txt"))
+      .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
+      .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path())
       .ResumeIfPossible(FLAGS_resume);
 }
@@ -960,7 +960,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(InitBootloaderEnvPartitionComponent);
 }
 
-Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config) {
+Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config) {
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
   std::vector<std::string> init_boot_image =
@@ -1145,6 +1145,12 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config) {
         // change the new flag value to corresponding instance
         instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
       }
+    }
+
+    if (SuperImageNeedsRebuilding(fetcher_config)) {
+      const std::string new_super_image_path =
+          const_instance.PerInstancePath("super.img");
+      instance.set_super_image(new_super_image_path);
     }
     instance_index++;
   }
