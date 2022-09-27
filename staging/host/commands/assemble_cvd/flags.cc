@@ -25,6 +25,8 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "flags.h"
+#include "flags_defaults.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
@@ -44,13 +46,14 @@ using cuttlefish::vm_manager::CrosvmManager;
 using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 using google::FlagSettingMode::SET_FLAGS_VALUE;
 
-DEFINE_int32(cpus, 2, "Virtual CPU count.");
-DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
-            " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "
-            "'always_create'.");
-DEFINE_int32(blank_data_image_mb, 0,
+DEFINE_int32(cpus, CF_DEFAULTS_CPUS, "Virtual CPU count.");
+DEFINE_string(data_policy, CF_DEFAULTS_DATA_POLICY,
+              "How to handle userdata partition."
+              " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "
+              "'always_create'.");
+DEFINE_int32(blank_data_image_mb, CF_DEFAULTS_BLANK_DATA_IMAGE_MB,
              "The size of the blank data image to generate, MB.");
-DEFINE_int32(gdb_port, 0,
+DEFINE_int32(gdb_port, CF_DEFAULTS_GDB_PORT,
              "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
              "kernel must have been built with CONFIG_RANDOMIZE_BASE "
              "disabled.");
@@ -68,10 +71,10 @@ constexpr const char kDisplayHelp[] =
 
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
 // when assemble_cvd switches to using the new flag parsing library.
-DEFINE_string(display0, "", kDisplayHelp);
-DEFINE_string(display1, "", kDisplayHelp);
-DEFINE_string(display2, "", kDisplayHelp);
-DEFINE_string(display3, "", kDisplayHelp);
+DEFINE_string(display0, CF_DEFAULTS_DISPLAY0, kDisplayHelp);
+DEFINE_string(display1, CF_DEFAULTS_DISPLAY1, kDisplayHelp);
+DEFINE_string(display2, CF_DEFAULTS_DISPLAY2, kDisplayHelp);
+DEFINE_string(display3, CF_DEFAULTS_DISPLAY3, kDisplayHelp);
 
 // TODO(b/171305898): mark these as deprecated after multi-display is fully
 // enabled.
@@ -79,72 +82,77 @@ DEFINE_string(x_res, "0", "Width of the screen in pixels");
 DEFINE_string(y_res, "0", "Height of the screen in pixels");
 DEFINE_string(dpi, "0", "Pixels per inch for the screen");
 DEFINE_string(refresh_rate_hz, "60", "Screen refresh rate in Hertz");
-DEFINE_string(kernel_path, "",
+DEFINE_string(kernel_path, CF_DEFAULTS_KERNEL_PATH,
               "Path to the kernel. Overrides the one from the boot image");
-DEFINE_string(initramfs_path, "", "Path to the initramfs");
-DEFINE_string(extra_kernel_cmdline, "",
+DEFINE_string(initramfs_path, CF_DEFAULTS_INITRAMFS_PATH,
+              "Path to the initramfs");
+DEFINE_string(extra_kernel_cmdline, CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
               "Additional flags to put on the kernel command line");
-DEFINE_string(extra_bootconfig_args, "",
+DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "Space-separated list of extra bootconfig args. "
               "Note: overwriting an existing bootconfig argument "
               "requires ':=' instead of '='.");
-DEFINE_bool(guest_enforce_security, true,
+DEFINE_bool(guest_enforce_security, CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
             "Whether to run in enforcing mode (non permissive).");
-DEFINE_int32(memory_mb, 0, "Total amount of memory available for guest, MB.");
-DEFINE_string(serial_number, cuttlefish::ForCurrentInstance("CUTTLEFISHCVD"),
+DEFINE_int32(memory_mb, CF_DEFAULTS_MEMORY_MB,
+             "Total amount of memory available for guest, MB.");
+DEFINE_string(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
-DEFINE_bool(use_random_serial, false,
+DEFINE_bool(use_random_serial, CF_DEFAULTS_USE_RANDOM_SERIAL,
             "Whether to use random serial for the device.");
-DEFINE_string(vm_manager, "",
+DEFINE_string(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
-DEFINE_string(gpu_mode, cuttlefish::kGpuModeAuto,
+DEFINE_string(gpu_mode, CF_DEFAULTS_GPU_MODE,
               "What gpu configuration to use, one of {auto, drm_virgl, "
               "gfxstream, guest_swiftshader}");
-DEFINE_string(hwcomposer, cuttlefish::kHwComposerAuto,
+DEFINE_string(hwcomposer, CF_DEFAULTS_HWCOMPOSER,
               "What hardware composer to use, one of {auto, drm, ranchu} ");
-DEFINE_string(gpu_capture_binary, "",
+DEFINE_string(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
               "Path to the GPU capture binary to use when capturing GPU traces"
               "(ngfx, renderdoc, etc)");
-DEFINE_bool(enable_gpu_udmabuf,
-            false,
+DEFINE_bool(enable_gpu_udmabuf, CF_DEFAULTS_ENABLE_GPU_UDMABUF,
             "Use the udmabuf driver for zero-copy virtio-gpu");
 
-DEFINE_bool(enable_gpu_angle,
-            false,
+DEFINE_bool(enable_gpu_angle, CF_DEFAULTS_ENABLE_GPU_ANGLE,
             "Use ANGLE to provide GLES implementation (always true for"
             " guest_swiftshader");
-DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
+DEFINE_bool(deprecated_boot_completed, CF_DEFAULTS_DEPRECATED_BOOT_COMPLETED,
+            "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
 
-DEFINE_bool(use_allocd, false,
+DEFINE_bool(use_allocd, CF_DEFAULTS_USE_ALLOCD,
             "Acquire static resources from the resource allocator daemon.");
-DEFINE_bool(enable_minimal_mode, false,
+DEFINE_bool(enable_minimal_mode, CF_DEFAULTS_ENABLE_MINIMAL_MODE,
             "Only enable the minimum features to boot a cuttlefish device and "
             "support minimal UI interactions.\nNote: Currently only supports "
             "handheld/phone targets");
-DEFINE_bool(pause_in_bootloader, false,
-            "Stop the bootflow in u-boot. You can continue the boot by connecting "
-            "to the device console and typing in \"boot\".");
-DEFINE_bool(enable_host_bluetooth, true,
+DEFINE_bool(
+    pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER,
+    "Stop the bootflow in u-boot. You can continue the boot by connecting "
+    "to the device console and typing in \"boot\".");
+DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
             "Enable the root-canal which is Bluetooth emulator in the host.");
-DEFINE_bool(rootcanal_attach_mode, false,
+DEFINE_bool(rootcanal_attach_mode, CF_DEFAULTS_ROOTCANAL_ATTACH_MODE,
             "[DEPRECATED] Ignored, use rootcanal_instance_num instead");
 DEFINE_int32(
-    rootcanal_instance_num, 0,
+    rootcanal_instance_num, CF_DEFAULTS_ENABLE_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
     "launched from cuttlefish instance "
     "with rootcanal_instance_num. Else, launch a new rootcanal instance");
-DEFINE_bool(netsim, false, "[Experimental] Connect all radios to netsim.");
+DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
+            "[Experimental] Connect all radios to netsim.");
 
-DEFINE_bool(netsim_bt, false, "[Experimental] Connect Bluetooth radio to netsim.");
+DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
+            "[Experimental] Connect Bluetooth radio to netsim.");
 
 DEFINE_string(bluetooth_controller_properties_file,
-              "etc/rootcanal/data/controller_properties.json",
+              CF_DEFAULTS_BLUETOOTH_CONTROLLER_PROPERTIES_FILE,
               "The configuartion file path for root-canal which is a Bluetooth "
               "emulator.");
 DEFINE_string(
-    bluetooth_default_commands_file, "etc/rootcanal/data/default_commands",
+    bluetooth_default_commands_file,
+    CF_DEFAULTS_BLUETOOTH_DEFAULT_COMMANDS_FILE,
     "The default commands which root-canal executes when it launches.");
 
 /**
@@ -153,7 +161,7 @@ DEFINE_string(
  * Also see SetDefaultFlagsForCrosvm()
  */
 DEFINE_bool(
-    enable_sandbox, false,
+    enable_sandbox, CF_DEFAULTS_ENABLE_SANDBOX,
     "Enable crosvm sandbox assuming /var/empty and seccomp directories exist. "
     "--noenable-sandbox will disable crosvm sandbox. "
     "When no option is given, sandbox is disabled if Cuttlefish is running "
@@ -162,196 +170,220 @@ DEFINE_bool(
     "cannot be created. Otherwise, sandbox is enabled on the supported "
     "architecture when no option is given.");
 
-static const std::string kSeccompDir =
-    std::string("usr/share/crosvm/") + cuttlefish::HostArchStr() + "-linux-gnu/seccomp";
-DEFINE_string(seccomp_policy_dir, DefaultHostArtifactsPath(kSeccompDir),
-              "With sandbox'ed crosvm, overrieds the security comp policy directory");
-
-DEFINE_bool(start_webrtc, false, "Whether to start the webrtc process.");
-
 DEFINE_string(
-        webrtc_assets_dir, DefaultHostArtifactsPath("usr/share/webrtc/assets"),
-        "[Experimental] Path to WebRTC webpage assets.");
+    seccomp_policy_dir, CF_DEFAULTS_SECCOMP_POLICY_DIR,
+    "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
-DEFINE_string(
-        webrtc_certs_dir, DefaultHostArtifactsPath("usr/share/webrtc/certs"),
-        "[Experimental] Path to WebRTC certificates directory.");
+DEFINE_bool(start_webrtc, CF_DEFAULTS_START_WEBRTC,
+            "Whether to start the webrtc process.");
 
-DEFINE_string(
-        webrtc_public_ip,
-        "0.0.0.0",
-        "[Deprecated] Ignored, webrtc can figure out its IP address");
+DEFINE_string(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
+              "[Experimental] Path to WebRTC webpage assets.");
 
-DEFINE_bool(
-        webrtc_enable_adb_websocket,
-        false,
-        "[Experimental] If enabled, exposes local adb service through a websocket.");
+DEFINE_string(webrtc_certs_dir, CF_DEFAULTS_WEBRTC_CERTS_DIR,
+              "[Experimental] Path to WebRTC certificates directory.");
+
+DEFINE_string(webrtc_public_ip, CF_DEFAULTS_WEBRTC_PUBLIC_IP,
+              "[Deprecated] Ignored, webrtc can figure out its IP address");
+
+DEFINE_bool(webrtc_enable_adb_websocket,
+            CF_DEFAULTS_WEBRTC_ENABLE_ADB_WEBSOCKET,
+            "[Experimental] If enabled, exposes local adb service through a "
+            "websocket.");
 
 static constexpr auto HOST_OPERATOR_SOCKET_PATH = "/run/cuttlefish/operator";
 
 DEFINE_bool(
     // The actual default for this flag is set with SetCommandLineOption() in
     // GetKernelConfigsAndSetDefaults() at the end of this file.
-    start_webrtc_sig_server, true,
+    start_webrtc_sig_server, CF_DEFAULTS_START_WEBRTC_SIG_SERVER,
     "Whether to start the webrtc signaling server. This option only applies to "
     "the first instance, if multiple instances are launched they'll share the "
     "same signaling server, which is owned by the first one.");
 
-DEFINE_string(webrtc_sig_server_addr, "",
+DEFINE_string(webrtc_sig_server_addr, CF_DEFAULTS_WEBRTC_SIG_SERVER_ADDR,
               "The address of the webrtc signaling server.");
 
 DEFINE_int32(
-    webrtc_sig_server_port, 443,
+    webrtc_sig_server_port, CF_DEFAULTS_WEBRTC_SIG_SERVER_PORT,
     "The port of the signaling server if started outside of this launch. If "
     "-start_webrtc_sig_server is given it will choose 8443+instance_num1-1 and "
     "this parameter is ignored.");
 
 // TODO (jemoreira): We need a much bigger range to reliably support several
 // simultaneous connections.
-DEFINE_string(tcp_port_range, "15550:15558",
+DEFINE_string(tcp_port_range, CF_DEFAULTS_TCP_PORT_RANGE,
               "The minimum and maximum TCP port numbers to allocate for ICE "
               "candidates as 'min:max'. To use any port just specify '0:0'");
 
-DEFINE_string(udp_port_range, "15550:15558",
+DEFINE_string(udp_port_range, CF_DEFAULTS_UDP_PORT_RANGE,
               "The minimum and maximum UDP port numbers to allocate for ICE "
               "candidates as 'min:max'. To use any port just specify '0:0'");
 
-DEFINE_string(webrtc_sig_server_path, "/register_device",
+DEFINE_string(webrtc_sig_server_path, CF_DEFAULTS_WEBRTC_SIG_SERVER_PATH,
               "The path section of the URL where the device should be "
               "registered with the signaling server.");
 
-DEFINE_bool(webrtc_sig_server_secure, true,
-            "Whether the WebRTC signaling server uses secure protocols (WSS vs WS).");
+DEFINE_bool(
+    webrtc_sig_server_secure, CF_DEFAULTS_WEBRTC_SIG_SERVER_SECURE,
+    "Whether the WebRTC signaling server uses secure protocols (WSS vs WS).");
 
-DEFINE_bool(verify_sig_server_certificate, false,
+DEFINE_bool(verify_sig_server_certificate,
+            CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE,
             "Whether to verify the signaling server's certificate with a "
             "trusted signing authority (Disallow self signed certificates). "
             "This is ignored if an insecure server is configured.");
 
-DEFINE_string(sig_server_headers_file, "",
+DEFINE_string(sig_server_headers_file, CF_DEFAULTS_SIG_SERVER_HEADERS_FILE,
               "Path to a file containing HTTP headers to be included in the "
               "connection to the signaling server. Each header should be on a "
               "line by itself in the form <name>: <value>");
 
 DEFINE_string(
-    webrtc_device_id, "cvd-{num}",
+    webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
     "The for the device to register with the signaling server. Every "
     "appearance of the substring '{num}' in the device id will be substituted "
     "with the instance number to support multiple instances");
 
-DEFINE_string(uuid, cuttlefish::ForCurrentInstance(cuttlefish::kDefaultUuidPrefix),
+DEFINE_string(uuid, CF_DEFAULTS_UUID,
               "UUID to use for the device. Random if not specified");
-DEFINE_bool(daemon, false,
+DEFINE_bool(daemon, CF_DEFAULTS_DAEMON,
             "Run cuttlefish in background, the launcher exits on boot "
             "completed/failed");
 
-DEFINE_string(setupwizard_mode, "DISABLED",
-            "One of DISABLED,OPTIONAL,REQUIRED");
-DEFINE_bool(enable_bootanimation, true,
+DEFINE_string(setupwizard_mode, CF_DEFAULTS_SETUPWIZARD_MODE,
+              "One of DISABLED,OPTIONAL,REQUIRED");
+DEFINE_bool(enable_bootanimation, CF_DEFAULTS_ENABLE_BOOTANIMATION,
             "Whether to enable the boot animation.");
 
-DEFINE_string(qemu_binary_dir, "/usr/bin",
+DEFINE_string(qemu_binary_dir, CF_DEFAULTS_QEMU_BINARY_DIR,
               "Path to the directory containing the qemu binary to use");
-DEFINE_string(crosvm_binary, HostBinaryPath("crosvm"),
+DEFINE_string(crosvm_binary, CF_DEFAULTS_CROSVM_BINARY,
               "The Crosvm binary to use");
-DEFINE_string(gem5_binary_dir, HostBinaryPath("gem5"),
+DEFINE_string(gem5_binary_dir, CF_DEFAULTS_GEM5_BINARY_DIR,
               "Path to the gem5 build tree root");
-DEFINE_string(gem5_checkpoint_dir, "",
+DEFINE_string(gem5_checkpoint_dir, CF_DEFAULTS_GEM5_CHECKPOINT_DIR,
               "Path to the gem5 restore checkpoint directory");
-DEFINE_string(gem5_debug_file, "", "The file name where gem5 saves debug prints and logs");
-DEFINE_string(gem5_debug_flags, "", "The debug flags gem5 uses to print debugs to file");
+DEFINE_string(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
+              "The file name where gem5 saves debug prints and logs");
+DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
+              "The debug flags gem5 uses to print debugs to file");
 
-DEFINE_bool(restart_subprocesses, false, "Restart any crashed host process");
-DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
+DEFINE_bool(restart_subprocesses, CF_DEFAULTS_RESTART_SUBPROCESSES,
+            "Restart any crashed host process");
+DEFINE_bool(enable_vehicle_hal_grpc_server,
+            CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER,
+            "Enables the vehicle HAL "
             "emulation gRPC server on the host");
-DEFINE_string(bootloader, "", "Bootloader binary path");
-DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
-             "the slot will be chosen based on the misc partition if using a "
-             "bootloader. It will default to 'a' if empty and not using a "
-             "bootloader.");
-DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
-DEFINE_string(instance_nums, "",
+DEFINE_string(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
+DEFINE_string(boot_slot, CF_DEFAULTS_BOOT_SLOT,
+              "Force booting into the given slot. If empty, "
+              "the slot will be chosen based on the misc partition if using a "
+              "bootloader. It will default to 'a' if empty and not using a "
+              "bootloader.");
+DEFINE_int32(num_instances, CF_DEFAULTS_NUM_INSTANCES,
+             "Number of Android guests to launch");
+DEFINE_string(instance_nums, CF_DEFAULTS_INSTANCE_NUMS,
               "A comma-separated list of instance numbers "
               "to use. Mutually exclusive with base_instance_num.");
-DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
-            "statistics for metrics collection and analysis.");
-DEFINE_string(ril_dns, "8.8.8.8", "DNS address of mobile network (RIL)");
-DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel "
-                         "with kgdb/kdb. The kernel must have been built with "
-                         "kgdb support, and serial console must be enabled.");
+DEFINE_string(report_anonymous_usage_stats,
+              CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS,
+              "Report anonymous usage "
+              "statistics for metrics collection and analysis.");
+DEFINE_string(ril_dns, CF_DEFAULTS_RIL_DNS,
+              "DNS address of mobile network (RIL)");
+DEFINE_bool(kgdb, CF_DEFAULTS_KGDB,
+            "Configure the virtual device for debugging the kernel "
+            "with kgdb/kdb. The kernel must have been built with "
+            "kgdb support, and serial console must be enabled.");
 
-DEFINE_bool(start_gnss_proxy, true, "Whether to start the gnss proxy.");
+DEFINE_bool(start_gnss_proxy, CF_DEFAULTS_START_GNSS_PROXY,
+            "Whether to start the gnss proxy.");
 
-DEFINE_string(gnss_file_path, "",
+DEFINE_string(gnss_file_path, CF_DEFAULTS_GNSS_FILE_PATH,
               "Local gnss raw measurement file path for the gnss proxy");
 
-DEFINE_string(fixed_location_file_path, "",
+DEFINE_string(fixed_location_file_path, CF_DEFAULTS_FIXED_LOCATION_FILE_PATH,
               "Local fixed location file path for the gnss proxy");
 
 // by default, this modem-simulator is disabled
-DEFINE_bool(enable_modem_simulator, true,
+DEFINE_bool(enable_modem_simulator, CF_DEFAULTS_ENABLE_MODEM_SIMULATOR,
             "Enable the modem simulator to process RILD AT commands");
 // modem_simulator_sim_type=2 for test CtsCarrierApiTestCases
-DEFINE_int32(modem_simulator_sim_type, 1,
+DEFINE_int32(modem_simulator_sim_type, CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE,
              "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
-DEFINE_bool(console, false, "Enable the serial console");
+DEFINE_bool(console, CF_DEFAULTS_CONSOLE, "Enable the serial console");
 
-DEFINE_bool(enable_kernel_log, true, "Enable kernel console/dmesg logging");
+DEFINE_bool(enable_kernel_log, CF_DEFAULTS_ENABLE_KERNEL_LOG,
+            "Enable kernel console/dmesg logging");
 
-DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
+DEFINE_bool(vhost_net, CF_DEFAULTS_VHOST_NET,
+            "Enable vhost acceleration of networking");
 
 DEFINE_string(
-    vhost_user_mac80211_hwsim, "",
+    vhost_user_mac80211_hwsim, CF_DEFAULTS_VHOST_USER_MAC80211_HWSIM,
     "Unix socket path for vhost-user of mac80211_hwsim, typically served by "
     "wmediumd. You can set this when using an external wmediumd instance.");
-DEFINE_string(wmediumd_config, "",
+DEFINE_string(wmediumd_config, CF_DEFAULTS_WMEDIUMD_CONFIG,
               "Path to the wmediumd config file. When missing, the default "
               "configuration is used which adds MAC addresses for up to 16 "
               "cuttlefish instances including AP.");
-DEFINE_string(ap_rootfs_image,
-              DefaultHostArtifactsPath("etc/openwrt/images/openwrt_rootfs"),
+DEFINE_string(ap_rootfs_image, CF_DEFAULTS_AP_ROOTFS_IMAGE,
               "rootfs image for AP instance");
-DEFINE_string(ap_kernel_image,
-              DefaultHostArtifactsPath("etc/openwrt/images/kernel_for_openwrt"),
+DEFINE_string(ap_kernel_image, CF_DEFAULTS_AP_KERNEL_IMAGE,
               "kernel image for AP instance");
 
-DEFINE_bool(record_screen, false, "Enable screen recording. "
-                                  "Requires --start_webrtc");
+DEFINE_bool(record_screen, CF_DEFAULTS_RECORD_SCREEN,
+            "Enable screen recording. "
+            "Requires --start_webrtc");
 
-DEFINE_bool(smt, false, "Enable simultaneous multithreading (SMT/HT)");
+DEFINE_bool(smt, CF_DEFAULTS_SMT,
+            "Enable simultaneous multithreading (SMT/HT)");
 
-DEFINE_int32(vsock_guest_cid,
-             cuttlefish::GetDefaultVsockCid(),
-             "vsock_guest_cid is used to determine the guest vsock cid as well as all the ports"
-             "of all vsock servers such as tombstone or modem simulator(s)."
-             "The vsock ports and guest vsock cid are a function of vsock_guest_cid and instance number."
-             "An instance number of i th instance is determined by --num_instances=N and --base_instance_num=B"
-             "The instance number of i th instance is B + i where i in [0, N-1] and B >= 1."
-             "See --num_instances, and --base_instance_num for more information"
-             "If --vsock_guest_cid=C is given and C >= 3, the guest vsock cid is C + i. Otherwise,"
-             "the guest vsock cid is 2 + instance number, which is 2 + (B + i)."
-             "If --vsock_guest_cid is not given, each vsock server port number for i th instance is"
-             "base + instance number - 1. vsock_guest_cid is by default B + i + 2."
-             "Thus, by default, each port is base + vsock_guest_cid - 3."
-             "The same formula holds when --vsock_guest_cid=C is given, for algorithm's sake."
-             "Each vsock server port number is base + C - 3.");
+DEFINE_int32(
+    vsock_guest_cid, CF_DEFAULTS_VSOCK_GUEST_CID,
+    "vsock_guest_cid is used to determine the guest vsock cid as well as all "
+    "the ports"
+    "of all vsock servers such as tombstone or modem simulator(s)."
+    "The vsock ports and guest vsock cid are a function of vsock_guest_cid and "
+    "instance number."
+    "An instance number of i th instance is determined by --num_instances=N "
+    "and --base_instance_num=B"
+    "The instance number of i th instance is B + i where i in [0, N-1] and B "
+    ">= 1."
+    "See --num_instances, and --base_instance_num for more information"
+    "If --vsock_guest_cid=C is given and C >= 3, the guest vsock cid is C + i. "
+    "Otherwise,"
+    "the guest vsock cid is 2 + instance number, which is 2 + (B + i)."
+    "If --vsock_guest_cid is not given, each vsock server port number for i th "
+    "instance is"
+    "base + instance number - 1. vsock_guest_cid is by default B + i + 2."
+    "Thus, by default, each port is base + vsock_guest_cid - 3."
+    "The same formula holds when --vsock_guest_cid=C is given, for algorithm's "
+    "sake."
+    "Each vsock server port number is base + C - 3.");
 
-DEFINE_string(secure_hals, "keymint,gatekeeper",
+DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
               "Which HALs to use enable host security features for. Supports "
               "keymint and gatekeeper at the moment.");
 
-DEFINE_bool(use_sdcard, true, "Create blank SD-Card image and expose to guest");
+DEFINE_bool(use_sdcard, CF_DEFAULTS_USE_SDCARD,
+            "Create blank SD-Card image and expose to guest");
 
-DEFINE_bool(protected_vm, false, "Boot in Protected VM mode");
+DEFINE_bool(protected_vm, CF_DEFAULTS_PROTECTED_VM,
+            "Boot in Protected VM mode");
 
-DEFINE_bool(enable_audio, true, "Whether to play or capture audio");
+DEFINE_bool(enable_audio, CF_DEFAULTS_ENABLE_AUDIO,
+            "Whether to play or capture audio");
 
-DEFINE_uint32(camera_server_port, 0, "camera vsock port");
+DEFINE_uint32(camera_server_port, CF_DEFAULTS_CAMERA_SERVER_PORT,
+              "camera vsock port");
 
-DEFINE_string(userdata_format, "f2fs", "The userdata filesystem format");
+DEFINE_string(userdata_format, CF_DEFAULTS_USERDATA_FORMAT,
+              "The userdata filesystem format");
 
-DEFINE_bool(use_overlay, true,
+DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "Capture disk writes an overlay. This is a "
             "prerequisite for powerwash_cvd or multiple instances.");
 
@@ -1168,6 +1200,13 @@ std::string GetConfigFilePath(const CuttlefishConfig& config) {
 
 std::string GetCuttlefishEnvPath() {
   return StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
+}
+
+std::string GetSeccompPolicyDir() {
+  static const std::string kSeccompDir = std::string("usr/share/crosvm/") +
+                                         cuttlefish::HostArchStr() +
+                                         "-linux-gnu/seccomp";
+  return DefaultHostArtifactsPath(kSeccompDir);
 }
 
 } // namespace cuttlefish
