@@ -26,10 +26,12 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 // To support other files that use this from gflags.
-DEFINE_string(system_image_dir, "", "");
+// TODO: Add a description to this flag
+DEFINE_string(system_image_dir, CF_DEFAULTS_SYSTEM_IMAGE_DIR, "");
 
 using gflags::FlagSettingMode::SET_FLAGS_DEFAULT;
 

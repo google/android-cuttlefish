@@ -34,6 +34,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -50,43 +51,49 @@
 
 DECLARE_string(system_image_dir);
 
-DEFINE_string(boot_image, "",
+DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(
-    init_boot_image, "",
+    init_boot_image, CF_DEFAULTS_INIT_BOOT_IMAGE,
     "Location of cuttlefish init boot image. If empty it is assumed to "
     "be init_boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(data_image, "", "Location of the data partition image.");
-DEFINE_string(super_image, "", "Location of the super partition image.");
-DEFINE_string(misc_image, "",
+DEFINE_string(data_image, CF_DEFAULTS_DATA_IMAGE,
+              "Location of the data partition image.");
+DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
+              "Location of the super partition image.");
+DEFINE_string(misc_image, CF_DEFAULTS_MISC_IMAGE,
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
-DEFINE_string(metadata_image, "", "Location of the metadata partition image "
+DEFINE_string(metadata_image, CF_DEFAULTS_METADATA_IMAGE,
+              "Location of the metadata partition image "
               "to be generated.");
-DEFINE_string(vendor_boot_image, "",
-              "Location of cuttlefish vendor boot image. If empty it is assumed to "
-              "be vendor_boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(vbmeta_image, "",
+DEFINE_string(
+    vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
+    "Location of cuttlefish vendor boot image. If empty it is assumed to "
+    "be vendor_boot.img in the directory specified by -system_image_dir.");
+DEFINE_string(vbmeta_image, CF_DEFAULTS_VBMETA_IMAGE,
               "Location of cuttlefish vbmeta image. If empty it is assumed to "
               "be vbmeta.img in the directory specified by -system_image_dir.");
-DEFINE_string(vbmeta_system_image, "",
-              "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
-              "be vbmeta_system.img in the directory specified by -system_image_dir.");
-DEFINE_string(otheros_esp_image, "",
+DEFINE_string(
+    vbmeta_system_image, CF_DEFAULTS_VBMETA_SYSTEM_IMAGE,
+    "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
+    "be vbmeta_system.img in the directory specified by -system_image_dir.");
+DEFINE_string(otheros_esp_image, CF_DEFAULTS_OTHEROS_ESP_IMAGE,
               "Location of cuttlefish esp image. If the image does not exist, "
               "and --otheros_root_image is specified, an esp partition image "
               "is created with default bootloaders.");
-DEFINE_string(otheros_kernel_path, "",
+DEFINE_string(otheros_kernel_path, CF_DEFAULTS_OTHEROS_KERNEL_PATH,
               "Location of cuttlefish otheros kernel.");
-DEFINE_string(otheros_initramfs_path, "",
+DEFINE_string(otheros_initramfs_path, CF_DEFAULTS_OTHEROS_INITRAMFS_PATH,
               "Location of cuttlefish otheros initramfs.img.");
-DEFINE_string(otheros_root_image, "",
+DEFINE_string(otheros_root_image, CF_DEFAULTS_OTHEROS_ROOT_IMAGE,
               "Location of cuttlefish otheros root filesystem image.");
-DEFINE_string(blank_metadata_image_mb, "64",
+
+DEFINE_string(blank_metadata_image_mb, CF_DEFAULTS_BLANK_METADATA_IMAGE_MB,
               "The size of the blank metadata image to generate, MB.");
 DEFINE_string(
-    blank_sdcard_image_mb, "2048",
+    blank_sdcard_image_mb, CF_DEFAULTS_BLANK_SDCARD_IMAGE_MB,
     "If enabled, the size of the blank sdcard image to generate, MB.");
 
 DECLARE_string(ap_rootfs_image);
