@@ -115,6 +115,9 @@ class CuttlefishConfig {
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
+  int ddr_mem_mb() const;
+  void set_ddr_mem_mb(int ddr_mem_mb);
+
   struct DisplayConfig {
     int width;
     int height;

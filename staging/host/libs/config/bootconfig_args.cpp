@@ -85,6 +85,8 @@ std::vector<std::string> BootconfigArgsFromConfig(
 
   bootconfig_args.push_back(
       concat("androidboot.serialno=", instance.serial_number()));
+  bootconfig_args.push_back(
+      concat("androidboot.ddr_size=", concat(config.ddr_mem_mb(), "MB")));
 
   // TODO(b/131884992): update to specify multiple once supported.
   const auto display_configs = instance.display_configs();

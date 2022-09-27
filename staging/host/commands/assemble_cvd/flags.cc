@@ -638,6 +638,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_smt(FLAGS_smt);
 
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
+  tmp_config_obj.set_ddr_mem_mb(FLAGS_memory_mb * 2);
 
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
   tmp_config_obj.set_enable_bootanimation(FLAGS_enable_bootanimation);
