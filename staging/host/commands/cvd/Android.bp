@@ -136,6 +136,11 @@ cc_defaults {
         "libcvd_server",
         "libfetch_cvd",
     ],
+    target: {
+        linux_bionic: {
+            static_executable: true,
+        },
+    },
     defaults: ["cvd_lib_defaults"],
 }
 
