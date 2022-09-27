@@ -71,8 +71,13 @@ DEFINE_bool(run_next_stage, false, "Continue running the device through the next
 DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
                                        "in seconds. Set to 0 to not wait.");
 DEFINE_bool(keep_downloaded_archives, false, "Keep downloaded zip/tar.");
+#ifdef __BIONIC__
+DEFINE_bool(external_dns_resolver, true,
+            "Use an out-of-process mechanism to resolve DNS queries");
+#else
 DEFINE_bool(external_dns_resolver, false,
             "Use an out-of-process mechanism to resolve DNS queries");
+#endif
 
 namespace cuttlefish {
 namespace {
@@ -308,7 +313,7 @@ std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
       http_client, content, BUILD_SCOPE);
   if (!result.ok()) {
     LOG(VERBOSE) << "Failed to load service account json file: \n"
-                 << result.error().Trace();
+                 << result.error();
     return {};
   }
   return std::unique_ptr<CredentialSource>(
@@ -370,7 +375,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
               new RefreshCredentialSource(std::move(*attempt_load)));
         } else {
           LOG(VERBOSE) << "Failed to load acloud credentials: "
-                       << attempt_load.error().Trace();
+                       << attempt_load.error();
         }
       } else {
         LOG(INFO) << "\"" << file << "\" missing, running without credentials";
