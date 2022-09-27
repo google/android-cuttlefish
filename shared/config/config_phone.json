@@ -2,5 +2,6 @@
 	"x_res" : 720,
 	"y_res" : 1280,
 	"dpi" : 320,
-	"memory_mb" : 2048
+	"memory_mb" : 2048,
+	"ddr_mem_mb" : 4096
 }
