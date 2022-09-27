@@ -88,7 +88,9 @@ void DisplayHandler::SendLastFrame() {
         std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count();
-    display_sinks_[buffer_display]->OnFrame(buffer, time_stamp);
+    if (buffer_display < display_sinks_.size()) {
+      display_sinks_[buffer_display]->OnFrame(buffer, time_stamp);
+    }
   }
 }
 }  // namespace cuttlefish
