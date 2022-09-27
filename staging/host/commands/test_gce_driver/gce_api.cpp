@@ -152,7 +152,7 @@ GceNetworkInterface GceNetworkInterface::Network(
   return *this;
 }
 
-constexpr char kSubnetwork[] = "network";
+constexpr char kSubnetwork[] = "subnetwork";
 std::optional<std::string> GceNetworkInterface::Subnetwork() const {
   return OptStringMember(data_, kSubnetwork);
 }
