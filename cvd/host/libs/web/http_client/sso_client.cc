@@ -91,8 +91,8 @@ Result<HttpResponse<Json::Value>> SsoClient::DownloadToJson(
   return CF_ERR("Not implemented");
 }
 
-Result<long> SsoClient::DownloadToCallback(DataCallback, const std::string&,
-                                           const std::vector<std::string>&) {
+Result<HttpResponse<void>> SsoClient::DownloadToCallback(
+    DataCallback, const std::string&, const std::vector<std::string>&) {
   return CF_ERR("Not implemented");
 }
 
