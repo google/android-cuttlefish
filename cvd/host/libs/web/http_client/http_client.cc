@@ -94,8 +94,8 @@ class CurlClient : public HttpClient {
       stream.write(data, size);
       return true;
     };
-    long http_code = CF_EXPECT(DownloadToCallback(callback, url, headers));
-    return HttpResponse<std::string>{stream.str(), http_code};
+    auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
+    return HttpResponse<std::string>{stream.str(), http_response.http_code};
   }
 
   Result<HttpResponse<std::string>> PostToString(
@@ -157,8 +157,9 @@ class CurlClient : public HttpClient {
     return PostToJson(url, json_str.str(), headers);
   }
 
-  Result<long> DownloadToCallback(DataCallback callback, const std::string& url,
-                                  const std::vector<std::string>& headers) {
+  Result<HttpResponse<void>> DownloadToCallback(
+      DataCallback callback, const std::string& url,
+      const std::vector<std::string>& headers) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
     curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
@@ -185,7 +186,7 @@ class CurlClient : public HttpClient {
                   << "Error buffer was \"" << error_buf << "\".");
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return http_code;
+    return HttpResponse<void>{{}, http_code};
   }
 
   Result<HttpResponse<std::string>> DownloadToFile(
@@ -201,8 +202,8 @@ class CurlClient : public HttpClient {
       stream.write(data, size);
       return !stream.fail();
     };
-    long http_code = CF_EXPECT(DownloadToCallback(callback, url, headers));
-    return HttpResponse<std::string>{path, http_code};
+    auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
+    return HttpResponse<std::string>{path, http_response.http_code};
   }
 
   Result<HttpResponse<Json::Value>> DownloadToJson(
@@ -357,12 +358,13 @@ class ServerErrorRetryClient : public HttpClient {
     return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
-  Result<long> DownloadToCallback(
+  Result<HttpResponse<void>> DownloadToCallback(
       DataCallback cb, const std::string& url,
       const std::vector<std::string>& hdrs) override {
-    auto fn = [&, this]() { return DownloadToCallbackHelper(cb, url, hdrs); };
-    auto response = CF_EXPECT(RetryImpl<bool>(fn));
-    return response.http_code;
+    auto fn = [&, this]() {
+      return inner_client_.DownloadToCallback(cb, url, hdrs);
+    };
+    return CF_EXPECT(RetryImpl<void>(fn));
   }
 
   Result<HttpResponse<Json::Value>> DeleteToJson(
@@ -391,15 +393,6 @@ class ServerErrorRetryClient : public HttpClient {
       }
     }
     return response;
-  }
-
-  // Wraps the http_code into an HttpResponse<bool> instance in order to be
-  // reused in the RetryImpl function.
-  Result<HttpResponse<bool>> DownloadToCallbackHelper(
-      DataCallback cb, const std::string& url,
-      const std::vector<std::string>& hdrs) {
-    long http_code = CF_EXPECT(inner_client_.DownloadToCallback(cb, url, hdrs));
-    return HttpResponse<bool>{false /* irrelevant */, http_code};
   }
 
  private:
