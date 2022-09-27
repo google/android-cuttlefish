@@ -24,13 +24,13 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/start/filesystem_explorer.h"
 #include "host/commands/start/flag_forwarder.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
-
 /**
  * If stdin is a tty, that means a user is invoking launch_cvd on the command
  * line and wants automatic file detection for assemble_cvd.
@@ -41,24 +41,28 @@
  * Controllable with a flag for extraordinary scenarios such as running from a
  * daemon which closes its own stdin.
  */
-DEFINE_bool(run_file_discovery, true,
+DEFINE_bool(run_file_discovery, CF_DEFAULTS_RUN_FILE_DISCOVERY,
             "Whether to run file discovery or get input files from stdin.");
-DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
-DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
-            "statistics for metrics collection and analysis.");
-DEFINE_int32(base_instance_num,
-             cuttlefish::GetInstance(),
-             "The instance number of the device created. When `-num_instances N`"
-             " is used, N instance numbers are claimed starting at this number.");
-DEFINE_string(instance_nums, "",
+DEFINE_int32(num_instances, CF_DEFAULTS_NUM_INSTANCES,
+             "Number of Android guests to launch");
+DEFINE_string(report_anonymous_usage_stats,
+              CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS,
+              "Report anonymous usage "
+              "statistics for metrics collection and analysis.");
+DEFINE_int32(
+    base_instance_num, CF_DEFAULTS_BASE_INSTANCE_NUM,
+    "The instance number of the device created. When `-num_instances N`"
+    " is used, N instance numbers are claimed starting at this number.");
+DEFINE_string(instance_nums, CF_DEFAULTS_INSTANCE_NUMS,
               "A comma-separated list of instance numbers "
               "to use. Mutually exclusive with base_instance_num.");
-DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE,"
-                                 "DEBUG,INFO,WARNING,ERROR");
-DEFINE_string(file_verbosity, "DEBUG",
+DEFINE_string(verbosity, CF_DEFAULTS_VERBOSITY,
+              "Console logging verbosity. Options are VERBOSE,"
+              "DEBUG,INFO,WARNING,ERROR");
+DEFINE_string(file_verbosity, CF_DEFAULTS_FILE_VERBOSITY,
               "Log file logging verbosity. Options are VERBOSE,DEBUG,INFO,"
               "WARNING,ERROR");
-DEFINE_bool(use_overlay, true,
+DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "Capture disk writes an overlay. This is a "
             "prerequisite for powerwash_cvd or multiple instances.");
 
