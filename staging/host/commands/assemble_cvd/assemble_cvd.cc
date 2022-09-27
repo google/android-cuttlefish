@@ -31,6 +31,7 @@
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/commands/assemble_cvd/flags.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/libs/config/adb/adb.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/custom_actions.h"
@@ -39,17 +40,18 @@
 
 using cuttlefish::StringFromEnv;
 
-DEFINE_string(assembly_dir, StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
+DEFINE_string(assembly_dir, CF_DEFAULTS_ASSEMBLY_DIR,
               "A directory to put generated files common between instances");
-DEFINE_string(instance_dir, StringFromEnv("HOME", ".") + "/cuttlefish",
+DEFINE_string(instance_dir, CF_DEFAULTS_INSTANCE_DIR,
               "This is a directory that will hold the cuttlefish generated"
               "files, including both instance-specific and common files");
-DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
-                          "possible. i.e., if --noresume is passed, the disk "
-                          "will be reset to the state it was initially launched "
-                          "in. This flag is ignored if the underlying partition "
-                          "images have been updated since the first launch.");
-DEFINE_int32(modem_simulator_count, 1,
+DEFINE_bool(resume, CF_DEFAULTS_RESUME,
+            "Resume using the disk from the last session, if "
+            "possible. i.e., if --noresume is passed, the disk "
+            "will be reset to the state it was initially launched "
+            "in. This flag is ignored if the underlying partition "
+            "images have been updated since the first launch.");
+DEFINE_int32(modem_simulator_count, CF_DEFAULTS_MODEM_SIMULATOR_COUNT,
              "Modem simulator count corresponding to maximum sim number");
 
 DECLARE_bool(use_overlay);
