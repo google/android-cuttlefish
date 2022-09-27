@@ -26,12 +26,13 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/feature.h"
 
-DEFINE_int32(reboot_notification_fd, -1,
+DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
              "A file descriptor to notify when boot completes.");
 
 namespace cuttlefish {
