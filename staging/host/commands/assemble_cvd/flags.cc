@@ -532,7 +532,8 @@ Result<KernelConfig> ReadKernelConfig() {
 
 CuttlefishConfig InitializeCuttlefishConfiguration(
     const std::string& root_dir, int modem_simulator_count,
-    KernelConfig kernel_config, fruit::Injector<>& injector) {
+    KernelConfig kernel_config, fruit::Injector<>& injector,
+    const FetcherConfig& fetcher_config) {
   CuttlefishConfig tmp_config_obj;
 
   for (const auto& fragment : injector.getMultibindings<ConfigFragment>()) {
@@ -1090,7 +1091,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_audio(FLAGS_enable_audio);
 
-  DiskImageFlagsVectorization(tmp_config_obj);
+  DiskImageFlagsVectorization(tmp_config_obj, fetcher_config);
 
   return tmp_config_obj;
 }

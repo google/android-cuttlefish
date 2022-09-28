@@ -27,5 +27,6 @@ fruit::Component<fruit::Required<const FetcherConfig, const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>,
                  SuperImageRebuilder>
 SuperImageRebuilderComponent();
+bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config);
 
 } // namespace cuttlefish
