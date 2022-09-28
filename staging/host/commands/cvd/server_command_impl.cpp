@@ -76,7 +76,8 @@ std::optional<CommandInvocationInfo> ExtractInfo(
   }
   const auto host_artifacts_path = host_out_itr->second;
   // TODO(kwstephenkim): eat --base_instance_num and --num_instances
-  // or --instance_nums, and override/delete CUTTLEFISH_INSTANCE in envs
+  // or --instance_nums, and override/delete kCuttlefishInstanceEnvVarName
+  // in envs
   CommandInvocationInfo result = {.command = command,
                                   .bin = bin,
                                   .home = home,
@@ -100,10 +101,11 @@ Result<Command> ConstructCommand(const std::string& bin_path,
   }
   // Set CuttlefishConfig path based on assembly dir,
   // used by subcommands when locating the CuttlefishConfig.
-  if (envs.count(kCuttlefishConfigEnvVarName) == 0) {
+  if (envs.count(cuttlefish::kCuttlefishConfigEnvVarName) == 0) {
     auto config_path = InstanceManager::GetCuttlefishConfigPath(home);
     if (config_path.ok()) {
-      command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, *config_path);
+      command.AddEnvironmentVariable(cuttlefish::kCuttlefishConfigEnvVarName,
+                                     *config_path);
     }
   }
   for (auto& it : envs) {
