@@ -31,7 +31,8 @@ namespace instance_db {
  */
 class LocalInstance {
  public:
-  LocalInstance(const int instance_id, const std::string& internal_group_name);
+  LocalInstance(const unsigned instance_id,
+                const std::string& internal_group_name);
   LocalInstance(const LocalInstance&) = default;
   LocalInstance(LocalInstance&&) = default;
   LocalInstance& operator=(const LocalInstance&) = default;
@@ -55,7 +56,7 @@ class LocalInstance {
   const std::string& InternalName() const;
   std::string InternalDeviceName() const;
 
-  int InstanceId() const;
+  unsigned InstanceId() const;
 
  private:
   bool Compare(const LocalInstance& target) const {
@@ -64,7 +65,7 @@ class LocalInstance {
            (internal_name_ == target.internal_name_) &&
            (internal_group_name_ == target.internal_group_name_);
   }
-  int instance_id_;
+  unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
   std::string internal_group_name_;
 };
