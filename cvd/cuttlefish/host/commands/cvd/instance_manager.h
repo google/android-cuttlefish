@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include <map>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -28,6 +28,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/instance_database.h"
 #include "host/commands/cvd/instance_lock.h"
 
 namespace cuttlefish {
@@ -49,7 +50,7 @@ class InstanceManager {
   Result<void> SetInstanceGroup(const InstanceGroupDir&,
                                 const InstanceGroupInfo&);
   void RemoveInstanceGroup(const InstanceGroupDir&);
-  Result<InstanceGroupInfo> GetInstanceGroup(const InstanceGroupDir&) const;
+  Result<InstanceGroupInfo> GetInstanceGroupInfo(const InstanceGroupDir&) const;
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
   cvd::Status CvdFleet(const SharedFD& out, const SharedFD& err,
@@ -64,10 +65,19 @@ class InstanceManager {
   cvd::Status CvdFleetHelp(const SharedFD& out, const SharedFD& err,
                            const std::string& host_tool_dir) const;
 
+  static void IssueStatusCommand(const SharedFD& out,
+                                 const std::string& config_file_path,
+                                 const instance_db::LocalInstanceGroup& group);
+  void IssueStopCommand(const SharedFD& out, const SharedFD& err,
+                        const std::string& config_file_path,
+                        const instance_db::LocalInstanceGroup& group);
+
   InstanceLockFileManager& lock_manager_;
 
-  mutable std::mutex instance_groups_mutex_;
-  std::map<InstanceGroupDir, InstanceGroupInfo> instance_groups_;
+  mutable std::mutex instance_db_mutex_;
+  instance_db::InstanceDatabase instance_db_;
+
+  using Query = instance_db::Query;
 };
 
 }  // namespace cuttlefish

@@ -51,7 +51,7 @@ class InstanceDatabase {
    * addressof(found_group) != addressof(group)
    *
    */
-  Result<void> AddInstance(const LocalInstanceGroup& group, const int id);
+  Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id);
 
   /*
    *  auto group = CF_EXPEC(FindGroups(...));
