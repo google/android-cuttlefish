@@ -86,7 +86,8 @@ Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroupsByHome(
       local_instance_groups_, [&home](const LocalInstanceGroup& group) {
         return group.HomeDir() == home;
       });
-  return AtMostOne(subset, TooManyInstancesFound(1, selector::kHomeField));
+  return AtMostOne(subset,
+                   GenerateTooManyInstancesErrorMsg(1, selector::kHomeField));
 }
 
 Result<Set<LocalInstance>> InstanceDatabase::FindInstancesById(
@@ -101,8 +102,8 @@ Result<Set<LocalInstance>> InstanceDatabase::FindInstancesById(
       },
       local_instance_groups_);
   CF_EXPECT(subset.ok());
-  return AtMostOne(*subset,
-                   TooManyInstancesFound(1, selector::kInstanceIdField));
+  return AtMostOne(
+      *subset, GenerateTooManyInstancesErrorMsg(1, selector::kInstanceIdField));
 }
 
 Result<Set<LocalInstance>> InstanceDatabase::FindInstancesByInstanceName(
@@ -113,8 +114,8 @@ Result<Set<LocalInstance>> InstanceDatabase::FindInstancesByInstanceName(
       },
       local_instance_groups_);
   CF_EXPECT(subset.ok());
-  return AtMostOne(*subset,
-                   TooManyInstancesFound(1, selector::kInstanceNameField));
+  return AtMostOne(*subset, GenerateTooManyInstancesErrorMsg(
+                                1, selector::kInstanceNameField));
 }
 
 }  // namespace instance_db
