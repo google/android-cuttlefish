@@ -15,76 +15,40 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/instance_group_record.h"
-#include "host/commands/cvd/selector/instance_record.h"
+#include "host/commands/cvd/instance_record.h"
 
-namespace cuttlefish {
-namespace selector {
+using LocalInstance = cuttlefish::instance_db::LocalInstance;
+
+/**
+ * returns default test instance
+ *
+ * Note that, as the fields of InstanceRecord are being added,
+ * using this function would minimize the line of codes that should
+ * be modified when fields are added.
+ */
+LocalInstance GetInstance() {
+  LocalInstance instance(3, "cvd", "cool_group", "phone");
+  return instance;
+}
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
+
+TEST(CvdInstanceRecordUnitTest, OperatorEQ) {
+  auto instance = GetInstance();
+  ASSERT_EQ(instance, LocalInstance(3, "cvd", "cool_group", "phone"));
+  ASSERT_FALSE(instance == LocalInstance(7, "cvd", "cool_group", "phone"));
+  ASSERT_FALSE(instance == LocalInstance(3, "cvd2", "cool_group", "phone"));
+  ASSERT_FALSE(instance == LocalInstance(3, "cvd", "", "phone"));
+  ASSERT_FALSE(instance == LocalInstance(3, "cvd", "cool_group", "tv"));
+}
+
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  LocalInstanceGroup parent_group(
-      {.group_name = "super",
-       .home_dir = "/home/user",
-       .host_artifacts_path = "/home/user/download/bin",
-       .product_out_path = "/home/user/download/bin"});
-  if (!parent_group.AddInstance(3, "phone").ok()) {
-    /*
-     * Here's why we skip the test rather than see it as a failure.
-     *
-     * 1. The test is specifically designed for operations in
-     *    LocalInstanceRecord.
-     * 2. Adding instance to a group is tested in another test suites designed
-     *    for LocalInstanceGroup. It's a failure there but not here.
-     *
-     */
-    GTEST_SKIP() << "Failed to add instance group. Set up failed.";
-  }
-  auto& instances = parent_group.Instances();
-  auto& instance = *instances.cbegin();
-
-  ASSERT_EQ(instance->InstanceId(), 3);
-  ASSERT_EQ(instance->InternalName(), "3");
-  ASSERT_EQ(instance->PerInstanceName(), "phone");
-  ASSERT_EQ(instance->InternalDeviceName(), "cvd-3");
-  ASSERT_EQ(instance->DeviceName(), "super-phone");
-  ASSERT_EQ(std::addressof(instance->ParentGroup()),
-            std::addressof(parent_group));
+  auto instance = GetInstance();
+  ASSERT_EQ(instance.InstanceId(), 3);
+  ASSERT_EQ(instance.InternalName(), "3");
+  ASSERT_EQ(instance.PerInstanceName(), "phone");
+  ASSERT_EQ(instance.InternalDeviceName(), "cvd-3");
+  ASSERT_EQ(instance.DeviceName(), "cool_group-phone");
 }
-
-/**
- * Note that invalid inputs must be tested at the InstanceDatabase level
- */
-TEST(CvdInstanceRecordUnitTest, Copy) {
-  LocalInstanceGroup parent_group(
-      {.group_name = "super",
-       .home_dir = "/home/user",
-       .host_artifacts_path = "/home/user/download/bin",
-       .product_out_path = "/home/user/download/bin"});
-  if (!parent_group.AddInstance(3, "phone").ok()) {
-    /*
-     * Here's why we skip the test rather than see it as a failure.
-     *
-     * 1. The test is specifically designed for operations in
-     *    LocalInstanceRecord.
-     * 2. Adding instance to a group is tested in another test suites designed
-     *    for LocalInstanceGroup. It's a failure there but not here.
-     *
-     */
-    GTEST_SKIP() << "Failed to add instance group. Set up failed.";
-  }
-  auto& instances = parent_group.Instances();
-  auto& instance = *instances.cbegin();
-  auto copy = instance->GetCopy();
-
-  ASSERT_EQ(instance->InstanceId(), copy.InstanceId());
-  ASSERT_EQ(instance->InternalName(), copy.InternalName());
-  ASSERT_EQ(instance->PerInstanceName(), copy.PerInstanceName());
-  ASSERT_EQ(instance->InternalDeviceName(), copy.InternalDeviceName());
-  ASSERT_EQ(instance->DeviceName(), copy.DeviceName());
-}
-
-}  // namespace selector
-}  // namespace cuttlefish
