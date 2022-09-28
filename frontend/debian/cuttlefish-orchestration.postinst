@@ -15,8 +15,6 @@ case "$1" in
         adduser --system --disabled-password --disabled-login --home /var/empty \
                 --no-create-home --quiet --force-badname --ingroup cvdnetwork _cvd-executor
     fi
-    # Allow `_cutf-operator` to run cvd commands as `_cvd-executor` using sudo without password.
-    echo "_cutf-operator ALL=(_cvd-executor) NOPASSWD:ALL" > /etc/sudoers.d/cuttlefish-orchestration
 esac
 
 #DEBHELPER#
