@@ -37,7 +37,7 @@ std::size_t LocalInstanceGroup::HashCode() const noexcept {
   return hash_function(home_dir_);
 }
 
-Result<void> LocalInstanceGroup::AddInstance(const int instance_id) {
+Result<void> LocalInstanceGroup::AddInstance(const unsigned instance_id) {
   if (HasInstance(instance_id)) {
     return CF_ERR("Instance Id " << instance_id << " is taken");
   }
@@ -58,7 +58,7 @@ Result<Set<LocalInstance>> LocalInstanceGroup::FindById(const int id) const {
                    TooManyInstancesFound(1, selector::kInstanceIdField));
 }
 
-bool LocalInstanceGroup::HasInstance(const int instance_id) const {
+bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
   for (const auto& instance : instances_) {
     if (instance_id == instance.InstanceId()) {
       return true;
