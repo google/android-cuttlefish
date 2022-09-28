@@ -26,5 +26,11 @@ constexpr char kInstanceIdField[] = "instance_id";
 // group_name + "-" + per_instance_name
 constexpr char kNameField[] = "name";
 
+/* per_instance_name
+ *
+ * by default, to_string(instance_id), and users can override it
+ */
+constexpr char kInstanceNameField[] = "instance_name";
+
 }  // namespace selector
 }  // namespace cuttlefish
