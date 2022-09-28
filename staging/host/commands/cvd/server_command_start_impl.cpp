@@ -16,8 +16,13 @@
 
 #include "host/commands/cvd/server_command_start_impl.h"
 
+#include <cstdint>
+
+#include <android-base/parseint.h>
+
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
@@ -51,27 +56,14 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   }
 
   auto invocation_info = std::move(*invocation_info_opt);
-  auto& envs = invocation_info.envs;
-
-  InstanceNumsCalculator calculator;
-  auto instance_env = envs.find("CUTTLEFISH_INSTANCE");
-  if (instance_env != envs.end()) {
-    calculator.BaseInstanceNum(std::stoi(instance_env->second));
-  }
-
-  // Track this assembly_dir in the fleet.
-  InstanceManager::InstanceGroupInfo info;
-  info.host_binaries_dir = invocation_info.host_artifacts_path + "/bin/";
-  info.instances = CF_EXPECT(calculator.Calculate());
-  instance_manager_.SetInstanceGroup(invocation_info.home, info);
-
-  auto assembly_info =
-      CF_EXPECT(instance_manager_.GetInstanceGroup(invocation_info.home));
   const std::string bin_path =
-      assembly_info.host_binaries_dir + invocation_info.bin;
+      CF_EXPECT(UpdateInstanceDatabase(invocation_info))
+          ? CF_EXPECT(MakeBinPathFromDatabase(invocation_info))
+          : invocation_info.host_artifacts_path + "/bin/" + invocation_info.bin;
 
   Command command = CF_EXPECT(ConstructCommand(
-      bin_path, invocation_info.home, invocation_info.args, envs,
+      bin_path, invocation_info.home, invocation_info.args,
+      invocation_info.envs,
       request.Message().command_request().working_directory(),
       invocation_info.bin, request.In(), request.Out(), request.Err()));
 
@@ -93,6 +85,37 @@ Result<void> CvdStartCommandHandler::Interrupt() {
   return {};
 }
 
+Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
+    const CommandInvocationInfo& invocation_info) {
+  auto& envs = invocation_info.envs;
+  if (HasHelpOpts(invocation_info.args)) {
+    return {false};
+  }
+  InstanceNumsCalculator calculator;
+  auto instance_env = envs.find("CUTTLEFISH_INSTANCE");
+  if (instance_env != envs.end()) {
+    std::int32_t instance_num = -1;
+    android::base::ParseInt(instance_env->second, &instance_num);
+    calculator.BaseInstanceNum(instance_num);
+  }
+
+  // Track this assembly_dir in the fleet.
+  InstanceManager::InstanceGroupInfo info;
+  info.host_binaries_dir = invocation_info.host_artifacts_path + "/bin/";
+  info.instances = CF_EXPECT(calculator.Calculate());
+  CF_EXPECT(instance_manager_.SetInstanceGroup(invocation_info.home, info),
+            invocation_info.home
+                << " is already taken so can't create new instance.");
+  return {true};
+}
+
+Result<std::string> CvdStartCommandHandler::MakeBinPathFromDatabase(
+    const CommandInvocationInfo& invocation_info) const {
+  auto assembly_info =
+      CF_EXPECT(instance_manager_.GetInstanceGroup(invocation_info.home));
+  return assembly_info.host_binaries_dir + invocation_info.bin;
+}
+
 Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
                                                  const bool wait) {
   SubprocessOptions options;
@@ -109,6 +132,23 @@ Result<cvd::Response> CvdStartCommandHandler::UnlockAndWait(
 
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   return ResponseFromSiginfo(infop);
+}
+
+bool CvdStartCommandHandler::HasHelpOpts(
+    const std::vector<std::string>& args) const {
+  std::vector<std::string> copied_args(args);
+  std::vector<Flag> flags;
+  bool bool_value_placeholder = false;
+  std::string str_value_placeholder;
+  for (const auto bool_opt : help_bool_opts_) {
+    flags.emplace_back(GflagsCompatFlag(bool_opt, bool_value_placeholder));
+  }
+  for (const auto str_opt : help_str_opts_) {
+    flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
+  }
+  ParseFlags(flags, copied_args);
+  // if there was any match, some in copied_args were consumed.
+  return (args.size() != copied_args.size());
 }
 
 const std::map<std::string, std::string>
