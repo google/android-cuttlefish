@@ -46,7 +46,8 @@ class InstanceManager {
   INJECT(InstanceManager(InstanceLockFileManager&));
 
   bool HasInstanceGroups() const;
-  void SetInstanceGroup(const InstanceGroupDir&, const InstanceGroupInfo&);
+  Result<void> SetInstanceGroup(const InstanceGroupDir&,
+                                const InstanceGroupInfo&);
   void RemoveInstanceGroup(const InstanceGroupDir&);
   Result<InstanceGroupInfo> GetInstanceGroup(const InstanceGroupDir&) const;
 
