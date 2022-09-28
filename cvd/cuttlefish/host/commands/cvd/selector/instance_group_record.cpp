@@ -37,18 +37,14 @@ std::size_t LocalInstanceGroup::HashCode() const noexcept {
   return hash_function(home_dir_);
 }
 
-Result<void> LocalInstanceGroup::AddInstance(const unsigned instance_id) {
+Result<void> LocalInstanceGroup::AddInstance(const unsigned instance_id,
+                                             const std::string& instance_name) {
   if (HasInstance(instance_id)) {
     return CF_ERR("Instance Id " << instance_id << " is taken");
   }
-  const std::string instance_name = std::to_string(instance_id);
   instances_.emplace(instance_id, internal_group_name_, internal_group_name_,
                      instance_name);
   return {};
-}
-
-Result<void> LocalInstanceGroup::AddInstance(const LocalInstance& instance) {
-  return AddInstance(instance.InstanceId());
 }
 
 Result<Set<LocalInstance>> LocalInstanceGroup::FindById(const int id) const {
@@ -58,6 +54,18 @@ Result<Set<LocalInstance>> LocalInstanceGroup::FindById(const int id) const {
       });
   return AtMostOne(subset,
                    TooManyInstancesFound(1, selector::kInstanceIdField));
+}
+
+Result<Set<LocalInstance>> LocalInstanceGroup::FindByInstanceName(
+    const std::string& instance_name) const {
+  auto subset = CollectToSet<LocalInstance>(
+      instances_, [&instance_name](const LocalInstance& instance) {
+        return instance.PerInstanceName() == instance_name;
+      });
+  // note that inside a group, the instance name is unique. However,
+  // across groups, they can be multiple
+  return AtMostOne(subset,
+                   TooManyInstancesFound(1, selector::kInstanceNameField));
 }
 
 bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
