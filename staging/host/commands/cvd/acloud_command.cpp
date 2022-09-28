@@ -32,6 +32,7 @@
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -329,7 +330,7 @@ class ConvertAcloudCreateCommand {
       start_env[kAndroidHostOut] = dir;
       start_env[kAndroidProductOut] = dir;
     }
-    start_env["CUTTLEFISH_INSTANCE"] = std::to_string(lock->Instance());
+    start_env[kCuttlefishInstanceEnvVarName] = std::to_string(lock->Instance());
     start_env["HOME"] = dir;
     *start_command.mutable_working_directory() = dir;
 
