@@ -60,7 +60,8 @@ Result<void> InstanceManager::SetInstanceGroup(
   auto searched_group =
       CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   for (auto i : info.instances) {
-    instance_db_.AddInstance(searched_group, i);
+    const std::string default_instance_name = std::to_string(i);
+    instance_db_.AddInstance(searched_group, i, default_instance_name);
   }
   return {};
 }

@@ -43,15 +43,8 @@ class InstanceDatabase {
   Result<void> AddInstanceGroup(const std::string& home_dir,
                                 const std::string& host_binaries_dir);
 
-  /** Finds an InstanceGroupRecord, and add new InstanceRecord to it
-   *
-   * returns CF_ERR if group does not exist in this database
-   *
-   * Note that "group" is just a key.
-   * addressof(found_group) != addressof(group)
-   *
-   */
-  Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id);
+  Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id,
+                           const std::string& instance_name);
 
   /*
    *  auto group = CF_EXPEC(FindGroups(...));
@@ -94,6 +87,8 @@ class InstanceDatabase {
   // actual Find implementations
   Result<Set<LocalInstanceGroup>> FindGroupsByHome(const Value& home) const;
   Result<Set<LocalInstance>> FindInstancesById(const Value& id) const;
+  Result<Set<LocalInstance>> FindInstancesByInstanceName(
+      const Value& instance_specific_name) const;
 
   std::vector<LocalInstanceGroup> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
