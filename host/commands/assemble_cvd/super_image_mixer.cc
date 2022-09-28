@@ -35,6 +35,20 @@
 #include "host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
+
+bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config) {
+  bool has_default_build = false;
+  bool has_system_build = false;
+  for (const auto& file_iter : fetcher_config.get_cvd_files()) {
+    if (file_iter.second.source == FileSource::DEFAULT_BUILD) {
+      has_default_build = true;
+    } else if (file_iter.second.source == FileSource::SYSTEM_BUILD) {
+      has_system_build = true;
+    }
+  }
+  return has_default_build && has_system_build;
+}
+
 namespace {
 
 std::string TargetFilesZip(const FetcherConfig& fetcher_config,
@@ -216,19 +230,6 @@ bool BuildSuperImage(const std::string& combined_target_zip,
     combined_target_zip,
     output_path,
   }) == 0;
-}
-
-bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config) {
-  bool has_default_build = false;
-  bool has_system_build = false;
-  for (const auto& file_iter : fetcher_config.get_cvd_files()) {
-    if (file_iter.second.source == FileSource::DEFAULT_BUILD) {
-      has_default_build = true;
-    } else if (file_iter.second.source == FileSource::SYSTEM_BUILD) {
-      has_system_build = true;
-    }
-  }
-  return has_default_build && has_system_build;
 }
 
 Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
