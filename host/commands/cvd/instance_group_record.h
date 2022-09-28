@@ -53,11 +53,20 @@ class LocalInstanceGroup {
    * return error if instance id of instance is taken AND that taken id
    * belongs to this group
    */
-  Result<void> AddInstance(const unsigned instance_id);
-  Result<void> AddInstance(const LocalInstance& instance);
+  Result<void> AddInstance(const unsigned instance_id,
+                           const std::string& instance_name);
   bool HasInstance(const unsigned instance_id) const;
 
   Result<Set<LocalInstance>> FindById(const int id) const;
+  /**
+   * Find by per-instance name.
+   *
+   * If the device name is cvd-foo or cvd-4, "cvd" is the group name,
+   * "foo" or "4" is the per-instance names, and "cvd-foo" or "cvd-4" is
+   * the device name.
+   */
+  Result<Set<LocalInstance>> FindByInstanceName(
+      const std::string& instance_name) const;
   std::size_t HashCode() const noexcept;
 
  private:
