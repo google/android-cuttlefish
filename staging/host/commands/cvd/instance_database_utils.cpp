@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/instance_database_utils.h"
 
+#include <regex>
 #include <set>
 #include <sstream>
 #include <string_view>
@@ -48,6 +49,12 @@ std::string GenInternalGroupName() {
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name) {
   return group_name + "-" + instance_name;
+}
+
+// [A-Za-z0-9_]+
+bool IsValidInstanceName(const std::string& token) {
+  std::regex regular_expr("[A-Za-z_0-9]+");
+  return std::regex_match(token, regular_expr);
 }
 
 bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir) {
