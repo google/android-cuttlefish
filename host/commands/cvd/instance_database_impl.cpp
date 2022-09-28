@@ -47,20 +47,27 @@ Result<void> InstanceDatabase::AddInstanceGroup(
 }
 
 Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup& group,
-                                           const unsigned id) {
+                                           const unsigned id,
+                                           const std::string& instance_name) {
+  CF_EXPECT(IsValidInstanceName(instance_name),
+            "instance_name " << instance_name << " is invalid.");
   auto itr = std::find(local_instance_groups_.begin(),
                        local_instance_groups_.end(), group);
-  if (itr == local_instance_groups_.end()) {
-    return CF_ERR("Group at " << group.HomeDir() << " does not exist "
-                              << "inside the Instance Database");
-  }
+  CF_EXPECT(
+      itr != local_instance_groups_.end(),
+      "Adding instances to non-existing group " + group.InternalGroupName());
 
   auto instances = CF_EXPECT(
       FindInstances({selector::kInstanceIdField, std::to_string(id)}));
   if (instances.size() != 0) {
     return CF_ERR("instance id " << id << " is taken");
   }
-  return itr->AddInstance(id);
+
+  auto instances_by_name = CF_EXPECT(group.FindByInstanceName(instance_name));
+  if (!instances_by_name.empty()) {
+    return CF_ERR("instance name " << instance_name << " is taken");
+  }
+  return itr->AddInstance(id, instance_name);
 }
 
 bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
@@ -84,20 +91,30 @@ Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroupsByHome(
 
 Result<Set<LocalInstance>> InstanceDatabase::FindInstancesById(
     const std::string& id) const {
-  auto all_elements = CollectAllElements<LocalInstance, LocalInstanceGroup>(
-      [](const LocalInstanceGroup& group) { return group.Instances(); },
-      local_instance_groups_);
-
   int parsed_int = 0;
   if (!android::base::ParseInt(id, &parsed_int)) {
     return CF_ERR(id << " cannot be converted to an integer");
   }
-  auto subset = CollectToSet<LocalInstance>(
-      all_elements, [parsed_int](const LocalInstance& instance) {
-        return instance.InstanceId() == parsed_int;
-      });
-  return AtMostOne(subset,
+  auto subset = CollectAllElements<LocalInstance, LocalInstanceGroup>(
+      [parsed_int](const LocalInstanceGroup& group) {
+        return group.FindById(parsed_int);
+      },
+      local_instance_groups_);
+  CF_EXPECT(subset.ok());
+  return AtMostOne(*subset,
                    TooManyInstancesFound(1, selector::kInstanceIdField));
+}
+
+Result<Set<LocalInstance>> InstanceDatabase::FindInstancesByInstanceName(
+    const Value& instance_specific_name) const {
+  auto subset = CollectAllElements<LocalInstance, LocalInstanceGroup>(
+      [&instance_specific_name](const LocalInstanceGroup& group) {
+        return group.FindByInstanceName(instance_specific_name);
+      },
+      local_instance_groups_);
+  CF_EXPECT(subset.ok());
+  return AtMostOne(*subset,
+                   TooManyInstancesFound(1, selector::kInstanceNameField));
 }
 
 }  // namespace instance_db
