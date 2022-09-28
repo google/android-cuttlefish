@@ -53,9 +53,9 @@ class LocalInstanceGroup {
    * return error if instance id of instance is taken AND that taken id
    * belongs to this group
    */
-  Result<void> AddInstance(const int instance_id);
+  Result<void> AddInstance(const unsigned instance_id);
   Result<void> AddInstance(const LocalInstance& instance);
-  bool HasInstance(const int instance_id) const;
+  bool HasInstance(const unsigned instance_id) const;
 
   Result<Set<LocalInstance>> FindById(const int id) const;
   std::size_t HashCode() const noexcept;

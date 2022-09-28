@@ -112,7 +112,7 @@ Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
 Result<std::string> CvdStartCommandHandler::MakeBinPathFromDatabase(
     const CommandInvocationInfo& invocation_info) const {
   auto assembly_info =
-      CF_EXPECT(instance_manager_.GetInstanceGroup(invocation_info.home));
+      CF_EXPECT(instance_manager_.GetInstanceGroupInfo(invocation_info.home));
   return assembly_info.host_binaries_dir + invocation_info.bin;
 }
 
