@@ -60,17 +60,14 @@ int InstanceFromString(std::string instance_str) {
 }
 
 int InstanceFromEnvironment() {
-  static constexpr char kInstanceEnvironmentVariable[] = "CUTTLEFISH_INSTANCE";
-
-  // CUTTLEFISH_INSTANCE environment variable
-  std::string instance_str = StringFromEnv(kInstanceEnvironmentVariable, "");
+  std::string instance_str = StringFromEnv(kCuttlefishInstanceEnvVarName, "");
   if (instance_str.empty()) {
     // Try to get it from the user instead
     instance_str = StringFromEnv("USER", "");
 
     if (instance_str.empty()) {
-      LOG(DEBUG) << "CUTTLEFISH_INSTANCE and USER unset, using instance id "
-                 << kDefaultInstance;
+      LOG(DEBUG) << kCuttlefishInstanceEnvVarName
+                 << " and USER unset, using instance id " << kDefaultInstance;
       return kDefaultInstance;
     }
     if (!android::base::StartsWith(instance_str, kVsocUserPrefix)) {
