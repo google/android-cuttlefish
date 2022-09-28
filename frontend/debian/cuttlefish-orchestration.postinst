@@ -14,6 +14,7 @@ case "$1" in
     then
         adduser --system --disabled-password --disabled-login --home /var/empty \
                 --no-create-home --quiet --force-badname --ingroup cvdnetwork _cvd-executor
+        usermod -aG kvm _cvd-executor
     fi
 esac
 
