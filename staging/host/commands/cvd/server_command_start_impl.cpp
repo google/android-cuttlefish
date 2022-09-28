@@ -92,7 +92,7 @@ Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
     return {false};
   }
   InstanceNumsCalculator calculator;
-  auto instance_env = envs.find("CUTTLEFISH_INSTANCE");
+  auto instance_env = envs.find(cuttlefish::kCuttlefishInstanceEnvVarName);
   if (instance_env != envs.end()) {
     std::int32_t instance_num = -1;
     android::base::ParseInt(instance_env->second, &instance_num);
