@@ -51,11 +51,13 @@ bool InstanceManager::HasInstanceGroups() const {
   return !instance_groups_.empty();
 }
 
-void InstanceManager::SetInstanceGroup(
+Result<void> InstanceManager::SetInstanceGroup(
     const InstanceManager::InstanceGroupDir& dir,
     const InstanceManager::InstanceGroupInfo& info) {
   std::lock_guard assemblies_lock(instance_groups_mutex_);
+  CF_EXPECT(instance_groups_.find(dir) == instance_groups_.end());
   instance_groups_[dir] = info;
+  return {};
 }
 
 void InstanceManager::RemoveInstanceGroup(

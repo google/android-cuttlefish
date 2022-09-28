@@ -16,7 +16,10 @@
 
 #pragma once
 
+#include <array>
+#include <map>
 #include <mutex>
+#include <string>
 
 #include <fruit/fruit.h>
 
@@ -44,9 +47,22 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> Interrupt() override;
 
  private:
+  /*
+   * Update instance database
+   *
+   * return false if the instance database wasn't expected to be set:
+   *  e.g. cvd start --help
+   *
+   * return CF_ERR if anything fails unexpectedly (e.g. HOME directory is taken)
+   */
+  Result<bool> UpdateInstanceDatabase(
+      const CommandInvocationInfo& invocation_info);
+  Result<std::string> MakeBinPathFromDatabase(
+      const CommandInvocationInfo& invocation_info) const;
   Result<void> FireCommand(Command&& command, const bool wait);
   Result<cvd::Response> UnlockAndWait(
       std::unique_lock<std::mutex>& interrupt_lock);
+  bool HasHelpOpts(const std::vector<std::string>& args) const;
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
@@ -55,6 +71,18 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   static constexpr char kStartBin[] = "cvd_internal_start";
   static const std::map<std::string, std::string> command_to_binary_map_;
+
+  /*
+   * From external/gflags/src, commit:
+   *  061f68cd158fa658ec0b9b2b989ed55764870047
+   *
+   */
+  constexpr static std::array help_bool_opts_{
+      "help", "helpfull", "helpshort", "helppackage", "helpxml", "version"};
+  constexpr static std::array help_str_opts_{
+      "helpon",
+      "helpmatch",
+  };
 };
 
 }  // namespace cvd_cmd_impl
