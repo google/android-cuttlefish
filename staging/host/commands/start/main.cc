@@ -237,7 +237,8 @@ int main(int argc, char** argv) {
 
   CHECK(instance_nums->size() > 0) << "Expected at least one instance";
   auto instance_num_str = std::to_string(*instance_nums->begin());
-  setenv("CUTTLEFISH_INSTANCE", instance_num_str.c_str(), /* overwrite */ 1);
+  setenv(cuttlefish::kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
+         /* overwrite */ 1);
 
 #if defined(__BIONIC__)
   // These environment variables are needed in case when Bionic is used.
@@ -277,7 +278,8 @@ int main(int argc, char** argv) {
     cuttlefish::SharedFD runner_stdin_in, runner_stdin_out;
     cuttlefish::SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
     std::string instance_num_str = std::to_string(instance_num);
-    setenv("CUTTLEFISH_INSTANCE", instance_num_str.c_str(), /* overwrite */ 1);
+    setenv(cuttlefish::kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
+           /* overwrite */ 1);
 
     auto run_proc = StartRunner(std::move(runner_stdin_out),
                                 forwarder.ArgvForSubprocess(kRunnerBin));
