@@ -75,7 +75,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
   std::string bin_path = invocation_info.bin;
   if (invocation_info.bin != kMkdirBin && invocation_info.bin != kLnBin) {
     auto assembly_info =
-        CF_EXPECT(instance_manager_.GetInstanceGroup(invocation_info.home));
+        CF_EXPECT(instance_manager_.GetInstanceGroupInfo(invocation_info.home));
     bin_path = assembly_info.host_binaries_dir + invocation_info.bin;
   }
 
