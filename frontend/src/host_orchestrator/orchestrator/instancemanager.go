@@ -151,6 +151,8 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 	if !ok {
 		panic("invalid type")
 	}
+	// NOTE: The artifacts directory gets created during the execution of `cvd fetch` granting
+	// owners permission to the user executing `cvd` which is relevant when extracting cvd-host_package.tar.gz.
 	artifactsDir :=
 		fmt.Sprintf("%s/%s_%s", b.paths.ArtifactsRootDir, req.BuildInfo.BuildID, req.BuildInfo.Target)
 	instanceNumber := atomic.AddUint32(&b.instanceNumberCounter, 1)
@@ -159,7 +161,6 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 		b.stageDownloadCVD,
 		b.stageStartCVDServer,
 		b.stageCreateArtifactsRootDir,
-		&StageCreateDir{Dir: artifactsDir},
 		b.buildFetchCVDStage(req.BuildInfo, artifactsDir),
 		b.stageCreateHomesRootDir,
 		&StageCreateDir{Dir: homeDir, FailIfExist: true},
@@ -211,11 +212,6 @@ func (s *StageDownloadCVD) Run() error {
 
 type ExecContext = func(name string, arg ...string) *exec.Cmd
 
-const (
-	envVarAndroidHostOut = "ANDROID_HOST_OUT"
-	envVarHome           = "HOME"
-)
-
 type StageStartCVDServer struct {
 	ExecContext ExecContext
 	CVDBin      string
@@ -229,8 +225,7 @@ func (s *StageStartCVDServer) Run() error {
 	if s.completed {
 		return nil
 	}
-	cmd := s.ExecContext(s.CVDBin)
-	cmd.Env = []string{fmt.Sprintf("%s=", envVarAndroidHostOut)}
+	cmd := buildCvdCommand(s.ExecContext, "", "", s.CVDBin)
 	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
 	// file descriptor to the null device (os.DevNull).
 	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
@@ -279,8 +274,7 @@ func (s *StageFetchCVD) Run() error {
 	}
 	buildArg := fmt.Sprintf("--default_build=%s/%s", s.BuildInfo.BuildID, s.BuildInfo.Target)
 	dirArg := fmt.Sprintf("--directory=%s", s.OutDir)
-	cmd := s.ExecContext(s.CVDBin, "fetch", buildArg, dirArg)
-	cmd.Env = []string{fmt.Sprintf("%s=", envVarAndroidHostOut)}
+	cmd := buildCvdCommand(s.ExecContext, "", "", s.CVDBin, "fetch", buildArg, dirArg)
 	stdoutStderr, err := cmd.CombinedOutput()
 	// NOTE: The stage is only completed when no error occurs. It's ok for this
 	// stage to be retried if an error happened before.
@@ -317,16 +311,8 @@ type StageLaunchCVD struct {
 func (s *StageLaunchCVD) Run() error {
 	instanceNumArg := fmt.Sprintf("--base_instance_num=%d", s.InstanceNumber)
 	imgDirArg := fmt.Sprintf("--system_image_dir=%s", s.ArtifactsDir)
-	cmd := s.ExecContext(s.CVDBin, "start",
-		daemonArg,
-		reportAnonymousUsageStatsArg,
-		instanceNumArg,
-		imgDirArg,
-	)
-	cmd.Env = append(os.Environ(),
-		fmt.Sprintf("%s=%s", envVarAndroidHostOut, s.ArtifactsDir),
-		fmt.Sprintf("%s=%s", envVarHome, s.HomeDir),
-	)
+	cmd := buildCvdCommand(s.ExecContext, s.ArtifactsDir, s.HomeDir,
+		s.CVDBin, "start", daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		msg := "`cvd start` failed with combined stdout and stderr:\n" +
@@ -464,4 +450,22 @@ func fileExist(name string) (bool, error) {
 	} else {
 		return false, err
 	}
+}
+
+const (
+	cvdUser              = "_cvd-executor"
+	envVarAndroidHostOut = "ANDROID_HOST_OUT"
+	envVarHome           = "HOME"
+)
+
+func buildCvdCommand(execContext ExecContext,
+	androidHostOut string, home string,
+	cvdBin string, args ...string) *exec.Cmd {
+	finalArgs := []string{"-u", cvdUser,
+		envVarAndroidHostOut + "=" + androidHostOut,
+		envVarHome + "=" + home,
+		cvdBin,
+	}
+	finalArgs = append(finalArgs, args...)
+	return execContext("sudo", finalArgs...)
 }
