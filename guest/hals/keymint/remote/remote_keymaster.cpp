@@ -187,6 +187,11 @@ void RemoteKeymaster::GenerateCsr(const GenerateCsrRequest& request,
   ForwardCommand(GENERATE_CSR, request, response);
 }
 
+void RemoteKeymaster::GenerateCsrV2(const GenerateCsrV2Request& request,
+                                    GenerateCsrV2Response* response) {
+  ForwardCommand(GENERATE_CSR_V2, request, response);
+}
+
 void RemoteKeymaster::GetKeyCharacteristics(
     const GetKeyCharacteristicsRequest& request,
     GetKeyCharacteristicsResponse* response) {
