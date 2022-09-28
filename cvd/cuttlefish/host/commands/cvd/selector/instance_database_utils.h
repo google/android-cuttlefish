@@ -31,6 +31,11 @@ Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 std::string GenInternalGroupName();
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name);
+/**
+ * Runs simple tests to see if it could potentially be a host binaries dir
+ *
+ */
+bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir);
 
 /**
  * simply returns:
