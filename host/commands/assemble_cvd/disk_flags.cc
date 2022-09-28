@@ -225,7 +225,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
   });
   partitions.push_back(ImagePartition{
       .label = "metadata",
-      .image_file_path = AbsolutePath(instance.metadata_image()),
+      .image_file_path = AbsolutePath(instance.new_metadata_image()),
       .read_only = FLAGS_use_overlay,
   });
   if (!instance.otheros_root_image().empty()) {
@@ -685,9 +685,9 @@ class InitializeMetadataImage : public SetupFeature {
       return {};
     }
 
-    CF_EXPECT(CreateBlankImage(instance_.metadata_image(),
+    CF_EXPECT(CreateBlankImage(instance_.new_metadata_image(),
                                instance_.blank_metadata_image_mb(), "none"),
-              "Failed to create \"" << instance_.metadata_image()
+              "Failed to create \"" << instance_.new_metadata_image()
                                     << "\" with size "
                                     << instance_.blank_metadata_image_mb());
     return {};
@@ -1010,6 +1010,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::string cur_initramfs_path;
   std::string cur_boot_image;
   std::string cur_vendor_boot_image;
+  std::string cur_metadata_image;
+  int cur_blank_metadata_image_mb;
   int value;
   int instance_index = 0;
   auto instance_nums =
@@ -1064,10 +1066,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_data_image(data_image[instance_index]);
     }
     if (instance_index >= metadata_image.size()) {
-      instance.set_metadata_image(metadata_image[0]);
+      cur_metadata_image = metadata_image[0];
     } else {
-      instance.set_metadata_image(metadata_image[instance_index]);
+      cur_metadata_image = metadata_image[instance_index];
     }
+    instance.set_metadata_image(cur_metadata_image);
     if (instance_index >= otheros_root_image.size()) {
       instance.set_otheros_root_image(otheros_root_image[0]);
     } else {
@@ -1119,6 +1122,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
           << blank_metadata_image_mb[instance_index];
     }
     instance.set_blank_metadata_image_mb(value);
+    cur_blank_metadata_image_mb = value;
 
     if (instance_index >= blank_sdcard_image_mb.size()) {
       CHECK(android::base::ParseInt(blank_sdcard_image_mb[0],
@@ -1158,6 +1162,15 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
       instance.set_super_image(new_super_image_path);
+    }
+
+    if (FileExists(cur_metadata_image) &&
+        FileSize(cur_metadata_image) == cur_blank_metadata_image_mb << 20) {
+      instance.set_new_metadata_image(cur_metadata_image);
+    } else {
+      const std::string new_metadata_image_path =
+          const_instance.PerInstancePath("metadata.img");
+      instance.set_new_metadata_image(new_metadata_image_path);
     }
     instance_index++;
   }
