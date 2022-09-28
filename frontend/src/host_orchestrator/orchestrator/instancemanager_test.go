@@ -247,23 +247,11 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		}
 	})
 
-	t.Run("create cvd artifacts directory stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[3].(*StageCreateDir)
-
-		expected := "/artifacts/256_waldo"
-		if s.Dir != expected {
-			t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
-		}
-	})
-
 	t.Run("fetch cvd artifacts stage", func(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[4].(*StageFetchCVD)
+		s := p[3].(*StageFetchCVD)
 
 		if s.CVDBin != paths.CVDBin {
 			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
@@ -282,8 +270,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		pFirst := builder.Build(req)
 		pSecond := builder.Build(req)
 
-		first := pFirst[4].(*StageFetchCVD)
-		second := pSecond[4].(*StageFetchCVD)
+		first := pFirst[3].(*StageFetchCVD)
+		second := pSecond[3].(*StageFetchCVD)
 
 		if first != second {
 			t.Errorf("expected <<%+v>>, got %+v", first, second)
@@ -294,7 +282,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[5].(*StageCreateDir)
+		s := p[4].(*StageCreateDir)
 
 		if s.Dir != paths.HomesRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
@@ -305,7 +293,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[6].(*StageCreateDir)
+		s := p[5].(*StageCreateDir)
 
 		expected := "/homes/cvd-1"
 		if s.Dir != expected {
@@ -318,7 +306,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			p := builder.Build(req)
 
-			s := p[6].(*StageCreateDir)
+			s := p[5].(*StageCreateDir)
 
 			expected := fmt.Sprintf("/homes/cvd-%d", i+1)
 			if s.Dir != expected {
@@ -335,7 +323,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			p := builder.Build(req)
 
-			s := p[7].(*StageLaunchCVD)
+			s := p[6].(*StageLaunchCVD)
 
 			if s.CVDBin != paths.CVDBin {
 				t.Errorf("expected <<%q>>, got %+q", paths.CVDBin, s.CVDBin)
@@ -422,12 +410,9 @@ func TestFakeCVDMain(t *testing.T) {
 	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
 		return
 	}
-	val, ok := os.LookupEnv(envVarAndroidHostOut)
-	if !ok || val != "" {
-		panic("invalid env var: " + envVarAndroidHostOut)
-	}
-	if os.Args[3] != "/bin/foo" {
-		panic("invalid binary path")
+	expectedArgs := []string{"sudo", "-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=", "/bin/foo"}
+	if !reflect.DeepEqual(os.Args[3:], expectedArgs) {
+		panic("invalid arguments")
 	}
 }
 
@@ -456,15 +441,11 @@ func TestFakeCVDFetchMain(t *testing.T) {
 	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
 		return
 	}
-	val, ok := os.LookupEnv(envVarAndroidHostOut)
-	if !ok || val != "" {
-		panic("invalid env var: " + envVarAndroidHostOut)
+	expectedArgs := []string{
+		"sudo", "-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=",
+		"/bin/foo", "fetch", "--default_build=256/bar", "--directory=/tmp/baz",
 	}
-	if os.Args[3] != "/bin/foo" {
-		panic("invalid binary path")
-	}
-	expectedArgs := []string{"fetch", "--default_build=256/bar", "--directory=/tmp/baz"}
-	if !reflect.DeepEqual(os.Args[4:], expectedArgs) {
+	if !reflect.DeepEqual(os.Args[3:], expectedArgs) {
 		panic("invalid arguments")
 	}
 }
@@ -482,27 +463,11 @@ func TestStageLaunchCVDSucceeds(t *testing.T) {
 		ArtifactsDir:   "/tmp/bar",
 		HomeDir:        "/tmp/baz",
 	}
-	// Tests that the current environment gets inherited.
-	if err := os.Setenv(envVarCuttlefishTestEnvVar, ""); err != nil {
-		t.Fatal(err)
-	}
-	// Test that the relevant environment variables values are overwritten.
-	if err := os.Setenv(envVarAndroidHostOut, "FOO"); err != nil {
-		t.Fatal(err)
-	}
 
 	err := s.Run()
 
 	if err != nil {
 		t.Errorf("expected <<nil>>, got %+v", err)
-	}
-
-	// Cleanup environment
-	if err := os.Unsetenv(envVarCuttlefishTestEnvVar); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Unsetenv(envVarAndroidHostOut); err != nil {
-		t.Fatal(err)
 	}
 }
 
@@ -513,24 +478,12 @@ func TestFakeCVDStartMain(t *testing.T) {
 	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
 		return
 	}
-	if _, ok := os.LookupEnv(envVarCuttlefishTestEnvVar); !ok {
-		panic("invalid env var: " + envVarCuttlefishTestEnvVar)
-	}
-	if os.Args[3] != "/bin/foo" {
-		panic("invalid binary path")
-	}
-	if os.Getenv(envVarAndroidHostOut) != "/tmp/bar" {
-		panic("invalid env var: " + envVarAndroidHostOut)
-	}
-	if os.Getenv(envVarHome) != "/tmp/baz" {
-		panic("invalid env var: " + envVarAndroidHostOut)
-	}
 	expectedArgs := []string{
-		"start",
-		daemonArg, reportAnonymousUsageStatsArg,
+		"sudo", "-u", "_cvd-executor", envVarAndroidHostOut + "=/tmp/bar", envVarHome + "=/tmp/baz",
+		"/bin/foo", "start", daemonArg, reportAnonymousUsageStatsArg,
 		"--base_instance_num=1", "--system_image_dir=/tmp/bar",
 	}
-	if !reflect.DeepEqual(os.Args[4:], expectedArgs) {
+	if !reflect.DeepEqual(os.Args[3:], expectedArgs) {
 		panic("invalid arguments")
 	}
 }
