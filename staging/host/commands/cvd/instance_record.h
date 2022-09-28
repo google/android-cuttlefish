@@ -32,7 +32,9 @@ namespace instance_db {
 class LocalInstance {
  public:
   LocalInstance(const unsigned instance_id,
-                const std::string& internal_group_name);
+                const std::string& internal_group_name,
+                const std::string& group_name,
+                const std::string& instance_name);
   LocalInstance(const LocalInstance&) = default;
   LocalInstance(LocalInstance&&) = default;
   LocalInstance& operator=(const LocalInstance&) = default;
@@ -41,12 +43,7 @@ class LocalInstance {
 
   /* names:
    *
-   *  As of 08/21/2022, the name of a cuttlefish instance is cvd-N. For now,
-   * instance groups share the "cvd-" prefix. So, "cvd" is the group name, and
-   * "N" is the instance specific name. "cvd-N" is the device name.
-   *
-   * There will be another name the user specify for each instance. However,
-   * many components in Cuttlefish traditionally expect the name to be "cvd-N,"
+   * Many components in Cuttlefish traditionally expect the name to be "cvd-N,"
    * and rely on "N" to avoid conflicts in the global resource uses.
    *
    * Thus, we will eventually maintain the internal device name for those
@@ -57,17 +54,29 @@ class LocalInstance {
   std::string InternalDeviceName() const;
 
   unsigned InstanceId() const;
+  const std::string& PerInstanceName() const;
+  std::string DeviceName() const;
 
  private:
   bool Compare(const LocalInstance& target) const {
     // list all fields here
     return (instance_id_ == target.instance_id_) &&
            (internal_name_ == target.internal_name_) &&
-           (internal_group_name_ == target.internal_group_name_);
+           (internal_group_name_ == target.internal_group_name_) &&
+           (group_name_ == target.group_name_) &&
+           (per_instance_name_ == target.per_instance_name_);
   }
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
   std::string internal_group_name_;
+  std::string group_name_;  ///< for now, the same as internal_group_name_
+  /** the instance specific name to be appended to the group name
+   *
+   * by default, to_string(instance_id_). The default value is decided by
+   * InstanceGroupRecord, as that's the only class that will create this
+   * instance
+   */
+  std::string per_instance_name_;
 };
 
 }  // namespace instance_db
