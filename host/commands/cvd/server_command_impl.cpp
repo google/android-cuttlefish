@@ -17,6 +17,7 @@
 #include "host/commands/cvd/server_command_impl.h"
 
 #include "common/libs/utils/files.h"
+#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 
