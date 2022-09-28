@@ -27,7 +27,7 @@ namespace instance_db {
 using FieldName = std::string;
 using Value = std::string;
 // e.g. if intended to search by --home=/home/vsoc-01,
-// field_name_ is "home" and the field_name_ is "/home/vsoc-01"
+// field_name_ is "home" and the field_value_ is "/home/vsoc-01"
 struct Query {
   FieldName field_name_;
   Value field_value_;
