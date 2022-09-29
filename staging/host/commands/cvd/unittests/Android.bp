@@ -20,6 +20,7 @@ package {
 cc_test_host {
     name: "cvd_instance_db_test",
     srcs: [
+        "test_group_record.cpp",
         "test_instance_record.cpp",
     ],
     test_options: {
