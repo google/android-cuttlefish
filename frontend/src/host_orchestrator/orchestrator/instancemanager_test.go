@@ -376,6 +376,24 @@ func TestStageDownloadCVD(t *testing.T) {
 	}
 }
 
+func TestStageFetchCVDSucceeds(t *testing.T) {
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return createFakeCmd(TestFakeCVDFetchMain, name, args, t)
+	}
+	s := &StageFetchCVD{
+		ExecContext: execContext,
+		CVDBin:      "/bin/foo",
+		BuildInfo:   apiv1.BuildInfo{BuildID: "256", Target: "bar"},
+		OutDir:      "/tmp/baz",
+	}
+
+	err := s.Run()
+
+	if err != nil {
+		t.Errorf("expected <<nil>>, got %+v", err)
+	}
+}
+
 // NOTE: This test is not a regular unit tests. It simulates a fake `cvd fetch` execution.
 // It validates the environment variables and arguments `cvd fetch` should be called with.
 func TestFakeCVDFetchMain(t *testing.T) {
