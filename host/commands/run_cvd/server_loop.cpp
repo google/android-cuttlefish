@@ -246,8 +246,8 @@ class ServerLoopImpl : public ServerLoop,
     if (instance_.start_ap()) {
       overlay_files.emplace_back("ap_overlay.img");
     }
-    for (auto overlay_file : {"overlay.img", "ap_overlay.img"}) {
-      auto overlay_path = instance_.PerInstancePath(overlay_file);
+    for (const auto& overlay_file : overlay_files) {
+      auto overlay_path = instance_.PerInstancePath(overlay_file.c_str());
       unlink(overlay_path.c_str());
       if (!CreateQcowOverlay(config_.crosvm_binary(),
                              instance_.os_composite_disk_path(), overlay_path)) {
