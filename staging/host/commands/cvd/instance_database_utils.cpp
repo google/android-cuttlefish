@@ -72,7 +72,8 @@ bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir) {
   return !result.empty();
 }
 
-std::string TooManyInstancesFound(const int n, const std::string& field_name) {
+std::string GenerateTooManyInstancesErrorMsg(const int n,
+                                             const std::string& field_name) {
   std::stringstream s;
   s << "Only up to " << n << " must match";
   if (!field_name.empty()) {
