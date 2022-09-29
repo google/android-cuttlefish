@@ -52,8 +52,8 @@ Result<Set<LocalInstance>> LocalInstanceGroup::FindById(const int id) const {
       instances_, [id](const LocalInstance& instance) {
         return instance.InstanceId() == id;
       });
-  return AtMostOne(subset,
-                   TooManyInstancesFound(1, selector::kInstanceIdField));
+  return AtMostOne(
+      subset, GenerateTooManyInstancesErrorMsg(1, selector::kInstanceIdField));
 }
 
 Result<Set<LocalInstance>> LocalInstanceGroup::FindByInstanceName(
@@ -64,8 +64,8 @@ Result<Set<LocalInstance>> LocalInstanceGroup::FindByInstanceName(
       });
   // note that inside a group, the instance name is unique. However,
   // across groups, they can be multiple
-  return AtMostOne(subset,
-                   TooManyInstancesFound(1, selector::kInstanceNameField));
+  return AtMostOne(subset, GenerateTooManyInstancesErrorMsg(
+                               1, selector::kInstanceNameField));
 }
 
 bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
