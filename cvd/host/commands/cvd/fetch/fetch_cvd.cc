@@ -313,7 +313,7 @@ std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
       http_client, content, BUILD_SCOPE);
   if (!result.ok()) {
     LOG(VERBOSE) << "Failed to load service account json file: \n"
-                 << result.error().Trace();
+                 << result.error();
     return {};
   }
   return std::unique_ptr<CredentialSource>(
@@ -341,6 +341,12 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 
   FetcherConfig config;
   config.RecordFlags();
+
+#ifdef __BIONIC__
+  // TODO(schuffelen): Find a better way to deal with tzdata
+  setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
+  setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
+#endif
 
   std::string target_dir = AbsolutePath(FLAGS_directory);
   if (!DirectoryExists(target_dir)) {
@@ -375,7 +381,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
               new RefreshCredentialSource(std::move(*attempt_load)));
         } else {
           LOG(VERBOSE) << "Failed to load acloud credentials: "
-                       << attempt_load.error().Trace();
+                       << attempt_load.error();
         }
       } else {
         LOG(INFO) << "\"" << file << "\" missing, running without credentials";
