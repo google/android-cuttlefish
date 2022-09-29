@@ -33,6 +33,7 @@ Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
+Breaks: cuttlefish-common (< 0.9.25)
 Description: Cuttlefish Android Virtual Device companion package
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.
