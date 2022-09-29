@@ -342,6 +342,12 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   FetcherConfig config;
   config.RecordFlags();
 
+#ifdef __BIONIC__
+  // TODO(schuffelen): Find a better way to deal with tzdata
+  setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
+  setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
+#endif
+
   std::string target_dir = AbsolutePath(FLAGS_directory);
   if (!DirectoryExists(target_dir)) {
     CF_EXPECT(mkdir(target_dir.c_str(), 0777) == 0,
