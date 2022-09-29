@@ -46,7 +46,8 @@ bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir);
  * "Only up to n must match by field " + FieldName
  *
  */
-std::string TooManyInstancesFound(const int n, const std::string& field_name);
+std::string GenerateTooManyInstancesErrorMsg(const int n,
+                                             const std::string& field_name);
 
 // effectively partial specialization of cuttlefish::Collect
 // with instance_db::Set<T>
