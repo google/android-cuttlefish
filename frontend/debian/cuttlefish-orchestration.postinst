@@ -13,8 +13,8 @@ case "$1" in
     if ! getent passwd _cvd-executor > /dev/null 2>&1
     then
         adduser --system --disabled-password --disabled-login --home /var/empty \
-                --no-create-home --quiet --force-badname --ingroup cvdnetwork _cvd-executor
-        usermod -aG kvm _cvd-executor
+                --no-create-home --quiet --force-badname --group _cvd-executor
+        usermod -a -G cvdnetwork,kvm _cvd-executor
     fi
 esac
 
