@@ -117,7 +117,6 @@ type ProcedureBuilder interface {
 type LaunchCVDProcedureBuilder struct {
 	paths                       IMPaths
 	stageDownloadCVD            *StageDownloadCVD
-	stageStartCVDServer         *StageStartCVDServer
 	stageCreateArtifactsRootDir *StageCreateDir
 	stageCreateHomesRootDir     *StageCreateDir
 	stageFetchCVDMap            map[string]*StageFetchCVD
@@ -135,10 +134,6 @@ func NewLaunchCVDProcedureBuilder(
 			CVDBin:     paths.CVDBin,
 			Build:      cvdBinAB,
 			Downloader: NewCVDDownloader(NewSignedURLArtifactDownloader(http.DefaultClient, abURL)),
-		},
-		stageStartCVDServer: &StageStartCVDServer{
-			ExecContext: exec.Command,
-			CVDBin:      paths.CVDBin,
 		},
 		stageCreateArtifactsRootDir: &StageCreateDir{Dir: paths.ArtifactsRootDir},
 		stageCreateHomesRootDir:     &StageCreateDir{Dir: paths.HomesRootDir},
@@ -159,7 +154,6 @@ func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
 	homeDir := fmt.Sprintf("%s/cvd-%d", b.paths.HomesRootDir, instanceNumber)
 	return Procedure{
 		b.stageDownloadCVD,
-		b.stageStartCVDServer,
 		b.stageCreateArtifactsRootDir,
 		b.buildFetchCVDStage(req.BuildInfo, artifactsDir),
 		b.stageCreateHomesRootDir,
@@ -212,35 +206,6 @@ func (s *StageDownloadCVD) Run() error {
 
 type ExecContext = func(name string, arg ...string) *exec.Cmd
 
-type StageStartCVDServer struct {
-	ExecContext ExecContext
-	CVDBin      string
-	mutex       sync.Mutex
-	completed   bool
-}
-
-func (s *StageStartCVDServer) Run() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	if s.completed {
-		return nil
-	}
-	cmd := buildCvdCommand(s.ExecContext, "", "", s.CVDBin)
-	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
-	// file descriptor to the null device (os.DevNull).
-	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
-	// the data of the new process, this pipe will be passed over to `cvd_server`,
-	// which is a daemon, hence the pipe will never reach EOF and Run will never
-	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	err := cmd.Run()
-	if err == nil {
-		s.completed = true
-	}
-	return err
-}
-
 type StageCreateDir struct {
 	Dir         string
 	FailIfExist bool
@@ -274,20 +239,17 @@ func (s *StageFetchCVD) Run() error {
 	}
 	buildArg := fmt.Sprintf("--default_build=%s/%s", s.BuildInfo.BuildID, s.BuildInfo.Target)
 	dirArg := fmt.Sprintf("--directory=%s", s.OutDir)
-	cmd := buildCvdCommand(s.ExecContext, "", "", s.CVDBin, "fetch", buildArg, dirArg)
-	stdoutStderr, err := cmd.CombinedOutput()
+	cvdCmd := cvdCommand{
+		execContext:    s.ExecContext,
+		androidHostOut: "",
+		home:           "",
+		cvdBin:         s.CVDBin,
+		args:           []string{"fetch", buildArg, dirArg},
+	}
+	err := cvdCmd.Run()
 	// NOTE: The stage is only completed when no error occurs. It's ok for this
 	// stage to be retried if an error happened before.
 	if err != nil {
-		msg := "`cvd fetch` failed with combined stdout and stderr:\n" +
-			"############################################\n" +
-			"## BEGIN \n" +
-			"############################################\n" +
-			"\n%s\n\n" +
-			"############################################\n" +
-			"## END \n" +
-			"############################################\n"
-		log.Printf(msg, string(stdoutStderr))
 		return fmt.Errorf("fetch cvd stage failed: %w", err)
 	}
 	s.completed = true
@@ -311,19 +273,15 @@ type StageLaunchCVD struct {
 func (s *StageLaunchCVD) Run() error {
 	instanceNumArg := fmt.Sprintf("--base_instance_num=%d", s.InstanceNumber)
 	imgDirArg := fmt.Sprintf("--system_image_dir=%s", s.ArtifactsDir)
-	cmd := buildCvdCommand(s.ExecContext, s.ArtifactsDir, s.HomeDir,
-		s.CVDBin, "start", daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg)
-	stdoutStderr, err := cmd.CombinedOutput()
+	cvdCmd := cvdCommand{
+		execContext:    s.ExecContext,
+		androidHostOut: s.ArtifactsDir,
+		home:           s.HomeDir,
+		cvdBin:         s.CVDBin,
+		args:           []string{"start", daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg},
+	}
+	err := cvdCmd.Run()
 	if err != nil {
-		msg := "`cvd start` failed with combined stdout and stderr:\n" +
-			"############################################\n" +
-			"## BEGIN \n" +
-			"############################################\n" +
-			"\n%s\n\n" +
-			"############################################\n" +
-			"## END \n" +
-			"############################################\n"
-		log.Printf(msg, string(stdoutStderr))
 		return fmt.Errorf("launch cvd stage failed: %w", err)
 	}
 	return nil
@@ -457,6 +415,49 @@ const (
 	envVarAndroidHostOut = "ANDROID_HOST_OUT"
 	envVarHome           = "HOME"
 )
+
+type cvdCommand struct {
+	execContext    ExecContext
+	androidHostOut string
+	home           string
+	cvdBin         string
+	args           []string
+}
+
+func (c *cvdCommand) Run() error {
+	// Makes sure cvd server daemon is running before executing the cvd command.
+	if err := c.startCVDServer(); err != nil {
+		return err
+	}
+	cmd := buildCvdCommand(c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		msg := "`cvd` execution failed with combined stdout and stderr:\n" +
+			"############################################\n" +
+			"## BEGIN \n" +
+			"############################################\n" +
+			"\n%s\n\n" +
+			"############################################\n" +
+			"## END \n" +
+			"############################################\n"
+		log.Printf(msg, string(stdoutStderr))
+		return fmt.Errorf("cvd execution failed: %w", err)
+	}
+	return nil
+}
+
+func (c *cvdCommand) startCVDServer() error {
+	cmd := buildCvdCommand(c.execContext, "", "", c.cvdBin)
+	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
+	// file descriptor to the null device (os.DevNull).
+	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
+	// the data of the new process, this pipe will be passed over to `cvd_server`,
+	// which is a daemon, hence the pipe will never reach EOF and Run will never
+	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}
 
 func buildCvdCommand(execContext ExecContext,
 	androidHostOut string, home string,

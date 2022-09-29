@@ -225,22 +225,11 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		}
 	})
 
-	t.Run("start cvd server stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[1].(*StageStartCVDServer)
-
-		if s.CVDBin != paths.CVDBin {
-			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
-		}
-	})
-
 	t.Run("create artifacts root directory stage", func(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[2].(*StageCreateDir)
+		s := p[1].(*StageCreateDir)
 
 		if s.Dir != paths.ArtifactsRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.ArtifactsRootDir, s.Dir)
@@ -251,7 +240,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[3].(*StageFetchCVD)
+		s := p[2].(*StageFetchCVD)
 
 		if s.CVDBin != paths.CVDBin {
 			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
@@ -270,8 +259,8 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		pFirst := builder.Build(req)
 		pSecond := builder.Build(req)
 
-		first := pFirst[3].(*StageFetchCVD)
-		second := pSecond[3].(*StageFetchCVD)
+		first := pFirst[2].(*StageFetchCVD)
+		second := pSecond[2].(*StageFetchCVD)
 
 		if first != second {
 			t.Errorf("expected <<%+v>>, got %+v", first, second)
@@ -282,7 +271,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[4].(*StageCreateDir)
+		s := p[3].(*StageCreateDir)
 
 		if s.Dir != paths.HomesRootDir {
 			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
@@ -293,7 +282,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
 		p := builder.Build(req)
 
-		s := p[5].(*StageCreateDir)
+		s := p[4].(*StageCreateDir)
 
 		expected := "/homes/cvd-1"
 		if s.Dir != expected {
@@ -306,7 +295,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			p := builder.Build(req)
 
-			s := p[5].(*StageCreateDir)
+			s := p[4].(*StageCreateDir)
 
 			expected := fmt.Sprintf("/homes/cvd-%d", i+1)
 			if s.Dir != expected {
@@ -323,7 +312,7 @@ func TestLaunchCVDProcedureBuilder(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			p := builder.Build(req)
 
-			s := p[6].(*StageLaunchCVD)
+			s := p[5].(*StageLaunchCVD)
 
 			if s.CVDBin != paths.CVDBin {
 				t.Errorf("expected <<%q>>, got %+q", paths.CVDBin, s.CVDBin)
@@ -387,58 +376,16 @@ func TestStageDownloadCVD(t *testing.T) {
 	}
 }
 
-func TestStageStartCVDServerSucceeds(t *testing.T) {
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return createFakeCmd(TestFakeCVDMain, name, args, t)
-	}
-	s := &StageStartCVDServer{
-		ExecContext: execContext,
-		CVDBin:      "/bin/foo",
-	}
-
-	err := s.Run()
-
-	if err != nil {
-		t.Errorf("expected <<nil>>, got %+v", err)
-	}
-}
-
-// NOTE: This test is not a regular unit tests. It simulates a fake `cvd` alone execution.
-// It validates the environment variables and arguments `cvd` should be called with.
-func TestFakeCVDMain(t *testing.T) {
-	// Early exist if called as a regular unit test function.
-	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
-		return
-	}
-	expectedArgs := []string{"sudo", "-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=", "/bin/foo"}
-	if !reflect.DeepEqual(os.Args[3:], expectedArgs) {
-		panic("invalid arguments")
-	}
-}
-
-func TestStageFetchCVDSucceeds(t *testing.T) {
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return createFakeCmd(TestFakeCVDFetchMain, name, args, t)
-	}
-	s := &StageFetchCVD{
-		ExecContext: execContext,
-		CVDBin:      "/bin/foo",
-		BuildInfo:   apiv1.BuildInfo{BuildID: "256", Target: "bar"},
-		OutDir:      "/tmp/baz",
-	}
-
-	err := s.Run()
-
-	if err != nil {
-		t.Errorf("expected <<nil>>, got %+v", err)
-	}
-}
-
 // NOTE: This test is not a regular unit tests. It simulates a fake `cvd fetch` execution.
 // It validates the environment variables and arguments `cvd fetch` should be called with.
 func TestFakeCVDFetchMain(t *testing.T) {
 	// Early exist if called as a regular unit test function.
 	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
+		return
+	}
+	startCVDServerExpectedArgs := []string{"sudo", "-u", "_cvd-executor",
+		envVarAndroidHostOut + "=", envVarHome + "=", "/bin/foo"}
+	if reflect.DeepEqual(os.Args[3:], startCVDServerExpectedArgs) {
 		return
 	}
 	expectedArgs := []string{
@@ -476,6 +423,11 @@ func TestStageLaunchCVDSucceeds(t *testing.T) {
 func TestFakeCVDStartMain(t *testing.T) {
 	// Early exist if called as a regular unit test function.
 	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
+		return
+	}
+	startCVDServerExpectedArgs := []string{"sudo", "-u", "_cvd-executor",
+		envVarAndroidHostOut + "=", envVarHome + "=", "/bin/foo"}
+	if reflect.DeepEqual(os.Args[3:], startCVDServerExpectedArgs) {
 		return
 	}
 	expectedArgs := []string{
