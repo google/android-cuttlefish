@@ -44,18 +44,18 @@ size_t file_write_callback(char* ptr, size_t, size_t nmemb, void* userdata) {
   return nmemb;
 }
 
-curl_slist* build_slist(const std::vector<std::string>& strings) {
-  curl_slist* curl_headers = nullptr;
+using ManagedCurlSlist =
+    std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;
+
+Result<ManagedCurlSlist> SlistFromStrings(
+    const std::vector<std::string>& strings) {
+  ManagedCurlSlist curl_headers(nullptr, curl_slist_free_all);
   for (const auto& str : strings) {
-    curl_slist* temp = curl_slist_append(curl_headers, str.c_str());
-    if (temp == nullptr) {
-      LOG(ERROR) << "curl_slist_append failed to add " << str;
-      if (curl_headers) {
-        curl_slist_free_all(curl_headers);
-        return nullptr;
-      }
-    }
-    curl_headers = temp;
+    curl_slist* temp = curl_slist_append(curl_headers.get(), str.c_str());
+    CF_EXPECT(temp != nullptr,
+              "curl_slist_append failed to add \"" << str << "\"");
+    (void)curl_headers.release();  // Memory is now owned by `temp`
+    curl_headers.reset(temp);
   }
   return curl_headers;
 }
@@ -93,11 +93,11 @@ class CurlClient : public HttpClient {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO) << "Attempting to download \"" << url << "\"";
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
-    curl_slist* curl_headers = build_slist(headers);
+    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
     curl_easy_reset(curl_);
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
                      "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data_to_write.size());
     curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data_to_write.c_str());
@@ -108,9 +108,6 @@ class CurlClient : public HttpClient {
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
     CURLcode res = curl_easy_perform(curl_);
-    if (curl_headers) {
-      curl_slist_free_all(curl_headers);
-    }
     CF_EXPECT(res == CURLE_OK,
               "curl_easy_perform() failed. "
                   << "Code was \"" << res << "\". "
@@ -154,11 +151,11 @@ class CurlClient : public HttpClient {
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
               "callback failure");
-    curl_slist* curl_headers = build_slist(headers);
+    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
     curl_easy_reset(curl_);
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
                      "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
     curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
@@ -166,9 +163,6 @@ class CurlClient : public HttpClient {
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
     CURLcode res = curl_easy_perform(curl_);
-    if (curl_headers) {
-      curl_slist_free_all(curl_headers);
-    }
     CF_EXPECT(res == CURLE_OK,
               "curl_easy_perform() failed. "
                   << "Code was \"" << res << "\". "
@@ -219,12 +213,12 @@ class CurlClient : public HttpClient {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO) << "Attempting to download \"" << url << "\"";
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
-    curl_slist* curl_headers = build_slist(headers);
+    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
     curl_easy_reset(curl_);
     curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
                      "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers);
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
     std::stringstream data_to_read;
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
@@ -233,9 +227,6 @@ class CurlClient : public HttpClient {
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
     CURLcode res = curl_easy_perform(curl_);
-    if (curl_headers) {
-      curl_slist_free_all(curl_headers);
-    }
     CF_EXPECT(res == CURLE_OK,
               "curl_easy_perform() failed. "
                   << "Code was \"" << res << "\". "
