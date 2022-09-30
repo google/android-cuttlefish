@@ -49,7 +49,7 @@ TEST(AdbConfigTest, SetFromFlags) {
   };
   auto flags = injector.getMultibindings<FlagFeature>();
   auto processed = FlagFeature::ProcessFlags(flags, args);
-  ASSERT_TRUE(processed.ok()) << processed.error();
+  ASSERT_TRUE(processed.ok()) << processed.error().Trace();
   ASSERT_TRUE(args.empty());
 
   std::set<AdbMode> modes = {AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
