@@ -27,6 +27,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -102,7 +103,7 @@ func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
 
 	op, _ := im.CreateCVD(req)
 
-	op, _ = om.Wait(op.Name)
+	op, _ = om.Wait(op.Name, 1*time.Second)
 	if !op.Done {
 		t.Error("expected operation to be done")
 	}
@@ -126,7 +127,7 @@ func TestCreateCVD(t *testing.T) {
 
 	op, _ := im.CreateCVD(req)
 
-	op, _ = om.Wait(op.Name)
+	op, _ = om.Wait(op.Name, 1*time.Second)
 	if !op.Done {
 		t.Error("expected operation to be done")
 	}

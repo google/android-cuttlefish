@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -44,18 +45,19 @@ type OperationResultError struct {
 type OperationManager interface {
 	New() Operation
 
-	Get(string) (Operation, error)
+	Get(name string) (Operation, error)
 
-	Complete(string, OperationResult) error
+	Complete(name string, result OperationResult) error
 
-	// TODO(b/231319087) This should handle timeout.
-	Wait(string) (Operation, error)
+	// Waits for the specified operation to be DONE within the passed deadline. If the deadline
+	// is reached it will return the current state of the operation which might be DONE or not.
+	Wait(name string, dt time.Duration) (Operation, error)
 }
 
 type mapOMOperationEntry struct {
-	data      Operation
-	mutex     sync.RWMutex
-	waitGroup sync.WaitGroup
+	data  Operation
+	mutex sync.RWMutex
+	done  chan struct{}
 }
 
 type MapOM struct {
@@ -92,10 +94,9 @@ func (m *MapOM) New() Operation {
 			Done:   false,
 			Result: OperationResult{},
 		},
-		mutex:     sync.RWMutex{},
-		waitGroup: sync.WaitGroup{},
+		mutex: sync.RWMutex{},
+		done:  make(chan struct{}),
 	}
-	entry.waitGroup.Add(1)
 	m.operations[name] = entry
 	return entry.data
 }
@@ -118,18 +119,21 @@ func (m *MapOM) Complete(name string, result OperationResult) error {
 	}
 	op.mutex.Lock()
 	defer op.mutex.Unlock()
-	op.waitGroup.Done()
 	op.data.Done = true
 	op.data.Result = result
+	close(op.done)
 	return nil
 }
 
-func (m *MapOM) Wait(name string) (Operation, error) {
+func (m *MapOM) Wait(name string, dt time.Duration) (Operation, error) {
 	entry, ok := m.getOperationEntry(name)
 	if !ok {
 		return Operation{}, NotFoundOperationError("map key didn't exist")
 	}
-	entry.waitGroup.Wait()
+	select {
+	case <-entry.done:
+	case <-time.After(time.Duration(dt)):
+	}
 	entry.mutex.RLock()
 	op := entry.data
 	entry.mutex.RUnlock()
