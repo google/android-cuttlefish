@@ -18,6 +18,7 @@
 #include <chrono>
 #include <mutex>
 #include <string>
+#include <type_traits>
 
 #include <json/json.h>
 
@@ -29,6 +30,8 @@ static inline bool IsHttpSuccess(int http_code) {
   return http_code >= 200 && http_code <= 299;
 };
 
+struct HttpVoidResponse {};
+
 template <typename T>
 struct HttpResponse {
   bool HttpInfo() { return http_code >= 100 && http_code <= 199; }
@@ -37,7 +40,7 @@ struct HttpResponse {
   bool HttpClientError() { return http_code >= 400 && http_code <= 499; }
   bool HttpServerError() { return http_code >= 500 && http_code <= 599; }
 
-  T data;
+  typename std::conditional<std::is_void_v<T>, HttpVoidResponse, T>::type data;
   long http_code;
 };
 
@@ -87,7 +90,7 @@ class HttpClient {
       const std::vector<std::string>& headers = {}) = 0;
 
   // Returns response's status code.
-  virtual Result<long> DownloadToCallback(
+  virtual Result<HttpResponse<void>> DownloadToCallback(
       DataCallback callback, const std::string& url,
       const std::vector<std::string>& headers = {}) = 0;
 

@@ -57,7 +57,7 @@ class SsoClient : public HttpClient {
       const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
-  Result<long> DownloadToCallback(
+  Result<HttpResponse<void>> DownloadToCallback(
       DataCallback, const std::string&,
       const std::vector<std::string>& headers = {}) override;
 
