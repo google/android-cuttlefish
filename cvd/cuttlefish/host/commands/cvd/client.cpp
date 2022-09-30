@@ -185,12 +185,17 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
   return {};
 }
 
-Result<void> CvdClient::HandleCommand(std::vector<std::string> args,
-                                      std::vector<std::string> env) {
+Result<void> CvdClient::HandleCommand(
+    std::vector<std::string> args, std::vector<std::string> env,
+    const std::vector<std::string>& selector_args) {
   cvd::Request request;
   auto command_request = request.mutable_command_request();
   for (const std::string& arg : args) {
     command_request->add_args(arg);
+  }
+  auto selector_opts = command_request->mutable_selector_opts();
+  for (const std::string& selector_arg : selector_args) {
+    selector_opts->add_args(selector_arg);
   }
   for (const std::string& e : env) {
     auto eq_pos = e.find('=');
@@ -310,14 +315,14 @@ Result<void> CvdClient::HandleAcloud(std::vector<std::string>& args,
   }
 
   args[0] = "try-acloud";
-  auto attempt = HandleCommand(args, env);
+  auto attempt = HandleCommand(args, env, {});
   if (!attempt.ok()) {
     CallPythonAcloud(args);
     // no return
   }
 
   args[0] = "acloud";
-  CF_EXPECT(HandleCommand(args, env));
+  CF_EXPECT(HandleCommand(args, env, {}));
   return {};
 }
 
