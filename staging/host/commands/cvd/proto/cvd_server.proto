@@ -74,6 +74,11 @@ enum WaitBehavior {
   WAIT_BEHAVIOR_COMPLETE = 2;
 }
 
+// the arguments that are used by selector inside the server
+message SelectorOption {
+  repeated string args = 1;
+}
+
 message CommandRequest {
   // The args that should be executed, including the subcommand.
   repeated string args = 1;
@@ -81,5 +86,6 @@ message CommandRequest {
   map<string, string> env = 2;
   string working_directory = 3;
   WaitBehavior wait_behavior = 4;
+  SelectorOption selector_opts = 5;
 }
 message CommandResponse {}
