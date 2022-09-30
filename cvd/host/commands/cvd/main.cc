@@ -151,7 +151,7 @@ int main(int argc, char** argv, char** envp) {
   if (result.ok()) {
     return 0;
   } else {
-    std::cerr << result.error() << std::endl;
+    std::cerr << result.error().Message() << std::endl;
     return -1;
   }
 }
