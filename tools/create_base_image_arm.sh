@@ -176,7 +176,7 @@ else
 	block_count=`sudo tune2fs -l ${devicep}7 | grep "Block count:" | sed 's/.*: *//'`
 	block_size=`sudo tune2fs -l ${devicep}7 | grep "Block size:" | sed 's/.*: *//'`
 	sector_size=512
-	start_sector=296960
+	start_sector=`partx -g -o START -s -n 7 "${IMAGE}" | xargs`
 	fs_size=$(( block_count*block_size ))
 	fs_sectors=$(( fs_size/sector_size ))
 	part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
