@@ -47,6 +47,7 @@
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/help_command.h"
+#include "host/commands/cvd/load_configs.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -100,7 +101,8 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
       .install(cvdVersionComponent)
-      .install(DemoMultiVdComponent);
+      .install(DemoMultiVdComponent)
+      .install(LoadConfigsComponent);
 }
 
 Result<void> CvdServer::BestEffortWakeup() {
@@ -269,7 +271,7 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   if (!response.ok()) {
     cvd::Response failure_message;
     failure_message.mutable_status()->set_code(cvd::Status::INTERNAL);
-    failure_message.mutable_status()->set_message(response.error().Trace());
+    failure_message.mutable_status()->set_message(response.error().Message());
     CF_EXPECT(SendResponse(event.fd, failure_message));
     return {};  // Error already sent to the client, don't repeat on the server
   }
