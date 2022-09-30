@@ -779,7 +779,11 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_data_policy, ",");
 
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
-  CHECK(instance_nums.ok()) << instance_nums.error();
+  if (!instance_nums.ok()) {
+    LOG(ERROR) << instance_nums.error().Message();
+    LOG(DEBUG) << instance_nums.error().Trace();
+    abort();
+  }
 
   CHECK(FLAGS_use_overlay || instance_nums->size() == 1)
       << "`--use_overlay=false` is incompatible with multiple instances";
