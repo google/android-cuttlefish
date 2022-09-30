@@ -71,6 +71,8 @@ DEFINE_bool(run_next_stage, false, "Continue running the device through the next
 DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
                                        "in seconds. Set to 0 to not wait.");
 DEFINE_bool(keep_downloaded_archives, false, "Keep downloaded zip/tar.");
+DEFINE_bool(external_dns_resolver, false,
+            "Use an out-of-process mechanism to resolve DNS queries");
 
 namespace cuttlefish {
 namespace {
@@ -345,7 +347,9 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
-    auto curl = HttpClient::CurlClient();
+    auto resolver =
+        FLAGS_external_dns_resolver ? GetEntDnsResolve : NameResolver();
+    auto curl = HttpClient::CurlClient(resolver);
     auto retrying_http_client = HttpClient::ServerErrorRetryClient(
         *curl, 10, std::chrono::milliseconds(5000));
     std::unique_ptr<CredentialSource> credential_source;
