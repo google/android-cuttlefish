@@ -93,7 +93,8 @@ int Main(int argc, char** argv) {
   if (FLAGS_host == "") {
     auto hosts = api.ListHosts();
     if (!hosts.ok()) {
-      LOG(ERROR) << hosts.error().message();
+      LOG(ERROR) << hosts.error().Message();
+      LOG(DEBUG) << hosts.error().Trace();
       return -1;
     }
     if ((*hosts).empty()) {
@@ -110,7 +111,8 @@ int Main(int argc, char** argv) {
   } else {
     auto cvd_streams = api.ListCVDWebRTCStreams(FLAGS_host);
     if (!cvd_streams.ok()) {
-      LOG(ERROR) << cvd_streams.error().message();
+      LOG(ERROR) << cvd_streams.error().Message();
+      LOG(DEBUG) << cvd_streams.error().Trace();
       return -1;
     }
     PrintCVDs(FLAGS_host, *cvd_streams);
