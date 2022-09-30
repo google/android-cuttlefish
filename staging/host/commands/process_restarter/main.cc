@@ -72,7 +72,8 @@ int main(int argc, char** argv) {
   }
   auto result = cuttlefish::RunProcessRestarter(argv[1], argv[2], argv + 2);
   if (!result.ok()) {
-    LOG(ERROR) << result.error();
+    LOG(ERROR) << result.error().Message();
+    LOG(DEBUG) << result.error().Trace();
     return EXIT_FAILURE;
   }
   return result.value();
