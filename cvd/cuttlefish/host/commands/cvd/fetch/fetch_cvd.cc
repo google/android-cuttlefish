@@ -306,7 +306,7 @@ std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
       http_client, content, BUILD_SCOPE);
   if (!result.ok()) {
     LOG(VERBOSE) << "Failed to load service account json file: \n"
-                 << result.error();
+                 << result.error().Trace();
     return {};
   }
   return std::unique_ptr<CredentialSource>(
@@ -366,7 +366,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
               new RefreshCredentialSource(std::move(*attempt_load)));
         } else {
           LOG(VERBOSE) << "Failed to load acloud credentials: "
-                       << attempt_load.error();
+                       << attempt_load.error().Trace();
         }
       } else {
         LOG(INFO) << "\"" << file << "\" missing, running without credentials";
