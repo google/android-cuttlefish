@@ -247,4 +247,3 @@ func TestOperationIsError(t *testing.T) {
 		}
 	}
 }
-
