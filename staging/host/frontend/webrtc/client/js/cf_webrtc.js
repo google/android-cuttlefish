@@ -121,26 +121,26 @@ class DeviceConnection {
     };
     this.#inputChannel = createDataChannel(pc, 'input-channel');
     this.#adbChannel = createDataChannel(pc, 'adb-channel', (msg) => {
-      if (this.#onAdbMessage) {
-        this.#onAdbMessage(msg.data);
-      } else {
+      if (!this.#onAdbMessage) {
         console.error('Received unexpected ADB message');
+        return;
       }
+      this.#onAdbMessage(msg.data);
     });
     this.#controlChannel = awaitDataChannel(pc, 'device-control', (msg) => {
-      if (this.#onControlMessage) {
-        this.#onControlMessage(msg);
-      } else {
+      if (!this.#onControlMessage) {
         console.error('Received unexpected Control message');
+        return;
       }
+      this.#onControlMessage(msg);
     });
     this.#bluetoothChannel =
         createDataChannel(pc, 'bluetooth-channel', (msg) => {
-          if (this.#onBluetoothMessage) {
-            this.#onBluetoothMessage(msg.data);
-          } else {
+          if (!this.#onBluetoothMessage) {
             console.error('Received unexpected Bluetooth message');
+            return;
           }
+          this.#onBluetoothMessage(msg.data);
         });
     this.#streams = {};
     this.#streamPromiseResolvers = {};
