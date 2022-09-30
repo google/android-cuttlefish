@@ -246,8 +246,9 @@ Result<void> BuildApi::ArtifactToCallback(const DeviceBuild& build,
   CF_EXPECT(json.isMember("signedUrl"),
             "URL endpoint did not have json path: " << json);
   std::string url = json["signedUrl"].asString();
-  CF_EXPECT(
-      IsHttpSuccess(CF_EXPECT(http_client.DownloadToCallback(callback, url))));
+  auto callback_response =
+      CF_EXPECT(http_client.DownloadToCallback(callback, url));
+  CF_EXPECT(IsHttpSuccess(callback_response.http_code));
   return {};
 }
 
