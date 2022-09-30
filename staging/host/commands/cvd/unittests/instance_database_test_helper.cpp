@@ -22,22 +22,12 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/files.h"
 
 namespace cuttlefish {
 namespace instance_db {
 namespace unittest {
 namespace {
-
-template <typename... Args>
-void RunCmd(const std::string& exe_path, Args&&... args) {
-  Command command(exe_path);
-  auto add_param = [&command](const std::string& arg) {
-    command.AddParameter(arg);
-  };
-  (add_param(std::forward<Args>(args)), ...);
-  command.Start().Wait();
-}
 
 std::string GetRandomInstanceName(const unsigned long len) {
   std::string alphabets{
@@ -64,7 +54,7 @@ DbTester::~DbTester() { Clear(); }
 
 void DbTester::Clear() {
   if (!tmp_dir_.empty()) {
-    RunCmd("/usr/bin/rm", "-fr", tmp_dir_);
+    RecursivelyRemoveDirectory(tmp_dir_);
   }
   fake_homes_.clear();
 }
@@ -77,7 +67,7 @@ void DbTester::SetUp() {
   for (int i = 1; i < kNGroups + 1; i++) {
     std::string subdir = tmp_dir_ + "/cf" + std::to_string(i);
     fake_homes_.emplace_back(subdir);
-    RunCmd("/usr/bin/mkdir", subdir);
+    EnsureDirectoryExists(subdir);
   }
 }
 
