@@ -24,8 +24,11 @@
 #include <thread>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <curl/curl.h>
 #include <json/json.h>
+
+#include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace {
@@ -42,6 +45,14 @@ size_t file_write_callback(char* ptr, size_t, size_t nmemb, void* userdata) {
   std::stringstream* stream = (std::stringstream*)userdata;
   stream->write(ptr, nmemb);
   return nmemb;
+}
+
+Result<std::string> CurlUrlGet(CURLU* url, CURLUPart what, unsigned int flags) {
+  char* str_ptr = nullptr;
+  CF_EXPECT(curl_url_get(url, what, &str_ptr, flags) == CURLUE_OK);
+  std::string str(str_ptr);
+  curl_free(str_ptr);
+  return str;
 }
 
 using ManagedCurlSlist =
@@ -62,7 +73,7 @@ Result<ManagedCurlSlist> SlistFromStrings(
 
 class CurlClient : public HttpClient {
  public:
-  CurlClient() {
+  CurlClient(NameResolver resolver) : resolver_(std::move(resolver)) {
     curl_ = curl_easy_init();
     if (!curl_) {
       LOG(ERROR) << "failed to initialize curl";
@@ -91,6 +102,8 @@ class CurlClient : public HttpClient {
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
     std::lock_guard<std::mutex> lock(mutex_);
+    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
+    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
     LOG(INFO) << "Attempting to download \"" << url << "\"";
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
@@ -147,6 +160,8 @@ class CurlClient : public HttpClient {
   Result<long> DownloadToCallback(DataCallback callback, const std::string& url,
                                   const std::vector<std::string>& headers) {
     std::lock_guard<std::mutex> lock(mutex_);
+    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
+    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
     LOG(INFO) << "Attempting to download \"" << url << "\"";
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
@@ -211,6 +226,8 @@ class CurlClient : public HttpClient {
       const std::string& url,
       const std::vector<std::string>& headers) override {
     std::lock_guard<std::mutex> lock(mutex_);
+    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
+    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
     LOG(INFO) << "Attempting to download \"" << url << "\"";
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
@@ -257,7 +274,28 @@ class CurlClient : public HttpClient {
   }
 
  private:
+  Result<ManagedCurlSlist> ManuallyResolveUrl(const std::string& url_str) {
+    if (!resolver_) {
+      return ManagedCurlSlist(nullptr, curl_slist_free_all);
+    }
+    LOG(INFO) << "Manually resolving \"" << url_str << "\"";
+    std::stringstream resolve_line;
+    std::unique_ptr<CURLU, decltype(&curl_url_cleanup)> url(curl_url(),
+                                                            curl_url_cleanup);
+    CF_EXPECT(curl_url_set(url.get(), CURLUPART_URL, url_str.c_str(), 0) ==
+              CURLUE_OK);
+    auto hostname = CF_EXPECT(CurlUrlGet(url.get(), CURLUPART_HOST, 0));
+    resolve_line << "+" << hostname;
+    auto port =
+        CF_EXPECT(CurlUrlGet(url.get(), CURLUPART_PORT, CURLU_DEFAULT_PORT));
+    resolve_line << ":" << port << ":";
+    resolve_line << android::base::Join(CF_EXPECT(resolver_(hostname)), ",");
+    auto slist = CF_EXPECT(SlistFromStrings({resolve_line.str()}));
+    return slist;
+  }
+
   CURL* curl_;
+  NameResolver resolver_;
   std::mutex mutex_;
 };
 
@@ -372,8 +410,29 @@ class ServerErrorRetryClient : public HttpClient {
 
 }  // namespace
 
-/* static */ std::unique_ptr<HttpClient> HttpClient::CurlClient() {
-  return std::unique_ptr<HttpClient>(new class CurlClient());
+Result<std::vector<std::string>> GetEntDnsResolve(const std::string& host) {
+  Command command("/bin/getent");
+  command.AddParameter("hosts");
+  command.AddParameter(host);
+
+  std::string out;
+  std::string err;
+  CF_EXPECT(RunWithManagedStdio(std::move(command), nullptr, &out, &err) == 0,
+            "`getent hosts " << host << "` failed: out = \"" << out
+                             << "\", err = \"" << err << "\"");
+  auto lines = android::base::Tokenize(out, "\n");
+  for (auto& line : lines) {
+    auto line_split = android::base::Tokenize(line, " \t");
+    CF_EXPECT(line_split.size() == 2,
+              "unexpected line format: \"" << line << "\"");
+    line = line_split[0];
+  }
+  return lines;
+}
+
+/* static */ std::unique_ptr<HttpClient> HttpClient::CurlClient(
+    NameResolver resolver) {
+  return std::unique_ptr<HttpClient>(new class CurlClient(std::move(resolver)));
 }
 
 /* static */ std::unique_ptr<HttpClient> HttpClient::ServerErrorRetryClient(
