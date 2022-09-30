@@ -198,12 +198,9 @@ template <typename T>
 void InstanceNumsCalculator::TrySet(T& field, Result<T> result) {
   if (result.ok()) {
     field = std::move(*result);
-  } else if (setter_result_.ok()) {
-    setter_result_ = android::base::Error() << result.error();
   } else {
-    setter_result_ = android::base::Error()
-                     << setter_result_.error() << "\n---\n"
-                     << result.error();
+    // TODO(schuffelen): Combine both errors into one
+    setter_result_.error() = result.error();
   }
 }
 
