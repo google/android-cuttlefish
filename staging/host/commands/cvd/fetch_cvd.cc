@@ -71,8 +71,13 @@ DEFINE_bool(run_next_stage, false, "Continue running the device through the next
 DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
                                        "in seconds. Set to 0 to not wait.");
 DEFINE_bool(keep_downloaded_archives, false, "Keep downloaded zip/tar.");
+#ifdef __BIONIC__
+DEFINE_bool(external_dns_resolver, true,
+            "Use an out-of-process mechanism to resolve DNS queries");
+#else
 DEFINE_bool(external_dns_resolver, false,
             "Use an out-of-process mechanism to resolve DNS queries");
+#endif
 
 namespace cuttlefish {
 namespace {
