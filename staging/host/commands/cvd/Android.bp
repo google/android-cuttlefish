@@ -133,6 +133,7 @@ cc_defaults {
     static_libs: [
         "libcvd_client",
         "libcvd_instance_db",
+        "libcvd_selector_frontend",
         "libcvd_server",
         "libfetch_cvd",
     ],

@@ -17,17 +17,11 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_test_host {
-    name: "cvd_instance_db_test",
+cc_library_host_static {
+    name: "libcvd_selector_frontend",
     srcs: [
-        "instance_database_test_helper.cpp",
-        "test_group_record.cpp",
-        "test_instance_database.cpp",
-        "test_instance_record.cpp",
-        "test_selector_cmdline_parser.cpp",
+        "selector_cmdline_parser.cpp",
     ],
-    test_options: {
-        unit_test: true,
-    },
-    defaults: ["cvd_and_fetch_cvd_defaults"],
+    defaults: ["cvd_lib_defaults"],
 }
+
