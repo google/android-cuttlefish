@@ -63,6 +63,7 @@
             <button id='camera_off_btn' title='Capture camera' class='material-icons'>videocam_off</button>
             <button id='record_video_btn' title='Record screen' class='material-icons'>movie_creation</button>
             <button id='mic_btn' title='Microphone' disabled='true' class='material-icons'>mic</button>
+            <button id='location-modal-button' title='location console' class='material-icons'>location_on </button>
           </div>
           <div id='control-panel-custom-buttons' class='control-panel-column'></div>
           <!-- tabindex="-1" allows this element to capture keyboard events -->
@@ -157,10 +158,63 @@
             <div colspan='2'><textarea id='bluetooth-console-view' readonly rows='10' cols='60'></textarea></div>
             <div width='1'><p id='bluetooth-console-cmd-label'>Command:</p></div>
             <div width='100'><input id='bluetooth-console-input' type='text'></input></div>
+      </div>
+    </div>
+  </div>
+
+  <div id='location-modal' class='modal-wrapper'>
+
+    <!-- location-prompt-modal modal -->
+    <div id='location-prompt-modal' class='modal'>
+      <div id='location-prompt-modal-header' class='modal-header'>
+        <h2>Location</h2>
+        <button id='location-prompt-modal-close' title='Close' class='material-icons modal-close'>close</button>
+      </div>
+      <div>
+        <div id='location-prompt-text' class='location-text'>
+          <div class='location-button'>
+            <button id='location-set-wizard' title='Set location' class='modal-button-highlight'>Set Location</button>
+            <button id='locations-import-wizard' title='Import locations' class='modal-button'>Import Locations</button>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+  <!-- location-set modal -->
+  <div id='location-set-modal' class='modal'>
+    <div id='location-set-modal-header' class='modal-header'>
+      <h2>Set Location</h2>
+      <button id='location-set-modal-close' title='Close' class='material-icons modal-close'>close</button>
+    </div>
+    <div>
+      <div class='location-text-field'><input type=number step=0.01 min="-180" max="180" value=-122.083 id='location-set-longitude' placeholder="Longitude" required></input></div>
+      <div class='location-text-field'><input type=number step=0.01 min="-90" max="90" value=37.415 id='location-set-latitude' placeholder="Latitude" required></input></div>
+      <div class='location-text-field'><input type=number step=0.01 value=0.0 id='location-set-altitude' placeholder="Elevation"required></input>
+    </div>
+      <div class='location-button'>
+        <button id='location-set-confirm' title='Confirm Location' class='modal-button-highlight'>Update Location</button>
+        <button id='location-set-cancel' title='Cancel' class='modal-button'>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- locations-import modal -->
+  <div id='locations-import-modal' class='modal'>
+    <div id='locations-import-modal-header' class='modal-header'>
+      <h2>Import Locations</h2>
+      <button id='locations-import-modal-close' title='Close' class='material-icons modal-close'>close</button>
+    </div>
+
+          <div class='location-text'>
+            <input type='file' id='locations_select_file' accept=".gpx, .kml">
+            <button id='locations-send-btn' title='Send Locations' class='modal-button-highlight'>Send Locations</button>
+
+          </div>
+
+  </div>
+
        <script src="js/adb.js"></script>
+       <script src="js/location.js"></script>
        <script src="js/rootcanal.js"></script>
        <script src="js/cf_webrtc.js" type="module"></script>
        <script src="js/controls.js"></script>

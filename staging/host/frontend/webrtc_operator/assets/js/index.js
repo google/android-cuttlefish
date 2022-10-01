@@ -90,7 +90,7 @@ window.addEventListener('load', e => {
     return new Promise((resolve, reject) => {
       let client = window.open(`client.html?deviceId=${deviceId}`, deviceId);
       client.addEventListener('load', evt => {
-        console.log('loaded');
+        console.debug('loaded');
         resolve();
       });
     });
