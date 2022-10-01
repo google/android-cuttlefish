@@ -15,78 +15,130 @@
 
 #include "host/commands/cvd/unittests/instance_database_test_helper.h"
 
-#include <array>
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
-#include <random>
 
+#include <android-base/file.h>
+
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace instance_db {
-namespace unittest {
 namespace {
 
-std::string GetRandomInstanceName(const unsigned long len) {
-  std::string alphabets{
-      "0123456789"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "abcdefghijklmnopqrstuvwxyz"
-      "_"};
-  std::string token;
-  std::sample(alphabets.begin(), alphabets.end(), std::back_inserter(token),
-              std::min(len, alphabets.size()),
-              std::mt19937{std::random_device{}()});
-  return token;
+// mktemp with /tmp/<subdir>.XXXXXX, and if failed,
+// mkdir -p /tmp/<subdir>.<default_suffix>
+std::optional<std::string> CreateTempDirectory(
+    const std::string& subdir, const std::string& default_suffix) {
+  std::string path_pattern = "/tmp/" + subdir + ".XXXXXX";
+  auto ptr = mkdtemp(path_pattern.data());
+  if (ptr) {
+    return {std::string(ptr)};
+  }
+  std::string default_path = "/tmp/" + subdir + "." + default_suffix;
+  return (EnsureDirectoryExists(default_path).ok() ? std::optional(default_path)
+                                                   : std::nullopt);
+}
+
+// Linux "touch" a(n empty) file
+bool Touch(const std::string& full_path) {
+  // this file is required only to make FileExists() true.
+  SharedFD new_file = SharedFD::Creat(full_path, S_IRUSR | S_IWUSR);
+  return new_file->IsOpen();
 }
 
 }  // namespace
 
-DbTester::DbTester()
-    : android_host_out_(StringFromEnv("ANDROID_HOST_OUT", ".")) {
-  Clear();
-  SetUp();
+CvdInstanceDatabaseTest::CvdInstanceDatabaseTest()
+    : error_{.error_code = ErrorCode::kOk, .msg = ""} {
+  InitWorkspace() && InitMockAndroidHostOut();
 }
 
-DbTester::~DbTester() { Clear(); }
+CvdInstanceDatabaseTest::~CvdInstanceDatabaseTest() { ClearWorkspace(); }
 
-void DbTester::Clear() {
-  if (!tmp_dir_.empty()) {
-    RecursivelyRemoveDirectory(tmp_dir_);
-  }
-  fake_homes_.clear();
-}
-
-void DbTester::SetUp() {
-  char temp_dir_name_pattern[] = "/tmp/cf_unittest.XXXXXX";
-  // temp_dir_name_pattern will be modified by mkdtemp call
-  auto ptr = mkdtemp(temp_dir_name_pattern);
-  tmp_dir_ = (!ptr ? "/tmp/cf_unittest/default_location" : ptr);
-  for (int i = 1; i < kNGroups + 1; i++) {
-    std::string subdir = tmp_dir_ + "/cf" + std::to_string(i);
-    fake_homes_.emplace_back(subdir);
-    EnsureDirectoryExists(subdir);
+void CvdInstanceDatabaseTest::ClearWorkspace() {
+  if (!workspace_dir_.empty()) {
+    RecursivelyRemoveDirectory(workspace_dir_);
   }
 }
 
-std::vector<std::unordered_set<std::string>> DbTester::InstanceNames(
-    const int n_groups) const {
-  int n_instances = 1;
-  std::vector<std::unordered_set<std::string>> result;
-  for (int group = 0; group < n_groups; group++) {
-    std::unordered_set<std::string> instances;
-    for (int i = 0; i < n_instances; i++) {
-      std::string prefix(1, 'a' + i);
-      instances.insert(prefix + "_" + GetRandomInstanceName(5));
+void CvdInstanceDatabaseTest::SetErrorCode(const ErrorCode error_code,
+                                           const std::string& msg) {
+  error_.error_code = error_code;
+  error_.msg = msg;
+}
+
+bool CvdInstanceDatabaseTest::InitWorkspace() {
+  // creating a parent dir of the mock home directories for each fake group
+  auto result_opt = CreateTempDirectory("cf_unittest", "default_location");
+  if (!result_opt) {
+    SetErrorCode(ErrorCode::kFileError, "Failed to create workspace");
+    return false;
+  }
+  workspace_dir_ = std::move(result_opt.value());
+  return true;
+}
+
+bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
+  /* creating a fake host out directory
+   *
+   * As the automated testing system does not guarantee that there is either
+   * ANDROID_HOST_OUT or ".", where we can find host tools, we create a fake
+   * host tool directory just enough to deceive InstanceDatabase APIs.
+   *
+   */
+  std::string android_host_out = workspace_dir_ + "/android_host_out";
+  if (!EnsureDirectoryExists(android_host_out).ok()) {
+    SetErrorCode(ErrorCode::kFileError, "Failed to create " + android_host_out);
+    return false;
+  }
+  android_binaries_dir_ = android_host_out + "/bin";
+  if (!EnsureDirectoryExists(android_binaries_dir_).ok()) {
+    SetErrorCode(ErrorCode::kFileError,
+                 "Failed to create " + android_binaries_dir_);
+    return false;
+  }
+  if (!Touch(android_binaries_dir_ + "/launch_cvd")) {
+    SetErrorCode(ErrorCode::kFileError, "Failed to create mock launch_cvd");
+    return false;
+  }
+  return true;
+}
+
+// Add an InstanceGroups with each home directory and android_host_out_
+bool CvdInstanceDatabaseTest::AddGroups(
+    const std::unordered_set<std::string>& base_names) {
+  for (const auto& base_name : base_names) {
+    const std::string home(Workspace() + "/" + base_name);
+    if (!EnsureDirectoryExists(home).ok()) {
+      SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
+      return false;
     }
-    result.emplace_back(std::move(instances));
-    n_instances++;  // one more instance in the next loop
+    if (!db_.AddInstanceGroup(home, android_binaries_dir_).ok()) {
+      SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
+      return false;
+    }
   }
-  return result;
+  return true;
 }
 
-}  // namespace unittest
+bool CvdInstanceDatabaseTest::AddInstances(
+    const ConstRef<LocalInstanceGroup> group,
+    const std::vector<InstanceInfo>& instances_info) {
+  for (const auto& [id, per_instance_name] : instances_info) {
+    if (!db_.AddInstance(group, id, per_instance_name).ok()) {
+      SetErrorCode(ErrorCode::kInstanceDabaseError,
+                   "Failed to add instance " + per_instance_name);
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace instance_db
 }  // namespace cuttlefish
