@@ -226,3 +226,10 @@ prebuilt_usr_share_host {
     filename: "rootcanal.js",
     sub_dir: "webrtc/assets/js",
 }
+prebuilt_usr_share_host {
+    name: "webrtc_location.js",
+    src: "client/js/location.js",
+    filename: "location.js",
+    sub_dir: "webrtc/assets/js",
+}
+
