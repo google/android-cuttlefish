@@ -255,6 +255,19 @@ body {
   color:         var(--main-fg);
 }
 
+.location-text, .location-text-bold, .location-text-field input {
+  font: normal 18px/1 "Open Sans", sans-serif;
+}
+.location-text, .location-text-bold {
+  color: var(--main-fg);
+}
+.location-text-bold {
+  font: bold;
+}
+.location-button {
+  text-align: center;
+}
+
 .control-panel-column {
   width: 50px;
   /* Items inside this use a column Flexbox.*/
