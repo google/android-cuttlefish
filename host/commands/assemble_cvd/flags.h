@@ -18,11 +18,11 @@ struct KernelConfig {
   bool bootconfig_supported;
 };
 
-Result<KernelConfig> GetKernelConfigAndSetDefaults();
+Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults();
 // Must be called after ParseCommandLineFlags.
 CuttlefishConfig InitializeCuttlefishConfiguration(const std::string& root_dir,
                                                    int modem_simulator_count,
-                                                   KernelConfig kernel_config,
+                                                   const std::vector<KernelConfig>& kernel_configs,
                                                    fruit::Injector<>& injector,
                                                    const FetcherConfig& fetcher_config);
 

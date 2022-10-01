@@ -594,7 +594,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("qemu-xhci,id=xhci");
 
   qemu_cmd.AddParameter("-bios");
-  qemu_cmd.AddParameter(config.bootloader());
+  qemu_cmd.AddParameter(instance.bootloader());
 
   if (instance.gdb_port() > 0) {
     qemu_cmd.AddParameter("-S");
