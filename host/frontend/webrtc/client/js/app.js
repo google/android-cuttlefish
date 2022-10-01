@@ -198,12 +198,30 @@ class DeviceControlApp {
         'bluetooth-wizard-cancel', 'bluetooth-prompt', 'bluetooth-wizard-close',
         'bluetooth-wizard');
 
+    createModalButton('location-modal-button', 'location-prompt-modal',
+        'location-prompt-modal-close');
+    createModalButton(
+        'location-set-wizard', 'location-set-modal', 'location-set-modal-close',
+        'location-prompt-modal');
+
+    createModalButton(
+        'locations-import-wizard', 'locations-import-modal', 'locations-import-modal-close',
+        'location-prompt-modal');
+    createModalButton(
+        'location-set-cancel', 'location-prompt-modal', 'location-set-modal-close',
+        'location-set-modal');
+
     positionModal('device-details-button', 'bluetooth-modal');
     positionModal('device-details-button', 'bluetooth-prompt');
     positionModal('device-details-button', 'bluetooth-wizard');
     positionModal('device-details-button', 'bluetooth-wizard-confirm');
     positionModal('device-details-button', 'bluetooth-list');
     positionModal('device-details-button', 'bluetooth-console');
+
+    positionModal('device-details-button', 'location-modal');
+    positionModal('device-details-button', 'location-prompt-modal');
+    positionModal('device-details-button', 'location-set-modal');
+    positionModal('device-details-button', 'locations-import-modal');
 
     createButtonListener('bluetooth-prompt-list', null, this.#deviceConnection,
       evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
@@ -215,6 +233,12 @@ class DeviceControlApp {
       evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
     createButtonListener('bluetooth-wizard-another', null, this.#deviceConnection,
       evt => this.#onRootCanalCommand(this.#deviceConnection, "list", evt));
+
+    createButtonListener('locations-send-btn', null, this.#deviceConnection,
+      evt => this.#onImportLocationsFile(this.#deviceConnection,evt));
+
+    createButtonListener('location-set-confirm', null, this.#deviceConnection,
+      evt => this.#onSendLocation(this.#deviceConnection, evt));
 
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
@@ -297,6 +321,8 @@ class DeviceControlApp {
     this.#deviceConnection.onBluetoothMessage(msg => {
       let decoded = decodeRootcanalMessage(msg);
       let deviceCount = btUpdateDeviceList(decoded);
+      console.debug("deviceCount= " +deviceCount);
+      console.debug("decoded= " +decoded);
       if (deviceCount > 0) {
         this.#deviceCount = deviceCount;
         createButtonListener('bluetooth-list-trash', null, this.#deviceConnection,
@@ -309,9 +335,14 @@ class DeviceControlApp {
       }
       bluetoothConsole.addLine(decoded);
     });
+
+    this.#deviceConnection.onLocationMessage(msg => {
+      console.debug("onLocationMessage = " +msg);
+    });
   }
 
   #onRootCanalCommand(deviceConnection, cmd, evt) {
+
     if (cmd == "list") {
       deviceConnection.sendBluetoothMessage(createRootcanalMessage("list", []));
     }
@@ -337,6 +368,51 @@ class DeviceControlApp {
       this.#deviceCount++;
       deviceConnection.sendBluetoothMessage(createRootcanalMessage("add_device_to_phy", [devId, phyId]));
     }
+  }
+
+  #onSendLocation(deviceConnection, evt) {
+
+    let longitude = document.getElementById('location-set-longitude').value;
+    let latitude = document.getElementById('location-set-latitude').value;
+    let altitude = document.getElementById('location-set-altitude').value;
+    if (longitude == null || longitude == '' || latitude == null  || latitude == ''||
+        altitude == null  || altitude == '') {
+      return;
+    }
+    let location_msg = longitude + "," +latitude + "," + altitude;
+    deviceConnection.sendLocationMessage(location_msg);
+  }
+  #onImportLocationsFile(deviceConnection, evt) {
+
+    function onLoad_send_kml_data(xml) {
+      deviceConnection.sendKmlLocationsMessage(xml);
+    }
+
+    function onLoad_send_gpx_data(xml) {
+      deviceConnection.sendGpxLocationsMessage(xml);
+    }
+
+    let file_selector=document.getElementById("locations_select_file");
+
+    if (!file_selector.files) {
+        alert("input parameter is not of file type");
+        return;
+    }
+
+    if (!file_selector.files[0]) {
+        alert("Please select a file ");
+        return;
+    }
+
+    var filename= file_selector.files[0];
+    if (filename.type.match('\gpx')) {
+      console.debug("import Gpx locations handling");
+      loadFile(onLoad_send_gpx_data);
+    } else if(filename.type.match('\kml')){
+      console.debug("import Kml locations handling");
+      loadFile(onLoad_send_kml_data);
+    }
+
   }
 
   #showWebrtcError() {
