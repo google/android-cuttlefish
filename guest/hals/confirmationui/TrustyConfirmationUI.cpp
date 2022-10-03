@@ -17,38 +17,33 @@
 
 #include "TrustyConfirmationUI.h"
 
+#include <android/binder_manager.h>
 #include <cutils/properties.h>
 
-namespace android {
-namespace hardware {
-namespace confirmationui {
-namespace V1_0 {
-namespace implementation {
-
+namespace aidl::android::hardware::confirmationui {
 using ::teeui::MsgString;
 using ::teeui::MsgVector;
-using ::android::hardware::keymaster::V4_0::HardwareAuthToken;
 using TeeuiRc = ::teeui::ResponseCode;
 
 namespace {
 teeui::UIOption convertUIOption(UIOption uio) {
-    static_assert(uint32_t(UIOption::AccessibilityInverted) ==
+    static_assert(uint32_t(UIOption::ACCESSIBILITY_INVERTED) ==
                           uint32_t(teeui::UIOption::AccessibilityInverted) &&
-                      uint32_t(UIOption::AccessibilityMagnified) ==
+                      uint32_t(UIOption::ACCESSIBILITY_MAGNIFIED) ==
                           uint32_t(teeui::UIOption::AccessibilityMagnified),
                   "teeui::UIOPtion and ::android::hardware::confirmationui::V1_0::UIOption "
                   "are out of sync");
     return teeui::UIOption(uio);
 }
 
-inline MsgString hidl2MsgString(const hidl_string& s) {
+inline MsgString str2MsgString(const string& s) {
     return {s.c_str(), s.c_str() + s.size()};
 }
-template <typename T> inline MsgVector<T> hidl2MsgVector(const hidl_vec<T>& v) {
+template <typename T> inline MsgVector<T> vec2MsgVector(const vector<T>& v) {
     return {v};
 }
 
-inline MsgVector<teeui::UIOption> hidl2MsgVector(const hidl_vec<UIOption>& v) {
+inline MsgVector<teeui::UIOption> vec2MsgVector(const vector<UIOption>& v) {
     MsgVector<teeui::UIOption> result(v.size());
     for (unsigned int i = 0; i < v.size(); ++i) {
         result[i] = convertUIOption(v[i]);
@@ -64,7 +59,7 @@ const char* TrustyConfirmationUI::GetVirtioConsoleDevicePath() {
 
 TrustyConfirmationUI::TrustyConfirmationUI()
     : listener_state_(ListenerState::None),
-      prompt_result_(ResponseCode::Ignored), current_session_id_{10} {
+      prompt_result_(IConfirmationUI::IGNORED), current_session_id_{10} {
     host_fd_ = cuttlefish::SharedFD::Open(GetVirtioConsoleDevicePath(), O_RDWR);
     CHECK(host_fd_->IsOpen()) << "ConfUI: " << GetVirtioConsoleDevicePath() << " is not open.";
     CHECK(host_fd_->SetTerminalRaw() >= 0)
@@ -126,17 +121,17 @@ void TrustyConfirmationUI::HostMessageFetcherLoop() {
     }
 }
 
-void TrustyConfirmationUI::RunSession(sp<IConfirmationResultCallback> resultCB,
-                                      hidl_string promptText, hidl_vec<uint8_t> extraData,
-                                      hidl_string locale, hidl_vec<UIOption> uiOptions) {
+void TrustyConfirmationUI::RunSession(shared_ptr<IConfirmationResultCallback> resultCB,
+                                      string promptText, vector<uint8_t> extraData, string locale,
+                                      vector<UIOption> uiOptions) {
     cuttlefish::SharedFD fd = host_fd_;
     // ownership of the fd is passed to GuestSession
     {
         std::unique_lock<std::mutex> lk(current_session_lock_);
         current_session_ = std::make_unique<GuestSession>(
             current_session_id_, listener_state_, listener_state_lock_, listener_state_condv_, fd,
-            hidl2MsgString(promptText), hidl2MsgVector(extraData), hidl2MsgString(locale),
-            hidl2MsgVector(uiOptions));
+            str2MsgString(promptText), vec2MsgVector(extraData), str2MsgString(locale),
+            vec2MsgVector(uiOptions));
     }
 
     auto [rc, msg, token] = current_session_->PromptUserConfirmation();
@@ -151,7 +146,12 @@ void TrustyConfirmationUI::RunSession(sp<IConfirmationResultCallback> resultCB,
     if (do_callback) {
         auto error = resultCB->result(prompt_result_, msg, token);
         if (!error.isOk()) {
-            ConfUiLog(ERROR) << "Result callback failed " << error.description();
+            if (error.getExceptionCode() == EX_SERVICE_SPECIFIC) {
+                ConfUiLog(ERROR) << "Result callback failed error: "
+                                 << error.getServiceSpecificError();
+            } else {
+                ConfUiLog(ERROR) << "Result callback failed error: " << error.getStatus();
+            }
         }
         ConfUiLog(INFO) << "Result callback returned.";
     } else {
@@ -161,17 +161,18 @@ void TrustyConfirmationUI::RunSession(sp<IConfirmationResultCallback> resultCB,
 
 // Methods from ::android::hardware::confirmationui::V1_0::IConfirmationUI
 // follow.
-Return<ResponseCode> TrustyConfirmationUI::promptUserConfirmation(
-    const sp<IConfirmationResultCallback>& resultCB, const hidl_string& promptText,
-    const hidl_vec<uint8_t>& extraData, const hidl_string& locale,
-    const hidl_vec<UIOption>& uiOptions) {
+::ndk::ScopedAStatus TrustyConfirmationUI::promptUserConfirmation(
+    const shared_ptr<IConfirmationResultCallback>& resultCB, const vector<uint8_t>& promptTextBytes,
+    const vector<uint8_t>& extraData, const string& locale, const vector<UIOption>& uiOptions) {
     std::unique_lock<std::mutex> stateLock(listener_state_lock_, std::defer_lock);
     ConfUiLog(INFO) << "promptUserConfirmation is called";
+    string promptText(promptTextBytes.begin(), promptTextBytes.end());
     if (!is_supported_vm_) {
-        resultCB->result(ResponseCode::Unimplemented, {}, {});
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(IConfirmationUI::UNIMPLEMENTED));
     }
     if (!stateLock.try_lock()) {
-        return ResponseCode::OperationPending;
+        return ndk::ScopedAStatus(
+            AStatus_fromServiceSpecificError(IConfirmationUI::OPERATION_PENDING));
     }
     switch (listener_state_) {
     case ListenerState::None:
@@ -179,21 +180,22 @@ Return<ResponseCode> TrustyConfirmationUI::promptUserConfirmation(
     case ListenerState::Starting:
     case ListenerState::SetupDone:
     case ListenerState::Interactive:
-        return ResponseCode::OperationPending;
+        return ndk::ScopedAStatus(
+            AStatus_fromServiceSpecificError(IConfirmationUI::OPERATION_PENDING));
     case ListenerState::Terminating:
         callback_thread_.join();
         listener_state_ = ListenerState::None;
         break;
     default:
-        return ResponseCode::Unexpected;
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(IConfirmationUI::UNEXPECTED));
     }
     assert(listener_state_ == ListenerState::None);
     listener_state_ = ListenerState::Starting;
 
     current_session_id_++;
-    auto worker = [this](const sp<IConfirmationResultCallback>& resultCB,
-                         const hidl_string& promptText, const hidl_vec<uint8_t>& extraData,
-                         const hidl_string& locale, const hidl_vec<UIOption>& uiOptions) {
+    auto worker = [this](const shared_ptr<IConfirmationResultCallback>& resultCB,
+                         const string& promptText, const vector<uint8_t>& extraData,
+                         const string& locale, const vector<UIOption>& uiOptions) {
         RunSession(resultCB, promptText, extraData, locale, uiOptions);
     };
     callback_thread_ = std::thread(worker, resultCB, promptText, extraData, locale, uiOptions);
@@ -206,46 +208,45 @@ Return<ResponseCode> TrustyConfirmationUI::promptUserConfirmation(
     if (listener_state_ == ListenerState::Terminating) {
         callback_thread_.join();
         listener_state_ = ListenerState::None;
-        if (prompt_result_ == ResponseCode::Canceled) {
+        if (prompt_result_ == IConfirmationUI::CANCELED) {
             // VTS expects this
-            return ResponseCode::OK;
+            return ndk::ScopedAStatus::ok();
         }
-        return prompt_result_;
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(prompt_result_));
     }
-    return ResponseCode::OK;
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<ResponseCode>
+::ndk::ScopedAStatus
 TrustyConfirmationUI::deliverSecureInputEvent(const HardwareAuthToken& auth_token) {
     ConfUiLog(INFO) << "deliverSecureInputEvent is called";
-    ResponseCode rc = ResponseCode::Ignored;
+    int rc = IConfirmationUI::IGNORED;
     if (!is_supported_vm_) {
-        return ResponseCode::Unimplemented;
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(IConfirmationUI::UNIMPLEMENTED));
     }
     {
         std::unique_lock<std::mutex> lock(current_session_lock_);
         if (!current_session_) {
-            return rc;
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(rc));
         }
-        return current_session_->DeliverSecureInputEvent(auth_token);
+        rc = current_session_->DeliverSecureInputEvent(auth_token);
+        if (rc != IConfirmationUI::OK) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(rc));
+        }
     }
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<void> TrustyConfirmationUI::abort() {
-    if (!is_supported_vm_) return {};
+::ndk::ScopedAStatus TrustyConfirmationUI::abort() {
+    if (!is_supported_vm_) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(IConfirmationUI::UNIMPLEMENTED));
+    }
     std::unique_lock<std::mutex> lock(current_session_lock_);
     if (!current_session_) {
-        return Void();
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(IConfirmationUI::IGNORED));
     }
-    return current_session_->Abort();
+    current_session_->Abort();
+    return ndk::ScopedAStatus::ok();
 }
 
-android::sp<IConfirmationUI> createTrustyConfirmationUI() {
-    return new TrustyConfirmationUI();
-}
-
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace confirmationui
-}  // namespace hardware
-}  // namespace android
+}  // namespace aidl::android::hardware::confirmationui

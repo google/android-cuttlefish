@@ -17,9 +17,8 @@
 
 #pragma once
 
+#include <aidl/android/hardware/security/keymint/HardwareAuthToken.h>
 #include <android-base/logging.h>
-#include <android/hardware/confirmationui/1.0/types.h>
-#include <android/hardware/keymaster/4.0/types.h>
 
 #include <condition_variable>
 #include <cstdint>
@@ -33,11 +32,8 @@
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
 
-namespace android {
-namespace hardware {
-namespace confirmationui {
-namespace V1_0 {
-namespace implementation {
+namespace aidl::android::hardware::confirmationui {
+using ::aidl::android::hardware::security::keymint::HardwareAuthToken;
 class GuestSession {
   public:
     using ConfUiMessage = cuttlefish::confui::ConfUiMessage;
@@ -78,14 +74,12 @@ class GuestSession {
         // join host_cmd_fetcher_thread_ once Session takes the ownership of fd
     }
 
-    using ResultTriple =
-        std::tuple<ResponseCode, teeui::MsgVector<uint8_t>, teeui::MsgVector<uint8_t>>;
+    using ResultTriple = std::tuple<int, teeui::MsgVector<uint8_t>, teeui::MsgVector<uint8_t>>;
     ResultTriple PromptUserConfirmation();
 
-    Return<ResponseCode> DeliverSecureInputEvent(
-        const ::android::hardware::keymaster::V4_0::HardwareAuthToken& secureInputToken);
+    int DeliverSecureInputEvent(const HardwareAuthToken& secureInputToken);
 
-    Return<void> Abort();
+    void Abort();
     std::string GetSessionId() const { return session_name_; }
 
     void Push(std::unique_ptr<ConfUiMessage>&& msg) { incoming_msg_queue_.Push(std::move(msg)); }
@@ -139,8 +133,4 @@ class GuestSession {
      */
     std::mutex send_serializer_mtx_;
 };
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace confirmationui
-}  // namespace hardware
-}  // namespace android
+}  // namespace aidl::android::hardware::confirmationui
