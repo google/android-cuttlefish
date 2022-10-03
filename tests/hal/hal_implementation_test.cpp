@@ -56,6 +56,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.camera.provider@2.7", // Camera converted to AIDL, b/196432585
     "android.hardware.cas.native@1.0",
     "android.hardware.configstore@1.1", // deprecated, see b/149050985, b/149050733
+    "android.hardware.confirmationui@1.0", // converted to AIDL, see b/205760172
     "android.hardware.contexthub@1.2",
     "android.hardware.drm@1.4", // converted to AIDL, b/200055138
     "android.hardware.fastboot@1.1",
