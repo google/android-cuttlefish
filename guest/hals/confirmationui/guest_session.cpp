@@ -17,13 +17,12 @@
 
 #include "guest_session.h"
 
+#include <aidl/android/hardware/confirmationui/BnConfirmationUI.h>
+#include <aidl/android/hardware/confirmationui/TestModeCommands.h>
+
 #include <future>
 
-namespace android {
-namespace hardware {
-namespace confirmationui {
-namespace V1_0 {
-namespace implementation {
+namespace aidl::android::hardware::confirmationui {
 using TeeuiRc = teeui::ResponseCode;
 
 GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
@@ -58,8 +57,8 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
      */
 
     GuestSession::ResultTriple error;
-    auto& error_rc = std::get<ResponseCode>(error);
-    error_rc = ResponseCode::SystemError;
+    auto& error_rc = std::get<int>(error);
+    error_rc = IConfirmationUI::SYSTEM_ERROR;
 
     CHECK(listener_state_ == ListenerState::Starting) << "ListenerState should be Starting";
 
@@ -72,7 +71,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
     if (payload_lower_bound > upper_bound) {
         ConfUiLog(INFO) << "UI message too long to send to the host";
         // message is too long anyway, and don't send it to the host
-        error_rc = ResponseCode::UIErrorMessageTooLong;
+        error_rc = IConfirmationUI::UI_ERROR_MESSAGE_TOO_LONG;
         return error;
     }
     SerializedSend(cuttlefish::confui::SendStartCmd, host_fd_, session_name_, prompt_text_,
@@ -95,11 +94,11 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
         const std::string error_msg = start_ack_msg.GetStatusMessage();
         if (error_msg == cuttlefish::confui::HostError::kMessageTooLongError) {
             ConfUiLog(ERROR) << "Message + Extra data + Meta info were too long";
-            error_rc = ResponseCode::UIErrorMessageTooLong;
+            error_rc = IConfirmationUI::UI_ERROR_MESSAGE_TOO_LONG;
         }
         if (error_msg == cuttlefish::confui::HostError::kIncorrectUTF8) {
             ConfUiLog(ERROR) << "Message is incorrectly UTF-encoded";
-            error_rc = ResponseCode::UIErrorMalformedUTF8Encoding;
+            error_rc = IConfirmationUI::UI_ERROR_MALFORMED_UTF8ENCODING;
         }
         return error;
     }
@@ -148,7 +147,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
     if (user_or_abort->GetType() == cuttlefish::confui::ConfUiCmd::kAbort) {
         ConfUiLog(ERROR) << "Abort called or the user/host aborted"
                          << " while waiting user response";
-        return {ResponseCode::Aborted, {}, {}};
+        return {IConfirmationUI::ABORTED, {}, {}};
     }
     if (user_or_abort->GetType() == cuttlefish::confui::ConfUiCmd::kCliAck) {
         auto& ack_msg = static_cast<cuttlefish::confui::ConfUiAckMessage&>(*user_or_abort);
@@ -156,7 +155,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
             ConfUiLog(ERROR) << "When host failed, it is supposed to send "
                              << "kCliAck with fail, but this is kCliAck with success";
         }
-        error_rc = ResponseCode::SystemError;
+        error_rc = IConfirmationUI::SYSTEM_ERROR;
         return error;
     }
     cuttlefish::confui::ConfUiCliResponseMessage& user_response =
@@ -169,7 +168,7 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
     // make up the result triple
     if (user_response.GetResponse() == cuttlefish::confui::UserResponse::kCancel) {
         SerializedSend(cuttlefish::confui::SendStopCmd, host_fd_, GetSessionId());
-        return {ResponseCode::Canceled, {}, {}};
+        return {IConfirmationUI::CANCELED, {}, {}};
     }
 
     if (user_response.GetResponse() != cuttlefish::confui::UserResponse::kConfirm) {
@@ -178,12 +177,11 @@ GuestSession::ResultTriple GuestSession::PromptUserConfirmation() {
     }
     SerializedSend(cuttlefish::confui::SendStopCmd, host_fd_, GetSessionId());
     //  ############################## Start 4th Phase - cleanup ##################################
-    return {ResponseCode::OK, user_response.GetMessage(), user_response.GetSign()};
+    return {IConfirmationUI::OK, user_response.GetMessage(), user_response.GetSign()};
 }
 
-Return<ResponseCode> GuestSession::DeliverSecureInputEvent(
-    const android::hardware::keymaster::V4_0::HardwareAuthToken& auth_token) {
-    ResponseCode rc = ResponseCode::Ignored;
+int GuestSession::DeliverSecureInputEvent(const HardwareAuthToken& auth_token) {
+    int rc = IConfirmationUI::IGNORED;
     {
         /*
          * deliverSecureInputEvent is only used by the VTS test to mock human input. A correct
@@ -200,7 +198,7 @@ Return<ResponseCode> GuestSession::DeliverSecureInputEvent(
         std::unique_lock<std::mutex> stateLock(listener_state_lock_);
         listener_state_condv_.wait(stateLock,
                                    [this] { return listener_state_ != ListenerState::SetupDone; });
-        if (listener_state_ != ListenerState::Interactive) return ResponseCode::Ignored;
+        if (listener_state_ != ListenerState::Interactive) return IConfirmationUI::IGNORED;
         if (static_cast<TestModeCommands>(auth_token.challenge) == TestModeCommands::OK_EVENT) {
             SerializedSend(cuttlefish::confui::SendUserSelection, host_fd_, GetSessionId(),
                            cuttlefish::confui::UserResponse::kConfirm);
@@ -208,7 +206,7 @@ Return<ResponseCode> GuestSession::DeliverSecureInputEvent(
             SerializedSend(cuttlefish::confui::SendUserSelection, host_fd_, GetSessionId(),
                            cuttlefish::confui::UserResponse::kCancel);
         }
-        rc = ResponseCode::OK;
+        rc = IConfirmationUI::OK;
     }
     listener_state_condv_.notify_all();
     // VTS test expect an OK response if the event was successfully delivered.
@@ -216,11 +214,11 @@ Return<ResponseCode> GuestSession::DeliverSecureInputEvent(
     // Canceled into OK. Canceled is only returned if the delivered event canceled
     // the operation, which means that the event was successfully delivered. Thus
     // we return OK.
-    if (rc == ResponseCode::Canceled) return ResponseCode::OK;
+    if (rc == IConfirmationUI::CANCELED) return IConfirmationUI::OK;
     return rc;
 }
 
-Return<void> GuestSession::Abort() {
+void GuestSession::Abort() {
     {
         std::unique_lock<std::mutex> stateLock(listener_state_lock_);
         if (listener_state_ == ListenerState::SetupDone ||
@@ -234,10 +232,5 @@ Return<void> GuestSession::Abort() {
         }
     }
     listener_state_condv_.notify_all();
-    return Void();
 }
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace confirmationui
-}  // namespace hardware
-}  // namespace android
+}  // namespace aidl::android::hardware::confirmationui

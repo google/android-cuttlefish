@@ -24,15 +24,16 @@ package {
 }
 
 cc_binary {
-    name: "android.hardware.confirmationui@1.0-service.cuttlefish",
-    defaults: ["hidl_defaults", "cuttlefish_guest_only"],
+    name: "android.hardware.confirmationui-service.cuttlefish",
+    defaults: ["cuttlefish_guest_only"],
     relative_install_path: "hw",
     vendor: true,
     shared_libs: [
-        "android.hardware.confirmationui@1.0",
-        "android.hardware.confirmationui@1.0-lib.cuttlefish",
+        "android.hardware.confirmationui-V1-ndk",
+        "android.hardware.confirmationui-lib.cuttlefish",
         "libbase",
-        "libhidlbase",
+        "libbinder_ndk",
+        "libteeui_hal_support",
         "libutils",
     ],
     static_libs: [
@@ -55,16 +56,18 @@ cc_binary {
 }
 
 cc_library {
-    name: "android.hardware.confirmationui@1.0-lib.cuttlefish",
-    defaults: ["hidl_defaults", "cuttlefish_guest_only"],
+    name: "android.hardware.confirmationui-lib.cuttlefish",
+    defaults: [
+        "cuttlefish_guest_only",
+        "keymint_use_latest_hal_aidl_ndk_shared",
+    ],
     vendor: true,
     shared_libs: [
-        "android.hardware.confirmationui@1.0",
-        "android.hardware.keymaster@4.0",
+        "android.hardware.confirmationui-V1-ndk",
         "libbase",
+        "libbinder_ndk",
         "libcutils",
         "libdmabufheap",
-        "libhidlbase",
         "libteeui_hal_support",
         "libtrusty",
         "libutils",
@@ -86,4 +89,3 @@ cc_library {
         "-DTEEUI_USE_STD_VECTOR",
     ],
 }
-

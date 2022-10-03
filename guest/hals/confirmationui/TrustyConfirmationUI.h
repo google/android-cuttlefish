@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_CONFIRMATIONUI_V1_0_TRUSTY_CONFIRMATIONUI_H
-#define ANDROID_HARDWARE_CONFIRMATIONUI_V1_0_TRUSTY_CONFIRMATIONUI_H
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -24,9 +23,10 @@
 #include <mutex>
 #include <thread>
 
-#include <android/hardware/confirmationui/1.0/IConfirmationUI.h>
-#include <android/hardware/keymaster/4.0/types.h>
-#include <hidl/Status.h>
+#include <aidl/android/hardware/confirmationui/BnConfirmationUI.h>
+#include <aidl/android/hardware/confirmationui/IConfirmationResultCallback.h>
+#include <aidl/android/hardware/confirmationui/UIOption.h>
+#include <aidl/android/hardware/security/keymint/HardwareAuthToken.h>
 #include <teeui/generic_messages.h>
 
 #include "common/libs/concurrency/thread_safe_queue.h"
@@ -34,20 +34,14 @@
 #include "common/libs/fs/shared_fd.h"
 #include "guest_session.h"
 
-namespace android {
-namespace hardware {
-namespace confirmationui {
-namespace V1_0 {
-namespace implementation {
+namespace aidl::android::hardware::confirmationui {
 
-using ::android::sp;
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
+using ::aidl::android::hardware::security::keymint::HardwareAuthToken;
+using std::shared_ptr;
+using std::string;
+using std::vector;
 
-class TrustyConfirmationUI : public IConfirmationUI {
+class TrustyConfirmationUI : public BnConfirmationUI {
   public:
     using ConfUiMessage = cuttlefish::confui::ConfUiMessage;
     using ConfUiAckMessage = cuttlefish::confui::ConfUiAckMessage;
@@ -57,15 +51,14 @@ class TrustyConfirmationUI : public IConfirmationUI {
     virtual ~TrustyConfirmationUI();
     // Methods from ::android::hardware::confirmationui::V1_0::IConfirmationUI
     // follow.
-    Return<ResponseCode> promptUserConfirmation(const sp<IConfirmationResultCallback>& resultCB,
-                                                const hidl_string& promptText,
-                                                const hidl_vec<uint8_t>& extraData,
-                                                const hidl_string& locale,
-                                                const hidl_vec<UIOption>& uiOptions) override;
-    Return<ResponseCode> deliverSecureInputEvent(
-        const ::android::hardware::keymaster::V4_0::HardwareAuthToken& secureInputToken) override;
+    ::ndk::ScopedAStatus
+    promptUserConfirmation(const shared_ptr<IConfirmationResultCallback>& resultCB,
+                           const vector<uint8_t>& promptText, const vector<uint8_t>& extraData,
+                           const string& locale, const vector<UIOption>& uiOptions) override;
+    ::ndk::ScopedAStatus
+    deliverSecureInputEvent(const HardwareAuthToken& secureInputToken) override;
 
-    Return<void> abort() override;
+    ::ndk::ScopedAStatus abort() override;
 
   private:
     /*
@@ -102,7 +95,7 @@ class TrustyConfirmationUI : public IConfirmationUI {
 
     std::mutex listener_state_lock_;
     std::condition_variable listener_state_condv_;
-    ResponseCode prompt_result_;
+    int prompt_result_;
 
     // client virtio-console fd to the host
     cuttlefish::SharedFD host_fd_;
@@ -116,15 +109,9 @@ class TrustyConfirmationUI : public IConfirmationUI {
 
     cuttlefish::SharedFD ConnectToHost();
     void HostMessageFetcherLoop();
-    void RunSession(sp<IConfirmationResultCallback> resultCB, hidl_string promptText,
-                    hidl_vec<uint8_t> extraData, hidl_string locale, hidl_vec<UIOption> uiOptions);
+    void RunSession(shared_ptr<IConfirmationResultCallback> resultCB, string promptText,
+                    vector<uint8_t> extraData, string locale, vector<UIOption> uiOptions);
     static const char* GetVirtioConsoleDevicePath();
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace confirmationui
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_CONFIRMATIONUI_V1_0_TRUSTY_CONFIRMATIONUI_H
+}  // namespace aidl::android::hardware::confirmationui

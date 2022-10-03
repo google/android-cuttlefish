@@ -4,6 +4,8 @@ hal_server_domain(hal_confirmationui_cuttlefish, hal_confirmationui)
 type hal_confirmationui_cuttlefish_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_confirmationui_cuttlefish)
 
+binder_call(hal_confirmationui_cuttlefish, keystore)
+
 type confirmationui_device, file_type;
 
 allow hal_confirmationui_cuttlefish device:dir r_dir_perms;
