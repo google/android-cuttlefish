@@ -15,21 +15,29 @@
  */
 
 #include <android-base/logging.h>
-#include <hidl/HidlTransportSupport.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 
-#include <TrustyConfirmationuiHal.h>
+#include "TrustyConfirmationUI.h"
 
-using android::sp;
-using android::hardware::confirmationui::V1_0::implementation::createTrustyConfirmationUI;
+using ::aidl::android::hardware::confirmationui::TrustyConfirmationUI;
 
 int main() {
-    ::android::hardware::configureRpcThreadpool(1, true /*willJoinThreadpool*/);
-    auto service = createTrustyConfirmationUI();
-    auto status = service->registerAsService();
-    if (status != android::OK) {
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
+
+    std::shared_ptr<TrustyConfirmationUI> confirmationui =
+        ndk::SharedRefBase::make<TrustyConfirmationUI>();
+
+    const std::string instance = std::string() + TrustyConfirmationUI::descriptor + "/default";
+    binder_status_t status =
+        AServiceManager_addService(confirmationui->asBinder().get(), instance.c_str());
+    CHECK_EQ(status, STATUS_OK);
+
+    if (status != STATUS_OK) {
         LOG(FATAL) << "Could not register service for ConfirmationUI 1.0 (" << status << ")";
         return -1;
     }
-    ::android::hardware::joinRpcThreadpool();
-    return -1;
+
+    ABinderProcess_joinThreadPool();
+    return -1;  // Should never get here.
 }
