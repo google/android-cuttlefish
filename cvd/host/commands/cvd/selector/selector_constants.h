@@ -19,18 +19,22 @@
 namespace cuttlefish {
 namespace selector {
 
-constexpr char kHomeField[] = "home";
-constexpr char kGroupNameField[] = "group_name";
-constexpr char kInstanceIdField[] = "instance_id";
-
 // group_name + "-" + per_instance_name
-constexpr char kNameField[] = "name";
+constexpr char kDeviceNameField[] = "device_name";
+constexpr char kGroupNameField[] = "group_name";
+constexpr char kHomeField[] = "home";
+constexpr char kInstanceIdField[] = "instance_id";
 
 /* per_instance_name
  *
  * by default, to_string(instance_id), and users can override it
  */
 constexpr char kInstanceNameField[] = "instance_name";
+
+/**
+ * this is used not by instance db but by selector front-end
+ */
+constexpr char kNameOpt[] = "name";
 
 }  // namespace selector
 }  // namespace cuttlefish
