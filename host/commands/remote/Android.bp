@@ -43,6 +43,18 @@ cc_library_static {
 }
 
 cc_binary {
+    name: "cvdremote_create_host",
+    srcs: [
+        "cvdremote_create_host.cc"
+    ],
+    static_libs: [
+        "libgflags",
+        "libcvdremote",
+    ],
+    defaults: ["cvdremote_defaults"],
+}
+
+cc_binary {
     name: "cvdremote_list_hosts",
     srcs: [
         "cvdremote_list_hosts.cc"
