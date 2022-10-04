@@ -41,6 +41,15 @@ static std::string CreateHostBody(const CreateHostInstanceRequest& request) {
   return JsonToString(request_json);
 }
 
+static std::string ToJson(const CreateCVDRequest& request) {
+  Json::Value build_info;
+  build_info["build_id"] = request.build_info.build_id;
+  build_info["target"] = request.build_info.target;
+  Json::Value root;
+  root["build_info"] = build_info;
+  return JsonToString(root);
+}
+
 }  // namespace
 
 CloudOrchestratorApi::CloudOrchestratorApi(const std::string& service_url,
@@ -82,6 +91,24 @@ Result<std::vector<std::string>> CloudOrchestratorApi::ListHosts() {
     result.push_back(item["name"].asString());
   }
   return result;
+}
+
+Result<std::string> CloudOrchestratorApi::CreateCVD(
+    const std::string& host, const CreateCVDRequest& request) {
+  std::string url =
+      service_url_ + "/v1/zones/" + zone_ + "/hosts/" + host + "/cvds";
+  std::string data = ToJson(request);
+  auto resp =
+      CF_EXPECT(http_client_.PostToString(url, data), "Http client failed");
+  CF_EXPECT(resp.HttpSuccess(), "Http request failed with status code: "
+                                    << resp.http_code << ", server response:\n"
+                                    << resp.data);
+  auto resp_json =
+      CF_EXPECT(ParseJson(resp.data), "Failed parsing response body");
+  CF_EXPECT(
+      resp_json.isMember(kFieldName),
+      "Invalid create cvd response,  missing field: '" << kFieldName << "'");
+  return resp_json[kFieldName].asString();
 }
 
 Result<std::vector<std::string>> CloudOrchestratorApi::ListCVDWebRTCStreams(
