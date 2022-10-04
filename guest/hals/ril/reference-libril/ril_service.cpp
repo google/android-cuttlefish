@@ -16,6 +16,7 @@
 
 #define LOG_TAG "RILC"
 
+#include "RefRadioIms.h"
 #include "RefRadioNetwork.h"
 
 #include <android-base/logging.h>
@@ -27,6 +28,7 @@
 #include <android/hardware/radio/1.6/types.h>
 #include <libradiocompat/CallbackManager.h>
 #include <libradiocompat/RadioData.h>
+#include <libradiocompat/RadioIms.h>
 #include <libradiocompat/RadioMessaging.h>
 #include <libradiocompat/RadioModem.h>
 #include <libradiocompat/RadioSim.h>
@@ -13430,6 +13432,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         publishRadioHal<cf::ril::RefRadioNetwork>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioSim>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioVoice>(context, radioHidl, callbackMgr, slot);
+        publishRadioHal<cf::ril::RefRadioIms>(context, radioHidl, callbackMgr, slot);
 
         RLOGD("registerService: OemHook is enabled = %s", kOemHookEnabled ? "true" : "false");
         if (kOemHookEnabled) {
