@@ -50,6 +50,7 @@ cvd_host_tools = [
     "cvd_internal_stop",
     "cvd_host_bugreport",
     "cvd_status",
+    "cvdremote_create_host",
     "cvd_test_gce_driver",
     "cvdremote_list_cvds",
     "cvdremote_list_hosts",
