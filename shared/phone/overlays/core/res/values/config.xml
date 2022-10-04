@@ -60,4 +60,7 @@
   <bool name="config_nightDisplayAvailable">true</bool>
   <!-- Let ColorFade use a color layer to avoid deadlocking in WM CTS. See b/233386717. -->
   <bool name="config_animateScreenLights">true</bool>
+
+  <!-- Is the device capable of hot swapping an UICC Card -->
+  <bool name="config_hotswapCapable">true</bool>
 </resources>
