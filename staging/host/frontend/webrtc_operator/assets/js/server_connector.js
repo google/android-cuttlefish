@@ -60,6 +60,13 @@ class Connector {
     }
   }
 
+  // Registers a callback to receive messages from the device. A race may occur
+  // if this is called after requestDevice() is called in which some device
+  // messages are lost.
+  onDeviceMsg(cb) {
+    throw 'Not implemented!';
+  }
+
   // Selects a particular device in the signaling server and opens the signaling
   // channel with it (but doesn't send any message to the device). Returns a
   // promise to an object with the following properties:
