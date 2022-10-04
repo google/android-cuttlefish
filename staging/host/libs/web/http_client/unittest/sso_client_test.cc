@@ -84,6 +84,38 @@ TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
             "\\\n--url=https://some.url");
 }
 
+TEST(SsoClientTest, PostToStringVerifyCommandArgs) {
+  std::string cmd_as_bash_script;
+  auto exec = [&](Command&& cmd, const std::string*, std::string*, std::string*,
+                  SubprocessOptions) {
+    cmd_as_bash_script = cmd.AsBashScript();
+    return 0;
+  };
+  SsoClient client(exec);
+
+  client.PostToString("https://some.url", "foo");
+
+  EXPECT_EQ(cmd_as_bash_script,
+            "#!/bin/bash\n\n/usr/bin/sso_client \\\n--dump_header "
+            "\\\n--url=https://some.url \\\n--method=POST \\\n--data=foo");
+}
+
+TEST(SsoClientTest, PostToStringEmptyDataVerifyCommandArgs) {
+  std::string cmd_as_bash_script;
+  auto exec = [&](Command&& cmd, const std::string*, std::string*, std::string*,
+                  SubprocessOptions) {
+    cmd_as_bash_script = cmd.AsBashScript();
+    return 0;
+  };
+  SsoClient client(exec);
+
+  client.PostToString("https://some.url", "");
+
+  EXPECT_EQ(cmd_as_bash_script,
+            "#!/bin/bash\n\n/usr/bin/sso_client \\\n--dump_header "
+            "\\\n--url=https://some.url \\\n--method=POST");
+}
+
 TEST(SsoClientTest, GetToStringFailsInvalidResponseFormat) {
   std::string stdout_ = "E0719 13:45:32.891177 2702210 foo failed";
   auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
