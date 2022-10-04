@@ -21,6 +21,7 @@ cc_library_host_static {
     name: "libcvd_selector_frontend",
     srcs: [
         "selector_cmdline_parser.cpp",
+        "selector_cvd_flags.cpp",
     ],
     defaults: ["cvd_lib_defaults"],
 }
