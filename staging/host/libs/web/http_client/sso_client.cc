@@ -26,13 +26,49 @@ namespace {
 
 constexpr char kSsoClientBin[] = "/usr/bin/sso_client";
 
-// Matches the sso_client output when it succeeds.
-static std::regex stdout_regex(
+// Matches the sso_client's standard output when it succeeds expecting a valid
+// http response.
+const std::regex kStdoutRegex(
     "HTTP/\\d+\\.\\d+\\s(\\d+)\\s.+\r\n" /* status */
     "(?:.+\r\n)+\r\n"                    /* headers */
     "(.+)?"                              /* body */
     "\n" /* new line added by the sso_client */);
 
+enum class HttpMethod {
+  kGet,
+  kPost,
+};
+
+Result<HttpResponse<std::string>> MakeRequest(
+    ExecCmdFunc exec_cmd_func_, const std::string& url,
+    HttpMethod method = HttpMethod::kGet, const std::string& data = "") {
+  Command sso_client_cmd(kSsoClientBin);
+  sso_client_cmd.AddParameter("--dump_header");
+  sso_client_cmd.AddParameter("--url=" + url);
+  if (method == HttpMethod::kPost) {
+    sso_client_cmd.AddParameter("--method=POST");
+    if (!data.empty()) {
+      sso_client_cmd.AddParameter("--data=" + data);
+    }
+  }
+  std::string stdout_, stderr_;
+  int ret = exec_cmd_func_(std::move(sso_client_cmd), nullptr, &stdout_,
+                           &stderr_, SubprocessOptions());
+  CF_EXPECT(ret == 0,
+            "`sso_client` execution failed with combined stdout and stderr: "
+                << stdout_ << stderr_);
+  CF_EXPECT(std::regex_match(stdout_, kStdoutRegex),
+            "Failed parsing `sso_client` output. Output:\n"
+                << stdout_);
+  std::smatch match;
+  std::regex_search(stdout_, match, kStdoutRegex);
+  long status_code = std::atol(match[1].str().data());
+  std::string body = "";
+  if (match.size() == 3) {
+    body = match[2];
+  }
+  return HttpResponse<std::string>{body, status_code};
+}
 }  // namespace
 
 SsoClient::SsoClient() : exec_cmd_func_(&RunWithManagedStdio) {}
@@ -43,32 +79,18 @@ SsoClient::SsoClient(ExecCmdFunc exec_cmd_func)
 SsoClient::~SsoClient() {}
 
 Result<HttpResponse<std::string>> SsoClient::GetToString(
-    const std::string& url, const std::vector<std::string>&) {
-  Command sso_client_cmd(kSsoClientBin);
-  sso_client_cmd.AddParameter("--dump_header");
-  sso_client_cmd.AddParameter("--url=" + url);
-  std::string stdout_, stderr_;
-  int ret = exec_cmd_func_(std::move(sso_client_cmd), nullptr, &stdout_,
-                           &stderr_, SubprocessOptions());
-  CF_EXPECT(ret == 0,
-            "`sso_client` execution failed with combined stdout and stderr: "
-                << stdout_ << stderr_);
-  CF_EXPECT(std::regex_match(stdout_, stdout_regex),
-            "Failed parsing `sso_client` output. Output:\n"
-                << stdout_);
-  std::smatch match;
-  std::regex_search(stdout_, match, stdout_regex);
-  long status_code = std::atol(match[1].str().data());
-  std::string body = "";
-  if (match.size() == 3) {
-    body = match[2];
-  }
-  return HttpResponse<std::string>{body, status_code};
+    const std::string& url, const std::vector<std::string>& headers) {
+  // TODO(b/250670329): Handle request headers.
+  CHECK(headers.empty()) << "headers are not handled yet";
+  return MakeRequest(exec_cmd_func_, url);
 }
 
 Result<HttpResponse<std::string>> SsoClient::PostToString(
-    const std::string&, const std::string&, const std::vector<std::string>&) {
-  return CF_ERR("Not implemented");
+    const std::string& url, const std::string& data,
+    const std::vector<std::string>& headers) {
+  // TODO(b/250670329): Handle request headers.
+  CHECK(headers.empty()) << "headers are not handled yet";
+  return MakeRequest(exec_cmd_func_, url, HttpMethod::kPost, data);
 };
 
 Result<HttpResponse<Json::Value>> SsoClient::PostToJson(
