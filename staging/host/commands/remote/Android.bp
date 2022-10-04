@@ -67,6 +67,18 @@ cc_binary {
 }
 
 cc_binary {
+    name: "cvdremote_create_cvd",
+    srcs: [
+        "cvdremote_create_cvd.cc"
+    ],
+    static_libs: [
+        "libgflags",
+        "libcvdremote",
+    ],
+    defaults: ["cvdremote_defaults"],
+}
+
+cc_binary {
     name: "cvdremote_list_cvds",
     srcs: [
         "cvdremote_list_cvds.cc"
