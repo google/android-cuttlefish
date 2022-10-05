@@ -33,15 +33,13 @@ func (m *testIM) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
 
 func TestCreateCVDSucceeds(t *testing.T) {
 	rr := httptest.NewRecorder()
-	router := mux.NewRouter()
 	req, err := http.NewRequest("POST", "/cvds", strings.NewReader("{}"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	controller := Controller{InstanceManager: &testIM{}}
-	controller.AddRoutes(router)
 
-	router.ServeHTTP(rr, req)
+	makeRequest(rr, req, &controller)
 
 	expected := http.StatusOK
 	if rr.Code != expected {
@@ -50,21 +48,25 @@ func TestCreateCVDSucceeds(t *testing.T) {
 }
 
 func TestGetOperationSucceeds(t *testing.T) {
+	rr := httptest.NewRecorder()
 	om := NewMapOM()
 	op := om.New()
-	rr := httptest.NewRecorder()
-	router := mux.NewRouter()
 	req, err := http.NewRequest("GET", "/operations/"+op.Name, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	controller := Controller{OperationManager: om}
-	controller.AddRoutes(router)
 
-	router.ServeHTTP(rr, req)
+	makeRequest(rr, req, &controller)
 
 	expected := http.StatusOK
 	if rr.Code != expected {
 		t.Errorf("unexpected status code <<%d>>, want: %d", rr.Code, expected)
 	}
+}
+
+func makeRequest(w http.ResponseWriter, r *http.Request, controller *Controller) {
+	router := mux.NewRouter()
+	controller.AddRoutes(router)
+	router.ServeHTTP(w, r)
 }
