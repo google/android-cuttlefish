@@ -160,7 +160,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition{
       .label = "misc",
-      .image_file_path = AbsolutePath(instance.misc_image()),
+      .image_file_path = AbsolutePath(instance.new_misc_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -1011,6 +1011,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::string cur_boot_image;
   std::string cur_vendor_boot_image;
   std::string cur_metadata_image;
+  std::string cur_misc_image;
   int cur_blank_metadata_image_mb;
   int value;
   int instance_index = 0;
@@ -1020,10 +1021,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     auto instance = config.ForInstance(num);
     if (instance_index >= misc_image.size()) {
       // legacy variable. Vectorize by copy [0] to all instances
-      instance.set_misc_image(misc_image[0]);
+      cur_misc_image = misc_image[0];
     } else {
-      instance.set_misc_image(misc_image[instance_index]);
+      cur_misc_image = misc_image[instance_index];
     }
+    instance.set_misc_image(cur_misc_image);
     if (instance_index >= boot_image.size()) {
       cur_boot_image = boot_image[0];
     } else {
@@ -1171,6 +1173,14 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       const std::string new_metadata_image_path =
           const_instance.PerInstancePath("metadata.img");
       instance.set_new_metadata_image(new_metadata_image_path);
+    }
+
+    if (FileHasContent(cur_misc_image)) {
+      instance.set_new_misc_image(cur_misc_image);
+    } else {
+      const std::string new_misc_image_path =
+          const_instance.PerInstancePath("misc.img");
+      instance.set_new_misc_image(new_misc_image_path);
     }
     instance_index++;
   }

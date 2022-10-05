@@ -354,7 +354,7 @@ class InitializeMiscImageImpl : public InitializeMiscImage {
 
     LOG(DEBUG) << "misc partition image: creating empty at \""
                << instance_.misc_image() << "\"";
-    if (!CreateBlankImage(instance_.misc_image(), 1 /* mb */, "none")) {
+    if (!CreateBlankImage(instance_.new_misc_image(), 1 /* mb */, "none")) {
       LOG(ERROR) << "Failed to create misc image";
       return false;
     }
