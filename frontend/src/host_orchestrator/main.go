@@ -121,7 +121,7 @@ func main() {
 		HomesRootDir:     imRootDir + "/homes",
 	}
 	om := orchestrator.NewMapOM()
-	im := &orchestrator.InstanceManager{
+	im := &orchestrator.CVDToolWrapperIM{
 		OM: om,
 		LaunchCVDProcedureBuilder: orchestrator.NewLaunchCVDProcedureBuilder(
 			abURL,
@@ -139,7 +139,11 @@ func main() {
 		log.Fatal("Error with device endpoint: ", err)
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	orchestrator.SetupInstanceManagement(r, im, om)
+	controller := orchestrator.Controller{
+		InstanceManager:  im,
+		OperationManager: om,
+	}
+	controller.AddRoutes(r)
 	// The host orchestrator currently has no use for this, since clients won't connect
 	// to it directly, however they probably will once the multi-device feature matures.
 	if len(webUIUrlStr) > 0 {
