@@ -36,8 +36,8 @@ Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   CF_EXPECT(android::base::Realpath(home, &home_realpath));
   static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
   std::string config_path = AbsolutePath(home_realpath + kSuffix);
-  CF_EXPECT(FileExists(config_path));
-  return CF_ERR("No config file exists.");
+  CF_EXPECT(FileExists(config_path), "No config file exists");
+  return {config_path};
 }
 
 std::string GenInternalGroupName() {
