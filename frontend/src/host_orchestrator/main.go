@@ -139,7 +139,7 @@ func main() {
 		log.Fatal("Error with device endpoint: ", err)
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	imController := orchestrator.IMController{
+	imController := orchestrator.Controller{
 		InstanceManager:  im,
 		OperationManager: om,
 	}
