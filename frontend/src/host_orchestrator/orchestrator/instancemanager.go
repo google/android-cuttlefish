@@ -53,12 +53,12 @@ type IMPaths struct {
 }
 
 // Instance manager implementation based on execution of `cvd` tool commands.
-type CVDToolWrapperIM struct {
+type CVDToolInstanceManager struct {
 	OM                        OperationManager
 	LaunchCVDProcedureBuilder ProcedureBuilder
 }
 
-func (m *CVDToolWrapperIM) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
+func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
 	if err := validateRequest(&req); err != nil {
 		return Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
 	}
@@ -70,7 +70,7 @@ func (m *CVDToolWrapperIM) CreateCVD(req apiv1.CreateCVDRequest) (Operation, err
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 // TODO(b/236398043): Return more granular and informative errors.
-func (m *CVDToolWrapperIM) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
+func (m *CVDToolInstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
 	p := m.LaunchCVDProcedureBuilder.Build(req)
 	var result OperationResult
 	if err := p.Execute(); err != nil {

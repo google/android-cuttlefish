@@ -24,12 +24,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Controller struct {
+type IMController struct {
 	InstanceManager  InstanceManager
 	OperationManager OperationManager
 }
 
-func (c *Controller) AddRoutes(router *mux.Router) {
+func (c *IMController) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds", &createCVDHandler{im: c.InstanceManager}).Methods("POST")
 	router.Handle("/operations/{name}", &getOperationHandler{om: c.OperationManager}).Methods("GET")
 }

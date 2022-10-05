@@ -34,7 +34,7 @@ import (
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
-	im := &CVDToolWrapperIM{}
+	im := &CVDToolInstanceManager{}
 	var validRequest = apiv1.CreateCVDRequest{
 		BuildInfo: &apiv1.BuildInfo{
 			BuildID: "1234",
@@ -90,7 +90,7 @@ func (b *testLaunchCVDProcedureBuilder) Build(_ interface{}) Procedure {
 
 func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
 	om := NewMapOM()
-	im := CVDToolWrapperIM{
+	im := CVDToolInstanceManager{
 		OM:                        om,
 		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{err: errors.New("error")},
 	}
@@ -114,7 +114,7 @@ func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
 
 func TestCreateCVD(t *testing.T) {
 	om := NewMapOM()
-	im := CVDToolWrapperIM{
+	im := CVDToolInstanceManager{
 		OM:                        om,
 		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{},
 	}

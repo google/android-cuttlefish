@@ -38,7 +38,7 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{InstanceManager: &testIM{}}
+	controller := IMController{InstanceManager: &testIM{}}
 	controller.AddRoutes(router)
 
 	router.ServeHTTP(rr, req)
@@ -58,7 +58,7 @@ func TestGetOperationSucceeds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: om}
+	controller := IMController{OperationManager: om}
 	controller.AddRoutes(router)
 
 	router.ServeHTTP(rr, req)
