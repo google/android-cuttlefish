@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,19 @@
 
 #pragma once
 
-#include <memory>
+#include <cstdint>
+#include <functional>
+#include <variant>
 
-#include "host/libs/screen_connector/screen_connector_common.h"
-#include "host/libs/wayland/wayland_server.h"
-
-namespace cuttlefish {
-
-class WaylandScreenConnector {
- public:
-  WaylandScreenConnector(int frames_fd);
-  void SetFrameCallback(GenerateProcessedFrameCallbackImpl frame_callback);
-
-  void SetDisplayEventCallback(DisplayEventCallback event_callback);
-
- private:
-  std::unique_ptr<wayland::WaylandServer> server_;
+struct DisplayCreatedEvent {
+  std::uint32_t display_number;
+  std::uint32_t display_width;
+  std::uint32_t display_height;
 };
 
-}  // namespace cuttlefish
+struct DisplayDestroyedEvent {
+  std::uint32_t display_number;
+};
+
+using DisplayEvent = std::variant<DisplayCreatedEvent, DisplayDestroyedEvent>;
+using DisplayEventCallback = std::function<void(const DisplayEvent&)>;
