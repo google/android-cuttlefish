@@ -24,23 +24,28 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func SetupInstanceManagement(router *mux.Router, im *InstanceManager, om OperationManager) {
-	router.HandleFunc("/cvds", func(w http.ResponseWriter, r *http.Request) {
-		createDevices(w, r, im)
-	}).Methods("POST")
-	router.HandleFunc("/operations/{name}", func(w http.ResponseWriter, r *http.Request) {
-		getOperation(w, r, om)
-	}).Methods("GET")
+type Controller struct {
+	InstanceManager  InstanceManager
+	OperationManager OperationManager
 }
 
-func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) {
+func (c *Controller) AddRoutes(router *mux.Router) {
+	router.Handle("/cvds", &createCVDHandler{im: c.InstanceManager}).Methods("POST")
+	router.Handle("/operations/{name}", &getOperationHandler{om: c.OperationManager}).Methods("GET")
+}
+
+type createCVDHandler struct {
+	im InstanceManager
+}
+
+func (h *createCVDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var msg apiv1.CreateCVDRequest
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		operator.ReplyJSONErr(w, operator.NewBadRequestError("Malformed JSON in request", err))
 		return
 	}
-	op, err := im.CreateCVD(msg)
+	op, err := h.im.CreateCVD(msg)
 	if err != nil {
 		operator.ReplyJSONErr(w, err)
 		return
@@ -48,11 +53,15 @@ func createDevices(w http.ResponseWriter, r *http.Request, im *InstanceManager) 
 	operator.ReplyJSONOK(w, BuildOperation(op))
 }
 
-func getOperation(w http.ResponseWriter, r *http.Request, om OperationManager) {
+type getOperationHandler struct {
+	om OperationManager
+}
+
+func (h *getOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	if op, err := om.Get(name); err != nil {
-		operator.ReplyJSONErr(w, operator.NewNotFoundError("operation not found", err))
+	if op, err := h.om.Get(name); err != nil {
+		operator.ReplyJSONErr(w, operator.NewNotFoundError("Operation not found", err))
 	} else {
 		operator.ReplyJSONOK(w, BuildOperation(op))
 	}
