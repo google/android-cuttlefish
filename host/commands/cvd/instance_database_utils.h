@@ -17,6 +17,7 @@
 #pragma once
 
 #include <algorithm>
+#include <memory>
 #include <string>
 
 #include "common/libs/utils/collect.h"
@@ -49,31 +50,75 @@ bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir);
 std::string GenerateTooManyInstancesErrorMsg(const int n,
                                              const std::string& field_name);
 
-// effectively partial specialization of cuttlefish::Collect
-// with instance_db::Set<T>
-template <typename T, typename Container>
-Set<T> CollectToSet(Container&& container,
-                    std::function<bool(const T&)> predicate) {
-  return Collect<T, Set<T>>(std::forward<Container>(container), predicate);
+/**
+ * return all the elements in container that satisfies predicate.
+ *
+ * Container has Wrappers, where each Wrapper is typically,
+ * std::unique/shared_ptr of T, or some wrapper of T, etc. Set is a set of T.
+ *
+ * This method returns the Set of T, as long as its corresponding Wrapper in
+ * Container meets the predicate.
+ */
+template <typename T, typename Wrapper, typename Set, typename Container>
+Set Collect(const Container& container,
+            std::function<bool(const Wrapper&)> predicate,
+            std::function<T(const Wrapper&)> convert) {
+  Set output;
+  for (const auto& t : container) {
+    if (!predicate(t)) {
+      continue;
+    }
+    output.insert(convert(t));
+  }
+  return output;
+}
+
+/*
+ * Returns a Set of const T*, which essentially satisfies "predicate"
+ *
+ * Container has a list/set of std::unique_ptr<T>. We collect all the
+ * const T pointers owned by Container as long as the T poiter satisfies
+ * the condition defined by predicate.
+ *
+ */
+template <typename T, typename Set, typename Container>
+Set CollectToSet(Container&& container,
+                 std::function<bool(const std::unique_ptr<T>&)> predicate) {
+  auto convert = [](const std::unique_ptr<T>& uniq_ptr) {
+    return uniq_ptr.get();
+  };
+  return Collect<const T*, std::unique_ptr<T>, Set>(
+      std::forward<Container>(container), std::move(predicate),
+      std::move(convert));
 }
 
 /**
- * Specialized version of cuttlefish::Flatten
+ * Given:
+ *  Containers have a list of n `Container`s. Each Container may have
+ *  m Element. Each is stored as a unique_ptr.
  *
- *  a. The result is stored in instance_db::Set<T>
- *  b. As not all Container candidate supports iterator over
- *    the elements, collect is responsible for gathering all
- *    elements in each container.
- *  c. Not all elements has to be collected
+ * Goal:
+ *  To collect Elements from each Container with Container's APIs. The
+ *  collected Elements meet the condition implicitly defined in collector.
  *
+ * E.g. InstanceDatabase has InstanceGroups, each has Instances. We want
+ * all the Instances its build-target was TV. Then, collector will look
+ * like this:
+ * [&build_target](const std::unique_ptr<InstanceGroup>& group) {
+ *   return group->FindByBuildTarget(build_target);
+ * }
+ *
+ * We take the union of all the returned subsets from each collector call.
  */
 template <typename Element, typename Container, typename Containers>
-Result<Set<Element>> CollectAllElements(
-    std::function<Result<Set<Element>>(const Container&)> collector,
-    const Containers& inputs) {
-  Set<Element> output;
-  for (const auto& container : inputs) {
-    auto subset = CF_EXPECT(collector(container));
+Result<Set<const Element*>> CollectAllElements(
+    std::function<
+        Result<Set<const Element*>>(const std::unique_ptr<Container>&)>
+        collector,
+    const Containers& outermost_container) {
+  Set<const Element*> output;
+  for (const auto& container_ptr : outermost_container) {
+    auto subset = CF_EXPECT(collector(container_ptr));
     output.insert(subset.cbegin(), subset.cend());
   }
   return {output};

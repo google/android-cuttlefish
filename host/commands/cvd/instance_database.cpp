@@ -41,7 +41,7 @@ bool InstanceDatabase::IsEmpty() const {
 }
 
 template <typename T>
-Result<Set<T>> InstanceDatabase::Find(
+Result<Set<const T*>> InstanceDatabase::Find(
     const Query& query,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   static_assert(std::is_same<T, LocalInstance>::value ||
@@ -55,7 +55,7 @@ Result<Set<T>> InstanceDatabase::Find(
 }
 
 template <typename T>
-Result<Set<T>> InstanceDatabase::Find(
+Result<Set<const T*>> InstanceDatabase::Find(
     const Queries& queries,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   static_assert(std::is_same<T, LocalInstance>::value ||
@@ -72,7 +72,7 @@ Result<Set<T>> InstanceDatabase::Find(
 }
 
 template <typename T>
-Result<T> InstanceDatabase::FindOne(
+Result<const T*> InstanceDatabase::FindOne(
     const Query& query,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(query, handler_map));
@@ -84,7 +84,7 @@ Result<T> InstanceDatabase::FindOne(
 }
 
 template <typename T>
-Result<T> InstanceDatabase::FindOne(
+Result<const T*> InstanceDatabase::FindOne(
     const Queries& queries,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(queries, handler_map));
@@ -95,41 +95,42 @@ Result<T> InstanceDatabase::FindOne(
   return {*set.cbegin()};
 }
 
-Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroups(
+Result<Set<const LocalInstanceGroup*>> InstanceDatabase::FindGroups(
     const Query& query) const {
   return Find<LocalInstanceGroup>(query, group_handlers_);
 }
 
-Result<Set<LocalInstanceGroup>> InstanceDatabase::FindGroups(
+Result<Set<const LocalInstanceGroup*>> InstanceDatabase::FindGroups(
     const Queries& queries) const {
   return Find<LocalInstanceGroup>(queries, group_handlers_);
 }
 
-Result<Set<LocalInstance>> InstanceDatabase::FindInstances(
+Result<Set<const LocalInstance*>> InstanceDatabase::FindInstances(
     const Query& query) const {
   return Find<LocalInstance>(query, instance_handlers_);
 }
 
-Result<Set<LocalInstance>> InstanceDatabase::FindInstances(
+Result<Set<const LocalInstance*>> InstanceDatabase::FindInstances(
     const Queries& queries) const {
   return Find<LocalInstance>(queries, instance_handlers_);
 }
 
-Result<LocalInstanceGroup> InstanceDatabase::FindGroup(
+Result<const LocalInstanceGroup*> InstanceDatabase::FindGroup(
     const Query& query) const {
   return FindOne<LocalInstanceGroup>(query, group_handlers_);
 }
 
-Result<LocalInstanceGroup> InstanceDatabase::FindGroup(
+Result<const LocalInstanceGroup*> InstanceDatabase::FindGroup(
     const Queries& queries) const {
   return FindOne<LocalInstanceGroup>(queries, group_handlers_);
 }
 
-Result<LocalInstance> InstanceDatabase::FindInstance(const Query& query) const {
+Result<const LocalInstance*> InstanceDatabase::FindInstance(
+    const Query& query) const {
   return FindOne<LocalInstance>(query, instance_handlers_);
 }
 
-Result<LocalInstance> InstanceDatabase::FindInstance(
+Result<const LocalInstance*> InstanceDatabase::FindInstance(
     const Queries& queries) const {
   return FindOne<LocalInstance>(queries, instance_handlers_);
 }
