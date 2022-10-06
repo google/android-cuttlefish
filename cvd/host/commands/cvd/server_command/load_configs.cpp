@@ -26,6 +26,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/server.h"
 #include "server_client.h"
 
@@ -49,9 +50,7 @@ class LoadConfigsCommand : public CvdServerHandler {
   }
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
+    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CF_EXPECT(CanHandle(request)));
 
     auto commands = CF_EXPECT(CreateCommandSequence(request));
@@ -79,6 +78,9 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     std::vector<Flag> flags;
     flags.emplace_back(GflagsCompatFlag("help", help));
+    std::string config_path;
+    flags.emplace_back(GflagsCompatFlag("config_path", config_path));
+
     auto args = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(ParseFlags(flags, args));
 
@@ -86,6 +88,14 @@ class LoadConfigsCommand : public CvdServerHandler {
       static constexpr char kHelp[] = "Usage: cvd load";
       CF_EXPECT(WriteAll(request.Out(), kHelp, sizeof(kHelp)) == sizeof(kHelp));
       return {};
+    }
+
+    std::vector<std::string> serialized_data;
+    Json::Value json_configs =
+        CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
+
+    if (!ParseCvdConfigs(json_configs, serialized_data)) {
+      return CF_ERR("parsing json configs failed");
     }
 
     DemoCommandSequence ret;
@@ -101,13 +111,17 @@ class LoadConfigsCommand : public CvdServerHandler {
         request.Message().command_request().working_directory());
     *launch_phone.mutable_env() = request.Message().command_request().env();
 
-    /* cvd load will always crate instances in deamon mode and
-    will enable reporting automatically
-    */
+    /* cvd load will always crate instances in deamon mode (to be independent of
+     terminal) and will enable reporting automatically(to run automatically
+     without question during launch)
+     */
     launch_phone.add_args("cvd");
     launch_phone.add_args("start");
     launch_phone.add_args("--daemon");
     launch_phone.add_args("--report_anonymous_usage_stats=y");
+    for (auto& parsed_flag : serialized_data) {
+      launch_phone.add_args(parsed_flag);
+    }
 
     auto phone_instance = std::to_string(ret.instance_locks[0].Instance());
     launch_phone.add_args("--base_instance_num=" + phone_instance);
