@@ -190,6 +190,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.soundtrigger3.", 1},
     {"android.media.soundtrigger.", 1},
 
+    // No implementation on cuttlefish for fastboot AIDL hal
+    {"android.hardware.fastboot.", 1},
+
     // These types are only used in Automotive.
     {"android.automotive.computepipe.registry.", 1},
     {"android.automotive.computepipe.runner.", 1},
