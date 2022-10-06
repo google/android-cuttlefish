@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <functional>
+#include <memory>
 #include <string>
 
 #include "common/libs/utils/result.h"
@@ -26,29 +26,25 @@
 namespace cuttlefish {
 namespace instance_db {
 
+class InstanceDatabase;
+
 /**
  * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
  *
  * Needs design changes to support both Remote Instances
  */
 class LocalInstanceGroup {
- public:
-  LocalInstanceGroup(const std::string& home_dir,
-                     const std::string& host_binaries_dir);
-  LocalInstanceGroup(LocalInstanceGroup&&) = default;
-  LocalInstanceGroup(const LocalInstanceGroup&) = default;
-  LocalInstanceGroup& operator=(LocalInstanceGroup&&) = default;
-  LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
-  // TODO(stephenkim): Replace with default operator== in C++20
-  bool operator==(const LocalInstanceGroup& target) const {
-    return Compare(target);
-  }
+  friend InstanceDatabase;
 
+ public:
   const std::string& InternalGroupName() const { return internal_group_name_; }
+  const std::string& GroupName() const { return InternalGroupName(); }
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostBinariesDir() const { return host_binaries_dir_; }
   Result<std::string> GetCuttlefishConfigPath() const;
-  const Set<LocalInstance> Instances() const { return instances_; }
+  const Set<std::unique_ptr<LocalInstance>>& Instances() const {
+    return instances_;
+  }
   /**
    * return error if instance id of instance is taken AND that taken id
    * belongs to this group
@@ -57,7 +53,7 @@ class LocalInstanceGroup {
                            const std::string& instance_name);
   bool HasInstance(const unsigned instance_id) const;
 
-  Result<Set<LocalInstance>> FindById(const int id) const;
+  Result<Set<const LocalInstance*>> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
    *
@@ -65,33 +61,19 @@ class LocalInstanceGroup {
    * "foo" or "4" is the per-instance names, and "cvd-foo" or "cvd-4" is
    * the device name.
    */
-  Result<Set<LocalInstance>> FindByInstanceName(
+  Result<Set<const LocalInstance*>> FindByInstanceName(
       const std::string& instance_name) const;
-  std::size_t HashCode() const noexcept;
 
  private:
-  bool Compare(const LocalInstanceGroup& target) const {
-    // list all fields
-    return (home_dir_ == target.home_dir_) &&
-           (host_binaries_dir_ == target.host_binaries_dir_) &&
-           (internal_group_name_ == target.internal_group_name_) &&
-           (instances_ == target.instances_);
-  }
+  LocalInstanceGroup(const std::string& home_dir,
+                     const std::string& host_binaries_dir);
   std::string home_dir_;
   std::string host_binaries_dir_;
 
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
-  Set<LocalInstance> instances_;
+  Set<std::unique_ptr<LocalInstance>> instances_;
 };
 
 }  // namespace instance_db
 }  // namespace cuttlefish
-
-template <>
-struct std::hash<cuttlefish::instance_db::LocalInstanceGroup> {
-  using LocalInstanceGroup = cuttlefish::instance_db::LocalInstanceGroup;
-  std::size_t operator()(const LocalInstanceGroup& group) const noexcept {
-    return group.HashCode();
-  }
-};
