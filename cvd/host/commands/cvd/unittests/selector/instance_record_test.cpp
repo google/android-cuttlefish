@@ -25,7 +25,8 @@ namespace instance_db {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  LocalInstanceGroup parent_group("/home/user", "/home/user/download/bin");
+  LocalInstanceGroup parent_group("super", "/home/user",
+                                  "/home/user/download/bin");
   if (!parent_group.AddInstance(3, "phone").ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
@@ -45,7 +46,9 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
   ASSERT_EQ(instance->InternalName(), "3");
   ASSERT_EQ(instance->PerInstanceName(), "phone");
   ASSERT_EQ(instance->InternalDeviceName(), "cvd-3");
-  ASSERT_EQ(instance->DeviceName(), "cvd-phone");
+  ASSERT_EQ(instance->DeviceName(), "super-phone");
+  ASSERT_EQ(std::addressof(instance->ParentGroup()),
+            std::addressof(parent_group));
 }
 
 }  // namespace instance_db

@@ -61,7 +61,7 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
   }
   auto& db = GetDb();
   // populate home directories under Workspace()
-  const std::string home{Workspace() + "/" + "cf_group"};
+  const std::string home{Workspace() + "/" + "meow"};
   if (!EnsureDirectoryExists(home).ok()) {
     // if ever failed, skip
     GTEST_SKIP() << "Failed to find/create " << home;
@@ -71,15 +71,25 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
     GTEST_SKIP() << "Failed to find/create " << invalid_host_binaries_dir;
   }
 
-  ASSERT_FALSE(
-      db.AddInstanceGroup("/path/to/never/exists", HostBinariesDir()).ok());
-  ASSERT_FALSE(db.AddInstanceGroup(home, "/path/to/never/exists").ok());
-  ASSERT_FALSE(
-      db.AddInstanceGroup("/path/to/never/exists", "/path/to/never/exists")
-          .ok());
-  // both are existing directoris, but host_binaries_dir is not actually
-  // the host tool directory.
-  ASSERT_FALSE(db.AddInstanceGroup(home, invalid_host_binaries_dir).ok());
+  // group_name : "meow"
+  auto result_bad_home =
+      db.AddInstanceGroup("meow", "/path/to/never/exists", HostBinariesDir());
+  auto result_bad_host_bin_dir =
+      db.AddInstanceGroup("meow", home, "/path/to/never/exists");
+  auto result_both_bad = db.AddInstanceGroup("meow", "/path/to/never/exists",
+                                             "/path/to/never/exists");
+  auto result_bad_group_name =
+      db.AddInstanceGroup("0invalid_group_name", home, HostBinariesDir());
+  // Everything is correct but one thing: the host tool directory does not have
+  // host tool files such as launch_cvd
+  auto result_non_qualifying_host_tool_dir =
+      db.AddInstanceGroup("meow", home, invalid_host_binaries_dir);
+
+  ASSERT_FALSE(result_bad_home.ok());
+  ASSERT_FALSE(result_bad_host_bin_dir.ok());
+  ASSERT_FALSE(result_both_bad.ok());
+  ASSERT_FALSE(result_bad_group_name.ok());
+  ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
@@ -87,17 +97,17 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  const std::string home0{Workspace() + "/" + "meow"};
+  const std::string home0{Workspace() + "/" + "home0"};
   if (!EnsureDirectoryExists(home0).ok()) {
     GTEST_SKIP() << "Failed to find/create " << home0;
   }
-  const std::string home1{Workspace() + "/" + "miaou"};
+  const std::string home1{Workspace() + "/" + "home1"};
   if (!EnsureDirectoryExists(home1).ok()) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup(home0, HostBinariesDir()).ok());
-  ASSERT_TRUE(db.AddInstanceGroup(home1, HostBinariesDir()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup("meow", home0, HostBinariesDir()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup("miaou", home1, HostBinariesDir()).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -105,18 +115,21 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  const std::string home{Workspace() + "/" + "meow"};
+  const std::string home{Workspace() + "/" + "my_home"};
   if (!EnsureDirectoryExists(home).ok()) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup(home, HostBinariesDir()).ok());
-  ASSERT_FALSE(db.AddInstanceGroup(home, HostBinariesDir()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup("meow", home, HostBinariesDir()).ok());
+  ASSERT_FALSE(db.AddInstanceGroup("meow", home, HostBinariesDir()).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
-  // AddGroups creates HOME directory under Workspace() and
-  // add an InstanceGroup with the given name to InstanceDatabase
+  /* AddGroups(name):
+   *   HOME: Workspace() + "/" + name
+   *   HostBinariesDirectory: Workspace() + "/" + "android_host_out"
+   *   group_ := LocalInstanceGroup(name, HOME, HostBinariesDirectory)
+   */
   if (!SetUpOk() || !AddGroups({"nyah", "yah_ong"})) {
     GTEST_SKIP() << Error().msg;
   }
