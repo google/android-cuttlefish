@@ -80,11 +80,13 @@ InstanceManager::GetInstanceGroupInfo(
     const InstanceManager::InstanceGroupDir& dir) const {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
+  CF_EXPECT(group != nullptr);
   InstanceGroupInfo info;
-  info.host_binaries_dir = group.HostBinariesDir();
-  auto instances = group.Instances();
+  info.host_binaries_dir = group->HostBinariesDir();
+  const auto& instances = group->Instances();
   for (const auto& instance : instances) {
-    info.instances.insert(instance.InstanceId());
+    CF_EXPECT(instance != nullptr);
+    info.instances.insert(instance->InstanceId());
   }
   return {info};
 }
@@ -109,7 +111,7 @@ void InstanceManager::IssueStatusCommand(
   }
 }
 
-cvd::Status InstanceManager::CvdFleetImpl(
+Result<cvd::Status> InstanceManager::CvdFleetImpl(
     const SharedFD& out, const std::optional<std::string>& env_config) const {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   const char _GroupDeviceInfoStart[] = "[\n";
@@ -119,11 +121,12 @@ cvd::Status InstanceManager::CvdFleetImpl(
   auto&& instance_groups = instance_db_.InstanceGroups();
 
   for (const auto& group : instance_groups) {
+    CF_EXPECT(group != nullptr);
     auto config_path = env_config && FileExists(*env_config)
                            ? *env_config
-                           : group.GetCuttlefishConfigPath();
+                           : group->GetCuttlefishConfigPath();
     if (config_path.ok()) {
-      IssueStatusCommand(out, *config_path, group);
+      IssueStatusCommand(out, *config_path, *group);
     }
     if (group == *instance_groups.crbegin()) {
       continue;
@@ -136,7 +139,7 @@ cvd::Status InstanceManager::CvdFleetImpl(
   return status;
 }
 
-cvd::Status InstanceManager::CvdFleetHelp(
+Result<cvd::Status> InstanceManager::CvdFleetHelp(
     const SharedFD& out, const SharedFD& err,
     const std::string& host_tool_dir) const {
   Command command(host_tool_dir + kStatusBin);
@@ -152,7 +155,7 @@ cvd::Status InstanceManager::CvdFleetHelp(
   return status;
 }
 
-cvd::Status InstanceManager::CvdFleet(
+Result<cvd::Status> InstanceManager::CvdFleet(
     const SharedFD& out, const SharedFD& err,
     const std::optional<std::string>& env_config,
     const std::string& host_tool_dir,
@@ -183,7 +186,7 @@ void InstanceManager::IssueStopCommand(
                  "\".\nThis can happen if instances are already stopped.\n");
   }
   for (const auto& instance : group.Instances()) {
-    auto lock = lock_manager_.TryAcquireLock(instance.InstanceId());
+    auto lock = lock_manager_.TryAcquireLock(instance->InstanceId());
     if (lock.ok() && (*lock)) {
       (*lock)->Status(InUseState::kNotInUse);
       continue;
@@ -200,12 +203,12 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
 
   auto&& instance_groups = instance_db_.InstanceGroups();
   for (const auto& group : instance_groups) {
-    auto config_path = group.GetCuttlefishConfigPath();
+    auto config_path = group->GetCuttlefishConfigPath();
     if (config_path.ok()) {
-      IssueStopCommand(out, err, *config_path, group);
+      IssueStopCommand(out, err, *config_path, *group);
     }
-    RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
-    RemoveFile(group.HomeDir() + config_json_name);
+    RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
+    RemoveFile(group->HomeDir() + config_json_name);
   }
   WriteAll(out, "Stopped all known instances\n");
 
