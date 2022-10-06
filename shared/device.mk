@@ -63,7 +63,6 @@ TARGET_USE_BTLINUX_HAL_IMPL ?= true
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     boot \
-    init_boot \
     odm \
     odm_dlkm \
     product \
@@ -75,6 +74,11 @@ AB_OTA_PARTITIONS += \
     vendor \
     vendor_boot \
     vendor_dlkm \
+
+TARGET_USES_INITBOOT ?= true
+ifeq ($(TARGET_USES_INITBOOT),true)
+AB_OTA_PARTITIONS += init_boot
+endif
 
 # Enable Virtual A/B
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/android_t_baseline.mk)
@@ -388,8 +392,19 @@ PRODUCT_PACKAGES += \
 #
 # Hardware Composer HAL
 #
+# The device needs to avoid having both hwcomposer2.4 and hwcomposer3
+# services running at the same time so make the user manually enables
+# in order to run with --gpu_mode=drm.
+ifeq ($(TARGET_ENABLE_DRMHWCOMPOSER),true)
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/shared/config/manifest_android.hardware.graphics.composer@2.4-service.xml
+PRODUCT_PACKAGES += \
+    android.hardware.graphics.composer@2.4-service \
+    hwcomposer.drm
+else
 PRODUCT_PACKAGES += \
     android.hardware.graphics.composer3-service.ranchu
+endif
 
 #
 # Gralloc HAL
@@ -448,6 +463,8 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio@7.1-impl.ranchu \
     android.hardware.audio.effect@7.0-impl \
     android.hardware.audio.effect.service-aidl.example
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/guest/hals/audio/effects/manifest.xml
 endif
 
 ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
@@ -767,18 +784,6 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Enable GPU-intensive background blur support on Cuttlefish when requested by apps
 PRODUCT_VENDOR_PROPERTIES += \
     ro.surface_flinger.supports_background_blur=1
-
-# Set support one-handed mode
-PRODUCT_PRODUCT_PROPERTIES += \
-    ro.support_one_handed_mode=true
-
-# Set one_handed_mode screen translate offset percentage
-PRODUCT_PRODUCT_PROPERTIES += \
-    persist.debug.one_handed_offset_percentage=50
-
-# Set one_handed_mode translate animation duration milliseconds
-PRODUCT_PRODUCT_PROPERTIES += \
-    persist.debug.one_handed_translate_animation_duration=300
 
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \
