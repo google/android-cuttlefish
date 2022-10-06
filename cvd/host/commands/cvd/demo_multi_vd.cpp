@@ -230,12 +230,6 @@ class SerialLaunchCommand : public CvdServerHandler {
                 "there are `--device` arguments");
     }
 
-    DemoCommandSequence ret;
-    for (int i = 0; i < devices.size(); i++) {
-      auto lock = CF_EXPECT(lock_file_manager_.TryAcquireUnusedLock());
-      CF_EXPECT(lock.has_value(), "Failed to acquire instance number");
-      ret.instance_locks.emplace_back(std::move(*lock));
-    }
     std::vector<cvd::Request> req_protos;
 
     if (!DirectoryExists(kParentDir)) {
@@ -328,6 +322,10 @@ class SerialLaunchCommand : public CvdServerHandler {
       fds = {dev_null, dev_null, dev_null};
     }
 
+    DemoCommandSequence ret;
+    for (auto& device : devices) {
+      ret.instance_locks.emplace_back(std::move(device.ins_lock));
+    }
     for (auto& request_proto : req_protos) {
       ret.requests.emplace_back(request.Client(), request_proto, fds,
                                 request.Credentials());
