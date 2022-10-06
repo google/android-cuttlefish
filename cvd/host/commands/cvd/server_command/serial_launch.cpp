@@ -21,6 +21,8 @@
 
 #include <fruit/fruit.h>
 
+#include "android-base/parseint.h"
+#include "android-base/strings.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -38,6 +40,39 @@ struct DemoCommandSequence {
 };
 
 static constexpr char kParentDir[] = "/tmp/cvd/";
+
+/** Returns a `Flag` object that accepts comma-separated unsigned integers. */
+template <typename T>
+static Flag DeviceSpecificUintFlag(const std::string& name,
+                                   std::vector<T>& values,
+                                   const RequestWithStdio& request) {
+  return GflagsCompatFlag(name).Setter(
+      [&request, &values](const FlagMatch& match) {
+        auto parsed_values = android::base::Tokenize(match.value, ", ");
+        for (auto& parsed_value : parsed_values) {
+          std::uint32_t num = 0;
+          if (!android::base::ParseUint(parsed_value, &num)) {
+            constexpr char kError[] = "Failed to parse integer";
+            WriteAll(request.Out(), kError, sizeof(kError));
+            return false;
+          }
+          values.push_back(num);
+        }
+        return true;
+      });
+}
+
+/** Returns a `Flag` object that accepts comma-separated strings. */
+static Flag DeviceSpecificStringFlag(const std::string& name,
+                                     std::vector<std::string>& values) {
+  return GflagsCompatFlag(name).Setter([&values](const FlagMatch& match) {
+    auto parsed_values = android::base::Tokenize(match.value, ", ");
+    for (auto& parsed_value : parsed_values) {
+      values.push_back(parsed_value);
+    }
+    return true;
+  });
+}
 
 class SerialLaunchCommand : public CvdServerHandler {
  public:
@@ -82,14 +117,46 @@ class SerialLaunchCommand : public CvdServerHandler {
       const RequestWithStdio& request) {
     const auto& client_env = request.Message().command_request().env();
 
-    bool help = false;
-    bool verbose = false;
-    std::string credentials;
-
     std::vector<Flag> flags;
+
+    bool help = false;
     flags.emplace_back(GflagsCompatFlag("help", help));
+
+    std::string credentials;
     flags.emplace_back(GflagsCompatFlag("credentials", credentials));
+
+    bool verbose = false;
     flags.emplace_back(GflagsCompatFlag("verbose", verbose));
+
+    std::vector<std::uint32_t> x_res;
+    flags.emplace_back(DeviceSpecificUintFlag("x_res", x_res, request));
+
+    std::vector<std::uint32_t> y_res;
+    flags.emplace_back(DeviceSpecificUintFlag("y_res", y_res, request));
+
+    std::vector<std::uint32_t> dpi;
+    flags.emplace_back(DeviceSpecificUintFlag("dpi", dpi, request));
+
+    std::vector<std::uint32_t> cpus;
+    flags.emplace_back(DeviceSpecificUintFlag("cpus", cpus, request));
+
+    std::vector<std::uint32_t> memory_mb;
+    flags.emplace_back(DeviceSpecificUintFlag("memory_mb", memory_mb, request));
+
+    std::vector<std::string> setupwizard_mode;
+    flags.emplace_back(
+        DeviceSpecificStringFlag("setupwizard_mode", setupwizard_mode));
+
+    std::vector<std::string> report_anonymous_usage_stats;
+    flags.emplace_back(DeviceSpecificStringFlag("report_anonymous_usage_stats",
+                                                report_anonymous_usage_stats));
+
+    std::vector<std::string> webrtc_device_id;
+    flags.emplace_back(
+        DeviceSpecificStringFlag("webrtc_device_id", webrtc_device_id));
+
+    bool daemon = true;
+    flags.emplace_back(GflagsCompatFlag("daemon", daemon));
 
     struct Device {
       std::string build;
@@ -124,6 +191,11 @@ class SerialLaunchCommand : public CvdServerHandler {
     });
 
     auto args = ParseInvocation(request.Message()).arguments;
+    for (const auto& arg : args) {
+      std::string message = "argument: \"" + arg + "\"\n";
+      CF_EXPECT(WriteAll(request.Err(), message) == message.size());
+    }
+
     CF_EXPECT(ParseFlags(flags, args));
 
     if (help) {
@@ -132,6 +204,30 @@ class SerialLaunchCommand : public CvdServerHandler {
           "--device=build/target --device=build/target";
       CF_EXPECT(WriteAll(request.Out(), kHelp, sizeof(kHelp)) == sizeof(kHelp));
       return {};
+    }
+
+    CF_EXPECT(devices.size() < 2 || daemon,
+              "--daemon=true required for more than 1 device");
+
+    std::vector<std::vector<std::uint32_t>*> int_device_args = {
+        &x_res, &y_res, &dpi, &cpus, &memory_mb,
+    };
+    for (const auto& int_device_arg : int_device_args) {
+      CF_EXPECT(int_device_arg->size() == 0 ||
+                    int_device_arg->size() == devices.size(),
+                "If given, device-specific flags should have as many values as "
+                "there are `--device` arguments");
+    }
+    std::vector<std::vector<std::string>*> string_device_args = {
+        &setupwizard_mode,
+        &report_anonymous_usage_stats,
+        &webrtc_device_id,
+    };
+    for (const auto& string_device_arg : string_device_args) {
+      CF_EXPECT(string_device_arg->size() == 0 ||
+                    string_device_arg->size() == devices.size(),
+                "If given, device-specific flags should have as many values as "
+                "there are `--device` arguments");
     }
 
     DemoCommandSequence ret;
@@ -152,6 +248,7 @@ class SerialLaunchCommand : public CvdServerHandler {
 
     bool is_first = true;
 
+    int index = 0;
     for (const auto& device : devices) {
       auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
       *mkdir_cmd.mutable_env() = client_env;
@@ -176,11 +273,39 @@ class SerialLaunchCommand : public CvdServerHandler {
       (*launch_cmd.mutable_env())["ANDROID_PRODUCT_OUT"] = device.home_dir;
       launch_cmd.add_args("cvd");
       launch_cmd.add_args("start");
+      launch_cmd.add_args(
+          "--undefok=daemon,base_instance_num,x_res,y_res,dpi,cpus,memory_mb,"
+          "setupwizard_mode,report_anonymous_usage_stats,webrtc_device_id");
       launch_cmd.add_args("--daemon");
-      launch_cmd.add_args("--report_anonymous_usage_stats=y");
       launch_cmd.add_args("--base_instance_num=" +
                           std::to_string(device.ins_lock.Instance()));
+      if (index < x_res.size()) {
+        launch_cmd.add_args("--x_res=" + std::to_string(x_res[index]));
+      }
+      if (index < y_res.size()) {
+        launch_cmd.add_args("--y_res=" + std::to_string(y_res[index]));
+      }
+      if (index < dpi.size()) {
+        launch_cmd.add_args("--dpi=" + std::to_string(dpi[index]));
+      }
+      if (index < cpus.size()) {
+        launch_cmd.add_args("--cpus=" + std::to_string(cpus[index]));
+      }
+      if (index < memory_mb.size()) {
+        launch_cmd.add_args("--memory_mb=" + std::to_string(memory_mb[index]));
+      }
+      if (index < setupwizard_mode.size()) {
+        launch_cmd.add_args("--setupwizard_mode=" + setupwizard_mode[index]);
+      }
+      if (index < report_anonymous_usage_stats.size()) {
+        launch_cmd.add_args("--report_anonymous_usage_stats=" +
+                            report_anonymous_usage_stats[index]);
+      }
+      if (index < webrtc_device_id.size()) {
+        launch_cmd.add_args("--webrtc_device_id=" + webrtc_device_id[index]);
+      }
 
+      index++;
       if (is_first) {
         is_first = false;
         continue;
