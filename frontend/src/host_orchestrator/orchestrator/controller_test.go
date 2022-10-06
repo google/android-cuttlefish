@@ -25,13 +25,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const pageNotFoundErrMsg = "404 page not found\n"
+
 type testIM struct{}
 
 func (m *testIM) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
 	return Operation{}, nil
 }
 
-func TestCreateCVDSucceeds(t *testing.T) {
+func TestCreateCVDIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/cvds", strings.NewReader("{}"))
 	if err != nil {
@@ -41,27 +43,23 @@ func TestCreateCVDSucceeds(t *testing.T) {
 
 	makeRequest(rr, req, &controller)
 
-	expected := http.StatusOK
-	if rr.Code != expected {
-		t.Errorf("unexpected status code <<%d>>, want: %d", rr.Code, expected)
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
 	}
 }
 
-func TestGetOperationSucceeds(t *testing.T) {
+func TestGetOperationIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
-	om := NewMapOM()
-	op := om.New()
-	req, err := http.NewRequest("GET", "/operations/"+op.Name, nil)
+	req, err := http.NewRequest("GET", "/operations/foo", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{OperationManager: om}
+	controller := Controller{OperationManager: NewMapOM()}
 
 	makeRequest(rr, req, &controller)
 
-	expected := http.StatusOK
-	if rr.Code != expected {
-		t.Errorf("unexpected status code <<%d>>, want: %d", rr.Code, expected)
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
 	}
 }
 
