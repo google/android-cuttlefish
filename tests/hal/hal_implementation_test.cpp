@@ -51,6 +51,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.biometrics.face@1.0", // converted to AIDL, see b/168730443
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.bluetooth.audio@2.1", // converted to AIDL, see b/203490261
+    "android.hardware.bluetooth@1.1", // converted to AIDL, see b/205758693
     "android.hardware.boot@1.2", // converted to AIDL, see b/227536004
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
@@ -175,9 +176,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // updated soon.
     {"android.hardware.identity.", 4},
     {"android.hardware.identity.", 5},
-
-    // Cuttlefish will use the default implementation (b/205758693)
-    {"android.hardware.bluetooth.", 1},
 
     // No implementations on cuttlefish for omapi aidl hal
     {"android.se.omapi.", 1},
