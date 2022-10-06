@@ -24,13 +24,13 @@
 namespace cuttlefish {
 namespace instance_db {
 
+static std::string GroupName() { return "yah_ong"; }
 static std::string HomeDir() { return "/home/user"; }
-
 static std::string TestBinDir() { return "/opt/android11/bin"; }
 
 class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
-  CvdInstanceGroupUnitTest() : group_(HomeDir(), TestBinDir()) {}
+  CvdInstanceGroupUnitTest() : group_(GroupName(), HomeDir(), TestBinDir()) {}
   LocalInstanceGroup& Get() { return group_; }
   LocalInstanceGroup group_;
 };
@@ -38,7 +38,8 @@ class CvdInstanceGroupUnitTest : public testing::Test {
 // CvdInstanceGroupUnitTest + add 4 instances
 class CvdInstanceGroupSearchUnitTest : public testing::Test {
  protected:
-  CvdInstanceGroupSearchUnitTest() : group_(HomeDir(), TestBinDir()) {
+  CvdInstanceGroupSearchUnitTest()
+      : group_(GroupName(), HomeDir(), TestBinDir()) {
     is_setup_ =
         (Get().AddInstance(1, "tv_instance").ok() &&
          Get().AddInstance(2, "2").ok() && Get().AddInstance(3, "phone").ok() &&
@@ -55,8 +56,9 @@ class CvdInstanceGroupSearchUnitTest : public testing::Test {
 
 TEST_F(CvdInstanceGroupUnitTest, Fields) {
   auto& group = Get();
+
   ASSERT_EQ(group.InternalGroupName(), "cvd");
-  ASSERT_EQ(group.GroupName(), "cvd");
+  ASSERT_EQ(group.GroupName(), "yah_ong");
   ASSERT_EQ(group.HomeDir(), HomeDir());
   ASSERT_EQ(group.HostBinariesDir(), TestBinDir());
 }
@@ -82,6 +84,8 @@ TEST_F(CvdInstanceGroupSearchUnitTest, SearchById) {
      */
     GTEST_SKIP() << "Failed to add instances to the group.";
   }
+  // valid_ids were added in the CvdInstanceGroupSearchUnitTest_SearchById
+  // constructor.
   std::vector<unsigned> valid_ids{1, 2, 7};
   std::vector<unsigned> invalid_ids{20, 0, 5};
 
