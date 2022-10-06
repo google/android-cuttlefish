@@ -119,7 +119,7 @@ bool CvdInstanceDatabaseTest::AddGroups(
       SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
       return false;
     }
-    if (!db_.AddInstanceGroup(home, android_binaries_dir_).ok()) {
+    if (!db_.AddInstanceGroup(base_name, home, android_binaries_dir_).ok()) {
       SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
       return false;
     }
