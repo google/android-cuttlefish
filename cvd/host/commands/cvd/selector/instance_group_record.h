@@ -19,6 +19,8 @@
 #include <memory>
 #include <string>
 
+#include <gtest/gtest.h>
+
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/constant_reference.h"
 #include "host/commands/cvd/instance_database_types.h"
@@ -74,6 +76,16 @@ class LocalInstanceGroup {
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
   Set<std::unique_ptr<LocalInstance>> instances_;
+
+  /*
+   * Expose constructor to the tests in InstanceRecord unit test suite.
+   *
+   * To create InstanceRecords, we should create InstanceGroup first.
+   */
+  FRIEND_TEST(CvdInstanceRecordUnitTest, Fields);
+
+  friend class CvdInstanceGroupUnitTest;
+  friend class CvdInstanceGroupSearchUnitTest;
 };
 
 }  // namespace instance_db
