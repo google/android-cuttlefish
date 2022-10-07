@@ -577,14 +577,6 @@ endif
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_SENSOR_PRODUCT_PACKAGE)
-#
-# Thermal (mock)
-#
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.android.hardware.thermal.mock
-else
-PRODUCT_PACKAGES += android.hardware.thermal@2.0-service.mock
-endif
 
 #
 # Lights
@@ -622,6 +614,12 @@ PRODUCT_PACKAGES += \
     android.hardware.power.stats-service.example \
 
 endif
+
+#
+# Thermal HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.thermal-service.example
 
 #
 # NeuralNetworks HAL
