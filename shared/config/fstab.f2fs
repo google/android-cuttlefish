@@ -1,0 +1,30 @@
+# Non-dynamic, boot critical partitions
+/dev/block/by-name/boot /boot emmc defaults recoveryonly,slotselect,first_stage_mount,avb=boot
+/dev/block/by-name/init_boot /init_boot emmc defaults recoveryonly,slotselect,first_stage_mount,avb=init_boot
+/dev/block/by-name/vendor_boot /vendor_boot emmc defaults recoveryonly,slotselect
+system /system erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system,avb_keys=/avb
+system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system,avb_keys=/avb
+# Add all non-dynamic partitions except system, after this comment
+/dev/block/by-name/userdata /data f2fs nodev,noatime,nosuid,inlinecrypt,reserve_root=32768 latemount,wait,check,quota,formattable,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,fscompress,keydirectory=/metadata/vold/metadata_encryption,checkpoint=fs
+/dev/block/by-name/metadata /metadata f2fs nodev,noatime,nosuid wait,check,formattable,first_stage_mount
+/dev/block/by-name/misc /misc emmc defaults defaults
+# Add all dynamic partitions except system, after this comment
+odm /odm erofs ro wait,logical,first_stage_mount,slotselect,avb
+odm /odm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
+product /product erofs ro wait,logical,first_stage_mount,slotselect,avb
+product /product ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
+system_ext /system_ext erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
+system_ext /system_ext ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
+vendor /vendor erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
+vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta
+vendor_dlkm /vendor_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb
+vendor_dlkm /vendor_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
+odm_dlkm /odm_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb
+odm_dlkm /odm_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
+system_dlkm /system_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
+system_dlkm /system_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta
+# ZRAM, SD-Card and virtiofs shares
+/dev/block/zram0 none swap defaults zramsize=75%
+/dev/block/vdc1 /sdcard vfat defaults recoveryonly
+/devices/*/block/vdc auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
+shared /mnt/vendor/shared virtiofs nosuid,nodev,noatime nofail
