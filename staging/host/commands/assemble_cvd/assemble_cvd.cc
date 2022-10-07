@@ -142,7 +142,7 @@ Result<void> CreateLegacySymlinks(
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
-    FetcherConfig fetcher_config, KernelConfig kernel_config,
+    FetcherConfig fetcher_config, const std::vector<KernelConfig>& kernel_configs,
     fruit::Injector<>& injector) {
   std::string runtime_dir_parent = AbsolutePath(FLAGS_instance_dir);
   while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
@@ -170,7 +170,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // disk.
     auto config = InitializeCuttlefishConfiguration(
         FLAGS_instance_dir, FLAGS_modem_simulator_count,
-        kernel_config, injector, fetcher_config);
+        kernel_configs, injector, fetcher_config);
     std::set<std::string> preserving;
     bool creating_os_disk = false;
     // if any device needs to rebuild its composite disk,
@@ -396,12 +396,12 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  auto kernel_config =
+  auto kernel_configs =
       CF_EXPECT(GetKernelConfigAndSetDefaults(), "Failed to parse arguments");
 
   auto config =
       CF_EXPECT(InitFilesystemAndCreateConfig(std::move(fetcher_config),
-                                              kernel_config, injector),
+                                              kernel_configs, injector),
                 "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";

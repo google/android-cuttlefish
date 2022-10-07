@@ -472,67 +472,104 @@ std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
 }
 
 #ifdef __ANDROID__
-Result<KernelConfig> ReadKernelConfig() {
-  // QEMU isn't on Android, so always follow host arch
-  KernelConfig ret{};
-  ret.target_arch = HostArch();
-  ret.bootconfig_supported = true;
-  return ret;
+Result<std::vector<KernelConfig>> ReadKernelConfig() {
+  std::vector<KernelConfig> rets;
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
+    // QEMU isn't on Android, so always follow host arch
+    KernelConfig ret{};
+    ret.target_arch = HostArch();
+    ret.bootconfig_supported = true;
+    rets.push_back(ret);
+  }
+  return rets;
 }
 #else
-Result<KernelConfig> ReadKernelConfig() {
-  // extract-ikconfig can be called directly on the boot image since it looks
-  // for the ikconfig header in the image before extracting the config list.
-  // This code is liable to break if the boot image ever includes the
-  // ikconfig header outside the kernel.
-  const std::string kernel_image_path =
-      FLAGS_kernel_path.size() ? FLAGS_kernel_path : FLAGS_boot_image;
-
-  Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
-  ikconfig_cmd.AddParameter(kernel_image_path);
+Result<std::vector<KernelConfig>> ReadKernelConfig() {
+  std::vector<KernelConfig> kernel_configs;
+  std::vector<std::string> boot_image =
+      android::base::Split(FLAGS_boot_image, ",");
+  std::vector<std::string> kernel_path =
+      android::base::Split(FLAGS_kernel_path, ",");
+  std::string kernel_image_path = "";
+  std::string cur_boot_image;
+  std::string cur_kernel_path;
 
   std::string current_path = StringFromEnv("PATH", "");
   std::string bin_folder = DefaultHostArtifactsPath("bin");
-  ikconfig_cmd.SetEnvironment({"PATH=" + current_path + ":" + bin_folder});
+  std::string new_path = "PATH=";
+  new_path += current_path;
+  new_path += ":";
+  new_path += bin_folder;
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
+    // extract-ikconfig can be called directly on the boot image since it looks
+    // for the ikconfig header in the image before extracting the config list.
+    // This code is liable to break if the boot image ever includes the
+    // ikconfig header outside the kernel.
+    cur_kernel_path = "";
+    if (instance_index < kernel_path.size()) {
+      cur_kernel_path = kernel_path[instance_index];
+    }
 
-  std::string ikconfig_path =
-      StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";
-  auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
-  CF_EXPECT(ikconfig_fd->IsOpen(),
-            "Unable to create ikconfig file: " << ikconfig_fd->StrError());
-  ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, ikconfig_fd);
+    cur_boot_image = "";
+    if (instance_index < boot_image.size()) {
+      cur_boot_image = boot_image[instance_index];
+    }
 
-  auto ikconfig_proc = ikconfig_cmd.Start();
-  CF_EXPECT(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0,
-            "Failed to extract ikconfig from " << kernel_image_path);
+    if (cur_kernel_path.size() > 0) {
+      kernel_image_path = cur_kernel_path;
+    } else if (cur_boot_image.size() > 0) {
+      kernel_image_path = cur_boot_image;
+    }
 
-  std::string config = ReadFile(ikconfig_path);
+    Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
+    ikconfig_cmd.AddParameter(kernel_image_path);
+    ikconfig_cmd.SetEnvironment({new_path});
 
-  KernelConfig kernel_config;
-  if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
-    kernel_config.target_arch = Arch::Arm;
-  } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
-    kernel_config.target_arch = Arch::Arm64;
-  } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
-    kernel_config.target_arch = Arch::X86_64;
-  } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
-    kernel_config.target_arch = Arch::X86;
-  } else {
-    return CF_ERR("Unknown target architecture");
+    std::string ikconfig_path =
+        StringFromEnv("TEMP", "/tmp") + "/ikconfig.XXXXXX";
+    auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
+    CF_EXPECT(ikconfig_fd->IsOpen(),
+              "Unable to create ikconfig file: " << ikconfig_fd->StrError());
+    ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, ikconfig_fd);
+
+    auto ikconfig_proc = ikconfig_cmd.Start();
+    CF_EXPECT(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0,
+              "Failed to extract ikconfig from " << kernel_image_path);
+
+    std::string config = ReadFile(ikconfig_path);
+
+    KernelConfig kernel_config;
+    if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
+      kernel_config.target_arch = Arch::Arm;
+    } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
+      kernel_config.target_arch = Arch::Arm64;
+    } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
+      kernel_config.target_arch = Arch::X86_64;
+    } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
+      kernel_config.target_arch = Arch::X86;
+    } else {
+      return CF_ERR("Unknown target architecture");
+    }
+    kernel_config.bootconfig_supported =
+        config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
+
+    unlink(ikconfig_path.c_str());
+    kernel_configs.push_back(kernel_config);
   }
-  kernel_config.bootconfig_supported =
-      config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
-
-  unlink(ikconfig_path.c_str());
-  return kernel_config;
+  return kernel_configs;
 }
+
 #endif  // #ifdef __ANDROID__
 
 } // namespace
 
 CuttlefishConfig InitializeCuttlefishConfiguration(
     const std::string& root_dir, int modem_simulator_count,
-    KernelConfig kernel_config, fruit::Injector<>& injector,
+    const std::vector<KernelConfig>& kernel_configs, fruit::Injector<>& injector,
     const FetcherConfig& fetcher_config) {
   CuttlefishConfig tmp_config_obj;
 
@@ -543,8 +580,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_root_dir(root_dir);
 
-  tmp_config_obj.set_bootconfig_supported(kernel_config.bootconfig_supported);
-  auto vmm = GetVmManager(FLAGS_vm_manager, kernel_config.target_arch);
+  // TODO(weihsu), b/250988697: these should move to instance,
+  // currently use instance[0] to setup for all instances
+  tmp_config_obj.set_bootconfig_supported(kernel_configs[0].bootconfig_supported);
+  auto vmm = GetVmManager(FLAGS_vm_manager, kernel_configs[0].target_arch);
   if (!vmm) {
     LOG(FATAL) << "Invalid vm_manager: " << FLAGS_vm_manager;
   }
@@ -700,8 +739,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(
       FLAGS_enable_vehicle_hal_grpc_server);
 
-  tmp_config_obj.set_bootloader(FLAGS_bootloader);
-
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
 
   if (!FLAGS_boot_slot.empty()) {
@@ -831,7 +868,9 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_session_id(iface_config.mobile_tap.session_id);
 
     // new instance specific flags (moved from common flags)
-    instance.set_target_arch(kernel_config.target_arch);
+    CHECK(instance_index<kernel_configs.size())
+      << "instance_index " << instance_index << " out of boundary " << kernel_configs.size();
+    instance.set_target_arch(kernel_configs[instance_index].target_arch);
     instance.set_console(FLAGS_console);
     instance.set_kgdb(FLAGS_console && FLAGS_kgdb);
     instance.set_cpus(FLAGS_cpus);
@@ -1141,7 +1180,24 @@ void SetDefaultFlagsForCrosvm() {
                                (default_enable_sandbox ? "true" : "false"),
                                SET_FLAGS_DEFAULT);
 
-  std::string default_bootloader = FLAGS_system_image_dir + "/bootloader";
+  std::vector<std::string> system_image_dir =
+      android::base::Split(FLAGS_system_image_dir, ",");
+  std::string cur_system_image_dir = "";
+  std::string default_bootloader = "";
+  auto instance_nums =
+      InstanceNumsCalculator().FromGlobalGflags().Calculate();
+  for (int instance_index = 0; instance_index < instance_nums->size(); instance_index++) {
+    if (instance_index >= system_image_dir.size()) {
+      cur_system_image_dir = system_image_dir[0];
+    } else {
+      cur_system_image_dir = system_image_dir[instance_index];
+    }
+    cur_system_image_dir += "/bootloader";
+    if (instance_index > 0) {
+      default_bootloader += ",";
+    }
+    default_bootloader += cur_system_image_dir;
+  }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
 }
@@ -1154,13 +1210,27 @@ void SetDefaultFlagsForGem5() {
   SetCommandLineOptionWithMode("cpus", "1", SET_FLAGS_DEFAULT);
 }
 
-Result<KernelConfig> GetKernelConfigAndSetDefaults() {
+Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
   CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
-  KernelConfig kernel_config = CF_EXPECT(ReadKernelConfig());
+  std::vector<KernelConfig> kernel_configs = CF_EXPECT(ReadKernelConfig());
 
+  // TODO(weihsu), b/250988697:
+  // assume all instances are using same VM manager/app/arch,
+  // later that multiple instances may use different VM manager/app/arch
+
+  // Temporary add this checking to make sure all instances have same target_arch
+  // and bootconfig_supported. This checking should be removed later.
+  for (int instance_index = 1; instance_index < kernel_configs.size(); instance_index++) {
+    CF_EXPECT(kernel_configs[0].target_arch == kernel_configs[instance_index].target_arch,
+              "all instance target_arch should be same");
+    CF_EXPECT(kernel_configs[0].bootconfig_supported ==
+              kernel_configs[instance_index].bootconfig_supported,
+              "all instance bootconfig_supported should be same");
+
+  }
   if (FLAGS_vm_manager == "") {
-    if (IsHostCompatible(kernel_config.target_arch)) {
+    if (IsHostCompatible(kernel_configs[0].target_arch)) {
       FLAGS_vm_manager = CrosvmManager::name();
     } else {
       FLAGS_vm_manager = QemuManager::name();
@@ -1168,12 +1238,12 @@ Result<KernelConfig> GetKernelConfigAndSetDefaults() {
   }
 
   if (FLAGS_vm_manager == QemuManager::name()) {
-    SetDefaultFlagsForQemu(kernel_config.target_arch);
+    SetDefaultFlagsForQemu(kernel_configs[0].target_arch);
   } else if (FLAGS_vm_manager == CrosvmManager::name()) {
     SetDefaultFlagsForCrosvm();
   } else if (FLAGS_vm_manager == Gem5Manager::name()) {
     // TODO: Get the other architectures working
-    if (kernel_config.target_arch != Arch::Arm64) {
+    if (kernel_configs[0].target_arch != Arch::Arm64) {
       return CF_ERR("Gem5 only supports ARM64");
     }
     SetDefaultFlagsForGem5();
@@ -1197,7 +1267,7 @@ Result<KernelConfig> GetKernelConfigAndSetDefaults() {
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
 
-  return kernel_config;
+  return kernel_configs;
 }
 
 std::string GetConfigFilePath(const CuttlefishConfig& config) {

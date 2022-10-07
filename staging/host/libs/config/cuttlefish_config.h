@@ -180,9 +180,6 @@ class CuttlefishConfig {
   void set_run_as_daemon(bool run_as_daemon);
   bool run_as_daemon() const;
 
-  void set_bootloader(const std::string& bootloader_path);
-  std::string bootloader() const;
-
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
