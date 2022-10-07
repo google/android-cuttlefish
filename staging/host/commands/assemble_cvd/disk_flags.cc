@@ -113,41 +113,77 @@ Result<void> ResolveInstanceFiles() {
   CF_EXPECT(!FLAGS_system_image_dir.empty(),
             "--system_image_dir must be specified.");
 
-  // If user did not specify location of either of these files, expect them to
-  // be placed in --system_image_dir location.
-  std::string default_boot_image = FLAGS_system_image_dir + "/boot.img";
+  std::vector<std::string> system_image_dir =
+      android::base::Split(FLAGS_system_image_dir, ",");
+  std::string default_boot_image = "";
+  std::string default_init_boot_image = "";
+  std::string default_data_image = "";
+  std::string default_metadata_image = "";
+  std::string default_super_image = "";
+  std::string default_misc_image = "";
+  std::string default_esp_image = "";
+  std::string default_vendor_boot_image = "";
+  std::string default_vbmeta_image = "";
+  std::string default_vbmeta_system_image = "";
+
+  std::string cur_system_image_dir;
+  std::string comma_str = "";
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
+    if (instance_index < system_image_dir.size()) {
+      cur_system_image_dir = system_image_dir[instance_index];
+    } else {
+      // legacy variable or out of boundary. Vectorize by copy [0] to all instances
+      cur_system_image_dir = system_image_dir[0];
+    }
+    if (instance_index > 0) {
+      comma_str = ",";
+    }
+
+    // If user did not specify location of either of these files, expect them to
+    // be placed in --system_image_dir location.
+    default_boot_image = default_boot_image + comma_str
+        + cur_system_image_dir + "/boot.img";
+    default_init_boot_image = default_init_boot_image + comma_str
+        + cur_system_image_dir + "/init_boot.img";
+    default_data_image = default_data_image + comma_str
+        + cur_system_image_dir + "/userdata.img";
+    default_metadata_image = default_metadata_image + comma_str
+        + cur_system_image_dir + "/metadata.img";
+    default_super_image = default_super_image + comma_str
+        + cur_system_image_dir + "/super.img";
+    default_misc_image = default_misc_image + comma_str
+        + cur_system_image_dir + "/misc.img";
+    default_esp_image = default_esp_image + comma_str
+        + cur_system_image_dir + "/esp.img";
+    default_vendor_boot_image = default_vendor_boot_image + comma_str
+        + cur_system_image_dir + "/vendor_boot.img";
+    default_vbmeta_image = default_vbmeta_image + comma_str
+        + cur_system_image_dir + "/vbmeta.img";
+    default_vbmeta_system_image = default_vbmeta_system_image + comma_str
+        + cur_system_image_dir + "/vbmeta_system.img";
+  }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_init_boot_image =
-      FLAGS_system_image_dir + "/init_boot.img";
   SetCommandLineOptionWithMode("init_boot_image",
                                default_init_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_data_image = FLAGS_system_image_dir + "/userdata.img";
   SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_metadata_image = FLAGS_system_image_dir + "/metadata.img";
   SetCommandLineOptionWithMode("metadata_image", default_metadata_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_super_image = FLAGS_system_image_dir + "/super.img";
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_misc_image = FLAGS_system_image_dir + "/misc.img";
   SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_esp_image = FLAGS_system_image_dir + "/esp.img";
   SetCommandLineOptionWithMode("otheros_esp_image", default_esp_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_vendor_boot_image = FLAGS_system_image_dir
-                                        + "/vendor_boot.img";
   SetCommandLineOptionWithMode("vendor_boot_image",
                                default_vendor_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_vbmeta_image = FLAGS_system_image_dir + "/vbmeta.img";
   SetCommandLineOptionWithMode("vbmeta_image", default_vbmeta_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_vbmeta_system_image = FLAGS_system_image_dir
-                                          + "/vbmeta_system.img";
   SetCommandLineOptionWithMode("vbmeta_system_image",
                                default_vbmeta_system_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
