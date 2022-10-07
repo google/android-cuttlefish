@@ -108,14 +108,11 @@ Result<Set<LocalInstance>> InstanceDatabase::FindInstancesById(
 
 Result<Set<LocalInstance>> InstanceDatabase::FindInstancesByInstanceName(
     const Value& instance_specific_name) const {
-  auto subset = CollectAllElements<LocalInstance, LocalInstanceGroup>(
+  return CollectAllElements<LocalInstance, LocalInstanceGroup>(
       [&instance_specific_name](const LocalInstanceGroup& group) {
         return group.FindByInstanceName(instance_specific_name);
       },
       local_instance_groups_);
-  CF_EXPECT(subset.ok());
-  return AtMostOne(*subset, GenerateTooManyInstancesErrorMsg(
-                                1, selector::kInstanceNameField));
 }
 
 }  // namespace instance_db
