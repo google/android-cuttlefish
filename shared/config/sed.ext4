@@ -1,3 +1,0 @@
-s/@userdata_fs_type@/ext4/
-s/@userdata_mount_flags@/errors=panic/
-s/@userdata_fsmgr_flags@/fileencryption=aes-256-xts:aes-256-cts,checkpoint=block/

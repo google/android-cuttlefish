@@ -1,3 +1,0 @@
-s/@userdata_fs_type@/f2fs/
-s/@userdata_mount_flags@/inlinecrypt,reserve_root=32768/
-s/@userdata_fsmgr_flags@/fileencryption=aes-256-xts:aes-256-cts:inlinecrypt_optimized,fscompress,checkpoint=fs/
