@@ -1,0 +1,13 @@
+# Allow remoteaccess HAL to communicate with remote wakeup client via local
+# socket.
+typeattribute hal_remoteaccess_default hal_automotive_socket_exemption;
+net_domain(hal_remoteaccess_default)
+allow hal_remoteaccess_default self:vsock_socket write;
+
+# Allow accessing VHAL.
+binder_use(hal_remoteaccess_default)
+hal_client_domain(hal_remoteaccess_default, hal_vehicle)
+
+# Allow debug dump
+allow hal_remoteaccess_default shell:fd use;
+allow hal_remoteaccess_default shell:fifo_file write;
