@@ -156,7 +156,7 @@ func TestMapOMWaitOperation(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("operation is not completed", func(t *testing.T) {
+	t.Run("operation is not completed and deadline is reached", func(t *testing.T) {
 		var wg sync.WaitGroup
 		om := NewMapOM()
 		newOp := om.New()
@@ -170,15 +170,14 @@ func TestMapOMWaitOperation(t *testing.T) {
 				op, err := om.Wait(newOp.Name, dt)
 				duration := time.Since(start)
 
-				if err != nil {
-					t.Errorf("expected nil error, got %+v", err)
-				}
 				if duration < dt {
 					t.Error("wait deadline was not reached")
 				}
-				expectedOp, _ := om.Get(newOp.Name)
-				if op != expectedOp {
-					t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+				if timedOutErr, ok := err.(*OperationWaitTimeoutError); !ok {
+					t.Errorf("expected <<%T>>, got %T", timedOutErr, err)
+				}
+				if (op != Operation{}) {
+					t.Error("expected empty operation")
 				}
 			}()
 		}

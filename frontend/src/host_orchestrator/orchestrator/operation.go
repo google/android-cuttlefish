@@ -28,6 +28,10 @@ func (s NotFoundOperationError) Error() string {
 	return fmt.Sprintf("operation not found: %s", string(s))
 }
 
+type OperationWaitTimeoutError struct{}
+
+func (s OperationWaitTimeoutError) Error() string { return "waiting for operation timed out" }
+
 type Operation struct {
 	Name   string
 	Done   bool
@@ -50,7 +54,7 @@ type OperationManager interface {
 	Complete(name string, result OperationResult) error
 
 	// Waits for the specified operation to be DONE within the passed deadline. If the deadline
-	// is reached it will return the current state of the operation which might be DONE or not.
+	// is reached `OperationWaitTimeoutError` will be returned.
 	Wait(name string, dt time.Duration) (Operation, error)
 }
 
@@ -132,12 +136,13 @@ func (m *MapOM) Wait(name string, dt time.Duration) (Operation, error) {
 	}
 	select {
 	case <-entry.done:
+		entry.mutex.RLock()
+		op := entry.data
+		entry.mutex.RUnlock()
+		return op, nil
 	case <-time.After(time.Duration(dt)):
+		return Operation{}, new(OperationWaitTimeoutError)
 	}
-	entry.mutex.RLock()
-	op := entry.data
-	entry.mutex.RUnlock()
-	return op, nil
 }
 
 func (m *MapOM) getOperationEntry(name string) (*mapOMOperationEntry, bool) {

@@ -53,3 +53,7 @@ func NewInternalError(msg string, e error) error {
 func NewNotFoundError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusNotFound, Err: e}
 }
+
+func NewServiceUnavailableError(msg string, e error) error {
+	return &AppError{Msg: msg, StatusCode: http.StatusServiceUnavailable, Err: e}
+}
