@@ -371,14 +371,6 @@ void CuttlefishConfig::set_run_as_daemon(bool run_as_daemon) {
   (*dictionary_)[kRunAsDaemon] = run_as_daemon;
 }
 
-static constexpr char kBootloader[] = "bootloader";
-std::string CuttlefishConfig::bootloader() const {
-  return (*dictionary_)[kBootloader].asString();
-}
-void CuttlefishConfig::set_bootloader(const std::string& bootloader) {
-  SetPath(kBootloader, bootloader);
-}
-
 static constexpr char kBootSlot[] = "boot_slot";
 void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
   (*dictionary_)[kBootSlot] = boot_slot;
