@@ -91,7 +91,7 @@ filegroup {
 }
 
 genrule {
-    name: "gen_cf_fstab_f2fs",
+    name: "gen_fstab.f2fs",
     srcs: ["fstab.in"],
     out: ["fstab.f2fs"],
     tool_files: [ "sed.f2fs" ],
@@ -99,7 +99,7 @@ genrule {
 }
 
 genrule {
-    name: "gen_cf_fstab_ext4",
+    name: "gen_fstab.ext4",
     srcs: ["fstab.in"],
     out: ["fstab.ext4"],
     tool_files: [ "sed.ext4" ],
@@ -107,17 +107,15 @@ genrule {
 }
 
 prebuilt_etc {
-    name: "cf_fstab.f2fs",
-    src: ":gen_cf_fstab_f2fs",
-    filename: "fstab.f2fs",
+    name: "fstab.f2fs",
+    src: ":gen_fstab.f2fs",
     vendor: true,
     vendor_ramdisk_available: true,
 }
 
 prebuilt_etc {
-    name: "cf_fstab.ext4",
-    src: ":gen_cf_fstab_ext4",
-    filename: "fstab.ext4",
+    name: "fstab.ext4",
+    src: ":gen_fstab.ext4",
     vendor: true,
     vendor_ramdisk_available: true,
 }
