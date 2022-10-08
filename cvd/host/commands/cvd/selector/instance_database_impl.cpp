@@ -28,10 +28,10 @@ namespace cuttlefish {
 namespace instance_db {
 
 std::vector<std::unique_ptr<LocalInstanceGroup>>::iterator
-InstanceDatabase::Find(const LocalInstanceGroup* ptr) {
+InstanceDatabase::FindIterator(const LocalInstanceGroup& group) {
   for (auto itr = local_instance_groups_.begin();
        itr != local_instance_groups_.end(); itr++) {
-    if (itr->get() == ptr) {
+    if (itr->get() == std::addressof(group)) {
       return itr;
     }
   }
@@ -61,16 +61,15 @@ Result<void> InstanceDatabase::AddInstanceGroup(
   return {};
 }
 
-Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup* group,
+Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup& group,
                                            const unsigned id,
                                            const std::string& instance_name) {
-  CF_EXPECT(group != nullptr);
   CF_EXPECT(IsValidInstanceName(instance_name),
             "instance_name " << instance_name << " is invalid.");
-  auto itr = Find(group);
+  auto itr = FindIterator(group);
   CF_EXPECT(
       itr != local_instance_groups_.end() && *itr != nullptr,
-      "Adding instances to non-existing group " + group->InternalGroupName());
+      "Adding instances to non-existing group " + group.InternalGroupName());
 
   auto instances = CF_EXPECT(
       FindInstances({selector::kInstanceIdField, std::to_string(id)}));
@@ -85,11 +84,8 @@ Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup* group,
   return (*itr)->AddInstance(id, instance_name);
 }
 
-bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup* group) {
-  if (!group) {
-    return false;
-  }
-  auto itr = Find(group);
+bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
+  auto itr = FindIterator(group);
   // *itr is the reference to the unique pointer object
   if (itr == local_instance_groups_.end() || !(*itr)) {
     return false;
@@ -98,19 +94,18 @@ bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup* group) {
   return true;
 }
 
-Result<Set<const LocalInstanceGroup*>> InstanceDatabase::FindGroupsByHome(
+Result<Set<ConstRef<LocalInstanceGroup>>> InstanceDatabase::FindGroupsByHome(
     const std::string& home) const {
-  auto subset =
-      CollectToSet<LocalInstanceGroup, Set<const LocalInstanceGroup*>>(
-          local_instance_groups_,
-          [&home](const std::unique_ptr<LocalInstanceGroup>& group) {
-            return (group && (group->HomeDir() == home));
-          });
+  auto subset = CollectToSet<LocalInstanceGroup>(
+      local_instance_groups_,
+      [&home](const std::unique_ptr<LocalInstanceGroup>& group) {
+        return (group && (group->HomeDir() == home));
+      });
   return AtMostOne(subset,
                    GenerateTooManyInstancesErrorMsg(1, selector::kHomeField));
 }
 
-Result<Set<const LocalInstance*>> InstanceDatabase::FindInstancesById(
+Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
     const std::string& id) const {
   int parsed_int = 0;
   if (!android::base::ParseInt(id, &parsed_int)) {
@@ -118,7 +113,7 @@ Result<Set<const LocalInstance*>> InstanceDatabase::FindInstancesById(
   }
   auto collector =
       [parsed_int](const std::unique_ptr<LocalInstanceGroup>& group)
-      -> Result<Set<const LocalInstance*>> {
+      -> Result<Set<ConstRef<LocalInstance>>> {
     CF_EXPECT(group != nullptr);
     return group->FindById(parsed_int);
   };
@@ -129,11 +124,12 @@ Result<Set<const LocalInstance*>> InstanceDatabase::FindInstancesById(
       *subset, GenerateTooManyInstancesErrorMsg(1, selector::kInstanceIdField));
 }
 
-Result<Set<const LocalInstance*>> InstanceDatabase::FindInstancesByInstanceName(
+Result<Set<ConstRef<LocalInstance>>>
+InstanceDatabase::FindInstancesByInstanceName(
     const Value& instance_specific_name) const {
   auto collector = [&instance_specific_name](
                        const std::unique_ptr<LocalInstanceGroup>& group)
-      -> Result<Set<const LocalInstance*>> {
+      -> Result<Set<ConstRef<LocalInstance>>> {
     CF_EXPECT(group != nullptr);
     return (group->FindByInstanceName(instance_specific_name));
   };

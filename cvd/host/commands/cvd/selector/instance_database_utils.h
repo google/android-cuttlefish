@@ -22,6 +22,7 @@
 
 #include "common/libs/utils/collect.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/constant_reference.h"
 #include "host/commands/cvd/instance_database_types.h"
 
 namespace cuttlefish {
@@ -74,20 +75,21 @@ Set Collect(const Container& container,
 }
 
 /*
- * Returns a Set of const T*, which essentially satisfies "predicate"
+ * Returns a Set of ConstRef<T>, which essentially satisfies "predicate"
  *
  * Container has a list/set of std::unique_ptr<T>. We collect all the
- * const T pointers owned by Container as long as the T poiter satisfies
- * the condition defined by predicate.
+ * const references of each object owned by Container, which meets the
+ * condition defined by predicate.
  *
  */
-template <typename T, typename Set, typename Container>
-Set CollectToSet(Container&& container,
-                 std::function<bool(const std::unique_ptr<T>&)> predicate) {
+template <typename T, typename Container>
+Set<ConstRef<T>> CollectToSet(
+    Container&& container,
+    std::function<bool(const std::unique_ptr<T>&)> predicate) {
   auto convert = [](const std::unique_ptr<T>& uniq_ptr) {
-    return uniq_ptr.get();
+    return Cref(*uniq_ptr);
   };
-  return Collect<const T*, std::unique_ptr<T>, Set>(
+  return Collect<ConstRef<T>, std::unique_ptr<T>, Set<ConstRef<T>>>(
       std::forward<Container>(container), std::move(predicate),
       std::move(convert));
 }
@@ -111,12 +113,12 @@ Set CollectToSet(Container&& container,
  * We take the union of all the returned subsets from each collector call.
  */
 template <typename Element, typename Container, typename Containers>
-Result<Set<const Element*>> CollectAllElements(
+Result<Set<ConstRef<Element>>> CollectAllElements(
     std::function<
-        Result<Set<const Element*>>(const std::unique_ptr<Container>&)>
+        Result<Set<ConstRef<Element>>>(const std::unique_ptr<Container>&)>
         collector,
     const Containers& outermost_container) {
-  Set<const Element*> output;
+  Set<ConstRef<Element>> output;
   for (const auto& container_ptr : outermost_container) {
     auto subset = CF_EXPECT(collector(container_ptr));
     output.insert(subset.cbegin(), subset.cend());
