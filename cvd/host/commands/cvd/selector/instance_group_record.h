@@ -20,6 +20,7 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/constant_reference.h"
 #include "host/commands/cvd/instance_database_types.h"
 #include "host/commands/cvd/instance_record.h"
 
@@ -53,7 +54,7 @@ class LocalInstanceGroup {
                            const std::string& instance_name);
   bool HasInstance(const unsigned instance_id) const;
 
-  Result<Set<const LocalInstance*>> FindById(const unsigned id) const;
+  Result<Set<ConstRef<LocalInstance>>> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
    *
@@ -61,7 +62,7 @@ class LocalInstanceGroup {
    * "foo" or "4" is the per-instance names, and "cvd-foo" or "cvd-4" is
    * the device name.
    */
-  Result<Set<const LocalInstance*>> FindByInstanceName(
+  Result<Set<ConstRef<LocalInstance>>> FindByInstanceName(
       const std::string& instance_name) const;
 
  private:

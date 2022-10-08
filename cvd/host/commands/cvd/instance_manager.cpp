@@ -61,7 +61,7 @@ Result<void> InstanceManager::SetInstanceGroup(
       CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   for (auto i : info.instances) {
     const std::string default_instance_name = std::to_string(i);
-    instance_db_.AddInstance(searched_group, i, default_instance_name);
+    instance_db_.AddInstance(searched_group.Get(), i, default_instance_name);
   }
   return {};
 }
@@ -80,10 +80,9 @@ InstanceManager::GetInstanceGroupInfo(
     const InstanceManager::InstanceGroupDir& dir) const {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
-  CF_EXPECT(group != nullptr);
   InstanceGroupInfo info;
-  info.host_binaries_dir = group->HostBinariesDir();
-  const auto& instances = group->Instances();
+  info.host_binaries_dir = group.Get().HostBinariesDir();
+  const auto& instances = group.Get().Instances();
   for (const auto& instance : instances) {
     CF_EXPECT(instance != nullptr);
     info.instances.insert(instance->InstanceId());

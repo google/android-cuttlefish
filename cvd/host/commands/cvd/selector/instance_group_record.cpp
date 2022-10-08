@@ -43,9 +43,9 @@ Result<void> LocalInstanceGroup::AddInstance(const unsigned instance_id,
   return {};
 }
 
-Result<Set<const LocalInstance*>> LocalInstanceGroup::FindById(
+Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindById(
     const unsigned id) const {
-  auto subset = CollectToSet<LocalInstance, Set<const LocalInstance*>>(
+  auto subset = CollectToSet<LocalInstance>(
       instances_, [&id](const std::unique_ptr<LocalInstance>& instance) {
         return instance && (instance->InstanceId() == id);
       });
@@ -53,9 +53,9 @@ Result<Set<const LocalInstance*>> LocalInstanceGroup::FindById(
       subset, GenerateTooManyInstancesErrorMsg(1, selector::kInstanceIdField));
 }
 
-Result<Set<const LocalInstance*>> LocalInstanceGroup::FindByInstanceName(
+Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindByInstanceName(
     const std::string& instance_name) const {
-  auto subset = CollectToSet<LocalInstance, Set<const LocalInstance*>>(
+  auto subset = CollectToSet<LocalInstance>(
       instances_,
       [&instance_name](const std::unique_ptr<LocalInstance>& instance) {
         return instance && (instance->PerInstanceName() == instance_name);
