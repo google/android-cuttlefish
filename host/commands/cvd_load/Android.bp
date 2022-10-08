@@ -28,3 +28,22 @@ cc_defaults {
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
+
+cc_test_host {
+    name: "cvd_load_test",
+    shared_libs: [
+        "libext2_blkid",
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libjsoncpp",
+    ],
+    static_libs: [
+        "libcvd_parser",
+        "libgmock",
+    ],
+    srcs: [
+        "unittest/flags_parser_test.cc",
+    ],
+    defaults: ["cvd_load_defaults"],
+}
