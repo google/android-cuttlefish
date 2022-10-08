@@ -24,15 +24,14 @@
 #include "common/libs/utils/json.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 
-
 namespace cuttlefish {
 
 // json parameters definitions
-std::map<std::string, Json::ValueType> configskeyMap = {
+static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
     {"instances", Json::ValueType::arrayValue}};
 
 // Validate data Name and type
-bool validateTypo(const Json::Value& root,
+bool ValidateTypo(const Json::Value& root,
                   std::map<std::string, Json::ValueType>& map) {
   for (const std::string& flag : root.getMemberNames()) {
     if (map.count(flag) == 0) {
@@ -40,7 +39,7 @@ bool validateTypo(const Json::Value& root,
                    << " not recognized";
       return false;
     }
-    if (!root["flag"].isConvertibleTo(map["flag"])) {
+    if (!root[flag].isConvertibleTo(map[flag])) {
       LOG(WARNING) << "Invalid flag type " << flag;
       return false;
     }
@@ -58,7 +57,7 @@ Result<Json::Value> ParseJsonFile(std::string file_path) {
 }
 
 bool ValidateJsonCfConfigs(const Json::Value& root) {
-  if (!validateTypo(root, configskeyMap)) {
+  if (!ValidateTypo(root, kConfigsKeyMap)) {
     LOG(WARNING) << "Typo in config main parameters";
     return false;
   }
@@ -70,22 +69,22 @@ bool ValidateJsonCfConfigs(const Json::Value& root) {
   return true;
 }
 
-void SerializeConfigs(const Json::Value& root,
-                      std::vector<std::string>& result) {
+void GenerateNumInstancesFlag(const Json::Value& root,
+                              std::vector<std::string>& result) {
   int num_instances = root["instances"].size();
   LOG(DEBUG) << "num_instances = " << num_instances;
   std::string flag = "--num_instances=" + std::to_string(num_instances);
   result.push_back(flag);
 }
 
-bool ParseCvdConfigs(const Json::Value& root,
+bool ParseCvdConfigs(Json::Value& root,
                      std::vector<std::string>& serialized_data) {
   if (!ValidateJsonCfConfigs(root)) {
     LOG(WARNING) << "Loaded Json validation failed";
     return false;
   }
 
-  SerializeConfigs(root, serialized_data);
+  GenerateNumInstancesFlag(root, serialized_data);
   return true;
 }
 
