@@ -48,6 +48,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto invocation = ParseInvocation(request.Message());
     return invocation.command == "load";
   }
+
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
     CF_EXPECT(!interrupted_, "Interrupted");
