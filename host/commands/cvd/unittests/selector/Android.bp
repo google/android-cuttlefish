@@ -16,3 +16,28 @@
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
+
+cc_test_host {
+    name: "cvd_db_instance_test",
+    srcs: [
+        "test_group_record.cpp",
+        "test_instance_record.cpp",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
+
+cc_test_host {
+    name: "cvd_db_test",
+    srcs: [
+        "instance_database_test_helper.cpp",
+        "test_id_allocator.cpp",
+        "test_instance_database.cpp",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
