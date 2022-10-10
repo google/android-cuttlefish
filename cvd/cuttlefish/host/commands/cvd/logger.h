@@ -16,7 +16,6 @@
 #pragma once
 
 #include <shared_mutex>
-#include <string>
 #include <thread>
 #include <unordered_map>
 
@@ -29,8 +28,6 @@ namespace cuttlefish {
 
 /** Per-thread logging state manager class. */
 class ServerLogger {
-  friend class CvdServer;
-
  public:
   /**
    * Thread-specific logger instance.
@@ -42,24 +39,20 @@ class ServerLogger {
   class ScopedLogger {
    public:
     friend ServerLogger;
-    using LogSeverity = android::base::LogSeverity;
 
     ScopedLogger(ScopedLogger&&) noexcept;
     ~ScopedLogger();
 
    private:
-    ScopedLogger(ServerLogger&, SharedFD target,
-                 const android::base::LogSeverity verbosity);
+    ScopedLogger(ServerLogger&, SharedFD target);
 
     /** Callback for `LOG(severity)` messages */
     void LogMessage(android::base::LogId log_buffer_id,
                     android::base::LogSeverity severity, const char* tag,
                     const char* file, unsigned int line, const char* message);
-    void SetSeverity(const LogSeverity);
 
     ServerLogger& server_logger_;
     SharedFD target_;
-    android::base::LogSeverity verbosity_;
   };
   INJECT(ServerLogger());
   ~ServerLogger();
@@ -68,13 +61,9 @@ class ServerLogger {
    * Configure `LOG(severity)` messages to write to the given file descriptor
    * for the lifetime of the returned object.
    */
-  ScopedLogger LogThreadToFd(SharedFD, const android::base::LogSeverity);
   ScopedLogger LogThreadToFd(SharedFD);
 
  private:
-  using LogSeverity = android::base::LogSeverity;
-  void SetSeverity(const LogSeverity);
-
   std::shared_mutex thread_loggers_lock_;
   std::unordered_map<std::thread::id, ScopedLogger*> thread_loggers_;
 };
