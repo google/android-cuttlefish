@@ -155,6 +155,10 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.hardware.camera.common.",
     "android.hardware.camera.device.",
     "android.hardware.camera.metadata.",
+
+    // android.hardware.media.bufferpool2 is a HAL-less interface.
+    // It could be used for buffer recycling and caching by using the interface.
+    "android.hardware.media.bufferpool2."
 };
 
 /*
