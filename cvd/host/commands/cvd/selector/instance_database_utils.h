@@ -26,7 +26,7 @@
 #include "host/commands/cvd/instance_database_types.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
@@ -152,5 +152,5 @@ RetSet Intersection(const RetSet& u, AnyContainer&& v, Containers&&... s) {
   return Intersection(first, std::forward<Containers>(s)...);
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

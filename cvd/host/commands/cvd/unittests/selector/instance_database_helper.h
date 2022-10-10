@@ -28,7 +28,7 @@
 #include "host/commands/cvd/instance_database.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 /**
  * Creates n mock HOME directories, one per group. Also, creates
@@ -97,5 +97,5 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   InstanceDatabase db_;
 };
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

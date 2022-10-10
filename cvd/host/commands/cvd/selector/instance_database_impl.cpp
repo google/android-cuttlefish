@@ -26,7 +26,7 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 std::vector<std::unique_ptr<LocalInstanceGroup>>::iterator
 InstanceDatabase::FindIterator(const LocalInstanceGroup& group) {
@@ -51,8 +51,8 @@ Result<void> InstanceDatabase::AddInstanceGroup(
             "HOME dir, " << home_dir << " does not exist");
   CF_EXPECT(PotentiallyHostBinariesDir(host_binaries_dir),
             "ANDROID_HOST_OUT, " << host_binaries_dir << " is not a tool dir");
-  std::vector<Query> queries = {{selector::kHomeField, home_dir},
-                                {selector::kGroupNameField, group_name}};
+  std::vector<Query> queries = {{kHomeField, home_dir},
+                                {kGroupNameField, group_name}};
   for (const auto& query : queries) {
     auto instance_groups =
         CF_EXPECT(Find<LocalInstanceGroup>(query, group_handlers_));
@@ -79,8 +79,8 @@ Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup& group,
       itr != local_instance_groups_.end() && *itr != nullptr,
       "Adding instances to non-existing group " + group.InternalGroupName());
 
-  auto instances = CF_EXPECT(
-      FindInstances({selector::kInstanceIdField, std::to_string(id)}));
+  auto instances =
+      CF_EXPECT(FindInstances({kInstanceIdField, std::to_string(id)}));
   if (instances.size() != 0) {
     return CF_ERR("instance id " << id << " is taken");
   }
@@ -109,8 +109,7 @@ Result<Set<ConstRef<LocalInstanceGroup>>> InstanceDatabase::FindGroupsByHome(
       [&home](const std::unique_ptr<LocalInstanceGroup>& group) {
         return (group && (group->HomeDir() == home));
       });
-  return AtMostOne(subset,
-                   GenerateTooManyInstancesErrorMsg(1, selector::kHomeField));
+  return AtMostOne(subset, GenerateTooManyInstancesErrorMsg(1, kHomeField));
 }
 
 Result<Set<ConstRef<LocalInstanceGroup>>>
@@ -120,8 +119,8 @@ InstanceDatabase::FindGroupsByGroupName(const std::string& group_name) const {
       [&group_name](const std::unique_ptr<LocalInstanceGroup>& group) {
         return (group && group->GroupName() == group_name);
       });
-  return AtMostOne(
-      subset, GenerateTooManyInstancesErrorMsg(1, selector::kGroupNameField));
+  return AtMostOne(subset,
+                   GenerateTooManyInstancesErrorMsg(1, kGroupNameField));
 }
 
 Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
@@ -139,8 +138,8 @@ Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
   auto subset = CollectAllElements<LocalInstance, LocalInstanceGroup>(
       collector, local_instance_groups_);
   CF_EXPECT(subset.ok());
-  return AtMostOne(
-      *subset, GenerateTooManyInstancesErrorMsg(1, selector::kInstanceIdField));
+  return AtMostOne(*subset,
+                   GenerateTooManyInstancesErrorMsg(1, kInstanceIdField));
 }
 
 Result<Set<ConstRef<LocalInstance>>>
@@ -156,5 +155,5 @@ InstanceDatabase::FindInstancesByInstanceName(
       collector, local_instance_groups_);
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
