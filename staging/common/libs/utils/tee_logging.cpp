@@ -126,9 +126,10 @@ static void SplitByLines(const char* msg, const F& log_function, Args&&... args)
 // Copied from system/libbase/logging_splitters.h
 // This adds the log header to each line of message and returns it as a string intended to be
 // written to stderr.
-static std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
-                                         LogSeverity severity, const char* tag, const char* file,
-                                         unsigned int line, const char* message) {
+std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
+                                  LogSeverity severity, const char* tag,
+                                  const char* file, unsigned int line,
+                                  const char* message) {
   char timestamp[32];
   strftime(timestamp, sizeof(timestamp), "%m-%d %H:%M:%S", &now);
 
