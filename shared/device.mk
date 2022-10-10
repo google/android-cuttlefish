@@ -333,10 +333,10 @@ PRODUCT_COPY_FILES += \
 endif
 
 PRODUCT_PACKAGES += \
-    cf_fstab.f2fs \
-    cf_fstab.f2fs.vendor_ramdisk \
-    cf_fstab.ext4 \
-    cf_fstab.ext4.vendor_ramdisk \
+    fstab.cf.f2fs \
+    fstab.cf.f2fs.vendor_ramdisk \
+    fstab.cf.ext4 \
+    fstab.cf.ext4.vendor_ramdisk \
 
 ifeq ($(TARGET_VULKAN_SUPPORT),true)
 ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
