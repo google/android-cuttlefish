@@ -22,8 +22,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
-#include "host/frontend/webrtc/lib/camera_controller.h"
-#include "host/frontend/webrtc/lib/connection_observer.h"
+#include "host/frontend/webrtc/libdevice/camera_controller.h"
+#include "host/frontend/webrtc/libdevice/connection_observer.h"
 #include "host/libs/confui/host_virtual_input.h"
 
 namespace cuttlefish {

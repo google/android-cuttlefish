@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 //
 
-#include "host/frontend/webrtc/lib/server_connection.h"
+#include "host/frontend/webrtc/libdevice/server_connection.h"
 
 #include <android-base/logging.h>
 #include <libwebsockets.h>

@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "host/frontend/webrtc/lib/video_frame_buffer.h"
+#include "host/frontend/webrtc/libdevice/video_frame_buffer.h"
 
 namespace cuttlefish {
 
