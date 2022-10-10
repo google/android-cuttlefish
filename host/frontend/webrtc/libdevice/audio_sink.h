@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "host/frontend/webrtc/lib/audio_frame_buffer.h"
+#include "host/frontend/webrtc/libdevice/audio_frame_buffer.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
