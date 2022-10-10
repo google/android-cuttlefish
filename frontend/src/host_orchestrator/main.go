@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -140,8 +141,9 @@ func main() {
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	imController := orchestrator.Controller{
-		InstanceManager:  im,
-		OperationManager: om,
+		InstanceManager:       im,
+		OperationManager:      om,
+		WaitOperationDuration: 2 * time.Minute,
 	}
 	imController.AddRoutes(r)
 	// The host orchestrator currently has no use for this, since clients won't connect

@@ -19,6 +19,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
@@ -60,6 +61,80 @@ func TestGetOperationIsHandled(t *testing.T) {
 
 	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestWaitOperationIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/operations/foo/wait", strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestWaitOperationNotFound(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/operations/foo/wait", strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	expected := http.StatusNotFound
+	if rr.Code != expected {
+		t.Errorf("expected <<%d>>, got %d", expected, rr.Code)
+	}
+}
+
+func TestWaitOperationTimeout(t *testing.T) {
+	rr := httptest.NewRecorder()
+	dt := 100 * time.Millisecond
+	om := NewMapOM()
+	op := om.New()
+	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/wait", strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{OperationManager: om, WaitOperationDuration: dt}
+
+	start := time.Now()
+	makeRequest(rr, req, &controller)
+	duration := time.Since(start)
+
+	expected := http.StatusServiceUnavailable
+	if rr.Code != expected {
+		t.Errorf("expected <<%d>>, got %d", expected, rr.Code)
+	}
+	if duration < dt {
+		t.Error("wait deadline was not reached")
+	}
+}
+
+func TestWaitOperationOperationIsDone(t *testing.T) {
+	rr := httptest.NewRecorder()
+	om := NewMapOM()
+	op := om.New()
+	om.Complete(op.Name, OperationResult{Error: OperationResultError{"error"}})
+	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/wait", strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{OperationManager: om}
+
+	makeRequest(rr, req, &controller)
+
+	expected := http.StatusOK
+	if rr.Code != expected {
+		t.Errorf("expected <<%d>>, got %d", expected, rr.Code)
 	}
 }
 

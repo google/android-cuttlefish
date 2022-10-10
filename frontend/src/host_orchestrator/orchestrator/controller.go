@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -25,13 +26,19 @@ import (
 )
 
 type Controller struct {
-	InstanceManager  InstanceManager
-	OperationManager OperationManager
+	InstanceManager       InstanceManager
+	OperationManager      OperationManager
+	WaitOperationDuration time.Duration
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds", &createCVDHandler{im: c.InstanceManager}).Methods("POST")
 	router.Handle("/operations/{name}", &getOperationHandler{om: c.OperationManager}).Methods("GET")
+	// Waits for the specified Operation resource to be DONE or for the request to approach the
+	// specified deadline, `503 Service Unavailable` error will be returned if the deadline is
+	// reached. Be prepared to retry if the deadline was reached.
+	router.Handle("/operations/{name}/wait",
+		&waitOperationHandler{c.OperationManager, c.WaitOperationDuration}).Methods("POST")
 }
 
 type createCVDHandler struct {
@@ -65,6 +72,31 @@ func (h *getOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	} else {
 		operator.ReplyJSONOK(w, BuildOperation(op))
 	}
+}
+
+type waitOperationHandler struct {
+	om           OperationManager
+	waitDuration time.Duration
+}
+
+func (h *waitOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	op, err := h.om.Wait(name, h.waitDuration)
+	if err == nil {
+		operator.ReplyJSONOK(w, BuildOperation(op))
+		return
+	}
+	if _, ok := err.(NotFoundOperationError); ok {
+		operator.ReplyJSONErr(w, operator.NewNotFoundError("Operation not found", err))
+		return
+	}
+	if _, ok := err.(*OperationWaitTimeoutError); ok {
+		operator.ReplyJSONErr(w,
+			operator.NewServiceUnavailableError("Wait for operation timed out", err))
+		return
+	}
+	operator.ReplyJSONErr(w, operator.NewInternalError("Unknown wait operation error", err))
 }
 
 func BuildOperation(op Operation) apiv1.Operation {
