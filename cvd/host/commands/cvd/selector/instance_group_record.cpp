@@ -20,7 +20,7 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
                                        const std::string& home_dir,
@@ -31,7 +31,7 @@ LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
       group_name_(group_name) {}
 
 Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
-  return cuttlefish::instance_db::GetCuttlefishConfigPath(HomeDir());
+  return ::cuttlefish::selector::GetCuttlefishConfigPath(HomeDir());
 }
 
 Result<void> LocalInstanceGroup::AddInstance(const unsigned instance_id,
@@ -51,8 +51,8 @@ Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindById(
       instances_, [&id](const std::unique_ptr<LocalInstance>& instance) {
         return instance && (instance->InstanceId() == id);
       });
-  return AtMostOne(
-      subset, GenerateTooManyInstancesErrorMsg(1, selector::kInstanceIdField));
+  return AtMostOne(subset,
+                   GenerateTooManyInstancesErrorMsg(1, kInstanceIdField));
 }
 
 Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindByInstanceName(
@@ -65,8 +65,8 @@ Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindByInstanceName(
 
   // note that inside a group, the instance name is unique. However,
   // across groups, they can be multiple
-  return AtMostOne(subset, GenerateTooManyInstancesErrorMsg(
-                               1, selector::kInstanceNameField));
+  return AtMostOne(subset,
+                   GenerateTooManyInstancesErrorMsg(1, kInstanceNameField));
 }
 
 bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
@@ -81,5 +81,5 @@ bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
   return false;
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

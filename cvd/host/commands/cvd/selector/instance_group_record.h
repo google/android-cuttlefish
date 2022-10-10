@@ -27,7 +27,7 @@
 #include "host/commands/cvd/instance_record.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 class InstanceDatabase;
 
@@ -89,5 +89,5 @@ class LocalInstanceGroup {
   friend class CvdInstanceGroupSearchUnitTest;
 };
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

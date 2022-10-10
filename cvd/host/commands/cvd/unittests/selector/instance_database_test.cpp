@@ -44,7 +44,7 @@
  */
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 TEST_F(CvdInstanceDatabaseTest, Empty) {
   if (!SetUpOk()) {
@@ -150,14 +150,10 @@ TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
   const std::string invalid_home_search_key{"/no/such/path"};
 
   // FindGroups returns Result<Set<const T*>>, FindGroup Result<const T*>
-  auto valid_groups =
-      db.FindGroups({selector::kHomeField, valid_home_search_key});
-  auto valid_group =
-      db.FindGroup({selector::kHomeField, valid_home_search_key});
-  auto invalid_groups =
-      db.FindGroups({selector::kHomeField, invalid_home_search_key});
-  auto invalid_group =
-      db.FindGroup({selector::kHomeField, invalid_home_search_key});
+  auto valid_groups = db.FindGroups({kHomeField, valid_home_search_key});
+  auto valid_group = db.FindGroup({kHomeField, valid_home_search_key});
+  auto invalid_groups = db.FindGroups({kHomeField, invalid_home_search_key});
+  auto invalid_group = db.FindGroup({kHomeField, invalid_home_search_key});
 
   ASSERT_TRUE(valid_groups.ok());
   ASSERT_EQ(valid_groups->size(), 1);
@@ -176,8 +172,7 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
   if (!AddGroups({"miaaaw", "meow", "mjau"})) {
     GTEST_SKIP() << Error().msg;
   }
-  auto eng_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "meow"});
+  auto eng_group = db.FindGroup({kHomeField, Workspace() + "/" + "meow"});
   if (!eng_group.ok()) {
     GTEST_SKIP() << "meow"
                  << " group was not found.";
@@ -192,8 +187,7 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto kitty_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "yah_ong"});
+  auto kitty_group = db.FindGroup({kHomeField, Workspace() + "/" + "yah_ong"});
   if (!kitty_group.ok()) {
     GTEST_SKIP() << "yah_ong"
                  << " group was not found";
@@ -215,8 +209,7 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesInvalid) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto kitty_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "yah_ong"});
+  auto kitty_group = db.FindGroup({kHomeField, Workspace() + "/" + "yah_ong"});
   if (!kitty_group.ok()) {
     GTEST_SKIP() << "yah_ong"
                  << " group was not found";
@@ -241,10 +234,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
       {1, "8"}, {10, "tv_instance"}};
   std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
       {7, "my_favorite_phone"}, {11, "tv_instance"}, {3, "3_"}};
-  auto miau_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "miau"});
-  auto nyah_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
+  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah group"
                  << " group was not found";
@@ -255,18 +246,12 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   }
   // The end of set up
 
-  auto result1 =
-      db.FindInstance({selector::kInstanceIdField, std::to_string(1)});
-  auto result10 =
-      db.FindInstance({selector::kInstanceIdField, std::to_string(10)});
-  auto result7 =
-      db.FindInstance({selector::kInstanceIdField, std::to_string(7)});
-  auto result11 =
-      db.FindInstance({selector::kInstanceIdField, std::to_string(11)});
-  auto result3 =
-      db.FindInstance({selector::kInstanceIdField, std::to_string(3)});
-  auto result_invalid =
-      db.FindInstance({selector::kInstanceIdField, std::to_string(20)});
+  auto result1 = db.FindInstance({kInstanceIdField, std::to_string(1)});
+  auto result10 = db.FindInstance({kInstanceIdField, std::to_string(10)});
+  auto result7 = db.FindInstance({kInstanceIdField, std::to_string(7)});
+  auto result11 = db.FindInstance({kInstanceIdField, std::to_string(11)});
+  auto result3 = db.FindInstance({kInstanceIdField, std::to_string(3)});
+  auto result_invalid = db.FindInstance({kInstanceIdField, std::to_string(20)});
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result10.ok());
@@ -291,10 +276,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
       {1, "8"}, {10, "tv_instance"}};
   std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
       {7, "my_favorite_phone"}, {11, "tv_instance"}};
-  auto miau_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "miau"});
-  auto nyah_group =
-      db.FindGroup({selector::kHomeField, Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
+  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
@@ -305,13 +288,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   }
   // end of set up
 
-  auto result1 = db.FindInstance({selector::kInstanceNameField, "8"});
-  auto result10_and_11 =
-      db.FindInstances({selector::kInstanceNameField, "tv_instance"});
-  auto result7 =
-      db.FindInstance({selector::kInstanceNameField, "my_favorite_phone"});
+  auto result1 = db.FindInstance({kInstanceNameField, "8"});
+  auto result10_and_11 = db.FindInstances({kInstanceNameField, "tv_instance"});
+  auto result7 = db.FindInstance({kInstanceNameField, "my_favorite_phone"});
   auto result_invalid =
-      db.FindInstance({selector::kInstanceNameField, "name_never_seen"});
+      db.FindInstance({kInstanceNameField, "name_never_seen"});
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result10_and_11.ok());
@@ -322,5 +303,5 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   ASSERT_FALSE(result_invalid.ok());
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

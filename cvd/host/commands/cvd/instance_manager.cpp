@@ -41,7 +41,7 @@ namespace cuttlefish {
 
 Result<std::string> InstanceManager::GetCuttlefishConfigPath(
     const std::string& home) {
-  return instance_db::GetCuttlefishConfigPath(home);
+  return selector::GetCuttlefishConfigPath(home);
 }
 
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager)
@@ -56,8 +56,8 @@ Result<void> InstanceManager::SetInstanceGroup(
     const InstanceManager::InstanceGroupDir& dir,
     const InstanceGroupInfo& info) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
-  CF_EXPECT(instance_db_.AddInstanceGroup(instance_db::GenDefaultGroupName(),
-                                          dir, info.host_binaries_dir));
+  CF_EXPECT(instance_db_.AddInstanceGroup(selector::GenDefaultGroupName(), dir,
+                                          info.host_binaries_dir));
   auto searched_group =
       CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   for (auto i : info.instances) {
@@ -93,7 +93,7 @@ InstanceManager::GetInstanceGroupInfo(
 
 void InstanceManager::IssueStatusCommand(
     const SharedFD& out, const std::string& config_file_path,
-    const instance_db::LocalInstanceGroup& group) {
+    const selector::LocalInstanceGroup& group) {
   // Reads CuttlefishConfig::instance_names(), which must remain stable
   // across changes to config file format (within server_constants.h major
   // version).
@@ -174,7 +174,7 @@ Result<cvd::Status> InstanceManager::CvdFleet(
 void InstanceManager::IssueStopCommand(
     const SharedFD& out, const SharedFD& err,
     const std::string& config_file_path,
-    const instance_db::LocalInstanceGroup& group) {
+    const selector::LocalInstanceGroup& group) {
   Command command(group.HostBinariesDir() + kStopBin);
   command.AddParameter("--clear_instance_dirs");
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);

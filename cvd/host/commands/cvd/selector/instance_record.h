@@ -21,7 +21,7 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 class LocalInstanceGroup;
 
@@ -69,5 +69,5 @@ class LocalInstance {
   std::string per_instance_name_;
 };
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

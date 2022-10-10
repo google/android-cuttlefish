@@ -22,7 +22,7 @@
 #include "host/commands/cvd/instance_record.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 static std::string GroupName() { return "yah_ong"; }
 static std::string HomeDir() { return "/home/user"; }
@@ -108,5 +108,5 @@ TEST_F(CvdInstanceGroupSearchUnitTest, SearchById) {
   }
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
