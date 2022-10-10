@@ -20,24 +20,21 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 InstanceDatabase::InstanceDatabase() {
-  group_handlers_[selector::kHomeField] = [this](const Value& field_value) {
+  group_handlers_[kHomeField] = [this](const Value& field_value) {
     return FindGroupsByHome(field_value);
   };
-  group_handlers_[selector::kGroupNameField] =
-      [this](const Value& field_value) {
-        return FindGroupsByGroupName(field_value);
-      };
-  instance_handlers_[selector::kInstanceIdField] =
-      [this](const Value& field_value) {
-        return FindInstancesById(field_value);
-      };
-  instance_handlers_[selector::kInstanceNameField] =
-      [this](const Value& field_value) {
-        return FindInstancesByInstanceName(field_value);
-      };
+  group_handlers_[kGroupNameField] = [this](const Value& field_value) {
+    return FindGroupsByGroupName(field_value);
+  };
+  instance_handlers_[kInstanceIdField] = [this](const Value& field_value) {
+    return FindInstancesById(field_value);
+  };
+  instance_handlers_[kInstanceNameField] = [this](const Value& field_value) {
+    return FindInstancesByInstanceName(field_value);
+  };
 }
 
 bool InstanceDatabase::IsEmpty() const {
@@ -133,5 +130,5 @@ Result<ConstRef<LocalInstance>> InstanceDatabase::FindInstance(
   return FindOne<LocalInstance>(queries, instance_handlers_);
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

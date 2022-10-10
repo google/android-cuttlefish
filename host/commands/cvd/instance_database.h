@@ -27,7 +27,7 @@
 #include "host/commands/cvd/instance_record.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 // TODO(kwstephenkim): make this per-user instance database
 class InstanceDatabase {
@@ -112,5 +112,5 @@ class InstanceDatabase {
   Map<FieldName, ConstInstanceHandler> instance_handlers_;
 };
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

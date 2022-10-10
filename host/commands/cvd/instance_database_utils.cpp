@@ -28,7 +28,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   std::string home_realpath;
@@ -90,5 +90,5 @@ std::string GenerateTooManyInstancesErrorMsg(const int n,
   return s.str();
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

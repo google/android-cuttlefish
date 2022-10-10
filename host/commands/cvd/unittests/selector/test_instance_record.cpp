@@ -19,7 +19,7 @@
 #include "host/commands/cvd/instance_record.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
@@ -51,5 +51,5 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
             std::addressof(parent_group));
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

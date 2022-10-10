@@ -21,7 +21,7 @@
 
 #include "host/commands/cvd/unique_resource_allocator.h"
 
-namespace cuttlefish::instance_db {
+namespace cuttlefish::selector {
 
 class CvdIdAllocatorOneEachTest
     : public testing::TestWithParam<std::vector<unsigned>> {};
@@ -163,4 +163,4 @@ TEST_F(CvdIdAllocatorTest, ReclaimEmptyPool) {
   ASSERT_TRUE(allocator.ReclaimAll(std::vector<unsigned>{}));
 }
 
-}  // namespace cuttlefish::instance_db
+}  // namespace cuttlefish::selector

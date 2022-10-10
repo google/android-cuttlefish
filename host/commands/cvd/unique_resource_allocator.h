@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 template <typename T>
 class UniqueResourceAllocator {
@@ -232,5 +232,5 @@ UniqueResourceAllocator<T>::TakeRangeInternal(const T& start_inclusive,
   return true;
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
