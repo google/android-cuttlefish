@@ -24,6 +24,11 @@
 
 namespace cuttlefish {
 
+std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
+                                  android::base::LogSeverity severity,
+                                  const char* tag, const char* file,
+                                  unsigned int line, const char* message);
+
 android::base::LogSeverity ConsoleSeverity();
 android::base::LogSeverity LogFileSeverity();
 
