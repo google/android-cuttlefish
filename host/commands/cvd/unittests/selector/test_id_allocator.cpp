@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/unique_resource_allocator.h"
+#include "host/commands/cvd/selector/unique_resource_allocator.h"
 
 namespace cuttlefish::selector {
 
