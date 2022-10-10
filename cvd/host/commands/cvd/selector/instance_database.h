@@ -21,10 +21,10 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/constant_reference.h"
-#include "host/commands/cvd/instance_database_types.h"
-#include "host/commands/cvd/instance_group_record.h"
-#include "host/commands/cvd/instance_record.h"
+#include "host/commands/cvd/selector/constant_reference.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {

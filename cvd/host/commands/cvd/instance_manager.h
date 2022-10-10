@@ -28,8 +28,8 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/instance_database.h"
 #include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/selector/instance_database.h"
 
 namespace cuttlefish {
 

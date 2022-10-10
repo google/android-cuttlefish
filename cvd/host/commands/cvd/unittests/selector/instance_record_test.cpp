@@ -15,8 +15,8 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/instance_group_record.h"
-#include "host/commands/cvd/instance_record.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
+#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
 namespace selector {

@@ -22,8 +22,8 @@
 
 #include "common/libs/utils/collect.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/constant_reference.h"
-#include "host/commands/cvd/instance_database_types.h"
+#include "host/commands/cvd/selector/constant_reference.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
 namespace selector {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_database_utils.h"
+#include "host/commands/cvd/selector/instance_database_utils.h"
 
 #include <regex>
 #include <set>

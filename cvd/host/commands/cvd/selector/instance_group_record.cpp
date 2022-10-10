@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_group_record.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
 
-#include "host/commands/cvd/instance_database_utils.h"
+#include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
