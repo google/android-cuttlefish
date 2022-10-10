@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/lib/audio_device.h"
+#include "host/frontend/webrtc/libdevice/audio_device.h"
 
 #include <string.h>
 

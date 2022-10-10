@@ -37,7 +37,7 @@
 #include "host/frontend/webrtc/bluetooth_handler.h"
 #include "host/frontend/webrtc/gpx_locations_handler.h"
 #include "host/frontend/webrtc/kml_locations_handler.h"
-#include "host/frontend/webrtc/lib/camera_controller.h"
+#include "host/frontend/webrtc/libdevice/camera_controller.h"
 #include "host/frontend/webrtc/location_handler.h"
 #include "host/libs/config/cuttlefish_config.h"
 
