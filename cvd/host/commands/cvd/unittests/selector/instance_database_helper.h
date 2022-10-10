@@ -24,8 +24,8 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/constant_reference.h"
-#include "host/commands/cvd/instance_database.h"
+#include "host/commands/cvd/selector/constant_reference.h"
+#include "host/commands/cvd/selector/instance_database.h"
 
 namespace cuttlefish {
 namespace selector {

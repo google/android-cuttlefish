@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_database.h"
+#include "host/commands/cvd/selector/instance_database.h"
 
 #include <algorithm>
 #include <sstream>
@@ -22,7 +22,7 @@
 #include <android-base/parseint.h>
 
 #include "common/libs/utils/files.h"
-#include "host/commands/cvd/instance_database_utils.h"
+#include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
