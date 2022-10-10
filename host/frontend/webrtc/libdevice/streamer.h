@@ -26,13 +26,13 @@
 
 #include "host/libs/config/custom_actions.h"
 
-#include "host/frontend/webrtc/lib/audio_sink.h"
-#include "host/frontend/webrtc/lib/audio_source.h"
-#include "host/frontend/webrtc/lib/camera_controller.h"
-#include "host/frontend/webrtc/lib/connection_observer.h"
-#include "host/frontend/webrtc/lib/local_recorder.h"
-#include "host/frontend/webrtc/lib/video_sink.h"
-#include "host/frontend/webrtc/lib/server_connection.h"
+#include "host/frontend/webrtc/libdevice/audio_sink.h"
+#include "host/frontend/webrtc/libdevice/audio_source.h"
+#include "host/frontend/webrtc/libdevice/camera_controller.h"
+#include "host/frontend/webrtc/libdevice/connection_observer.h"
+#include "host/frontend/webrtc/libdevice/local_recorder.h"
+#include "host/frontend/webrtc/libdevice/video_sink.h"
+#include "host/frontend/webrtc/libdevice/server_connection.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

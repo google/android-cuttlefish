@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "host/frontend/webrtc/cvd_video_frame_buffer.h"
-#include "host/frontend/webrtc/lib/video_sink.h"
+#include "host/frontend/webrtc/libdevice/video_sink.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {

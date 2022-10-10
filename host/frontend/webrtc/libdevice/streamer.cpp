@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/lib/streamer.h"
+#include "host/frontend/webrtc/libdevice/streamer.h"
 
 #include <android-base/logging.h>
 #include <json/json.h>
@@ -32,13 +32,13 @@
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
-#include "host/frontend/webrtc/lib/audio_device.h"
-#include "host/frontend/webrtc/lib/audio_track_source_impl.h"
-#include "host/frontend/webrtc/lib/camera_streamer.h"
-#include "host/frontend/webrtc/lib/client_handler.h"
-#include "host/frontend/webrtc/lib/port_range_socket_factory.h"
-#include "host/frontend/webrtc/lib/video_track_source_impl.h"
-#include "host/frontend/webrtc/lib/vp8only_encoder_factory.h"
+#include "host/frontend/webrtc/libdevice/audio_device.h"
+#include "host/frontend/webrtc/libdevice/audio_track_source_impl.h"
+#include "host/frontend/webrtc/libdevice/camera_streamer.h"
+#include "host/frontend/webrtc/libdevice/client_handler.h"
+#include "host/frontend/webrtc/libdevice/port_range_socket_factory.h"
+#include "host/frontend/webrtc/libdevice/video_track_source_impl.h"
+#include "host/frontend/webrtc/libdevice/vp8only_encoder_factory.h"
 #include "host/frontend/webrtc_operator/constants/signaling_constants.h"
 
 namespace cuttlefish {
