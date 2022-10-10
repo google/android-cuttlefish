@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/lib/audio_track_source_impl.h"
+#include "host/frontend/webrtc/libdevice/audio_track_source_impl.h"
 
 #include <android-base/logging.h>
 

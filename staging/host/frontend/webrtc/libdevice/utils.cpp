@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/lib/utils.h"
+#include "host/frontend/webrtc/libdevice/utils.h"
 
 #include <map>
 

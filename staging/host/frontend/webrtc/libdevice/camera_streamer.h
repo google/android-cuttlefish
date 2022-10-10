@@ -21,7 +21,7 @@
 #include <json/json.h>
 
 #include "common/libs/utils/vsock_connection.h"
-#include "host/frontend/webrtc/lib/camera_controller.h"
+#include "host/frontend/webrtc/libdevice/camera_controller.h"
 
 #include <atomic>
 #include <mutex>
