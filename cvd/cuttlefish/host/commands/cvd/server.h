@@ -34,6 +34,7 @@
 #include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/web/build_api.h"
@@ -51,7 +52,7 @@ class CvdServerHandler {
 
 class CvdServer {
  public:
-  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&));
+  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&, ServerLogger&));
   ~CvdServer();
 
   Result<void> StartServer(SharedFD server);
@@ -79,6 +80,7 @@ class CvdServer {
   BuildApi& build_api_;
   EpollPool& epoll_pool_;
   InstanceManager& instance_manager_;
+  ServerLogger& server_logger_;
   std::atomic_bool running_ = true;
 
   std::mutex ongoing_requests_mutex_;
