@@ -16,7 +16,7 @@
 
 #define LOG_TAG "ClientHandler"
 
-#include "host/frontend/webrtc/lib/client_handler.h"
+#include "host/frontend/webrtc/libdevice/client_handler.h"
 
 #include <vector>
 
@@ -27,8 +27,8 @@
 
 #include <android-base/logging.h>
 
-#include "host/frontend/webrtc/lib/keyboard.h"
-#include "host/frontend/webrtc/lib/utils.h"
+#include "host/frontend/webrtc/libdevice/keyboard.h"
+#include "host/frontend/webrtc/libdevice/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {

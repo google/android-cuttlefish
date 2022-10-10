@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/lib/keyboard.h"
+#include "host/frontend/webrtc/libdevice/keyboard.h"
 
 #include <linux/input.h>
 

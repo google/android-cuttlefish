@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/lib/port_range_socket_factory.h"
+#include "host/frontend/webrtc/libdevice/port_range_socket_factory.h"
 
 #include <android-base/logging.h>
 
