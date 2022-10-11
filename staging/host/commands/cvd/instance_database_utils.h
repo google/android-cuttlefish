@@ -31,10 +31,12 @@ namespace instance_db {
 Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
 std::string GenInternalGroupName();
+std::string GenDefaultGroupName();
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name);
 
 bool IsValidInstanceName(const std::string& token);
+bool IsValidGroupName(const std::string& token);
 /**
  * Runs simple tests to see if it could potentially be a host binaries dir
  *
