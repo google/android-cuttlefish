@@ -95,3 +95,33 @@ filegroup {
     name: "manifest_android.hardware.bluetooth@1.1-service.xml",
     srcs: ["manifest_android.hardware.bluetooth@1.1-service.xml"]
 }
+
+genrule {
+    name: "gen_fstab_cf_f2fs",
+    srcs: ["fstab.in"],
+    out: ["fstab.cf.f2fs"],
+    tool_files: [ "sed.f2fs" ],
+    cmd: "sed -f $(location sed.f2fs) $(in) > $(out)",
+}
+
+genrule {
+    name: "gen_fstab_cf_ext4",
+    srcs: ["fstab.in"],
+    out: ["fstab.cf.ext4"],
+    tool_files: [ "sed.ext4" ],
+    cmd: "sed -f $(location sed.ext4) $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "fstab.cf.f2fs",
+    src: ":gen_fstab_cf_f2fs",
+    vendor: true,
+    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.ext4",
+    src: ":gen_fstab_cf_ext4",
+    vendor: true,
+    vendor_ramdisk_available: true,
+}
