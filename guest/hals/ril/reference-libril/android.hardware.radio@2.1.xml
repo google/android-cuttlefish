@@ -5,6 +5,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.data</name>
+        <version>2</version>
         <fqname>IRadioData/slot1</fqname>
     </hal>
     <hal format="aidl">
