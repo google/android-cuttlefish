@@ -17,9 +17,11 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/constant_reference.h"
 #include "host/commands/cvd/instance_database_types.h"
 #include "host/commands/cvd/instance_group_record.h"
 #include "host/commands/cvd/instance_record.h"
@@ -30,7 +32,7 @@ namespace instance_db {
 // TODO(kwstephenkim): make this per-user instance database
 class InstanceDatabase {
   template <typename T>
-  using ConstHandler = std::function<Result<Set<T>>(const Value&)>;
+  using ConstHandler = std::function<Result<Set<ConstRef<T>>>(const Value&)>;
 
   using ConstGroupHandler = ConstHandler<LocalInstanceGroup>;
   using ConstInstanceHandler = ConstHandler<LocalInstance>;
@@ -53,44 +55,56 @@ class InstanceDatabase {
   bool RemoveInstanceGroup(const LocalInstanceGroup& group);
   void Clear();
 
-  Result<Set<LocalInstanceGroup>> FindGroups(const Query& query) const;
-  Result<Set<LocalInstanceGroup>> FindGroups(const Queries& queries) const;
-  Result<Set<LocalInstance>> FindInstances(const Query& query) const;
-  Result<Set<LocalInstance>> FindInstances(const Queries& queries) const;
+  Result<Set<ConstRef<LocalInstanceGroup>>> FindGroups(
+      const Query& query) const;
+  Result<Set<ConstRef<LocalInstanceGroup>>> FindGroups(
+      const Queries& queries) const;
+  Result<Set<ConstRef<LocalInstance>>> FindInstances(const Query& query) const;
+  Result<Set<ConstRef<LocalInstance>>> FindInstances(
+      const Queries& queries) const;
   const auto& InstanceGroups() const { return local_instance_groups_; }
 
   /*
    * FindGroup/Instance method must be used when exactly one instance/group
    * is expected to match the query
    */
-  Result<LocalInstanceGroup> FindGroup(const Query& query) const;
-  Result<LocalInstanceGroup> FindGroup(const Queries& queries) const;
-  Result<LocalInstance> FindInstance(const Query& query) const;
-  Result<LocalInstance> FindInstance(const Queries& queries) const;
+  Result<ConstRef<LocalInstanceGroup>> FindGroup(const Query& query) const;
+  Result<ConstRef<LocalInstanceGroup>> FindGroup(const Queries& queries) const;
+  Result<ConstRef<LocalInstance>> FindInstance(const Query& query) const;
+  Result<ConstRef<LocalInstance>> FindInstance(const Queries& queries) const;
 
  private:
   template <typename T>
-  Result<Set<T>> Find(const Query& query,
-                      const Map<FieldName, ConstHandler<T>>& handler_map) const;
+  Result<Set<ConstRef<T>>> Find(
+      const Query& query,
+      const Map<FieldName, ConstHandler<T>>& handler_map) const;
 
   template <typename T>
-  Result<Set<T>> Find(const Queries& queries,
-                      const Map<FieldName, ConstHandler<T>>& handler_map) const;
-  template <typename T>
-  Result<T> FindOne(const Query& query,
-                    const Map<FieldName, ConstHandler<T>>& handler_map) const;
+  Result<Set<ConstRef<T>>> Find(
+      const Queries& queries,
+      const Map<FieldName, ConstHandler<T>>& handler_map) const;
 
   template <typename T>
-  Result<T> FindOne(const Queries& queries,
-                    const Map<FieldName, ConstHandler<T>>& handler_map) const;
+  Result<ConstRef<T>> FindOne(
+      const Query& query,
+      const Map<FieldName, ConstHandler<T>>& handler_map) const;
+
+  template <typename T>
+  Result<ConstRef<T>> FindOne(
+      const Queries& queries,
+      const Map<FieldName, ConstHandler<T>>& handler_map) const;
+
+  std::vector<std::unique_ptr<LocalInstanceGroup>>::iterator FindIterator(
+      const LocalInstanceGroup& group);
 
   // actual Find implementations
-  Result<Set<LocalInstanceGroup>> FindGroupsByHome(const Value& home) const;
-  Result<Set<LocalInstance>> FindInstancesById(const Value& id) const;
-  Result<Set<LocalInstance>> FindInstancesByInstanceName(
+  Result<Set<ConstRef<LocalInstanceGroup>>> FindGroupsByHome(
+      const Value& home) const;
+  Result<Set<ConstRef<LocalInstance>>> FindInstancesById(const Value& id) const;
+  Result<Set<ConstRef<LocalInstance>>> FindInstancesByInstanceName(
       const Value& instance_specific_name) const;
 
-  std::vector<LocalInstanceGroup> local_instance_groups_;
+  std::vector<std::unique_ptr<LocalInstanceGroup>> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
   Map<FieldName, ConstInstanceHandler> instance_handlers_;
 };
