@@ -21,6 +21,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -122,17 +123,16 @@ func main() {
 		HomesRootDir:     imRootDir + "/homes",
 	}
 	om := orchestrator.NewMapOM()
-	im := &orchestrator.CVDToolInstanceManager{
-		OM: om,
-		LaunchCVDProcedureBuilder: orchestrator.NewLaunchCVDProcedureBuilder(
-			abURL,
-			orchestrator.AndroidBuild{
-				ID:     cvdBinAndroidBuildID,
-				Target: cvdBinAndroidBuildTarget,
-			},
-			imPaths,
-		),
-	}
+	im := orchestrator.NewCVDToolInstanceManager(
+		exec.Command,
+		orchestrator.AndroidBuild{
+			ID:     cvdBinAndroidBuildID,
+			Target: cvdBinAndroidBuildTarget,
+		},
+		imPaths,
+		orchestrator.NewCVDDownloader(orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)),
+		om,
+	)
 
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
