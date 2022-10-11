@@ -30,6 +30,7 @@
 #include <pc/video_track_source.h>
 
 #include "host/frontend/webrtc/libdevice/connection_observer.h"
+#include "host/frontend/webrtc/libcommon/signaling.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -48,14 +49,9 @@ class ClientVideoTrackImpl;
 class PeerConnectionBuilder;
 
 class ClientHandler : public webrtc::PeerConnectionObserver,
+                      public SignalingObserver,
                       public std::enable_shared_from_this<ClientHandler> {
  public:
-  // Checks if the message contains an "ice_servers" array field and parses it
-  // into a vector of webrtc ICE servers. Returns an empty vector if the field
-  // isn't present.
-  static std::vector<webrtc::PeerConnectionInterface::IceServer>
-  ParseIceServersMessage(const Json::Value& message);
-
   static std::shared_ptr<ClientHandler> Create(
       int client_id, std::shared_ptr<ConnectionObserver> observer,
       PeerConnectionBuilder& connection_builder,
@@ -72,6 +68,18 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   ClientVideoTrackInterface* GetCameraStream();
 
   void HandleMessage(const Json::Value& client_message);
+
+  // Signaling observer implementation
+  Result<void> OnOfferRequestMsg(
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          ice_servers) override;
+  Result<void> OnOfferMsg(
+      std::unique_ptr<webrtc::SessionDescriptionInterface> offer) override;
+  Result<void> OnAnswerMsg(
+      std::unique_ptr<webrtc::SessionDescriptionInterface> offer) override;
+  Result<void> OnIceCandidateMsg(
+      std::unique_ptr<webrtc::IceCandidateInterface> ice_candidate) override;
+  Result<void> OnErrorMsg(const std::string& msg) override;
 
   // CreateSessionDescriptionObserver implementation
   void OnCreateSDPSuccess(webrtc::SessionDescriptionInterface* desc);
@@ -130,7 +138,10 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
 
   void LogAndReplyError(const std::string& error_msg) const;
   void AddPendingIceCandidates();
-  bool BuildPeerConnection(const Json::Value& message);
+  bool BuildPeerConnection(
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          ice_serversconst);
+  Result<void> CreateOffer();
 
   int client_id_;
   State state_ = State::kNew;

@@ -20,7 +20,7 @@
 
 #include <atomic>
 
-#include "host/frontend/webrtc/libdevice/audio_source.h"
+#include "host/frontend/webrtc/libcommon/audio_source.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
