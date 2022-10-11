@@ -502,8 +502,8 @@ class Controller {
     this.#pc = pc;
     console.debug('ConnectDevice');
     // ICE candidates will be generated when we add the offer. Adding it here
-    // instead of in _onOffer because this function is called once per peer
-    // connection, while _onOffer may be called more than once due to
+    // instead of in #onOffer because this function is called once per peer
+    // connection, while #onOffer may be called more than once due to
     // renegotiations.
     this.#pc.addEventListener('icecandidate', evt => {
       if (evt.candidate) this.#sendIceCandidate(evt.candidate);
