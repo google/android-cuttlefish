@@ -55,7 +55,7 @@ on post-fs
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
 
-on post-fs-data && property:ro.vendor.disable_rename_eth0=
+on post-fs-data
     # works around framework netiface enumeration issue
     # TODO(b/202731768): Add this `start rename_eth0` command to the init.rc for rename_netiface
     start rename_eth0
