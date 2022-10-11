@@ -167,7 +167,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
                                      instance.modem_simulator_ports()));
   }
 
-  bootconfig_args.push_back(concat("androidboot.fstab_suffix=",
+  bootconfig_args.push_back(concat("androidboot.fstab_suffix=cf.",
                                    config.userdata_format()));
 
   bootconfig_args.push_back(
