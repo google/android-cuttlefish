@@ -53,17 +53,17 @@ class InstanceManager {
   Result<InstanceGroupInfo> GetInstanceGroupInfo(const InstanceGroupDir&) const;
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
-  cvd::Status CvdFleet(const SharedFD& out, const SharedFD& err,
-                       const std::optional<std::string>& env_config,
-                       const std::string& host_tool_dir,
-                       const std::vector<std::string>& args) const;
+  Result<cvd::Status> CvdFleet(const SharedFD& out, const SharedFD& err,
+                               const std::optional<std::string>& env_config,
+                               const std::string& host_tool_dir,
+                               const std::vector<std::string>& args) const;
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
  private:
-  cvd::Status CvdFleetImpl(const SharedFD& out,
-                           const std::optional<std::string>& env_config) const;
-  cvd::Status CvdFleetHelp(const SharedFD& out, const SharedFD& err,
-                           const std::string& host_tool_dir) const;
+  Result<cvd::Status> CvdFleetImpl(
+      const SharedFD& out, const std::optional<std::string>& env_config) const;
+  Result<cvd::Status> CvdFleetHelp(const SharedFD& out, const SharedFD& err,
+                                   const std::string& host_tool_dir) const;
 
   static void IssueStatusCommand(const SharedFD& out,
                                  const std::string& config_file_path,
