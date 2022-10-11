@@ -16,6 +16,7 @@
 
 package com.android.cuttlefish.tests;
 
+import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -23,7 +24,11 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.google.common.base.Splitter;
 
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -33,10 +38,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class WmediumdControlE2eTest extends BaseHostJUnit4Test {
+public class WmediumdControlE2eTest extends CuttlefishHostTest {
 
-    ITestDevice testDevice;
-    WmediumdControlRunner runner;
+    private static final String WMEDIUMD_BINARY_BASENAME = "wmediumd_control";
+
+    private static final String WMEDIUMD_SERVER_BASENAME = "internal/wmediumd_api_server";
+
+    private static final Splitter NEWLINE_SPLITTER = Splitter.on('\n');
+
+    private static final Splitter TAB_SPLITTER = Splitter.on('\t');
+
+    private static final Splitter SPACE_SPLITTER = Splitter.on(' ');
+
+    private ITestDevice testDevice;
 
     private int getRSSI() throws Exception {
         CommandResult wifiScanCommandResult = testDevice.executeShellV2Command("cmd wifi status");
@@ -65,42 +79,81 @@ public class WmediumdControlE2eTest extends BaseHostJUnit4Test {
         return apMacAddressList.get(0);
     }
 
+    private CommandResult runWmediumdCommand(long timeout, String... command) throws FileNotFoundException {
+        String wmediumdBinary;
+        String wmediumdServer;
+
+        Assert.assertNotNull(runner);
+
+        wmediumdBinary = runner.getHostBinaryPath(WMEDIUMD_BINARY_BASENAME);
+        wmediumdServer = runner.getHostRuntimePath(WMEDIUMD_SERVER_BASENAME);
+
+        ArrayList<String> fullCommand = new ArrayList<String>(Arrays.asList(command));
+        fullCommand.add(0, wmediumdBinary);
+        fullCommand.add(1, String.format("--wmediumd_api_server=%s", wmediumdServer));
+
+        return runner.run(timeout, fullCommand.toArray(new String[0]));
+    }
+
+    /** One line for "Total Stations" and one line for the "tsv header". */
+    private static final int NUMBER_OF_NONEMPTY_INFO_LINES = 2;
+
+    public List<StationInfo> listStations() throws Exception {
+        CommandResult result = runWmediumdCommand(10000, "list_stations");
+        CLog.i("stdout:%s", result.getStdout());
+        CLog.i("stderr:%s", result.getStderr());
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+
+        List<String> lines = NEWLINE_SPLITTER.omitEmptyStrings().splitToList(result.getStdout());
+        List<String> parsedTotalStationsLine = SPACE_SPLITTER.splitToList(lines.get(0));
+        String lastLine = parsedTotalStationsLine.get(parsedTotalStationsLine.size() - 1);
+        Assert.assertEquals(lines.size() - NUMBER_OF_NONEMPTY_INFO_LINES, Integer.parseInt(lastLine));
+
+        List<StationInfo> stationInfoList = new ArrayList<>();
+        for (int idx = NUMBER_OF_NONEMPTY_INFO_LINES; idx < lines.size(); ++idx) {
+            stationInfoList.add(StationInfo.getStationInfo(TAB_SPLITTER.splitToList(lines.get(idx))));
+        }
+        return stationInfoList;
+    }
+
+    private void setSnr(String macAddress1, String macAddress2, int snr) throws Exception {
+        CommandResult result = runWmediumdCommand(10000, "set_snr", macAddress1, macAddress2, Integer.toString(snr));
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+    }
+
+    private void setPosition(String macAddress, double xPosition, double yPosition) throws Exception {
+        CommandResult result = runWmediumdCommand(10000, "--", "set_position", macAddress, Double.toString(xPosition), Double.toString(yPosition));
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+    }
+
     @Before
     public void setUp() throws Exception {
-        testDevice = getDevice();
-        CLog.i("Test Device Class Name: " + testDevice.getClass().getSimpleName());
-
-        if (testDevice instanceof RemoteAndroidVirtualDevice) {
-            runner = new WmediumdControlRemoteRunner((RemoteAndroidVirtualDevice)testDevice);
-        }
-        else {
-            runner = new WmediumdControlLocalRunner(testDevice, getTestInformation());
-        }
+        this.testDevice = getDevice();
     }
 
     @Test(timeout = 60 * 1000)
     public void testWmediumdControlListStations() throws Exception {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        runner.listStations();
+        listStations();
     }
 
     @Test(timeout = 60 * 1000)
     public void testWmediumdControlSetSnr() throws Exception {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        List<StationInfo> stationInfoList = runner.listStations();
+        List<StationInfo> stationInfoList = listStations();
         String stationMacAddress = getStationMacAddress(stationInfoList);
         String apMacAddress = getApMacAddress(stationInfoList);
         int rssiDefault = getRSSI();
         int rssiSnr11, rssiSnr88;
 
-        runner.setSnr(apMacAddress, stationMacAddress, 11);
+        setSnr(apMacAddress, stationMacAddress, 11);
         while ((rssiSnr11 = getRSSI()) == rssiDefault) {
             Thread.sleep(1000);
         }
 
-        runner.setSnr(apMacAddress, stationMacAddress, 88);
+        setSnr(apMacAddress, stationMacAddress, 88);
         while ((rssiSnr88 = getRSSI()) == rssiSnr11) {
             Thread.sleep(1000);
         }
@@ -112,24 +165,24 @@ public class WmediumdControlE2eTest extends BaseHostJUnit4Test {
     public void testWmediumdControlSetPosition() throws Exception {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        List<StationInfo> stationInfoList = runner.listStations();
+        List<StationInfo> stationInfoList = listStations();
         String stationMacAddress = getStationMacAddress(stationInfoList);
         String apMacAddress = getApMacAddress(stationInfoList);
         int rssiDefault = getRSSI();
         int rssiDistance1000, rssiDistance100, rssiDistance10;
 
-        runner.setPosition(apMacAddress, 0.0, 0.0);
-        runner.setPosition(stationMacAddress, 0.0, -1000.0);
+        setPosition(apMacAddress, 0.0, 0.0);
+        setPosition(stationMacAddress, 0.0, -1000.0);
         while ((rssiDistance1000 = getRSSI()) == rssiDefault) {
             Thread.sleep(1000);
         }
 
-        runner.setPosition(stationMacAddress, 0.0, 100.0);
+        setPosition(stationMacAddress, 0.0, 100.0);
         while ((rssiDistance100 = getRSSI()) == rssiDistance1000) {
             Thread.sleep(1000);
         }
 
-        runner.setPosition(stationMacAddress, -10.0, 0.0);
+        setPosition(stationMacAddress, -10.0, 0.0);
         while ((rssiDistance10 = getRSSI()) == rssiDistance100) {
             Thread.sleep(1000);
         }
