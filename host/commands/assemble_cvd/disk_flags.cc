@@ -863,7 +863,10 @@ class InitializeHwcomposerPmemImage : public SetupFeature {
 
   // SetupFeature
   std::string Name() const override { return "InitializeHwcomposerPmemImage"; }
-  bool Enabled() const override { return !instance_.protected_vm(); }
+  bool Enabled() const override {
+    return instance_.hwcomposer() != kHwComposerNone &&
+           !instance_.protected_vm();
+  }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }

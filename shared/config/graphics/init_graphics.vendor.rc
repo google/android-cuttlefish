@@ -1,0 +1,13 @@
+on early-init
+#    loglevel 8
+
+    setprop ro.sf.lcd_density ${ro.boot.lcd_density}
+    setprop ro.hardware.egl ${ro.boot.hardware.egl}
+    setprop debug.sf.vsync_reactor_ignore_present_fences true
+    setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
+    setprop ro.hardware.hwcomposer ${ro.boot.hardware.hwcomposer}
+    setprop ro.vendor.hwcomposer.display_finder_mode ${ro.boot.hardware.hwcomposer.display_finder_mode}
+    setprop ro.vendor.hwcomposer.mode ${ro.boot.hardware.hwcomposer.mode}
+    setprop ro.hardware.vulkan ${ro.boot.hardware.vulkan}
+    setprop ro.cpuvulkan.version ${ro.boot.cpuvulkan.version}
+    setprop ro.opengles.version ${ro.boot.opengles.version}
