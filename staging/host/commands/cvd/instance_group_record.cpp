@@ -22,11 +22,13 @@
 namespace cuttlefish {
 namespace instance_db {
 
-LocalInstanceGroup::LocalInstanceGroup(const std::string& home_dir,
+LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
+                                       const std::string& home_dir,
                                        const std::string& host_binaries_dir)
     : home_dir_{home_dir},
       host_binaries_dir_{host_binaries_dir},
-      internal_group_name_(GenInternalGroupName()) {}
+      internal_group_name_(GenInternalGroupName()),
+      group_name_(group_name) {}
 
 Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
   return cuttlefish::instance_db::GetCuttlefishConfigPath(HomeDir());

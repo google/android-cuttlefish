@@ -42,7 +42,8 @@ class InstanceDatabase {
   bool IsEmpty() const;
 
   // returns CF_ERR if the home_directory is already taken
-  Result<void> AddInstanceGroup(const std::string& home_dir,
+  Result<void> AddInstanceGroup(const std::string& group_name,
+                                const std::string& home_dir,
                                 const std::string& host_binaries_dir);
 
   Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id,
@@ -100,6 +101,8 @@ class InstanceDatabase {
   // actual Find implementations
   Result<Set<ConstRef<LocalInstanceGroup>>> FindGroupsByHome(
       const Value& home) const;
+  Result<Set<ConstRef<LocalInstanceGroup>>> FindGroupsByGroupName(
+      const Value& group_name) const;
   Result<Set<ConstRef<LocalInstance>>> FindInstancesById(const Value& id) const;
   Result<Set<ConstRef<LocalInstance>>> FindInstancesByInstanceName(
       const Value& instance_specific_name) const;
