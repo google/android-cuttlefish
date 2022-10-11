@@ -16,10 +16,12 @@
 
 package com.android.cuttlefish.tests;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.Assert;
+
 
 public class StationInfo {
     public String macAddress;
@@ -41,7 +43,10 @@ public class StationInfo {
         return matcher.find();
     }
 
-    public static StationInfo getStationInfo(String[] stationInfoLine) throws Exception {
-        return new StationInfo(stationInfoLine[0], Double.parseDouble(stationInfoLine[1]), Double.parseDouble(stationInfoLine[2]), Integer.parseInt(stationInfoLine[3]));
+    public static StationInfo getStationInfo(List<String> stationInfoLine) throws Exception {
+        return new StationInfo(stationInfoLine.get(0),
+                               Double.parseDouble(stationInfoLine.get(1)),
+                               Double.parseDouble(stationInfoLine.get(2)),
+                               Integer.parseInt(stationInfoLine.get(3)));
     }
 }
