@@ -44,9 +44,9 @@ class CvdCommandHandler : public CvdServerHandler {
   Result<void> Interrupt() override;
 
  private:
-  cvd::Status HandleCvdFleet(const RequestWithStdio& request,
-                             const std::vector<std::string>& args,
-                             const std::string& host_artifacts_path);
+  Result<cvd::Status> HandleCvdFleet(const RequestWithStdio& request,
+                                     const std::vector<std::string>& args,
+                                     const std::string& host_artifacts_path);
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;

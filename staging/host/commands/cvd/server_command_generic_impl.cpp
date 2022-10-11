@@ -67,8 +67,8 @@ Result<cvd::Response> CvdCommandHandler::Handle(
   }
 
   if (invocation_info.bin == kFleetBin) {
-    *response.mutable_status() = HandleCvdFleet(
-        request, invocation_info.args, invocation_info.host_artifacts_path);
+    *response.mutable_status() = CF_EXPECT(HandleCvdFleet(
+        request, invocation_info.args, invocation_info.host_artifacts_path));
     return response;
   }
 
@@ -109,7 +109,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
   return ResponseFromSiginfo(infop);
 }
 
-cvd::Status CvdCommandHandler::HandleCvdFleet(
+Result<cvd::Status> CvdCommandHandler::HandleCvdFleet(
     const RequestWithStdio& request, const std::vector<std::string>& args,
     const std::string& host_artifacts_path) {
   auto env_config = request.Message().command_request().env().find(
