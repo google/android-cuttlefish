@@ -62,6 +62,12 @@ cc_defaults {
         "libcuttlefish_web",
         "libgflags",
     ],
+    header_libs: [
+        "libgtest_prod_headers",
+    ],
+    export_header_lib_headers: [
+        "libgtest_prod_headers",
+    ],
     required: [
         "cvd_internal_host_bugreport",
         "cvd_internal_start",
