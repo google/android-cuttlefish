@@ -17,6 +17,7 @@
 #include "host/commands/cvd/instance_database.h"
 
 #include <algorithm>
+#include <sstream>
 
 #include <android-base/parseint.h>
 
@@ -42,19 +43,26 @@ InstanceDatabase::FindIterator(const LocalInstanceGroup& group) {
 void InstanceDatabase::Clear() { local_instance_groups_.clear(); }
 
 Result<void> InstanceDatabase::AddInstanceGroup(
-    const std::string& home_dir, const std::string& host_binaries_dir) {
+    const std::string& group_name, const std::string& home_dir,
+    const std::string& host_binaries_dir) {
+  CF_EXPECT(IsValidGroupName(group_name),
+            "GroupName " << group_name << " is ill-formed.");
   CF_EXPECT(EnsureDirectoryExists(home_dir),
             "HOME dir, " << home_dir << " does not exist");
   CF_EXPECT(PotentiallyHostBinariesDir(host_binaries_dir),
             "ANDROID_HOST_OUT, " << host_binaries_dir << " is not a tool dir");
-
-  Query query = {selector::kHomeField, home_dir};
-  auto instance_groups =
-      CF_EXPECT(Find<LocalInstanceGroup>(query, group_handlers_));
-  if (!instance_groups.empty()) {
-    return CF_ERR(home_dir << " is already taken");
+  std::vector<Query> queries = {{selector::kHomeField, home_dir},
+                                {selector::kGroupNameField, group_name}};
+  for (const auto& query : queries) {
+    auto instance_groups =
+        CF_EXPECT(Find<LocalInstanceGroup>(query, group_handlers_));
+    std::stringstream err_msg;
+    err_msg << query.field_name_ << " : " << query.field_value_
+            << " is already taken.";
+    CF_EXPECT(instance_groups.empty(), err_msg.str());
   }
-  auto new_group = new LocalInstanceGroup(home_dir, host_binaries_dir);
+  auto new_group =
+      new LocalInstanceGroup(group_name, home_dir, host_binaries_dir);
   CF_EXPECT(new_group != nullptr);
   local_instance_groups_.emplace_back(
       std::unique_ptr<LocalInstanceGroup>(new_group));
@@ -103,6 +111,17 @@ Result<Set<ConstRef<LocalInstanceGroup>>> InstanceDatabase::FindGroupsByHome(
       });
   return AtMostOne(subset,
                    GenerateTooManyInstancesErrorMsg(1, selector::kHomeField));
+}
+
+Result<Set<ConstRef<LocalInstanceGroup>>>
+InstanceDatabase::FindGroupsByGroupName(const std::string& group_name) const {
+  auto subset = CollectToSet<LocalInstanceGroup>(
+      local_instance_groups_,
+      [&group_name](const std::unique_ptr<LocalInstanceGroup>& group) {
+        return (group && group->GroupName() == group_name);
+      });
+  return AtMostOne(
+      subset, GenerateTooManyInstancesErrorMsg(1, selector::kGroupNameField));
 }
 
 Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
