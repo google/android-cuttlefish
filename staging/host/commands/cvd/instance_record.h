@@ -49,12 +49,13 @@ class LocalInstance {
   unsigned InstanceId() const;
   const std::string& PerInstanceName() const;
   std::string DeviceName() const;
+  const LocalInstanceGroup& ParentGroup() const;
 
  private:
-  LocalInstance(const LocalInstanceGroup& instance_group,
+  LocalInstance(const LocalInstanceGroup& parent_group,
                 const unsigned instance_id, const std::string& instance_name);
 
-  const LocalInstanceGroup& instance_group_;
+  const LocalInstanceGroup& parent_group_;
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
   std::string internal_group_name_;
