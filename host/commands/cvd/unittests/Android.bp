@@ -28,3 +28,15 @@ cc_test_host {
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_db_test",
+    srcs: [
+        "instance_database_test_helper.cpp",
+        "test_instance_database.cpp",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
