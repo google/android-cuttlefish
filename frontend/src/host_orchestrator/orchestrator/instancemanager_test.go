@@ -17,7 +17,6 @@ package orchestrator
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -68,459 +67,212 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	}
 }
 
-type testProcedureStage struct {
-	err error
+type testCVDDwnlder struct {
+	count int
 }
 
-func (s *testProcedureStage) Run() error {
-	return s.err
+func (d *testCVDDwnlder) Download(_ string, _ AndroidBuild) error {
+	d.count += 1
+	return nil
 }
 
-type testLaunchCVDProcedureBuilder struct {
-	err error
-}
-
-func (b *testLaunchCVDProcedureBuilder) Build(_ interface{}) Procedure {
-	return []ProcedureStage{
-		&testProcedureStage{
-			err: b.err,
-		},
+func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return buildTestCmd()
 	}
-}
-
-func TestCreateCVDLaunchCVDProcedureFails(t *testing.T) {
-	om := NewMapOM()
-	im := CVDToolInstanceManager{
-		OM:                        om,
-		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{err: errors.New("error")},
-	}
-	req := apiv1.CreateCVDRequest{
-		BuildInfo: &apiv1.BuildInfo{
-			BuildID: "1234",
-			Target:  "aosp_cf_x86_64_phone-userdebug",
-		},
-	}
-
-	op, _ := im.CreateCVD(req)
-
-	op, _ = om.Wait(op.Name, 1*time.Second)
-	if !op.Done {
-		t.Error("expected operation to be done")
-	}
-	if op.Result.Error.ErrorMsg != ErrMsgLaunchCVDFailed {
-		t.Errorf("expected <<%q>>, got %q", ErrMsgLaunchCVDFailed, op.Result.Error.ErrorMsg)
-	}
-}
-
-func TestCreateCVD(t *testing.T) {
-	om := NewMapOM()
-	im := CVDToolInstanceManager{
-		OM:                        om,
-		LaunchCVDProcedureBuilder: &testLaunchCVDProcedureBuilder{},
-	}
-	req := apiv1.CreateCVDRequest{
-		BuildInfo: &apiv1.BuildInfo{
-			BuildID: "1234",
-			Target:  "aosp_cf_x86_64_phone-userdebug",
-		},
-	}
-
-	op, _ := im.CreateCVD(req)
-
-	op, _ = om.Wait(op.Name, 1*time.Second)
-	if !op.Done {
-		t.Error("expected operation to be done")
-	}
-	if (op.Result != OperationResult{}) {
-		t.Errorf("expected empty result, got %+v", op.Result)
-	}
-}
-
-type testCounterProcedureStage struct {
-	count *int
-	err   error
-}
-
-func (s *testCounterProcedureStage) Run() error {
-	*s.count++
-	return s.err
-}
-
-func TestProcedureExecuteOneStage(t *testing.T) {
-	count := 0
-	p := Procedure{&testCounterProcedureStage{count: &count}}
-
-	err := p.Execute()
-
-	if err != nil {
-		t.Errorf("epected <<nil>> error, got %#v", err)
-	}
-	if count != 1 {
-		t.Errorf("epected <<1>> error, got %#v", count)
-	}
-}
-
-func TestProcedureExecuteThreeStages(t *testing.T) {
-	count := 0
-	p := Procedure{
-		&testCounterProcedureStage{count: &count},
-		&testCounterProcedureStage{count: &count},
-		&testCounterProcedureStage{count: &count},
-	}
-
-	err := p.Execute()
-
-	if err != nil {
-		t.Errorf("epected <<nil>> error, got %#v", err)
-	}
-	if count != 3 {
-		t.Errorf("epected <<3>> error, got %#v", count)
-	}
-}
-
-func TestProcedureExecuteInnerStageWithFails(t *testing.T) {
-	count := 0
-	expectedErr := errors.New("error")
-	p := Procedure{
-		&testCounterProcedureStage{count: &count},
-		&testCounterProcedureStage{count: &count, err: expectedErr},
-		&testCounterProcedureStage{count: &count},
-	}
-
-	err := p.Execute()
-
-	if !errors.Is(err, expectedErr) {
-		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
-	}
-	if count != 2 {
-		t.Errorf("epected <<2>> error, got %#v", count)
-	}
-}
-
-func TestLaunchCVDProcedureBuilder(t *testing.T) {
-	abURL := "http://ab.test"
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDBin:           "/bin/cvd",
-		ArtifactsRootDir: "/artifacts",
-		HomesRootDir:     "/homes",
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
+	r1 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r2 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "2", Target: "foo"}}
+
+	op1, _ := im.CreateCVD(r1)
+	op2, _ := im.CreateCVD(r2)
+
+	om.Wait(op1.Name, 1*time.Second)
+	om.Wait(op2.Name, 1*time.Second)
+
+	if cvdDwnlder.count == 0 {
+		t.Error("cvd was never downloaded")
 	}
-	req := apiv1.CreateCVDRequest{
-		BuildInfo: &apiv1.BuildInfo{BuildID: "256", Target: "waldo"},
-	}
-
-	t.Run("download cvd stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[0].(*StageDownloadCVD)
-
-		if s.CVDBin != paths.CVDBin {
-			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
-		}
-		if s.Build != cvdBinAB {
-			t.Errorf("expected <<%+v>>, got %+v", cvdBinAB, s.Build)
-		}
-		if s.Downloader == nil {
-			t.Error("expected not nil")
-		}
-	})
-
-	t.Run("create artifacts root directory stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[1].(*StageCreateDir)
-
-		if s.Dir != paths.ArtifactsRootDir {
-			t.Errorf("expected <<%q>>, got %q", paths.ArtifactsRootDir, s.Dir)
-		}
-	})
-
-	t.Run("fetch cvd artifacts stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[2].(*StageFetchCVD)
-
-		if s.CVDBin != paths.CVDBin {
-			t.Errorf("expected <<%q>>, got %q", paths.CVDBin, s.CVDBin)
-		}
-		if s.BuildInfo != *req.BuildInfo {
-			t.Errorf("expected <<%+v>>, got %+v", *req.BuildInfo, s.BuildInfo)
-		}
-		expectedOutDir := "/artifacts/256_waldo"
-		if s.OutDir != expectedOutDir {
-			t.Errorf("expected <<%q>>, got %q", expectedOutDir, s.OutDir)
-		}
-	})
-
-	t.Run("fetch cvd artifacts stages with same build info", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		pFirst := builder.Build(req)
-		pSecond := builder.Build(req)
-
-		first := pFirst[2].(*StageFetchCVD)
-		second := pSecond[2].(*StageFetchCVD)
-
-		if first != second {
-			t.Errorf("expected <<%+v>>, got %+v", first, second)
-		}
-	})
-
-	t.Run("create homes root directory stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[3].(*StageCreateDir)
-
-		if s.Dir != paths.HomesRootDir {
-			t.Errorf("expected <<%q>>, got %q", paths.HomesRootDir, s.Dir)
-		}
-	})
-
-	t.Run("create cvd home directory stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		p := builder.Build(req)
-
-		s := p[4].(*StageCreateDir)
-
-		expected := "/homes/cvd-1"
-		if s.Dir != expected {
-			t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
-		}
-	})
-
-	t.Run("create cvd home directory multiple times", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		for i := 0; i < 10; i++ {
-			p := builder.Build(req)
-
-			s := p[4].(*StageCreateDir)
-
-			expected := fmt.Sprintf("/homes/cvd-%d", i+1)
-			if s.Dir != expected {
-				t.Errorf("expected <<%q>>, got %q", expected, s.Dir)
-			}
-			if !s.FailIfExist {
-				t.Errorf("expected true")
-			}
-		}
-	})
-
-	t.Run("launch cvd stage", func(t *testing.T) {
-		builder := NewLaunchCVDProcedureBuilder(abURL, cvdBinAB, paths)
-		for i := 0; i < 10; i++ {
-			p := builder.Build(req)
-
-			s := p[5].(*StageLaunchCVD)
-
-			if s.CVDBin != paths.CVDBin {
-				t.Errorf("expected <<%q>>, got %+q", paths.CVDBin, s.CVDBin)
-			}
-			var expectedN uint32 = uint32(i + 1)
-			if s.InstanceNumber != expectedN {
-				t.Errorf("expected <<%d>>, got %d", expectedN, s.InstanceNumber)
-			}
-			expectedArtDir := "/artifacts/256_waldo"
-			if s.ArtifactsDir != expectedArtDir {
-				t.Errorf("expected <<%q>>, got %+q", expectedArtDir, s.ArtifactsDir)
-			}
-			expectedHomeDir := fmt.Sprintf("/homes/cvd-%d", expectedN)
-			if s.HomeDir != expectedHomeDir {
-				t.Errorf("expected <<%q>>, got %+q", expectedHomeDir, s.HomeDir)
-			}
-		}
-	})
-}
-
-func TestStageDownloadCVDDownloadFails(t *testing.T) {
-	cvdBin := os.TempDir() + "/cvd"
-	expectedErr := errors.New("error")
-	s := StageDownloadCVD{
-		CVDBin:     cvdBin,
-		Build:      AndroidBuild{ID: "1", Target: "xyzzy"},
-		Downloader: NewCVDDownloader(&AlwaysFailsArtifactDownloader{err: expectedErr}),
-	}
-
-	err := s.Run()
-
-	if !errors.Is(err, expectedErr) {
-		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
+	if cvdDwnlder.count > 1 {
+		t.Errorf("cvd was downloaded more than once, it was <<%d>> times", cvdDwnlder.count)
 	}
 }
 
-func TestStageDownloadCVD(t *testing.T) {
+func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	cvdBin := dir + "/cvd"
-	cvdBinContent := "foo"
-	ad := &FakeArtifactDownloader{
-		t:       t,
-		content: cvdBinContent,
-	}
-	s := StageDownloadCVD{
-		CVDBin:     cvdBin,
-		Build:      AndroidBuild{ID: "1", Target: "xyzzy"},
-		Downloader: NewCVDDownloader(ad),
-	}
-
-	err := s.Run()
-
-	if err != nil {
-		t.Errorf("expected <<nil>>, got %+v", err)
-	}
-	content, _ := ioutil.ReadFile(cvdBin)
-	actual := string(content)
-	if actual != cvdBinContent {
-		t.Errorf("expected <<%q>>, got %q", cvdBinContent, actual)
-	}
-}
-
-func TestStageFetchCVDSucceeds(t *testing.T) {
+	fetchCVDExecCounter := 0
 	execContext := func(name string, args ...string) *exec.Cmd {
-		return createFakeCmd(TestFakeCVDFetchMain, name, args, t)
+		if contains(args, "fetch") {
+			fetchCVDExecCounter += 1
+		}
+		return buildTestCmd()
 	}
-	s := &StageFetchCVD{
-		ExecContext: execContext,
-		CVDBin:      "/bin/foo",
-		BuildInfo:   apiv1.BuildInfo{BuildID: "256", Target: "bar"},
-		OutDir:      "/tmp/baz",
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
 	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	r1 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r2 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
 
-	err := s.Run()
+	op1, _ := im.CreateCVD(r1)
+	op2, _ := im.CreateCVD(r2)
 
-	if err != nil {
-		t.Errorf("expected <<nil>>, got %+v", err)
+	om.Wait(op1.Name, 1*time.Second)
+	om.Wait(op2.Name, 1*time.Second)
+
+	if fetchCVDExecCounter == 0 {
+		t.Error("`cvd fetch` was never executed")
+	}
+	if fetchCVDExecCounter > 1 {
+		t.Errorf("`cvd fetch` was downloaded more than once, it was <<%d>> times", fetchCVDExecCounter)
 	}
 }
 
-// NOTE: This test is not a regular unit tests. It simulates a fake `cvd fetch` execution.
-// It validates the environment variables and arguments `cvd fetch` should be called with.
-func TestFakeCVDFetchMain(t *testing.T) {
-	// Early exist if called as a regular unit test function.
-	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
-		return
-	}
-	startCVDServerExpectedArgs := []string{"sudo", "-u", "_cvd-executor",
-		envVarAndroidHostOut + "=", envVarHome + "=", "/bin/foo"}
-	if reflect.DeepEqual(os.Args[3:], startCVDServerExpectedArgs) {
-		return
-	}
-	expectedArgs := []string{
-		"sudo", "-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=",
-		"/bin/foo", "fetch", "--default_build=256/bar", "--directory=/tmp/baz",
-	}
-	if !reflect.DeepEqual(os.Args[3:], expectedArgs) {
-		panic("invalid arguments")
-	}
-}
-
-const envVarCuttlefishTestEnvVar = "CUTTLEFISH_TEST_ENV_VAR"
-
-func TestStageLaunchCVDSucceeds(t *testing.T) {
+func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	execContext := func(name string, args ...string) *exec.Cmd {
-		return createFakeCmd(TestFakeCVDStartMain, name, args, t)
+		return buildTestCmd()
 	}
-	s := &StageLaunchCVD{
-		ExecContext:    execContext,
-		CVDBin:         "/bin/foo",
-		InstanceNumber: 1,
-		ArtifactsDir:   "/tmp/bar",
-		HomeDir:        "/tmp/baz",
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
 	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im1 := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	op, _ := im1.CreateCVD(r)
+	om.Wait(op.Name, 1*time.Second)
+	// The second instance manager is created with the same im paths as the previous instance
+	// manager, this will lead to create an instance home dir that already exist.
+	im2 := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
 
-	err := s.Run()
+	op, _ = im2.CreateCVD(r)
 
-	if err != nil {
-		t.Errorf("expected <<nil>>, got %+v", err)
+	op, _ = om.Wait(op.Name, 1*time.Second)
+	if op.Result.Error.ErrorMsg == "" {
+		t.Error("expected error due instance home dir already existing")
 	}
 }
 
-// NOTE: This test is not a regular unit tests. It simulates a fake `cvd start` execution.
-// It validates the environment variables and arguments `cvd start` should be called with.
-func TestFakeCVDStartMain(t *testing.T) {
-	// Early exist if called as a regular unit test function.
-	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMainArg {
-		return
+func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return buildTestCmd()
 	}
-	startCVDServerExpectedArgs := []string{"sudo", "-u", "_cvd-executor",
-		envVarAndroidHostOut + "=", envVarHome + "=", "/bin/foo"}
-	if reflect.DeepEqual(os.Args[3:], startCVDServerExpectedArgs) {
-		return
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
 	}
-	expectedArgs := []string{
-		"sudo", "-u", "_cvd-executor", envVarAndroidHostOut + "=/tmp/bar", envVarHome + "=/tmp/baz",
-		"/bin/foo", "start", daemonArg, reportAnonymousUsageStatsArg,
-		"--base_instance_num=1", "--system_image_dir=/tmp/bar",
-	}
-	if !reflect.DeepEqual(os.Args[3:], expectedArgs) {
-		panic("invalid arguments")
-	}
-}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
 
-func TestStageCreateDir(t *testing.T) {
-	tmpDir := tempDir(t)
-	defer removeDir(t, tmpDir)
-	dir := tmpDir + "/foo"
-	s := StageCreateDir{Dir: dir}
+	op, _ := im.CreateCVD(r)
 
-	err := s.Run()
+	om.Wait(op.Name, 1*time.Second)
 
-	if err != nil {
-		t.Errorf("expected nil error, got %+v", err)
-	}
-	stats, _ := os.Stat(dir)
 	expected := "drwxrwxr--"
-	got := stats.Mode().String()
-	if got != expected {
-		t.Errorf("expected <<%q>, got %q", expected, got)
+	stats, _ := os.Stat(paths.ArtifactsRootDir)
+	if stats.Mode().String() != expected {
+		t.Errorf("expected <<%q>, got %q", expected, stats.Mode().String())
+	}
+	stats, _ = os.Stat(paths.HomesRootDir)
+	if stats.Mode().String() != expected {
+		t.Errorf("expected <<%q>, got %q", expected, stats.Mode().String())
 	}
 }
 
-func TestStageCreateDirAndDirectoryExists(t *testing.T) {
-	tmpDir := tempDir(t)
-	defer removeDir(t, tmpDir)
-	dir := tmpDir + "/foo"
-	s := StageCreateDir{Dir: dir}
-
-	err := s.Run()
-	err = s.Run()
-
-	if err != nil {
-		t.Errorf("expected nil error, got %+v", err)
+func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	var usedCmdName string
+	var usedCmdArgs []string
+	execContext := func(name string, args ...string) *exec.Cmd {
+		if contains(args, "fetch") {
+			usedCmdName = name
+			usedCmdArgs = args
+		}
+		return buildTestCmd()
 	}
-	stats, _ := os.Stat(dir)
-	expected := "drwxrwxr--"
-	got := stats.Mode().String()
-	if got != expected {
-		t.Errorf("expected <<%q>, got %q", expected, got)
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
+	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+
+	op, _ := im.CreateCVD(r)
+
+	om.Wait(op.Name, 1*time.Second)
+	if usedCmdName != "sudo" {
+		t.Errorf("expected 'sudo', got %q", usedCmdName)
+	}
+	expectedCmdArgs := []string{
+		"-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=", paths.CVDBin, "fetch",
+		"--default_build=1/foo", "--directory=" + paths.ArtifactsRootDir + "/1_foo",
+	}
+	if !reflect.DeepEqual(usedCmdArgs, expectedCmdArgs) {
+		t.Errorf("invalid args\nexpected: %+v\ngot:      %+v", expectedCmdArgs, usedCmdArgs)
 	}
 }
 
-func TestStageCreateDirAndDirectoryExistsFailIfExist(t *testing.T) {
-	tmpDir := tempDir(t)
-	defer removeDir(t, tmpDir)
-	dir := tmpDir + "/foo"
-	s := StageCreateDir{Dir: dir, FailIfExist: true}
-	if err := s.Run(); err != nil {
-		t.Fatal(err)
+func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	var usedCmdName string
+	var usedCmdArgs []string
+	execContext := func(name string, args ...string) *exec.Cmd {
+		if contains(args, "start") {
+			usedCmdName = name
+			usedCmdArgs = args
+		}
+		return buildTestCmd()
 	}
-
-	err := s.Run()
-
-	if !os.IsExist(err) {
-		t.Errorf("expected <<%+v>>, got: <%+v>", os.ErrExist, err)
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
 	}
-}
+	om := NewMapOM()
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
+	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
 
-func TestStageCreateDirInvalidDir(t *testing.T) {
-	s := StageCreateDir{Dir: ""}
+	op, _ := im.CreateCVD(r)
 
-	err := s.Run().(*os.PathError)
-
-	if err.Op != "mkdir" {
-		t.Errorf("expected <<%q>, got %q", "mkdir", err.Op)
+	om.Wait(op.Name, 1*time.Second)
+	if usedCmdName != "sudo" {
+		t.Errorf("expected 'sudo', got %q", usedCmdName)
+	}
+	artifactsDir := paths.ArtifactsRootDir + "/1_foo"
+	homeDir := paths.HomesRootDir + "/cvd-1"
+	expectedCmdArgs := []string{
+		"-u", "_cvd-executor", envVarAndroidHostOut + "=" + artifactsDir, envVarHome + "=" + homeDir,
+		paths.CVDBin, "start", daemonArg, reportAnonymousUsageStatsArg,
+		"--base_instance_num=1", "--system_image_dir=" + artifactsDir,
+	}
+	if !reflect.DeepEqual(usedCmdArgs, expectedCmdArgs) {
+		t.Errorf("invalid args\nexpected: %+v\ngot:      %+v", expectedCmdArgs, usedCmdArgs)
 	}
 }
 
@@ -599,24 +351,6 @@ func TestCVDDownloaderDownload0750FileAccessIsSet(t *testing.T) {
 	var expected os.FileMode = 0750
 	if stats.Mode() != expected {
 		t.Errorf("expected <<%+v>>, got %+v", expected, stats.Mode())
-	}
-}
-
-func TestCVDDownloaderDownloadSettingFileAccessFails(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	filename := dir + "/cvd"
-	ad := &FakeArtifactDownloader{t, "foo"}
-	cd := NewCVDDownloader(ad)
-	expectedErr := errors.New("error")
-	cd.osChmod = func(_ string, _ os.FileMode) error {
-		return expectedErr
-	}
-
-	err := cd.Download(filename, AndroidBuild{ID: "1", Target: "xyzzy"})
-
-	if !errors.Is(err, expectedErr) {
-		t.Errorf("expected <<%+v>>, got %+v", expectedErr, err)
 	}
 }
 
@@ -760,21 +494,13 @@ func removeDir(t *testing.T, name string) {
 
 type fakeMainFunc func(*testing.T)
 
-const executedAsFakeMainArg = "executed_as_fake_main"
+// NOTE: This test is not a regular unit tests. It simulates a fake binary execution.
+func TestFakeBinaryMain(t *testing.T) {}
 
-// Creates a new exec.Cmd, which will call the `TestMockGoTestCmdHelperFunction`
-// function through the execution of the `go test` binary using the parameter `--test.run`.
-func createFakeCmd(fn fakeMainFunc, name string, args []string, t *testing.T) *exec.Cmd {
-	cs := []string{"--test.run=" + funcName(fn), executedAsFakeMainArg}
-	verifyCmd := exec.Command(os.Args[0], cs...)
-	err := verifyCmd.Run()
-	if err == nil {
-		// Makes sure the test function used as `fakeMainFunc` is picked by `go test`, otherwise the
-		// execution will always succeed as no test was actually ran.
-		t.Fatalf("execution of %s with no arguments or env variables set must fail", funcName(fn))
-	}
-	cs = append(cs, name)
-	cs = append(cs, args...)
+// Creates a new exec.Cmd, which will call the `TestFakeBinaryMain` function through the execution
+// of the `go test` binary using the parameter `--test.run`.
+func buildTestCmd() *exec.Cmd {
+	cs := []string{"--test.run=" + funcName(TestFakeBinaryMain)}
 	cmd := exec.Command(os.Args[0], cs...)
 	return cmd
 }
@@ -782,4 +508,13 @@ func createFakeCmd(fn fakeMainFunc, name string, args []string, t *testing.T) *e
 func funcName(fn fakeMainFunc) string {
 	name := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
 	return name[strings.LastIndex(name, ".")+1:]
+}
+
+func contains(values []string, t string) bool {
+	for _, v := range values {
+		if v == t {
+			return true
+		}
+	}
+	return false
 }
