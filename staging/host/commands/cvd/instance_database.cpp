@@ -26,6 +26,10 @@ InstanceDatabase::InstanceDatabase() {
   group_handlers_[selector::kHomeField] = [this](const Value& field_value) {
     return FindGroupsByHome(field_value);
   };
+  group_handlers_[selector::kGroupNameField] =
+      [this](const Value& field_value) {
+        return FindGroupsByGroupName(field_value);
+      };
   instance_handlers_[selector::kInstanceIdField] =
       [this](const Value& field_value) {
         return FindInstancesById(field_value);
