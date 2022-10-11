@@ -21,7 +21,7 @@
 
 #include <api/media_stream_interface.h>
 
-#include "host/frontend/webrtc/lib/audio_sink.h"
+#include "host/frontend/webrtc/libdevice/audio_sink.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

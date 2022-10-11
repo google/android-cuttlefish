@@ -21,8 +21,8 @@
 #include <thread>
 #include <vector>
 
-#include "host/frontend/webrtc/lib/audio_sink.h"
-#include "host/frontend/webrtc/lib/audio_source.h"
+#include "host/frontend/webrtc/libdevice/audio_sink.h"
+#include "host/frontend/webrtc/libdevice/audio_source.h"
 #include "host/libs/audio_connector/server.h"
 
 namespace cuttlefish {
