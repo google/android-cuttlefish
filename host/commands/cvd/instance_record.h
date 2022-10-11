@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <functional>
 #include <string>
 
 #include "common/libs/utils/result.h"
@@ -24,23 +23,17 @@
 namespace cuttlefish {
 namespace instance_db {
 
+class LocalInstanceGroup;
+
 /**
  * TODO(kwstephenkim): add more methods, fields, and abstract out Instance
  *
  * Needs design changes to support both Remote and Local Instances
  */
 class LocalInstance {
- public:
-  LocalInstance(const unsigned instance_id,
-                const std::string& internal_group_name,
-                const std::string& group_name,
-                const std::string& instance_name);
-  LocalInstance(const LocalInstance&) = default;
-  LocalInstance(LocalInstance&&) = default;
-  LocalInstance& operator=(const LocalInstance&) = default;
-  LocalInstance& operator=(LocalInstance&&) = default;
-  bool operator==(const LocalInstance& target) const { return Compare(target); }
+  friend class LocalInstanceGroup;
 
+ public:
   /* names:
    *
    * Many components in Cuttlefish traditionally expect the name to be "cvd-N,"
@@ -58,14 +51,10 @@ class LocalInstance {
   std::string DeviceName() const;
 
  private:
-  bool Compare(const LocalInstance& target) const {
-    // list all fields here
-    return (instance_id_ == target.instance_id_) &&
-           (internal_name_ == target.internal_name_) &&
-           (internal_group_name_ == target.internal_group_name_) &&
-           (group_name_ == target.group_name_) &&
-           (per_instance_name_ == target.per_instance_name_);
-  }
+  LocalInstance(const LocalInstanceGroup& instance_group,
+                const unsigned instance_id, const std::string& instance_name);
+
+  const LocalInstanceGroup& instance_group_;
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
   std::string internal_group_name_;
@@ -81,11 +70,3 @@ class LocalInstance {
 
 }  // namespace instance_db
 }  // namespace cuttlefish
-
-template <>
-struct std::hash<cuttlefish::instance_db::LocalInstance> {
-  using LocalInstance = cuttlefish::instance_db::LocalInstance;
-  std::size_t operator()(const LocalInstance& instance) const noexcept {
-    return std::hash<int>()(instance.InstanceId());
-  }
-};
