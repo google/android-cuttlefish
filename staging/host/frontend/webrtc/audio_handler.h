@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "host/frontend/webrtc/libdevice/audio_sink.h"
-#include "host/frontend/webrtc/libdevice/audio_source.h"
+#include "host/frontend/webrtc/libcommon/audio_source.h"
 #include "host/libs/audio_connector/server.h"
 
 namespace cuttlefish {
