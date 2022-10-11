@@ -19,7 +19,7 @@
 #include <functional>
 
 namespace cuttlefish {
-namespace selector {
+namespace instance_db {
 
 class LocalInstanceGroup;
 class LocalInstance;
@@ -39,7 +39,6 @@ class ConstRef {
 
   ConstRef& operator=(const ConstRef& other) {
     inner_wrapper_ = other.inner_wrapper_;
-    return *this;
   }
 
   operator const T&() const noexcept { return inner_wrapper_.get(); }
@@ -67,7 +66,7 @@ ConstRef<T> Cref(const T& t) noexcept {
   return ConstRef<T>(t);
 }
 
-}  // namespace selector
+}  // namespace instance_db
 }  // namespace cuttlefish
 
 /**
@@ -76,9 +75,9 @@ ConstRef<T> Cref(const T& t) noexcept {
  * on LocalInstance(Group) object per a given cuttlefish instance (group).
  */
 template <typename T>
-struct std::hash<cuttlefish::selector::ConstRef<T>> {
+struct std::hash<cuttlefish::instance_db::ConstRef<T>> {
   std::size_t operator()(
-      const cuttlefish::selector::ConstRef<T>& ref) const noexcept {
+      const cuttlefish::instance_db::ConstRef<T>& ref) const noexcept {
     const auto ptr = std::addressof(ref.Get());
     return std::hash<const T*>()(ptr);
   }

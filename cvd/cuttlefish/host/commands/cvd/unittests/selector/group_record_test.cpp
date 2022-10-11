@@ -16,96 +16,93 @@
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "host/commands/cvd/instance_database_utils.h"
 #include "host/commands/cvd/instance_group_record.h"
+#include "host/commands/cvd/instance_record.h"
 
-using LocalInstance = cuttlefish::instance_db::LocalInstance;
-using LocalInstanceGroup = cuttlefish::instance_db::LocalInstanceGroup;
+namespace cuttlefish {
+namespace instance_db {
 
-namespace {
+static std::string HomeDir() { return "/home/user"; }
 
-const std::string TestHome() { return cuttlefish::StringFromEnv("HOME", ""); }
+static std::string TestBinDir() { return "/opt/android11/bin"; }
 
-const std::string TestBinDir() {
-  return cuttlefish::StringFromEnv("ANDROID_HOST_OUT", ".");
-}
+class CvdInstanceGroupUnitTest : public testing::Test {
+ protected:
+  CvdInstanceGroupUnitTest() : group_(HomeDir(), TestBinDir()) {}
+  LocalInstanceGroup& Get() { return group_; }
+  LocalInstanceGroup group_;
+};
 
-LocalInstanceGroup Get(const std::string& home_dir,
-                       const std::string& host_binaries_dir) {
-  LocalInstanceGroup group(home_dir, host_binaries_dir);
-  return group;
-}
+// CvdInstanceGroupUnitTest + add 4 instances
+class CvdInstanceGroupSearchUnitTest : public testing::Test {
+ protected:
+  CvdInstanceGroupSearchUnitTest() : group_(HomeDir(), TestBinDir()) {
+    is_setup_ =
+        (Get().AddInstance(1, "tv_instance").ok() &&
+         Get().AddInstance(2, "2").ok() && Get().AddInstance(3, "phone").ok() &&
+         Get().AddInstance(7, "tv_instance").ok());
+    is_setup_ = is_setup_ && (Get().Instances().size() == 4);
+  }
+  LocalInstanceGroup& Get() { return group_; }
+  bool IsSetup() const { return is_setup_; }
 
-LocalInstanceGroup Get() {
-  const std::string home = TestHome();
-  const std::string host_binaries_dir = TestBinDir();
-  return Get(home, host_binaries_dir);
-}
+ private:
+  bool is_setup_;
+  LocalInstanceGroup group_;
+};
 
-}  // namespace
-
-TEST(CvdInstanceGroupUnitTest, OperatorEQ) {
-  auto group = Get();
-  ASSERT_EQ(group, Get());
-  ASSERT_FALSE(group == Get(TestHome(), "/tmp/host_bin/placeholder"));
-  ASSERT_FALSE(group == Get("/home/placeholder", TestBinDir()));
-  ASSERT_FALSE(group == Get("/home/placeholder", "/tmp/host_bin/placeholder"));
-}
-
-TEST(CvdInstanceGroupUnitTest, Fields) {
-  auto group = Get();
+TEST_F(CvdInstanceGroupUnitTest, Fields) {
+  auto& group = Get();
   ASSERT_EQ(group.InternalGroupName(), "cvd");
-  ASSERT_EQ(group.HomeDir(), TestHome());
+  ASSERT_EQ(group.GroupName(), "cvd");
+  ASSERT_EQ(group.HomeDir(), HomeDir());
   ASSERT_EQ(group.HostBinariesDir(), TestBinDir());
-  std::string home_dir;
-  android::base::Realpath(TestHome(), &home_dir);
-  auto config_path_result = group.GetCuttlefishConfigPath();
-  if (config_path_result.ok()) {
-    ASSERT_EQ(*config_path_result,
-              home_dir + "/cuttlefish_assembly/cuttlefish_config.json");
+}
+
+TEST_F(CvdInstanceGroupUnitTest, AddInstances) {
+  auto& group = Get();
+
+  ASSERT_TRUE(group.AddInstance(1, "tv_instance").ok());
+  ASSERT_TRUE(group.AddInstance(2, "2").ok());
+  ASSERT_TRUE(group.AddInstance(3, "phone").ok());
+  ASSERT_EQ(group.Instances().size(), 3);
+}
+
+TEST_F(CvdInstanceGroupSearchUnitTest, SearchById) {
+  auto& group = Get();
+  if (!IsSetup()) {
+    /*
+     * Here's why we skip the test rather than see it as a failure.
+     *
+     * 1. The test is specifically designed for searcy-by-id operations.
+     * 2. Adding instance to a group is tested in AddInstances test designed
+     *    specifically for it. It's a failure there but not here.
+     */
+    GTEST_SKIP() << "Failed to add instances to the group.";
+  }
+  std::vector<unsigned> valid_ids{1, 2, 7};
+  std::vector<unsigned> invalid_ids{20, 0, 5};
+
+  // valid search
+  for (auto const& valid_id : valid_ids) {
+    auto result = group.FindById(valid_id);
+    ASSERT_TRUE(result.ok());
+    auto set = *result;
+    ASSERT_EQ(set.size(), 1);
+    const LocalInstance& instance = *set.cbegin();
+    ASSERT_EQ(instance.InstanceId(), valid_id);
+  }
+
+  // invalid search
+  for (auto const& invalid_id : invalid_ids) {
+    auto result = group.FindById(invalid_id);
+    // it's okay not to be found
+    ASSERT_TRUE(result.ok());
+    ASSERT_TRUE(result->empty());
   }
 }
 
-TEST(CvdInstanceGroupUnitTest, Instances) {
-  auto group = Get();
-  ASSERT_FALSE(group.HasInstance(1));
-  group.AddInstance(1, "tv_instance");
-  ASSERT_TRUE(group.HasInstance(1));
-  std::vector<int> more_instances{2, 3, 4};
-  for (auto const i : more_instances) {
-    group.AddInstance(i, std::to_string(i));
-  }
-  std::vector<int> instances{more_instances};
-  instances.emplace_back(1);
-  for (auto const i : more_instances) {
-    ASSERT_TRUE(group.HasInstance(i));
-    auto result = group.FindById(i);
-    ASSERT_TRUE(result.ok());
-    cuttlefish::instance_db::Set<LocalInstance> set = *result;
-    ASSERT_TRUE(cuttlefish::instance_db::AtMostOne(set, "").ok());
-  }
-  // correct keys
-  std::vector<std::string> instance_name_keys = {"tv_instance", "2", "3", "4"};
-  for (const auto& key : instance_name_keys) {
-    auto result = group.FindByInstanceName(key);
-    ASSERT_TRUE(result.ok());
-    auto found_instances = *result;
-    const auto& instance = *found_instances.cbegin();
-    ASSERT_EQ(instance.PerInstanceName(), key);
-    ASSERT_EQ(instance.DeviceName(), group.InternalGroupName() + "-" + key);
-  }
-
-  // wrong keys
-  instance_name_keys = std::vector<std::string>{"phone-instance", "6", ""};
-  for (const auto& key : instance_name_keys) {
-    auto result = group.FindByInstanceName(key);
-    ASSERT_TRUE(result.ok());
-    auto subset = *result;
-    ASSERT_TRUE(subset.empty());
-  }
-}
+}  // namespace instance_db
+}  // namespace cuttlefish
