@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libdevice/vp8only_encoder_factory.h"
+#include "host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

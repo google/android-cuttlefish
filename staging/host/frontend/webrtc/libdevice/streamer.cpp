@@ -32,13 +32,15 @@
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
-#include "host/frontend/webrtc/libdevice/audio_device.h"
+#include "host/frontend/webrtc/libcommon/audio_device.h"
+#include "host/frontend/webrtc/libcommon/peer_connection_utils.h"
+#include "host/frontend/webrtc/libcommon/port_range_socket_factory.h"
+#include "host/frontend/webrtc/libcommon/signaling.h"
+#include "host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
 #include "host/frontend/webrtc/libdevice/audio_track_source_impl.h"
 #include "host/frontend/webrtc/libdevice/camera_streamer.h"
 #include "host/frontend/webrtc/libdevice/client_handler.h"
-#include "host/frontend/webrtc/libdevice/port_range_socket_factory.h"
 #include "host/frontend/webrtc/libdevice/video_track_source_impl.h"
-#include "host/frontend/webrtc/libdevice/vp8only_encoder_factory.h"
 #include "host/frontend/webrtc_operator/constants/signaling_constants.h"
 
 namespace cuttlefish {
@@ -73,20 +75,6 @@ bool ParseMessage(const uint8_t* data, size_t length, Json::Value* msg_out) {
   std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
   std::string errorMessage;
   return json_reader->parse(str, str + length, msg_out, &errorMessage);
-}
-
-std::unique_ptr<rtc::Thread> CreateAndStartThread(const std::string& name) {
-  auto thread = rtc::Thread::CreateWithSocketServer();
-  if (!thread) {
-    LOG(ERROR) << "Failed to create " << name << " thread";
-    return nullptr;
-  }
-  thread->SetName(name, nullptr);
-  if (!thread->Start()) {
-    LOG(ERROR) << "Failed to start " << name << " thread";
-    return nullptr;
-  }
-  return thread;
 }
 
 struct DisplayDescriptor {
@@ -200,38 +188,40 @@ std::unique_ptr<Streamer> Streamer::Create(
   impl->config_ = cfg;
   impl->connection_observer_factory_ = connection_observer_factory;
 
-  impl->network_thread_ = CreateAndStartThread("network-thread");
-  impl->worker_thread_ = CreateAndStartThread("work-thread");
-  impl->signal_thread_ = CreateAndStartThread("signal-thread");
-  if (!impl->network_thread_ || !impl->worker_thread_ ||
-      !impl->signal_thread_) {
+  auto network_thread_result = CreateAndStartThread("network-thread");
+  if (!network_thread_result.ok()) {
+    LOG(ERROR) << network_thread_result.error().Trace();
     return nullptr;
   }
+  impl->network_thread_ = std::move(*network_thread_result);
+
+  auto worker_thread_result = CreateAndStartThread("worker-thread");
+  if (!worker_thread_result.ok()) {
+    LOG(ERROR) << worker_thread_result.error().Trace();
+    return nullptr;
+  }
+  impl->worker_thread_ = std::move(*worker_thread_result);
+
+  auto signal_thread_result = CreateAndStartThread("signal-thread");
+  if (!signal_thread_result.ok()) {
+    LOG(ERROR) << signal_thread_result.error().Trace();
+    return nullptr;
+  }
+  impl->signal_thread_ = std::move(*signal_thread_result);
 
   impl->audio_device_module_ = std::make_shared<AudioDeviceModuleWrapper>(
       rtc::scoped_refptr<CfAudioDeviceModule>(
           new rtc::RefCountedObject<CfAudioDeviceModule>()));
 
-  impl->peer_connection_factory_ = webrtc::CreatePeerConnectionFactory(
+  auto result = CreatePeerConnectionFactory(
       impl->network_thread_.get(), impl->worker_thread_.get(),
-      impl->signal_thread_.get(), impl->audio_device_module_->device_module(),
-      webrtc::CreateBuiltinAudioEncoderFactory(),
-      webrtc::CreateBuiltinAudioDecoderFactory(),
-      std::make_unique<VP8OnlyEncoderFactory>(
-          webrtc::CreateBuiltinVideoEncoderFactory()),
-      webrtc::CreateBuiltinVideoDecoderFactory(), nullptr /* audio_mixer */,
-      nullptr /* audio_processing */);
+      impl->signal_thread_.get(), impl->audio_device_module_->device_module());
 
-  if (!impl->peer_connection_factory_) {
-    LOG(ERROR) << "Failed to create peer connection factory";
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
     return nullptr;
   }
-
-  webrtc::PeerConnectionFactoryInterface::Options options;
-  // By default the loopback network is ignored, but generating candidates for
-  // it is useful when using TCP port forwarding.
-  options.network_ignore_mask = 0;
-  impl->peer_connection_factory_->SetOptions(options);
+  impl->peer_connection_factory_ = *result;
 
   return std::unique_ptr<Streamer>(new Streamer(std::move(impl)));
 }
@@ -481,8 +471,12 @@ void Streamer::Impl::OnError(const std::string& error) {
 void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
-  operator_config_.servers =
-      ClientHandler::ParseIceServersMessage(server_message);
+  auto result = ParseIceServersMessage(server_message);
+  if (!result.ok()) {
+    LOG(WARNING) << "Failed to parse ice servers message from server: "
+                 << result.error().Trace();
+  }
+  operator_config_.servers = *result;
 }
 
 void Streamer::Impl::HandleClientMessage(const Json::Value& server_message) {
@@ -610,26 +604,22 @@ rtc::scoped_refptr<webrtc::PeerConnectionInterface> Streamer::Impl::Build(
     webrtc::PeerConnectionObserver* observer,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>&
         per_connection_servers) {
-  webrtc::PeerConnectionInterface::RTCConfiguration config;
-  config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
-  config.enable_dtls_srtp = true;
-  config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
-                        operator_config_.servers.end());
-  config.servers.insert(config.servers.end(), per_connection_servers.begin(),
-                        per_connection_servers.end());
   webrtc::PeerConnectionDependencies dependencies(observer);
   // PortRangeSocketFactory's super class' constructor needs to be called on the
   // network thread or have it as a parameter
   dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
       network_thread_.get(), config_.udp_port_range, config_.tcp_port_range));
-  auto peer_connection = peer_connection_factory_->CreatePeerConnection(
-      config, std::move(dependencies));
+  auto servers = operator_config_.servers;
+  servers.insert(servers.end(), per_connection_servers.begin(),
+                 per_connection_servers.end());
+  auto peer_connection_res = CreatePeerConnection(
+      peer_connection_factory_, std::move(dependencies), servers);
 
-  if (!peer_connection) {
-    LOG(ERROR) << "Failed to create peer connection";
+  if (!peer_connection_res.ok()) {
+    LOG(ERROR) << peer_connection_res.error().Trace();
     return nullptr;
   }
-  return peer_connection;
+  return *peer_connection_res;
 }
 
 void Streamer::Impl::SendMessageToClient(int client_id,

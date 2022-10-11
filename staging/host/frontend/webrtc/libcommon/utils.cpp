@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libdevice/utils.h"
+#include "host/frontend/webrtc/libcommon/utils.h"
 
 #include <map>
 
@@ -25,14 +25,12 @@ namespace webrtc_streaming {
 
 namespace {
 
-std::string ValidateField(const Json::Value &obj, const std::string &type,
-                          const std::string &field_name,
-                          const Json::ValueType &field_type, bool required) {
-  if (!obj.isObject()) {
-    return "Expected object with name-value pairs";
-  }
+Result<void> ValidateField(const Json::Value &obj, const std::string &type,
+                           const std::string &field_name,
+                           const Json::ValueType &field_type, bool required) {
+  CF_EXPECT(obj.isObject(), "Expected object with name-value pairs");
   if (!obj.isMember(field_name) && !required) {
-    return "";
+    return {};
   }
   if (!(obj.isMember(field_name) &&
         obj[field_name].isConvertibleTo(field_type))) {
@@ -44,30 +42,24 @@ std::string ValidateField(const Json::Value &obj, const std::string &type,
       error_msg += " in message of type '" + type + "'";
     }
     error_msg += ".";
-    return error_msg;
+    return CF_ERR(error_msg);
   }
-  return "";
+  return {};
 }
 
 }  // namespace
 
-ValidationResult ValidationResult::ValidateJsonObject(
+Result<void> ValidateJsonObject(
     const Json::Value &obj, const std::string &type,
     const std::map<std::string, Json::ValueType> &required_fields,
     const std::map<std::string, Json::ValueType> &optional_fields) {
   for (const auto &field_spec : required_fields) {
-    auto result =
-        ValidateField(obj, type, field_spec.first, field_spec.second, true);
-    if (!result.empty()) {
-      return {result};
-    }
+    CF_EXPECT(
+        ValidateField(obj, type, field_spec.first, field_spec.second, true));
   }
   for (const auto &field_spec : optional_fields) {
-    auto result =
-        ValidateField(obj, type, field_spec.first, field_spec.second, false);
-    if (!result.empty()) {
-      return {result};
-    }
+    CF_EXPECT(
+        ValidateField(obj, type, field_spec.first, field_spec.second, false));
   }
   return {};
 }
