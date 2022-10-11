@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,16 +18,14 @@ package {
 }
 
 cc_library_static {
-    name: "libcuttlefish_webrtc_device",
+    name: "libcuttlefish_webrtc_common",
     srcs: [
-        "audio_track_source_impl.cpp",
-        "camera_streamer.cpp",
-        "client_handler.cpp",
-        "keyboard.cpp",
-        "local_recorder.cpp",
-        "streamer.cpp",
-        "video_track_source_impl.cpp",
-        "server_connection.cpp",
+        "audio_device.cpp",
+        "peer_connection_utils.cpp",
+        "port_range_socket_factory.cpp",
+        "signaling.cpp",
+        "vp8only_encoder_factory.cpp",
+        "utils.cpp",
     ],
     cflags: [
         // libwebrtc headers need this
@@ -37,42 +35,16 @@ cc_library_static {
         "-DWEBRTC_LINUX",
     ],
     header_libs: [
-        "webrtc_signaling_headers",
         "libwebrtc_absl_headers",
     ],
     static_libs: [
-        "libsrtp2",
-        "libcuttlefish_host_config",
-        "libcuttlefish_screen_connector",
-        "libcuttlefish_wayland_server",
-        "libcuttlefish_webrtc_common",
-        "libgflags",
-        "libdrm",
-        "libffi",
-        "libwayland_crosvm_gpu_display_extension_server_protocols",
-        "libwayland_extension_server_protocols",
-        "libwayland_server",
-        "libwebsockets",
-        "libcap",
-        "libcuttlefish_utils",
         "libwebrtc",
         "libwebrtc_absl_base",
         "libwebrtc_absl_types",
-        "libcvd_gnss_grpc_proxy",
-        "liblocation",
     ],
     shared_libs: [
         "libbase",
-        "libcn-cbor",
-        "libcuttlefish_fs",
-        "libfruit",
         "libjsoncpp",
-        "libssl",
-        "libwebm_mkvmuxer",
-        "libprotobuf-cpp-full",
-        "libgrpc++_unsecure",
-        "libxml2",
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
-

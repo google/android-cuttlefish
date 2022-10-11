@@ -27,8 +27,9 @@
 
 #include <android-base/logging.h>
 
+#include "host/frontend/webrtc/libcommon/signaling.h"
+#include "host/frontend/webrtc/libcommon/utils.h"
 #include "host/frontend/webrtc/libdevice/keyboard.h"
-#include "host/frontend/webrtc/libdevice/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -311,13 +312,13 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   auto event_type = evt["type"].asString();
   if (event_type == "mouse") {
     auto result =
-        ValidationResult::ValidateJsonObject(evt, "mouse",
+        ValidateJsonObject(evt, "mouse",
                            {{"down", Json::ValueType::intValue},
                             {"x", Json::ValueType::intValue},
                             {"y", Json::ValueType::intValue},
                             {"display_label", Json::ValueType::stringValue}});
     if (!result.ok()) {
-      LOG(ERROR) << result.error();
+      LOG(ERROR) << result.error().Trace();
       return;
     }
     auto label = evt["display_label"].asString();
@@ -328,7 +329,7 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     observer_->OnTouchEvent(label, x, y, down);
   } else if (event_type == "multi-touch") {
     auto result =
-        ValidationResult::ValidateJsonObject(evt, "multi-touch",
+        ValidateJsonObject(evt, "multi-touch",
                            {{"id", Json::ValueType::arrayValue},
                             {"down", Json::ValueType::intValue},
                             {"x", Json::ValueType::arrayValue},
@@ -336,7 +337,7 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
                             {"slot", Json::ValueType::arrayValue},
                             {"display_label", Json::ValueType::stringValue}});
     if (!result.ok()) {
-      LOG(ERROR) << result.error();
+      LOG(ERROR) << result.error().Trace();
       return;
     }
 
@@ -351,11 +352,11 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     observer_->OnMultiTouchEvent(label, idArr, slotArr, xArr, yArr, down, size);
   } else if (event_type == "keyboard") {
     auto result =
-        ValidationResult::ValidateJsonObject(evt, "keyboard",
+        ValidateJsonObject(evt, "keyboard",
                            {{"event_type", Json::ValueType::stringValue},
                             {"keycode", Json::ValueType::stringValue}});
     if (!result.ok()) {
-      LOG(ERROR) << result.error();
+      LOG(ERROR) << result.error().Trace();
       return;
     }
     auto down = evt["event_type"].asString() == std::string("keydown");
@@ -435,7 +436,7 @@ void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     return;
   }
 
-  auto result = ValidationResult::ValidateJsonObject(
+  auto result = ValidateJsonObject(
       evt, "command",
       /*required_fields=*/{{"command", Json::ValueType::stringValue}},
       /*optional_fields=*/
@@ -445,7 +446,7 @@ void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
           {"hinge_angle_value", Json::ValueType::intValue},
       });
   if (!result.ok()) {
-    LOG(ERROR) << result.error();
+    LOG(ERROR) << result.error().Trace();
     return;
   }
   auto command = evt["command"].asString();
@@ -669,45 +670,6 @@ void CameraChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
                          msg_data + msg.size());
 }
 
-std::vector<webrtc::PeerConnectionInterface::IceServer>
-ClientHandler::ParseIceServersMessage(const Json::Value &message) {
-  std::vector<webrtc::PeerConnectionInterface::IceServer> ret;
-  if (!message.isMember("ice_servers") || !message["ice_servers"].isArray()) {
-    // Log as verbose since the ice_servers field is optional in some messages
-    LOG(VERBOSE) << "ice_servers field not present in json object or not an array";
-    return ret;
-  }
-  auto& servers = message["ice_servers"];
-  for (const auto& server: servers) {
-    webrtc::PeerConnectionInterface::IceServer ice_server;
-    if (!server.isMember("urls") || !server["urls"].isArray()) {
-      // The urls field is required
-      LOG(WARNING)
-          << "ICE server specification missing urls field or not an array: "
-          << server.toStyledString();
-      continue;
-    }
-    auto urls = server["urls"];
-    for (int url_idx = 0; url_idx < urls.size(); url_idx++) {
-      auto url = urls[url_idx];
-      if (!url.isString()) {
-        LOG(WARNING) << "Non string 'urls' field in ice server: "
-                     << url.toStyledString();
-        continue;
-      }
-      ice_server.urls.push_back(url.asString());
-    }
-    if (server.isMember("credential") && server["credential"].isString()) {
-      ice_server.password = server["credential"].asString();
-    }
-    if (server.isMember("username") && server["username"].isString()) {
-      ice_server.username = server["username"].asString();
-    }
-    ret.push_back(ice_server);
-  }
-  return ret;
-}
-
 std::shared_ptr<ClientHandler> ClientHandler::Create(
     int client_id, std::shared_ptr<ConnectionObserver> observer,
     PeerConnectionBuilder &connection_builder,
@@ -796,8 +758,9 @@ void ClientHandler::AddPendingIceCandidates() {
   pending_ice_candidates_.clear();
 }
 
-bool ClientHandler::BuildPeerConnection(const Json::Value &message) {
-  auto ice_servers = ParseIceServersMessage(message);
+bool ClientHandler::BuildPeerConnection(
+    const std::vector<webrtc::PeerConnectionInterface::IceServer>
+        &ice_servers) {
   peer_connection_ = connection_builder_.Build(this, ice_servers);
   if (!peer_connection_) {
     return false;
@@ -884,161 +847,110 @@ void ClientHandler::OnSetSDPFailure(webrtc::RTCError error) {
   Close();
 }
 
-void ClientHandler::HandleMessage(const Json::Value &message) {
-  {
-    auto result = ValidationResult::ValidateJsonObject(message, "",
-                                     {{"type", Json::ValueType::stringValue}});
-    if (!result.ok()) {
-      LogAndReplyError(result.error());
-      return;
-    }
+Result<void> ClientHandler::CreateOffer() {
+  // An offer may have been requested already
+  CF_EXPECT(state_ != State::kCreatingOffer,
+            "Multiple requests for offer received from single client");
+  state_ = State::kCreatingOffer;
+  peer_connection_->CreateOffer(
+      // No memory leak here because this is a ref counted object and the
+      // peer connection immediately wraps it with a scoped_refptr
+      new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
+          weak_from_this()),
+      webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+  // The created offer wil be sent to the client on
+  // OnSuccess(webrtc::SessionDescriptionInterface* desc)
+  return {};
+}
+
+Result<void> ClientHandler::OnOfferRequestMsg(
+    const std::vector<webrtc::PeerConnectionInterface::IceServer>
+        &ice_servers) {
+  if (state_ == State::kNew) {
+    // The peer connection must be created on the first request-offer
+    CF_EXPECT(BuildPeerConnection(ice_servers), "Failed to create peer connection");
   }
-  auto type = message["type"].asString();
-  if (type == "request-offer") {
-    if (state_ == State::kNew) {
-      // The peer connection must be created on the first request-offer
-      if (!BuildPeerConnection(message)) {
-        LogAndReplyError("Failed to create peer connection");
-        return;
-      }
-      // Renegotiation can start in any state after the answer is returned, not
-      // just kNew.
-    } else if (state_ == State::kCreatingOffer) {
-      // An offer has been requested already
-      LogAndReplyError("Multiple requests for offer received from single client");
-      return;
-    }
-    state_ = State::kCreatingOffer;
-    peer_connection_->CreateOffer(
-        // No memory leak here because this is a ref counted objects and the
-        // peer connection immediately wraps it with a scoped_refptr
-        new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
-            weak_from_this()),
-        webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-    // The created offer wil be sent to the client on
-    // OnSuccess(webrtc::SessionDescriptionInterface* desc)
-  } else if (type == "offer") {
-    auto result = ValidationResult::ValidateJsonObject(
-        message, type, {{"sdp", Json::ValueType::stringValue}});
-    if (!result.ok()) {
-      LogAndReplyError(result.error());
-      return;
-    }
-    auto remote_desc_str = message["sdp"].asString();
-    auto remote_desc = webrtc::CreateSessionDescription(
-        webrtc::SdpType::kOffer, remote_desc_str, nullptr /*error*/);
-    if (!remote_desc) {
-      LogAndReplyError("Failed to parse answer.");
-      return;
-    }
+  return CreateOffer();
+}
 
-    rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
-        new rtc::RefCountedObject<
-            CvdOnSetRemoteDescription>([this](webrtc::RTCError error) {
-          if (!error.ok()) {
-            LogAndReplyError(error.message());
-            // The remote description was rejected, this client can't be
-            // trusted anymore.
-            Close();
-            return;
-          }
-          remote_description_added_ = true;
-          AddPendingIceCandidates();
-          peer_connection_->CreateAnswer(
-              // No memory leak here because this is a ref counted objects and
-              // the peer connection immediately wraps it with a scoped_refptr
-              new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
-                  weak_from_this()),
-              webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-        }));
-    peer_connection_->SetRemoteDescription(std::move(remote_desc), observer);
-    state_ = State::kConnecting;
-  } else if (type == "answer") {
-    if (state_ != State::kAwaitingAnswer) {
-      LogAndReplyError("Received unexpected SDP answer");
-      return;
-    }
-    auto result = ValidationResult::ValidateJsonObject(message, type,
-                                     {{"sdp", Json::ValueType::stringValue}});
-    if (!result.ok()) {
-      LogAndReplyError(result.error());
-      return;
-    }
-    auto remote_desc_str = message["sdp"].asString();
-    auto remote_desc = webrtc::CreateSessionDescription(
-        webrtc::SdpType::kAnswer, remote_desc_str, nullptr /*error*/);
-    if (!remote_desc) {
-      LogAndReplyError("Failed to parse answer.");
-      return;
-    }
-    rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
-        new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
-            [this](webrtc::RTCError error) {
-              if (!error.ok()) {
-                LogAndReplyError(error.message());
-                // The remote description was rejected, this client can't be
-                // trusted anymore.
-                Close();
-              }
-            }));
-    peer_connection_->SetRemoteDescription(std::move(remote_desc), observer);
-    remote_description_added_ = true;
-    AddPendingIceCandidates();
-    state_ = State::kConnecting;
+Result<void> ClientHandler::OnOfferMsg(
+    std::unique_ptr<webrtc::SessionDescriptionInterface> offer) {
+  rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
+      new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
+          [this](webrtc::RTCError error) {
+            if (!error.ok()) {
+              LogAndReplyError(error.message());
+              // The remote description was rejected, this client can't be
+              // trusted anymore.
+              Close();
+              return;
+            }
+            remote_description_added_ = true;
+            AddPendingIceCandidates();
+            peer_connection_->CreateAnswer(
+                // No memory leak here because this is a ref counted objects and
+                // the peer connection immediately wraps it with a scoped_refptr
+                new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
+                    weak_from_this()),
+                webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+          }));
+  peer_connection_->SetRemoteDescription(std::move(offer), observer);
+  state_ = State::kConnecting;
+  return {};
+}
 
-  } else if (type == "ice-candidate") {
-    {
-      auto result = ValidationResult::ValidateJsonObject(
-          message, type, {{"candidate", Json::ValueType::objectValue}});
-      if (!result.ok()) {
-        LogAndReplyError(result.error());
-        return;
-      }
-    }
-    auto candidate_json = message["candidate"];
-    {
-      auto result =
-          ValidationResult::ValidateJsonObject(candidate_json,
-                                               "ice-candidate/candidate",
-                             {
-                                 {"sdpMid", Json::ValueType::stringValue},
-                                 {"candidate", Json::ValueType::stringValue},
-                                 {"sdpMLineIndex", Json::ValueType::intValue},
-                             });
-      if (!result.ok()) {
-        LogAndReplyError(result.error());
-        return;
-      }
-    }
-    auto mid = candidate_json["sdpMid"].asString();
-    auto candidate_sdp = candidate_json["candidate"].asString();
-    auto line_index = candidate_json["sdpMLineIndex"].asInt();
+Result<void> ClientHandler::OnAnswerMsg(
+    std::unique_ptr<webrtc::SessionDescriptionInterface> answer) {
+  CF_EXPECT(state_ == State::kAwaitingAnswer, "Received unexpected SDP answer");
 
-    std::unique_ptr<webrtc::IceCandidateInterface> candidate(
-        webrtc::CreateIceCandidate(mid, line_index, candidate_sdp,
-                                   nullptr /*error*/));
-    if (!candidate) {
-      LogAndReplyError("Failed to parse ICE candidate");
-      return;
-    }
-    if (remote_description_added_) {
-      peer_connection_->AddIceCandidate(std::move(candidate),
-                                        [this](webrtc::RTCError error) {
-                                          if (!error.ok()) {
-                                            LogAndReplyError(error.message());
-                                          }
-                                        });
-    } else {
-      // Store the ice candidate to be added later if it arrives before the
-      // remote description. This could happen if the client uses polling
-      // instead of websockets because the candidates are generated immediately
-      // after the remote (offer) description is set and the events and the ajax
-      // calls are asynchronous.
-      pending_ice_candidates_.push_back(std::move(candidate));
-    }
+  rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
+      new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
+          [this](webrtc::RTCError error) {
+            if (!error.ok()) {
+              LogAndReplyError(error.message());
+              // The remote description was rejected, this client can't be
+              // trusted anymore.
+              Close();
+            }
+          }));
+  peer_connection_->SetRemoteDescription(std::move(answer), observer);
+  remote_description_added_ = true;
+  AddPendingIceCandidates();
+  state_ = State::kConnecting;
+  return {};
+}
+
+Result<void> ClientHandler::OnIceCandidateMsg(
+    std::unique_ptr<webrtc::IceCandidateInterface> candidate) {
+  if (remote_description_added_) {
+    peer_connection_->AddIceCandidate(std::move(candidate),
+                                      [this](webrtc::RTCError error) {
+                                        if (!error.ok()) {
+                                          LogAndReplyError(error.message());
+                                        }
+                                      });
   } else {
-    LogAndReplyError("Unknown client message type: " + type);
-    return;
+    // Store the ice candidate to be added later if it arrives before the
+    // remote description. This could happen if the client uses polling
+    // instead of websockets because the candidates are generated immediately
+    // after the remote (offer) description is set and the events and the ajax
+    // calls are asynchronous.
+    pending_ice_candidates_.push_back(std::move(candidate));
+  }
+  return {};
+}
+
+Result<void> ClientHandler::OnErrorMsg(const std::string &msg) {
+  // The client shouldn't reply with error to the device
+  LOG(ERROR) << "Client error message: " << msg;
+  // Don't return an error, the message was handled successfully.
+  return {};
+}
+
+void ClientHandler::HandleMessage(const Json::Value &message) {
+  auto result = HandleSignalingMessage(message, *this);
+  if (!result.ok()) {
+    LogAndReplyError(result.error().Trace());
   }
 }
 
