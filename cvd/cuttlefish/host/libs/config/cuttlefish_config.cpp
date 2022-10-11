@@ -85,13 +85,15 @@ const char* kInstances = "instances";
 }  // namespace
 
 const char* const kGpuModeAuto = "auto";
-const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxStream = "gfxstream";
+const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
+const char* const kGpuModeNone = "none";
 
 const char* const kHwComposerAuto = "auto";
 const char* const kHwComposerDrm = "drm";
 const char* const kHwComposerRanchu = "ranchu";
+const char* const kHwComposerNone = "none";
 
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
