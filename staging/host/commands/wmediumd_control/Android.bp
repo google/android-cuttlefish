@@ -17,27 +17,27 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
+cc_binary_host {
     name: "wmediumd_control",
     srcs: [
         "main.cpp",
     ],
-    shared_libs: [
-        "libext2_blkid",
+    static_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
-        "libfruit",
-        "libjsoncpp",
-        "libz",
-    ],
-    static_libs: [
         "libcuttlefish_host_config",
         "libcuttlefish_wmediumd_controller",
+        "libext2_blkid",
+        "libfruit",
         "libgflags",
+        "liblog",
+        "libjsoncpp",
+        "libz",
     ],
     header_libs: [
         "wmediumd_headers",
     ],
+    stl: "libc++_static",
     defaults: ["cuttlefish_host"],
 }
