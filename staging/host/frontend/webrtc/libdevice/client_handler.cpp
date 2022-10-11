@@ -1041,8 +1041,12 @@ void ClientHandler::OnDataChannel(
 }
 
 void ClientHandler::OnRenegotiationNeeded() {
-  state_ = State::kNew;
   LOG(VERBOSE) << "Client " << client_id_ << " needs renegotiation";
+  auto result = CreateOffer();
+  if (!result.ok()) {
+    LOG(ERROR) << "Failed to create offer on renegotiation: "
+               << result.error().Trace();
+  }
 }
 
 void ClientHandler::OnIceGatheringChange(
