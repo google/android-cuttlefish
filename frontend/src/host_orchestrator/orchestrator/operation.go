@@ -138,7 +138,3 @@ func (m *MapOM) getOperationEntry(name string) (*mapOMOperationEntry, bool) {
 	op, ok := m.operations[name]
 	return op, ok
 }
-
-func isFailed(op *apiv1.Operation) bool {
-	return op.Done && op.Result != nil && op.Result.Error != nil
-}
