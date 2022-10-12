@@ -18,7 +18,7 @@
 #include <string>
 
 namespace cuttlefish {
-namespace {
+namespace internal {
 
 const char* kFieldName = "name";
 
@@ -51,12 +51,49 @@ class CreateHostAction : public Action<std::string> {
   const CreateHostInstanceRequest& request_;
 };
 
-}  // namespace
+// Creates a cvd.
+class CreateCVDAction : public Action<std::string> {
+ public:
+  CreateCVDAction(CloudOrchestratorApi& api, const CreateCVDRequest& request,
+                  std::string host)
+      : api_(api), request_(request), host_(host) {}
+
+  ~CreateCVDAction() {}
+
+  Result<std::string> Execute() override {
+    auto operation_name =
+        CF_EXPECT(api_.CreateCVD(host_, request_), "Create cvd failed");
+    auto operation = CF_EXPECT(api_.WaitHostOperation(host_, operation_name),
+                               "Waiting for operation failed");
+    if (!operation.done) {
+      return CF_ERR("Create cvd operation is not done yet");
+    }
+    OperationResult& result = operation.result;
+    CF_EXPECT(
+        result.response.isMember(kFieldName),
+        "Invalid operation response, missing field: '" << kFieldName << "'");
+    return result.response[kFieldName].asString();
+  }
+
+ private:
+  CloudOrchestratorApi& api_;
+  const CreateCVDRequest& request_;
+  std::string host_;
+};
+
+}  // namespace internal
 
 std::unique_ptr<Action<std::string>> CreateHostAction(
     CloudOrchestratorApi& api, const CreateHostInstanceRequest& request) {
   return std::unique_ptr<Action<std::string>>(
-      new class CreateHostAction(api, request));
+      new internal::CreateHostAction(api, request));
+}
+
+std::unique_ptr<Action<std::string>> CreateCVDAction(
+    CloudOrchestratorApi& api, const CreateCVDRequest& request,
+    std::string host) {
+  return std::unique_ptr<Action<std::string>>(
+      new internal::CreateCVDAction(api, request, host));
 }
 
 }  // namespace cuttlefish
