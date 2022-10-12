@@ -319,4 +319,12 @@ GetRootOfTrustResponse RemoteKeymaster::GetRootOfTrust(
   return response;
 }
 
+GetHwInfoResponse RemoteKeymaster::GetHwInfo() {
+  // Unused empty buffer to allow ForwardCommand to have something to serialize
+  Buffer request;
+  GetHwInfoResponse response(message_version());
+  ForwardCommand(GET_HW_INFO, request, &response);
+  return response;
+}
+
 }  // namespace keymaster
