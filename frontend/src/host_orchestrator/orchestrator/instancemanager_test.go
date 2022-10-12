@@ -276,6 +276,38 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	}
 }
 
+func TestCreateCVDSucceeds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return buildTestCmd()
+	}
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
+	r := apiv1.CreateCVDRequest{BuildInfo: buildInfo}
+
+	op, _ := im.CreateCVD(r)
+
+	op, _ = om.Wait(op.Name, 1*time.Second)
+
+	cvd := op.Result.Response.(*apiv1.CVD)
+	expectedName := "cvd-1"
+	if cvd.Name != expectedName {
+		t.Errorf("expected %q, got %q", expectedName, cvd.Name)
+	}
+	if !reflect.DeepEqual(cvd.BuildInfo, buildInfo) {
+		t.Errorf("expected: %+v, got: %+v", buildInfo, cvd.BuildInfo)
+	}
+}
+
 type FakeArtifactDownloader struct {
 	t       *testing.T
 	content string

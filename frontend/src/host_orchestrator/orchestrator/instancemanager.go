@@ -97,10 +97,14 @@ const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 // TODO(b/236398043): Return more granular and informative errors.
 func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.Operation) {
 	var result apiv1.OperationResult
-	if err := m.launchCVD_(req, op); err != nil {
+	if cvd, err := m.launchCVD_(req, op); err != nil {
 		log.Printf("failed to launch cvd with error: %v", err)
 		result = apiv1.OperationResult{
 			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
+		}
+	} else {
+		result = apiv1.OperationResult{
+			Response: cvd,
 		}
 	}
 	if err := m.om.Complete(op.Name, result); err != nil {
@@ -108,29 +112,35 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	}
 }
 
-func (m *CVDToolInstanceManager) launchCVD_(req apiv1.CreateCVDRequest, op apiv1.Operation) error {
+func (m *CVDToolInstanceManager) launchCVD_(
+	req apiv1.CreateCVDRequest,
+	op apiv1.Operation) (*apiv1.CVD, error) {
 	if err := m.downloadCVDHandler.Download(); err != nil {
-		return err
+		return nil, err
 	}
 	if err := createDir(m.paths.ArtifactsRootDir, false); err != nil {
-		return err
+		return nil, err
 	}
 	if err := createDir(m.paths.HomesRootDir, false); err != nil {
-		return err
+		return nil, err
 	}
 	artifactsDir, err := m.fetchCVDHandler.Fetch(req.BuildInfo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
-	homeDir := fmt.Sprintf("%s/cvd-%d", m.paths.HomesRootDir, instanceNumber)
+	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
+	homeDir := m.paths.HomesRootDir + "/" + cvdName
 	if err := createDir(homeDir, true); err != nil {
-		return err
+		return nil, err
 	}
 	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &apiv1.CVD{
+		Name:      cvdName,
+		BuildInfo: req.BuildInfo,
+	}, nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
