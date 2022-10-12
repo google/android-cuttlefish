@@ -141,6 +141,35 @@ Result<std::string> CloudOrchestratorApi::CreateCVD(
   return resp_json[kFieldName].asString();
 }
 
+Result<Operation> CloudOrchestratorApi::WaitHostOperation(
+    const std::string& host, const std::string& name) {
+  std::string url = service_url_ + "/v1/zones/" + zone_ + "/hosts/" + host +
+                    "/operations/" + name + "/wait";
+  auto resp =
+      CF_EXPECT(http_client_.PostToString(url, ""), "Http client failed");
+  CF_EXPECT(resp.HttpSuccess(), "Http request failed with status code: "
+                                    << resp.http_code << ", server response:\n"
+                                    << resp.data);
+  auto resp_json =
+      CF_EXPECT(ParseJson(resp.data), "Failed parsing response body");
+  CF_EXPECT(resp_json.isMember(kFieldDone),
+            "Invalid response,  missing field: '" << kFieldDone << "'");
+  bool done = resp_json[kFieldDone].asBool();
+  if (!done) {
+    return Operation{done : done};
+  }
+  CF_EXPECT(resp_json.isMember(kFieldResult),
+            "Invalid response,  missing field: '" << kFieldResult << "'");
+  CF_EXPECT(resp_json[kFieldResult].isMember(kFieldResponse),
+            "Invalid response,  missing field: '" << kFieldResponse << "'");
+  return Operation{
+    done : done,
+    result : OperationResult{
+      response : resp_json[kFieldResult][kFieldResponse],
+    }
+  };
+}
+
 Result<std::vector<std::string>> CloudOrchestratorApi::ListCVDWebRTCStreams(
     const std::string& host) {
   std::string url =
