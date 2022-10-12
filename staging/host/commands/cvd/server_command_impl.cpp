@@ -71,7 +71,7 @@ std::optional<CommandInvocationInfo> ExtractInfo(
   std::string home = request_home != envs.end() ? request_home->second
                                                 : StringFromEnv("HOME", ".");
   auto host_out_itr = envs.find("ANDROID_HOST_OUT");
-  if (host_out_itr == envs.end() && !DirectoryExists(host_out_itr->second)) {
+  if (host_out_itr == envs.end() || !DirectoryExists(host_out_itr->second)) {
     return std::nullopt;
   }
   const auto host_artifacts_path = host_out_itr->second;
@@ -94,8 +94,8 @@ Result<Command> ConstructCommand(const std::string& bin_path,
                                  const std::string& working_dir,
                                  const std::string& command_name, SharedFD in,
                                  SharedFD out, SharedFD err) {
-  Command command(bin_path);
-  command.SetName(command_name);
+  Command command(command_name);
+  command.SetExecutable(bin_path);
   for (const std::string& arg : args) {
     command.AddParameter(arg);
   }
