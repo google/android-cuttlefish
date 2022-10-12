@@ -77,6 +77,8 @@ const struct wl_region_interface region_implementation = {
 void surface_destroy(wl_client*, wl_resource* surface) {
   LOG(VERBOSE) << __FUNCTION__
                << " surface=" << surface;
+
+  delete GetUserData<Surface>(surface);
 }
 
 void surface_attach(wl_client*,
@@ -182,10 +184,7 @@ const struct wl_surface_interface surface_implementation = {
   .damage_buffer = surface_damage_buffer,
 };
 
-void surface_destroy_resource_callback(struct wl_resource* surface_resource) {
-  Surface* surface = GetUserData<Surface>(surface_resource);
-  delete surface;
-}
+void surface_destroy_resource_callback(struct wl_resource*) {}
 
 void compositor_create_surface(wl_client* client,
                                wl_resource* compositor,
