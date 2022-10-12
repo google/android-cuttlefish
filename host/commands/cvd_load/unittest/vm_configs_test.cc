@@ -19,63 +19,15 @@
 #include <iostream>
 
 #include <android-base/file.h>
+
 #include <gtest/gtest.h>
 
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd_load/unittest/test_common.h"
+
 namespace cuttlefish {
-TEST(FlagsParserTest, ParseInvalidJson) {
-  const char* test_string = R""""(
-    instances=50;
-  )"""";
 
-  std::vector<std::string> serialized_data;
-  Json::Value json_configs;
-  std::string strjson(test_string);
-
-  EXPECT_FALSE(ParseJsonString(strjson, json_configs));
-}
-
-TEST(FlagsParserTest, ParseJsonWithSpellingError) {
-  const char* test_string = R""""(
-{
-    "Insta" :
-    [
-        {
-        }
-    ]
-}
-  )"""";
-
-  std::vector<std::string> serialized_data;
-  Json::Value json_configs;
-  std::string strjson(test_string);
-
-  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_FALSE(ParseCvdConfigs(json_configs, serialized_data));
-}
-
-TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
-  const char* test_string = R""""(
-{
-    "instances" :
-    [
-        {
-        }
-    ]
-}
-  )"""";
-
-  std::vector<std::string> serialized_data;
-  Json::Value json_configs;
-  std::string strjson(test_string);
-
-  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
-  EXPECT_TRUE(FindConfig(serialized_data, "--num_instances=1"));
-}
-
-TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
+TEST(FlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -83,7 +35,6 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
         {
         },
         {
-
         }
     ]
 }
@@ -95,7 +46,62 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
-  EXPECT_TRUE(FindConfig(serialized_data, "--num_instances=2"));
+  EXPECT_TRUE(FindConfig(serialized_data, "--cpus=2,2"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+            }
+        },
+        {
+            "vm": {
+                "cpus": 4
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, "--cpus=2,4"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "cpus": 4
+            }
+        },
+        {
+            "vm": {
+                "cpus": 6
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, "--cpus=4,6"));
 }
 
 }  // namespace cuttlefish
