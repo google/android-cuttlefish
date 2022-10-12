@@ -1,2 +1,2 @@
-service setup_wifi /vendor/bin/setup_wifi --interface=${ro.vendor.virtwifi.port}
+service setup_wifi /vendor/bin/setup_wifi
     oneshot

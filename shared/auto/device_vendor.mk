@@ -83,10 +83,6 @@ ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
 endif
 PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
 
-# VirtWiFi interface settings
-DEVICE_VIRTWIFI_PORT ?= eth2
-PRODUCT_VENDOR_PROPERTIES += ro.vendor.virtwifi.port=${DEVICE_VIRTWIFI_PORT}
-
 # CAN bus HAL
 PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
 PRODUCT_PACKAGES_DEBUG += canhalctrl \
