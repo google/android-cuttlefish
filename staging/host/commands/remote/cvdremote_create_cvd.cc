@@ -18,6 +18,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "host/commands/remote/actions.h"
 #include "host/commands/remote/remote.h"
 #include "host/libs/web/http_client/sso_client.h"
 
@@ -59,7 +60,8 @@ int Main(int argc, char** argv) {
       target : FLAGS_target,
     },
   };
-  auto result = api.CreateCVD(FLAGS_host, request);
+  auto action = CreateCVDAction(api, request, FLAGS_host);
+  auto result = action->Execute();
   if (!result.ok()) {
     LOG(ERROR) << result.error().Message();
     return -1;

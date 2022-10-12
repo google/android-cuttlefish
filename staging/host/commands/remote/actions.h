@@ -33,4 +33,9 @@ class Action {
 std::unique_ptr<Action<std::string>> CreateHostAction(
     CloudOrchestratorApi& api, const CreateHostInstanceRequest& request);
 
+// Action that creates a cvd.
+std::unique_ptr<Action<std::string>> CreateCVDAction(
+    CloudOrchestratorApi& api, const CreateCVDRequest& request,
+    std::string host);
+
 }  // namespace cuttlefish

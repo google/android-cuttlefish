@@ -66,6 +66,9 @@ class CloudOrchestratorApi {
   Result<std::string> CreateCVD(const std::string& host,
                                 const CreateCVDRequest& request);
 
+  Result<Operation> WaitHostOperation(const std::string& host,
+                                      const std::string& name);
+
   Result<std::vector<std::string>> ListCVDWebRTCStreams(
       const std::string& host);
 
