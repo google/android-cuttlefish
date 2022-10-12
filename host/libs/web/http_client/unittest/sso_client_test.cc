@@ -68,6 +68,10 @@ TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
   EXPECT_EQ(result->http_code, 222);
 }
 
+constexpr char kBashScriptPrefix[] =
+    "#!/bin/bash\n\n/usr/bin/sso_client \\\n--request_timeout=120 "
+    "\\\n--dump_header ";
+
 TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
   std::string cmd_as_bash_script;
   auto exec = [&](Command&& cmd, const std::string*, std::string*, std::string*,
@@ -80,8 +84,7 @@ TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
   client.GetToString("https://some.url");
 
   EXPECT_EQ(cmd_as_bash_script,
-            "#!/bin/bash\n\n/usr/bin/sso_client \\\n--dump_header "
-            "\\\n--url=https://some.url");
+            std::string(kBashScriptPrefix) + "\\\n--url=https://some.url");
 }
 
 TEST(SsoClientTest, PostToStringVerifyCommandArgs) {
@@ -96,8 +99,8 @@ TEST(SsoClientTest, PostToStringVerifyCommandArgs) {
   client.PostToString("https://some.url", "foo");
 
   EXPECT_EQ(cmd_as_bash_script,
-            "#!/bin/bash\n\n/usr/bin/sso_client \\\n--dump_header "
-            "\\\n--url=https://some.url \\\n--method=POST \\\n--data=foo");
+            std::string(kBashScriptPrefix) +
+                "\\\n--url=https://some.url \\\n--method=POST \\\n--data=foo");
 }
 
 TEST(SsoClientTest, PostToStringEmptyDataVerifyCommandArgs) {
@@ -112,8 +115,8 @@ TEST(SsoClientTest, PostToStringEmptyDataVerifyCommandArgs) {
   client.PostToString("https://some.url", "");
 
   EXPECT_EQ(cmd_as_bash_script,
-            "#!/bin/bash\n\n/usr/bin/sso_client \\\n--dump_header "
-            "\\\n--url=https://some.url \\\n--method=POST");
+            std::string(kBashScriptPrefix) +
+                "\\\n--url=https://some.url \\\n--method=POST");
 }
 
 TEST(SsoClientTest, GetToStringFailsInvalidResponseFormat) {
