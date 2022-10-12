@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,21 +17,19 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "powerwash_cvd",
+cc_library_static {
+    name: "libcuttlefish_command_util",
     srcs: [
-        "powerwash_cvd.cc",
+        "util.cc",
     ],
     shared_libs: [
-        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libjsoncpp",
     ],
     static_libs: [
+        "libbase",
         "libcuttlefish_host_config",
-        "libgflags",
-        "libcuttlefish_command_util",
     ],
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
 }
