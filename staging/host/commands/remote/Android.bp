@@ -38,6 +38,7 @@ cc_library_static {
     name: "libcvdremote",
     srcs: [
         "remote.cc",
+        "actions.cc",
     ],
     defaults: ["cvdremote_defaults"],
 }

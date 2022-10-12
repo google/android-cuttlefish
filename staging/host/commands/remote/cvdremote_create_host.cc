@@ -18,6 +18,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "host/commands/remote/actions.h"
 #include "host/commands/remote/remote.h"
 #include "host/libs/web/http_client/sso_client.h"
 
@@ -51,7 +52,8 @@ int Main(int argc, char** argv) {
   gcp.min_cpu_platform = FLAGS_min_cpu_platform.c_str();
   CreateHostInstanceRequest request;
   request.gcp = &gcp;
-  auto result = api.CreateHost(request);
+  auto action = CreateHostAction(api, request);
+  auto result = action->Execute();
   if (!result.ok()) {
     LOG(ERROR) << result.error().Message();
     return -1;
