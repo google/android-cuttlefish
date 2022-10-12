@@ -57,7 +57,7 @@ func (h *createCVDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		operator.ReplyJSONErr(w, err)
 		return
 	}
-	operator.ReplyJSONOK(w, BuildOperation(op))
+	operator.ReplyJSONOK(w, op)
 }
 
 type getOperationHandler struct {
@@ -70,7 +70,7 @@ func (h *getOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if op, err := h.om.Get(name); err != nil {
 		operator.ReplyJSONErr(w, operator.NewNotFoundError("Operation not found", err))
 	} else {
-		operator.ReplyJSONOK(w, BuildOperation(op))
+		operator.ReplyJSONOK(w, op)
 	}
 }
 
@@ -84,7 +84,7 @@ func (h *waitOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	name := vars["name"]
 	op, err := h.om.Wait(name, h.waitDuration)
 	if err == nil {
-		operator.ReplyJSONOK(w, BuildOperation(op))
+		operator.ReplyJSONOK(w, op)
 		return
 	}
 	if _, ok := err.(NotFoundOperationError); ok {
@@ -97,20 +97,4 @@ func (h *waitOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	operator.ReplyJSONErr(w, operator.NewInternalError("Unknown wait operation error", err))
-}
-
-func BuildOperation(op Operation) apiv1.Operation {
-	result := apiv1.Operation{
-		Name: op.Name,
-		Done: op.Done,
-	}
-	if !op.Done {
-		return result
-	}
-	if op.IsError() {
-		result.Result = &apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{op.Result.Error.ErrorMsg},
-		}
-	}
-	return result
 }

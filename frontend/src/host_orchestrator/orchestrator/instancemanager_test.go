@@ -162,7 +162,7 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	op, _ = im2.CreateCVD(r)
 
 	op, _ = om.Wait(op.Name, 1*time.Second)
-	if op.Result.Error.ErrorMsg == "" {
+	if op.Result.Error.Error == "" {
 		t.Error("expected error due instance home dir already existing")
 	}
 }

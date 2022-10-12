@@ -30,8 +30,8 @@ const pageNotFoundErrMsg = "404 page not found\n"
 
 type testIM struct{}
 
-func (m *testIM) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
-	return Operation{}, nil
+func (m *testIM) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
+	return apiv1.Operation{}, nil
 }
 
 func TestCreateCVDIsHandled(t *testing.T) {
@@ -123,7 +123,7 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 	rr := httptest.NewRecorder()
 	om := NewMapOM()
 	op := om.New()
-	om.Complete(op.Name, OperationResult{Error: OperationResultError{"error"}})
+	om.Complete(op.Name, apiv1.OperationResult{Error: &apiv1.ErrorMsg{Error: "error"}})
 	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/wait", strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)

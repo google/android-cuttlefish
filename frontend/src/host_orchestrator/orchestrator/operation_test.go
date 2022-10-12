@@ -19,6 +19,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
 func TestMapOMNewOperation(t *testing.T) {
@@ -32,8 +34,8 @@ func TestMapOMNewOperation(t *testing.T) {
 	if op.Done {
 		t.Error("expected false")
 	}
-	if (op.Result != OperationResult{}) {
-		t.Error("expected empty result")
+	if op.Result != nil {
+		t.Errorf("expected <<nil>>, got %+v", op.Result)
 	}
 }
 
@@ -75,7 +77,7 @@ func TestMapOMGetOperation(t *testing.T) {
 				t.Errorf("error type <<\"%T\">> not found in error chain", notFoundError)
 			}
 		}
-		if (op != Operation{}) {
+		if (op != apiv1.Operation{}) {
 			t.Errorf("expected zero value %T", op)
 		}
 	})
@@ -85,8 +87,8 @@ func TestMapOMCompleteOperation(t *testing.T) {
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM()
 		newOp := om.New()
-		result := OperationResult{
-			Error: OperationResultError{"error"},
+		result := apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{Error: "error"},
 		}
 
 		err := om.Complete(newOp.Name, result)
@@ -101,15 +103,15 @@ func TestMapOMCompleteOperation(t *testing.T) {
 		if !op.Done {
 			t.Error("expected true")
 		}
-		if op.Result != result {
-			t.Errorf("expected <<%+v>>, got %+v", result, op.Result)
+		if op.Result.Error.Error != result.Error.Error {
+			t.Errorf("expected <<%+v>>, got %+v", result.Error.Error, op.Result.Error.Error)
 		}
 	})
 
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM()
-		result := OperationResult{
-			Error: OperationResultError{"error"},
+		result := apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{"error"},
 		}
 
 		err := om.Complete("foo", result)
@@ -122,8 +124,8 @@ func TestMapOMCompleteOperation(t *testing.T) {
 
 func TestMapOMWaitOperation(t *testing.T) {
 	dt := 1 * time.Second
-	result := OperationResult{
-		Error: OperationResultError{"error"},
+	result := apiv1.OperationResult{
+		Error: &apiv1.ErrorMsg{"error"},
 	}
 
 	t.Run("operation was completed", func(t *testing.T) {
@@ -176,7 +178,7 @@ func TestMapOMWaitOperation(t *testing.T) {
 				if timedOutErr, ok := err.(*OperationWaitTimeoutError); !ok {
 					t.Errorf("expected <<%T>>, got %T", timedOutErr, err)
 				}
-				if (op != Operation{}) {
+				if (op != apiv1.Operation{}) {
 					t.Error("expected empty operation")
 				}
 			}()
@@ -197,52 +199,8 @@ func TestMapOMWaitOperation(t *testing.T) {
 		if notFoundErr, ok := err.(NotFoundOperationError); !ok {
 			t.Errorf("expected <<%T>>, got %T", notFoundErr, err)
 		}
-		if (op != Operation{}) {
+		if (op != apiv1.Operation{}) {
 			t.Error("expected empty operation")
 		}
 	})
-}
-
-func TestOperationIsError(t *testing.T) {
-	var tests = []struct {
-		op    Operation
-		isErr bool
-	}{
-		{
-			op: Operation{
-				Name: "operation-1",
-				Done: false,
-				Result: OperationResult{
-					Error: OperationResultError{"error"},
-				},
-			},
-			isErr: false,
-		},
-		{
-			op: Operation{
-				Name:   "operation-1",
-				Done:   true,
-				Result: OperationResult{},
-			},
-			isErr: false,
-		},
-		{
-			op: Operation{
-				Name: "operation-1",
-				Done: true,
-				Result: OperationResult{
-					Error: OperationResultError{"error"},
-				},
-			},
-			isErr: true,
-		},
-	}
-
-	for _, test := range tests {
-		isErr := test.op.IsError()
-
-		if isErr != test.isErr {
-			t.Errorf("expected <<%v>>, got %v for operation %+v", test.isErr, isErr, test.op)
-		}
-	}
 }

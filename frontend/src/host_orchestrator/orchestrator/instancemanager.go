@@ -33,7 +33,7 @@ import (
 type ExecContext = func(name string, arg ...string) *exec.Cmd
 
 type InstanceManager interface {
-	CreateCVD(req apiv1.CreateCVDRequest) (Operation, error)
+	CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error)
 }
 
 type EmptyFieldError string
@@ -83,9 +83,9 @@ func NewCVDToolInstanceManager(
 	}
 }
 
-func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
+func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
 	if err := validateRequest(&req); err != nil {
-		return Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
+		return apiv1.Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
 	}
 	op := m.om.New()
 	go m.launchCVD(req, op)
@@ -95,12 +95,12 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operatio
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 // TODO(b/236398043): Return more granular and informative errors.
-func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op Operation) {
-	var result OperationResult
+func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.Operation) {
+	var result apiv1.OperationResult
 	if err := m.launchCVD_(req, op); err != nil {
 		log.Printf("failed to launch cvd with error: %v", err)
-		result = OperationResult{
-			Error: OperationResultError{ErrMsgLaunchCVDFailed},
+		result = apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
 		}
 	}
 	if err := m.om.Complete(op.Name, result); err != nil {
@@ -108,7 +108,7 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op Operat
 	}
 }
 
-func (m *CVDToolInstanceManager) launchCVD_(req apiv1.CreateCVDRequest, op Operation) error {
+func (m *CVDToolInstanceManager) launchCVD_(req apiv1.CreateCVDRequest, op apiv1.Operation) error {
 	if err := m.downloadCVDHandler.Download(); err != nil {
 		return err
 	}
