@@ -95,6 +95,7 @@ class RemoteKeymaster {
   void GenerateTimestampToken(GenerateTimestampTokenRequest& request,
                               GenerateTimestampTokenResponse* response);
   GetRootOfTrustResponse GetRootOfTrust(const GetRootOfTrustRequest& request);
+  GetHwInfoResponse GetHwInfo();
 
   // CF HAL and remote sides are always compiled together, so will never
   // disagree about message versions.
