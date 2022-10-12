@@ -99,6 +99,7 @@ bool KeymasterResponder::ProcessMessage() {
     HANDLE_MESSAGE_W_RETURN_NO_ARG(GET_HMAC_SHARING_PARAMETERS,
                                    GetHmacSharingParameters)
     HANDLE_MESSAGE_W_RETURN_NO_ARG(EARLY_BOOT_ENDED, EarlyBootEnded)
+    HANDLE_MESSAGE_W_RETURN_NO_ARG(GET_HW_INFO, GetHwInfo)
 #undef HANDLE_MESSAGE_W_RETURN_NO_ARG
     case ADD_RNG_ENTROPY: {
       AddEntropyRequest request(keymaster_.message_version());

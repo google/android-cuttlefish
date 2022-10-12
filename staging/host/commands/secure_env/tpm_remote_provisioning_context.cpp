@@ -223,4 +223,12 @@ TpmRemoteProvisioningContext::GenerateHmacSha256(
   return hmac;
 }
 
+void TpmRemoteProvisioningContext::GetHwInfo(
+    keymaster::GetHwInfoResponse* hwInfo) const {
+  hwInfo->version = 2;
+  hwInfo->rpcAuthorName = "Google";
+  hwInfo->supportedEekCurve = 2 /* CURVE_25519 */;
+  hwInfo->uniqueId = "remote keymint";
+}
+
 }  // namespace cuttlefish
