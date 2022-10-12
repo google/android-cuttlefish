@@ -179,9 +179,9 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   }
 
   for (const auto& display_config : instance.display_configs()) {
-    crosvm_cmd.Cmd().AddParameter(
-        "--gpu-display=", "width=", display_config.width, ",",
-        "height=", display_config.height);
+    crosvm_cmd.Cmd().AddParameter("--gpu-display=", "mode=windowed[",
+                                  display_config.width, ",",
+                                  display_config.height, "]");
   }
 
   crosvm_cmd.Cmd().AddParameter("--wayland-sock=",
