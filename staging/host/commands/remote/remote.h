@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -41,6 +42,15 @@ struct CreateCVDRequest {
   const BuildInfo& build_info;
 };
 
+struct OperationResult {
+  Json::Value response;
+};
+
+struct Operation {
+  bool done;
+  OperationResult result;
+};
+
 class CloudOrchestratorApi {
  public:
   CloudOrchestratorApi(const std::string& service_url, const std::string& zone,
@@ -48,6 +58,8 @@ class CloudOrchestratorApi {
   ~CloudOrchestratorApi();
 
   Result<std::string> CreateHost(const CreateHostInstanceRequest& request);
+
+  Result<Operation> WaitCloudOperation(const std::string& name);
 
   Result<std::vector<std::string>> ListHosts();
 
