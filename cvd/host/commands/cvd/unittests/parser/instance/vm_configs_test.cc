@@ -181,4 +181,82 @@ TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=4069,8192"));
 }
 
+TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, R"(--vm_manager="","")"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+            }
+        },
+        {
+            "vm": {
+                "vm_manager": "crosvm"
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, R"(--vm_manager="","crosvm")"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "vm_manager": "qemu_cli"
+            }
+        },
+        {
+            "vm": {
+                "vm_manager": "crosvm"
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(
+      FindConfig(serialized_data, R"(--vm_manager="qemu_cli","crosvm")"));
+}
+
 }  // namespace cuttlefish
