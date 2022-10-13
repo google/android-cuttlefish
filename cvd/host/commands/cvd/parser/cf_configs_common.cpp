@@ -49,6 +49,18 @@ void InitIntConfig(Json::Value& instances, std::string group,
   }
 }
 
+void InitStringConfig(Json::Value& instances, std::string group,
+                      std::string json_flag, std::string default_value) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(json_flag))) {
+      instances[i][group][json_flag] = default_value;
+    }
+  }
+}
+
 std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
                           std::string group, std::string json_flag) {
   int size = instances.size();
