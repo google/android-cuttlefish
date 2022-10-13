@@ -23,7 +23,8 @@ namespace cuttlefish {
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::intValue},
     {"memory_mb", Json::ValueType::intValue},
-    {"vm_manager", Json::ValueType::stringValue}};
+    {"vm_manager", Json::ValueType::stringValue},
+    {"setupwizard_mode", Json::ValueType::stringValue}};
 
 bool ValidateVmConfigs(const Json::Value& root) {
   if (!ValidateTypo(root, kVmKeyMap)) {
@@ -37,6 +38,8 @@ void InitVmConfigs(Json::Value& instances) {
   InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
   InitIntConfig(instances, "vm", "memory_mb", CF_DEFAULTS_MEMORY_MB);
   InitStringConfig(instances, "vm", "vm_manager", CF_DEFAULTS_VM_MANAGER);
+  InitStringConfig(instances, "vm", "setupwizard_mode",
+                   CF_DEFAULTS_SETUPWIZARD_MODE);
 }
 
 void GenerateVmConfigs(const Json::Value& instances,
@@ -45,6 +48,8 @@ void GenerateVmConfigs(const Json::Value& instances,
   result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
   result.emplace_back(
       GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
+  result.emplace_back(
+      GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
 }
 
 }  // namespace cuttlefish
