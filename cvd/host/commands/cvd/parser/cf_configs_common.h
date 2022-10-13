@@ -23,4 +23,9 @@ namespace cuttlefish {
 bool ValidateTypo(const Json::Value& root,
                   const std::map<std::string, Json::ValueType>& map);
 
+void InitIntConfig(Json::Value& instances, std::string group,
+                   std::string json_flag, int default_value);
+std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
+                          std::string group, std::string json_flag);
+
 }  // namespace cuttlefish
