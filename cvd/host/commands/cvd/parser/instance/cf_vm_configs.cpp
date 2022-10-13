@@ -21,7 +21,8 @@
 namespace cuttlefish {
 
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
-    {"cpus", Json::ValueType::intValue}};
+    {"cpus", Json::ValueType::intValue},
+    {"memory_mb", Json::ValueType::intValue}};
 
 bool ValidateVmConfigs(const Json::Value& root) {
   if (!ValidateTypo(root, kVmKeyMap)) {
@@ -31,37 +32,15 @@ bool ValidateVmConfigs(const Json::Value& root) {
   return true;
 }
 
-void InitVmConfigs(Json::Value& root) {
-  // Allocate and initialize with default values
-  int size = root.size();
-  for (int i = 0; i < size; i++) {
-    if (!root[i].isMember("vm") || (!root[i]["vm"].isMember("cpus"))) {
-      root[i]["vm"]["cpus"] = CF_DEFAULTS_CPUS;
-    }
-  }
+void InitVmConfigs(Json::Value& instances) {
+  InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
+  InitIntConfig(instances, "vm", "memory_mb", CF_DEFAULTS_MEMORY_MB);
 }
 
-std::string GenerateCpuFlag(const Json::Value& root) {
-  int size = root.size();
-  {
-    std::stringstream buff;
-    // Append Header
-    buff << "--"
-         << "cpus"
-         << "=";
-    // Append values
-    for (int i = 0; i < size; i++) {
-      int val = root[i]["vm"]["cpus"].asInt();
-      buff << val;
-      if (i != size - 1) buff << ",";
-    }
-    return buff.str();
-  }
-}
-
-void GenerateVmConfigs(const Json::Value& root,
+void GenerateVmConfigs(const Json::Value& instances,
                        std::vector<std::string>& result) {
-  result.emplace_back(GenerateCpuFlag(root));
+  result.emplace_back(GenerateGflag(instances, "cpus", "vm", "cpus"));
+  result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
 }
 
 }  // namespace cuttlefish
