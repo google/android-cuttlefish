@@ -47,6 +47,7 @@
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/help_command.h"
+#include "host/commands/cvd/load_configs.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -100,7 +101,8 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
       .install(cvdVersionComponent)
-      .install(DemoMultiVdComponent);
+      .install(DemoMultiVdComponent)
+      .install(LoadConfigsComponent);
 }
 
 Result<void> CvdServer::BestEffortWakeup() {
