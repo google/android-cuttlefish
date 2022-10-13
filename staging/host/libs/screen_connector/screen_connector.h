@@ -122,6 +122,10 @@ class ScreenConnector : public ScreenConnectorInfo,
     return false;
   }
 
+  void SetDisplayEventCallback(DisplayEventCallback event_callback) {
+    sc_android_src_->SetDisplayEventCallback(std::move(event_callback));
+  }
+
   /* returns the processed frame that also includes meta-info such as success/fail
    * and display number from the guest
    *
