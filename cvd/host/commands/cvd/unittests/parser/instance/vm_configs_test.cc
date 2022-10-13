@@ -339,4 +339,87 @@ TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
       FindConfig(serialized_data, R"(--setupwizard_mode="ENABLED","ENABLED")"));
 }
 
+TEST(FlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      R"(--uuid="699acfc4-c8c4-11e7-882b-5065f31dc101","699acfc4-c8c4-11e7-882b-5065f31dc101")"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesUuidFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+            }
+        },
+        {
+            "vm": {
+                "uuid": "870acfc4-c8c4-11e7-99ac-5065f31dc250"
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      R"(--uuid="699acfc4-c8c4-11e7-882b-5065f31dc101","870acfc4-c8c4-11e7-99ac-5065f31dc250")"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesUuidFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "uuid": "870acfc4-c8c4-11e7-99ac-5065f31dc250"
+            }
+        },
+        {
+            "vm": {
+                "uuid": "870acfc4-c8c4-11e7-99ac-5065f31dc251"
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      R"(--uuid="870acfc4-c8c4-11e7-99ac-5065f31dc250","870acfc4-c8c4-11e7-99ac-5065f31dc251")"));
+}
+
 }  // namespace cuttlefish
