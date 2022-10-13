@@ -47,6 +47,7 @@ cc_test_host {
         "unittest/test_common.cc",
         "unittest/flags_parser_test.cc",
         "unittest/vm_configs_test.cc",
+        "unittest/boot_configs_test.cc",
     ],
     defaults: ["cvd_load_defaults"],
 }
