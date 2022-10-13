@@ -54,10 +54,15 @@ RemoteRemotelyProvisionedComponent::RemoteRemotelyProvisionedComponent(
 
 ScopedAStatus RemoteRemotelyProvisionedComponent::getHardwareInfo(
     RpcHardwareInfo* info) {
-  info->versionNumber = 2;
-  info->rpcAuthorName = "Google";
-  info->supportedEekCurve = RpcHardwareInfo::CURVE_25519;
-  info->uniqueId = "remote keymint";
+  GetHwInfoResponse response = impl_.GetHwInfo();
+  if (response.error != KM_ERROR_OK) {
+    return toKeymasterError(response);
+  }
+
+  info->versionNumber = response.version;
+  info->rpcAuthorName = response.rpcAuthorName;
+  info->supportedEekCurve = response.supportedEekCurve;
+  info->uniqueId = response.uniqueId;
   return ScopedAStatus::ok();
 }
 
