@@ -259,4 +259,84 @@ TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
       FindConfig(serialized_data, R"(--vm_manager="qemu_cli","crosvm")"));
 }
 
+TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data,
+                         R"(--setupwizard_mode="DISABLED","DISABLED")"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+            }
+        },
+        {
+            "vm": {
+                "setupwizard_mode": "ENABLED"
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data,
+                         R"(--setupwizard_mode="DISABLED","ENABLED")"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "setupwizard_mode": "ENABLED"
+            }
+        },
+        {
+            "vm": {
+                "setupwizard_mode": "ENABLED"
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(
+      FindConfig(serialized_data, R"(--setupwizard_mode="ENABLED","ENABLED")"));
+}
+
 }  // namespace cuttlefish
