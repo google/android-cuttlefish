@@ -22,7 +22,8 @@ namespace cuttlefish {
 
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::intValue},
-    {"memory_mb", Json::ValueType::intValue}};
+    {"memory_mb", Json::ValueType::intValue},
+    {"vm_manager", Json::ValueType::stringValue}};
 
 bool ValidateVmConfigs(const Json::Value& root) {
   if (!ValidateTypo(root, kVmKeyMap)) {
@@ -35,12 +36,15 @@ bool ValidateVmConfigs(const Json::Value& root) {
 void InitVmConfigs(Json::Value& instances) {
   InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
   InitIntConfig(instances, "vm", "memory_mb", CF_DEFAULTS_MEMORY_MB);
+  InitStringConfig(instances, "vm", "vm_manager", CF_DEFAULTS_VM_MANAGER);
 }
 
 void GenerateVmConfigs(const Json::Value& instances,
                        std::vector<std::string>& result) {
   result.emplace_back(GenerateGflag(instances, "cpus", "vm", "cpus"));
   result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
+  result.emplace_back(
+      GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
 }
 
 }  // namespace cuttlefish
