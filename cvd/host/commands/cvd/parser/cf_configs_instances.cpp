@@ -18,6 +18,7 @@
 
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
+#include "host/commands/cvd/parser/instance/cf_boot_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 
 namespace cuttlefish {
@@ -47,16 +48,24 @@ bool ValidateInstancesConfigs(const Json::Value& root) {
       LOG(INFO) << "ValidateVmConfigs fail";
       return false;
     }
+    if (root[i].isMember("boot") && !ValidateBootConfigs(root[i]["boot"])) {
+      LOG(INFO) << "ValidateBootConfigs fail";
+      return false;
+    }
   }
 
   return true;
 }
 
-void InitInstancesConfigs(Json::Value& root) { InitVmConfigs(root); }
+void InitInstancesConfigs(Json::Value& root) {
+  InitVmConfigs(root);
+  InitBootConfigs(root);
+}
 
 void GenerateInstancesConfigs(const Json::Value& root,
                               std::vector<std::string>& result) {
   GenerateVmConfigs(root, result);
+  GenerateBootConfigs(root, result);
 }
 
 }  // namespace cuttlefish
