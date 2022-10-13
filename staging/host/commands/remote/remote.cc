@@ -34,7 +34,6 @@ static std::string JsonToString(const Json::Value& input) {
 
 static std::string CreateHostBody(const CreateHostInstanceRequest& request) {
   Json::Value gcp;
-  gcp["disk_size_gb"] = request.gcp->disk_size_gb;
   gcp["machine_type"] = request.gcp->machine_type;
   gcp["min_cpu_platform"] = request.gcp->min_cpu_platform;
   Json::Value request_json;
