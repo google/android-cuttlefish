@@ -40,6 +40,7 @@ cc_test_host {
     ],
     static_libs: [
         "libcvd_parser",
+        "libcuttlefish_host_config",
         "libgmock",
     ],
     srcs: [
