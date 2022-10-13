@@ -69,7 +69,7 @@ TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
 }
 
 constexpr char kBashScriptPrefix[] =
-    "#!/bin/bash\n\n/usr/bin/sso_client \\\n--request_timeout=120 "
+    "#!/bin/bash\n\n/usr/bin/sso_client \\\n--request_timeout=300 "
     "\\\n--dump_header ";
 
 TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
