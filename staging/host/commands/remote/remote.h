@@ -24,7 +24,6 @@
 namespace cuttlefish {
 
 struct GCPInstance {
-  int disk_size_gb;
   const char* machine_type;
   const char* min_cpu_platform;
 };
