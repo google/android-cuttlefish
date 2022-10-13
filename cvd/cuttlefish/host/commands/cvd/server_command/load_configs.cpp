@@ -13,56 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/server_command/load_configs.h"
+#include "host/commands/cvd/load_configs.h"
 
-#include <iostream>
+#include <chrono>
 #include <mutex>
-#include <sstream>
 #include <string>
-#include <vector>
 
-#include <android-base/strings.h>
 #include <fruit/fruit.h>
-#include <json/json.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/parser/load_configs_parser.h"
-#include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server_client.h"
-#include "host/commands/cvd/server_command/utils.h"
-#include "host/commands/cvd/types.h"
+#include "host/commands/cvd/server.h"
+#include "server_client.h"
 
 namespace cuttlefish {
 
+struct DemoCommandSequence {
+  std::vector<InstanceLockFile> instance_locks;
+  std::vector<RequestWithStdio> requests;
+};
+
 class LoadConfigsCommand : public CvdServerHandler {
  public:
-  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor))
-      : executor_(executor) {}
+  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor,
+                            InstanceLockFileManager& lock_file_manager))
+      : executor_(executor), lock_file_manager_(lock_file_manager) {}
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
-    return invocation.command == kLoadSubCmd;
+    return invocation.command == "load";
   }
-
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
-    CF_EXPECT(!interrupted_, "Interrupted");
+    if (interrupted_) {
+      return CF_ERR("Interrupted");
+    }
     CF_EXPECT(CF_EXPECT(CanHandle(request)));
 
     auto commands = CF_EXPECT(CreateCommandSequence(request));
     interrupt_lock.unlock();
-    CF_EXPECT(executor_.Execute(commands, request.Err()));
+    CF_EXPECT(executor_.Execute(commands.requests, request.Err()));
+
+    for (auto& lock : commands.instance_locks) {
+      CF_EXPECT(lock.Status(InUseState::kInUse));
+    }
 
     cvd::Response response;
     response.mutable_command_response();
     return response;
   }
-
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
@@ -70,117 +73,61 @@ class LoadConfigsCommand : public CvdServerHandler {
     return {};
   }
 
-  cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
-
-  Result<std::vector<RequestWithStdio>> CreateCommandSequence(
+  Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {
     bool help = false;
 
     std::vector<Flag> flags;
     flags.emplace_back(GflagsCompatFlag("help", help));
-    std::vector<std::string> overrides;
-    FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
-    flags.emplace_back(Flag().Alias(alias).Setter(
-        [&overrides](const FlagMatch& m) -> Result<void> {
-          overrides.push_back(m.value);
-          return {};
-        }));
     auto args = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(ParseFlags(flags, args));
-    CF_EXPECT(args.size() > 0,
-              "No arguments provided to cvd load command, please provide at "
-              "least one argument (help or path to json file)");
 
     if (help) {
-      std::stringstream help_msg_stream;
-      help_msg_stream << "Usage: cvd " << kLoadSubCmd;
-      const auto help_msg = help_msg_stream.str();
-      CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
+      static constexpr char kHelp[] = "Usage: cvd load";
+      CF_EXPECT(WriteAll(request.Out(), kHelp, sizeof(kHelp)) == sizeof(kHelp));
       return {};
     }
 
-    std::string config_path = args.front();
-    if (config_path[0] != '/') {
-      config_path = request.Message().command_request().working_directory() +
-                    "/" + config_path;
-    }
-    Json::Value json_configs =
-        CF_EXPECT(GetOverridedJsonConfig(config_path, overrides));
-    const auto load_directories =
-        CF_EXPECT(GenerateLoadDirectories(json_configs["instances"].size()));
-    auto cvd_flags = CF_EXPECT(ParseCvdConfigs(json_configs, load_directories),
-                               "parsing json configs failed");
+    DemoCommandSequence ret;
+
+    auto lock = CF_EXPECT(lock_file_manager_.TryAcquireUnusedLock());
+    CF_EXPECT(lock.has_value(), "Failed to acquire instance number (Load)");
+    ret.instance_locks.emplace_back(std::move(*lock));
+
     std::vector<cvd::Request> req_protos;
-    const auto& client_env = request.Message().command_request().env();
 
-    if (!cvd_flags.fetch_cvd_flags.empty()) {
-      auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
-      *fetch_cmd.mutable_env() = client_env;
-      fetch_cmd.add_args("cvd");
-      fetch_cmd.add_args("fetch");
-      for (const auto& flag : cvd_flags.fetch_cvd_flags) {
-        fetch_cmd.add_args(flag);
-      }
-    }
+    auto& launch_phone = *req_protos.emplace_back().mutable_command_request();
+    launch_phone.set_working_directory(
+        request.Message().command_request().working_directory());
+    *launch_phone.mutable_env() = request.Message().command_request().env();
 
-    auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
-    *mkdir_cmd.mutable_env() = client_env;
-    mkdir_cmd.add_args("cvd");
-    mkdir_cmd.add_args("mkdir");
-    mkdir_cmd.add_args("-p");
-    mkdir_cmd.add_args(load_directories.launch_home_directory);
+    /* cvd load will always crate instances in deamon mode and
+    will enable reporting automatically
+    */
+    launch_phone.add_args("cvd");
+    launch_phone.add_args("start");
+    launch_phone.add_args("--daemon");
+    launch_phone.add_args("--report_anonymous_usage_stats=y");
 
-    auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-    launch_cmd.set_working_directory(load_directories.first_instance_directory);
-    *launch_cmd.mutable_env() = client_env;
-    (*launch_cmd.mutable_env())["HOME"] =
-        load_directories.launch_home_directory;
-    (*launch_cmd.mutable_env())[kAndroidHostOut] =
-        load_directories.first_instance_directory;
-    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
-        load_directories.first_instance_directory;
-    if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
-      (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
-    }
-
-    /* cvd load will always create instances in daemon mode (to be independent
-     of terminal) and will enable reporting automatically (to run automatically
-     without question during launch)
-     */
-    launch_cmd.add_args("cvd");
-    launch_cmd.add_args("start");
-    launch_cmd.add_args("--daemon");
-    for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
-      launch_cmd.add_args(parsed_flag);
-    }
-    // Add system flag for multi-build scenario
-    launch_cmd.add_args(load_directories.system_image_directory_flag);
-
-    auto selector_opts = launch_cmd.mutable_selector_opts();
-    selector_opts->add_args(
-        std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
-    for (const auto& flag: cvd_flags.selector_flags) {
-      selector_opts->add_args(flag);
-    }
+    auto phone_instance = std::to_string(ret.instance_locks[0].Instance());
+    launch_phone.add_args("--base_instance_num=" + phone_instance);
 
     /*Verbose is disabled by default*/
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
     std::vector<SharedFD> fds = {dev_null, dev_null, dev_null};
-    std::vector<RequestWithStdio> ret;
 
     for (auto& request_proto : req_protos) {
-      ret.emplace_back(RequestWithStdio(request.Client(), request_proto, fds,
-                                        request.Credentials()));
+      ret.requests.emplace_back(request.Client(), request_proto, fds,
+                                request.Credentials());
     }
 
     return ret;
   }
 
  private:
-  static constexpr char kLoadSubCmd[] = "load";
-
   CommandSequenceExecutor& executor_;
+  InstanceLockFileManager& lock_file_manager_;
 
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
