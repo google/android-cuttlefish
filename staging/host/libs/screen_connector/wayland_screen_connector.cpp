@@ -38,4 +38,9 @@ void WaylandScreenConnector::SetFrameCallback(
   server_->SetFrameCallback(std::move(frame_callback));
 }
 
+void WaylandScreenConnector::SetDisplayEventCallback(
+    DisplayEventCallback event_callback) {
+  server_->SetDisplayEventCallback(std::move(event_callback));
+}
+
 }  // namespace cuttlefish
