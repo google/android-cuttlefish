@@ -104,4 +104,81 @@ TEST(FlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=4,6"));
 }
 
+TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=0,0"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+            }
+        },
+        {
+            "vm": {
+                "memory_mb": 4069
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=0,4069"));
+}
+
+TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "memory_mb": 4069
+            }
+        },
+        {
+            "vm": {
+                "memory_mb": 8192
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=4069,8192"));
+}
+
 }  // namespace cuttlefish
