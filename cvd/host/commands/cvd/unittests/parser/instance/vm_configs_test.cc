@@ -27,7 +27,7 @@
 
 namespace cuttlefish {
 
-TEST(FlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -49,7 +49,7 @@ TEST(FlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=2,2"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -76,7 +76,7 @@ TEST(FlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=2,4"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -104,7 +104,7 @@ TEST(FlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=4,6"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagEmptyJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagEmptyJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -126,7 +126,7 @@ TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagEmptyJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=0,0"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -153,7 +153,7 @@ TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=0,4069"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -181,7 +181,7 @@ TEST(FlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=4069,8192"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagEmptyJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagEmptyJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -203,7 +203,7 @@ TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagEmptyJson) {
   EXPECT_TRUE(FindConfig(serialized_data, R"(--vm_manager="","")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagPartialJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagPartialJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -230,7 +230,7 @@ TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagPartialJson) {
   EXPECT_TRUE(FindConfig(serialized_data, R"(--vm_manager="","crosvm")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -259,7 +259,7 @@ TEST(FlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
       FindConfig(serialized_data, R"(--vm_manager="qemu_cli","crosvm")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagEmptyJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagEmptyJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -282,7 +282,7 @@ TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagEmptyJson) {
                          R"(--setupwizard_mode="DISABLED","DISABLED")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -310,7 +310,7 @@ TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
                          R"(--setupwizard_mode="DISABLED","ENABLED")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -339,7 +339,7 @@ TEST(FlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
       FindConfig(serialized_data, R"(--setupwizard_mode="ENABLED","ENABLED")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -363,7 +363,7 @@ TEST(FlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
       R"(--uuid="699acfc4-c8c4-11e7-882b-5065f31dc101","699acfc4-c8c4-11e7-882b-5065f31dc101")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesUuidFlagPartialJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagPartialJson) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -392,7 +392,7 @@ TEST(FlagsParserTest, ParseTwoInstancesUuidFlagPartialJson) {
       R"(--uuid="699acfc4-c8c4-11e7-882b-5065f31dc101","870acfc4-c8c4-11e7-99ac-5065f31dc250")"));
 }
 
-TEST(FlagsParserTest, ParseTwoInstancesUuidFlagFullJson) {
+TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagFullJson) {
   const char* test_string = R""""(
 {
     "instances" :
