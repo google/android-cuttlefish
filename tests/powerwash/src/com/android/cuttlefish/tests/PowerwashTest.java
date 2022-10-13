@@ -47,7 +47,6 @@ public class PowerwashTest extends BaseHostJUnit4Test {
 
         // Reboot the device to make sure the file persits.
         getDevice().reboot();
-        getDevice().waitForDeviceAvailable();
         File file = getDevice().pullFile(tmpFile);
         if (file == null) {
             Assert.fail("Setup failed: tmp file failed to persist after device reboot.");
