@@ -31,7 +31,7 @@ class Surfaces;
 class Surface {
  public:
   Surface(Surfaces& surfaces);
-  virtual ~Surface() = default;
+  virtual ~Surface();
 
   Surface(const Surface& rhs) = delete;
   Surface& operator=(const Surface& rhs) = delete;
@@ -76,6 +76,8 @@ class Surface {
     Region region;
 
     VirtioGpuMetadata virtio_gpu_metadata_;
+
+    bool has_notified_surface_create = false;
   };
 
   std::mutex state_mutex_;
