@@ -24,6 +24,8 @@
 #include <thread>
 #include <unordered_map>
 
+#include "host/libs/wayland/wayland_server_callbacks.h"
+
 namespace wayland {
 
 class Surface;
@@ -48,6 +50,8 @@ class Surfaces {
 
   void SetFrameCallback(FrameCallback callback);
 
+  void SetDisplayEventCallback(DisplayEventCallback callback);
+
  private:
   friend class Surface;
   void HandleSurfaceFrame(std::uint32_t display_number,      //
@@ -56,8 +60,15 @@ class Surfaces {
                           std::uint32_t frame_stride_bytes,  //
                           std::uint8_t* frame_bytes);
 
+  void HandleSurfaceCreated(std::uint32_t display_number,
+                            std::uint32_t display_width,
+                            std::uint32_t display_height);
+
+  void HandleSurfaceDestroyed(std::uint32_t display_number);
+
   std::mutex callback_mutex_;
   std::optional<FrameCallback> callback_;
+  std::optional<DisplayEventCallback> event_callback_;
 };
 
 }  // namespace wayland

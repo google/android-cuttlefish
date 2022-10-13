@@ -24,6 +24,7 @@
 #include <string>
 #include <thread>
 
+#include "host/libs/wayland/wayland_server_callbacks.h"
 #include "host/libs/wayland/wayland_surfaces.h"
 
 namespace wayland {
@@ -51,6 +52,8 @@ class WaylandServer {
     // Registers the callback that will be run whenever a new frame is
     // available.
     void SetFrameCallback(Surfaces::FrameCallback callback);
+
+    void SetDisplayEventCallback(DisplayEventCallback callback);
 
    private:
     void ServerLoop(int wayland_socket_fd);
