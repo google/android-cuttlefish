@@ -25,6 +25,13 @@ namespace wayland {
 
 Surface::Surface(Surfaces& surfaces) : surfaces_(surfaces) {}
 
+Surface::~Surface() {
+  if (state_.virtio_gpu_metadata_.scanout_id.has_value()) {
+    const uint32_t display_number = *state_.virtio_gpu_metadata_.scanout_id;
+    surfaces_.HandleSurfaceDestroyed(display_number);
+  }
+}
+
 void Surface::SetRegion(const Region& region) {
   std::unique_lock<std::mutex> lock(state_mutex_);
   state_.region = region;
@@ -57,6 +64,11 @@ void Surface::Commit() {
     const int32_t buffer_h = wl_shm_buffer_get_height(shm_buffer);
     CHECK(buffer_h == state_.region.h);
     const int32_t buffer_stride_bytes = wl_shm_buffer_get_stride(shm_buffer);
+
+    if (!state_.has_notified_surface_create) {
+      surfaces_.HandleSurfaceCreated(display_number, buffer_w, buffer_h);
+      state_.has_notified_surface_create = true;
+    }
 
     uint8_t* buffer_pixels =
         reinterpret_cast<uint8_t*>(wl_shm_buffer_get_data(shm_buffer));
