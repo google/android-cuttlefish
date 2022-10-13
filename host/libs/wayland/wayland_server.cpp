@@ -101,4 +101,8 @@ void WaylandServer::SetFrameCallback(Surfaces::FrameCallback callback) {
   server_state_->surfaces_.SetFrameCallback(std::move(callback));
 }
 
+void WaylandServer::SetDisplayEventCallback(DisplayEventCallback callback) {
+  server_state_->surfaces_.SetDisplayEventCallback(std::move(callback));
+}
+
 }  // namespace wayland
