@@ -212,6 +212,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.automotive.remoteaccess.", 1},
     {"android.hardware.automotive.vehicle.", 2},
 
+    // TODO(b/250036572): Implement for the interface.
+    {"android.hardware.graphics.composer3.", 2},
+
     // These types are only used in TV.
     {"android.hardware.tv.tuner.", 2},
     {"android.hardware.tv.input.", 1},
