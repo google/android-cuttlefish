@@ -18,13 +18,16 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
+#include "host/libs/config/cuttlefish_config.h"
 namespace cuttlefish {
 
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::intValue},
     {"memory_mb", Json::ValueType::intValue},
     {"vm_manager", Json::ValueType::stringValue},
-    {"setupwizard_mode", Json::ValueType::stringValue}};
+    {"setupwizard_mode", Json::ValueType::stringValue},
+    {"uuid", Json::ValueType::stringValue},
+};
 
 bool ValidateVmConfigs(const Json::Value& root) {
   if (!ValidateTypo(root, kVmKeyMap)) {
@@ -40,6 +43,7 @@ void InitVmConfigs(Json::Value& instances) {
   InitStringConfig(instances, "vm", "vm_manager", CF_DEFAULTS_VM_MANAGER);
   InitStringConfig(instances, "vm", "setupwizard_mode",
                    CF_DEFAULTS_SETUPWIZARD_MODE);
+  InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
 }
 
 void GenerateVmConfigs(const Json::Value& instances,
@@ -50,6 +54,7 @@ void GenerateVmConfigs(const Json::Value& instances,
       GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
   result.emplace_back(
       GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
+  result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
 }
 
 }  // namespace cuttlefish
