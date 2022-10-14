@@ -23,12 +23,29 @@
 
 namespace cuttlefish {
 
+static std::map<std::string, Json::ValueType> securitykeyMap = {
+    {"serial_number", Json::ValueType::stringValue}};
+
 static std::map<std::string, Json::ValueType> kBootKeyMap = {
-    {"extra_bootconfig_args", Json::ValueType::stringValue}};
+    {"extra_bootconfig_args", Json::ValueType::stringValue},
+    {"security", Json::ValueType::objectValue}};
+
+bool ValidateSecurityConfigs(const Json::Value& root) {
+  if (!ValidateTypo(root, securitykeyMap)) {
+    LOG(INFO) << "ValidateSecurityConfigs ValidateTypo fail";
+    return false;
+  }
+  return true;
+}
 
 bool ValidateBootConfigs(const Json::Value& root) {
   if (!ValidateTypo(root, kBootKeyMap)) {
     LOG(INFO) << "ValidateBootConfigs ValidateTypo fail";
+    return false;
+  }
+
+  if (root.isMember("security") && !ValidateSecurityConfigs(root["security"])) {
+    LOG(INFO) << "ValidateSecurityConfigs fail";
     return false;
   }
 
@@ -38,12 +55,16 @@ bool ValidateBootConfigs(const Json::Value& root) {
 void InitBootConfigs(Json::Value& instances) {
   InitStringConfig(instances, "boot", "extra_bootconfig_args",
                    CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
+  InitStringConfigSubGroup(instances, "boot", "security", "serial_number",
+                           CF_DEFAULTS_SERIAL_NUMBER);
 }
 
 void GenerateBootConfigs(const Json::Value& instances,
                          std::vector<std::string>& result) {
-  GenerateGflag(instances, result, "extra_bootconfig_args", "boot",
-                "extra_bootconfig_args");
+  result.emplace_back(GenerateGflag(instances, "extra_bootconfig_args", "boot",
+                                    "extra_bootconfig_args"));
+  result.emplace_back(GenerateGflagSubGroup(instances, "serial_number", "boot",
+                                            "security", "serial_number"));
 }
 
 }  // namespace cuttlefish
