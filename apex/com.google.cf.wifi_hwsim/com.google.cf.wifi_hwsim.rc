@@ -27,15 +27,3 @@ service hostapd /apex/com.android.wifi.hal/bin/hw/hostapd_cf
     group wifi net_raw net_admin
     disabled
     oneshot
-
-service vendor.wifi_hal_legacy /apex/com.android.wifi.hal/bin/hw/android.hardware.wifi@1.0-service
-    interface android.hardware.wifi@1.0::IWifi default
-    interface android.hardware.wifi@1.1::IWifi default
-    interface android.hardware.wifi@1.2::IWifi default
-    interface android.hardware.wifi@1.3::IWifi default
-    interface android.hardware.wifi@1.4::IWifi default
-    interface android.hardware.wifi@1.5::IWifi default
-    class hal
-    capabilities NET_ADMIN NET_RAW SYS_MODULE
-    user wifi
-    group wifi gps
