@@ -99,4 +99,95 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
       R"(--extra_bootconfig_args="androidboot.X=Y","androidboot.X=Z")"));
 }
 
+TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(
+      FindConfig(serialized_data,
+                 R"(--serial_number="CUTTLEFISHCVD01","CUTTLEFISHCVD01")"));
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "boot": {
+                "security": {
+                }
+            }
+        },
+        {
+            "boot": {
+                "security": {
+                    "serial_number": "CUTTLEFISHCVD101"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(
+      FindConfig(serialized_data,
+                 R"(--serial_number="CUTTLEFISHCVD01","CUTTLEFISHCVD101")"));
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "boot": {
+                "security": {
+                    "serial_number": "CUTTLEFISHCVD101"
+                }
+            }
+        },
+        {
+            "boot": {
+                "security": {
+                    "serial_number": "CUTTLEFISHCVD102"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(
+      FindConfig(serialized_data,
+                 R"(--serial_number="CUTTLEFISHCVD101","CUTTLEFISHCVD102")"));
+}
+
 }  // namespace cuttlefish
