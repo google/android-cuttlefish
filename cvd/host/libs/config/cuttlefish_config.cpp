@@ -180,22 +180,6 @@ bool CuttlefishConfig::enable_gpu_angle() const {
   return (*dictionary_)[kEnableGpuAngle].asBool();
 }
 
-static constexpr char kMemoryMb[] = "memory_mb";
-int CuttlefishConfig::memory_mb() const {
-  return (*dictionary_)[kMemoryMb].asInt();
-}
-void CuttlefishConfig::set_memory_mb(int memory_mb) {
-  (*dictionary_)[kMemoryMb] = memory_mb;
-}
-
-static constexpr char kDdrMemMb[] = "ddr_mem_mb";
-int CuttlefishConfig::ddr_mem_mb() const {
-  return (*dictionary_)[kDdrMemMb].asInt();
-}
-void CuttlefishConfig::set_ddr_mem_mb(int ddr_mem_mb) {
-  (*dictionary_)[kDdrMemMb] = ddr_mem_mb;
-}
-
 void CuttlefishConfig::SetPath(const std::string& key,
                                const std::string& path) {
   if (!path.empty()) {
