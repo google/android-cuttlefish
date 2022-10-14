@@ -7,13 +7,4 @@
         <name>android.hardware.wifi.hostapd</name>
         <fqname>IHostapd/default</fqname>
     </hal>
-    <hal format="hidl">
-        <name>android.hardware.wifi</name>
-        <transport>hwbinder</transport>
-        <version>1.6</version>
-        <interface>
-            <name>IWifi</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
 </manifest>
