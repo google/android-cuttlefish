@@ -61,6 +61,20 @@ void InitStringConfig(Json::Value& instances, std::string group,
   }
 }
 
+void InitStringConfigSubGroup(Json::Value& instances, std::string group,
+                              std::string subgroup, std::string json_flag,
+                              std::string default_value) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(subgroup)) ||
+        (!instances[i][group][subgroup].isMember(json_flag))) {
+      instances[i][group][subgroup][json_flag] = default_value;
+    }
+  }
+}
+
 std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
                           std::string group, std::string json_flag) {
   int size = instances.size();
@@ -75,4 +89,18 @@ std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
   return buff.str();
 }
 
+std::string GenerateGflagSubGroup(const Json::Value& instances,
+                                  std::string gflag_name, std::string group,
+                                  std::string subgroup, std::string json_flag) {
+  int size = instances.size();
+  std::stringstream buff;
+  // Append Header
+  buff << "--" << gflag_name << "=";
+  // Append values
+  for (int i = 0; i < size; i++) {
+    buff << instances[i][group][subgroup][json_flag];
+    if (i != size - 1) buff << ",";
+  }
+  return buff.str();
+}
 }  // namespace cuttlefish

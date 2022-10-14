@@ -28,7 +28,16 @@ void InitIntConfig(Json::Value& instances, std::string group,
 
 void InitStringConfig(Json::Value& instances, std::string group,
                       std::string json_flag, std::string default_value);
+
+void InitStringConfigSubGroup(Json::Value& instances, std::string group,
+                              std::string subgroup, std::string json_flag,
+                              std::string default_value);
+
 std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
                           std::string group, std::string json_flag);
+
+std::string GenerateGflagSubGroup(const Json::Value& instances,
+                                  std::string gflag_name, std::string group,
+                                  std::string subgroup, std::string json_flag);
 
 }  // namespace cuttlefish
