@@ -142,6 +142,13 @@ class DeviceControlApp {
     audioElm.onplay = () => audioPlaybackCtrl.Set(true);
     audioElm.onpause = () => audioPlaybackCtrl.Set(false);
 
+    // Enable non-ADB buttons, these buttons use data channels to communicate
+    // with the host, so they're ready to go as soon as the webrtc connection is
+    // established.
+    this.#getControlPanelButtons()
+        .filter(b => !b.dataset.adb)
+        .forEach(b => b.disabled = false);
+
     this.#showDeviceUI();
   }
 
@@ -645,10 +652,6 @@ class DeviceControlApp {
       deviceDisplay.style.visibility = 'visible';
     }
 
-    // Enable the buttons after the screen is visible.
-    this.#getControlPanelButtons()
-        .filter(b => !b.dataset.adb)
-        .forEach(b => b.disabled = false);
     // Start the adb connection if it is not already started.
     this.#initializeAdb();
   }
