@@ -53,7 +53,11 @@ int Main(int argc, char** argv) {
       FLAGS_use_sso_client
           ? std::unique_ptr<HttpClient>(new http_client::SsoClient())
           : HttpClient::CurlClient();
-  CloudOrchestratorApi api(FLAGS_service_url, FLAGS_zone, *http_client);
+  auto retrying_http_client = HttpClient::ServerErrorRetryClient(
+      *http_client, 2 /* retry_attempts */,
+      std::chrono::milliseconds(5000) /* retry_delay */);
+  CloudOrchestratorApi api(FLAGS_service_url, FLAGS_zone,
+                           *retrying_http_client);
   CreateCVDRequest request{
     build_info : BuildInfo{
       build_id : FLAGS_build_id,
