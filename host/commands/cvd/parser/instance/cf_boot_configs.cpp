@@ -26,13 +26,26 @@ namespace cuttlefish {
 static std::map<std::string, Json::ValueType> securitykeyMap = {
     {"serial_number", Json::ValueType::stringValue}};
 
+static std::map<std::string, Json::ValueType> kernelkeyMap = {
+    {"extra_kernel_cmdline", Json::ValueType::stringValue},
+};
+
 static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"extra_bootconfig_args", Json::ValueType::stringValue},
-    {"security", Json::ValueType::objectValue}};
+    {"security", Json::ValueType::objectValue},
+    {"kernel", Json::ValueType::objectValue}};
 
 bool ValidateSecurityConfigs(const Json::Value& root) {
   if (!ValidateTypo(root, securitykeyMap)) {
     LOG(INFO) << "ValidateSecurityConfigs ValidateTypo fail";
+    return false;
+  }
+  return true;
+}
+
+bool ValidateKernelConfigs(const Json::Value& root) {
+  if (!ValidateTypo(root, kernelkeyMap)) {
+    LOG(INFO) << "ValidateKernelConfigs ValidateTypo fail";
     return false;
   }
   return true;
@@ -49,6 +62,10 @@ bool ValidateBootConfigs(const Json::Value& root) {
     return false;
   }
 
+  if (root.isMember("kernel") && !ValidateKernelConfigs(root["kernel"])) {
+    LOG(INFO) << "ValidateKernelConfigs fail";
+    return false;
+  }
   return true;
 }
 
@@ -57,6 +74,8 @@ void InitBootConfigs(Json::Value& instances) {
                    CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
   InitStringConfigSubGroup(instances, "boot", "security", "serial_number",
                            CF_DEFAULTS_SERIAL_NUMBER);
+  InitStringConfigSubGroup(instances, "boot", "kernel", "extra_kernel_cmdline",
+                           CF_DEFAULTS_EXTRA_KERNEL_CMDLINE);
 }
 
 void GenerateBootConfigs(const Json::Value& instances,
@@ -65,6 +84,9 @@ void GenerateBootConfigs(const Json::Value& instances,
                                     "extra_bootconfig_args"));
   result.emplace_back(GenerateGflagSubGroup(instances, "serial_number", "boot",
                                             "security", "serial_number"));
+  result.emplace_back(GenerateGflagSubGroup(instances, "extra_kernel_cmdline",
+                                            "boot", "kernel",
+                                            "extra_kernel_cmdline"));
 }
 
 }  // namespace cuttlefish
