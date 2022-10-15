@@ -190,4 +190,93 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
                  R"(--serial_number="CUTTLEFISHCVD101","CUTTLEFISHCVD102")"));
 }
 
+TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_kernel_cmdline="","")"));
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "boot": {
+                "kernel": {
+                }
+            }
+        },
+        {
+            "boot": {
+                "kernel": {
+                    "extra_kernel_cmdline": "androidboot.selinux=permissive"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      R"(--extra_kernel_cmdline="","androidboot.selinux=permissive")"));
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "boot": {
+                "kernel": {
+                    "extra_kernel_cmdline": "androidboot.selinux=permissive"
+                }
+            }
+        },
+        {
+            "boot": {
+                "kernel": {
+                    "extra_kernel_cmdline": "lpm_levels.sleep_disabled=1"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  std::vector<std::string> serialized_data;
+  Json::Value json_configs;
+  std::string strjson(test_string);
+
+  EXPECT_TRUE(ParseJsonString(strjson, json_configs));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      R"(--extra_kernel_cmdline="androidboot.selinux=permissive","lpm_levels.sleep_disabled=1")"));
+}
+
 }  // namespace cuttlefish
