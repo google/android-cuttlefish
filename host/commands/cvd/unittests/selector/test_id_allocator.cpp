@@ -23,10 +23,9 @@
 
 namespace cuttlefish::selector {
 
-class CvdIdAllocatorOneEachTest
-    : public testing::TestWithParam<std::vector<unsigned>> {};
+class OneEachTest : public testing::TestWithParam<std::vector<unsigned>> {};
 
-TEST_P(CvdIdAllocatorOneEachTest, GetAnyAvailableOne) {
+TEST_P(OneEachTest, GetAnyAvailableOne) {
   const auto resources = GetParam();
   auto allocator = UniqueResourceAllocator<unsigned>::New(resources);
   std::unordered_set<unsigned> expected_ids{resources.cbegin(),
@@ -41,7 +40,7 @@ TEST_P(CvdIdAllocatorOneEachTest, GetAnyAvailableOne) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    AllocatorGetterTest, CvdIdAllocatorOneEachTest,
+    CvdIdAllocator, OneEachTest,
     testing::Values(std::vector<unsigned>{}, std::vector<unsigned>{1},
                     std::vector<unsigned>{1, 22, 3, 43, 5}));
 
@@ -117,10 +116,9 @@ TEST_F(CvdIdAllocatorTest, TakeRange) {
   ASSERT_FALSE(allocator.TakeRange(2, 4));
 }
 
-class CvdIdAllocatorReclaimTest
-    : public testing::TestWithParam<std::vector<unsigned>> {};
+class ReclaimTest : public testing::TestWithParam<std::vector<unsigned>> {};
 
-TEST_P(CvdIdAllocatorReclaimTest, Reclaim) {
+TEST_P(ReclaimTest, Reclaim) {
   const auto inputs{GetParam()};
   auto allocator = UniqueResourceAllocator<unsigned>::New(inputs);
   if (!allocator.TakeAll(inputs)) {
@@ -133,7 +131,7 @@ TEST_P(CvdIdAllocatorReclaimTest, Reclaim) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    AllocatorReclaimTest, CvdIdAllocatorReclaimTest,
+    CvdIdAllocator, ReclaimTest,
     testing::Values(std::vector<unsigned>{7}, std::vector<unsigned>{7, 3},
                     std::vector<unsigned>{1, 22, 3, 43, 7}));
 
