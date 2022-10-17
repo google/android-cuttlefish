@@ -128,12 +128,6 @@ PRODUCT_VENDOR_PROPERTIES += \
 PRODUCT_VENDOR_PROPERTIES += \
     wlan.driver.status=ok
 
-ifneq ($(LOCAL_DISABLE_OMX),true)
-# Codec 1.0 requires the OMX services
-DEVICE_MANIFEST_FILE += \
-    device/google/cuttlefish/shared/config/android.hardware.media.omx@1.0.xml
-endif
-
 PRODUCT_VENDOR_PROPERTIES += \
     debug.stagefright.c2inputsurface=-1
 
