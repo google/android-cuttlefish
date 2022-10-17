@@ -19,7 +19,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "host/commands/cvd_load/unittest/test_common.h"
+#include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
 
