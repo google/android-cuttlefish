@@ -16,6 +16,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 
@@ -43,6 +44,21 @@ class InstanceNumsCalculator {
   InstanceNumsCalculator& InstanceNums(std::set<std::int32_t>) &;
   InstanceNumsCalculator InstanceNums(std::set<std::int32_t>) &&;
 
+  /**
+   * Finds set of ids using the flags only.
+   *
+   * Especially, this calculates the base from --instance_nums and
+   * --base_instance_num only
+   *
+   * Processes such as cvd clients may see different user accounts,
+   * CUTTLEFISH_INSTANCE environment variable, etc, than the launcher
+   * effectively sees. This util method is still helpful for that.
+   */
+  Result<std::set<std::int32_t>> CalculateFromFlags();
+
+  // Calculates the base from the --instance_nums, --base_instance_num,
+  // CUTTLEFISH_INSTANCE, suffix of the user account, and the default value.
+  // Then, figures out the set if ids.
   Result<std::set<std::int32_t>> Calculate();
 
  private:
