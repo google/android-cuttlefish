@@ -66,7 +66,14 @@ bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
   return fd_ < other.fd_;
 }
 
-InstanceLockFileManager::InstanceLockFileManager() = default;
+InstanceLockFileManager::InstanceLockFileManager() {
+  auto value_result = FindPotentialInstanceNumsFromNetDevices();
+  if (value_result.ok()) {
+    all_instance_nums_ = std::move(*value_result);
+    return;
+  }
+  initialization_error_ = std::move(value_result.error());
+}
 
 // Replicates tempfile.gettempdir() in Python
 std::string TempDir() {
@@ -136,7 +143,17 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
   return locks;
 }
 
-static Result<std::set<int>> AllInstanceNums() {
+Result<std::reference_wrapper<const std::set<int>>>
+InstanceLockFileManager::AllPotentialInstanceNums() {
+  CF_EXPECT(initialization_error_ == std::nullopt,
+            initialization_error_->Trace());
+  CF_EXPECT(!all_instance_nums_.empty(),
+            "0 available instance numbers on the host");
+  return std::cref(all_instance_nums_);
+}
+
+Result<std::set<int>>
+InstanceLockFileManager::FindPotentialInstanceNumsFromNetDevices() {
   // Estimate this by looking at available tap devices
   // clang-format off
   /** Sample format:
@@ -149,6 +166,7 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
   std::string proc_net_dev;
   using android::base::ReadFileToString;
   CF_EXPECT(ReadFileToString(kPath, &proc_net_dev, /* follow_symlinks */ true));
+
   auto lines = android::base::Split(proc_net_dev, "\n");
   std::set<int> etaps, mtaps, wtaps;
   for (const auto& line : lines) {
@@ -175,7 +193,7 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
 
 Result<std::optional<InstanceLockFile>>
 InstanceLockFileManager::TryAcquireUnusedLock() {
-  auto nums = CF_EXPECT(AllInstanceNums());
+  const std::set<int>& nums = CF_EXPECT(AllPotentialInstanceNums());
   for (const auto& num : nums) {
     auto lock = CF_EXPECT(TryAcquireLock(num));
     if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
