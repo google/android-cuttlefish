@@ -297,7 +297,7 @@ int main(int argc, char** argv) {
   observer_factory->SetDisplayHandler(display_handler);
 
   streamer->SetHardwareSpec("CPUs", instance.cpus());
-  streamer->SetHardwareSpec("RAM", std::to_string(cvd_config->memory_mb()) + " mb");
+  streamer->SetHardwareSpec("RAM", std::to_string(instance.memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;
   if (cvd_config->gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
