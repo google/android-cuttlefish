@@ -29,11 +29,8 @@ static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"uuid", Json::ValueType::stringValue},
 };
 
-bool ValidateVmConfigs(const Json::Value& root) {
-  if (!ValidateTypo(root, kVmKeyMap)) {
-    LOG(INFO) << "ValidateVmConfigs ValidateTypo fail";
-    return false;
-  }
+Result<bool> ValidateVmConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kVmKeyMap), "ValidateVmConfigs ValidateTypo fail");
   return true;
 }
 

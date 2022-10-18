@@ -52,7 +52,7 @@ TEST(FlagsParserTest, ParseJsonWithSpellingError) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_FALSE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_FALSE(ParseCvdConfigs(json_configs, serialized_data).ok());
 }
 
 TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
@@ -71,7 +71,7 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--num_instances=1"));
 }
 
@@ -94,7 +94,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--num_instances=2"));
 }
 

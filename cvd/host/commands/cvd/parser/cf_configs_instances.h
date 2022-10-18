@@ -18,7 +18,7 @@
 #include <json/json.h>
 namespace cuttlefish {
 
-bool ValidateInstancesConfigs(const Json::Value& root);
+Result<bool> ValidateInstancesConfigs(const Json::Value& root);
 
 void InitInstancesConfigs(Json::Value& root);
 void GenerateInstancesConfigs(const Json::Value& root,

@@ -37,7 +37,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_bootconfig_args="","")"));
 }
 
@@ -64,7 +64,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data,
                          R"(--extra_bootconfig_args="","androidboot.X=Y")"));
 }
@@ -93,7 +93,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
       R"(--extra_bootconfig_args="androidboot.X=Y","androidboot.X=Z")"));
@@ -117,7 +117,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data,
                  R"(--serial_number="CUTTLEFISHCVD01","CUTTLEFISHCVD01")"));
@@ -150,7 +150,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data,
                  R"(--serial_number="CUTTLEFISHCVD01","CUTTLEFISHCVD101")"));
@@ -184,7 +184,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data,
                  R"(--serial_number="CUTTLEFISHCVD101","CUTTLEFISHCVD102")"));
@@ -208,7 +208,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_kernel_cmdline="","")"));
 }
 
@@ -239,7 +239,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
       R"(--extra_kernel_cmdline="","androidboot.selinux=permissive")"));
@@ -273,7 +273,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
       R"(--extra_kernel_cmdline="androidboot.selinux=permissive","lpm_levels.sleep_disabled=1")"));
