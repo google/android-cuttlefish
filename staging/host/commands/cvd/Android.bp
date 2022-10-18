@@ -142,6 +142,7 @@ cc_defaults {
         "libcvd_client",
         "libcvd_instance_db",
         "libcvd_selector_frontend",
+        "libcvd_parser",
         "libcvd_server",
         "libfetch_cvd",
     ],
