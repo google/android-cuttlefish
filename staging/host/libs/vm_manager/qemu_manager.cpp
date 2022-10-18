@@ -316,12 +316,12 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
   qemu_cmd.AddParameter("-m");
-  auto maxmem = config.memory_mb() +
+  auto maxmem = instance.memory_mb() +
                 (access_kregistry_size_bytes / 1024 / 1024) +
                 (hwcomposer_pmem_size_bytes / 1024 / 1024) +
                 (is_arm ? 0 : pstore_size_bytes / 1024 / 1024);
   auto slots = is_arm ? "" : ",slots=2";
-  qemu_cmd.AddParameter("size=", config.memory_mb(), "M",
+  qemu_cmd.AddParameter("size=", instance.memory_mb(), "M",
                         ",maxmem=", maxmem, "M", slots);
 
   qemu_cmd.AddParameter("-overcommit");
