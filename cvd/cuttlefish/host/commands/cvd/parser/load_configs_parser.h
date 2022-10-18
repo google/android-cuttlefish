@@ -15,40 +15,13 @@
  */
 
 #pragma once
-
-#include <string>
-#include <vector>
-
 #include <json/json.h>
-
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/parser/fetch_cvd_parser.h"
 
 namespace cuttlefish {
 
-typedef struct _CvdFlags {
-  std::vector<std::string> launch_cvd_flags;
-  std::vector<std::string> selector_flags;
-  std::vector<std::string> fetch_cvd_flags;
-} CvdFlags;
-
-struct LoadDirectories {
-  std::string target_directory;
-  std::vector<std::string> target_subdirectories;
-  std::string launch_home_directory;
-  std::string first_instance_directory;
-  std::string system_image_directory_flag;
-};
-
-Result<Json::Value> ParseJsonFile(const std::string& file_path);
-
-Result<Json::Value> GetOverridedJsonConfig(
-    const std::string& config_path,
-    const std::vector<std::string>& override_flags);
-
-Result<LoadDirectories> GenerateLoadDirectories(const int num_instances);
-
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
-                                 const LoadDirectories& load_directories);
+Result<Json::Value> ParseJsonFile(std::string file_path);
+bool ParseCvdConfigs(Json::Value& root,
+                     std::vector<std::string>& serialized_data);
 
 };  // namespace cuttlefish
