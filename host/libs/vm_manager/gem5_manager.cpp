@@ -86,7 +86,7 @@ void GenerateGem5File(const CuttlefishConfig& config,
   starter_fs_ofstream << "  parser.add_argument(\"--mem-type\", default=\"" << mem_type << "\", choices=ObjectList.mem_list.get_names())\n";
   starter_fs_ofstream << "  parser.add_argument(\"--mem-channels\", type=int, default=" << mem_channels << ")\n";
   starter_fs_ofstream << "  parser.add_argument(\"--mem-ranks\", type=int, default=" << mem_ranks << ")\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--mem-size\", action=\"store\", type=str, default=\"" << config.memory_mb() << "MB\")\n";
+  starter_fs_ofstream << "  parser.add_argument(\"--mem-size\", action=\"store\", type=str, default=\"" << instance.memory_mb() << "MB\")\n";
   starter_fs_ofstream << "  parser.add_argument(\"--restore\", type=str, default=None)\n";
   starter_fs_ofstream << "  args = parser.parse_args()\n";
 
@@ -199,7 +199,7 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
                           instance.gem5_checkpoint_dir());
   }
 
-  gem5_cmd.AddParameter("--mem-size=", config.memory_mb() * 1024ULL * 1024ULL);
+  gem5_cmd.AddParameter("--mem-size=", instance.memory_mb() * 1024ULL * 1024ULL);
   for (const auto& disk : instance.virtual_disk_paths()) {
     gem5_cmd.AddParameter("--disk-image=", disk);
   }
