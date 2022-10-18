@@ -21,24 +21,17 @@ namespace cuttlefish {
 /**
  * Validate Json data Name and type
  */
-bool ValidateTypo(const Json::Value& root,
+Result<bool> ValidateTypo(const Json::Value& root,
                   const std::map<std::string, Json::ValueType>& map) {
   for (const std::string& flag : root.getMemberNames()) {
-    if (map.count(flag) == 0) {
-      LOG(WARNING) << "Invalid flag name (typo) , Param --> " << flag
-                   << " not recognized";
-      return false;
-    }
-    if (!root[flag].isConvertibleTo(map.at(flag))) {
-      LOG(WARNING) << "Invalid flag type " << flag;
-      return false;
-    }
+    CF_EXPECT(map.count(flag) != 0 , "Invalid flag name (typo) , Param --> " << flag<< " not recognized");
+    CF_EXPECT(root[flag].isConvertibleTo(map.at(flag)), "Invalid flag typ"<< flag);
   }
   return true;
 }
 
-void InitIntConfig(Json::Value& instances, std::string group,
-                   std::string json_flag, int default_value) {
+void InitIntConfig(Json::Value& instances, const std::string& group,
+                   const std::string& json_flag, int default_value) {
   // Allocate and initialize with default values
   int size = instances.size();
   for (int i = 0; i < size; i++) {
@@ -49,8 +42,8 @@ void InitIntConfig(Json::Value& instances, std::string group,
   }
 }
 
-void InitStringConfig(Json::Value& instances, std::string group,
-                      std::string json_flag, std::string default_value) {
+void InitStringConfig(Json::Value& instances, const std::string& group,
+                      const std::string& json_flag, const std::string& default_value) {
   // Allocate and initialize with default values
   int size = instances.size();
   for (int i = 0; i < size; i++) {
@@ -61,9 +54,9 @@ void InitStringConfig(Json::Value& instances, std::string group,
   }
 }
 
-void InitStringConfigSubGroup(Json::Value& instances, std::string group,
-                              std::string subgroup, std::string json_flag,
-                              std::string default_value) {
+void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
+                              const std::string& subgroup, const std::string& json_flag,
+                              const std::string& default_value) {
   // Allocate and initialize with default values
   int size = instances.size();
   for (int i = 0; i < size; i++) {
@@ -75,8 +68,8 @@ void InitStringConfigSubGroup(Json::Value& instances, std::string group,
   }
 }
 
-std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
-                          std::string group, std::string json_flag) {
+std::string GenerateGflag(const Json::Value& instances, const std::string& gflag_name,
+                          const std::string& group, const std::string& json_flag) {
   int size = instances.size();
   std::stringstream buff;
   // Append Header
@@ -84,14 +77,14 @@ std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
   // Append values
   for (int i = 0; i < size; i++) {
     buff << instances[i][group][json_flag];
-    if (i != size - 1) buff << ",";
+    if (i != size - 1){ buff << ",";}
   }
   return buff.str();
 }
 
 std::string GenerateGflagSubGroup(const Json::Value& instances,
-                                  std::string gflag_name, std::string group,
-                                  std::string subgroup, std::string json_flag) {
+                                  const std::string& gflag_name, const std::string& group,
+                                  const std::string& subgroup, const std::string& json_flag) {
   int size = instances.size();
   std::stringstream buff;
   // Append Header
@@ -99,7 +92,7 @@ std::string GenerateGflagSubGroup(const Json::Value& instances,
   // Append values
   for (int i = 0; i < size; i++) {
     buff << instances[i][group][subgroup][json_flag];
-    if (i != size - 1) buff << ",";
+    if (i != size - 1){ buff << ",";}
   }
   return buff.str();
 }

@@ -95,9 +95,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     Json::Value json_configs =
         CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
 
-    if (!ParseCvdConfigs(json_configs, serialized_data)) {
-      return CF_ERR("parsing json configs failed");
-    }
+    CF_EXPECT(ParseCvdConfigs(json_configs, serialized_data), "parsing json configs failed");
 
     DemoCommandSequence ret;
 

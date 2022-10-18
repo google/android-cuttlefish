@@ -19,8 +19,10 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
-bool ValidateBootConfigs(const Json::Value& root);
+Result<bool> ValidateBootConfigs(const Json::Value& root);
 void InitBootConfigs(Json::Value& root);
 void GenerateBootConfigs(const Json::Value& root,
                          std::vector<std::string>& result);

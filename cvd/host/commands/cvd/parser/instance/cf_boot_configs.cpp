@@ -35,37 +35,27 @@ static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"security", Json::ValueType::objectValue},
     {"kernel", Json::ValueType::objectValue}};
 
-bool ValidateSecurityConfigs(const Json::Value& root) {
-  if (!ValidateTypo(root, securitykeyMap)) {
-    LOG(INFO) << "ValidateSecurityConfigs ValidateTypo fail";
-    return false;
-  }
+Result<bool> ValidateSecurityConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, securitykeyMap), "ValidateSecurityConfigs ValidateTypo fail");
   return true;
 }
 
-bool ValidateKernelConfigs(const Json::Value& root) {
-  if (!ValidateTypo(root, kernelkeyMap)) {
-    LOG(INFO) << "ValidateKernelConfigs ValidateTypo fail";
-    return false;
-  }
+Result<bool> ValidateKernelConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kernelkeyMap), "ValidateKernelConfigs ValidateTypo fail");
   return true;
 }
 
-bool ValidateBootConfigs(const Json::Value& root) {
-  if (!ValidateTypo(root, kBootKeyMap)) {
-    LOG(INFO) << "ValidateBootConfigs ValidateTypo fail";
-    return false;
+Result<bool> ValidateBootConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kBootKeyMap), "ValidateBootConfigs ValidateTypo fail");
+
+  if (root.isMember("security")) {
+    CF_EXPECT(ValidateSecurityConfigs(root["security"]), "ValidateSecurityConfigs fail");
   }
 
-  if (root.isMember("security") && !ValidateSecurityConfigs(root["security"])) {
-    LOG(INFO) << "ValidateSecurityConfigs fail";
-    return false;
+   if (root.isMember("kernel")) {
+    CF_EXPECT(ValidateKernelConfigs(root["kernel"]), "ValidateKernelConfigs fail");
   }
 
-  if (root.isMember("kernel") && !ValidateKernelConfigs(root["kernel"])) {
-    LOG(INFO) << "ValidateKernelConfigs fail";
-    return false;
-  }
   return true;
 }
 

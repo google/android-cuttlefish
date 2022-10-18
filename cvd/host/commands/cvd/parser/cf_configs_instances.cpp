@@ -37,20 +37,17 @@ static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"location", Json::ValueType::objectValue},
     {"metrics", Json::ValueType::objectValue}};
 
-bool ValidateInstancesConfigs(const Json::Value& root) {
+Result<bool> ValidateInstancesConfigs(const Json::Value& root) {
   int num_instances = root.size();
   for (unsigned int i = 0; i < num_instances; i++) {
-    if (!ValidateTypo(root[i], kInstanceKeyMap)) {
-      LOG(INFO) << "vm ValidateTypo fail";
-      return false;
+    CF_EXPECT(ValidateTypo(root[i], kInstanceKeyMap), "vm ValidateTypo fail");
+
+    if (root[i].isMember("vm")) {
+      CF_EXPECT(ValidateVmConfigs(root[i]["vm"]), "ValidateVmConfigs fail");
     }
-    if (root[i].isMember("vm") && !ValidateVmConfigs(root[i]["vm"])) {
-      LOG(INFO) << "ValidateVmConfigs fail";
-      return false;
-    }
-    if (root[i].isMember("boot") && !ValidateBootConfigs(root[i]["boot"])) {
-      LOG(INFO) << "ValidateBootConfigs fail";
-      return false;
+
+    if (root[i].isMember("boot")) {
+      CF_EXPECT(ValidateBootConfigs(root[i]["boot"]), "ValidateBootConfigs fail");
     }
   }
 
