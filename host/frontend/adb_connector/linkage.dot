@@ -1,0 +1,23 @@
+graph {
+  adb_connector [label = < <B>adb_connector</B> >, penwidth = "2"]
+  adb_client [label = "ADB command line interface"]
+  adb_server [label = "ADB Server"]
+  user [label = "User input"]
+  vmm [label = "crosvm / qemu"]
+  host_vsock [label = "/dev/vhost_vsock", shape = "rectangle"]
+  subgraph cluster_android {
+    adb_daemon [label = "ADB Daemon"]
+    android_vsock [label = "/dev/vhost_vsock", shape = "rectangle"]
+    shell [label = "toybox / sh"]
+  }
+
+  run_cvd -- adb_connector
+  adb_connector -- adb_server
+  user -- adb_client
+  adb_client -- adb_server
+  android_vsock -- adb_daemon
+  vmm -- android_vsock
+  host_vsock -- vmm
+  adb_server -- host_vsock
+  adb_daemon -- shell
+}
