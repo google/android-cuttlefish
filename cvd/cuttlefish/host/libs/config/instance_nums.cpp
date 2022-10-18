@@ -76,7 +76,7 @@ static Result<std::set<std::int32_t>> ParseInstanceNumsFlag(
   std::string value;
   auto flag = GflagsCompatFlag("instance_nums", value);
   CF_EXPECT(flag.Parse(flags), "Flag parsing error");
-  if (value == "") {
+  if (!value.empty()) {
     return CF_EXPECT(ParseInstanceNums(value));
   } else {
     return {};
@@ -204,21 +204,44 @@ void InstanceNumsCalculator::TrySet(T& field, Result<T> result) {
   }
 }
 
-Result<std::set<std::int32_t>> InstanceNumsCalculator::Calculate() {
+Result<std::set<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
   CF_EXPECT(Result<void>(setter_result_));
-  if (!instance_nums_.empty() && base_instance_num_) {
-    return CF_ERR("InstanceNums and BaseInstanceNum are mutually exclusive");
-  }
+  std::optional<std::set<std::int32_t>> instance_nums_opt;
   if (!instance_nums_.empty()) {
+    instance_nums_opt = instance_nums_;
+  }
+  // exactly one of these two should be given
+  CF_EXPECT(!instance_nums_opt || !base_instance_num_,
+            "At least one of --instance_nums or --base_instance_num"
+                << "should be given to call CalculateFromFlags()");
+  CF_EXPECT(instance_nums_opt || base_instance_num_,
+            "InstanceNums and BaseInstanceNum are mutually exclusive");
+
+  if (instance_nums_opt) {
     if (num_instances_) {
       CF_EXPECT(instance_nums_.size() == *num_instances_);
     }
     CF_EXPECT(instance_nums_.size() > 0, "no instance nums");
     return instance_nums_;
   }
+
   std::set<std::int32_t> instance_nums;
   for (int i = 0; i < num_instances_.value_or(1); i++) {
-    instance_nums.insert(i + base_instance_num_.value_or(GetInstance()));
+    instance_nums.insert(i + *base_instance_num_);
+  }
+  return instance_nums;
+}
+
+Result<std::set<std::int32_t>> InstanceNumsCalculator::Calculate() {
+  CF_EXPECT(Result<void>(setter_result_));
+
+  if (!instance_nums_.empty() || base_instance_num_) {
+    return CalculateFromFlags();
+  }
+
+  std::set<std::int32_t> instance_nums;
+  for (int i = 0; i < num_instances_.value_or(1); i++) {
+    instance_nums.insert(i + GetInstance());
   }
   CF_EXPECT(instance_nums.size() > 0, "no instance nums");
   return instance_nums;
