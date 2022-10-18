@@ -68,7 +68,7 @@ void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
   }
 }
 
-std::string GenerateGflag(const Json::Value& instances, const std::string& gflag_name,
+std::string GenerateIntGflag(const Json::Value& instances, const std::string& gflag_name,
                           const std::string& group, const std::string& json_flag) {
   int size = instances.size();
   std::stringstream buff;
@@ -82,7 +82,21 @@ std::string GenerateGflag(const Json::Value& instances, const std::string& gflag
   return buff.str();
 }
 
-std::string GenerateGflagSubGroup(const Json::Value& instances,
+std::string GenerateStrGflag(const Json::Value& instances, const std::string& gflag_name,
+                          const std::string& group, const std::string& json_flag) {
+  int size = instances.size();
+  std::stringstream buff;
+  // Append Header
+  buff << "--" << gflag_name << "=";
+  // Append values
+  for (int i = 0; i < size; i++) {
+    buff << instances[i][group][json_flag].asString();
+    if (i != size - 1){ buff << ",";}
+  }
+  return buff.str();
+}
+
+std::string GenerateGflagIntSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag) {
   int size = instances.size();
@@ -92,6 +106,21 @@ std::string GenerateGflagSubGroup(const Json::Value& instances,
   // Append values
   for (int i = 0; i < size; i++) {
     buff << instances[i][group][subgroup][json_flag];
+    if (i != size - 1){ buff << ",";}
+  }
+  return buff.str();
+}
+
+std::string GenerateStrGflagSubGroup(const Json::Value& instances,
+                                  const std::string& gflag_name, const std::string& group,
+                                  const std::string& subgroup, const std::string& json_flag) {
+  int size = instances.size();
+  std::stringstream buff;
+  // Append Header
+  buff << "--" << gflag_name << "=";
+  // Append values
+  for (int i = 0; i < size; i++) {
+    buff << instances[i][group][subgroup][json_flag].asString();
     if (i != size - 1){ buff << ",";}
   }
   return buff.str();

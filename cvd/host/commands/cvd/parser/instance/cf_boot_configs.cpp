@@ -70,11 +70,12 @@ void InitBootConfigs(Json::Value& instances) {
 
 void GenerateBootConfigs(const Json::Value& instances,
                          std::vector<std::string>& result) {
-  result.emplace_back(GenerateGflag(instances, "extra_bootconfig_args", "boot",
+
+  result.emplace_back(GenerateStrGflag(instances, "extra_bootconfig_args", "boot",
                                     "extra_bootconfig_args"));
-  result.emplace_back(GenerateGflagSubGroup(instances, "serial_number", "boot",
+  result.emplace_back(GenerateStrGflagSubGroup(instances, "serial_number", "boot",
                                             "security", "serial_number"));
-  result.emplace_back(GenerateGflagSubGroup(instances, "extra_kernel_cmdline",
+  result.emplace_back(GenerateStrGflagSubGroup(instances, "extra_kernel_cmdline",
                                             "boot", "kernel",
                                             "extra_kernel_cmdline"));
 }
