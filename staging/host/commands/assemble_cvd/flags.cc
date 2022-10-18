@@ -94,7 +94,7 @@ DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "requires ':=' instead of '='.");
 DEFINE_bool(guest_enforce_security, CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
             "Whether to run in enforcing mode (non permissive).");
-DEFINE_int32(memory_mb, CF_DEFAULTS_MEMORY_MB,
+DEFINE_string(memory_mb, std::to_string(CF_DEFAULTS_MEMORY_MB),
              "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
@@ -677,9 +677,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       << "CPUs must be a multiple of 2 in SMT mode";
   tmp_config_obj.set_smt(FLAGS_smt);
 
-  tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
-  tmp_config_obj.set_ddr_mem_mb(FLAGS_memory_mb * 2);
-
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
   tmp_config_obj.set_enable_bootanimation(FLAGS_enable_bootanimation);
 
@@ -806,6 +803,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   std::vector<std::string> dpi_vec = android::base::Split(FLAGS_dpi, ",");
   std::vector<std::string> refresh_rate_hz_vec =
       android::base::Split(FLAGS_refresh_rate_hz, ",");
+  std::vector<std::string> memory_mb_vec =
+      android::base::Split(FLAGS_memory_mb, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -897,51 +896,43 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
     int x_res = 0;
     if (instance_index < x_res_vec.size()) {
-      if (!android::base::ParseInt(x_res_vec[instance_index].c_str(), &x_res)) {
-        LOG(ERROR) << "Failed to parse value \"" << x_res_vec[instance_index]
-                   << "\" for x_res";
-      }
+      CHECK(android::base::ParseInt(x_res_vec[instance_index].c_str(), &x_res))
+        << "Failed to parse value \"" << x_res_vec[instance_index]
+        << "\" for x_res";
     } else if (x_res_vec.size() == 1) {
-      if (!android::base::ParseInt(x_res_vec[0].c_str(), &x_res)) {
-        LOG(ERROR) << "Failed to parse value \"" << x_res_vec[0]
-                   << "\" for x_res";
-      }
+      CHECK(android::base::ParseInt(x_res_vec[0].c_str(), &x_res))
+        << "Failed to parse value \"" << x_res_vec[0]
+        << "\" for x_res";
     }
     int y_res = 0;
     if (instance_index < y_res_vec.size()) {
-      if (!android::base::ParseInt(y_res_vec[instance_index].c_str(), &y_res)) {
-        LOG(ERROR) << "Failed to parse value \"" << y_res_vec[instance_index]
-                   << "\" for y_res";
-      }
+      CHECK(android::base::ParseInt(y_res_vec[instance_index].c_str(), &y_res))
+        << "Failed to parse value \"" << y_res_vec[instance_index]
+        << "\" for y_res";
     } else if (y_res_vec.size() == 1) {
-      if (!android::base::ParseInt(y_res_vec[0].c_str(), &y_res)) {
-        LOG(ERROR) << "Failed to parse value \"" << y_res_vec[0]
-                   << "\" for y_res";
-      }
+      CHECK(android::base::ParseInt(y_res_vec[0].c_str(), &y_res))
+        << "Failed to parse value \"" << y_res_vec[0]
+        << "\" for y_res";
     }
     int dpi = 0;
     if (instance_index < dpi_vec.size()) {
-      if (!android::base::ParseInt(dpi_vec[instance_index].c_str(), &dpi)) {
-        LOG(ERROR) << "Failed to parse value \"" << dpi_vec[instance_index]
-                   << "\" for dpi";
-      }
+      CHECK(android::base::ParseInt(dpi_vec[instance_index].c_str(), &dpi))
+        << "Failed to parse value \"" << dpi_vec[instance_index]
+        << "\" for dpi";
     } else if (dpi_vec.size() == 1) {
-      if (!android::base::ParseInt(dpi_vec[0].c_str(), &dpi)) {
-        LOG(ERROR) << "Failed to parse value \"" << dpi_vec[0]
-                   << "\" for dpi";
-      }
+      CHECK(android::base::ParseInt(dpi_vec[0].c_str(), &dpi))
+        << "Failed to parse value \"" << dpi_vec[0]
+        << "\" for dpi";
     }
     int refresh_rate_hz = 0;
     if (instance_index < refresh_rate_hz_vec.size()) {
-      if (!android::base::ParseInt(refresh_rate_hz_vec[instance_index].c_str(), &refresh_rate_hz)) {
-        LOG(ERROR) << "Failed to parse value \"" << refresh_rate_hz_vec[instance_index]
-                   << "\" for refresh_rate_hz";
-      }
+      CHECK(android::base::ParseInt(refresh_rate_hz_vec[instance_index].c_str(), &refresh_rate_hz))
+        << "Failed to parse value \"" << refresh_rate_hz_vec[instance_index]
+        << "\" for refresh_rate_hz";
     } else if (refresh_rate_hz_vec.size() == 1) {
-      if (!android::base::ParseInt(refresh_rate_hz_vec[0].c_str(), &refresh_rate_hz)) {
-        LOG(ERROR) << "Failed to parse value \"" << refresh_rate_hz_vec[0]
-                   << "\" for refresh_rate_hz";
-      }
+      CHECK(android::base::ParseInt(refresh_rate_hz_vec[0].c_str(), &refresh_rate_hz))
+        << "Failed to parse value \"" << refresh_rate_hz_vec[0]
+        << "\" for refresh_rate_hz";
     }
     if (x_res > 0 && y_res > 0) {
       if (display_configs.empty()) {
@@ -956,6 +947,19 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       }
     }
     instance.set_display_configs(display_configs);
+
+    int memory_mb;
+    if (instance_index >= memory_mb_vec.size()) {
+      CHECK(android::base::ParseInt(memory_mb_vec[0].c_str(), &memory_mb))
+        << "Failed to parse value \"" << memory_mb_vec[0]
+        << "\" for memory_mb";
+    } else {
+      CHECK(android::base::ParseInt(memory_mb_vec[instance_index].c_str(), &memory_mb))
+        << "Failed to parse value \"" << memory_mb_vec[instance_index]
+        << "\" for memory_mb";
+    }
+    instance.set_memory_mb(memory_mb);
+    instance.set_ddr_mem_mb(memory_mb * 2);
 
     if (instance_index < gem5_binary_dirs.size()) {
       instance.set_gem5_binary_dir(gem5_binary_dirs[instance_index]);

@@ -113,12 +113,6 @@ class CuttlefishConfig {
   void set_enable_gpu_angle(const bool enable_gpu_angle);
   bool enable_gpu_angle() const;
 
-  int memory_mb() const;
-  void set_memory_mb(int memory_mb);
-
-  int ddr_mem_mb() const;
-  void set_ddr_mem_mb(int ddr_mem_mb);
-
   struct DisplayConfig {
     int width;
     int height;
@@ -530,6 +524,9 @@ class CuttlefishConfig {
 
     std::vector<DisplayConfig> display_configs() const;
 
+    int memory_mb() const;
+    int ddr_mem_mb() const;
+
     // system image files
     std::string boot_image() const;
     std::string new_boot_image() const;
@@ -617,6 +614,8 @@ class CuttlefishConfig {
     void set_blank_data_image_mb(int blank_data_image_mb);
     void set_gdb_port(int gdb_port);
     void set_display_configs(const std::vector<DisplayConfig>& display_configs);
+    void set_memory_mb(int memory_mb);
+    void set_ddr_mem_mb(int ddr_mem_mb);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
