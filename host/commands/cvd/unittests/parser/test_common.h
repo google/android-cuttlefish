@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-#pragma once
+#include <algorithm>
+
+#include <fstream>
+#include <iostream>
+
 #include <json/json.h>
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJsonFile(std::string file_path);
-Result<bool> ParseCvdConfigs(Json::Value& root,
-                     std::vector<std::string>& serialized_data);
+bool ParseJsonString(std::string& strjson, Json::Value& root);
 
-};  // namespace cuttlefish
+bool FindConfig(const std::vector<std::string>& vec,
+                const std::string& element);
+
+}  // namespace cuttlefish
