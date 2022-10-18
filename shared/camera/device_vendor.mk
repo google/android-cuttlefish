@@ -17,8 +17,14 @@
 PRODUCT_VENDOR_PROPERTIES += \
     ro.camerax.extensions.enabled=true
 
-# Enable CameraX extension sample
+# Enable Camera Extension sample
+ifeq ($(TARGET_USE_CAMERA_ADVANCED_EXTENSION_SAMPLE),true)
+PRODUCT_PACKAGES += \
+    androidx.camera.extensions.impl.advanced advancedSample_camera_extensions.xml \
+    libencoderjpeg_jni
+else
 PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
+endif
 
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
