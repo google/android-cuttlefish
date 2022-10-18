@@ -42,19 +42,10 @@ Result<Json::Value> ParseJsonFile(std::string file_path) {
   return root;
 }
 
-bool ValidateCfConfigs(const Json::Value& root) {
-  if (!ValidateTypo(root, kConfigsKeyMap)) {
-    LOG(WARNING) << "Typo in config main parameters";
-    return false;
-  }
-  if (!root.isMember("instances")) {
-    LOG(WARNING) << "instances object is missing";
-    return false;
-  }
-
-  if (!ValidateInstancesConfigs(root["instances"])) {
-    return false;
-  }
+Result<bool> ValidateCfConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap), "Typo in config main parameters");
+  CF_EXPECT(root.isMember("instances"), "instances object is missing");
+  CF_EXPECT(ValidateInstancesConfigs(root["instances"]), "ValidateInstancesConfigs failed");
 
   return true;
 }
@@ -74,12 +65,9 @@ void GenerateCfConfigs(const Json::Value& root,
   GenerateInstancesConfigs(root["instances"], result);
 }
 
-bool ParseCvdConfigs(Json::Value& root,
+Result<bool> ParseCvdConfigs(Json::Value& root,
                      std::vector<std::string>& serialized_data) {
-  if (!ValidateCfConfigs(root)) {
-    LOG(WARNING) << "Loaded Json validation failed";
-    return false;
-  }
+  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
 
   InitInstancesConfigs(root["instances"]);
 

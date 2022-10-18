@@ -45,7 +45,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=2,2"));
 }
 
@@ -72,7 +72,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=2,4"));
 }
 
@@ -100,7 +100,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--cpus=4,6"));
 }
 
@@ -122,7 +122,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=0,0"));
 }
 
@@ -149,7 +149,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=0,4069"));
 }
 
@@ -177,7 +177,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--memory_mb=4069,8192"));
 }
 
@@ -199,7 +199,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, R"(--vm_manager="","")"));
 }
 
@@ -226,7 +226,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, R"(--vm_manager="","crosvm")"));
 }
 
@@ -254,7 +254,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data, R"(--vm_manager="qemu_cli","crosvm")"));
 }
@@ -277,7 +277,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data,
                          R"(--setupwizard_mode="DISABLED","DISABLED")"));
 }
@@ -305,7 +305,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data,
                          R"(--setupwizard_mode="DISABLED","ENABLED")"));
 }
@@ -334,7 +334,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data, R"(--setupwizard_mode="ENABLED","ENABLED")"));
 }
@@ -357,7 +357,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
       R"(--uuid="699acfc4-c8c4-11e7-882b-5065f31dc101","699acfc4-c8c4-11e7-882b-5065f31dc101")"));
@@ -386,7 +386,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagPartialJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
       R"(--uuid="699acfc4-c8c4-11e7-882b-5065f31dc101","870acfc4-c8c4-11e7-99ac-5065f31dc250")"));
@@ -416,7 +416,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagFullJson) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
       R"(--uuid="870acfc4-c8c4-11e7-99ac-5065f31dc250","870acfc4-c8c4-11e7-99ac-5065f31dc251")"));

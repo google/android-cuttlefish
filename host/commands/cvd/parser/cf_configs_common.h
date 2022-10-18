@@ -18,26 +18,27 @@
 #include <json/json.h>
 #include <iostream>
 
+#include "common/libs/utils/result.h"
 namespace cuttlefish {
 
-bool ValidateTypo(const Json::Value& root,
+Result<bool> ValidateTypo(const Json::Value& root,
                   const std::map<std::string, Json::ValueType>& map);
 
-void InitIntConfig(Json::Value& instances, std::string group,
-                   std::string json_flag, int default_value);
+void InitIntConfig(Json::Value& instances, const std::string& group,
+                   const std::string& json_flag, int default_value);
 
-void InitStringConfig(Json::Value& instances, std::string group,
-                      std::string json_flag, std::string default_value);
+void InitStringConfig(Json::Value& instances, const std::string& group,
+                      const std::string& json_flag, const std::string& default_value);
 
-void InitStringConfigSubGroup(Json::Value& instances, std::string group,
-                              std::string subgroup, std::string json_flag,
-                              std::string default_value);
+void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
+                              const std::string& subgroup, const std::string& json_flag,
+                              const std::string& default_value);
 
-std::string GenerateGflag(const Json::Value& instances, std::string gflag_name,
-                          std::string group, std::string json_flag);
+std::string GenerateGflag(const Json::Value& instances, const std::string& gflag_name,
+                          const std::string& group, const std::string& json_flag);
 
 std::string GenerateGflagSubGroup(const Json::Value& instances,
-                                  std::string gflag_name, std::string group,
-                                  std::string subgroup, std::string json_flag);
+                                  const std::string& gflag_name, const std::string& group,
+                                  const std::string& subgroup, const std::string& json_flag);
 
 }  // namespace cuttlefish
