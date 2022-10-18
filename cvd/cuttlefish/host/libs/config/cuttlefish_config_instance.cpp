@@ -384,6 +384,22 @@ int CuttlefishConfig::InstanceSpecific::gdb_port() const {
   return (*Dictionary())[kGdbPort].asInt();
 }
 
+static constexpr char kMemoryMb[] = "memory_mb";
+int CuttlefishConfig::InstanceSpecific::memory_mb() const {
+  return (*Dictionary())[kMemoryMb].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_memory_mb(int memory_mb) {
+  (*Dictionary())[kMemoryMb] = memory_mb;
+}
+
+static constexpr char kDdrMemMb[] = "ddr_mem_mb";
+int CuttlefishConfig::InstanceSpecific::ddr_mem_mb() const {
+  return (*Dictionary())[kDdrMemMb].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_ddr_mem_mb(int ddr_mem_mb) {
+  (*Dictionary())[kDdrMemMb] = ddr_mem_mb;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
