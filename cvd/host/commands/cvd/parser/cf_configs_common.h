@@ -34,10 +34,17 @@ void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
                               const std::string& subgroup, const std::string& json_flag,
                               const std::string& default_value);
 
-std::string GenerateGflag(const Json::Value& instances, const std::string& gflag_name,
+std::string GenerateIntGflag(const Json::Value& instances, const std::string& gflag_name,
                           const std::string& group, const std::string& json_flag);
 
-std::string GenerateGflagSubGroup(const Json::Value& instances,
+std::string GenerateStrGflag(const Json::Value& instances, const std::string& gflag_name,
+                          const std::string& group, const std::string& json_flag);
+
+std::string GenerateIntGflagSubGroup(const Json::Value& instances,
+                                  const std::string& gflag_name, const std::string& group,
+                                  const std::string& subgroup, const std::string& json_flag);
+
+std::string GenerateStrGflagSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag);
 

@@ -38,7 +38,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagEmptyJson) {
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
-  EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_bootconfig_args="","")"));
+  EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_bootconfig_args=,)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
@@ -66,7 +66,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data,
-                         R"(--extra_bootconfig_args="","androidboot.X=Y")"));
+                         R"(--extra_bootconfig_args=,androidboot.X=Y)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
@@ -96,7 +96,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
-      R"(--extra_bootconfig_args="androidboot.X=Y","androidboot.X=Z")"));
+      R"(--extra_bootconfig_args=androidboot.X=Y,androidboot.X=Z)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
@@ -120,7 +120,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data,
-                 R"(--serial_number="CUTTLEFISHCVD01","CUTTLEFISHCVD01")"));
+                 R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD01)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
@@ -153,7 +153,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data,
-                 R"(--serial_number="CUTTLEFISHCVD01","CUTTLEFISHCVD101")"));
+                 R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD101)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
@@ -187,7 +187,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(
       FindConfig(serialized_data,
-                 R"(--serial_number="CUTTLEFISHCVD101","CUTTLEFISHCVD102")"));
+                 R"(--serial_number=CUTTLEFISHCVD101,CUTTLEFISHCVD102)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
@@ -209,7 +209,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
-  EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_kernel_cmdline="","")"));
+  EXPECT_TRUE(FindConfig(serialized_data, R"(--extra_kernel_cmdline=,)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
@@ -242,7 +242,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
-      R"(--extra_kernel_cmdline="","androidboot.selinux=permissive")"));
+      R"(--extra_kernel_cmdline=,androidboot.selinux=permissive)"));
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
@@ -276,7 +276,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
   EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(
       serialized_data,
-      R"(--extra_kernel_cmdline="androidboot.selinux=permissive","lpm_levels.sleep_disabled=1")"));
+      R"(--extra_kernel_cmdline=androidboot.selinux=permissive,lpm_levels.sleep_disabled=1)"));
 }
 
 }  // namespace cuttlefish
