@@ -13,47 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "host/commands/cvd/parser/cf_configs_instances.h"
-
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include <android-base/logging.h>
-#include <json/json.h>
+#include <iostream>
 
-#include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "host/commands/cvd/parser/cf_configs_instances.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
-#include "host/commands/cvd/parser/instance/cf_disk_configs.h"
-#include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
-#include "host/commands/cvd/parser/instance/cf_security_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 
 namespace cuttlefish {
 
-Result<void> InitInstancesConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, "", {"name"}));
+static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
+    {"vm", Json::ValueType::objectValue},
+    {"boot", Json::ValueType::objectValue},
+    {"disk", Json::ValueType::objectValue},
+    {"graphics", Json::ValueType::objectValue},
+    {"camera", Json::ValueType::objectValue},
+    {"connectivity", Json::ValueType::objectValue},
+    {"audio", Json::ValueType::objectValue},
+    {"streaming", Json::ValueType::objectValue},
+    {"adb", Json::ValueType::objectValue},
+    {"vehicle", Json::ValueType::objectValue},
+    {"location", Json::ValueType::objectValue},
+    {"metrics", Json::ValueType::objectValue}};
+
+Result<bool> ValidateInstancesConfigs(const Json::Value& root) {
+  int num_instances = root.size();
+  for (unsigned int i = 0; i < num_instances; i++) {
+    CF_EXPECT(ValidateTypo(root[i], kInstanceKeyMap), "vm ValidateTypo fail");
+
+    if (root[i].isMember("vm")) {
+      CF_EXPECT(ValidateVmConfigs(root[i]["vm"]), "ValidateVmConfigs fail");
+    }
+
+    if (root[i].isMember("boot")) {
+      CF_EXPECT(ValidateBootConfigs(root[i]["boot"]), "ValidateBootConfigs fail");
+    }
   }
-  CF_EXPECT(InitBootConfigs(instances));
-  CF_EXPECT(InitDiskConfigs(instances));
-  CF_EXPECT(InitGraphicsConfigs(instances));
-  CF_EXPECT(InitSecurityConfigs(instances));
-  CF_EXPECT(InitVmConfigs(instances));
-  return {};
+
+  return true;
 }
 
-Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(instances));
-  result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
+void InitInstancesConfigs(Json::Value& root) {
+  InitVmConfigs(root);
+  InitBootConfigs(root);
+}
 
-  return result;
+void GenerateInstancesConfigs(const Json::Value& root,
+                              std::vector<std::string>& result) {
+  GenerateVmConfigs(root, result);
+  GenerateBootConfigs(root, result);
 }
 
 }  // namespace cuttlefish

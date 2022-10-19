@@ -21,17 +21,11 @@
 
 #include <json/json.h>
 
-#include "common/libs/utils/result.h"
-
 namespace cuttlefish {
 
-bool ParseJsonString(std::string& json_text, Json::Value& root);
+bool ParseJsonString(std::string& strjson, Json::Value& root);
 
 bool FindConfig(const std::vector<std::string>& vec,
                 const std::string& element);
-
-bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
-                            const std::string& str);
-Result<std::vector<std::string>> LaunchCvdParserTester(Json::Value& root);
 
 }  // namespace cuttlefish
