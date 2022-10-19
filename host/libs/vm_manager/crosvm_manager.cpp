@@ -179,9 +179,19 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   }
 
   for (const auto& display_config : instance.display_configs()) {
-    crosvm_cmd.Cmd().AddParameter("--gpu-display=", "mode=windowed[",
-                                  display_config.width, ",",
-                                  display_config.height, "]");
+    const auto display_w = std::to_string(display_config.width);
+    const auto display_h = std::to_string(display_config.height);
+    const auto display_dpi = std::to_string(display_config.dpi);
+    const auto display_rr = std::to_string(display_config.refresh_rate_hz);
+    const auto display_params = android::base::Join(
+        std::vector<std::string>{
+            "mode=windowed[" + display_w + "," + display_h + "]",
+            "horizontal-dpi=" + display_dpi,
+            "vertical-dpi=" + display_dpi,
+            "refresh-rate=" + display_rr,
+        },
+        ",");
+    crosvm_cmd.Cmd().AddParameter("--gpu-display=", display_params);
   }
 
   crosvm_cmd.Cmd().AddParameter("--wayland-sock=",
