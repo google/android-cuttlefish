@@ -22,12 +22,12 @@
 #include <gtest/gtest.h>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/constant_reference.h"
-#include "host/commands/cvd/instance_database_types.h"
-#include "host/commands/cvd/instance_record.h"
+#include "host/commands/cvd/selector/constant_reference.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/instance_record.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 class InstanceDatabase;
 
@@ -89,5 +89,5 @@ class LocalInstanceGroup {
   friend class CvdInstanceGroupSearchUnitTest;
 };
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
