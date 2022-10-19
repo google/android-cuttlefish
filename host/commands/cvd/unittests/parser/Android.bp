@@ -40,10 +40,14 @@ cc_test_host {
     ],
     static_libs: [
         "libcvd_parser",
+        "libcuttlefish_host_config",
         "libgmock",
     ],
     srcs: [
-        "unittest/flags_parser_test.cc",
+        "test_common.cc",
+        "flags_parser_test.cc",
+        "instance/vm_configs_test.cc",
+        "instance/boot_configs_test.cc",
     ],
     defaults: ["cvd_load_defaults"],
 }
