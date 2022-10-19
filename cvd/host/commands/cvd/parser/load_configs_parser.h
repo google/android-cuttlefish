@@ -21,7 +21,7 @@
 namespace cuttlefish {
 
 Result<Json::Value> ParseJsonFile(std::string file_path);
-Result<bool> ParseCvdConfigs(Json::Value& root,
-                     std::vector<std::string>& serialized_data);
+Result<void> ParseCvdConfigs(Json::Value& root,
+                             std::vector<std::string>& serialized_data);
 
 };  // namespace cuttlefish
