@@ -68,6 +68,7 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
         "androidboot.opengles.version=196609",  // OpenGL ES 3.1
@@ -80,6 +81,7 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=ranchu",
         "androidboot.hardware.hwcomposer.mode=client",
+        "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=mesa",
         // No "hardware" Vulkan support, yet
         "androidboot.opengles.version=196608",  // OpenGL ES 3.0
@@ -91,6 +93,7 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.cpuvulkan.version=0",
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=" + gles_impl,
         "androidboot.hardware.vulkan=ranchu",
         "androidboot.hardware.gltransport=virtio-gpu-asg",
