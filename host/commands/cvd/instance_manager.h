@@ -28,8 +28,8 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/instance_database.h"
 #include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/selector/instance_database.h"
 
 namespace cuttlefish {
 
@@ -67,17 +67,17 @@ class InstanceManager {
 
   static void IssueStatusCommand(const SharedFD& out,
                                  const std::string& config_file_path,
-                                 const instance_db::LocalInstanceGroup& group);
+                                 const selector::LocalInstanceGroup& group);
   void IssueStopCommand(const SharedFD& out, const SharedFD& err,
                         const std::string& config_file_path,
-                        const instance_db::LocalInstanceGroup& group);
+                        const selector::LocalInstanceGroup& group);
 
   InstanceLockFileManager& lock_manager_;
 
   mutable std::mutex instance_db_mutex_;
-  instance_db::InstanceDatabase instance_db_;
+  selector::InstanceDatabase instance_db_;
 
-  using Query = instance_db::Query;
+  using Query = selector::Query;
 };
 
 }  // namespace cuttlefish
