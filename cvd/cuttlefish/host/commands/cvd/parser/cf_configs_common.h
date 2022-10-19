@@ -15,84 +15,37 @@
  */
 
 #pragma once
-
-#include <functional>
-#include <iostream>
-#include <map>
-#include <optional>
-#include <string>
-#include <vector>
-
 #include <json/json.h>
+#include <iostream>
 
 #include "common/libs/utils/result.h"
-
 namespace cuttlefish {
 
-Result<void> ValidateTypo(const Json::Value& root,
-                          const std::map<std::string, Json::ValueType>& map);
+Result<bool> ValidateTypo(const Json::Value& root,
+                  const std::map<std::string, Json::ValueType>& map);
 
-template <typename T>
-Result<void> ValidateConfig(const Json::Value& instance,
-                            std::function<Result<void>(const T&)> validator,
-                            const std::vector<std::string>& selectors) {
-  const int size = selectors.size();
-  CF_EXPECT(size > 0, "No keys given for initializing config");
-  int i = 0;
-  const Json::Value* traverse = &instance;
-  for (const auto& selector : selectors) {
-    if (traverse->isMember(selector)) {
-      if (i == size - 1) {
-        T flag_value = (*traverse)[selector].as<T>();
-        CF_EXPECTF(validator(flag_value), "Invalid flag value \"{}\"",
-                   flag_value);
-      }
-    } else {
-      // field does not exist, no validation needed
-      break;
-    }
-    traverse = &(*traverse)[selector];
-    ++i;
-  }
-  return {};
-}
+void InitIntConfig(Json::Value& instances, const std::string& group,
+                   const std::string& json_flag, int default_value);
 
-template <typename T>
-Result<void> InitConfig(Json::Value& root, const T& default_value,
-                        const std::vector<std::string>& selectors) {
-  const int size = selectors.size();
-  CF_EXPECT(size > 0, "No keys given for initializing config");
-  int i = 0;
-  Json::Value* traverse = &root;
-  for (const auto& selector : selectors) {
-    if (!traverse->isMember(selector)) {
-      if (i == size - 1) {
-        (*traverse)[selector] = default_value;
-      } else {
-        (*traverse)[selector] = Json::Value();
-      }
-    }
-    traverse = &(*traverse)[selector];
-    ++i;
-  }
-  return {};
-}
+void InitStringConfig(Json::Value& instances, const std::string& group,
+                      const std::string& json_flag, const std::string& default_value);
 
-void InitIntConfigSubGroupVector(Json::Value& instances,
-                                 const std::string& group,
-                                 const std::string& subgroup,
-                                 const std::string& json_flag,
-                                 int default_value);
+void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
+                              const std::string& subgroup, const std::string& json_flag,
+                              const std::string& default_value);
 
-std::string GenerateGflag(const std::string& gflag_name,
-                          const std::vector<std::string>& values);
-Result<std::string> GenerateGflag(const Json::Value& instances,
-                                  const std::string& gflag_name,
-                                  const std::vector<std::string>& selectors);
+std::string GenerateIntGflag(const Json::Value& instances, const std::string& gflag_name,
+                          const std::string& group, const std::string& json_flag);
 
-std::vector<std::string> MergeResults(std::vector<std::string> first_list,
-                                      std::vector<std::string> scond_list);
+std::string GenerateStrGflag(const Json::Value& instances, const std::string& gflag_name,
+                          const std::string& group, const std::string& json_flag);
 
-void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src);
+std::string GenerateIntGflagSubGroup(const Json::Value& instances,
+                                  const std::string& gflag_name, const std::string& group,
+                                  const std::string& subgroup, const std::string& json_flag);
+
+std::string GenerateStrGflagSubGroup(const Json::Value& instances,
+                                  const std::string& gflag_name, const std::string& group,
+                                  const std::string& subgroup, const std::string& json_flag);
 
 }  // namespace cuttlefish
