@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-#pragma once
-#include <json/json.h>
-#include "common/libs/utils/result.h"
+#include <algorithm>
+
+#include <fstream>
+#include <iostream>
+
+#include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJsonFile(std::string file_path);
-Result<bool> ParseCvdConfigs(Json::Value& root,
-                     std::vector<std::string>& serialized_data);
+bool ParseJsonString(std::string& strjson, Json::Value& root) {
+  Json::Reader reader;  //  Reader
+  return reader.parse(strjson, root);
+}
 
-};  // namespace cuttlefish
+bool FindConfig(const std::vector<std::string>& vec,
+                const std::string& element) {
+  auto it = find(vec.begin(), vec.end(), element);
+  return it != vec.end();
+}
+
+}  // namespace cuttlefish
