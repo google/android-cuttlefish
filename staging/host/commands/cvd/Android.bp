@@ -69,6 +69,7 @@ cc_defaults {
         "libgtest_prod_headers",
     ],
     required: [
+        "cvd_internal_display",
         "cvd_internal_host_bugreport",
         "cvd_internal_start",
         "cvd_internal_status",
