@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/instance_database_test_helper.h"
+#include "host/commands/cvd/unittests/selector/instance_database_test_helper.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -28,7 +28,7 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 namespace {
 
 // mktemp with /tmp/<subdir>.XXXXXX, and if failed,
@@ -140,5 +140,5 @@ bool CvdInstanceDatabaseTest::AddInstances(
   return true;
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish

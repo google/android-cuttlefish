@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_database_utils.h"
+#include "host/commands/cvd/selector/instance_database_utils.h"
 
 #include <regex>
 #include <set>
@@ -28,7 +28,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
   std::string home_realpath;
@@ -90,5 +90,5 @@ std::string GenerateTooManyInstancesErrorMsg(const int n,
   return s.str();
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
