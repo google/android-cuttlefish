@@ -1,0 +1,12 @@
+digraph {
+  assemble_cvd
+  cvd
+  cvd_internal_start [label = "launch_cvd / cvd_internal_start"]
+  run_cvd
+  user [label = "User CLI"]
+
+  user -> cvd
+  user -> cvd_internal_start
+  cvd_internal_start -> assemble_cvd
+  cvd_internal_start -> run_cvd
+}
