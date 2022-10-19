@@ -14,42 +14,28 @@
  * limitations under the License.
  */
 
-#include <dirent.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
 
-#include <algorithm>
+#include <cinttypes>
+#include <csignal>
+#include <cstdio>
 #include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <memory>
-#include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/utils.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -126,51 +112,33 @@ int FallBackStop(const std::set<std::string>& dirs) {
 }
 
 Result<void> CleanStopInstance(
-    const CuttlefishConfig::InstanceSpecific& instance,
-    std::int32_t wait_for_launcher) {
-  auto monitor_path = instance.launcher_monitor_socket_path();
-  CF_EXPECT(!monitor_path.empty(), "No path to launcher monitor found");
+    const CuttlefishConfig::InstanceSpecific& instance_config,
+    const std::int32_t wait_for_launcher) {
+  SharedFD monitor_socket = CF_EXPECT(
+      GetLauncherMonitorFromInstance(instance_config, wait_for_launcher));
 
-  auto monitor_socket = SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM, wait_for_launcher);
-  CF_EXPECT(monitor_socket->IsOpen(),
-            "Unable to connect to launcher monitor at "
-                << monitor_path << ": " << monitor_socket->StrError());
+  LOG(INFO) << "Requesting stop";
+  CF_EXPECT(WriteLauncherAction(monitor_socket, LauncherAction::kStop));
+  CF_EXPECT(WaitForRead(monitor_socket, wait_for_launcher));
+  LauncherResponse stop_response =
+      CF_EXPECT(ReadLauncherResponse(monitor_socket));
+  CF_EXPECT(
+      stop_response == LauncherResponse::kSuccess,
+      "Received `" << static_cast<char>(stop_response)
+                   << "` response from launcher monitor for status request");
 
-  auto request = LauncherAction::kStop;
-  auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
-  CF_EXPECT(bytes_sent >= 0, "Error sending launcher monitor the stop command: "
-                                 << monitor_socket->StrError());
-
-  // Perform a select with a timeout to guard against launcher hanging
-  SharedFDSet read_set;
-  read_set.Set(monitor_socket);
-  struct timeval timeout = {wait_for_launcher, 0};
-  int selected = Select(&read_set, nullptr, nullptr,
-                        wait_for_launcher <= 0 ? nullptr : &timeout);
-  CF_EXPECT(selected >= 0, "Failed communication with the launcher monitor: "
-                               << strerror(errno));
-  CF_EXPECT(selected > 0, "Timeout expired waiting for launcher to respond");
-
-  LauncherResponse response;
-  auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
-  CF_EXPECT(bytes_recv >= 0, "Error receiving response from launcher monitor: "
-                                 << monitor_socket->StrError());
-  CF_EXPECT(response == LauncherResponse::kSuccess,
-            "Received '" << static_cast<char>(response)
-                         << "' response from launcher monitor");
-  LOG(INFO) << "Successfully stopped device " << instance.instance_name()
-            << ": " << instance.adb_ip_and_port();
+  LOG(INFO) << "Successfully stopped device " << instance_config.instance_name()
+            << ": " << instance_config.adb_ip_and_port();
   return {};
 }
 
 int StopInstance(const CuttlefishConfig& config,
                  const CuttlefishConfig::InstanceSpecific& instance,
-                 std::int32_t wait_for_launcher) {
-  auto res = CleanStopInstance(instance, wait_for_launcher);
-  if (!res.ok()) {
-    LOG(ERROR) << "Clean stop failed: " << res.error().Message();
-    LOG(DEBUG) << "Clean stop failed: " << res.error().Trace();
+                 const std::int32_t wait_for_launcher) {
+  auto result = CleanStopInstance(instance, wait_for_launcher);
+  if (!result.ok()) {
+    LOG(ERROR) << "Clean stop failed: " << result.error().Message();
+    LOG(DEBUG) << "Clean stop failed: " << result.error().Trace();
     return FallBackStop(DirsForInstance(config, instance));
   }
   return 0;
@@ -199,17 +167,14 @@ void ReleaseAllocdResources(SharedFD allocd_sock, uint32_t session_id) {
   LOG(INFO) << "Stop Session operation: " << resp["config_status"];
 }
 
-int StopCvdMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-
-  std::vector<Flag> flags;
-
+std::tuple<std::int32_t, bool> GetFlagValues(int argc, char** argv) {
   std::int32_t wait_for_launcher = 5;
+  bool clear_instance_dirs = false;
+  std::vector<Flag> flags;
   flags.emplace_back(
       GflagsCompatFlag("wait_for_launcher", wait_for_launcher)
           .Help("How many seconds to wait for the launcher to respond to the "
                 "status command. A value of zero means wait indefinitely"));
-  bool clear_instance_dirs;
   flags.emplace_back(
       GflagsCompatFlag("clear_instance_dirs", clear_instance_dirs)
           .Help("If provided, deletes the instance dir after attempting to "
@@ -220,13 +185,18 @@ int StopCvdMain(int argc, char** argv) {
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
   CHECK(ParseFlags(flags, args)) << "Could not process command line flags.";
 
+  return {wait_for_launcher, clear_instance_dirs};
+}
+
+int StopCvdMain(const std::int32_t wait_for_launcher,
+                const bool clear_instance_dirs) {
   auto config = CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
     return FallBackStop(FallbackDirs());
   }
 
-  int ret = 0;
+  int exit_code = 0;
   for (const auto& instance : config->Instances()) {
     auto session_id = instance.session_id();
     int exit_status = StopInstance(*config, instance, wait_for_launcher);
@@ -239,26 +209,28 @@ int StopCvdMain(int argc, char** argv) {
                    << kDefaultLocation << ": "
                    << allocd_sock->StrError();
       }
-
       ReleaseAllocdResources(allocd_sock, session_id);
     }
-    if (clear_instance_dirs) {
-      if (DirectoryExists(instance.instance_dir())) {
-        LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
-        if (!RecursivelyRemoveDirectory(instance.instance_dir())) {
-          LOG(ERROR) << "Unable to rmdir " << instance.instance_dir();
-        }
+
+    if (clear_instance_dirs && DirectoryExists(instance.instance_dir())) {
+      LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
+      if (!RecursivelyRemoveDirectory(instance.instance_dir())) {
+        LOG(ERROR) << "Unable to rmdir " << instance.instance_dir();
       }
     }
-    ret |= exit_status;
+    exit_code |= exit_status;
   }
-
-  return ret;
+  return exit_code;
 }
 
 } // namespace
 } // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::StopCvdMain(argc, argv);
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+
+  const auto [wait_for_launcher, clear_instance_dirs] =
+      cuttlefish::GetFlagValues(argc, argv);
+
+  return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs);
 }
