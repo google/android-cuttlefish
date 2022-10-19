@@ -22,21 +22,8 @@
 #include <gtest/gtest.h>
 
 #include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/unittests/parser/test_common.h"
 namespace cuttlefish {
-
-namespace {
-bool ParseJsonString(std::string& strjson, Json::Value& root) {
-  Json::Reader reader;  //  Reader
-  return reader.parse(strjson, root);
-}
-
-bool FindConfig(const std::vector<std::string>& vec,
-                const std::string& element) {
-  auto it = find(vec.begin(), vec.end(), element);
-  return it != vec.end();
-}
-}  // namespace
-
 TEST(FlagsParserTest, ParseInvalidJson) {
   const char* test_string = R""""(
     instances=50;
@@ -65,7 +52,7 @@ TEST(FlagsParserTest, ParseJsonWithSpellingError) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_FALSE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_FALSE(ParseCvdConfigs(json_configs, serialized_data).ok());
 }
 
 TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
@@ -84,7 +71,7 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--num_instances=1"));
 }
 
@@ -107,7 +94,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
   std::string strjson(test_string);
 
   EXPECT_TRUE(ParseJsonString(strjson, json_configs));
-  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data));
+  EXPECT_TRUE(ParseCvdConfigs(json_configs, serialized_data).ok());
   EXPECT_TRUE(FindConfig(serialized_data, "--num_instances=2"));
 }
 
