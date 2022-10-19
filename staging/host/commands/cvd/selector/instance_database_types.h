@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 using FieldName = std::string;
 using Value = std::string;
@@ -40,5 +40,5 @@ using Set = std::unordered_set<T>;
 template <typename K, typename V>
 using Map = std::unordered_map<K, V>;
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
