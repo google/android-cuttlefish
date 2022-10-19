@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/instance_record.h"
+#include "host/commands/cvd/selector/instance_record.h"
 
-#include "host/commands/cvd/instance_database_utils.h"
-#include "host/commands/cvd/instance_group_record.h"
+#include "host/commands/cvd/selector/instance_database_utils.h"
+#include "host/commands/cvd/selector/instance_group_record.h"
 
 namespace cuttlefish {
-namespace instance_db {
+namespace selector {
 
 LocalInstance::LocalInstance(const LocalInstanceGroup& parent_group,
                              const unsigned instance_id,
@@ -52,5 +52,5 @@ const LocalInstanceGroup& LocalInstance::ParentGroup() const {
   return parent_group_;
 }
 
-}  // namespace instance_db
+}  // namespace selector
 }  // namespace cuttlefish
