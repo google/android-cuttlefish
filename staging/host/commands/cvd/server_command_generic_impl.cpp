@@ -134,6 +134,7 @@ const std::map<std::string, std::string>
         {"mkdir", kMkdirBin},
         {"ln", kLnBin},
         {"fleet", kFleetBin},
+        {"display", kDisplayBin},
 };
 
 }  // namespace cvd_cmd_impl
