@@ -35,17 +35,17 @@ static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"security", Json::ValueType::objectValue},
     {"kernel", Json::ValueType::objectValue}};
 
-Result<bool> ValidateSecurityConfigs(const Json::Value& root) {
+Result<void> ValidateSecurityConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, securitykeyMap), "ValidateSecurityConfigs ValidateTypo fail");
-  return true;
+  return {};
 }
 
-Result<bool> ValidateKernelConfigs(const Json::Value& root) {
+Result<void> ValidateKernelConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kernelkeyMap), "ValidateKernelConfigs ValidateTypo fail");
-  return true;
+  return {};
 }
 
-Result<bool> ValidateBootConfigs(const Json::Value& root) {
+Result<void> ValidateBootConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kBootKeyMap), "ValidateBootConfigs ValidateTypo fail");
 
   if (root.isMember("security")) {
@@ -56,7 +56,7 @@ Result<bool> ValidateBootConfigs(const Json::Value& root) {
     CF_EXPECT(ValidateKernelConfigs(root["kernel"]), "ValidateKernelConfigs fail");
   }
 
-  return true;
+  return {};
 }
 
 void InitBootConfigs(Json::Value& instances) {
