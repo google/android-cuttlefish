@@ -195,6 +195,10 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // No implementation on cuttlefish for fastboot AIDL hal
     {"android.hardware.fastboot.", 1},
 
+    // These types are only used in TV.
+    {"android.hardware.tv.cec.", 1},
+    {"android.hardware.tv.hdmi.", 1},
+
     // These types are only used in Automotive.
     {"android.automotive.computepipe.registry.", 1},
     {"android.automotive.computepipe.runner.", 1},

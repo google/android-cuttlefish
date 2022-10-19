@@ -40,6 +40,14 @@ PRODUCT_COPY_FILES += \
 # HDMI CEC HAL
 PRODUCT_PACKAGES += android.hardware.tv.cec@1.1-service
 
+# HDMI AIDL HAL
+PRODUCT_PACKAGES += \
+     android.hardware.tv.hdmi-service
+
+# CEC AIDL HAL
+PRODUCT_PACKAGES += \
+     android.hardware.tv.cec-service
+
 # Setup HDMI CEC as Playback Device
 PRODUCT_PROPERTY_OVERRIDES += ro.hdmi.device_type=4
 
