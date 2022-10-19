@@ -53,6 +53,7 @@ class CvdCommandHandler : public CvdServerHandler {
   bool interrupted_ = false;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
+  static constexpr char kDisplayBin[] = "cvd_internal_display";
   static constexpr char kLnBin[] = "ln";
   static constexpr char kMkdirBin[] = "mkdir";
 
