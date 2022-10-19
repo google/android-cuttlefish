@@ -16,12 +16,15 @@
 
 #include <android-base/file.h>
 #include <gflags/gflags.h>
+
 #include <stdio.h>
 #include <fstream>
 #include <string>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
+#include "host/commands/cvd/parser/cf_configs_common.h"
+#include "host/commands/cvd/parser/cf_configs_instances.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 
 namespace cuttlefish {
@@ -29,23 +32,6 @@ namespace cuttlefish {
 // json parameters definitions
 static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
     {"instances", Json::ValueType::arrayValue}};
-
-// Validate data Name and type
-bool ValidateTypo(const Json::Value& root,
-                  std::map<std::string, Json::ValueType>& map) {
-  for (const std::string& flag : root.getMemberNames()) {
-    if (map.count(flag) == 0) {
-      LOG(WARNING) << "Invalid flag name (typo) , Param --> " << flag
-                   << " not recognized";
-      return false;
-    }
-    if (!root[flag].isConvertibleTo(map[flag])) {
-      LOG(WARNING) << "Invalid flag type " << flag;
-      return false;
-    }
-  }
-  return true;
-}
 
 Result<Json::Value> ParseJsonFile(std::string file_path) {
   std::string file_content;
@@ -56,15 +42,10 @@ Result<Json::Value> ParseJsonFile(std::string file_path) {
   return root;
 }
 
-bool ValidateJsonCfConfigs(const Json::Value& root) {
-  if (!ValidateTypo(root, kConfigsKeyMap)) {
-    LOG(WARNING) << "Typo in config main parameters";
-    return false;
-  }
-  if (!root.isMember("instances")) {
-    LOG(WARNING) << "instances object is missing";
-    return false;
-  }
+Result<bool> ValidateCfConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap), "Typo in config main parameters");
+  CF_EXPECT(root.isMember("instances"), "instances object is missing");
+  CF_EXPECT(ValidateInstancesConfigs(root["instances"]), "ValidateInstancesConfigs failed");
 
   return true;
 }
@@ -77,14 +58,20 @@ void GenerateNumInstancesFlag(const Json::Value& root,
   result.push_back(flag);
 }
 
-bool ParseCvdConfigs(Json::Value& root,
-                     std::vector<std::string>& serialized_data) {
-  if (!ValidateJsonCfConfigs(root)) {
-    LOG(WARNING) << "Loaded Json validation failed";
-    return false;
-  }
+void GenerateCfConfigs(const Json::Value& root,
+                       std::vector<std::string>& result) {
+  GenerateNumInstancesFlag(root, result);
 
-  GenerateNumInstancesFlag(root, serialized_data);
+  GenerateInstancesConfigs(root["instances"], result);
+}
+
+Result<bool> ParseCvdConfigs(Json::Value& root,
+                     std::vector<std::string>& serialized_data) {
+  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
+
+  InitInstancesConfigs(root["instances"]);
+
+  GenerateCfConfigs(root, serialized_data);
   return true;
 }
 
