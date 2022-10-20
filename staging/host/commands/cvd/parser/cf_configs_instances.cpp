@@ -37,7 +37,7 @@ static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"location", Json::ValueType::objectValue},
     {"metrics", Json::ValueType::objectValue}};
 
-Result<bool> ValidateInstancesConfigs(const Json::Value& root) {
+Result<void> ValidateInstancesConfigs(const Json::Value& root) {
   int num_instances = root.size();
   for (unsigned int i = 0; i < num_instances; i++) {
     CF_EXPECT(ValidateTypo(root[i], kInstanceKeyMap), "vm ValidateTypo fail");
@@ -51,7 +51,7 @@ Result<bool> ValidateInstancesConfigs(const Json::Value& root) {
     }
   }
 
-  return true;
+  return {};
 }
 
 void InitInstancesConfigs(Json::Value& root) {
