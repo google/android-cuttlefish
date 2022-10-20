@@ -42,12 +42,12 @@ Result<Json::Value> ParseJsonFile(std::string file_path) {
   return root;
 }
 
-Result<bool> ValidateCfConfigs(const Json::Value& root) {
+Result<void> ValidateCfConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kConfigsKeyMap), "Typo in config main parameters");
   CF_EXPECT(root.isMember("instances"), "instances object is missing");
   CF_EXPECT(ValidateInstancesConfigs(root["instances"]), "ValidateInstancesConfigs failed");
 
-  return true;
+  return {};
 }
 
 void GenerateNumInstancesFlag(const Json::Value& root,
@@ -65,14 +65,14 @@ void GenerateCfConfigs(const Json::Value& root,
   GenerateInstancesConfigs(root["instances"], result);
 }
 
-Result<bool> ParseCvdConfigs(Json::Value& root,
-                     std::vector<std::string>& serialized_data) {
+Result<void> ParseCvdConfigs(Json::Value& root,
+                             std::vector<std::string>& serialized_data) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
 
   InitInstancesConfigs(root["instances"]);
 
   GenerateCfConfigs(root, serialized_data);
-  return true;
+  return {};
 }
 
 }  // namespace cuttlefish

@@ -21,13 +21,13 @@ namespace cuttlefish {
 /**
  * Validate Json data Name and type
  */
-Result<bool> ValidateTypo(const Json::Value& root,
-                  const std::map<std::string, Json::ValueType>& map) {
+Result<void> ValidateTypo(const Json::Value& root,
+                          const std::map<std::string, Json::ValueType>& map) {
   for (const std::string& flag : root.getMemberNames()) {
     CF_EXPECT(map.count(flag) != 0 , "Invalid flag name (typo) , Param --> " << flag<< " not recognized");
     CF_EXPECT(root[flag].isConvertibleTo(map.at(flag)), "Invalid flag typ"<< flag);
   }
-  return true;
+  return {};
 }
 
 void InitIntConfig(Json::Value& instances, const std::string& group,
