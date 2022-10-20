@@ -48,4 +48,7 @@ std::string GenerateStrGflagSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag);
 
+std::vector<std::string> MergeResults(std::vector<std::string> first_list,
+                                      std::vector<std::string> scond_list);
+
 }  // namespace cuttlefish
