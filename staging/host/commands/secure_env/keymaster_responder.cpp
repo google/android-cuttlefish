@@ -68,6 +68,7 @@ bool KeymasterResponder::ProcessMessage() {
     HANDLE_MESSAGE(IMPORT_WRAPPED_KEY, ImportWrappedKey)
     HANDLE_MESSAGE(GENERATE_RKP_KEY, GenerateRkpKey)
     HANDLE_MESSAGE(GENERATE_CSR, GenerateCsr)
+    HANDLE_MESSAGE(GENERATE_CSR_V2, GenerateCsrV2)
     HANDLE_MESSAGE(GENERATE_TIMESTAMP_TOKEN, GenerateTimestampToken)
 #undef HANDLE_MESSAGE
 #define HANDLE_MESSAGE_W_RETURN(ENUM_NAME, METHOD_NAME)              \
