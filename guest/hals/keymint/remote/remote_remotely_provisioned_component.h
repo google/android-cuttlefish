@@ -47,6 +47,11 @@ class RemoteRemotelyProvisionedComponent
       ProtectedData* protectedData,
       std::vector<uint8_t>* keysToSignMac) override;
 
+  ndk::ScopedAStatus generateCertificateRequestV2(
+      const std::vector<MacedPublicKey>& keysToSign,
+      const std::vector<uint8_t>& challenge,
+      std::vector<uint8_t>* csr) override;
+
  private:
   keymaster::RemoteKeymaster& impl_;
 };
