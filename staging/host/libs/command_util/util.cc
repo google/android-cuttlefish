@@ -53,11 +53,10 @@ Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket) {
   return ReadFromMonitor<RunnerExitCodes>(monitor_socket);
 }
 
-Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
-                                    const int instance_num,
-                                    const int timeout_seconds) {
-  auto instance = config.ForInstance(instance_num);
-  std::string monitor_path = instance.launcher_monitor_socket_path();
+Result<SharedFD> GetLauncherMonitorFromInstance(
+    const CuttlefishConfig::InstanceSpecific& instance_config,
+    const int timeout_seconds) {
+  std::string monitor_path = instance_config.launcher_monitor_socket_path();
   CF_EXPECT(!monitor_path.empty(), "No path to launcher monitor found");
 
   SharedFD monitor_socket = SharedFD::SocketLocalClient(
@@ -66,6 +65,13 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
             "Unable to connect to launcher monitor at "
                 << monitor_path << ":" << monitor_socket->StrError());
   return monitor_socket;
+}
+
+Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
+                                    const int instance_num,
+                                    const int timeout_seconds) {
+  auto instance_config = config.ForInstance(instance_num);
+  return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
 }
 
 Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
