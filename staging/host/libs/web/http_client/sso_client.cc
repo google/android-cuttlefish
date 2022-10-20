@@ -43,6 +43,7 @@ Result<HttpResponse<std::string>> MakeRequest(
     ExecCmdFunc exec_cmd_func_, const std::string& url,
     HttpMethod method = HttpMethod::kGet, const std::string& data = "") {
   Command sso_client_cmd(kSsoClientBin);
+  sso_client_cmd.AddParameter("--use_master_cookie");
   sso_client_cmd.AddParameter("--request_timeout=300");  // 5 minutes
   sso_client_cmd.AddParameter("--dump_header");
   sso_client_cmd.AddParameter("--url=" + url);
