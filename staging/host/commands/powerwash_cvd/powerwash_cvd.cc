@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <cstdlib>
 
 #include <gflags/gflags.h>
@@ -31,7 +32,7 @@ DEFINE_int32(instance_num, cuttlefish::GetInstance(),
 DEFINE_int32(
     wait_for_launcher, 30,
     "How many seconds to wait for the launcher to respond to the status "
-    "command. A value of zero means wait indefinetly.");
+    "command. A value of zero means wait indefinitely.");
 
 DEFINE_int32(boot_timeout, 1000, "How many seconds to wait for the device to "
                                  "reboot.");
