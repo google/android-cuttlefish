@@ -30,6 +30,9 @@ void InitIntConfig(Json::Value& instances, const std::string& group,
 void InitStringConfig(Json::Value& instances, const std::string& group,
                       const std::string& json_flag, const std::string& default_value);
 
+void InitBoolConfig(Json::Value& instances, const std::string& group,
+                    const std::string& json_flag, const bool default_value);
+
 void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
                               const std::string& subgroup, const std::string& json_flag,
                               const std::string& default_value);
@@ -40,6 +43,11 @@ std::string GenerateIntGflag(const Json::Value& instances, const std::string& gf
 std::string GenerateStrGflag(const Json::Value& instances, const std::string& gflag_name,
                           const std::string& group, const std::string& json_flag);
 
+std::string GenerateBoolGflag(const Json::Value& instances,
+                              const std::string& gflag_name,
+                              const std::string& group,
+                              const std::string& json_flag);
+
 std::string GenerateIntGflagSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag);
@@ -47,6 +55,12 @@ std::string GenerateIntGflagSubGroup(const Json::Value& instances,
 std::string GenerateStrGflagSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag);
+
+std::string GenerateBoolGflagSubGroup(const Json::Value& instances,
+                                      const std::string& gflag_name,
+                                      const std::string& group,
+                                      const std::string& subgroup,
+                                      const std::string& json_flag);
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list);
