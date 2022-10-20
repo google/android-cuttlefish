@@ -33,7 +33,7 @@ namespace cuttlefish {
 static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
     {"instances", Json::ValueType::arrayValue}};
 
-Result<Json::Value> ParseJsonFile(std::string file_path) {
+Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   std::string file_content;
   using android::base::ReadFileToString;
   CF_EXPECT(ReadFileToString(file_path.c_str(), &file_content,
@@ -50,29 +50,28 @@ Result<void> ValidateCfConfigs(const Json::Value& root) {
   return {};
 }
 
-void GenerateNumInstancesFlag(const Json::Value& root,
-                              std::vector<std::string>& result) {
+std::string GenerateNumInstancesFlag(const Json::Value& root) {
   int num_instances = root["instances"].size();
   LOG(DEBUG) << "num_instances = " << num_instances;
-  std::string flag = "--num_instances=" + std::to_string(num_instances);
-  result.push_back(flag);
+  std::string result = "--num_instances=" + std::to_string(num_instances);
+  return result;
 }
 
-void GenerateCfConfigs(const Json::Value& root,
-                       std::vector<std::string>& result) {
-  GenerateNumInstancesFlag(root, result);
+std::vector<std::string> GenerateCfConfigs(const Json::Value& root) {
+  std::vector<std::string> result;
+  result.emplace_back(GenerateNumInstancesFlag(root));
 
-  GenerateInstancesConfigs(root["instances"], result);
+  result = MergeResults(result, GenerateInstancesConfigs(root["instances"]));
+  return result;
 }
 
-Result<void> ParseCvdConfigs(Json::Value& root,
-                             std::vector<std::string>& serialized_data) {
+Result<std::vector<std::string>> ParseCvdConfigs(Json::Value& root) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
 
   InitInstancesConfigs(root["instances"]);
 
-  GenerateCfConfigs(root, serialized_data);
-  return {};
+  return GenerateCfConfigs(root);
+  ;
 }
 
 }  // namespace cuttlefish

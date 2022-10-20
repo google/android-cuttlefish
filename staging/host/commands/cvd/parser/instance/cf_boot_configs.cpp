@@ -68,9 +68,8 @@ void InitBootConfigs(Json::Value& instances) {
                            CF_DEFAULTS_EXTRA_KERNEL_CMDLINE);
 }
 
-void GenerateBootConfigs(const Json::Value& instances,
-                         std::vector<std::string>& result) {
-
+std::vector<std::string> GenerateBootConfigs(const Json::Value& instances) {
+  std::vector<std::string> result;
   result.emplace_back(GenerateStrGflag(instances, "extra_bootconfig_args", "boot",
                                     "extra_bootconfig_args"));
   result.emplace_back(GenerateStrGflagSubGroup(instances, "serial_number", "boot",
@@ -78,6 +77,7 @@ void GenerateBootConfigs(const Json::Value& instances,
   result.emplace_back(GenerateStrGflagSubGroup(instances, "extra_kernel_cmdline",
                                             "boot", "kernel",
                                             "extra_kernel_cmdline"));
+  return result;
 }
 
 }  // namespace cuttlefish
