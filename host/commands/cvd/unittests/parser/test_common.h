@@ -23,7 +23,7 @@
 
 namespace cuttlefish {
 
-bool ParseJsonString(std::string& strjson, Json::Value& root);
+bool ParseJsonString(std::string& json_text, Json::Value& root);
 
 bool FindConfig(const std::vector<std::string>& vec,
                 const std::string& element);
