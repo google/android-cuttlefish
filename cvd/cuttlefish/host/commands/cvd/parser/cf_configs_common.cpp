@@ -125,4 +125,14 @@ std::string GenerateStrGflagSubGroup(const Json::Value& instances,
   }
   return buff.str();
 }
+
+std::vector<std::string> MergeResults(std::vector<std::string> first_list,
+                                      std::vector<std::string> scond_list) {
+  std::vector<std::string> result;
+  result.reserve(first_list.size() + scond_list.size());
+  result.insert(result.begin(), first_list.begin(), first_list.end());
+  result.insert(result.end(), scond_list.begin(), scond_list.end());
+  return result;
+}
+
 }  // namespace cuttlefish

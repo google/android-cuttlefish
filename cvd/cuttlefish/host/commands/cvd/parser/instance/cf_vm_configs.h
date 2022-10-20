@@ -22,7 +22,6 @@
 namespace cuttlefish {
 Result<void> ValidateVmConfigs(const Json::Value& root);
 void InitVmConfigs(Json::Value& root);
-void GenerateVmConfigs(const Json::Value& root,
-                       std::vector<std::string>& result);
+std::vector<std::string> GenerateVmConfigs(const Json::Value& root);
 
 };  // namespace cuttlefish
