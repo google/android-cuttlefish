@@ -29,9 +29,9 @@ static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"uuid", Json::ValueType::stringValue},
 };
 
-Result<bool> ValidateVmConfigs(const Json::Value& root) {
+Result<void> ValidateVmConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kVmKeyMap), "ValidateVmConfigs ValidateTypo fail");
-  return true;
+  return {};
 }
 
 void InitVmConfigs(Json::Value& instances) {
