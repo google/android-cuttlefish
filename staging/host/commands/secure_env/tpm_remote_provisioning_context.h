@@ -41,6 +41,10 @@ class TpmRemoteProvisioningContext
   std::optional<cppcose::HmacSha256> GenerateHmacSha256(
       const cppcose::bytevec& input) const override;
   void GetHwInfo(keymaster::GetHwInfoResponse* hwInfo) const override;
+  cppcose::ErrMsgOr<cppbor::Array> BuildCsr(
+      const std::vector<uint8_t>& challenge,
+      cppbor::Array keysToSign) const override;
+
   std::pair<std::vector<uint8_t>, cppbor::Array> GenerateBcc(
       bool testMode) const;
   void SetSystemVersion(uint32_t os_version, uint32_t os_patchlevel);
