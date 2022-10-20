@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace cuttlefish {
-Result<bool> ValidateVmConfigs(const Json::Value& root);
+Result<void> ValidateVmConfigs(const Json::Value& root);
 void InitVmConfigs(Json::Value& root);
 void GenerateVmConfigs(const Json::Value& root,
                        std::vector<std::string>& result);
