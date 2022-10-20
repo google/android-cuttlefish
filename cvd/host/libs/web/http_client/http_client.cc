@@ -33,17 +33,17 @@
 namespace cuttlefish {
 namespace {
 
+enum class HttpMethod {
+  kGet,
+  kPost,
+  kDelete,
+};
+
 size_t curl_to_function_cb(char* ptr, size_t, size_t nmemb, void* userdata) {
   HttpClient::DataCallback* callback = (HttpClient::DataCallback*)userdata;
   if (!(*callback)(ptr, nmemb)) {
     return 0;  // Signals error to curl
   }
-  return nmemb;
-}
-
-size_t file_write_callback(char* ptr, size_t, size_t nmemb, void* userdata) {
-  std::stringstream* stream = (std::stringstream*)userdata;
-  stream->write(ptr, nmemb);
   return nmemb;
 }
 
@@ -85,68 +85,19 @@ class CurlClient : public HttpClient {
   Result<HttpResponse<std::string>> GetToString(
       const std::string& url,
       const std::vector<std::string>& headers) override {
-    std::stringstream stream;
-    auto callback = [&stream](char* data, size_t size) -> bool {
-      if (data == nullptr) {
-        stream = std::stringstream();
-        return true;
-      }
-      stream.write(data, size);
-      return true;
-    };
-    auto http_response = CF_EXPECT(DownloadToCallback(callback, url, headers));
-    return HttpResponse<std::string>{stream.str(), http_response.http_code};
+    return DownloadToString(HttpMethod::kGet, url, headers);
   }
 
   Result<HttpResponse<std::string>> PostToString(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
-    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
-    LOG(INFO) << "Attempting to download \"" << url << "\"";
-    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
-    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
-    curl_easy_reset(curl_);
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
-    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data_to_write.size());
-    curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data_to_write.c_str());
-    std::stringstream data_to_read;
-    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data_to_read);
-    char error_buf[CURL_ERROR_SIZE];
-    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    CURLcode res = curl_easy_perform(curl_);
-    CF_EXPECT(res == CURLE_OK,
-              "curl_easy_perform() failed. "
-                  << "Code was \"" << res << "\". "
-                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                  << "Error buffer was \"" << error_buf << "\".");
-    long http_code = 0;
-    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return HttpResponse<std::string>{data_to_read.str(), http_code};
+    return DownloadToString(HttpMethod::kPost, url, headers, data_to_write);
   }
 
   Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
-    auto response = CF_EXPECT(PostToString(url, data_to_write, headers));
-    const std::string& contents = response.data;
-    Json::CharReaderBuilder builder;
-    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    Json::Value json;
-    std::string errorMessage;
-    if (!reader->parse(&*contents.begin(), &*contents.end(), &json,
-                       &errorMessage)) {
-      LOG(ERROR) << "Could not parse json: " << errorMessage;
-      json["error"] = "Failed to parse json.";
-      json["response"] = contents;
-    }
-    return HttpResponse<Json::Value>{json, response.http_code};
+    return DownloadToJson(HttpMethod::kPost, url, headers, data_to_write);
   }
 
   Result<HttpResponse<Json::Value>> PostToJson(
@@ -154,39 +105,13 @@ class CurlClient : public HttpClient {
       const std::vector<std::string>& headers) override {
     std::stringstream json_str;
     json_str << data_to_write;
-    return PostToJson(url, json_str.str(), headers);
+    return DownloadToJson(HttpMethod::kPost, url, headers, json_str.str());
   }
 
   Result<HttpResponse<void>> DownloadToCallback(
       DataCallback callback, const std::string& url,
       const std::vector<std::string>& headers) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
-    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
-    LOG(INFO) << "Attempting to download \"" << url << "\"";
-    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
-    CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
-              "callback failure");
-    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
-    curl_easy_reset(curl_);
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
-    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
-    char error_buf[CURL_ERROR_SIZE];
-    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    CURLcode res = curl_easy_perform(curl_);
-    CF_EXPECT(res == CURLE_OK,
-              "curl_easy_perform() failed. "
-                  << "Code was \"" << res << "\". "
-                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                  << "Error buffer was \"" << error_buf << "\".");
-    long http_code = 0;
-    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return HttpResponse<void>{{}, http_code};
+    return DownloadToCallback(HttpMethod::kGet, callback, url, headers);
   }
 
   Result<HttpResponse<std::string>> DownloadToFile(
@@ -208,63 +133,13 @@ class CurlClient : public HttpClient {
 
   Result<HttpResponse<Json::Value>> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers) {
-    auto result = CF_EXPECT(GetToString(url, headers));
-    const std::string& contents = result.data;
-    Json::CharReaderBuilder builder;
-    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    Json::Value json;
-    std::string errorMessage;
-    if (!reader->parse(&*contents.begin(), &*contents.end(), &json,
-                       &errorMessage)) {
-      LOG(ERROR) << "Could not parse json: " << errorMessage;
-      json["error"] = "Failed to parse json.";
-      json["response"] = contents;
-    }
-    return HttpResponse<Json::Value>{json, result.http_code};
+    return DownloadToJson(HttpMethod::kGet, url, headers);
   }
 
   Result<HttpResponse<Json::Value>> DeleteToJson(
       const std::string& url,
       const std::vector<std::string>& headers) override {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
-    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
-    LOG(INFO) << "Attempting to download \"" << url << "\"";
-    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
-    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
-    curl_easy_reset(curl_);
-    curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
-    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    std::stringstream data_to_read;
-    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, file_write_callback);
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data_to_read);
-    char error_buf[CURL_ERROR_SIZE];
-    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    CURLcode res = curl_easy_perform(curl_);
-    CF_EXPECT(res == CURLE_OK,
-              "curl_easy_perform() failed. "
-                  << "Code was \"" << res << "\". "
-                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                  << "Error buffer was \"" << error_buf << "\".");
-    long http_code = 0;
-    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-
-    auto contents = data_to_read.str();
-    Json::CharReaderBuilder builder;
-    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    Json::Value json;
-    std::string errorMessage;
-    if (!reader->parse(&*contents.begin(), &*contents.end(), &json,
-                       &errorMessage)) {
-      LOG(ERROR) << "Could not parse json: " << errorMessage;
-      json["error"] = "Failed to parse json.";
-      json["response"] = contents;
-    }
-    return HttpResponse<Json::Value>{json, http_code};
+    return DownloadToJson(HttpMethod::kDelete, url, headers);
   }
 
   std::string UrlEscape(const std::string& text) override {
@@ -293,6 +168,86 @@ class CurlClient : public HttpClient {
     resolve_line << android::base::Join(CF_EXPECT(resolver_(hostname)), ",");
     auto slist = CF_EXPECT(SlistFromStrings({resolve_line.str()}));
     return slist;
+  }
+
+  Result<HttpResponse<Json::Value>> DownloadToJson(
+      HttpMethod method, const std::string& url,
+      const std::vector<std::string>& headers,
+      const std::string& data_to_write = "") {
+    auto response =
+        CF_EXPECT(DownloadToString(method, url, headers, data_to_write));
+    const std::string& contents = response.data;
+    Json::CharReaderBuilder builder;
+    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    Json::Value json;
+    std::string errorMessage;
+    if (!reader->parse(&*contents.begin(), &*contents.end(), &json,
+                       &errorMessage)) {
+      LOG(ERROR) << "Could not parse json: " << errorMessage;
+      json["error"] = "Failed to parse json.";
+      json["response"] = contents;
+    }
+    return HttpResponse<Json::Value>{json, response.http_code};
+  }
+
+  Result<HttpResponse<std::string>> DownloadToString(
+      HttpMethod method, const std::string& url,
+      const std::vector<std::string>& headers,
+      const std::string& data_to_write = "") {
+    std::stringstream stream;
+    auto callback = [&stream](char* data, size_t size) -> bool {
+      if (data == nullptr) {
+        stream = std::stringstream();
+        return true;
+      }
+      stream.write(data, size);
+      return true;
+    };
+    auto http_response = CF_EXPECT(
+        DownloadToCallback(method, callback, url, headers, data_to_write));
+    return HttpResponse<std::string>{stream.str(), http_response.http_code};
+  }
+
+  Result<HttpResponse<void>> DownloadToCallback(
+      HttpMethod method, DataCallback callback, const std::string& url,
+      const std::vector<std::string>& headers,
+      const std::string& data_to_write = "") {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
+    curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
+    LOG(INFO) << "Attempting to download \"" << url << "\"";
+    CF_EXPECT(method != HttpMethod::kPost && !data_to_write.empty(),
+              "data must be empty for non POST requests");
+    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
+    CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
+              "callback failure");
+    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
+    curl_easy_reset(curl_);
+    if (method == HttpMethod::kDelete) {
+      curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
+    }
+    curl_easy_setopt(curl_, CURLOPT_CAINFO,
+                     "/etc/ssl/certs/ca-certificates.crt");
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
+    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
+    if (method == HttpMethod::kPost) {
+      curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data_to_write.size());
+      curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data_to_write.c_str());
+    }
+    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
+    char error_buf[CURL_ERROR_SIZE];
+    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
+    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
+    CURLcode res = curl_easy_perform(curl_);
+    CF_EXPECT(res == CURLE_OK,
+              "curl_easy_perform() failed. "
+                  << "Code was \"" << res << "\". "
+                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                  << "Error buffer was \"" << error_buf << "\".");
+    long http_code = 0;
+    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
+    return HttpResponse<void>{{}, http_code};
   }
 
   CURL* curl_;
