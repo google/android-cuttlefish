@@ -43,8 +43,8 @@ void InitVmConfigs(Json::Value& instances) {
   InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
 }
 
-void GenerateVmConfigs(const Json::Value& instances,
-                       std::vector<std::string>& result) {
+std::vector<std::string> GenerateVmConfigs(const Json::Value& instances) {
+  std::vector<std::string> result;
   result.emplace_back(GenerateIntGflag(instances, "cpus", "vm", "cpus"));
   result.emplace_back(GenerateIntGflag(instances, "memory_mb", "vm", "memory_mb"));
   result.emplace_back(
@@ -52,6 +52,7 @@ void GenerateVmConfigs(const Json::Value& instances,
   result.emplace_back(
       GenerateStrGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
   result.emplace_back(GenerateStrGflag(instances, "uuid", "vm", "uuid"));
+  return result;
 }
 
 }  // namespace cuttlefish
