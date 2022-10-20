@@ -27,6 +27,10 @@ Result<LauncherResponse> ReadLauncherResponse(const SharedFD& monitor_socket);
 
 Result<RunnerExitCodes> ReadExitCode(const SharedFD& monitor_socket);
 
+Result<SharedFD> GetLauncherMonitorFromInstance(
+    const CuttlefishConfig::InstanceSpecific& instance_config,
+    const int timeout_seconds);
+
 Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
                                     const int instance_num,
                                     const int timeout_seconds);
