@@ -61,11 +61,12 @@ class InstanceManager {
 
  private:
   Result<cvd::Status> CvdFleetImpl(
-      const SharedFD& out, const std::optional<std::string>& env_config) const;
+      const SharedFD& out, const SharedFD& err,
+      const std::optional<std::string>& env_config) const;
   Result<cvd::Status> CvdFleetHelp(const SharedFD& out, const SharedFD& err,
                                    const std::string& host_tool_dir) const;
 
-  static void IssueStatusCommand(const SharedFD& out,
+  static void IssueStatusCommand(const SharedFD& out, const SharedFD& err,
                                  const std::string& config_file_path,
                                  const selector::LocalInstanceGroup& group);
   void IssueStopCommand(const SharedFD& out, const SharedFD& err,
