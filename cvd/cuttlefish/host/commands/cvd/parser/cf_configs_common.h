@@ -21,8 +21,8 @@
 #include "common/libs/utils/result.h"
 namespace cuttlefish {
 
-Result<bool> ValidateTypo(const Json::Value& root,
-                  const std::map<std::string, Json::ValueType>& map);
+Result<void> ValidateTypo(const Json::Value& root,
+                          const std::map<std::string, Json::ValueType>& map);
 
 void InitIntConfig(Json::Value& instances, const std::string& group,
                    const std::string& json_flag, int default_value);
