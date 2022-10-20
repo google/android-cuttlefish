@@ -59,10 +59,10 @@ void InitInstancesConfigs(Json::Value& root) {
   InitBootConfigs(root);
 }
 
-void GenerateInstancesConfigs(const Json::Value& root,
-                              std::vector<std::string>& result) {
-  GenerateVmConfigs(root, result);
-  GenerateBootConfigs(root, result);
+std::vector<std::string> GenerateInstancesConfigs(const Json::Value& root) {
+  std::vector<std::string> result = GenerateVmConfigs(root);
+  result = MergeResults(result, GenerateBootConfigs(root));
+  return result;
 }
 
 }  // namespace cuttlefish
