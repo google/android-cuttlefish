@@ -98,6 +98,7 @@ std::unique_ptr<cppbor::Map> TpmRemoteProvisioningContext::CreateDeviceInfo()
     result->add(cppbor::Tstr("vendor_patch_level"),
                 cppbor::Uint(*vendor_patchlevel_));
   }
+  result->add(cppbor::Tstr("version"), cppbor::Uint(2));
   result->add(cppbor::Tstr("fused"), cppbor::Uint(0));
   result->add(cppbor::Tstr("security_level"), cppbor::Tstr("tee"));
   result->canonicalize();
@@ -224,7 +225,7 @@ TpmRemoteProvisioningContext::GenerateHmacSha256(
 
 void TpmRemoteProvisioningContext::GetHwInfo(
     keymaster::GetHwInfoResponse* hwInfo) const {
-  hwInfo->version = 3;
+  hwInfo->version = 2;
   hwInfo->rpcAuthorName = "Google";
   hwInfo->supportedEekCurve = 2 /* CURVE_25519 */;
   hwInfo->uniqueId = "remote keymint";
