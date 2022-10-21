@@ -49,5 +49,8 @@ cc_test_host {
         "instance/vm_configs_test.cc",
         "instance/boot_configs_test.cc",
     ],
+    test_options: {
+        unit_test: true,
+    },
     defaults: ["cvd_load_defaults"],
 }
