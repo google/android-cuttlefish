@@ -157,8 +157,8 @@ bool CreateBlankImage(
     }
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = cuttlefish::HostBinaryPath("make_f2fs");
-    if (execute({make_f2fs_path, "-t", image_fmt, image, "-C", "utf8", "-O",
-             "compression,extra_attr,project_quota", "-g", "android"}) != 0) {
+    if (execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
+     "compression,extra_attr,project_quota,casefold", "-g", "android"}) != 0) {
       return false;
     }
   } else if (image_fmt == "sdcard") {
