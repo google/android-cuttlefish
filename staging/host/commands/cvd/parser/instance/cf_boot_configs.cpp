@@ -33,7 +33,9 @@ static std::map<std::string, Json::ValueType> kernelkeyMap = {
 static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"extra_bootconfig_args", Json::ValueType::stringValue},
     {"security", Json::ValueType::objectValue},
-    {"kernel", Json::ValueType::objectValue}};
+    {"kernel", Json::ValueType::objectValue},
+    {"enable_bootanimation", Json::ValueType::booleanValue},
+};
 
 Result<void> ValidateSecurityConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, securitykeyMap), "ValidateSecurityConfigs ValidateTypo fail");
@@ -62,6 +64,8 @@ Result<void> ValidateBootConfigs(const Json::Value& root) {
 void InitBootConfigs(Json::Value& instances) {
   InitStringConfig(instances, "boot", "extra_bootconfig_args",
                    CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
+  InitBoolConfig(instances, "boot", "enable_bootanimation",
+                 CF_DEFAULTS_ENABLE_BOOTANIMATION);
   InitStringConfigSubGroup(instances, "boot", "security", "serial_number",
                            CF_DEFAULTS_SERIAL_NUMBER);
   InitStringConfigSubGroup(instances, "boot", "kernel", "extra_kernel_cmdline",
@@ -72,6 +76,8 @@ std::vector<std::string> GenerateBootConfigs(const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(GenerateStrGflag(instances, "extra_bootconfig_args", "boot",
                                     "extra_bootconfig_args"));
+  result.emplace_back(GenerateStrGflag(instances, "enable_bootanimation",
+                                       "boot", "enable_bootanimation"));
   result.emplace_back(GenerateStrGflagSubGroup(instances, "serial_number", "boot",
                                             "security", "serial_number"));
   result.emplace_back(GenerateStrGflagSubGroup(instances, "extra_kernel_cmdline",

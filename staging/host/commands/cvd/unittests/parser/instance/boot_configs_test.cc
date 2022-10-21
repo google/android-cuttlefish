@@ -99,6 +99,89 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
                  R"(--extra_bootconfig_args=androidboot.X=Y,androidboot.X=Z)"));
 }
 
+TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--enable_bootanimation=true,true)"))
+      << "enable_bootanimation flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "boot": {
+            }
+        },
+        {
+            "boot": {
+                "enable_bootanimation": false
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--enable_bootanimation=true,false)"))
+      << "enable_bootanimation flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "boot": {
+                "enable_bootanimation": false
+            }
+        },
+        {
+            "boot": {
+                "enable_bootanimation": false
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--enable_bootanimation=false,false)"))
+      << "enable_bootanimation flag is missing or wrongly formatted";
+}
+
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   const char* test_string = R""""(
 {
