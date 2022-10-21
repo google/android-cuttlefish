@@ -67,31 +67,38 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
     return {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer="+ config.hwcomposer(),
+        "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
-        "androidboot.opengles.version=196609"};  // OpenGL ES 3.1
+        "androidboot.opengles.version=196609",  // OpenGL ES 3.1
+    };
   }
 
   if (config.gpu_mode() == kGpuModeDrmVirgl) {
     return {
-      "androidboot.cpuvulkan.version=0",
-      "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=ranchu",
-      "androidboot.hardware.hwcomposer.mode=client",
-      "androidboot.hardware.egl=mesa",
-      // No "hardware" Vulkan support, yet
-      "androidboot.opengles.version=196608"};  // OpenGL ES 3.0
+        "androidboot.cpuvulkan.version=0",
+        "androidboot.hardware.gralloc=minigbm",
+        "androidboot.hardware.hwcomposer=ranchu",
+        "androidboot.hardware.hwcomposer.mode=client",
+        "androidboot.hardware.hwcomposer.display_finder_mode=drm",
+        "androidboot.hardware.egl=mesa",
+        // No "hardware" Vulkan support, yet
+        "androidboot.opengles.version=196608",  // OpenGL ES 3.0
+    };
   }
   if (config.gpu_mode() == kGpuModeGfxStream) {
     std::string gles_impl = config.enable_gpu_angle() ? "angle" : "emulation";
-    return {"androidboot.cpuvulkan.version=0",
-            "androidboot.hardware.gralloc=minigbm",
-            "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
-            "androidboot.hardware.egl=" + gles_impl,
-            "androidboot.hardware.vulkan=ranchu",
-            "androidboot.hardware.gltransport=virtio-gpu-asg",
-            "androidboot.opengles.version=196608"};  // OpenGL ES 3.0
+    return {
+        "androidboot.cpuvulkan.version=0",
+        "androidboot.hardware.gralloc=minigbm",
+        "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer.display_finder_mode=drm",
+        "androidboot.hardware.egl=" + gles_impl,
+        "androidboot.hardware.vulkan=ranchu",
+        "androidboot.hardware.gltransport=virtio-gpu-asg",
+        "androidboot.opengles.version=196608",  // OpenGL ES 3.0
+    };
   }
   return {};
 }
@@ -175,9 +182,19 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   }
 
   for (const auto& display_config : instance.display_configs()) {
-    crosvm_cmd.Cmd().AddParameter("--gpu-display=", "mode=windowed[",
-                                  display_config.width, ",",
-                                  display_config.height, "]");
+    const auto display_w = std::to_string(display_config.width);
+    const auto display_h = std::to_string(display_config.height);
+    const auto display_dpi = std::to_string(display_config.dpi);
+    const auto display_rr = std::to_string(display_config.refresh_rate_hz);
+    const auto display_params = android::base::Join(
+        std::vector<std::string>{
+            "mode=windowed[" + display_w + "," + display_h + "]",
+            "horizontal-dpi=" + display_dpi,
+            "vertical-dpi=" + display_dpi,
+            "refresh-rate=" + display_rr,
+        },
+        ",");
+    crosvm_cmd.Cmd().AddParameter("--gpu-display=", display_params);
   }
 
   crosvm_cmd.Cmd().AddParameter("--wayland-sock=",
@@ -280,10 +297,10 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                             config.enable_kernel_log());
 
   if (instance.console()) {
-    // stdin is the only currently supported way to write data to a serial port in
-    // crosvm. A file (named pipe) is used here instead of stdout to ensure only
-    // the serial port output is received by the console forwarder as crosvm may
-    // print other messages to stdout.
+    // stdin is the only currently supported way to write data to a serial port
+    // in crosvm. A file (named pipe) is used here instead of stdout to ensure
+    // only the serial port output is received by the console forwarder as
+    // crosvm may print other messages to stdout.
     if (instance.kgdb() || instance.use_bootloader()) {
       crosvm_cmd.AddSerialConsoleReadWrite(instance.console_out_pipe_name(),
                                            instance.console_in_pipe_name(),
@@ -373,7 +390,8 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--sound=", instance.audio_server_path());
   }
 
-  // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
+  // TODO(b/162071003): virtiofs crashes without sandboxing, this should be
+  // fixed
   if (0 && config.enable_sandbox()) {
     // Set up directory shared with virtiofs
     crosvm_cmd.Cmd().AddParameter(
@@ -399,8 +417,9 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     std::uint8_t dhcp_server_ip[] = {
         192, 168, 96, (std::uint8_t)(ForCurrentInstance(1) * 4 - 3)};
     if (!ReleaseDhcpLeases(lease_file, wifi_tap, dhcp_server_ip)) {
-      LOG(ERROR) << "Failed to release wifi DHCP leases. Connecting to the wifi "
-                 << "network may not work.";
+      LOG(ERROR)
+          << "Failed to release wifi DHCP leases. Connecting to the wifi "
+          << "network may not work.";
     }
   }
 
@@ -467,5 +486,5 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   return ret;
 }
 
-} // namespace vm_manager
+}  // namespace vm_manager
 }  // namespace cuttlefish
