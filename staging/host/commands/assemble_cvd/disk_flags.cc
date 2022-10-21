@@ -191,9 +191,29 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-std::vector<ImagePartition> GetOsCompositeDiskConfig(
+std::vector<ImagePartition> otheros_composite_disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
+
+  partitions.push_back(ImagePartition{
+      .label = "otheros_esp",
+      .image_file_path = AbsolutePath(instance.otheros_esp_image()),
+      .type = kEfiSystemPartition,
+      .read_only = FLAGS_use_overlay,
+  });
+  partitions.push_back(ImagePartition{
+      .label = "otheros_root",
+      .image_file_path = AbsolutePath(instance.otheros_root_image()),
+      .read_only = FLAGS_use_overlay,
+  });
+
+  return partitions;
+}
+
+std::vector<ImagePartition> android_composite_disk_config(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::vector<ImagePartition> partitions;
+
   partitions.push_back(ImagePartition{
       .label = "misc",
       .image_file_path = AbsolutePath(instance.new_misc_image()),
@@ -264,19 +284,8 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
       .image_file_path = AbsolutePath(instance.new_metadata_image()),
       .read_only = FLAGS_use_overlay,
   });
-  if (!instance.otheros_root_image().empty()) {
-    partitions.push_back(ImagePartition{
-        .label = "otheros_esp",
-        .image_file_path = AbsolutePath(instance.otheros_esp_image()),
-        .type = kEfiSystemPartition,
-        .read_only = FLAGS_use_overlay,
-    });
-    partitions.push_back(ImagePartition{
-        .label = "otheros_root",
-        .image_file_path = AbsolutePath(instance.otheros_root_image()),
-        .read_only = FLAGS_use_overlay,
-    });
-  }
+
+  // TODO: remove after moving ap to otheros flow
   if (!FLAGS_ap_rootfs_image.empty()) {
     // In case if there are multiple ap_rootfs_image input
     // we could only take 1st one and shared by all instances
@@ -289,6 +298,14 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
     });
   }
   return partitions;
+}
+
+std::vector<ImagePartition> GetOsCompositeDiskConfig(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (!instance.otheros_root_image().empty()) {
+    return otheros_composite_disk_config(instance);
+  }
+  return android_composite_disk_config(instance);
 }
 
 DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
