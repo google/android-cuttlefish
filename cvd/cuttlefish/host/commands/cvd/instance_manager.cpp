@@ -92,7 +92,8 @@ InstanceManager::GetInstanceGroupInfo(
 }
 
 void InstanceManager::IssueStatusCommand(
-    const SharedFD& out, const std::string& config_file_path,
+    const SharedFD& out, const SharedFD& err,
+    const std::string& config_file_path,
     const selector::LocalInstanceGroup& group) {
   // Reads CuttlefishConfig::instance_names(), which must remain stable
   // across changes to config file format (within server_constants.h major
@@ -105,14 +106,16 @@ void InstanceManager::IssueStatusCommand(
   command.AddParameter("--print");
   command.AddParameter("--all_instances");
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
   command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
   if (int wait_result = command.Start().Wait(); wait_result != 0) {
-    WriteAll(out, "      (unknown instance status error)");
+    WriteAll(err, "      (unknown instance status error)");
   }
 }
 
 Result<cvd::Status> InstanceManager::CvdFleetImpl(
-    const SharedFD& out, const std::optional<std::string>& env_config) const {
+    const SharedFD& out, const SharedFD& err,
+    const std::optional<std::string>& env_config) const {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   const char _GroupDeviceInfoStart[] = "[\n";
   const char _GroupDeviceInfoSeparate[] = ",\n";
@@ -126,7 +129,7 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(
                            ? *env_config
                            : group->GetCuttlefishConfigPath();
     if (config_path.ok()) {
-      IssueStatusCommand(out, *config_path, *group);
+      IssueStatusCommand(out, err, *config_path, *group);
     }
     if (group == *instance_groups.crbegin()) {
       continue;
@@ -147,7 +150,7 @@ Result<cvd::Status> InstanceManager::CvdFleetHelp(
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
   if (int wait_result = command.Start().Wait(); wait_result != 0) {
-    WriteAll(out, "      (unknown instance status error)");
+    WriteAll(err, "      (unknown instance status error)");
   }
   WriteAll(out, "\n");
   cvd::Status status;
@@ -168,7 +171,7 @@ Result<cvd::Status> InstanceManager::CvdFleet(
     }
   }
   return (is_help ? CvdFleetHelp(out, err, host_tool_dir + "/bin/")
-                  : CvdFleetImpl(out, env_config));
+                  : CvdFleetImpl(out, err, env_config));
 }
 
 void InstanceManager::IssueStopCommand(
@@ -181,7 +184,7 @@ void InstanceManager::IssueStopCommand(
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
   command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
   if (int wait_result = command.Start().Wait(); wait_result != 0) {
-    WriteAll(out,
+    WriteAll(err,
              "Warning: error stopping instances for dir \"" + group.HomeDir() +
                  "\".\nThis can happen if instances are already stopped.\n");
   }
@@ -210,7 +213,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
     RemoveFile(group->HomeDir() + config_json_name);
   }
-  WriteAll(out, "Stopped all known instances\n");
+  WriteAll(err, "Stopped all known instances\n");
 
   instance_db_.Clear();
   status.set_code(cvd::Status::OK);
