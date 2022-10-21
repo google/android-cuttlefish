@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/utils/subprocess.h"
@@ -30,8 +31,11 @@ DEFINE_uint32(width, 0,
               "When adding a display, the width of the display in pixels");
 DEFINE_uint32(height, 0,
               "When adding a display, the height of the display in pixels");
-
-// TODO(b/163864461): Add DPI and refresh rate when supported.
+DEFINE_uint32(dpi, 320,
+              "When adding a display, the pixels per inch of the display");
+DEFINE_uint32(refresh_rate_hz, 60,
+              "When adding a display, the refresh rate of the display in "
+              "Hertz");
 
 namespace cuttlefish {
 namespace {
@@ -143,9 +147,30 @@ int DoAdd(const std::vector<std::string>&) {
     std::cerr << kAddUsage << std::endl;
     return 1;
   }
+  if (FLAGS_dpi <= 0) {
+    std::cerr << "Must specify valid --dpi flag. Usage:" << std::endl;
+    std::cerr << kAddUsage << std::endl;
+    return 1;
+  }
+  if (FLAGS_refresh_rate_hz <= 0) {
+    std::cerr << "Must specify valid --dpi flag. Usage:" << std::endl;
+    std::cerr << kAddUsage << std::endl;
+    return 1;
+  }
 
-  const std::string params = "mode=windowed[" + std::to_string(FLAGS_width) +
-                             "," + std::to_string(FLAGS_height) + "]";
+  const std::string w = std::to_string(FLAGS_width);
+  const std::string h = std::to_string(FLAGS_height);
+  const std::string dpi = std::to_string(FLAGS_dpi);
+  const std::string rr = std::to_string(FLAGS_refresh_rate_hz);
+
+  const std::string params = android::base::Join(
+      std::vector<std::string>{
+          "mode=windowed[" + w + "," + h + "]",
+          "horizontal-dpi=" + dpi,
+          "vertical-dpi=" + dpi,
+          "refresh-rate=" + rr,
+      },
+      ",");
 
   return RunCrosvmDisplayCommand({
       "add-displays",
