@@ -14,43 +14,25 @@
  * limitations under the License.
  */
 
-#include <inttypes.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
-
-#include <algorithm>
+#include <cstdint>
 #include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <vector>
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
+#include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/environment.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
-             "Which instance to restart");
+             "Which instance to restart.");
 
-DEFINE_int32(wait_for_launcher, 30,
-             "How many seconds to wait for the launcher to respond to the status "
-             "command. A value of zero means wait indefinetly");
+DEFINE_int32(
+    wait_for_launcher, 30,
+    "How many seconds to wait for the launcher to respond to the status "
+    "command. A value of zero means wait indefinitely.");
 
 DEFINE_int32(boot_timeout, 1000, "How many seconds to wait for the device to "
                                  "reboot.");
@@ -58,106 +40,46 @@ DEFINE_int32(boot_timeout, 1000, "How many seconds to wait for the device to "
 namespace cuttlefish {
 namespace {
 
-int RestartCvdMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, true);
+Result<void> RestartCvdMain() {
+  const CuttlefishConfig* config =
+      CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
+  SharedFD monitor_socket = CF_EXPECT(
+      GetLauncherMonitor(*config, FLAGS_instance_num, FLAGS_wait_for_launcher));
 
-  auto config = CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Failed to obtain config object";
-    return 1;
-  }
-
-  auto instance = config->ForInstance(FLAGS_instance_num);
-  auto monitor_path = instance.launcher_monitor_socket_path();
-  if (monitor_path.empty()) {
-    LOG(ERROR) << "No path to launcher monitor found";
-    return 2;
-  }
-  // This may hang if the server never picks up the connection.
-  auto monitor_socket = SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM, FLAGS_wait_for_launcher);
-  if (!monitor_socket->IsOpen()) {
-    LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
-               << ": " << monitor_socket->StrError();
-    return 3;
-  }
-  auto request = LauncherAction::kRestart;
-  auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
-  if (bytes_sent < 0) {
-    LOG(ERROR) << "Error sending launcher monitor the status command: "
-               << monitor_socket->StrError();
-    return 4;
-  }
-  // Perform a select with a timeout to guard against launcher hanging
-  SharedFDSet read_set;
-  read_set.Set(monitor_socket);
-  struct timeval timeout = {FLAGS_wait_for_launcher, 0};
-  int selected = Select(&read_set, nullptr, nullptr,
-                        FLAGS_wait_for_launcher <= 0 ? nullptr : &timeout);
-  if (selected < 0){
-    LOG(ERROR) << "Failed communication with the launcher monitor: "
-               << strerror(errno);
-    return 5;
-  }
-  if (selected == 0) {
-    LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
-    return 6;
-  }
-  LauncherResponse response;
-  auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
-  if (bytes_recv < 0) {
-    LOG(ERROR) << "Error receiving response from launcher monitor: "
-               << monitor_socket->StrError();
-    return 7;
-  }
   LOG(INFO) << "Requesting restart";
-  if (response != LauncherResponse::kSuccess) {
-    LOG(ERROR) << "Received '" << static_cast<char>(response)
-               << "' response from launcher monitor for restart request";
-    return 8;
-  }
+  CF_EXPECT(WriteLauncherAction(monitor_socket, LauncherAction::kRestart));
+  CF_EXPECT(WaitForRead(monitor_socket, FLAGS_wait_for_launcher));
+  LauncherResponse restart_response =
+      CF_EXPECT(ReadLauncherResponse(monitor_socket));
+  CF_EXPECT(
+      restart_response == LauncherResponse::kSuccess,
+      "Received `" << static_cast<char>(restart_response)
+                   << "` response from launcher monitor for restart request");
+
   LOG(INFO) << "Waiting for device to boot up again";
+  CF_EXPECT(WaitForRead(monitor_socket, FLAGS_boot_timeout));
+  RunnerExitCodes boot_exit_code = CF_EXPECT(ReadExitCode(monitor_socket));
+  CF_EXPECT(boot_exit_code != RunnerExitCodes::kVirtualDeviceBootFailed,
+            "Boot failed");
+  CF_EXPECT(boot_exit_code == RunnerExitCodes::kSuccess,
+            "Unknown response" << static_cast<int>(boot_exit_code));
 
-  read_set.Set(monitor_socket);
-  timeout = {FLAGS_boot_timeout, 0};
-  selected = Select(&read_set, nullptr, nullptr,
-                    FLAGS_boot_timeout <= 0 ? nullptr : &timeout);
-  if (selected < 0){
-    LOG(ERROR) << "Failed communication with the launcher monitor: "
-               << strerror(errno);
-    return 5;
-  }
-  if (selected == 0) {
-    LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
-    return 6;
-  }
-
-  RunnerExitCodes exit_code;
-  bytes_recv = ReadExactBinary(monitor_socket, &exit_code);
-  if (bytes_recv < 0) {
-    LOG(ERROR) << "Error in stream response: " << monitor_socket->StrError();
-    return 9;
-  } else if (bytes_recv == 0) {
-    LOG(ERROR) << "Launcher socket closed unexpectedly";
-    return 10;
-  } else if (bytes_recv != sizeof(exit_code)) {
-    LOG(ERROR) << "Launcher response was too short";
-    return 11;
-  } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
-    LOG(ERROR) << "Boot failed";
-    return 12;
-  } else if (exit_code != RunnerExitCodes::kSuccess) {
-    LOG(ERROR) << "Unknown response: " << (int) exit_code;
-    return 13;
-  }
   LOG(INFO) << "Restart successful";
-  return 0;
+  return {};
 }
 
 } // namespace
 } // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::RestartCvdMain(argc, argv);
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+
+  cuttlefish::Result<void> result = cuttlefish::RestartCvdMain();
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Message();
+    LOG(DEBUG) << result.error().Trace();
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
