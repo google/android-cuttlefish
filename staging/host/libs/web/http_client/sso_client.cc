@@ -32,7 +32,7 @@ const std::regex kStdoutRegex(
     "HTTP/\\d+\\.\\d+\\s(\\d+)\\s.+\r\n" /* status */
     "(?:.+\r\n)+\r\n"                    /* headers */
     "(.+)?"                              /* body */
-    "\n" /* new line added by the sso_client */);
+    "\n?" /* new line added by the sso_client if a body exists */);
 
 enum class HttpMethod {
   kGet,
