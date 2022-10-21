@@ -37,9 +37,6 @@ PRODUCT_COPY_FILES += \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_1_1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_1_1.xml \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_aidl_V1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_aidl_V1.xml
 
-# HDMI CEC HAL
-PRODUCT_PACKAGES += android.hardware.tv.cec@1.1-service
-
 # HDMI AIDL HAL
 PRODUCT_PACKAGES += \
      android.hardware.tv.hdmi-service
