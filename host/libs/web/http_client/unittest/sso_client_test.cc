@@ -68,6 +68,25 @@ TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
   EXPECT_EQ(result->http_code, 222);
 }
 
+TEST(SsoClientTest, GetToStringNoBody) {
+  std::string stdout =
+      "HTTP/1.1 502 Bad Gateway\r\n"
+      "Content-Type: application/json\r\n"
+      "\r\n";
+  auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
+                  SubprocessOptions) {
+    *out = stdout;
+    return 0;
+  };
+  SsoClient client(exec);
+
+  auto result = client.GetToString("https://some.url");
+
+  EXPECT_TRUE(result.ok()) << result.error().Trace();
+  EXPECT_EQ(result->data, "");
+  EXPECT_EQ(result->http_code, 502);
+}
+
 constexpr char kBashScriptPrefix[] =
     "#!/bin/bash\n\n/usr/bin/sso_client \\\n--use_master_cookie "
     "\\\n--request_timeout=300 "
