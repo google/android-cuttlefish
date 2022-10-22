@@ -95,7 +95,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
       concat("androidboot.lcd_density=", display_configs[0].dpi));
 
   bootconfig_args.push_back(
-      concat("androidboot.setupwizard_mode=", config.setupwizard_mode()));
+      concat("androidboot.setupwizard_mode=", instance.setupwizard_mode()));
   bootconfig_args.push_back(concat("androidboot.enable_bootanimation=",
                                    config.enable_bootanimation()));
 
