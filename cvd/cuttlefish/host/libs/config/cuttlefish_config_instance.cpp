@@ -400,6 +400,24 @@ void CuttlefishConfig::MutableInstanceSpecific::set_ddr_mem_mb(int ddr_mem_mb) {
   (*Dictionary())[kDdrMemMb] = ddr_mem_mb;
 }
 
+bool ValidateStupWizardMode(const std::string& setupwizard_mode) {
+  // One of DISABLED,OPTIONAL,REQUIRED
+  if (setupwizard_mode == "DISABLED" || setupwizard_mode == "OPTIONAL" ||
+      setupwizard_mode == "REQUIRED") {
+    return true;
+  }
+  return false;
+}
+static constexpr char kSetupWizardMode[] = "setupwizard_mode";
+std::string CuttlefishConfig::InstanceSpecific::setupwizard_mode() const {
+  return (*Dictionary())[kSetupWizardMode].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_setupwizard_mode(const std::string& mode) {
+  CHECK(ValidateStupWizardMode(mode))
+      << "setupwizard_mode flag has invalid value: " << mode;
+  (*Dictionary())[kSetupWizardMode] = mode;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
