@@ -24,16 +24,14 @@ cc_binary {
         "main.cc",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libfruit",
         "libjsoncpp",
     ],
     static_libs: [
+        "libcuttlefish_command_util",
         "libcuttlefish_host_config",
-        "libcuttlefish_vm_manager",
         "libgflags",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
