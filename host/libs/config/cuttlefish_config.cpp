@@ -231,14 +231,6 @@ void CuttlefishConfig::set_secure_hals(const std::set<std::string>& hals) {
   (*dictionary_)[kSecureHals] = hals_json_obj;
 }
 
-static constexpr char kSetupWizardMode[] = "setupwizard_mode";
-std::string CuttlefishConfig::setupwizard_mode() const {
-  return (*dictionary_)[kSetupWizardMode].asString();
-}
-void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
-  (*dictionary_)[kSetupWizardMode] = mode;
-}
-
 static constexpr char kEnableBootAnimation[] = "enable_bootanimation";
 bool CuttlefishConfig::enable_bootanimation() const {
   return (*dictionary_)[kEnableBootAnimation].asBool();
