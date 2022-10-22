@@ -685,7 +685,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
                ") does not work with vm_manager=" << vm_manager_vec[0];
   }
 
-  tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
   tmp_config_obj.set_enable_bootanimation(FLAGS_enable_bootanimation);
 
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
@@ -821,6 +820,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   std::vector<std::string> blank_data_image_mb_vec =
       android::base::Split(FLAGS_blank_data_image_mb, ",");
   std::vector<std::string> gdb_port_vec = android::base::Split(FLAGS_gdb_port, ",");
+  std::vector<std::string> setupwizard_mode_vec =
+      android::base::Split(FLAGS_setupwizard_mode, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -1032,6 +1033,12 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     }
     instance.set_memory_mb(memory_mb);
     instance.set_ddr_mem_mb(memory_mb * 2);
+
+    if (instance_index >= setupwizard_mode_vec.size()) {
+      instance.set_setupwizard_mode(setupwizard_mode_vec[0]);
+    } else {
+      instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]);
+    }
 
     int camera_server_port;
     if (instance_index < camera_server_port_vec.size()) {
