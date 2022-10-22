@@ -17,8 +17,11 @@ package com.android.cuttlefish.tests;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.platform.test.annotations.LargeTest;
+
 import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -28,6 +31,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Range;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -39,6 +43,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -166,8 +172,7 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
         }
     }
 
-    @Test
-    public void testDisplayHotplug() throws Exception {
+    private void doOneConnectAndDisconnectCycle() throws Exception {
         Map<Integer, DisplayInfo> originalDisplays = getDisplays();
         assertThat(originalDisplays).isNotNull();
         assertThat(originalDisplays).isNotEmpty();
@@ -195,5 +200,83 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
             Maps.difference(removedDisplays, originalDisplays);
         assertThat(removedDisplaysDiff.entriesOnlyOnLeft()).isEmpty();
         assertThat(removedDisplaysDiff.entriesOnlyOnRight()).isEmpty();
+    }
+
+    @Test
+    public void testDisplayHotplug() throws Exception {
+        doOneConnectAndDisconnectCycle();
+    }
+
+    @AutoValue
+    public static abstract class MemoryInfo {
+        static MemoryInfo create(int usedRam) {
+            return new AutoValue_CuttlefishDisplayHotplugTest_MemoryInfo(usedRam);
+        }
+
+        abstract int usedRamBytes();
+    }
+
+    private static final String GET_USED_RAM_COMMAND = "dumpsys meminfo";
+
+    private static final Pattern USED_RAM_PATTERN = Pattern.compile("Used RAM: (.*?)K \\(");
+
+    private MemoryInfo getMemoryInfo() throws Exception {
+        ITestDevice device = getDevice();
+
+        CommandResult getUsedRamResult = device.executeShellV2Command(GET_USED_RAM_COMMAND);
+        if (!CommandStatus.SUCCESS.equals(getUsedRamResult.getStatus())) {
+            throw new IllegalStateException(
+                    String.format("Failed to run |%s|: stdout: %s\n stderr: %s",
+                                  GET_USED_RAM_COMMAND,
+                                  getUsedRamResult.getStdout(),
+                                  getUsedRamResult.getStderr()));
+        }
+        // Ex:
+        //    ...
+        //    GPU:              0K (        0K dmabuf +         0K private)
+        //    Used RAM: 1,155,524K (  870,488K used pss +   285,036K kernel)
+        //    Lost RAM:    59,469K
+        //    ...
+        String usedRamString = getUsedRamResult.getStdout();
+        Matcher m = USED_RAM_PATTERN.matcher(usedRamString);
+        if (!m.find()) {
+            throw new IllegalStateException(
+                     String.format("Failed to parse 'Used RAM' from stdout:\n%s",
+                                   getUsedRamResult.getStdout()));
+        }
+        // Ex: "1,228,768"
+        usedRamString = m.group(1);
+        usedRamString = usedRamString.replaceAll(",", "");
+        int usedRam = Integer.parseInt(usedRamString) * 1000;
+
+        return MemoryInfo.create(usedRam);
+    }
+
+    private static final int MAX_ALLOWED_RAM_BYTES_DIFF = 32 * 1024 * 1024;
+
+    private void doCheckForLeaks(MemoryInfo base) throws Exception {
+        MemoryInfo current = getMemoryInfo();
+
+        assertThat(current.usedRamBytes()).isIn(
+                Range.closed(base.usedRamBytes() - MAX_ALLOWED_RAM_BYTES_DIFF,
+                             base.usedRamBytes() + MAX_ALLOWED_RAM_BYTES_DIFF));
+    }
+
+    @Test
+    @LargeTest
+    public void testDisplayHotplugDoesNotLeakMemory() throws Exception {
+        // Warm up to potentially reach any steady state memory usage.
+        for (int i = 0; i < 50; i++) {
+            doOneConnectAndDisconnectCycle();
+        }
+
+        MemoryInfo original = getMemoryInfo();
+        for (int i = 0; i <= 500; i++) {
+            doOneConnectAndDisconnectCycle();
+
+            if (i % 100 == 0) {
+                doCheckForLeaks(original);
+            }
+        }
     }
 }
