@@ -258,6 +258,28 @@ TEST(VmFlagsParserTest, ParseTwoInstancesVmManagerFlagFullJson) {
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--vm_manager=qemu_cli,crosvm)"));
 }
 
+TEST(VmFlagsParserTest, ParseOneInstanceSetupWizardInvalidValue) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "setupwizard_mode": "ENABLED"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_FALSE(serialized_data.ok());
+}
+
 TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagEmptyJson) {
   const char* test_string = R""""(
 {
@@ -292,7 +314,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
         },
         {
             "vm": {
-                "setupwizard_mode": "ENABLED"
+                "setupwizard_mode": "REQUIRED"
             }
         }
     ]
@@ -306,7 +328,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagPartialJson) {
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok());
   EXPECT_TRUE(
-      FindConfig(*serialized_data, R"(--setupwizard_mode=DISABLED,ENABLED)"));
+      FindConfig(*serialized_data, R"(--setupwizard_mode=DISABLED,REQUIRED)"));
 }
 
 TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
@@ -316,12 +338,12 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
     [
         {
             "vm": {
-                "setupwizard_mode": "ENABLED"
+                "setupwizard_mode": "OPTIONAL"
             }
         },
         {
             "vm": {
-                "setupwizard_mode": "ENABLED"
+                "setupwizard_mode": "REQUIRED"
             }
         }
     ]
@@ -335,7 +357,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSetupWizardFlagFullJson) {
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok());
   EXPECT_TRUE(
-      FindConfig(*serialized_data, R"(--setupwizard_mode=ENABLED,ENABLED)"));
+      FindConfig(*serialized_data, R"(--setupwizard_mode=OPTIONAL,REQUIRED)"));
 }
 
 TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagEmptyJson) {
