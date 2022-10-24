@@ -766,6 +766,17 @@ void CuttlefishConfig::set_userdata_format(const std::string& userdata_format) {
   (*dictionary_)[kUserdataFormat] = fmt;
 }
 
+static constexpr char kFilenameEncryptionMode[] = "filename_encryption_mode";
+std::string CuttlefishConfig::filename_encryption_mode() const {
+  return (*dictionary_)[kFilenameEncryptionMode].asString();
+}
+void CuttlefishConfig::set_filename_encryption_mode(
+    const std::string& filename_encryption_mode) {
+  auto fmt = filename_encryption_mode;
+  std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
+  (*dictionary_)[kFilenameEncryptionMode] = fmt;
+}
+
 static constexpr char kApImageDevPath[] = "ap_image_dev_path";
 std::string CuttlefishConfig::ap_image_dev_path() const {
   return (*dictionary_)[kApImageDevPath].asString();
