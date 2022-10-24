@@ -28,6 +28,7 @@
 #include <curl/curl.h>
 #include <json/json.h>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -176,18 +177,15 @@ class CurlClient : public HttpClient {
       const std::string& data_to_write = "") {
     auto response =
         CF_EXPECT(DownloadToString(method, url, headers, data_to_write));
-    const std::string& contents = response.data;
-    Json::CharReaderBuilder builder;
-    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-    Json::Value json;
-    std::string errorMessage;
-    if (!reader->parse(&*contents.begin(), &*contents.end(), &json,
-                       &errorMessage)) {
-      LOG(ERROR) << "Could not parse json: " << errorMessage;
-      json["error"] = "Failed to parse json.";
-      json["response"] = contents;
+    auto result = ParseJson(response.data);
+    if (!result.ok()) {
+      Json::Value error_json;
+      LOG(ERROR) << "Could not parse json: " << result.error().Message();
+      error_json["error"] = "Failed to parse json: " + result.error().Message();
+      error_json["response"] = response.data;
+      return HttpResponse<Json::Value>{error_json, response.http_code};
     }
-    return HttpResponse<Json::Value>{json, response.http_code};
+    return HttpResponse<Json::Value>{*result, response.http_code};
   }
 
   Result<HttpResponse<std::string>> DownloadToString(
