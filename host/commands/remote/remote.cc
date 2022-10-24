@@ -122,6 +122,15 @@ Result<std::vector<std::string>> CloudOrchestratorApi::ListHosts() {
   return result;
 }
 
+Result<void> CloudOrchestratorApi::DeleteHost(const std::string& host) {
+  std::string url = service_url_ + "/v1/zones/" + zone_ + "/hosts/" + host;
+  auto resp = CF_EXPECT(http_client_.DeleteToString(url), "Http client failed");
+  CF_EXPECT(resp.HttpSuccess(), "Http request failed with status code: "
+                                    << resp.http_code << ", server response:\n"
+                                    << resp.data);
+  return {};
+}
+
 Result<std::string> CloudOrchestratorApi::CreateCVD(
     const std::string& host, const CreateCVDRequest& request) {
   std::string url =
