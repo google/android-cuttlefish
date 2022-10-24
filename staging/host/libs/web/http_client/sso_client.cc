@@ -37,7 +37,10 @@ const std::regex kStdoutRegex(
 enum class HttpMethod {
   kGet,
   kPost,
+  kDelete,
 };
+
+const char* kHttpMethodStrings[] = {"GET", "POST", "DELETE"};
 
 Result<HttpResponse<std::string>> MakeRequest(
     ExecCmdFunc exec_cmd_func_, const std::string& url,
@@ -47,8 +50,9 @@ Result<HttpResponse<std::string>> MakeRequest(
   sso_client_cmd.AddParameter("--request_timeout=300");  // 5 minutes
   sso_client_cmd.AddParameter("--dump_header");
   sso_client_cmd.AddParameter("--url=" + url);
+  sso_client_cmd.AddParameter("--method=" +
+                              std::string(kHttpMethodStrings[(int)method]));
   if (method == HttpMethod::kPost) {
-    sso_client_cmd.AddParameter("--method=POST");
     if (!data.empty()) {
       sso_client_cmd.AddParameter("--data=" + data);
     }
@@ -83,7 +87,7 @@ SsoClient::~SsoClient() {}
 Result<HttpResponse<std::string>> SsoClient::GetToString(
     const std::string& url, const std::vector<std::string>& headers) {
   // TODO(b/250670329): Handle request headers.
-  CHECK(headers.empty()) << "headers are not handled yet";
+  CF_EXPECT(headers.empty(), "headers are not handled yet");
   return MakeRequest(exec_cmd_func_, url);
 }
 
@@ -91,9 +95,16 @@ Result<HttpResponse<std::string>> SsoClient::PostToString(
     const std::string& url, const std::string& data,
     const std::vector<std::string>& headers) {
   // TODO(b/250670329): Handle request headers.
-  CHECK(headers.empty()) << "headers are not handled yet";
+  CF_EXPECT(headers.empty(), "headers are not handled yet");
   return MakeRequest(exec_cmd_func_, url, HttpMethod::kPost, data);
 };
+
+Result<HttpResponse<std::string>> SsoClient::DeleteToString(
+    const std::string& url, const std::vector<std::string>& headers) {
+  // TODO(b/250670329): Handle request headers.
+  CF_EXPECT(headers.empty(), "headers are not handled yet");
+  return MakeRequest(exec_cmd_func_, url, HttpMethod::kDelete);
+}
 
 Result<HttpResponse<Json::Value>> SsoClient::PostToJson(
     const std::string&, const std::string&, const std::vector<std::string>&) {

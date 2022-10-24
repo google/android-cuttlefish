@@ -95,6 +95,12 @@ class CurlClient : public HttpClient {
     return DownloadToString(HttpMethod::kPost, url, headers, data_to_write);
   }
 
+  Result<HttpResponse<std::string>> DeleteToString(
+      const std::string& url,
+      const std::vector<std::string>& headers) override {
+    return DownloadToString(HttpMethod::kDelete, url, headers);
+  }
+
   Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
@@ -272,6 +278,14 @@ class ServerErrorRetryClient : public HttpClient {
       const std::vector<std::string>& headers) override {
     auto fn = [&, this]() {
       return inner_client_.PostToString(url, data, headers);
+    };
+    return CF_EXPECT(RetryImpl<std::string>(fn));
+  }
+
+  Result<HttpResponse<std::string>> DeleteToString(
+      const std::string& url, const std::vector<std::string>& headers) {
+    auto fn = [&, this]() {
+      return inner_client_.DeleteToString(url, headers);
     };
     return CF_EXPECT(RetryImpl<std::string>(fn));
   }
