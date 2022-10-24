@@ -62,6 +62,8 @@ class CloudOrchestratorApi {
 
   Result<std::vector<std::string>> ListHosts();
 
+  Result<void> DeleteHost(const std::string& name);
+
   Result<std::string> CreateCVD(const std::string& host,
                                 const CreateCVDRequest& request);
 
