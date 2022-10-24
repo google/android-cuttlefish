@@ -327,10 +327,14 @@ PRODUCT_COPY_FILES += \
 endif
 
 PRODUCT_PACKAGES += \
-    fstab.cf.f2fs \
-    fstab.cf.f2fs.vendor_ramdisk \
-    fstab.cf.ext4 \
-    fstab.cf.ext4.vendor_ramdisk \
+    fstab.cf.f2fs.hctr2 \
+    fstab.cf.f2fs.hctr2.vendor_ramdisk \
+    fstab.cf.f2fs.cts \
+    fstab.cf.f2fs.cts.vendor_ramdisk \
+    fstab.cf.ext4.hctr2 \
+    fstab.cf.ext4.hctr2.vendor_ramdisk \
+    fstab.cf.ext4.cts \
+    fstab.cf.ext4.cts.vendor_ramdisk \
 
 ifeq ($(TARGET_VULKAN_SUPPORT),true)
 ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
