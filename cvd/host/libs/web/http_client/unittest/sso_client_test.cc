@@ -43,7 +43,7 @@ TEST(SsoClientTest, GetToStringSucceeds) {
 
   auto result = client.GetToString("https://some.url");
 
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result.ok()) << result.error().Trace();
   EXPECT_EQ(result->data, "foo");
   EXPECT_EQ(result->http_code, 222);
 }
@@ -63,7 +63,7 @@ TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
 
   auto result = client.GetToString("https://some.url");
 
-  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(result.ok()) << result.error().Trace();
   EXPECT_EQ(result->data, "");
   EXPECT_EQ(result->http_code, 222);
 }
