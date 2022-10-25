@@ -418,6 +418,16 @@ void CuttlefishConfig::MutableInstanceSpecific::set_setupwizard_mode(const std::
   (*Dictionary())[kSetupWizardMode] = mode;
 }
 
+static constexpr char kUserdataFormat[] = "userdata_format";
+std::string CuttlefishConfig::InstanceSpecific::userdata_format() const {
+  return (*Dictionary())[kUserdataFormat].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_userdata_format(const std::string& userdata_format) {
+  auto fmt = userdata_format;
+  std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
+  (*Dictionary())[kUserdataFormat] = fmt;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";

@@ -170,7 +170,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
   // Once all Cuttlefish kernel versions are at least 5.15, filename encryption
   // will not need to be set conditionally. HCTR2 will always be available.
   // At that point fstab.cf.f2fs.cts and fstab.cf.ext4.cts can be removed.
-  std::string fstab_suffix = fmt::format("cf.{}.{}", config.userdata_format(),
+  std::string fstab_suffix = fmt::format("cf.{}.{}", instance.userdata_format(),
                                          config.filename_encryption_mode());
 
   bootconfig_args.push_back(concat("androidboot.fstab_suffix=", fstab_suffix));
