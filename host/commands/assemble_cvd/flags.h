@@ -16,6 +16,7 @@ namespace cuttlefish {
 struct KernelConfig {
   Arch target_arch;
   bool bootconfig_supported;
+  bool hctr2_supported;
 };
 
 Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults();
