@@ -1,0 +1,53 @@
+digraph {
+  cvd_import_locations [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd_import_locations/"]
+  cvd_update_location [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd_update_location/"]
+  gnss_grpc_proxy [label = < <B>gnss_grpc_proxy</B> >]
+  gnss_grpc_server [label = "TCP gRPC", shape = "rectangle"]
+  run_cvd [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/run_cvd/"]
+  host_gnss_console_in [color = "green", label = "internal/gnsshvc_fifo_vm.in", shape = "rectangle"]
+  host_gnss_console_out [color = "green", label = "internal/gnsshvc_fifo_vm.out", shape = "rectangle"]
+  host_fixed_location_console_in [color = "blue", label = "internal/locationhvc_fifo_vm.in", shape = "rectangle"]
+  host_fixed_location_console_out [color = "blue", label = "internal/locationhvc_fifo_vm.out", shape = "rectangle"]
+  vmm [label = "crosvm / qemu"]
+  subgraph cluster_android {
+    label = "Android"
+
+    gnss_hal [label = "vendor.gnss-default", URL = "https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/gnss/aidl/default/"]
+    fixed_location_console [color = "blue", label = "/dev/hvc6 | /dev/gnss1", shape = "rectangle"]
+    gnss_console [color = "green", label = "/dev/hvc5 | /dev/gnss0", shape = "rectangle"]
+  }
+
+  run_cvd -> gnss_grpc_proxy
+
+  fixed_location_console -> gnss_hal [color = "blue"]
+  gnss_hal -> fixed_location_console [color = "blue"]
+  gnss_console -> gnss_hal [color = "green"]
+  gnss_hal -> gnss_console [color = "green"]
+
+  cvd_import_locations -> gnss_grpc_server
+  gnss_grpc_server -> cvd_import_locations
+
+  cvd_update_location -> gnss_grpc_server
+  gnss_grpc_server -> cvd_update_location
+
+  gnss_grpc_server -> gnss_grpc_proxy
+  gnss_grpc_proxy -> gnss_grpc_server
+
+  gnss_grpc_proxy -> host_gnss_console_in [color = "green"]
+  host_gnss_console_out -> gnss_grpc_proxy [color = "green"]
+
+  vmm -> host_gnss_console_out [color = "green"]
+  host_gnss_console_in -> vmm [color = "green"]
+
+  gnss_grpc_proxy -> host_fixed_location_console_in [color = "blue"]
+  host_fixed_location_console_out -> gnss_grpc_proxy [color = "blue"]
+
+  vmm -> host_fixed_location_console_out [color = "blue"]
+  host_fixed_location_console_in -> vmm [color = "blue"]
+
+  vmm -> fixed_location_console [color = "blue"]
+  fixed_location_console -> vmm [color = "blue"]
+
+  gnss_console -> vmm [color = "green"]
+  vmm -> gnss_console [color = "green"]
+}
