@@ -44,12 +44,12 @@ const std::pair<std::string, std::string> kM5BlobTable[] = {
     {"/tmp/m5", kM5},
 };
 
-bool ForceFsckImage(const CuttlefishConfig& config,
-                    const std::string& data_image) {
+bool ForceFsckImage(const std::string& data_image,
+                    const CuttlefishConfig::InstanceSpecific& instance) {
   std::string fsck_path;
-  if (config.userdata_format() == "f2fs") {
+  if (instance.userdata_format() == "f2fs") {
     fsck_path = HostBinaryPath("fsck.f2fs");
-  } else if (config.userdata_format() == "ext4") {
+  } else if (instance.userdata_format() == "ext4") {
     fsck_path = "/sbin/e2fsck";
   }
   int fsck_status = execute({fsck_path, "-y", "-f", data_image});
@@ -92,8 +92,8 @@ bool NewfsMsdos(const std::string& data_image, int data_image_mb,
                          data_image}) == 0;
 }
 
-bool ResizeImage(const CuttlefishConfig& config, const std::string& data_image,
-                 int data_image_mb) {
+bool ResizeImage(const std::string& data_image, int data_image_mb,
+                 const CuttlefishConfig::InstanceSpecific& instance) {
   auto file_mb = FileSize(data_image) >> 20;
   if (file_mb > data_image_mb) {
     LOG(ERROR) << data_image << " is already " << file_mb << " MB, will not "
@@ -110,14 +110,14 @@ bool ResizeImage(const CuttlefishConfig& config, const std::string& data_image,
                   << data_image << "` failed:" << fd->StrError();
       return false;
     }
-    bool fsck_success = ForceFsckImage(config, data_image);
+    bool fsck_success = ForceFsckImage(data_image, instance);
     if (!fsck_success) {
       return false;
     }
     std::string resize_path;
-    if (config.userdata_format() == "f2fs") {
+    if (instance.userdata_format() == "f2fs") {
       resize_path = HostBinaryPath("resize.f2fs");
-    } else if (config.userdata_format() == "ext4") {
+    } else if (instance.userdata_format() == "ext4") {
       resize_path = "/sbin/resize2fs";
     }
     int resize_status = execute({resize_path, data_image});
@@ -126,7 +126,7 @@ bool ResizeImage(const CuttlefishConfig& config, const std::string& data_image,
                  << resize_status;
       return false;
     }
-    fsck_success = ForceFsckImage(config, data_image);
+    fsck_success = ForceFsckImage(data_image, instance);
     if (!fsck_success) {
       return false;
     }
@@ -221,9 +221,8 @@ std::string GetFsType(const std::string& path) {
 class InitializeDataImageImpl : public InitializeDataImage {
  public:
   INJECT(InitializeDataImageImpl(
-      const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+      : instance_(instance) {}
 
   // SetupFeature
   std::string Name() const override { return "InitializeDataImageImpl"; }
@@ -272,11 +271,11 @@ class InitializeDataImageImpl : public InitializeDataImage {
       return DataImageAction::kNoAction;
     }
     auto current_fs_type = GetFsType(instance_.data_image());
-    if (current_fs_type != config_.userdata_format()) {
+    if (current_fs_type != instance_.userdata_format()) {
       CF_EXPECT(instance_.data_policy() == kDataPolicyResizeUpTo,
                 "Changing the fs format is incompatible with -data_policy="
                     << kDataPolicyResizeUpTo << " (\"" << current_fs_type
-                    << "\" != \"" << config_.userdata_format() << "\")");
+                    << "\" != \"" << instance_.userdata_format() << "\")");
       return DataImageAction::kCreateImage;
     }
     if (instance_.data_policy() == kDataPolicyResizeUpTo) {
@@ -297,19 +296,19 @@ class InitializeDataImageImpl : public InitializeDataImage {
                   "image creation.");
         CF_EXPECT(CreateBlankImage(instance_.data_image(),
                                    instance_.blank_data_image_mb(),
-                                   config_.userdata_format()),
+                                   instance_.userdata_format()),
                   "Failed to create a blank image at \""
                       << instance_.data_image() << "\" with size "
                       << instance_.blank_data_image_mb() << " and format \""
-                      << config_.userdata_format() << "\"");
+                      << instance_.userdata_format() << "\"");
         return {};
       }
       case DataImageAction::kResizeImage: {
         CF_EXPECT(instance_.blank_data_image_mb() != 0,
                   "Expected `-blank_data_image_mb` to be set for "
                   "image resizing.");
-        CF_EXPECT(ResizeImage(config_, instance_.data_image(),
-                              instance_.blank_data_image_mb()),
+        CF_EXPECT(ResizeImage(instance_.data_image(),
+                              instance_.blank_data_image_mb(), instance_),
                   "Failed to resize \"" << instance_.data_image() << "\" to "
                                         << instance_.blank_data_image_mb()
                                         << " MB");
@@ -318,12 +317,10 @@ class InitializeDataImageImpl : public InitializeDataImage {
     }
   }
 
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  InitializeDataImage>
 InitializeDataImageComponent() {
   return fruit::createComponent()
