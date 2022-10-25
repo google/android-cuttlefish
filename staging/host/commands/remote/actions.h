@@ -33,6 +33,10 @@ class Action {
 std::unique_ptr<Action<std::string>> CreateHostAction(
     CloudOrchestratorApi& api, const CreateHostInstanceRequest& request);
 
+// Action that deletes the passed hosts.
+std::unique_ptr<Action<std::vector<Result<void>>>> DeleteHostsAction(
+    CloudOrchestratorApi& api, const std::vector<std::string>& names);
+
 // Action that creates a cvd.
 std::unique_ptr<Action<std::string>> CreateCVDAction(
     CloudOrchestratorApi& api, const CreateCVDRequest& request,

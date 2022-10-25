@@ -125,15 +125,26 @@ int CommandDeleteHostMain(const std::vector<std::string>& args) {
     std::cerr << "Missing host name." << std::endl;
     return -1;
   }
-  std::string name = args[0];
   auto http_client =
       FLAGS_use_sso_client
           ? std::unique_ptr<HttpClient>(new http_client::SsoClient())
           : HttpClient::CurlClient();
   CloudOrchestratorApi api(FLAGS_service_url, FLAGS_zone, *http_client);
-  auto result = api.DeleteHost(name);
-  if (!result.ok()) {
-    std::cerr << result.error().Message();
+  auto action = DeleteHostsAction(api, args);
+  auto action_result = action->Execute();
+  if (!action_result.ok()) {
+    std::cerr << action_result.error().Message();
+    return -1;
+  }
+  bool any_del_had_error = false;
+  for (auto& del_instance_result : *action_result) {
+    if (!del_instance_result.ok()) {
+      std::cerr << del_instance_result.error().Message() << std::endl
+                << std::endl;
+      any_del_had_error = true;
+    }
+  }
+  if (any_del_had_error) {
     return -1;
   }
   return 0;
