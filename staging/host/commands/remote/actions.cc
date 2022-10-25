@@ -15,6 +15,8 @@
 
 #include "host/commands/remote/actions.h"
 
+#include <future>
+#include <iostream>
 #include <string>
 
 namespace cuttlefish {
@@ -49,6 +51,35 @@ class CreateHostAction : public Action<std::string> {
  private:
   CloudOrchestratorApi& api_;
   const CreateHostInstanceRequest& request_;
+};
+
+class DeleteHostsAction : public Action<std::vector<Result<void>>> {
+ public:
+  DeleteHostsAction(CloudOrchestratorApi& api,
+                    const std::vector<std::string>& names)
+      : api_(api), names_(names) {}
+
+  ~DeleteHostsAction() {}
+
+  Result<std::vector<Result<void>>> Execute() override {
+    std::vector<std::future<Result<void>>> del_futures;
+    for (const std::string& name : names_) {
+      del_futures.push_back(std::async([this, name]() -> Result<void> {
+        CF_EXPECT(api_.DeleteHost(name),
+                  "Failed deleting host instance \"" << name << "\".");
+        return {};
+      }));
+    }
+    std::vector<Result<void>> results;
+    for (auto& f : del_futures) {
+      results.push_back(f.get());
+    }
+    return results;
+  }
+
+ private:
+  CloudOrchestratorApi& api_;
+  const std::vector<std::string>& names_;
 };
 
 // Creates a cvd.
@@ -94,6 +125,12 @@ std::unique_ptr<Action<std::string>> CreateCVDAction(
     std::string host) {
   return std::unique_ptr<Action<std::string>>(
       new internal::CreateCVDAction(api, request, host));
+}
+
+std::unique_ptr<Action<std::vector<Result<void>>>> DeleteHostsAction(
+    CloudOrchestratorApi& api, const std::vector<std::string>& names) {
+  return std::unique_ptr<Action<std::vector<Result<void>>>>(
+      new internal::DeleteHostsAction(api, names));
 }
 
 }  // namespace cuttlefish
