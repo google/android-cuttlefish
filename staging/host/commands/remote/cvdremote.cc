@@ -32,17 +32,17 @@ SYNOPSIS
 
 RESOURCES
     cvd (default)
-        Cuttlefish Virtual Devices 
-        
+        Cuttlefish Virtual Devices.
+
     host
-        Host machines where CVDs live. 
+        Host machines where CVDs live.
 
 COMMANDS
     create
         Create a resource.
 
     list
-        List the resources. 
+        List the resources.
 )";
 
 // General flags.
@@ -111,7 +111,7 @@ int CommandListHostsMain(const std::vector<std::string>&) {
     std::cerr << "~ No hosts found ~" << std::endl;
     return 0;
   }
-  for (auto host : *hosts) {
+  for (const std::string& host : *hosts) {
     std::cout << host << std::endl;
   }
   return 0;
