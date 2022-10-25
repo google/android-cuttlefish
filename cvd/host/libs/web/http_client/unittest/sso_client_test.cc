@@ -23,7 +23,7 @@ namespace cuttlefish {
 namespace http_client {
 
 TEST(SsoClientTest, GetToStringSucceeds) {
-  std::string stdout_ =
+  std::string stdout =
       "HTTP/1.1 222 Bad Request\r\n"
       "Content-Type: application/json\r\n"
       "Vary: Accept-Encoding\r\n"
@@ -36,7 +36,7 @@ TEST(SsoClientTest, GetToStringSucceeds) {
       "\n";
   auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
                   SubprocessOptions) {
-    *out = stdout_;
+    *out = stdout;
     return 0;
   };
   SsoClient client(exec);
@@ -49,14 +49,14 @@ TEST(SsoClientTest, GetToStringSucceeds) {
 }
 
 TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
-  std::string stdout_ =
+  std::string stdout =
       "HTTP/1.1 222 OK\r\n"
       "Content-Type: application/json\r\n"
       "\r\n"
       "\n";
   auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
                   SubprocessOptions) {
-    *out = stdout_;
+    *out = stdout;
     return 0;
   };
   SsoClient client(exec);
@@ -157,10 +157,10 @@ TEST(SsoClientTest, DeleteToStringVerifyCommandArgs) {
 }
 
 TEST(SsoClientTest, GetToStringFailsInvalidResponseFormat) {
-  std::string stdout_ = "E0719 13:45:32.891177 2702210 foo failed";
+  std::string stdout = "E0719 13:45:32.891177 2702210 foo failed";
   auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
                   SubprocessOptions) {
-    *out = stdout_;
+    *out = stdout;
     return 0;
   };
   SsoClient client(exec);
@@ -181,12 +181,12 @@ TEST(SsoClientTest, GetToStringFailsEmptyStdout) {
 }
 
 TEST(SsoClientTest, GetToStringFailsExecutionFails) {
-  std::string stdout_ = "foo";
-  std::string stderr_ = "bar";
+  std::string stdout = "foo";
+  std::string stderr = "bar";
   auto exec = [&](Command&&, const std::string*, std::string* out,
                   std::string* err, SubprocessOptions) {
-    *out = stdout_;
-    *err = stderr_;
+    *out = stdout;
+    *err = stderr;
     return -1;
   };
   SsoClient client(exec);
@@ -194,8 +194,8 @@ TEST(SsoClientTest, GetToStringFailsExecutionFails) {
   auto result = client.GetToString("https://some.url");
 
   EXPECT_FALSE(result.ok());
-  EXPECT_TRUE(result.error().Message().find(stdout_) != std::string::npos);
-  EXPECT_TRUE(result.error().Message().find(stderr_) != std::string::npos);
+  EXPECT_TRUE(result.error().Message().find(stdout) != std::string::npos);
+  EXPECT_TRUE(result.error().Message().find(stderr) != std::string::npos);
 }
 
 }  // namespace http_client
