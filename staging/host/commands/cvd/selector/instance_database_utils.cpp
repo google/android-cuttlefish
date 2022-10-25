@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -63,6 +64,14 @@ bool IsValidGroupName(const std::string& token) {
 bool IsValidInstanceName(const std::string& token) {
   std::regex regular_expr("[A-Za-z_0-9]+");
   return std::regex_match(token, regular_expr);
+}
+
+bool IsValidDeviceName(const std::string& token) {
+  auto pieces = android::base::Split(token, "-");
+  if (pieces.size() != 2) {
+    return false;
+  }
+  return IsValidGroupName(pieces[0]) && IsValidInstanceName(pieces[1]);
 }
 
 bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir) {

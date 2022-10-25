@@ -35,8 +35,16 @@ std::string GenDefaultGroupName();
 std::string LocalDeviceNameRule(const std::string& group_name,
                                 const std::string& instance_name);
 
+// [A-Za-z0-9_]+, e.g. 0, tv, my_phone07, etc
 bool IsValidInstanceName(const std::string& token);
+
+// [A-Za-z_][A-Za-z0-9_]*, e.g. cool_group, cv0_d, cf, etc
+// but can't start with [0-9]
 bool IsValidGroupName(const std::string& token);
+
+// <valid group name>-<valid instance name>
+bool IsValidDeviceName(const std::string& token);
+
 /**
  * Runs simple tests to see if it could potentially be a host binaries dir
  *
