@@ -97,31 +97,61 @@ filegroup {
 }
 
 genrule {
-    name: "gen_fstab_cf_f2fs",
+    name: "gen_fstab_cf_f2fs_hctr2",
     srcs: ["fstab.in"],
-    out: ["fstab.cf.f2fs"],
-    tool_files: [ "sed.f2fs" ],
-    cmd: "sed -f $(location sed.f2fs) $(in) > $(out)",
+    out: ["fstab.cf.f2fs.hctr2"],
+    tool_files: [ "sed.f2fs", "sed.hctr2" ],
+    cmd: "sed -f $(location sed.f2fs) -f $(location sed.hctr2) $(in) > $(out)",
 }
 
 genrule {
-    name: "gen_fstab_cf_ext4",
+    name: "gen_fstab_cf_f2fs_cts",
     srcs: ["fstab.in"],
-    out: ["fstab.cf.ext4"],
-    tool_files: [ "sed.ext4" ],
-    cmd: "sed -f $(location sed.ext4) $(in) > $(out)",
+    out: ["fstab.cf.f2fs.cts"],
+    tool_files: [ "sed.f2fs", "sed.cts" ],
+    cmd: "sed -f $(location sed.f2fs) -f $(location sed.cts) $(in) > $(out)",
+}
+
+genrule {
+    name: "gen_fstab_cf_ext4_hctr2",
+    srcs: ["fstab.in"],
+    out: ["fstab.cf.ext4.hctr2"],
+    tool_files: [ "sed.ext4", "sed.hctr2" ],
+    cmd: "sed -f $(location sed.ext4) -f $(location sed.hctr2) $(in) > $(out)",
+}
+
+genrule {
+    name: "gen_fstab_cf_ext4_cts",
+    srcs: ["fstab.in"],
+    out: ["fstab.cf.ext4.cts"],
+    tool_files: [ "sed.ext4", "sed.cts" ],
+    cmd: "sed -f $(location sed.ext4) -f $(location sed.cts) $(in) > $(out)",
 }
 
 prebuilt_etc {
-    name: "fstab.cf.f2fs",
-    src: ":gen_fstab_cf_f2fs",
+    name: "fstab.cf.f2fs.hctr2",
+    src: ":gen_fstab_cf_f2fs_hctr2",
     vendor: true,
     vendor_ramdisk_available: true,
 }
 
 prebuilt_etc {
-    name: "fstab.cf.ext4",
-    src: ":gen_fstab_cf_ext4",
+    name: "fstab.cf.f2fs.cts",
+    src: ":gen_fstab_cf_f2fs_cts",
+    vendor: true,
+    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.ext4.hctr2",
+    src: ":gen_fstab_cf_ext4_hctr2",
+    vendor: true,
+    vendor_ramdisk_available: true,
+}
+
+prebuilt_etc {
+    name: "fstab.cf.ext4.cts",
+    src: ":gen_fstab_cf_ext4_cts",
     vendor: true,
     vendor_ramdisk_available: true,
 }
