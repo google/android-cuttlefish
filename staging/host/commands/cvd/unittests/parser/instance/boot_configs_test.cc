@@ -35,10 +35,12 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagEmptyJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--extra_bootconfig_args=,)"));
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--extra_bootconfig_args=,)"))
+      << "extra_bootconfig_args flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
@@ -62,11 +64,13 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         R"(--extra_bootconfig_args=,androidboot.X=Y)"));
+                         R"(--extra_bootconfig_args=,androidboot.X=Y)"))
+      << "extra_bootconfig_args flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
@@ -91,12 +95,14 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 R"(--extra_bootconfig_args=androidboot.X=Y,androidboot.X=Z)"));
+                 R"(--extra_bootconfig_args=androidboot.X=Y,androidboot.X=Z)"))
+      << "extra_bootconfig_args flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
@@ -115,7 +121,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
@@ -144,7 +151,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagPartialJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
@@ -174,7 +182,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagFullJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
@@ -198,11 +207,13 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD01)"));
+                         R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD01)"))
+      << "serial_number flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
@@ -230,11 +241,13 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
-  EXPECT_TRUE(FindConfig(
-      *serialized_data, R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD101)"));
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD101)"))
+      << "serial_number flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
@@ -263,12 +276,13 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
-  EXPECT_TRUE(
-      FindConfig(*serialized_data,
-                 R"(--serial_number=CUTTLEFISHCVD101,CUTTLEFISHCVD102)"));
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(
+      *serialized_data, R"(--serial_number=CUTTLEFISHCVD101,CUTTLEFISHCVD102)"))
+      << "serial_number flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
@@ -287,10 +301,12 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--extra_kernel_cmdline=,)"));
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--extra_kernel_cmdline=,)"))
+      << "extra_kernel_cmdline flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
@@ -318,12 +334,14 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 R"(--extra_kernel_cmdline=,androidboot.selinux=permissive)"));
+                 R"(--extra_kernel_cmdline=,androidboot.selinux=permissive)"))
+      << "extra_kernel_cmdline flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
@@ -352,12 +370,14 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(
       *serialized_data,
-      R"(--extra_kernel_cmdline=androidboot.selinux=permissive,lpm_levels.sleep_disabled=1)"));
+      R"(--extra_kernel_cmdline=androidboot.selinux=permissive,lpm_levels.sleep_disabled=1)"))
+      << "extra_kernel_cmdline flag is missing or wrongly formatted";
 }
 
 }  // namespace cuttlefish
