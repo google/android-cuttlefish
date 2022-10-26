@@ -69,13 +69,13 @@ TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
 }
 
 TEST(SsoClientTest, GetToStringNoBody) {
-  std::string stdout =
+  std::string stdout_ =
       "HTTP/1.1 502 Bad Gateway\r\n"
       "Content-Type: application/json\r\n"
       "\r\n";
   auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
                   SubprocessOptions) {
-    *out = stdout;
+    *out = stdout_;
     return 0;
   };
   SsoClient client(exec);
@@ -104,8 +104,7 @@ TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
   client.GetToString("https://some.url");
 
   EXPECT_EQ(cmd_as_bash_script,
-            std::string(kBashScriptPrefix) +
-                "\\\n--url=https://some.url \\\n--method=GET");
+            std::string(kBashScriptPrefix) + "\\\n--url=https://some.url");
 }
 
 TEST(SsoClientTest, PostToStringVerifyCommandArgs) {
@@ -138,22 +137,6 @@ TEST(SsoClientTest, PostToStringEmptyDataVerifyCommandArgs) {
   EXPECT_EQ(cmd_as_bash_script,
             std::string(kBashScriptPrefix) +
                 "\\\n--url=https://some.url \\\n--method=POST");
-}
-
-TEST(SsoClientTest, DeleteToStringVerifyCommandArgs) {
-  std::string cmd_as_bash_script;
-  auto exec = [&](Command&& cmd, const std::string*, std::string*, std::string*,
-                  SubprocessOptions) {
-    cmd_as_bash_script = cmd.AsBashScript();
-    return 0;
-  };
-  SsoClient client(exec);
-
-  client.DeleteToString("https://some.url");
-
-  EXPECT_EQ(cmd_as_bash_script,
-            std::string(kBashScriptPrefix) +
-                "\\\n--url=https://some.url \\\n--method=DELETE");
 }
 
 TEST(SsoClientTest, GetToStringFailsInvalidResponseFormat) {
