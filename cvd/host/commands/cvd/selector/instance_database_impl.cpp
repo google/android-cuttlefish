@@ -17,6 +17,7 @@
 #include "host/commands/cvd/selector/instance_database.h"
 
 #include <algorithm>
+#include <regex>
 #include <sstream>
 
 #include <android-base/parseint.h>
@@ -43,8 +44,43 @@ InstanceDatabase::FindIterator(const LocalInstanceGroup& group) {
 void InstanceDatabase::Clear() { local_instance_groups_.clear(); }
 
 Result<void> InstanceDatabase::AddInstanceGroup(
+    const std::string& home_dir, const std::string& host_binaries_dir) {
+  const auto suffix_opt = auto_gen_group_name_suffice_.UniqueItem();
+  CF_EXPECT(suffix_opt != std::nullopt,
+            "unique suffix to automatically generate the group name"
+                << " is running out");
+  const auto suffix = *suffix_opt;
+  std::string group_name = GenDefaultGroupName();
+  if (suffix != 0) {
+    group_name.append(std::to_string(suffix));
+  }
+  CF_EXPECT(AddInstanceGroup(group_name, home_dir, host_binaries_dir));
+  return {};
+}
+
+static Result<std::optional<int>> CheckDefaultGroupName(
+    const std::string& group_name) {
+  std::regex default_group_name_pattern("cvd[0-9]*");
+  if (!std::regex_match(group_name, default_group_name_pattern)) {
+    return std::nullopt;
+  }
+  if (group_name == "cvd") {
+    return 0;
+  }
+  std::smatch match_results;
+  CF_EXPECT(std::regex_search(group_name, match_results, std::regex("[0-9]+")));
+  std::int32_t group_suffix = 0;
+  CF_EXPECT(android::base::ParseInt(*(match_results.begin()), &group_suffix));
+  return group_suffix;
+}
+
+Result<void> InstanceDatabase::AddInstanceGroup(
     const std::string& group_name, const std::string& home_dir,
     const std::string& host_binaries_dir) {
+  auto group_suffix_opt = CF_EXPECT(CheckDefaultGroupName(group_name));
+  if (group_suffix_opt) {
+    auto_gen_group_name_to_suffix_map_[group_name] = *group_suffix_opt;
+  }
   CF_EXPECT(IsValidGroupName(group_name),
             "GroupName " << group_name << " is ill-formed.");
   CF_EXPECT(EnsureDirectoryExists(home_dir),
@@ -97,6 +133,13 @@ bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
   // *itr is the reference to the unique pointer object
   if (itr == local_instance_groups_.end() || !(*itr)) {
     return false;
+  }
+  auto&& group_name = (*itr)->GroupName();
+  if (auto_gen_group_name_to_suffix_map_.find(group_name) !=
+      auto_gen_group_name_to_suffix_map_.end()) {
+    auto_gen_group_name_suffice_.Reclaim(
+        auto_gen_group_name_to_suffix_map_[group_name]);
+    auto_gen_group_name_to_suffix_map_.erase(group_name);
   }
   local_instance_groups_.erase(itr);
   return true;
