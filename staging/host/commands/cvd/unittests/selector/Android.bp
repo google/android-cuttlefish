@@ -41,3 +41,14 @@ cc_test_host {
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_selector_parser_test",
+    srcs: [
+        "test_cvd_selector_parser.cpp",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
