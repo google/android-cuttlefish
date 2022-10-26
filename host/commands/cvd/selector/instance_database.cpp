@@ -77,7 +77,7 @@ Result<ConstRef<T>> InstanceDatabase::FindOne(
     const Query& query,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(query, handler_map));
-  CF_EXPECT(set.size() == 1, "Only one Instance (Group) is allowed.");
+  CF_EXPECT_EQ(set.size(), 1, "Only one Instance (Group) is allowed.");
   return {*set.cbegin()};
 }
 
@@ -86,7 +86,7 @@ Result<ConstRef<T>> InstanceDatabase::FindOne(
     const Queries& queries,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(queries, handler_map));
-  CF_EXPECT(set.size() == 1, "Only one Instance (Group) is allowed.");
+  CF_EXPECT_EQ(set.size(), 1, "Only one Instance (Group) is allowed.");
   return {*set.cbegin()};
 }
 
