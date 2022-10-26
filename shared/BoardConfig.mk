@@ -286,7 +286,7 @@ EXCLUDE_BUILD_RAMDUMP_UPLOADER_DEBUG_TOOL := true
 BOARD_USES_GENERIC_KERNEL_IMAGE := true
 ifdef TARGET_DEDICATED_RECOVERY
   BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE := true
-else
+else ifneq ($(PRODUCT_BUILD_VENDOR_BOOT_IMAGE), false)
   BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
 endif
 BOARD_MOVE_GSI_AVB_KEYS_TO_VENDOR_BOOT := true
@@ -297,3 +297,48 @@ BOARD_HAVE_BLUETOOTH := true
 
 # Enable the new fingerprint format on cuttlefish
 BOARD_USE_VBMETA_DIGTEST_IN_FINGERPRINT := true
+
+# Set AB OTA partitions based on the build configuration
+AB_OTA_UPDATER := true
+
+ifneq ($(PRODUCT_BUILD_VENDOR_IMAGE), false)
+AB_OTA_PARTITIONS += vendor
+AB_OTA_PARTITIONS += vendor_dlkm
+endif
+
+ifneq ($(PRODUCT_BUILD_BOOT_IMAGE), false)
+AB_OTA_PARTITIONS += boot
+endif
+
+ifneq ($(PRODUCT_BUILD_INIT_BOOT_IMAGE), false)
+AB_OTA_PARTITIONS += init_boot
+endif
+
+ifneq ($(PRODUCT_BUILD_VENDOR_BOOT_IMAGE), false)
+AB_OTA_PARTITIONS += vendor_boot
+endif
+
+ifneq ($(PRODUCT_BUILD_ODM_IMAGE), false)
+AB_OTA_PARTITIONS += odm
+AB_OTA_PARTITIONS += odm_dlkm
+endif
+
+ifneq ($(PRODUCT_BUILD_PRODUCT_IMAGE), false)
+AB_OTA_PARTITIONS += product
+endif
+
+ifneq ($(PRODUCT_BUILD_SYSTEM_IMAGE), false)
+AB_OTA_PARTITIONS += system
+AB_OTA_PARTITIONS += system_dlkm
+ifneq ($(PRODUCT_BUILD_VBMETA_IMAGE), false)
+AB_OTA_PARTITIONS += vbmeta_system
+endif
+endif
+
+ifneq ($(PRODUCT_BUILD_SYSTEM_EXT_IMAGE), false)
+AB_OTA_PARTITIONS += system_ext
+endif
+
+ifneq ($(PRODUCT_BUILD_VBMETA_IMAGE), false)
+AB_OTA_PARTITIONS += vbmeta
+endif
