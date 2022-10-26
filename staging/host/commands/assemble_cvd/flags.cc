@@ -573,10 +573,10 @@ Result<std::vector<KernelConfig>> ReadKernelConfig() {
 
 } // namespace
 
-CuttlefishConfig InitializeCuttlefishConfiguration(
+Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, int modem_simulator_count,
-    const std::vector<KernelConfig>& kernel_configs, fruit::Injector<>& injector,
-    const FetcherConfig& fetcher_config) {
+    const std::vector<KernelConfig>& kernel_configs,
+    fruit::Injector<>& injector, const FetcherConfig& fetcher_config) {
   CuttlefishConfig tmp_config_obj;
 
   for (const auto& fragment : injector.getMultibindings<ConfigFragment>()) {
@@ -1041,9 +1041,12 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_ddr_mem_mb(memory_mb * 2);
 
     if (instance_index >= setupwizard_mode_vec.size()) {
-      instance.set_setupwizard_mode(setupwizard_mode_vec[0]);
+      CF_EXPECT(instance.set_setupwizard_mode(setupwizard_mode_vec[0]),
+                "setting setupwizard flag failed");
     } else {
-      instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]);
+      CF_EXPECT(
+          instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]),
+          "setting setupwizard flag failed");
     }
 
     if (instance_index >= userdata_format_vec.size()) {

@@ -25,6 +25,7 @@ cc_library {
         "environment.cpp",
         "files.cpp",
         "flag_parser.cpp",
+        "flags_validator.cpp",
         "json.cpp",
         "network.cpp",
         "scope_guard.cpp",
