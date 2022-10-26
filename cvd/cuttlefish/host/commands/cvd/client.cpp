@@ -197,15 +197,24 @@ Result<void> CvdClient::HandleCommand(
   for (const std::string& selector_arg : selector_args) {
     selector_opts->add_args(selector_arg);
   }
+
   for (const std::string& e : env) {
     auto eq_pos = e.find('=');
     if (eq_pos == std::string::npos) {
       LOG(WARNING) << "Environment var in unknown format: " << e;
       continue;
     }
-    (*command_request->mutable_env())[e.substr(0, eq_pos)] =
-        e.substr(eq_pos + 1);
+    const auto key = e.substr(0, eq_pos);
+    const auto value = e.substr(eq_pos + 1);
+    (*command_request->mutable_env())[key] = value;
   }
+  const auto& immutable_env = command_request->env();
+  if (immutable_env.find("ANDROID_HOST_OUT") == immutable_env.end()) {
+    // see b/254418863
+    (*command_request->mutable_env())["ANDROID_HOST_OUT"] =
+        android::base::Dirname(android::base::GetExecutableDirectory());
+  }
+
   std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
   command_request->set_working_directory(cwd.get());
   command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
