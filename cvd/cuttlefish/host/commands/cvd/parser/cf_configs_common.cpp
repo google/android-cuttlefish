@@ -30,6 +30,73 @@ Result<void> ValidateTypo(const Json::Value& root,
   return {};
 }
 
+Result<void> ValidateIntConfig(
+    const Json::Value& instances, const std::string& group,
+    const std::string& json_flag,
+    std::function<Result<void>(int)> validate_config) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (instances[i].isMember(group) &&
+        (instances[i][group].isMember(json_flag))) {
+      int flag = instances[i][group][json_flag].asInt();
+      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+    }
+  }
+  return {};
+}
+
+Result<void> ValidateIntConfigSubGroup(
+    const Json::Value& instances, const std::string& group,
+    const std::string& subgroup, const std::string& json_flag,
+    std::function<Result<void>(int)> validate_config) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (instances[i].isMember(group) &&
+        (instances[i][group].isMember(subgroup)) &&
+        (instances[i][group][subgroup].isMember(json_flag))) {
+      int flag = instances[i][group][subgroup][json_flag].asInt();
+      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+    }
+  }
+  return {};
+}
+
+Result<void> ValidateStringConfig(
+    const Json::Value& instances, const std::string& group,
+    const std::string& json_flag,
+    std::function<Result<void>(const std::string&)> validate_config) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (instances[i].isMember(group) &&
+        (instances[i][group].isMember(json_flag))) {
+      // Validate input parameter
+      std::string flag = instances[i][group][json_flag].asString();
+      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+    }
+  }
+  return {};
+}
+
+Result<void> ValidateStringConfigSubGroup(
+    const Json::Value& instances, const std::string& group,
+    const std::string& subgroup, const std::string& json_flag,
+    std::function<Result<void>(const std::string&)> validate_config) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(subgroup)) ||
+        (!instances[i][group][subgroup].isMember(json_flag))) {
+      std::string flag = instances[i][group][subgroup][json_flag].asString();
+      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+    }
+  }
+  return {};
+}
+
 void InitIntConfig(Json::Value& instances, const std::string& group,
                    const std::string& json_flag, int default_value) {
   // Allocate and initialize with default values
@@ -38,6 +105,20 @@ void InitIntConfig(Json::Value& instances, const std::string& group,
     if (!instances[i].isMember(group) ||
         (!instances[i][group].isMember(json_flag))) {
       instances[i][group][json_flag] = default_value;
+    }
+  }
+}
+
+void InitIntConfigSubGroup(Json::Value& instances, const std::string& group,
+                           const std::string& subgroup,
+                           const std::string& json_flag, int default_value) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(subgroup)) ||
+        (!instances[i][group][subgroup].isMember(json_flag))) {
+      instances[i][group][subgroup][json_flag] = default_value;
     }
   }
 }
@@ -53,6 +134,22 @@ void InitStringConfig(Json::Value& instances, const std::string& group,
     }
   }
 }
+
+void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
+                              const std::string& subgroup,
+                              const std::string& json_flag,
+                              const std::string& default_value) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(subgroup)) ||
+        (!instances[i][group][subgroup].isMember(json_flag))) {
+      instances[i][group][subgroup][json_flag] = default_value;
+    }
+  }
+}
+
 void InitBoolConfig(Json::Value& instances, const std::string& group,
                     const std::string& json_flag, const bool default_value) {
   // Allocate and initialize with default values
@@ -65,9 +162,10 @@ void InitBoolConfig(Json::Value& instances, const std::string& group,
   }
 }
 
-void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
-                              const std::string& subgroup, const std::string& json_flag,
-                              const std::string& default_value) {
+void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
+                            const std::string& subgroup,
+                            const std::string& json_flag,
+                            const bool default_value) {
   // Allocate and initialize with default values
   int size = instances.size();
   for (int i = 0; i < size; i++) {
@@ -93,8 +191,28 @@ std::string GenerateIntGflag(const Json::Value& instances, const std::string& gf
   return buff.str();
 }
 
-std::string GenerateStrGflag(const Json::Value& instances, const std::string& gflag_name,
-                          const std::string& group, const std::string& json_flag) {
+// TODO(b/255384531) for using variadic functions
+std::string GenerateIntGflagSubGroup(const Json::Value& instances,
+                                     const std::string& gflag_name,
+                                     const std::string& group,
+                                     const std::string& subgroup,
+                                     const std::string& json_flag) {
+  int size = instances.size();
+  std::stringstream buff;
+  // Append Header
+  buff << "--" << gflag_name << "=";
+  // Append values
+  for (int i = 0; i < size; i++) {
+    buff << instances[i][group][subgroup][json_flag];
+    if (i != size - 1){ buff << ",";}
+  }
+  return buff.str();
+}
+
+std::string GenerateStrGflag(const Json::Value& instances,
+                             const std::string& gflag_name,
+                             const std::string& group,
+                             const std::string& json_flag) {
   int size = instances.size();
   std::stringstream buff;
   // Append Header
@@ -102,6 +220,25 @@ std::string GenerateStrGflag(const Json::Value& instances, const std::string& gf
   // Append values
   for (int i = 0; i < size; i++) {
     buff << instances[i][group][json_flag].asString();
+    if (i != size - 1) {
+      buff << ",";
+    }
+  }
+  return buff.str();
+}
+
+std::string GenerateStrGflagSubGroup(const Json::Value& instances,
+                                     const std::string& gflag_name,
+                                     const std::string& group,
+                                     const std::string& subgroup,
+                                     const std::string& json_flag) {
+  int size = instances.size();
+  std::stringstream buff;
+  // Append Header
+  buff << "--" << gflag_name << "=";
+  // Append values
+  for (int i = 0; i < size; i++) {
+    buff << instances[i][group][subgroup][json_flag].asString();
     if (i != size - 1){ buff << ",";}
   }
   return buff.str();
@@ -123,38 +260,6 @@ std::string GenerateBoolGflag(const Json::Value& instances,
     if (i != size - 1) {
       buff << ",";
     }
-  }
-  return buff.str();
-}
-
-std::string GenerateIntGflagSubGroup(const Json::Value& instances,
-                                     const std::string& gflag_name,
-                                     const std::string& group,
-                                     const std::string& subgroup,
-                                     const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << instances[i][group][subgroup][json_flag];
-    if (i != size - 1){ buff << ",";}
-  }
-  return buff.str();
-}
-
-std::string GenerateStrGflagSubGroup(const Json::Value& instances,
-                                  const std::string& gflag_name, const std::string& group,
-                                  const std::string& subgroup, const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << instances[i][group][subgroup][json_flag].asString();
-    if (i != size - 1){ buff << ",";}
   }
   return buff.str();
 }
