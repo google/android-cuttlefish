@@ -16,23 +16,13 @@
 
 #include "host/commands/cvd/selector/instance_database.h"
 
-#include <numeric>  // std::iota
-
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
-static UniqueResourceAllocator<int> GetGroupSuffixGenerator() {
-  constexpr const int kMaxNumberOfRunningGroups = 100;
-  std::vector<int> pool(kMaxNumberOfRunningGroups);
-  std::iota(pool.begin(), pool.end(), 0);
-  return UniqueResourceAllocator<int>::New(pool);
-}
-
-InstanceDatabase::InstanceDatabase()
-    : auto_gen_group_name_suffice_{GetGroupSuffixGenerator()} {
+InstanceDatabase::InstanceDatabase() {
   group_handlers_[kHomeField] = [this](const Value& field_value) {
     return FindGroupsByHome(field_value);
   };
@@ -87,7 +77,7 @@ Result<ConstRef<T>> InstanceDatabase::FindOne(
     const Query& query,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(query, handler_map));
-  CF_EXPECT(set.size() == 1, "Only one Instance (Group) is allowed.");
+  CF_EXPECT_EQ(set.size(), 1, "Only one Instance (Group) is allowed.");
   return {*set.cbegin()};
 }
 
@@ -96,7 +86,7 @@ Result<ConstRef<T>> InstanceDatabase::FindOne(
     const Queries& queries,
     const Map<FieldName, ConstHandler<T>>& handler_map) const {
   auto set = CF_EXPECT(Find<T>(queries, handler_map));
-  CF_EXPECT(set.size() == 1, "Only one Instance (Group) is allowed.");
+  CF_EXPECT_EQ(set.size(), 1, "Only one Instance (Group) is allowed.");
   return {*set.cbegin()};
 }
 
