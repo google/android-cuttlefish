@@ -24,37 +24,70 @@ namespace cuttlefish {
 Result<void> ValidateTypo(const Json::Value& root,
                           const std::map<std::string, Json::ValueType>& map);
 
+Result<void> ValidateIntConfig(
+    const Json::Value& instances, const std::string& group,
+    const std::string& json_flag,
+    std::function<Result<void>(int)> validate_config);
+
+Result<void> ValidateIntConfigSubGroup(
+    const Json::Value& instances, const std::string& group,
+    const std::string& subgroup, const std::string& json_flag,
+    std::function<Result<void>(int)> validate_config);
+
+Result<void> ValidateStringConfig(
+    const Json::Value& instances, const std::string& group,
+    const std::string& json_flag,
+    std::function<Result<void>(const std::string&)> validate_config);
+
+Result<void> ValidateStringConfigSubGroup(
+    const Json::Value& instances, const std::string& group,
+    const std::string& subgroup, const std::string& json_flag,
+    std::function<Result<void>(const std::string&)> validate_config);
+
 void InitIntConfig(Json::Value& instances, const std::string& group,
                    const std::string& json_flag, int default_value);
 
+void InitIntConfigSubGroup(Json::Value& instances, const std::string& group,
+                           const std::string& subgroup,
+                           const std::string& json_flag, int default_value);
+
 void InitStringConfig(Json::Value& instances, const std::string& group,
                       const std::string& json_flag, const std::string& default_value);
-
-void InitBoolConfig(Json::Value& instances, const std::string& group,
-                    const std::string& json_flag, const bool default_value);
 
 void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
                               const std::string& subgroup, const std::string& json_flag,
                               const std::string& default_value);
 
-std::string GenerateIntGflag(const Json::Value& instances, const std::string& gflag_name,
-                          const std::string& group, const std::string& json_flag);
+void InitBoolConfig(Json::Value& instances, const std::string& group,
+                    const std::string& json_flag, const bool default_value);
 
-std::string GenerateStrGflag(const Json::Value& instances, const std::string& gflag_name,
-                          const std::string& group, const std::string& json_flag);
+void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
+                            const std::string& subgroup,
+                            const std::string& json_flag,
+                            const bool default_value);
 
-std::string GenerateBoolGflag(const Json::Value& instances,
-                              const std::string& gflag_name,
-                              const std::string& group,
-                              const std::string& json_flag);
+std::string GenerateIntGflag(const Json::Value& instances,
+                             const std::string& gflag_name,
+                             const std::string& group,
+                             const std::string& json_flag);
 
 std::string GenerateIntGflagSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag);
 
+std::string GenerateStrGflag(const Json::Value& instances,
+                             const std::string& gflag_name,
+                             const std::string& group,
+                             const std::string& json_flag);
+
 std::string GenerateStrGflagSubGroup(const Json::Value& instances,
                                   const std::string& gflag_name, const std::string& group,
                                   const std::string& subgroup, const std::string& json_flag);
+
+std::string GenerateBoolGflag(const Json::Value& instances,
+                              const std::string& gflag_name,
+                              const std::string& group,
+                              const std::string& json_flag);
 
 std::string GenerateBoolGflagSubGroup(const Json::Value& instances,
                                       const std::string& gflag_name,
