@@ -154,5 +154,43 @@ INSTANTIATE_TEST_SUITE_P(
                     "--device_name=z --instance_name=p", "--instance_name=*79a",
                     "--device_name=abcd-e,xyz-f", "--device_name=xyz-e,xyz-e"));
 
+struct SubstringTestInput {
+  std::string input_args;
+  bool expected;
+};
+
+class CvdSelectorParserSubstringTest
+    : public testing::TestWithParam<SubstringTestInput> {
+ protected:
+  CvdSelectorParserSubstringTest() {
+    auto [input, expected] = GetParam();
+    auto selector_args = android::base::Tokenize(input, " ");
+    auto parse_result =
+        SelectorFlagsParser::ConductSelectFlagsParser(selector_args);
+    if (parse_result.ok()) {
+      parser_ = std::move(*parse_result);
+    }
+    expected_result_ = expected;
+  }
+  bool expected_result_;
+  std::optional<SelectorFlagsParser> parser_;
+};
+
+TEST_P(CvdSelectorParserSubstringTest, Substring) {
+  ASSERT_EQ(parser_ != std::nullopt, expected_result_);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    CvdParser3, CvdSelectorParserSubstringTest,
+    testing::Values(SubstringTestInput{"--name cvd", true},
+                    SubstringTestInput{"c v --name cvd d", true},
+                    SubstringTestInput{"--name cvd c", true},
+                    SubstringTestInput{"--name cvd c v", true},
+                    SubstringTestInput{"c --name cvd v", true},
+                    SubstringTestInput{"--name cvd c,v,d", true},
+                    SubstringTestInput{"--name cvd c v,d", true},
+                    SubstringTestInput{"--name cvd c,", false},
+                    SubstringTestInput{"--name cvd c v,,d", false}));
+
 }  // namespace selector
 }  // namespace cuttlefish
