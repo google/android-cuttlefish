@@ -167,11 +167,6 @@ void PrintCVDs(const std::string& host, const std::vector<std::string>& cvds) {
 // Create cvd.
 //
 int CommandCreateCVDMain(const std::vector<std::string>&) {
-  if (FLAGS_host == "") {
-    std::cerr
-        << "Creating a cvd instance without a host is not implemented yet.";
-    return -1;
-  }
   if (FLAGS_build_id == "") {
     std::cerr << "Missing --build_id flag.";
     return -1;
@@ -181,17 +176,32 @@ int CommandCreateCVDMain(const std::vector<std::string>&) {
           ? std::unique_ptr<HttpClient>(new http_client::SsoClient())
           : HttpClient::CurlClient();
   auto retrying_http_client = HttpClient::ServerErrorRetryClient(
-      *http_client, 2 /* retry_attempts */,
+      *http_client, 5 /* retry_attempts */,
       std::chrono::milliseconds(5000) /* retry_delay */);
   CloudOrchestratorApi api(FLAGS_service_url, FLAGS_zone,
                            *retrying_http_client);
+  std::string host = FLAGS_host;
+  if (host == "") {
+    GCPInstance gcp;
+    gcp.machine_type = FLAGS_machine_type.c_str();
+    gcp.min_cpu_platform = FLAGS_min_cpu_platform.c_str();
+    CreateHostInstanceRequest request;
+    request.gcp = &gcp;
+    auto action = CreateHostAction(api, request);
+    auto result = action->Execute();
+    if (!result.ok()) {
+      std::cerr << result.error().Message();
+      return -1;
+    }
+    host = *result;
+  }
   CreateCVDRequest request{
     build_info : BuildInfo{
       build_id : FLAGS_build_id,
       target : FLAGS_target,
     },
   };
-  auto action = CreateCVDAction(api, request, FLAGS_host);
+  auto action = CreateCVDAction(api, request, host);
   auto result = action->Execute();
   if (!result.ok()) {
     std::cerr << result.error().Message();
