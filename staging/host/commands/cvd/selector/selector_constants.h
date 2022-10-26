@@ -19,12 +19,13 @@
 namespace cuttlefish {
 namespace selector {
 
-// group_name + "-" + per_instance_name
-constexpr char kDeviceNameField[] = "device_name";
+/*
+ * These are fields in instance database
+ *
+ */
 constexpr char kGroupNameField[] = "group_name";
 constexpr char kHomeField[] = "home";
 constexpr char kInstanceIdField[] = "instance_id";
-
 /* per_instance_name
  *
  * by default, to_string(instance_id), and users can override it
@@ -32,9 +33,21 @@ constexpr char kInstanceIdField[] = "instance_id";
 constexpr char kInstanceNameField[] = "instance_name";
 
 /**
- * this is used not by instance db but by selector front-end
+ * these are used not by instance db but by selector front-end
+ *
+ * E.g. --name, --device_name, -group_name, etc
+ *
+ * A device name is group name followed by "-" followed by a per-
+ * instance name (or, interchangeably, instance_name).
+ *
+ * E.g. "cvd-1" could be a device name, "cvd" being the group name,
+ * and "1" being the instance name.
+ *
  */
 constexpr char kNameOpt[] = "name";
+constexpr char kDeviceNameOpt[] = "device_name";
+constexpr char kGroupNameOpt[] = "group_name";
+constexpr char kInstanceNameOpt[] = "instance_name";
 
 }  // namespace selector
 }  // namespace cuttlefish
