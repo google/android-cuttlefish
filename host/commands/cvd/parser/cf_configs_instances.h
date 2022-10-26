@@ -16,6 +16,8 @@
 
 #pragma once
 #include <json/json.h>
+
+#include "common/libs/utils/result.h"
 namespace cuttlefish {
 
 Result<void> ValidateInstancesConfigs(const Json::Value& root);
