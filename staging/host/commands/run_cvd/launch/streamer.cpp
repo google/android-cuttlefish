@@ -193,15 +193,17 @@ class WebRtcServer : public virtual CommandSource,
         custom_action_config_(custom_action_config) {}
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
-    if (!Enabled() || !config_.ForDefaultInstance().start_webrtc_sig_server()) {
+    if (!Enabled() ||
+        !(config_.ForDefaultInstance().start_webrtc_sig_server() ||
+          config_.ForDefaultInstance().start_webrtc_sig_server_proxy())) {
       // When WebRTC is enabled but an operator other than the one launched by
       // run_cvd is used there is no way to know the url to which to point the
       // browser to.
       return {};
     }
     std::ostringstream out;
-    out << "Point your browser to https://" << config_.sig_server_address()
-        << ":" << config_.sig_server_port() << " to interact with the device.";
+    out << "Point your browser to https://localhost:"
+        << config_.sig_server_port() << " to interact with the device.";
     return {out.str()};
   }
 
