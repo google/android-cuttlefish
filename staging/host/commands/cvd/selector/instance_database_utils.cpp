@@ -54,13 +54,11 @@ std::string LocalDeviceNameRule(const std::string& group_name,
   return group_name + "-" + instance_name;
 }
 
-// [A-Za-z_][A-Za-z0-9_]*
 bool IsValidGroupName(const std::string& token) {
   std::regex regular_expr("[A-Za-z_][A-Za-z_0-9]*");
   return std::regex_match(token, regular_expr);
 }
 
-// [A-Za-z0-9_]+
 bool IsValidInstanceName(const std::string& token) {
   std::regex regular_expr("[A-Za-z_0-9]+");
   return std::regex_match(token, regular_expr);
