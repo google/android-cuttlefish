@@ -220,10 +220,9 @@ SelectorFlagsParser::FindSubstringsToMatch() {
     const auto& substring = args_.back();
     auto tokens = android::base::Split(substring, ",");
     for (const auto& t : tokens) {
-      if (t.empty()) {
-        continue;
-      }
-      substring_queries.insert(t);
+      CF_EXPECT(!t.empty(),
+                "Empty keyword for substring search is not allowed.");
+      substring_queries_.insert(t);
     }
     args_.pop_back();
   }
