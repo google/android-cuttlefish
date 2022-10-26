@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <string>
-
 #include "common/libs/utils/flags_validator.h"
 
 namespace cuttlefish {
-Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode) {
+Result<void> ValidateStupWizardMode(const std::string& setupwizard_mode) {
   // One of DISABLED,OPTIONAL,REQUIRED
   bool result = setupwizard_mode == "DISABLED" ||
                 setupwizard_mode == "OPTIONAL" ||
