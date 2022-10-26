@@ -49,6 +49,31 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
   return {};
 }
 
+struct VerifyNameOptionsParam {
+  std::optional<std::string> name;
+  std::optional<std::string> device_name;
+  std::optional<std::string> group_name;
+  std::optional<std::string> per_instance_name;
+};
+
+/*
+ * There are valid combinations of --name, --device_name, --group_name, and
+ * --instance_name, let alone the syntax of each.
+ *
+ * --name and --device_name respectively should be given without any of the
+ * other three. --group_name and --instance_name could be given together.
+ *
+ * It is allowed that none of those four options is given.
+ */
+Result<void> VerifyNameOptions(const VerifyNameOptionsParam& param);
+
+struct DeviceName {
+  std::string group_name;
+  std::string per_instance_name;
+};
+
+Result<DeviceName> SplitDeviceName(const std::string& device_name);
+
 /*
  * android::base::Split by delimeter but returns CF_ERR if any split token is
  * empty
