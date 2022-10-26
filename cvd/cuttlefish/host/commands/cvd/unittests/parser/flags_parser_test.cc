@@ -49,7 +49,8 @@ TEST(FlagsParserTest, ParseJsonWithSpellingError) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_FALSE(serialized_data.ok());
 }
@@ -68,10 +69,12 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
-  EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=1"));
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=1"))
+      << "num_instances flag is missing or wrongly formatted";
 }
 
 TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
@@ -91,10 +94,12 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
   Json::Value json_configs;
   std::string json_text(test_string);
 
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs));
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
-  EXPECT_TRUE(serialized_data.ok());
-  EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=2"));
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=2"))
+      << "num_instances flag is missing or wrongly formatted";
 }
 
 }  // namespace cuttlefish
