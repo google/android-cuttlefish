@@ -168,9 +168,10 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config = InitializeCuttlefishConfiguration(
-        FLAGS_instance_dir, FLAGS_modem_simulator_count,
-        kernel_configs, injector, fetcher_config);
+    auto config = CF_EXPECT(InitializeCuttlefishConfiguration(
+                                FLAGS_instance_dir, FLAGS_modem_simulator_count,
+                                kernel_configs, injector, fetcher_config),
+                            "cuttlefish configuration initialization failed");
     std::set<std::string> preserving;
     bool creating_os_disk = false;
     // if any device needs to rebuild its composite disk,
