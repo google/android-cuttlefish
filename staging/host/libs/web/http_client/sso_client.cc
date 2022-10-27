@@ -57,17 +57,17 @@ Result<HttpResponse<std::string>> MakeRequest(
       sso_client_cmd.AddParameter("--data=" + data);
     }
   }
-  std::string stdout, stderr;
-  int ret = exec_cmd_func_(std::move(sso_client_cmd), nullptr, &stdout, &stderr,
-                           SubprocessOptions());
+  std::string stdout_, stderr_;
+  int ret = exec_cmd_func_(std::move(sso_client_cmd), nullptr, &stdout_,
+                           &stderr_, SubprocessOptions());
   CF_EXPECT(ret == 0,
             "`sso_client` execution failed with combined stdout and stderr: "
-                << stdout << stderr);
-  CF_EXPECT(std::regex_match(stdout, kStdoutRegex),
+                << stdout_ << stderr_);
+  CF_EXPECT(std::regex_match(stdout_, kStdoutRegex),
             "Failed parsing `sso_client` output. Output:\n"
-                << stdout);
+                << stdout_);
   std::smatch match;
-  std::regex_search(stdout, match, kStdoutRegex);
+  std::regex_search(stdout_, match, kStdoutRegex);
   long status_code = std::atol(match[1].str().data());
   std::string body = "";
   if (match.size() == 3) {
