@@ -16,13 +16,23 @@
 
 #include "host/commands/cvd/selector/instance_database.h"
 
+#include <numeric>  // std::iota
+
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
-InstanceDatabase::InstanceDatabase() {
+static UniqueResourceAllocator<int> GetGroupSuffixGenerator() {
+  constexpr const int kMaxNumberOfRunningGroups = 100;
+  std::vector<int> pool(kMaxNumberOfRunningGroups);
+  std::iota(pool.begin(), pool.end(), 0);
+  return UniqueResourceAllocator<int>::New(pool);
+}
+
+InstanceDatabase::InstanceDatabase()
+    : auto_gen_group_name_suffice_{GetGroupSuffixGenerator()} {
   group_handlers_[kHomeField] = [this](const Value& field_value) {
     return FindGroupsByHome(field_value);
   };

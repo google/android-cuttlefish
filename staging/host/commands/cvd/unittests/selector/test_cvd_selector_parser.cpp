@@ -122,8 +122,6 @@ INSTANTIATE_TEST_SUITE_P(
                 ExpectedOutput{
                     .group_name = "my_cool",
                 }},
-        // this is ill-formed for cvd start but acceptable
-        // for the rest
         InputOutput{
             .input = "--instance_name=my_cool",
             .expected = ExpectedOutput{
