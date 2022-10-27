@@ -25,6 +25,7 @@
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/instance_record.h"
+#include "host/commands/cvd/selector/unique_resource_allocator.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -44,6 +45,9 @@ class InstanceDatabase {
   // returns CF_ERR if the home_directory is already taken
   Result<void> AddInstanceGroup(const std::string& group_name,
                                 const std::string& home_dir,
+                                const std::string& host_binaries_dir);
+  // auto-generate the group_name
+  Result<void> AddInstanceGroup(const std::string& home_dir,
                                 const std::string& host_binaries_dir);
 
   Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id,
@@ -110,6 +114,9 @@ class InstanceDatabase {
   std::vector<std::unique_ptr<LocalInstanceGroup>> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
   Map<FieldName, ConstInstanceHandler> instance_handlers_;
+
+  UniqueResourceAllocator<int> auto_gen_group_name_suffice_;
+  std::unordered_map<std::string, int> auto_gen_group_name_to_suffix_map_;
 };
 
 }  // namespace selector

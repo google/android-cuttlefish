@@ -56,8 +56,8 @@ Result<void> InstanceManager::SetInstanceGroup(
     const InstanceManager::InstanceGroupDir& dir,
     const InstanceGroupInfo& info) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
-  CF_EXPECT(instance_db_.AddInstanceGroup(selector::GenDefaultGroupName(), dir,
-                                          info.host_binaries_dir));
+  // for now, the group name is determined automatically by the instance_db_
+  CF_EXPECT(instance_db_.AddInstanceGroup(dir, info.host_binaries_dir));
   auto searched_group =
       CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
   for (auto i : info.instances) {
