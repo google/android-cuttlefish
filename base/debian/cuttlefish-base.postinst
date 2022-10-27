@@ -4,6 +4,7 @@ set -e
 
 case "$1" in
     (configure)
+    mkdir -p /var/empty
     if ! getent group cvdnetwork > /dev/null 2>&1
     then
         addgroup --system cvdnetwork
