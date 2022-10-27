@@ -1,0 +1,64 @@
+digraph {
+  rankdir = "LR";
+
+  overlay [label = "Operating System Overlay (qcow2)", URL = "https://en.wikipedia.org/wiki/Qcow"]
+  operating_system [label = "Operating System (composite)", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions"]
+  persistent [label = "Persistent Disk (composite)", URL = "https://chromium.googlesource.com/chromiumos/platform/crosvm/+/refs/heads/main/disk/src/composite.rs"]
+
+  uboot_env [URL = "https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/assemble_cvd/boot_config.cc"]
+  persistent_vbmeta [label = "vbmeta", URL = "https://android.googlesource.com/platform/external/avb/+/master/README.md"]
+  frp
+  bootconfig [URL = "https://source.android.com/docs/core/architecture/bootloader/implementing-bootconfig"]
+
+  gpt_header [label = "GPT Header", URL = "https://en.wikipedia.org/wiki/GUID_Partition_Table"]
+  misc
+  boot [label = "boot_[ab]", URL = "https://source.android.com/docs/core/architecture/bootloader/boot-image-header"]
+  init_boot [label = "init_boot_[ab]", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/generic-boot"]
+  vendor_boot [label = "vendor_boot_[ab]", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/vendor-boot-partitions"]
+  vbmeta [label = "vbmeta_[ab]", URL = "https://android.googlesource.com/platform/external/avb/+/master/README.md"]
+  vbmeta_system [label = "vbmeta_system_[ab]", URL = "https://android.googlesource.com/platform/external/avb/+/master/README.md"]
+  super [URL = "https://source.android.com/docs/core/ota/dynamic_partitions/implement"]
+  userdata
+  metadata [URL = "https://source.android.com/docs/security/features/encryption/metadata"]
+  ap_rootfs [style = "dashed"]
+  gpt_footer [label = "GPT Footer", URL = "https://en.wikipedia.org/wiki/GUID_Partition_Table"]
+
+  product [color = "green", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/product-partitions"]
+  system [color = "green", URL = "https://source.android.com/docs/core/architecture"]
+  system_ext [color = "green", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/shared-system-image"]
+  system_dlkm [color = "green", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/gki-partitions"]
+
+  odm [color = "blue", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/odm-partitions"]
+  vendor [color = "blue", URL = "https://source.android.com/docs/core/architecture"]
+  vendor_dlkm [color = "blue", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/vendor-odm-dlkm-partition"]
+  odm_dlkm [color = "blue", URL = "https://source.android.com/docs/core/architecture/bootloader/partitions/vendor-odm-dlkm-partition"]
+
+  persistent -> uboot_env
+  persistent -> persistent_vbmeta
+  persistent -> frp
+  persistent -> bootconfig
+
+  overlay -> operating_system
+  operating_system -> gpt_header
+  operating_system -> misc
+  operating_system -> boot
+  operating_system -> init_boot
+  operating_system -> vendor_boot
+  operating_system -> vbmeta
+  operating_system -> vbmeta_system
+  operating_system -> super
+  operating_system -> userdata
+  operating_system -> metadata
+  operating_system -> ap_rootfs [style = "dashed"]
+  operating_system -> gpt_footer
+
+  super -> product [color = "green"]
+  super -> system [color = "green"]
+  super -> system_ext [color = "green"]
+  super -> system_dlkm [color = "green"]
+
+  super -> odm [color = "blue"]
+  super -> vendor [color = "blue"]
+  super -> vendor_dlkm [color = "blue"]
+  super -> odm_dlkm [color = "blue"]
+}
