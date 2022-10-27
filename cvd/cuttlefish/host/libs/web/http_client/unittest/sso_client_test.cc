@@ -69,13 +69,13 @@ TEST(SsoClientTest, GetToStringSucceedsEmptyBody) {
 }
 
 TEST(SsoClientTest, GetToStringNoBody) {
-  std::string stdout =
+  std::string stdout_ =
       "HTTP/1.1 502 Bad Gateway\r\n"
       "Content-Type: application/json\r\n"
       "\r\n";
   auto exec = [&](Command&&, const std::string*, std::string* out, std::string*,
                   SubprocessOptions) {
-    *out = stdout;
+    *out = stdout_;
     return 0;
   };
   SsoClient client(exec);
