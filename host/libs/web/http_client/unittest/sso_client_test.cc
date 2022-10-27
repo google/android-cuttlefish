@@ -87,10 +87,12 @@ TEST(SsoClientTest, GetToStringNoBody) {
   EXPECT_EQ(result->http_code, 502);
 }
 
-constexpr char kBashScriptPrefix[] =
-    "#!/bin/bash\n\n/usr/bin/sso_client \\\n--use_master_cookie "
-    "\\\n--request_timeout=300 "
-    "\\\n--dump_header ";
+constexpr char kBashScriptPrefix[] = R"(#!/bin/bash
+
+/usr/bin/sso_client \
+--use_master_cookie \
+--request_timeout=300 \
+--dump_header \)";
 
 TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
   std::string cmd_as_bash_script;
@@ -103,9 +105,10 @@ TEST(SsoClientTest, GetToStringVerifyCommandArgs) {
 
   client.GetToString("https://some.url");
 
-  EXPECT_EQ(cmd_as_bash_script,
-            std::string(kBashScriptPrefix) +
-                "\\\n--url=https://some.url \\\n--method=GET");
+  std::string expected = std::string(kBashScriptPrefix) + R"(
+--url=https://some.url \
+--method=GET)";
+  EXPECT_EQ(cmd_as_bash_script, expected);
 }
 
 TEST(SsoClientTest, PostToStringVerifyCommandArgs) {
@@ -119,9 +122,11 @@ TEST(SsoClientTest, PostToStringVerifyCommandArgs) {
 
   client.PostToString("https://some.url", "foo");
 
-  EXPECT_EQ(cmd_as_bash_script,
-            std::string(kBashScriptPrefix) +
-                "\\\n--url=https://some.url \\\n--method=POST \\\n--data=foo");
+  std::string expected = std::string(kBashScriptPrefix) + R"(
+--url=https://some.url \
+--method=POST \
+--data=foo)";
+  EXPECT_EQ(cmd_as_bash_script, expected);
 }
 
 TEST(SsoClientTest, PostToStringEmptyDataVerifyCommandArgs) {
@@ -135,9 +140,10 @@ TEST(SsoClientTest, PostToStringEmptyDataVerifyCommandArgs) {
 
   client.PostToString("https://some.url", "");
 
-  EXPECT_EQ(cmd_as_bash_script,
-            std::string(kBashScriptPrefix) +
-                "\\\n--url=https://some.url \\\n--method=POST");
+  std::string expected = std::string(kBashScriptPrefix) + R"(
+--url=https://some.url \
+--method=POST)";
+  EXPECT_EQ(cmd_as_bash_script, expected);
 }
 
 TEST(SsoClientTest, DeleteToStringVerifyCommandArgs) {
@@ -151,9 +157,10 @@ TEST(SsoClientTest, DeleteToStringVerifyCommandArgs) {
 
   client.DeleteToString("https://some.url");
 
-  EXPECT_EQ(cmd_as_bash_script,
-            std::string(kBashScriptPrefix) +
-                "\\\n--url=https://some.url \\\n--method=DELETE");
+  std::string expected = std::string(kBashScriptPrefix) + R"(
+--url=https://some.url \
+--method=DELETE)";
+  EXPECT_EQ(cmd_as_bash_script, expected);
 }
 
 TEST(SsoClientTest, GetToStringFailsInvalidResponseFormat) {
