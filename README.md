@@ -87,5 +87,5 @@ WebRTC on Cuttlefish
 You will need to stop the virtual device within the same directory as you used
 to launch the device.
 
-    `$ HOME=$PWD ./bin/stop_cvd`
+   `$ HOME=$PWD ./bin/stop_cvd`
 
