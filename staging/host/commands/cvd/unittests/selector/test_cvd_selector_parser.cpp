@@ -75,10 +75,9 @@ TEST_P(CvdSelectorParserNamesTest, FieldsNoSubstring) {
      * We aren't testing whether or not parsing is working.
      * That's tested in ValidInputs tests. We test fields.
      */
-    GTEST_SKIP() << "Parsing failed";
+    GTEST_SKIP() << "Parsing failed, which must be tested in ValidInputs Test";
   }
 
-  ASSERT_EQ(parser_->Names(), expected_output_.names);
   ASSERT_EQ(parser_->GroupName(), expected_output_.group_name);
   ASSERT_EQ(parser_->PerInstanceNames(), expected_output_.per_instance_names);
 }
@@ -86,6 +85,8 @@ TEST_P(CvdSelectorParserNamesTest, FieldsNoSubstring) {
 INSTANTIATE_TEST_SUITE_P(
     CvdParser, CvdSelectorParserNamesTest,
     testing::Values(
+        InputOutput{.input = "--name=cf",
+                    .expected = ExpectedOutput{.group_name = "cf"}},
         InputOutput{.input = "--name=cvd,cf",
                     .expected = ExpectedOutput{.per_instance_names =
                                                    std::vector<std::string>{
