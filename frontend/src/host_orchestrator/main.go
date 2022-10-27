@@ -21,11 +21,13 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
 	"sync"
+	"time"
 
-	"cuttlefish/host_orchestrator/orchestrator"
-	apiv1 "cuttlefish/liboperator/api/v1"
-	"cuttlefish/liboperator/operator"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 const (
@@ -121,17 +123,16 @@ func main() {
 		HomesRootDir:     imRootDir + "/homes",
 	}
 	om := orchestrator.NewMapOM()
-	im := &orchestrator.InstanceManager{
-		OM: om,
-		LaunchCVDProcedureBuilder: orchestrator.NewLaunchCVDProcedureBuilder(
-			abURL,
-			orchestrator.AndroidBuild{
-				ID:     cvdBinAndroidBuildID,
-				Target: cvdBinAndroidBuildTarget,
-			},
-			imPaths,
-		),
-	}
+	im := orchestrator.NewCVDToolInstanceManager(
+		exec.Command,
+		orchestrator.AndroidBuild{
+			ID:     cvdBinAndroidBuildID,
+			Target: cvdBinAndroidBuildTarget,
+		},
+		imPaths,
+		orchestrator.NewCVDDownloader(orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)),
+		om,
+	)
 
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
@@ -139,7 +140,12 @@ func main() {
 		log.Fatal("Error with device endpoint: ", err)
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
-	orchestrator.SetupInstanceManagement(r, im, om)
+	imController := orchestrator.Controller{
+		InstanceManager:       im,
+		OperationManager:      om,
+		WaitOperationDuration: 2 * time.Minute,
+	}
+	imController.AddRoutes(r)
 	// The host orchestrator currently has no use for this, since clients won't connect
 	// to it directly, however they probably will once the multi-device feature matures.
 	if len(webUIUrlStr) > 0 {

@@ -17,7 +17,7 @@ package operator
 import (
 	"net/http"
 
-	apiv1 "cuttlefish/liboperator/api/v1"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
 type AppError struct {
@@ -52,4 +52,8 @@ func NewInternalError(msg string, e error) error {
 
 func NewNotFoundError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusNotFound, Err: e}
+}
+
+func NewServiceUnavailableError(msg string, e error) error {
+	return &AppError{Msg: msg, StatusCode: http.StatusServiceUnavailable, Err: e}
 }

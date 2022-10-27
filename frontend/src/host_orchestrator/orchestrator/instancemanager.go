@@ -26,9 +26,15 @@ import (
 	"sync"
 	"sync/atomic"
 
-	apiv1 "cuttlefish/liboperator/api/v1"
-	"cuttlefish/liboperator/operator"
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
+
+type ExecContext = func(name string, arg ...string) *exec.Cmd
+
+type InstanceManager interface {
+	CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error)
+}
 
 type EmptyFieldError string
 
@@ -48,35 +54,93 @@ type IMPaths struct {
 	HomesRootDir     string
 }
 
-type InstanceManager struct {
-	OM                        OperationManager
-	LaunchCVDProcedureBuilder ProcedureBuilder
+// Instance manager implementation based on execution of `cvd` tool commands.
+type CVDToolInstanceManager struct {
+	paths              IMPaths
+	om                 OperationManager
+	instanceCounter    uint32
+	downloadCVDHandler *downloadCVDHandler
+	fetchCVDHandler    *fetchCVDHandler
+	startCVDHandler    *startCVDHandler
 }
 
-func (m *InstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (Operation, error) {
-	if err := validateRequest(&req); err != nil {
-		return Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
+func NewCVDToolInstanceManager(
+	execContext ExecContext,
+	cvdBinAB AndroidBuild,
+	paths IMPaths,
+	cvdDwnlder CVDDownloader,
+	om OperationManager) *CVDToolInstanceManager {
+	return &CVDToolInstanceManager{
+		paths: paths,
+		om:    om,
+		downloadCVDHandler: &downloadCVDHandler{
+			CVDBinAB: cvdBinAB,
+			CVDBin:   paths.CVDBin,
+			Dwnlder:  cvdDwnlder,
+		},
+		fetchCVDHandler: newFetchCVDHandler(execContext, paths.CVDBin, paths.ArtifactsRootDir),
+		startCVDHandler: &startCVDHandler{ExecContext: execContext, CVDBin: paths.CVDBin},
 	}
-	op := m.OM.New()
-	go m.LaunchCVD(req, op)
+}
+
+func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
+	if err := validateRequest(&req); err != nil {
+		return apiv1.Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
+	}
+	op := m.om.New()
+	go m.launchCVD(req, op)
 	return op, nil
 }
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 // TODO(b/236398043): Return more granular and informative errors.
-func (m *InstanceManager) LaunchCVD(req apiv1.CreateCVDRequest, op Operation) {
-	p := m.LaunchCVDProcedureBuilder.Build(req)
-	var result OperationResult
-	if err := p.Execute(); err != nil {
+func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.Operation) {
+	var result apiv1.OperationResult
+	if cvd, err := m.launchCVD_(req, op); err != nil {
 		log.Printf("failed to launch cvd with error: %v", err)
-		result = OperationResult{
-			Error: OperationResultError{ErrMsgLaunchCVDFailed},
+		result = apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
+		}
+	} else {
+		result = apiv1.OperationResult{
+			Response: cvd,
 		}
 	}
-	if err := m.OM.Complete(op.Name, result); err != nil {
+	if err := m.om.Complete(op.Name, result); err != nil {
 		log.Printf("failed to complete operation with error: %v", err)
 	}
+}
+
+func (m *CVDToolInstanceManager) launchCVD_(
+	req apiv1.CreateCVDRequest,
+	op apiv1.Operation) (*apiv1.CVD, error) {
+	if err := m.downloadCVDHandler.Download(); err != nil {
+		return nil, err
+	}
+	if err := createDir(m.paths.ArtifactsRootDir, false); err != nil {
+		return nil, err
+	}
+	if err := createDir(m.paths.HomesRootDir, false); err != nil {
+		return nil, err
+	}
+	artifactsDir, err := m.fetchCVDHandler.Fetch(req.BuildInfo)
+	if err != nil {
+		return nil, err
+	}
+	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
+	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
+	homeDir := m.paths.HomesRootDir + "/" + cvdName
+	if err := createDir(homeDir, true); err != nil {
+		return nil, err
+	}
+	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
+		return nil, err
+	}
+	return &apiv1.CVD{
+		Name:      cvdName,
+		BuildInfo: req.BuildInfo,
+	}, nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
@@ -92,212 +156,95 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-type ProcedureStage interface {
-	Run() error
+type downloadCVDResult struct {
+	Error error
 }
 
-type Procedure []ProcedureStage
-
-func (p Procedure) Execute() error {
-	for _, s := range p {
-		if err := s.Run(); err != nil {
-			return err
-		}
-	}
-	return nil
+type downloadCVDHandler struct {
+	CVDBinAB AndroidBuild
+	CVDBin   string
+	Dwnlder  CVDDownloader
+	mutex    sync.Mutex
+	result   *downloadCVDResult
 }
 
-// TODO(b/236995709): Make it generic
-type ProcedureBuilder interface {
-	Build(input interface{}) Procedure
-}
-
-// Fetch CVD stages will be reused to avoid downloading the artifacts of the same
-// target multiple times.
-type LaunchCVDProcedureBuilder struct {
-	paths                       IMPaths
-	stageDownloadCVD            *StageDownloadCVD
-	stageStartCVDServer         *StageStartCVDServer
-	stageCreateArtifactsRootDir *StageCreateDir
-	stageCreateHomesRootDir     *StageCreateDir
-	stageFetchCVDMap            map[string]*StageFetchCVD
-	stageFetchCVDMapMutex       sync.Mutex
-	instanceNumberCounter       uint32
-}
-
-func NewLaunchCVDProcedureBuilder(
-	abURL string,
-	cvdBinAB AndroidBuild,
-	paths IMPaths) *LaunchCVDProcedureBuilder {
-	return &LaunchCVDProcedureBuilder{
-		paths: paths,
-		stageDownloadCVD: &StageDownloadCVD{
-			CVDBin:     paths.CVDBin,
-			Build:      cvdBinAB,
-			Downloader: NewCVDDownloader(NewSignedURLArtifactDownloader(http.DefaultClient, abURL)),
-		},
-		stageStartCVDServer: &StageStartCVDServer{
-			ExecContext: exec.Command,
-			CVDBin:      paths.CVDBin,
-		},
-		stageCreateArtifactsRootDir: &StageCreateDir{Dir: paths.ArtifactsRootDir},
-		stageCreateHomesRootDir:     &StageCreateDir{Dir: paths.HomesRootDir},
-		stageFetchCVDMap:            make(map[string]*StageFetchCVD),
-	}
-}
-
-func (b *LaunchCVDProcedureBuilder) Build(input interface{}) Procedure {
-	req, ok := input.(apiv1.CreateCVDRequest)
-	if !ok {
-		panic("invalid type")
-	}
-	artifactsDir :=
-		fmt.Sprintf("%s/%s_%s", b.paths.ArtifactsRootDir, req.BuildInfo.BuildID, req.BuildInfo.Target)
-	instanceNumber := atomic.AddUint32(&b.instanceNumberCounter, 1)
-	homeDir := fmt.Sprintf("%s/cvd-%d", b.paths.HomesRootDir, instanceNumber)
-	return Procedure{
-		b.stageDownloadCVD,
-		b.stageStartCVDServer,
-		b.stageCreateArtifactsRootDir,
-		&StageCreateDir{Dir: artifactsDir},
-		b.buildFetchCVDStage(req.BuildInfo, artifactsDir),
-		b.stageCreateHomesRootDir,
-		&StageCreateDir{Dir: homeDir, FailIfExist: true},
-		b.buildLaunchCVDStage(instanceNumber, artifactsDir, homeDir),
-	}
-}
-
-func (b *LaunchCVDProcedureBuilder) buildFetchCVDStage(
-	info *apiv1.BuildInfo, outDir string) *StageFetchCVD {
-	b.stageFetchCVDMapMutex.Lock()
-	defer b.stageFetchCVDMapMutex.Unlock()
-	key := fmt.Sprintf("%s_%s", info.BuildID, info.Target)
-	value := b.stageFetchCVDMap[key]
-	if value == nil {
-		value = &StageFetchCVD{
-			ExecContext: exec.Command,
-			CVDBin:      b.paths.CVDBin,
-			BuildInfo:   *info,
-			OutDir:      outDir,
-		}
-		b.stageFetchCVDMap[key] = value
-	}
-	return value
-}
-
-func (b *LaunchCVDProcedureBuilder) buildLaunchCVDStage(
-	instanceNumber uint32, artifactsDir, homeDir string) *StageLaunchCVD {
-	return &StageLaunchCVD{
-		ExecContext:    exec.Command,
-		CVDBin:         b.paths.CVDBin,
-		InstanceNumber: instanceNumber,
-		ArtifactsDir:   artifactsDir,
-		HomeDir:        homeDir,
-	}
-}
-
-type StageDownloadCVD struct {
-	CVDBin     string
-	Build      AndroidBuild
-	Downloader *CVDDownloader
-	mutex      sync.Mutex
-}
-
-func (s *StageDownloadCVD) Run() error {
+func (s *downloadCVDHandler) Download() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	return s.Downloader.Download(s.CVDBin, s.Build)
-}
-
-type ExecContext = func(name string, arg ...string) *exec.Cmd
-
-const (
-	envVarAndroidHostOut = "ANDROID_HOST_OUT"
-	envVarHome           = "HOME"
-)
-
-type StageStartCVDServer struct {
-	ExecContext ExecContext
-	CVDBin      string
-	mutex       sync.Mutex
-	completed   bool
-}
-
-func (s *StageStartCVDServer) Run() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	if s.completed {
-		return nil
+	if s.result != nil {
+		return s.result.Error
 	}
-	cmd := s.ExecContext(s.CVDBin)
-	cmd.Env = []string{fmt.Sprintf("%s=", envVarAndroidHostOut)}
-	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
-	// file descriptor to the null device (os.DevNull).
-	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
-	// the data of the new process, this pipe will be passed over to `cvd_server`,
-	// which is a daemon, hence the pipe will never reach EOF and Run will never
-	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	err := cmd.Run()
-	if err == nil {
-		s.completed = true
-	}
+	err := s.Dwnlder.Download(s.CVDBin, s.CVDBinAB)
+	s.result = &downloadCVDResult{err}
 	return err
 }
 
-type StageCreateDir struct {
-	Dir         string
-	FailIfExist bool
+type fetchCVDResult struct {
+	OutDir string
+	Error  error
 }
 
-func (s *StageCreateDir) Run() error {
-	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
-	// once b/236976427 is addressed.
-	err := os.Mkdir(s.Dir, 0774)
-	if err != nil && ((s.FailIfExist && os.IsExist(err)) || (!os.IsExist(err))) {
-		return err
+type fetchCVDMapEntry struct {
+	mutex  sync.Mutex
+	result *fetchCVDResult
+}
+
+type fetchCVDHandler struct {
+	execContext  ExecContext
+	cvdBin       string
+	artifactsDir string
+	map_         map[string]*fetchCVDMapEntry
+	mapMutex     sync.Mutex
+}
+
+func newFetchCVDHandler(execContext ExecContext, cvdBin, artifactsDir string) *fetchCVDHandler {
+	return &fetchCVDHandler{
+		execContext:  execContext,
+		cvdBin:       cvdBin,
+		artifactsDir: artifactsDir,
+		map_:         make(map[string]*fetchCVDMapEntry),
 	}
-	// Mkdir set the permission bits (before umask)
-	return os.Chmod(s.Dir, 0774)
 }
 
-type StageFetchCVD struct {
-	ExecContext ExecContext
-	CVDBin      string
-	BuildInfo   apiv1.BuildInfo
-	OutDir      string
-	mutex       sync.Mutex
-	completed   bool
-}
-
-func (s *StageFetchCVD) Run() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	if s.completed {
-		return nil
+func (h *fetchCVDHandler) Fetch(info *apiv1.BuildInfo) (string, error) {
+	entry := h.getMapEntry(info)
+	entry.mutex.Lock()
+	defer entry.mutex.Unlock()
+	if entry.result != nil {
+		return entry.result.OutDir, entry.result.Error
 	}
-	buildArg := fmt.Sprintf("--default_build=%s/%s", s.BuildInfo.BuildID, s.BuildInfo.Target)
-	dirArg := fmt.Sprintf("--directory=%s", s.OutDir)
-	cmd := s.ExecContext(s.CVDBin, "fetch", buildArg, dirArg)
-	cmd.Env = []string{fmt.Sprintf("%s=", envVarAndroidHostOut)}
-	stdoutStderr, err := cmd.CombinedOutput()
-	// NOTE: The stage is only completed when no error occurs. It's ok for this
-	// stage to be retried if an error happened before.
+	// NOTE: The artifacts directory gets created during the execution of `cvd fetch` granting
+	// owners permission to the user executing `cvd` which is relevant when extracting
+	// cvd-host_package.tar.gz.
+	outDir := fmt.Sprintf("%s/%s_%s", h.artifactsDir, info.BuildID, info.Target)
+	buildArg := fmt.Sprintf("--default_build=%s/%s", info.BuildID, info.Target)
+	dirArg := fmt.Sprintf("--directory=%s", outDir)
+	cvdCmd := cvdCommand{
+		execContext:    h.execContext,
+		androidHostOut: "",
+		home:           "",
+		cvdBin:         h.cvdBin,
+		args:           []string{"fetch", buildArg, dirArg},
+	}
+	err := cvdCmd.Run()
 	if err != nil {
-		msg := "`cvd fetch` failed with combined stdout and stderr:\n" +
-			"############################################\n" +
-			"## BEGIN \n" +
-			"############################################\n" +
-			"\n%s\n\n" +
-			"############################################\n" +
-			"## END \n" +
-			"############################################\n"
-		log.Printf(msg, string(stdoutStderr))
-		return fmt.Errorf("fetch cvd stage failed: %w", err)
+		entry.result = &fetchCVDResult{Error: fmt.Errorf("fetch cvd stage failed: %w", err)}
+		return "", err
 	}
-	s.completed = true
-	return nil
+	entry.result = &fetchCVDResult{OutDir: outDir}
+	return outDir, nil
+}
+
+func (h *fetchCVDHandler) getMapEntry(info *apiv1.BuildInfo) *fetchCVDMapEntry {
+	h.mapMutex.Lock()
+	defer h.mapMutex.Unlock()
+	key := fmt.Sprintf("%s_%s", info.BuildID, info.Target)
+	entry := h.map_[key]
+	if entry == nil {
+		entry = &fetchCVDMapEntry{}
+		h.map_[key] = entry
+	}
+	return entry
 }
 
 const (
@@ -306,53 +253,53 @@ const (
 	reportAnonymousUsageStatsArg = "--report_anonymous_usage_stats=y"
 )
 
-type StageLaunchCVD struct {
-	ExecContext    ExecContext
-	CVDBin         string
-	InstanceNumber uint32
-	ArtifactsDir   string
-	HomeDir        string
+type startCVDHandler struct {
+	ExecContext ExecContext
+	CVDBin      string
 }
 
-func (s *StageLaunchCVD) Run() error {
-	instanceNumArg := fmt.Sprintf("--base_instance_num=%d", s.InstanceNumber)
-	imgDirArg := fmt.Sprintf("--system_image_dir=%s", s.ArtifactsDir)
-	cmd := s.ExecContext(s.CVDBin, "start",
-		daemonArg,
-		reportAnonymousUsageStatsArg,
-		instanceNumArg,
-		imgDirArg,
-	)
-	cmd.Env = append(os.Environ(),
-		fmt.Sprintf("%s=%s", envVarAndroidHostOut, s.ArtifactsDir),
-		fmt.Sprintf("%s=%s", envVarHome, s.HomeDir),
-	)
-	stdoutStderr, err := cmd.CombinedOutput()
+func (h *startCVDHandler) Launch(instanceNumber uint32, artifactsDir, homeDir string) error {
+	instanceNumArg := fmt.Sprintf("--base_instance_num=%d", instanceNumber)
+	imgDirArg := fmt.Sprintf("--system_image_dir=%s", artifactsDir)
+	cvdCmd := cvdCommand{
+		execContext:    h.ExecContext,
+		androidHostOut: artifactsDir,
+		home:           homeDir,
+		cvdBin:         h.CVDBin,
+		args:           []string{"start", daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg},
+	}
+	err := cvdCmd.Run()
 	if err != nil {
-		msg := "`cvd start` failed with combined stdout and stderr:\n" +
-			"############################################\n" +
-			"## BEGIN \n" +
-			"############################################\n" +
-			"\n%s\n\n" +
-			"############################################\n" +
-			"## END \n" +
-			"############################################\n"
-		log.Printf(msg, string(stdoutStderr))
 		return fmt.Errorf("launch cvd stage failed: %w", err)
 	}
 	return nil
 }
 
-type CVDDownloader struct {
-	downloader ArtifactDownloader
-	osChmod    func(string, os.FileMode) error
+func createDir(dir string, failIfExist bool) error {
+	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
+	// once b/236976427 is addressed.
+	err := os.Mkdir(dir, 0774)
+	if err != nil && ((failIfExist && os.IsExist(err)) || (!os.IsExist(err))) {
+		return err
+	}
+	// Mkdir set the permission bits (before umask)
+	return os.Chmod(dir, 0774)
 }
 
-func NewCVDDownloader(downloader ArtifactDownloader) *CVDDownloader {
-	return &CVDDownloader{downloader, os.Chmod}
+type CVDDownloader interface {
+	Download(filename string, build AndroidBuild) error
 }
 
-func (h *CVDDownloader) Download(filename string, build AndroidBuild) error {
+type cvdDownloaderImpl struct {
+	ad      ArtifactDownloader
+	osChmod func(string, os.FileMode) error
+}
+
+func NewCVDDownloader(ad ArtifactDownloader) CVDDownloader {
+	return &cvdDownloaderImpl{ad, os.Chmod}
+}
+
+func (h *cvdDownloaderImpl) Download(filename string, build AndroidBuild) error {
 	exist, err := fileExist(filename)
 	if err != nil {
 		return err
@@ -365,7 +312,7 @@ func (h *CVDDownloader) Download(filename string, build AndroidBuild) error {
 		return err
 	}
 	defer f.Close()
-	if err := h.downloader.Download(f, build, "cvd"); err != nil {
+	if err := h.ad.Download(f, build, "cvd"); err != nil {
 		if removeErr := os.Remove(filename); err != nil {
 			return fmt.Errorf("%w; %v", err, removeErr)
 		}
@@ -464,4 +411,65 @@ func fileExist(name string) (bool, error) {
 	} else {
 		return false, err
 	}
+}
+
+const (
+	cvdUser              = "_cvd-executor"
+	envVarAndroidHostOut = "ANDROID_HOST_OUT"
+	envVarHome           = "HOME"
+)
+
+type cvdCommand struct {
+	execContext    ExecContext
+	androidHostOut string
+	home           string
+	cvdBin         string
+	args           []string
+}
+
+func (c *cvdCommand) Run() error {
+	// Makes sure cvd server daemon is running before executing the cvd command.
+	if err := c.startCVDServer(); err != nil {
+		return err
+	}
+	cmd := buildCvdCommand(c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		msg := "`cvd` execution failed with combined stdout and stderr:\n" +
+			"############################################\n" +
+			"## BEGIN \n" +
+			"############################################\n" +
+			"\n%s\n\n" +
+			"############################################\n" +
+			"## END \n" +
+			"############################################\n"
+		log.Printf(msg, string(stdoutStderr))
+		return fmt.Errorf("cvd execution failed: %w", err)
+	}
+	return nil
+}
+
+func (c *cvdCommand) startCVDServer() error {
+	cmd := buildCvdCommand(c.execContext, "", "", c.cvdBin)
+	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
+	// file descriptor to the null device (os.DevNull).
+	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
+	// the data of the new process, this pipe will be passed over to `cvd_server`,
+	// which is a daemon, hence the pipe will never reach EOF and Run will never
+	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}
+
+func buildCvdCommand(execContext ExecContext,
+	androidHostOut string, home string,
+	cvdBin string, args ...string) *exec.Cmd {
+	finalArgs := []string{"-u", cvdUser,
+		envVarAndroidHostOut + "=" + androidHostOut,
+		envVarHome + "=" + home,
+		cvdBin,
+	}
+	finalArgs = append(finalArgs, args...)
+	return execContext("sudo", finalArgs...)
 }

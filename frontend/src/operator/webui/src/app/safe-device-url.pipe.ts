@@ -1,5 +1,5 @@
 import {Pipe, PipeTransform} from '@angular/core';
-import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
+import {DomSanitizer} from '@angular/platform-browser';
 
 @Pipe({
   name: 'safedeviceurl',
@@ -7,9 +7,10 @@ import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
 export class SafeDeviceUrlPipe implements PipeTransform {
   constructor(private sanitizer: DomSanitizer) {}
 
-  transform(deviceId: string): SafeResourceUrl {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(
-      `/devices/${deviceId}/files/client.html`
-    );
+  transform(deviceId: string) {
+    /* eslint-disable */
+    // DO NOT FORMAT THIS LINE
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`/devices/${deviceId}/files/client.html`);
+    /* eslint-enable */
   }
 }

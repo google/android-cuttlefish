@@ -16,8 +16,11 @@ package orchestrator
 
 import (
 	"errors"
+	"sync"
 	"testing"
 	"time"
+
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
 func TestMapOMNewOperation(t *testing.T) {
@@ -31,8 +34,8 @@ func TestMapOMNewOperation(t *testing.T) {
 	if op.Done {
 		t.Error("expected false")
 	}
-	if (op.Result != OperationResult{}) {
-		t.Error("expected empty result")
+	if op.Result != nil {
+		t.Errorf("expected <<nil>>, got %+v", op.Result)
 	}
 }
 
@@ -74,7 +77,7 @@ func TestMapOMGetOperation(t *testing.T) {
 				t.Errorf("error type <<\"%T\">> not found in error chain", notFoundError)
 			}
 		}
-		if (op != Operation{}) {
+		if (op != apiv1.Operation{}) {
 			t.Errorf("expected zero value %T", op)
 		}
 	})
@@ -84,8 +87,8 @@ func TestMapOMCompleteOperation(t *testing.T) {
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM()
 		newOp := om.New()
-		result := OperationResult{
-			Error: OperationResultError{"error"},
+		result := apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{Error: "error"},
 		}
 
 		err := om.Complete(newOp.Name, result)
@@ -100,15 +103,15 @@ func TestMapOMCompleteOperation(t *testing.T) {
 		if !op.Done {
 			t.Error("expected true")
 		}
-		if op.Result != result {
-			t.Errorf("expected <<%+v>>, got %+v", result, op.Result)
+		if op.Result.Error.Error != result.Error.Error {
+			t.Errorf("expected <<%+v>>, got %+v", result.Error.Error, op.Result.Error.Error)
 		}
 	})
 
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM()
-		result := OperationResult{
-			Error: OperationResultError{"error"},
+		result := apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{"error"},
 		}
 
 		err := om.Complete("foo", result)
@@ -120,125 +123,84 @@ func TestMapOMCompleteOperation(t *testing.T) {
 }
 
 func TestMapOMWaitOperation(t *testing.T) {
-	result := OperationResult{
-		Error: OperationResultError{"error"},
+	dt := 1 * time.Second
+	result := apiv1.OperationResult{
+		Error: &apiv1.ErrorMsg{"error"},
 	}
 
 	t.Run("operation was completed", func(t *testing.T) {
+		var wg sync.WaitGroup
 		om := NewMapOM()
 		newOp := om.New()
+		// Testing more than one Wait call at the same time.
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				start := time.Now()
+				op, err := om.Wait(newOp.Name, dt)
+				duration := time.Since(start)
+
+				if err != nil {
+					t.Errorf("expected nil error, got %+v", err)
+				}
+				if duration >= dt {
+					t.Error("reached the wait deadline")
+				}
+				expectedOp, _ := om.Get(newOp.Name)
+				if op != expectedOp {
+					t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+				}
+			}()
+		}
 		om.Complete(newOp.Name, result)
-
-		op, err, timeout := om.waitForOperation(newOp.Name, 1*time.Second)
-
-		if timeout {
-			t.Error("expected to stop waiting as operation was completed")
-		}
-		if err != nil {
-			t.Errorf("expected nil error, got %+v", err)
-		}
-		expectedOp, _ := om.Get(newOp.Name)
-		if op != expectedOp {
-			t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
-		}
+		wg.Wait()
 	})
 
-	t.Run("operation is not completed", func(t *testing.T) {
+	t.Run("operation is not completed and deadline is reached", func(t *testing.T) {
+		var wg sync.WaitGroup
 		om := NewMapOM()
 		newOp := om.New()
+		// Testing more than one Wait call at the same time.
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
 
-		op, err, timeout := om.waitForOperation(newOp.Name, 1*time.Second)
+				start := time.Now()
+				op, err := om.Wait(newOp.Name, dt)
+				duration := time.Since(start)
 
-		if !timeout {
-			t.Error("expected to continue waiting as operation has not been completed yet")
+				if duration < dt {
+					t.Error("wait deadline was not reached")
+				}
+				if timedOutErr, ok := err.(*OperationWaitTimeoutError); !ok {
+					t.Errorf("expected <<%T>>, got %T", timedOutErr, err)
+				}
+				if (op != apiv1.Operation{}) {
+					t.Error("expected empty operation")
+				}
+			}()
 		}
-		if err != nil {
-			t.Errorf("expected nil error, got %+v", err)
-		}
-		if (op != Operation{}) {
-			t.Errorf("expected zero value %T", op)
-		}
+		wg.Wait()
 	})
 
 	t.Run("operation does not exist", func(t *testing.T) {
 		om := NewMapOM()
 
-		op, err, timeout := om.waitForOperation("foo", 1*time.Second)
+		start := time.Now()
+		op, err := om.Wait("foo", dt)
+		duration := time.Since(start)
 
-		if timeout {
-			t.Error("expected to never wait as operation did not exist")
+		if duration >= dt {
+			t.Error("reached the wait deadline")
 		}
-		if err == nil {
-			t.Error("expected non nil error")
+		if notFoundErr, ok := err.(NotFoundOperationError); !ok {
+			t.Errorf("expected <<%T>>, got %T", notFoundErr, err)
 		}
-		if (op != Operation{}) {
+		if (op != apiv1.Operation{}) {
 			t.Error("expected empty operation")
 		}
 	})
-}
-
-func TestOperationIsError(t *testing.T) {
-	var tests = []struct {
-		op    Operation
-		isErr bool
-	}{
-		{
-			op: Operation{
-				Name: "operation-1",
-				Done: false,
-				Result: OperationResult{
-					Error: OperationResultError{"error"},
-				},
-			},
-			isErr: false,
-		},
-		{
-			op: Operation{
-				Name:   "operation-1",
-				Done:   true,
-				Result: OperationResult{},
-			},
-			isErr: false,
-		},
-		{
-			op: Operation{
-				Name: "operation-1",
-				Done: true,
-				Result: OperationResult{
-					Error: OperationResultError{"error"},
-				},
-			},
-			isErr: true,
-		},
-	}
-
-	for _, test := range tests {
-		isErr := test.op.IsError()
-
-		if isErr != test.isErr {
-			t.Errorf("expected <<%v>>, got %v for operation %+v", test.isErr, isErr, test.op)
-		}
-	}
-}
-
-func (om *MapOM) waitForOperation(name string, duration time.Duration) (Operation, error, bool /*timeout hit*/) {
-	okCh := make(chan Operation, 1)
-	errCh := make(chan error, 1)
-
-	go func() {
-		if op, err := om.Wait(name); err != nil {
-			errCh <- err
-		} else {
-			okCh <- op
-		}
-	}()
-
-	select {
-	case op := <-okCh:
-		return op, nil, false
-	case err := <-errCh:
-		return Operation{}, err, false
-	case <-time.After(duration):
-		return Operation{}, nil, true
-	}
 }

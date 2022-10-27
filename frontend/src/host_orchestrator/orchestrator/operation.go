@@ -17,6 +17,9 @@ package orchestrator
 import (
 	"fmt"
 	"sync"
+	"time"
+
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/google/uuid"
 )
@@ -27,35 +30,26 @@ func (s NotFoundOperationError) Error() string {
 	return fmt.Sprintf("operation not found: %s", string(s))
 }
 
-type Operation struct {
-	Name   string
-	Done   bool
-	Result OperationResult
-}
+type OperationWaitTimeoutError struct{}
 
-type OperationResult struct {
-	Error OperationResultError
-}
-
-type OperationResultError struct {
-	ErrorMsg string
-}
+func (s OperationWaitTimeoutError) Error() string { return "waiting for operation timed out" }
 
 type OperationManager interface {
-	New() Operation
+	New() apiv1.Operation
 
-	Get(string) (Operation, error)
+	Get(name string) (apiv1.Operation, error)
 
-	Complete(string, OperationResult) error
+	Complete(name string, result apiv1.OperationResult) error
 
-	// TODO(b/231319087) This should handle timeout.
-	Wait(string) (Operation, error)
+	// Waits for the specified operation to be DONE within the passed deadline. If the deadline
+	// is reached `OperationWaitTimeoutError` will be returned.
+	Wait(name string, dt time.Duration) (apiv1.Operation, error)
 }
 
 type mapOMOperationEntry struct {
-	data      Operation
-	mutex     sync.RWMutex
-	waitGroup sync.WaitGroup
+	data  apiv1.Operation
+	mutex sync.RWMutex
+	done  chan struct{}
 }
 
 type MapOM struct {
@@ -74,7 +68,7 @@ func NewMapOM() *MapOM {
 
 const mapOMNewUUIDRetryLimit = 100
 
-func (m *MapOM) New() Operation {
+func (m *MapOM) New() apiv1.Operation {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	name, retryCount := m.uuidFactory(), 0
@@ -87,23 +81,21 @@ func (m *MapOM) New() Operation {
 		panic("uuid retry limit reached")
 	}
 	entry := &mapOMOperationEntry{
-		data: Operation{
-			Name:   name,
-			Done:   false,
-			Result: OperationResult{},
+		data: apiv1.Operation{
+			Name: name,
+			Done: false,
 		},
-		mutex:     sync.RWMutex{},
-		waitGroup: sync.WaitGroup{},
+		mutex: sync.RWMutex{},
+		done:  make(chan struct{}),
 	}
-	entry.waitGroup.Add(1)
 	m.operations[name] = entry
 	return entry.data
 }
 
-func (m *MapOM) Get(name string) (Operation, error) {
+func (m *MapOM) Get(name string) (apiv1.Operation, error) {
 	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		return Operation{}, NotFoundOperationError("map key didn't exist")
+		return apiv1.Operation{}, NotFoundOperationError("map key didn't exist")
 	}
 	entry.mutex.RLock()
 	op := entry.data
@@ -111,29 +103,33 @@ func (m *MapOM) Get(name string) (Operation, error) {
 	return op, nil
 }
 
-func (m *MapOM) Complete(name string, result OperationResult) error {
+func (m *MapOM) Complete(name string, result apiv1.OperationResult) error {
 	op, ok := m.getOperationEntry(name)
 	if !ok {
 		return fmt.Errorf("attempting to complete an operation which does not exist")
 	}
 	op.mutex.Lock()
 	defer op.mutex.Unlock()
-	op.waitGroup.Done()
 	op.data.Done = true
-	op.data.Result = result
+	op.data.Result = &result
+	close(op.done)
 	return nil
 }
 
-func (m *MapOM) Wait(name string) (Operation, error) {
+func (m *MapOM) Wait(name string, dt time.Duration) (apiv1.Operation, error) {
 	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		return Operation{}, NotFoundOperationError("map key didn't exist")
+		return apiv1.Operation{}, NotFoundOperationError("map key didn't exist")
 	}
-	entry.waitGroup.Wait()
-	entry.mutex.RLock()
-	op := entry.data
-	entry.mutex.RUnlock()
-	return op, nil
+	select {
+	case <-entry.done:
+		entry.mutex.RLock()
+		op := entry.data
+		entry.mutex.RUnlock()
+		return op, nil
+	case <-time.After(time.Duration(dt)):
+		return apiv1.Operation{}, new(OperationWaitTimeoutError)
+	}
 }
 
 func (m *MapOM) getOperationEntry(name string) (*mapOMOperationEntry, bool) {
@@ -141,8 +137,4 @@ func (m *MapOM) getOperationEntry(name string) (*mapOMOperationEntry, bool) {
 	defer m.mutex.RUnlock()
 	op, ok := m.operations[name]
 	return op, ok
-}
-
-func (d *Operation) IsError() bool {
-	return d.Done && (d.Result.Error != OperationResultError{})
 }

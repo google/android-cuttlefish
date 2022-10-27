@@ -87,10 +87,24 @@ type Operation struct {
 }
 
 type OperationResult struct {
+	// The error result of the operation in case of failure or cancellation.
 	Error *ErrorMsg `json:"error,omitempty"`
+	// The expected response of the operation in case of success.  If the original
+	// method returns no data on success, such as `Delete`, this field will be
+	// empty, hence omitted. If the original method is standard:
+	// `Get`/`Create`/`Update`, the response should be the relevant resource.
+	Response interface{} `json:"response,omitempty"`
+}
+
+// The cuttlefish virtual device resource.
+type CVD struct {
+	// [REQUIRED]
+	Name string `json:"name"`
+	// [REQUIRED]
+	BuildInfo *BuildInfo `json:"build_info"`
 }
 
 type DeviceInfoReply struct {
-	DeviceId string `json:"device_id"`
+	DeviceId         string      `json:"device_id"`
 	RegistrationInfo interface{} `json:"registration_info"`
 }
