@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include <iostream>
-#include <memory>
 #include <sstream>
 
 #include <android-base/file.h>
@@ -27,6 +26,7 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/host_tools_version.h"
 
@@ -188,37 +188,6 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
 Result<void> CvdClient::HandleCommand(
     std::vector<std::string> args, std::vector<std::string> env,
     const std::vector<std::string>& selector_args) {
-  cvd::Request request;
-  auto command_request = request.mutable_command_request();
-  for (const std::string& arg : args) {
-    command_request->add_args(arg);
-  }
-  auto selector_opts = command_request->mutable_selector_opts();
-  for (const std::string& selector_arg : selector_args) {
-    selector_opts->add_args(selector_arg);
-  }
-
-  for (const std::string& e : env) {
-    auto eq_pos = e.find('=');
-    if (eq_pos == std::string::npos) {
-      LOG(WARNING) << "Environment var in unknown format: " << e;
-      continue;
-    }
-    const auto key = e.substr(0, eq_pos);
-    const auto value = e.substr(eq_pos + 1);
-    (*command_request->mutable_env())[key] = value;
-  }
-  const auto& immutable_env = command_request->env();
-  if (immutable_env.find("ANDROID_HOST_OUT") == immutable_env.end()) {
-    // see b/254418863
-    (*command_request->mutable_env())["ANDROID_HOST_OUT"] =
-        android::base::Dirname(android::base::GetExecutableDirectory());
-  }
-
-  std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
-  command_request->set_working_directory(cwd.get());
-  command_request->set_wait_behavior(cvd::WAIT_BEHAVIOR_COMPLETE);
-
   std::optional<SharedFD> exe_fd;
   if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
       args[1] == "restart-server" && args[2] == "match-client") {
@@ -228,6 +197,9 @@ Result<void> CvdClient::HandleCommand(
                                                        << (*exe_fd)->StrError()
                                                        << "\"");
   }
+  cvd::Request request = MakeRequest(
+      {.cmd_args = args, .env = env, .selector_args = selector_args},
+      cvd::WAIT_BEHAVIOR_COMPLETE);
   auto response = CF_EXPECT(SendRequest(request, exe_fd));
   CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
   CF_EXPECT(response.has_command_response(),
