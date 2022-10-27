@@ -54,18 +54,6 @@ class SelectorFlagsParser {
  public:
   static Result<SelectorFlagsParser> ConductSelectFlagsParser(
       const std::vector<std::string>& args);
-  /*
-   * Note: name may or may not be valid. A name could be a
-   * group name or a device name or an instance name, depending
-   * on the context: i.e. the operation.
-   *
-   * Here, we only check if the name is a qualified token in
-   * terms of lexing rules.
-   *
-   * This does not return CF_ERR only if all args_ can be legitimately
-   * consumed.
-   */
-  std::optional<std::vector<std::string>> Names() const;
   std::optional<std::string> GroupName() const;
   std::optional<std::vector<std::string>> PerInstanceNames() const;
   const auto& SubstringQueries() const { return substring_queries_; }
@@ -73,12 +61,19 @@ class SelectorFlagsParser {
  private:
   SelectorFlagsParser(const std::vector<std::string>& args);
 
+  /*
+   * Note: name may or may not be valid. A name could be a
+   * group name or a device name or an instance name, depending
+   * on the context: i.e. the operation.
+   *
+   * This succeeds only if all selector arguments can be legitimately
+   * consumed.
+   */
   Result<void> ParseOptions();
 
   bool IsValidName(const std::string& name) const;
   Result<std::unordered_set<std::string>> FindSubstringsToMatch();
   struct ParsedNameFlags {
-    std::optional<std::vector<std::string>> names;
     std::optional<std::string> group_name;
     std::optional<std::vector<std::string>> instance_names;
   };
@@ -108,10 +103,6 @@ class SelectorFlagsParser {
   Result<std::string> HandleGroupName(
       const std::optional<std::string>& group_name) const;
 
-  // Note that --name could be either group_name, device_name, or
-  // instance name depending on the context/operation.
-  // Thus, we defer the decision.
-  std::optional<std::vector<std::string>> names_;
   std::optional<std::string> group_name_;
   std::optional<std::vector<std::string>> instance_names_;
   std::unordered_set<std::string> substring_queries_;
