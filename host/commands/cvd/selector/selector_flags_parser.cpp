@@ -35,10 +35,6 @@ Result<SelectorFlagsParser> SelectorFlagsParser::ConductSelectFlagsParser(
 SelectorFlagsParser::SelectorFlagsParser(const std::vector<std::string>& args)
     : args_(args) {}
 
-std::optional<std::vector<std::string>> SelectorFlagsParser::Names() const {
-  return names_;
-}
-
 std::optional<std::string> SelectorFlagsParser::GroupName() const {
   return group_name_;
 }
@@ -58,23 +54,33 @@ Result<SelectorFlagsParser::ParsedNameFlags> SelectorFlagsParser::HandleNames(
   if (IsValidDeviceName(*name_list.cbegin())) {
     auto device_names_pair = CF_EXPECT(HandleDeviceNames(names));
     return {ParsedNameFlags{
-        .names = std::nullopt,
         .group_name = std::move(device_names_pair.group_name),
         .instance_names = std::move(device_names_pair.instance_names)}};
   }
 
+  // they must be either group names or per-instance names
   for (const auto& name : name_list) {
-    if (!IsValidDeviceName(name)) {
+    if (!IsValidGroupName(name)) {
       return {ParsedNameFlags{
-          .names = std::nullopt,
           .group_name = std::nullopt,
           .instance_names = std::move(CF_EXPECT(HandleInstanceNames(names)))}};
     }
   }
 
-  return {ParsedNameFlags{.names = std::move(name_list),
-                          .group_name = std::nullopt,
-                          .instance_names = std::nullopt}};
+  // all of the names are either group name or instance name
+  // However, the number of group names must be 1.
+  if (name_list.size() > 1) {
+    return {ParsedNameFlags{
+        .group_name = std::nullopt,
+        .instance_names = std::move(CF_EXPECT(HandleInstanceNames(names)))}};
+  }
+
+  // Now, we have one token that we don't know if this is name or group
+  // However, historically, this should be meant to a group name
+  auto sole_element = *(name_list.cbegin());
+  return {
+      ParsedNameFlags{.group_name = CF_EXPECT(HandleGroupName(sole_element)),
+                      .instance_names = std::nullopt}};
 }
 
 Result<std::vector<std::string>> SelectorFlagsParser::HandleInstanceNames(
@@ -141,7 +147,6 @@ SelectorFlagsParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
   if (device_names) {
     auto device_names_pair = CF_EXPECT(HandleDeviceNames(device_names));
     return {ParsedNameFlags{
-        .names = std::nullopt,
         .group_name = std::move(device_names_pair.group_name),
         .instance_names = std::move(device_names_pair.instance_names)}};
   }
@@ -162,8 +167,7 @@ SelectorFlagsParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
         std::move(CF_EXPECT(HandleInstanceNames(instance_names)));
   }
   return {ParsedNameFlags{.group_name = std::move(group_name_output),
-                          .instance_names = std::move(instance_names_output),
-                          .names = std::nullopt}};
+                          .instance_names = std::move(instance_names_output)}};
 }
 
 Result<void> SelectorFlagsParser::ParseOptions() {
@@ -194,7 +198,6 @@ Result<void> SelectorFlagsParser::ParseOptions() {
       .instance_names = key_optional_map[kInstanceNameOpt]};
   auto parsed_name_flags = CF_EXPECT(HandleNameOpts(name_flags_param));
   group_name_ = parsed_name_flags.group_name;
-  names_ = parsed_name_flags.names;
   instance_names_ = parsed_name_flags.instance_names;
 
   if (args_.empty()) {
