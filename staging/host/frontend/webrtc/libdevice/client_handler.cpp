@@ -828,18 +828,15 @@ void ClientHandler::OnCreateSDPSuccess(
   reply["type"] = sdp_type;
   reply["sdp"] = offer_str;
 
-  state_ = State::kAwaitingAnswer;
   send_to_client_(reply);
 }
 
 void ClientHandler::OnCreateSDPFailure(webrtc::RTCError error) {
-  state_ = State::kFailed;
   LogAndReplyError(error.message());
   Close();
 }
 
 void ClientHandler::OnSetSDPFailure(webrtc::RTCError error) {
-  state_ = State::kFailed;
   LogAndReplyError(error.message());
   LOG(ERROR) << "Error setting local description: Either there is a bug in "
                 "libwebrtc or the local description was (incorrectly) modified "
@@ -848,10 +845,6 @@ void ClientHandler::OnSetSDPFailure(webrtc::RTCError error) {
 }
 
 Result<void> ClientHandler::CreateOffer() {
-  // An offer may have been requested already
-  CF_EXPECT(state_ != State::kCreatingOffer,
-            "Multiple requests for offer received from single client");
-  state_ = State::kCreatingOffer;
   peer_connection_->CreateOffer(
       // No memory leak here because this is a ref counted object and the
       // peer connection immediately wraps it with a scoped_refptr
@@ -866,11 +859,9 @@ Result<void> ClientHandler::CreateOffer() {
 Result<void> ClientHandler::OnOfferRequestMsg(
     const std::vector<webrtc::PeerConnectionInterface::IceServer>
         &ice_servers) {
-  if (state_ == State::kNew) {
-    // The peer connection must be created on the first request-offer
-    CF_EXPECT(BuildPeerConnection(ice_servers), "Failed to create peer connection");
-  }
-  return CreateOffer();
+  // The peer connection must be created on the first request-offer
+  CF_EXPECT(BuildPeerConnection(ice_servers), "Failed to create peer connection");
+  return {};
 }
 
 Result<void> ClientHandler::OnOfferMsg(
@@ -895,14 +886,11 @@ Result<void> ClientHandler::OnOfferMsg(
                 webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
           }));
   peer_connection_->SetRemoteDescription(std::move(offer), observer);
-  state_ = State::kConnecting;
   return {};
 }
 
 Result<void> ClientHandler::OnAnswerMsg(
     std::unique_ptr<webrtc::SessionDescriptionInterface> answer) {
-  CF_EXPECT(state_ == State::kAwaitingAnswer, "Received unexpected SDP answer");
-
   rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
       new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
           [this](webrtc::RTCError error) {
@@ -916,7 +904,6 @@ Result<void> ClientHandler::OnAnswerMsg(
   peer_connection_->SetRemoteDescription(std::move(answer), observer);
   remote_description_added_ = true;
   AddPendingIceCandidates();
-  state_ = State::kConnecting;
   return {};
 }
 
@@ -973,7 +960,6 @@ void ClientHandler::OnConnectionChange(
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
-      state_ = State::kConnected;
       observer_->OnConnected(
           [this](const uint8_t *msg, size_t size, bool binary) {
             control_handler_->Send(msg, size, binary);
@@ -1107,7 +1093,6 @@ void ClientHandler::OnStandardizedIceConnectionChange(
       LOG(DEBUG) << "ICE connection state: Completed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionFailed:
-      state_ = State::kFailed;
       LOG(DEBUG) << "ICE connection state: Failed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionDisconnected:
