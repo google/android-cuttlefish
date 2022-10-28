@@ -25,9 +25,11 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.IRunUtil;
 import com.android.tradefed.util.RunUtil;
+import com.google.common.collect.Iterables;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -71,9 +73,15 @@ public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
     }
 
     @Override
-    public CommandResult run(long timeout, String... command) {
+    public CommandResult run(long timeout, String... originalCommand) {
+        // Note: IRunUtil has setEnvVariable() but that ends up setting the environment
+        // variable for the ssh command and not the environment variable on the ssh target.
+        List<String> command = new ArrayList<>(Arrays.asList(originalCommand));
+        command.add(0, String.format("HOME=%s", this.basePath));
+        String[] commandArray = Iterables.toArray(command, String.class);
+
         return RemoteSshUtil.remoteSshCommandExec(
-                testDeviceAvdInfo, testDeviceOptions, runUtil, timeout, command);
+                testDeviceAvdInfo, testDeviceOptions, runUtil, timeout, commandArray);
     }
 
     @Override
