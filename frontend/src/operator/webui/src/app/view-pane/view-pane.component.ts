@@ -10,12 +10,14 @@ import {
 import {DisplaysService} from '../displays.service';
 import {
   BehaviorSubject,
-  debounceTime,
-  filter,
   fromEvent,
   merge,
   Subscription,
 } from 'rxjs';
+import {
+  debounceTime,
+  filter,
+} from 'rxjs/operators';
 import {
   KtdDragEnd,
   KtdDragStart,
