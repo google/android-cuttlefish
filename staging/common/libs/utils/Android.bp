@@ -63,12 +63,14 @@ cc_test_host {
     name: "libcuttlefish_utils_test",
     srcs: [
         "flag_parser_test.cpp",
+        "result_test.cpp",
         "unix_sockets_test.cpp",
     ],
     static_libs: [
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libgmock",
     ],
     shared_libs: [
         "libcrypto",
