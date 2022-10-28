@@ -282,4 +282,47 @@ auto ErrorFromType(Result<T>&& value) {
 #define CF_EXPECT(...) \
   CF_EXPECT_OVERLOAD(__VA_ARGS__, CF_EXPECT2, CF_EXPECT1)(__VA_ARGS__)
 
+#define CF_COMPARE_EXPECT4(COMPARE_OP, LHS_RESULT, RHS_RESULT, MSG)         \
+  ({                                                                        \
+    decltype(LHS_RESULT)&& lhs_macro_intermediate_result = LHS_RESULT;      \
+    decltype(RHS_RESULT)&& rhs_macro_intermediate_result = RHS_RESULT;      \
+    bool comparison_result = lhs_macro_intermediate_result COMPARE_OP       \
+        rhs_macro_intermediate_result;                                      \
+    if (!comparison_result) {                                               \
+      auto current_entry = CF_STACK_TRACE_ENTRY("");                        \
+      current_entry << "Expected \"" << #LHS_RESULT << "\" " << #COMPARE_OP \
+                    << " \"" << #RHS_RESULT << "\" but was "                \
+                    << lhs_macro_intermediate_result << " vs "              \
+                    << rhs_macro_intermediate_result << ".";                \
+      current_entry << MSG;                                                 \
+      auto error = ErrorFromType(false);                                    \
+      error.PushEntry(std::move(current_entry));                            \
+      return error;                                                         \
+    };                                                                      \
+    comparison_result;                                                      \
+  })
+
+#define CF_COMPARE_EXPECT3(COMPARE_OP, LHS_RESULT, RHS_RESULT) \
+  CF_COMPARE_EXPECT4(COMPARE_OP, LHS_RESULT, RHS_RESULT, "")
+
+#define CF_COMPARE_EXPECT_OVERLOAD(_1, _2, _3, _4, NAME, ...) NAME
+
+#define CF_COMPARE_EXPECT(...)                                \
+  CF_COMPARE_EXPECT_OVERLOAD(__VA_ARGS__, CF_COMPARE_EXPECT4, \
+                             CF_COMPARE_EXPECT3)              \
+  (__VA_ARGS__)
+
+#define CF_EXPECT_EQ(LHS_RESULT, RHS_RESULT, ...) \
+  CF_COMPARE_EXPECT(==, LHS_RESULT, RHS_RESULT, ##__VA_ARGS__)
+#define CF_EXPECT_NE(LHS_RESULT, RHS_RESULT, ...) \
+  CF_COMPARE_EXPECT(!=, LHS_RESULT, RHS_RESULT, ##__VA_ARGS__)
+#define CF_EXPECT_LE(LHS_RESULT, RHS_RESULT, ...) \
+  CF_COMPARE_EXPECT(<=, LHS_RESULT, RHS_RESULT, ##__VA_ARGS__)
+#define CF_EXPECT_LT(LHS_RESULT, RHS_RESULT, ...) \
+  CF_COMPARE_EXPECT(<, LHS_RESULT, RHS_RESULT, ##__VA_ARGS__)
+#define CF_EXPECT_GE(LHS_RESULT, RHS_RESULT, ...) \
+  CF_COMPARE_EXPECT(>=, LHS_RESULT, RHS_RESULT, ##__VA_ARGS__)
+#define CF_EXPECT_GT(LHS_RESULT, RHS_RESULT, ...) \
+  CF_COMPARE_EXPECT(>, LHS_RESULT, RHS_RESULT, ##__VA_ARGS__)
+
 }  // namespace cuttlefish
