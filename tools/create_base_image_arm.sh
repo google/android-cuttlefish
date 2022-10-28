@@ -158,23 +158,30 @@ if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
 	sudo partx -v --add ${device}
 	sudo resize2fs ${devicep}7 >/dev/null 2>&1
 else
-	device=$(sudo losetup -f)
-	devicep=${device}p
-
-	# Set up loop device for whole disk image
-	sudo losetup -P ${device} ${IMAGE}
-
 	# Minimize rootfs filesystem
-	sudo e2fsck -fy ${devicep}7 >/dev/null 2>&1
+	rootfs_partition_start=$(partx -g -o START -s -n 7 "${IMAGE}" | xargs)
+	rootfs_partition_end=$(partx -g -o END -s -n 7 "${IMAGE}" | xargs)
+	rootfs_partition_num_sectors=$((${rootfs_partition_end} - ${rootfs_partition_start} + 1))
+	rootfs_partition_offset=$((${rootfs_partition_start} * 512))
+	rootfs_partition_size=$((${rootfs_partition_num_sectors} * 512))
+	e2fsck -fy ${IMAGE}?offset=${rootfs_partition_offset} >/dev/null 2>&1
+	imagesize=`stat -c %s "${IMAGE}"`
+	loopdev_rootfs="$(sudo losetup -f)"
+	sudo losetup --offset ${rootfs_partition_offset} --sizelimit ${rootfs_partition_size} "${loopdev_rootfs}" "${IMAGE}"
 	while true; do
-		out=`sudo resize2fs -M ${devicep}7 2>&1`
+		out=`sudo resize2fs -M ${loopdev_rootfs} 2>&1`
 		if [[ $out =~ "Nothing to do" ]]; then
 			break
 		fi
 	done
+	sudo losetup -d ${loopdev_rootfs}
+	truncate -s "${imagesize}" "${IMAGE}"
+	sgdisk -e "${IMAGE}"
+	e2fsck -fy ${IMAGE}?offset=${rootfs_partition_offset} || true
+
 	# Minimize rootfs file size
-	block_count=`sudo tune2fs -l ${devicep}7 | grep "Block count:" | sed 's/.*: *//'`
-	block_size=`sudo tune2fs -l ${devicep}7 | grep "Block size:" | sed 's/.*: *//'`
+	block_count=`tune2fs -l ${IMAGE}?offset=${rootfs_partition_offset} | grep "Block count:" | sed 's/.*: *//'`
+	block_size=`tune2fs -l ${IMAGE}?offset=${rootfs_partition_offset} | grep "Block size:" | sed 's/.*: *//'`
 	sector_size=512
 	start_sector=`partx -g -o START -s -n 7 "${IMAGE}" | xargs`
 	fs_size=$(( block_count*block_size ))
@@ -186,29 +193,42 @@ else
 	image_size=$(( part_sectors*sector_size ))
 
         # Disable ext3/4 journal for flashing to SD-Card
-	sudo tune2fs -O ^has_journal ${devicep}7
-	sudo e2fsck -fy ${devicep}7 >/dev/null 2>&1
+	tune2fs -O ^has_journal ${IMAGE}?offset=${rootfs_partition_offset}
+	e2fsck -fy ${IMAGE}?offset=${rootfs_partition_offset} >/dev/null 2>&1
 
 	# Update partition table
-	sudo sgdisk --delete=7 ${device}
-	sudo sgdisk --new=7:145M:${end_sector} --typecode=7:8305 --change-name=7:rootfs --attributes=7:set:2 ${device}
+	sgdisk --delete=7 ${IMAGE}
+	sgdisk --new=7:145M:${end_sector} --typecode=7:8305 --change-name=7:rootfs --attributes=7:set:2 ${IMAGE}
 fi
 
 # idbloader
-sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
+if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
+	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
+else
+	idbloader_partition_start=$(partx -g -o START -s -n 1 "${IMAGE}" | xargs)
+	dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of="${IMAGE}" bs=512 seek=${idbloader_partition_start} conv=fsync,notrunc
+fi
 # prebuilt
 # sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
 
 # uboot_env
-sudo dd if=${bootenv} of=${devicep}2 conv=fsync
-
+if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
+	sudo dd if=${bootenv} of=${devicep}2 conv=fsync
+else
+	ubootenv_partition_start=$(partx -g -o START -s -n 2 "${IMAGE}" | xargs)
+	dd if=${bootenv} of="${IMAGE}" bs=512 seek=${ubootenv_partition_start} conv=fsync,notrunc
+fi
 # uboot
-sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
+if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
+	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
+else
+	uboot_partition_start=$(partx -g -o START -s -n 3 "${IMAGE}" | xargs)
+	dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of="${IMAGE}" bs=512 seek=${uboot_partition_start} conv=fsync,notrunc
+fi
 # prebuilt
 # sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
 
 if [ ${WRITE_TO_IMAGE} -eq 1 ]; then
-	sudo losetup -d ${device}
 	truncate -s ${fs_end} ${IMAGE}
 	sgdisk --move-second-header ${IMAGE}
 	mv -f ${IMAGE} ${OUTPUT_IMAGE}
