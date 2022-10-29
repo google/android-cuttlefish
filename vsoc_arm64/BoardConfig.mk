@@ -34,8 +34,12 @@ TARGET_2ND_CPU_ABI2 := armeabi
 TARGET_2ND_CPU_VARIANT := cortex-a53
 TARGET_TRANSLATE_2ND_ARCH := false
 
+KERNEL_MODULES_PATH := kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(TARGET_ARCH)
+
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/arm64/*.ko)
+  BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(patsubst %, $(KERNEL_MODULES_PATH)/%, $(RAMDISK_KERNEL_MODULES))
+  ALL_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/*.ko)
+  BOARD_VENDOR_KERNEL_MODULES := $(filter-out $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),$(ALL_KERNEL_MODULES))
 endif
 
 HOST_CROSS_OS := linux_bionic
