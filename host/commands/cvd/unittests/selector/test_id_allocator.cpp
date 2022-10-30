@@ -13,17 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/cvd/unittests/selector/id_allocator_test_helper.h"
+
 #include <memory>
 #include <unordered_set>
-#include <vector>
-
-#include <gtest/gtest.h>
 
 #include "host/commands/cvd/selector/unique_resource_allocator.h"
 
 namespace cuttlefish::selector {
-
-class OneEachTest : public testing::TestWithParam<std::vector<unsigned>> {};
 
 TEST_P(OneEachTest, GetAnyAvailableOne) {
   const auto resources = GetParam();
@@ -43,8 +40,6 @@ INSTANTIATE_TEST_SUITE_P(
     CvdIdAllocator, OneEachTest,
     testing::Values(std::vector<unsigned>{}, std::vector<unsigned>{1},
                     std::vector<unsigned>{1, 22, 3, 43, 5}));
-
-class CvdIdAllocatorTest : public testing::Test {};
 
 TEST_F(CvdIdAllocatorTest, ClaimAll) {
   std::vector<unsigned> inputs{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -116,25 +111,6 @@ TEST_F(CvdIdAllocatorTest, TakeRange) {
   ASSERT_FALSE(allocator.TakeRange(2, 4));
 }
 
-class ReclaimTest : public testing::TestWithParam<std::vector<unsigned>> {};
-
-TEST_P(ReclaimTest, Reclaim) {
-  const auto inputs{GetParam()};
-  auto allocator = UniqueResourceAllocator<unsigned>::New(inputs);
-  if (!allocator.TakeAll(inputs)) {
-    GTEST_SKIP() << "In set up for Reclaim, TakeAll failed.";
-  }
-
-  ASSERT_TRUE(allocator.Reclaim(7));
-  ASSERT_FALSE(allocator.Reclaim(100));
-  ASSERT_TRUE(allocator.Take(7));
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    CvdIdAllocator, ReclaimTest,
-    testing::Values(std::vector<unsigned>{7}, std::vector<unsigned>{7, 3},
-                    std::vector<unsigned>{1, 22, 3, 43, 7}));
-
 TEST_F(CvdIdAllocatorTest, ReclaimAll) {
   std::vector<unsigned> inputs{1, 2, 4, 5, 6, 7, 8, 9, 10, 11};
   auto allocator = UniqueResourceAllocator<unsigned>::New(inputs);
@@ -160,5 +136,22 @@ TEST_F(CvdIdAllocatorTest, ReclaimEmptyPool) {
   ASSERT_FALSE(allocator.ReclaimAll(std::vector<unsigned>{1, 2}));
   ASSERT_TRUE(allocator.ReclaimAll(std::vector<unsigned>{}));
 }
+
+TEST_P(ReclaimTest, Reclaim) {
+  const auto inputs{GetParam()};
+  auto allocator = UniqueResourceAllocator<unsigned>::New(inputs);
+  if (!allocator.TakeAll(inputs)) {
+    GTEST_SKIP() << "In set up for Reclaim, TakeAll failed.";
+  }
+
+  ASSERT_TRUE(allocator.Reclaim(7));
+  ASSERT_FALSE(allocator.Reclaim(100));
+  ASSERT_TRUE(allocator.Take(7));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    CvdIdAllocator, ReclaimTest,
+    testing::Values(std::vector<unsigned>{7}, std::vector<unsigned>{7, 3},
+                    std::vector<unsigned>{1, 22, 3, 43, 7}));
 
 }  // namespace cuttlefish::selector
