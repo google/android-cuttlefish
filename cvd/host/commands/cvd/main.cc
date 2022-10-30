@@ -114,7 +114,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
-  if (args.size() > 1 && args[1] == "kill-server") {
+  if (args.size() > 1 &&
+      (args[1] == "kill-server" || args[1] == "server-kill")) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
     return {};
   }
