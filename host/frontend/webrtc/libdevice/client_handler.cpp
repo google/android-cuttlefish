@@ -701,7 +701,9 @@ ClientHandler::~ClientHandler() {
 bool ClientHandler::AddDisplay(
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track,
     const std::string &label) {
-  displays_.emplace_back(video_track, label);
+  auto [it, inserted] = displays_.emplace(label, DisplayTrackAndSender{
+                                                     .track = video_track,
+                                                 });
   if (peer_connection_) {
     // Send each track as part of a different stream with the label as id
     auto err_or_sender =
@@ -710,9 +712,30 @@ bool ClientHandler::AddDisplay(
       LOG(ERROR) << "Failed to add video track to the peer connection";
       return false;
     }
-    // TODO (b/154138394): use the returned sender (err_or_sender.value()) to
-    // remove the display from the connection.
+
+    DisplayTrackAndSender &info = it->second;
+    info.sender = err_or_sender.MoveValue();
   }
+  return true;
+}
+
+bool ClientHandler::RemoveDisplay(const std::string &label) {
+  auto it = displays_.find(label);
+  if (it == displays_.end()) {
+    return false;
+  }
+
+  if (peer_connection_) {
+    DisplayTrackAndSender &info = it->second;
+
+    bool success = peer_connection_->RemoveTrack(info.sender);
+    if (!success) {
+      LOG(ERROR) << "Failed to remove video track for display: " << label;
+      return false;
+    }
+  }
+
+  displays_.erase(it);
   return true;
 }
 
@@ -770,10 +793,8 @@ bool ClientHandler::BuildPeerConnection(
   // created
   decltype(displays_) tmp_displays;
   tmp_displays.swap(displays_);
-  for (auto &pair : tmp_displays) {
-    auto &video_track = pair.first;
-    auto &label = pair.second;
-    if (!AddDisplay(video_track, label)) {
+  for (auto &[label, info] : tmp_displays) {
+    if (!AddDisplay(info.track, label)) {
       return false;
     }
   }
