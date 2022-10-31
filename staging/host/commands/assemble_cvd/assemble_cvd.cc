@@ -175,7 +175,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     std::set<std::string> preserving;
     bool creating_os_disk = false;
     // if any device needs to rebuild its composite disk,
-    // then don't preserve any files and delete everything."
+    // then don't preserve any files and delete everything.
     for (const auto& instance : config.Instances()) {
       auto os_builder = OsCompositeDiskBuilder(config, instance);
       creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
