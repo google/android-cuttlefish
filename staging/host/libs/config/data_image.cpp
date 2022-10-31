@@ -381,7 +381,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
   std::string Name() const override { return "InitializeEspImageImpl"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Enabled() const override {
-    return !instance_.otheros_root_image().empty();
+    return instance_.boot_flow() == CuttlefishConfig::InstanceSpecific::BootFlow::Linux;
   }
 
  protected:
@@ -470,20 +470,20 @@ class InitializeEspImageImpl : public InitializeEspImage {
       }
     }
 
-    if (!instance_.otheros_kernel_path().empty()) {
+    if (!instance_.linux_kernel_path().empty()) {
       success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                         instance_.otheros_kernel_path(), "::vmlinuz"});
+                         instance_.linux_kernel_path(), "::vmlinuz"});
       if (success != 0) {
-        LOG(ERROR) << "Failed to copy " << instance_.otheros_kernel_path()
+        LOG(ERROR) << "Failed to copy " << instance_.linux_kernel_path()
                    << " to " << tmp_esp_image;
         return false;
       }
 
-      if (!instance_.otheros_initramfs_path().empty()) {
+      if (!instance_.linux_initramfs_path().empty()) {
         success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                           instance_.otheros_initramfs_path(), "::initrd.img"});
+                           instance_.linux_initramfs_path(), "::initrd.img"});
         if (success != 0) {
-          LOG(ERROR) << "Failed to copy " << instance_.otheros_initramfs_path()
+          LOG(ERROR) << "Failed to copy " << instance_.linux_initramfs_path()
                      << " to " << tmp_esp_image;
           return false;
         }
