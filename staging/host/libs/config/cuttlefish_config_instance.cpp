@@ -179,29 +179,29 @@ void CuttlefishConfig::MutableInstanceSpecific::set_otheros_esp_image(
     const std::string& otheros_esp_image) {
   (*Dictionary())[kOtherosEspImage] = otheros_esp_image;
 }
-static constexpr char kOtherosKernelPath[] = "otheros_kernel_path";
-std::string CuttlefishConfig::InstanceSpecific::otheros_kernel_path() const {
-  return (*Dictionary())[kOtherosKernelPath].asString();
+static constexpr char kLinuxKernelPath[] = "linux_kernel_path";
+std::string CuttlefishConfig::InstanceSpecific::linux_kernel_path() const {
+  return (*Dictionary())[kLinuxKernelPath].asString();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_otheros_kernel_path(
-    const std::string& otheros_kernel_path) {
-  (*Dictionary())[kOtherosKernelPath] = otheros_kernel_path;
+void CuttlefishConfig::MutableInstanceSpecific::set_linux_kernel_path(
+    const std::string& linux_kernel_path) {
+  (*Dictionary())[kLinuxKernelPath] = linux_kernel_path;
 }
-static constexpr char kOtherosInitramfsPath[] = "otheros_initramfs_path";
-std::string CuttlefishConfig::InstanceSpecific::otheros_initramfs_path() const {
-  return (*Dictionary())[kOtherosInitramfsPath].asString();
+static constexpr char kLinuxInitramfsPath[] = "linux_initramfs_path";
+std::string CuttlefishConfig::InstanceSpecific::linux_initramfs_path() const {
+  return (*Dictionary())[kLinuxInitramfsPath].asString();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_otheros_initramfs_path(
-    const std::string& otheros_initramfs_path) {
-  (*Dictionary())[kOtherosInitramfsPath] = otheros_initramfs_path;
+void CuttlefishConfig::MutableInstanceSpecific::set_linux_initramfs_path(
+    const std::string& linux_initramfs_path) {
+  (*Dictionary())[kLinuxInitramfsPath] = linux_initramfs_path;
 }
-static constexpr char kOtherosRootImage[] = "otheros_root_image";
-std::string CuttlefishConfig::InstanceSpecific::otheros_root_image() const {
-  return (*Dictionary())[kOtherosRootImage].asString();
+static constexpr char kLinuxRootImage[] = "linux_root_image";
+std::string CuttlefishConfig::InstanceSpecific::linux_root_image() const {
+  return (*Dictionary())[kLinuxRootImage].asString();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_otheros_root_image(
-    const std::string& otheros_root_image) {
-  (*Dictionary())[kOtherosRootImage] = otheros_root_image;
+void CuttlefishConfig::MutableInstanceSpecific::set_linux_root_image(
+    const std::string& linux_root_image) {
+  (*Dictionary())[kLinuxRootImage] = linux_root_image;
 }
 static constexpr char kBlankMetadataImageMb[] = "blank_metadata_image_mb";
 int CuttlefishConfig::InstanceSpecific::blank_metadata_image_mb() const {
@@ -565,6 +565,18 @@ static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
 
 std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
   return AbsolutePath(PerInstanceInternalPath("audio_server.sock"));
+}
+
+CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
+  const bool linux_flow_used = !linux_kernel_path().empty()
+    || !linux_initramfs_path().empty()
+    || !linux_root_image().empty();
+
+  if (linux_flow_used) {
+    return BootFlow::Linux;
+  } else {
+    return BootFlow::Android;
+  }
 }
 
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
