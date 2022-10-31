@@ -256,21 +256,8 @@ int main(int argc, char** argv) {
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";
 
-  uint32_t display_index = 0;
-  std::vector<std::shared_ptr<VideoSink>> displays;
-  for (const auto& display_config : instance.display_configs()) {
-    const std::string display_id = "display_" + std::to_string(display_index);
-
-    auto display =
-        streamer->AddDisplay(display_id, display_config.width,
-                             display_config.height, display_config.dpi, true);
-    displays.push_back(display);
-
-    ++display_index;
-  }
-
   auto display_handler =
-      std::make_shared<DisplayHandler>(std::move(displays), screen_connector);
+      std::make_shared<DisplayHandler>(*streamer, screen_connector);
 
   if (instance.camera_server_port()) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),

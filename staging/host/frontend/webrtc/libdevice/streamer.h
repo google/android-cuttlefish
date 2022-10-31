@@ -75,6 +75,7 @@ class Streamer {
   std::shared_ptr<VideoSink> AddDisplay(const std::string& label, int width,
                                         int height, int dpi,
                                         bool touch_enabled);
+  bool RemoveDisplay(const std::string& label);
 
   void SetHardwareSpec(std::string key, std::string value);
 

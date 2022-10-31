@@ -241,8 +241,29 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
         rtc::scoped_refptr<VideoTrackSourceImpl> source(
             new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
         impl_->displays_[label] = {width, height, dpi, touch_enabled, source};
+
+        auto video_track = impl_->peer_connection_factory_->CreateVideoTrack(
+            label, source.get());
+
+        for (auto& [_, client] : impl_->clients_) {
+          client->AddDisplay(video_track, label);
+        }
+
         return std::shared_ptr<VideoSink>(
             new VideoTrackSourceImplSinkWrapper(source));
+      });
+}
+
+bool Streamer::RemoveDisplay(const std::string& label) {
+  // Usually called from an application thread
+  return impl_->signal_thread_->Invoke<bool>(
+      RTC_FROM_HERE, [this, &label]() -> bool {
+        for (auto& [_, client] : impl_->clients_) {
+          client->RemoveDisplay(label);
+        }
+
+        impl_->displays_.erase(label);
+        return true;
       });
 }
 
