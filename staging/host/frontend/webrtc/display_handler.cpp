@@ -22,12 +22,47 @@
 
 #include <libyuv.h>
 
+#include "host/frontend/webrtc/libdevice/streamer.h"
+
 namespace cuttlefish {
-DisplayHandler::DisplayHandler(
-    std::vector<std::shared_ptr<webrtc_streaming::VideoSink>> display_sinks,
-    ScreenConnector& screen_connector)
-    : display_sinks_(display_sinks), screen_connector_(screen_connector) {
+DisplayHandler::DisplayHandler(webrtc_streaming::Streamer& streamer,
+                               ScreenConnector& screen_connector)
+    : streamer_(streamer), screen_connector_(screen_connector) {
   screen_connector_.SetCallback(std::move(GetScreenConnectorCallback()));
+  screen_connector_.SetDisplayEventCallback([this](const DisplayEvent& event) {
+    std::visit(
+        [this](auto&& e) {
+          using T = std::decay_t<decltype(e)>;
+          if constexpr (std::is_same_v<DisplayCreatedEvent, T>) {
+            LOG(VERBOSE) << "Display:" << e.display_number << " created "
+                         << " w:" << e.display_width
+                         << " h:" << e.display_height;
+
+            const auto display_number = e.display_number;
+            const std::string display_id =
+                "display_" + std::to_string(e.display_number);
+            auto display = streamer_.AddDisplay(display_id, e.display_width,
+                                                e.display_height, 160, true);
+            if (!display) {
+              LOG(ERROR) << "Failed to create display.";
+              return;
+            }
+
+            display_sinks_[display_number] = display;
+          } else if constexpr (std::is_same_v<DisplayDestroyedEvent, T>) {
+            LOG(VERBOSE) << "Display:" << e.display_number << " destroyed.";
+
+            const auto display_number = e.display_number;
+            const auto display_id =
+                "display_" + std::to_string(e.display_number);
+            streamer_.RemoveDisplay(display_id);
+            display_sinks_.erase(display_number);
+          } else {
+            static_assert("Unhandled display event.");
+          }
+        },
+        event);
+  });
 }
 
 DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnectorCallback() {
@@ -88,8 +123,10 @@ void DisplayHandler::SendLastFrame() {
         std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count();
-    if (buffer_display < display_sinks_.size()) {
-      display_sinks_[buffer_display]->OnFrame(buffer, time_stamp);
+
+    auto it = display_sinks_.find(buffer_display);
+    if (it != display_sinks_.end()) {
+      it->second->OnFrame(buffer, time_stamp);
     }
   }
 }
