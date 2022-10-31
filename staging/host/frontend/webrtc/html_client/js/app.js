@@ -284,22 +284,20 @@ class DeviceControlApp {
     }
 
     // Set up displays
-    this.#createDeviceDisplays();
+    this.#updateDeviceDisplays();
+    this.#deviceConnection.onStreamChange(stream => this.#onStreamChange(stream));
 
     // Set up audio
     const deviceAudio = document.getElementById('device-audio');
     for (const audio_desc of this.#deviceConnection.description.audio_streams) {
       let stream_id = audio_desc.stream_id;
-      this.#deviceConnection.getStream(stream_id)
+      this.#deviceConnection.onStream(stream_id)
           .then(stream => {
             deviceAudio.srcObject = stream;
             deviceAudio.play();
           })
           .catch(e => console.error('Unable to get audio stream: ', e));
     }
-
-    // Set up touch input
-    this.#startMouseTracking();
 
     // Set up keyboard capture
     this.#startKeyboardCapture();
@@ -346,6 +344,13 @@ class DeviceControlApp {
     this.#deviceConnection.onLocationMessage(msg => {
       console.debug("onLocationMessage = " +msg);
     });
+  }
+
+  #onStreamChange(stream) {
+    let stream_id = stream.id;
+    if (stream_id.startsWith('display_')) {
+      this.#updateDeviceDisplays();
+    }
   }
 
   #onRootCanalCommand(deviceConnection, cmd, evt) {
@@ -491,8 +496,26 @@ class DeviceControlApp {
     }
 
     document.querySelectorAll('.device-display-video').forEach((v, i) => {
-      let displayDesc = this.#displayDescriptions[i];
-      let aspectRatio = displayDesc.x_res / displayDesc.y_res;
+      const stream = v.srcObject;
+      if (stream == null) {
+        console.error('Missing corresponding device display video stream', l);
+        return;
+      }
+
+      const streamVideoTracks = stream.getVideoTracks();
+      if (streamVideoTracks == null || streamVideoTracks.length == 0) {
+        return;
+      }
+
+      const streamSettings = stream.getVideoTracks()[0].getSettings();
+      const streamWidth = streamSettings.width;
+      const streamHeight = streamSettings.height;
+      if (streamWidth == 0 || streamHeight == 0) {
+        console.error('Stream dimensions not yet available?', stream);
+        return;
+      }
+
+      const aspectRatio = streamWidth / streamHeight;
 
       let keyFrames = [];
       let from = this.#currentScreenStyles[v.id];
@@ -513,15 +536,49 @@ class DeviceControlApp {
 
   #updateDeviceDisplaysInfo() {
     let labels = document.querySelectorAll('.device-display-info');
-    labels.forEach((l, i) => {
-      let deviceDisplayDescription = this.#displayDescriptions[i];
-      let text = `Display ${i} - ` +
-          `${deviceDisplayDescription.x_res}x` +
-          `${deviceDisplayDescription.y_res} ` +
-          `(${deviceDisplayDescription.dpi} DPI)`;
+    labels.forEach(l => {
+      let deviceDisplay = l.closest('.device-display');
+      if (deviceDisplay == null) {
+        console.error('Missing corresponding device display', l);
+        return;
+      }
+
+      let deviceDisplayVideo =
+          deviceDisplay.querySelector('.device-display-video');
+      if (deviceDisplayVideo == null) {
+        console.error('Missing corresponding device display video', l);
+        return;
+      }
+
+      const DISPLAY_PREFIX = 'display_';
+      let displayId = deviceDisplayVideo.id;
+      if (displayId == null || !displayId.startsWith(DISPLAY_PREFIX)) {
+        console.error('Unexpected device display video id', displayId);
+        return;
+      }
+      displayId = displayId.slice(DISPLAY_PREFIX.length);
+
+      let stream = deviceDisplayVideo.srcObject;
+      if (stream == null) {
+        console.error('Missing corresponding device display video stream', l);
+        return;
+      }
+
+      let text = `Display ${displayId} `;
+
+      let streamVideoTracks = stream.getVideoTracks();
+      if (streamVideoTracks.length > 0) {
+        let streamSettings = stream.getVideoTracks()[0].getSettings();
+        let streamWidth = streamSettings.width;
+        let streamHeight = streamSettings.height;
+
+        text += `${streamWidth}x${streamHeight}`;
+      }
+
       if (this.#currentRotation != 0) {
         text += ` (Rotated ${this.#currentRotation}deg)`
       }
+
       l.textContent = text;
     });
   }
@@ -582,38 +639,64 @@ class DeviceControlApp {
   // height of the device as the CSS 'transform' property used on the <video>
   // element for rotating the device only affects the visuals of the element
   // and not its layout.
-  #createDeviceDisplays() {
-    console.debug(
-        'Display descriptions: ', this.#deviceConnection.description.displays);
-    this.#displayDescriptions = this.#deviceConnection.description.displays;
+  #updateDeviceDisplays() {
     let anyDisplayLoaded = false;
     const deviceDisplays = document.getElementById('device-displays');
-    for (const deviceDisplayDescription of this.#displayDescriptions) {
-      let displayFragment =
-          document.querySelector('#display-template').content.cloneNode(true);
 
-      let deviceDisplayInfo =
-          displayFragment.querySelector('.device-display-info');
-      deviceDisplayInfo.id = deviceDisplayDescription.stream_id + '_info';
+    const MAX_DISPLAYS = 16;
+    for (let i = 0; i < MAX_DISPLAYS; i++) {
+      const stream_id = 'display_' + i.toString();
+      const stream = this.#deviceConnection.getStream(stream_id);
 
-      let deviceDisplayVideo = displayFragment.querySelector('video');
-      deviceDisplayVideo.id = deviceDisplayDescription.stream_id;
-      deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
-        if (!anyDisplayLoaded) {
-          anyDisplayLoaded = true;
-          this.#onDeviceDisplayLoaded();
+      let deviceDisplayVideo = document.querySelector('#' + stream_id);
+      const deviceDisplayIsPresent = deviceDisplayVideo != null;
+      const deviceDisplayStreamIsActive = stream != null && stream.active;
+      if (deviceDisplayStreamIsActive == deviceDisplayIsPresent) {
+          continue;
+      }
+
+      if (deviceDisplayStreamIsActive) {
+        console.debug('Adding display', i);
+
+        let displayFragment =
+            document.querySelector('#display-template').content.cloneNode(true);
+
+        let deviceDisplayInfo =
+            displayFragment.querySelector('.device-display-info');
+        deviceDisplayInfo.id = stream_id + '_info';
+
+        deviceDisplayVideo = displayFragment.querySelector('video');
+        deviceDisplayVideo.id = stream_id;
+        deviceDisplayVideo.srcObject = stream;
+        deviceDisplayVideo.addEventListener('loadeddata', (evt) => {
+          if (!anyDisplayLoaded) {
+            anyDisplayLoaded = true;
+            this.#onDeviceDisplayLoaded();
+          }
+        });
+
+        this.#addMouseTracking(deviceDisplayVideo);
+
+        deviceDisplays.appendChild(displayFragment);
+
+        // Confusingly, events for adding tracks occur on the peer connection
+        // but events for removing tracks occur on the stream.
+        stream.addEventListener('removetrack', evt => {
+          this.#updateDeviceDisplays();
+        });
+      } else {
+        console.debug('Removing display', i);
+
+        let deviceDisplay = deviceDisplayVideo.closest('.device-display');
+        if (deviceDisplay == null) {
+          console.error('Failed to find device display for ', stream_id);
+        } else {
+          deviceDisplays.removeChild(deviceDisplay);
         }
-      });
-
-      deviceDisplays.appendChild(displayFragment);
-
-      let stream_id = deviceDisplayDescription.stream_id;
-      this.#deviceConnection.getStream(stream_id)
-          .then(stream => {
-            deviceDisplayVideo.srcObject = stream;
-          })
-          .catch(e => console.error('Unable to get display stream: ', e));
+      }
     }
+
+    this.#updateDeviceDisplaysInfo();
   }
 
   #initializeAdb() {
@@ -697,7 +780,7 @@ class DeviceControlApp {
     this.#deviceConnection.sendKeyEvent(e.code, e.type);
   }
 
-  #startMouseTracking() {
+  #addMouseTracking(displayDeviceVideo) {
     let $this = this;
     let mouseIsDown = false;
     let mouseCtx = {
@@ -733,25 +816,18 @@ class DeviceControlApp {
       }
     }
 
-    let deviceDisplayList = document.getElementsByClassName('device-display-video');
     if (window.PointerEvent) {
-      for (const deviceDisplay of deviceDisplayList) {
-        deviceDisplay.addEventListener('pointerdown', onStartDrag);
-        deviceDisplay.addEventListener('pointermove', onContinueDrag);
-        deviceDisplay.addEventListener('pointerup', onEndDrag);
-      }
+      displayDeviceVideo.addEventListener('pointerdown', onStartDrag);
+      displayDeviceVideo.addEventListener('pointermove', onContinueDrag);
+      displayDeviceVideo.addEventListener('pointerup', onEndDrag);
     } else if (window.TouchEvent) {
-      for (const deviceDisplay of deviceDisplayList) {
-        deviceDisplay.addEventListener('touchstart', onStartDrag);
-        deviceDisplay.addEventListener('touchmove', onContinueDrag);
-        deviceDisplay.addEventListener('touchend', onEndDrag);
-      }
+      displayDeviceVideo.addEventListener('touchstart', onStartDrag);
+      displayDeviceVideo.addEventListener('touchmove', onContinueDrag);
+      displayDeviceVideo.addEventListener('touchend', onEndDrag);
     } else if (window.MouseEvent) {
-      for (const deviceDisplay of deviceDisplayList) {
-        deviceDisplay.addEventListener('mousedown', onStartDrag);
-        deviceDisplay.addEventListener('mousemove', onContinueDrag);
-        deviceDisplay.addEventListener('mouseup', onEndDrag);
-      }
+      displayDeviceVideo.addEventListener('mousedown', onStartDrag);
+      displayDeviceVideo.addEventListener('mousemove', onContinueDrag);
+      displayDeviceVideo.addEventListener('mouseup', onEndDrag);
     }
   }
 
@@ -855,7 +931,13 @@ class DeviceControlApp {
   }
 
   #updateDisplayVisibility(displayId, powerMode) {
-    const display = document.getElementById('display_' + displayId).parentElement;
+    const displayVideo = document.getElementById('display_' + displayId);
+    if (displayVideo == null) {
+      console.error('Unknown display id: ' + displayId);
+      return;
+    }
+
+    const display = displayVideo.parentElement;
     if (display == null) {
       console.error('Unknown display id: ' + displayId);
       return;

@@ -98,6 +98,7 @@ class DeviceConnection {
 
   #streams;
   #streamPromiseResolvers;
+  #streamChangeCallback;
   #micSenders = [];
   #cameraSenders = [];
   #camera_res_x;
@@ -187,6 +188,10 @@ class DeviceConnection {
           }
           delete this.#streamPromiseResolvers[stream.id];
         }
+
+        if (this.#streamChangeCallback) {
+          this.#streamChangeCallback(stream);
+        }
       }
     });
   }
@@ -220,6 +225,13 @@ class DeviceConnection {
   }
 
   getStream(stream_id) {
+    if (stream_id in this.#streams) {
+      return this.#streams[stream_id];
+    }
+    return null;
+  }
+
+  onStream(stream_id) {
     return new Promise((resolve, reject) => {
       if (this.#streams[stream_id]) {
         resolve(this.#streams[stream_id]);
@@ -230,6 +242,10 @@ class DeviceConnection {
         this.#streamPromiseResolvers[stream_id].push(resolve);
       }
     });
+  }
+
+  onStreamChange(cb) {
+    this.#streamChangeCallback = cb;
   }
 
   #sendJsonInput(evt) {
