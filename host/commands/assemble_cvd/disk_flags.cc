@@ -83,12 +83,13 @@ DEFINE_string(otheros_esp_image, CF_DEFAULTS_OTHEROS_ESP_IMAGE,
               "Location of cuttlefish esp image. If the image does not exist, "
               "and --otheros_root_image is specified, an esp partition image "
               "is created with default bootloaders.");
-DEFINE_string(otheros_kernel_path, CF_DEFAULTS_OTHEROS_KERNEL_PATH,
-              "Location of cuttlefish otheros kernel.");
-DEFINE_string(otheros_initramfs_path, CF_DEFAULTS_OTHEROS_INITRAMFS_PATH,
-              "Location of cuttlefish otheros initramfs.img.");
-DEFINE_string(otheros_root_image, CF_DEFAULTS_OTHEROS_ROOT_IMAGE,
-              "Location of cuttlefish otheros root filesystem image.");
+
+DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
+              "Location of linux kernel for cuttlefish otheros flow.");
+DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
+              "Location of linux initramfs.img for cuttlefish otheros flow.");
+DEFINE_string(linux_root_image, CF_DEFAULTS_LINUX_ROOT_IMAGE,
+              "Location of linux root filesystem image for cuttlefish otheros flow.");
 
 DEFINE_string(blank_metadata_image_mb, CF_DEFAULTS_BLANK_METADATA_IMAGE_MB,
               "The size of the blank metadata image to generate, MB.");
@@ -191,19 +192,19 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-std::vector<ImagePartition> otheros_composite_disk_config(
+std::vector<ImagePartition> linux_composite_disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
 
   partitions.push_back(ImagePartition{
-      .label = "otheros_esp",
+      .label = "linux_esp",
       .image_file_path = AbsolutePath(instance.otheros_esp_image()),
       .type = kEfiSystemPartition,
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
-      .label = "otheros_root",
-      .image_file_path = AbsolutePath(instance.otheros_root_image()),
+      .label = "linux_root",
+      .image_file_path = AbsolutePath(instance.linux_root_image()),
       .read_only = FLAGS_use_overlay,
   });
 
@@ -302,10 +303,15 @@ std::vector<ImagePartition> android_composite_disk_config(
 
 std::vector<ImagePartition> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!instance.otheros_root_image().empty()) {
-    return otheros_composite_disk_config(instance);
+
+  switch (instance.boot_flow()) {
+    case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
+      return android_composite_disk_config(instance);
+      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
+      return linux_composite_disk_config(instance);
+      break;
   }
-  return android_composite_disk_config(instance);
 }
 
 DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
@@ -1041,12 +1047,14 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_vbmeta_system_image, ",");
   std::vector<std::string> otheros_esp_image =
       android::base::Split(FLAGS_otheros_esp_image, ",");
-  std::vector<std::string> otheros_kernel_path =
-      android::base::Split(FLAGS_otheros_kernel_path, ",");
-  std::vector<std::string> otheros_initramfs_path =
-      android::base::Split(FLAGS_otheros_initramfs_path, ",");
-  std::vector<std::string> otheros_root_image =
-      android::base::Split(FLAGS_otheros_root_image, ",");
+
+  std::vector<std::string> linux_kernel_path =
+      android::base::Split(FLAGS_linux_kernel_path, ",");
+  std::vector<std::string> linux_initramfs_path =
+      android::base::Split(FLAGS_linux_initramfs_path, ",");
+  std::vector<std::string> linux_root_image =
+      android::base::Split(FLAGS_linux_root_image, ",");
+
   std::vector<std::string> bootloader =
       android::base::Split(FLAGS_bootloader, ",");
   std::vector<std::string> initramfs_path =
@@ -1126,26 +1134,25 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       cur_metadata_image = metadata_image[instance_index];
     }
     instance.set_metadata_image(cur_metadata_image);
-    if (instance_index >= otheros_root_image.size()) {
-      instance.set_otheros_root_image(otheros_root_image[0]);
-    } else {
-      instance.set_otheros_root_image(otheros_root_image[instance_index]);
-    }
     if (instance_index >= otheros_esp_image.size()) {
       instance.set_otheros_esp_image(otheros_esp_image[0]);
     } else {
       instance.set_otheros_esp_image(otheros_esp_image[instance_index]);
     }
-    if (instance_index >= otheros_kernel_path.size()) {
-      instance.set_otheros_kernel_path(otheros_kernel_path[0]);
+    if (instance_index >= linux_kernel_path.size()) {
+      instance.set_linux_kernel_path(linux_kernel_path[0]);
     } else {
-      instance.set_otheros_kernel_path(otheros_kernel_path[instance_index]);
+      instance.set_linux_kernel_path(linux_kernel_path[instance_index]);
     }
-    if (instance_index >= otheros_initramfs_path.size()) {
-      instance.set_otheros_initramfs_path(otheros_initramfs_path[0]);
+    if (instance_index >= linux_initramfs_path.size()) {
+      instance.set_linux_initramfs_path(linux_initramfs_path[0]);
     } else {
-      instance.set_otheros_initramfs_path(
-          otheros_initramfs_path[instance_index]);
+      instance.set_linux_initramfs_path(linux_initramfs_path[instance_index]);
+    }
+    if (instance_index >= linux_root_image.size()) {
+      instance.set_linux_root_image(linux_root_image[0]);
+    } else {
+      instance.set_linux_root_image(linux_root_image[instance_index]);
     }
     if (instance_index >= bootloader.size()) {
       instance.set_bootloader(bootloader[0]);
