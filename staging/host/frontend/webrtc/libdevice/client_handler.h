@@ -61,6 +61,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
 
   bool AddDisplay(rtc::scoped_refptr<webrtc::VideoTrackInterface> track,
                   const std::string& label);
+  bool RemoveDisplay(const std::string& label);
 
   bool AddAudio(rtc::scoped_refptr<webrtc::AudioTrackInterface> track,
                   const std::string& label);
@@ -154,9 +155,12 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   bool remote_description_added_ = false;
   std::vector<std::unique_ptr<webrtc::IceCandidateInterface>>
       pending_ice_candidates_;
-  std::vector<
-      std::pair<rtc::scoped_refptr<webrtc::VideoTrackInterface>, std::string>>
-      displays_;
+
+  struct DisplayTrackAndSender {
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> track;
+    rtc::scoped_refptr<webrtc::RtpSenderInterface> sender;
+  };
+  std::map<std::string, DisplayTrackAndSender> displays_;
   std::vector<
       std::pair<rtc::scoped_refptr<webrtc::AudioTrackInterface>, std::string>>
       audio_streams_;
