@@ -122,8 +122,7 @@ class ConnectionObserverImpl
     }
   }
 
-  void OnConnected(std::function<void(const uint8_t *, size_t, bool)>
-                   /*ctrl_msg_sender*/) override {
+  void OnConnected() override {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
       std::thread th([this]() {

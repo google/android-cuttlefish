@@ -40,8 +40,7 @@ class ConnectionObserver {
   ConnectionObserver() = default;
   virtual ~ConnectionObserver() = default;
 
-  virtual void OnConnected(
-      std::function<void(const uint8_t*, size_t, bool)> ctrl_msg_sender) = 0;
+  virtual void OnConnected() = 0;
 
   virtual void OnTouchEvent(const std::string& display_label, int x, int y,
                             bool down) = 0;
