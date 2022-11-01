@@ -1,0 +1,68 @@
+digraph {
+  rankdir = "BT"
+  subgraph clients {
+    rank = same;
+    browser [label = "Browser"]
+    vnc_client [label = "VNC Client"]
+  }
+  host_renderer [label = < <font color="blue">gfxstream</font> / virglrenderer >]
+  run_cvd
+  wayland_socket [label = "internal/frames.sock", shape = "rectangle"]
+  webrtc [label = < <b>webrtc</b> >, penwidth = 2]
+  vmm [label = < <font color="blue">crosvm</font> / <font color="red">qemu</font> >]
+
+  subgraph cluster_android {
+    label = "Cuttlefish VM"
+    subgraph devices {
+      rank = same;
+      drm_card [label = "/dev/dri/card0", shape = "rectangle"]
+      drm_render [label = "/dev/dri/renderD128", shape = "rectangle"]
+    }
+    subgraph hals {
+      rank = same;
+      angle
+      egl [shape = "rectangle"]
+      hwcomposer_drm [label = "hwcomposer.drm"]
+      hwcomposer_ranchu [label = "hwcomposer.ranchu"]
+      vulkan [shape = "rectangle"]
+    }
+    minigbm
+    mesa
+    swiftshader [label = "SwiftShader Pastel"]
+    surfaceflinger
+    vulkan_ranchu [color = "blue", label = "Gfxstream Vulkan"]
+  }
+
+  webrtc -> browser [dir = both]
+  vmm -> vnc_client [dir = both, color = "red"]
+
+  webrtc -> run_cvd [dir = back]
+
+  wayland_socket -> webrtc [dir = both, color = "blue", label = < <I>Wayland</I> >]
+  vmm -> wayland_socket [dir = both, color = "blue", label = < <I>Wayland</I> >]
+
+  { rank = same; host_renderer -> vmm [dir = both] }
+
+  drm_render -> vmm
+  drm_card -> vmm
+
+  minigbm -> drm_render
+  mesa -> drm_render
+  vulkan_ranchu -> drm_render
+  hwcomposer_drm -> drm_card
+  hwcomposer_ranchu -> drm_card
+
+  minigbm -> hwcomposer_drm [dir = both, label = "HIDL (graphics.allocator)", style = "dashed"]
+  hwcomposer_ranchu -> minigbm [dir = both, label = "AIDL (graphics.allocator)", style = "dashed"]
+  angle -> egl [dir = "back", label = "Symlink", style = "dashed"]
+  egl -> mesa [label = "Symlink", style = "dashed"]
+  vulkan -> angle [dir = "back", label = "Shared library"]
+  vulkan-> swiftshader  [label = "Symlink", style = "dashed"]
+  vulkan -> vulkan_ranchu [label = "Symlink", style = "dashed"]
+
+  surfaceflinger -> egl [label = "Shared library"]
+  surfaceflinger -> hwcomposer_ranchu [dir = both, label = "AIDL (graphics.composer3)", style = "dashed"]
+  surfaceflinger -> hwcomposer_drm [dir = both, label = "HIDL (graphics.composer)", style = "dashed"]
+  surfaceflinger -> vulkan [label = "Shared library"]
+  surfaceflinger -> minigbm [dir = both, label = "HIDL (graphics.allocator)"]
+}
