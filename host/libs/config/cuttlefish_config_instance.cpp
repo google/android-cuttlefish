@@ -423,6 +423,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_userdata_format(const std::s
   (*Dictionary())[kUserdataFormat] = fmt;
 }
 
+static constexpr char kGuestEnforceSecurity[] = "guest_enforce_security";
+void CuttlefishConfig::MutableInstanceSpecific::set_guest_enforce_security(bool guest_enforce_security) {
+  (*Dictionary())[kGuestEnforceSecurity] = guest_enforce_security;
+}
+bool CuttlefishConfig::InstanceSpecific::guest_enforce_security() const {
+  return (*Dictionary())[kGuestEnforceSecurity].asBool();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
