@@ -81,6 +81,12 @@ class NetsimServer : public CommandSource {
     AddDevicesParameter(cmd);
     // Release SharedFDs, they've been duped by Command
     devices_.clear();
+    // Bluetooth controller properties file
+    cmd.AddParameter("--rootcanal_controller_properties_file=",
+                     config_.rootcanal_config_file());
+    // Default commands file
+    cmd.AddParameter("--rootcanal_default_commands_file=",
+                     config_.rootcanal_default_commands_file());
     return single_element_emplace(std::move(cmd));
   }
 
