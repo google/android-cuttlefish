@@ -981,11 +981,7 @@ void ClientHandler::OnConnectionChange(
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
-      observer_->OnConnected(
-          [this](const uint8_t *msg, size_t size, bool binary) {
-            control_handler_->Send(msg, size, binary);
-            return true;
-          });
+      observer_->OnConnected();
       on_connection_changed_cb_(true);
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
