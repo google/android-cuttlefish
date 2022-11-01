@@ -21,7 +21,7 @@ namespace {
 
 // NetsimServer launches netsim server with fifos for radio HALs.
 //
-// netsim -s '{devices:[
+// netsimd -s '{devices:[
 //  {serial:"0.0.0.0:5000", chips:[
 //    {kind:"BLUETOOTH", fdIn:10, fdOut:11}]},
 //  {serial:"0.0.0.0:5010", chips:[
@@ -76,7 +76,7 @@ class NetsimServer : public CommandSource {
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
-    Command cmd(HostBinaryPath("netsim"));
+    Command cmd(HostBinaryPath("netsimd"));
     cmd.AddParameter("-s");
     AddDevicesParameter(cmd);
     // Release SharedFDs, they've been duped by Command
@@ -84,7 +84,7 @@ class NetsimServer : public CommandSource {
     return single_element_emplace(std::move(cmd));
   }
 
-  // Convert devices_ to json for netsim -s <arg>. The devices_, created and
+  // Convert devices_ to json for netsimd -s <arg>. The devices_, created and
   // validated during ResultSetup, contains all the SharedFDs and meta-data.
 
   void AddDevicesParameter(Command& c) {
@@ -106,23 +106,24 @@ class NetsimServer : public CommandSource {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
   Result<void> ResultSetup() {
-    auto netsim = HostBinaryPath("netsim");
-    CF_EXPECT(FileExists(netsim), "Failed to find netsim binary: " << netsim);
+    auto netsimd = HostBinaryPath("netsimd");
+    CF_EXPECT(FileExists(netsimd),
+              "Failed to find netsimd binary: " << netsimd);
 
-
-   for (const auto& instance : config_.Instances()) {
-     Device device(instance.adb_ip_and_port());
-     // Add bluetooth chip if enabled
-     if (config_.netsim_radio_enabled(CuttlefishConfig::NetsimRadio::Bluetooth)) {
-       Chip chip("BLUETOOTH");
-       CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.in", chip.fd_in));
-       CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.out", chip.fd_out));
-       device.chips.emplace_back(chip);
-     }
-     // Add other chips if enabled
-     devices_.emplace_back(device);
-   }
-   return {};
+    for (const auto& instance : config_.Instances()) {
+      Device device(instance.adb_ip_and_port());
+      // Add bluetooth chip if enabled
+      if (config_.netsim_radio_enabled(
+              CuttlefishConfig::NetsimRadio::Bluetooth)) {
+        Chip chip("BLUETOOTH");
+        CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.in", chip.fd_in));
+        CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.out", chip.fd_out));
+        device.chips.emplace_back(chip);
+      }
+      // Add other chips if enabled
+      devices_.emplace_back(device);
+    }
+    return {};
   }
 
   Result<void> MakeFifo(const CuttlefishConfig::InstanceSpecific& instance,
