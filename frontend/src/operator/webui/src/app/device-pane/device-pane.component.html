@@ -11,21 +11,15 @@
   <ul class="devices">
     <section class="device-list">
       <li *ngFor="let device of devices | async">
-        <mat-checkbox
-          class="checkbox"
-          [ngModel]="displaysService.isVisibleDevice(device)"
-          (change)="onSelect(device)"
-          >{{ device.deviceId }}</mat-checkbox
+        <mat-slide-toggle
+          color="primary"
+          [checked]="displaysService.isVisibleDevice(device)"
+          (change)="displaysService.onToggle(device)"
+          >{{ device.deviceId }}</mat-slide-toggle
         >
-        <a
-          [href]="device.deviceId | safedeviceurl"
-          title="Launch in new tab"
-          target="_blank"
-        >
-          <button mat-icon-button id="pop-up">
-            <mat-icon>open_in_new</mat-icon>
-          </button>
-        </a>
+        <button mat-icon-button class="menu" title="menu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
       </li>
     </section>
   </ul>

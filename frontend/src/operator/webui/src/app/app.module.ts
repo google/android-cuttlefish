@@ -6,12 +6,16 @@ import {AppComponent} from './app.component';
 import {DevicePaneComponent} from './device-pane/device-pane.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {HttpClientModule} from '@angular/common/http';
-import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCardModule} from '@angular/material/card';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatIconModule} from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatToolbarModule} from '@angular/material/toolbar';
 import {ViewPaneComponent} from './view-pane/view-pane.component';
 import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
+import {KtdGridModule} from '@katoid/angular-grid-layout';
 
 @NgModule({
   declarations: [
@@ -23,12 +27,16 @@ import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    MatSidenavModule,
-    MatCheckboxModule,
     MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
     MatIconModule,
+    MatSidenavModule,
+    MatSlideToggleModule,
+    MatToolbarModule,
     FormsModule,
     HttpClientModule,
+    KtdGridModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

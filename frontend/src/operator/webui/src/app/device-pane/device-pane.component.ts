@@ -17,14 +17,6 @@ export class DevicePaneComponent {
     public displaysService: DisplaysService
   ) {}
 
-  onSelect(device: Device): void {
-    if (this.displaysService.isVisibleDevice(device)) {
-      this.displaysService.remove(device);
-    } else {
-      this.displaysService.add(device);
-    }
-  }
-
   onRefresh(): void {
     this.deviceService.refresh();
   }
@@ -33,7 +25,7 @@ export class DevicePaneComponent {
     this.devices.pipe(first()).subscribe((devices: Device[]) => {
       devices.forEach(device => {
         if (!this.displaysService.isVisibleDevice(device)) {
-          this.onSelect(device);
+          this.displaysService.onToggle(device);
         }
       });
     });

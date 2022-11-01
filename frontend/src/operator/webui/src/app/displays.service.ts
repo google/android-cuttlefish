@@ -19,6 +19,14 @@ export class DisplaysService {
     });
   }
 
+  onToggle(device: Device): void {
+    if (this.isVisibleDevice(device)) {
+      this.remove(device);
+    } else {
+      this.add(device);
+    }
+  }
+
   add(addedDevice: Device) {
     if (
       !this.visibleDevices.some(
