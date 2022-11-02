@@ -30,11 +30,14 @@ const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
 //       build an EFI monolith for this architecture.
 const std::string kBootPathIA32 = "EFI/BOOT/BOOTIA32.EFI";
 const std::string kBootPathAA64 = "EFI/BOOT/BOOTAA64.EFI";
+const std::string kModulesPath = "EFI/modules";
+const std::string kMultibootModulePath = kModulesPath + "/multiboot.mod";
 const std::string kM5 = "";
 
 // These are the paths Debian installs the monoliths to. If another distro
 // uses an alternative monolith path, add it to this table
 const std::pair<std::string, std::string> kGrubBlobTable[] = {
+    {"/usr/lib/grub/i386-efi/multiboot.mod", kMultibootModulePath},
     {"/usr/lib/grub/i386-efi/monolithic/grubia32.efi", kBootPathIA32},
     {"/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi", kBootPathAA64},
 };
@@ -381,7 +384,9 @@ class InitializeEspImageImpl : public InitializeEspImage {
   std::string Name() const override { return "InitializeEspImageImpl"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Enabled() const override {
-    return instance_.boot_flow() == CuttlefishConfig::InstanceSpecific::BootFlow::Linux;
+    auto flow = instance_.boot_flow();
+    return flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
+      flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
   }
 
  protected:
@@ -413,7 +418,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
       // extra directories below and copy the initial grub.cfg there as well
       auto mmd = HostBinaryPath("mmd");
       success =
-          execute({mmd, "-i", tmp_esp_image, "EFI", "EFI/BOOT", "EFI/debian"});
+          execute({mmd, "-i", tmp_esp_image, "EFI", "EFI/BOOT", "EFI/debian", "EFI/modules"});
       if (success != 0) {
         LOG(ERROR) << "Failed to create directories in " << tmp_esp_image;
         return false;
@@ -464,24 +469,44 @@ class InitializeEspImageImpl : public InitializeEspImage {
       }
     }
 
-    if (!instance_.linux_kernel_path().empty()) {
-      success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                         instance_.linux_kernel_path(), "::vmlinuz"});
-      if (success != 0) {
-        LOG(ERROR) << "Failed to copy " << instance_.linux_kernel_path()
-                   << " to " << tmp_esp_image;
-        return false;
-      }
-
-      if (!instance_.linux_initramfs_path().empty()) {
+    switch (instance_.boot_flow()) {
+      case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
         success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                           instance_.linux_initramfs_path(), "::initrd.img"});
+                         instance_.linux_kernel_path(), "::vmlinuz"});
         if (success != 0) {
-          LOG(ERROR) << "Failed to copy " << instance_.linux_initramfs_path()
-                     << " to " << tmp_esp_image;
+          LOG(ERROR) << "Failed to copy " << instance_.linux_kernel_path()
+                    << " to " << tmp_esp_image;
           return false;
         }
-      }
+
+        if (!instance_.linux_initramfs_path().empty()) {
+          success = execute({mcopy, "-i", tmp_esp_image, "-s",
+                            instance_.linux_initramfs_path(), "::initrd.img"});
+          if (success != 0) {
+            LOG(ERROR) << "Failed to copy " << instance_.linux_initramfs_path()
+                      << " to " << tmp_esp_image;
+            return false;
+          }
+        }
+        break;
+      case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
+        success = execute({mcopy, "-i", tmp_esp_image, "-s",
+                         instance_.fuchsia_zedboot_path(), "::zedboot.zbi"});
+        if (success != 0) {
+          LOG(ERROR) << "Failed to copy " << instance_.fuchsia_zedboot_path()
+                    << " to " << tmp_esp_image;
+          return false;
+        }
+        success = execute({mcopy, "-i", tmp_esp_image, "-s",
+                         instance_.fuchsia_multiboot_bin_path(), "::multiboot.bin"});
+        if (success != 0) {
+          LOG(ERROR) << "Failed to copy " << instance_.fuchsia_multiboot_bin_path()
+                    << " to " << tmp_esp_image;
+          return false;
+        }
+        break;
+      default:
+        break;
     }
 
     if (!cuttlefish::RenameFile(tmp_esp_image, instance_.otheros_esp_image())) {

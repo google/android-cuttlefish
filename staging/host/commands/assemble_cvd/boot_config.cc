@@ -67,7 +67,7 @@ void WriteAndroidEnvironment(const CuttlefishConfig& config,
   env << '\0';
 }
 
-void WriteLinuxEnvironment(std::ostream& env) {
+void WriteEFIEnvironment(std::ostream& env) {
   // TODO(b/256602611): get rid of loadddr hardcode. make sure loadddr
   // env setup in the bootloader.
   WritePausedEntrypoint(env,
@@ -95,7 +95,8 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
       WriteAndroidEnvironment(config, env);
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-      WriteLinuxEnvironment(env);
+    case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
+      WriteEFIEnvironment(env);
       break;
   }
 
