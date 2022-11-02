@@ -105,6 +105,7 @@ bool ReadFully(borrowed_fd fd, void* data, size_t byte_count);
 bool ReadFullyAtOffset(borrowed_fd fd, void* data, size_t byte_count, off64_t offset);
 
 bool WriteFully(borrowed_fd fd, const void* data, size_t byte_count);
+bool WriteFullyAtOffset(borrowed_fd fd, const void* data, size_t byte_count, off64_t offset);
 
 bool RemoveFileIfExists(const std::string& path, std::string* err = nullptr);
 
