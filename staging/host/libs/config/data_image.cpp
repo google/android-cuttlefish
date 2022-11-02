@@ -95,6 +95,17 @@ bool NewfsMsdos(const std::string& data_image, int data_image_mb,
                          data_image}) == 0;
 }
 
+bool CopyToMsdos(const std::string& image, const std::string& path,
+                 const std::string& destination) {
+  const auto mcopy = HostBinaryPath("mcopy");
+  const auto success = execute({mcopy, "-o", "-i", image, "-s", path, destination});
+  if (success != 0) {
+    LOG(ERROR) << "Failed to copy " << path << " to " << image;
+    return false;
+  }
+  return true;
+}
+
 bool ResizeImage(const std::string& data_image, int data_image_mb,
                  const CuttlefishConfig::InstanceSpecific& instance) {
   auto file_mb = FileSize(data_image) >> 20;
@@ -434,18 +445,13 @@ class InitializeEspImageImpl : public InitializeEspImage {
     // we can find, which minimizes complexity. If the user removed the grub bin
     // package from their system, the ESP will be empty and Other OS will not be
     // supported
-    auto mcopy = HostBinaryPath("mcopy");
     bool copied = false;
     for (int i=0; i<size; i++) {
       auto grub = kBlobTable[i];
       if (!FileExists(grub.first)) {
         continue;
       }
-      success = execute({mcopy, "-o", "-i", tmp_esp_image, "-s", grub.first,
-                         "::" + grub.second});
-      if (success != 0) {
-        LOG(ERROR) << "Failed to copy " << grub.first << " to " << grub.second
-                   << " in " << tmp_esp_image;
+      if (!CopyToMsdos(tmp_esp_image, grub.first, "::" + grub.second)) {
         return false;
       }
       copied = true;
@@ -461,47 +467,29 @@ class InitializeEspImageImpl : public InitializeEspImage {
     if (config_.vm_manager() != vm_manager::Gem5Manager::name()) {
       auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
       CHECK(FileExists(grub_cfg)) << "Missing file " << grub_cfg << "!";
-      success =
-          execute({mcopy, "-i", tmp_esp_image, "-s", grub_cfg, "::EFI/debian/"});
-      if (success != 0) {
-        LOG(ERROR) << "Failed to copy " << grub_cfg << " to " << tmp_esp_image;
+      if (!CopyToMsdos(tmp_esp_image, grub_cfg, "::EFI/debian/")) {
         return false;
       }
     }
 
     switch (instance_.boot_flow()) {
       case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-        success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                         instance_.linux_kernel_path(), "::vmlinuz"});
-        if (success != 0) {
-          LOG(ERROR) << "Failed to copy " << instance_.linux_kernel_path()
-                    << " to " << tmp_esp_image;
+        if (!CopyToMsdos(tmp_esp_image, instance_.linux_kernel_path(), "::vmlinuz")) {
           return false;
         }
 
         if (!instance_.linux_initramfs_path().empty()) {
-          success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                            instance_.linux_initramfs_path(), "::initrd.img"});
-          if (success != 0) {
-            LOG(ERROR) << "Failed to copy " << instance_.linux_initramfs_path()
-                      << " to " << tmp_esp_image;
+          if (!CopyToMsdos(tmp_esp_image, instance_.linux_initramfs_path(), "::initrd.img")) {
             return false;
           }
         }
         break;
       case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-        success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                         instance_.fuchsia_zedboot_path(), "::zedboot.zbi"});
-        if (success != 0) {
-          LOG(ERROR) << "Failed to copy " << instance_.fuchsia_zedboot_path()
-                    << " to " << tmp_esp_image;
+        if (!CopyToMsdos(tmp_esp_image, instance_.fuchsia_zedboot_path(), "::zedboot.zbi")) {
           return false;
         }
-        success = execute({mcopy, "-i", tmp_esp_image, "-s",
-                         instance_.fuchsia_multiboot_bin_path(), "::multiboot.bin"});
-        if (success != 0) {
-          LOG(ERROR) << "Failed to copy " << instance_.fuchsia_multiboot_bin_path()
-                    << " to " << tmp_esp_image;
+        if (!CopyToMsdos(tmp_esp_image,
+                         instance_.fuchsia_multiboot_bin_path(), "::multiboot.bin")) {
           return false;
         }
         break;
