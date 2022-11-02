@@ -490,14 +490,6 @@ std::map<std::string, uint32_t> CuttlefishConfig::host_tools_version() const {
   return versions;
 }
 
-static constexpr char kGuestEnforceSecurity[] = "guest_enforce_security";
-void CuttlefishConfig::set_guest_enforce_security(bool guest_enforce_security) {
-  (*dictionary_)[kGuestEnforceSecurity] = guest_enforce_security;
-}
-bool CuttlefishConfig::guest_enforce_security() const {
-  return (*dictionary_)[kGuestEnforceSecurity].asBool();
-}
-
 static constexpr char kenableHostBluetooth[] = "enable_host_bluetooth";
 void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
   (*dictionary_)[kenableHostBluetooth] = enable_host_bluetooth;

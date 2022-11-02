@@ -175,9 +175,6 @@ class CuttlefishConfig {
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
-  void set_guest_enforce_security(bool guest_enforce_security);
-  bool guest_enforce_security() const;
-
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
@@ -534,6 +531,7 @@ class CuttlefishConfig {
     int ddr_mem_mb() const;
     std::string setupwizard_mode() const;
     std::string userdata_format() const;
+    bool guest_enforce_security() const;
 
     // android artifacts
     std::string boot_image() const;
@@ -636,6 +634,7 @@ class CuttlefishConfig {
     void set_ddr_mem_mb(int ddr_mem_mb);
     Result<void> set_setupwizard_mode(const std::string& title);
     void set_userdata_format(const std::string& userdata_format);
+    void set_guest_enforce_security(bool guest_enforce_security);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
