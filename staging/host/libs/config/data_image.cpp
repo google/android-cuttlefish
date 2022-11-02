@@ -386,12 +386,6 @@ class InitializeEspImageImpl : public InitializeEspImage {
 
  protected:
   bool Setup() override {
-    bool esp_exists = FileHasContent(instance_.otheros_esp_image());
-    if (esp_exists) {
-      LOG(DEBUG) << "esp partition image: use existing";
-      return true;
-    }
-
     LOG(DEBUG) << "esp partition image: creating default";
 
     // newfs_msdos won't make a partition smaller than 257 mb
