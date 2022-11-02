@@ -337,6 +337,21 @@ static ssize_t pread(borrowed_fd fd, void* data, size_t byte_count, off64_t offs
   }
   return static_cast<ssize_t>(bytes_read);
 }
+
+static ssize_t pwrite(borrowed_fd fd, const void* data, size_t byte_count, off64_t offset) {
+  DWORD bytes_written;
+  OVERLAPPED overlapped;
+  memset(&overlapped, 0, sizeof(OVERLAPPED));
+  overlapped.Offset = static_cast<DWORD>(offset);
+  overlapped.OffsetHigh = static_cast<DWORD>(offset >> 32);
+  if (!WriteFile(reinterpret_cast<HANDLE>(_get_osfhandle(fd.get())), data,
+                 static_cast<DWORD>(byte_count), &bytes_written, &overlapped)) {
+    // In case someone tries to read errno (since this is masquerading as a POSIX call)
+    errno = EIO;
+    return -1;
+  }
+  return static_cast<ssize_t>(bytes_written);
+}
 #endif
 
 bool ReadFullyAtOffset(borrowed_fd fd, void* data, size_t byte_count, off64_t offset) {
@@ -346,6 +361,19 @@ bool ReadFullyAtOffset(borrowed_fd fd, void* data, size_t byte_count, off64_t of
     if (n <= 0) return false;
     p += n;
     byte_count -= n;
+    offset += n;
+  }
+  return true;
+}
+
+bool WriteFullyAtOffset(borrowed_fd fd, const void* data, size_t byte_count, off64_t offset) {
+  const uint8_t* p = reinterpret_cast<const uint8_t*>(data);
+  size_t remaining = byte_count;
+  while (remaining > 0) {
+    ssize_t n = TEMP_FAILURE_RETRY(pwrite(fd.get(), p, remaining, offset));
+    if (n == -1) return false;
+    p += n;
+    remaining -= n;
     offset += n;
   }
   return true;
