@@ -91,6 +91,13 @@ DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
 DEFINE_string(linux_root_image, CF_DEFAULTS_LINUX_ROOT_IMAGE,
               "Location of linux root filesystem image for cuttlefish otheros flow.");
 
+DEFINE_string(fuchsia_zedboot_path, CF_DEFAULTS_FUCHSIA_ZEDBOOT_PATH,
+              "Location of fuchsia zedboot path for cuttlefish otheros flow.");
+DEFINE_string(fuchsia_multiboot_bin_path, CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH,
+              "Location of fuchsia multiboot bin path for cuttlefish otheros flow.");
+DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
+              "Location of fuchsia root filesystem image for cuttlefish otheros flow.");
+
 DEFINE_string(blank_metadata_image_mb, CF_DEFAULTS_BLANK_METADATA_IMAGE_MB,
               "The size of the blank metadata image to generate, MB.");
 DEFINE_string(
@@ -211,6 +218,20 @@ std::vector<ImagePartition> linux_composite_disk_config(
   return partitions;
 }
 
+std::vector<ImagePartition> fuchsia_composite_disk_config(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::vector<ImagePartition> partitions;
+
+  partitions.push_back(ImagePartition{
+      .label = "fuchsia_esp",
+      .image_file_path = AbsolutePath(instance.otheros_esp_image()),
+      .type = kEfiSystemPartition,
+      .read_only = FLAGS_use_overlay,
+  });
+
+  return partitions;
+}
+
 std::vector<ImagePartition> android_composite_disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
@@ -310,6 +331,9 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
       return linux_composite_disk_config(instance);
+      break;
+    case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
+      return fuchsia_composite_disk_config(instance);
       break;
   }
 }
@@ -1055,6 +1079,13 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::vector<std::string> linux_root_image =
       android::base::Split(FLAGS_linux_root_image, ",");
 
+  std::vector<std::string> fuchsia_zedboot_path =
+      android::base::Split(FLAGS_fuchsia_zedboot_path, ",");
+  std::vector<std::string> fuchsia_multiboot_bin_path =
+      android::base::Split(FLAGS_fuchsia_multiboot_bin_path, ",");
+  std::vector<std::string> fuchsia_root_image =
+      android::base::Split(FLAGS_fuchsia_root_image, ",");
+
   std::vector<std::string> bootloader =
       android::base::Split(FLAGS_bootloader, ",");
   std::vector<std::string> initramfs_path =
@@ -1153,6 +1184,21 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_linux_root_image(linux_root_image[0]);
     } else {
       instance.set_linux_root_image(linux_root_image[instance_index]);
+    }
+    if (instance_index >= fuchsia_zedboot_path.size()) {
+      instance.set_fuchsia_zedboot_path(fuchsia_zedboot_path[0]);
+    } else {
+      instance.set_fuchsia_zedboot_path(fuchsia_zedboot_path[instance_index]);
+    }
+    if (instance_index >= fuchsia_multiboot_bin_path.size()) {
+      instance.set_fuchsia_multiboot_bin_path(fuchsia_multiboot_bin_path[0]);
+    } else {
+      instance.set_fuchsia_multiboot_bin_path(fuchsia_multiboot_bin_path[instance_index]);
+    }
+    if (instance_index >= fuchsia_root_image.size()) {
+      instance.set_fuchsia_root_image(fuchsia_root_image[0]);
+    } else {
+      instance.set_fuchsia_root_image(fuchsia_root_image[instance_index]);
     }
     if (instance_index >= bootloader.size()) {
       instance.set_bootloader(bootloader[0]);
