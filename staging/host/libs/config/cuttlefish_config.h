@@ -458,7 +458,8 @@ class CuttlefishConfig {
 
     enum class BootFlow {
       Android,
-      Linux
+      Linux,
+      Fuchsia
     };
 
     BootFlow boot_flow() const;
@@ -557,6 +558,10 @@ class CuttlefishConfig {
     std::string linux_initramfs_path() const;
     std::string linux_root_image() const;
 
+    std::string fuchsia_zedboot_path() const;
+    std::string fuchsia_multiboot_bin_path() const;
+    std::string fuchsia_root_image() const;
+
     int blank_metadata_image_mb() const;
     int blank_sdcard_image_mb() const;
     std::string bootloader() const;
@@ -649,6 +654,9 @@ class CuttlefishConfig {
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
     void set_linux_root_image(const std::string& linux_root_image);
+    void set_fuchsia_zedboot_path(const std::string& fuchsia_zedboot_path);
+    void set_fuchsia_multiboot_bin_path(const std::string& fuchsia_multiboot_bin_path);
+    void set_fuchsia_root_image(const std::string& fuchsia_root_image);
     void set_blank_metadata_image_mb(int blank_metadata_image_mb);
     void set_blank_sdcard_image_mb(int blank_sdcard_image_mb);
     void set_bootloader(const std::string& bootloader);
