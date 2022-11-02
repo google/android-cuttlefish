@@ -74,9 +74,15 @@ Result<cvd::Response> CvdCommandHandler::Handle(
 
   std::string bin_path = invocation_info.bin;
   if (invocation_info.bin != kMkdirBin && invocation_info.bin != kLnBin) {
-    auto assembly_info =
-        CF_EXPECT(instance_manager_.GetInstanceGroupInfo(invocation_info.home));
-    bin_path = assembly_info.host_binaries_dir + invocation_info.bin;
+    auto assembly_info_result =
+        instance_manager_.GetInstanceGroupInfo(invocation_info.home);
+    if (assembly_info_result.ok()) {
+      auto assembly_info = assembly_info_result.value();
+      bin_path = assembly_info.host_binaries_dir + invocation_info.bin;
+    } else {
+      bin_path =
+          invocation_info.host_artifacts_path + "/bin/" + invocation_info.bin;
+    }
   }
 
   Command command = CF_EXPECT(ConstructCommand(
