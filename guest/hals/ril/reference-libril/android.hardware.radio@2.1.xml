@@ -8,10 +8,6 @@
         <fqname>IRadioData/slot1</fqname>
     </hal>
     <hal format="aidl">
-        <name>android.hardware.radio.ims</name>
-        <fqname>IRadioIms/slot1</fqname>
-    </hal>
-    <hal format="aidl">
         <name>android.hardware.radio.messaging</name>
         <fqname>IRadioMessaging/slot1</fqname>
     </hal>
