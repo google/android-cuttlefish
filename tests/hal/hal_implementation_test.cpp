@@ -179,6 +179,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // The interface is in development (b/205884982)
     {"android.hardware.audio.core.", 1},
 
+    // Cuttlefish will use the default implementation (b/205758693)
+    {"android.hardware.bluetooth.", 1},
+
     // No implementations on cuttlefish for omapi aidl hal
     {"android.se.omapi.", 1},
 
