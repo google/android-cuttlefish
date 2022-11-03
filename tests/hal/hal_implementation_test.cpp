@@ -137,12 +137,8 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     // types-only packages, which never expect a default implementation
     "android.hardware.audio.common.",
     "android.hardware.biometrics.common.",
-    "android.hardware.biometrics.common.",
-    "android.hardware.common.",
     "android.hardware.common.",
     "android.hardware.common.fmq.",
-    "android.hardware.graphics.common.",
-    "android.hardware.graphics.common.",
     "android.hardware.graphics.common.",
     "android.hardware.input.common.",
     "android.media.audio.common.",
@@ -191,6 +187,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.keymaster.", 1},
     {"android.hardware.keymaster.", 2},
     {"android.hardware.keymaster.", 3},
+    {"android.hardware.keymaster.", 4},
 
     // Sound trigger doesn't have a default implementation.
     {"android.hardware.soundtrigger3.", 1},
