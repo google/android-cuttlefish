@@ -37,7 +37,7 @@ using ElemType = decltype(*(std::cbegin(std::declval<Container&>())));
 
 template <typename Container>
 using CheckFindMethodType = decltype(void(
-    std::declval<Container&>().find(std::declval<ElemType<Container>&>())));
+    std::declval<Container&>().find(std::declval<ElemType<Container&>>())));
 
 template <typename Container, typename = void>
 struct HasFindImpl : std::false_type {};
@@ -46,27 +46,16 @@ template <typename Container>
 struct HasFindImpl<Container, CheckFindMethodType<Container>> : std::true_type {
 };
 
-template <typename Container>
-constexpr bool HasFind(Container&&) {
-  return HasFindImpl<Container>::value;
-}
-
 }  // namespace contains_internal_impl
 
 // TODO(kwstephenkim): Replace these when C++20 starts to be used.
-template <typename Container, typename U,
-          typename = std::enable_if_t<
-              contains_internal_impl::HasFindImpl<Container>::value, void>>
-constexpr bool Contains(Container&& container, U&& u) {
-  // using O(1) or O(lgN) find()
-  return container.find(std::forward<U>(u)) != container.end();
-}
-
-template <typename Container, typename U,
-          std::enable_if_t<
-              !contains_internal_impl::HasFindImpl<Container>::value, int> = 0>
-constexpr bool Contains(Container&& container, U&& u) {
-  // falls back to a generic, likely linear search
+template <typename Container, typename U>
+bool Contains(Container&& container, U&& u) {
+  if constexpr (contains_internal_impl::HasFindImpl<Container>::value) {
+    // using O(1) or O(lgN) find()
+    return container.find(std::forward<U>(u)) != container.end();
+  }
+  // using std::find, which is likely O(n)
   const auto itr =
       std::find(std::begin(container), std::end(container), std::forward<U>(u));
   return itr != std::end(container);
