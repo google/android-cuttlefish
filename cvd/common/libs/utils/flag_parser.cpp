@@ -129,6 +129,10 @@ static bool LikelyFlag(const std::string& next_arg) {
   return android::base::StartsWith(next_arg, "-");
 }
 
+std::string BoolToString(bool val) {
+  return val ? "true" : "false";
+}
+
 Flag::FlagProcessResult Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   if (!setter_ && aliases_.size() > 0) {
