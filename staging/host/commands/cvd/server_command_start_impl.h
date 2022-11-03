@@ -60,8 +60,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<std::string> MakeBinPathFromDatabase(
       const CommandInvocationInfo& invocation_info) const;
   Result<void> FireCommand(Command&& command, const bool wait);
-  Result<cvd::Response> UnlockAndWait(
-      std::unique_lock<std::mutex>& interrupt_lock);
   bool HasHelpOpts(const std::vector<std::string>& args) const;
 
   InstanceManager& instance_manager_;
