@@ -570,6 +570,13 @@ Arch CuttlefishConfig::InstanceSpecific::target_arch() const {
   return static_cast<Arch>((*Dictionary())[kTargetArch].asInt());
 }
 
+static constexpr char kEnableSandbox[] = "enable_sandbox";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_sandbox(const bool enable_sandbox) {
+  (*Dictionary())[kEnableSandbox] = enable_sandbox;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_sandbox() const {
+  return (*Dictionary())[kEnableSandbox].asBool();
+}
 static constexpr char kConsole[] = "console";
 void CuttlefishConfig::MutableInstanceSpecific::set_console(bool console) {
   (*Dictionary())[kConsole] = console;

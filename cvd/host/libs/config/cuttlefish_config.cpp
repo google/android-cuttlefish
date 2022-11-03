@@ -278,14 +278,6 @@ bool CuttlefishConfig::enable_gnss_grpc_proxy() const {
   return (*dictionary_)[kEnableGnssGrpcProxy].asBool();
 }
 
-static constexpr char kEnableSandbox[] = "enable_sandbox";
-void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
-  (*dictionary_)[kEnableSandbox] = enable_sandbox;
-}
-bool CuttlefishConfig::enable_sandbox() const {
-  return (*dictionary_)[kEnableSandbox].asBool();
-}
-
 static constexpr char kSeccompPolicyDir[] = "seccomp_policy_dir";
 void CuttlefishConfig::set_seccomp_policy_dir(const std::string& seccomp_policy_dir) {
   if (seccomp_policy_dir.empty()) {
@@ -611,22 +603,6 @@ void CuttlefishConfig::set_wmediumd_config(const std::string& config) {
 }
 std::string CuttlefishConfig::wmediumd_config() const {
   return (*dictionary_)[kWmediumdConfig].asString();
-}
-
-static constexpr char kRootcanalArgs[] = "rootcanal_args";
-void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
-  Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(rootcanal_args, " ")) {
-    args_json_obj.append(arg);
-  }
-  (*dictionary_)[kRootcanalArgs] = args_json_obj;
-}
-std::vector<std::string> CuttlefishConfig::rootcanal_args() const {
-  std::vector<std::string> rootcanal_args;
-  for (const Json::Value& arg : (*dictionary_)[kRootcanalArgs]) {
-    rootcanal_args.push_back(arg.asString());
-  }
-  return rootcanal_args;
 }
 
 static constexpr char kRootcanalHciPort[] = "rootcanal_hci_port";
