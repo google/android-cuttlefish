@@ -17,6 +17,7 @@
 #include "host/commands/cvd/server_command_start_impl.h"
 
 #include <cstdint>
+#include <cstdlib>
 
 #include <android-base/parseint.h>
 
@@ -75,7 +76,13 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
-  return UnlockAndWait(interrupt_lock);
+  interrupt_lock.unlock();
+
+  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+  if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
+    instance_manager_.RemoveInstanceGroup(invocation_info.home);
+  }
+  return ResponseFromSiginfo(infop);
 }
 
 Result<void> CvdStartCommandHandler::Interrupt() {
@@ -124,14 +131,6 @@ Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
   }
   CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
   return {};
-}
-
-Result<cvd::Response> CvdStartCommandHandler::UnlockAndWait(
-    std::unique_lock<std::mutex>& interrupt_lock) {
-  interrupt_lock.unlock();
-
-  auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-  return ResponseFromSiginfo(infop);
 }
 
 bool CvdStartCommandHandler::HasHelpOpts(
