@@ -278,14 +278,6 @@ bool CuttlefishConfig::enable_gnss_grpc_proxy() const {
   return (*dictionary_)[kEnableGnssGrpcProxy].asBool();
 }
 
-static constexpr char kEnableSandbox[] = "enable_sandbox";
-void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
-  (*dictionary_)[kEnableSandbox] = enable_sandbox;
-}
-bool CuttlefishConfig::enable_sandbox() const {
-  return (*dictionary_)[kEnableSandbox].asBool();
-}
-
 static constexpr char kSeccompPolicyDir[] = "seccomp_policy_dir";
 void CuttlefishConfig::set_seccomp_policy_dir(const std::string& seccomp_policy_dir) {
   if (seccomp_policy_dir.empty()) {
