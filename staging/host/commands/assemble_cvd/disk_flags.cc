@@ -298,7 +298,7 @@ std::vector<ImagePartition> android_composite_disk_config(
   });
   partitions.push_back(ImagePartition{
       .label = "userdata",
-      .image_file_path = AbsolutePath(instance.new_data_image()),
+      .image_file_path = AbsolutePath(instance.data_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -1154,6 +1154,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     } else {
       instance.set_super_image(super_image[instance_index]);
     }
+    if (instance_index >= data_image.size()) {
+      instance.set_data_image(data_image[0]);
+    } else {
+      instance.set_data_image(data_image[instance_index]);
+    }
     if (instance_index >= metadata_image.size()) {
       cur_metadata_image = metadata_image[0];
     } else {
@@ -1251,13 +1256,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_new_boot_image(new_boot_image_path.c_str());
     }
 
-    instance.set_new_data_image(const_instance.PerInstancePath("userdata.img"));
-    if (instance_index >= data_image.size()) {
-      instance.set_data_image(data_image[0]);
-    } else {
-      instance.set_data_image(data_image[instance_index]);
-    }
-
     if (cur_kernel_path.size() || cur_initramfs_path.size()) {
       const std::string new_vendor_boot_image_path =
           const_instance.PerInstancePath("vendor_boot_repacked.img");
@@ -1298,15 +1296,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config) {
   for (const auto& instance : config.Instances()) {
-    // b/255384523, copy userdata before modifying it
-    std::ofstream data_dest(instance.new_data_image(),
-                            std::ios_base::binary);
-    std::ifstream data_src(instance.data_image(),
-                           std::ios_base::binary);
-    data_dest << data_src.rdbuf();
-    data_dest.close();
-    data_src.close();
-
     // TODO(schuffelen): Unify this with the other injector created in
     // assemble_cvd.cpp
     fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config,
@@ -1330,24 +1319,24 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
               "instance = \"" << instance.instance_name() << "\"");
 
     // Check if filling in the sparse image would run out of disk space.
-    auto existing_sizes = SparseFileSizes(instance.new_data_image());
+    auto existing_sizes = SparseFileSizes(instance.data_image());
     CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
-              "Unable to determine size of \"" << instance.new_data_image()
+              "Unable to determine size of \"" << instance.data_image()
                                                << "\". Does this file exist?");
-    auto available_space = AvailableSpaceAtPath(instance.new_data_image());
+    auto available_space = AvailableSpaceAtPath(instance.data_image());
     if (available_space <
         existing_sizes.sparse_size - existing_sizes.disk_size) {
       // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a
       // separate machine
       return CF_ERR("Not enough space remaining in fs containing \""
-                    << instance.new_data_image() << "\", wanted "
+                    << instance.data_image() << "\", wanted "
                     << (existing_sizes.sparse_size - existing_sizes.disk_size)
                     << ", got " << available_space);
     } else {
       LOG(DEBUG) << "Available space: " << available_space;
-      LOG(DEBUG) << "Sparse size of \"" << instance.new_data_image()
+      LOG(DEBUG) << "Sparse size of \"" << instance.data_image()
                  << "\": " << existing_sizes.sparse_size;
-      LOG(DEBUG) << "Disk size of \"" << instance.new_data_image()
+      LOG(DEBUG) << "Disk size of \"" << instance.data_image()
                  << "\": " << existing_sizes.disk_size;
     }
 

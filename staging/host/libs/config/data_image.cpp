@@ -271,12 +271,12 @@ class InitializeDataImageImpl : public InitializeDataImage {
     if (instance_.data_policy() == kDataPolicyAlwaysCreate) {
       return DataImageAction::kCreateImage;
     }
-    if (!FileHasContent(instance_.new_data_image())) {
+    if (!FileHasContent(instance_.data_image())) {
       if (instance_.data_policy() == kDataPolicyUseExisting) {
         return CF_ERR("A data image must exist to use -data_policy="
                       << kDataPolicyUseExisting);
       } else if (instance_.data_policy() == kDataPolicyResizeUpTo) {
-        return CF_ERR(instance_.new_data_image()
+        return CF_ERR(instance_.data_image()
                       << " does not exist, but resizing was requested");
       }
       return DataImageAction::kCreateImage;
@@ -284,7 +284,7 @@ class InitializeDataImageImpl : public InitializeDataImage {
     if (instance_.data_policy() == kDataPolicyUseExisting) {
       return DataImageAction::kNoAction;
     }
-    auto current_fs_type = GetFsType(instance_.new_data_image());
+    auto current_fs_type = GetFsType(instance_.data_image());
     if (current_fs_type != instance_.userdata_format()) {
       CF_EXPECT(instance_.data_policy() == kDataPolicyResizeUpTo,
                 "Changing the fs format is incompatible with -data_policy="
@@ -301,18 +301,18 @@ class InitializeDataImageImpl : public InitializeDataImage {
   Result<void> EvaluateAction(DataImageAction action) {
     switch (action) {
       case DataImageAction::kNoAction:
-        LOG(DEBUG) << instance_.new_data_image() << " exists. Not creating it.";
+        LOG(DEBUG) << instance_.data_image() << " exists. Not creating it.";
         return {};
       case DataImageAction::kCreateImage: {
-        RemoveFile(instance_.new_data_image());
+        RemoveFile(instance_.data_image());
         CF_EXPECT(instance_.blank_data_image_mb() != 0,
                   "Expected `-blank_data_image_mb` to be set for "
                   "image creation.");
-        CF_EXPECT(CreateBlankImage(instance_.new_data_image(),
+        CF_EXPECT(CreateBlankImage(instance_.data_image(),
                                    instance_.blank_data_image_mb(),
                                    instance_.userdata_format()),
                   "Failed to create a blank image at \""
-                      << instance_.new_data_image() << "\" with size "
+                      << instance_.data_image() << "\" with size "
                       << instance_.blank_data_image_mb() << " and format \""
                       << instance_.userdata_format() << "\"");
         return {};
@@ -321,9 +321,9 @@ class InitializeDataImageImpl : public InitializeDataImage {
         CF_EXPECT(instance_.blank_data_image_mb() != 0,
                   "Expected `-blank_data_image_mb` to be set for "
                   "image resizing.");
-        CF_EXPECT(ResizeImage(instance_.new_data_image(),
+        CF_EXPECT(ResizeImage(instance_.data_image(),
                               instance_.blank_data_image_mb(), instance_),
-                  "Failed to resize \"" << instance_.new_data_image() << "\" to "
+                  "Failed to resize \"" << instance_.data_image() << "\" to "
                                         << instance_.blank_data_image_mb()
                                         << " MB");
         return {};
