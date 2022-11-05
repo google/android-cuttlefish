@@ -541,11 +541,7 @@ class Gem5ImageUnpacker : public SetupFeature {
               "Failed to extract the vendor boot image");
 
     // Assume the user specified a kernel manually which is a vmlinux
-    std::ofstream kernel(unpack_dir + "/kernel", std::ios_base::binary |
-                                                 std::ios_base::trunc);
-    std::ifstream vmlinux(instance_.kernel_path(), std::ios_base::binary);
-    kernel << vmlinux.rdbuf();
-    kernel.close();
+    CF_EXPECT(cuttlefish::Copy(instance_.kernel_path(), unpack_dir + "/kernel"));
 
     // Gem5 needs the bootloader binary to be a specific directory structure
     // to find it. Create a 'binaries' directory and copy it into there
@@ -554,23 +550,15 @@ class Gem5ImageUnpacker : public SetupFeature {
                     S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0 ||
                   errno == EEXIST,
               "\"" << binaries_dir << "\": " << strerror(errno));
-    std::ofstream bootloader(
-        binaries_dir + "/" + cpp_basename(instance_.bootloader()),
-        std::ios_base::binary | std::ios_base::trunc);
-    std::ifstream src_bootloader(instance_.bootloader(), std::ios_base::binary);
-    bootloader << src_bootloader.rdbuf();
-    bootloader.close();
+    CF_EXPECT(cuttlefish::Copy(instance_.bootloader(),
+        binaries_dir + "/" + cpp_basename(instance_.bootloader())));
 
     // Gem5 also needs the ARM version of the bootloader, even though it
     // doesn't use it. It'll even open it to check it's a valid ELF file.
     // Work around this by copying such a named file from the same directory
-    std::ofstream boot_arm(binaries_dir + "/boot.arm",
-                           std::ios_base::binary | std::ios_base::trunc);
-    std::ifstream src_boot_arm(
+    CF_EXPECT(cuttlefish::Copy(
         cpp_dirname(instance_.bootloader()) + "/boot.arm",
-        std::ios_base::binary);
-    boot_arm << src_boot_arm.rdbuf();
-    boot_arm.close();
+        binaries_dir + "/boot.arm"));
 
     return {};
   }
