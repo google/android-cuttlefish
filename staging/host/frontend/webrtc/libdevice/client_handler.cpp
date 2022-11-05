@@ -27,7 +27,6 @@
 
 #include <android-base/logging.h>
 
-#include "host/frontend/webrtc/libcommon/signaling.h"
 #include "host/frontend/webrtc/libcommon/utils.h"
 #include "host/frontend/webrtc/libdevice/keyboard.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -45,65 +44,6 @@ static constexpr auto kLocationDataChannelLabel = "location-channel";
 static constexpr auto kKmlLocationsDataChannelLabel = "kml-locations-channel";
 static constexpr auto kGpxLocationsDataChannelLabel = "gpx-locations-channel";
 static constexpr auto kCameraDataEof = "EOF";
-
-class CvdCreateSessionDescriptionObserver
-    : public webrtc::CreateSessionDescriptionObserver {
- public:
-  CvdCreateSessionDescriptionObserver(
-      std::weak_ptr<ClientHandler> client_handler)
-      : client_handler_(client_handler) {}
-
-  void OnSuccess(webrtc::SessionDescriptionInterface *desc) override {
-    auto client_handler = client_handler_.lock();
-    if (client_handler) {
-      client_handler->OnCreateSDPSuccess(desc);
-    }
-  }
-  void OnFailure(webrtc::RTCError error) override {
-    auto client_handler = client_handler_.lock();
-    if (client_handler) {
-      client_handler->OnCreateSDPFailure(error);
-    }
-  }
-
- private:
-  std::weak_ptr<ClientHandler> client_handler_;
-};
-
-class CvdSetSessionDescriptionObserver
-    : public webrtc::SetSessionDescriptionObserver {
- public:
-  CvdSetSessionDescriptionObserver(std::weak_ptr<ClientHandler> client_handler)
-      : client_handler_(client_handler) {}
-
-  void OnSuccess() override {
-    // local description set, nothing else to do
-  }
-  void OnFailure(webrtc::RTCError error) override {
-    auto client_handler = client_handler_.lock();
-    if (client_handler) {
-      client_handler->OnSetSDPFailure(error);
-    }
-  }
-
- private:
-  std::weak_ptr<ClientHandler> client_handler_;
-};
-
-class CvdOnSetRemoteDescription
-    : public webrtc::SetRemoteDescriptionObserverInterface {
- public:
-  CvdOnSetRemoteDescription(
-      std::function<void(webrtc::RTCError error)> on_error)
-      : on_error_(on_error) {}
-
-  void OnSetRemoteDescriptionComplete(webrtc::RTCError error) override {
-    on_error_(error);
-  }
-
- private:
-  std::function<void(webrtc::RTCError error)> on_error_;
-};
 
 }  // namespace
 
@@ -690,6 +630,7 @@ ClientHandler::ClientHandler(
       send_to_client_(send_to_client_cb),
       on_connection_changed_cb_(on_connection_changed_cb),
       connection_builder_(connection_builder),
+      controller_(*this, *this, *this),
       camera_track_(new ClientVideoTrackImpl()) {}
 
 ClientHandler::~ClientHandler() {
@@ -698,25 +639,38 @@ ClientHandler::~ClientHandler() {
   }
 }
 
+rtc::scoped_refptr<webrtc::RtpSenderInterface>
+ClientHandler::AddTrackToConnection(
+    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
+    const std::string &label) {
+  if (!peer_connection) {
+    return nullptr;
+  }
+  // Send each track as part of a different stream with the label as id
+  auto err_or_sender =
+      peer_connection->AddTrack(track, {label} /* stream_id */);
+  if (!err_or_sender.ok()) {
+    LOG(ERROR) << "Failed to add track to the peer connection";
+    return nullptr;
+  }
+  return err_or_sender.MoveValue();
+}
+
 bool ClientHandler::AddDisplay(
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track,
     const std::string &label) {
   auto [it, inserted] = displays_.emplace(label, DisplayTrackAndSender{
                                                      .track = video_track,
                                                  });
-  if (peer_connection_) {
-    // Send each track as part of a different stream with the label as id
-    auto err_or_sender =
-        peer_connection_->AddTrack(video_track, {label} /* stream_id */);
-    if (!err_or_sender.ok()) {
-      LOG(ERROR) << "Failed to add video track to the peer connection";
-      return false;
-    }
-
+  auto sender =
+      AddTrackToConnection(video_track, controller_.peer_connection(), label);
+  if (sender) {
     DisplayTrackAndSender &info = it->second;
-    info.sender = err_or_sender.MoveValue();
+    info.sender = sender;
   }
-  return true;
+  // Succeed if the peer connection is null or the track was added
+  return controller_.peer_connection() == nullptr || sender;
 }
 
 bool ClientHandler::RemoveDisplay(const std::string &label) {
@@ -725,10 +679,10 @@ bool ClientHandler::RemoveDisplay(const std::string &label) {
     return false;
   }
 
-  if (peer_connection_) {
+  if (controller_.peer_connection()) {
     DisplayTrackAndSender &info = it->second;
 
-    bool success = peer_connection_->RemoveTrack(info.sender);
+    bool success = controller_.peer_connection()->RemoveTrack(info.sender);
     if (!success) {
       LOG(ERROR) << "Failed to remove video track for display: " << label;
       return false;
@@ -742,70 +696,44 @@ bool ClientHandler::RemoveDisplay(const std::string &label) {
 bool ClientHandler::AddAudio(
     rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track,
     const std::string &label) {
-  // Store the audio track for when the peer connection is created
   audio_streams_.emplace_back(audio_track, label);
-  if (peer_connection_) {
-    // Send each track as part of a different stream with the label as id
-    auto err_or_sender =
-        peer_connection_->AddTrack(audio_track, {label} /* stream_id */);
-    if (!err_or_sender.ok()) {
-      LOG(ERROR) << "Failed to add video track to the peer connection";
-      return false;
-    }
+  auto peer_connection = controller_.peer_connection();
+  if (!peer_connection) {
+    return true;
   }
-  return true;
+  return AddTrackToConnection(audio_track, controller_.peer_connection(),
+                              label);
 }
 
 ClientVideoTrackInterface* ClientHandler::GetCameraStream() {
   return camera_track_.get();
 }
 
-void ClientHandler::LogAndReplyError(const std::string &error_msg) const {
-  LOG(ERROR) << error_msg;
-  Json::Value reply;
-  reply["type"] = "error";
-  reply["error"] = error_msg;
-  send_to_client_(reply);
+Result<void> ClientHandler::SendMessage(const Json::Value &msg) {
+  send_to_client_(msg);
+  return {};
 }
 
-void ClientHandler::AddPendingIceCandidates() {
-  // Add any ice candidates that arrived before the remote description
-  for (auto& candidate: pending_ice_candidates_) {
-    peer_connection_->AddIceCandidate(std::move(candidate),
-                                      [this](webrtc::RTCError error) {
-                                        if (!error.ok()) {
-                                          LogAndReplyError(error.message());
-                                        }
-                                      });
-  }
-  pending_ice_candidates_.clear();
-}
-
-bool ClientHandler::BuildPeerConnection(
+Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
+ClientHandler::Build(
+    webrtc::PeerConnectionObserver &observer,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>
-        &ice_servers) {
-  peer_connection_ = connection_builder_.Build(this, ice_servers);
-  if (!peer_connection_) {
-    return false;
-  }
+        &per_connection_servers) {
+  auto peer_connection =
+      CF_EXPECT(connection_builder_.Build(observer, per_connection_servers));
 
   // Re-add the video and audio tracks after the peer connection has been
   // created
-  decltype(displays_) tmp_displays;
-  tmp_displays.swap(displays_);
-  for (auto &[label, info] : tmp_displays) {
-    if (!AddDisplay(info.track, label)) {
-      return false;
-    }
+  for (auto &[label, info] : displays_) {
+    info.sender =
+        CF_EXPECT(AddTrackToConnection(info.track, peer_connection, label));
   }
-  decltype(audio_streams_) tmp_audio_streams;
-  tmp_audio_streams.swap(audio_streams_);
-  for (auto &pair : tmp_audio_streams) {
-    auto &audio_track = pair.first;
-    auto &label = pair.second;
-    if (!AddAudio(audio_track, label)) {
-      return false;
-    }
+  // Add the audio tracks to the peer connection
+  for (auto &[audio_track, label] : audio_streams_) {
+    // Audio channels are never removed from the connection by the device, so
+    // it's ok to discard the returned sender here. The peer connection keeps
+    // track of it anyways.
+    CF_EXPECT(AddTrackToConnection(audio_track, peer_connection, label));
   }
 
   // libwebrtc configures the video encoder with a start bitrate of just 300kbs
@@ -814,152 +742,21 @@ bool ClientHandler::BuildPeerConnection(
   // object, so we pass the maximum possible value here.
   webrtc::BitrateSettings bitrate_settings;
   bitrate_settings.start_bitrate_bps = 2000000;  // 2Mbs
-  peer_connection_->SetBitrate(bitrate_settings);
+  peer_connection->SetBitrate(bitrate_settings);
 
-  // At least one data channel needs to be created on the side that makes the
+  // At least one data channel needs to be created on the side that creates the
   // SDP offer (the device) for data channels to be enabled at all.
   // This channel is meant to carry control commands from the client.
-  auto control_channel = peer_connection_->CreateDataChannel(
+  auto control_channel = peer_connection->CreateDataChannel(
       "device-control", nullptr /* config */);
-  if (!control_channel) {
-    LOG(ERROR) << "Failed to create control data channel";
-    return false;
-  }
+  CF_EXPECT(control_channel.get(), "Failed to create control data channel");
   control_handler_.reset(new ControlChannelHandler(control_channel, observer_));
 
-  return true;
-}
-
-void ClientHandler::OnCreateSDPSuccess(
-    webrtc::SessionDescriptionInterface *desc) {
-  std::string offer_str;
-  desc->ToString(&offer_str);
-  std::string sdp_type = desc->type();
-  peer_connection_->SetLocalDescription(
-      // The peer connection wraps this raw pointer with a scoped_refptr, so
-      // it's guaranteed to be deleted at some point
-      new rtc::RefCountedObject<CvdSetSessionDescriptionObserver>(
-          weak_from_this()),
-      desc);
-  // The peer connection takes ownership of the description so it should not be
-  // used after this
-  desc = nullptr;
-
-  Json::Value reply;
-  reply["type"] = sdp_type;
-  reply["sdp"] = offer_str;
-
-  send_to_client_(reply);
-}
-
-void ClientHandler::OnCreateSDPFailure(webrtc::RTCError error) {
-  LogAndReplyError(error.message());
-  Close();
-}
-
-void ClientHandler::OnSetSDPFailure(webrtc::RTCError error) {
-  LogAndReplyError(error.message());
-  LOG(ERROR) << "Error setting local description: Either there is a bug in "
-                "libwebrtc or the local description was (incorrectly) modified "
-                "after creating it";
-  Close();
-}
-
-Result<void> ClientHandler::CreateOffer() {
-  peer_connection_->CreateOffer(
-      // No memory leak here because this is a ref counted object and the
-      // peer connection immediately wraps it with a scoped_refptr
-      new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
-          weak_from_this()),
-      webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-  // The created offer wil be sent to the client on
-  // OnSuccess(webrtc::SessionDescriptionInterface* desc)
-  return {};
-}
-
-Result<void> ClientHandler::OnOfferRequestMsg(
-    const std::vector<webrtc::PeerConnectionInterface::IceServer>
-        &ice_servers) {
-  // The peer connection must be created on the first request-offer
-  CF_EXPECT(BuildPeerConnection(ice_servers), "Failed to create peer connection");
-  return {};
-}
-
-Result<void> ClientHandler::OnOfferMsg(
-    std::unique_ptr<webrtc::SessionDescriptionInterface> offer) {
-  rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
-      new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
-          [this](webrtc::RTCError error) {
-            if (!error.ok()) {
-              LogAndReplyError(error.message());
-              // The remote description was rejected, this client can't be
-              // trusted anymore.
-              Close();
-              return;
-            }
-            remote_description_added_ = true;
-            AddPendingIceCandidates();
-            peer_connection_->CreateAnswer(
-                // No memory leak here because this is a ref counted objects and
-                // the peer connection immediately wraps it with a scoped_refptr
-                new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
-                    weak_from_this()),
-                webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-          }));
-  peer_connection_->SetRemoteDescription(std::move(offer), observer);
-  return {};
-}
-
-Result<void> ClientHandler::OnAnswerMsg(
-    std::unique_ptr<webrtc::SessionDescriptionInterface> answer) {
-  rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
-      new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
-          [this](webrtc::RTCError error) {
-            if (!error.ok()) {
-              LogAndReplyError(error.message());
-              // The remote description was rejected, this client can't be
-              // trusted anymore.
-              Close();
-            }
-          }));
-  peer_connection_->SetRemoteDescription(std::move(answer), observer);
-  remote_description_added_ = true;
-  AddPendingIceCandidates();
-  return {};
-}
-
-Result<void> ClientHandler::OnIceCandidateMsg(
-    std::unique_ptr<webrtc::IceCandidateInterface> candidate) {
-  if (remote_description_added_) {
-    peer_connection_->AddIceCandidate(std::move(candidate),
-                                      [this](webrtc::RTCError error) {
-                                        if (!error.ok()) {
-                                          LogAndReplyError(error.message());
-                                        }
-                                      });
-  } else {
-    // Store the ice candidate to be added later if it arrives before the
-    // remote description. This could happen if the client uses polling
-    // instead of websockets because the candidates are generated immediately
-    // after the remote (offer) description is set and the events and the ajax
-    // calls are asynchronous.
-    pending_ice_candidates_.push_back(std::move(candidate));
-  }
-  return {};
-}
-
-Result<void> ClientHandler::OnErrorMsg(const std::string &msg) {
-  // The client shouldn't reply with error to the device
-  LOG(ERROR) << "Client error message: " << msg;
-  // Don't return an error, the message was handled successfully.
-  return {};
+  return peer_connection;
 }
 
 void ClientHandler::HandleMessage(const Json::Value &message) {
-  auto result = HandleSignalingMessage(message, *this);
-  if (!result.ok()) {
-    LogAndReplyError(result.error().Trace());
-  }
+  controller_.HandleSignalingMessage(message);
 }
 
 void ClientHandler::Close() {
@@ -972,13 +769,15 @@ void ClientHandler::Close() {
   on_connection_changed_cb_(false);
 }
 
-void ClientHandler::OnConnectionChange(
-    webrtc::PeerConnectionInterface::PeerConnectionState new_state) {
-  switch (new_state) {
-    case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
-      break;
-    case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
-      break;
+void ClientHandler::OnConnectionStateChange(
+    Result<webrtc::PeerConnectionInterface::PeerConnectionState> new_state) {
+  if (!new_state.ok()) {
+    LOG(ERROR) << "Connection error: " << new_state.error().Message();
+    LOG(DEBUG) << new_state.error().Trace();
+    Close();
+    return;
+  }
+  switch (*new_state) {
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
       observer_->OnConnected();
@@ -996,23 +795,13 @@ void ClientHandler::OnConnectionChange(
       LOG(VERBOSE) << "Client " << client_id_ << ": Connection closed";
       Close();
       break;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
+      LOG(VERBOSE) << "Client " << client_id_ << ": Connection new";
+      break;
+    case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
+      LOG(VERBOSE) << "Client " << client_id_ << ": Connection started";
+      break;
   }
-}
-
-void ClientHandler::OnIceCandidate(
-    const webrtc::IceCandidateInterface *candidate) {
-  std::string candidate_sdp;
-  candidate->ToString(&candidate_sdp);
-  auto sdp_mid = candidate->sdp_mid();
-  auto line_index = candidate->sdp_mline_index();
-
-  Json::Value reply;
-  reply["type"] = "ice-candidate";
-  reply["mid"] = sdp_mid;
-  reply["mLineIndex"] = static_cast<Json::UInt64>(line_index);
-  reply["candidate"] = candidate_sdp;
-
-  send_to_client_(reply);
 }
 
 void ClientHandler::OnDataChannel(
@@ -1043,90 +832,6 @@ void ClientHandler::OnDataChannel(
   }
 }
 
-void ClientHandler::OnRenegotiationNeeded() {
-  LOG(VERBOSE) << "Client " << client_id_ << " needs renegotiation";
-  auto result = CreateOffer();
-  if (!result.ok()) {
-    LOG(ERROR) << "Failed to create offer on renegotiation: "
-               << result.error().Trace();
-  }
-}
-
-void ClientHandler::OnIceGatheringChange(
-    webrtc::PeerConnectionInterface::IceGatheringState new_state) {
-  std::string state_str;
-  switch (new_state) {
-    case webrtc::PeerConnectionInterface::IceGatheringState::kIceGatheringNew:
-      state_str = "NEW";
-      break;
-    case webrtc::PeerConnectionInterface::IceGatheringState::
-        kIceGatheringGathering:
-      state_str = "GATHERING";
-      break;
-    case webrtc::PeerConnectionInterface::IceGatheringState::
-        kIceGatheringComplete:
-      state_str = "COMPLETE";
-      break;
-    default:
-      state_str = "UNKNOWN";
-  }
-  LOG(VERBOSE) << "Client " << client_id_
-               << ": ICE Gathering state set to: " << state_str;
-}
-
-void ClientHandler::OnIceCandidateError(const std::string &host_candidate,
-                                        const std::string &url, int error_code,
-                                        const std::string &error_text) {
-  LOG(VERBOSE) << "Gathering of an ICE candidate (host candidate: "
-               << host_candidate << ", url: " << url
-               << ") failed: " << error_text;
-}
-
-void ClientHandler::OnIceCandidateError(const std::string &address, int port,
-                                        const std::string &url, int error_code,
-                                        const std::string &error_text) {
-  LOG(VERBOSE) << "Gathering of an ICE candidate (address: " << address
-               << ", port: " << port << ", url: " << url
-               << ") failed: " << error_text;
-}
-
-void ClientHandler::OnSignalingChange(
-    webrtc::PeerConnectionInterface::SignalingState new_state) {
-  // ignore
-}
-void ClientHandler::OnStandardizedIceConnectionChange(
-    webrtc::PeerConnectionInterface::IceConnectionState new_state) {
-  switch (new_state) {
-    case webrtc::PeerConnectionInterface::kIceConnectionNew:
-      LOG(DEBUG) << "ICE connection state: New";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionChecking:
-      LOG(DEBUG) << "ICE connection state: Checking";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionConnected:
-      LOG(DEBUG) << "ICE connection state: Connected";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionCompleted:
-      LOG(DEBUG) << "ICE connection state: Completed";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionFailed:
-      LOG(DEBUG) << "ICE connection state: Failed";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionDisconnected:
-      LOG(DEBUG) << "ICE connection state: Disconnected";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionClosed:
-      LOG(DEBUG) << "ICE connection state: Closed";
-      break;
-    case webrtc::PeerConnectionInterface::kIceConnectionMax:
-      LOG(DEBUG) << "ICE connection state: Max";
-      break;
-  }
-}
-void ClientHandler::OnIceCandidatesRemoved(
-    const std::vector<cricket::Candidate> &candidates) {
-  // ignore
-}
 void ClientHandler::OnTrack(
     rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   auto track = transceiver->receiver()->track();
