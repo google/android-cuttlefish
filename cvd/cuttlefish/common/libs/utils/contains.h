@@ -18,8 +18,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <string>
-#include <string_view>
 #include <type_traits>
 
 /**
@@ -27,99 +25,40 @@
  *
  * The function returns true if container has the key, or false.
  *
- * If the container has a find(key) method (e.g. set, unordered_set, std::map,
- * etc), the find method is used. Otherwise, the std::find function from
- * algorithm is used, which may result in a linear search.
- *
- * See go/cf-utils-contains for more details.
+ * If the container has a find(key) method (e.g. set, unordered_set, etc), the
+ * find method is used. Otherwise, the std::find function from algorithm is
+ * used, which may result in a linear search.
  */
 namespace cuttlefish {
 namespace contains_internal_impl {
 
-/*
- * If Container does not have find key, will be a compiler error used
- * by SFINAE. If it does have one, this is equivalent to the "void" type.
- */
-template <typename Container, typename Key>
-using VoidTypeIfHasFind =
-    decltype(void(std::declval<Container&>().find(std::declval<Key&>())));
+template <typename Container>
+using ElemType = decltype(*(std::cbegin(std::declval<Container&>())));
 
-/*
- * Here is how this works:
- *
- * Given that
- *   HasFindImpl<Container, T> is used in the code
- *
- *   1. The input is effectively regarded as HasFindImpl<Container, T, void>.
- *   The specialized version below isn't looked up yet; whether the specialized
- *   version below is used or not, the compiler front-end needs all three
- *   template parameters to match against either special or generic version.
- *   When obtaining "all three," the front-end only looks up the base template
- *   definition. The default type of the third template parameter is void, so
- *   the given type is expanded/deduced to HasFindImpl<Container, T, void>.
- *
- *   2. Now, given HasFindImpl<Container, T, void>, the compiler front-end
- *   tries matching against the specialized and generic/original versions. If
- *   the input could matches both a generic and a specialized one, the compiler
- *   chooses the specialized one. Thus, particularly, HasFindImpl
- *   implementation's third parameter in the specialized version must be the
- *   same as the default type of the third template parameter to the original/
- *   generic version, which is "void."
- */
-template <typename Container, typename T, typename = void>
+template <typename Container>
+using CheckFindMethodType = decltype(void(
+    std::declval<Container&>().find(std::declval<ElemType<Container&>>())));
+
+template <typename Container, typename = void>
 struct HasFindImpl : std::false_type {};
 
-template <typename Container, typename T>
-struct HasFindImpl<Container, T, VoidTypeIfHasFind<Container, T>>
-    : std::true_type {};
-
-template <typename T>
-using RemoveCvref =
-    typename std::remove_cv_t<typename std::remove_reference_t<T>>;
-
-template <typename T, typename U>
-using IsSame = typename std::is_same<RemoveCvref<T>, RemoveCvref<U>>;
-
-template <typename T>
-struct IsString : IsSame<std::string, T> {};
-
-template <typename T>
-struct IsStringView : IsSame<std::string_view, T> {};
+template <typename Container>
+struct HasFindImpl<Container, CheckFindMethodType<Container>> : std::true_type {
+};
 
 }  // namespace contains_internal_impl
 
 // TODO(kwstephenkim): Replace these when C++20 starts to be used.
-template <typename Container, typename U,
-          typename = std::enable_if_t<
-              contains_internal_impl::HasFindImpl<Container, U>::value &&
-                  (!contains_internal_impl::IsString<Container>::value &&
-                   !contains_internal_impl::IsStringView<Container>::value),
-              void>>
-constexpr bool Contains(Container&& container, U&& u) {
-  // using O(1) or O(lgN) find()
-  return container.find(std::forward<U>(u)) != container.end();
-}
-
-template <
-    typename Container, typename U,
-    std::enable_if_t<!contains_internal_impl::HasFindImpl<Container, U>::value,
-                     int> = 0>
-constexpr bool Contains(Container&& container, U&& u) {
-  // falls back to a generic, likely linear search
+template <typename Container, typename U>
+bool Contains(Container&& container, U&& u) {
+  if constexpr (contains_internal_impl::HasFindImpl<Container>::value) {
+    // using O(1) or O(lgN) find()
+    return container.find(std::forward<U>(u)) != container.end();
+  }
+  // using std::find, which is likely O(n)
   const auto itr =
       std::find(std::begin(container), std::end(container), std::forward<U>(u));
   return itr != std::end(container);
-}
-
-// std::string:: or std::string_view::find() returns index, not iterator
-template <typename T>
-constexpr bool Contains(const std::string& s, T&& t) {
-  return s.find(std::forward<T>(t)) != std::string::npos;
-}
-
-template <typename T>
-constexpr bool Contains(const std::string_view& s, T&& t) {
-  return s.find(std::forward<T>(t)) != std::string_view::npos;
 }
 
 }  // namespace cuttlefish
