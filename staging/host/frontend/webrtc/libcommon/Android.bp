@@ -21,9 +21,9 @@ cc_library_static {
     name: "libcuttlefish_webrtc_common",
     srcs: [
         "audio_device.cpp",
+        "connection_controller.cpp",
         "peer_connection_utils.cpp",
         "port_range_socket_factory.cpp",
-        "signaling.cpp",
         "vp8only_encoder_factory.cpp",
         "utils.cpp",
     ],
