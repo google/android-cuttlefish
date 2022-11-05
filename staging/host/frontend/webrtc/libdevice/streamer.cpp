@@ -35,7 +35,7 @@
 #include "host/frontend/webrtc/libcommon/audio_device.h"
 #include "host/frontend/webrtc/libcommon/peer_connection_utils.h"
 #include "host/frontend/webrtc/libcommon/port_range_socket_factory.h"
-#include "host/frontend/webrtc/libcommon/signaling.h"
+#include "host/frontend/webrtc/libcommon/utils.h"
 #include "host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
 #include "host/frontend/webrtc/libdevice/audio_track_source_impl.h"
 #include "host/frontend/webrtc/libdevice/camera_streamer.h"
@@ -145,8 +145,8 @@ class Streamer::Impl : public ServerConnectionObserver,
   void HandleClientMessage(const Json::Value& server_message);
 
   // PeerConnectionBuilder
-  rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
-      webrtc::PeerConnectionObserver* observer,
+  Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
+      webrtc::PeerConnectionObserver& observer,
       const std::vector<webrtc::PeerConnectionInterface::IceServer>&
           per_connection_servers) override;
 
@@ -376,7 +376,7 @@ void Streamer::Impl::OnOpen() {
         cuttlefish::webrtc_signaling::kRegisterType;
     register_obj[cuttlefish::webrtc_signaling::kDeviceIdField] =
         config_.device_id;
-    CHECK(config_.client_files_port >= 0) << "Invalide device port provided";
+    CHECK(config_.client_files_port >= 0) << "Invalid device port provided";
     register_obj[cuttlefish::webrtc_signaling::kDevicePortField] =
         config_.client_files_port;
 
@@ -621,11 +621,12 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
   return client_handler;
 }
 
-rtc::scoped_refptr<webrtc::PeerConnectionInterface> Streamer::Impl::Build(
-    webrtc::PeerConnectionObserver* observer,
+Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
+Streamer::Impl::Build(
+    webrtc::PeerConnectionObserver& observer,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>&
         per_connection_servers) {
-  webrtc::PeerConnectionDependencies dependencies(observer);
+  webrtc::PeerConnectionDependencies dependencies(&observer);
   // PortRangeSocketFactory's super class' constructor needs to be called on the
   // network thread or have it as a parameter
   dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
@@ -633,14 +634,9 @@ rtc::scoped_refptr<webrtc::PeerConnectionInterface> Streamer::Impl::Build(
   auto servers = operator_config_.servers;
   servers.insert(servers.end(), per_connection_servers.begin(),
                  per_connection_servers.end());
-  auto peer_connection_res = CreatePeerConnection(
-      peer_connection_factory_, std::move(dependencies), servers);
-
-  if (!peer_connection_res.ok()) {
-    LOG(ERROR) << peer_connection_res.error().Trace();
-    return nullptr;
-  }
-  return *peer_connection_res;
+  return CF_EXPECT(CreatePeerConnection(peer_connection_factory_,
+                                        std::move(dependencies), servers),
+                   "Failed to build peer connection");
 }
 
 void Streamer::Impl::SendMessageToClient(int client_id,
