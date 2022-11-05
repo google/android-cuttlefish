@@ -38,7 +38,7 @@ void DefaultSubprocessLogging(char* argv[]) {
     prefix = instance.instance_name() + ": ";
   }
 
-  if (config->run_as_daemon()) {
+  if (instance.run_as_daemon()) {
     SetLogger(LogToFiles({instance.launcher_log_path()}));
   } else {
     SetLogger(LogToStderrAndFiles({instance.launcher_log_path()}, prefix));
