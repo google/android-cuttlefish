@@ -98,6 +98,10 @@ DEFINE_string(fuchsia_multiboot_bin_path, CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH
 DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
               "Location of fuchsia root filesystem image for cuttlefish otheros flow.");
 
+DEFINE_string(custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
+              "Location of custom image that will be passed as a \"custom\" partition"
+              "to rootfs and can be used by /dev/block/by-name/custom");
+
 DEFINE_string(blank_metadata_image_mb, CF_DEFAULTS_BLANK_METADATA_IMAGE_MB,
               "The size of the blank metadata image to generate, MB.");
 DEFINE_string(
@@ -306,6 +310,14 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(instance.new_metadata_image()),
       .read_only = FLAGS_use_overlay,
   });
+  const auto custom_partition_path = instance.custom_partition_path();
+  if (!custom_partition_path.empty()) {
+    partitions.push_back(ImagePartition{
+        .label = "custom",
+        .image_file_path = AbsolutePath(custom_partition_path),
+        .read_only = FLAGS_use_overlay,
+    });
+  }
 
   // TODO: remove after moving ap to otheros flow
   if (!FLAGS_ap_rootfs_image.empty()) {
@@ -1074,6 +1086,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::vector<std::string> fuchsia_root_image =
       android::base::Split(FLAGS_fuchsia_root_image, ",");
 
+  std::vector<std::string> custom_partition_path =
+      android::base::Split(FLAGS_custom_partition_path, ",");
+
   std::vector<std::string> bootloader =
       android::base::Split(FLAGS_bootloader, ",");
   std::vector<std::string> initramfs_path =
@@ -1187,6 +1202,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_fuchsia_root_image(fuchsia_root_image[0]);
     } else {
       instance.set_fuchsia_root_image(fuchsia_root_image[instance_index]);
+    }
+    if (instance_index >= custom_partition_path.size()) {
+      instance.set_custom_partition_path(custom_partition_path[0]);
+    } else {
+      instance.set_custom_partition_path(custom_partition_path[instance_index]);
     }
     if (instance_index >= bootloader.size()) {
       instance.set_bootloader(bootloader[0]);
