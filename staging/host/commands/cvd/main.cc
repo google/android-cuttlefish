@@ -25,6 +25,7 @@
 #include <android-base/result.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
@@ -114,8 +115,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
-  if (args.size() > 1 &&
-      (args[1] == "kill-server" || args[1] == "server-kill")) {
+  std::vector<std::string> kill_server_cmds{"kill-server", "server-kill"};
+  if (args.size() > 1 && Contains(kill_server_cmds, args[1])) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
     return {};
   }
