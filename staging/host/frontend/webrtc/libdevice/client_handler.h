@@ -29,8 +29,9 @@
 #include <api/peer_connection_interface.h>
 #include <pc/video_track_source.h>
 
+#include "common/libs/utils/result.h"
+#include "host/frontend/webrtc/libcommon/connection_controller.h"
 #include "host/frontend/webrtc/libdevice/connection_observer.h"
-#include "host/frontend/webrtc/libcommon/signaling.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -48,9 +49,9 @@ class ClientVideoTrackInterface;
 class ClientVideoTrackImpl;
 class PeerConnectionBuilder;
 
-class ClientHandler : public webrtc::PeerConnectionObserver,
-                      public SignalingObserver,
-                      public std::enable_shared_from_this<ClientHandler> {
+class ClientHandler : public ConnectionController::Observer,
+                      public PeerConnectionBuilder,
+                      public PeerSignalingHandler {
  public:
   static std::shared_ptr<ClientHandler> Create(
       int client_id, std::shared_ptr<ConnectionObserver> observer,
@@ -64,61 +65,32 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   bool RemoveDisplay(const std::string& label);
 
   bool AddAudio(rtc::scoped_refptr<webrtc::AudioTrackInterface> track,
-                  const std::string& label);
+                const std::string& label);
 
   ClientVideoTrackInterface* GetCameraStream();
 
   void HandleMessage(const Json::Value& client_message);
 
-  // Signaling observer implementation
-  Result<void> OnOfferRequestMsg(
-      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
-          ice_servers) override;
-  Result<void> OnOfferMsg(
-      std::unique_ptr<webrtc::SessionDescriptionInterface> offer) override;
-  Result<void> OnAnswerMsg(
-      std::unique_ptr<webrtc::SessionDescriptionInterface> offer) override;
-  Result<void> OnIceCandidateMsg(
-      std::unique_ptr<webrtc::IceCandidateInterface> ice_candidate) override;
-  Result<void> OnErrorMsg(const std::string& msg) override;
-
-  // CreateSessionDescriptionObserver implementation
-  void OnCreateSDPSuccess(webrtc::SessionDescriptionInterface* desc);
-  void OnCreateSDPFailure(webrtc::RTCError error);
-
-  // SetSessionDescriptionObserver implementation
-  void OnSetSDPFailure(webrtc::RTCError error);
-
-  // PeerConnectionObserver implementation
-  void OnSignalingChange(
-      webrtc::PeerConnectionInterface::SignalingState new_state) override;
+  // ConnectionController::Observer implementation
+  void OnConnectionStateChange(
+      Result<webrtc::PeerConnectionInterface::PeerConnectionState> status) override;
   void OnDataChannel(
       rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override;
-  void OnRenegotiationNeeded() override;
-  void OnStandardizedIceConnectionChange(
-      webrtc::PeerConnectionInterface::IceConnectionState new_state) override;
-  void OnConnectionChange(
-      webrtc::PeerConnectionInterface::PeerConnectionState new_state) override;
-  void OnIceGatheringChange(
-      webrtc::PeerConnectionInterface::IceGatheringState new_state) override;
-  void OnIceCandidate(const webrtc::IceCandidateInterface* candidate) override;
-  // Gathering of an ICE candidate failed.
-  // See https://w3c.github.io/webrtc-pc/#event-icecandidateerror
-  // |host_candidate| is a stringified socket address.
-  void OnIceCandidateError(const std::string& host_candidate,
-                           const std::string& url, int error_code,
-                           const std::string& error_text) override;
-  // Gathering of an ICE candidate failed.
-  // See https://w3c.github.io/webrtc-pc/#event-icecandidateerror
-  void OnIceCandidateError(const std::string& address, int port,
-                           const std::string& url, int error_code,
-                           const std::string& error_text) override;
-  void OnIceCandidatesRemoved(
-      const std::vector<cricket::Candidate>& candidates) override;
   void OnTrack(
       rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
   void OnRemoveTrack(
       rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+
+  // PeerSignalingHandling implementation
+  Result<void> SendMessage(const Json::Value& msg) override;
+
+  // PeerConnectionBuilder implementation
+  // Delegates on its own pc builder to create the pc and then adds the displays
+  // and other streams as required.
+  Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
+      webrtc::PeerConnectionObserver& observer,
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          per_connection_servers) override;
 
  private:
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
@@ -130,18 +102,18 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   void Close();
 
   void LogAndReplyError(const std::string& error_msg) const;
-  void AddPendingIceCandidates();
-  bool BuildPeerConnection(
-      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
-          ice_serversconst);
   Result<void> CreateOffer();
+  rtc::scoped_refptr<webrtc::RtpSenderInterface> AddTrackToConnection(
+      rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+      rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
+      const std::string& label);
 
   int client_id_;
   std::shared_ptr<ConnectionObserver> observer_;
   std::function<void(const Json::Value&)> send_to_client_;
   std::function<void(bool)> on_connection_changed_cb_;
   PeerConnectionBuilder& connection_builder_;
-  rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
+  ConnectionController controller_;
   std::vector<rtc::scoped_refptr<webrtc::DataChannelInterface>> data_channels_;
   std::unique_ptr<InputChannelHandler> input_handler_;
   std::unique_ptr<AdbChannelHandler> adb_handler_;
@@ -152,10 +124,6 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::unique_ptr<GpxLocationsChannelHandler> gpx_location_handler_;
   std::unique_ptr<CameraChannelHandler> camera_data_handler_;
   std::unique_ptr<ClientVideoTrackImpl> camera_track_;
-  bool remote_description_added_ = false;
-  std::vector<std::unique_ptr<webrtc::IceCandidateInterface>>
-      pending_ice_candidates_;
-
   struct DisplayTrackAndSender {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> track;
     rtc::scoped_refptr<webrtc::RtpSenderInterface> sender;
@@ -172,15 +140,6 @@ class ClientVideoTrackInterface {
   virtual void AddOrUpdateSink(
       rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
       const rtc::VideoSinkWants& wants) = 0;
-};
-
-class PeerConnectionBuilder {
- public:
-  virtual ~PeerConnectionBuilder() = default;
-  virtual rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
-      webrtc::PeerConnectionObserver* observer,
-      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
-          per_connection_servers) = 0;
 };
 
 }  // namespace webrtc_streaming
