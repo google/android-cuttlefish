@@ -188,7 +188,8 @@ bool HostToolsUpdated() {
 // Hash table for all bool flag names
 // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
 // This is the solution for vectorize bool flags in gFlags
-std::unordered_set<std::string> kBoolFlags = {"guest_enforce_security"};
+std::unordered_set<std::string> kBoolFlags = {"guest_enforce_security",
+  "use_random_serial"};
 
 struct BooleanFlag {
   bool is_bool_flag;
