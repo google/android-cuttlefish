@@ -101,7 +101,7 @@ DEFINE_string(memory_mb, std::to_string(CF_DEFAULTS_MEMORY_MB),
              "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
-DEFINE_bool(use_random_serial, CF_DEFAULTS_USE_RANDOM_SERIAL,
+DEFINE_string(use_random_serial, CF_DEFAULTS_USE_RANDOM_SERIAL?"true":"false",
             "Whether to use random serial for the device.");
 DEFINE_string(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
@@ -842,6 +842,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_userdata_format, ",");
   std::vector<std::string> guest_enforce_security_vec =
       android::base::Split(FLAGS_guest_enforce_security, ",");
+  std::vector<std::string> use_random_serial_vec =
+      android::base::Split(FLAGS_use_random_serial, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -884,11 +886,19 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       iface_config = DefaultNetworkInterfaces(num);
     }
 
+    bool use_random_serial;
+    if (instance_index >= use_random_serial_vec.size()) {
+      use_random_serial = CF_EXPECT(ParseBool(use_random_serial_vec[0],
+                                    "use_random_serial"));
+    } else {
+      use_random_serial = CF_EXPECT(ParseBool(
+          use_random_serial_vec[instance_index], "use_random_serial"));
+    }
     auto instance = tmp_config_obj.ForInstance(num);
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
     instance.set_use_allocd(FLAGS_use_allocd);
-    if (FLAGS_use_random_serial) {
+    if (use_random_serial) {
       instance.set_serial_number(
           RandomSerialNumber("CFCVD" + std::to_string(num)));
     } else {
