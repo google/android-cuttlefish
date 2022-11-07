@@ -342,3 +342,13 @@ endif
 ifneq ($(PRODUCT_BUILD_VBMETA_IMAGE), false)
 AB_OTA_PARTITIONS += vbmeta
 endif
+
+RAMDISK_KERNEL_MODULES :=       failover.ko \
+                                net_failover.ko \
+                                nd_virtio.ko \
+                                virtio-rng.ko \
+                                virtio_blk.ko \
+                                virtio_console.ko \
+                                virtio_pci.ko \
+                                virtio_pci_modern_dev.ko \
+

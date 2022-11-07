@@ -12,6 +12,15 @@ allow dlkm_loader vendor_file:system module_load;
 # needed for libmodprobe to read kernel commandline
 allow dlkm_loader proc_cmdline:file r_file_perms;
 
+# Needed because CONFIG_USB_DUMMY_HCD adds some additional logic to
+# finit_module() syscall, causing that syscall to create/update keyrings.
+# Once we remove CONFIG_USB_DUMMY_HCD config, self:key write permission can be
+# removed.
+allow dlkm_loader self:key write;
+
+# Allow writing to kernel log
+allow dlkm_loader kmsg_device:chr_file rw_file_perms;
+
 # dlkm_loader searches tracefs while looking for modules
 dontaudit dlkm_loader debugfs_bootreceiver_tracing:dir search;
 dontaudit dlkm_loader debugfs_mm_events_tracing:dir search;
