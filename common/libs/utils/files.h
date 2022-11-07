@@ -31,6 +31,7 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 Result<void> EnsureDirectoryExists(const std::string& directory_path);
 bool IsDirectoryEmpty(const std::string& path);
 bool RecursivelyRemoveDirectory(const std::string& path);
+bool Copy(const std::string& from, const std::string& to);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);
 bool RenameFile(const std::string& old_name, const std::string& new_name);
