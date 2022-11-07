@@ -22,10 +22,8 @@
 #include <vector>
 
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/qemu_manager.h"
-#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
@@ -97,6 +95,12 @@ std::vector<std::string> KernelCommandLineFromConfig(
   std::vector<std::string> kernel_cmdline;
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config, instance));
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
+  if (!instance.kernel_path().empty()) {
+    kernel_cmdline.emplace_back("androidboot.kernel_hotswapped=1");
+  }
+  if (!instance.initramfs_path().empty()) {
+    kernel_cmdline.emplace_back("androidboot.ramdisk_hotswapped=1");
+  }
   return kernel_cmdline;
 }
 
