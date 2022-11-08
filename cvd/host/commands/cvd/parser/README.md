@@ -11,3 +11,6 @@ Canonical configs user interface groups and classes
 
 ## adb category
 [![adb category diagram](./doc/adb.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/adb.svg)
+
+## streaming category
+[![streaming category diagram](./doc/streaming.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/streaming.svg)
