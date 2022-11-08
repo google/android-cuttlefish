@@ -17,3 +17,6 @@ Canonical configs user interface groups and classes
 
 ## disk category
 [![disk category diagram](./doc/disk.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/disk.svg)
+
+## connectivity category
+[![connectivity category diagram](./doc/connectivity.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/connectivity.svg)
