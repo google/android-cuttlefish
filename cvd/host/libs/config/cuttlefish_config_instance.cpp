@@ -227,14 +227,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_fuchsia_root_image(
 std::string CuttlefishConfig::InstanceSpecific::fuchsia_root_image() const {
   return (*Dictionary())[kFuchsiaRootImage].asString();
 }
-static constexpr char kCustomPartitionPath[] = "custom_partition_path";
-void CuttlefishConfig::MutableInstanceSpecific::set_custom_partition_path(
-    const std::string& custom_partition_path) {
-  (*Dictionary())[kCustomPartitionPath] = custom_partition_path;
-}
-std::string CuttlefishConfig::InstanceSpecific::custom_partition_path() const {
-  return (*Dictionary())[kCustomPartitionPath].asString();
-}
 static constexpr char kBlankMetadataImageMb[] = "blank_metadata_image_mb";
 int CuttlefishConfig::InstanceSpecific::blank_metadata_image_mb() const {
   return (*Dictionary())[kBlankMetadataImageMb].asInt();
@@ -461,6 +453,22 @@ void CuttlefishConfig::MutableInstanceSpecific::set_guest_enforce_security(bool 
 }
 bool CuttlefishConfig::InstanceSpecific::guest_enforce_security() const {
   return (*Dictionary())[kGuestEnforceSecurity].asBool();
+}
+
+static constexpr char kUseSdcard[] = "use_sdcard";
+void CuttlefishConfig::MutableInstanceSpecific::set_use_sdcard(bool use_sdcard) {
+  (*Dictionary())[kUseSdcard] = use_sdcard;
+}
+bool CuttlefishConfig::InstanceSpecific::use_sdcard() const {
+  return (*Dictionary())[kUseSdcard].asBool();
+}
+
+static constexpr char kPauseInBootloader[] = "pause_in_bootloader";
+void CuttlefishConfig::MutableInstanceSpecific::set_pause_in_bootloader(bool pause_in_bootloader) {
+  (*Dictionary())[kPauseInBootloader] = pause_in_bootloader;
+}
+bool CuttlefishConfig::InstanceSpecific::pause_in_bootloader() const {
+  return (*Dictionary())[kPauseInBootloader].asBool();
 }
 
 static constexpr char kDisplayConfigs[] = "display_configs";
