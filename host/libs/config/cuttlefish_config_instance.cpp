@@ -455,6 +455,22 @@ bool CuttlefishConfig::InstanceSpecific::guest_enforce_security() const {
   return (*Dictionary())[kGuestEnforceSecurity].asBool();
 }
 
+static constexpr char kUseSdcard[] = "use_sdcard";
+void CuttlefishConfig::MutableInstanceSpecific::set_use_sdcard(bool use_sdcard) {
+  (*Dictionary())[kUseSdcard] = use_sdcard;
+}
+bool CuttlefishConfig::InstanceSpecific::use_sdcard() const {
+  return (*Dictionary())[kUseSdcard].asBool();
+}
+
+static constexpr char kPauseInBootloader[] = "pause_in_bootloader";
+void CuttlefishConfig::MutableInstanceSpecific::set_pause_in_bootloader(bool pause_in_bootloader) {
+  (*Dictionary())[kPauseInBootloader] = pause_in_bootloader;
+}
+bool CuttlefishConfig::InstanceSpecific::pause_in_bootloader() const {
+  return (*Dictionary())[kPauseInBootloader].asBool();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
