@@ -1,0 +1,14 @@
+graph {
+  rankdir=LR
+    graphics--hwcomposer
+    graphics--gpu_mode
+    graphics--record_screen
+    graphics--gpu_capture_binary
+    graphics--enable_gpu_udmabuf
+    graphics--enable_gpu_angle
+    graphics--displays
+        displays--dpi
+        displays--refresh_rate_hz
+        displays--x_res
+        displays--y_res
+}
