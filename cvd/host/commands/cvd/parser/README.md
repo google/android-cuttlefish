@@ -14,3 +14,6 @@ Canonical configs user interface groups and classes
 
 ## streaming category
 [![streaming category diagram](./doc/streaming.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/streaming.svg)
+
+## disk category
+[![disk category diagram](./doc/disk.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/disk.svg)
