@@ -5,3 +5,6 @@ Canonical configs user interface groups and classes
 
 ## vm category
 [![vm category diagram](./doc/vm.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/vm.svg)
+
+## graphics category
+[![graphics category diagram](./doc/graphics.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/graphics.svg)
