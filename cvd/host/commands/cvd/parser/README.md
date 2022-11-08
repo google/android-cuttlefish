@@ -28,3 +28,6 @@ Canonical configs user interface groups and classes
 
 ## location category
 [![location category diagram](./doc/location.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/location.svg)
+
+## vehicle category
+[![streaming category diagram](./doc/vehicle.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/vehicle.svg)
