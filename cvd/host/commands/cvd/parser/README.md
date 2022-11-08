@@ -20,3 +20,6 @@ Canonical configs user interface groups and classes
 
 ## connectivity category
 [![connectivity category diagram](./doc/connectivity.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/connectivity.svg)
+
+## camera category
+[![camera category diagram](./doc/camera.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/camera.svg)
