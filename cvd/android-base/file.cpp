@@ -498,7 +498,7 @@ std::string GetExecutableDirectory() {
 }
 
 #if defined(_WIN32)
-std::string Basename(const std::string& path) {
+std::string Basename(std::string_view path) {
   // TODO: how much of this is actually necessary for mingw?
 
   // Copy path because basename may modify the string passed in.
@@ -524,21 +524,21 @@ std::string Basename(const std::string& path) {
 }
 #else
 // Copied from bionic so that Basename() below can be portable and thread-safe.
-static int __basename_r(const char* path, char* buffer, size_t buffer_size) {
+static int _basename_r(const char* path, size_t path_size, char* buffer, size_t buffer_size) {
   const char* startp = nullptr;
   const char* endp = nullptr;
   int len;
   int result;
 
   // Empty or NULL string gets treated as ".".
-  if (path == nullptr || *path == '\0') {
+  if (path == nullptr || path_size == 0) {
     startp = ".";
     len = 1;
     goto Exit;
   }
 
   // Strip trailing slashes.
-  endp = path + strlen(path) - 1;
+  endp = path + path_size - 1;
   while (endp > path && *endp == '/') {
     endp--;
   }
@@ -575,15 +575,15 @@ static int __basename_r(const char* path, char* buffer, size_t buffer_size) {
   }
   return result;
 }
-std::string Basename(const std::string& path) {
-  char buf[PATH_MAX];
-  __basename_r(path.c_str(), buf, sizeof(buf));
-  return buf;
+std::string Basename(std::string_view path) {
+  char buf[PATH_MAX] __attribute__((__uninitialized__));
+  const auto size = _basename_r(path.data(), path.size(), buf, sizeof(buf));
+  return size > 0 ? std::string(buf, size) : std::string();
 }
 #endif
 
 #if defined(_WIN32)
-std::string Dirname(const std::string& path) {
+std::string Dirname(std::string_view path) {
   // TODO: how much of this is actually necessary for mingw?
 
   // Copy path because dirname may modify the string passed in.
@@ -609,20 +609,20 @@ std::string Dirname(const std::string& path) {
 }
 #else
 // Copied from bionic so that Dirname() below can be portable and thread-safe.
-static int __dirname_r(const char* path, char* buffer, size_t buffer_size) {
+static int _dirname_r(const char* path, size_t path_size, char* buffer, size_t buffer_size) {
   const char* endp = nullptr;
   int len;
   int result;
 
   // Empty or NULL string gets treated as ".".
-  if (path == nullptr || *path == '\0') {
+  if (path == nullptr || path_size == 0) {
     path = ".";
     len = 1;
     goto Exit;
   }
 
   // Strip trailing slashes.
-  endp = path + strlen(path) - 1;
+  endp = path + path_size - 1;
   while (endp > path && *endp == '/') {
     endp--;
   }
@@ -667,10 +667,10 @@ static int __dirname_r(const char* path, char* buffer, size_t buffer_size) {
   }
   return result;
 }
-std::string Dirname(const std::string& path) {
-  char buf[PATH_MAX];
-  __dirname_r(path.c_str(), buf, sizeof(buf));
-  return buf;
+std::string Dirname(std::string_view path) {
+  char buf[PATH_MAX] __attribute__((__uninitialized__));
+  const auto size = _dirname_r(path.data(), path.size(), buf, sizeof(buf));
+  return size > 0 ? std::string(buf, size) : std::string();
 }
 #endif
 
