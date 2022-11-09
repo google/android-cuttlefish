@@ -95,12 +95,6 @@ std::vector<std::string> KernelCommandLineFromConfig(
   std::vector<std::string> kernel_cmdline;
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config, instance));
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
-  if (!instance.kernel_path().empty()) {
-    kernel_cmdline.emplace_back("androidboot.kernel_hotswapped=1");
-  }
-  if (!instance.initramfs_path().empty()) {
-    kernel_cmdline.emplace_back("androidboot.ramdisk_hotswapped=1");
-  }
   return kernel_cmdline;
 }
 
