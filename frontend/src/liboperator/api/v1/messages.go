@@ -62,10 +62,7 @@ type IceServer struct {
 
 type CreateCVDRequest struct {
 	// REQUIRED.
-	BuildInfo *BuildInfo `json:"build_info"`
-	// The number of CVDs to create. Use this field if creating more than one instance.
-	// Defaults to 1.
-	InstancesCount int `json:"instances_count"`
+	CVD *CVD `json:"cvd"`
 }
 
 type BuildInfo struct {
@@ -96,9 +93,8 @@ type OperationResult struct {
 	Response interface{} `json:"response,omitempty"`
 }
 
-// The cuttlefish virtual device resource.
 type CVD struct {
-	// [REQUIRED]
+	// [Output Only]
 	Name string `json:"name"`
 	// [REQUIRED]
 	BuildInfo *BuildInfo `json:"build_info"`

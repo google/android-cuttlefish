@@ -34,28 +34,32 @@ import (
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &CVDToolInstanceManager{}
-	var validRequest = apiv1.CreateCVDRequest{
-		BuildInfo: &apiv1.BuildInfo{
-			BuildID: "1234",
-			Target:  "aosp_cf_x86_64_phone-userdebug",
-		},
+	validRequest := func() *apiv1.CreateCVDRequest {
+		return &apiv1.CreateCVDRequest{
+			CVD: &apiv1.CVD{
+				BuildInfo: &apiv1.BuildInfo{
+					BuildID: "1234",
+					Target:  "aosp_cf_x86_64_phone-userdebug",
+				},
+			},
+		}
 	}
 	// Make sure the valid request is indeed valid.
-	if err := validateRequest(&validRequest); err != nil {
+	if err := validateRequest(validRequest()); err != nil {
 		t.Fatalf("the valid request is not valid")
 	}
 	var tests = []struct {
 		corruptRequest func(r *apiv1.CreateCVDRequest)
 	}{
-		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo = nil }},
-		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo.BuildID = "" }},
-		{func(r *apiv1.CreateCVDRequest) { r.BuildInfo.Target = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildInfo = nil }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildInfo.BuildID = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildInfo.Target = "" }},
 	}
 
 	for _, test := range tests {
-		req := validRequest
-		test.corruptRequest(&req)
-		_, err := im.CreateCVD(req)
+		req := validRequest()
+		test.corruptRequest(req)
+		_, err := im.CreateCVD(*req)
 		var appErr *operator.AppError
 		if !errors.As(err, &appErr) {
 			t.Errorf("error type <<\"%T\">> not found in error chain", appErr)
@@ -84,8 +88,8 @@ func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := NewCVDToolInstanceManager(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
-	r1 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
-	r2 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "2", Target: "foo"}}
+	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "2", Target: "foo"}}}
 
 	op1, _ := im.CreateCVD(r1)
 	op2, _ := im.CreateCVD(r2)
@@ -120,8 +124,8 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	r1 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
-	r2 := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op1, _ := im.CreateCVD(r1)
 	op2, _ := im.CreateCVD(r2)
@@ -152,7 +156,7 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im1 := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 	op, _ := im1.CreateCVD(r)
 	om.Wait(op.Name, 1*time.Second)
 	// The second instance manager is created with the same im paths as the previous instance
@@ -182,7 +186,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -219,7 +223,7 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 	}
 	om := NewMapOM()
 	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
-	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -256,7 +260,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	}
 	om := NewMapOM()
 	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
-	r := apiv1.CreateCVDRequest{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -292,7 +296,7 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	cvdDwnlder := &testCVDDwnlder{}
 	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
-	r := apiv1.CreateCVDRequest{BuildInfo: buildInfo}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
 
 	op, _ := im.CreateCVD(r)
 

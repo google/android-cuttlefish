@@ -124,7 +124,7 @@ func (m *CVDToolInstanceManager) launchCVD_(
 	if err := createDir(m.paths.HomesRootDir, false); err != nil {
 		return nil, err
 	}
-	artifactsDir, err := m.fetchCVDHandler.Fetch(req.BuildInfo)
+	artifactsDir, err := m.fetchCVDHandler.Fetch(req.CVD.BuildInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -139,18 +139,18 @@ func (m *CVDToolInstanceManager) launchCVD_(
 	}
 	return &apiv1.CVD{
 		Name:      cvdName,
-		BuildInfo: req.BuildInfo,
+		BuildInfo: req.CVD.BuildInfo,
 	}, nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
-	if r.BuildInfo == nil {
+	if r.CVD.BuildInfo == nil {
 		return EmptyFieldError("BuildInfo")
 	}
-	if r.BuildInfo.BuildID == "" {
+	if r.CVD.BuildInfo.BuildID == "" {
 		return EmptyFieldError("BuildInfo.BuildID")
 	}
-	if r.BuildInfo.Target == "" {
+	if r.CVD.BuildInfo.Target == "" {
 		return EmptyFieldError("BuildInfo.Target")
 	}
 	return nil
