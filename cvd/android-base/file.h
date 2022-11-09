@@ -119,8 +119,8 @@ std::string GetExecutableDirectory();
 
 // Like the regular basename and dirname, but thread-safe on all
 // platforms and capable of correctly handling exotic Windows paths.
-std::string Basename(const std::string& path);
-std::string Dirname(const std::string& path);
+std::string Basename(std::string_view path);
+std::string Dirname(std::string_view path);
 
 }  // namespace base
 }  // namespace android
