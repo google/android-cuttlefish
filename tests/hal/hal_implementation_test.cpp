@@ -131,9 +131,16 @@ struct VersionedAidlPackage {
 
 /*
  * Always missing AIDL packages that are not served on Cuttlefish.
- * These are typically ypes-only packages.
+ * These are typically types-only packages.
  */
 static const std::set<std::string> kAlwaysMissingAidl = {
+
+    // android.frameworks.cameraservice.common is a type only package use by
+    // android.frameworks.cameraservice.device.
+    // android.frameworks.cameraservice.device is an interface returnd by
+    // android.frameworks.cameraservice.service.
+    "android.frameworks.cameraservice.common.",
+    "android.frameworks.cameraservice.device.",
 
     // types-only packages, which never expect a default implementation
     "android.hardware.audio.common.",
