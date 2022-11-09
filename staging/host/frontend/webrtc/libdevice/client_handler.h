@@ -31,6 +31,7 @@
 
 #include "common/libs/utils/result.h"
 #include "host/frontend/webrtc/libcommon/connection_controller.h"
+#include "host/frontend/webrtc/libdevice/data_channels.h"
 #include "host/frontend/webrtc/libdevice/connection_observer.h"
 
 namespace cuttlefish {
@@ -58,7 +59,7 @@ class ClientHandler : public ConnectionController::Observer,
       PeerConnectionBuilder& connection_builder,
       std::function<void(const Json::Value&)> send_client_cb,
       std::function<void(bool)> on_connection_changed_cb);
-  ~ClientHandler() override;
+  ~ClientHandler() override = default;
 
   bool AddDisplay(rtc::scoped_refptr<webrtc::VideoTrackInterface> track,
                   const std::string& label);
@@ -114,15 +115,7 @@ class ClientHandler : public ConnectionController::Observer,
   std::function<void(bool)> on_connection_changed_cb_;
   PeerConnectionBuilder& connection_builder_;
   ConnectionController controller_;
-  std::vector<rtc::scoped_refptr<webrtc::DataChannelInterface>> data_channels_;
-  std::unique_ptr<InputChannelHandler> input_handler_;
-  std::unique_ptr<AdbChannelHandler> adb_handler_;
-  std::unique_ptr<ControlChannelHandler> control_handler_;
-  std::unique_ptr<BluetoothChannelHandler> bluetooth_handler_;
-  std::unique_ptr<LocationChannelHandler> location_handler_;
-  std::unique_ptr<KmlLocationsChannelHandler> kml_location_handler_;
-  std::unique_ptr<GpxLocationsChannelHandler> gpx_location_handler_;
-  std::unique_ptr<CameraChannelHandler> camera_data_handler_;
+  DataChannelHandlers data_channels_handler_;
   std::unique_ptr<ClientVideoTrackImpl> camera_track_;
   struct DisplayTrackAndSender {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> track;
