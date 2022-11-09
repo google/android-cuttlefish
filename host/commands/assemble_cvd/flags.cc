@@ -870,6 +870,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_rootcanal_hci_port(7300 + rootcanal_instance_num);
   tmp_config_obj.set_rootcanal_link_port(7400 + rootcanal_instance_num);
   tmp_config_obj.set_rootcanal_test_port(7500 + rootcanal_instance_num);
+  tmp_config_obj.set_rootcanal_link_ble_port(7600 + rootcanal_instance_num);
   LOG(DEBUG) << "rootcanal_instance_num: " << rootcanal_instance_num;
   LOG(DEBUG) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
   bool is_first_instance = true;

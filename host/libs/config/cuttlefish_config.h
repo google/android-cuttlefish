@@ -299,6 +299,9 @@ class CuttlefishConfig {
   void set_rootcanal_link_port(int rootcanal_link_port);
   int rootcanal_link_port() const;
 
+  void set_rootcanal_link_ble_port(int rootcanal_link_ble_port);
+  int rootcanal_link_ble_port() const;
+
   void set_rootcanal_test_port(int rootcanal_test_port);
   int rootcanal_test_port() const;
 
