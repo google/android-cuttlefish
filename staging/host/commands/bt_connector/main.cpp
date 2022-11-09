@@ -41,6 +41,7 @@ DEFINE_int32(bt_out, -1, "A pipe for bt communication");
 DEFINE_int32(hci_port, -1, "A port for bt hci command");
 DEFINE_int32(link_port, -1, "A pipe for bt link layer command");
 DEFINE_int32(test_port, -1, "A pipe for rootcanal test channel");
+DEFINE_int32(link_ble_port, -1, "A pipe for bt link layer for ble command");
 
 void openSocket(cuttlefish::SharedFD* fd, int port) {
   static std::mutex mutex;
