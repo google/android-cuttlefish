@@ -110,7 +110,6 @@ DEFINE_string(
 
 DECLARE_string(ap_rootfs_image);
 DECLARE_string(bootloader);
-DECLARE_bool(use_sdcard);
 DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
@@ -867,7 +866,7 @@ class InitializeSdCard : public SetupFeature {
   // SetupFeature
   std::string Name() const override { return "InitializeSdCard"; }
   bool Enabled() const override {
-    return FLAGS_use_sdcard && !config_.protected_vm();
+    return instance_.use_sdcard() && !config_.protected_vm();
   }
 
  private:
