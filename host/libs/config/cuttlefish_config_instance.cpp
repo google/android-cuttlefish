@@ -479,6 +479,14 @@ bool CuttlefishConfig::InstanceSpecific::pause_in_bootloader() const {
   return (*Dictionary())[kPauseInBootloader].asBool();
 }
 
+static constexpr char kRunAsDaemon[] = "run_as_daemon";
+bool CuttlefishConfig::InstanceSpecific::run_as_daemon() const {
+  return (*Dictionary())[kRunAsDaemon].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_run_as_daemon(bool run_as_daemon) {
+  (*Dictionary())[kRunAsDaemon] = run_as_daemon;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
