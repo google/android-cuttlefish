@@ -227,6 +227,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_fuchsia_root_image(
 std::string CuttlefishConfig::InstanceSpecific::fuchsia_root_image() const {
   return (*Dictionary())[kFuchsiaRootImage].asString();
 }
+static constexpr char kCustomPartitionPath[] = "custom_partition_path";
+void CuttlefishConfig::MutableInstanceSpecific::set_custom_partition_path(
+    const std::string& custom_partition_path) {
+  (*Dictionary())[kCustomPartitionPath] = custom_partition_path;
+}
+std::string CuttlefishConfig::InstanceSpecific::custom_partition_path() const {
+  return (*Dictionary())[kCustomPartitionPath].asString();
+}
 static constexpr char kBlankMetadataImageMb[] = "blank_metadata_image_mb";
 int CuttlefishConfig::InstanceSpecific::blank_metadata_image_mb() const {
   return (*Dictionary())[kBlankMetadataImageMb].asInt();
