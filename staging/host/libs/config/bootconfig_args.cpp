@@ -193,6 +193,12 @@ std::vector<std::string> BootconfigArgsFromConfig(
     bootconfig_args.push_back(
         "androidboot.hypervisor.protected_vm.supported=0");
   }
+  if (!instance.kernel_path().empty()) {
+    bootconfig_args.emplace_back("androidboot.kernel_hotswapped=1");
+  }
+  if (!instance.initramfs_path().empty()) {
+    bootconfig_args.emplace_back("androidboot.ramdisk_hotswapped=1");
+  }
 
   AppendVector(&bootconfig_args, config.extra_bootconfig_args());
 
