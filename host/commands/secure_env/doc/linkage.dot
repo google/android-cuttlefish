@@ -1,70 +1,52 @@
 digraph {
   browser [label = "Browser"]
-  confirmationui_sign [label = "internal/confui_sign.sock", shape = "rectangle"]
-  host_confirmationui_in [color = "red", label = "internal/confui_fifo_vm.in", shape = "rectangle"]
-  host_confirmationui_out [color = "red", label = "internal/confui_fifo_vm.out", shape = "rectangle"]
-  host_gatekeeper_in [color = "green", label = "internal/gatekeeper_fifo_vm.in", shape = "rectangle"]
-  host_gatekeeper_out [color = "green", label = "internal/gatekeeper_fifo_vm.out", shape = "rectangle"]
-  host_keymint_in [color = "blue", label = "internal/keymaster_fifo_vm.in", shape = "rectangle"]
-  host_keymint_out [color = "blue", label = "internal/keymaster_fifo_vm.out", shape = "rectangle"]
+  confirmationui_sign [color = "red", label = "internal/confui_sign.sock", shape = "rectangle"]
   run_cvd
   secure_env [label = < <B>secure_env</B> >, penwidth=2]
   vmm [label = "crosvm / qemu"]
   webRTC
+
+  subgraph fifos {
+    rank = same;
+
+    host_keymint_in [color = "blue", label = "internal/keymaster_fifo_vm.in", shape = "rectangle"]
+    host_keymint_out [color = "blue", label = "internal/keymaster_fifo_vm.out", shape = "rectangle"]
+    host_gatekeeper_in [color = "green", label = "internal/gatekeeper_fifo_vm.in", shape = "rectangle"]
+    host_gatekeeper_out [color = "green", label = "internal/gatekeeper_fifo_vm.out", shape = "rectangle"]
+    host_confirmationui_in [color = "red", label = "internal/confui_fifo_vm.in", shape = "rectangle"]
+    host_confirmationui_out [color = "red", label = "internal/confui_fifo_vm.out", shape = "rectangle"]
+  }
+
   subgraph cluster_android {
     label = "Android VM"
     u_boot [label = "u-boot"]
     confirmationui [color = "red", label = "ConfirmationUI HAL"]
-    confirmationui_console [color = "red", label = "/dev/hvc8", shape = "rectangle"]
     gatekeeper [color = "green", label = "Gatekeeper HAL"]
-    gatekeeper_console [color = "green", label = "/dev/hvc4", shape = "rectangle"]
     keymint [color = "blue", label = "Keymint HAL"]
-    keymint_console [color = "blue", label = "/dev/hvc3", shape = "rectangle"]
+
+    subgraph consoles {
+      	rank = same;
+        confirmationui_console [color = "red", label = "/dev/hvc8", shape = "rectangle"]
+        gatekeeper_console [color = "green", label = "/dev/hvc4", shape = "rectangle"]
+        keymint_console [color = "blue", label = "/dev/hvc3", shape = "rectangle"]
+    }
   }
 
   browser -> webRTC
   run_cvd -> secure_env
-  host_confirmationui_out -> webRTC [color = "red"]
-  webRTC -> host_confirmationui_in [color = "red"]
-  host_gatekeeper_out -> secure_env [color = "green"]
-  secure_env -> host_gatekeeper_in [color = "green"]
-  host_keymint_out -> secure_env [color = "blue"]
-  secure_env -> host_keymint_in [color = "blue"]
 
-  vmm -> host_confirmationui_out [color = "red"]
-  host_confirmationui_in -> vmm [color = "red"]
+  webRTC -> host_confirmationui_out -> vmm [dir = "back", color = "red"]
+  webRTC -> host_confirmationui_in -> vmm [color = "red"]
+  vmm -> confirmationui_console -> confirmationui [dir = "both", color = "red"]
+  { rank = same; secure_env -> confirmationui_sign -> webRTC [color = "red", dir = "both"] }
 
-  vmm -> host_gatekeeper_out [color = "green"]
-  host_gatekeeper_in -> vmm [color = "green"]
+  secure_env -> host_gatekeeper_out -> vmm [color = "green", dir = "back"]
+  secure_env -> host_gatekeeper_in -> vmm [color = "green"]
+  vmm -> gatekeeper_console -> gatekeeper [color = "green", dir = "both"]
 
-  vmm -> host_keymint_out [color = "blue"]
-  host_keymint_in -> vmm [color = "blue"]
+  secure_env -> host_keymint_out -> vmm [color = "blue", dir = "back"]
+  secure_env -> host_keymint_in -> vmm [color = "blue"]
+  vmm -> keymint_console -> keymint [color = "blue", dir = "both"]
+  keymint_console -> u_boot [color = "blue", dir = "both"]
 
-  vmm -> confirmationui_console [color = "red"]
-  confirmationui_console -> vmm [color = "red"]
-
-  vmm -> gatekeeper_console [color = "green"]
-  gatekeeper_console -> vmm [color = "green"]
-
-  vmm -> keymint_console [color = "blue"]
-  keymint_console -> vmm [color = "blue"]
-
-  confirmationui_console -> confirmationui [color = "red"]
-  confirmationui -> confirmationui_console [color = "red"]
-
-  gatekeeper_console -> gatekeeper [color = "green"]
-  gatekeeper -> gatekeeper_console [color = "green"]
-
-  keymint -> keymint_console [color = "blue"]
-  keymint_console -> keymint [color = "blue"]
-
-  u_boot -> keymint_console [color = "blue"]
-  keymint_console -> u_boot [color = "blue"]
-
-  webRTC -> confirmationui_sign
-  confirmationui_sign -> webRTC
-
-  secure_env -> confirmationui_sign
-  confirmationui_sign -> secure_env
 }
-
