@@ -38,7 +38,6 @@
 
 using cuttlefish::vm_manager::CrosvmManager;
 
-DECLARE_bool(pause_in_bootloader);
 DECLARE_string(vm_manager);
 
 // Taken from external/avb/avbtool.py; this define is not in the headers
@@ -47,8 +46,9 @@ DECLARE_string(vm_manager);
 namespace cuttlefish {
 namespace {
 
-void WritePausedEntrypoint(std::ostream& env, const char* entrypoint) {
-  if (FLAGS_pause_in_bootloader) {
+void WritePausedEntrypoint(std::ostream& env, const char* entrypoint,
+                           const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.pause_in_bootloader()) {
     env << "if test $paused -ne 1; then paused=1; else " << entrypoint << "; fi";
   } else {
     env << entrypoint;
@@ -57,9 +57,10 @@ void WritePausedEntrypoint(std::ostream& env, const char* entrypoint) {
   env << '\0';
 }
 
-void WriteAndroidEnvironment(const CuttlefishConfig& config,
-                             std::ostream& env) {
-  WritePausedEntrypoint(env, "run bootcmd_android");
+void WriteAndroidEnvironment(
+    const CuttlefishConfig& config,std::ostream& env,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  WritePausedEntrypoint(env, "run bootcmd_android", instance);
 
   if (!config.boot_slot().empty()) {
     env << "android_slot_suffix=_" << config.boot_slot() << '\0';
@@ -67,14 +68,15 @@ void WriteAndroidEnvironment(const CuttlefishConfig& config,
   env << '\0';
 }
 
-void WriteEFIEnvironment(std::ostream& env) {
+void WriteEFIEnvironment(
+    std::ostream& env, const CuttlefishConfig::InstanceSpecific& instance) {
   // TODO(b/256602611): get rid of loadddr hardcode. make sure loadddr
   // env setup in the bootloader.
   WritePausedEntrypoint(env,
     "load virtio 0:${devplist} 0x80200000 efi/boot/bootaa64.efi "
     "&& bootefi 0x80200000 ${fdtcontroladdr}; "
     "load virtio 0:${devplist} 0x02400000 efi/boot/bootia32.efi && "
-    "bootefi 0x02400000 ${fdtcontroladdr}"
+    "bootefi 0x02400000 ${fdtcontroladdr}", instance
   );
 }
 
@@ -92,11 +94,11 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
 
   switch (instance.boot_flow()) {
     case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
-      WriteAndroidEnvironment(config, env);
+      WriteAndroidEnvironment(config, env, instance);
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
     case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-      WriteEFIEnvironment(env);
+      WriteEFIEnvironment(env, instance);
       break;
   }
 
