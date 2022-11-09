@@ -45,6 +45,8 @@ class RootCanal : public CommandSource {
     command.AddParameter(config_.rootcanal_hci_port());
     // Link server port
     command.AddParameter(config_.rootcanal_link_port());
+    // Link ble server port
+    command.AddParameter(config_.rootcanal_link_ble_port());
     // Bluetooth controller properties file
     command.AddParameter("--controller_properties_file=",
                          config_.rootcanal_config_file());
