@@ -89,8 +89,9 @@ type OperationResult struct {
 	// The expected response of the operation in case of success.  If the original
 	// method returns no data on success, such as `Delete`, this field will be
 	// empty, hence omitted. If the original method is standard:
-	// `Get`/`Create`/`Update`, the response should be the relevant resource.
-	Response interface{} `json:"response,omitempty"`
+	// `Get`/`Create`/`Update`, the response should be the relevant resource
+	// encoded in JSON format.
+	Response string `json:"response,omitempty"`
 }
 
 type CVD struct {

@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -30,6 +31,8 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
@@ -301,14 +304,11 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	op, _ := im.CreateCVD(r)
 
 	op, _ = om.Wait(op.Name, 1*time.Second)
-
-	cvd := op.Result.Response.(*apiv1.CVD)
-	expectedName := "cvd-1"
-	if cvd.Name != expectedName {
-		t.Errorf("expected %q, got %q", expectedName, cvd.Name)
-	}
-	if !reflect.DeepEqual(cvd.BuildInfo, buildInfo) {
-		t.Errorf("expected: %+v, got: %+v", buildInfo, cvd.BuildInfo)
+	want := apiv1.CVD{Name: "cvd-1", BuildInfo: buildInfo}
+	var got apiv1.CVD
+	json.Unmarshal([]byte(op.Result.Response), &got)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
 	}
 }
 
