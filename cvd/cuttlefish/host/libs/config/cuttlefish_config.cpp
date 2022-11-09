@@ -671,6 +671,15 @@ void CuttlefishConfig::set_rootcanal_link_port(int rootcanal_link_port) {
   (*dictionary_)[kRootcanalLinkPort] = rootcanal_link_port;
 }
 
+static constexpr char kRootcanalLinkBlePort[] = "rootcanal_link_ble_port";
+int CuttlefishConfig::rootcanal_link_ble_port() const {
+  return (*dictionary_)[kRootcanalLinkBlePort].asInt();
+}
+void CuttlefishConfig::set_rootcanal_link_ble_port(
+    int rootcanal_link_ble_port) {
+  (*dictionary_)[kRootcanalLinkBlePort] = rootcanal_link_ble_port;
+}
+
 static constexpr char kRootcanalTestPort[] = "rootcanal_test_port";
 int CuttlefishConfig::rootcanal_test_port() const {
   return (*dictionary_)[kRootcanalTestPort].asInt();
