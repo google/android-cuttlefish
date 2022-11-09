@@ -23,6 +23,7 @@ cc_library_static {
         "audio_track_source_impl.cpp",
         "camera_streamer.cpp",
         "client_handler.cpp",
+        "data_channels.cpp",
         "keyboard.cpp",
         "local_recorder.cpp",
         "streamer.cpp",
