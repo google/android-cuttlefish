@@ -226,7 +226,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.tv.input.", 1},
 
     // No implementation of IRadioIms yet TODO(b/250912118)
-    {"android.hardware.radio.ims.", 1},
     {"android.hardware.radio.ims.media.", 1},
 };
 
