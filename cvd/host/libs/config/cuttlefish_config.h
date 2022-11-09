@@ -299,6 +299,9 @@ class CuttlefishConfig {
   void set_rootcanal_link_port(int rootcanal_link_port);
   int rootcanal_link_port() const;
 
+  void set_rootcanal_link_ble_port(int rootcanal_link_ble_port);
+  int rootcanal_link_ble_port() const;
+
   void set_rootcanal_test_port(int rootcanal_test_port);
   int rootcanal_test_port() const;
 
@@ -532,8 +535,6 @@ class CuttlefishConfig {
     std::string setupwizard_mode() const;
     std::string userdata_format() const;
     bool guest_enforce_security() const;
-    bool use_sdcard() const;
-    bool pause_in_bootloader() const;
 
     // android artifacts
     std::string boot_image() const;
@@ -638,8 +639,6 @@ class CuttlefishConfig {
     Result<void> set_setupwizard_mode(const std::string& title);
     void set_userdata_format(const std::string& userdata_format);
     void set_guest_enforce_security(bool guest_enforce_security);
-    void set_use_sdcard(bool use_sdcard);
-    void set_pause_in_bootloader(bool pause_in_bootloader);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
