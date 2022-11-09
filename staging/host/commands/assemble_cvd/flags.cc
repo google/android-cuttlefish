@@ -124,14 +124,14 @@ DEFINE_bool(deprecated_boot_completed, CF_DEFAULTS_DEPRECATED_BOOT_COMPLETED,
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
 
-DEFINE_bool(use_allocd, CF_DEFAULTS_USE_ALLOCD,
+DEFINE_string(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
 DEFINE_bool(enable_minimal_mode, CF_DEFAULTS_ENABLE_MINIMAL_MODE,
             "Only enable the minimum features to boot a cuttlefish device and "
             "support minimal UI interactions.\nNote: Currently only supports "
             "handheld/phone targets");
-DEFINE_bool(
-    pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER,
+DEFINE_string(
+    pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER?"true":"false",
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
 DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
@@ -371,7 +371,7 @@ DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
               "Which HALs to use enable host security features for. Supports "
               "keymint and gatekeeper at the moment.");
 
-DEFINE_bool(use_sdcard, CF_DEFAULTS_USE_SDCARD,
+DEFINE_string(use_sdcard, CF_DEFAULTS_USE_SDCARD?"true":"false",
             "Create blank SD-Card image and expose to guest");
 
 DEFINE_bool(protected_vm, CF_DEFAULTS_PROTECTED_VM,
@@ -844,6 +844,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_guest_enforce_security, ",");
   std::vector<std::string> use_random_serial_vec =
       android::base::Split(FLAGS_use_random_serial, ",");
+  std::vector<std::string> use_allocd_vec =
+      android::base::Split(FLAGS_use_allocd, ",");
+  std::vector<std::string> use_sdcard_vec =
+      android::base::Split(FLAGS_use_sdcard, ",");
+  std::vector<std::string> pause_in_bootloader_vec =
+      android::base::Split(FLAGS_pause_in_bootloader, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -875,8 +881,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   bool is_first_instance = true;
   int instance_index = 0;
   for (const auto& num : *instance_nums) {
+    bool use_allocd;
+    if (instance_index >= use_allocd_vec.size()) {
+      use_allocd = CF_EXPECT(ParseBool(use_allocd_vec[0],
+                                    "use_allocd"));
+    } else {
+      use_allocd = CF_EXPECT(ParseBool(
+          use_allocd_vec[instance_index], "use_allocd"));
+    }
+
     IfaceConfig iface_config;
-    if (FLAGS_use_allocd) {
+    if (use_allocd) {
       auto iface_opt = AllocateNetworkInterfaces();
       if (!iface_opt.has_value()) {
         LOG(FATAL) << "Failed to acquire network interfaces";
@@ -897,7 +912,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto instance = tmp_config_obj.ForInstance(num);
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
-    instance.set_use_allocd(FLAGS_use_allocd);
+    instance.set_use_allocd(use_allocd);
     if (use_random_serial) {
       instance.set_serial_number(
           RandomSerialNumber("CFCVD" + std::to_string(num)));
@@ -1089,6 +1104,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     instance.set_guest_enforce_security(guest_enforce_security);
 
+    bool pause_in_bootloader;
+    if (instance_index >= pause_in_bootloader_vec.size()) {
+      pause_in_bootloader = CF_EXPECT(ParseBool(pause_in_bootloader_vec[0],
+                                    "pause_in_bootloader"));
+    } else {
+      pause_in_bootloader = CF_EXPECT(ParseBool(
+          pause_in_bootloader_vec[instance_index], "pause_in_bootloader"));
+    }
+    instance.set_pause_in_bootloader(pause_in_bootloader);
+
     int camera_server_port;
     if (instance_index < camera_server_port_vec.size()) {
       CHECK(android::base::ParseInt(camera_server_port_vec[instance_index].c_str(),
@@ -1180,8 +1205,18 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       virtual_disk_paths.push_back(path);
     }
 
+    bool use_sdcard;
+    if (instance_index >= use_sdcard_vec.size()) {
+      use_sdcard = CF_EXPECT(ParseBool(use_sdcard_vec[0],
+                                    "use_sdcard"));
+    } else {
+      use_sdcard = CF_EXPECT(ParseBool(
+          use_sdcard_vec[instance_index], "use_sdcard"));
+    }
+    instance.set_use_sdcard(use_sdcard);
+
     bool sdcard = true;
-    sdcard &= FLAGS_use_sdcard;
+    sdcard &= use_sdcard;
     sdcard &= !FLAGS_protected_vm;
     if (sdcard) {
       virtual_disk_paths.push_back(const_instance.sdcard_path());
