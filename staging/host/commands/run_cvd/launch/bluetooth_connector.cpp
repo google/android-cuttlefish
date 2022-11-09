@@ -32,6 +32,7 @@ class BluetoothConnector : public CommandSource {
     command.AddParameter("-hci_port=", config_.rootcanal_hci_port());
     command.AddParameter("-link_port=", config_.rootcanal_link_port());
     command.AddParameter("-test_port=", config_.rootcanal_test_port());
+    command.AddParameter("-link_ble_port=", config_.rootcanal_link_ble_port());
     return single_element_emplace(std::move(command));
   }
 
