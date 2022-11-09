@@ -93,9 +93,9 @@ public class RilE2eTests {
 
     /**
      * Verify that RIL stack is able to get up and connect to network in
-     * 60 seconds.
+     * 20 seconds.
      */
-    @Test(timeout = 10 * 1000)
+    @Test(timeout = 20 * 1000)
     public void testRilConnects() throws Exception {
         while (true) {
             NetworkInfo net = mConnManager.getActiveNetworkInfo();
