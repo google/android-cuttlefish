@@ -15,6 +15,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -40,6 +41,9 @@ struct InputOutput {
 
 }  // namespace
 
+using Envs = std::unordered_map<std::string, std::string>;
+using Args = std::vector<std::string>;
+
 class CvdSelectorParserNamesTest : public testing::TestWithParam<InputOutput> {
  protected:
   CvdSelectorParserNamesTest() { Init(); }
@@ -47,8 +51,8 @@ class CvdSelectorParserNamesTest : public testing::TestWithParam<InputOutput> {
     auto [input, expected_output] = GetParam();
     selector_args_ = android::base::Tokenize(input, " ");
     expected_output_ = std::move(expected_output);
-    auto parse_result =
-        SelectorFlagsParser::ConductSelectFlagsParser(selector_args_);
+    auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+        selector_args_, Args{}, Envs{});
     if (parse_result.ok()) {
       parser_ = std::move(*parse_result);
     }
@@ -59,12 +63,7 @@ class CvdSelectorParserNamesTest : public testing::TestWithParam<InputOutput> {
   std::optional<SelectorFlagsParser> parser_;
 };
 
-TEST_P(CvdSelectorParserNamesTest, ValidInputs) {
-  /*
-   * if ParseOptions() is successful, parser_ is not nullopt
-   */
-  ASSERT_TRUE(parser_);
-}
+TEST_P(CvdSelectorParserNamesTest, ValidInputs) { ASSERT_TRUE(parser_); }
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
@@ -139,10 +138,10 @@ class CvdSelectorParserInvalidNamesTest
 };
 
 TEST_P(CvdSelectorParserInvalidNamesTest, InvalidInputs) {
-  auto parse_result =
-      SelectorFlagsParser::ConductSelectFlagsParser(selector_args_);
+  auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+      selector_args_, Args{}, Envs{});
 
-  ASSERT_FALSE(parse_result.ok()) << "Failed with " << input_;
+  ASSERT_FALSE(parse_result.ok()) << parse_result.error().Trace();
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -164,8 +163,8 @@ class CvdSelectorParserSubstringTest
   CvdSelectorParserSubstringTest() {
     auto [input, expected] = GetParam();
     auto selector_args = android::base::Tokenize(input, " ");
-    auto parse_result =
-        SelectorFlagsParser::ConductSelectFlagsParser(selector_args);
+    auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+        selector_args, Args{}, Envs{});
     if (parse_result.ok()) {
       parser_ = std::move(*parse_result);
     }
