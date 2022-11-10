@@ -37,7 +37,7 @@ type Controller struct {
 	observer       Observer
 }
 
-func (c Controller) connect(onComplete func(error)) {
+func (c *Controller) connect(onComplete func(error)) {
 	// Provide sufficient buffer in case several events are triggered when the peer
 	// connection fails or closes.
 	closeCh := make(chan bool, 10)
@@ -77,7 +77,7 @@ func (c Controller) connect(onComplete func(error)) {
 	c.signaling.SendCh <- NewRequestOfferMsg(c.signaling.ClientICEServers)
 }
 
-func (c Controller) recvLoop(closeCh chan bool) error {
+func (c *Controller) recvLoop(closeCh chan bool) error {
 	for {
 		select {
 		case _ = <-closeCh:
@@ -91,36 +91,30 @@ func (c Controller) recvLoop(closeCh chan bool) error {
 				panic("Device requested an offer. This violates the signaling protocol")
 			case OfferMsgType:
 				var offer webrtc.SessionDescription
-				err := Reshape(msg, &offer)
-				if err != nil {
+				if err := Reshape(msg, &offer); err != nil {
 					// msg was obtained from a JSON string so Reshape shouldn't fail
-					panic(fmt.Errorf("Failed to reshape json: ", err))
+					panic(fmt.Sprintf("Failed to reshape json: %v", err))
 				}
-				err = c.onOffer(offer)
-				if err != nil {
-					return fmt.Errorf("Error handling offer: %v", err)
+				if err := c.onOffer(offer); err != nil {
+					return fmt.Errorf("Error handling offer: %w", err)
 				}
 			case ICECandidateMsgType:
 				var candidate webrtc.ICECandidateInit
-				err := Reshape(msg, &candidate)
-				if err != nil {
+				if err := Reshape(msg, &candidate); err != nil {
 					// msg was obtained from a JSON string so Reshape shouldn't fail
-					panic(fmt.Errorf("Failed to reshape json: ", err))
+					panic(fmt.Sprintf("Failed to reshape json: %v", err))
 				}
-				err = c.onICECandidate(candidate)
-				if err != nil {
-					return fmt.Errorf("Error handling ICE candidate: %v", err)
+				if err := c.onICECandidate(candidate); err != nil {
+					return fmt.Errorf("Error handling ICE candidate: %w", err)
 				}
 			case AnswerMsgType:
 				var answer webrtc.SessionDescription
-				err := Reshape(msg, &answer)
-				if err != nil {
+				if err := Reshape(msg, &answer); err != nil {
 					// msg was obtained from a JSON string so Reshape shouldn't fail
-					panic(fmt.Errorf("Failed to reshape json: ", err))
+					panic(fmt.Sprintf("Failed to reshape json: %v", err))
 				}
-				err = c.onAnswer(answer)
-				if err != nil {
-					return fmt.Errorf("Error handling answer: %v", err)
+				if err := c.onAnswer(answer); err != nil {
+					return fmt.Errorf("Error handling answer: %w", err)
 				}
 			default:
 				if errMsg, errPresent := msg["error"]; errPresent {
@@ -133,41 +127,38 @@ func (c Controller) recvLoop(closeCh chan bool) error {
 	}
 }
 
-func (c Controller) onOffer(offer webrtc.SessionDescription) error {
-	err := c.peerConnection.SetRemoteDescription(offer)
-	if err != nil {
-		return fmt.Errorf("Failed to set remote description: %v", err)
+func (c *Controller) onOffer(offer webrtc.SessionDescription) error {
+	if err := c.peerConnection.SetRemoteDescription(offer); err != nil {
+		return fmt.Errorf("Failed to set remote description: %w", err)
 	}
 	answer, err := c.peerConnection.CreateAnswer(nil)
 	if err != nil {
-		return fmt.Errorf("Failed to create answer: %v", err)
+		return fmt.Errorf("Failed to create answer: %w", err)
 	}
-	fmt.Println("Answer created -===-=-=-=--=-=-==-=")
-	err = c.peerConnection.SetLocalDescription(answer)
-	if err != nil {
-		return fmt.Errorf("Failed to set local description: %v", err)
+	if err = c.peerConnection.SetLocalDescription(answer); err != nil {
+		return fmt.Errorf("Failed to set local description: %w", err)
 	}
 	c.signaling.SendCh <- answer
 	return nil
 }
 
-func (c Controller) onAnswer(answer webrtc.SessionDescription) error {
+func (c *Controller) onAnswer(answer webrtc.SessionDescription) error {
 	err := c.peerConnection.SetRemoteDescription(answer)
 	if err != nil {
-		return fmt.Errorf("Failed to set remote description: %v", err)
+		return fmt.Errorf("Failed to set remote description: %w", err)
 	}
 	return nil
 }
 
-func (c Controller) onICECandidate(candidate webrtc.ICECandidateInit) error {
+func (c *Controller) onICECandidate(candidate webrtc.ICECandidateInit) error {
 	err := c.peerConnection.AddICECandidate(candidate)
 	if err != nil {
-		return fmt.Errorf("Failed to add ICE candidate: %v", err)
+		return fmt.Errorf("Failed to add ICE candidate: %w", err)
 	}
 	return nil
 }
 
-func (c Controller) sendICECandidate(candidate webrtc.ICECandidateInit) {
+func (c *Controller) sendICECandidate(candidate webrtc.ICECandidateInit) {
 	c.signaling.SendCh <- NewICECandidateMsg(candidate)
 }
 
@@ -190,11 +181,11 @@ func NewDeviceConnection(signaling *Signaling, observer Observer) (*Connection, 
 	}
 	pc, err := webrtc.NewPeerConnection(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create peer connection: %v", err)
+		return nil, fmt.Errorf("Failed to create peer connection: %w", err)
 	}
 	adbChannel, err := pc.CreateDataChannel("adb-channel", nil /*options*/)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create adb data channel: %v", err)
+		return nil, fmt.Errorf("Failed to create adb data channel: %w", err)
 	}
 	pc.OnNegotiationNeeded(func() {
 		// TODO(jemoreira): This needs to be handled when unnecessary tracks and
