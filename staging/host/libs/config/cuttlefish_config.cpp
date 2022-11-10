@@ -339,14 +339,6 @@ void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
   (*dictionary_)[kRestartSubprocesses] = restart_subprocesses;
 }
 
-static constexpr char kRunAsDaemon[] = "run_as_daemon";
-bool CuttlefishConfig::run_as_daemon() const {
-  return (*dictionary_)[kRunAsDaemon].asBool();
-}
-void CuttlefishConfig::set_run_as_daemon(bool run_as_daemon) {
-  (*dictionary_)[kRunAsDaemon] = run_as_daemon;
-}
-
 static constexpr char kBootSlot[] = "boot_slot";
 void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
   (*dictionary_)[kBootSlot] = boot_slot;

@@ -250,7 +250,7 @@ DEFINE_string(
 
 DEFINE_string(uuid, CF_DEFAULTS_UUID,
               "UUID to use for the device. Random if not specified");
-DEFINE_bool(daemon, CF_DEFAULTS_DAEMON,
+DEFINE_string(daemon, CF_DEFAULTS_DAEMON?"true":"false",
             "Run cuttlefish in background, the launcher exits on boot "
             "completed/failed");
 
@@ -754,8 +754,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_enable_adb_websocket(
           FLAGS_webrtc_enable_adb_websocket);
 
-  tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
-
   tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
 
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(
@@ -850,6 +848,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_use_sdcard, ",");
   std::vector<std::string> pause_in_bootloader_vec =
       android::base::Split(FLAGS_pause_in_bootloader, ",");
+  std::vector<std::string> daemon_vec =
+      android::base::Split(FLAGS_daemon, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -1114,6 +1114,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           pause_in_bootloader_vec[instance_index], "pause_in_bootloader"));
     }
     instance.set_pause_in_bootloader(pause_in_bootloader);
+
+    bool daemon;
+    if (instance_index >= daemon_vec.size()) {
+      daemon = CF_EXPECT(ParseBool(daemon_vec[0], "daemon"));
+    } else {
+      daemon = CF_EXPECT(ParseBool(daemon_vec[instance_index], "daemon"));
+    }
+    instance.set_run_as_daemon(daemon);
 
     int camera_server_port;
     if (instance_index < camera_server_port_vec.size()) {
