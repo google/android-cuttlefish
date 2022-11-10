@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 
   auto instance = config->ForDefaultInstance();
 
-  if (config->run_as_daemon()) {
+  if (instance.run_as_daemon()) {
     android::base::SetLogger(
         cuttlefish::LogToFiles({instance.launcher_log_path()}));
   } else {
