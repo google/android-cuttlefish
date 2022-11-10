@@ -21,7 +21,8 @@
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider>>
+fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                     const CuttlefishConfig::InstanceSpecific>>
 bootStateMachineComponent();
 
 }  // namespace cuttlefish
