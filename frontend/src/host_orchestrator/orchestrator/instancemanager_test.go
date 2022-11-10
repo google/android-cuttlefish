@@ -312,6 +312,32 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	}
 }
 
+func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return buildTestCmdF(args...)
+	}
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+
+	op, _ := im.CreateCVD(r)
+
+	op, _ = om.Wait(op.Name, 1*time.Second)
+	if op.Result.Error.Details == "" {
+		t.Error("expected not empty details")
+	}
+}
+
 type FakeArtifactDownloader struct {
 	t       *testing.T
 	content string
@@ -528,15 +554,36 @@ func removeDir(t *testing.T, name string) {
 	}
 }
 
+const executedAsFakeMain = "executed_as_fake_main"
+
 type fakeMainFunc func(*testing.T)
 
 // NOTE: This test is not a regular unit tests. It simulates a fake binary execution.
 func TestFakeBinaryMain(t *testing.T) {}
 
+// NOTE: This test is not a regular unit tests. It simulates a fake binary execution that fails.
+func TestFakeBinaryMainF(t *testing.T) {
+	// Early exit when called as regular test.
+	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMain {
+		return
+	}
+	panic("failure")
+}
+
 // Creates a new exec.Cmd, which will call the `TestFakeBinaryMain` function through the execution
 // of the `go test` binary using the parameter `--test.run`.
 func buildTestCmd() *exec.Cmd {
 	cs := []string{"--test.run=" + funcName(TestFakeBinaryMain)}
+	cmd := exec.Command(os.Args[0], cs...)
+	return cmd
+}
+
+// Same as buildTestCmd but the execution fails when a cvd subcommand is executed.
+func buildTestCmdF(args ...string) *exec.Cmd {
+	if len(args) == 5 {
+		return buildTestCmd()
+	}
+	cs := []string{"--test.run=" + funcName(TestFakeBinaryMainF), executedAsFakeMain}
 	cmd := exec.Command(os.Args[0], cs...)
 	return cmd
 }

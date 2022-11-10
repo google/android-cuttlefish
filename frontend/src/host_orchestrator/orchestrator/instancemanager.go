@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +24,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -104,18 +106,21 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	}()
 	cvd, err := m.launchCVD_(req, op)
 	if err != nil {
-		log.Printf("failed to launch cvd with error: %v", err)
-		result = apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
+		opErr := &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed}
+		var cvdExecError *cvdCommandExecErr
+		if errors.As(err, &cvdExecError) {
+			opErr.Details = cvdExecError.Error()
+			log.Printf("failed to launch cvd with error: %v", cvdExecError.Unwrap())
+		} else {
+			log.Printf("failed to launch cvd with error: %v", err)
 		}
+		result = apiv1.OperationResult{Error: opErr}
 		return
 	}
 	buf, err := json.Marshal(cvd)
 	if err != nil {
 		log.Printf("%v", err)
-		result = apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
-		}
+		result = apiv1.OperationResult{Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed}}
 		return
 	}
 	result = apiv1.OperationResult{Response: string(buf)}
@@ -436,6 +441,20 @@ type cvdCommand struct {
 	args           []string
 }
 
+type cvdCommandExecErr struct {
+	args         []string
+	stdoutStderr string
+	err          error
+}
+
+func (e *cvdCommandExecErr) Error() string {
+	return fmt.Sprintf("cvd execution with args %q failed with combined stdout and stderr:\n%s",
+		strings.Join(e.args, " "),
+		e.stdoutStderr)
+}
+
+func (e *cvdCommandExecErr) Unwrap() error { return e.err }
+
 func (c *cvdCommand) Run() error {
 	// Makes sure cvd server daemon is running before executing the cvd command.
 	if err := c.startCVDServer(); err != nil {
@@ -453,7 +472,7 @@ func (c *cvdCommand) Run() error {
 			"## END \n" +
 			"############################################\n"
 		log.Printf(msg, string(stdoutStderr))
-		return fmt.Errorf("cvd execution failed: %w", err)
+		return &cvdCommandExecErr{c.args, string(stdoutStderr), err}
 	}
 	return nil
 }
