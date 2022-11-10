@@ -163,6 +163,11 @@ class ProxyKeymasterContext : public keymaster::KeymasterContext {
     return wrapped_.GetBootPatchlevel();
   }
 
+  keymaster_error_t SetAttestationIds(
+      const keymaster::SetAttestationIdsRequest& request) override {
+    return wrapped_.SetAttestationIds(request);
+  }
+
  private:
   KeymasterContext& wrapped_;
 };
