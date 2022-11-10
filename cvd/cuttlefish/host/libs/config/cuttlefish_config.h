@@ -169,9 +169,6 @@ class CuttlefishConfig {
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
 
-  void set_run_as_daemon(bool run_as_daemon);
-  bool run_as_daemon() const;
-
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
@@ -537,6 +534,7 @@ class CuttlefishConfig {
     bool guest_enforce_security() const;
     bool use_sdcard() const;
     bool pause_in_bootloader() const;
+    bool run_as_daemon() const;
 
     // android artifacts
     std::string boot_image() const;
@@ -643,6 +641,7 @@ class CuttlefishConfig {
     void set_guest_enforce_security(bool guest_enforce_security);
     void set_use_sdcard(bool use_sdcard);
     void set_pause_in_bootloader(bool pause_in_bootloader);
+    void set_run_as_daemon(bool run_as_daemon);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
