@@ -54,11 +54,76 @@ keymaster_security_level_t TpmAttestationRecordContext::GetSecurityLevel() const
   return KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
 }
 
+// Return true if entries match, false otherwise.
+bool matchAttestationId(keymaster_blob_t blob, const std::vector<uint8_t>& id) {
+  if (blob.data_length != id.size()) {
+    return false;
+  }
+  if (memcmp(blob.data, id.data(), id.size())) {
+    return false;
+  }
+  return true;
+}
+
 keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
-    const AuthorizationSet& /*attestation_params*/,
-    AuthorizationSet* /*attestation*/) const {
-  LOG(DEBUG) << "TODO(schuffelen): Implement VerifyAndCopyDeviceIds";
-  return KM_ERROR_UNIMPLEMENTED;
+    const AuthorizationSet& attestation_params,
+    AuthorizationSet* attestation) const {
+  const AttestationIds& ids = attestation_ids_;
+  bool found_mismatch = false;
+  for (auto& entry : attestation_params) {
+    switch (entry.tag) {
+      case KM_TAG_ATTESTATION_ID_BRAND:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.brand);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_DEVICE:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.device);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_PRODUCT:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.product);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_SERIAL:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.serial);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_IMEI:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.imei);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_MEID:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.meid);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_MANUFACTURER:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.manufacturer);
+        attestation->push_back(entry);
+        break;
+
+      case KM_TAG_ATTESTATION_ID_MODEL:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.model);
+        attestation->push_back(entry);
+        break;
+
+      default:
+        // Ignore non-ID tags.
+        break;
+    }
+  }
+
+  if (found_mismatch) {
+    attestation->Clear();
+    return KM_ERROR_CANNOT_ATTEST_IDS;
+  }
+
+  return KM_ERROR_OK;
 }
 
 keymaster::Buffer TpmAttestationRecordContext::GenerateUniqueId(
@@ -105,6 +170,22 @@ void TpmAttestationRecordContext::SetVerifiedBootInfo(
   }
 
   vb_params_.device_locked = bootloader_state == "locked";
+}
+
+keymaster_error_t TpmAttestationRecordContext::SetAttestationIds(
+    const keymaster::SetAttestationIdsRequest& request) {
+  attestation_ids_.brand.assign(request.brand.begin(), request.brand.end());
+  attestation_ids_.device.assign(request.device.begin(), request.device.end());
+  attestation_ids_.product.assign(request.product.begin(),
+                                  request.product.end());
+  attestation_ids_.serial.assign(request.serial.begin(), request.serial.end());
+  attestation_ids_.imei.assign(request.imei.begin(), request.imei.end());
+  attestation_ids_.meid.assign(request.meid.begin(), request.meid.end());
+  attestation_ids_.manufacturer.assign(request.manufacturer.begin(),
+                                       request.manufacturer.end());
+  attestation_ids_.model.assign(request.model.begin(), request.model.end());
+
+  return KM_ERROR_OK;
 }
 
 }  // namespace cuttlefish
