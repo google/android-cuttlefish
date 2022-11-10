@@ -15,9 +15,10 @@ use std::os::unix::io::FromRawFd;
 
 pub mod attest;
 mod clock;
+mod tpm;
 
 /// Main routine for the KeyMint TA. Only returns if there is a fatal error.
-pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel) {
+pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: *mut libc::c_void) {
     let _ = env_logger::try_init();
     info!(
         "KeyMint TA running with fd_id={}, fd_out={}, security_level={:?}",
@@ -55,9 +56,12 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel) {
     };
     let sign_info = attest::CertSignInfo::new();
 
+    let tpm_keys = tpm::Keys::new(trm);
+    let soft_keys = SoftwareKeys;
+    let keys: &dyn kmr_ta::device::RetrieveKeyMaterial =
+        if security_level == SecurityLevel::TrustedEnvironment { &tpm_keys } else { &soft_keys };
     let dev = kmr_ta::device::Implementation {
-        // TODO(b/242838132): add TPM-backed implementation
-        keys: &SoftwareKeys,
+        keys,
         sign_info: &sign_info,
         // HAL populates attestation IDs from properties.
         attest_ids: None,
