@@ -98,6 +98,8 @@ class RemoteKeymaster {
                               GenerateTimestampTokenResponse* response);
   GetRootOfTrustResponse GetRootOfTrust(const GetRootOfTrustRequest& request);
   GetHwInfoResponse GetHwInfo();
+  SetAttestationIdsResponse SetAttestationIds(
+      const SetAttestationIdsRequest& request);
 
   // CF HAL and remote sides are always compiled together, so will never
   // disagree about message versions.
