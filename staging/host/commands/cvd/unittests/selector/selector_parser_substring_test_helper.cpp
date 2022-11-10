@@ -15,25 +15,21 @@
 
 #include "host/commands/cvd/unittests/selector/selector_parser_substring_test_helper.h"
 
+#include <android-base/strings.h>
+
 namespace cuttlefish {
 namespace selector {
 
-TEST_P(SubstringTest, Substring) {
-  ASSERT_EQ((parser_ != std::nullopt), expected_result_);
+SubstringTest::SubstringTest() {
+  auto [input, expected] = GetParam();
+  auto selector_args = android::base::Tokenize(input, " ");
+  auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+      selector_args, Args{}, Envs{});
+  if (parse_result.ok()) {
+    parser_ = std::move(*parse_result);
+  }
+  expected_result_ = expected;
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    CvdParser, SubstringTest,
-    testing::Values(SubstringTestInput{"--name cvd", true},
-                    SubstringTestInput{"--name cvd cv", true},
-                    SubstringTestInput{"--name cvd c v", true},
-                    SubstringTestInput{"--name cvd c,v,d", true},
-                    SubstringTestInput{"--name cvd c v,d", true},
-                    SubstringTestInput{"--name cvd c", true},
-                    SubstringTestInput{"c v --name cvd d", true},
-                    SubstringTestInput{"c --name cvd v", true},
-                    SubstringTestInput{"--name cvd c,", false},
-                    SubstringTestInput{"--name cvd c v,,d", false}));
 
 }  // namespace selector
 }  // namespace cuttlefish
