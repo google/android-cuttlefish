@@ -112,7 +112,9 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
 
 class ProcessLeader : public SetupFeature {
  public:
-  INJECT(ProcessLeader(const CuttlefishConfig& config)) : config_(config) {}
+  INJECT(ProcessLeader(const CuttlefishConfig& config,
+                       const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
 
   SharedFD ForegroundLauncherPipe() { return foreground_launcher_pipe_; }
 
@@ -126,7 +128,7 @@ class ProcessLeader : public SetupFeature {
     /* These two paths result in pretty different process state, but both
      * achieve the same goal of making the current process the leader of a
      * process group, and are therefore grouped together. */
-    if (config_.run_as_daemon()) {
+    if (instance_.run_as_daemon()) {
       foreground_launcher_pipe_ = DaemonizeLauncher(config_);
       if (!foreground_launcher_pipe_->IsOpen()) {
         return false;
@@ -146,6 +148,7 @@ class ProcessLeader : public SetupFeature {
   }
 
   const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
   SharedFD foreground_launcher_pipe_;
 };
 
@@ -301,7 +304,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider>>
+fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                     const CuttlefishConfig::InstanceSpecific>>
 bootStateMachineComponent() {
   return fruit::createComponent()
       .addMultibinding<KernelLogPipeConsumer, CvdBootStateMachine>()
