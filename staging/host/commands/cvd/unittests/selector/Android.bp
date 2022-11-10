@@ -45,7 +45,9 @@ cc_test_host {
 cc_test_host {
     name: "cvd_selector_parser_test",
     srcs: [
-        "test_cvd_selector_parser.cpp",
+        "test_cvd_selector_parser_ids.cpp",
+        "test_cvd_selector_parser_names.cpp",
+        "test_cvd_selector_parser_substring.cpp",
     ],
     test_options: {
         unit_test: true,
