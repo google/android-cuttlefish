@@ -32,7 +32,6 @@ const std::string kBootPathIA32 = "EFI/BOOT/BOOTIA32.EFI";
 const std::string kBootPathAA64 = "EFI/BOOT/BOOTAA64.EFI";
 const std::string kModulesPath = "EFI/modules";
 const std::string kMultibootModulePath = kModulesPath + "/multiboot.mod";
-const std::string kM5 = "";
 
 // These are the paths Debian installs the monoliths to. If another distro
 // uses an alternative monolith path, add it to this table
@@ -40,11 +39,6 @@ const std::pair<std::string, std::string> kGrubBlobTable[] = {
     {"/usr/lib/grub/i386-efi/multiboot.mod", kMultibootModulePath},
     {"/usr/lib/grub/i386-efi/monolithic/grubia32.efi", kBootPathIA32},
     {"/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi", kBootPathAA64},
-};
-
-// M5 checkpoint required binary file
-const std::pair<std::string, std::string> kM5BlobTable[] = {
-    {"/tmp/m5", kM5},
 };
 
 bool ForceFsckImage(const std::string& data_image,
@@ -436,35 +430,29 @@ class InitializeEspImageImpl : public InitializeEspImage {
       }
       size = sizeof(kGrubBlobTable)/sizeof(const std::pair<std::string, std::string>);
       kBlobTable = kGrubBlobTable;
-    } else {
-      size = sizeof(kM5BlobTable)/sizeof(const std::pair<std::string, std::string>);
-      kBlobTable = kM5BlobTable;
-    }
 
-    // The grub binaries are small, so just copy all the architecture blobs
-    // we can find, which minimizes complexity. If the user removed the grub bin
-    // package from their system, the ESP will be empty and Other OS will not be
-    // supported
-    bool copied = false;
-    for (int i=0; i<size; i++) {
-      auto grub = kBlobTable[i];
-      if (!FileExists(grub.first)) {
-        continue;
+      // The grub binaries are small, so just copy all the architecture blobs
+      // we can find, which minimizes complexity. If the user removed the grub bin
+      // package from their system, the ESP will be empty and Other OS will not be
+      // supported
+      bool copied = false;
+      for (int i=0; i<size; i++) {
+        auto grub = kBlobTable[i];
+        if (!FileExists(grub.first)) {
+          continue;
+        }
+        if (!CopyToMsdos(tmp_esp_image, grub.first, "::" + grub.second)) {
+          return false;
+        }
+        copied = true;
       }
-      if (!CopyToMsdos(tmp_esp_image, grub.first, "::" + grub.second)) {
+
+      if (!copied) {
+        LOG(ERROR) << "Binary dependencies were not found on this system; Other OS "
+                      "support will be broken";
         return false;
       }
-      copied = true;
-    }
 
-    if (!copied) {
-      LOG(ERROR) << "Binary dependencies were not found on this system; Other OS "
-                    "support will be broken";
-      return false;
-    }
-
-    // Skip Gem5 case. Gem5 will never be able to use bootloaders like grub.
-    if (config_.vm_manager() != vm_manager::Gem5Manager::name()) {
       auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
       CHECK(FileExists(grub_cfg)) << "Missing file " << grub_cfg << "!";
       if (!CopyToMsdos(tmp_esp_image, grub_cfg, "::EFI/debian/")) {
