@@ -16,24 +16,42 @@
 
 #include "host/commands/cvd/selector/selector_cmdline_parser.h"
 
+#include <sstream>
+#include <string_view>
+
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
 namespace selector {
 
+static Result<unsigned> ParseNaturalNumber(const std::string& token) {
+  std::int32_t value;
+  CF_EXPECT(android::base::ParseInt(token, &value));
+  CF_EXPECT(value > 0);
+  return static_cast<unsigned>(value);
+}
+
 Result<SelectorFlagsParser> SelectorFlagsParser::ConductSelectFlagsParser(
-    const std::vector<std::string>& args) {
-  SelectorFlagsParser parser(args);
+    const std::vector<std::string>& selector_args,
+    const std::vector<std::string>& cmd_args,
+    const std::unordered_map<std::string, std::string>& envs) {
+  SelectorFlagsParser parser(selector_args, cmd_args, envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
-SelectorFlagsParser::SelectorFlagsParser(const std::vector<std::string>& args)
-    : args_(args) {}
+SelectorFlagsParser::SelectorFlagsParser(
+    const std::vector<std::string>& selector_args,
+    const std::vector<std::string>& cmd_args,
+    const std::unordered_map<std::string, std::string>& envs)
+    : selector_args_(selector_args), cmd_args_(cmd_args), envs_(envs) {}
 
 std::optional<std::string> SelectorFlagsParser::GroupName() const {
   return group_name_;
@@ -170,6 +188,153 @@ SelectorFlagsParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
                           .instance_names = std::move(instance_names_output)}};
 }
 
+namespace {
+
+using Envs = std::unordered_map<std::string, std::string>;
+
+std::optional<unsigned> TryFromCuttlefishInstance(const Envs& envs) {
+  if (envs.find(kCuttlefishInstanceEnvVarName) == envs.end()) {
+    return std::nullopt;
+  }
+  const auto cuttlefish_instance = envs.at(kCuttlefishInstanceEnvVarName);
+  if (cuttlefish_instance.empty()) {
+    return std::nullopt;
+  }
+  auto parsed = ParseNaturalNumber(cuttlefish_instance);
+  return parsed.ok() ? std::optional(*parsed) : std::nullopt;
+}
+
+std::optional<unsigned> TryFromUser(const Envs& envs) {
+  if (envs.find("USER") == envs.end()) {
+    return std::nullopt;
+  }
+  std::string_view user{envs.at("USER")};
+  if (user.empty() || !android::base::ConsumePrefix(&user, kVsocUserPrefix)) {
+    return std::nullopt;
+  }
+  const auto& vsoc_num = user;
+  auto vsoc_id = ParseNaturalNumber(vsoc_num.data());
+  return vsoc_id.ok() ? std::optional(*vsoc_id) : std::nullopt;
+}
+
+}  // namespace
+
+std::optional<std::unordered_set<unsigned>>
+SelectorFlagsParser::InstanceFromEnvironment(
+    const InstanceFromEnvParam& params) {
+  const auto& cuttlefish_instance_env = params.cuttlefish_instance_env;
+  const auto& vsoc_suffix = params.vsoc_suffix;
+  const auto& num_instances = params.num_instances;
+
+  // see the logic in cuttlefish::InstanceFromEnvironment()
+  // defined in host/libs/config/cuttlefish_config.cpp
+  std::unordered_set<unsigned> nums;
+  std::optional<unsigned> base;
+  if (cuttlefish_instance_env) {
+    base = *cuttlefish_instance_env;
+  }
+  if (!base && vsoc_suffix) {
+    base = *vsoc_suffix;
+  }
+  if (!base) {
+    return std::nullopt;
+  }
+  // this is guaranteed by the caller
+  // assert(num_instances != std::nullopt);
+  for (unsigned i = 0; i != *num_instances; i++) {
+    nums.insert(base.value() + i);
+  }
+  return nums;
+}
+
+Result<unsigned> SelectorFlagsParser::VerifyNumOfInstances(
+    const VerifyNumOfInstancesParam& params,
+    const unsigned default_n_instances) const {
+  const auto& num_instances_flag = params.num_instances_flag;
+  const auto& instance_names = params.instance_names;
+  const auto& instance_nums_flag = params.instance_nums_flag;
+
+  std::optional<unsigned> num_instances;
+  if (num_instances_flag) {
+    num_instances = CF_EXPECT(ParseNaturalNumber(*num_instances_flag));
+  }
+  if (instance_names && !instance_names->empty()) {
+    auto implied_n_instances = instance_names->size();
+    if (num_instances) {
+      CF_EXPECT_EQ(*num_instances, static_cast<unsigned>(implied_n_instances),
+                   "The number of instances requested by --num_instances "
+                       << " are not the same as what is implied by "
+                       << " --name/device_name/instance_name.");
+    }
+    num_instances = implied_n_instances;
+  }
+  if (instance_nums_flag) {
+    std::vector<std::string> tokens =
+        android::base::Split(*instance_nums_flag, ",");
+    for (const auto& t : tokens) {
+      CF_EXPECT(ParseNaturalNumber(t), t << " must be a natural number");
+    }
+    if (!num_instances) {
+      num_instances = tokens.size();
+    }
+    CF_EXPECT_EQ(*num_instances, tokens.size(),
+                 "All information for the number of instances must match.");
+  }
+  return num_instances.value_or(default_n_instances);
+}
+
+Result<SelectorFlagsParser::ParsedInstanceIdsOpt>
+SelectorFlagsParser::HandleInstanceIds(
+    const InstanceIdsParams& instance_id_params) {
+  const auto& instance_nums = instance_id_params.instance_nums;
+  const auto& base_instance_num = instance_id_params.base_instance_num;
+  const auto& cuttlefish_instance_env =
+      instance_id_params.cuttlefish_instance_env;
+  const auto& vsoc_suffix = instance_id_params.vsoc_suffix;
+
+  // calculate and/or verify the number of instances
+  unsigned num_instances =
+      CF_EXPECT(VerifyNumOfInstances(VerifyNumOfInstancesParam{
+          .num_instances_flag = instance_id_params.num_instances,
+          .instance_names = instance_names_,
+          .instance_nums_flag = instance_nums}));
+
+  if (!instance_nums && !base_instance_num) {
+    // num_instances is given. if non-std::nullopt is returned,
+    // the base is also figured out. If base can't be figured out,
+    // std::nullopt is returned.
+    auto instance_ids = InstanceFromEnvironment(
+        {.cuttlefish_instance_env = cuttlefish_instance_env,
+         .vsoc_suffix = vsoc_suffix,
+         .num_instances = num_instances});
+    if (instance_ids) {
+      return ParsedInstanceIdsOpt(*instance_ids);
+    }
+    // the return value, n_instances is the "desired/requested" instances
+    // When instance_ids set isn't figured out, n_instances is not meant to
+    // be always zero; it could be any natural number.
+    return ParsedInstanceIdsOpt(num_instances);
+  }
+
+  InstanceNumsCalculator calculator;
+  calculator.NumInstances(static_cast<std::int32_t>(num_instances));
+  if (instance_nums) {
+    calculator.InstanceNums(*instance_nums);
+  }
+  if (base_instance_num) {
+    unsigned base = CF_EXPECT(ParseNaturalNumber(*base_instance_num));
+    calculator.BaseInstanceNum(static_cast<std::int32_t>(base));
+  }
+  auto instance_ids = std::move(CF_EXPECT(calculator.CalculateFromFlags()));
+  CF_EXPECT(!instance_ids.empty(),
+            "CalculateFromFlags() must be called when --num_instances or "
+                << "--base_instance_num is given, and must not return an "
+                << "empty set");
+  auto instance_ids_hash_set =
+      std::unordered_set<unsigned>{instance_ids.begin(), instance_ids.end()};
+  return ParsedInstanceIdsOpt{instance_ids_hash_set};
+}
+
 Result<void> SelectorFlagsParser::ParseOptions() {
   // Handling name-related options
   std::optional<std::string> names;
@@ -188,7 +353,7 @@ Result<void> SelectorFlagsParser::ParseOptions() {
   for (auto& [flag_name, value] : key_optional_map) {
     // value is set to std::nullopt if parsing failed or no flag_name flag is
     // given.
-    CF_EXPECT(FilterSelectorFlag(args_, flag_name, value));
+    CF_EXPECT(FilterSelectorFlag(selector_args_, flag_name, value));
   }
 
   NameFlagsParam name_flags_param{
@@ -200,7 +365,25 @@ Result<void> SelectorFlagsParser::ParseOptions() {
   group_name_ = parsed_name_flags.group_name;
   instance_names_ = parsed_name_flags.instance_names;
 
-  if (args_.empty()) {
+  std::optional<std::string> num_instances;
+  std::optional<std::string> instance_nums;
+  std::optional<std::string> base_instance_num;
+  // set num_instances as std::nullptr or the value of --num_instances
+  FilterSelectorFlag(cmd_args_, "num_instances", num_instances);
+  FilterSelectorFlag(cmd_args_, "instance_nums", instance_nums);
+  FilterSelectorFlag(cmd_args_, "base_instance_num", base_instance_num);
+
+  InstanceIdsParams instance_nums_param{
+      .num_instances = std::move(num_instances),
+      .instance_nums = std::move(instance_nums),
+      .base_instance_num = std::move(base_instance_num),
+      .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_),
+      .vsoc_suffix = TryFromUser(envs_)};
+  auto parsed_ids = CF_EXPECT(HandleInstanceIds(instance_nums_param));
+  requested_num_instances_ = parsed_ids.GetNumOfInstances();
+  instance_ids_ = std::move(parsed_ids.GetInstanceIds());
+
+  if (selector_args_.empty()) {
     return {};
   }
   substring_queries_ = CF_EXPECT(FindSubstringsToMatch());
@@ -214,20 +397,20 @@ Result<void> SelectorFlagsParser::ParseOptions() {
 Result<std::unordered_set<std::string>>
 SelectorFlagsParser::FindSubstringsToMatch() {
   std::unordered_set<std::string> substring_queries;
-  const auto args_size = args_.size();
-  for (int i = 0; i < args_size; i++) {
+  const auto selector_args_size = selector_args_.size();
+  for (int i = 0; i < selector_args_size; i++) {
     /*
      * Logically, the order does not matter. The reason why we start from
      * behind is that pop_back() of a vector is much cheaper than pop_front()
      */
-    const auto& substring = args_.back();
+    const auto& substring = selector_args_.back();
     auto tokens = android::base::Split(substring, ",");
     for (const auto& t : tokens) {
       CF_EXPECT(!t.empty(),
                 "Empty keyword for substring search is not allowed.");
       substring_queries_.insert(t);
     }
-    args_.pop_back();
+    selector_args_.pop_back();
   }
   return {substring_queries};
 }
