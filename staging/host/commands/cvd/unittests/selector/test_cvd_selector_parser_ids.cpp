@@ -23,43 +23,10 @@
 #include <gtest/gtest.h>
 
 #include "host/commands/cvd/selector/selector_cmdline_parser.h"
-#include "host/commands/cvd/selector/selector_option_parser_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/commands/cvd/unittests/selector/selector_parser_ids_test_helper.h"
 
 namespace cuttlefish {
 namespace selector {
-
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
-
-struct InstanceIdTestInput {
-  std::string input_args;
-  std::optional<std::string> cuttlefish_instance;
-  std::optional<std::unordered_set<unsigned>> expected_ids;
-  bool expected_result;
-};
-
-class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
- protected:
-  InstanceIdTest() {
-    auto [input, cuttlefish_instance, ids, result] = GetParam();
-    auto cmd_args = android::base::Tokenize(input, " ");
-    if (cuttlefish_instance) {
-      envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
-    }
-    auto parse_result =
-        SelectorFlagsParser::ConductSelectFlagsParser(Args{}, cmd_args, envs_);
-    if (parse_result.ok()) {
-      parser_ = std::move(*parse_result);
-    }
-    expected_ids_ = std::move(ids);
-    expected_result_ = result;
-  }
-  bool expected_result_;
-  std::optional<std::unordered_set<unsigned>> expected_ids_;
-  std::unordered_map<std::string, std::string> envs_;
-  std::optional<SelectorFlagsParser> parser_;
-};
 
 TEST_P(InstanceIdTest, InstanceIdCalculation) {
   ASSERT_EQ(parser_ != std::nullopt, expected_result_);
