@@ -132,6 +132,11 @@ class TpmKeymasterContext : public keymaster::KeymasterContext {
   keymaster_error_t SetBootPatchlevel(uint32_t boot_patchlevel) override;
   std::optional<uint32_t> GetVendorPatchlevel() const override;
   std::optional<uint32_t> GetBootPatchlevel() const override;
+
+  keymaster_error_t SetAttestationIds(
+      const keymaster::SetAttestationIdsRequest& request) override {
+    return attestation_context_->SetAttestationIds(request);
+  }
 };
 
 }  // namespace cuttlefish
