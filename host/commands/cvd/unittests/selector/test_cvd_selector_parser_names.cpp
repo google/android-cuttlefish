@@ -13,68 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
-#include <android-base/strings.h>
-#include <gtest/gtest.h>
-
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
-#include "host/commands/cvd/selector/selector_option_parser_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/commands/cvd/unittests/selector/selector_parser_names_test_helper.h"
 
 namespace cuttlefish {
 namespace selector {
-
-struct ExpectedOutput {
-  std::optional<std::vector<std::string>> names;
-  std::optional<std::string> group_name;
-  std::optional<std::vector<std::string>> per_instance_names;
-};
-
-struct InputOutput {
-  std::string input;
-  ExpectedOutput expected;
-};
-
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
-
-class ValidNamesTest : public testing::TestWithParam<InputOutput> {
- protected:
-  ValidNamesTest() { Init(); }
-  void Init() {
-    auto [input, expected_output] = GetParam();
-    selector_args_ = android::base::Tokenize(input, " ");
-    expected_output_ = std::move(expected_output);
-    auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
-        selector_args_, Args{}, Envs{});
-    if (parse_result.ok()) {
-      parser_ = std::move(*parse_result);
-    }
-  }
-
-  std::vector<std::string> selector_args_;
-  ExpectedOutput expected_output_;
-  std::optional<SelectorFlagsParser> parser_;
-};
-
-class InvalidNamesTest : public testing::TestWithParam<std::string> {
- protected:
-  InvalidNamesTest() {
-    auto input = GetParam();
-    auto selector_args = android::base::Tokenize(input, " ");
-    auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
-        selector_args, Args{}, Envs{});
-    if (parse_result.ok()) {
-      parser_ = std::move(*parse_result);
-    }
-  }
-  std::optional<SelectorFlagsParser> parser_;
-};
 
 TEST_P(ValidNamesTest, ValidInputs) { ASSERT_TRUE(parser_); }
 
