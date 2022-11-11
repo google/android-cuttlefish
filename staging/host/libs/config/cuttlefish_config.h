@@ -256,19 +256,6 @@ class CuttlefishConfig {
   void set_enable_kernel_log(bool enable_kernel_log);
   bool enable_kernel_log() const;
 
-  // Configuration flags for a minimal device
-  bool enable_minimal_mode() const;
-  void set_enable_minimal_mode(bool enable_minimal_mode);
-
-  void set_enable_modem_simulator(bool enable_modem_simulator);
-  bool enable_modem_simulator() const;
-
-  void set_modem_simulator_instance_number(int instance_numbers);
-  int modem_simulator_instance_number() const;
-
-  void set_modem_simulator_sim_type(int sim_type);
-  int modem_simulator_sim_type() const;
-
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
 
@@ -536,6 +523,12 @@ class CuttlefishConfig {
     bool pause_in_bootloader() const;
     bool run_as_daemon() const;
 
+    // Configuration flags for a minimal device
+    bool enable_minimal_mode() const;
+    bool enable_modem_simulator() const;
+    int modem_simulator_instance_number() const;
+    int modem_simulator_sim_type() const;
+
     // android artifacts
     std::string boot_image() const;
     std::string new_boot_image() const;
@@ -642,6 +635,12 @@ class CuttlefishConfig {
     void set_use_sdcard(bool use_sdcard);
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
+
+    // Configuration flags for a minimal device
+    void set_enable_minimal_mode(bool enable_minimal_mode);
+    void set_enable_modem_simulator(bool enable_modem_simulator);
+    void set_modem_simulator_instance_number(int instance_numbers);
+    void set_modem_simulator_sim_type(int sim_type);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
