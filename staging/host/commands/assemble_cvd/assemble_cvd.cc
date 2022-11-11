@@ -51,8 +51,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "will be reset to the state it was initially launched "
             "in. This flag is ignored if the underlying partition "
             "images have been updated since the first launch.");
-DEFINE_int32(modem_simulator_count, CF_DEFAULTS_MODEM_SIMULATOR_COUNT,
-             "Modem simulator count corresponding to maximum sim number");
 
 DECLARE_bool(use_overlay);
 
@@ -168,10 +166,15 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config = CF_EXPECT(InitializeCuttlefishConfiguration(
-                                FLAGS_instance_dir, FLAGS_modem_simulator_count,
-                                kernel_configs, injector, fetcher_config),
-                            "cuttlefish configuration initialization failed");
+    auto config = CF_EXPECT(
+        InitializeCuttlefishConfiguration(FLAGS_instance_dir, kernel_configs,
+                                          injector, fetcher_config),
+        "cuttlefish configuration initialization failed");
+
+    // take the max value of modem_simulator_instance_number in each instance
+    // which is used for preserving/deleting iccprofile_for_simX.xml files
+    int modem_simulator_count = 0;
+
     std::set<std::string> preserving;
     bool creating_os_disk = false;
     // if any device needs to rebuild its composite disk,
@@ -179,6 +182,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     for (const auto& instance : config.Instances()) {
       auto os_builder = OsCompositeDiskBuilder(config, instance);
       creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
+      if (instance.modem_simulator_instance_number() > modem_simulator_count) {
+        modem_simulator_count = instance.modem_simulator_instance_number();
+      }
     }
     // TODO(schuffelen): Add smarter decision for when to delete runtime files.
     // Files like NVChip are tightly bound to Android keymint and should be
@@ -214,7 +220,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("uboot_env.img");
       preserving.insert("factory_reset_protected.img");
       std::stringstream ss;
-      for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
+      for (int i = 0; i < modem_simulator_count; i++) {
         ss.clear();
         ss << "iccprofile_for_sim" << i << ".xml";
         preserving.insert(ss.str());
