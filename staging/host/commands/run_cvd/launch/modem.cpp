@@ -61,9 +61,8 @@ static bool StopModemSimulator(int id) {
 
 class ModemSimulator : public CommandSource {
  public:
-  INJECT(ModemSimulator(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+  INJECT(ModemSimulator(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
@@ -79,7 +78,7 @@ class ModemSimulator : public CommandSource {
                  : StopperResult::kStopFailure;
     });
 
-    auto sim_type = config_.modem_simulator_sim_type();
+    auto sim_type = instance_.modem_simulator_sim_type();
     cmd.AddParameter(std::string{"-sim_type="} + std::to_string(sim_type));
     cmd.AddParameter("-server_fds=");
     bool first_socket = true;
@@ -99,16 +98,16 @@ class ModemSimulator : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "ModemSimulator"; }
   bool Enabled() const override {
-    if (!config_.enable_modem_simulator()) {
+    if (!instance_.enable_modem_simulator()) {
       LOG(DEBUG) << "Modem simulator not enabled";
     }
-    return config_.enable_modem_simulator();
+    return instance_.enable_modem_simulator();
   }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    int instance_number = config_.modem_simulator_instance_number();
+    int instance_number = instance_.modem_simulator_instance_number();
     CF_EXPECT(instance_number >= 0 && instance_number < 4,
               "Modem simulator instance number should range between 0 and 3");
     auto ports = instance_.modem_simulator_ports();
@@ -125,7 +124,6 @@ class ModemSimulator : public CommandSource {
     return {};
   }
 
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   std::vector<SharedFD> sockets_;
 };
