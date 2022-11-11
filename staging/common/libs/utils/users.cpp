@@ -33,6 +33,8 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
+#include "common/libs/utils/contains.h"
+
 namespace cuttlefish {
 namespace {
 gid_t GroupIdFromName(const std::string& group_name) {
@@ -91,11 +93,7 @@ bool InGroup(const std::string& group) {
   }
 
   auto groups = GetSuplementaryGroups();
-
-  if (std::find(groups.cbegin(), groups.cend(), gid) != groups.cend()) {
-    return true;
-  }
-  return false;
+  return Contains(groups, gid);
 }
 
 Result<std::string> SystemWideUserHome(const uid_t uid) {
