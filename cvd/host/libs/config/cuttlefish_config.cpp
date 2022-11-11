@@ -435,6 +435,32 @@ std::string CuttlefishConfig::sig_server_headers_path() const {
   return (*dictionary_)[kSigServerHeadersPath].asString();
 }
 
+static constexpr char kRunModemSimulator[] = "enable_modem_simulator";
+bool CuttlefishConfig::enable_modem_simulator() const {
+  return (*dictionary_)[kRunModemSimulator].asBool();
+}
+void CuttlefishConfig::set_enable_modem_simulator(bool enable_modem_simulator) {
+  (*dictionary_)[kRunModemSimulator] = enable_modem_simulator;
+}
+
+static constexpr char kModemSimulatorInstanceNumber[] =
+    "modem_simulator_instance_number";
+void CuttlefishConfig::set_modem_simulator_instance_number(
+    int instance_number) {
+  (*dictionary_)[kModemSimulatorInstanceNumber] = instance_number;
+}
+int CuttlefishConfig::modem_simulator_instance_number() const {
+  return (*dictionary_)[kModemSimulatorInstanceNumber].asInt();
+}
+
+static constexpr char kModemSimulatorSimType[] = "modem_simulator_sim_type";
+void CuttlefishConfig::set_modem_simulator_sim_type(int sim_type) {
+  (*dictionary_)[kModemSimulatorSimType] = sim_type;
+}
+int CuttlefishConfig::modem_simulator_sim_type() const {
+  return (*dictionary_)[kModemSimulatorSimType].asInt();
+}
+
 static constexpr char kHostToolsVersion[] = "host_tools_version";
 void CuttlefishConfig::set_host_tools_version(
     const std::map<std::string, uint32_t>& versions) {
@@ -557,6 +583,14 @@ std::string CuttlefishConfig::ril_dns() const {
   return (*dictionary_)[kRilDns].asString();
 }
 
+static constexpr char kEnableMinimalMode[] = "enable_minimal_mode";
+bool CuttlefishConfig::enable_minimal_mode() const {
+  return (*dictionary_)[kEnableMinimalMode].asBool();
+}
+void CuttlefishConfig::set_enable_minimal_mode(bool enable_minimal_mode) {
+  (*dictionary_)[kEnableMinimalMode] = enable_minimal_mode;
+}
+
 static constexpr char kEnableKernelLog[] = "enable_kernel_log";
 void CuttlefishConfig::set_enable_kernel_log(bool enable_kernel_log) {
   (*dictionary_)[kEnableKernelLog] = enable_kernel_log;
@@ -611,6 +645,22 @@ void CuttlefishConfig::set_wmediumd_config(const std::string& config) {
 }
 std::string CuttlefishConfig::wmediumd_config() const {
   return (*dictionary_)[kWmediumdConfig].asString();
+}
+
+static constexpr char kRootcanalArgs[] = "rootcanal_args";
+void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(rootcanal_args, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kRootcanalArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::rootcanal_args() const {
+  std::vector<std::string> rootcanal_args;
+  for (const Json::Value& arg : (*dictionary_)[kRootcanalArgs]) {
+    rootcanal_args.push_back(arg.asString());
+  }
+  return rootcanal_args;
 }
 
 static constexpr char kRootcanalHciPort[] = "rootcanal_hci_port";
