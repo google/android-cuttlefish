@@ -61,13 +61,110 @@ CreationAnalyzer::CreationAnalyzer(
       selector_options_parser_{std::move(selector_options_parser)},
       instance_file_lock_manager_{instance_file_lock_manager} {}
 
-static void PlaceHolder(InstanceLockFileManager&) {}
+static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
+    std::vector<InstanceLockFile>&& lock_files) {
+  std::unordered_map<unsigned, InstanceLockFile> mapping;
+  for (auto& lock_file : lock_files) {
+    const unsigned id = static_cast<unsigned>(lock_file.Instance());
+    mapping.insert({id, std::move(lock_file)});
+  }
+  lock_files.clear();
+  return mapping;
+}
+
+Result<std::vector<InstanceLockFile>>
+CreationAnalyzer::AnalyzeInstanceIdsWithLockInternal() {
+  // As this test was done earlier, this line must not fail
+  const auto n_instances = selector_options_parser_.RequestedNumInstances();
+  auto requested_instance_ids = selector_options_parser_.InstanceIds();
+  auto acquired_all_file_locks =
+      CF_EXPECT(instance_file_lock_manager_.LockAllAvailable());
+
+  auto id_to_lockfile_map =
+      ConstructIdLockFileMap(std::move(acquired_all_file_locks));
+
+  // verify if any of the request IDs is beyond the InstanceFileLockManager
+  if (requested_instance_ids) {
+    for (auto const id : *requested_instance_ids) {
+      CF_EXPECT(Contains(id_to_lockfile_map, id),
+                id << " is not allowed by InstanceFileLockManager.");
+    }
+  }
+
+  std::vector<InstanceLockFile> allocated_ids_with_locks;
+  if (requested_instance_ids) {
+    CF_EXPECT(!requested_instance_ids->empty(),
+              "Instance IDs were specified, so should be one or more.");
+    for (const auto id : *requested_instance_ids) {
+      CF_EXPECT(Contains(id_to_lockfile_map, id),
+                "Instance ID " << id << " lock file can't be locked.");
+      auto& lock_file = id_to_lockfile_map.at(id);
+      allocated_ids_with_locks.emplace_back(std::move(lock_file));
+    }
+    return allocated_ids_with_locks;
+  }
+
+  /* generate n_instances consecutive ids. For backward compatibility,
+   * we prefer n consecutive ids for now.
+   */
+  std::vector<unsigned> id_pool;
+  id_pool.reserve(id_to_lockfile_map.size());
+  for (const auto& [id, _] : id_to_lockfile_map) {
+    id_pool.emplace_back(id);
+  }
+  // TODO(kwstephenkim): check with instance database
+  IdAllocator unique_id_allocator = IdAllocator::New(id_pool);
+  auto allocated_ids = unique_id_allocator.UniqueConsecutiveItems(n_instances);
+  CF_EXPECT(allocated_ids != std::nullopt, "Unique ID allocation failed.");
+
+  // Picks the lock files according to the ids, and discards the rest
+  for (const auto id : *allocated_ids) {
+    CF_EXPECT(Contains(id_to_lockfile_map, id),
+              "Instance ID " << id << " lock file can't be locked.");
+    auto& lock_file = id_to_lockfile_map.at(id);
+    allocated_ids_with_locks.emplace_back(std::move(lock_file));
+  }
+  return allocated_ids_with_locks;
+}
+
+static Result<std::vector<PerInstanceInfo>> GenerateInstanceInfo(
+    const std::optional<std::vector<std::string>>& per_instance_names_opt,
+    std::vector<InstanceLockFile>& instance_file_locks) {
+  std::vector<std::string> per_instance_names;
+  if (per_instance_names_opt) {
+    per_instance_names = per_instance_names_opt.value();
+    CF_EXPECT(per_instance_names.size() == instance_file_locks.size());
+  } else {
+    /*
+     * What is generated here is an (per-)instance name:
+     *  See: go/cf-naming-clarification
+     *
+     * A full device name is a group name followed by '-' followed by
+     * per-instance name. Also, see instance_record.cpp.
+     */
+    for (const auto& instance_file_lock : instance_file_locks) {
+      per_instance_names.emplace_back(
+          std::to_string(instance_file_lock.Instance()));
+    }
+  }
+
+  std::vector<PerInstanceInfo> instance_info;
+  for (int i = 0; i < per_instance_names.size(); i++) {
+    InstanceLockFile i_th_file_lock = std::move(instance_file_locks[i]);
+    const auto& instance_name = per_instance_names[i];
+    instance_info.emplace_back(static_cast<unsigned>(i_th_file_lock.Instance()),
+                               instance_name, std::move(i_th_file_lock));
+  }
+  instance_file_locks.clear();
+  return instance_info;
+}
 
 Result<std::vector<PerInstanceInfo>>
 CreationAnalyzer::AnalyzeInstanceIdsWithLock() {
-  // TODO(kwstephenkim): implement AnalyzeInstanceIdsWithLock()
-  PlaceHolder(instance_file_lock_manager_);
-  return std::vector<PerInstanceInfo>{};
+  auto instance_ids_with_lock = CF_EXPECT(AnalyzeInstanceIdsWithLockInternal());
+  auto instance_file_locks = CF_EXPECT(GenerateInstanceInfo(
+      selector_options_parser_.PerInstanceNames(), instance_ids_with_lock));
+  return instance_file_locks;
 }
 
 Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
