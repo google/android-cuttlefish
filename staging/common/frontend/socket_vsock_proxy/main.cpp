@@ -19,6 +19,7 @@
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/socket2socket_proxy.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 
@@ -112,7 +113,7 @@ cuttlefish::SharedFD OpenSocketConnection() {
 
 bool socketErrorIsRecoverable(int error) {
   std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT};
-  return unrecoverable.find(error) == unrecoverable.end();
+  return !cuttlefish::Contains(unrecoverable, error);
 }
 
 [[noreturn]] static void SleepForever() {
