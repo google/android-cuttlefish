@@ -126,10 +126,11 @@ DEFINE_bool(deprecated_boot_completed, CF_DEFAULTS_DEPRECATED_BOOT_COMPLETED,
 
 DEFINE_string(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
-DEFINE_bool(enable_minimal_mode, CF_DEFAULTS_ENABLE_MINIMAL_MODE,
-            "Only enable the minimum features to boot a cuttlefish device and "
-            "support minimal UI interactions.\nNote: Currently only supports "
-            "handheld/phone targets");
+DEFINE_string(
+    enable_minimal_mode, CF_DEFAULTS_ENABLE_MINIMAL_MODE ? "true" : "false",
+    "Only enable the minimum features to boot a cuttlefish device and "
+    "support minimal UI interactions.\nNote: Currently only supports "
+    "handheld/phone targets");
 DEFINE_string(
     pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER?"true":"false",
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
@@ -310,11 +311,13 @@ DEFINE_string(fixed_location_file_path, CF_DEFAULTS_FIXED_LOCATION_FILE_PATH,
               "Local fixed location file path for the gnss proxy");
 
 // by default, this modem-simulator is disabled
-DEFINE_bool(enable_modem_simulator, CF_DEFAULTS_ENABLE_MODEM_SIMULATOR,
-            "Enable the modem simulator to process RILD AT commands");
+DEFINE_string(enable_modem_simulator,
+              CF_DEFAULTS_ENABLE_MODEM_SIMULATOR ? "true" : "false",
+              "Enable the modem simulator to process RILD AT commands");
 // modem_simulator_sim_type=2 for test CtsCarrierApiTestCases
-DEFINE_int32(modem_simulator_sim_type, CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE,
-             "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
+DEFINE_string(modem_simulator_sim_type,
+              std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE),
+              "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
 DEFINE_bool(console, CF_DEFAULTS_CONSOLE, "Enable the serial console");
 
@@ -389,6 +392,10 @@ DEFINE_string(userdata_format, CF_DEFAULTS_USERDATA_FORMAT,
 DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "Capture disk writes an overlay. This is a "
             "prerequisite for powerwash_cvd or multiple instances.");
+
+DEFINE_string(modem_simulator_count,
+              std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_COUNT),
+              "Modem simulator count corresponding to maximum sim number");
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -587,7 +594,7 @@ Result<bool> ParseBool(const std::string& flag_str,
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
-    const std::string& root_dir, int modem_simulator_count,
+    const std::string& root_dir,
     const std::vector<KernelConfig>& kernel_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config) {
   CuttlefishConfig tmp_config_obj;
@@ -605,8 +612,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> vm_manager_vec =
       android::base::Split(FLAGS_vm_manager, ",");
   for (int i=1; i<vm_manager_vec.size(); i++) {
-    CHECK(vm_manager_vec[0]==vm_manager_vec[i])
-      << "All instances should have same vm_manager, " << FLAGS_vm_manager;
+    CF_EXPECT(
+        vm_manager_vec[0] == vm_manager_vec[i],
+        "All instances should have same vm_manager, " << FLAGS_vm_manager);
   }
 
   // TODO(weihsu), b/250988697: these should move to instance,
@@ -746,11 +754,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto udp_range  = ParsePortRange(FLAGS_udp_port_range);
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
-  tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator &&
-                                            !FLAGS_enable_minimal_mode);
-  tmp_config_obj.set_modem_simulator_instance_number(modem_simulator_count);
-  tmp_config_obj.set_modem_simulator_sim_type(FLAGS_modem_simulator_sim_type);
-
   tmp_config_obj.set_webrtc_enable_adb_websocket(
           FLAGS_webrtc_enable_adb_websocket);
 
@@ -768,8 +771,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
   tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
-
-  tmp_config_obj.set_enable_minimal_mode(FLAGS_enable_minimal_mode);
 
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
 
@@ -850,6 +851,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_pause_in_bootloader, ",");
   std::vector<std::string> daemon_vec =
       android::base::Split(FLAGS_daemon, ",");
+  std::vector<std::string> enable_minimal_mode_vec =
+      android::base::Split(FLAGS_enable_minimal_mode, ",");
+  std::vector<std::string> enable_modem_simulator_vec =
+      android::base::Split(FLAGS_enable_modem_simulator, ",");
+  std::vector<std::string> modem_simulator_count_vec =
+      android::base::Split(FLAGS_modem_simulator_count, ",");
+  std::vector<std::string> modem_simulator_sim_type_vec =
+      android::base::Split(FLAGS_modem_simulator_sim_type, ",");
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
@@ -923,15 +932,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     int vsock_guest_cid_int;
     if (instance_index < vsock_guest_cid_vec.size()) {
-      CHECK(android::base::ParseInt(vsock_guest_cid_vec[instance_index].c_str(),
-                                    &vsock_guest_cid_int))
-        << "Failed to parse value \"" << vsock_guest_cid_vec[instance_index]
-        << "\" for vsock_guest_cid";
+      CF_EXPECT(
+          android::base::ParseInt(vsock_guest_cid_vec[instance_index].c_str(),
+                                  &vsock_guest_cid_int),
+          "Failed to parse value \"" << vsock_guest_cid_vec[instance_index]
+                                     << "\" for vsock_guest_cid");
     } else {
-      CHECK(android::base::ParseInt(vsock_guest_cid_vec[0].c_str(),
-                                    &vsock_guest_cid_int))
-        << "Failed to parse value \"" << vsock_guest_cid_vec[0]
-        << "\" for vsock_guest_cid";
+      CF_EXPECT(android::base::ParseInt(vsock_guest_cid_vec[0].c_str(),
+                                        &vsock_guest_cid_int),
+                "Failed to parse value \"" << vsock_guest_cid_vec[0]
+                                           << "\" for vsock_guest_cid");
     }
 
     // call this before all stuff that has vsock server: e.g. touchpad, keyboard, etc
@@ -945,53 +955,55 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     int cpus_int;
     if (instance_index < cpus_vec.size()) {
-      CHECK(android::base::ParseInt(cpus_vec[instance_index].c_str(),&cpus_int))
-        << "Failed to parse value \"" << cpus_vec[instance_index]
-        << "\" for cpus";
+      CF_EXPECT(
+          android::base::ParseInt(cpus_vec[instance_index].c_str(), &cpus_int),
+          "Failed to parse value \"" << cpus_vec[instance_index]
+                                     << "\" for cpus");
     } else {
-      CHECK(android::base::ParseInt(cpus_vec[0].c_str(),&cpus_int))
-        << "Failed to parse value \"" << cpus_vec[0]
-        << "\" for cpus";
+      CF_EXPECT(android::base::ParseInt(cpus_vec[0].c_str(), &cpus_int),
+                "Failed to parse value \"" << cpus_vec[0] << "\" for cpus");
     }
     instance.set_cpus(cpus_int);
     // TODO(weihsu): before vectorizing smt flag,
     // make sure all instances have multiple of 2 then SMT mode
     // if any of instance doesn't have multiple of 2 then NOT SMT
-    CHECK(!FLAGS_smt || cpus_int % 2 == 0)
-        << "CPUs must be a multiple of 2 in SMT mode";
+    CF_EXPECT(!FLAGS_smt || cpus_int % 2 == 0,
+              "CPUs must be a multiple of 2 in SMT mode");
 
     // new instance specific flags (moved from common flags)
-    CHECK(instance_index<kernel_configs.size())
-      << "instance_index " << instance_index << " out of boundary " << kernel_configs.size();
+    CF_EXPECT(instance_index < kernel_configs.size(),
+              "instance_index " << instance_index << " out of boundary "
+                                << kernel_configs.size());
     instance.set_target_arch(kernel_configs[instance_index].target_arch);
     instance.set_console(FLAGS_console);
     instance.set_kgdb(FLAGS_console && FLAGS_kgdb);
 
     int blank_data_image_mb_int;
     if (instance_index < blank_data_image_mb_vec.size()) {
-      CHECK(android::base::ParseInt(blank_data_image_mb_vec[instance_index].c_str(),
-                                    &blank_data_image_mb_int))
-        << "Failed to parse value \"" << blank_data_image_mb_vec[instance_index]
-        << "\" for blank_data_image_mb";
+      CF_EXPECT(android::base::ParseInt(
+                    blank_data_image_mb_vec[instance_index].c_str(),
+                    &blank_data_image_mb_int),
+                "Failed to parse value \""
+                    << blank_data_image_mb_vec[instance_index]
+                    << "\" for blank_data_image_mb");
     } else {
-      CHECK(android::base::ParseInt(blank_data_image_mb_vec[0].c_str(),
-                                    &blank_data_image_mb_int))
-        << "Failed to parse value \"" << blank_data_image_mb_vec[0]
-        << "\" for blank_data_image_mb";
+      CF_EXPECT(android::base::ParseInt(blank_data_image_mb_vec[0].c_str(),
+                                        &blank_data_image_mb_int),
+                "Failed to parse value \"" << blank_data_image_mb_vec[0]
+                                           << "\" for blank_data_image_mb");
     }
     instance.set_blank_data_image_mb(blank_data_image_mb_int);
 
     int gdb_port_int;
     if (instance_index < gdb_port_vec.size()) {
-      CHECK(android::base::ParseInt(gdb_port_vec[instance_index].c_str(),
-                                    &gdb_port_int))
-        << "Failed to parse value \"" << gdb_port_vec[instance_index]
-        << "\" for gdb_port";
+      CF_EXPECT(android::base::ParseInt(gdb_port_vec[instance_index].c_str(),
+                                        &gdb_port_int),
+                "Failed to parse value \"" << gdb_port_vec[instance_index]
+                                           << "\" for gdb_port");
     } else {
-      CHECK(android::base::ParseInt(gdb_port_vec[0].c_str(),
-                                    &gdb_port_int))
-        << "Failed to parse value \"" << gdb_port_vec[0]
-        << "\" for gdb_port";
+      CF_EXPECT(
+          android::base::ParseInt(gdb_port_vec[0].c_str(), &gdb_port_int),
+          "Failed to parse value \"" << gdb_port_vec[0] << "\" for gdb_port");
     }
     instance.set_gdb_port(gdb_port_int);
 
@@ -1015,43 +1027,45 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     int x_res = 0;
     if (instance_index < x_res_vec.size()) {
-      CHECK(android::base::ParseInt(x_res_vec[instance_index].c_str(), &x_res))
-        << "Failed to parse value \"" << x_res_vec[instance_index]
-        << "\" for x_res";
+      CF_EXPECT(
+          android::base::ParseInt(x_res_vec[instance_index].c_str(), &x_res),
+          "Failed to parse value \"" << x_res_vec[instance_index]
+                                     << "\" for x_res");
     } else if (x_res_vec.size() == 1) {
-      CHECK(android::base::ParseInt(x_res_vec[0].c_str(), &x_res))
-        << "Failed to parse value \"" << x_res_vec[0]
-        << "\" for x_res";
+      CF_EXPECT(android::base::ParseInt(x_res_vec[0].c_str(), &x_res),
+                "Failed to parse value \"" << x_res_vec[0] << "\" for x_res");
     }
     int y_res = 0;
     if (instance_index < y_res_vec.size()) {
-      CHECK(android::base::ParseInt(y_res_vec[instance_index].c_str(), &y_res))
-        << "Failed to parse value \"" << y_res_vec[instance_index]
-        << "\" for y_res";
+      CF_EXPECT(
+          android::base::ParseInt(y_res_vec[instance_index].c_str(), &y_res),
+          "Failed to parse value \"" << y_res_vec[instance_index]
+                                     << "\" for y_res");
     } else if (y_res_vec.size() == 1) {
-      CHECK(android::base::ParseInt(y_res_vec[0].c_str(), &y_res))
-        << "Failed to parse value \"" << y_res_vec[0]
-        << "\" for y_res";
+      CF_EXPECT(android::base::ParseInt(y_res_vec[0].c_str(), &y_res),
+                "Failed to parse value \"" << y_res_vec[0] << "\" for y_res");
     }
     int dpi = 0;
     if (instance_index < dpi_vec.size()) {
-      CHECK(android::base::ParseInt(dpi_vec[instance_index].c_str(), &dpi))
-        << "Failed to parse value \"" << dpi_vec[instance_index]
-        << "\" for dpi";
+      CF_EXPECT(android::base::ParseInt(dpi_vec[instance_index].c_str(), &dpi),
+                "Failed to parse value \"" << dpi_vec[instance_index]
+                                           << "\" for dpi");
     } else if (dpi_vec.size() == 1) {
-      CHECK(android::base::ParseInt(dpi_vec[0].c_str(), &dpi))
-        << "Failed to parse value \"" << dpi_vec[0]
-        << "\" for dpi";
+      CF_EXPECT(android::base::ParseInt(dpi_vec[0].c_str(), &dpi),
+                "Failed to parse value \"" << dpi_vec[0] << "\" for dpi");
     }
     int refresh_rate_hz = 0;
     if (instance_index < refresh_rate_hz_vec.size()) {
-      CHECK(android::base::ParseInt(refresh_rate_hz_vec[instance_index].c_str(), &refresh_rate_hz))
-        << "Failed to parse value \"" << refresh_rate_hz_vec[instance_index]
-        << "\" for refresh_rate_hz";
+      CF_EXPECT(
+          android::base::ParseInt(refresh_rate_hz_vec[instance_index].c_str(),
+                                  &refresh_rate_hz),
+          "Failed to parse value \"" << refresh_rate_hz_vec[instance_index]
+                                     << "\" for refresh_rate_hz");
     } else if (refresh_rate_hz_vec.size() == 1) {
-      CHECK(android::base::ParseInt(refresh_rate_hz_vec[0].c_str(), &refresh_rate_hz))
-        << "Failed to parse value \"" << refresh_rate_hz_vec[0]
-        << "\" for refresh_rate_hz";
+      CF_EXPECT(android::base::ParseInt(refresh_rate_hz_vec[0].c_str(),
+                                        &refresh_rate_hz),
+                "Failed to parse value \"" << refresh_rate_hz_vec[0]
+                                           << "\" for refresh_rate_hz");
     }
     if (x_res > 0 && y_res > 0) {
       if (display_configs.empty()) {
@@ -1069,13 +1083,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     int memory_mb;
     if (instance_index >= memory_mb_vec.size()) {
-      CHECK(android::base::ParseInt(memory_mb_vec[0].c_str(), &memory_mb))
-        << "Failed to parse value \"" << memory_mb_vec[0]
-        << "\" for memory_mb";
+      CF_EXPECT(
+          android::base::ParseInt(memory_mb_vec[0].c_str(), &memory_mb),
+          "Failed to parse value \"" << memory_mb_vec[0] << "\" for memory_mb");
     } else {
-      CHECK(android::base::ParseInt(memory_mb_vec[instance_index].c_str(), &memory_mb))
-        << "Failed to parse value \"" << memory_mb_vec[instance_index]
-        << "\" for memory_mb";
+      CF_EXPECT(android::base::ParseInt(memory_mb_vec[instance_index].c_str(),
+                                        &memory_mb),
+                "Failed to parse value \"" << memory_mb_vec[instance_index]
+                                           << "\" for memory_mb");
     }
     instance.set_memory_mb(memory_mb);
     instance.set_ddr_mem_mb(memory_mb * 2);
@@ -1097,8 +1112,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool guest_enforce_security;
     if (instance_index >= guest_enforce_security_vec.size()) {
-      guest_enforce_security = CF_EXPECT(ParseBool(guest_enforce_security_vec[0],
-                                    "guest_enforce_security"));
+      guest_enforce_security = CF_EXPECT(
+          ParseBool(guest_enforce_security_vec[0], "guest_enforce_security"));
     } else {
       guest_enforce_security = CF_EXPECT(ParseBool(
           guest_enforce_security_vec[instance_index], "guest_enforce_security"));
@@ -1123,17 +1138,72 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     instance.set_run_as_daemon(daemon);
 
+    bool enable_minimal_mode;
+    if (instance_index >= enable_minimal_mode_vec.size()) {
+      enable_minimal_mode = CF_EXPECT(
+          ParseBool(enable_minimal_mode_vec[0], "enable_minimal_mode"));
+    } else {
+      enable_minimal_mode = CF_EXPECT(ParseBool(
+          enable_minimal_mode_vec[instance_index], "enable_minimal_mode"));
+    }
+    bool enable_modem_simulator;
+    if (instance_index >= enable_modem_simulator_vec.size()) {
+      enable_modem_simulator = CF_EXPECT(
+          ParseBool(enable_modem_simulator_vec[0], "enable_modem_simulator"));
+    } else {
+      enable_modem_simulator =
+          CF_EXPECT(ParseBool(enable_modem_simulator_vec[instance_index],
+                              "enable_modem_simulator"));
+    }
+    int modem_simulator_count;
+    if (instance_index >= modem_simulator_count_vec.size()) {
+      CF_EXPECT(android::base::ParseInt(modem_simulator_count_vec[0].c_str(),
+                                        &modem_simulator_count),
+                "Failed to parse value \"" << modem_simulator_count_vec[0]
+                                           << "\" for modem_simulator_count");
+    } else {
+      CF_EXPECT(android::base::ParseInt(
+                    modem_simulator_count_vec[instance_index].c_str(),
+                    &modem_simulator_count),
+                "Failed to parse value \""
+                    << modem_simulator_count_vec[instance_index]
+                    << "\" for modem_simulator_count");
+    }
+    int modem_simulator_sim_type;
+    if (instance_index >= modem_simulator_sim_type_vec.size()) {
+      CF_EXPECT(android::base::ParseInt(modem_simulator_sim_type_vec[0].c_str(),
+                                        &modem_simulator_sim_type),
+                "Failed to parse value \""
+                    << modem_simulator_sim_type_vec[0]
+                    << "\" for modem_simulator_sim_type");
+    } else {
+      CF_EXPECT(android::base::ParseInt(
+                    modem_simulator_sim_type_vec[instance_index].c_str(),
+                    &modem_simulator_sim_type),
+                "Failed to parse value \""
+                    << modem_simulator_sim_type_vec[instance_index]
+                    << "\" for modem_simulator_sim_type");
+    }
+    instance.set_enable_modem_simulator(enable_modem_simulator &&
+                                        !enable_minimal_mode);
+    instance.set_modem_simulator_instance_number(modem_simulator_count);
+    instance.set_modem_simulator_sim_type(modem_simulator_sim_type);
+
+    instance.set_enable_minimal_mode(enable_minimal_mode);
+
     int camera_server_port;
     if (instance_index < camera_server_port_vec.size()) {
-      CHECK(android::base::ParseInt(camera_server_port_vec[instance_index].c_str(),
-                                    &camera_server_port))
-        << "Failed to parse value \"" << camera_server_port_vec[instance_index]
-        << "\" for camera_server_port";
+      CF_EXPECT(android::base::ParseInt(
+                    camera_server_port_vec[instance_index].c_str(),
+                    &camera_server_port),
+                "Failed to parse value \""
+                    << camera_server_port_vec[instance_index]
+                    << "\" for camera_server_port");
     } else {
-      CHECK(android::base::ParseInt(camera_server_port_vec[0].c_str(),
-                                    &camera_server_port))
-        << "Failed to parse value \"" << camera_server_port_vec[0]
-        << "\" for camera_server_port";
+      CF_EXPECT(android::base::ParseInt(camera_server_port_vec[0].c_str(),
+                                        &camera_server_port),
+                "Failed to parse value \"" << camera_server_port_vec[0]
+                                           << "\" for camera_server_port");
     }
     instance.set_camera_server_port(camera_server_port);
 
