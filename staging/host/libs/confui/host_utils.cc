@@ -21,7 +21,7 @@ namespace confui {
 namespace thread {
 std::string ThreadTracer::Get(const std::thread::id tid) {
   std::lock_guard<std::mutex> lock(mtx_);
-  if (id2name_.find(tid) != id2name_.end()) {
+  if (Contains(id2name_, tid)) {
     return id2name_[tid];
   }
   std::stringstream ss;
@@ -31,7 +31,7 @@ std::string ThreadTracer::Get(const std::thread::id tid) {
 
 void ThreadTracer::Set(const std::string& name, const std::thread::id tid) {
   std::lock_guard<std::mutex> lock(mtx_);
-  if (name2id_.find(name) != name2id_.end()) {
+  if (Contains(name2id_, name)) {
     // has the name already
     if (name2id_[name] != tid) {  // used for another thread
       ConfUiLog(FATAL) << "Thread name is duplicated.";
@@ -39,7 +39,7 @@ void ThreadTracer::Set(const std::string& name, const std::thread::id tid) {
     // name and id are already set correctly
     return;
   }
-  if (id2name_.find(tid) != id2name_.end()) {
+  if (Contains(id2name_, tid)) {
     // tid exists but has a different name
     name2id_.erase(id2name_[tid]);  // delete old_name -> tid map
   }
@@ -50,10 +50,10 @@ void ThreadTracer::Set(const std::string& name, const std::thread::id tid) {
 
 std::optional<std::thread::id> ThreadTracer::Get(const std::string& name) {
   std::lock_guard<std::mutex> lock(mtx_);
-  if (name2id_.find(name) != name2id_.end()) {
+  if (Contains(name2id_, name)) {
     return {name2id_[name]};
   }
-  return std::nullopt;  // unknown
+  return std::nullopt;
 }
 
 ThreadTracer& GetThreadTracer() {

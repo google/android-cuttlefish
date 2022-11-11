@@ -18,6 +18,7 @@
 
 #include <algorithm>
 
+#include "common/libs/utils/contains.h"
 #include "host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
@@ -63,12 +64,6 @@ bool Session::IsConfUiActive() const {
     return true;
   }
   return false;
-}
-
-template <typename C, typename T>
-static bool Contains(const C& c, T&& item) {
-  auto itr = std::find(c.begin(), c.end(), std::forward<T>(item));
-  return itr != c.end();
 }
 
 bool Session::IsInverted() const {

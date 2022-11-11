@@ -21,6 +21,7 @@
 
 #include "common/libs/confui/packet.h"
 #include "common/libs/confui/utils.h"
+#include "common/libs/utils/contains.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -40,7 +41,7 @@ std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose) {
       {ConfUiCmd::kAbort, "kAbort"},
       {ConfUiCmd::kUserInputEvent, "kUserInputEvent"},
       {ConfUiCmd::kUserInputEvent, "kUserTouchEvent"}};
-  if (look_up_tab.find(cmd) != look_up_tab.end()) {
+  if (Contains(look_up_tab, cmd)) {
     return look_up_tab[cmd] + suffix;
   }
   return "kUnknown" + suffix;
@@ -73,7 +74,7 @@ ConfUiCmd ToCmd(const std::string& cmd_str) {
       {"kUserInputEvent", ConfUiCmd::kUserInputEvent},
       {"kUserTouchEvent", ConfUiCmd::kUserTouchEvent},
   };
-  if (cmds.find(cmd_str) != cmds.end()) {
+  if (Contains(cmds, cmd_str)) {
     return cmds[cmd_str];
   }
   return ConfUiCmd::kUnknown;
