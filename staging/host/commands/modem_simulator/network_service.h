@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <ctime>
 
 #include "host/commands/modem_simulator/data_service.h"
@@ -290,8 +291,8 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   int getModemTechFromPrefer(int preferred_mask);
   ModemTechnology getTechFromNetworkType(NetworkRegistrationStatus::AccessTechnoloy act);
 
-  bool first_signal_strength_request_;  // For time update
-  time_t android_last_signal_time_;
+  std::atomic<bool> first_signal_strength_request_;  // For time update
+  std::atomic<time_t> android_last_signal_time_;
 
   class KeepSignalStrengthChangingLoop {
    public:
