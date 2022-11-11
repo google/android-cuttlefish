@@ -319,13 +319,13 @@ void NetworkService::HandleRadioPower(const Client& client, std::string& command
 
 bool NetworkService::WakeupFromSleep() {
   // It has not called once yet
-  if (android_last_signal_time_ == 0) {
+  if (android_last_signal_time_.load() == 0) {
       return false;
   }
   // Heuristics: if guest has not asked for signal strength
   // for 2 minutes, we assume it is caused by host sleep
   time_t now = time(0);
-  const bool wakeup_from_sleep = (now > android_last_signal_time_ + 120);
+  const bool wakeup_from_sleep = (now > android_last_signal_time_.load() + 120);
   return wakeup_from_sleep;
 }
 
@@ -416,11 +416,10 @@ bool NetworkService::WakeupFromSleep() {
 void NetworkService::HandleSignalStrength(const Client& client) {
   std::vector<std::string> responses;
   std::stringstream ss;
-
+  bool expected = true;
   if (WakeupFromSleep()) {
     misc_service_->TimeUpdate();
-  } else if (first_signal_strength_request_) {
-    first_signal_strength_request_ = false;
+  } else if (first_signal_strength_request_.compare_exchange_strong(expected, false)) {
     misc_service_->TimeUpdate();
   }
 
