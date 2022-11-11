@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 
 #include "common/libs/confui/confui.h"
+#include "common/libs/utils/contains.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/logging.h"
 
@@ -68,7 +69,7 @@ class ThreadTracer {
   template <typename F, typename... Args>
   std::thread RunThread(const std::string& name, F&& f, Args&&... args) {
     auto th = std::thread(std::forward<F>(f), std::forward<Args>(args)...);
-    if (name2id_.find(name) != name2id_.end()) {
+    if (Contains(name2id_, name)) {
       ConfUiLog(FATAL) << "Thread name is duplicated";
     }
     name2id_[name] = th.get_id();
