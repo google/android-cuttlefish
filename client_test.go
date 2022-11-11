@@ -60,14 +60,14 @@ func (o *TestObserver) OnError(err error) {
 	}
 }
 
-func recvWithTimeOut(sendCh chan interface{}, msg interface{}) error {
+func recvWithTimeOut[K interface{}](sendCh chan interface{}) (*K, error) {
 	select {
 	case m := <-sendCh:
 		// Reshape instead of type check here: the client is allowed to send whatever
 		// type it wants as long as has the expected fields.
-		return Reshape(m, msg)
+		return Reshape[K](m)
 	case <-time.After(1 * time.Second):
-		return fmt.Errorf("time out")
+		return nil, fmt.Errorf("time out")
 	}
 }
 
@@ -83,8 +83,8 @@ func TestClientSendsInitialMessage(t *testing.T) {
 		_, _ = NewDeviceConnection(&signaling, &observer)
 	}()
 
-	var msg RequestOfferMsg
-	if err := recvWithTimeOut(signaling.SendCh, &msg); err != nil {
+	msg, err := recvWithTimeOut[RequestOfferMsg](signaling.SendCh)
+	if err != nil {
 		t.Fatalf("Client didn't send the request-offer message in time: %v", err)
 	}
 	if msg.Type != RequestOfferMsgType {
@@ -106,16 +106,15 @@ func TestClientGeneratesAnswer(t *testing.T) {
 	}()
 
 	// The first message is always the request-offer
-	var _offerMsg interface{}
-	if err := recvWithTimeOut(signaling.SendCh, &_offerMsg); err != nil {
+	if _, err := recvWithTimeOut[RequestOfferMsg](signaling.SendCh); err != nil {
 		t.Skipf("Client didn't send request-offer in time: %v", err)
 	}
 	signaling.RecvCh <- map[string]interface{}{
 		"type": "offer",
 		"sdp":  fakeSDP,
 	}
-	var msg webrtc.SessionDescription
-	if err := recvWithTimeOut(signaling.SendCh, &msg); err != nil {
+	msg, err := recvWithTimeOut[webrtc.SessionDescription](signaling.SendCh)
+	if err != nil {
 		t.Fatalf("Client didn't send the answer message in time: %v", err)
 	}
 	if msg.Type != webrtc.SDPTypeAnswer {
@@ -136,20 +135,18 @@ func TestClientGeneratesICECandidate(t *testing.T) {
 	}()
 
 	// The first message is always the request-offer
-	var _offerMsg interface{}
-	if err := recvWithTimeOut(signaling.SendCh, &_offerMsg); err != nil {
+	if _, err := recvWithTimeOut[RequestOfferMsg](signaling.SendCh); err != nil {
 		t.Skipf("Client didn't send request-offer in time: %v", err)
 	}
 	signaling.RecvCh <- map[string]interface{}{
 		"type": "offer",
 		"sdp":  fakeSDP,
 	}
-	var _answerMsg webrtc.SessionDescription
-	if err := recvWithTimeOut(signaling.SendCh, &_answerMsg); err != nil {
+	if _, err := recvWithTimeOut[webrtc.SessionDescription](signaling.SendCh); err != nil {
 		t.Skipf("Client didn't send the answer message in time: %v", err)
 	}
-	var msg ICECandidateMsg
-	if err := recvWithTimeOut(signaling.SendCh, &msg); err != nil {
+	msg, err := recvWithTimeOut[ICECandidateMsg](signaling.SendCh)
+	if err != nil {
 		t.Fatalf("Client didn't send the first ice-candidate message in time: %v", err)
 	}
 	if msg.Type != ICECandidateMsgType {
