@@ -90,8 +90,8 @@ func (c *Controller) recvLoop(closeCh chan bool) error {
 			case RequestOfferMsgType:
 				panic("Device requested an offer. This violates the signaling protocol")
 			case OfferMsgType:
-				var offer webrtc.SessionDescription
-				if err := Reshape(msg, &offer); err != nil {
+				offer, err := Reshape[webrtc.SessionDescription](msg)
+				if err != nil {
 					// msg was obtained from a JSON string so Reshape shouldn't fail
 					panic(fmt.Sprintf("Failed to reshape json: %v", err))
 				}
@@ -99,8 +99,8 @@ func (c *Controller) recvLoop(closeCh chan bool) error {
 					return fmt.Errorf("Error handling offer: %w", err)
 				}
 			case ICECandidateMsgType:
-				var candidate webrtc.ICECandidateInit
-				if err := Reshape(msg, &candidate); err != nil {
+				candidate, err := Reshape[webrtc.ICECandidateInit](msg)
+				if err != nil {
 					// msg was obtained from a JSON string so Reshape shouldn't fail
 					panic(fmt.Sprintf("Failed to reshape json: %v", err))
 				}
@@ -108,8 +108,8 @@ func (c *Controller) recvLoop(closeCh chan bool) error {
 					return fmt.Errorf("Error handling ICE candidate: %w", err)
 				}
 			case AnswerMsgType:
-				var answer webrtc.SessionDescription
-				if err := Reshape(msg, &answer); err != nil {
+				answer, err := Reshape[webrtc.SessionDescription](msg)
+				if err != nil {
 					// msg was obtained from a JSON string so Reshape shouldn't fail
 					panic(fmt.Sprintf("Failed to reshape json: %v", err))
 				}
@@ -127,8 +127,8 @@ func (c *Controller) recvLoop(closeCh chan bool) error {
 	}
 }
 
-func (c *Controller) onOffer(offer webrtc.SessionDescription) error {
-	if err := c.peerConnection.SetRemoteDescription(offer); err != nil {
+func (c *Controller) onOffer(offer *webrtc.SessionDescription) error {
+	if err := c.peerConnection.SetRemoteDescription(*offer); err != nil {
 		return fmt.Errorf("Failed to set remote description: %w", err)
 	}
 	answer, err := c.peerConnection.CreateAnswer(nil)
@@ -142,16 +142,16 @@ func (c *Controller) onOffer(offer webrtc.SessionDescription) error {
 	return nil
 }
 
-func (c *Controller) onAnswer(answer webrtc.SessionDescription) error {
-	err := c.peerConnection.SetRemoteDescription(answer)
+func (c *Controller) onAnswer(answer *webrtc.SessionDescription) error {
+	err := c.peerConnection.SetRemoteDescription(*answer)
 	if err != nil {
 		return fmt.Errorf("Failed to set remote description: %w", err)
 	}
 	return nil
 }
 
-func (c *Controller) onICECandidate(candidate webrtc.ICECandidateInit) error {
-	err := c.peerConnection.AddICECandidate(candidate)
+func (c *Controller) onICECandidate(candidate *webrtc.ICECandidateInit) error {
+	err := c.peerConnection.AddICECandidate(*candidate)
 	if err != nil {
 		return fmt.Errorf("Failed to add ICE candidate: %w", err)
 	}
