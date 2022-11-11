@@ -34,6 +34,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
+#include "common/libs/utils/result.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
@@ -669,11 +670,12 @@ int FileInstance::Fcntl(int command, int value) {
   return rval;
 }
 
-int FileInstance::Flock(int operation) {
+Result<void> FileInstance::Flock(int operation) {
   errno = 0;
   int rval = TEMP_FAILURE_RETRY(flock(fd_, operation));
   errno_ = errno;
-  return rval;
+  CF_EXPECT(rval == 0, StrError());
+  return {};
 }
 
 int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
