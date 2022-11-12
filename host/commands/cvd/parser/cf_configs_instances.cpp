@@ -22,6 +22,7 @@
 #include "common/libs/utils/flags_validator.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
+#include "host/commands/cvd/parser/instance/cf_security_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 
 namespace cuttlefish {
@@ -29,6 +30,7 @@ namespace cuttlefish {
 static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"vm", Json::ValueType::objectValue},
     {"boot", Json::ValueType::objectValue},
+    {"security", Json::ValueType::objectValue},
     {"disk", Json::ValueType::objectValue},
     {"graphics", Json::ValueType::objectValue},
     {"camera", Json::ValueType::objectValue},
@@ -52,6 +54,10 @@ Result<void> ValidateInstancesConfigs(const Json::Value& root) {
     if (root[i].isMember("boot")) {
       CF_EXPECT(ValidateBootConfigs(root[i]["boot"]), "ValidateBootConfigs fail");
     }
+    if (root[i].isMember("security")) {
+      CF_EXPECT(ValidateSecurityConfigs(root[i]["security"]),
+                "ValidateSecurityConfigs fail");
+    }
   }
   CF_EXPECT(ValidateStringConfig(root, "vm", "setupwizard_mode",
                                  ValidateStupWizardMode),
@@ -63,11 +69,13 @@ Result<void> ValidateInstancesConfigs(const Json::Value& root) {
 void InitInstancesConfigs(Json::Value& root) {
   InitVmConfigs(root);
   InitBootConfigs(root);
+  InitSecurityConfigs(root);
 }
 
 std::vector<std::string> GenerateInstancesConfigs(const Json::Value& root) {
   std::vector<std::string> result = GenerateVmConfigs(root);
   result = MergeResults(result, GenerateBootConfigs(root));
+  result = MergeResults(result, GenerateSecurityFlags(root));
   return result;
 }
 
