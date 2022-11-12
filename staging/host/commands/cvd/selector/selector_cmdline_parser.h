@@ -28,16 +28,12 @@
 namespace cuttlefish {
 namespace selector {
 
-struct SeparatedArguments {
-  std::vector<std::string> before_selector_opts;
-  std::vector<std::string> selector_specific;
-  std::vector<std::string> after_selector_opts;
+struct CommandAndSelectorArguments {
+  std::vector<std::string> cmd_args;
+  std::vector<std::string> selector_args;
 };
 
-/**
- * takes cmdline arguments, and separate them into 3 pieces above
- */
-Result<SeparatedArguments> SeparateArguments(
+Result<CommandAndSelectorArguments> GetCommandAndSelectorArguments(
     const std::vector<std::string>& args);
 
 /**
