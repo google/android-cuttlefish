@@ -222,16 +222,12 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
     "instances" :
     [
         {
-            "boot": {
-                "security": {
-                }
+            "security": {
             }
         },
         {
-            "boot": {
-                "security": {
-                    "serial_number": "CUTTLEFISHCVD101"
-                }
+            "security": {
+                "serial_number": "CUTTLEFISHCVD101"
             }
         }
     ]
@@ -256,17 +252,13 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
     "instances" :
     [
         {
-            "boot": {
-                "security": {
-                    "serial_number": "CUTTLEFISHCVD101"
-                }
+            "security": {
+                "serial_number": "CUTTLEFISHCVD101"
             }
         },
         {
-            "boot": {
-                "security": {
-                    "serial_number": "CUTTLEFISHCVD102"
-                }
+            "security": {
+                "serial_number": "CUTTLEFISHCVD102"
             }
         }
     ]
