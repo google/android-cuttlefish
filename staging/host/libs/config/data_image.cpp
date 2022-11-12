@@ -10,6 +10,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/mbr.h"
+#include "host/libs/config/esp.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
@@ -53,48 +54,6 @@ bool ForceFsckImage(const std::string& data_image,
   if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
     LOG(ERROR) << "`" << fsck_path << " -y -f " << data_image << "` failed with code "
                << fsck_status;
-    return false;
-  }
-  return true;
-}
-
-bool NewfsMsdos(const std::string& data_image, int data_image_mb,
-                int offset_num_mb) {
-  off_t image_size_bytes = static_cast<off_t>(data_image_mb) << 20;
-  off_t offset_size_bytes = static_cast<off_t>(offset_num_mb) << 20;
-  image_size_bytes -= offset_size_bytes;
-  off_t image_size_sectors = image_size_bytes / 512;
-  auto newfs_msdos_path = HostBinaryPath("newfs_msdos");
-  return execute({newfs_msdos_path,
-                         "-F",
-                         "32",
-                         "-m",
-                         "0xf8",
-                         "-o",
-                         "0",
-                         "-c",
-                         "8",
-                         "-h",
-                         "255",
-                         "-u",
-                         "63",
-                         "-S",
-                         "512",
-                         "-s",
-                         std::to_string(image_size_sectors),
-                         "-C",
-                         std::to_string(data_image_mb) + "M",
-                         "-@",
-                         std::to_string(offset_size_bytes),
-                         data_image}) == 0;
-}
-
-bool CopyToMsdos(const std::string& image, const std::string& path,
-                 const std::string& destination) {
-  const auto mcopy = HostBinaryPath("mcopy");
-  const auto success = execute({mcopy, "-o", "-i", image, "-s", path, destination});
-  if (success != 0) {
-    LOG(ERROR) << "Failed to copy " << path << " to " << image;
     return false;
   }
   return true;
@@ -397,22 +356,13 @@ class InitializeEspImageImpl : public InitializeEspImage {
  protected:
   bool Setup() override {
     LOG(DEBUG) << "esp partition image: creating default";
-
-    // newfs_msdos won't make a partition smaller than 257 mb
-    // this should be enough for anybody..
-    auto tmp_esp_image = instance_.otheros_esp_image() + ".tmp";
-    if (!NewfsMsdos(tmp_esp_image, 257 /* mb */, 0 /* mb (offset) */)) {
-      LOG(ERROR) << "Failed to create filesystem for " << tmp_esp_image;
-      return false;
-    }
+    auto builder = EspBuilder(instance_.otheros_esp_image());
 
     // For licensing and build reproducibility reasons, pick up the bootloaders
     // from the host Linux distribution (if present) and pack them into the
     // automatically generated ESP. If the user wants their own bootloaders,
     // they can use -esp_image=/path/to/esp.img to override, so we don't need
     // to accommodate customizations of this packing process.
-
-    int success;
     const std::pair<std::string, std::string> *kBlobTable;
     std::size_t size;
     // Skip GRUB on Gem5
@@ -421,13 +371,11 @@ class InitializeEspImageImpl : public InitializeEspImage {
       // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
       // nowhere else. If you want to add support for other distros, make the
       // extra directories below and copy the initial grub.cfg there as well
-      auto mmd = HostBinaryPath("mmd");
-      success =
-          execute({mmd, "-i", tmp_esp_image, "EFI", "EFI/BOOT", "EFI/debian", "EFI/modules"});
-      if (success != 0) {
-        LOG(ERROR) << "Failed to create directories in " << tmp_esp_image;
-        return false;
-      }
+      builder.Directory("EFI")
+          .Directory("EFI/BOOT")
+          .Directory("EFI/debian")
+          .Directory("EFI/modules");
+
       size = sizeof(kGrubBlobTable)/sizeof(const std::pair<std::string, std::string>);
       kBlobTable = kGrubBlobTable;
 
@@ -435,62 +383,31 @@ class InitializeEspImageImpl : public InitializeEspImage {
       // we can find, which minimizes complexity. If the user removed the grub bin
       // package from their system, the ESP will be empty and Other OS will not be
       // supported
-      bool copied = false;
-      for (int i=0; i<size; i++) {
-        auto grub = kBlobTable[i];
-        if (!FileExists(grub.first)) {
-          continue;
-        }
-        if (!CopyToMsdos(tmp_esp_image, grub.first, "::" + grub.second)) {
-          return false;
-        }
-        copied = true;
-      }
-
-      if (!copied) {
-        LOG(ERROR) << "Binary dependencies were not found on this system; Other OS "
-                      "support will be broken";
-        return false;
+      for (int i = 0; i < size; i++) {
+        const auto grub = kBlobTable[i];
+        builder.File(grub.first, grub.second, false);
       }
 
       auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
-      CHECK(FileExists(grub_cfg)) << "Missing file " << grub_cfg << "!";
-      if (!CopyToMsdos(tmp_esp_image, grub_cfg, "::EFI/debian/")) {
-        return false;
-      }
+      builder.File(grub_cfg, "EFI/debian/");
     }
 
     switch (instance_.boot_flow()) {
       case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-        if (!CopyToMsdos(tmp_esp_image, instance_.linux_kernel_path(), "::vmlinuz")) {
-          return false;
-        }
-
+        builder.File(instance_.linux_kernel_path(), "vmlinuz");
         if (!instance_.linux_initramfs_path().empty()) {
-          if (!CopyToMsdos(tmp_esp_image, instance_.linux_initramfs_path(), "::initrd.img")) {
-            return false;
-          }
+          builder.File(instance_.linux_initramfs_path(), "initrd.img");
         }
         break;
       case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-        if (!CopyToMsdos(tmp_esp_image, instance_.fuchsia_zedboot_path(), "::zedboot.zbi")) {
-          return false;
-        }
-        if (!CopyToMsdos(tmp_esp_image,
-                         instance_.fuchsia_multiboot_bin_path(), "::multiboot.bin")) {
-          return false;
-        }
+        builder.File(instance_.fuchsia_zedboot_path(), "zedboot.zbi");
+        builder.File(instance_.fuchsia_multiboot_bin_path(), "multiboot.bin");
         break;
       default:
         break;
     }
 
-    if (!cuttlefish::RenameFile(tmp_esp_image, instance_.otheros_esp_image())) {
-      LOG(ERROR) << "Renaming " << tmp_esp_image << " to "
-                 << instance_.otheros_esp_image() << " failed";
-      return false;
-    }
-    return true;
+    return builder.Build();
   }
 
  private:
