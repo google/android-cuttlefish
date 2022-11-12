@@ -23,24 +23,15 @@
 
 namespace cuttlefish {
 
-static std::map<std::string, Json::ValueType> securitykeyMap = {
-    {"serial_number", Json::ValueType::stringValue}};
-
 static std::map<std::string, Json::ValueType> kernelkeyMap = {
     {"extra_kernel_cmdline", Json::ValueType::stringValue},
 };
 
 static std::map<std::string, Json::ValueType> kBootKeyMap = {
     {"extra_bootconfig_args", Json::ValueType::stringValue},
-    {"security", Json::ValueType::objectValue},
     {"kernel", Json::ValueType::objectValue},
     {"enable_bootanimation", Json::ValueType::booleanValue},
 };
-
-Result<void> ValidateSecurityConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, securitykeyMap), "ValidateSecurityConfigs ValidateTypo fail");
-  return {};
-}
 
 Result<void> ValidateKernelConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kernelkeyMap), "ValidateKernelConfigs ValidateTypo fail");
@@ -49,10 +40,6 @@ Result<void> ValidateKernelConfigs(const Json::Value& root) {
 
 Result<void> ValidateBootConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kBootKeyMap), "ValidateBootConfigs ValidateTypo fail");
-
-  if (root.isMember("security")) {
-    CF_EXPECT(ValidateSecurityConfigs(root["security"]), "ValidateSecurityConfigs fail");
-  }
 
    if (root.isMember("kernel")) {
     CF_EXPECT(ValidateKernelConfigs(root["kernel"]), "ValidateKernelConfigs fail");
@@ -66,8 +53,6 @@ void InitBootConfigs(Json::Value& instances) {
                    CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
   InitBoolConfig(instances, "boot", "enable_bootanimation",
                  CF_DEFAULTS_ENABLE_BOOTANIMATION);
-  InitStringConfigSubGroup(instances, "boot", "security", "serial_number",
-                           CF_DEFAULTS_SERIAL_NUMBER);
   InitStringConfigSubGroup(instances, "boot", "kernel", "extra_kernel_cmdline",
                            CF_DEFAULTS_EXTRA_KERNEL_CMDLINE);
 }
@@ -78,8 +63,6 @@ std::vector<std::string> GenerateBootConfigs(const Json::Value& instances) {
                                     "extra_bootconfig_args"));
   result.emplace_back(GenerateStrGflag(instances, "enable_bootanimation",
                                        "boot", "enable_bootanimation"));
-  result.emplace_back(GenerateStrGflagSubGroup(instances, "serial_number", "boot",
-                                            "security", "serial_number"));
   result.emplace_back(GenerateStrGflagSubGroup(instances, "extra_kernel_cmdline",
                                             "boot", "kernel",
                                             "extra_kernel_cmdline"));
