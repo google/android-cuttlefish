@@ -86,10 +86,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return {};
   }
 
-  auto separated_args = CF_EXPECT(selector::SeparateArguments(all_args));
-  auto [pre, selector_args, post] = std::move(separated_args);
-  std::vector<std::string> args = std::move(pre);
-  std::move(post.begin(), post.end(), std::back_inserter(args));
+  auto [args, selector_args] =
+      CF_EXPECT(selector::GetCommandAndSelectorArguments(all_args));
 
   std::vector<std::string> env;
   for (char** e = envp; *e != 0; e++) {

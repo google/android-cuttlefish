@@ -19,11 +19,18 @@
 #include <algorithm>
 #include <cctype>
 #include <deque>
+#include <iterator>
 #include <stack>
 
 namespace cuttlefish {
 namespace selector {
 namespace {
+
+struct SeparatedArguments {
+  std::vector<std::string> before_selector_opts;
+  std::vector<std::string> selector_specific;
+  std::vector<std::string> after_selector_opts;
+};
 
 enum class ParseState {
   kInit = 0,
@@ -31,8 +38,6 @@ enum class ParseState {
   kAfterSelector = 2,
   kParseError = 3
 };
-
-}  // namespace
 
 /*
  * Basically, cmd with the arguments would look this:
@@ -123,6 +128,17 @@ Result<SeparatedArguments> SeparateArguments(
   return {SeparatedArguments{.before_selector_opts = before_selector_opts,
                              .selector_specific = selector_specific,
                              .after_selector_opts = after_selector_opts}};
+}
+
+}  // namespace
+
+Result<CommandAndSelectorArguments> GetCommandAndSelectorArguments(
+    const std::vector<std::string>& args) {
+  auto [pre, selector_specific, post] = CF_EXPECT(SeparateArguments(args));
+  std::vector<std::string> cmd_args{pre};
+  std::copy(post.begin(), post.end(), std::back_inserter(cmd_args));
+  return CommandAndSelectorArguments{.cmd_args = cmd_args,
+                                     .selector_args = selector_specific};
 }
 
 }  // namespace selector
