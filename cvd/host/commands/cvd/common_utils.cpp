@@ -23,6 +23,8 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
+#include "common/libs/utils/contains.h"
+
 namespace cuttlefish {
 
 cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
@@ -50,8 +52,8 @@ cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
     const auto value = e.substr(eq_pos + 1);
     (*command_request->mutable_env())[key] = value;
   }
-  const auto& immutable_env = command_request->env();
-  if (immutable_env.find("ANDROID_HOST_OUT") == immutable_env.end()) {
+
+  if (!Contains(command_request->env(), "ANDROID_HOST_OUT")) {
     // see b/254418863
     (*command_request->mutable_env())["ANDROID_HOST_OUT"] =
         android::base::Dirname(android::base::GetExecutableDirectory());
