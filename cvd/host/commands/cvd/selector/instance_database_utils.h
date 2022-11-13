@@ -21,6 +21,7 @@
 #include <string>
 
 #include "common/libs/utils/collect.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -147,7 +148,7 @@ template <typename RetSet, typename AnyContainer>
 RetSet Intersection(const RetSet& u, AnyContainer&& v) {
   RetSet result;
   for (auto const& e : v) {
-    if (u.find(e) != u.end()) {
+    if (Contains(u, e)) {
       result.insert(e);
     }
   }

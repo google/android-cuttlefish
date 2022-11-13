@@ -22,6 +22,7 @@
 
 #include <android-base/parseint.h>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
@@ -135,8 +136,7 @@ bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
     return false;
   }
   auto&& group_name = (*itr)->GroupName();
-  if (auto_gen_group_name_to_suffix_map_.find(group_name) !=
-      auto_gen_group_name_to_suffix_map_.end()) {
+  if (Contains(auto_gen_group_name_to_suffix_map_, group_name)) {
     auto_gen_group_name_suffice_.Reclaim(
         auto_gen_group_name_to_suffix_map_[group_name]);
     auto_gen_group_name_to_suffix_map_.erase(group_name);
