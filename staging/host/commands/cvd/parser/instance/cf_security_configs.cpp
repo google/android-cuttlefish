@@ -32,15 +32,36 @@ Result<void> ValidateSecurityConfigs(const Json::Value& root) {
   return {};
 }
 
+/*This function is created to cover the initiation use_random_serial flag
+when the json value of serial_number equal "@random"
+*/
+void InitRandomSerialNumber(Json::Value& instances) {
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    std::string serial_number_str =
+        instances[i]["security"]["serial_number"].asString();
+    if (serial_number_str == "@random") {
+      instances[i]["security"]["use_random_serial"] = true;
+    } else {
+      instances[i]["security"]["use_random_serial"] = false;
+    }
+  }
+}
+
 void InitSecurityConfigs(Json::Value& instances) {
   InitStringConfig(instances, "security", "serial_number",
                    CF_DEFAULTS_SERIAL_NUMBER);
+  // This init should be called after the InitSecurityConfigs call, since it
+  // depends on  serial_number flag
+  InitRandomSerialNumber(instances);
 }
 
 std::vector<std::string> GenerateSecurityFlags(const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(GenerateStrGflag(instances, "serial_number", "security",
                                        "serial_number"));
+  result.emplace_back(GenerateBoolGflag(instances, "use_random_serial",
+                                        "security", "use_random_serial"));
   return result;
 }
 
