@@ -102,7 +102,7 @@ ScopedAStatus RemoteKeyMintOperation::finish(
     const optional<vector<uint8_t>>& signature,  //
     const optional<HardwareAuthToken>& authToken,
     const optional<TimeStampToken>& /* timestampToken */,
-    const optional<vector<uint8_t>>& /* confirmationToken */,
+    const optional<vector<uint8_t>>& confirmationToken,
     vector<uint8_t>* output) {
   if (!output) {
     return ScopedAStatus(AStatus_fromServiceSpecificError(
@@ -119,6 +119,11 @@ ScopedAStatus RemoteKeyMintOperation::finish(
     auto tokenAsVec(authToken2AidlVec(*authToken));
     request.additional_params.push_back(keymaster::TAG_AUTH_TOKEN,
                                         tokenAsVec.data(), tokenAsVec.size());
+  }
+  if (confirmationToken) {
+    request.additional_params.push_back(keymaster::TAG_CONFIRMATION_TOKEN,
+                                        confirmationToken->data(),
+                                        confirmationToken->size());
   }
 
   FinishOperationResponse response(impl_.message_version());
