@@ -97,19 +97,28 @@ const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 // TODO(b/236398043): Return more granular and informative errors.
 func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.Operation) {
 	var result apiv1.OperationResult
-	if cvd, err := m.launchCVD_(req, op); err != nil {
+	defer func() {
+		if err := m.om.Complete(op.Name, result); err != nil {
+			log.Printf("failed to complete operation with error: %v", err)
+		}
+	}()
+	cvd, err := m.launchCVD_(req, op)
+	if err != nil {
 		log.Printf("failed to launch cvd with error: %v", err)
 		result = apiv1.OperationResult{
 			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
 		}
-	} else {
+		return
+	}
+	buf, err := json.Marshal(cvd)
+	if err != nil {
+		log.Printf("%v", err)
 		result = apiv1.OperationResult{
-			Response: cvd,
+			Error: &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed},
 		}
+		return
 	}
-	if err := m.om.Complete(op.Name, result); err != nil {
-		log.Printf("failed to complete operation with error: %v", err)
-	}
+	result = apiv1.OperationResult{Response: string(buf)}
 }
 
 func (m *CVDToolInstanceManager) launchCVD_(
