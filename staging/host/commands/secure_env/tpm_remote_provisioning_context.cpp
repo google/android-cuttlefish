@@ -234,17 +234,18 @@ void TpmRemoteProvisioningContext::GetHwInfo(
 cppcose::ErrMsgOr<cppbor::Array> TpmRemoteProvisioningContext::BuildCsr(
     const std::vector<uint8_t>& challenge, cppbor::Array keysToSign) const {
   auto deviceInfo = std::move(*CreateDeviceInfo());
-  auto signedDataPayload = cppbor::Array()
-                               .add(1 /* version */)
-                               .add("keymint" /* CertificateType */)
-                               .add(std::move(deviceInfo))
-                               .add(challenge)
-                               .add(std::move(keysToSign));
+  auto csrPayload = cppbor::Array()
+                        .add(3 /* version */)
+                        .add("keymint" /* CertificateType */)
+                        .add(std::move(deviceInfo))
+                        .add(std::move(keysToSign));
+  auto signedDataPayload =
+      cppbor::Array().add(challenge).add(cppbor::Bstr(csrPayload.encode()));
   auto signedData = constructCoseSign1(
       devicePrivKey_, signedDataPayload.encode(), {} /* aad */);
 
   return cppbor::Array()
-      .add(3 /* version */)
+      .add(1 /* version */)
       .add(cppbor::Map() /* UdsCerts */)
       .add(std::move(*bcc_.clone()->asArray()) /* DiceCertChain */)
       .add(std::move(*signedData) /* SignedData */);
