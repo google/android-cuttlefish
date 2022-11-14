@@ -35,6 +35,7 @@ struct InstanceIdTestInput {
   std::string input_args;
   std::optional<std::string> cuttlefish_instance;
   std::optional<std::unordered_set<unsigned>> expected_ids;
+  unsigned requested_num_instances;
   bool expected_result;
 };
 
@@ -43,9 +44,11 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
   InstanceIdTest();
 
   bool expected_result_;
+  unsigned requested_num_instances_;
   std::optional<std::unordered_set<unsigned>> expected_ids_;
   std::unordered_map<std::string, std::string> envs_;
   std::optional<SelectorFlagsParser> parser_;
+  Result<CommandAndSelectorArguments> flag_separation_result_;
 };
 
 }  // namespace selector
