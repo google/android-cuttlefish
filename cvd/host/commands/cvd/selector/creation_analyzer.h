@@ -103,6 +103,7 @@ class CreationAnalyzer {
   static Result<GroupCreationInfo> Analyze(
       const CreationAnalyzerParam& param,
       const std::optional<ucred>& credential,
+      const InstanceDatabase& instance_database,
       InstanceLockFileManager& instance_lock_file_manager);
 
  private:
@@ -111,6 +112,7 @@ class CreationAnalyzer {
   CreationAnalyzer(const CreationAnalyzerParam& param,
                    const std::optional<ucred>& credential,
                    SelectorFlagsParser&& selector_options_parser,
+                   const InstanceDatabase& instance_database,
                    InstanceLockFileManager& instance_lock_file_manager);
 
   Result<GroupCreationInfo> Analyze();
@@ -159,6 +161,7 @@ class CreationAnalyzer {
 
   // internal, temporary
   SelectorFlagsParser selector_options_parser_;
+  const InstanceDatabase& instance_database_;
   InstanceLockFileManager& instance_file_lock_manager_;
 };
 
