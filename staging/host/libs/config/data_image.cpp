@@ -29,18 +29,20 @@ const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
 // these search paths. Install all bootloaders to one of these paths.
 // NOTE: For now, just ignore the 32-bit ARM version, as Debian doesn't
 //       build an EFI monolith for this architecture.
-const std::string kBootPathIA32 = "EFI/BOOT/BOOTIA32.EFI";
-const std::string kBootPathAA64 = "EFI/BOOT/BOOTAA64.EFI";
-const std::string kModulesPath = "EFI/modules";
-const std::string kMultibootModulePath = kModulesPath + "/multiboot.mod";
-
 // These are the paths Debian installs the monoliths to. If another distro
 // uses an alternative monolith path, add it to this table
-const std::pair<std::string, std::string> kGrubBlobTable[] = {
-    {"/usr/lib/grub/i386-efi/multiboot.mod", kMultibootModulePath},
-    {"/usr/lib/grub/i386-efi/monolithic/grubia32.efi", kBootPathIA32},
-    {"/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi", kBootPathAA64},
-};
+const std::string kBootSrcPathIA32 = "/usr/lib/grub/i386-efi/monolithic/grubia32.efi";
+const std::string kBootDestPathIA32 = "EFI/BOOT/BOOTIA32.EFI";
+
+const std::string kBootSrcPathAA64 = "/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi";
+const std::string kBootDestPathAA64 = "EFI/BOOT/BOOTAA64.EFI";
+
+const std::string kModulesDestPath = "EFI/modules";
+const std::string kMultibootModuleSrcPathIA32 = "/usr/lib/grub/i386-efi/multiboot.mod";
+const std::string kMultibootModuleDestPathIA32 = kModulesDestPath + "/multiboot.mod";
+
+const std::string kMultibootModuleSrcPathAA64 = "/usr/lib/grub/arm64-efi/multiboot.mod";
+const std::string kMultibootModuleDestPathAA64 = kModulesDestPath + "/multiboot.mod";
 
 bool ForceFsckImage(const std::string& data_image,
                     const CuttlefishConfig::InstanceSpecific& instance) {
@@ -348,9 +350,14 @@ class InitializeEspImageImpl : public InitializeEspImage {
   std::string Name() const override { return "InitializeEspImageImpl"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Enabled() const override {
-    auto flow = instance_.boot_flow();
-    return flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
-      flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
+    const auto flow = instance_.boot_flow();
+    const auto vm = config_.vm_manager();
+    const auto not_gem5 = vm != vm_manager::Gem5Manager::name();
+    const auto boot_flow_required_esp =
+        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
+        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
+
+    return not_gem5 && boot_flow_required_esp;
   }
 
  protected:
@@ -363,45 +370,49 @@ class InitializeEspImageImpl : public InitializeEspImage {
     // automatically generated ESP. If the user wants their own bootloaders,
     // they can use -esp_image=/path/to/esp.img to override, so we don't need
     // to accommodate customizations of this packing process.
-    const std::pair<std::string, std::string> *kBlobTable;
-    std::size_t size;
-    // Skip GRUB on Gem5
-    if (config_.vm_manager() != vm_manager::Gem5Manager::name()) {
-      // Currently we only support Debian based distributions, and GRUB is built
-      // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
-      // nowhere else. If you want to add support for other distros, make the
-      // extra directories below and copy the initial grub.cfg there as well
-      builder.Directory("EFI")
-          .Directory("EFI/BOOT")
-          .Directory("EFI/debian")
-          .Directory("EFI/modules");
 
-      size = sizeof(kGrubBlobTable)/sizeof(const std::pair<std::string, std::string>);
-      kBlobTable = kGrubBlobTable;
+    // Currently we only support Debian based distributions, and GRUB is built
+    // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
+    // nowhere else. If you want to add support for other distros, make the
+    // extra directories below and copy the initial grub.cfg there as well
+    builder.Directory("EFI")
+        .Directory("EFI/BOOT")
+        .Directory("EFI/debian")
+        .Directory("EFI/modules");
 
-      // The grub binaries are small, so just copy all the architecture blobs
-      // we can find, which minimizes complexity. If the user removed the grub bin
-      // package from their system, the ESP will be empty and Other OS will not be
-      // supported
-      for (int i = 0; i < size; i++) {
-        const auto grub = kBlobTable[i];
-        builder.File(grub.first, grub.second, false);
-      }
-
+    const auto flow = instance_.boot_flow();
+    if (flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
+        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia) {
       auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
-      builder.File(grub_cfg, "EFI/debian/");
+      builder.File(grub_cfg, "EFI/debian/grub.cfg", /* required */ true);
+      switch (instance_.target_arch()) {
+        case Arch::Arm:
+        case Arch::Arm64:
+          builder.File(kBootSrcPathAA64, kBootDestPathAA64, /* required */ true);
+          builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPathAA64,
+                        /* required */ true);
+          break;
+        case Arch::X86:
+        case Arch::X86_64:
+          builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
+          builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
+                        /* required */ true);
+          break;
+      }
     }
 
-    switch (instance_.boot_flow()) {
+    switch (flow) {
       case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-        builder.File(instance_.linux_kernel_path(), "vmlinuz");
+        builder.File(instance_.linux_kernel_path(), "vmlinuz", /* required */ true);
         if (!instance_.linux_initramfs_path().empty()) {
-          builder.File(instance_.linux_initramfs_path(), "initrd.img");
+          builder.File(instance_.linux_initramfs_path(), "initrd.img", /* required */ true);
         }
         break;
       case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-        builder.File(instance_.fuchsia_zedboot_path(), "zedboot.zbi");
-        builder.File(instance_.fuchsia_multiboot_bin_path(), "multiboot.bin");
+        builder.File(instance_.fuchsia_zedboot_path(), "zedboot.zbi",
+                     /* required */ true);
+        builder.File(instance_.fuchsia_multiboot_bin_path(), "multiboot.bin",
+                     /* required */ true);
         break;
       default:
         break;
