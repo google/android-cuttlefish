@@ -277,6 +277,91 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
       << "serial_number flag is missing or wrongly formatted";
 }
 
+TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--use_random_serial=false,false)"))
+      << "use_random_serial flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "security": {
+                "serial_number": "CUTTLEFISHCVD101"
+            }
+        },
+        {
+            "security": {
+                "serial_number": "@random"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--use_random_serial=false,true)"))
+      << "use_random_serial flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "security": {
+                "serial_number": "@random"
+            }
+        },
+        {
+            "security": {
+                "serial_number": "@random"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--use_random_serial=true,true)"))
+      << "use_random_serial flag is missing or wrongly formatted";
+}
+
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
   const char* test_string = R""""(
 {
