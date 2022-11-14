@@ -22,6 +22,14 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "tpm_keymaster_context.h"
 
+namespace {
+
+// Defined in
+// hardware/interfaces/confirmationui/1.0/IConfirmationResultCallback.hal
+constexpr const char kConfirmationTokenMessageTag[] = "confirmation token";
+
+}  // namespace
+
 namespace cuttlefish {
 ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
                                    SharedFD server_fd)
@@ -63,10 +71,14 @@ ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
       continue;
     }
 
-    // hmac
+    // hmac over (prefix || data)
+    std::vector<std::uint8_t> data{std::begin(kConfirmationTokenMessageTag),
+                                   std::end(kConfirmationTokenMessageTag) - 1};
+
+    data.insert(data.end(), request.payload_.data(),
+                request.payload_.data() + request.payload_.size());
     auto hmac = TpmHmac(tpm_resource_manager_, signing_key->get(),
-                        TpmAuth(ESYS_TR_PASSWORD), request.payload_.data(),
-                        request.payload_.size());
+                        TpmAuth(ESYS_TR_PASSWORD), data.data(), data.size());
     if (!hmac) {
       LOG(ERROR) << "Could not calculate confirmation token hmac";
       sign_sender.Send(confui::SignMessageError::kUnknownError, {});
