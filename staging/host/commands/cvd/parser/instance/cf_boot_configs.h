@@ -24,5 +24,5 @@
 namespace cuttlefish {
 Result<void> ValidateBootConfigs(const Json::Value& root);
 void InitBootConfigs(Json::Value& root);
-std::vector<std::string> GenerateBootConfigs(const Json::Value& root);
+std::vector<std::string> GenerateBootFlags(const Json::Value& root);
 };  // namespace cuttlefish
