@@ -277,6 +277,9 @@ class CuttlefishConfig {
   void set_wmediumd_config(const std::string& path);
   std::string wmediumd_config() const;
 
+  void set_rootcanal_args(const std::string& rootcanal_args);
+  std::vector<std::string> rootcanal_args() const;
+
   void set_rootcanal_hci_port(int rootcanal_hci_port);
   int rootcanal_hci_port() const;
 
