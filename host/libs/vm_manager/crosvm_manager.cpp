@@ -267,7 +267,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                                   ",size=", FileSize(instance.pstore_path()));
   }
 
-  if (config.enable_sandbox()) {
+  if (instance.enable_sandbox()) {
     const bool seccomp_exists = DirectoryExists(config.seccomp_policy_dir());
     const std::string& var_empty_dir = kCrosvmVarEmptyDir;
     const bool var_empty_available = DirectoryExists(var_empty_dir);
@@ -392,7 +392,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be
   // fixed
-  if (0 && config.enable_sandbox()) {
+  if (0 && instance.enable_sandbox()) {
     // Set up directory shared with virtiofs
     crosvm_cmd.Cmd().AddParameter(
         "--shared-dir=", instance.PerInstancePath(kSharedDirName),
