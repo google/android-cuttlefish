@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include <tss2/tss2_esys.h>
 
@@ -51,5 +52,13 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     TpmAuth auth,
     const uint8_t* data,
     size_t data_size);
+
+/**
+ * Returns a HMAC signature for `data` with a key created in the TPM with
+ * context / unique-data `context`.
+ */
+UniqueEsysPtr<TPM2B_DIGEST> TpmHmacWithContext(
+    TpmResourceManager& resource_manager, const std::string& context,
+    const uint8_t* data, size_t data_size);
 
 }  // namespace cuttlefish
