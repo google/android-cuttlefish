@@ -95,19 +95,9 @@ void TpmGatekeeper::ComputeSignature(
     uint32_t length) const {
   memset(signature, 0, signature_length);
   std::string key_unique(reinterpret_cast<const char*>(key), key_length);
-  auto key_slot =
-      PrimaryKeyBuilder::CreateSigningKey(resource_manager_, key_unique);
-  if (!key_slot) {
-    LOG(ERROR) << "Unable to load signing key into TPM memory";
-    return;
-  }
+
   auto calculated_signature =
-      TpmHmac(
-          resource_manager_,
-          key_slot->get(),
-          TpmAuth(ESYS_TR_PASSWORD),
-          message,
-          length);
+      TpmHmacWithContext(resource_manager_, key_unique, message, length);
   if (!calculated_signature) {
     LOG(ERROR) << "Failure in calculating signature";
     return;

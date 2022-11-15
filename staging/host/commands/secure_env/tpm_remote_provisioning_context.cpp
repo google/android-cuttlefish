@@ -43,13 +43,15 @@ TpmRemoteProvisioningContext::TpmRemoteProvisioningContext(
 
 std::vector<uint8_t> TpmRemoteProvisioningContext::DeriveBytesFromHbk(
     const std::string& context, size_t num_bytes) const {
-  auto key = PrimaryKeyBuilder::CreateSigningKey(resource_manager_,
-                                                 "HardwareBoundKey");
-  auto hbk =
-      TpmHmac(resource_manager_, key->get(), TpmAuth(ESYS_TR_PASSWORD),
-              reinterpret_cast<const uint8_t*>(context.data()), context.size());
-
   std::vector<uint8_t> result(num_bytes);
+  auto hbk = TpmHmacWithContext(
+      resource_manager_, "HardwareBoundKey",
+      reinterpret_cast<const uint8_t*>(context.data()), context.size());
+  if (!hbk) {
+    LOG(ERROR) << "Error calculating HMAC";
+    return result;
+  }
+
   if (!HKDF(result.data(), num_bytes,              //
             EVP_sha256(),                          //
             hbk->buffer, hbk->size,                //
@@ -57,7 +59,7 @@ std::vector<uint8_t> TpmRemoteProvisioningContext::DeriveBytesFromHbk(
             reinterpret_cast<const uint8_t*>(context.data()), context.size())) {
     // Should never fail. Even if it could the API has no way of reporting the
     // error.
-    LOG(ERROR) << "Error calculating HMAC: " << ERR_peek_last_error();
+    LOG(ERROR) << "Error calculating HKDF: " << ERR_peek_last_error();
   }
 
   return result;
@@ -195,17 +197,9 @@ TpmRemoteProvisioningContext::BuildProtectedDataPayload(
 std::optional<cppcose::HmacSha256>
 TpmRemoteProvisioningContext::GenerateHmacSha256(
     const cppcose::bytevec& input) const {
-  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
-      resource_manager_, "Public Key Authentication Key");
-  if (!signing_key) {
-    LOG(ERROR) << "Could not make MAC key for authenticating the pubkey";
-    return std::nullopt;
-  }
-
   auto tpm_digest =
-      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
-              input.data(), input.size());
-
+      TpmHmacWithContext(resource_manager_, "Public Key Authentication Key",
+                         input.data(), input.size());
   if (!tpm_digest) {
     LOG(ERROR) << "Could not calculate hmac";
     return std::nullopt;
