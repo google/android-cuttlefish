@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"reflect"
 	"runtime"
 	"strings"
@@ -580,7 +581,8 @@ func buildTestCmd() *exec.Cmd {
 
 // Same as buildTestCmd but the execution fails when a cvd subcommand is executed.
 func buildTestCmdF(args ...string) *exec.Cmd {
-	if len(args) == 5 {
+	// Do not fail when executing cvd only as it is not a cvd subcommand.
+	if path.Base(args[len(args)-1]) == "cvd" {
 		return buildTestCmd()
 	}
 	cs := []string{"--test.run=" + funcName(TestFakeBinaryMainF), executedAsFakeMain}
