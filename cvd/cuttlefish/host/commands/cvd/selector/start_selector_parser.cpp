@@ -22,6 +22,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/contains.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
@@ -193,7 +194,7 @@ namespace {
 using Envs = std::unordered_map<std::string, std::string>;
 
 std::optional<unsigned> TryFromCuttlefishInstance(const Envs& envs) {
-  if (envs.find(kCuttlefishInstanceEnvVarName) == envs.end()) {
+  if (!Contains(envs, kCuttlefishInstanceEnvVarName)) {
     return std::nullopt;
   }
   const auto cuttlefish_instance = envs.at(kCuttlefishInstanceEnvVarName);
@@ -205,7 +206,7 @@ std::optional<unsigned> TryFromCuttlefishInstance(const Envs& envs) {
 }
 
 std::optional<unsigned> TryFromUser(const Envs& envs) {
-  if (envs.find("USER") == envs.end()) {
+  if (!Contains(envs, "USER")) {
     return std::nullopt;
   }
   std::string_view user{envs.at("USER")};
