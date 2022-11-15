@@ -66,14 +66,7 @@ bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
   return fd_ < other.fd_;
 }
 
-InstanceLockFileManager::InstanceLockFileManager() {
-  auto value_result = FindPotentialInstanceNumsFromNetDevices();
-  if (value_result.ok()) {
-    all_instance_nums_ = std::move(*value_result);
-    return;
-  }
-  initialization_error_ = std::move(value_result.error());
-}
+InstanceLockFileManager::InstanceLockFileManager() {}
 
 // Replicates tempfile.gettempdir() in Python
 std::string TempDir() {
@@ -145,13 +138,25 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
   return locks;
 }
 
-Result<std::reference_wrapper<const std::set<int>>>
-InstanceLockFileManager::AllPotentialInstanceNums() {
-  CF_EXPECT(initialization_error_ == std::nullopt,
-            initialization_error_->Trace());
-  CF_EXPECT(!all_instance_nums_.empty(),
-            "0 available instance numbers on the host");
-  return std::cref(all_instance_nums_);
+Result<std::vector<InstanceLockFile>>
+InstanceLockFileManager::LockAllAvailable() {
+  if (!all_instance_nums_) {
+    all_instance_nums_ = CF_EXPECT(FindPotentialInstanceNumsFromNetDevices());
+  }
+
+  std::vector<InstanceLockFile> acquired_lock_files;
+  for (const auto num : *all_instance_nums_) {
+    auto lock = CF_EXPECT(TryAcquireLock(num));
+    if (!lock) {
+      continue;
+    }
+    auto status = CF_EXPECT(lock->Status());
+    if (status != InUseState::kNotInUse) {
+      continue;
+    }
+    acquired_lock_files.emplace_back(std::move(*lock));
+  }
+  return acquired_lock_files;
 }
 
 Result<std::set<int>>
@@ -195,8 +200,11 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
 
 Result<std::optional<InstanceLockFile>>
 InstanceLockFileManager::TryAcquireUnusedLock() {
-  const std::set<int>& nums = CF_EXPECT(AllPotentialInstanceNums());
-  for (const auto& num : nums) {
+  if (!all_instance_nums_) {
+    all_instance_nums_ = CF_EXPECT(FindPotentialInstanceNumsFromNetDevices());
+  }
+
+  for (const auto num : *all_instance_nums_) {
     auto lock = CF_EXPECT(TryAcquireLock(num));
     if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
       return std::move(*lock);
