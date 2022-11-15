@@ -46,6 +46,8 @@
 
 #include "vm_sockets.h"
 
+#include "common/libs/utils/result.h"
+
 /**
  * Classes to to enable safe access to files.
  * POSIX kernels have an unfortunate habit of recycling file descriptors.
@@ -271,7 +273,7 @@ class FileInstance {
   int Fchdir();
   int Fcntl(int command, int value);
 
-  int Flock(int operation);
+  Result<void> Flock(int operation);
 
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
