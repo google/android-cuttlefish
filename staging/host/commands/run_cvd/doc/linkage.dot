@@ -1,0 +1,117 @@
+digraph {
+  rankdir = "LR";
+
+  config_server
+  console_forwarder
+  cvd
+  cvd_status
+  gnss_grpc_proxy
+  kernel_log_monitor
+  launch_cvd
+  launcher_monitor_socket [label = "launcher_monitor.sock", shape = "rectangle"]
+  logcat_receiver
+  metrics
+  modem_simulator
+  powerwash_cvd
+  restart_cvd
+  run_cvd [label = < <b>run_cvd</b> >, penwidth = "2"]
+  run_cvd_2 [label = "run_cvd", style = "dashed"]
+  run_cvd_etc [label = "...", style = "dashed"]
+  secure_env
+  stop_cvd
+  tombstone_receiver
+  vehicle_hal_server [label = "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"]
+
+  subgraph cluster_adb_group {
+    label = "ADB"
+
+    adb_connector
+    socket_vsock_proxy
+  }
+
+  subgraph cluster_bluetooth_group {
+    label = "Bluetooth"
+
+    bt_connector
+    netsim
+    root_canal [label = "root-canal"]
+    root_canal_log_tee [label = "log_tee"]
+  }
+
+  subgraph cluster_vmm_group {
+    label = "VMM"
+
+    crosvm_android [label = "Android crosvm"]
+    crosvm_android_log_tee [label = "log_tee"]
+    crosvm_android_restarter [label = "process_restarter"]
+    gem5
+    qemu [label = "QEMU"]
+    vmm [label = "", shape = "diamond"]
+  }
+
+  subgraph cluster_webrtc_group {
+    label = "WebRTC"
+
+    operator_proxy
+    webrtc
+  }
+
+  subgraph cluster_wifi_group {
+    label = "Wifi"
+
+    crosvm_openwrt [label = "OpenWRT crosvm"]
+    crosvm_openwrt_log_tee [label = "log_tee"]
+    wmediumd
+    wmediumd_log_tee [label = "log_tee"]
+  }
+
+  cvd -> cvd_status
+  cvd -> launch_cvd
+  cvd -> powerwash_cvd
+  cvd -> restart_cvd
+  cvd -> stop_cvd
+
+  launch_cvd -> run_cvd
+  launch_cvd -> run_cvd_2 [style = "dashed"]
+  launch_cvd -> run_cvd_etc [style = "dashed"]
+
+  cvd_status -> launcher_monitor_socket [dir = "both"]
+  powerwash_cvd -> launcher_monitor_socket [dir = "both"]
+  restart_cvd -> launcher_monitor_socket [dir = "both"]
+  stop_cvd -> launcher_monitor_socket [dir = "both"]
+  launcher_monitor_socket -> run_cvd [dir = "both"]
+
+  run_cvd -> adb_connector [style = "dashed"]
+  run_cvd -> bt_connector [style = "dashed"]
+  run_cvd -> config_server
+  run_cvd -> console_forwarder [style = "dashed"]
+  run_cvd -> crosvm_openwrt
+  run_cvd -> crosvm_openwrt_log_tee
+  crosvm_openwrt_log_tee -> crosvm_openwrt [dir = "back"]
+  run_cvd -> gnss_grpc_proxy [style = "dashed"]
+  run_cvd -> kernel_log_monitor
+  run_cvd -> logcat_receiver
+  run_cvd -> metrics
+  run_cvd -> modem_simulator
+  run_cvd -> netsim [style = "dashed"]
+  run_cvd -> operator_proxy [style = "dashed"]
+  run_cvd -> root_canal [style = "dashed"]
+  run_cvd -> root_canal_log_tee [style = "dashed"]
+  root_canal_log_tee -> root_canal [dir = "back"]
+  run_cvd -> secure_env
+  run_cvd -> socket_vsock_proxy [style = "dashed"]
+  run_cvd -> tombstone_receiver
+  run_cvd -> vehicle_hal_server [style = "dashed"]
+  run_cvd -> vmm
+  run_cvd -> webrtc [style = "dashed"]
+  run_cvd -> wmediumd
+  run_cvd -> wmediumd_log_tee
+  wmediumd_log_tee -> wmediumd [dir = "back"]
+
+  crosvm_android_log_tee -> crosvm_android [dir = "back", style = "dashed"]
+  vmm -> crosvm_android_restarter [style = "dashed"]
+  crosvm_android_restarter -> crosvm_android
+  vmm -> crosvm_android_log_tee [style = "dashed"]
+  vmm -> gem5 [style = "dashed"]
+  vmm -> qemu [style = "dashed"]
+}
