@@ -32,6 +32,7 @@ using keymaster::KeymasterEnforcement;
 using keymaster::km_id_t;
 using keymaster::VerifyAuthorizationRequest;
 using keymaster::VerifyAuthorizationResponse;
+
 namespace {
 inline bool operator==(const keymaster_blob_t& a, const keymaster_blob_t& b) {
   if (!a.data_length && !b.data_length) return true;
@@ -204,24 +205,14 @@ keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
     }
   }
 
-  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
-      resource_manager_, std::string(unique_data, sizeof(unique_data)));
-  if (!signing_key) {
-    LOG(ERROR) << "Could not make signing key for key id";
-    return KM_ERROR_UNKNOWN_ERROR;
-  }
-
   static const uint8_t signing_input[] = "Keymaster HMAC Verification";
-
-  auto hmac =
-      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
-              signing_input, sizeof(signing_input));
-
+  auto hmac = TpmHmacWithContext(resource_manager_,
+                                 std::string(unique_data, sizeof(unique_data)),
+                                 signing_input, sizeof(signing_input));
   if (!hmac) {
     LOG(ERROR) << "Unable to complete signing check";
     return KM_ERROR_UNKNOWN_ERROR;
   }
-
   *sharingCheck = KeymasterBlob(hmac->buffer, hmac->size);
 
   return KM_ERROR_OK;
@@ -246,16 +237,9 @@ VerifyAuthorizationResponse TpmKeymasterEnforcement::VerifyAuthorization(
       .security_level = response.token.security_level,
   };
 
-  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(
-      resource_manager_, "verify_authorization");
-  if (!signing_key) {
-    LOG(ERROR) << "Could not make signing key for verifying authorization";
-    return response;
-  }
-  auto hmac =
-      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
-              reinterpret_cast<uint8_t*>(&verify_data), sizeof(verify_data));
-
+  auto hmac = TpmHmacWithContext(resource_manager_, "verify_authorization",
+                                 reinterpret_cast<uint8_t*>(&verify_data),
+                                 sizeof(verify_data));
   if (!hmac) {
     LOG(ERROR) << "Could not calculate verification hmac";
     return response;
@@ -274,19 +258,14 @@ keymaster_error_t TpmKeymasterEnforcement::GenerateTimestampToken(
   token->timestamp = get_current_time_ms();
   token->security_level = SecurityLevel();
   token->mac = KeymasterBlob();
-
-  auto signing_key =
-      PrimaryKeyBuilder::CreateSigningKey(resource_manager_, "timestamp_token");
-  if (!signing_key) {
-    LOG(ERROR) << "Could not make signing key for verifying authorization";
-    return KM_ERROR_UNKNOWN_ERROR;
-  }
   std::vector<uint8_t> token_buf_to_sign(token->SerializedSize(), 0);
   token->Serialize(token_buf_to_sign.data(),
                    token_buf_to_sign.data() + token_buf_to_sign.size());
+
   auto hmac =
-      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
-              token_buf_to_sign.data(), token_buf_to_sign.size());
+      TpmHmacWithContext(resource_manager_, "timestamp_token",
+                         token_buf_to_sign.data(), token_buf_to_sign.size());
+
   if (!hmac) {
     LOG(ERROR) << "Could not calculate timestamp token hmac";
     return KM_ERROR_UNKNOWN_ERROR;
@@ -319,15 +298,9 @@ TpmKeymasterEnforcement::ComputeHmac(
 
 bool TpmKeymasterEnforcement::CreateKeyId(const keymaster_key_blob_t& key_blob,
                                           km_id_t* keyid) const {
-  auto signing_key =
-      PrimaryKeyBuilder::CreateSigningKey(resource_manager_, "key_id");
-  if (!signing_key) {
-    LOG(ERROR) << "Could not make signing key for key id";
-    return false;
-  }
   auto hmac =
-      TpmHmac(resource_manager_, signing_key->get(), TpmAuth(ESYS_TR_PASSWORD),
-              key_blob.key_material, key_blob.key_material_size);
+      TpmHmacWithContext(resource_manager_, "key_id", key_blob.key_material,
+                         key_blob.key_material_size);
   if (!hmac) {
     LOG(ERROR) << "Failed to make a signature for a key id";
     return false;
