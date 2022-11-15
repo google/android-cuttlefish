@@ -145,9 +145,6 @@ class CuttlefishConfig {
   void set_gem5_debug_flags(const std::string& gem5_debug_flags);
   std::string gem5_debug_flags() const;
 
-  void set_enable_sandbox(const bool enable_sandbox);
-  bool enable_sandbox() const;
-
   void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
   std::string seccomp_policy_dir() const;
 
@@ -495,6 +492,7 @@ class CuttlefishConfig {
     // Serial console
     bool console() const;
     std::string console_dev() const;
+    bool enable_sandbox() const;
 
     // KGDB configuration for kernel debugging
     bool kgdb() const;
@@ -623,6 +621,7 @@ class CuttlefishConfig {
     void set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir);
     // Serial console
     void set_console(bool console);
+    void set_enable_sandbox(const bool enable_sandbox);
     void set_kgdb(bool kgdb);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
