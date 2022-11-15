@@ -60,6 +60,18 @@ func (o *TestObserver) OnError(err error) {
 	}
 }
 
+func (o *TestObserver) OnClose() {
+	if o.onError != nil {
+		o.onError(fmt.Errorf("Connection closed"))
+	}
+}
+
+func (o *TestObserver) OnFailure() {
+	if o.onError != nil {
+		o.onError(fmt.Errorf("Connection failed"))
+	}
+}
+
 func recvWithTimeOut[K interface{}](sendCh chan interface{}) (*K, error) {
 	select {
 	case m := <-sendCh:
@@ -80,7 +92,7 @@ func TestClientSendsInitialMessage(t *testing.T) {
 
 	// This won't return, so run it in another routine
 	go func() {
-		_, _ = NewDeviceConnection(&signaling, &observer)
+		_, _ = NewConnection(&signaling, &observer)
 	}()
 
 	msg, err := recvWithTimeOut[RequestOfferMsg](signaling.SendCh)
@@ -102,7 +114,7 @@ func TestClientGeneratesAnswer(t *testing.T) {
 
 	// This won't return, so run it in another routine
 	go func() {
-		_, _ = NewDeviceConnection(&signaling, &observer)
+		_, _ = NewConnection(&signaling, &observer)
 	}()
 
 	// The first message is always the request-offer
@@ -131,7 +143,7 @@ func TestClientGeneratesICECandidate(t *testing.T) {
 
 	// This won't return, so run it in another routine
 	go func() {
-		_, _ = NewDeviceConnection(&signaling, &observer)
+		_, _ = NewConnection(&signaling, &observer)
 	}()
 
 	// The first message is always the request-offer
