@@ -435,32 +435,6 @@ std::string CuttlefishConfig::sig_server_headers_path() const {
   return (*dictionary_)[kSigServerHeadersPath].asString();
 }
 
-static constexpr char kRunModemSimulator[] = "enable_modem_simulator";
-bool CuttlefishConfig::enable_modem_simulator() const {
-  return (*dictionary_)[kRunModemSimulator].asBool();
-}
-void CuttlefishConfig::set_enable_modem_simulator(bool enable_modem_simulator) {
-  (*dictionary_)[kRunModemSimulator] = enable_modem_simulator;
-}
-
-static constexpr char kModemSimulatorInstanceNumber[] =
-    "modem_simulator_instance_number";
-void CuttlefishConfig::set_modem_simulator_instance_number(
-    int instance_number) {
-  (*dictionary_)[kModemSimulatorInstanceNumber] = instance_number;
-}
-int CuttlefishConfig::modem_simulator_instance_number() const {
-  return (*dictionary_)[kModemSimulatorInstanceNumber].asInt();
-}
-
-static constexpr char kModemSimulatorSimType[] = "modem_simulator_sim_type";
-void CuttlefishConfig::set_modem_simulator_sim_type(int sim_type) {
-  (*dictionary_)[kModemSimulatorSimType] = sim_type;
-}
-int CuttlefishConfig::modem_simulator_sim_type() const {
-  return (*dictionary_)[kModemSimulatorSimType].asInt();
-}
-
 static constexpr char kHostToolsVersion[] = "host_tools_version";
 void CuttlefishConfig::set_host_tools_version(
     const std::map<std::string, uint32_t>& versions) {
@@ -581,14 +555,6 @@ void CuttlefishConfig::set_ril_dns(const std::string& ril_dns) {
 }
 std::string CuttlefishConfig::ril_dns() const {
   return (*dictionary_)[kRilDns].asString();
-}
-
-static constexpr char kEnableMinimalMode[] = "enable_minimal_mode";
-bool CuttlefishConfig::enable_minimal_mode() const {
-  return (*dictionary_)[kEnableMinimalMode].asBool();
-}
-void CuttlefishConfig::set_enable_minimal_mode(bool enable_minimal_mode) {
-  (*dictionary_)[kEnableMinimalMode] = enable_minimal_mode;
 }
 
 static constexpr char kEnableKernelLog[] = "enable_kernel_log";
