@@ -22,7 +22,7 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/environment.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "flags.h"
@@ -594,6 +594,56 @@ Result<bool> ParseBool(const std::string& flag_str,
   return false;
 }
 
+Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
+    const CuttlefishConfig& tmp_config_obj,
+    const std::set<std::int32_t>& instance_nums,
+    const std::string& webrtc_device_id_flag) {
+  std::unordered_map<int, std::string> output_map;
+  if (webrtc_device_id_flag.empty()) {
+    for (const auto num : instance_nums) {
+      const auto const_instance = tmp_config_obj.ForInstance(num);
+      output_map[num] = const_instance.instance_name();
+    }
+    return output_map;
+  }
+  auto tokens = android::base::Tokenize(webrtc_device_id_flag, ",");
+  CF_EXPECT(tokens.size() == 1 || tokens.size() == instance_nums.size(),
+            "--webrtc_device_ids provided " << tokens.size()
+                                            << " tokens"
+                                               " while 1 or "
+                                            << instance_nums.size()
+                                            << " is expected.");
+  CF_EXPECT(!tokens.empty(), "--webrtc_device_ids is ill-formatted");
+
+  std::vector<std::string> device_ids;
+  if (tokens.size() != instance_nums.size()) {
+    /* this is only possible when tokens.size() == 1
+     * and instance_nums.size() > 1. The token must include {num}
+     * so that the token pattern can be expanded to multiple instances.
+     */
+    auto device_id = tokens.front();
+    CF_EXPECT(device_id.find("{num}") != std::string::npos,
+              "If one webrtc_device_ids is given for multiple instances, "
+                  << " {num} should be included in webrtc_device_id.");
+    device_ids = std::move(
+        std::vector<std::string>(instance_nums.size(), tokens.front()));
+  }
+
+  if (tokens.size() == instance_nums.size()) {
+    // doesn't have to include {num}
+    device_ids = std::move(tokens);
+  }
+
+  auto itr = device_ids.begin();
+  for (const auto num : instance_nums) {
+    std::string_view device_id_view(itr->data(), itr->size());
+    output_map[num] = android::base::StringReplace(device_id_view, "{num}",
+                                                   std::to_string(num), true);
+    ++itr;
+  }
+  return output_map;
+}
+
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
@@ -892,6 +942,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   LOG(DEBUG) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
   bool is_first_instance = true;
   int instance_index = 0;
+  auto num_to_webrtc_device_id_flag_map =
+      CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, *instance_nums,
+                                             FLAGS_webrtc_device_id));
   for (const auto& num : *instance_nums) {
     bool use_allocd;
     if (instance_index >= use_allocd_vec.size()) {
@@ -1344,17 +1397,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_start_webrtc_signaling_server(false);
 
-    if (FLAGS_webrtc_device_id.empty()) {
-      // Use the instance's name as a default
-      instance.set_webrtc_device_id(const_instance.instance_name());
-    } else {
-      std::string device_id = FLAGS_webrtc_device_id;
-      size_t pos;
-      while ((pos = device_id.find("{num}")) != std::string::npos) {
-        device_id.replace(pos, strlen("{num}"), std::to_string(num));
-      }
-      instance.set_webrtc_device_id(device_id);
-    }
+    CF_EXPECT(Contains(num_to_webrtc_device_id_flag_map, num),
+              "Error in looking up num to webrtc_device_id_flag_map");
+    instance.set_webrtc_device_id(num_to_webrtc_device_id_flag_map[num]);
+
     if (!is_first_instance || !FLAGS_start_webrtc) {
       // Only the first instance starts the signaling server or proxy
       instance.set_start_webrtc_signaling_server(false);
