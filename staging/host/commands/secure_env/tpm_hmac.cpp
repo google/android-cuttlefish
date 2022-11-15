@@ -18,6 +18,7 @@
 #include <android-base/logging.h>
 #include <tss2/tss2_rc.h>
 
+#include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
@@ -154,6 +155,19 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     size_t data_size) {
   auto fn = data_size > TPM2_MAX_DIGEST_BUFFER ? SegmentedHmac : OneshotHmac;
   return fn(resource_manager, key_handle, auth, data, data_size);
+}
+
+UniqueEsysPtr<TPM2B_DIGEST> TpmHmacWithContext(
+    TpmResourceManager& resource_manager, const std::string& context,
+    const uint8_t* data, size_t data_size) {
+  auto key_slot =
+      PrimaryKeyBuilder::CreateSigningKey(resource_manager, context);
+  if (!key_slot) {
+    LOG(ERROR) << "Could not make signing key for " << context;
+    return nullptr;
+  }
+  return TpmHmac(resource_manager, key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
+                 data, data_size);
 }
 
 }  // namespace cuttlefish
