@@ -576,16 +576,8 @@ keymaster_error_t TpmKeymasterContext::UnwrapKey(
 keymaster_error_t TpmKeymasterContext::CheckConfirmationToken(
     const std::uint8_t* input_data, size_t input_data_size,
     const uint8_t confirmation_token[keymaster::kConfirmationTokenSize]) const {
-  auto signing_key = PrimaryKeyBuilder::CreateSigningKey(resource_manager_,
-                                                         "confirmation_token");
-  if (!signing_key) {
-    LOG(ERROR) << "Could not generate signing key";
-    return KM_ERROR_UNKNOWN_ERROR;
-  }
-
-  auto hmac = TpmHmac(resource_manager_, signing_key->get(),
-                      TpmAuth(ESYS_TR_PASSWORD), input_data, input_data_size);
-
+  auto hmac = TpmHmacWithContext(resource_manager_, "confirmation_token",
+                                 input_data, input_data_size);
   if (!hmac) {
     LOG(ERROR) << "Could not calculate confirmation token hmac";
     return KM_ERROR_UNKNOWN_ERROR;
