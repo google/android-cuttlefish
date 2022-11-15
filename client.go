@@ -63,10 +63,9 @@ func NewAPIClient(baseURL, proxyURL string, dumpOut io.Writer) (*APIClient, erro
 	}, nil
 }
 
-func (c *APIClient) CreateHost() (*apiv1.HostInstance, error) {
+func (c *APIClient) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error) {
 	var op apiv1.Operation
-	body := apiv1.CreateHostRequest{HostInstance: &apiv1.HostInstance{}}
-	if err := c.doRequest("POST", "/hosts", &body, &op); err != nil {
+	if err := c.doRequest("POST", "/hosts", req, &op); err != nil {
 		return nil, err
 	}
 	path := "/operations/" + op.Name + "/wait"
