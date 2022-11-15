@@ -106,7 +106,7 @@ static Result<SharedFD> OpenLockFile(int instance_num) {
 Result<InstanceLockFile> InstanceLockFileManager::AcquireLock(
     int instance_num) {
   auto fd = CF_EXPECT(OpenLockFile(instance_num));
-  CF_EXPECT(fd->Flock(LOCK_EX), fd->StrError());
+  CF_EXPECT(fd->Flock(LOCK_EX));
   return InstanceLockFile(fd, instance_num);
 }
 
@@ -122,13 +122,15 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireLocks(
 Result<std::optional<InstanceLockFile>> InstanceLockFileManager::TryAcquireLock(
     int instance_num) {
   auto fd = CF_EXPECT(OpenLockFile(instance_num));
-  int flock_result = fd->Flock(LOCK_EX | LOCK_NB);
-  if (flock_result == 0) {
+  auto flock_result = fd->Flock(LOCK_EX | LOCK_NB);
+  if (flock_result.ok()) {
     return InstanceLockFile(fd, instance_num);
-  } else if (flock_result == -1 && fd->GetErrno() == EWOULDBLOCK) {
+    // TODO(schuffelen): Include the error code in the Result
+  } else if (!flock_result.ok() && fd->GetErrno() == EWOULDBLOCK) {
     return {};
   }
-  return CF_ERR("flock " << instance_num << " failed: " << fd->StrError());
+  CF_EXPECT(std::move(flock_result));
+  return {};
 }
 
 Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
