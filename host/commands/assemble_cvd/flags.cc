@@ -144,6 +144,8 @@ DEFINE_int32(
     "If it is greater than 0, use an existing rootcanal instance which is "
     "launched from cuttlefish instance "
     "with rootcanal_instance_num. Else, launch a new rootcanal instance");
+DEFINE_string(rootcanal_args, CF_DEFAULTS_ROOTCANAL_ARGS,
+              "Space-separated list of rootcanal args. ");
 DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
             "[Experimental] Connect all radios to netsim.");
 
@@ -882,6 +884,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (FLAGS_rootcanal_instance_num > 0) {
     rootcanal_instance_num = FLAGS_rootcanal_instance_num - 1;
   }
+  tmp_config_obj.set_rootcanal_args(FLAGS_rootcanal_args);
   tmp_config_obj.set_rootcanal_hci_port(7300 + rootcanal_instance_num);
   tmp_config_obj.set_rootcanal_link_port(7400 + rootcanal_instance_num);
   tmp_config_obj.set_rootcanal_test_port(7500 + rootcanal_instance_num);

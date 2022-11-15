@@ -613,6 +613,22 @@ std::string CuttlefishConfig::wmediumd_config() const {
   return (*dictionary_)[kWmediumdConfig].asString();
 }
 
+static constexpr char kRootcanalArgs[] = "rootcanal_args";
+void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(rootcanal_args, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kRootcanalArgs] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::rootcanal_args() const {
+  std::vector<std::string> rootcanal_args;
+  for (const Json::Value& arg : (*dictionary_)[kRootcanalArgs]) {
+    rootcanal_args.push_back(arg.asString());
+  }
+  return rootcanal_args;
+}
+
 static constexpr char kRootcanalHciPort[] = "rootcanal_hci_port";
 int CuttlefishConfig::rootcanal_hci_port() const {
   return (*dictionary_)[kRootcanalHciPort].asInt();
