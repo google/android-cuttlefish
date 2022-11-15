@@ -25,6 +25,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "common/libs/utils/contains.h"
+
 namespace cuttlefish {
 namespace selector {
 
@@ -155,8 +157,8 @@ template <typename Container>
 bool UniqueResourceAllocator<T>::ReclaimAll(const Container& items) {
   std::lock_guard<std::mutex> lock(mutex_);
   for (const auto& i : items) {
-    if (allocated_resources_.find(i) == allocated_resources_.end() &&
-        available_resources_.find(i) == available_resources_.end()) {
+    if (!Contains(allocated_resources_, i) &&
+        !Contains(available_resources_, i)) {
       return false;
     }
     allocated_resources_.erase(i);
@@ -168,8 +170,8 @@ bool UniqueResourceAllocator<T>::ReclaimAll(const Container& items) {
 template <typename T>
 bool UniqueResourceAllocator<T>::Reclaim(const T& t) {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (allocated_resources_.find(t) == allocated_resources_.end() &&
-      available_resources_.find(t) == available_resources_.end()) {
+  if (!Contains(allocated_resources_, t) &&
+      !Contains(available_resources_, t)) {
     return false;
   }
   allocated_resources_.erase(t);
@@ -180,7 +182,7 @@ bool UniqueResourceAllocator<T>::Reclaim(const T& t) {
 template <typename T>
 bool UniqueResourceAllocator<T>::Take(const T& t) {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (available_resources_.find(t) == available_resources_.end()) {
+  if (!Contains(available_resources_, t)) {
     return false;
   }
   available_resources_.erase(t);
@@ -193,7 +195,7 @@ template <typename Container>
 bool UniqueResourceAllocator<T>::TakeAll(const Container& ts) {
   std::lock_guard<std::mutex> lock(mutex_);
   for (const auto& t : ts) {
-    if (available_resources_.find(t) == available_resources_.end()) {
+    if (!Contains(available_resources_, t)) {
       return false;
     }
   }
@@ -221,7 +223,7 @@ UniqueResourceAllocator<T>::TakeRangeInternal(const T& start_inclusive,
                                               const T& end_exclusive) {
   static_assert(std::is_same<T, V>::value);
   for (auto cursor = start_inclusive; cursor < end_exclusive; cursor++) {
-    if (available_resources_.find(cursor) == available_resources_.end()) {
+    if (!Contains(available_resources_, cursor)) {
       return false;
     }
   }
