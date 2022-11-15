@@ -18,6 +18,7 @@
 #include <memory>
 #include <unordered_set>
 
+#include "common/libs/utils/contains.h"
 #include "host/commands/cvd/selector/unique_resource_allocator.h"
 
 namespace cuttlefish::selector {
@@ -31,7 +32,7 @@ TEST_P(OneEachTest, GetAnyAvailableOne) {
   for (int i = 0; i < resources.size(); i++) {
     auto id_opt = allocator.UniqueItem();
     ASSERT_TRUE(id_opt);
-    ASSERT_NE(expected_ids.find(*id_opt), expected_ids.end());
+    ASSERT_TRUE(Contains(expected_ids, *id_opt));
   }
   ASSERT_FALSE(allocator.UniqueItem());
 }
