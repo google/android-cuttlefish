@@ -136,9 +136,6 @@ class CuttlefishConfig {
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
 
-  void set_webrtc_enable_adb_websocket(bool enable);
-  bool webrtc_enable_adb_websocket() const;
-
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
