@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -66,22 +68,30 @@ type CVDToolInstanceManager struct {
 	startCVDHandler    *startCVDHandler
 }
 
-func NewCVDToolInstanceManager(
-	execContext ExecContext,
-	cvdBinAB AndroidBuild,
-	paths IMPaths,
-	cvdDwnlder CVDDownloader,
-	om OperationManager) *CVDToolInstanceManager {
+type CVDToolInstanceManagerOpts struct {
+	ExecContext      ExecContext
+	CVDBinAB         AndroidBuild
+	Paths            IMPaths
+	CVDDownloader    CVDDownloader
+	OperationManager OperationManager
+	CVDExecTimeout   time.Duration
+}
+
+func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
 	return &CVDToolInstanceManager{
-		paths: paths,
-		om:    om,
+		paths: opts.Paths,
+		om:    opts.OperationManager,
 		downloadCVDHandler: &downloadCVDHandler{
-			CVDBinAB: cvdBinAB,
-			CVDBin:   paths.CVDBin,
-			Dwnlder:  cvdDwnlder,
+			CVDBinAB: opts.CVDBinAB,
+			CVDBin:   opts.Paths.CVDBin,
+			Dwnlder:  opts.CVDDownloader,
 		},
-		fetchCVDHandler: newFetchCVDHandler(execContext, paths.CVDBin, paths.ArtifactsRootDir),
-		startCVDHandler: &startCVDHandler{ExecContext: execContext, CVDBin: paths.CVDBin},
+		fetchCVDHandler: newFetchCVDHandler(opts.ExecContext, opts.Paths.CVDBin, opts.Paths.ArtifactsRootDir),
+		startCVDHandler: &startCVDHandler{
+			ExecContext: opts.ExecContext,
+			CVDBin:      opts.Paths.CVDBin,
+			Timeout:     opts.CVDExecTimeout,
+		},
 	}
 }
 
@@ -106,15 +116,23 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	}()
 	cvd, err := m.launchCVD_(req, op)
 	if err != nil {
-		opErr := &apiv1.ErrorMsg{Error: ErrMsgLaunchCVDFailed}
-		var cvdExecError *cvdCommandExecErr
-		if errors.As(err, &cvdExecError) {
-			opErr.Details = cvdExecError.Error()
-			log.Printf("failed to launch cvd with error: %v", cvdExecError.Unwrap())
-		} else {
-			log.Printf("failed to launch cvd with error: %v", err)
+		var details string
+		var execError *cvdCommandExecErr
+		var timeoutErr *cvdCommandTimeoutErr
+		if errors.As(err, &execError) {
+			details = execError.Error()
+			// Overwrite err with the unwrapped error as execution errors were already logged.
+			err = execError.Unwrap()
+		} else if errors.As(err, &timeoutErr) {
+			details = timeoutErr.Error()
 		}
-		result = apiv1.OperationResult{Error: opErr}
+		result = apiv1.OperationResult{
+			Error: &apiv1.ErrorMsg{
+				Error:   ErrMsgLaunchCVDFailed,
+				Details: details,
+			},
+		}
+		log.Printf("failed to launch cvd with error: %v", err)
 		return
 	}
 	buf, err := json.Marshal(cvd)
@@ -270,6 +288,7 @@ const (
 type startCVDHandler struct {
 	ExecContext ExecContext
 	CVDBin      string
+	Timeout     time.Duration
 }
 
 func (h *startCVDHandler) Launch(instanceNumber uint32, artifactsDir, homeDir string) error {
@@ -281,6 +300,7 @@ func (h *startCVDHandler) Launch(instanceNumber uint32, artifactsDir, homeDir st
 		home:           homeDir,
 		cvdBin:         h.CVDBin,
 		args:           []string{"start", daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg},
+		timeout:        h.Timeout,
 	}
 	err := cvdCmd.Run()
 	if err != nil {
@@ -439,6 +459,8 @@ type cvdCommand struct {
 	home           string
 	cvdBin         string
 	args           []string
+	// if zero, there's no timeout logic.
+	timeout time.Duration
 }
 
 type cvdCommandExecErr struct {
@@ -455,24 +477,49 @@ func (e *cvdCommandExecErr) Error() string {
 
 func (e *cvdCommandExecErr) Unwrap() error { return e.err }
 
+type cvdCommandTimeoutErr struct {
+	args []string
+}
+
+func (e *cvdCommandTimeoutErr) Error() string {
+	return fmt.Sprintf("cvd execution with args %q timed out", strings.Join(e.args, " "))
+}
+
 func (c *cvdCommand) Run() error {
 	// Makes sure cvd server daemon is running before executing the cvd command.
 	if err := c.startCVDServer(); err != nil {
 		return err
 	}
+	done := make(chan error)
+	var b bytes.Buffer
 	cmd := buildCvdCommand(c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
-	stdoutStderr, err := cmd.CombinedOutput()
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+	err := cmd.Start()
 	if err != nil {
-		msg := "`cvd` execution failed with combined stdout and stderr:\n" +
-			"############################################\n" +
-			"## BEGIN \n" +
-			"############################################\n" +
-			"\n%s\n\n" +
-			"############################################\n" +
-			"## END \n" +
-			"############################################\n"
-		log.Printf(msg, string(stdoutStderr))
-		return &cvdCommandExecErr{c.args, string(stdoutStderr), err}
+		return err
+	}
+	go func() { done <- cmd.Wait() }()
+	var timeoutCh <-chan time.Time
+	if c.timeout != 0 {
+		timeoutCh = time.After(c.timeout)
+	}
+	select {
+	case err := <-done:
+		if err != nil {
+			msg := "`cvd` execution failed with combined stdout and stderr:\n" +
+				"############################################\n" +
+				"## BEGIN \n" +
+				"############################################\n" +
+				"\n%s\n\n" +
+				"############################################\n" +
+				"## END \n" +
+				"############################################\n"
+			log.Printf(msg, b.String())
+			return &cvdCommandExecErr{c.args, b.String(), err}
+		}
+	case <-timeoutCh:
+		return &cvdCommandTimeoutErr{c.args}
 	}
 	return nil
 }

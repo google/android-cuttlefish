@@ -109,7 +109,7 @@ func main() {
 	config := apiv1.InfraConfig{
 		Type: "config",
 		IceServers: []apiv1.IceServer{
-			apiv1.IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
+			{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
 	abURL := fromEnvOrDefault("ORCHESTRATOR_ANDROID_BUILD_URL", defaultAndroidBuildURL)
@@ -123,17 +123,19 @@ func main() {
 		HomesRootDir:     imRootDir + "/homes",
 	}
 	om := orchestrator.NewMapOM()
-	im := orchestrator.NewCVDToolInstanceManager(
-		exec.Command,
-		orchestrator.AndroidBuild{
+	dw := orchestrator.NewCVDDownloader(orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL))
+	opts := orchestrator.CVDToolInstanceManagerOpts{
+		ExecContext: exec.Command,
+		CVDBinAB: orchestrator.AndroidBuild{
 			ID:     cvdBinAndroidBuildID,
 			Target: cvdBinAndroidBuildTarget,
 		},
-		imPaths,
-		orchestrator.NewCVDDownloader(orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL)),
-		om,
-	)
-
+		Paths:            imPaths,
+		CVDDownloader:    dw,
+		OperationManager: om,
+		CVDExecTimeout:   5 * time.Minute,
+	}
+	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
 		err := deviceServerLoop()

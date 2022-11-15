@@ -91,7 +91,7 @@ func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
 	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "2", Target: "foo"}}}
 
@@ -127,7 +127,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
@@ -159,13 +159,13 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im1 := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	im1 := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 	op, _ := im1.CreateCVD(r)
 	om.Wait(op.Name, 1*time.Second)
 	// The second instance manager is created with the same im paths as the previous instance
 	// manager, this will lead to create an instance home dir that already exist.
-	im2 := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	im2 := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 
 	op, _ = im2.CreateCVD(r)
 
@@ -189,7 +189,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op, _ := im.CreateCVD(r)
@@ -226,7 +226,7 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 		HomesRootDir:     dir + "/homes",
 	}
 	om := NewMapOM()
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op, _ := im.CreateCVD(r)
@@ -263,7 +263,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 		HomesRootDir:     dir + "/homes",
 	}
 	om := NewMapOM()
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
 
 	op, _ := im.CreateCVD(r)
@@ -298,7 +298,7 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
 
@@ -327,7 +327,41 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := NewCVDToolInstanceManager(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
+	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+
+	op, _ := im.CreateCVD(r)
+
+	op, _ = om.Wait(op.Name, 1*time.Second)
+	if op.Result.Error.Details == "" {
+		t.Error("expected not empty details")
+	}
+}
+
+func TestCreateCVDFailsDueTimeout(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := func(name string, args ...string) *exec.Cmd {
+		return buildTestCmdD(args...)
+	}
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	opts := CVDToolInstanceManagerOpts{
+		ExecContext:      execContext,
+		CVDBinAB:         cvdBinAB,
+		Paths:            paths,
+		CVDDownloader:    cvdDwnlder,
+		OperationManager: om,
+		CVDExecTimeout:   testFakeBinaryDelayMs - (50 * time.Millisecond),
+	}
+	im := NewCVDToolInstanceManager(&opts)
 	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
 
@@ -536,6 +570,19 @@ func TestBuildGetSignedURL(t *testing.T) {
 	})
 }
 
+// Helper constructor
+func newCVDToolIm(execContext ExecContext, cvdBinAB AndroidBuild, paths IMPaths, cvdDwnlder CVDDownloader,
+	om OperationManager) *CVDToolInstanceManager {
+	opts := CVDToolInstanceManagerOpts{
+		ExecContext:      execContext,
+		CVDBinAB:         cvdBinAB,
+		Paths:            paths,
+		CVDDownloader:    cvdDwnlder,
+		OperationManager: om,
+	}
+	return NewCVDToolInstanceManager(&opts)
+}
+
 // Creates a temporary directory for the test to use returning its path.
 // Each subsequent call creates a unique directory; if the directory creation
 // fails, `tempDir` terminates the test by calling Fatal.
@@ -562,6 +609,14 @@ type fakeMainFunc func(*testing.T)
 // NOTE: This test is not a regular unit tests. It simulates a fake binary execution.
 func TestFakeBinaryMain(t *testing.T) {}
 
+// Creates a new exec.Cmd, which will call the `TestFakeBinaryMain` function through the execution
+// of the `go test` binary using the parameter `--test.run`.
+func buildTestCmd() *exec.Cmd {
+	cs := []string{"--test.run=" + funcName(TestFakeBinaryMain)}
+	cmd := exec.Command(os.Args[0], cs...)
+	return cmd
+}
+
 // NOTE: This test is not a regular unit tests. It simulates a fake binary execution that fails.
 func TestFakeBinaryMainF(t *testing.T) {
 	// Early exit when called as regular test.
@@ -571,14 +626,6 @@ func TestFakeBinaryMainF(t *testing.T) {
 	panic("failure")
 }
 
-// Creates a new exec.Cmd, which will call the `TestFakeBinaryMain` function through the execution
-// of the `go test` binary using the parameter `--test.run`.
-func buildTestCmd() *exec.Cmd {
-	cs := []string{"--test.run=" + funcName(TestFakeBinaryMain)}
-	cmd := exec.Command(os.Args[0], cs...)
-	return cmd
-}
-
 // Same as buildTestCmd but the execution fails when a cvd subcommand is executed.
 func buildTestCmdF(args ...string) *exec.Cmd {
 	// Do not fail when executing cvd only as it is not a cvd subcommand.
@@ -586,6 +633,24 @@ func buildTestCmdF(args ...string) *exec.Cmd {
 		return buildTestCmd()
 	}
 	cs := []string{"--test.run=" + funcName(TestFakeBinaryMainF), executedAsFakeMain}
+	cmd := exec.Command(os.Args[0], cs...)
+	return cmd
+}
+
+const testFakeBinaryDelayMs = 100 * time.Millisecond
+
+// NOTE: This test is not a regular unit tests. It simulates a fake binary execution with some delay.
+func TestFakeBinaryMainDelay(t *testing.T) {
+	// Early exit when called as regular test.
+	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMain {
+		return
+	}
+	time.Sleep(testFakeBinaryDelayMs)
+}
+
+// Same as buildTestCmd but the execution has some delay.
+func buildTestCmdD(args ...string) *exec.Cmd {
+	cs := []string{"--test.run=" + funcName(TestFakeBinaryMainDelay), executedAsFakeMain}
 	cmd := exec.Command(os.Args[0], cs...)
 	return cmd
 }
