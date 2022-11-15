@@ -54,6 +54,11 @@ class RootCanal : public CommandSource {
     command.AddParameter("--default_commands_file=",
                          config_.rootcanal_default_commands_file());
 
+    // Add parameters from passthrough option --rootcanal-args
+    for (auto const& arg : config_.rootcanal_args()) {
+      command.AddParameter(arg);
+    }
+
     std::vector<Command> commands;
     commands.emplace_back(log_tee_.CreateLogTee(command, "rootcanal"));
     commands.emplace_back(std::move(command));
