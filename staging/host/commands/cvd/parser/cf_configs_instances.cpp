@@ -72,9 +72,9 @@ void InitInstancesConfigs(Json::Value& root) {
   InitSecurityConfigs(root);
 }
 
-std::vector<std::string> GenerateInstancesConfigs(const Json::Value& root) {
-  std::vector<std::string> result = GenerateVmConfigs(root);
-  result = MergeResults(result, GenerateBootConfigs(root));
+std::vector<std::string> GenerateInstancesFlags(const Json::Value& root) {
+  std::vector<std::string> result = GenerateVmFlags(root);
+  result = MergeResults(result, GenerateBootFlags(root));
   result = MergeResults(result, GenerateSecurityFlags(root));
   return result;
 }

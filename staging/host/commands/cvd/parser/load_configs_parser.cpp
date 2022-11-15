@@ -57,11 +57,11 @@ std::string GenerateNumInstancesFlag(const Json::Value& root) {
   return result;
 }
 
-std::vector<std::string> GenerateCfConfigs(const Json::Value& root) {
+std::vector<std::string> GenerateCfFlags(const Json::Value& root) {
   std::vector<std::string> result;
   result.emplace_back(GenerateNumInstancesFlag(root));
 
-  result = MergeResults(result, GenerateInstancesConfigs(root["instances"]));
+  result = MergeResults(result, GenerateInstancesFlags(root["instances"]));
   return result;
 }
 
@@ -70,7 +70,7 @@ Result<std::vector<std::string>> ParseCvdConfigs(Json::Value& root) {
 
   InitInstancesConfigs(root["instances"]);
 
-  return GenerateCfConfigs(root);
+  return GenerateCfFlags(root);
   ;
 }
 
