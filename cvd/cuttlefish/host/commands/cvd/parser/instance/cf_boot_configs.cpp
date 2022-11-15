@@ -57,7 +57,7 @@ void InitBootConfigs(Json::Value& instances) {
                            CF_DEFAULTS_EXTRA_KERNEL_CMDLINE);
 }
 
-std::vector<std::string> GenerateBootConfigs(const Json::Value& instances) {
+std::vector<std::string> GenerateBootFlags(const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(GenerateStrGflag(instances, "extra_bootconfig_args", "boot",
                                     "extra_bootconfig_args"));
