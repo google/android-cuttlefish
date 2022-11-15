@@ -65,7 +65,7 @@ class OpenWrt : public CommandSource {
             << "network may not work.";
       }
     }
-    if (config_.enable_sandbox()) {
+    if (instance_.enable_sandbox()) {
       ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
                                 config_.seccomp_policy_dir());
     } else {
