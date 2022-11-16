@@ -227,6 +227,10 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // No implementation of IRadioIms yet TODO(b/250912118)
     {"android.hardware.radio.ims.media.", 1},
+
+    // TODO(b/259311835): Revert; temporary to handle merge conflicts from AOSP
+    // -> Internal
+    {"android.hardware.graphics.allocator.", 2},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
