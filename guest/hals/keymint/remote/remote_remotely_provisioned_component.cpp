@@ -64,6 +64,7 @@ ScopedAStatus RemoteRemotelyProvisionedComponent::getHardwareInfo(
   info->rpcAuthorName = response.rpcAuthorName;
   info->supportedEekCurve = response.supportedEekCurve;
   info->uniqueId = response.uniqueId;
+  info->supportedNumKeysInCsr = response.supportedNumKeysInCsr;
   return ScopedAStatus::ok();
 }
 
