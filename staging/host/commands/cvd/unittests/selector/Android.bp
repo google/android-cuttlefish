@@ -77,3 +77,15 @@ cc_test_host {
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_creation_analyzer_test",
+    srcs: [
+        "creation_analyzer_test_helper.cpp",
+        "test_creation_analyzer.cpp",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
