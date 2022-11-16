@@ -23,6 +23,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -34,8 +35,7 @@ namespace cvd_cmd_impl {
 Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
-  return command_to_binary_map_.find(invocation.command) !=
-         command_to_binary_map_.end();
+  return Contains(command_to_binary_map_, invocation.command);
 }
 
 Result<cvd::Response> CvdStartCommandHandler::Handle(

@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/server_command_impl.h"
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
@@ -61,20 +62,18 @@ std::optional<CommandInvocationInfo> ExtractInfo(
     const std::map<std::string, std::string>& command_to_binary_map,
     const RequestWithStdio& request) {
   auto [command, args] = ParseInvocation(request.Message());
-  auto subcommand_bin = command_to_binary_map.find(command);
-  if (subcommand_bin == command_to_binary_map.end()) {
+  if (!Contains(command_to_binary_map, command)) {
     return std::nullopt;
   }
-  auto bin = subcommand_bin->second;
+  const auto& bin = command_to_binary_map.at(command);
   Envs envs = ConvertMap(request.Message().command_request().env());
-  auto request_home = envs.find("HOME");
-  std::string home = request_home != envs.end() ? request_home->second
-                                                : StringFromEnv("HOME", ".");
-  auto host_out_itr = envs.find("ANDROID_HOST_OUT");
-  if (host_out_itr == envs.end() || !DirectoryExists(host_out_itr->second)) {
+  std::string home =
+      Contains(envs, "HOME") ? envs.at("HOME") : StringFromEnv("HOME", ".");
+  if (!Contains(envs, "ANDROID_HOST_OUT") ||
+      !DirectoryExists(envs.at("ANDROID_HOST_OUT"))) {
     return std::nullopt;
   }
-  const auto host_artifacts_path = host_out_itr->second;
+  const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
   // TODO(kwstephenkim): eat --base_instance_num and --num_instances
   // or --instance_nums, and override/delete kCuttlefishInstanceEnvVarName
   // in envs

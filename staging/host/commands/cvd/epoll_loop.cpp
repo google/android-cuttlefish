@@ -20,6 +20,7 @@
 
 #include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -53,9 +54,7 @@ Result<void> EpollPool::Register(SharedFD fd, uint32_t events,
   std::shared_lock instance_lock(instance_mutex_, std::defer_lock);
   std::unique_lock callbacks_lock(callbacks_mutex_, std::defer_lock);
   std::lock(instance_lock, callbacks_lock);
-  if (callbacks_.find(fd) != callbacks_.end()) {
-    return CF_ERR("Already have a callback created");
-  }
+  CF_EXPECT(!Contains(callbacks_, fd), "Already have a callback created");
   CF_EXPECT(epoll_.AddOrModify(fd, events | EPOLLONESHOT));
   callbacks_[fd] = std::move(callback);
   return {};
