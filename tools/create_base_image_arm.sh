@@ -26,20 +26,20 @@ fi
 
 source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
 
-UBOOT_REPO=
-KERNEL_REPO=
+UBOOT_DIST=
+KERNEL_DIST=
 OUTPUT_IMAGE=
 
-FLAGS_HELP="USAGE: $0 <UBOOT_REPO> <KERNEL_REPO> [OUTPUT_IMAGE] [flags]"
+FLAGS_HELP="USAGE: $0 [UBOOT_DIST] [KERNEL_DIST] [OUTPUT_IMAGE] [flags]"
 
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
 
 for arg in "$@" ; do
-	if [ -z $UBOOT_REPO ]; then
-		UBOOT_REPO=$arg
-	elif [ -z $KERNEL_REPO ]; then
-		KERNEL_REPO=$arg
+	if [ -z $UBOOT_DIST ]; then
+		UBOOT_DIST=$arg
+	elif [ -z $KERNEL_DIST ]; then
+		KERNEL_DIST=$arg
 	elif [ -z $OUTPUT_IMAGE ]; then
 		OUTPUT_IMAGE=$arg
 	else
@@ -48,17 +48,18 @@ for arg in "$@" ; do
 	fi
 done
 
-if [ -z $KERNEL_REPO -o -z $UBOOT_REPO ]; then
-	flags_help
-	exit 1
+if [ -z "${KERNEL_DIST}" ]; then
+	OUTPUT_IMAGE="${UBOOT_DIST}"
+	UBOOT_DIST=
 fi
-if [ ! -e "${UBOOT_REPO}" ]; then
-	echo "error: can't find '${UBOOT_REPO}'. aborting..."
-	exit 1
+
+if [ ! -e "${UBOOT_DIST}" ]; then
+	echo "No UBOOT_DIST, use prebuilts"
+	UBOOT_DIST="${ANDROID_BUILD_TOP}"/device/google/cuttlefish_prebuilts/bootloader/rockpi_aarch64
 fi
-if [ ! -e "${KERNEL_REPO}" ]; then
-	echo "error: can't find '${KERNEL_REPO}'. aborting..."
-	exit 1
+if [ ! -e "${KERNEL_DIST}" ]; then
+	echo "No KERNEL_DIST, use prebuilts"
+	KERNEL_DIST=$(find "${ANDROID_BUILD_TOP}"/device/google/cuttlefish_prebuilts/kernel -name '*-arm64-rockpi' | sort | tail -n 1)
 fi
 
 WRITE_TO_IMAGE=`[ -z "${OUTPUT_IMAGE}" ] && echo "0" || echo "1"`
@@ -115,21 +116,12 @@ find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/boot.scr; then ech
 run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/boot.scr; source ${scriptaddr}
 fastboot_raw_partition_raw1=0x0 0x2000000
 EOF
-echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_REPO} --kernel ${KERNEL_REPO}`" >> ${bootenv_src}
+echo "Sha=`${script_dir}/gen_sha.sh --uboot ${UBOOT_DIST} --kernel ${KERNEL_DIST}`" >> ${bootenv_src}
 ${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_tools/mkenvimage -s 32768 -o ${bootenv} - < ${bootenv_src}
 rm -f ${bootenv_src}
 
-cd ${UBOOT_REPO}
-BUILD_CONFIG=u-boot/build.config.rockpi4 build/build.sh -j1
-cd -
-
-cd ${KERNEL_REPO}
-rm -rf out
-BUILD_CONFIG=common/build.config.rockpi4 build/build.sh -j`nproc`
-cd -
-
 IMAGE=`mktemp`
-kernel_dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
+kernel_dist_dir=$(echo ${KERNEL_DIST})
 kernel_dist_dir=$(realpath -e ${kernel_dist_dir})
 ${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh \
 	-a arm64 -s bullseye-rockpi -n ${IMAGE} -r ${IMAGE}.initrd -e -g \
@@ -203,10 +195,10 @@ fi
 
 # idbloader
 if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
-	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of=${devicep}1 conv=fsync
+	sudo dd if=${UBOOT_DIST}/idbloader.img of=${devicep}1 conv=fsync
 else
 	idbloader_partition_start=$(partx -g -o START -s -n 1 "${IMAGE}" | xargs)
-	dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/idbloader.img of="${IMAGE}" bs=512 seek=${idbloader_partition_start} conv=fsync,notrunc
+	dd if=${UBOOT_DIST}/idbloader.img of="${IMAGE}" bs=512 seek=${idbloader_partition_start} conv=fsync,notrunc
 fi
 # prebuilt
 # sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/idbloader.img of=${devicep}1 conv=fsync
@@ -220,10 +212,10 @@ else
 fi
 # uboot
 if [ ${WRITE_TO_IMAGE} -eq 0 ]; then
-	sudo dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of=${devicep}3 conv=fsync
+	sudo dd if=${UBOOT_DIST}/u-boot.itb of=${devicep}3 conv=fsync
 else
 	uboot_partition_start=$(partx -g -o START -s -n 3 "${IMAGE}" | xargs)
-	dd if=${UBOOT_REPO}/out/u-boot-mainline/dist/u-boot.itb of="${IMAGE}" bs=512 seek=${uboot_partition_start} conv=fsync,notrunc
+	dd if=${UBOOT_DIST}/u-boot.itb of="${IMAGE}" bs=512 seek=${uboot_partition_start} conv=fsync,notrunc
 fi
 # prebuilt
 # sudo dd if=${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts/uboot_bin/u-boot.itb of=${devicep}3 conv=fsync
