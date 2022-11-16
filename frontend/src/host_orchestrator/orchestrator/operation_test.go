@@ -111,7 +111,7 @@ func TestMapOMCompleteOperation(t *testing.T) {
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM()
 		result := apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{"error"},
+			Error: &apiv1.ErrorMsg{Error: "error"},
 		}
 
 		err := om.Complete("foo", result)
@@ -125,7 +125,7 @@ func TestMapOMCompleteOperation(t *testing.T) {
 func TestMapOMWaitOperation(t *testing.T) {
 	dt := 1 * time.Second
 	result := apiv1.OperationResult{
-		Error: &apiv1.ErrorMsg{"error"},
+		Error: &apiv1.ErrorMsg{Error: "error"},
 	}
 
 	t.Run("operation was completed", func(t *testing.T) {

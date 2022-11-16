@@ -40,7 +40,8 @@ type ClientMsg struct {
 }
 
 type ErrorMsg struct {
-	Error string `json:"error"`
+	Error   string `json:"error"`
+	Details string `json:"details,omitempty"`
 }
 
 type NewConnMsg struct {
