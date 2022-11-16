@@ -19,6 +19,7 @@
 #include <android-base/file.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -30,8 +31,7 @@ namespace cvd_cmd_impl {
 Result<bool> CvdCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
-  return command_to_binary_map_.find(invocation.command) !=
-         command_to_binary_map_.end();
+  return Contains(command_to_binary_map_, invocation.command);
 }
 
 Result<void> CvdCommandHandler::Interrupt() {
@@ -118,11 +118,10 @@ Result<cvd::Response> CvdCommandHandler::Handle(
 Result<cvd::Status> CvdCommandHandler::HandleCvdFleet(
     const RequestWithStdio& request, const std::vector<std::string>& args,
     const std::string& host_artifacts_path) {
-  auto env_config = request.Message().command_request().env().find(
-      kCuttlefishConfigEnvVarName);
+  const auto& envs = request.Message().command_request().env();
   std::optional<std::string> config_path = std::nullopt;
-  if (env_config != request.Message().command_request().env().end()) {
-    config_path = env_config->second;
+  if (Contains(envs, kCuttlefishConfigEnvVarName)) {
+    config_path = envs.at(kCuttlefishConfigEnvVarName);
   }
   return instance_manager_.CvdFleet(request.Out(), request.Err(), config_path,
                                     host_artifacts_path, args);
