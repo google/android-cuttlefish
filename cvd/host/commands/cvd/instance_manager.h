@@ -32,6 +32,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/instance_database.h"
 
 namespace cuttlefish {
@@ -41,6 +42,10 @@ constexpr char kStopBin[] = "cvd_internal_stop";
 
 class InstanceManager {
  public:
+  using CreationAnalyzer = selector::CreationAnalyzer;
+  using CreationAnalyzerParam = CreationAnalyzer::CreationAnalyzerParam;
+  using GroupCreationInfo = selector::GroupCreationInfo;
+
   using InstanceGroupDir = std::string;
   struct InstanceGroupInfo {
     std::string host_binaries_dir;
@@ -48,6 +53,9 @@ class InstanceManager {
   };
 
   INJECT(InstanceManager(InstanceLockFileManager&));
+
+  Result<GroupCreationInfo> Analyze(const CreationAnalyzerParam& param,
+                                    const std::optional<ucred>& credential);
 
   bool HasInstanceGroups(const uid_t uid);
   Result<void> SetInstanceGroup(const uid_t uid, const InstanceGroupDir&,
