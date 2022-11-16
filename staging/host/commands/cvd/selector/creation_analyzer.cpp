@@ -227,8 +227,20 @@ std::string CreationAnalyzer::AnalyzeGroupName(
 }
 
 Result<std::string> CreationAnalyzer::AnalyzeHome() const {
-  // TODO(kwstephenkim): implement AnalyzeHome()
-  return "";
+  CF_EXPECT(credential_ != std::nullopt,
+            "Credential is necessary for cvd start.");
+  auto system_wide_home =
+      CF_EXPECT(SystemWideUserHome(credential_.value().uid));
+  if (envs_.find("HOME") != envs_.end() &&
+      envs_.at("HOME") != system_wide_home) {
+    // explicitly overridden by the user
+    return envs_.at("HOME");
+  }
+  CF_EXPECT(!group_name_.empty(),
+            "To auto-generate HOME, the group name is a must.");
+  std::string auto_generated_home{kParentOfDefaultHomeDirectories};
+  auto_generated_home.append("/" + group_name_);
+  return auto_generated_home;
 }
 
 }  // namespace selector
