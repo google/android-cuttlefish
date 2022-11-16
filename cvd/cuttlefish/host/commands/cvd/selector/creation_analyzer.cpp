@@ -196,9 +196,34 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
 }
 
 std::string CreationAnalyzer::AnalyzeGroupName(
-    const std::vector<PerInstanceInfo>&) const {
-  // TODO(kwstephenkim): implement AnalyzeGroupName()
-  return "";
+    const std::vector<PerInstanceInfo>& per_instance_infos) const {
+  if (selector_options_parser_.GroupName()) {
+    return selector_options_parser_.GroupName().value();
+  }
+  // auto-generate group name
+  std::vector<unsigned> ids;
+  for (const auto& per_instance_info : per_instance_infos) {
+    ids.emplace_back(per_instance_info.instance_id_);
+  }
+  std::string base_name = GenDefaultGroupName();
+  /*
+   * TODO(kwstephenkim): Determine the default group based on InstanceDatabase
+   *
+   * The default instance group is the group that is created when there is no
+   * active instance group for the user. The implementation is deferred for now
+   * until InstanceDatabase related code is added to this implementation.
+   */
+  if (Contains(ids, 1)) {
+    // if default group, we simply return base_name, which is "cvd"
+    return base_name;
+  }
+  /* We cannot return simply "cvd" as we do not want duplication in the group
+   * name across the instance groups owned by the user. Note that the set of ids
+   * are expected to be unique to the user, so we use the ids. If ever the end
+   * user happened to have already used the generated name, we did our best, and
+   * cvd start will fail with a proper error message.
+   */
+  return base_name + "_" + android::base::Join(ids, "_");
 }
 
 Result<std::string> CreationAnalyzer::AnalyzeHome() const {
