@@ -30,8 +30,9 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 
 # TODO(b/257379485): Enable cuttlefish build for all Camera 3A paths.
-PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gAF
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/g3ABase
+PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gAF
+PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gHAWB
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.concurrent.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.concurrent.xml \
