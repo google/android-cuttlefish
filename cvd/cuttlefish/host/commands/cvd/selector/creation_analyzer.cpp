@@ -183,8 +183,8 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
   group_name_ = AnalyzeGroupName(instance_info);
   home_ = CF_EXPECT(AnalyzeHome());
-  // TODO(kwstephenkim): implement host_artifacts_path_
-  host_artifacts_path_ = "";
+  CF_EXPECT(envs_.find(kAndroidHostOut) != envs_.end());
+  host_artifacts_path_ = envs_.at(kAndroidHostOut);
 
   GroupCreationInfo report = {.home = home_,
                               .host_artifacts_path = host_artifacts_path_,
