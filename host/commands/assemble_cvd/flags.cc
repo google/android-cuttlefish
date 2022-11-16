@@ -189,9 +189,6 @@ DEFINE_string(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
 DEFINE_string(webrtc_certs_dir, CF_DEFAULTS_WEBRTC_CERTS_DIR,
               "[Experimental] Path to WebRTC certificates directory.");
 
-DEFINE_string(webrtc_public_ip, CF_DEFAULTS_WEBRTC_PUBLIC_IP,
-              "[Deprecated] Ignored, webrtc can figure out its IP address");
-
 DEFINE_bool(webrtc_enable_adb_websocket,
             CF_DEFAULTS_WEBRTC_ENABLE_ADB_WEBSOCKET,
             "[Experimental] If enabled, exposes local adb service through a "
