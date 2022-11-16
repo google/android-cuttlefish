@@ -223,6 +223,7 @@ void TpmRemoteProvisioningContext::GetHwInfo(
   hwInfo->rpcAuthorName = "Google";
   hwInfo->supportedEekCurve = 2 /* CURVE_25519 */;
   hwInfo->uniqueId = "remote keymint";
+  hwInfo->supportedNumKeysInCsr = 20;
 }
 
 cppcose::ErrMsgOr<cppbor::Array> TpmRemoteProvisioningContext::BuildCsr(
