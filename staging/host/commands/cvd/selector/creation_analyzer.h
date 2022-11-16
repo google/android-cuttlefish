@@ -110,7 +110,7 @@ class CreationAnalyzer {
 
   CreationAnalyzer(const CreationAnalyzerParam& param,
                    const std::optional<ucred>& credential,
-                   SelectorFlagsParser&& selector_options_parser_,
+                   SelectorFlagsParser&& selector_options_parser,
                    InstanceLockFileManager& instance_lock_file_manager);
 
   Result<GroupCreationInfo> Analyze();
