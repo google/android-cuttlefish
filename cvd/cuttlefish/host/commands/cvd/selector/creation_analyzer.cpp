@@ -167,8 +167,19 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLock() {
   return instance_file_locks;
 }
 
+static bool IsCvdStart(const std::vector<std::string>& args) {
+  if (args.empty()) {
+    return false;
+  }
+  if (args[0] == "start") {
+    return true;
+  }
+  return (args.size() > 1 && args[1] == "start");
+}
+
 Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
-  // TODO(kwstephenkim): check if the command is "start"
+  CF_EXPECT(IsCvdStart(cmd_args_),
+            "CreationAnalyzer::Analyze() is for cvd start only.");
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
   group_name_ = AnalyzeGroupName(instance_info);
   home_ = CF_EXPECT(AnalyzeHome());
