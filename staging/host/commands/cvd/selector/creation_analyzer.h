@@ -143,6 +143,8 @@ class CreationAnalyzer {
    */
   Result<std::string> AnalyzeHome() const;
 
+  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsWithLockInternal();
+
   // inputs
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
