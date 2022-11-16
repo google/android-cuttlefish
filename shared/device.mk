@@ -177,6 +177,12 @@ PRODUCT_PACKAGES += \
     QualifiedNetworksService
 
 #
+# Package for AOSP GBA
+#
+PRODUCT_PACKAGES += \
+    GbaService
+
+#
 # Packages for the OpenGL implementation
 #
 
