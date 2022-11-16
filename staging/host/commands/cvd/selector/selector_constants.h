@@ -19,6 +19,9 @@
 namespace cuttlefish {
 namespace selector {
 
+// The name of environment variable that points to the host out directory
+constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
+
 /*
  * These are fields in instance database
  *
@@ -45,6 +48,7 @@ constexpr char kInstanceNameField[] = "instance_name";
  *
  */
 constexpr char kNameOpt[] = "name";
+// device_name == (group_name + "-" + instance_name)
 constexpr char kDeviceNameOpt[] = "device_name";
 constexpr char kGroupNameOpt[] = "group_name";
 constexpr char kInstanceNameOpt[] = "instance_name";
