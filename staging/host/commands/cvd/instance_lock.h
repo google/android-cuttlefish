@@ -67,19 +67,14 @@ class InstanceLockFileManager {
   // Best-effort attempt to find a free instance id.
   Result<std::optional<InstanceLockFile>> TryAcquireUnusedLock();
 
-  /**
-   * Returns all potentially available instance nums based on the net devices
-   */
-  Result<std::reference_wrapper<const std::set<int>>>
-  AllPotentialInstanceNums();
+  Result<std::vector<InstanceLockFile>> LockAllAvailable();
 
  private:
   /*
    * Generate value to initialize
    */
   Result<std::set<int>> FindPotentialInstanceNumsFromNetDevices();
-  std::optional<StackTraceError> initialization_error_;
-  std::set<int> all_instance_nums_;
+  std::optional<std::set<int>> all_instance_nums_;
 };
 
 }  // namespace cuttlefish
