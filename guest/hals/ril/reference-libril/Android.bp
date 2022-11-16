@@ -43,7 +43,7 @@ cc_library {
         "android.hardware.radio.data-V1-ndk",
         "android.hardware.radio.ims-V1-ndk",
         "android.hardware.radio.messaging-V1-ndk",
-        "android.hardware.radio.modem-V1-ndk",
+        "android.hardware.radio.modem-V2-ndk",
         "android.hardware.radio.network-V2-ndk",
         "android.hardware.radio.sim-V1-ndk",
         "android.hardware.radio.voice-V1-ndk",

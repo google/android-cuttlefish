@@ -17,6 +17,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.modem</name>
+        <version>2</version>
         <fqname>IRadioModem/slot1</fqname>
     </hal>
     <hal format="aidl">
