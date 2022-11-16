@@ -30,6 +30,9 @@
 namespace cuttlefish {
 namespace selector {
 
+using Envs = std::unordered_map<std::string, std::string>;
+using Args = std::vector<std::string>;
+
 struct OutputInfo {
   std::string home;
   std::string host_artifacts_path;  ///< e.g. out/host/linux-x86
@@ -61,20 +64,16 @@ class CreationInfoGenTest : public testing::TestWithParam<InputOutput> {
   void Init();
 
   std::vector<std::string> selector_args_;
-  std::string sub_cmd_;
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
-  ucred credential_;
+  std::optional<ucred> credential_;
   OutputInfo expected_output_;
   bool expected_success_;
-  InstanceDatabase instance_db_;
   InstanceLockFileManager instance_lock_file_manager_;
 };
 
 class HomeTest : public CreationInfoGenTest {};
 class HostArtifactsTest : public CreationInfoGenTest {};
-class InvalidSubCmdTest : public CreationInfoGenTest {};
-class ValidSubCmdTest : public CreationInfoGenTest {};
 
 }  // namespace selector
 }  // namespace cuttlefish
