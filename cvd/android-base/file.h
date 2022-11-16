@@ -84,7 +84,7 @@ bool ReadFileToString(const std::string& path, std::string* content,
 
 bool WriteStringToFile(const std::string& content, const std::string& path,
                        bool follow_symlinks = false);
-bool WriteStringToFd(const std::string& content, borrowed_fd fd);
+bool WriteStringToFd(std::string_view content, borrowed_fd fd);
 
 #if !defined(_WIN32)
 bool WriteStringToFile(const std::string& content, const std::string& path,
