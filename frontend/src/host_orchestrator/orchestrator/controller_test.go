@@ -64,6 +64,24 @@ func TestGetOperationIsHandled(t *testing.T) {
 	}
 }
 
+func TestGetOperationResultIsHandled(t *testing.T) {
+	om := NewMapOM()
+	op := om.New()
+	om.Complete(op.Name, &OperationResult{Value: "bar"})
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/operations/"+op.Name+"/result", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestWaitOperationIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/operations/foo/wait", strings.NewReader(""))
@@ -123,7 +141,7 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 	rr := httptest.NewRecorder()
 	om := NewMapOM()
 	op := om.New()
-	om.Complete(op.Name, apiv1.OperationResult{Error: &apiv1.ErrorMsg{Error: "error"}})
+	om.Complete(op.Name, &OperationResult{Value: "foo"})
 	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/wait", strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)

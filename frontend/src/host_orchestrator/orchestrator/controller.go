@@ -34,8 +34,12 @@ type Controller struct {
 func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds", &createCVDHandler{im: c.InstanceManager}).Methods("POST")
 	router.Handle("/operations/{name}", &getOperationHandler{om: c.OperationManager}).Methods("GET")
-	// Waits for the specified Operation resource to be DONE or for the request to approach the
-	// specified deadline, `503 Service Unavailable` error will be returned if the deadline is
+	// The expected response of the operation in case of success.  If the original method returns no data on
+	// success, such as `Delete`, response will be empty. If the original method is standard
+	// `Get`/`Create`/`Update`, the response should be the relevant resource encoded in JSON format.
+	router.Handle("/operations/{name}/result", &getOperationResultHandler{om: c.OperationManager}).Methods("GET")
+	// Same as `/operations/{name}/result but waits for the specified operation to be DONE or for the request
+	// to approach the specified deadline, `503 Service Unavailable` error will be returned if the deadline is
 	// reached. Be prepared to retry if the deadline was reached.
 	router.Handle("/operations/{name}/wait",
 		&waitOperationHandler{c.OperationManager, c.WaitOperationDuration}).Methods("POST")
@@ -68,10 +72,44 @@ func (h *getOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	name := vars["name"]
 	if op, err := h.om.Get(name); err != nil {
-		operator.ReplyJSONErr(w, operator.NewNotFoundError("Operation not found", err))
+		var resErr error
+		if _, ok := err.(NotFoundOperationError); ok {
+			resErr = operator.NewNotFoundError("Operation not found", err)
+		} else {
+			resErr = operator.NewInternalError("Unexpected get operation error", err)
+		}
+		operator.ReplyJSONErr(w, resErr)
+
 	} else {
 		operator.ReplyJSONOK(w, op)
 	}
+}
+
+type getOperationResultHandler struct {
+	om OperationManager
+}
+
+func (h *getOperationResultHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	res, err := h.om.GetResult(name)
+	if err != nil {
+		var resErr error
+		if _, ok := err.(NotFoundOperationError); ok {
+			resErr = operator.NewNotFoundError("Operation not found", err)
+		} else if _, ok := err.(OperationNotDoneError); ok {
+			resErr = operator.NewNotFoundError("Operation not done", err)
+		} else {
+			resErr = operator.NewInternalError("Unexpected get operation error", err)
+		}
+		operator.ReplyJSONErr(w, resErr)
+		return
+	}
+	if res.Error != nil {
+		operator.ReplyJSONErr(w, res.Error)
+		return
+	}
+	operator.ReplyJSONOK(w, res.Value)
 }
 
 type waitOperationHandler struct {
@@ -82,19 +120,23 @@ type waitOperationHandler struct {
 func (h *waitOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	op, err := h.om.Wait(name, h.waitDuration)
-	if err == nil {
-		operator.ReplyJSONOK(w, op)
+	res, err := h.om.Wait(name, h.waitDuration)
+	if err != nil {
+		var resErr error
+		if _, ok := err.(NotFoundOperationError); ok {
+			resErr = operator.NewNotFoundError("Operation not found", err)
+		} else if _, ok := err.(*OperationWaitTimeoutError); ok {
+			resErr = operator.NewServiceUnavailableError("Wait for operation timed out", err)
+		} else {
+			resErr = operator.NewInternalError("Unexpected get operation error", err)
+		}
+		operator.ReplyJSONErr(w, resErr)
 		return
 	}
-	if _, ok := err.(NotFoundOperationError); ok {
-		operator.ReplyJSONErr(w, operator.NewNotFoundError("Operation not found", err))
+	if res.Error != nil {
+		operator.ReplyJSONErr(w, res.Error)
 		return
 	}
-	if _, ok := err.(*OperationWaitTimeoutError); ok {
-		operator.ReplyJSONErr(w,
-			operator.NewServiceUnavailableError("Wait for operation timed out", err))
-		return
-	}
-	operator.ReplyJSONErr(w, operator.NewInternalError("Unknown wait operation error", err))
+	operator.ReplyJSONOK(w, res.Value)
+
 }

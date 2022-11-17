@@ -80,19 +80,6 @@ type Operation struct {
 	// If `true`, the operation is completed, and either `error` or `response` is
 	// available.
 	Done bool `json:"done"`
-	// Result will contain either an error or a result object but never both.
-	Result *OperationResult `json:"result,omitempty"`
-}
-
-type OperationResult struct {
-	// The error result of the operation in case of failure or cancellation.
-	Error *ErrorMsg `json:"error,omitempty"`
-	// The expected response of the operation in case of success.  If the original
-	// method returns no data on success, such as `Delete`, this field will be
-	// empty, hence omitted. If the original method is standard:
-	// `Get`/`Create`/`Update`, the response should be the relevant resource
-	// encoded in JSON format.
-	Response string `json:"response,omitempty"`
 }
 
 type CVD struct {
