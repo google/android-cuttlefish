@@ -43,6 +43,10 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::ndk::ScopedAStatus exitEmergencyMode(int32_t serial) override;
 
     ::ndk::ScopedAStatus cancelEmergencyNetworkScan(int32_t serial, bool resetScan) override;
+
+    ::ndk::ScopedAStatus isN1ModeEnabled(int32_t serial) override;
+
+    ::ndk::ScopedAStatus setN1ModeEnabled(int32_t serial, bool enable) override;
 };
 
 }  // namespace cf::ril

@@ -70,4 +70,14 @@ ScopedAStatus RefRadioNetwork::cancelEmergencyNetworkScan(int32_t serial, bool r
     return ok();
 }
 
+ScopedAStatus RefRadioNetwork::isN1ModeEnabled(int32_t serial) {
+    respond()->isN1ModeEnabledResponse(responseInfo(serial), false);
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::setN1ModeEnabled(int32_t serial, bool enable) {
+    respond()->setN1ModeEnabledResponse(responseInfo(serial));
+    return ok();
+}
+
 }  // namespace cf::ril
