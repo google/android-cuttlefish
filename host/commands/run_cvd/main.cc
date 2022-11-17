@@ -207,12 +207,14 @@ void ConfigureLogs(const CuttlefishConfig& config,
                    const CuttlefishConfig::InstanceSpecific& instance) {
   auto log_path = instance.launcher_log_path();
 
-  std::ofstream launcher_log_ofstream(log_path.c_str());
-  auto assembly_path = config.AssemblyPath("assemble_cvd.log");
-  std::ifstream assembly_log_ifstream(assembly_path);
-  if (assembly_log_ifstream) {
-    auto assemble_log = ReadFile(assembly_path);
-    launcher_log_ofstream << assemble_log;
+  if (!FileHasContent(log_path)) {
+    std::ofstream launcher_log_ofstream(log_path.c_str());
+    auto assembly_path = config.AssemblyPath("assemble_cvd.log");
+    std::ifstream assembly_log_ifstream(assembly_path);
+    if (assembly_log_ifstream) {
+      auto assemble_log = ReadFile(assembly_path);
+      launcher_log_ofstream << assemble_log;
+    }
   }
   std::string prefix;
   if (config.Instances().size() > 1) {
