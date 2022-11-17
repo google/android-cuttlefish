@@ -80,4 +80,13 @@ ScopedAStatus RefRadioNetwork::setN1ModeEnabled(int32_t serial, bool enable) {
     return ok();
 }
 
+ScopedAStatus RefRadioNetwork::setLocationPrivacySetting(int32_t serial, bool shareLocation) {
+    respond()->setLocationPrivacySettingResponse(responseInfo(serial));
+    return ok();
+}
+
+ScopedAStatus RefRadioNetwork::getLocationPrivacySetting(int32_t serial) {
+    respond()->getLocationPrivacySettingResponse(responseInfo(serial), false);
+    return ok();
+}
 }  // namespace cf::ril
