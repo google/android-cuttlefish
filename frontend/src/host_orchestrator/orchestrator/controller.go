@@ -33,6 +33,7 @@ type Controller struct {
 
 func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds", &createCVDHandler{im: c.InstanceManager}).Methods("POST")
+	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{im: c.InstanceManager}).Methods("GET")
 	router.Handle("/operations/{name}", &getOperationHandler{om: c.OperationManager}).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
 	// success, such as `Delete`, response will be empty. If the original method is standard
@@ -62,6 +63,19 @@ func (h *createCVDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	operator.ReplyJSONOK(w, op)
+}
+
+type getCVDLogsHandler struct {
+	im InstanceManager
+}
+
+func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	pathPrefix := "/cvds/" + name + "/logs"
+	logsDir := h.im.GetLogsDir(name)
+	handler := http.StripPrefix(pathPrefix, http.FileServer(http.Dir(logsDir)))
+	handler.ServeHTTP(w, r)
 }
 
 type getOperationHandler struct {

@@ -28,10 +28,16 @@ import (
 
 const pageNotFoundErrMsg = "404 page not found\n"
 
-type testIM struct{}
+type testIM struct {
+	LogsDir string
+}
 
-func (m *testIM) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
+func (testIM) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
 	return apiv1.Operation{}, nil
+}
+
+func (m *testIM) GetLogsDir(name string) string {
+	return m.LogsDir
 }
 
 func TestCreateCVDIsHandled(t *testing.T) {
@@ -41,6 +47,23 @@ func TestCreateCVDIsHandled(t *testing.T) {
 		t.Fatal(err)
 	}
 	controller := Controller{InstanceManager: &testIM{}}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestGetCVDLogsIsHandled(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/cvds/cvd-1/logs", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{InstanceManager: &testIM{LogsDir: dir}}
 
 	makeRequest(rr, req, &controller)
 
