@@ -620,16 +620,9 @@ PRODUCT_PACKAGES += \
     android.hardware.neuralnetworks-service-sample-limited \
     android.hardware.neuralnetworks-shim-service-sample
 
-#
 # USB
-# TODO(b/227791019): Convert USB AIDL HAL to APEX
-# ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-# PRODUCT_PACKAGES += \
-#    com.android.hardware.usb
-#else
 PRODUCT_PACKAGES += \
-    android.hardware.usb-service.example
-#endif
+    com.android.hardware.usb
 
 # Vibrator HAL
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
