@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -169,8 +168,8 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 
 	op, _ = im2.CreateCVD(r)
 
-	op, _ = om.Wait(op.Name, 1*time.Second)
-	if op.Result.Error.Error == "" {
+	res, _ := om.Wait(op.Name, 1*time.Second)
+	if res.Error == nil {
 		t.Error("expected error due instance home dir already existing")
 	}
 }
@@ -304,11 +303,9 @@ func TestCreateCVDSucceeds(t *testing.T) {
 
 	op, _ := im.CreateCVD(r)
 
-	op, _ = om.Wait(op.Name, 1*time.Second)
-	want := apiv1.CVD{Name: "cvd-1", BuildInfo: buildInfo}
-	var got apiv1.CVD
-	json.Unmarshal([]byte(op.Result.Response), &got)
-	if diff := cmp.Diff(want, got); diff != "" {
+	res, _ := om.Wait(op.Name, 1*time.Second)
+	want := &apiv1.CVD{Name: "cvd-1", BuildInfo: buildInfo}
+	if diff := cmp.Diff(want, res.Value); diff != "" {
 		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -333,9 +330,9 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 
 	op, _ := im.CreateCVD(r)
 
-	op, _ = om.Wait(op.Name, 1*time.Second)
-	if op.Result.Error.Details == "" {
-		t.Error("expected not empty details")
+	res, _ := om.Wait(op.Name, 1*time.Second)
+	if res.Error == nil {
+		t.Error("expected error")
 	}
 }
 
@@ -367,9 +364,9 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 
 	op, _ := im.CreateCVD(r)
 
-	op, _ = om.Wait(op.Name, 1*time.Second)
-	if op.Result.Error.Details == "" {
-		t.Error("expected not empty details")
+	res, _ := om.Wait(op.Name, 1*time.Second)
+	if res.Error == nil {
+		t.Error("expected error")
 	}
 }
 

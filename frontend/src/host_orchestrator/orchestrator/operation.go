@@ -34,22 +34,36 @@ type OperationWaitTimeoutError struct{}
 
 func (s OperationWaitTimeoutError) Error() string { return "waiting for operation timed out" }
 
+type OperationNotDoneError string
+
+func (s OperationNotDoneError) Error() string {
+	return fmt.Sprintf("operation %q is not done", string(s))
+}
+
+type OperationResult struct {
+	Error error
+	Value interface{}
+}
+
 type OperationManager interface {
 	New() apiv1.Operation
 
 	Get(name string) (apiv1.Operation, error)
 
-	Complete(name string, result apiv1.OperationResult) error
+	GetResult(name string) (*OperationResult, error)
+
+	Complete(name string, result *OperationResult) error
 
 	// Waits for the specified operation to be DONE within the passed deadline. If the deadline
 	// is reached `OperationWaitTimeoutError` will be returned.
-	Wait(name string, dt time.Duration) (apiv1.Operation, error)
+	Wait(name string, dt time.Duration) (*OperationResult, error)
 }
 
 type mapOMOperationEntry struct {
-	data  apiv1.Operation
-	mutex sync.RWMutex
-	done  chan struct{}
+	op     apiv1.Operation
+	result *OperationResult
+	mutex  sync.RWMutex
+	done   chan struct{}
 }
 
 type MapOM struct {
@@ -81,7 +95,7 @@ func (m *MapOM) New() apiv1.Operation {
 		panic("uuid retry limit reached")
 	}
 	entry := &mapOMOperationEntry{
-		data: apiv1.Operation{
+		op: apiv1.Operation{
 			Name: name,
 			Done: false,
 		},
@@ -89,46 +103,59 @@ func (m *MapOM) New() apiv1.Operation {
 		done:  make(chan struct{}),
 	}
 	m.operations[name] = entry
-	return entry.data
+	return entry.op
 }
 
 func (m *MapOM) Get(name string) (apiv1.Operation, error) {
 	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		return apiv1.Operation{}, NotFoundOperationError("map key didn't exist")
+		return apiv1.Operation{}, NotFoundOperationError(name)
 	}
 	entry.mutex.RLock()
-	op := entry.data
+	op := entry.op
 	entry.mutex.RUnlock()
 	return op, nil
 }
 
-func (m *MapOM) Complete(name string, result apiv1.OperationResult) error {
-	op, ok := m.getOperationEntry(name)
+func (m *MapOM) GetResult(name string) (*OperationResult, error) {
+	entry, ok := m.getOperationEntry(name)
+	if !ok {
+		return nil, NotFoundOperationError(name)
+	}
+	entry.mutex.RLock()
+	defer entry.mutex.RUnlock()
+	if !entry.op.Done {
+		return nil, OperationNotDoneError(name)
+	}
+	return entry.result, nil
+}
+
+func (m *MapOM) Complete(name string, result *OperationResult) error {
+	entry, ok := m.getOperationEntry(name)
 	if !ok {
 		return fmt.Errorf("attempting to complete an operation which does not exist")
 	}
-	op.mutex.Lock()
-	defer op.mutex.Unlock()
-	op.data.Done = true
-	op.data.Result = &result
-	close(op.done)
+	entry.mutex.Lock()
+	defer entry.mutex.Unlock()
+	entry.op.Done = true
+	entry.result = result
+	close(entry.done)
 	return nil
 }
 
-func (m *MapOM) Wait(name string, dt time.Duration) (apiv1.Operation, error) {
+func (m *MapOM) Wait(name string, dt time.Duration) (*OperationResult, error) {
 	entry, ok := m.getOperationEntry(name)
 	if !ok {
-		return apiv1.Operation{}, NotFoundOperationError("map key didn't exist")
+		return nil, NotFoundOperationError("map key didn't exist")
 	}
 	select {
 	case <-entry.done:
 		entry.mutex.RLock()
-		op := entry.data
+		result := entry.result
 		entry.mutex.RUnlock()
-		return op, nil
+		return result, nil
 	case <-time.After(time.Duration(dt)):
-		return apiv1.Operation{}, new(OperationWaitTimeoutError)
+		return nil, new(OperationWaitTimeoutError)
 	}
 }
 

@@ -21,6 +21,8 @@ import (
 	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestMapOMNewOperation(t *testing.T) {
@@ -33,9 +35,6 @@ func TestMapOMNewOperation(t *testing.T) {
 	}
 	if op.Done {
 		t.Error("expected false")
-	}
-	if op.Result != nil {
-		t.Errorf("expected <<nil>>, got %+v", op.Result)
 	}
 }
 
@@ -70,13 +69,10 @@ func TestMapOMGetOperation(t *testing.T) {
 
 		op, err := om.Get("foo")
 
-		if err == nil {
-			t.Errorf("expected error")
-			var notFoundError *NotFoundOperationError
-			if !errors.As(err, &notFoundError) {
-				t.Errorf("error type <<\"%T\">> not found in error chain", notFoundError)
-			}
+		if notFoundErr, ok := err.(NotFoundOperationError); !ok {
+			t.Errorf("expected <<%T>>, got %T", notFoundErr, err)
 		}
+
 		if (op != apiv1.Operation{}) {
 			t.Errorf("expected zero value %T", op)
 		}
@@ -84,12 +80,11 @@ func TestMapOMGetOperation(t *testing.T) {
 }
 
 func TestMapOMCompleteOperation(t *testing.T) {
+	result := &OperationResult{Error: errors.New("error")}
+
 	t.Run("exists", func(t *testing.T) {
 		om := NewMapOM()
 		newOp := om.New()
-		result := apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{Error: "error"},
-		}
 
 		err := om.Complete(newOp.Name, result)
 
@@ -103,16 +98,10 @@ func TestMapOMCompleteOperation(t *testing.T) {
 		if !op.Done {
 			t.Error("expected true")
 		}
-		if op.Result.Error.Error != result.Error.Error {
-			t.Errorf("expected <<%+v>>, got %+v", result.Error.Error, op.Result.Error.Error)
-		}
 	})
 
 	t.Run("does not exist", func(t *testing.T) {
 		om := NewMapOM()
-		result := apiv1.OperationResult{
-			Error: &apiv1.ErrorMsg{Error: "error"},
-		}
 
 		err := om.Complete("foo", result)
 
@@ -124,9 +113,7 @@ func TestMapOMCompleteOperation(t *testing.T) {
 
 func TestMapOMWaitOperation(t *testing.T) {
 	dt := 1 * time.Second
-	result := apiv1.OperationResult{
-		Error: &apiv1.ErrorMsg{Error: "error"},
-	}
+	result := &OperationResult{Value: "foo"}
 
 	t.Run("operation was completed", func(t *testing.T) {
 		var wg sync.WaitGroup
@@ -139,7 +126,7 @@ func TestMapOMWaitOperation(t *testing.T) {
 				defer wg.Done()
 
 				start := time.Now()
-				op, err := om.Wait(newOp.Name, dt)
+				got, err := om.Wait(newOp.Name, dt)
 				duration := time.Since(start)
 
 				if err != nil {
@@ -148,9 +135,8 @@ func TestMapOMWaitOperation(t *testing.T) {
 				if duration >= dt {
 					t.Error("reached the wait deadline")
 				}
-				expectedOp, _ := om.Get(newOp.Name)
-				if op != expectedOp {
-					t.Errorf("expected <<%+v>>, got %+v", expectedOp, op)
+				if diff := cmp.Diff(result.Value, got.Value); diff != "" {
+					t.Errorf("result value mismatch (-want +got):\n%s", diff)
 				}
 			}()
 		}
@@ -169,7 +155,7 @@ func TestMapOMWaitOperation(t *testing.T) {
 				defer wg.Done()
 
 				start := time.Now()
-				op, err := om.Wait(newOp.Name, dt)
+				res, err := om.Wait(newOp.Name, dt)
 				duration := time.Since(start)
 
 				if duration < dt {
@@ -178,8 +164,8 @@ func TestMapOMWaitOperation(t *testing.T) {
 				if timedOutErr, ok := err.(*OperationWaitTimeoutError); !ok {
 					t.Errorf("expected <<%T>>, got %T", timedOutErr, err)
 				}
-				if (op != apiv1.Operation{}) {
-					t.Error("expected empty operation")
+				if res != nil {
+					t.Error("expected nil result")
 				}
 			}()
 		}
@@ -190,7 +176,7 @@ func TestMapOMWaitOperation(t *testing.T) {
 		om := NewMapOM()
 
 		start := time.Now()
-		op, err := om.Wait("foo", dt)
+		res, err := om.Wait("foo", dt)
 		duration := time.Since(start)
 
 		if duration >= dt {
@@ -199,8 +185,49 @@ func TestMapOMWaitOperation(t *testing.T) {
 		if notFoundErr, ok := err.(NotFoundOperationError); !ok {
 			t.Errorf("expected <<%T>>, got %T", notFoundErr, err)
 		}
-		if (op != apiv1.Operation{}) {
-			t.Error("expected empty operation")
+		if res != nil {
+			t.Error("expected nil result")
+		}
+	})
+}
+
+func TestMapOMGetOperationResult(t *testing.T) {
+	t.Run("does not exist", func(t *testing.T) {
+		om := NewMapOM()
+
+		_, err := om.GetResult("foo")
+
+		if notFoundErr, ok := err.(NotFoundOperationError); !ok {
+			t.Errorf("expected <<%T>>, got %T", notFoundErr, err)
+		}
+	})
+
+	t.Run("exists not done", func(t *testing.T) {
+		om := NewMapOM()
+		op := om.New()
+
+		_, err := om.GetResult(op.Name)
+
+		if notDoneErr, ok := err.(OperationNotDoneError); !ok {
+			t.Errorf("expected <<%T>>, got %T", notDoneErr, err)
+		}
+	})
+
+	t.Run("exists done", func(t *testing.T) {
+		om := NewMapOM()
+		op := om.New()
+		om.Complete(op.Name, &OperationResult{Value: "bar"})
+
+		res, err := om.GetResult(op.Name)
+
+		if err != nil {
+			t.Errorf("expected no error")
+		}
+		if res.Error != nil {
+			t.Errorf("expected no error")
+		}
+		if diff := cmp.Diff("bar", res.Value); diff != "" {
+			t.Errorf("result value (-want +got):\n%s", diff)
 		}
 	})
 }
