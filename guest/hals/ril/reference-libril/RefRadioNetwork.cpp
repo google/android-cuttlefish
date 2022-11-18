@@ -89,4 +89,10 @@ ScopedAStatus RefRadioNetwork::getLocationPrivacySetting(int32_t serial) {
     respond()->getLocationPrivacySettingResponse(responseInfo(serial), false);
     return ok();
 }
+
+ScopedAStatus RefRadioNetwork::setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) {
+    respond()->setNullCipherAndIntegrityEnabledResponse(responseInfo(serial));
+    return ok();
+}
+
 }  // namespace cf::ril
