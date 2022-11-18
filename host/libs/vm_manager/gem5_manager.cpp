@@ -124,7 +124,7 @@ bool Gem5Manager::IsSupported() {
 }
 
 std::vector<std::string> Gem5Manager::ConfigureGraphics(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig::InstanceSpecific& instance) {
   // TODO: Add support for the gem5 gpu models
 
   // Override the default HAL search paths in all cases. We do this because
@@ -134,7 +134,7 @@ std::vector<std::string> Gem5Manager::ConfigureGraphics(
   return {
       "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
       "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+      "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
       "androidboot.hardware.hwcomposer.mode=noop",
       "androidboot.hardware.egl=angle",
       "androidboot.hardware.vulkan=pastel",
