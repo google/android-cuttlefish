@@ -45,7 +45,6 @@ apex {
         "rename_netiface",
         "wpa_supplicant_cf",
         "hostapd_cf",
-        "android.hardware.wifi@1.0-service",
     ],
     sh_binaries: ["init.wifi_apex"],
     prebuilts: [
