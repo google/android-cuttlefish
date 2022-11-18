@@ -122,8 +122,8 @@ bool QemuManager::IsSupported() {
 }
 
 std::vector<std::string> QemuManager::ConfigureGraphics(
-    const CuttlefishConfig& config) {
-  if (config.gpu_mode() == kGpuModeGuestSwiftshader) {
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
     // Override the default HAL search paths in all cases. We do this because
     // the HAL search path allows for fallbacks, and fallbacks in conjunction
     // with properities lead to non-deterministic behavior while loading the
@@ -131,13 +131,13 @@ std::vector<std::string> QemuManager::ConfigureGraphics(
     return {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
         "androidboot.opengles.version=196609"};  // OpenGL ES 3.1
   }
 
-  if (config.gpu_mode() == kGpuModeDrmVirgl) {
+  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
     return {
       "androidboot.cpuvulkan.version=0",
       "androidboot.hardware.gralloc=minigbm",
@@ -360,7 +360,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
-  if (config.gpu_mode() == kGpuModeDrmVirgl) {
+  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("egl-headless");
 
@@ -378,7 +378,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
 
   bool use_gpu_gl = qemu_version.first >= 6 &&
-                    config.gpu_mode() != kGpuModeGuestSwiftshader;
+                    instance.gpu_mode() != kGpuModeGuestSwiftshader;
   qemu_cmd.AddParameter(use_gpu_gl ?
                             "virtio-gpu-gl-pci" : "virtio-gpu-pci", ",id=gpu0",
                         ",xres=", display_config.width,

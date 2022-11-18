@@ -46,6 +46,8 @@ using cuttlefish::vm_manager::CrosvmManager;
 using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 using google::FlagSettingMode::SET_FLAGS_VALUE;
 
+#define DEFINE_vec DEFINE_string
+
 DEFINE_string(cpus, std::to_string(CF_DEFAULTS_CPUS),
               "Virtual CPU count.");
 DEFINE_string(data_policy, CF_DEFAULTS_DATA_POLICY,
@@ -105,18 +107,18 @@ DEFINE_string(use_random_serial, cuttlefish::BoolToString(CF_DEFAULTS_USE_RANDOM
             "Whether to use random serial for the device.");
 DEFINE_string(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
-DEFINE_string(gpu_mode, CF_DEFAULTS_GPU_MODE,
+DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
               "What gpu configuration to use, one of {auto, drm_virgl, "
               "gfxstream, guest_swiftshader}");
-DEFINE_string(hwcomposer, CF_DEFAULTS_HWCOMPOSER,
+DEFINE_vec(hwcomposer, CF_DEFAULTS_HWCOMPOSER,
               "What hardware composer to use, one of {auto, drm, ranchu} ");
-DEFINE_string(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
+DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
               "Path to the GPU capture binary to use when capturing GPU traces"
               "(ngfx, renderdoc, etc)");
-DEFINE_bool(enable_gpu_udmabuf, CF_DEFAULTS_ENABLE_GPU_UDMABUF,
+DEFINE_vec(enable_gpu_udmabuf, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_UDMABUF),
             "Use the udmabuf driver for zero-copy virtio-gpu");
 
-DEFINE_bool(enable_gpu_angle, CF_DEFAULTS_ENABLE_GPU_ANGLE,
+DEFINE_vec(enable_gpu_angle, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_ANGLE),
             "Use ANGLE to provide GLES implementation (always true for"
             " guest_swiftshader");
 DEFINE_bool(deprecated_boot_completed, CF_DEFAULTS_DEPRECATED_BOOT_COMPLETED,
@@ -272,8 +274,9 @@ DEFINE_string(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
 DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
               "The debug flags gem5 uses to print debugs to file");
 
-DEFINE_bool(restart_subprocesses, CF_DEFAULTS_RESTART_SUBPROCESSES,
-            "Restart any crashed host process");
+DEFINE_vec(restart_subprocesses,
+              cuttlefish::BoolToString(CF_DEFAULTS_RESTART_SUBPROCESSES),
+              "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server,
             CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER,
             "Enables the vehicle HAL "
@@ -641,6 +644,54 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
   return output_map;
 }
 
+Result<std::vector<bool>> GetFlagBoolValueForInstances(
+    const std::string& flag_values, int32_t instances_size, const std::string& flag_name) {
+  std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
+  std::vector<bool> value_vec(instances_size);
+
+  for (int instance_index=0; instance_index<instances_size; instance_index++) {
+    if (instance_index >= flag_vec.size()) {
+      value_vec[instance_index] = CF_EXPECT(ParseBool(flag_vec[0], flag_name));
+    } else {
+      value_vec[instance_index] = CF_EXPECT(ParseBool(flag_vec[instance_index], flag_name));
+    }
+  }
+  return value_vec;
+}
+
+Result<std::vector<int>> GetFlagIntValueForInstances(
+    const std::string& flag_values, int32_t instances_size, const std::string& flag_name) {
+  std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
+  std::vector<int> value_vec(instances_size);
+
+  for (int instance_index=0; instance_index<instances_size; instance_index++) {
+    if (instance_index >= flag_vec.size()) {
+      CF_EXPECT(android::base::ParseInt(flag_vec[0].c_str(), &value_vec[instance_index]),
+      "Failed to parse value \"" << flag_vec[0] << "\" for " << flag_name);
+    } else {
+      CF_EXPECT(android::base::ParseInt(flag_vec[instance_index].c_str(),
+      &value_vec[instance_index]),
+      "Failed to parse value \"" << flag_vec[instance_index] << "\" for " << flag_name);
+    }
+  }
+  return value_vec;
+}
+
+Result<std::vector<std::string>> GetFlagStrValueForInstances(
+    const std::string& flag_values, int32_t instances_size) {
+  std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
+  std::vector<std::string> value_vec(instances_size);
+
+  for (int instance_index=0; instance_index<instances_size; instance_index++) {
+    if (instance_index >= flag_vec.size()) {
+      value_vec[instance_index] = flag_vec[0];
+    } else {
+      value_vec[instance_index] = flag_vec[instance_index];
+    }
+  }
+  return value_vec;
+}
+
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
@@ -682,79 +733,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     GetGraphicsAvailabilityWithSubprocessCheck();
 
   LOG(DEBUG) << graphics_availability;
-
-  tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
-  if (tmp_config_obj.gpu_mode() != kGpuModeAuto &&
-      tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl &&
-      tmp_config_obj.gpu_mode() != kGpuModeGfxStream &&
-      tmp_config_obj.gpu_mode() != kGpuModeGuestSwiftshader) {
-    LOG(FATAL) << "Invalid gpu_mode: " << FLAGS_gpu_mode;
-  }
-  if (tmp_config_obj.gpu_mode() == kGpuModeAuto) {
-    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                   "rendering support.";
-      if (vm_manager_vec[0] == QemuManager::name()) {
-        LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
-        tmp_config_obj.set_gpu_mode(kGpuModeDrmVirgl);
-      } else {
-        LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
-        tmp_config_obj.set_gpu_mode(kGpuModeGfxStream);
-      }
-    } else {
-      LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
-                   "accelerated rendering support, enabling "
-                   "--gpu_mode=guest_swiftshader.";
-      tmp_config_obj.set_gpu_mode(kGpuModeGuestSwiftshader);
-    }
-  } else if (tmp_config_obj.gpu_mode() == kGpuModeGfxStream ||
-             tmp_config_obj.gpu_mode() == kGpuModeDrmVirgl) {
-    if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(ERROR) << "--gpu_mode="
-                 << tmp_config_obj.gpu_mode()
-                 << " was requested but the prerequisites for accelerated "
-                    "rendering were not detected so the device may not "
-                    "function correctly. Please consider switching to "
-                    "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
-    }
-  }
-
-  tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
-  tmp_config_obj.set_gpu_capture_binary(FLAGS_gpu_capture_binary);
-  if (!tmp_config_obj.gpu_capture_binary().empty()) {
-    CHECK(tmp_config_obj.gpu_mode() == kGpuModeGfxStream)
-        << "GPU capture only supported with --gpu_mode=gfxstream";
-
-    // GPU capture runs in a detached mode where the "launcher" process
-    // intentionally exits immediately.
-    CHECK(!tmp_config_obj.restart_subprocesses())
-        << "GPU capture only supported with --norestart_subprocesses";
-  }
-
-  tmp_config_obj.set_hwcomposer(FLAGS_hwcomposer);
-  if (!tmp_config_obj.hwcomposer().empty()) {
-    if (tmp_config_obj.hwcomposer() == kHwComposerRanchu) {
-      CHECK(tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl)
-        << "ranchu hwcomposer not supported with --gpu_mode=drm_virgl";
-    }
-  }
-
-  if (tmp_config_obj.hwcomposer() == kHwComposerAuto) {
-      if (tmp_config_obj.gpu_mode() == kGpuModeDrmVirgl) {
-        tmp_config_obj.set_hwcomposer(kHwComposerDrm);
-      } else {
-        tmp_config_obj.set_hwcomposer(kHwComposerRanchu);
-      }
-  }
-
-  tmp_config_obj.set_enable_gpu_udmabuf(FLAGS_enable_gpu_udmabuf);
-  tmp_config_obj.set_enable_gpu_angle(FLAGS_enable_gpu_angle);
-
-  if (vmm->ConfigureGraphics(tmp_config_obj).empty()) {
-    LOG(FATAL) << "Invalid (gpu_mode=," << FLAGS_gpu_mode <<
-               " hwcomposer= " << FLAGS_hwcomposer <<
-               ") does not work with vm_manager=" << vm_manager_vec[0];
-  }
 
   tmp_config_obj.set_enable_bootanimation(FLAGS_enable_bootanimation);
 
@@ -856,15 +834,24 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_protected_vm(FLAGS_protected_vm);
 
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+
   // old flags but vectorized for multi-device instances
-  std::vector<std::string> gnss_file_paths = android::base::Split(FLAGS_gnss_file_path, ",");
+  int32_t instances_size = instance_nums.size();
+  std::vector<std::string> gnss_file_paths =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gnss_file_path, instances_size));
   std::vector<std::string> fixed_location_file_paths =
-      android::base::Split(FLAGS_fixed_location_file_path, ",");
-  std::vector<std::string> x_res_vec = android::base::Split(FLAGS_x_res, ",");
-  std::vector<std::string> y_res_vec = android::base::Split(FLAGS_y_res, ",");
-  std::vector<std::string> dpi_vec = android::base::Split(FLAGS_dpi, ",");
-  std::vector<std::string> refresh_rate_hz_vec =
-      android::base::Split(FLAGS_refresh_rate_hz, ",");
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_fixed_location_file_path, instances_size));
+  std::vector<int> x_res_vec = CF_EXPECT(GetFlagIntValueForInstances(
+      FLAGS_x_res, instances_size, "x_res"));
+  std::vector<int> y_res_vec = CF_EXPECT(GetFlagIntValueForInstances(
+      FLAGS_y_res, instances_size, "y_res"));
+  std::vector<int> dpi_vec = CF_EXPECT(GetFlagIntValueForInstances(
+      FLAGS_dpi, instances_size, "dpi"));
+  std::vector<int> refresh_rate_hz_vec = CF_EXPECT(GetFlagIntValueForInstances(
+      FLAGS_refresh_rate_hz, instances_size, "refresh_rate_hz"));
+
   std::vector<std::string> memory_mb_vec =
       android::base::Split(FLAGS_memory_mb, ",");
   std::vector<std::string> camera_server_port_vec =
@@ -883,8 +870,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       android::base::Split(FLAGS_guest_enforce_security, ",");
   std::vector<std::string> use_random_serial_vec =
       android::base::Split(FLAGS_use_random_serial, ",");
-  std::vector<std::string> use_allocd_vec =
-      android::base::Split(FLAGS_use_allocd, ",");
+  std::vector<bool> use_allocd_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_use_allocd, instances_size, "use_allocd"));
   std::vector<std::string> use_sdcard_vec =
       android::base::Split(FLAGS_use_sdcard, ",");
   std::vector<std::string> pause_in_bootloader_vec =
@@ -906,6 +893,19 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> enable_sandbox_vec =
       android::base::Split(FLAGS_enable_sandbox, ",");
 
+  std::vector<std::string> gpu_mode_vec =
+      android::base::Split(FLAGS_gpu_mode, ",");
+  std::vector<std::string> gpu_capture_binary_vec =
+      android::base::Split(FLAGS_gpu_capture_binary, ",");
+  std::vector<std::string> restart_subprocesses_vec =
+      android::base::Split(FLAGS_restart_subprocesses, ",");
+  std::vector<std::string> hwcomposer_vec =
+      android::base::Split(FLAGS_hwcomposer, ",");
+  std::vector<std::string> enable_gpu_udmabuf_vec =
+      android::base::Split(FLAGS_enable_gpu_udmabuf, ",");
+  std::vector<std::string> enable_gpu_angle_vec =
+      android::base::Split(FLAGS_enable_gpu_angle, ",");
+
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dirs =
       android::base::Split(FLAGS_gem5_binary_dir, ",");
@@ -916,17 +916,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::string default_enable_sandbox = "";
   std::string comma_str = "";
 
-  auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
-  if (!instance_nums.ok()) {
-    LOG(ERROR) << instance_nums.error().Message();
-    LOG(DEBUG) << instance_nums.error().Trace();
-    abort();
-  }
-
-  CHECK(FLAGS_use_overlay || instance_nums->size() == 1)
+  CHECK(FLAGS_use_overlay || instance_nums.size() == 1)
       << "`--use_overlay=false` is incompatible with multiple instances";
-  CHECK(instance_nums->size() > 0) << "Require at least one instance.";
-  auto rootcanal_instance_num = *instance_nums->begin() - 1;
+  CHECK(instance_nums.size() > 0) << "Require at least one instance.";
+  auto rootcanal_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_rootcanal_instance_num > 0) {
     rootcanal_instance_num = FLAGS_rootcanal_instance_num - 1;
   }
@@ -940,20 +933,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   bool is_first_instance = true;
   int instance_index = 0;
   auto num_to_webrtc_device_id_flag_map =
-      CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, *instance_nums,
+      CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, instance_nums,
                                              FLAGS_webrtc_device_id));
-  for (const auto& num : *instance_nums) {
-    bool use_allocd;
-    if (instance_index >= use_allocd_vec.size()) {
-      use_allocd = CF_EXPECT(ParseBool(use_allocd_vec[0],
-                                    "use_allocd"));
-    } else {
-      use_allocd = CF_EXPECT(ParseBool(
-          use_allocd_vec[instance_index], "use_allocd"));
-    }
-
+  for (const auto& num : instance_nums) {
     IfaceConfig iface_config;
-    if (use_allocd) {
+    if (use_allocd_vec[instance_index]) {
       auto iface_opt = AllocateNetworkInterfaces();
       if (!iface_opt.has_value()) {
         LOG(FATAL) << "Failed to acquire network interfaces";
@@ -974,7 +958,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto instance = tmp_config_obj.ForInstance(num);
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
-    instance.set_use_allocd(use_allocd);
+    instance.set_use_allocd(use_allocd_vec[instance_index]);
     if (use_random_serial) {
       instance.set_serial_number(
           RandomSerialNumber("CFCVD" + std::to_string(num)));
@@ -1046,21 +1030,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       enable_sandbox = CF_EXPECT(ParseBool(
           enable_sandbox_vec[instance_index], "enable_sandbox"));
     }
-    // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
-    // then set_enable_sandbox later.
-    // 2. SetCommandLineOptionWithMode condition: if gpu_mode or console,
-    // then SetCommandLineOptionWithMode false as original code did,
-    // otherwise keep default enable_sandbox value.
-    // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily disable
-    // auto-enabling sandbox when gpu is enabled (b/152323505).
-    default_enable_sandbox += comma_str;
-    if ((tmp_config_obj.gpu_mode() != kGpuModeGuestSwiftshader) || console) {
-      // original code, just moved to each instance setting block
-      default_enable_sandbox += "false";
-    } else {
-      default_enable_sandbox += BoolToString(enable_sandbox);
-    }
-    comma_str = ",";
 
     int blank_data_image_mb_int;
     if (instance_index < blank_data_image_mb_vec.size()) {
@@ -1109,55 +1078,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       display_configs.push_back(*display3);
     }
 
-    int x_res = 0;
-    if (instance_index < x_res_vec.size()) {
-      CF_EXPECT(
-          android::base::ParseInt(x_res_vec[instance_index].c_str(), &x_res),
-          "Failed to parse value \"" << x_res_vec[instance_index]
-                                     << "\" for x_res");
-    } else if (x_res_vec.size() == 1) {
-      CF_EXPECT(android::base::ParseInt(x_res_vec[0].c_str(), &x_res),
-                "Failed to parse value \"" << x_res_vec[0] << "\" for x_res");
-    }
-    int y_res = 0;
-    if (instance_index < y_res_vec.size()) {
-      CF_EXPECT(
-          android::base::ParseInt(y_res_vec[instance_index].c_str(), &y_res),
-          "Failed to parse value \"" << y_res_vec[instance_index]
-                                     << "\" for y_res");
-    } else if (y_res_vec.size() == 1) {
-      CF_EXPECT(android::base::ParseInt(y_res_vec[0].c_str(), &y_res),
-                "Failed to parse value \"" << y_res_vec[0] << "\" for y_res");
-    }
-    int dpi = 0;
-    if (instance_index < dpi_vec.size()) {
-      CF_EXPECT(android::base::ParseInt(dpi_vec[instance_index].c_str(), &dpi),
-                "Failed to parse value \"" << dpi_vec[instance_index]
-                                           << "\" for dpi");
-    } else if (dpi_vec.size() == 1) {
-      CF_EXPECT(android::base::ParseInt(dpi_vec[0].c_str(), &dpi),
-                "Failed to parse value \"" << dpi_vec[0] << "\" for dpi");
-    }
-    int refresh_rate_hz = 0;
-    if (instance_index < refresh_rate_hz_vec.size()) {
-      CF_EXPECT(
-          android::base::ParseInt(refresh_rate_hz_vec[instance_index].c_str(),
-                                  &refresh_rate_hz),
-          "Failed to parse value \"" << refresh_rate_hz_vec[instance_index]
-                                     << "\" for refresh_rate_hz");
-    } else if (refresh_rate_hz_vec.size() == 1) {
-      CF_EXPECT(android::base::ParseInt(refresh_rate_hz_vec[0].c_str(),
-                                        &refresh_rate_hz),
-                "Failed to parse value \"" << refresh_rate_hz_vec[0]
-                                           << "\" for refresh_rate_hz");
-    }
-    if (x_res > 0 && y_res > 0) {
+    if (x_res_vec[instance_index] > 0 && y_res_vec[instance_index] > 0) {
       if (display_configs.empty()) {
         display_configs.push_back({
-            .width = x_res,
-            .height = y_res,
-            .dpi = dpi,
-            .refresh_rate_hz = refresh_rate_hz,
+            .width = x_res_vec[instance_index],
+            .height = y_res_vec[instance_index],
+            .dpi = dpi_vec[instance_index],
+            .refresh_rate_hz = refresh_rate_hz_vec[instance_index],
           });
       } else {
         LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
@@ -1328,23 +1255,152 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
     instance.set_config_server_port(calc_vsock_port(6800));
 
-    if (tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl &&
-        tmp_config_obj.gpu_mode() != kGpuModeGfxStream) {
+    // gpu related settings
+    std::string gpu_mode;
+    if (instance_index >= gpu_mode_vec.size()) {
+      gpu_mode = gpu_mode_vec[0];
+    } else {
+      gpu_mode = gpu_mode_vec[instance_index];
+    }
+    instance.set_gpu_mode(gpu_mode);
+    if (gpu_mode != kGpuModeAuto &&
+        gpu_mode != kGpuModeDrmVirgl &&
+        gpu_mode != kGpuModeGfxStream &&
+        gpu_mode != kGpuModeGuestSwiftshader) {
+      LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode;
+    }
+    if (gpu_mode == kGpuModeAuto) {
+      if (ShouldEnableAcceleratedRendering(graphics_availability)) {
+        LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
+            "rendering support.";
+        if (vm_manager_vec[0] == QemuManager::name()) {
+          LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
+          instance.set_gpu_mode(kGpuModeDrmVirgl);
+        } else {
+          LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
+          instance.set_gpu_mode(kGpuModeGfxStream);
+        }
+      } else {
+        LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
+            "accelerated rendering support, enabling "
+            "--gpu_mode=guest_swiftshader.";
+        instance.set_gpu_mode(kGpuModeGuestSwiftshader);
+      }
+    } else if (gpu_mode == kGpuModeGfxStream ||
+               gpu_mode == kGpuModeDrmVirgl) {
+      if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
+        LOG(ERROR) << "--gpu_mode="
+                   << gpu_mode
+                   << " was requested but the prerequisites for accelerated "
+                   "rendering were not detected so the device may not "
+                   "function correctly. Please consider switching to "
+                   "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+      }
+    }
+
+    bool restart_subprocesses;
+    if (instance_index >= restart_subprocesses_vec.size()) {
+      restart_subprocesses = CF_EXPECT(ParseBool(restart_subprocesses_vec[0],
+                                    "restart_subprocesses"));
+    } else {
+      restart_subprocesses = CF_EXPECT(ParseBool(
+          restart_subprocesses_vec[instance_index], "restart_subprocesses"));
+    }
+    instance.set_restart_subprocesses(restart_subprocesses);
+
+    std::string gpu_capture_binary;
+    if (instance_index >= gpu_capture_binary_vec.size()) {
+      gpu_capture_binary = gpu_capture_binary_vec[0];
+    } else {
+      gpu_capture_binary = gpu_capture_binary_vec[instance_index];
+    }
+    instance.set_gpu_capture_binary(gpu_capture_binary);
+    if (!gpu_capture_binary.empty()) {
+      CF_EXPECT(gpu_mode == kGpuModeGfxStream,
+          "GPU capture only supported with --gpu_mode=gfxstream");
+
+      // GPU capture runs in a detached mode where the "launcher" process
+      // intentionally exits immediately.
+      CF_EXPECT(!restart_subprocesses,
+          "GPU capture only supported with --norestart_subprocesses");
+    }
+
+    std::string hwcomposer;
+    if (instance_index >= hwcomposer_vec.size()) {
+      hwcomposer = hwcomposer_vec[0];
+    } else {
+      hwcomposer = hwcomposer_vec[instance_index];
+    }
+    instance.set_hwcomposer(hwcomposer);
+    if (!hwcomposer.empty()) {
+      if (hwcomposer == kHwComposerRanchu) {
+        CF_EXPECT(gpu_mode != kGpuModeDrmVirgl,
+            "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
+      }
+    }
+
+    if (hwcomposer == kHwComposerAuto) {
+      if (gpu_mode == kGpuModeDrmVirgl) {
+        instance.set_hwcomposer(kHwComposerDrm);
+      } else {
+        instance.set_hwcomposer(kHwComposerRanchu);
+      }
+    }
+
+    bool enable_gpu_udmabuf;
+    if (instance_index >= enable_gpu_udmabuf_vec.size()) {
+      enable_gpu_udmabuf = CF_EXPECT(ParseBool(enable_gpu_udmabuf_vec[0],
+                                    "enable_gpu_udmabuf"));
+    } else {
+      enable_gpu_udmabuf = CF_EXPECT(ParseBool(
+          enable_gpu_udmabuf_vec[instance_index], "enable_gpu_udmabuf"));
+    }
+    instance.set_enable_gpu_udmabuf(enable_gpu_udmabuf);
+
+    bool enable_gpu_angle;
+    if (instance_index >= enable_gpu_angle_vec.size()) {
+      enable_gpu_angle = CF_EXPECT(ParseBool(enable_gpu_angle_vec[0],
+                                    "enable_gpu_angle"));
+    } else {
+      enable_gpu_angle = CF_EXPECT(ParseBool(
+          enable_gpu_angle_vec[instance_index], "enable_gpu_angle"));
+    }
+    instance.set_enable_gpu_angle(enable_gpu_angle);
+
+    // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
+    // then set_enable_sandbox later.
+    // 2. SetCommandLineOptionWithMode condition: if gpu_mode or console,
+    // then SetCommandLineOptionWithMode false as original code did,
+    // otherwise keep default enable_sandbox value.
+    // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily disable
+    // auto-enabling sandbox when gpu is enabled (b/152323505).
+    default_enable_sandbox += comma_str;
+    if ((gpu_mode != kGpuModeGuestSwiftshader) || console) {
+      // original code, just moved to each instance setting block
+      default_enable_sandbox += "false";
+    } else {
+      default_enable_sandbox += BoolToString(enable_sandbox);
+    }
+    comma_str = ",";
+
+    if (vmm->ConfigureGraphics(const_instance).empty()) {
+      LOG(FATAL) << "Invalid (gpu_mode=," << gpu_mode <<
+      " hwcomposer= " << hwcomposer <<
+      ") does not work with vm_manager=" << vm_manager_vec[0];
+    }
+
+    if (gpu_mode != kGpuModeDrmVirgl &&
+        gpu_mode != kGpuModeGfxStream) {
       if (vm_manager_vec[0] == QemuManager::name()) {
         instance.set_keyboard_server_port(calc_vsock_port(7000));
         instance.set_touch_server_port(calc_vsock_port(7100));
       }
     }
+    // end of gpu related settings
 
     instance.set_gnss_grpc_proxy_server_port(7200 + num -1);
-
-    if (instance_index < gnss_file_paths.size()) {
-      instance.set_gnss_file_path(gnss_file_paths[instance_index]);
-    }
-    if (instance_index < fixed_location_file_paths.size()) {
-      instance.set_fixed_location_file_path(
-          fixed_location_file_paths[instance_index]);
-    }
+    instance.set_gnss_file_path(gnss_file_paths[instance_index]);
+    instance.set_fixed_location_file_path(fixed_location_file_paths[instance_index]);
 
     std::vector<std::string> virtual_disk_paths;
 
@@ -1473,7 +1529,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // After last SetCommandLineOptionWithMode, we could set these special flags
   enable_sandbox_vec = android::base::Split(FLAGS_enable_sandbox, ",");
   instance_index = 0;
-  for (const auto& num : *instance_nums) {
+  for (const auto& num : instance_nums) {
     auto instance = tmp_config_obj.ForInstance(num);
     bool enable_sandbox;
     if (instance_index >= enable_sandbox_vec.size()) {
@@ -1494,14 +1550,30 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
-void SetDefaultFlagsForQemu(Arch target_arch) {
-  // for now, we don't set non-default options for QEMU
-  if (FLAGS_gpu_mode == kGpuModeGuestSwiftshader && !FLAGS_start_webrtc) {
-    // This makes WebRTC the default streamer unless the user requests
-    // another via a --star_<streamer> flag, while at the same time it's
-    // possible to run without any streamer by setting --start_webrtc=false.
-    SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
+Result<void> SetDefaultFlagsForQemu(Arch target_arch) {
+  std::string gpu_mode;
+  std::vector<std::string> gpu_mode_vec =
+      android::base::Split(FLAGS_gpu_mode, ",");
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+
+  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
+    if (instance_index >= gpu_mode_vec.size()) {
+      gpu_mode = gpu_mode_vec[0];
+    } else {
+      gpu_mode = gpu_mode_vec[instance_index];
+    }
+
+    // This is the 1st place to set "start_webrtc" flag value
+    // for now, we don't set non-default options for QEMU
+    if (gpu_mode == kGpuModeGuestSwiftshader && !FLAGS_start_webrtc) {
+      // This makes WebRTC the default streamer unless the user requests
+      // another via a --star_<streamer> flag, while at the same time it's
+      // possible to run without any streamer by setting --start_webrtc=false.
+      SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
+    }
   }
+
   std::string default_bootloader =
       DefaultHostArtifactsPath("etc/bootloader_");
   if(target_arch == Arch::Arm) {
@@ -1516,9 +1588,11 @@ void SetDefaultFlagsForQemu(Arch target_arch) {
   default_bootloader += "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
+  return {};
 }
 
-void SetDefaultFlagsForCrosvm() {
+Result<void> SetDefaultFlagsForCrosvm() {
+  // This is the 1st place to set "start_webrtc" flag value
   if (!FLAGS_start_webrtc) {
     // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
@@ -1538,8 +1612,8 @@ void SetDefaultFlagsForCrosvm() {
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
   auto instance_nums =
-      InstanceNumsCalculator().FromGlobalGflags().Calculate();
-  for (int instance_index = 0; instance_index < instance_nums->size(); instance_index++) {
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
     if (instance_index >= system_image_dir.size()) {
       cur_system_image_dir = system_image_dir[0];
     } else {
@@ -1558,6 +1632,7 @@ void SetDefaultFlagsForCrosvm() {
   // This is the 1st place to set "enable_sandbox" flag value
   SetCommandLineOptionWithMode("enable_sandbox",
                                default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
+  return {};
 }
 
 void SetDefaultFlagsForGem5() {
@@ -1599,9 +1674,9 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
       android::base::Split(FLAGS_vm_manager, ",");
 
   if (vm_manager_vec[0] == QemuManager::name()) {
-    SetDefaultFlagsForQemu(kernel_configs[0].target_arch);
+    CF_EXPECT(SetDefaultFlagsForQemu(kernel_configs[0].target_arch));
   } else if (vm_manager_vec[0] == CrosvmManager::name()) {
-    SetDefaultFlagsForCrosvm();
+    CF_EXPECT(SetDefaultFlagsForCrosvm());
   } else if (vm_manager_vec[0] == Gem5Manager::name()) {
     // TODO: Get the other architectures working
     if (kernel_configs[0].target_arch != Arch::Arm64) {
