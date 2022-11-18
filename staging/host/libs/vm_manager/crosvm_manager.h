@@ -35,7 +35,7 @@ class CrosvmManager : public VmManager {
 
   bool IsSupported() override;
   std::vector<std::string> ConfigureGraphics(
-      const CuttlefishConfig& config) override;
+      const CuttlefishConfig::InstanceSpecific& instance) override;
   std::string ConfigureBootDevices(int num_disks) override;
 
   Result<std::vector<cuttlefish::Command>> StartCommands(
@@ -47,4 +47,3 @@ class CrosvmManager : public VmManager {
 
 } // namespace vm_manager
 } // namespace cuttlefish
-
