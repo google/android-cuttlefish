@@ -58,7 +58,7 @@ void WritePausedEntrypoint(std::ostream& env, const char* entrypoint,
 }
 
 void WriteAndroidEnvironment(
-    const CuttlefishConfig& config,std::ostream& env,
+    const CuttlefishConfig& config, std::ostream& env,
     const CuttlefishConfig::InstanceSpecific& instance) {
   WritePausedEntrypoint(env, "run bootcmd_android", instance);
 
@@ -82,6 +82,7 @@ void WriteEFIEnvironment(
 
 size_t WriteEnvironment(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance,
+                        const CuttlefishConfig::InstanceSpecific::BootFlow& flow,
                         const std::string& kernel_args,
                         const std::string& env_path) {
   std::ostringstream env;
@@ -92,7 +93,7 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
     env << "uenvcmd=setenv bootargs \"$cbootargs\" && ";
   }
 
-  switch (instance.boot_flow()) {
+  switch (flow) {
     case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
       WriteAndroidEnvironment(config, env, instance);
       break;
@@ -129,8 +130,22 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
-    auto boot_env_image_path = instance_.uboot_env_image_path();
-    auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
+    if (instance_.start_ap()) {
+      if (!PrepareBootEnvImage(instance_.ap_uboot_env_image_path(),
+          CuttlefishConfig::InstanceSpecific::BootFlow::Linux)) {
+        return false;
+      }
+    }
+    if (!PrepareBootEnvImage(instance_.uboot_env_image_path(), instance_.boot_flow())) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool PrepareBootEnvImage(const std::string& image_path,
+                           const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
+    auto tmp_boot_env_image_path = image_path + ".tmp";
     auto uboot_env_path = instance_.PerInstancePath("mkenvimg_input");
     auto kernel_cmdline = android::base::Join(
         KernelCommandLineFromConfig(config_, instance_), " ");
@@ -154,7 +169,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       kernel_cmdline += " ";
       kernel_cmdline += bootconfig_args;
     }
-    if (!WriteEnvironment(config_, instance_, kernel_cmdline, uboot_env_path)) {
+    if (!WriteEnvironment(config_, instance_, flow, kernel_cmdline, uboot_env_path)) {
       LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path
                  << ".'";
       return false;
@@ -197,9 +212,9 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       return false;
     }
 
-    if (!FileExists(boot_env_image_path) ||
-        ReadFile(boot_env_image_path) != ReadFile(tmp_boot_env_image_path)) {
-      if (!RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
+    if (!FileExists(image_path) ||
+        ReadFile(image_path) != ReadFile(tmp_boot_env_image_path)) {
+      if (!RenameFile(tmp_boot_env_image_path, image_path)) {
         LOG(ERROR) << "Unable to delete the old env image.";
         return false;
       }

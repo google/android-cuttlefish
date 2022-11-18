@@ -251,15 +251,27 @@ class ServerLoopImpl : public ServerLoop,
     auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
     LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
     CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
-    std::vector<std::string> overlay_files{"overlay.img"};
+
+    struct OverlayFile {
+      std::string name;
+      std::string composite_disk_path;
+
+      OverlayFile(std::string name, std::string composite_disk_path)
+          : name(std::move(name)), composite_disk_path(std::move(composite_disk_path)) {}
+    };
+    std::vector<OverlayFile> overlay_files{
+      OverlayFile("overlay.img", instance_.os_composite_disk_path())
+    };
     if (instance_.start_ap()) {
-      overlay_files.emplace_back("ap_overlay.img");
+      overlay_files.emplace_back(
+        OverlayFile("ap_overlay.img", instance_.ap_composite_disk_path()));
     }
     for (const auto& overlay_file : overlay_files) {
-      auto overlay_path = instance_.PerInstancePath(overlay_file.c_str());
+      auto overlay_path = instance_.PerInstancePath(overlay_file.name.c_str());
+      auto composite_disk_path = overlay_file.composite_disk_path.c_str();
+
       unlink(overlay_path.c_str());
-      if (!CreateQcowOverlay(config_.crosvm_binary(),
-                             instance_.os_composite_disk_path(), overlay_path)) {
+      if (!CreateQcowOverlay(config_.crosvm_binary(), composite_disk_path, overlay_path)) {
         LOG(ERROR) << "CreateQcowOverlay failed";
         return false;
       }
