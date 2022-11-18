@@ -470,7 +470,7 @@ bool eicOpsEcDsaVerifyWithPublicKey(const uint8_t* digest, size_t digestSize,
 }
 
 bool eicOpsEcdh(const uint8_t publicKey[EIC_P256_PUB_KEY_SIZE],
-                const uint8_t privateKey[EIC_P256_PUB_KEY_SIZE],
+                const uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
                 uint8_t sharedSecret[EIC_P256_COORDINATE_SIZE]) {
   vector<uint8_t> pubKeyVec(EIC_P256_PUB_KEY_SIZE + 1);
   pubKeyVec[0] = 0x04;
