@@ -525,6 +525,54 @@ int CuttlefishConfig::InstanceSpecific::modem_simulator_sim_type() const {
   return (*Dictionary())[kModemSimulatorSimType].asInt();
 }
 
+static constexpr char kGpuMode[] = "gpu_mode";
+std::string CuttlefishConfig::InstanceSpecific::gpu_mode() const {
+  return (*Dictionary())[kGpuMode].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(const std::string& name) {
+  (*Dictionary())[kGpuMode] = name;
+}
+
+static constexpr char kGpuCaptureBinary[] = "gpu_capture_binary";
+std::string CuttlefishConfig::InstanceSpecific::gpu_capture_binary() const {
+  return (*Dictionary())[kGpuCaptureBinary].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_capture_binary(const std::string& name) {
+  (*Dictionary())[kGpuCaptureBinary] = name;
+}
+
+static constexpr char kRestartSubprocesses[] = "restart_subprocesses";
+bool CuttlefishConfig::InstanceSpecific::restart_subprocesses() const {
+  return (*Dictionary())[kRestartSubprocesses].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_restart_subprocesses(bool restart_subprocesses) {
+  (*Dictionary())[kRestartSubprocesses] = restart_subprocesses;
+}
+
+static constexpr char kHWComposer[] = "hwcomposer";
+std::string CuttlefishConfig::InstanceSpecific::hwcomposer() const {
+  return (*Dictionary())[kHWComposer].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_hwcomposer(const std::string& name) {
+  (*Dictionary())[kHWComposer] = name;
+}
+
+static constexpr char kEnableGpuUdmabuf[] = "enable_gpu_udmabuf";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf) {
+  (*Dictionary())[kEnableGpuUdmabuf] = enable_gpu_udmabuf;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_udmabuf() const {
+  return (*Dictionary())[kEnableGpuUdmabuf].asBool();
+}
+
+static constexpr char kEnableGpuAngle[] = "enable_gpu_angle";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_angle(const bool enable_gpu_angle) {
+  (*Dictionary())[kEnableGpuAngle] = enable_gpu_angle;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gpu_angle() const {
+  return (*Dictionary())[kEnableGpuAngle].asBool();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
