@@ -39,6 +39,8 @@ type ExecContext = func(name string, arg ...string) *exec.Cmd
 type InstanceManager interface {
 	CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error)
 
+	ListCVDs() (*apiv1.ListCVDsResponse, error)
+
 	GetLogsDir(name string) string
 }
 
@@ -62,6 +64,7 @@ type IMPaths struct {
 
 // Instance manager implementation based on execution of `cvd` tool commands.
 type CVDToolInstanceManager struct {
+	execContext        ExecContext
 	paths              IMPaths
 	om                 OperationManager
 	instanceCounter    uint32
@@ -81,8 +84,9 @@ type CVDToolInstanceManagerOpts struct {
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
 	return &CVDToolInstanceManager{
-		paths: opts.Paths,
-		om:    opts.OperationManager,
+		execContext: opts.ExecContext,
+		paths:       opts.Paths,
+		om:          opts.OperationManager,
 		downloadCVDHandler: &downloadCVDHandler{
 			CVDBinAB: opts.CVDBinAB,
 			CVDBin:   opts.Paths.CVDBin,
@@ -104,6 +108,47 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	op := m.om.New()
 	go m.launchCVD(req, op)
 	return op, nil
+}
+
+type cvdFleetItem struct {
+	InstanceName string   `json:"instance_name"`
+	Status       string   `json:"status"`
+	Displays     []string `json:"displays"`
+}
+
+func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
+	if err := m.downloadCVDHandler.Download(); err != nil {
+		return nil, err
+	}
+	var stdOut string
+	cvdCmd := cvdCommand{
+		execContext: m.execContext,
+		cvdBin:      m.paths.CVDBin,
+		args:        []string{"fleet"},
+		stdOut:      &stdOut,
+	}
+	err := cvdCmd.Run()
+	if err != nil {
+		return nil, err
+	}
+	items := make([][]cvdFleetItem, 0)
+	if err := json.Unmarshal([]byte(stdOut), &items); err != nil {
+		return nil, err
+	}
+	cvds := make([]*apiv1.CVD, 0)
+	for _, s := range items {
+		for _, item := range s {
+			cvd := &apiv1.CVD{
+				Name: item.InstanceName,
+				// TODO(b/259725479): Update when `cvd fleet` prints out build information.
+				BuildInfo: &apiv1.BuildInfo{},
+				Status:    item.Status,
+				Displays:  item.Displays,
+			}
+			cvds = append(cvds, cvd)
+		}
+	}
+	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
 }
 
 func (m *CVDToolInstanceManager) GetLogsDir(name string) string {
@@ -454,6 +499,7 @@ type cvdCommand struct {
 	home           string
 	cvdBin         string
 	args           []string
+	stdOut         *string
 	// if zero, there's no timeout logic.
 	timeout time.Duration
 }
@@ -512,6 +558,9 @@ func (c *cvdCommand) Run() error {
 				"############################################\n"
 			log.Printf(msg, b.String())
 			return &cvdCommandExecErr{c.args, b.String(), err}
+		}
+		if c.stdOut != nil {
+			*c.stdOut = b.String()
 		}
 	case <-timeoutCh:
 		return &cvdCommandTimeoutErr{c.args}

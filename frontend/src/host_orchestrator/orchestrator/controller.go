@@ -33,6 +33,7 @@ type Controller struct {
 
 func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds", &createCVDHandler{im: c.InstanceManager}).Methods("POST")
+	router.Handle("/cvds", &listCVDsHandler{im: c.InstanceManager}).Methods("GET")
 	router.PathPrefix("/cvds/{name}/logs").Handler(&getCVDLogsHandler{im: c.InstanceManager}).Methods("GET")
 	router.Handle("/operations/{name}", &getOperationHandler{om: c.OperationManager}).Methods("GET")
 	// The expected response of the operation in case of success.  If the original method returns no data on
@@ -63,6 +64,19 @@ func (h *createCVDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	operator.ReplyJSONOK(w, op)
+}
+
+type listCVDsHandler struct {
+	im InstanceManager
+}
+
+func (h *listCVDsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	res, err := h.im.ListCVDs()
+	if err != nil {
+		operator.ReplyJSONErr(w, err)
+		return
+	}
+	operator.ReplyJSONOK(w, res)
 }
 
 type getCVDLogsHandler struct {

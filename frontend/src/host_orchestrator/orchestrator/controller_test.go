@@ -36,6 +36,10 @@ func (testIM) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
 	return apiv1.Operation{}, nil
 }
 
+func (testIM) ListCVDs() (*apiv1.ListCVDsResponse, error) {
+	return &apiv1.ListCVDsResponse{}, nil
+}
+
 func (m *testIM) GetLogsDir(name string) string {
 	return m.LogsDir
 }
