@@ -38,6 +38,8 @@ type ExecContext = func(name string, arg ...string) *exec.Cmd
 
 type InstanceManager interface {
 	CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error)
+
+	GetLogsDir(name string) string
 }
 
 type EmptyFieldError string
@@ -102,6 +104,10 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	op := m.om.New()
 	go m.launchCVD(req, op)
 	return op, nil
+}
+
+func (m *CVDToolInstanceManager) GetLogsDir(name string) string {
+	return m.paths.HomesRootDir + "/" + name + "/cuttlefish_runtime/logs"
 }
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
