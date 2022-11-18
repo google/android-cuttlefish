@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,6 @@ import (
 	"os/exec"
 	"path"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -84,9 +84,7 @@ func (d *testCVDDwnlder) Download(_ string, _ AndroidBuild) error {
 }
 
 func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return buildTestCmd()
-	}
+	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -116,7 +114,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 		if contains(args, "fetch") {
 			fetchCVDExecCounter += 1
 		}
-		return buildTestCmd()
+		return exec.Command("true")
 	}
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -147,9 +145,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return buildTestCmd()
-	}
+	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
@@ -177,9 +173,7 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return buildTestCmd()
-	}
+	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
@@ -216,7 +210,7 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 			usedCmdName = name
 			usedCmdArgs = args
 		}
-		return buildTestCmd()
+		return exec.Command("true")
 	}
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -253,7 +247,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 			usedCmdName = name
 			usedCmdArgs = args
 		}
-		return buildTestCmd()
+		return exec.Command("true")
 	}
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -286,9 +280,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 func TestCreateCVDSucceeds(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return buildTestCmd()
-	}
+	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
@@ -313,9 +305,7 @@ func TestCreateCVDSucceeds(t *testing.T) {
 func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return buildTestCmdF(args...)
-	}
+	execContext := execCtxSubcmdFails
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
@@ -339,9 +329,7 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := func(name string, args ...string) *exec.Cmd {
-		return buildTestCmdD(args...)
-	}
+	execContext := execCtxSubcmdDelays
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
@@ -610,62 +598,28 @@ func removeDir(t *testing.T, name string) {
 	}
 }
 
-const executedAsFakeMain = "executed_as_fake_main"
-
-type fakeMainFunc func(*testing.T)
-
-// NOTE: This test is not a regular unit tests. It simulates a fake binary execution.
-func TestFakeBinaryMain(t *testing.T) {}
-
-// Creates a new exec.Cmd, which will call the `TestFakeBinaryMain` function through the execution
-// of the `go test` binary using the parameter `--test.run`.
-func buildTestCmd() *exec.Cmd {
-	cs := []string{"--test.run=" + funcName(TestFakeBinaryMain)}
-	cmd := exec.Command(os.Args[0], cs...)
-	return cmd
+func execCtxAlwaysSucceeds(name string, args ...string) *exec.Cmd {
+	return exec.Command("true")
 }
 
-// NOTE: This test is not a regular unit tests. It simulates a fake binary execution that fails.
-func TestFakeBinaryMainF(t *testing.T) {
-	// Early exit when called as regular test.
-	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMain {
-		return
-	}
-	panic("failure")
-}
-
-// Same as buildTestCmd but the execution fails when a cvd subcommand is executed.
-func buildTestCmdF(args ...string) *exec.Cmd {
+func execCtxSubcmdFails(name string, args ...string) *exec.Cmd {
+	cmd := "false"
 	// Do not fail when executing cvd only as it is not a cvd subcommand.
 	if path.Base(args[len(args)-1]) == "cvd" {
-		return buildTestCmd()
+		cmd = "true"
 	}
-	cs := []string{"--test.run=" + funcName(TestFakeBinaryMainF), executedAsFakeMain}
-	cmd := exec.Command(os.Args[0], cs...)
-	return cmd
+	return exec.Command(cmd)
 }
 
 const testFakeBinaryDelayMs = 100 * time.Millisecond
 
-// NOTE: This test is not a regular unit tests. It simulates a fake binary execution with some delay.
-func TestFakeBinaryMainDelay(t *testing.T) {
-	// Early exit when called as regular test.
-	if len(os.Args) < 3 || os.Args[2] != executedAsFakeMain {
-		return
+func execCtxSubcmdDelays(name string, args ...string) *exec.Cmd {
+	cmd := fmt.Sprintf("sleep %f", float64(testFakeBinaryDelayMs)/1000_000_000)
+	// Do not wait when executing cvd only as it is not a cvd subcommand.
+	if path.Base(args[len(args)-1]) == "cvd" {
+		cmd = "true"
 	}
-	time.Sleep(testFakeBinaryDelayMs)
-}
-
-// Same as buildTestCmd but the execution has some delay.
-func buildTestCmdD(args ...string) *exec.Cmd {
-	cs := []string{"--test.run=" + funcName(TestFakeBinaryMainDelay), executedAsFakeMain}
-	cmd := exec.Command(os.Args[0], cs...)
-	return cmd
-}
-
-func funcName(fn fakeMainFunc) string {
-	name := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
-	return name[strings.LastIndex(name, ".")+1:]
+	return exec.Command(cmd)
 }
 
 func contains(values []string, t string) bool {
