@@ -174,25 +174,6 @@ PRODUCT_PACKAGES += \
 # Packages for the OpenGL implementation
 #
 
-# ANGLE provides an OpenGL implementation built on top of Vulkan.
-PRODUCT_PACKAGES += \
-    libEGL_angle \
-    libGLESv1_CM_angle \
-    libGLESv2_angle
-
-# ANGLE options:
-#
-# * preferLinearFilterForYUV
-#     Prefer linear filtering for YUV AHBs to pass
-#     android.media.decoder.cts.DecodeAccuracyTest.
-#
-# * mapUnspecifiedColorSpaceToPassThrough
-#     Map unspecified color spaces to PASS_THROUGH to pass
-#     android.media.codec.cts.DecodeEditEncodeTest and
-#     android.media.codec.cts.EncodeDecodeTest.
-PRODUCT_VENDOR_PROPERTIES += \
-    debug.angle.feature_overrides_enabled=preferLinearFilterForYUV:mapUnspecifiedColorSpaceToPassThrough
-
 # GL implementation for virgl
 PRODUCT_PACKAGES += \
     libGLES_mesa \
