@@ -729,8 +729,6 @@ endif
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
 
-PRODUCT_EXTRA_VNDK_VERSIONS := 28 29 30 31
-
 PRODUCT_SOONG_NAMESPACES += external/mesa3d
 
 #for Confirmation UI
