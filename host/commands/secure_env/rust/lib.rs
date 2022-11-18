@@ -42,6 +42,10 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     let clock = clock::StdClock::default();
     let rsa = BoringRsa::default();
     let ec = BoringEc::default();
+    let tpm_hkdf = tpm::KeyDerivation::new(trm);
+    let soft_hkdf = BoringHmac;
+    let hkdf: &dyn kmr_common::crypto::Hkdf =
+        if security_level == SecurityLevel::TrustedEnvironment { &tpm_hkdf } else { &soft_hkdf };
     let imp = crypto::Implementation {
         rng: &mut rng,
         clock: Some(&clock),
@@ -52,7 +56,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         rsa: &rsa,
         ec: &ec,
         ckdf: &BoringAesCmac,
-        hkdf: &BoringHmac,
+        hkdf,
     };
     let sign_info = attest::CertSignInfo::new();
 

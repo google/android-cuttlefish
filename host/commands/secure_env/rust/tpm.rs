@@ -1,7 +1,13 @@
 //! Key management interactions using the TPM.
 
-use kmr_common::{crypto, km_err, vec_try, Error};
+use kmr_common::{
+    crypto,
+    crypto::{NoOpHmac, SHA256_DIGEST_LEN},
+    km_err, vec_try, vec_try_with_capacity, Error, FallibleAllocExt,
+};
 use kmr_ta::device::DeviceHmac;
+
+pub const ROOT_KEK_MARKER: &[u8] = b"CF Root KEK";
 
 // TPM-backed implementation of key retrieval/management functionality.
 pub struct Keys {
@@ -17,8 +23,7 @@ impl Keys {
 
 impl kmr_ta::device::RetrieveKeyMaterial for Keys {
     fn root_kek(&self, _context: &[u8]) -> Result<crypto::RawKeyMaterial, Error> {
-        // TODO(b/242838132): add TPM-backed implementation
-        Ok(crypto::RawKeyMaterial(b"0123456789012345".to_vec()))
+        Ok(crypto::RawKeyMaterial(ROOT_KEK_MARKER.to_vec()))
     }
 
     fn kak(&self) -> Result<crypto::aes::Key, Error> {
@@ -75,5 +80,55 @@ fn tpm_hmac(trm: *mut libc::c_void, data: &[u8]) -> Result<Vec<u8>, Error> {
         Ok(tag)
     } else {
         Err(km_err!(UnknownError, "HMAC calculation failed"))
+    }
+}
+
+pub struct KeyDerivation {
+    tpm_hmac: TpmHmac,
+}
+
+impl KeyDerivation {
+    pub fn new(trm: *mut libc::c_void) -> Self {
+        Self { tpm_hmac: TpmHmac { trm } }
+    }
+}
+
+impl kmr_common::crypto::Hkdf for KeyDerivation {
+    fn hkdf(&self, salt: &[u8], ikm: &[u8], info: &[u8], out_len: usize) -> Result<Vec<u8>, Error> {
+        if ikm != ROOT_KEK_MARKER {
+            // This code expects that the value from `Keys::root_kek()` above will be passed
+            // unmodified to this function in its (only) use as key derivation.  If this is not the
+            // case, then the assumptions below around TPM use may no longer be correct.
+            return Err(km_err!(UnknownError, "unexpected root kek in key derivation"));
+        }
+        if !salt.is_empty() {
+            // Similarly, we ignore the salt on the assumption that it is empty. If this changes,
+            // then assumptions about use of this trait implementation may be wrong.
+            return Err(km_err!(UnknownError, "unexpected non-empty salt in key derivation"));
+        }
+
+        // HKDF normally performs an initial extract step to create a pseudo-random key (PRK) for
+        // use in the HKDF expand processing.  This implementation uses a TPM HMAC key for HKDF
+        // expand processing instead, and so the HKDF extract step is skipped.
+
+        // HKDF expand: feed the derivation info into HMAC (using the TPM key) repeatedly.
+        let n = (out_len + SHA256_DIGEST_LEN - 1) / SHA256_DIGEST_LEN;
+        if n > 256 {
+            return Err(km_err!(UnknownError, "overflow in hkdf"));
+        }
+        let mut t = vec_try_with_capacity!(SHA256_DIGEST_LEN)?;
+        let mut okm = vec_try_with_capacity!(n * SHA256_DIGEST_LEN)?;
+        let n = n as u8;
+        for idx in 0..n {
+            let mut input = vec_try_with_capacity!(t.len() + info.len() + 1)?;
+            input.extend_from_slice(&t);
+            input.extend_from_slice(info);
+            input.push(idx + 1);
+
+            t = self.tpm_hmac.hmac(&NoOpHmac, &input)?;
+            okm.try_extend_from_slice(&t)?;
+        }
+        okm.truncate(out_len);
+        Ok(okm)
     }
 }
