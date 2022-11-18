@@ -287,14 +287,14 @@ int main(int argc, char** argv) {
   streamer->SetHardwareSpec("RAM", std::to_string(instance.memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;
-  if (cvd_config->gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
+  if (instance.gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
-  } else if (cvd_config->gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
+  } else if (instance.gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
     user_friendly_gpu_mode = "VirglRenderer (Accelerated Host GPU Rendering)";
-  } else if (cvd_config->gpu_mode() == cuttlefish::kGpuModeGfxStream) {
+  } else if (instance.gpu_mode() == cuttlefish::kGpuModeGfxStream) {
     user_friendly_gpu_mode = "Gfxstream (Accelerated Host GPU Rendering)";
   } else {
-    user_friendly_gpu_mode = cvd_config->gpu_mode();
+    user_friendly_gpu_mode = instance.gpu_mode();
   }
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
