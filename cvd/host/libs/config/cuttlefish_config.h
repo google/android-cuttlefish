@@ -99,6 +99,21 @@ class CuttlefishConfig {
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
+  std::string gpu_mode() const;
+  void set_gpu_mode(const std::string& name);
+
+  std::string gpu_capture_binary() const;
+  void set_gpu_capture_binary(const std::string&);
+
+  std::string hwcomposer() const;
+  void set_hwcomposer(const std::string&);
+
+  void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
+  bool enable_gpu_udmabuf() const;
+
+  void set_enable_gpu_angle(const bool enable_gpu_angle);
+  bool enable_gpu_angle() const;
+
   struct DisplayConfig {
     int width;
     int height;
@@ -144,6 +159,9 @@ class CuttlefishConfig {
 
   void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
   bool enable_vehicle_hal_grpc_server() const;
+
+  void set_restart_subprocesses(bool restart_subprocesses);
+  bool restart_subprocesses() const;
 
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
@@ -246,6 +264,9 @@ class CuttlefishConfig {
 
   void set_wmediumd_api_server_socket(const std::string& path);
   std::string wmediumd_api_server_socket() const;
+
+  void set_ap_esp_image(const std::string& otheros_ap_image);
+  std::string ap_esp_image() const;
 
   void set_ap_rootfs_image(const std::string& path);
   std::string ap_rootfs_image() const;
@@ -416,9 +437,15 @@ class CuttlefishConfig {
 
     std::string persistent_composite_disk_path() const;
 
+    std::string persistent_ap_composite_disk_path() const;
+
     std::string os_composite_disk_path() const;
 
+    std::string ap_composite_disk_path() const;
+
     std::string uboot_env_image_path() const;
+
+    std::string ap_uboot_env_image_path() const;
 
     std::string audio_server_path() const;
 
@@ -511,13 +538,6 @@ class CuttlefishConfig {
     bool enable_modem_simulator() const;
     int modem_simulator_instance_number() const;
     int modem_simulator_sim_type() const;
-
-    std::string gpu_mode() const;
-    std::string gpu_capture_binary() const;
-    bool restart_subprocesses() const;
-    std::string hwcomposer() const;
-    bool enable_gpu_udmabuf() const;
-    bool enable_gpu_angle() const;
 
     // android artifacts
     std::string boot_image() const;
@@ -632,13 +652,6 @@ class CuttlefishConfig {
     void set_enable_modem_simulator(bool enable_modem_simulator);
     void set_modem_simulator_instance_number(int instance_numbers);
     void set_modem_simulator_sim_type(int sim_type);
-
-    void set_gpu_mode(const std::string& name);
-    void set_gpu_capture_binary(const std::string&);
-    void set_restart_subprocesses(bool restart_subprocesses);
-    void set_hwcomposer(const std::string&);
-    void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
-    void set_enable_gpu_angle(const bool enable_gpu_angle);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
