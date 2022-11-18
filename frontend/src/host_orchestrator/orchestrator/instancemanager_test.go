@@ -358,6 +358,58 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	}
 }
 
+func TestListCVDsSucceeds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	output := `[
+  [
+          {
+                  "adb_serial" : "0.0.0.0:6520",
+                  "assembly_dir" : "/var/lib/cuttlefish-common/homes/cvd-1/cuttlefish/assembly",
+                  "displays" :
+                  [
+                          "720 x 1280 ( 320 )"
+                  ],
+                  "instance_dir" : "/var/lib/cuttlefish-common/homes/cvd-1/cuttlefish/instances/cvd-1",
+                  "instance_name" : "cvd-1",
+                  "status" : "Running",
+                  "web_access" : "https:///run/cuttlefish/operator:8443/client.html?deviceId=cvd-1",
+                  "webrtc_port" : "8443"
+          }
+  ]
+]`
+	execContext := func(name string, args ...string) *exec.Cmd {
+		cmd := exec.Command("true")
+		if path.Base(args[len(args)-1]) == "fleet" {
+			cmd = exec.Command("echo", strings.TrimSpace(output))
+		}
+		return cmd
+	}
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
+
+	res, _ := im.ListCVDs()
+
+	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
+		&apiv1.CVD{
+			Name:      "cvd-1",
+			BuildInfo: &apiv1.BuildInfo{},
+			Status:    "Running",
+			Displays:  []string{"720 x 1280 ( 320 )"},
+		},
+	}}
+	if diff := cmp.Diff(want, res); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestGetLogsDir(t *testing.T) {
 	paths := IMPaths{HomesRootDir: "/homes"}
 	im := NewCVDToolInstanceManager(&CVDToolInstanceManagerOpts{Paths: paths})

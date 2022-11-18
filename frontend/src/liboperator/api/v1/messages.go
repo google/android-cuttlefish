@@ -87,9 +87,17 @@ type CVD struct {
 	Name string `json:"name"`
 	// [REQUIRED]
 	BuildInfo *BuildInfo `json:"build_info"`
+	// [Output Only]
+	Status string `json:"status"`
+	// [Output Only]
+	Displays []string `json:"displays"`
 }
 
 type DeviceInfoReply struct {
 	DeviceId         string      `json:"device_id"`
 	RegistrationInfo interface{} `json:"registration_info"`
+}
+
+type ListCVDsResponse struct {
+	CVDs []*CVD `json:"cvds"`
 }
