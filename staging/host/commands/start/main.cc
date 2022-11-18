@@ -198,7 +198,10 @@ std::unordered_set<std::string> kBoolFlags = {"guest_enforce_security",
                                               "enable_minimal_mode",
                                               "enable_modem_simulator",
                                               "console",
-                                              "enable_sandbox"};
+                                              "enable_sandbox",
+                                              "restart_subprocesses",
+                                              "enable_gpu_udmabuf",
+                                              "enable_gpu_angle"};
 
 struct BooleanFlag {
   bool is_bool_flag;
