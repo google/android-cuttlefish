@@ -224,11 +224,9 @@ func NewConnection(signaling *Signaling, observer Observer) (*Connection, error)
 	pc.OnNegotiationNeeded(func() {
 		// TODO(jemoreira): This needs to be handled when unnecessary tracks and
 		// channels are removed from the peer connection.
-		fmt.Println("Negotiation needed")
 	})
 	pc.OnTrack(func(tr *webrtc.TrackRemote, rtpRec *webrtc.RTPReceiver) {
 		// TODO(jemoreira): Remove from the peer connection to save bandwidth.
-		fmt.Printf("New track: %s\n", tr.ID())
 	})
 
 	observer.OnADBDataChannel(adbChannel)
