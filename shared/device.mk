@@ -402,8 +402,9 @@ endif
 # Gralloc HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.graphics.allocator-V1-service.minigbm \
-    android.hardware.graphics.mapper@4.0-impl.minigbm
+    android.hardware.graphics.allocator-service.minigbm \
+    android.hardware.graphics.mapper@4.0-impl.minigbm \
+    mapper.minigbm
 
 #
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
