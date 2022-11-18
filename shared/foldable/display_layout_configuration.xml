@@ -38,4 +38,17 @@
       <address>4619827353912518657</address>
     </display>
   </layout>
+
+  <layout>
+  <!-- REAR_DISPLAY_MODE: display0 disabled, display1 enabled -->
+    <state>3</state>
+
+    <display enabled="false">
+      <address>4619827259835644672</address>
+    </display>
+
+    <display enabled="true" defaultDisplay="true">
+      <address>4619827551948147201</address>
+    </display>
+  </layout>
 </layouts>
