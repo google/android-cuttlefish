@@ -58,16 +58,16 @@ bool CrosvmManager::IsSupported() {
 }
 
 std::vector<std::string> CrosvmManager::ConfigureGraphics(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig::InstanceSpecific& instance) {
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  if (config.gpu_mode() == kGpuModeGuestSwiftshader) {
+  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
     return {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
         "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
@@ -75,7 +75,7 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
     };
   }
 
-  if (config.gpu_mode() == kGpuModeDrmVirgl) {
+  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
     return {
         "androidboot.cpuvulkan.version=0",
         "androidboot.hardware.gralloc=minigbm",
@@ -87,12 +87,12 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.opengles.version=196608",  // OpenGL ES 3.0
     };
   }
-  if (config.gpu_mode() == kGpuModeGfxStream) {
-    std::string gles_impl = config.enable_gpu_angle() ? "angle" : "emulation";
+  if (instance.gpu_mode() == kGpuModeGfxStream) {
+    std::string gles_impl = instance.enable_gpu_angle() ? "angle" : "emulation";
     return {
         "androidboot.cpuvulkan.version=0",
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=" + config.hwcomposer(),
+        "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
         "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=" + gles_impl,
         "androidboot.hardware.vulkan=ranchu",
@@ -157,15 +157,15 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--gdb=", instance.gdb_port());
   }
 
-  const auto gpu_capture_enabled = !config.gpu_capture_binary().empty();
-  const auto gpu_mode = config.gpu_mode();
+  const auto gpu_capture_enabled = !instance.gpu_capture_binary().empty();
+  const auto gpu_mode = instance.gpu_mode();
 
   const std::string gpu_angle_string =
-      config.enable_gpu_angle() ? ",angle=true" : "";
+      instance.enable_gpu_angle() ? ",angle=true" : "";
   // 256MB so it is small enough for a 32-bit kernel.
   const std::string gpu_pci_bar_size = ",pci-bar-size=268435456";
   const std::string gpu_udmabuf_string =
-      config.enable_gpu_udmabuf() ? ",udmabuf=true" : "";
+      instance.enable_gpu_udmabuf() ? ",udmabuf=true" : "";
 
   const std::string gpu_common_string = gpu_udmabuf_string + gpu_pci_bar_size;
   const std::string gpu_common_3d_string =
@@ -427,7 +427,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 
   if (gpu_capture_enabled) {
     const std::string gpu_capture_basename =
-        cpp_basename(config.gpu_capture_binary());
+        cpp_basename(instance.gpu_capture_binary());
 
     auto gpu_capture_logs_path =
         instance.PerInstanceInternalPath("gpu_capture.fifo");
@@ -441,7 +441,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                                          gpu_capture_basename);
     gpu_capture_log_tee_cmd.AddParameter("--log_fd_in=", gpu_capture_logs);
 
-    Command gpu_capture_command(config.gpu_capture_binary());
+    Command gpu_capture_command(instance.gpu_capture_binary());
     if (gpu_capture_basename == "ngfx") {
       // Crosvm depends on command line arguments being passed as multiple
       // arguments but ngfx only allows a single `--args`. To work around this,
@@ -463,7 +463,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     } else {
       // TODO(natsu): renderdoc
       return CF_ERR(
-          "Unhandled GPU capture binary: " << config.gpu_capture_binary());
+          "Unhandled GPU capture binary: " << instance.gpu_capture_binary());
     }
 
     gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,

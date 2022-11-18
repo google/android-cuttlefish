@@ -73,7 +73,7 @@ class ServerLoopImpl : public ServerLoop,
     // Monitor and restart host processes supporting the CVD
     ProcessMonitor::Properties process_monitor_properties;
     process_monitor_properties.RestartSubprocesses(
-        config_.restart_subprocesses());
+        instance_.restart_subprocesses());
 
     for (auto& command_source : command_sources_) {
       if (command_source->Enabled()) {
