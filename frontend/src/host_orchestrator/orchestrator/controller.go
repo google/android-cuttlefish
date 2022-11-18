@@ -43,7 +43,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	// Same as `/operations/{name}/result but waits for the specified operation to be DONE or for the request
 	// to approach the specified deadline, `503 Service Unavailable` error will be returned if the deadline is
 	// reached. Be prepared to retry if the deadline was reached.
-	router.Handle("/operations/{name}/wait",
+	router.Handle("/operations/{name}/:wait",
 		&waitOperationHandler{c.OperationManager, c.WaitOperationDuration}).Methods("POST")
 }
 

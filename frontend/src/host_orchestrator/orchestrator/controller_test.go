@@ -111,7 +111,7 @@ func TestGetOperationResultIsHandled(t *testing.T) {
 
 func TestWaitOperationIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("POST", "/operations/foo/wait", strings.NewReader(""))
+	req, err := http.NewRequest("POST", "/operations/foo/:wait", strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestWaitOperationIsHandled(t *testing.T) {
 
 func TestWaitOperationNotFound(t *testing.T) {
 	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("POST", "/operations/foo/wait", strings.NewReader(""))
+	req, err := http.NewRequest("POST", "/operations/foo/:wait", strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +145,7 @@ func TestWaitOperationTimeout(t *testing.T) {
 	dt := 100 * time.Millisecond
 	om := NewMapOM()
 	op := om.New()
-	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/wait", strings.NewReader(""))
+	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/:wait", strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +169,7 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 	om := NewMapOM()
 	op := om.New()
 	om.Complete(op.Name, &OperationResult{Value: "foo"})
-	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/wait", strings.NewReader(""))
+	req, err := http.NewRequest("POST", "/operations/"+op.Name+"/:wait", strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)
 	}
