@@ -1,10 +1,12 @@
 <manifest version="1.0" type="device">
     <hal format="aidl">
         <name>android.hardware.radio.config</name>
+        <version>2</version>
         <fqname>IRadioConfig/default</fqname>
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.data</name>
+        <version>2</version>
         <fqname>IRadioData/slot1</fqname>
     </hal>
     <hal format="aidl">
@@ -13,6 +15,7 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.messaging</name>
+        <version>2</version>
         <fqname>IRadioMessaging/slot1</fqname>
     </hal>
     <hal format="aidl">
@@ -27,10 +30,12 @@
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.sim</name>
+        <version>2</version>
         <fqname>IRadioSim/slot1</fqname>
     </hal>
     <hal format="aidl">
         <name>android.hardware.radio.voice</name>
+        <version>2</version>
         <fqname>IRadioVoice/slot1</fqname>
     </hal>
 </manifest>
