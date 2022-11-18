@@ -1,0 +1,4 @@
+/vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-external-vsock-service u:object_r:hal_camera_default_exec:s0
+/vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google u:object_r:hal_camera_default_exec:s0
+/vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google-lazy u:object_r:hal_camera_default_exec:s0
+

@@ -19,7 +19,3 @@ ro.vendor.hwcomposer.mode  u:object_r:vendor_hwcomposer_prop:s0 exact string
 ro.vendor.hwcomposer.pmem  u:object_r:vendor_hwcomposer_prop:s0 exact string
 vendor.wlan.firmware.version   u:object_r:vendor_wlan_versions_prop:s0 exact string
 vendor.wlan.driver.version     u:object_r:vendor_wlan_versions_prop:s0 exact string
-
-# Camera
-persist.vendor.camera.                     u:object_r:vendor_camera_prop:s0
-vendor.camera.                             u:object_r:vendor_camera_prop:s0
