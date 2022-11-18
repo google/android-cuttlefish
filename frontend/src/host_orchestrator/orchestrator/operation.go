@@ -56,6 +56,7 @@ type OperationManager interface {
 
 	// Waits for the specified operation to be DONE within the passed deadline. If the deadline
 	// is reached `OperationWaitTimeoutError` will be returned.
+	// NOTE: if dt is zero there's no timeout.
 	Wait(name string, dt time.Duration) (*OperationResult, error)
 }
 
@@ -148,13 +149,17 @@ func (m *MapOM) Wait(name string, dt time.Duration) (*OperationResult, error) {
 	if !ok {
 		return nil, NotFoundOperationError("map key didn't exist")
 	}
+	var timeoutCh <-chan time.Time
+	if dt != 0 {
+		timeoutCh = time.After(dt)
+	}
 	select {
 	case <-entry.done:
 		entry.mutex.RLock()
 		result := entry.result
 		entry.mutex.RUnlock()
 		return result, nil
-	case <-time.After(time.Duration(dt)):
+	case <-timeoutCh:
 		return nil, new(OperationWaitTimeoutError)
 	}
 }
