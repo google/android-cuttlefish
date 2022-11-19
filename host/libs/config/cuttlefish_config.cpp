@@ -549,6 +549,15 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
   (*dictionary_)[kApKernelImage] = ap_kernel_image;
 }
 
+static constexpr char kApEspImage[] = "ap_esp_image";
+std::string CuttlefishConfig::ap_esp_image() const {
+  return (*dictionary_)[kApEspImage].asString();
+}
+void CuttlefishConfig::set_ap_esp_image(
+    const std::string& ap_esp_image) {
+  (*dictionary_)[kApEspImage] = ap_esp_image;
+}
+
 static constexpr char kWmediumdConfig[] = "wmediumd_config";
 void CuttlefishConfig::set_wmediumd_config(const std::string& config) {
   (*dictionary_)[kWmediumdConfig] = config;
@@ -676,14 +685,6 @@ void CuttlefishConfig::set_filename_encryption_mode(
   auto fmt = filename_encryption_mode;
   std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
   (*dictionary_)[kFilenameEncryptionMode] = fmt;
-}
-
-static constexpr char kApImageDevPath[] = "ap_image_dev_path";
-std::string CuttlefishConfig::ap_image_dev_path() const {
-  return (*dictionary_)[kApImageDevPath].asString();
-}
-void CuttlefishConfig::set_ap_image_dev_path(const std::string& dev_path) {
-  (*dictionary_)[kApImageDevPath] = dev_path;
 }
 
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
