@@ -220,7 +220,7 @@ class CurlClient : public HttpClient {
     auto extra_cache_entries = CF_EXPECT(ManuallyResolveUrl(url));
     curl_easy_setopt(curl_, CURLOPT_RESOLVE, extra_cache_entries.get());
     LOG(INFO) << "Attempting to download \"" << url << "\"";
-    CF_EXPECT(method != HttpMethod::kPost && !data_to_write.empty(),
+    CF_EXPECT(data_to_write.empty() || method == HttpMethod::kPost,
               "data must be empty for non POST requests");
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
