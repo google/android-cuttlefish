@@ -23,6 +23,7 @@ cc_library_host_static {
         "creation_analyzer.cpp",
         "instance_database.cpp",
         "instance_database_impl.cpp",
+        "instance_database_types.cpp",
         "instance_database_utils.cpp",
         "instance_group_record.cpp",
         "instance_record.cpp",
