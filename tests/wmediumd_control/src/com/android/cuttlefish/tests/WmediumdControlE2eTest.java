@@ -116,6 +116,16 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
         return stationInfoList;
     }
 
+    public StationInfo getStation(String macAddress) throws Exception {
+        List<StationInfo> stationInfoList = listStations();
+        for (StationInfo station : stationInfoList) {
+            if (station.macAddress.equals(macAddress)) {
+                return station;
+            }
+        }
+        return null;
+    }
+
     private void setSnr(String macAddress1, String macAddress2, int snr) throws Exception {
         CommandResult result = runWmediumdCommand(10000, "set_snr", macAddress1, macAddress2, Integer.toString(snr));
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
@@ -123,6 +133,16 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
 
     private void setPosition(String macAddress, double xPosition, double yPosition) throws Exception {
         CommandResult result = runWmediumdCommand(10000, "--", "set_position", macAddress, Double.toString(xPosition), Double.toString(yPosition));
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+    }
+
+    private void setLci(String macAddress, String lci) throws Exception {
+        CommandResult result = runWmediumdCommand(10000, "set_lci", macAddress, lci);
+        Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+    }
+
+    private void setCivicloc(String macAddress, String civicloc) throws Exception {
+        CommandResult result = runWmediumdCommand(10000, "set_civicloc", macAddress, civicloc);
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
     }
 
@@ -189,5 +209,41 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
 
         Assert.assertTrue(rssiDistance1000 < rssiDistance100);
         Assert.assertTrue(rssiDistance100 < rssiDistance10);
+    }
+
+    @Test(timeout = 60 * 1000)
+    public void testWmediumdControlSetLci() throws Exception {
+        if (!testDevice.connectToWifiNetwork("VirtWifi", ""))
+            return;
+
+        List<StationInfo> stationInfoList = listStations();
+        String apMacAddress = getApMacAddress(stationInfoList);
+
+        String testLci = "abcdef";
+
+        setLci(apMacAddress, testLci);
+
+        StationInfo apStation = getStation(apMacAddress);
+
+        String trimmedLci = apStation.lci.substring(1, apStation.lci.length() - 1);
+        Assert.assertEquals(testLci, trimmedLci);
+    }
+
+    @Test(timeout = 60 * 1000)
+    public void testWmediumdControlSetCivicloc() throws Exception {
+        if (!testDevice.connectToWifiNetwork("VirtWifi", ""))
+            return;
+
+        List<StationInfo> stationInfoList = listStations();
+        String apMacAddress = getApMacAddress(stationInfoList);
+
+        String testCivicloc = "zxcvb";
+
+        setCivicloc(apMacAddress, testCivicloc);
+
+        StationInfo apStation = getStation(apMacAddress);
+
+        String trimmedCivicloc = apStation.civicloc.substring(1, apStation.civicloc.length() - 1);
+        Assert.assertEquals(testCivicloc, trimmedCivicloc);
     }
 }
