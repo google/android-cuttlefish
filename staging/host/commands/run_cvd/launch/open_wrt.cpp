@@ -72,9 +72,7 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--disable-sandbox");
     }
     ap_cmd.AddReadWriteDisk(instance_.PerInstancePath("ap_overlay.img"));
-
-    ap_cmd.Cmd().AddParameter("--params=\"root=" + config_.ap_image_dev_path() +
-                              "\"");
+    ap_cmd.AddReadWriteDisk(instance_.persistent_ap_composite_disk_path());
 
     auto boot_logs_path =
         instance_.PerInstanceLogPath("crosvm_openwrt_boot.log");
@@ -82,7 +80,7 @@ class OpenWrt : public CommandSource {
     ap_cmd.AddSerialConsoleReadOnly(boot_logs_path);
     ap_cmd.AddHvcReadOnly(logs_path);
 
-    ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
+    ap_cmd.Cmd().AddParameter("--bios=", instance_.bootloader());
 
     std::vector<Command> commands;
     commands.emplace_back(log_tee_.CreateLogTee(ap_cmd.Cmd(), "openwrt"));

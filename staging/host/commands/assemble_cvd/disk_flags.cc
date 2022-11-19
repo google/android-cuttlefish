@@ -132,6 +132,7 @@ Result<void> ResolveInstanceFiles() {
   std::string default_metadata_image = "";
   std::string default_super_image = "";
   std::string default_misc_image = "";
+  std::string default_ap_esp_image = "";
   std::string default_esp_image = "";
   std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
@@ -154,26 +155,17 @@ Result<void> ResolveInstanceFiles() {
 
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.
-    default_boot_image = default_boot_image + comma_str
-        + cur_system_image_dir + "/boot.img";
-    default_init_boot_image = default_init_boot_image + comma_str
-        + cur_system_image_dir + "/init_boot.img";
-    default_data_image = default_data_image + comma_str
-        + cur_system_image_dir + "/userdata.img";
-    default_metadata_image = default_metadata_image + comma_str
-        + cur_system_image_dir + "/metadata.img";
-    default_super_image = default_super_image + comma_str
-        + cur_system_image_dir + "/super.img";
-    default_misc_image = default_misc_image + comma_str
-        + cur_system_image_dir + "/misc.img";
-    default_esp_image = default_esp_image + comma_str
-        + cur_system_image_dir + "/esp.img";
-    default_vendor_boot_image = default_vendor_boot_image + comma_str
-        + cur_system_image_dir + "/vendor_boot.img";
-    default_vbmeta_image = default_vbmeta_image + comma_str
-        + cur_system_image_dir + "/vbmeta.img";
-    default_vbmeta_system_image = default_vbmeta_system_image + comma_str
-        + cur_system_image_dir + "/vbmeta_system.img";
+    default_boot_image += comma_str + cur_system_image_dir + "/boot.img";
+    default_init_boot_image += comma_str + cur_system_image_dir + "/init_boot.img";
+    default_data_image += comma_str + cur_system_image_dir + "/userdata.img";
+    default_metadata_image += comma_str + cur_system_image_dir + "/metadata.img";
+    default_super_image += comma_str + cur_system_image_dir + "/super.img";
+    default_misc_image += comma_str + cur_system_image_dir + "/misc.img";
+    default_esp_image += comma_str + cur_system_image_dir + "/esp.img";
+    default_ap_esp_image += comma_str + cur_system_image_dir + "/ap_esp.img";
+    default_vendor_boot_image += comma_str + cur_system_image_dir + "/vendor_boot.img";
+    default_vbmeta_image += comma_str + cur_system_image_dir + "/vbmeta.img";
+    default_vbmeta_system_image += comma_str + cur_system_image_dir + "/vbmeta_system.img";
   }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -187,6 +179,8 @@ Result<void> ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("ap_esp_image", default_ap_esp_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("otheros_esp_image", default_esp_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -318,18 +312,24 @@ std::vector<ImagePartition> android_composite_disk_config(
     });
   }
 
-  // TODO: remove after moving ap to otheros flow
-  if (!FLAGS_ap_rootfs_image.empty()) {
-    // In case if there are multiple ap_rootfs_image input
-    // we could only take 1st one and shared by all instances
-    std::string ap_rootfs_image =
-      android::base::Split(FLAGS_ap_rootfs_image, ",")[0];
-    partitions.push_back(ImagePartition{
-        .label = "ap_rootfs",
-        .image_file_path = AbsolutePath(ap_rootfs_image),
-        .read_only = FLAGS_use_overlay,
-    });
-  }
+  return partitions;
+}
+
+std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& config) {
+  std::vector<ImagePartition> partitions;
+
+  partitions.push_back(ImagePartition{
+      .label = "ap_esp",
+      .image_file_path = AbsolutePath(config.ap_esp_image()),
+      .read_only = FLAGS_use_overlay,
+  });
+
+  partitions.push_back(ImagePartition{
+      .label = "ap_rootfs",
+      .image_file_path = AbsolutePath(config.ap_rootfs_image()),
+      .read_only = FLAGS_use_overlay,
+  });
+
   return partitions;
 }
 
@@ -362,9 +362,23 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
       .ResumeIfPossible(FLAGS_resume);
 }
 
+DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  return DiskBuilder()
+      .Partitions(GetApCompositeDiskConfig(config))
+      .VmManager(config.vm_manager())
+      .CrosvmPath(config.crosvm_binary())
+      .ConfigPath(instance.PerInstancePath("ap_composite_disk_config.txt"))
+      .HeaderPath(instance.PerInstancePath("ap_composite_gpt_header.img"))
+      .FooterPath(instance.PerInstancePath("ap_composite_gpt_footer.img"))
+      .CompositeDiskPath(instance.ap_composite_disk_path())
+      .ResumeIfPossible(FLAGS_resume);
+}
+
 std::vector<ImagePartition> persistent_composite_disk_config(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::string& uboot_env_image_path) {
   std::vector<ImagePartition> partitions;
 
   // Note that if the position of uboot_env changes, the environment for
@@ -372,7 +386,7 @@ std::vector<ImagePartition> persistent_composite_disk_config(
   // cuttlefish.fragment in external/u-boot).
   partitions.push_back(ImagePartition{
       .label = "uboot_env",
-      .image_file_path = AbsolutePath(instance.uboot_env_image_path()),
+      .image_file_path = AbsolutePath(uboot_env_image_path),
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta",
@@ -937,12 +951,13 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
     };
   }
   Result<void> ResultSetup() override {
-    auto ipath = [this](const std::string& path) -> std::string {
+    const auto ipath = [this](const std::string& path) -> std::string {
       return instance_.PerInstancePath(path.c_str());
     };
     auto persistent_disk_builder =
         DiskBuilder()
-            .Partitions(persistent_composite_disk_config(config_, instance_))
+            .Partitions(persistent_composite_disk_config(
+                config_, instance_, instance_.uboot_env_image_path()))
             .VmManager(config_.vm_manager())
             .CrosvmPath(config_.crosvm_binary())
             .ConfigPath(ipath("persistent_composite_disk_config.txt"))
@@ -950,8 +965,23 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
             .FooterPath(ipath("persistent_composite_gpt_footer.img"))
             .CompositeDiskPath(instance_.persistent_composite_disk_path())
             .ResumeIfPossible(FLAGS_resume);
-
     CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
+
+    if (instance_.start_ap()) {
+      auto persistent_ap_disk_builder =
+        DiskBuilder()
+            .Partitions(persistent_composite_disk_config(
+                config_, instance_, instance_.ap_uboot_env_image_path()))
+            .VmManager(config_.vm_manager())
+            .CrosvmPath(config_.crosvm_binary())
+            .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))
+            .HeaderPath(ipath("ap_persistent_composite_gpt_header.img"))
+            .FooterPath(ipath("ap_persistent_composite_gpt_footer.img"))
+            .CompositeDiskPath(instance_.persistent_ap_composite_disk_path())
+            .ResumeIfPossible(FLAGS_resume);
+      CF_EXPECT(persistent_ap_disk_builder.BuildCompositeDiskIfNecessary());
+    }
+
     return {};
   }
 
@@ -1348,9 +1378,14 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     }
 
     auto os_disk_builder = OsCompositeDiskBuilder(config, instance);
-    auto built_composite =
-        CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
-    if (built_composite) {
+    const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
+
+    auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
+    if (instance.start_ap()) {
+      CF_EXPECT(ap_disk_builder.BuildCompositeDiskIfNecessary());
+    }
+
+    if (os_built_composite) {
       if (FileExists(instance.access_kregistry_path())) {
         CF_EXPECT(CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */,
                                    "none"),
@@ -1371,8 +1406,8 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       os_disk_builder.OverlayPath(instance.PerInstancePath("overlay.img"));
       CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
       if (instance.start_ap()) {
-        os_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
-        CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
+        ap_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
+        CF_EXPECT(ap_disk_builder.BuildOverlayIfNecessary());
       }
     }
   }
