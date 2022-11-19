@@ -140,46 +140,6 @@ void CuttlefishConfig::set_vm_manager(const std::string& name) {
   (*dictionary_)[kVmManager] = name;
 }
 
-static constexpr char kGpuMode[] = "gpu_mode";
-std::string CuttlefishConfig::gpu_mode() const {
-  return (*dictionary_)[kGpuMode].asString();
-}
-void CuttlefishConfig::set_gpu_mode(const std::string& name) {
-  (*dictionary_)[kGpuMode] = name;
-}
-
-static constexpr char kGpuCaptureBinary[] = "gpu_capture_binary";
-std::string CuttlefishConfig::gpu_capture_binary() const {
-  return (*dictionary_)[kGpuCaptureBinary].asString();
-}
-void CuttlefishConfig::set_gpu_capture_binary(const std::string& name) {
-  (*dictionary_)[kGpuCaptureBinary] = name;
-}
-
-static constexpr char kHWComposer[] = "hwcomposer";
-std::string CuttlefishConfig::hwcomposer() const {
-  return (*dictionary_)[kHWComposer].asString();
-}
-void CuttlefishConfig::set_hwcomposer(const std::string& name) {
-  (*dictionary_)[kHWComposer] = name;
-}
-
-static constexpr char kEnableGpuUdmabuf[] = "enable_gpu_udmabuf";
-void CuttlefishConfig::set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf) {
-  (*dictionary_)[kEnableGpuUdmabuf] = enable_gpu_udmabuf;
-}
-bool CuttlefishConfig::enable_gpu_udmabuf() const {
-  return (*dictionary_)[kEnableGpuUdmabuf].asBool();
-}
-
-static constexpr char kEnableGpuAngle[] = "enable_gpu_angle";
-void CuttlefishConfig::set_enable_gpu_angle(const bool enable_gpu_angle) {
-  (*dictionary_)[kEnableGpuAngle] = enable_gpu_angle;
-}
-bool CuttlefishConfig::enable_gpu_angle() const {
-  return (*dictionary_)[kEnableGpuAngle].asBool();
-}
-
 void CuttlefishConfig::SetPath(const std::string& key,
                                const std::string& path) {
   if (!path.empty()) {
@@ -321,14 +281,6 @@ void CuttlefishConfig::set_webrtc_enable_adb_websocket(bool enable) {
 }
 bool CuttlefishConfig::webrtc_enable_adb_websocket() const {
     return (*dictionary_)[kWebRTCEnableADBWebSocket].asBool();
-}
-
-static constexpr char kRestartSubprocesses[] = "restart_subprocesses";
-bool CuttlefishConfig::restart_subprocesses() const {
-  return (*dictionary_)[kRestartSubprocesses].asBool();
-}
-void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
-  (*dictionary_)[kRestartSubprocesses] = restart_subprocesses;
 }
 
 static constexpr char kBootSlot[] = "boot_slot";
