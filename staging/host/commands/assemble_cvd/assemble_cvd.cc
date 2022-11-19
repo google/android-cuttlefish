@@ -182,6 +182,10 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     for (const auto& instance : config.Instances()) {
       auto os_builder = OsCompositeDiskBuilder(config, instance);
       creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
+      if (instance.start_ap()) {
+        auto ap_builder = ApCompositeDiskBuilder(config, instance);
+        creating_os_disk |= CF_EXPECT(ap_builder.WillRebuildCompositeDisk());
+      }
       if (instance.modem_simulator_instance_number() > modem_simulator_count) {
         modem_simulator_count = instance.modem_simulator_instance_number();
       }
@@ -238,19 +242,6 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
                   << config.AssemblyPath("assemble_cvd.log")
                   << ": " << log->StrError();
-    }
-
-    // use 1st instance to setup ap image dev
-    auto disk_config = GetOsCompositeDiskConfig(config.Instances()[0]);
-    if (auto it = std::find_if(disk_config.begin(), disk_config.end(),
-                               [](const auto& partition) {
-                                 return partition.label == "ap_rootfs";
-                               });
-        it != disk_config.end()) {
-      auto ap_image_idx = std::distance(disk_config.begin(), it) + 1;
-      std::stringstream ss;
-      ss << "/dev/vda" << ap_image_idx;
-      config.set_ap_image_dev_path(ss.str());
     }
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.

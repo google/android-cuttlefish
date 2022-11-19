@@ -338,6 +338,10 @@ DEFINE_string(wmediumd_config, CF_DEFAULTS_WMEDIUMD_CONFIG,
               "Path to the wmediumd config file. When missing, the default "
               "configuration is used which adds MAC addresses for up to 16 "
               "cuttlefish instances including AP.");
+
+DEFINE_string(ap_esp_image, CF_DEFAULTS_AP_ESP_IMAGE,
+              "Location of cuttlefish AP esp image. If the image does not exist, "
+              "an esp partition image is created with default bootloaders.");
 DEFINE_string(ap_rootfs_image, CF_DEFAULTS_AP_ROOTFS_IMAGE,
               "rootfs image for AP instance");
 DEFINE_string(ap_kernel_image, CF_DEFAULTS_AP_KERNEL_IMAGE,
@@ -804,8 +808,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (!FLAGS_ap_rootfs_image.empty()) {
     ap_rootfs_image = android::base::Split(FLAGS_ap_rootfs_image, ",")[0];
   }
+  std::string ap_esp_image = "";
+  if (!FLAGS_ap_esp_image.empty()) {
+    ap_esp_image = android::base::Split(FLAGS_ap_esp_image, ",")[0];
+  }
 
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
+  tmp_config_obj.set_ap_esp_image(ap_esp_image);
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);

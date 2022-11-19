@@ -125,7 +125,7 @@ bool CreateBlankImage(
       return false;
     }
   } else if (image_fmt == "f2fs") {
-    auto make_f2fs_path = cuttlefish::HostBinaryPath("make_f2fs");
+    auto make_f2fs_path = HostBinaryPath("make_f2fs");
     if (execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
      "compression,extra_attr,project_quota,casefold", "-g", "android"}) != 0) {
       return false;
@@ -349,57 +349,53 @@ class InitializeEspImageImpl : public InitializeEspImage {
   // SetupFeature
   std::string Name() const override { return "InitializeEspImageImpl"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Enabled() const override {
-    const auto flow = instance_.boot_flow();
-    const auto vm = config_.vm_manager();
-    const auto not_gem5 = vm != vm_manager::Gem5Manager::name();
-    const auto boot_flow_required_esp =
-        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
-        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
 
-    return not_gem5 && boot_flow_required_esp;
+  bool Enabled() const override {
+    return EspRequiredForBootFlow() || instance_.start_ap();
   }
 
  protected:
   bool Setup() override {
-    LOG(DEBUG) << "esp partition image: creating default";
-    auto builder = EspBuilder(instance_.otheros_esp_image());
-
-    // For licensing and build reproducibility reasons, pick up the bootloaders
-    // from the host Linux distribution (if present) and pack them into the
-    // automatically generated ESP. If the user wants their own bootloaders,
-    // they can use -esp_image=/path/to/esp.img to override, so we don't need
-    // to accommodate customizations of this packing process.
-
-    // Currently we only support Debian based distributions, and GRUB is built
-    // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
-    // nowhere else. If you want to add support for other distros, make the
-    // extra directories below and copy the initial grub.cfg there as well
-    builder.Directory("EFI")
-        .Directory("EFI/BOOT")
-        .Directory("EFI/debian")
-        .Directory("EFI/modules");
-
-    const auto flow = instance_.boot_flow();
-    if (flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
-        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia) {
-      auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
-      builder.File(grub_cfg, "EFI/debian/grub.cfg", /* required */ true);
-      switch (instance_.target_arch()) {
-        case Arch::Arm:
-        case Arch::Arm64:
-          builder.File(kBootSrcPathAA64, kBootDestPathAA64, /* required */ true);
-          builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPathAA64,
-                        /* required */ true);
-          break;
-        case Arch::X86:
-        case Arch::X86_64:
-          builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
-          builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
-                        /* required */ true);
-          break;
+    if (instance_.start_ap()) {
+      LOG(DEBUG) << "creating esp_image: " << config_.ap_esp_image();
+      if (!BuildAPImage()) {
+        return false;
       }
     }
+    const auto is_not_gem5 = config_.vm_manager() != vm_manager::Gem5Manager::name();
+    const auto esp_required_for_boot_flow = EspRequiredForBootFlow();
+    if (is_not_gem5 && esp_required_for_boot_flow) {
+      LOG(DEBUG) << "creating esp_image: " << instance_.otheros_esp_image();
+      if (!BuildOSImage()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+ private:
+
+  bool EspRequiredForBootFlow() const {
+    const auto flow = instance_.boot_flow();
+    return flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
+        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia;
+  }
+
+  bool BuildAPImage() {
+    auto builder = EspBuilder(config_.ap_esp_image());
+    PrepareESP(builder, CuttlefishConfig::InstanceSpecific::BootFlow::Linux);
+
+    builder.File(config_.ap_kernel_image(), "vmlinuz", /* required */ true);
+
+    return builder.Build();
+  }
+
+  bool BuildOSImage() {
+    auto builder = EspBuilder(instance_.otheros_esp_image());
+
+    const auto flow = instance_.boot_flow();
+    PrepareESP(builder, flow);
 
     switch (flow) {
       case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
@@ -421,7 +417,46 @@ class InitializeEspImageImpl : public InitializeEspImage {
     return builder.Build();
   }
 
- private:
+  void PrepareESP(EspBuilder& builder,
+                  const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
+    // For licensing and build reproducibility reasons, pick up the bootloaders
+    // from the host Linux distribution (if present) and pack them into the
+    // automatically generated ESP. If the user wants their own bootloaders,
+    // they can use -esp_image=/path/to/esp.img to override, so we don't need
+    // to accommodate customizations of this packing process.
+
+    // Currently we only support Debian based distributions, and GRUB is built
+    // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
+    // nowhere else. If you want to add support for other distros, make the
+    // extra directories below and copy the initial grub.cfg there as well
+    builder.Directory("EFI")
+        .Directory("EFI/BOOT")
+        .Directory("EFI/debian")
+        .Directory("EFI/modules");
+
+    if (flow == CuttlefishConfig::InstanceSpecific::BootFlow::Linux ||
+        flow == CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia) {
+      auto grub_cfg = DefaultHostArtifactsPath("etc/grub/grub.cfg");
+      builder.File(grub_cfg, "EFI/debian/grub.cfg", /* required */ true);
+      switch (instance_.target_arch()) {
+        case Arch::Arm:
+        case Arch::Arm64:
+          builder.File(kBootSrcPathAA64, kBootDestPathAA64, /* required */ true);
+          // Not required for arm64 due missing it in deb package, so fuchsia is
+          // not supported for it.
+          builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPathAA64,
+                        /* required */ false);
+          break;
+        case Arch::X86:
+        case Arch::X86_64:
+          builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
+          builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
+                        /* required */ true);
+          break;
+      }
+    }
+  }
+
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
