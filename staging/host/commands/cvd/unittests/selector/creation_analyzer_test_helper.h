@@ -74,6 +74,8 @@ class CreationInfoGenTest : public testing::TestWithParam<InputOutput> {
 
 class HomeTest : public CreationInfoGenTest {};
 class HostArtifactsTest : public CreationInfoGenTest {};
+class InvalidSubcmdTest : public CreationInfoGenTest {};
+class ValidSubcmdTest : public CreationInfoGenTest {};
 
 }  // namespace selector
 }  // namespace cuttlefish
