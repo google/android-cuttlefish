@@ -705,9 +705,19 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::persistent_ap_composite_disk_path()
+    const {
+  return AbsolutePath(PerInstancePath("ap_persistent_composite.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("os_composite.img"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::ap_composite_disk_path()
+    const {
+  return AbsolutePath(PerInstancePath("ap_composite.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
@@ -716,6 +726,10 @@ std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("uboot_env.img"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const {
+  return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }
 
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";

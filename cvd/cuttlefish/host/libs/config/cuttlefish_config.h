@@ -247,6 +247,9 @@ class CuttlefishConfig {
   void set_wmediumd_api_server_socket(const std::string& path);
   std::string wmediumd_api_server_socket() const;
 
+  void set_ap_esp_image(const std::string& otheros_ap_image);
+  std::string ap_esp_image() const;
+
   void set_ap_rootfs_image(const std::string& path);
   std::string ap_rootfs_image() const;
 
@@ -416,9 +419,15 @@ class CuttlefishConfig {
 
     std::string persistent_composite_disk_path() const;
 
+    std::string persistent_ap_composite_disk_path() const;
+
     std::string os_composite_disk_path() const;
 
+    std::string ap_composite_disk_path() const;
+
     std::string uboot_env_image_path() const;
+
+    std::string ap_uboot_env_image_path() const;
 
     std::string audio_server_path() const;
 
