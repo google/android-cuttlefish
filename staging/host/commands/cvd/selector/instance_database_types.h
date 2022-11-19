@@ -17,18 +17,40 @@
 #pragma once
 
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 namespace cuttlefish {
 namespace selector {
+namespace selector_impl {
+
+template <typename ValueType>
+using ToStringTypeReturnType =
+    decltype(void(std::to_string(std::declval<ValueType&>())));
+
+template <typename T, typename = void>
+struct IsToStringOk : std::false_type {};
+
+template <typename T>
+struct IsToStringOk<T, ToStringTypeReturnType<T>> : std::true_type {};
+
+}  // namespace selector_impl
 
 using FieldName = std::string;
 using Value = std::string;
 // e.g. if intended to search by --home=/home/vsoc-01,
 // field_name_ is "home" and the field_value_ is "/home/vsoc-01"
 struct Query {
+  template <typename ValueType,
+            typename = std::enable_if_t<
+                selector_impl::IsToStringOk<ValueType>::value, void>>
+  Query(const std::string& field_name, ValueType&& field_value)
+      : field_name_(field_name),
+        field_value_(std::to_string(std::forward<ValueType>(field_value))) {}
+  Query(const std::string& field_name, const std::string& field_value);
+
   FieldName field_name_;
   Value field_value_;
 };
