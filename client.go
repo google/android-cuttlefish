@@ -74,7 +74,7 @@ func (c *APIClient) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstanc
 	if err := c.doRequest("POST", "/hosts", req, &op); err != nil {
 		return nil, err
 	}
-	path := "/operations/" + op.Name + "/wait"
+	path := "/operations/" + op.Name + "/:wait"
 	if err := c.doRequest("POST", path, nil, &op); err != nil {
 		return nil, err
 	}
