@@ -118,7 +118,6 @@ DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
               "(ngfx, renderdoc, etc)");
 DEFINE_vec(enable_gpu_udmabuf, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_UDMABUF),
             "Use the udmabuf driver for zero-copy virtio-gpu");
-
 DEFINE_vec(enable_gpu_angle,
            cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_ANGLE),
            "Use ANGLE to provide GLES implementation (always true for"
@@ -254,8 +253,9 @@ DEFINE_vec(daemon, CF_DEFAULTS_DAEMON?"true":"false",
 
 DEFINE_vec(setupwizard_mode, CF_DEFAULTS_SETUPWIZARD_MODE,
               "One of DISABLED,OPTIONAL,REQUIRED");
-DEFINE_bool(enable_bootanimation, CF_DEFAULTS_ENABLE_BOOTANIMATION,
-            "Whether to enable the boot animation.");
+DEFINE_vec(enable_bootanimation,
+           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_BOOTANIMATION),
+           "Whether to enable the boot animation.");
 
 DEFINE_string(qemu_binary_dir, CF_DEFAULTS_QEMU_BINARY_DIR,
               "Path to the directory containing the qemu binary to use");
@@ -343,9 +343,9 @@ DEFINE_string(ap_rootfs_image, CF_DEFAULTS_AP_ROOTFS_IMAGE,
 DEFINE_string(ap_kernel_image, CF_DEFAULTS_AP_KERNEL_IMAGE,
               "kernel image for AP instance");
 
-DEFINE_bool(record_screen, CF_DEFAULTS_RECORD_SCREEN,
-            "Enable screen recording. "
-            "Requires --start_webrtc");
+DEFINE_vec(record_screen, cuttlefish::BoolToString(CF_DEFAULTS_RECORD_SCREEN),
+           "Enable screen recording. "
+           "Requires --start_webrtc");
 
 DEFINE_bool(smt, CF_DEFAULTS_SMT,
             "Enable simultaneous multithreading (SMT/HT)");
@@ -734,8 +734,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   LOG(DEBUG) << graphics_availability;
 
-  tmp_config_obj.set_enable_bootanimation(FLAGS_enable_bootanimation);
-
   auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
   tmp_config_obj.set_secure_hals(
       std::set<std::string>(secure_hals.begin(), secure_hals.end()));
@@ -812,8 +810,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       FLAGS_bluetooth_controller_properties_file);
   tmp_config_obj.set_rootcanal_default_commands_file(
       FLAGS_bluetooth_default_commands_file);
-
-  tmp_config_obj.set_record_screen(FLAGS_record_screen);
 
   // netsim flags allow all radios or selecting a specific radio
   bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt;
@@ -893,6 +889,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       FLAGS_enable_vehicle_hal_grpc_server, instances_size, "enable_vehicle_hal_grpc_server"));
   std::vector<bool> start_gnss_proxy_vec = CF_EXPECT(GetFlagBoolValueForInstances(
       FLAGS_start_gnss_proxy, instances_size, "start_gnss_proxy"));
+  std::vector<bool> enable_bootanimation_vec =
+      CF_EXPECT(GetFlagBoolValueForInstances(
+          FLAGS_enable_bootanimation, instances_size, "enable_bootanimation"));
+  std::vector<bool> record_screen_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_record_screen, instances_size, "record_screen"));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GetFlagBoolValueForInstances(
@@ -962,6 +963,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_vehicle_hal_grpc_server(
       enable_vehicle_hal_grpc_server_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
+    instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
+    instance.set_record_screen(record_screen_vec[instance_index]);
 
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(

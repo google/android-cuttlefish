@@ -182,14 +182,6 @@ void CuttlefishConfig::set_secure_hals(const std::set<std::string>& hals) {
   (*dictionary_)[kSecureHals] = hals_json_obj;
 }
 
-static constexpr char kEnableBootAnimation[] = "enable_bootanimation";
-bool CuttlefishConfig::enable_bootanimation() const {
-  return (*dictionary_)[kEnableBootAnimation].asBool();
-}
-void CuttlefishConfig::set_enable_bootanimation(bool enable_bootanimation) {
-  (*dictionary_)[kEnableBootAnimation] = enable_bootanimation;
-}
-
 static constexpr char kQemuBinaryDir[] = "qemu_binary_dir";
 std::string CuttlefishConfig::qemu_binary_dir() const {
   return (*dictionary_)[kQemuBinaryDir].asString();
@@ -609,14 +601,6 @@ void CuttlefishConfig::set_rootcanal_default_commands_file(
     const std::string& rootcanal_default_commands_file) {
   (*dictionary_)[kRootcanalDefaultCommandsFile] =
       DefaultHostArtifactsPath(rootcanal_default_commands_file);
-}
-
-static constexpr char kRecordScreen[] = "record_screen";
-void CuttlefishConfig::set_record_screen(bool record_screen) {
-  (*dictionary_)[kRecordScreen] = record_screen;
-}
-bool CuttlefishConfig::record_screen() const {
-  return (*dictionary_)[kRecordScreen].asBool();
 }
 
 static constexpr char kSmt[] = "smt";
