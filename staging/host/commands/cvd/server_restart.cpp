@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/server.h"
 
+#include <sys/types.h>
+
 #include <android-base/file.h>
 #include <fruit/fruit.h>
 
@@ -70,10 +72,12 @@ class CvdRestartHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
+    CF_EXPECT(request.Credentials() != std::nullopt);
+    const uid_t uid = request.Credentials()->uid;
     cvd::Response response;
     response.mutable_shutdown_response();
 
-    if (instance_manager_.HasInstanceGroups()) {
+    if (instance_manager_.HasInstanceGroups(uid)) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Cannot restart cvd_server while devices are being tracked. "
