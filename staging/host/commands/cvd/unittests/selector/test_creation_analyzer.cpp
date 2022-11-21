@@ -89,7 +89,7 @@ TEST_P(HomeTest, HomeTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_,
+  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
                                           instance_lock_file_manager_);
 
   ASSERT_EQ(result.ok(), expected_success_) << result.error().Trace();
@@ -123,7 +123,7 @@ TEST_P(HostArtifactsTest, HostArtifactsTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_,
+  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
                                           instance_lock_file_manager_);
 
   ASSERT_EQ(result.ok(), expected_success_) << result.error().Trace();
@@ -151,7 +151,7 @@ TEST_P(InvalidSubcmdTest, InvalidSubcmdTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_,
+  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
                                           instance_lock_file_manager_);
 
   ASSERT_FALSE(result.ok())
@@ -167,7 +167,7 @@ TEST_P(ValidSubcmdTest, ValidSubcmdTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_,
+  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
                                           instance_lock_file_manager_);
 
   ASSERT_TRUE(result.ok()) << result.error().Trace();
