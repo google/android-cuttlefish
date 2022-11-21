@@ -27,6 +27,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -47,40 +48,51 @@ Result<std::string> InstanceManager::GetCuttlefishConfigPath(
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager)
     : lock_manager_(lock_manager) {}
 
-bool InstanceManager::HasInstanceGroups() const {
+selector::InstanceDatabase& InstanceManager::GetInstanceDB(const uid_t uid) {
+  if (!Contains(instance_dbs_, uid)) {
+    instance_dbs_.try_emplace(uid);
+  }
+  return instance_dbs_[uid];
+}
+
+bool InstanceManager::HasInstanceGroups(const uid_t uid) {
   std::lock_guard lock(instance_db_mutex_);
-  return !instance_db_.IsEmpty();
+  auto& instance_db = GetInstanceDB(uid);
+  return !instance_db.IsEmpty();
 }
 
 Result<void> InstanceManager::SetInstanceGroup(
-    const InstanceManager::InstanceGroupDir& dir,
+    const uid_t uid, const InstanceManager::InstanceGroupDir& dir,
     const InstanceGroupInfo& info) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
+  auto& instance_db = GetInstanceDB(uid);
   // for now, the group name is determined automatically by the instance_db_
-  CF_EXPECT(instance_db_.AddInstanceGroup(dir, info.host_binaries_dir));
+  CF_EXPECT(instance_db.AddInstanceGroup(dir, info.host_binaries_dir));
   auto searched_group =
-      CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
+      CF_EXPECT(instance_db.FindGroup({selector::kHomeField, dir}));
   for (auto i : info.instances) {
     const std::string default_instance_name = std::to_string(i);
-    instance_db_.AddInstance(searched_group.Get(), i, default_instance_name);
+    instance_db.AddInstance(searched_group.Get(), i, default_instance_name);
   }
   return {};
 }
 
 void InstanceManager::RemoveInstanceGroup(
-    const InstanceManager::InstanceGroupDir& dir) {
+    const uid_t uid, const InstanceManager::InstanceGroupDir& dir) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
-  auto result = instance_db_.FindGroup({selector::kHomeField, dir});
+  auto& instance_db = GetInstanceDB(uid);
+  auto result = instance_db.FindGroup({selector::kHomeField, dir});
   if (!result.ok()) return;
   auto group = *result;
-  instance_db_.RemoveInstanceGroup(group);
+  instance_db.RemoveInstanceGroup(group);
 }
 
 Result<InstanceManager::InstanceGroupInfo>
 InstanceManager::GetInstanceGroupInfo(
-    const InstanceManager::InstanceGroupDir& dir) const {
+    const uid_t uid, const InstanceManager::InstanceGroupDir& dir) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
-  auto group = CF_EXPECT(instance_db_.FindGroup({selector::kHomeField, dir}));
+  auto& instance_db = GetInstanceDB(uid);
+  auto group = CF_EXPECT(instance_db.FindGroup({selector::kHomeField, dir}));
   InstanceGroupInfo info;
   info.host_binaries_dir = group.Get().HostBinariesDir();
   const auto& instances = group.Get().Instances();
@@ -114,14 +126,15 @@ void InstanceManager::IssueStatusCommand(
 }
 
 Result<cvd::Status> InstanceManager::CvdFleetImpl(
-    const SharedFD& out, const SharedFD& err,
-    const std::optional<std::string>& env_config) const {
+    const uid_t uid, const SharedFD& out, const SharedFD& err,
+    const std::optional<std::string>& env_config) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
+  auto& instance_db = GetInstanceDB(uid);
   const char _GroupDeviceInfoStart[] = "[\n";
   const char _GroupDeviceInfoSeparate[] = ",\n";
   const char _GroupDeviceInfoEnd[] = "]\n";
   WriteAll(out, _GroupDeviceInfoStart);
-  auto&& instance_groups = instance_db_.InstanceGroups();
+  auto&& instance_groups = instance_db.InstanceGroups();
 
   for (const auto& group : instance_groups) {
     CF_EXPECT(group != nullptr);
@@ -144,7 +157,7 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(
 
 Result<cvd::Status> InstanceManager::CvdFleetHelp(
     const SharedFD& out, const SharedFD& err,
-    const std::string& host_tool_dir) const {
+    const std::string& host_tool_dir) {
   Command command(host_tool_dir + kStatusBin);
   command.AddParameter("--help");
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
@@ -159,10 +172,9 @@ Result<cvd::Status> InstanceManager::CvdFleetHelp(
 }
 
 Result<cvd::Status> InstanceManager::CvdFleet(
-    const SharedFD& out, const SharedFD& err,
+    const uid_t uid, const SharedFD& out, const SharedFD& err,
     const std::optional<std::string>& env_config,
-    const std::string& host_tool_dir,
-    const std::vector<std::string>& args) const {
+    const std::string& host_tool_dir, const std::vector<std::string>& args) {
   bool is_help = false;
   for (const auto& arg : args) {
     if (arg == "--help" || arg == "-help") {
@@ -171,7 +183,7 @@ Result<cvd::Status> InstanceManager::CvdFleet(
     }
   }
   return (is_help ? CvdFleetHelp(out, err, host_tool_dir + "/bin/")
-                  : CvdFleetImpl(out, err, env_config));
+                  : CvdFleetImpl(uid, out, err, env_config));
 }
 
 void InstanceManager::IssueStopCommand(
@@ -198,13 +210,14 @@ void InstanceManager::IssueStopCommand(
   }
 }
 
-cvd::Status InstanceManager::CvdClear(const SharedFD& out,
+cvd::Status InstanceManager::CvdClear(const uid_t uid, const SharedFD& out,
                                       const SharedFD& err) {
   std::lock_guard lock(instance_db_mutex_);
+  auto& instance_db = GetInstanceDB(uid);
   cvd::Status status;
   const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
 
-  auto&& instance_groups = instance_db_.InstanceGroups();
+  auto&& instance_groups = instance_db.InstanceGroups();
   for (const auto& group : instance_groups) {
     auto config_path = group->GetCuttlefishConfigPath();
     if (config_path.ok()) {
@@ -215,7 +228,7 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   }
   WriteAll(err, "Stopped all known instances\n");
 
-  instance_db_.Clear();
+  instance_db.Clear();
   status.set_code(cvd::Status::OK);
   return status;
 }

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -37,6 +39,7 @@ struct CommandInvocationInfo {
   std::string bin;
   std::string home;
   std::string host_artifacts_path;
+  uid_t uid;
   std::vector<std::string> args;
   Envs envs;
 };

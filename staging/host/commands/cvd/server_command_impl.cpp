@@ -61,6 +61,12 @@ cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
 std::optional<CommandInvocationInfo> ExtractInfo(
     const std::map<std::string, std::string>& command_to_binary_map,
     const RequestWithStdio& request) {
+  auto result_opt = request.Credentials();
+  if (!result_opt) {
+    return std::nullopt;
+  }
+  const uid_t uid = result_opt->uid;
+
   auto [command, args] = ParseInvocation(request.Message());
   if (!Contains(command_to_binary_map, command)) {
     return std::nullopt;
@@ -81,6 +87,7 @@ std::optional<CommandInvocationInfo> ExtractInfo(
                                   .bin = bin,
                                   .home = home,
                                   .host_artifacts_path = host_artifacts_path,
+                                  .uid = uid,
                                   .args = args,
                                   .envs = envs};
   return {result};
