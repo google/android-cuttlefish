@@ -282,7 +282,7 @@ DEFINE_string(report_anonymous_usage_stats,
               CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS,
               "Report anonymous usage "
               "statistics for metrics collection and analysis.");
-DEFINE_string(ril_dns, CF_DEFAULTS_RIL_DNS,
+DEFINE_vec(ril_dns, CF_DEFAULTS_RIL_DNS,
               "DNS address of mobile network (RIL)");
 DEFINE_vec(kgdb, cuttlefish::BoolToString(CF_DEFAULTS_KGDB),
             "Configure the virtual device for debugging the kernel "
@@ -314,7 +314,7 @@ DEFINE_vec(enable_kernel_log,
            cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_KERNEL_LOG),
             "Enable kernel console/dmesg logging");
 
-DEFINE_bool(vhost_net, CF_DEFAULTS_VHOST_NET,
+DEFINE_vec(vhost_net, cuttlefish::BoolToString(CF_DEFAULTS_VHOST_NET),
             "Enable vhost acceleration of networking");
 
 DEFINE_string(
@@ -749,15 +749,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
 
-  tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
-
-  tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
-
   tmp_config_obj.set_vhost_user_mac80211_hwsim(FLAGS_vhost_user_mac80211_hwsim);
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
     LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
-                  "set or neither should be set.";
+        "set or neither should be set.";
   }
   // If user input multiple values, we only take the 1st value and shared with
   // all instances
@@ -776,12 +772,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);
 
-  tmp_config_obj.set_rootcanal_config_file(
-      FLAGS_bluetooth_controller_properties_file);
+  // netsim flags allow all radios or selecting a specific radio
   tmp_config_obj.set_rootcanal_default_commands_file(
       FLAGS_bluetooth_default_commands_file);
+  tmp_config_obj.set_rootcanal_config_file(
+      FLAGS_bluetooth_controller_properties_file);
 
-  // netsim flags allow all radios or selecting a specific radio
   bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt;
   bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
 
@@ -795,6 +791,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (is_bt_netsim) {
     tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
   }
+  // end of vectorize ap_rootfs_image, ap_esp_image, ap_kernel_image, wmediumd_config
 
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
@@ -880,6 +877,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GetFlagStrValueForInstances(FLAGS_tcp_port_range, instances_size));
   std::vector<std::string> udp_port_range_vec =
       CF_EXPECT(GetFlagStrValueForInstances(FLAGS_udp_port_range, instances_size));
+  std::vector<bool> vhost_net_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_vhost_net, instances_size, "vhost_net"));
+  std::vector<std::string> ril_dns_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_ril_dns, instances_size));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GetFlagBoolValueForInstances(
@@ -970,6 +971,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_crosvm_binary(crosvm_binary_vec[instance_index]);
     instance.set_seccomp_policy_dir(seccomp_policy_dir_vec[instance_index]);
     instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
+
+    // wifi, bluetooth, connectivity setup
+    instance.set_ril_dns(ril_dns_vec[instance_index]);
+
+    instance.set_vhost_net(vhost_net_vec[instance_index]);
+    // end of wifi, bluetooth, connectivity setup
 
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(

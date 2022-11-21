@@ -570,7 +570,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-keyboard-pci,disable-legacy=on");
 
-  auto vhost_net = config.vhost_net() ? ",vhost=on" : "";
+  auto vhost_net = instance.vhost_net() ? ",vhost=on" : "";
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-balloon-pci-non-transitional,id=balloon0");
