@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/server_command_start_impl.h"
 
+#include <sys/types.h>
+
 #include <cstdint>
 #include <cstdlib>
 
@@ -45,6 +47,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return CF_ERR("Interrupted");
   }
   CF_EXPECT(CanHandle(request));
+  CF_EXPECT(request.Credentials() != std::nullopt);
+  const uid_t uid = request.Credentials()->uid;
+
   cvd::Response response;
   response.mutable_command_response();
 
@@ -80,7 +85,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
-    instance_manager_.RemoveInstanceGroup(invocation_info.home);
+    instance_manager_.RemoveInstanceGroup(uid, invocation_info.home);
   }
   return ResponseFromSiginfo(infop);
 }
@@ -110,7 +115,8 @@ Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
   InstanceManager::InstanceGroupInfo info;
   info.host_binaries_dir = invocation_info.host_artifacts_path + "/bin/";
   info.instances = CF_EXPECT(calculator.Calculate());
-  CF_EXPECT(instance_manager_.SetInstanceGroup(invocation_info.home, info),
+  CF_EXPECT(instance_manager_.SetInstanceGroup(invocation_info.uid,
+                                               invocation_info.home, info),
             invocation_info.home
                 << " is already taken so can't create new instance.");
   return {true};
@@ -118,8 +124,8 @@ Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
 
 Result<std::string> CvdStartCommandHandler::MakeBinPathFromDatabase(
     const CommandInvocationInfo& invocation_info) const {
-  auto assembly_info =
-      CF_EXPECT(instance_manager_.GetInstanceGroupInfo(invocation_info.home));
+  auto assembly_info = CF_EXPECT(instance_manager_.GetInstanceGroupInfo(
+      invocation_info.uid, invocation_info.home));
   return assembly_info.host_binaries_dir + invocation_info.bin;
 }
 
