@@ -112,9 +112,6 @@ class CuttlefishConfig {
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
 
-  void set_enable_bootanimation(const bool enable_bootanimation);
-  bool enable_bootanimation() const;
-
   void set_qemu_binary_dir(const std::string& qemu_binary_dir);
   std::string qemu_binary_dir() const;
 
@@ -135,6 +132,9 @@ class CuttlefishConfig {
 
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
+
+  void set_webrtc_enable_adb_websocket(bool enable);
+  bool webrtc_enable_adb_websocket() const;
 
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
@@ -268,9 +268,6 @@ class CuttlefishConfig {
   void set_rootcanal_default_commands_file(
       const std::string& rootcanal_default_commands_file);
   std::string rootcanal_default_commands_file() const;
-
-  void set_record_screen(bool record_screen);
-  bool record_screen() const;
 
   void set_smt(bool smt);
   bool smt() const;
@@ -518,6 +515,8 @@ class CuttlefishConfig {
     bool enable_audio() const;
     bool enable_vehicle_hal_grpc_server() const;
     bool enable_gnss_grpc_proxy() const;
+    bool enable_bootanimation() const;
+    bool record_screen() const;
 
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
@@ -642,6 +641,8 @@ class CuttlefishConfig {
     void set_enable_audio(bool enable);
     void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
+    void set_enable_bootanimation(const bool enable_bootanimation);
+    void set_record_screen(bool record_screen);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
