@@ -751,6 +751,22 @@ void CuttlefishConfig::MutableInstanceSpecific::set_qemu_binary_dir(
   (*Dictionary())[kQemuBinaryDir] = qemu_binary_dir;
 }
 
+static constexpr char kVhostNet[] = "vhost_net";
+void CuttlefishConfig::MutableInstanceSpecific::set_vhost_net(bool vhost_net) {
+  (*Dictionary())[kVhostNet] = vhost_net;
+}
+bool CuttlefishConfig::InstanceSpecific::vhost_net() const {
+  return (*Dictionary())[kVhostNet].asBool();
+}
+
+static constexpr char kRilDns[] = "ril_dns";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_dns(const std::string& ril_dns) {
+  (*Dictionary())[kRilDns] = ril_dns;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_dns() const {
+  return (*Dictionary())[kRilDns].asString();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
@@ -820,7 +836,8 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
     // console can't be used since uboot doesn't support it.
     console_dev = "hvc1";
   } else {
-    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
+    // QEMU and Gem5 emulate pl011 on ARM/ARM64, but QEMU and crosvm on other
+    // architectures emulate ns16550a/uart8250 instead.
     Arch target = target_arch();
     if ((target == Arch::Arm64 || target == Arch::Arm) &&
         config_->vm_manager() != vm_manager::CrosvmManager::name()) {
@@ -974,33 +991,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_ethernet_tap_name(
   (*Dictionary())[kEthernetTapName] = ethernet_tap_name;
 }
 
-static constexpr char kEthernetBridgeName[] = "ethernet_bridge_name";
-std::string CuttlefishConfig::InstanceSpecific::ethernet_bridge_name() const {
-  return (*Dictionary())[kEthernetBridgeName].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_ethernet_bridge_name(
-    const std::string& ethernet_bridge_name) {
-  (*Dictionary())[kEthernetBridgeName] = ethernet_bridge_name;
-}
-
-static constexpr char kEthernetMac[] = "ethernet_mac";
-std::string CuttlefishConfig::InstanceSpecific::ethernet_mac() const {
-  return (*Dictionary())[kEthernetMac].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_ethernet_mac(
-    const std::string& mac) {
-  (*Dictionary())[kEthernetMac] = mac;
-}
-
-static constexpr char kEthernetIPV6[] = "ethernet_ipv6";
-std::string CuttlefishConfig::InstanceSpecific::ethernet_ipv6() const {
-  return (*Dictionary())[kEthernetIPV6].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_ethernet_ipv6(
-    const std::string& ip) {
-  (*Dictionary())[kEthernetIPV6] = ip;
-}
-
 static constexpr char kUseAllocd[] = "use_allocd";
 bool CuttlefishConfig::InstanceSpecific::use_allocd() const {
   return (*Dictionary())[kUseAllocd].asBool();
@@ -1042,14 +1032,6 @@ int CuttlefishConfig::InstanceSpecific::adb_host_port() const {
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_adb_host_port(int port) {
   (*Dictionary())[kHostPort] = port;
-}
-
-static constexpr char kFastbootHostPort[] = "fastboot_host_port";
-int CuttlefishConfig::InstanceSpecific::fastboot_host_port() const {
-  return (*Dictionary())[kFastbootHostPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_fastboot_host_port(int port) {
-  (*Dictionary())[kFastbootHostPort] = port;
 }
 
 static constexpr char kModemSimulatorId[] = "modem_simulator_host_id";
