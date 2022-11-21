@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <algorithm>
+#include <deque>
 #include <regex>
 #include <set>
 #include <string>
@@ -39,13 +40,14 @@ namespace selector {
 
 Result<GroupCreationInfo> CreationAnalyzer::Analyze(
     const CreationAnalyzerParam& param, const std::optional<ucred>& credential,
+    const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_lock_file_manager) {
   auto selector_options_parser =
       CF_EXPECT(SelectorFlagsParser::ConductSelectFlagsParser(
           param.selector_args, param.cmd_args, param.envs));
   CreationAnalyzer analyzer(param, credential,
                             std::move(selector_options_parser),
-                            instance_lock_file_manager);
+                            instance_database, instance_lock_file_manager);
   auto result = CF_EXPECT(analyzer.Analyze());
   return result;
 }
@@ -53,12 +55,14 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
 CreationAnalyzer::CreationAnalyzer(
     const CreationAnalyzerParam& param, const std::optional<ucred>& credential,
     SelectorFlagsParser&& selector_options_parser,
+    const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_file_lock_manager)
     : cmd_args_(param.cmd_args),
       envs_(param.envs),
       selector_args_(param.selector_args),
       credential_(credential),
       selector_options_parser_{std::move(selector_options_parser)},
+      instance_database_{instance_database},
       instance_file_lock_manager_{instance_file_lock_manager} {}
 
 static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
@@ -70,6 +74,27 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
   }
   lock_files.clear();
   return mapping;
+}
+
+/*
+ * Filters out the ids in id_pool that already exist in instance_database
+ */
+static Result<std::vector<unsigned>> CollectUnusedIds(
+    const InstanceDatabase& instance_database,
+    std::vector<unsigned>&& id_pool) {
+  std::deque<unsigned> collected_ids;
+  while (!id_pool.empty()) {
+    const auto id = id_pool.back();
+    id_pool.pop_back();
+    auto subset =
+        CF_EXPECT(instance_database.FindInstances(Query{kInstanceIdField, id}));
+    CF_EXPECT(subset.size() < 2,
+              "Cvd Instance Database has two instances with the id: " << id);
+    if (subset.empty()) {
+      collected_ids.push_back(id);
+    }
+  }
+  return std::vector<unsigned>{collected_ids.begin(), collected_ids.end()};
 }
 
 Result<std::vector<InstanceLockFile>>
@@ -112,8 +137,9 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLockInternal() {
   for (const auto& [id, _] : id_to_lockfile_map) {
     id_pool.emplace_back(id);
   }
-  // TODO(kwstephenkim): check with instance database
-  IdAllocator unique_id_allocator = IdAllocator::New(id_pool);
+  auto unused_id_pool =
+      CF_EXPECT(CollectUnusedIds(instance_database_, std::move(id_pool)));
+  IdAllocator unique_id_allocator = IdAllocator::New(unused_id_pool);
   auto allocated_ids = unique_id_allocator.UniqueConsecutiveItems(n_instances);
   CF_EXPECT(allocated_ids != std::nullopt, "Unique ID allocation failed.");
 
@@ -206,14 +232,7 @@ std::string CreationAnalyzer::AnalyzeGroupName(
     ids.emplace_back(per_instance_info.instance_id_);
   }
   std::string base_name = GenDefaultGroupName();
-  /*
-   * TODO(kwstephenkim): Determine the default group based on InstanceDatabase
-   *
-   * The default instance group is the group that is created when there is no
-   * active instance group for the user. The implementation is deferred for now
-   * until InstanceDatabase related code is added to this implementation.
-   */
-  if (Contains(ids, 1)) {
+  if (instance_database_.IsEmpty()) {
     // if default group, we simply return base_name, which is "cvd"
     return base_name;
   }
