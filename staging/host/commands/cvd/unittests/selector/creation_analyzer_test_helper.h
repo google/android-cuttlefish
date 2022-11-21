@@ -69,6 +69,7 @@ class CreationInfoGenTest : public testing::TestWithParam<InputOutput> {
   std::optional<ucred> credential_;
   OutputInfo expected_output_;
   bool expected_success_;
+  InstanceDatabase instance_db_;
   InstanceLockFileManager instance_lock_file_manager_;
 };
 
