@@ -160,8 +160,10 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
 UniqueEsysPtr<TPM2B_DIGEST> TpmHmacWithContext(
     TpmResourceManager& resource_manager, const std::string& context,
     const uint8_t* data, size_t data_size) {
+  // Use the same context for all HMAC operations (ignoring the provided
+  // `context` parameter) to better comply with the KeyMint spec.
   auto key_slot =
-      PrimaryKeyBuilder::CreateSigningKey(resource_manager, context);
+      PrimaryKeyBuilder::CreateSigningKey(resource_manager, "TpmHmac_context");
   if (!key_slot) {
     LOG(ERROR) << "Could not make signing key for " << context;
     return nullptr;
