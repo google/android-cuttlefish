@@ -340,22 +340,6 @@ std::vector<std::string> CuttlefishConfig::extra_bootconfig_args() const {
   return bootconfig;
 }
 
-static constexpr char kRilDns[] = "ril_dns";
-void CuttlefishConfig::set_ril_dns(const std::string& ril_dns) {
-  (*dictionary_)[kRilDns] = ril_dns;
-}
-std::string CuttlefishConfig::ril_dns() const {
-  return (*dictionary_)[kRilDns].asString();
-}
-
-static constexpr char kVhostNet[] = "vhost_net";
-void CuttlefishConfig::set_vhost_net(bool vhost_net) {
-  (*dictionary_)[kVhostNet] = vhost_net;
-}
-bool CuttlefishConfig::vhost_net() const {
-  return (*dictionary_)[kVhostNet].asBool();
-}
-
 static constexpr char kVhostUserMac80211Hwsim[] = "vhost_user_mac80211_hwsim";
 void CuttlefishConfig::set_vhost_user_mac80211_hwsim(const std::string& path) {
   (*dictionary_)[kVhostUserMac80211Hwsim] = path;
