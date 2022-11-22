@@ -48,11 +48,7 @@ class WmediumdServer : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "WmediumdServer"; }
   bool Enabled() const override {
-#ifndef ENFORCE_MAC80211_HWSIM
-    return false;
-#else
     return instance_.start_wmediumd();
-#endif
   }
 
  private:
