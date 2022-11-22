@@ -22,7 +22,6 @@
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/sendfile.h>
 #include <unistd.h>
 
 #include <array>
@@ -84,13 +83,18 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks) {
 }
 
 Result<void> EnsureDirectoryExists(const std::string& directory_path) {
-  if (!DirectoryExists(directory_path)) {
-    LOG(DEBUG) << "Setting up " << directory_path;
-    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-            0 &&
-        errno != EEXIST) {
-      return CF_ERRNO("Failed to create dir: \"" << directory_path);
-    }
+  if (DirectoryExists(directory_path)) {
+    return {};
+  }
+  const auto parent_dir = cpp_dirname(directory_path);
+  if (parent_dir.size() > 1) {
+    EnsureDirectoryExists(parent_dir);
+  }
+  LOG(DEBUG) << "Setting up " << directory_path;
+  if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
+          0 &&
+      errno != EEXIST) {
+    return CF_ERRNO("Failed to create dir: \"" << directory_path);
   }
   return {};
 }
@@ -148,33 +152,6 @@ bool RecursivelyRemoveDirectory(const std::string& path) {
 
   return nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) ==
          0;
-}
-
-bool Copy(const std::string& from, const std::string& to) {
-  android::base::unique_fd fd_from(
-      open(from.c_str(), O_RDONLY | O_CLOEXEC));
-  android::base::unique_fd fd_to(
-      open(to.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
-
-  if (fd_from.get() < 0 || fd_to.get() < 0) {
-    return false;
-  }
-
-  struct stat from_stat;
-  fstat(fd_from.get(), &from_stat);
-
-  off_t offset = 0;
-  ssize_t remain = from_stat.st_size;
-
-  while (remain != 0) {
-    if (sendfile(fd_to.get(), fd_from.get(), &offset, remain) <= 0) {
-      break;
-    }
-
-    remain = from_stat.st_size - offset;
-  }
-
-  return remain == 0;
 }
 
 std::string AbsolutePath(const std::string& path) {
