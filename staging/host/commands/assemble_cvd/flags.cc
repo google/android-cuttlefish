@@ -1226,10 +1226,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           !FLAGS_start_webrtc_sig_server);
     }
 
+#ifndef ENFORCE_MAC80211_HWSIM
+    const bool start_wmediumd = false;
+#else
     // Start wmediumd process for the first instance if
     // vhost_user_mac80211_hwsim is not specified.
     const bool start_wmediumd =
         FLAGS_vhost_user_mac80211_hwsim.empty() && is_first_instance;
+#endif
+
     if (start_wmediumd) {
       // TODO(b/199020470) move this to the directory for shared resources
       auto vhost_user_socket_path =
