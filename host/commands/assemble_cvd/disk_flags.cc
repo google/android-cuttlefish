@@ -248,16 +248,19 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(instance.new_boot_image()),
       .read_only = FLAGS_use_overlay,
   });
-  partitions.push_back(ImagePartition{
-      .label = "init_boot_a",
-      .image_file_path = AbsolutePath(instance.init_boot_image()),
-      .read_only = FLAGS_use_overlay,
-  });
-  partitions.push_back(ImagePartition{
-      .label = "init_boot_b",
-      .image_file_path = AbsolutePath(instance.init_boot_image()),
-      .read_only = FLAGS_use_overlay,
-  });
+  const auto init_boot_path = instance.init_boot_image();
+  if (FileExists(init_boot_path)) {
+    partitions.push_back(ImagePartition{
+        .label = "init_boot_a",
+        .image_file_path = AbsolutePath(init_boot_path),
+        .read_only = FLAGS_use_overlay,
+    });
+    partitions.push_back(ImagePartition{
+        .label = "init_boot_b",
+        .image_file_path = AbsolutePath(init_boot_path),
+        .read_only = FLAGS_use_overlay,
+    });
+  }
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_a",
       .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
@@ -565,19 +568,19 @@ class Gem5ImageUnpacker : public SetupFeature {
      */
 
     CF_EXPECT(FileHasContent(instance_.boot_image()), instance_.boot_image());
+
+    const std::string unpack_dir = config_.assembly_dir();
     // The init_boot partition is be optional for testing boot.img
     // with the ramdisk inside.
     if (!FileHasContent(instance_.init_boot_image())) {
       LOG(WARNING) << "File not found: " << instance_.init_boot_image();
+    } else {
+      CF_EXPECT(UnpackBootImage(instance_.init_boot_image(), unpack_dir),
+                "Failed to extract the init boot image");
     }
 
     CF_EXPECT(FileHasContent(instance_.vendor_boot_image()),
               instance_.vendor_boot_image());
-
-    const std::string unpack_dir = config_.assembly_dir();
-
-    CF_EXPECT(UnpackBootImage(instance_.init_boot_image(), unpack_dir),
-              "Failed to extract the init boot image");
 
     CF_EXPECT(UnpackVendorBootImageIfNotUnpacked(instance_.vendor_boot_image(),
                                                  unpack_dir),
@@ -623,17 +626,20 @@ class GeneratePersistentBootconfig : public SetupFeature {
     return "GeneratePersistentBootconfig";
   }
   bool Enabled() const override {
-    //  Cuttlefish for the time being won't be able to support OTA from a
-    //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
-    //  device is stopped (via stop_cvd). This is rarely an issue since OTA
-    //  testing run on cuttlefish is done within one launch cycle of the device.
-    //  If this ever becomes an issue, this code will have to be rewritten.
-    return !config_.protected_vm() && config_.bootconfig_supported();
+    return (!config_.protected_vm());
   }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
+    //  Cuttlefish for the time being won't be able to support OTA from a
+    //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
+    //  device is stopped (via stop_cvd). This is rarely an issue since OTA
+    //  testing run on cuttlefish is done within one launch cycle of the device.
+    //  If this ever becomes an issue, this code will have to be rewritten.
+    if(!config_.bootconfig_supported()) {
+      return {};
+    }
     const auto bootconfig_path = instance_.persistent_bootconfig_path();
     if (!FileExists(bootconfig_path)) {
       CF_EXPECT(CreateBlankImage(bootconfig_path, 1 /* mb */, "none"),
