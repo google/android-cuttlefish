@@ -44,7 +44,7 @@ InstanceDatabase::FindIterator(const LocalInstanceGroup& group) {
 
 void InstanceDatabase::Clear() { local_instance_groups_.clear(); }
 
-Result<void> InstanceDatabase::AddInstanceGroup(
+Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
     const std::string& home_dir, const std::string& host_artifacts_path) {
   const auto suffix_opt = auto_gen_group_name_suffice_.UniqueItem();
   CF_EXPECT(suffix_opt != std::nullopt,
@@ -55,8 +55,9 @@ Result<void> InstanceDatabase::AddInstanceGroup(
   if (suffix != 0) {
     group_name.append(std::to_string(suffix));
   }
-  CF_EXPECT(AddInstanceGroup(group_name, home_dir, host_artifacts_path));
-  return {};
+  auto return_value =
+      CF_EXPECT(AddInstanceGroup(group_name, home_dir, host_artifacts_path));
+  return return_value;
 }
 
 static Result<std::optional<int>> CheckDefaultGroupName(
@@ -75,7 +76,7 @@ static Result<std::optional<int>> CheckDefaultGroupName(
   return group_suffix;
 }
 
-Result<void> InstanceDatabase::AddInstanceGroup(
+Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
     const std::string& group_name, const std::string& home_dir,
     const std::string& host_artifacts_path) {
   auto group_suffix_opt = CF_EXPECT(CheckDefaultGroupName(group_name));
@@ -102,9 +103,10 @@ Result<void> InstanceDatabase::AddInstanceGroup(
   auto new_group =
       new LocalInstanceGroup(group_name, home_dir, host_artifacts_path);
   CF_EXPECT(new_group != nullptr);
-  local_instance_groups_.emplace_back(
-      std::unique_ptr<LocalInstanceGroup>(new_group));
-  return {};
+  local_instance_groups_.emplace_back(new_group);
+  const auto raw_ptr = local_instance_groups_.back().get();
+  ConstRef<LocalInstanceGroup> const_ref = *raw_ptr;
+  return {const_ref};
 }
 
 Result<void> InstanceDatabase::AddInstance(const LocalInstanceGroup& group,
