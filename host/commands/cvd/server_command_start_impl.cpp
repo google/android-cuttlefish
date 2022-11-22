@@ -22,6 +22,7 @@
 #include <cstdlib>
 
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -29,7 +30,6 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {

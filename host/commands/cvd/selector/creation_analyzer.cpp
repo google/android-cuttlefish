@@ -258,6 +258,34 @@ static Result<std::vector<std::string>> UpdateInstanceArgs(
   return new_args;
 }
 
+Result<std::vector<std::string>> CreationAnalyzer::UpdateWebrtcDeviceId(
+    std::vector<std::string>&& args,
+    const std::vector<PerInstanceInfo>& per_instance_info) {
+  std::vector<std::string> new_args{std::move(args)};
+  std::string flag_value;
+  std::vector<Flag> webrtc_device_id_flag{
+      GflagsCompatFlag("webrtc_device_id", flag_value)};
+  std::vector<std::string> copied_args{new_args};
+  CF_EXPECT(ParseFlags(webrtc_device_id_flag, copied_args));
+
+  if (!flag_value.empty()) {
+    return new_args;
+  }
+
+  CF_EXPECT(!group_name_.empty());
+  std::vector<std::string> device_name_list;
+  for (const auto& instance : per_instance_info) {
+    const auto& per_instance_name = instance.per_instance_name_;
+    std::string device_name = group_name_ + "-" + per_instance_name;
+    device_name_list.emplace_back(device_name);
+  }
+  // take --webrtc_device_id flag away
+  new_args = std::move(copied_args);
+  new_args.emplace_back("--webrtc_device_id=" +
+                        android::base::Join(device_name_list, ","));
+  return new_args;
+}
+
 Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
   std::vector<unsigned> ids;
@@ -268,6 +296,9 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   cmd_args_ = CF_EXPECT(UpdateInstanceArgs(std::move(cmd_args_), ids));
 
   group_name_ = CF_EXPECT(AnalyzeGroupName(instance_info));
+  cmd_args_ =
+      CF_EXPECT(UpdateWebrtcDeviceId(std::move(cmd_args_), instance_info));
+
   home_ = CF_EXPECT(AnalyzeHome());
   envs_["HOME"] = home_;
 
