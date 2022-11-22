@@ -91,12 +91,8 @@ class OpenWrt : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "OpenWrt"; }
   bool Enabled() const override {
-#ifndef ENFORCE_MAC80211_HWSIM
-    return false;
-#else
     return instance_.start_ap() &&
            config_.vm_manager() == vm_manager::CrosvmManager::name();
-#endif
   }
 
  private:
