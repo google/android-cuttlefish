@@ -50,6 +50,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 
@@ -382,5 +383,22 @@ bool FileIsSocket(const std::string& path) {
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
+int GetDiskUsage(const std::string& path) {
+  Command du_cmd("du");
+  du_cmd.AddParameter("-b");
+  du_cmd.AddParameter("-k");
+  du_cmd.AddParameter("-s");
+  du_cmd.AddParameter(path);
+  SharedFD read_fd;
+  SharedFD write_fd;
+  SharedFD::Pipe(&read_fd, &write_fd);
+  du_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, write_fd);
+  auto subprocess = du_cmd.Start();
+  std::array<char, 1024> text_output{};
+  const auto bytes_read = read_fd->Read(text_output.data(), text_output.size());
+  CHECK_GT(bytes_read, 0) << "Failed to read from pipe " << strerror(errno);
+  std::move(subprocess).Wait();
+  return atoi(text_output.data()) * 1024;
+}
 
 }  // namespace cuttlefish
