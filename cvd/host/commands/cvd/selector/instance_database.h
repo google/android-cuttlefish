@@ -42,14 +42,24 @@ class InstanceDatabase {
   InstanceDatabase();
   bool IsEmpty() const;
 
-  // returns CF_ERR if the home_directory is already taken
-  Result<void> AddInstanceGroup(const std::string& group_name,
-                                const std::string& home_dir,
-                                const std::string& host_artifacts_path);
+  /** Adds instance group.
+   *
+   * If group_name or home_dir is already taken or host_artifacts_path is
+   * not likely an artifacts path, CF_ERR is returned.
+   */
+  Result<ConstRef<LocalInstanceGroup>> AddInstanceGroup(
+      const std::string& group_name, const std::string& home_dir,
+      const std::string& host_artifacts_path);
   // auto-generate the group_name
-  Result<void> AddInstanceGroup(const std::string& home_dir,
-                                const std::string& host_artifacts_path);
+  Result<ConstRef<LocalInstanceGroup>> AddInstanceGroup(
+      const std::string& home_dir, const std::string& host_artifacts_path);
 
+  /**
+   * Adds instance to the group.
+   *
+   * If id is duplicated in the scope of the InstanceDatabase or instance_name
+   * is not unique within the group, CF_ERR is returned.
+   */
   Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id,
                            const std::string& instance_name);
 
