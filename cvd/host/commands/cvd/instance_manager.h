@@ -54,7 +54,8 @@ class InstanceManager {
 
   INJECT(InstanceManager(InstanceLockFileManager&));
 
-  Result<GroupCreationInfo> Analyze(const CreationAnalyzerParam& param,
+  Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,
+                                    const CreationAnalyzerParam& param,
                                     const std::optional<ucred>& credential);
 
   bool HasInstanceGroups(const uid_t uid);

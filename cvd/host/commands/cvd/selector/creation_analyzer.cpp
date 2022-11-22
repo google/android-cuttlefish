@@ -38,10 +38,20 @@
 namespace cuttlefish {
 namespace selector {
 
+static bool IsCvdStart(const std::string& cmd) {
+  if (cmd.empty()) {
+    return false;
+  }
+  return cmd == "start";
+}
+
 Result<GroupCreationInfo> CreationAnalyzer::Analyze(
-    const CreationAnalyzerParam& param, const std::optional<ucred>& credential,
+    const std::string& cmd, const CreationAnalyzerParam& param,
+    const std::optional<ucred>& credential,
     const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_lock_file_manager) {
+  CF_EXPECT(IsCvdStart(cmd),
+            "CreationAnalyzer::Analyze() is for cvd start only.");
   auto selector_options_parser =
       CF_EXPECT(SelectorFlagsParser::ConductSelectFlagsParser(
           param.selector_args, param.cmd_args, param.envs));
@@ -193,19 +203,7 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLock() {
   return instance_file_locks;
 }
 
-static bool IsCvdStart(const std::vector<std::string>& args) {
-  if (args.empty()) {
-    return false;
-  }
-  if (args[0] == "start") {
-    return true;
-  }
-  return (args.size() > 1 && args[1] == "start");
-}
-
 Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
-  CF_EXPECT(IsCvdStart(cmd_args_),
-            "CreationAnalyzer::Analyze() is for cvd start only.");
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
   group_name_ = AnalyzeGroupName(instance_info);
   home_ = CF_EXPECT(AnalyzeHome());
