@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+$(call inherit-product, device/google/cuttlefish/shared/angle/device_vendor.mk)
+
 ifeq ($(TARGET_VULKAN_SUPPORT),true)
 
 # TODO(b/65201432): Swiftshader needs to create executable memory.

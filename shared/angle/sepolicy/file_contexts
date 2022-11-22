@@ -1,0 +1,4 @@
+/vendor/lib(64)?/libEGL_angle\.so              u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGLESv1_CM_angle\.so        u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGLESv2_angle\.so           u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libfeature_support_angle\.so  u:object_r:same_process_hal_file:s0

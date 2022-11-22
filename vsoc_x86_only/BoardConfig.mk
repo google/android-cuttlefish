@@ -19,7 +19,9 @@
 #
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/camera/BoardConfig.mk
 -include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
+-include device/google/cuttlefish/shared/telephony/BoardConfig.mk
 
 TARGET_BOARD_PLATFORM := vsoc_x86
 TARGET_ARCH := x86
