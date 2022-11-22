@@ -6,5 +6,4 @@ init system_lib_file dir b/133444385
 init system_lib_file file b/133444385
 kernel kernel capability b/179966921
 migrate_legacy_obb_data dalvikcache_data_file file b/152338071
-gmscore_app hal_camera_prop file b/156287758
 priv_app radio_vendor_data_file dir b/188833462

@@ -69,9 +69,6 @@
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/suspend_blocker  u:object_r:suspend_blocker_exec:s0
 /vendor/bin/metrics_helper   u:object_r:metrics_helper_exec:s0
-/vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-external-vsock-service u:object_r:hal_camera_default_exec:s0
-/vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google u:object_r:hal_camera_default_exec:s0
-/vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google-lazy u:object_r:hal_camera_default_exec:s0
 /vendor/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock  u:object_r:hal_power_stats_default_exec:s0
 /vendor/bin/hw/android\.hardware\.audio\.service u:object_r:hal_audio_cuttlefish_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.1-service\.remote  u:object_r:hal_bluetooth_remote_exec:s0
@@ -138,8 +135,4 @@
 /vendor/lib(64)?/libGLESv2_enc\.so       u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libvulkan_enc\.so       u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libandroidemu\.so       u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/libEGL_angle\.so          u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/libGLESv1_CM_angle\.so    u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/libGLESv2_angle\.so       u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/libfeature_support_angle\.so       u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libGoldfishProfiler\.so       u:object_r:same_process_hal_file:s0
