@@ -102,15 +102,13 @@ class CreationAnalyzer {
 
   static Result<GroupCreationInfo> Analyze(
       const std::string& cmd, const CreationAnalyzerParam& param,
-      const std::optional<ucred>& credential,
-      const InstanceDatabase& instance_database,
+      const ucred& credential, const InstanceDatabase& instance_database,
       InstanceLockFileManager& instance_lock_file_manager);
 
  private:
   using IdAllocator = UniqueResourceAllocator<unsigned>;
 
-  CreationAnalyzer(const CreationAnalyzerParam& param,
-                   const std::optional<ucred>& credential,
+  CreationAnalyzer(const CreationAnalyzerParam& param, const ucred& credential,
                    SelectorFlagsParser&& selector_options_parser,
                    const InstanceDatabase& instance_database,
                    InstanceLockFileManager& instance_lock_file_manager);
@@ -151,7 +149,7 @@ class CreationAnalyzer {
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
   std::vector<std::string> selector_args_;
-  const std::optional<ucred> credential_;
+  const ucred credential_;
 
   // information to return later
   std::string home_;

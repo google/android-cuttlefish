@@ -56,7 +56,7 @@ class InstanceManager {
 
   Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,
                                     const CreationAnalyzerParam& param,
-                                    const std::optional<ucred>& credential);
+                                    const ucred& credential);
 
   bool HasInstanceGroups(const uid_t uid);
   Result<void> SetInstanceGroup(const uid_t uid, const InstanceGroupDir&,
