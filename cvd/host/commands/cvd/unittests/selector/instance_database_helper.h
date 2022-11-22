@@ -66,13 +66,15 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   bool SetUpOk() const { return error_.error_code == ErrorCode::kOk; }
   const std::string& Workspace() const { return workspace_dir_; }
   /*
-   * Returns a valid host binaries directory, which is a prerequisite for
+   * Returns a valid host artifacts dir, which is a prerequisite for
    * InstanceDatabase APIs.
    */
-  const std::string& HostBinariesDir() const { return android_binaries_dir_; }
+  const std::string& HostArtifactsPath() const {
+    return android_artifacts_path_;
+  }
 
   // Adds InstanceGroups, each by:
-  //    "mkdir" : Workspace() + "/" + base_name, HostBinariesDir()
+  //    "mkdir" : Workspace() + "/" + base_name, HostArtifactsPath()
   //    db_.AddInstanceGroup()
   bool AddGroups(const std::unordered_set<std::string>& base_names);
   struct InstanceInfo {
@@ -91,7 +93,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   // set error_ when there is an error
   void SetErrorCode(const ErrorCode error_code, const std::string& msg);
 
-  std::string android_binaries_dir_;
+  std::string android_artifacts_path_;
   std::string workspace_dir_;
   SetupError error_;
   InstanceDatabase db_;
