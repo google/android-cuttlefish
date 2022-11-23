@@ -209,6 +209,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
   group_name_ = AnalyzeGroupName(instance_info);
   home_ = CF_EXPECT(AnalyzeHome());
+  envs_["HOME"] = home_;
   CF_EXPECT(envs_.find(kAndroidHostOut) != envs_.end());
   host_artifacts_path_ = envs_.at(kAndroidHostOut);
 
