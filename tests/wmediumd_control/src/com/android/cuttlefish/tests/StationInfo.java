@@ -27,13 +27,18 @@ public class StationInfo {
     public String macAddress;
     public double xPosition;
     public double yPosition;
+    public String lci;
+    public String civicloc;
     public int txPower;
 
-    public StationInfo(String macAddress, double xPosition, double yPosition, int txPower) throws Exception {
+    public StationInfo(String macAddress, double xPosition, double yPosition, String lci,
+            String civicloc, int txPower) throws Exception {
         Assert.assertTrue(isValidMacAddr(macAddress));
         this.macAddress = macAddress;
         this.xPosition = xPosition;
         this.yPosition = yPosition;
+        this.lci = lci;
+        this.civicloc = civicloc;
         this.txPower = txPower;
     }
 
@@ -44,9 +49,8 @@ public class StationInfo {
     }
 
     public static StationInfo getStationInfo(List<String> stationInfoLine) throws Exception {
-        return new StationInfo(stationInfoLine.get(0),
-                               Double.parseDouble(stationInfoLine.get(1)),
-                               Double.parseDouble(stationInfoLine.get(2)),
-                               Integer.parseInt(stationInfoLine.get(3)));
+        return new StationInfo(stationInfoLine.get(0), Double.parseDouble(stationInfoLine.get(1)),
+            Double.parseDouble(stationInfoLine.get(2)), stationInfoLine.get(3),
+            stationInfoLine.get(4), Integer.parseInt(stationInfoLine.get(5)));
     }
 }
