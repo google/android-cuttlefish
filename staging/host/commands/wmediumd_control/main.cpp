@@ -52,7 +52,15 @@ const std::string usageMessage =
     "      use -- before set_position if you want to set the position with "
     "negative values\n"
     "        e.g. wmediumd_control -- set_position 42:00:00:00:00:00 -1.0 "
-    "-2.0\n\n";
+    "-2.0\n\n"
+    "    set_lci mac lci\n"
+    "      set LCI (latitude, longitude, altitude) of the specific station\n"
+    "      it's free-form string and may not match with other location nor"
+    "position information\n\n"
+    "    set_civicloc mac civicloc\n"
+    "      set CIVIC location (e.g. postal address) of the specific station\n"
+    "      it's free-form string and may not match with other location nor"
+    "position information\n";
 
 DEFINE_string(wmediumd_api_server, "",
               "Unix socket path of wmediumd api server");
@@ -154,12 +162,17 @@ bool HandleListStationsCommand(cuttlefish::WmediumdController& client,
             << "\t"
             << "Y Pos"
             << "\t"
+            << "LCI"
+            << "\t"
+            << "CIVICLOC"
+            << "\t"
             << "TX Power" << std::endl;
 
   for (auto& station : stationList) {
     std::cout << cuttlefish::MacToString(station.addr) << "\t"
               << std::setprecision(1) << std::fixed << station.x << "\t"
-              << std::setprecision(1) << std::fixed << station.y << "\t"
+              << std::setprecision(1) << std::fixed << station.y << "\t\""
+              << station.lci << "\"\t\"" << station.civicloc << "\"\t"
               << station.tx_power << std::endl;
   }
 
@@ -197,6 +210,44 @@ bool HandleSetPositionCommand(cuttlefish::WmediumdController& client,
   }
 
   if (!client.SetPosition(args[1], x, y)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool HandleSetLciCommand(cuttlefish::WmediumdController& client,
+                         const std::vector<std::string>& args) {
+  if (args.size() != 3) {
+    LOG(ERROR) << "error: set_lci must provide 2 options";
+    return false;
+  }
+
+  if (!cuttlefish::ValidMacAddr(args[1])) {
+    LOG(ERROR) << "error: invalid mac address " << args[1];
+    return false;
+  }
+
+  if (!client.SetLci(args[1], args[2])) {
+    return false;
+  }
+
+  return true;
+}
+
+bool HandleSetCiviclocCommand(cuttlefish::WmediumdController& client,
+                              const std::vector<std::string>& args) {
+  if (args.size() != 3) {
+    LOG(ERROR) << "error: set_civicloc must provide 2 options";
+    return false;
+  }
+
+  if (!cuttlefish::ValidMacAddr(args[1])) {
+    LOG(ERROR) << "error: invalid mac address " << args[1];
+    return false;
+  }
+
+  if (!client.SetCivicloc(args[1], args[2])) {
     return false;
   }
 
@@ -242,14 +293,15 @@ int main(int argc, char** argv) {
   auto commandMap =
       std::unordered_map<std::string,
                          std::function<bool(cuttlefish::WmediumdController&,
-                                            const std::vector<std::string>&)>>{{
-          {"set_snr", HandleSetSnrCommand},
-          {"reload_config", HandleReloadConfigCommand},
-          {"start_pcap", HandleStartPcapCommand},
-          {"stop_pcap", HandleStopPcapCommand},
-          {"list_stations", HandleListStationsCommand},
-          {"set_position", HandleSetPositionCommand},
-      }};
+                                            const std::vector<std::string>&)>>{
+          {{"set_snr", HandleSetSnrCommand},
+           {"reload_config", HandleReloadConfigCommand},
+           {"start_pcap", HandleStartPcapCommand},
+           {"stop_pcap", HandleStopPcapCommand},
+           {"list_stations", HandleListStationsCommand},
+           {"set_position", HandleSetPositionCommand},
+           {"set_lci", HandleSetLciCommand},
+           {"set_civicloc", HandleSetCiviclocCommand}}};
 
   if (commandMap.find(args[0]) == std::end(commandMap)) {
     LOG(ERROR) << "error: command " << args[0] << " does not exist";
