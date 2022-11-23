@@ -724,6 +724,10 @@ std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
   return AbsolutePath(PerInstancePath("vbmeta.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::ap_vbmeta_path() const {
+  return AbsolutePath(PerInstancePath("ap_vbmeta.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("uboot_env.img"));
 }
