@@ -44,6 +44,8 @@ enum class WmediumdMessageType : uint32_t {
   kStopPcap = WMEDIUMD_MSG_STOP_PCAP,
   kStationsList = WMEDIUMD_MSG_STATIONS_LIST,
   kSetPosition = WMEDIUMD_MSG_SET_POSITION,
+  kSetLci = WMEDIUMD_MSG_SET_LCI,
+  kSetCivicloc = WMEDIUMD_MSG_SET_CIVICLOC,
 };
 
 struct WmediumdStationInfo {
@@ -53,11 +55,15 @@ struct WmediumdStationInfo {
   double x;
   double y;
 
+  std::string lci;
+  std::string civicloc;
+
   int tx_power;
 
   WmediumdStationInfo(const char addr[ETH_ALEN], const char hwaddr[ETH_ALEN],
-                      double x, double y, int tx_power)
-      : x(x), y(y), tx_power(tx_power) {
+                      double x, double y, const std::string& lci,
+                      const std::string& civicloc, int tx_power)
+      : x(x), y(y), lci(lci), civicloc(civicloc), tx_power(tx_power) {
     memcpy(this->addr, addr, sizeof(this->addr));
     memcpy(this->hwaddr, hwaddr, sizeof(this->hwaddr));
   }
@@ -213,6 +219,37 @@ class WmediumdMessageSetPosition : public WmediumdMessage {
   std::array<uint8_t, 6> mac_;
   double x_;
   double y_;
+};
+
+class WmediumdMessageSetLci : public WmediumdMessage {
+ public:
+  WmediumdMessageSetLci(const std::string& node, const std::string& lci);
+
+  WmediumdMessageType Type() const override {
+    return WmediumdMessageType::kSetLci;
+  }
+
+ private:
+  void SerializeBody(std::string& out) const override;
+
+  std::array<uint8_t, 6> mac_;
+  std::string lci_;
+};
+
+class WmediumdMessageSetCivicloc : public WmediumdMessage {
+ public:
+  WmediumdMessageSetCivicloc(const std::string& node,
+                             const std::string& civicloc);
+
+  WmediumdMessageType Type() const override {
+    return WmediumdMessageType::kSetCivicloc;
+  }
+
+ private:
+  void SerializeBody(std::string& out) const override;
+
+  std::array<uint8_t, 6> mac_;
+  std::string civicloc_;
 };
 
 }  // namespace cuttlefish
