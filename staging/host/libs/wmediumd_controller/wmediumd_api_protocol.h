@@ -29,21 +29,38 @@
 namespace cuttlefish {
 
 enum class WmediumdMessageType : uint32_t {
-  kInvalid = 0,
-  kAck = 1,
-  kRegister = 2,
-  kUnregister = 3,
-  kNetlink = 4,
-  kSetControl = 5,
-  kTxStart = 6,
-  kGetStations = 7,
-  kSetSnr = 8,
-  kReloadConfig = 9,
-  kReloadCurrentConfig = 10,
-  kStartPcap = 11,
-  kStopPcap = 12,
-  kStationsList = 13,
-  kSetPosition = 14,
+  kInvalid = WMEDIUMD_MSG_INVALID,
+  kAck = WMEDIUMD_MSG_ACK,
+  kRegister = WMEDIUMD_MSG_REGISTER,
+  kUnregister = WMEDIUMD_MSG_UNREGISTER,
+  kNetlink = WMEDIUMD_MSG_NETLINK,
+  kSetControl = WMEDIUMD_MSG_SET_CONTROL,
+  kTxStart = WMEDIUMD_MSG_TX_START,
+  kGetStations = WMEDIUMD_MSG_GET_STATIONS,
+  kSetSnr = WMEDIUMD_MSG_SET_SNR,
+  kReloadConfig = WMEDIUMD_MSG_RELOAD_CONFIG,
+  kReloadCurrentConfig = WMEDIUMD_MSG_RELOAD_CURRENT_CONFIG,
+  kStartPcap = WMEDIUMD_MSG_START_PCAP,
+  kStopPcap = WMEDIUMD_MSG_STOP_PCAP,
+  kStationsList = WMEDIUMD_MSG_STATIONS_LIST,
+  kSetPosition = WMEDIUMD_MSG_SET_POSITION,
+};
+
+struct WmediumdStationInfo {
+  char addr[ETH_ALEN];
+  char hwaddr[ETH_ALEN];
+
+  double x;
+  double y;
+
+  int tx_power;
+
+  WmediumdStationInfo(const char addr[ETH_ALEN], const char hwaddr[ETH_ALEN],
+                      double x, double y, int tx_power)
+      : x(x), y(y), tx_power(tx_power) {
+    memcpy(this->addr, addr, sizeof(this->addr));
+    memcpy(this->hwaddr, hwaddr, sizeof(this->hwaddr));
+  }
 };
 
 bool ValidMacAddr(const std::string& macAddr);
@@ -174,12 +191,12 @@ class WmediumdMessageStationsList : public WmediumdMessage {
     return WmediumdMessageType::kStationsList;
   }
 
-  const std::vector<wmediumd_station_info>& GetStations() const {
+  const std::vector<WmediumdStationInfo>& GetStations() const {
     return station_list_;
   }
 
  private:
-  std::vector<wmediumd_station_info> station_list_;
+  std::vector<WmediumdStationInfo> station_list_;
 };
 
 class WmediumdMessageSetPosition : public WmediumdMessage {
