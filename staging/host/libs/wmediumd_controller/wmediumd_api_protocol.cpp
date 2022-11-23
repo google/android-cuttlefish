@@ -153,6 +153,31 @@ void WmediumdMessageSetPosition::SerializeBody(std::string& buf) const {
   AppendBinaryRepresentation(buf, y_);
 }
 
+WmediumdMessageSetLci::WmediumdMessageSetLci(const std::string& node,
+                                             const std::string& lci) {
+  mac_ = ParseMacAddress(node);
+  lci_ = lci;
+}
+
+void WmediumdMessageSetLci::SerializeBody(std::string& buf) const {
+  std::copy(std::begin(mac_), std::end(mac_), std::back_inserter(buf));
+  std::copy(std::begin(lci_), std::end(lci_), std::back_inserter(buf));
+  buf.push_back('\0');
+}
+
+WmediumdMessageSetCivicloc::WmediumdMessageSetCivicloc(
+    const std::string& node, const std::string& civicloc) {
+  mac_ = ParseMacAddress(node);
+  civicloc_ = civicloc;
+}
+
+void WmediumdMessageSetCivicloc::SerializeBody(std::string& buf) const {
+  std::copy(std::begin(mac_), std::end(mac_), std::back_inserter(buf));
+  std::copy(std::begin(civicloc_), std::end(civicloc_),
+            std::back_inserter(buf));
+  buf.push_back('\0');
+}
+
 std::optional<WmediumdMessageStationsList> WmediumdMessageStationsList::Parse(
     const WmediumdMessageReply& reply) {
   size_t pos = 0;
@@ -183,8 +208,10 @@ std::optional<WmediumdMessageStationsList> WmediumdMessageStationsList::Parse(
 
     const wmediumd_station_info* station =
         reinterpret_cast<const wmediumd_station_info*>(data + pos);
+    std::string lci((char*)station + station->lci_offset);
+    std::string civicloc((char*)station + station->civicloc_offset);
     result.station_list_.emplace_back(station->addr, station->hwaddr,
-                                      station->x, station->y,
+                                      station->x, station->y, lci, civicloc,
                                       station->tx_power);
     pos += sizeof(wmediumd_station_info);
   }
