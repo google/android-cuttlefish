@@ -260,6 +260,7 @@ Result<std::string> CreationAnalyzer::AnalyzeHome() const {
             "To auto-generate HOME, the group name is a must.");
   std::string auto_generated_home{kParentOfDefaultHomeDirectories};
   auto_generated_home.append("/" + group_name_);
+  CF_EXPECT(EnsureDirectoryExistsAllTheWay(auto_generated_home));
   return auto_generated_home;
 }
 
