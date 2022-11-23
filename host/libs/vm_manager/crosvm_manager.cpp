@@ -213,9 +213,9 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     }
   }
 
-  if (config.enable_webrtc()) {
+  if (instance.enable_webrtc()) {
     auto touch_type_parameter =
-        config.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
+        instance.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
 
     auto display_configs = instance.display_configs();
     CF_EXPECT(display_configs.size() >= 1);
@@ -230,7 +230,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--keyboard=",
                                   instance.keyboard_socket_path());
   }
-  if (config.enable_webrtc()) {
+  if (instance.enable_webrtc()) {
     crosvm_cmd.Cmd().AddParameter("--switches=",
                                   instance.switches_socket_path());
   }
