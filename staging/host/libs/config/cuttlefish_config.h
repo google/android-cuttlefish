@@ -474,6 +474,8 @@ class CuttlefishConfig {
 
     std::string vbmeta_path() const;
 
+    std::string ap_vbmeta_path() const;
+
     std::string id() const;
 
     std::string gem5_binary_dir() const;
