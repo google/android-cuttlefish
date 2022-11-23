@@ -180,8 +180,12 @@ std::optional<WmediumdMessageStationsList> WmediumdMessageStationsList::Parse(
       LOG(ERROR) << "invalid response size";
       return std::nullopt;
     }
-    result.station_list_.push_back(
-        *reinterpret_cast<const wmediumd_station_info*>(data + pos));
+
+    const wmediumd_station_info* station =
+        reinterpret_cast<const wmediumd_station_info*>(data + pos);
+    result.station_list_.emplace_back(station->addr, station->hwaddr,
+                                      station->x, station->y,
+                                      station->tx_power);
     pos += sizeof(wmediumd_station_info);
   }
 
