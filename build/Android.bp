@@ -64,6 +64,7 @@ cvd_host_tools = [
     "libgrpc++_unsecure",
     "log_tee",
     "logcat_receiver",
+    "lpadd",
     "lpmake",
     "lpunpack",
     "lz4",
