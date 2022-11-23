@@ -39,7 +39,6 @@ PRODUCT_PACKAGES += FakeSystemApp
 #
 LOCAL_PREFER_VENDOR_APEX := true
 $(call inherit-product, device/google/cuttlefish/shared/slim/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 
 #
 # Special settings for the target
