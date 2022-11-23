@@ -55,6 +55,18 @@ selector::InstanceDatabase& InstanceManager::GetInstanceDB(const uid_t uid) {
   return instance_dbs_[uid];
 }
 
+Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
+    const CreationAnalyzerParam& param,
+    const std::optional<ucred>& credential) {
+  CF_EXPECT(credential != std::nullopt);
+  const uid_t uid = credential->uid;
+  auto& instance_db = GetInstanceDB(uid);
+
+  auto group_creation_info = CF_EXPECT(
+      CreationAnalyzer::Analyze(param, credential, instance_db, lock_manager_));
+  return {group_creation_info};
+}
+
 bool InstanceManager::HasInstanceGroups(const uid_t uid) {
   std::lock_guard lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
