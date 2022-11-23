@@ -94,6 +94,16 @@ bool WmediumdController::SetPosition(const std::string& node, double x,
   return SendMessage(WmediumdMessageSetPosition(node, x, y));
 }
 
+bool WmediumdController::SetLci(const std::string& node,
+                                const std::string& lci) {
+  return SendMessage(WmediumdMessageSetLci(node, lci));
+}
+
+bool WmediumdController::SetCivicloc(const std::string& node,
+                                     const std::string& civicloc) {
+  return SendMessage(WmediumdMessageSetCivicloc(node, civicloc));
+}
+
 bool WmediumdController::SendMessage(const WmediumdMessage& message) {
   auto reply = SendMessageWithReply(message);
 
