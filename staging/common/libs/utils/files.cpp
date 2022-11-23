@@ -84,13 +84,18 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks) {
 }
 
 Result<void> EnsureDirectoryExists(const std::string& directory_path) {
-  if (!DirectoryExists(directory_path)) {
-    LOG(DEBUG) << "Setting up " << directory_path;
-    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-            0 &&
-        errno != EEXIST) {
-      return CF_ERRNO("Failed to create dir: \"" << directory_path);
-    }
+  if (DirectoryExists(directory_path)) {
+    return {};
+  }
+  const auto parent_dir = cpp_dirname(directory_path);
+  if (parent_dir.size() > 1) {
+    EnsureDirectoryExists(parent_dir);
+  }
+  LOG(DEBUG) << "Setting up " << directory_path;
+  if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
+          0 &&
+      errno != EEXIST) {
+    return CF_ERRNO("Failed to create dir: \"" << directory_path);
   }
   return {};
 }
