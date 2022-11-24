@@ -142,12 +142,6 @@ class CuttlefishConfig {
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
 
-  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
-  bool enable_vehicle_hal_grpc_server() const;
-
-  void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
-  bool enable_gnss_grpc_proxy() const;
-
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
@@ -286,9 +280,6 @@ class CuttlefishConfig {
 
   void set_smt(bool smt);
   bool smt() const;
-
-  void set_enable_audio(bool enable);
-  bool enable_audio() const;
 
   void set_protected_vm(bool protected_vm);
   bool protected_vm() const;
@@ -516,6 +507,9 @@ class CuttlefishConfig {
     bool use_sdcard() const;
     bool pause_in_bootloader() const;
     bool run_as_daemon() const;
+    bool enable_audio() const;
+    bool enable_vehicle_hal_grpc_server() const;
+    bool enable_gnss_grpc_proxy() const;
 
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
@@ -637,6 +631,9 @@ class CuttlefishConfig {
     void set_use_sdcard(bool use_sdcard);
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
+    void set_enable_audio(bool enable);
+    void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
+    void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
