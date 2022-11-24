@@ -12,6 +12,7 @@ on early-init
     setprop ro.cpuvulkan.version ${ro.boot.cpuvulkan.version}
     setprop ro.hw_timeout_multiplier ${ro.boot.hw_timeout_multiplier}
     setprop ro.opengles.version ${ro.boot.opengles.version}
+    setprop hypervisor.memory_reclaim.supported ${ro.boot.hypervisor.vm.supported}
 
     start metrics_helper
     # start module load in the background
