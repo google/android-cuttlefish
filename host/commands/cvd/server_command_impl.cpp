@@ -90,6 +90,7 @@ std::optional<CommandInvocationInfo> ExtractInfo(
                                   .uid = uid,
                                   .args = args,
                                   .envs = envs};
+  result.envs["HOME"] = home;
   return {result};
 }
 
