@@ -84,7 +84,7 @@ Result<void> InstanceDatabase::AddInstanceGroup(
   }
   CF_EXPECT(IsValidGroupName(group_name),
             "GroupName " << group_name << " is ill-formed.");
-  CF_EXPECT(EnsureDirectoryExists(home_dir),
+  CF_EXPECT(EnsureDirectoryExistsAllTheWay(home_dir),
             "HOME dir, " << home_dir << " does not exist");
   CF_EXPECT(PotentiallyHostBinariesDir(host_binaries_dir),
             "ANDROID_HOST_OUT, " << host_binaries_dir << " is not a tool dir");

@@ -209,6 +209,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
   group_name_ = AnalyzeGroupName(instance_info);
   home_ = CF_EXPECT(AnalyzeHome());
+  envs_["HOME"] = home_;
   CF_EXPECT(envs_.find(kAndroidHostOut) != envs_.end());
   host_artifacts_path_ = envs_.at(kAndroidHostOut);
 
@@ -259,6 +260,7 @@ Result<std::string> CreationAnalyzer::AnalyzeHome() const {
             "To auto-generate HOME, the group name is a must.");
   std::string auto_generated_home{kParentOfDefaultHomeDirectories};
   auto_generated_home.append("/" + group_name_);
+  CF_EXPECT(EnsureDirectoryExistsAllTheWay(auto_generated_home));
   return auto_generated_home;
 }
 
