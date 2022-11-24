@@ -147,6 +147,15 @@ void CuttlefishConfig::SetPath(const std::string& key,
   }
 }
 
+static constexpr char kDeprecatedBootCompleted[] = "deprecated_boot_completed";
+bool CuttlefishConfig::deprecated_boot_completed() const {
+  return (*dictionary_)[kDeprecatedBootCompleted].asBool();
+}
+void CuttlefishConfig::set_deprecated_boot_completed(
+    bool deprecated_boot_completed) {
+  (*dictionary_)[kDeprecatedBootCompleted] = deprecated_boot_completed;
+}
+
 static constexpr char kCuttlefishEnvPath[] = "cuttlefish_env_path";
 void CuttlefishConfig::set_cuttlefish_env_path(const std::string& path) {
   SetPath(kCuttlefishEnvPath, path);
@@ -221,14 +230,6 @@ void CuttlefishConfig::set_gem5_debug_flags(const std::string& gem5_debug_flags)
   (*dictionary_)[kGem5DebugFlags] = gem5_debug_flags;
 }
 
-static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
-void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
-  (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
-}
-bool CuttlefishConfig::enable_gnss_grpc_proxy() const {
-  return (*dictionary_)[kEnableGnssGrpcProxy].asBool();
-}
-
 static constexpr char kSeccompPolicyDir[] = "seccomp_policy_dir";
 void CuttlefishConfig::set_seccomp_policy_dir(const std::string& seccomp_policy_dir) {
   if (seccomp_policy_dir.empty()) {
@@ -247,14 +248,6 @@ void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
 }
 bool CuttlefishConfig::enable_webrtc() const {
   return (*dictionary_)[kEnableWebRTC].asBool();
-}
-
-static constexpr char kEnableVehicleHalServer[] = "enable_vehicle_hal_server";
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
 }
 
 static constexpr char kWebRTCAssetsDir[] = "webrtc_assets_dir";
@@ -641,14 +634,6 @@ void CuttlefishConfig::set_smt(bool smt) {
 }
 bool CuttlefishConfig::smt() const {
   return (*dictionary_)[kSmt].asBool();
-}
-
-static constexpr char kEnableAudio[] = "enable_audio";
-void CuttlefishConfig::set_enable_audio(bool enable) {
-  (*dictionary_)[kEnableAudio] = enable;
-}
-bool CuttlefishConfig::enable_audio() const {
-  return (*dictionary_)[kEnableAudio].asBool();
 }
 
 static constexpr char kProtectedVm[] = "protected_vm";
