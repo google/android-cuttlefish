@@ -347,8 +347,13 @@ RAMDISK_KERNEL_MODULES :=       failover.ko \
                                 net_failover.ko \
                                 nd_virtio.ko \
                                 virtio-rng.ko \
+                                virtio_net.ko \
+                                virtio_dma_buf.ko \
+                                virtio-gpu.ko \
+                                virtio_input.ko \
                                 virtio_blk.ko \
                                 virtio_console.ko \
                                 virtio_pci.ko \
                                 virtio_pci_modern_dev.ko \
+                                vmw_vsock_virtio_transport.ko \
 
