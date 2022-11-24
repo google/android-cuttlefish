@@ -190,9 +190,10 @@ std::vector<std::string> BootconfigArgsFromConfig(
     bootconfig_args.push_back(
         concat("androidboot.hypervisor.version=cf-", config.vm_manager()));
     bootconfig_args.push_back("androidboot.hypervisor.vm.supported=1");
-    bootconfig_args.push_back(
-        "androidboot.hypervisor.protected_vm.supported=0");
+  } else {
+    bootconfig_args.push_back("androidboot.hypervisor.vm.supported=0");
   }
+  bootconfig_args.push_back("androidboot.hypervisor.protected_vm.supported=0");
   if (!instance.kernel_path().empty()) {
     bootconfig_args.emplace_back("androidboot.kernel_hotswapped=1");
   }
