@@ -28,6 +28,8 @@
 namespace cuttlefish {
 namespace {
 
+using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
+
 const char* kInstances = "instances";
 
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
@@ -983,12 +985,12 @@ bool CuttlefishConfig::InstanceSpecific::start_netsim() const {
   return (*Dictionary())[kStartNetsim].asBool();
 }
 
-static constexpr char kStartAp[] = "start_ap";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_ap(bool start) {
-  (*Dictionary())[kStartAp] = start;
+static constexpr char kApBootFlow[] = "ap_boot_flow";
+void CuttlefishConfig::MutableInstanceSpecific::set_ap_boot_flow(APBootFlow flow) {
+  (*Dictionary())[kApBootFlow] = static_cast<int>(flow);
 }
-bool CuttlefishConfig::InstanceSpecific::start_ap() const {
-  return (*Dictionary())[kStartAp].asBool();
+APBootFlow CuttlefishConfig::InstanceSpecific::ap_boot_flow() const {
+  return static_cast<APBootFlow>((*Dictionary())[kApBootFlow].asInt());
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
