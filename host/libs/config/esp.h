@@ -20,6 +20,26 @@
 
 namespace cuttlefish {
 
+// Currently the Cuttlefish bootloaders are built only for x86 (32-bit),
+// ARM (QEMU only, 32-bit) and AArch64 (64-bit), and U-Boot will hard-code
+// these search paths. Install all bootloaders to one of these paths.
+// NOTE: For now, just ignore the 32-bit ARM version, as Debian doesn't
+//       build an EFI monolith for this architecture.
+// These are the paths Debian installs the monoliths to. If another distro
+// uses an alternative monolith path, add it to this table
+const std::string kBootSrcPathIA32 = "/usr/lib/grub/i386-efi/monolithic/grubia32.efi";
+const std::string kBootDestPathIA32 = "EFI/BOOT/BOOTIA32.EFI";
+
+const std::string kBootSrcPathAA64 = "/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi";
+const std::string kBootDestPathAA64 = "EFI/BOOT/BOOTAA64.EFI";
+
+const std::string kModulesDestPath = "EFI/modules";
+const std::string kMultibootModuleSrcPathIA32 = "/usr/lib/grub/i386-efi/multiboot.mod";
+const std::string kMultibootModuleDestPathIA32 = kModulesDestPath + "/multiboot.mod";
+
+const std::string kMultibootModuleSrcPathAA64 = "/usr/lib/grub/arm64-efi/multiboot.mod";
+const std::string kMultibootModuleDestPathAA64 = kModulesDestPath + "/multiboot.mod";
+
 class EspBuilder final {
  public:
   EspBuilder() = delete;

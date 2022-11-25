@@ -262,7 +262,7 @@ class ServerLoopImpl : public ServerLoop,
     std::vector<OverlayFile> overlay_files{
       OverlayFile("overlay.img", instance_.os_composite_disk_path())
     };
-    if (instance_.start_ap()) {
+    if (instance_.ap_boot_flow() != CuttlefishConfig::InstanceSpecific::APBootFlow::None) {
       overlay_files.emplace_back(
         OverlayFile("ap_overlay.img", instance_.ap_composite_disk_path()));
     }
