@@ -462,8 +462,22 @@ class CuttlefishConfig {
     // Whether this instance should start a netsim instance
     bool start_netsim() const;
 
-    // Whether this instance should start an ap instance
-    bool start_ap() const;
+    enum class APBootFlow {
+      // Not starting AP at all (for example not the 1st instance)
+      None,
+      // Generating ESP and using U-BOOT to boot AP
+      Grub,
+      // Using legacy way to boot AP in case we cannot generate ESP image.
+      // Currently we have only one case when we cannot do it. When users
+      // have ubuntu bionic which doesn't have monolith binaris in the
+      // grub-efi-arm64-bin (for arm64) and grub-efi-ia32-bin (x86) deb packages.
+      // TODO(b/260337906): check is it possible to add grub binaries into the AOSP
+      // to deliver the proper grub environment
+      // TODO(b/260338443): use grub-mkimage from grub-common in case we cannot overcome
+      // legal issues
+      LegacyDirect
+    };
+    APBootFlow ap_boot_flow() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -608,7 +622,7 @@ class CuttlefishConfig {
     void set_start_wmediumd(bool start);
     void set_start_rootcanal(bool start);
     void set_start_netsim(bool start);
-    void set_start_ap(bool start);
+    void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
