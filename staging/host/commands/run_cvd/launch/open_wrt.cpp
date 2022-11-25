@@ -24,6 +24,8 @@
 namespace cuttlefish {
 namespace {
 
+using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
+
 class OpenWrt : public CommandSource {
  public:
   INJECT(OpenWrt(const CuttlefishConfig& config,
@@ -72,7 +74,6 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--disable-sandbox");
     }
     ap_cmd.AddReadWriteDisk(instance_.PerInstancePath("ap_overlay.img"));
-    ap_cmd.AddReadWriteDisk(instance_.persistent_ap_composite_disk_path());
 
     auto boot_logs_path =
         instance_.PerInstanceLogPath("crosvm_openwrt_boot.log");
@@ -80,7 +81,19 @@ class OpenWrt : public CommandSource {
     ap_cmd.AddSerialConsoleReadOnly(boot_logs_path);
     ap_cmd.AddHvcReadOnly(logs_path);
 
-    ap_cmd.Cmd().AddParameter("--bios=", instance_.bootloader());
+    switch (instance_.ap_boot_flow()) {
+      case APBootFlow::Grub:
+        ap_cmd.AddReadWriteDisk(instance_.persistent_ap_composite_disk_path());
+        ap_cmd.Cmd().AddParameter("--bios=", instance_.bootloader());
+        break;
+      case APBootFlow::LegacyDirect:
+        ap_cmd.Cmd().AddParameter("--params=\"root=/dev/vda1\"");
+        ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
+        break;
+      default:
+        // must not be happened
+        break;
+    }
 
     std::vector<Command> commands;
     commands.emplace_back(log_tee_.CreateLogTee(ap_cmd.Cmd(), "openwrt"));
@@ -91,7 +104,7 @@ class OpenWrt : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "OpenWrt"; }
   bool Enabled() const override {
-    return instance_.start_ap() &&
+    return instance_.ap_boot_flow() != APBootFlow::None &&
            config_.vm_manager() == vm_manager::CrosvmManager::name();
   }
 
