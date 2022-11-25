@@ -31,6 +31,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/libs/config/config_flag.h"
+#include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
@@ -1254,8 +1255,27 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
                                  (FLAGS_rootcanal_instance_num <= 0));
 
-    instance.set_start_ap(!FLAGS_ap_rootfs_image.empty() &&
-                          !FLAGS_ap_kernel_image.empty() && start_wmediumd);
+    if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() && start_wmediumd) {
+      std::string required_grub_image_path;
+      switch (kernel_configs[0].target_arch) {
+        case Arch::Arm:
+        case Arch::Arm64:
+          required_grub_image_path = kBootSrcPathAA64;
+          break;
+        case Arch::X86:
+        case Arch::X86_64:
+          required_grub_image_path = kBootSrcPathIA32;
+          break;
+      }
+
+      if (FileExists(required_grub_image_path)) {
+        instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::Grub);
+      } else {
+        instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
+      }
+    } else {
+      instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::None);
+    }
 
     is_first_instance = false;
 

@@ -130,7 +130,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
-    if (instance_.start_ap()) {
+    if (instance_.ap_boot_flow() == CuttlefishConfig::InstanceSpecific::APBootFlow::Grub) {
       if (!PrepareBootEnvImage(instance_.ap_uboot_env_image_path(),
           CuttlefishConfig::InstanceSpecific::BootFlow::Linux)) {
         return false;

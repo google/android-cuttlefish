@@ -118,6 +118,7 @@ DECLARE_bool(use_overlay);
 
 namespace cuttlefish {
 
+using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 using vm_manager::Gem5Manager;
 
 Result<void> ResolveInstanceFiles() {
@@ -315,14 +316,17 @@ std::vector<ImagePartition> android_composite_disk_config(
   return partitions;
 }
 
-std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& config) {
+std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
 
-  partitions.push_back(ImagePartition{
-      .label = "ap_esp",
-      .image_file_path = AbsolutePath(config.ap_esp_image()),
-      .read_only = FLAGS_use_overlay,
-  });
+  if (instance.ap_boot_flow() == APBootFlow::Grub) {
+    partitions.push_back(ImagePartition{
+        .label = "ap_esp",
+        .image_file_path = AbsolutePath(config.ap_esp_image()),
+        .read_only = FLAGS_use_overlay,
+    });
+  }
 
   partitions.push_back(ImagePartition{
       .label = "ap_rootfs",
@@ -365,7 +369,7 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   return DiskBuilder()
-      .Partitions(GetApCompositeDiskConfig(config))
+      .Partitions(GetApCompositeDiskConfig(config, instance))
       .VmManager(config.vm_manager())
       .CrosvmPath(config.crosvm_binary())
       .ConfigPath(instance.PerInstancePath("ap_composite_disk_config.txt"))
@@ -731,7 +735,7 @@ class GeneratePersistentVbmeta : public SetupFeature {
       }
     }
 
-    if (instance_.start_ap()) {
+    if (instance_.ap_boot_flow() == APBootFlow::Grub) {
       if (!PrepareVBMetaImage(instance_.ap_vbmeta_path(), false)) {
         return false;
       }
@@ -996,7 +1000,7 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
             .ResumeIfPossible(FLAGS_resume);
     CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
 
-    if (instance_.start_ap()) {
+    if (instance_.ap_boot_flow() == APBootFlow::Grub) {
       auto persistent_ap_disk_builder =
         DiskBuilder()
             .Partitions(persistent_ap_composite_disk_config(instance_))
@@ -1409,7 +1413,7 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
-    if (instance.start_ap()) {
+    if (instance.ap_boot_flow() != APBootFlow::None) {
       CF_EXPECT(ap_disk_builder.BuildCompositeDiskIfNecessary());
     }
 
@@ -1433,7 +1437,7 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     if (!FLAGS_protected_vm) {
       os_disk_builder.OverlayPath(instance.PerInstancePath("overlay.img"));
       CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
-      if (instance.start_ap()) {
+      if (instance.ap_boot_flow() != APBootFlow::None) {
         ap_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
         CF_EXPECT(ap_disk_builder.BuildOverlayIfNecessary());
       }
