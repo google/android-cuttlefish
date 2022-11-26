@@ -78,5 +78,16 @@ std::vector<std::string> ConvertProtoArguments(
 // e.g. cvd start --help, cvd stop --help
 bool IsHelpSubcmd(const std::vector<std::string>& args);
 
+/**
+ * Calculates absolute path based on the client's environment
+ *
+ * If the client sent a relative path like "bin/foo", it is relative
+ * to the client's working directory, not to the server's.
+ * Likewise, if the client sent a path that starts with ~, we should
+ * replace ~ with the client user's home, not the server user's.
+ */
+Result<std::string> ClientAbsolutePath(const std::string& path, const uid_t uid,
+                                       const std::string& client_pwd);
+
 }  // namespace cvd_cmd_impl
 }  // namespace cuttlefish
