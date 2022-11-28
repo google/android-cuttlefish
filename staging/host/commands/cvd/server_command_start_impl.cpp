@@ -40,6 +40,25 @@ Result<bool> CvdStartCommandHandler::CanHandle(
   return Contains(command_to_binary_map_, invocation.command);
 }
 
+CvdStartCommandHandler::PreconditionVerification
+CvdStartCommandHandler::VerifyPrecondition(
+    const RequestWithStdio& request) const {
+  PreconditionVerification verification_result;
+  if (!request.Credentials()) {
+    verification_result.error_message =
+        "ucred is not available while it is necessary.";
+    return verification_result;
+  }
+  if (!Contains(request.Message().command_request().env(),
+                "ANDROID_HOST_OUT")) {
+    verification_result.error_message =
+        "ANDROID_HOST_OUT in client environment is invalid.";
+    return verification_result;
+  }
+  verification_result.is_ok = true;
+  return verification_result;
+}
+
 Result<cvd::Response> CvdStartCommandHandler::Handle(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
@@ -47,20 +66,21 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return CF_ERR("Interrupted");
   }
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(request.Credentials() != std::nullopt);
-  const uid_t uid = request.Credentials()->uid;
 
   cvd::Response response;
   response.mutable_command_response();
 
-  auto invocation_info_opt = ExtractInfo(command_to_binary_map_, request);
-  if (!invocation_info_opt) {
+  auto [meets_precondition, error_message] = VerifyPrecondition(request);
+  if (!meets_precondition) {
     response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(
-        "ANDROID_HOST_OUT in client environment is invalid.");
+    response.mutable_status()->set_message(error_message);
     return response;
   }
 
+  const uid_t uid = request.Credentials()->uid;
+
+  auto invocation_info_opt = ExtractInfo(command_to_binary_map_, request);
+  CF_EXPECT(invocation_info_opt != std::nullopt);
   auto invocation_info = std::move(*invocation_info_opt);
   const std::string bin_path =
       CF_EXPECT(UpdateInstanceDatabase(invocation_info))
