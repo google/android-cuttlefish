@@ -48,7 +48,7 @@ class InstanceManager {
 
   using InstanceGroupDir = std::string;
   struct InstanceGroupInfo {
-    std::string host_binaries_dir;
+    std::string host_artifacts_path;
     std::set<int> instances;
   };
 

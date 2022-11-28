@@ -83,7 +83,8 @@ Result<cvd::Response> CvdCommandHandler::Handle(
         instance_manager_.GetInstanceGroupInfo(uid, invocation_info.home);
     if (assembly_info_result.ok()) {
       auto assembly_info = assembly_info_result.value();
-      bin_path = assembly_info.host_binaries_dir + invocation_info.bin;
+      bin_path =
+          assembly_info.host_artifacts_path + "/bin/" + invocation_info.bin;
     } else {
       bin_path =
           invocation_info.host_artifacts_path + "/bin/" + invocation_info.bin;
