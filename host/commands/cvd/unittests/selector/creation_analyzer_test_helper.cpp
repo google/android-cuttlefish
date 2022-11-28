@@ -19,12 +19,38 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
+
+// copied from server.h
+struct CommandInvocation {
+  std::string command;
+  std::vector<std::string> arguments;
+};
+
+CommandInvocation MockParseInvocation(const std::vector<std::string>& args) {
+  if (args.empty()) {
+    return CommandInvocation{};
+  }
+  if (args[0] != "cvd") {
+    return CommandInvocation{.command = args[0], .arguments = Args{}};
+  }
+  if (args.size() == 1) {
+    return CommandInvocation{.command = "help", .arguments = Args{}};
+  }
+  Args program_args{args.begin() + 2, args.end()};
+  return CommandInvocation{.command = args[1], .arguments = program_args};
+}
+
+}  // namespace
 
 CreationInfoGenTest::CreationInfoGenTest() { Init(); }
 void CreationInfoGenTest::Init() {
   const auto& input_param = GetParam();
   selector_args_ = android::base::Tokenize(input_param.selector_args, " ");
-  cmd_args_ = android::base::Tokenize(input_param.cmd_args, " ");
+  auto cmd_invocation =
+      MockParseInvocation(android::base::Tokenize(input_param.cmd_args, " "));
+  sub_cmd_ = cmd_invocation.command;
+  cmd_args_ = std::move(cmd_invocation.arguments);
   if (!input_param.home.empty()) {
     envs_["HOME"] = input_param.home;
   }
