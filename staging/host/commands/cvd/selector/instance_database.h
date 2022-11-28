@@ -45,10 +45,10 @@ class InstanceDatabase {
   // returns CF_ERR if the home_directory is already taken
   Result<void> AddInstanceGroup(const std::string& group_name,
                                 const std::string& home_dir,
-                                const std::string& host_binaries_dir);
+                                const std::string& host_artifacts_path);
   // auto-generate the group_name
   Result<void> AddInstanceGroup(const std::string& home_dir,
-                                const std::string& host_binaries_dir);
+                                const std::string& host_artifacts_path);
 
   Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id,
                            const std::string& instance_name);

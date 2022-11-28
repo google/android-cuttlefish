@@ -24,9 +24,9 @@ namespace selector {
 
 LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
                                        const std::string& home_dir,
-                                       const std::string& host_binaries_dir)
+                                       const std::string& host_artifacts_path)
     : home_dir_{home_dir},
-      host_binaries_dir_{host_binaries_dir},
+      host_artifacts_path_{host_artifacts_path},
       internal_group_name_(GenInternalGroupName()),
       group_name_(group_name) {}
 
