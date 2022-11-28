@@ -97,13 +97,13 @@ bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
     SetErrorCode(ErrorCode::kFileError, "Failed to create " + android_host_out);
     return false;
   }
-  android_binaries_dir_ = android_host_out + "/bin";
-  if (!EnsureDirectoryExists(android_binaries_dir_).ok()) {
+  android_artifacts_path_ = android_host_out;
+  if (!EnsureDirectoryExists(android_artifacts_path_ + "/bin").ok()) {
     SetErrorCode(ErrorCode::kFileError,
-                 "Failed to create " + android_binaries_dir_);
+                 "Failed to create " + android_artifacts_path_ + "/bin");
     return false;
   }
-  if (!Touch(android_binaries_dir_ + "/launch_cvd")) {
+  if (!Touch(android_artifacts_path_ + "/bin" + "/launch_cvd")) {
     SetErrorCode(ErrorCode::kFileError, "Failed to create mock launch_cvd");
     return false;
   }
@@ -119,7 +119,7 @@ bool CvdInstanceDatabaseTest::AddGroups(
       SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
       return false;
     }
-    if (!db_.AddInstanceGroup(base_name, home, android_binaries_dir_).ok()) {
+    if (!db_.AddInstanceGroup(base_name, home, android_artifacts_path_).ok()) {
       SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
       return false;
     }
