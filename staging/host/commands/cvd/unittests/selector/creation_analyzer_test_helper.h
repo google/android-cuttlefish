@@ -67,7 +67,7 @@ class CreationInfoGenTest : public testing::TestWithParam<InputOutput> {
   std::string sub_cmd_;
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
-  std::optional<ucred> credential_;
+  ucred credential_;
   OutputInfo expected_output_;
   bool expected_success_;
   InstanceDatabase instance_db_;
