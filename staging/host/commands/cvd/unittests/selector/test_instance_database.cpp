@@ -66,24 +66,26 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
     // if ever failed, skip
     GTEST_SKIP() << "Failed to find/create " << home;
   }
-  const std::string invalid_host_binaries_dir{Workspace() + "/" + "host_out"};
-  if (!EnsureDirectoryExists(invalid_host_binaries_dir).ok()) {
-    GTEST_SKIP() << "Failed to find/create " << invalid_host_binaries_dir;
+  const std::string invalid_host_artifacts_path{Workspace() + "/" + "host_out"};
+  if (!EnsureDirectoryExists(invalid_host_artifacts_path).ok() ||
+      !EnsureDirectoryExists(invalid_host_artifacts_path + "/bin").ok()) {
+    GTEST_SKIP() << "Failed to find/create "
+                 << invalid_host_artifacts_path + "/bin";
   }
 
   // group_name : "meow"
   auto result_bad_home =
-      db.AddInstanceGroup("meow", "/path/to/never/exists", HostBinariesDir());
+      db.AddInstanceGroup("meow", "/path/to/never/exists", HostArtifactsPath());
   auto result_bad_host_bin_dir =
       db.AddInstanceGroup("meow", home, "/path/to/never/exists");
   auto result_both_bad = db.AddInstanceGroup("meow", "/path/to/never/exists",
                                              "/path/to/never/exists");
   auto result_bad_group_name =
-      db.AddInstanceGroup("0invalid_group_name", home, HostBinariesDir());
-  // Everything is correct but one thing: the host tool directory does not have
-  // host tool files such as launch_cvd
+      db.AddInstanceGroup("0invalid_group_name", home, HostArtifactsPath());
+  // Everything is correct but one thing: the host artifacts directory does not
+  // have host tool files such as launch_cvd
   auto result_non_qualifying_host_tool_dir =
-      db.AddInstanceGroup("meow", home, invalid_host_binaries_dir);
+      db.AddInstanceGroup("meow", home, invalid_host_artifacts_path);
 
   ASSERT_FALSE(result_bad_home.ok());
   ASSERT_FALSE(result_bad_host_bin_dir.ok());
@@ -106,8 +108,8 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup("meow", home0, HostBinariesDir()).ok());
-  ASSERT_TRUE(db.AddInstanceGroup("miaou", home1, HostBinariesDir()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup("meow", home0, HostArtifactsPath()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup("miaou", home1, HostArtifactsPath()).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -120,15 +122,15 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup("meow", home, HostBinariesDir()).ok());
-  ASSERT_FALSE(db.AddInstanceGroup("meow", home, HostBinariesDir()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup("meow", home, HostArtifactsPath()).ok());
+  ASSERT_FALSE(db.AddInstanceGroup("meow", home, HostArtifactsPath()).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
   /* AddGroups(name):
    *   HOME: Workspace() + "/" + name
-   *   HostBinariesDirectory: Workspace() + "/" + "android_host_out"
-   *   group_ := LocalInstanceGroup(name, HOME, HostBinariesDirectory)
+   *   HostArtifactsPath: Workspace() + "/" + "android_host_out"
+   *   group_ := LocalInstanceGroup(name, HOME, HostArtifactsPath)
    */
   if (!SetUpOk() || !AddGroups({"nyah", "yah_ong"})) {
     GTEST_SKIP() << Error().msg;
@@ -149,7 +151,6 @@ TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
   const std::string valid_home_search_key{Workspace() + "/" + "myau"};
   const std::string invalid_home_search_key{"/no/such/path"};
 
-  // FindGroups returns Result<Set<const T*>>, FindGroup Result<const T*>
   auto valid_groups = db.FindGroups({kHomeField, valid_home_search_key});
   auto valid_group = db.FindGroup({kHomeField, valid_home_search_key});
   auto invalid_groups = db.FindGroups({kHomeField, invalid_home_search_key});

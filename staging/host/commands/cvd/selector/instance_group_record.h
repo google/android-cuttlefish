@@ -43,7 +43,7 @@ class LocalInstanceGroup {
   const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& GroupName() const { return group_name_; }
   const std::string& HomeDir() const { return home_dir_; }
-  const std::string& HostBinariesDir() const { return host_binaries_dir_; }
+  const std::string& HostArtifactsPath() const { return host_artifacts_path_; }
   Result<std::string> GetCuttlefishConfigPath() const;
   const Set<std::unique_ptr<LocalInstance>>& Instances() const {
     return instances_;
@@ -69,9 +69,9 @@ class LocalInstanceGroup {
 
  private:
   LocalInstanceGroup(const std::string& group_name, const std::string& home_dir,
-                     const std::string& host_binaries_dir);
+                     const std::string& host_artifacts_path);
   std::string home_dir_;
-  std::string host_binaries_dir_;
+  std::string host_artifacts_path_;
 
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
