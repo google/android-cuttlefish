@@ -26,7 +26,7 @@ namespace selector {
 
 static std::string GroupName() { return "yah_ong"; }
 static std::string HomeDir() { return "/home/user"; }
-static std::string TestBinDir() { return "/opt/android11/bin"; }
+static std::string TestBinDir() { return "/opt/android11"; }
 
 class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
@@ -60,7 +60,7 @@ TEST_F(CvdInstanceGroupUnitTest, Fields) {
   ASSERT_EQ(group.InternalGroupName(), "cvd");
   ASSERT_EQ(group.GroupName(), "yah_ong");
   ASSERT_EQ(group.HomeDir(), HomeDir());
-  ASSERT_EQ(group.HostBinariesDir(), TestBinDir());
+  ASSERT_EQ(group.HostArtifactsPath(), TestBinDir());
 }
 
 TEST_F(CvdInstanceGroupUnitTest, AddInstances) {
