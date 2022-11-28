@@ -61,6 +61,12 @@ class CvdStartCommandHandler : public CvdServerHandler {
       const CommandInvocationInfo& invocation_info) const;
   Result<void> FireCommand(Command&& command, const bool wait);
   bool HasHelpOpts(const std::vector<std::string>& args) const;
+  struct PreconditionVerification {
+    bool is_ok;
+    std::string error_message;
+  };
+  PreconditionVerification VerifyPrecondition(
+      const RequestWithStdio& request) const;
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
