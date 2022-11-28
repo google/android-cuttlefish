@@ -47,8 +47,7 @@ static bool IsCvdStart(const std::string& cmd) {
 
 Result<GroupCreationInfo> CreationAnalyzer::Analyze(
     const std::string& cmd, const CreationAnalyzerParam& param,
-    const std::optional<ucred>& credential,
-    const InstanceDatabase& instance_database,
+    const ucred& credential, const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_lock_file_manager) {
   CF_EXPECT(IsCvdStart(cmd),
             "CreationAnalyzer::Analyze() is for cvd start only.");
@@ -63,7 +62,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
 }
 
 CreationAnalyzer::CreationAnalyzer(
-    const CreationAnalyzerParam& param, const std::optional<ucred>& credential,
+    const CreationAnalyzerParam& param, const ucred& credential,
     SelectorFlagsParser&& selector_options_parser,
     const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_file_lock_manager)
@@ -245,10 +244,7 @@ std::string CreationAnalyzer::AnalyzeGroupName(
 }
 
 Result<std::string> CreationAnalyzer::AnalyzeHome() const {
-  CF_EXPECT(credential_ != std::nullopt,
-            "Credential is necessary for cvd start.");
-  auto system_wide_home =
-      CF_EXPECT(SystemWideUserHome(credential_.value().uid));
+  auto system_wide_home = CF_EXPECT(SystemWideUserHome(credential_.uid));
   if (envs_.find("HOME") != envs_.end() &&
       envs_.at("HOME") != system_wide_home) {
     // explicitly overridden by the user
