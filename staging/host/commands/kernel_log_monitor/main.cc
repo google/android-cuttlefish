@@ -94,8 +94,8 @@ int main(int argc, char** argv) {
     return 2;
   }
 
-  monitor::KernelLogServer klog{pipe, instance.PerInstanceLogPath("kernel.log"),
-                                config->deprecated_boot_completed()};
+  monitor::KernelLogServer klog{pipe,
+                                instance.PerInstanceLogPath("kernel.log")};
 
   for (auto subscriber_fd: subscriber_fds) {
     if (subscriber_fd->IsOpen()) {
