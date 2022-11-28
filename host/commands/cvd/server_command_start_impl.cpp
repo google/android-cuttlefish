@@ -113,7 +113,7 @@ Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
 
   // Track this assembly_dir in the fleet.
   InstanceManager::InstanceGroupInfo info;
-  info.host_binaries_dir = invocation_info.host_artifacts_path + "/bin/";
+  info.host_artifacts_path = invocation_info.host_artifacts_path;
   info.instances = CF_EXPECT(calculator.Calculate());
   CF_EXPECT(instance_manager_.SetInstanceGroup(invocation_info.uid,
                                                invocation_info.home, info),
@@ -126,7 +126,7 @@ Result<std::string> CvdStartCommandHandler::MakeBinPathFromDatabase(
     const CommandInvocationInfo& invocation_info) const {
   auto assembly_info = CF_EXPECT(instance_manager_.GetInstanceGroupInfo(
       invocation_info.uid, invocation_info.home));
-  return assembly_info.host_binaries_dir + invocation_info.bin;
+  return assembly_info.host_artifacts_path + "/bin/" + invocation_info.bin;
 }
 
 Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
