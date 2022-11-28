@@ -24,6 +24,7 @@ PRODUCT_COPY_FILES += \
 
 $(call inherit-product, frameworks/native/build/tablet-7in-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/pc/overlay
