@@ -75,21 +75,11 @@ func (c *APIClient) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstanc
 		return nil, err
 	}
 	path := "/operations/" + op.Name + "/:wait"
-	if err := c.doRequest("POST", path, nil, &op); err != nil {
+	ins := &apiv1.HostInstance{}
+	if err := c.doRequest("POST", path, nil, ins); err != nil {
 		return nil, err
 	}
-	if op.Result != nil && op.Result.Error != nil {
-		err := &ApiCallError{op.Result.Error}
-		return nil, err
-	}
-	if !op.Done {
-		return nil, OpTimeoutError(op.Name)
-	}
-	var ins apiv1.HostInstance
-	if err := json.Unmarshal([]byte(op.Result.Response), &ins); err != nil {
-		return nil, err
-	}
-	return &ins, nil
+	return ins, nil
 }
 
 func (c *APIClient) ListHosts() (*apiv1.ListHostsResponse, error) {
