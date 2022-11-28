@@ -147,15 +147,6 @@ void CuttlefishConfig::SetPath(const std::string& key,
   }
 }
 
-static constexpr char kDeprecatedBootCompleted[] = "deprecated_boot_completed";
-bool CuttlefishConfig::deprecated_boot_completed() const {
-  return (*dictionary_)[kDeprecatedBootCompleted].asBool();
-}
-void CuttlefishConfig::set_deprecated_boot_completed(
-    bool deprecated_boot_completed) {
-  (*dictionary_)[kDeprecatedBootCompleted] = deprecated_boot_completed;
-}
-
 static constexpr char kCuttlefishEnvPath[] = "cuttlefish_env_path";
 void CuttlefishConfig::set_cuttlefish_env_path(const std::string& path) {
   SetPath(kCuttlefishEnvPath, path);

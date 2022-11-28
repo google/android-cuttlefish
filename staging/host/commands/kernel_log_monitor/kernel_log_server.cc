@@ -91,11 +91,10 @@ void ProcessSubscriptions(
 
 namespace monitor {
 KernelLogServer::KernelLogServer(cuttlefish::SharedFD pipe_fd,
-                                 const std::string& log_name,
-                                 bool deprecated_boot_completed)
+                                 const std::string& log_name)
     : pipe_fd_(pipe_fd),
-      log_fd_(cuttlefish::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR | O_APPEND, 0666)),
-      deprecated_boot_completed_(deprecated_boot_completed) {}
+      log_fd_(cuttlefish::SharedFD::Open(log_name.c_str(),
+                                         O_CREAT | O_RDWR | O_APPEND, 0666)) {}
 
 void KernelLogServer::BeforeSelect(cuttlefish::SharedFDSet* fd_read) const {
   fd_read->Set(pipe_fd_);
@@ -167,15 +166,6 @@ bool KernelLogServer::HandleIncomingMessage() {
           }
           message["metadata"] = metadata;
           ProcessSubscriptions(message, &subscribers_);
-
-          //TODO(b/69417553) Remove this when our clients have transitioned to the
-          // new boot completed
-          if (deprecated_boot_completed_) {
-            // Write to host kernel log
-            FILE* log = popen("/usr/bin/sudo /usr/bin/tee /dev/kmsg", "w");
-            fprintf(log, "%s\n", std::string(stage).c_str());
-            fclose(log);
-          }
         }
       }
       line_.clear();
