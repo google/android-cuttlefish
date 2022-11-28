@@ -171,14 +171,6 @@ PRODUCT_PACKAGES += \
     wificond \
 
 #
-# Packages for the OpenGL implementation
-#
-
-# GL implementation for virgl
-PRODUCT_PACKAGES += \
-    libGLES_mesa \
-
-#
 # Packages for the Vulkan implementation
 #
 ifeq ($(TARGET_VULKAN_SUPPORT),true)
@@ -709,8 +701,6 @@ endif
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
-
-PRODUCT_SOONG_NAMESPACES += external/mesa3d
 
 #for Confirmation UI
 PRODUCT_SOONG_NAMESPACES += vendor/google_devices/common/proprietary/confirmatioui_hal
