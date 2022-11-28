@@ -57,9 +57,8 @@ selector::InstanceDatabase& InstanceManager::GetInstanceDB(const uid_t uid) {
 
 Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
     const std::string& sub_cmd, const CreationAnalyzerParam& param,
-    const std::optional<ucred>& credential) {
-  CF_EXPECT(credential != std::nullopt);
-  const uid_t uid = credential->uid;
+    const ucred& credential) {
+  const uid_t uid = credential.uid;
   auto& instance_db = GetInstanceDB(uid);
 
   auto group_creation_info = CF_EXPECT(CreationAnalyzer::Analyze(
