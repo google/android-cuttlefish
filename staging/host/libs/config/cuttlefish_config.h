@@ -106,9 +106,6 @@ class CuttlefishConfig {
     int refresh_rate_hz;
   };
 
-  bool deprecated_boot_completed() const;
-  void set_deprecated_boot_completed(bool deprecated_boot_completed);
-
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
 
