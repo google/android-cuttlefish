@@ -89,8 +89,8 @@ TEST_P(HomeTest, HomeTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
-                                          instance_lock_file_manager_);
+  auto result = CreationAnalyzer::Analyze(
+      sub_cmd_, param, credential_, instance_db_, instance_lock_file_manager_);
 
   ASSERT_EQ(result.ok(), expected_success_) << result.error().Trace();
   if (!expected_success_) {
@@ -123,8 +123,8 @@ TEST_P(HostArtifactsTest, HostArtifactsTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
-                                          instance_lock_file_manager_);
+  auto result = CreationAnalyzer::Analyze(
+      sub_cmd_, param, credential_, instance_db_, instance_lock_file_manager_);
 
   ASSERT_EQ(result.ok(), expected_success_) << result.error().Trace();
   if (!expected_success_) {
@@ -136,7 +136,7 @@ TEST_P(HostArtifactsTest, HostArtifactsTest) {
 INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, HostArtifactsTest,
                          host_out_test_inputs);
 
-static auto invalid_subcmd_test_inputs =
+static auto invalid_sub_cmd_test_inputs =
     testing::Values(InputOutput{.cmd_args = "cvd stop --daemon",
                                 .android_host_out = "/home/user/download",
                                 .home = "/home/fake_user"},
@@ -147,34 +147,34 @@ static auto invalid_subcmd_test_inputs =
                                 .android_host_out = "/home/user/download",
                                 .home = "/home/fake_user"});
 
-TEST_P(InvalidSubcmdTest, InvalidSubcmdTest) {
+TEST_P(InvalidSubCmdTest, InvalidSubCmdTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
-                                          instance_lock_file_manager_);
+  auto result = CreationAnalyzer::Analyze(
+      sub_cmd_, param, credential_, instance_db_, instance_lock_file_manager_);
 
   ASSERT_FALSE(result.ok())
       << "Analyze() had to fail with the subcmd in " << GetParam().cmd_args;
 }
 
-INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, InvalidSubcmdTest,
-                         invalid_subcmd_test_inputs);
+INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, InvalidSubCmdTest,
+                         invalid_sub_cmd_test_inputs);
 
-static auto& valid_subcmd_test_inputs = home_test_inputs;
+static auto& valid_sub_cmd_test_inputs = home_test_inputs;
 
-TEST_P(ValidSubcmdTest, ValidSubcmdTest) {
+TEST_P(ValidSubCmdTest, ValidSubCmdTest) {
   auto param = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_, .envs = envs_, .selector_args = selector_args_};
 
-  auto result = CreationAnalyzer::Analyze(param, credential_, instance_db_,
-                                          instance_lock_file_manager_);
+  auto result = CreationAnalyzer::Analyze(
+      sub_cmd_, param, credential_, instance_db_, instance_lock_file_manager_);
 
   ASSERT_TRUE(result.ok()) << result.error().Trace();
 }
 
-INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, ValidSubcmdTest,
-                         valid_subcmd_test_inputs);
+INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, ValidSubCmdTest,
+                         valid_sub_cmd_test_inputs);
 
 }  // namespace selector
 }  // namespace cuttlefish
