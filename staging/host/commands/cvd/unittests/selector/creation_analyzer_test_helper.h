@@ -64,6 +64,7 @@ class CreationInfoGenTest : public testing::TestWithParam<InputOutput> {
   void Init();
 
   std::vector<std::string> selector_args_;
+  std::string sub_cmd_;
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
   std::optional<ucred> credential_;
@@ -75,8 +76,8 @@ class CreationInfoGenTest : public testing::TestWithParam<InputOutput> {
 
 class HomeTest : public CreationInfoGenTest {};
 class HostArtifactsTest : public CreationInfoGenTest {};
-class InvalidSubcmdTest : public CreationInfoGenTest {};
-class ValidSubcmdTest : public CreationInfoGenTest {};
+class InvalidSubCmdTest : public CreationInfoGenTest {};
+class ValidSubCmdTest : public CreationInfoGenTest {};
 
 }  // namespace selector
 }  // namespace cuttlefish
