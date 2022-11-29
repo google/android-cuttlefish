@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/selector/selector_cmdline_parser.h"
 
+#include <unistd.h>
+
 #include <sstream>
 #include <string_view>
 
@@ -23,6 +25,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
@@ -40,19 +43,27 @@ static Result<unsigned> ParseNaturalNumber(const std::string& token) {
 }
 
 Result<SelectorFlagsParser> SelectorFlagsParser::ConductSelectFlagsParser(
-    const std::vector<std::string>& selector_args,
+    const uid_t uid, const std::vector<std::string>& selector_args,
     const std::vector<std::string>& cmd_args,
     const std::unordered_map<std::string, std::string>& envs) {
-  SelectorFlagsParser parser(selector_args, cmd_args, envs);
+  const std::string system_wide_home = CF_EXPECT(SystemWideUserHome(uid));
+  SelectorFlagsParser parser(system_wide_home, selector_args, cmd_args, envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
 SelectorFlagsParser::SelectorFlagsParser(
+    const std::string& system_wide_user_home,
     const std::vector<std::string>& selector_args,
     const std::vector<std::string>& cmd_args,
     const std::unordered_map<std::string, std::string>& envs)
-    : selector_args_(selector_args), cmd_args_(cmd_args), envs_(envs) {}
+    : selector_args_(selector_args), cmd_args_(cmd_args), envs_(envs) {
+  if (Contains(envs_, "HOME") && envs_.at("HOME") != system_wide_user_home) {
+    may_be_default_group_ = false;
+    return;
+  }
+  may_be_default_group_ = selector_args.empty();
+}
 
 std::optional<std::string> SelectorFlagsParser::GroupName() const {
   return group_name_;
