@@ -7,7 +7,13 @@ use kmr_crypto_boring::{
     aes::BoringAes, aes_cmac::BoringAesCmac, des::BoringDes, ec::BoringEc, eq::BoringEq,
     hmac::BoringHmac, rng::BoringRng, rsa::BoringRsa,
 };
+use kmr_ta::device::{
+    BootloaderDone, Implementation, NoOpRetrieveRpcArtifacts, RetrieveKeyMaterial,
+    TrustedPresenceUnsupported,
+};
+use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
 use kmr_wire::keymint::SecurityLevel;
+use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use libc::c_int;
 use log::{debug, error, info};
 use std::io::{Read, Write};
@@ -29,13 +35,19 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     let mut infile = unsafe { std::fs::File::from_raw_fd(fd_in) };
     let mut outfile = unsafe { std::fs::File::from_raw_fd(fd_out) };
 
-    let hw_info = kmr_ta::HardwareInfo {
+    let hw_info = HardwareInfo {
         version_number: 1,
         security_level,
         impl_name: "Rust reference implementation for Cuttlefish",
         author_name: "Google",
         unique_id: "Cuttlefish KeyMint TA",
+    };
+
+    let rpc_info_v3 = RpcInfoV3 {
+        author_name: "Google",
+        unique_id: "Cuttlefish KeyMint TA",
         fused: false,
+        supported_num_of_keys_in_csr: MINIMUM_SUPPORTED_KEYS_IN_CSR,
     };
 
     let mut rng = BoringRng::default();
@@ -64,7 +76,8 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     let soft_keys = SoftwareKeys;
     let keys: &dyn kmr_ta::device::RetrieveKeyMaterial =
         if security_level == SecurityLevel::TrustedEnvironment { &tpm_keys } else { &soft_keys };
-    let dev = kmr_ta::device::Implementation {
+    let dev = Implementation {
+        // TODO(b/242838132): add TPM-backed implementation
         keys,
         sign_info: &sign_info,
         // HAL populates attestation IDs from properties.
@@ -72,15 +85,17 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         // No secure storage.
         sdd_mgr: None,
         // `BOOTLOADER_ONLY` keys not supported.
-        bootloader: &kmr_ta::device::BootloaderDone,
+        bootloader: &BootloaderDone,
         // `STORAGE_KEY` keys not supported.
         sk_wrapper: None,
         // `TRUSTED_USER_PRESENCE_REQUIRED` keys not supported
-        tup: &kmr_ta::device::TrustedPresenceUnsupported,
+        tup: &TrustedPresenceUnsupported,
         // No support for converting previous implementation's keyblobs.
         legacy_key: None,
+        // TODO (b/260601375): add TPM-backed implementation
+        rpc: &NoOpRetrieveRpcArtifacts,
     };
-    let mut ta = kmr_ta::KeyMintTa::new(hw_info, imp, dev);
+    let mut ta = KeyMintTa::new(hw_info, RpcInfo::V3(rpc_info_v3), imp, dev);
 
     let mut buf = [0; kmr_wire::MAX_SIZE];
     loop {
@@ -136,7 +151,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
 /// Software-only implementation using fake keys.
 struct SoftwareKeys;
 
-impl kmr_ta::device::RetrieveKeyMaterial for SoftwareKeys {
+impl RetrieveKeyMaterial for SoftwareKeys {
     fn root_kek(&self, _context: &[u8]) -> Result<crypto::RawKeyMaterial, Error> {
         // Matches `MASTER_KEY` in system/keymaster/key_blob_utils/software_keyblobs.cpp
         Ok(crypto::RawKeyMaterial([0; 16].to_vec()))
