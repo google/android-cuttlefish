@@ -575,6 +575,30 @@ bool CuttlefishConfig::InstanceSpecific::enable_gpu_angle() const {
   return (*Dictionary())[kEnableGpuAngle].asBool();
 }
 
+static constexpr char kEnableAudio[] = "enable_audio";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
+  (*Dictionary())[kEnableAudio] = enable;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_audio() const {
+  return (*Dictionary())[kEnableAudio].asBool();
+}
+
+static constexpr char kEnableVehicleHalServer[] = "enable_vehicle_hal_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*Dictionary())[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_vehicle_hal_grpc_server() const {
+  return (*Dictionary())[kEnableVehicleHalServer].asBool();
+}
+
+static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
+  (*Dictionary())[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gnss_grpc_proxy() const {
+  return (*Dictionary())[kEnableGnssGrpcProxy].asBool();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
