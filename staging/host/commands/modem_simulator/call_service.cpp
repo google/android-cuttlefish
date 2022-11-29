@@ -37,7 +37,6 @@ void CallService::InitializeServiceState() {
   auto instance = nvram_config->ForInstance(service_id_);
   in_emergency_mode_ = instance.emergency_mode();
 
-  last_active_call_index_ = 1;
   mute_on_ = false;
 }
 
@@ -216,7 +215,7 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
     call_status.is_mobile_terminated = false;
     call_status.call_state = CallStatus::CALL_STATE_DIALING;
     call_status.remote_client = remote_client;
-    int index = last_active_call_index_++;
+    auto index = FindFreeCallIndex();
 
     auto call_token = std::make_pair(index, call_status.number);
     call_status.timeout_serial = thread_looper_->Post(
@@ -232,7 +231,7 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
     CallStatus call_status(number);
     call_status.is_mobile_terminated = false;
     call_status.call_state = CallStatus::CALL_STATE_DIALING;
-    auto index = last_active_call_index_++;
+    auto index = FindFreeCallIndex();
     active_calls_[index] = call_status;
 
     if (emergency_number) {
@@ -707,7 +706,7 @@ void CallService::HandleRemoteCall(const Client& client,
       call_status.remote_client = client.client_fd;
       call_status.call_state = CallStatus::CALL_STATE_INCOMING;
 
-      auto index = last_active_call_index_++;
+      auto index = FindFreeCallIndex();
       active_calls_[index] = call_status;
       break;
     }
