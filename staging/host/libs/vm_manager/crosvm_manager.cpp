@@ -359,7 +359,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   } else {
     crosvm_cmd.AddHvcSink();
   }
-  if (config.enable_gnss_grpc_proxy()) {
+  if (instance.enable_gnss_grpc_proxy()) {
     crosvm_cmd.AddHvcReadWrite(
         instance.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
         instance.PerInstanceInternalPath("gnsshvc_fifo_vm.in"));
@@ -386,7 +386,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                           << VmManager::kMaxDisks + VmManager::kDefaultNumHvcs
                           << " devices");
 
-  if (config.enable_audio()) {
+  if (instance.enable_audio()) {
     crosvm_cmd.Cmd().AddParameter("--sound=", instance.audio_server_path());
   }
 
