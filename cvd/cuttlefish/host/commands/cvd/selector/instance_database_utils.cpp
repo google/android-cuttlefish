@@ -92,11 +92,12 @@ bool IsValidDeviceName(const std::string& token) {
   return IsValidGroupName(pieces[0]) && IsValidInstanceName(pieces[1]);
 }
 
-bool PotentiallyHostBinariesDir(const std::string& host_binaries_dir) {
-  if (host_binaries_dir.empty() || !DirectoryExists(host_binaries_dir)) {
+bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
+  if (host_artifacts_path.empty() || !DirectoryExists(host_artifacts_path)) {
     return false;
   }
-  std::vector<std::string> contents = DirectoryContents(host_binaries_dir);
+  const auto host_bin_path = host_artifacts_path + "/bin";
+  std::vector<std::string> contents = DirectoryContents(host_bin_path);
   std::set<std::string> contents_set{std::move_iterator(contents.begin()),
                                      std::move_iterator(contents.end())};
   std::set<std::string> launchers = {"cvd", "launch_cvd"};
