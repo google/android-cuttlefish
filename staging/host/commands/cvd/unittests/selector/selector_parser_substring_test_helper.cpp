@@ -15,16 +15,20 @@
 
 #include "host/commands/cvd/unittests/selector/selector_parser_substring_test_helper.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <android-base/strings.h>
 
 namespace cuttlefish {
 namespace selector {
 
 SubstringTest::SubstringTest() {
+  const uid_t uid = getuid();
   auto [input, expected] = GetParam();
   auto selector_args = android::base::Tokenize(input, " ");
   auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
-      selector_args, Args{}, Envs{});
+      uid, selector_args, Args{}, Envs{});
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
   }
