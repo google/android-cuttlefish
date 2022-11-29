@@ -74,6 +74,7 @@ cc_library_host_static {
         "tpm_auth.cpp",
         "tpm_commands.cpp",
         "tpm_encrypt_decrypt.cpp",
+        "tpm_ffi.cpp",
         "tpm_gatekeeper.cpp",
         "tpm_hmac.cpp",
         "tpm_key_blob_maker.cpp",
@@ -85,6 +86,21 @@ cc_library_host_static {
         "tpm_serialize.cpp",
     ],
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
+}
+
+// Rust FFI bindings to access TPM-specific functionality in C/C++.
+rust_bindgen_host {
+    name: "libsecure_env_tpm",
+    source_stem: "libsecure_env_tpm",
+    crate_name: "secure_env_tpm",
+    wrapper_src: "tpm_ffi.h",
+    vendor_available: true,
+    static_libs: [
+        "libsecure_env",
+    ],
+    // The cc_library_host_static target for libsecure_env only generates x86_64 arch
+    // libraries, not x86.
+    compile_multilib: "64",
 }
 
 cc_binary_host {
