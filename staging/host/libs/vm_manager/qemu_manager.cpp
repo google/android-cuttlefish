@@ -444,7 +444,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
-  if (config.enable_gnss_grpc_proxy()) {
+  if (instance.enable_gnss_grpc_proxy()) {
     add_hvc(instance.PerInstanceInternalPath("gnsshvc_fifo_vm"));
     add_hvc(instance.PerInstanceInternalPath("locationhvc_fifo_vm"));
   } else {

@@ -299,7 +299,7 @@ int main(int argc, char** argv) {
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
   std::shared_ptr<AudioHandler> audio_handler;
-  if (cvd_config->enable_audio()) {
+  if (instance.enable_audio()) {
     auto audio_stream = streamer->AddAudioStream("audio");
     auto audio_server = CreateAudioServer();
     auto audio_source = streamer->GetAudioSource();

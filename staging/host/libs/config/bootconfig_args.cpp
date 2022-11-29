@@ -129,7 +129,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
         concat("androidboot.vsock_touch_port=", instance.touch_server_port()));
   }
 
-  if (config.enable_vehicle_hal_grpc_server() &&
+  if (instance.enable_vehicle_hal_grpc_server() &&
       instance.vehicle_hal_server_port() &&
       FileExists(VehicleHalGrpcServerBinary())) {
     constexpr int vehicle_hal_server_cid = 2;
@@ -149,7 +149,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
                instance.audiocontrol_server_port()));
   }
 
-  if (!config.enable_audio()) {
+  if (!instance.enable_audio()) {
     bootconfig_args.push_back("androidboot.audio.tinyalsa.ignore_output=true");
     bootconfig_args.push_back("androidboot.audio.tinyalsa.simulate_input=true");
   }
