@@ -37,11 +37,17 @@ func (s OpTimeoutError) Error() string {
 }
 
 type ApiCallError struct {
-	Err *apiv1.Error
+	Code     string `json:"code,omitempty"`
+	ErrorMsg string `json:"error,omitempty"`
+	Details  string `json:"details,omitempty"`
 }
 
 func (e *ApiCallError) Error() string {
-	return fmt.Sprintf("api call error %s: %s", e.Err.Code, e.Err.Message)
+	str := fmt.Sprintf("api call error %s: %s", e.Code, e.ErrorMsg)
+	if e.Details != "" {
+		str += fmt.Sprintf("\n\nDETAILS: %s", e.Details)
+	}
+	return str
 }
 
 type APIClient struct {
@@ -235,6 +241,40 @@ func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
 	return out
 }
 
+type BuildInfo struct {
+	BuildID string `json:"build_id"`
+	Target  string `json:"target"`
+}
+
+type CVD struct {
+	Name      string     `json:"name"`
+	BuildInfo *BuildInfo `json:"build_info"`
+	Status    string     `json:"status"`
+	Displays  []string   `json:"displays"`
+}
+
+type CreateCVDRequest struct {
+	CVD *CVD `json:"cvd"`
+}
+
+type Operation struct {
+	Name string `json:"name"`
+	Done bool   `json:"done"`
+}
+
+func (c *APIClient) CreateCVD(host string, req *CreateCVDRequest) (*CVD, error) {
+	var op Operation
+	if err := c.doRequest("POST", "/hosts/"+host+"/cvds", req, &op); err != nil {
+		return nil, err
+	}
+	path := "/hosts/" + host + "/operations/" + op.Name + "/:wait"
+	cvd := &CVD{}
+	if err := c.doRequest("POST", path, nil, cvd); err != nil {
+		return nil, err
+	}
+	return cvd, nil
+}
+
 // It either populates the passed response payload reference and returns nil
 // error or returns an error. For responses with non-2xx status code an error
 // will be returned.
@@ -268,13 +308,13 @@ func (c *APIClient) doRequest(method, path string, reqpl, respl interface{}) err
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		// DELETE responses do not have a body.
 		if method == "DELETE" {
-			return &ApiCallError{&apiv1.Error{Message: res.Status}}
+			return &ApiCallError{ErrorMsg: res.Status}
 		}
-		errpl := new(apiv1.Error)
+		errpl := new(ApiCallError)
 		if err := dec.Decode(errpl); err != nil {
 			return err
 		}
-		return &ApiCallError{errpl}
+		return errpl
 	}
 	if respl != nil {
 		if err := dec.Decode(respl); err != nil {
