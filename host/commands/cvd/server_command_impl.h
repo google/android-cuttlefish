@@ -50,13 +50,18 @@ std::optional<CommandInvocationInfo> ExtractInfo(
     const std::map<std::string, std::string>& command_to_binary_map,
     const RequestWithStdio& request);
 
-Result<Command> ConstructCommand(const std::string& bin_path,
-                                 const std::string& home,
-                                 const std::vector<std::string>& args,
-                                 const Envs& envs,
-                                 const std::string& working_dir,
-                                 const std::string& command_name, SharedFD in,
-                                 SharedFD out, SharedFD err);
+struct ConstructCommandParam {
+  const std::string& bin_path;
+  const std::string& home;
+  const std::vector<std::string>& args;
+  const Envs& envs;
+  const std::string& working_dir;
+  const std::string& command_name;
+  SharedFD in;
+  SharedFD out;
+  SharedFD err;
+};
+Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
 
 }  // namespace cvd_cmd_impl
 }  // namespace cuttlefish
