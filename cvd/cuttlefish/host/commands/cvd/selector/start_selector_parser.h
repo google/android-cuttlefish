@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -50,7 +52,7 @@ Result<CommandAndSelectorArguments> GetCommandAndSelectorArguments(
 class SelectorFlagsParser {
  public:
   static Result<SelectorFlagsParser> ConductSelectFlagsParser(
-      const std::vector<std::string>& selector_args,
+      const uid_t uid, const std::vector<std::string>& selector_args,
       const std::vector<std::string>& cmd_args,
       const std::unordered_map<std::string, std::string>& envs);
   std::optional<std::string> GroupName() const;
@@ -60,9 +62,11 @@ class SelectorFlagsParser {
     return instance_ids_;
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
+  bool IsMaybeDefaultGroup() const { return may_be_default_group_; }
 
  private:
-  SelectorFlagsParser(const std::vector<std::string>& selector_args,
+  SelectorFlagsParser(const std::string& system_wide_user_home,
+                      const std::vector<std::string>& selector_args,
                       const std::vector<std::string>& cmd_args,
                       const std::unordered_map<std::string, std::string>& envs);
 
@@ -182,6 +186,7 @@ class SelectorFlagsParser {
    */
   std::optional<std::unordered_set<unsigned>> instance_ids_;
   unsigned requested_num_instances_;
+  bool may_be_default_group_;
 
   // temporarily keeps the leftover of the input cmd_args
   std::vector<std::string> selector_args_;
