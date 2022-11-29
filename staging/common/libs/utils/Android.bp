@@ -64,6 +64,7 @@ cc_test_host {
     srcs: [
         "flag_parser_test.cpp",
         "result_test.cpp",
+        "unique_resource_allocator_test.cpp",
         "unix_sockets_test.cpp",
     ],
     static_libs: [
