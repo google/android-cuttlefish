@@ -149,25 +149,24 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLockInternal() {
   }
   auto unused_id_pool =
       CF_EXPECT(CollectUnusedIds(instance_database_, std::move(id_pool)));
-  IdAllocator unique_id_allocator = IdAllocator::New(unused_id_pool);
+  auto unique_id_allocator = std::move(IdAllocator::New(unused_id_pool));
+  CF_EXPECT(unique_id_allocator != nullptr,
+            "Memory allocation for UniqueResourceAllocator failed.");
 
   // auto-generation means the user did not specify much: e.g. "cvd start"
   // In this case, the user may expect the instance id to be 1+
-  std::optional<std::unordered_set<unsigned>> allocated_ids;
-  if (unique_id_allocator.TakeRange(1, 1 + n_instances)) {
-    allocated_ids = std::unordered_set<unsigned>{};
-    for (unsigned int u = 1; u < 1 + n_instances; u++) {
-      allocated_ids->insert(u);
-    }
-  }
+  using ReservationSet = UniqueResourceAllocator<unsigned>::ReservationSet;
+  std::optional<ReservationSet> allocated_ids =
+      unique_id_allocator->TakeRange(1, 1 + n_instances);
   if (!allocated_ids) {
     // We could not allocate [1, 1 + n -1]. Try, [k, k + n - 1]
-    allocated_ids = unique_id_allocator.UniqueConsecutiveItems(n_instances);
+    allocated_ids = unique_id_allocator->UniqueConsecutiveItems(n_instances);
   }
   CF_EXPECT(allocated_ids != std::nullopt, "Unique ID allocation failed.");
 
   // Picks the lock files according to the ids, and discards the rest
-  for (const auto id : *allocated_ids) {
+  for (const auto& reservation : *allocated_ids) {
+    const auto id = reservation.Get();
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
