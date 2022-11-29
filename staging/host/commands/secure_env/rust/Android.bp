@@ -19,6 +19,9 @@ package {
 
 rust_library_host {
     name: "libkmr_cf",
+    // The cc_library_host_static target for libsecure_env only generates x86_64 arch
+    // libraries, not x86.
+    compile_multilib: "64",
     srcs: [ "lib.rs" ],
     crate_name: "kmr_cf",
     rustlibs: [
@@ -30,11 +33,13 @@ rust_library_host {
         "libkmr_wire",
         "liblibc",
         "liblog_rust",
+        "libsecure_env_tpm",
     ],
 }
 
 rust_ffi_host {
     name: "libkmr_cf_ffi",
+    compile_multilib: "64",
     srcs: [ "ffi.rs" ],
     crate_name: "kmr_cf_ffi",
     rustlibs: [
