@@ -110,6 +110,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.vibrator@1.3",
     "android.hardware.vr@1.0",
     "android.hardware.weaver@1.0",
+    "android.hardware.wifi@1.6", // Converted to AIDL (see b/205044134)
     "android.hardware.wifi.hostapd@1.3", // Converted to AIDL (see b/194806512)
     "android.hardware.wifi.supplicant@1.4", // Converted to AIDL (see b/196235436)
     "android.hardware.wifi.offload@1.0",
@@ -164,9 +165,6 @@ static const std::set<std::string> kAlwaysMissingAidl = {
  * These should be accompanied by a bug and expected to be here temporarily.
  */
 static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
-    // No implementations on cuttlefish for wifi aidl hal
-    {"android.hardware.wifi.", 1},
-
     // Cuttlefish Identity Credential HAL implementation is currently
     // stuck at version 3 while RKP support is being added. Will be
     // updated soon.
