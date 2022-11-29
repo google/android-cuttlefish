@@ -119,13 +119,10 @@ DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
 DEFINE_vec(enable_gpu_udmabuf, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_UDMABUF),
             "Use the udmabuf driver for zero-copy virtio-gpu");
 
-DEFINE_vec(enable_gpu_angle, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_ANGLE),
-            "Use ANGLE to provide GLES implementation (always true for"
-            " guest_swiftshader");
-DEFINE_bool(deprecated_boot_completed, CF_DEFAULTS_DEPRECATED_BOOT_COMPLETED,
-            "Log boot completed message to"
-            " host kernel. This is only used during transition of our clients."
-            " Will be deprecated soon.");
+DEFINE_vec(enable_gpu_angle,
+           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_ANGLE),
+           "Use ANGLE to provide GLES implementation (always true for"
+           " guest_swiftshader");
 
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
@@ -751,8 +748,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_kernel_log(FLAGS_enable_kernel_log);
 
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
-
-  tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
 
   tmp_config_obj.set_qemu_binary_dir(FLAGS_qemu_binary_dir);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
