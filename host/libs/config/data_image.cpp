@@ -221,7 +221,7 @@ class InitializeDataImageImpl : public InitializeDataImage {
     }
     auto current_fs_type = GetFsType(instance_.data_image());
     if (current_fs_type != instance_.userdata_format()) {
-      CF_EXPECT(instance_.data_policy() == kDataPolicyResizeUpTo,
+      CF_EXPECT(instance_.data_policy() != kDataPolicyResizeUpTo,
                 "Changing the fs format is incompatible with -data_policy="
                     << kDataPolicyResizeUpTo << " (\"" << current_fs_type
                     << "\" != \"" << instance_.userdata_format() << "\")");
