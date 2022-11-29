@@ -42,6 +42,13 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
   void HandleCancelUssd(const Client& client, const std::string& command);
   void HandleEmergencyMode(const Client& client, const std::string& command);
   void HandleRemoteCall(const Client& client, const std::string& command);
+  int FindFreeCallIndex() const {
+    for (int index = 1; true; index++) {
+      if (active_calls_.find(index) == active_calls_.end()) {
+        return index;
+      }
+    }
+  }
 
  private:
   void InitializeServiceState();
@@ -141,7 +148,6 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
   // private data members
   SimService* sim_service_;
   NetworkService* network_service_;
-  int32_t last_active_call_index_;
   std::map<int, CallStatus> active_calls_;
   bool in_emergency_mode_;
   bool mute_on_;
