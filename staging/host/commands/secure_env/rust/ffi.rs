@@ -8,7 +8,12 @@ use log::error;
 
 /// FFI wrapper around [`kmr_cf::ta_main`].
 #[no_mangle]
-pub extern "C" fn kmr_ta_main(fd_in: c_int, fd_out: c_int, security_level: c_int) {
+pub extern "C" fn kmr_ta_main(
+    fd_in: c_int,
+    fd_out: c_int,
+    security_level: c_int,
+    trm: *mut libc::c_void,
+) {
     let security_level = match security_level as i32 {
         x if x == SecurityLevel::TrustedEnvironment as i32 => SecurityLevel::TrustedEnvironment,
         x if x == SecurityLevel::Strongbox as i32 => SecurityLevel::Strongbox,
@@ -18,5 +23,5 @@ pub extern "C" fn kmr_ta_main(fd_in: c_int, fd_out: c_int, security_level: c_int
             SecurityLevel::Software
         }
     };
-    kmr_cf::ta_main(fd_in, fd_out, security_level)
+    kmr_cf::ta_main(fd_in, fd_out, security_level, trm)
 }
