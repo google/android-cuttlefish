@@ -15,6 +15,9 @@
 
 #include "host/commands/cvd/unittests/selector/selector_parser_names_test_helper.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
@@ -27,21 +30,23 @@ namespace selector {
 ValidNamesTest::ValidNamesTest() { Init(); }
 
 void ValidNamesTest::Init() {
+  const uid_t uid = getuid();
   auto [input, expected_output] = GetParam();
   selector_args_ = android::base::Tokenize(input, " ");
   expected_output_ = std::move(expected_output);
   auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
-      selector_args_, Args{}, Envs{});
+      uid, selector_args_, Args{}, Envs{});
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
   }
 }
 
 InvalidNamesTest::InvalidNamesTest() {
+  const uid_t uid = getuid();
   auto input = GetParam();
   auto selector_args = android::base::Tokenize(input, " ");
   auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
-      selector_args, Args{}, Envs{});
+      uid, selector_args, Args{}, Envs{});
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
   }
