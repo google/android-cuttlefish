@@ -137,8 +137,6 @@ DEFINE_vec(
     "to the device console and typing in \"boot\".");
 DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
             "Enable the root-canal which is Bluetooth emulator in the host.");
-DEFINE_bool(rootcanal_attach_mode, CF_DEFAULTS_ROOTCANAL_ATTACH_MODE,
-            "[DEPRECATED] Ignored, use rootcanal_instance_num instead");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ENABLE_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
