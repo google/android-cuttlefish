@@ -24,3 +24,5 @@ allow dlkm_loader kmsg_device:chr_file rw_file_perms;
 # dlkm_loader searches tracefs while looking for modules
 dontaudit dlkm_loader debugfs_bootreceiver_tracing:dir search;
 dontaudit dlkm_loader debugfs_mm_events_tracing:dir search;
+
+set_prop(dlkm_loader, vendor_device_prop)
