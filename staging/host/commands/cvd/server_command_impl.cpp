@@ -94,39 +94,36 @@ std::optional<CommandInvocationInfo> ExtractInfo(
   return {result};
 }
 
-Result<Command> ConstructCommand(const std::string& bin_path,
-                                 const std::string& home,
-                                 const std::vector<std::string>& args,
-                                 const Envs& envs,
-                                 const std::string& working_dir,
-                                 const std::string& command_name, SharedFD in,
-                                 SharedFD out, SharedFD err) {
-  Command command(command_name);
-  command.SetExecutable(bin_path);
-  for (const std::string& arg : args) {
+Result<Command> ConstructCommand(const ConstructCommandParam& param) {
+  Command command(param.command_name);
+  command.SetExecutable(param.bin_path);
+  for (const std::string& arg : param.args) {
     command.AddParameter(arg);
   }
   // Set CuttlefishConfig path based on assembly dir,
   // used by subcommands when locating the CuttlefishConfig.
-  if (envs.count(cuttlefish::kCuttlefishConfigEnvVarName) == 0) {
-    auto config_path = InstanceManager::GetCuttlefishConfigPath(home);
+  if (param.envs.count(cuttlefish::kCuttlefishConfigEnvVarName) == 0) {
+    auto config_path = InstanceManager::GetCuttlefishConfigPath(param.home);
     if (config_path.ok()) {
       command.AddEnvironmentVariable(cuttlefish::kCuttlefishConfigEnvVarName,
                                      *config_path);
     }
   }
-  for (auto& it : envs) {
+  for (auto& it : param.envs) {
     command.UnsetFromEnvironment(it.first);
     command.AddEnvironmentVariable(it.first, it.second);
   }
   // Redirect stdin, stdout, stderr back to the cvd client
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, std::move(in));
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, std::move(out));
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, std::move(err));
-  if (!working_dir.empty()) {
-    auto fd = SharedFD::Open(working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
-    CF_EXPECT(fd->IsOpen(),
-              "Couldn't open \"" << working_dir << "\": " << fd->StrError());
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, std::move(param.in));
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                        std::move(param.out));
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+                        std::move(param.err));
+  if (!param.working_dir.empty()) {
+    auto fd =
+        SharedFD::Open(param.working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
+    CF_EXPECT(fd->IsOpen(), "Couldn't open \"" << param.working_dir
+                                               << "\": " << fd->StrError());
     command.SetWorkingDirectory(fd);
   }
   return {std::move(command)};
