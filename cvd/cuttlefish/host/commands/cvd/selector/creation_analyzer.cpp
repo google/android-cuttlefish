@@ -51,9 +51,10 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
     InstanceLockFileManager& instance_lock_file_manager) {
   CF_EXPECT(IsCvdStart(cmd),
             "CreationAnalyzer::Analyze() is for cvd start only.");
+  const auto uid = credential.uid;
   auto selector_options_parser =
       CF_EXPECT(SelectorFlagsParser::ConductSelectFlagsParser(
-          param.selector_args, param.cmd_args, param.envs));
+          uid, param.selector_args, param.cmd_args, param.envs));
   CreationAnalyzer analyzer(param, credential,
                             std::move(selector_options_parser),
                             instance_database, instance_lock_file_manager);
