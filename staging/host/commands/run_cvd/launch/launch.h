@@ -56,8 +56,7 @@ ConfigServerComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 ConsoleForwarderComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 GnssGrpcProxyServerComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig>>
@@ -85,8 +84,7 @@ SecureEnvComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 TombstoneReceiverComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 VehicleHalServerComponent();
 
 fruit::Component<

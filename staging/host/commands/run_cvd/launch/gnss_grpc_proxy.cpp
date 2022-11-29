@@ -24,9 +24,8 @@ namespace {
 class GnssGrpcProxyServer : public CommandSource {
  public:
   INJECT(
-      GnssGrpcProxyServer(const CuttlefishConfig& config,
-                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+      GnssGrpcProxyServer(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
@@ -56,7 +55,7 @@ class GnssGrpcProxyServer : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "GnssGrpcProxyServer"; }
   bool Enabled() const override {
-    return config_.enable_gnss_grpc_proxy() &&
+    return instance_.enable_gnss_grpc_proxy() &&
            FileExists(GnssGrpcProxyBinary());
   }
 
@@ -87,7 +86,6 @@ class GnssGrpcProxyServer : public CommandSource {
   }
 
  private:
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   SharedFD gnss_grpc_proxy_in_wr_;
   SharedFD gnss_grpc_proxy_out_rd_;
@@ -97,8 +95,7 @@ class GnssGrpcProxyServer : public CommandSource {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 GnssGrpcProxyServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, GnssGrpcProxyServer>()
