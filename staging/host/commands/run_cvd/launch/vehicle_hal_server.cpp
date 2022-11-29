@@ -23,9 +23,8 @@ namespace {
 
 class VehicleHalServer : public CommandSource {
  public:
-  INJECT(VehicleHalServer(const CuttlefishConfig& config,
-                          const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+  INJECT(VehicleHalServer(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
@@ -50,7 +49,7 @@ class VehicleHalServer : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "VehicleHalServer"; }
   bool Enabled() const override {
-    return config_.enable_vehicle_hal_grpc_server() &&
+    return instance_.enable_vehicle_hal_grpc_server() &&
            FileExists(VehicleHalGrpcServerBinary());
   }
 
@@ -59,14 +58,12 @@ class VehicleHalServer : public CommandSource {
   bool Setup() override { return true; }
 
  private:
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 VehicleHalServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, VehicleHalServer>()
