@@ -117,18 +117,15 @@ std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
 }
 
 constexpr auto crosvm_socket = "crosvm_control.sock";
-constexpr auto process_restarter = "process_restarter";
 
 Result<std::vector<Command>> CrosvmManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
   CrosvmBuilder crosvm_cmd;
-  crosvm_cmd.Cmd().SetExecutableAndName(HostBinaryPath(process_restarter));
-  crosvm_cmd.Cmd().AddParameter(kCrosvmVmResetExitCode);
-  crosvm_cmd.Cmd().AddParameter(config.crosvm_binary());
-  // Flag allows exit codes other than 0 or 1, must be before command argument
-  crosvm_cmd.Cmd().AddParameter("--extended-status");
+
+  crosvm_cmd.ApplyProcessRestarter(config.crosvm_binary(),
+                                   kCrosvmVmResetExitCode);
   crosvm_cmd.Cmd().AddParameter("run");
   crosvm_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_socket),
                               config.crosvm_binary());
