@@ -25,23 +25,12 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "common/libs/utils/contains.h"
 
 namespace cuttlefish {
 
-/**
- * Generic allocator that can provide RAII-aware resource reservations.
- *
- * See go/cf-resource-allocator-utils for more details.
- */
 template <typename T>
 class UniqueResourceAllocator {
-  template <typename U>
-  using RemoveCvref =
-      typename std::remove_cv_t<typename std::remove_reference_t<U>>;
-
  public:
   /*
    * Returning the inner resource to the pool at destruction time
@@ -69,27 +58,29 @@ class UniqueResourceAllocator {
 
     ~Reservation() {
       if (resource_pool_) {
-        resource_pool_->Reclaim(*resource_);
+        resource_pool_->Reclaim(std::move(resource_));
       }
     }
-    const T& Get() const { return *resource_; }
+    const T& Get() const { return resource_; }
 
    private:
-    Reservation(UniqueResourceAllocator& resource_pool, const T& resource)
+    Reservation(UniqueResourceAllocator& resource_pool, T&& resource)
         : resource_pool_(std::addressof(resource_pool)),
-          resource_(std::addressof(resource)) {}
+          resource_(std::move(resource)) {}
+    Reservation(UniqueResourceAllocator& resource_pool, const T& resource)
+        : resource_pool_(std::addressof(resource_pool)), resource_(resource) {}
     /*
      * Once this Reservation is std::move-ed out to other object,
      * resource_pool_ should be invalidated, and resource_ shouldn't
      * be tried to be returned to the invalid resource_pool_
      */
     UniqueResourceAllocator* resource_pool_;
-    const T* resource_;
+    T resource_;
   };
 
   struct ReservationHash {
     std::size_t operator()(const Reservation& resource_wrapper) const {
-      return std::hash<const T*>()(std::addressof(resource_wrapper.Get()));
+      return std::hash<T>()(resource_wrapper.Get());
     }
   };
   using ReservationSet = std::unordered_set<Reservation, ReservationHash>;
@@ -109,41 +100,14 @@ class UniqueResourceAllocator {
     return std::unique_ptr<UniqueResourceAllocator>(new_allocator);
   }
 
-  // Adds the elements from new pool that did not belong to and have not
-  // belonged to the current pool of the allocator. returns the leftover
-  std::vector<T> ExpandPool(std::vector<T> another_pool) {
-    std::lock_guard lock(mutex_);
-    std::vector<T> not_selected;
-    for (auto& new_item : another_pool) {
-      if (Contains(available_resources_, new_item) ||
-          Contains(allocated_resources_, new_item)) {
-        not_selected.emplace_back(std::move(new_item));
-        continue;
-      }
-      available_resources_.insert(std::move(new_item));
-    }
-    return not_selected;
-  }
-
-  std::vector<T> ExpandPool(T&& t) {
-    std::vector<T> pool_to_add;
-    pool_to_add.emplace_back(std::move(t));
-    return ExpandPool(std::move(pool_to_add));
-  }
-
-  std::vector<T> ExpandPool(const T& t) {
-    std::vector<T> pool_to_add;
-    pool_to_add.emplace_back(t);
-    return ExpandPool(std::move(pool_to_add));
-  }
-
   std::optional<Reservation> UniqueItem() {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto itr = available_resources_.begin();
-    if (itr == available_resources_.end()) {
+    if (available_resources_.empty()) {
       return std::nullopt;
     }
-    Reservation r(*this, *(RemoveFromPool(itr)));
+    auto itr = available_resources_.begin();
+    Reservation r(*this, std::move(*itr));
+    available_resources_.erase(itr);
     return {std::move(r)};
   }
 
@@ -156,7 +120,8 @@ class UniqueResourceAllocator {
     ReservationSet result;
     for (int i = 0; i < n; i++) {
       auto itr = available_resources_.begin();
-      result.insert(Reservation{*this, *(RemoveFromPool(itr))});
+      result.insert(Reservation{*this, std::move(*itr)});
+      available_resources_.erase(itr);
     }
     return {std::move(result)};
   }
@@ -186,11 +151,12 @@ class UniqueResourceAllocator {
   // returns false if not available or not in the pool at all
   std::optional<Reservation> Take(const T& t) {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto itr = available_resources_.find(t);
-    if (itr == available_resources_.end()) {
+    if (!Contains(available_resources_, t)) {
       return std::nullopt;
     }
-    Reservation resource{*this, *(RemoveFromPool(itr))};
+    auto itr = available_resources_.find(t);
+    Reservation resource{*this, std::move(*itr)};
+    available_resources_.erase(itr);
     return resource;
   }
 
@@ -205,7 +171,8 @@ class UniqueResourceAllocator {
     ReservationSet resources;
     for (const auto& t : ts) {
       auto itr = available_resources_.find(t);
-      resources.insert(Reservation{*this, *(RemoveFromPool(itr))});
+      resources.insert(Reservation{*this, std::move(*itr)});
+      available_resources_.erase(itr);
     }
     return resources;
   }
@@ -234,21 +201,9 @@ class UniqueResourceAllocator {
   }
 
   // only called by the destructor of Reservation
-  // harder to use Result as this is called by destructors only
-  void Reclaim(const T& t) {
+  void Reclaim(T&& t) {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto itr = allocated_resources_.find(t);
-    if (itr == allocated_resources_.end()) {
-      if (!Contains(available_resources_, t)) {
-        LOG(ERROR) << "The resource " << t << " does not belong to this pool";
-        return;
-      }
-      // already reclaimed.
-      return;
-    }
-    T tmp = std::move(*itr);
-    allocated_resources_.erase(itr);
-    available_resources_.insert(std::move(tmp));
+    available_resources_.insert(std::move(t));
   }
 
   /*
@@ -269,26 +224,13 @@ class UniqueResourceAllocator {
     ReservationSet resources;
     for (auto cursor = start_inclusive; cursor < end_exclusive; cursor++) {
       auto itr = available_resources_.find(cursor);
-      resources.insert(Reservation{*this, *(RemoveFromPool(itr))});
+      resources.insert(Reservation{*this, std::move(*itr)});
+      available_resources_.erase(itr);
     }
     return resources;
   }
 
-  /*
-   * Moves *itr from available_resources_ to allocated_resources_, and returns
-   * the pointer of the object in the allocated_resources_. The pointer is never
-   * nullptr as it is std::addressof(an object in the unordered_set buffer).
-   *
-   * The itr must belong to available_resources_.
-   */
-  const T* RemoveFromPool(const typename std::unordered_set<T>::iterator itr) {
-    T tmp = std::move(*itr);
-    available_resources_.erase(itr);
-    const auto [new_itr, _] = allocated_resources_.insert(std::move(tmp));
-    return std::addressof(*new_itr);
-  }
   std::unordered_set<T> available_resources_;
-  std::unordered_set<T> allocated_resources_;
   std::mutex mutex_;
 };
 
