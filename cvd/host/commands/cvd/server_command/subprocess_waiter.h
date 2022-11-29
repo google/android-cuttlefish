@@ -46,6 +46,12 @@ struct CommandInvocationInfo {
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
+struct PreconditionVerification {
+  bool is_ok;
+  std::string error_message;
+};
+PreconditionVerification VerifyPrecondition(const RequestWithStdio& request);
+
 std::optional<CommandInvocationInfo> ExtractInfo(
     const std::map<std::string, std::string>& command_to_binary_map,
     const RequestWithStdio& request);
