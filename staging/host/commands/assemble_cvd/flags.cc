@@ -187,11 +187,6 @@ DEFINE_string(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
 DEFINE_string(webrtc_certs_dir, CF_DEFAULTS_WEBRTC_CERTS_DIR,
               "[Experimental] Path to WebRTC certificates directory.");
 
-DEFINE_bool(webrtc_enable_adb_websocket,
-            CF_DEFAULTS_WEBRTC_ENABLE_ADB_WEBSOCKET,
-            "[Experimental] If enabled, exposes local adb service through a "
-            "websocket.");
-
 static constexpr auto HOST_OPERATOR_SOCKET_PATH = "/run/cuttlefish/operator";
 
 DEFINE_bool(
@@ -769,9 +764,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_tcp_port_range(tcp_range);
   auto udp_range  = ParsePortRange(FLAGS_udp_port_range);
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
-
-  tmp_config_obj.set_webrtc_enable_adb_websocket(
-          FLAGS_webrtc_enable_adb_websocket);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
 
