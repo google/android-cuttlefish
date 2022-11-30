@@ -123,22 +123,22 @@ class CreationAnalyzer {
   /*
    * When group name is nil, it is auto-generated using instance ids
    *
-   * if the given ids are {l, m, n}, the auto-generated group name will be
-   * GenDefaultGroupName() + "_l_m_n." If the ids set is equal to {1}, the
-   * auto-generated group name will be just GenDefaultGroupName()
-   *
+   * If the instanc group is the default one, the group name is cvd. Otherwise,
+   * for given instance ids, {i, j, k}, the group name will be cvd_i_j_k.
    */
-  std::string AnalyzeGroupName(const std::vector<PerInstanceInfo>&) const;
+  Result<std::string> AnalyzeGroupName(
+      const std::vector<PerInstanceInfo>&) const;
 
   /**
    * Figures out the HOME directory
    *
-   *  If given in envs and is different from the system-wide home, use it
-   *  If not, try $(SYSTEM_WIDE_HOME)/.cuttlefish_home/group_name
+   * The issue is that many times, HOME is anyway implicitly given. Thus, only
+   * if the HOME value is not equal to the HOME directory recognized by the
+   * system, it can be safely regarded as overridden by the user.
    *
-   * The issue here is, mostly, HOME is given anyway. How would we tell
-   * if the HOME is given explicitly or not?
-   * e.g. HOME=/any/path cvd start vs. cvd start
+   * If that is not the case, we use a automatically generated value as HOME.
+   * If the group instance is the default one, we still use the user's system-
+   * widely recognized home. If not, we populate them user /tmp/.cf/<uid>/
    *
    */
   Result<std::string> AnalyzeHome() const;
@@ -155,7 +155,6 @@ class CreationAnalyzer {
   std::string home_;
   std::string host_artifacts_path_;  ///< e.g. out/host/linux-x86
   std::string group_name_;
-  std::optional<std::vector<std::string>> per_instance_names_;
 
   // internal, temporary
   SelectorFlagsParser selector_options_parser_;
