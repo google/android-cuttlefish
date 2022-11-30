@@ -133,35 +133,3 @@ func TestClientGeneratesAnswer(t *testing.T) {
 		t.Fatalf("Expected 'answer' message, but got '%v' instead", msg.Type)
 	}
 }
-
-func TestClientGeneratesICECandidate(t *testing.T) {
-	observer := TestObserver{}
-	signaling := Signaling{
-		SendCh: make(chan interface{}),
-		RecvCh: make(chan map[string]interface{}),
-	}
-
-	// This won't return, so run it in another routine
-	go func() {
-		_, _ = NewConnection(&signaling, &observer)
-	}()
-
-	// The first message is always the request-offer
-	if _, err := recvWithTimeOut[RequestOfferMsg](signaling.SendCh); err != nil {
-		t.Skipf("Client didn't send request-offer in time: %v", err)
-	}
-	signaling.RecvCh <- map[string]interface{}{
-		"type": "offer",
-		"sdp":  fakeSDP,
-	}
-	if _, err := recvWithTimeOut[webrtc.SessionDescription](signaling.SendCh); err != nil {
-		t.Skipf("Client didn't send the answer message in time: %v", err)
-	}
-	msg, err := recvWithTimeOut[ICECandidateMsg](signaling.SendCh)
-	if err != nil {
-		t.Fatalf("Client didn't send the first ice-candidate message in time: %v", err)
-	}
-	if msg.Type != ICECandidateMsgType {
-		t.Fatalf("Expected '%s' message, but got '%v' instead", ICECandidateMsgType, msg.Type)
-	}
-}
