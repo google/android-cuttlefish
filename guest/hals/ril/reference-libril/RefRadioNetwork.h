@@ -47,6 +47,9 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::ndk::ScopedAStatus isN1ModeEnabled(int32_t serial) override;
 
     ::ndk::ScopedAStatus setN1ModeEnabled(int32_t serial, bool enable) override;
+
+    ::ndk::ScopedAStatus setLocationPrivacySetting(int32_t serial, bool shareLocation) override;
+    ::ndk::ScopedAStatus getLocationPrivacySetting(int32_t serial) override;
 };
 
 }  // namespace cf::ril
