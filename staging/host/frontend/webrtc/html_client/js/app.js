@@ -569,10 +569,14 @@ class DeviceControlApp {
       let streamVideoTracks = stream.getVideoTracks();
       if (streamVideoTracks.length > 0) {
         let streamSettings = stream.getVideoTracks()[0].getSettings();
-        let streamWidth = streamSettings.width;
-        let streamHeight = streamSettings.height;
+        // Width and height may not be available immediately after the track is
+        // added but before frames arrive.
+        if ('width' in streamSettings && 'height' in streamSettings) {
+          let streamWidth = streamSettings.width;
+          let streamHeight = streamSettings.height;
 
-        text += `${streamWidth}x${streamHeight}`;
+          text += `${streamWidth}x${streamHeight}`;
+        }
       }
 
       if (this.#currentRotation != 0) {
@@ -673,6 +677,9 @@ class DeviceControlApp {
             anyDisplayLoaded = true;
             this.#onDeviceDisplayLoaded();
           }
+        });
+        deviceDisplayVideo.addEventListener('loadedmetadata', (evt) => {
+          this.#updateDeviceDisplaysInfo();
         });
 
         this.#addMouseTracking(deviceDisplayVideo);
