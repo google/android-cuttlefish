@@ -4,6 +4,12 @@ allow vendor_init {
   audio_device
 }:chr_file { getattr };
 
+# FIXME: Allow vendor_init to directly load system_dlkm modules
+allow vendor_init system_dlkm_file:dir r_dir_perms;
+allow vendor_init system_dlkm_file:file r_file_perms;
+allow vendor_init system_dlkm_file:system module_load;
+allow vendor_init self:capability sys_module;
+
 set_prop(vendor_init, vendor_bt_rootcanal_prop)
 set_prop(vendor_init, vendor_hwcomposer_prop)
 
