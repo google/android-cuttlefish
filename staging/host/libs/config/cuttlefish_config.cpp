@@ -249,15 +249,6 @@ std::string CuttlefishConfig::webrtc_assets_dir() const {
   return (*dictionary_)[kWebRTCAssetsDir].asString();
 }
 
-static constexpr char kWebRTCEnableADBWebSocket[] =
-    "webrtc_enable_adb_websocket";
-void CuttlefishConfig::set_webrtc_enable_adb_websocket(bool enable) {
-    (*dictionary_)[kWebRTCEnableADBWebSocket] = enable;
-}
-bool CuttlefishConfig::webrtc_enable_adb_websocket() const {
-    return (*dictionary_)[kWebRTCEnableADBWebSocket].asBool();
-}
-
 static constexpr char kBootSlot[] = "boot_slot";
 void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
   (*dictionary_)[kBootSlot] = boot_slot;
