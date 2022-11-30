@@ -150,7 +150,20 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLockInternal() {
   auto unused_id_pool =
       CF_EXPECT(CollectUnusedIds(instance_database_, std::move(id_pool)));
   IdAllocator unique_id_allocator = IdAllocator::New(unused_id_pool);
-  auto allocated_ids = unique_id_allocator.UniqueConsecutiveItems(n_instances);
+
+  // auto-generation means the user did not specify much: e.g. "cvd start"
+  // In this case, the user may expect the instance id to be 1+
+  std::optional<std::unordered_set<unsigned>> allocated_ids;
+  if (unique_id_allocator.TakeRange(1, 1 + n_instances)) {
+    allocated_ids = std::unordered_set<unsigned>{};
+    for (unsigned int u = 1; u < 1 + n_instances; u++) {
+      allocated_ids->insert(u);
+    }
+  }
+  if (!allocated_ids) {
+    // We could not allocate [1, 1 + n -1]. Try, [k, k + n - 1]
+    allocated_ids = unique_id_allocator.UniqueConsecutiveItems(n_instances);
+  }
   CF_EXPECT(allocated_ids != std::nullopt, "Unique ID allocation failed.");
 
   // Picks the lock files according to the ids, and discards the rest
@@ -203,14 +216,63 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLock() {
   return instance_file_locks;
 }
 
+/*
+ * 1. Remove --num_instances, --instance_nums, --base_instance_num if any.
+ * 2. If the ids are consecutive and ordered, add:
+ *   --base_instance_num=min --num_instances=ids.size()
+ * 3. If not, --instance_nums=<ids>
+ *
+ */
+static Result<std::vector<std::string>> UpdateInstanceArgs(
+    std::vector<std::string>&& args, const std::vector<unsigned>& ids) {
+  CF_EXPECT(ids.empty() == false);
+
+  std::vector<std::string> new_args{std::move(args)};
+  std::string old_instance_nums;
+  std::string old_num_instances;
+  std::string old_base_instance_num;
+
+  std::vector<Flag> instance_id_flags{
+      GflagsCompatFlag("instance_nums", old_instance_nums),
+      GflagsCompatFlag("num_instances", old_num_instances),
+      GflagsCompatFlag("base_instance_num", old_base_instance_num)};
+  // discard old ones
+  ParseFlags(instance_id_flags, new_args);
+
+  auto max = *(std::max_element(ids.cbegin(), ids.cend()));
+  auto min = *(std::min_element(ids.cbegin(), ids.cend()));
+
+  const bool is_consecutive = ((max - min) == (ids.size() - 1));
+  const bool is_sorted = std::is_sorted(ids.begin(), ids.end());
+
+  if (!is_consecutive || !is_sorted) {
+    std::string flag_value = android::base::Join(ids, ",");
+    new_args.emplace_back("--instance_nums=" + flag_value);
+    return new_args;
+  }
+
+  // sorted and consecutive, so let's use old flags
+  // like --num_instances and --base_instance_num
+  new_args.emplace_back("--num_instances=" + std::to_string(ids.size()));
+  new_args.emplace_back("--base_instance_num=" + std::to_string(min));
+  return new_args;
+}
+
 Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
-  group_name_ = AnalyzeGroupName(instance_info);
+  std::vector<unsigned> ids;
+  ids.reserve(instance_info.size());
+  for (const auto& instance : instance_info) {
+    ids.emplace_back(instance.instance_id_);
+  }
+  cmd_args_ = CF_EXPECT(UpdateInstanceArgs(std::move(cmd_args_), ids));
+
+  group_name_ = CF_EXPECT(AnalyzeGroupName(instance_info));
   home_ = CF_EXPECT(AnalyzeHome());
   envs_["HOME"] = home_;
+
   CF_EXPECT(envs_.find(kAndroidHostOut) != envs_.end());
   host_artifacts_path_ = envs_.at(kAndroidHostOut);
-
   GroupCreationInfo report = {.home = home_,
                               .host_artifacts_path = host_artifacts_path_,
                               .group_name = group_name_,
@@ -220,7 +282,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   return report;
 }
 
-std::string CreationAnalyzer::AnalyzeGroupName(
+Result<std::string> CreationAnalyzer::AnalyzeGroupName(
     const std::vector<PerInstanceInfo>& per_instance_infos) const {
   if (selector_options_parser_.GroupName()) {
     return selector_options_parser_.GroupName().value();
@@ -231,10 +293,18 @@ std::string CreationAnalyzer::AnalyzeGroupName(
     ids.emplace_back(per_instance_info.instance_id_);
   }
   std::string base_name = GenDefaultGroupName();
-  if (instance_database_.IsEmpty()) {
-    // if default group, we simply return base_name, which is "cvd"
+  if (selector_options_parser_.IsMaybeDefaultGroup()) {
+    /*
+     * this base_name might be already taken. In that case, the user's
+     * request should fail in the InstanceDatabase
+     */
+    auto groups =
+        CF_EXPECT(instance_database_.FindGroups({kGroupNameField, base_name}));
+    CF_EXPECT(groups.empty(), "The default instance group name, \""
+                                  << base_name << "\" has been already taken.");
     return base_name;
   }
+
   /* We cannot return simply "cvd" as we do not want duplication in the group
    * name across the instance groups owned by the user. Note that the set of ids
    * are expected to be unique to the user, so we use the ids. If ever the end
@@ -246,14 +316,22 @@ std::string CreationAnalyzer::AnalyzeGroupName(
 
 Result<std::string> CreationAnalyzer::AnalyzeHome() const {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome(credential_.uid));
-  if (envs_.find("HOME") != envs_.end() &&
-      envs_.at("HOME") != system_wide_home) {
-    // explicitly overridden by the user
+  if (Contains(envs_, "HOME") && envs_.at("HOME") != system_wide_home) {
     return envs_.at("HOME");
   }
+
+  if (selector_options_parser_.IsMaybeDefaultGroup()) {
+    auto groups = CF_EXPECT(
+        instance_database_.FindGroups({kHomeField, system_wide_home}));
+    if (groups.empty()) {
+      return system_wide_home;
+    }
+  }
+
   CF_EXPECT(!group_name_.empty(),
             "To auto-generate HOME, the group name is a must.");
   std::string auto_generated_home{kParentOfDefaultHomeDirectories};
+  auto_generated_home.append("/" + std::to_string(credential_.uid));
   auto_generated_home.append("/" + group_name_);
   CF_EXPECT(EnsureDirectoryExistsAllTheWay(auto_generated_home));
   return auto_generated_home;
