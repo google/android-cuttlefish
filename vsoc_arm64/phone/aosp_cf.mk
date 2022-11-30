@@ -46,7 +46,6 @@ $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk
 #
 # Special settings for the target
 #
-$(call inherit-product, device/google/cuttlefish/vsoc_arm64/kernel.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_arm64/bootloader.mk)
 
 PRODUCT_NAME := aosp_cf_arm64_phone
