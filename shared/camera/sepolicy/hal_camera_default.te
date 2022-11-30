@@ -14,6 +14,5 @@ allow hal_camera_default self:vsock_socket { accept bind create getopt listen re
 
 set_prop(hal_camera_default, vendor_camera_prop)
 
-# The camera HAL can respond to APEX updates (see ApexUpdateListener), but this
-# is not used by the emulated camera HAL APEX. Ignore these denials.
-dontaudit hal_camera_default apex_info_file:file { read };
+# For observing apex file changes
+allow hal_camera_default apex_info_file:file r_file_perms;
