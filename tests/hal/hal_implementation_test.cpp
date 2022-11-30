@@ -189,6 +189,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.keymaster.", 3},
     {"android.hardware.keymaster.", 4},
 
+    // Merging implementation separately
+    {"android.hardware.secure_element.", 1},
+
     // Sound trigger doesn't have a default implementation.
     {"android.hardware.soundtrigger3.", 1},
     {"android.media.soundtrigger.", 1},
