@@ -97,7 +97,7 @@ std::vector<std::string> BootconfigArgsFromConfig(
   bootconfig_args.push_back(
       concat("androidboot.setupwizard_mode=", instance.setupwizard_mode()));
   bootconfig_args.push_back(concat("androidboot.enable_bootanimation=",
-                                   config.enable_bootanimation()));
+                                   instance.enable_bootanimation()));
 
   if (!instance.guest_enforce_security()) {
     bootconfig_args.push_back("androidboot.selinux=permissive");
