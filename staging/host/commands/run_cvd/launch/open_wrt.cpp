@@ -38,7 +38,8 @@ class OpenWrt : public CommandSource {
     constexpr auto crosvm_for_ap_socket = "ap_control.sock";
 
     CrosvmBuilder ap_cmd;
-    ap_cmd.Cmd().SetExecutableAndName(config_.crosvm_binary());
+    ap_cmd.ApplyProcessRestarter(config_.crosvm_binary(),
+                                 kOpenwrtVmResetExitCode);
     ap_cmd.Cmd().AddParameter("run");
     ap_cmd.AddControlSocket(
         instance_.PerInstanceInternalPath(crosvm_for_ap_socket),
@@ -115,6 +116,8 @@ class OpenWrt : public CommandSource {
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   LogTeeCreator& log_tee_;
+
+  static constexpr int kOpenwrtVmResetExitCode = 32;
 };
 
 }  // namespace
