@@ -617,6 +617,38 @@ bool CuttlefishConfig::InstanceSpecific::record_screen() const {
   return (*Dictionary())[kRecordScreen].asBool();
 }
 
+static constexpr char kGem5DebugFile[] = "gem5_debug_file";
+std::string CuttlefishConfig::InstanceSpecific::gem5_debug_file() const {
+  return (*Dictionary())[kGem5DebugFile].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gem5_debug_file(const std::string& gem5_debug_file) {
+  (*Dictionary())[kGem5DebugFile] = gem5_debug_file;
+}
+
+static constexpr char kProtectedVm[] = "protected_vm";
+void CuttlefishConfig::MutableInstanceSpecific::set_protected_vm(bool protected_vm) {
+  (*Dictionary())[kProtectedVm] = protected_vm;
+}
+bool CuttlefishConfig::InstanceSpecific::protected_vm() const {
+  return (*Dictionary())[kProtectedVm].asBool();
+}
+
+static constexpr char kEnableKernelLog[] = "enable_kernel_log";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_kernel_log(bool enable_kernel_log) {
+  (*Dictionary())[kEnableKernelLog] = enable_kernel_log;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_kernel_log() const {
+  return (*Dictionary())[kEnableKernelLog].asBool();
+}
+
+static constexpr char kBootSlot[] = "boot_slot";
+void CuttlefishConfig::MutableInstanceSpecific::set_boot_slot(const std::string& boot_slot) {
+  (*Dictionary())[kBootSlot] = boot_slot;
+}
+std::string CuttlefishConfig::InstanceSpecific::boot_slot() const {
+  return (*Dictionary())[kBootSlot].asString();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
