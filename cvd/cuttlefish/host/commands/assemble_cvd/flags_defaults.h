@@ -139,10 +139,8 @@
 #define CF_DEFAULTS_NETSIM_BT false
 
 // Wifi default parameters
-#define CF_DEFAULTS_AP_KERNEL_IMAGE \
-  DefaultHostArtifactsPath("etc/openwrt/images/kernel_for_openwrt")
-#define CF_DEFAULTS_AP_ROOTFS_IMAGE \
-  DefaultHostArtifactsPath("etc/openwrt/images/openwrt_rootfs")
+#define CF_DEFAULTS_AP_KERNEL_IMAGE CF_DEFAULTS_DYNAMIC_STRING
+#define CF_DEFAULTS_AP_ROOTFS_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VHOST_NET false
 #define CF_DEFAULTS_VHOST_USER_MAC80211_HWSIM CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_WMEDIUMD_CONFIG CF_DEFAULTS_DYNAMIC_STRING
