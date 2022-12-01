@@ -18,7 +18,6 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -34,7 +33,7 @@ using Args = std::vector<std::string>;
 struct InstanceIdTestInput {
   std::string input_args;
   std::optional<std::string> cuttlefish_instance;
-  std::optional<std::unordered_set<unsigned>> expected_ids;
+  std::optional<std::vector<unsigned>> expected_ids;
   unsigned requested_num_instances;
   bool expected_result;
 };
@@ -45,7 +44,7 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
 
   bool expected_result_;
   unsigned requested_num_instances_;
-  std::optional<std::unordered_set<unsigned>> expected_ids_;
+  std::optional<std::vector<unsigned>> expected_ids_;
   std::unordered_map<std::string, std::string> envs_;
   std::optional<SelectorFlagsParser> parser_;
   Result<CommandAndSelectorArguments> flag_separation_result_;
