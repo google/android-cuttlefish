@@ -59,8 +59,8 @@ class InstanceManager {
                                     const ucred& credential);
 
   bool HasInstanceGroups(const uid_t uid);
-  Result<void> SetInstanceGroup(const uid_t uid, const InstanceGroupDir&,
-                                const InstanceGroupInfo&);
+  Result<void> SetInstanceGroup(const uid_t uid,
+                                const selector::GroupCreationInfo& group_info);
   void RemoveInstanceGroup(const uid_t uid, const InstanceGroupDir&);
   Result<InstanceGroupInfo> GetInstanceGroupInfo(const uid_t uid,
                                                  const InstanceGroupDir&);

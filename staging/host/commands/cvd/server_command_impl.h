@@ -63,5 +63,17 @@ struct ConstructCommandParam {
 };
 Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
 
+// Constructs a command for cvd whatever --help or --help-related-option
+Result<Command> ConstructCvdHelpCommand(
+    const std::string& bin_file, const Envs& envs,
+    const std::vector<std::string>& subcmd_args,
+    const RequestWithStdio& request);
+
+Envs ConvertProtoMap(
+    const google::protobuf::Map<std::string, std::string>& proto_map);
+
+std::vector<std::string> ConvertProtoArguments(
+    const google::protobuf::RepeatedPtrField<std::string>& proto_args);
+
 }  // namespace cvd_cmd_impl
 }  // namespace cuttlefish

@@ -35,6 +35,11 @@
 namespace cuttlefish {
 namespace selector {
 
+static bool Unique(const std::vector<unsigned>& v) {
+  std::unordered_set<unsigned> hash_set(v.begin(), v.end());
+  return v.size() == hash_set.size();
+}
+
 static Result<unsigned> ParseNaturalNumber(const std::string& token) {
   std::int32_t value;
   CF_EXPECT(android::base::ParseInt(token, &value));
@@ -231,7 +236,7 @@ std::optional<unsigned> TryFromUser(const Envs& envs) {
 
 }  // namespace
 
-std::optional<std::unordered_set<unsigned>>
+std::optional<std::vector<unsigned>>
 SelectorFlagsParser::InstanceFromEnvironment(
     const InstanceFromEnvParam& params) {
   const auto& cuttlefish_instance_env = params.cuttlefish_instance_env;
@@ -240,7 +245,7 @@ SelectorFlagsParser::InstanceFromEnvironment(
 
   // see the logic in cuttlefish::InstanceFromEnvironment()
   // defined in host/libs/config/cuttlefish_config.cpp
-  std::unordered_set<unsigned> nums;
+  std::vector<unsigned> nums;
   std::optional<unsigned> base;
   if (cuttlefish_instance_env) {
     base = *cuttlefish_instance_env;
@@ -254,7 +259,7 @@ SelectorFlagsParser::InstanceFromEnvironment(
   // this is guaranteed by the caller
   // assert(num_instances != std::nullopt);
   for (unsigned i = 0; i != *num_instances; i++) {
-    nums.insert(base.value() + i);
+    nums.emplace_back(base.value() + i);
   }
   return nums;
 }
@@ -295,6 +300,20 @@ Result<unsigned> SelectorFlagsParser::VerifyNumOfInstances(
   return num_instances.value_or(default_n_instances);
 }
 
+static Result<std::vector<unsigned>> ParseInstanceNums(
+    const std::string& instance_nums_flag) {
+  std::vector<unsigned> nums;
+  std::vector<std::string> tokens =
+      android::base::Split(instance_nums_flag, ",");
+  for (const auto& t : tokens) {
+    unsigned num =
+        CF_EXPECT(ParseNaturalNumber(t), t << " must be a natural number");
+    nums.emplace_back(num);
+  }
+  CF_EXPECT(Unique(nums), "--instance_nums include duplicated numbers");
+  return nums;
+}
+
 Result<SelectorFlagsParser::ParsedInstanceIdsOpt>
 SelectorFlagsParser::HandleInstanceIds(
     const InstanceIdsParams& instance_id_params) {
@@ -331,7 +350,11 @@ SelectorFlagsParser::HandleInstanceIds(
   InstanceNumsCalculator calculator;
   calculator.NumInstances(static_cast<std::int32_t>(num_instances));
   if (instance_nums) {
-    calculator.InstanceNums(*instance_nums);
+    CF_EXPECT(base_instance_num == std::nullopt,
+              "-base_instance_num and -instance_nums are mutually exclusive.");
+    std::vector<unsigned> parsed_nums =
+        CF_EXPECT(ParseInstanceNums(*instance_nums));
+    return ParsedInstanceIdsOpt(parsed_nums);
   }
   if (base_instance_num) {
     unsigned base = CF_EXPECT(ParseNaturalNumber(*base_instance_num));
@@ -342,9 +365,9 @@ SelectorFlagsParser::HandleInstanceIds(
             "CalculateFromFlags() must be called when --num_instances or "
                 << "--base_instance_num is given, and must not return an "
                 << "empty set");
-  auto instance_ids_hash_set =
-      std::unordered_set<unsigned>{instance_ids.begin(), instance_ids.end()};
-  return ParsedInstanceIdsOpt{instance_ids_hash_set};
+  auto instance_ids_vector =
+      std::vector<unsigned>{instance_ids.begin(), instance_ids.end()};
+  return ParsedInstanceIdsOpt{instance_ids_vector};
 }
 
 Result<void> SelectorFlagsParser::ParseOptions() {

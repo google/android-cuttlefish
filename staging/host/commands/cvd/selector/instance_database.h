@@ -25,7 +25,6 @@
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/instance_record.h"
-#include "host/commands/cvd/selector/unique_resource_allocator.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -42,14 +41,21 @@ class InstanceDatabase {
   InstanceDatabase();
   bool IsEmpty() const;
 
-  // returns CF_ERR if the home_directory is already taken
-  Result<void> AddInstanceGroup(const std::string& group_name,
-                                const std::string& home_dir,
-                                const std::string& host_artifacts_path);
-  // auto-generate the group_name
-  Result<void> AddInstanceGroup(const std::string& home_dir,
-                                const std::string& host_artifacts_path);
+  /** Adds instance group.
+   *
+   * If group_name or home_dir is already taken or host_artifacts_path is
+   * not likely an artifacts path, CF_ERR is returned.
+   */
+  Result<ConstRef<LocalInstanceGroup>> AddInstanceGroup(
+      const std::string& group_name, const std::string& home_dir,
+      const std::string& host_artifacts_path);
 
+  /**
+   * Adds instance to the group.
+   *
+   * If id is duplicated in the scope of the InstanceDatabase or instance_name
+   * is not unique within the group, CF_ERR is returned.
+   */
   Result<void> AddInstance(const LocalInstanceGroup& group, const unsigned id,
                            const std::string& instance_name);
 
@@ -114,9 +120,6 @@ class InstanceDatabase {
   std::vector<std::unique_ptr<LocalInstanceGroup>> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
   Map<FieldName, ConstInstanceHandler> instance_handlers_;
-
-  UniqueResourceAllocator<int> auto_gen_group_name_suffice_;
-  std::unordered_map<std::string, int> auto_gen_group_name_to_suffix_map_;
 };
 
 }  // namespace selector
