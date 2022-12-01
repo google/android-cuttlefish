@@ -20,8 +20,9 @@ set -u
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if [ -z $ANDROID_BUILD_TOP ]; then
-	echo "error: run script after 'lunch'"
-	exit 1
+	echo "error: please run script after 'lunch'"
+	export ANDROID_BUILD_TOP=$(realpath "${script_dir}"/../../../..)
+	echo "error: set ANDROID_BUILD_TOP as ${ANDROID_BUILD_TOP}"
 fi
 
 source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
