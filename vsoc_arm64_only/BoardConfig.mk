@@ -18,12 +18,6 @@
 # arm64 (64-bit only) target for Cuttlefish
 #
 
--include device/google/cuttlefish/shared/BoardConfig.mk
--include device/google/cuttlefish/shared/camera/BoardConfig.mk
--include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
--include device/google/cuttlefish/shared/telephony/BoardConfig.mk
--include device/google/cuttlefish/shared/virgl/BoardConfig.mk
-
 TARGET_BOARD_PLATFORM := vsoc_arm64
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
@@ -31,8 +25,13 @@ TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_VARIANT := cortex-a53
 
 AUDIOSERVER_MULTILIB := first
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/arm64/*.ko)
 
 HOST_CROSS_OS := linux_bionic
 HOST_CROSS_ARCH := arm64
 HOST_CROSS_2ND_ARCH :=
+
+-include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/camera/BoardConfig.mk
+-include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
+-include device/google/cuttlefish/shared/telephony/BoardConfig.mk
+-include device/google/cuttlefish/shared/virgl/BoardConfig.mk

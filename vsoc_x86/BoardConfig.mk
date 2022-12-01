@@ -18,12 +18,6 @@
 # x86 target for Cuttlefish
 #
 
--include device/google/cuttlefish/shared/BoardConfig.mk
--include device/google/cuttlefish/shared/camera/BoardConfig.mk
--include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
--include device/google/cuttlefish/shared/telephony/BoardConfig.mk
--include device/google/cuttlefish/shared/virgl/BoardConfig.mk
-
 TARGET_BOARD_PLATFORM := vsoc_x86
 TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
@@ -33,16 +27,16 @@ TARGET_NATIVE_BRIDGE_ARCH := arm
 TARGET_NATIVE_BRIDGE_ARCH_VARIANT := armv7-a-neon
 TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_ABI := armeabi-v7a armeabi
-KERNEL_MODULES_PATH := kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/x86-64
-
-
-ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-  BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(patsubst %, $(KERNEL_MODULES_PATH)/%, $(RAMDISK_KERNEL_MODULES))
-  ALL_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/*.ko)
-  BOARD_VENDOR_KERNEL_MODULES := $(filter-out $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),$(ALL_KERNEL_MODULES))
-endif
 
 # TODO(b/156534160): Temporarily allow for the old style PRODUCT_COPY_FILES for ndk_translation_prebuilt
 ifeq ($(USE_NDK_TRANSLATION_BINARY),true)
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 endif
+
+TARGET_KERNEL_ARCH := x86_64
+
+-include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/camera/BoardConfig.mk
+-include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
+-include device/google/cuttlefish/shared/telephony/BoardConfig.mk
+-include device/google/cuttlefish/shared/virgl/BoardConfig.mk
