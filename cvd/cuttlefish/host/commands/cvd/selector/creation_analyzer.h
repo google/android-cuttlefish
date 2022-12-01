@@ -145,6 +145,13 @@ class CreationAnalyzer {
 
   Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsWithLockInternal();
 
+  /*
+   * Adds --webrtc_device_id_ when necessary to cmd_args_
+   */
+  Result<std::vector<std::string>> UpdateWebrtcDeviceId(
+      std::vector<std::string>&& args,
+      const std::vector<PerInstanceInfo>& per_instance_info);
+
   // inputs
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
