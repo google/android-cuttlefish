@@ -58,7 +58,7 @@ class SelectorFlagsParser {
   std::optional<std::string> GroupName() const;
   std::optional<std::vector<std::string>> PerInstanceNames() const;
   const auto& SubstringQueries() const { return substring_queries_; }
-  const std::optional<std::unordered_set<unsigned>>& InstanceIds() const {
+  const std::optional<std::vector<unsigned>>& InstanceIds() const {
     return instance_ids_;
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
@@ -123,14 +123,14 @@ class SelectorFlagsParser {
     friend class SelectorFlagsParser;
 
    private:
-    ParsedInstanceIdsOpt(const std::unordered_set<unsigned>& instance_ids)
+    ParsedInstanceIdsOpt(const std::vector<unsigned>& instance_ids)
         : instance_ids_{instance_ids},
           n_instances_{static_cast<unsigned>(instance_ids.size())} {}
     ParsedInstanceIdsOpt(const unsigned n_instances)
         : instance_ids_{std::nullopt}, n_instances_{n_instances} {}
     auto GetInstanceIds() { return std::move(instance_ids_); }
     unsigned GetNumOfInstances() const { return n_instances_; }
-    std::optional<std::unordered_set<unsigned>> instance_ids_;
+    std::optional<std::vector<unsigned>> instance_ids_;
     const unsigned n_instances_;
   };
 
@@ -157,7 +157,7 @@ class SelectorFlagsParser {
     std::optional<unsigned> vsoc_suffix;
     std::optional<unsigned> num_instances;
   };
-  std::optional<std::unordered_set<unsigned>> InstanceFromEnvironment(
+  std::optional<std::vector<unsigned>> InstanceFromEnvironment(
       const InstanceFromEnvParam& params);
 
   struct VerifyNumOfInstancesParam {
@@ -184,7 +184,7 @@ class SelectorFlagsParser {
    * --instance_nums is not given.
    *
    */
-  std::optional<std::unordered_set<unsigned>> instance_ids_;
+  std::optional<std::vector<unsigned>> instance_ids_;
   unsigned requested_num_instances_;
   bool may_be_default_group_;
 

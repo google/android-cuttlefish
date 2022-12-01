@@ -47,26 +47,27 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> Interrupt() override;
 
  private:
-  /*
-   * Update instance database
-   *
-   * return false if the instance database wasn't expected to be set:
-   *  e.g. cvd start --help
-   *
-   * return CF_ERR if anything fails unexpectedly (e.g. HOME directory is taken)
-   */
-  Result<bool> UpdateInstanceDatabase(
-      const CommandInvocationInfo& invocation_info);
-  Result<std::string> MakeBinPathFromDatabase(
-      const CommandInvocationInfo& invocation_info) const;
+  Result<void> UpdateInstanceDatabase(
+      const uid_t uid, const selector::GroupCreationInfo& group_creation_info);
   Result<void> FireCommand(Command&& command, const bool wait);
   bool HasHelpOpts(const std::vector<std::string>& args) const;
+
   struct PreconditionVerification {
     bool is_ok;
     std::string error_message;
   };
   PreconditionVerification VerifyPrecondition(
       const RequestWithStdio& request) const;
+
+  Result<Command> ConstructCvdNonHelpCommand(
+      const std::string& bin_file,
+      const selector::GroupCreationInfo& group_info,
+      const RequestWithStdio& request);
+
+  // call this only if !is_help
+  Result<selector::GroupCreationInfo> GetGroupCreationInfo(
+      const std::string& subcmd, const std::vector<std::string>& subcmd_args,
+      const Envs& envs, const RequestWithStdio& request);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
