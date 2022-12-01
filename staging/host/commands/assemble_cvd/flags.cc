@@ -1254,7 +1254,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       switch (kernel_configs[0].target_arch) {
         case Arch::Arm:
         case Arch::Arm64:
-          required_grub_image_path = kBootSrcPathAA64;
+          // TODO(b/260960328) : Migrate openwrt image for arm64 into
+          // APBootFlow::Grub.
           break;
         case Arch::X86:
         case Arch::X86_64:
@@ -1404,6 +1405,32 @@ void SetDefaultFlagsForGem5() {
   SetCommandLineOptionWithMode("cpus", "1", SET_FLAGS_DEFAULT);
 }
 
+void SetDefaultFlagsForOpenwrt(Arch target_arch) {
+  if (target_arch == Arch::X86_64) {
+    SetCommandLineOptionWithMode(
+        "ap_kernel_image",
+        DefaultHostArtifactsPath("etc/openwrt/images/openwrt_kernel_x86_64")
+            .c_str(),
+        SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode(
+        "ap_rootfs_image",
+        DefaultHostArtifactsPath("etc/openwrt/images/openwrt_rootfs_x86_64")
+            .c_str(),
+        SET_FLAGS_DEFAULT);
+  } else if (target_arch == Arch::Arm64) {
+    SetCommandLineOptionWithMode(
+        "ap_kernel_image",
+        DefaultHostArtifactsPath("etc/openwrt/images/openwrt_kernel_aarch64")
+            .c_str(),
+        SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode(
+        "ap_rootfs_image",
+        DefaultHostArtifactsPath("etc/openwrt/images/openwrt_rootfs_aarch64")
+            .c_str(),
+        SET_FLAGS_DEFAULT);
+  }
+}
+
 Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
   CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
@@ -1461,6 +1488,9 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
         host_operator_present ? HOST_OPERATOR_SOCKET_PATH : "0.0.0.0",
         SET_FLAGS_DEFAULT);
   }
+
+  SetDefaultFlagsForOpenwrt(kernel_configs[0].target_arch);
+
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
 
