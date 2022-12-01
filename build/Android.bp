@@ -104,8 +104,10 @@ cvd_host_tools = [
 ]
 
 cvd_openwrt_images = [
-    "kernel_for_openwrt",
-    "openwrt_rootfs",
+    "openwrt_kernel_x86_64",
+    "openwrt_rootfs_x86_64",
+    "openwrt_kernel_aarch64",
+    "openwrt_rootfs_aarch64",
 ]
 
 cvd_bluetooth_config_files = [
