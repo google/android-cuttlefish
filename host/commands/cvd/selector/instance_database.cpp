@@ -24,15 +24,7 @@
 namespace cuttlefish {
 namespace selector {
 
-static UniqueResourceAllocator<int> GetGroupSuffixGenerator() {
-  constexpr const int kMaxNumberOfRunningGroups = 100;
-  std::vector<int> pool(kMaxNumberOfRunningGroups);
-  std::iota(pool.begin(), pool.end(), 0);
-  return UniqueResourceAllocator<int>::New(pool);
-}
-
-InstanceDatabase::InstanceDatabase()
-    : auto_gen_group_name_suffice_{GetGroupSuffixGenerator()} {
+InstanceDatabase::InstanceDatabase() {
   group_handlers_[kHomeField] = [this](const Value& field_value) {
     return FindGroupsByHome(field_value);
   };
