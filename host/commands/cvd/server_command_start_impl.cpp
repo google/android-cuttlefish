@@ -22,6 +22,7 @@
 #include <cstdlib>
 
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -29,7 +30,6 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
@@ -59,6 +59,43 @@ CvdStartCommandHandler::VerifyPrecondition(
   return verification_result;
 }
 
+Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
+    const std::string& bin_file, const selector::GroupCreationInfo& group_info,
+    const RequestWithStdio& request) {
+  const auto bin_path = group_info.host_artifacts_path + "/bin/" + bin_file;
+  CF_EXPECT(!group_info.home.empty());
+  ConstructCommandParam construct_cmd_param{
+      .bin_path = bin_path,
+      .home = group_info.home,
+      .args = group_info.args,
+      .envs = group_info.envs,
+      .working_dir = request.Message().command_request().working_directory(),
+      .command_name = bin_file,
+      .in = request.In(),
+      .out = request.Out(),
+      .err = request.Err()};
+  Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  return non_help_command;
+}
+
+// call this only if !is_help
+Result<selector::GroupCreationInfo>
+CvdStartCommandHandler::GetGroupCreationInfo(
+    const std::string& subcmd, const std::vector<std::string>& subcmd_args,
+    const Envs& envs, const RequestWithStdio& request) {
+  using CreationAnalyzerParam =
+      selector::CreationAnalyzer::CreationAnalyzerParam;
+  const auto& selector_opts =
+      request.Message().command_request().selector_opts();
+  const auto selector_args = ConvertProtoArguments(selector_opts.args());
+  CreationAnalyzerParam analyzer_param{
+      .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
+  auto cred = CF_EXPECT(request.Credentials());
+  auto group_creation_info =
+      CF_EXPECT(instance_manager_.Analyze(subcmd, analyzer_param, cred));
+  return group_creation_info;
+}
+
 Result<cvd::Response> CvdStartCommandHandler::Handle(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
@@ -78,26 +115,27 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   }
 
   const uid_t uid = request.Credentials()->uid;
+  Envs envs = ConvertProtoMap(request.Message().command_request().env());
 
-  auto invocation_info_opt = ExtractInfo(command_to_binary_map_, request);
-  CF_EXPECT(invocation_info_opt != std::nullopt);
-  auto invocation_info = std::move(*invocation_info_opt);
-  const std::string bin_path =
-      CF_EXPECT(UpdateInstanceDatabase(invocation_info))
-          ? CF_EXPECT(MakeBinPathFromDatabase(invocation_info))
-          : invocation_info.host_artifacts_path + "/bin/" + invocation_info.bin;
+  // update DB if not help
+  // collect group creation infos
+  auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+  CF_EXPECT(subcmd == "start", "subcmd should be start but is " << subcmd);
+  const bool is_help = HasHelpOpts(subcmd_args);
+  const auto bin = command_to_binary_map_.at(subcmd);
 
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = bin_path,
-      .home = invocation_info.home,
-      .args = invocation_info.args,
-      .envs = invocation_info.envs,
-      .working_dir = request.Message().command_request().working_directory(),
-      .command_name = invocation_info.bin,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
-  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  std::optional<selector::GroupCreationInfo> group_creation_info;
+  if (!is_help) {
+    group_creation_info =
+        CF_EXPECT(GetGroupCreationInfo(subcmd, subcmd_args, envs, request));
+    CF_EXPECT(UpdateInstanceDatabase(uid, *group_creation_info));
+  }
+
+  Command command =
+      is_help
+          ? CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request))
+          : CF_EXPECT(
+                ConstructCvdNonHelpCommand(bin, *group_creation_info, request));
 
   const bool should_wait =
       (request.Message().command_request().wait_behavior() !=
@@ -111,7 +149,9 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   auto infop = CF_EXPECT(subprocess_waiter_.Wait());
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
-    instance_manager_.RemoveInstanceGroup(uid, invocation_info.home);
+    if (!is_help) {
+      instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
+    }
   }
   return ResponseFromSiginfo(infop);
 }
@@ -123,36 +163,12 @@ Result<void> CvdStartCommandHandler::Interrupt() {
   return {};
 }
 
-Result<bool> CvdStartCommandHandler::UpdateInstanceDatabase(
-    const CommandInvocationInfo& invocation_info) {
-  auto& envs = invocation_info.envs;
-  if (HasHelpOpts(invocation_info.args)) {
-    return {false};
-  }
-  InstanceNumsCalculator calculator;
-  auto instance_env = envs.find(cuttlefish::kCuttlefishInstanceEnvVarName);
-  if (instance_env != envs.end()) {
-    std::int32_t instance_num = -1;
-    CF_EXPECT(android::base::ParseInt(instance_env->second, &instance_num));
-    calculator.BaseInstanceNum(instance_num);
-  }
-
-  // Track this assembly_dir in the fleet.
-  InstanceManager::InstanceGroupInfo info;
-  info.host_artifacts_path = invocation_info.host_artifacts_path;
-  info.instances = CF_EXPECT(calculator.Calculate());
-  CF_EXPECT(instance_manager_.SetInstanceGroup(invocation_info.uid,
-                                               invocation_info.home, info),
-            invocation_info.home
+Result<void> CvdStartCommandHandler::UpdateInstanceDatabase(
+    const uid_t uid, const selector::GroupCreationInfo& group_creation_info) {
+  CF_EXPECT(instance_manager_.SetInstanceGroup(uid, group_creation_info),
+            group_creation_info.home
                 << " is already taken so can't create new instance.");
-  return {true};
-}
-
-Result<std::string> CvdStartCommandHandler::MakeBinPathFromDatabase(
-    const CommandInvocationInfo& invocation_info) const {
-  auto assembly_info = CF_EXPECT(instance_manager_.GetInstanceGroupInfo(
-      invocation_info.uid, invocation_info.home));
-  return assembly_info.host_artifacts_path + "/bin/" + invocation_info.bin;
+  return {};
 }
 
 Result<void> CvdStartCommandHandler::FireCommand(Command&& command,
