@@ -599,6 +599,24 @@ bool CuttlefishConfig::InstanceSpecific::enable_gnss_grpc_proxy() const {
   return (*Dictionary())[kEnableGnssGrpcProxy].asBool();
 }
 
+static constexpr char kEnableBootAnimation[] = "enable_bootanimation";
+bool CuttlefishConfig::InstanceSpecific::enable_bootanimation() const {
+  return (*Dictionary())[kEnableBootAnimation].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_bootanimation(
+    bool enable_bootanimation) {
+  (*Dictionary())[kEnableBootAnimation] = enable_bootanimation;
+}
+
+static constexpr char kRecordScreen[] = "record_screen";
+void CuttlefishConfig::MutableInstanceSpecific::set_record_screen(
+    bool record_screen) {
+  (*Dictionary())[kRecordScreen] = record_screen;
+}
+bool CuttlefishConfig::InstanceSpecific::record_screen() const {
+  return (*Dictionary())[kRecordScreen].asBool();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
