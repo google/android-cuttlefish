@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
   }
 
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
-  if (cvd_config->record_screen()) {
+  if (instance.record_screen()) {
     int recording_num = 0;
     std::string recording_path;
     do {
