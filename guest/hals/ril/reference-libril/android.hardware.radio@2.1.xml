@@ -34,6 +34,10 @@
         <fqname>IRadioSim/slot1</fqname>
     </hal>
     <hal format="aidl">
+        <name>android.hardware.radio.sap</name>
+        <fqname>ISap/slot1</fqname>
+    </hal>
+    <hal format="aidl">
         <name>android.hardware.radio.voice</name>
         <version>2</version>
         <fqname>IRadioVoice/slot1</fqname>

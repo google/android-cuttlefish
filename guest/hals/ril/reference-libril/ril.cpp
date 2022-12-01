@@ -489,7 +489,7 @@ RIL_register (const RIL_RadioFunctions *callbacks) {
     radio_1_6::registerConfigService(&s_callbacks, s_configCommands);
     /* }@ */
 
-
+    sap::registerService(&s_callbacks);
 }
 
 extern "C" void
