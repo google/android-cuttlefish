@@ -18,6 +18,38 @@
 # Common BoardConfig for all supported architectures.
 #
 
+TARGET_KERNEL_USE ?= 5.15
+TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
+TARGET_KERNEL_PATH ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)/kernel-$(TARGET_KERNEL_USE)
+KERNEL_MODULES_PATH ?= \
+    kernel/prebuilts/common-modules/virtual-device/$(TARGET_KERNEL_USE)/$(subst _,-,$(TARGET_KERNEL_ARCH))
+PRODUCT_COPY_FILES += $(TARGET_KERNEL_PATH):kernel
+
+# The list of modules strictly/only required either to reach second stage
+# init, OR for recovery. Do not use this list to workaround second stage
+# issues.
+RAMDISK_KERNEL_MODULES := \
+    failover.ko \
+    nd_virtio.ko \
+    net_failover.ko \
+    virtio_blk.ko \
+    virtio_console.ko \
+    virtio_dma_buf.ko \
+    virtio-gpu.ko \
+    virtio_input.ko \
+    virtio_net.ko \
+    virtio_pci.ko \
+    virtio_pci_modern_dev.ko \
+    virtio-rng.ko \
+    vmw_vsock_virtio_transport.ko \
+
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES := \
+    $(patsubst %,$(KERNEL_MODULES_PATH)/%,$(RAMDISK_KERNEL_MODULES))
+ALL_KERNEL_MODULES := $(wildcard $(KERNEL_MODULES_PATH)/*.ko)
+BOARD_VENDOR_KERNEL_MODULES := \
+    $(filter-out $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),\
+                 $(wildcard $(KERNEL_MODULES_PATH)/*.ko))
+
 # TODO(b/170639028): Back up TARGET_NO_BOOTLOADER
 __TARGET_NO_BOOTLOADER := $(TARGET_NO_BOOTLOADER)
 include build/make/target/board/BoardConfigMainlineCommon.mk
@@ -340,18 +372,3 @@ endif
 ifneq ($(PRODUCT_BUILD_VBMETA_IMAGE), false)
 AB_OTA_PARTITIONS += vbmeta
 endif
-
-RAMDISK_KERNEL_MODULES :=       failover.ko \
-                                net_failover.ko \
-                                nd_virtio.ko \
-                                virtio-rng.ko \
-                                virtio_net.ko \
-                                virtio_dma_buf.ko \
-                                virtio-gpu.ko \
-                                virtio_input.ko \
-                                virtio_blk.ko \
-                                virtio_console.ko \
-                                virtio_pci.ko \
-                                virtio_pci_modern_dev.ko \
-                                vmw_vsock_virtio_transport.ko \
-

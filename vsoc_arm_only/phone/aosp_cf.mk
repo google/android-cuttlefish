@@ -57,7 +57,6 @@ PRODUCT_ENFORCE_MAC80211_HWSIM := false
 #
 # Special settings for the target
 #
-$(call inherit-product, device/google/cuttlefish/vsoc_arm_only/kernel.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_arm_only/bootloader.mk)
 
 # Exclude features that are not available on AOSP devices.

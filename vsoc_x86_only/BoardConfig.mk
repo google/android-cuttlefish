@@ -18,15 +18,19 @@
 # x86 (32-bit kernel) target for Cuttlefish
 #
 
--include device/google/cuttlefish/shared/BoardConfig.mk
--include device/google/cuttlefish/shared/camera/BoardConfig.mk
--include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
--include device/google/cuttlefish/shared/telephony/BoardConfig.mk
--include device/google/cuttlefish/shared/virgl/BoardConfig.mk
-
 TARGET_BOARD_PLATFORM := vsoc_x86
 TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
 TARGET_CPU_ABI := x86
 
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-i686/*.ko)
+TARGET_KERNEL_ARCH ?= i686
+TARGET_KERNEL_USE ?= 5.15
+KERNEL_MODULES_PATH := device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-$(TARGET_KERNEL_ARCH)
+TARGET_KERNEL_PATH := $(KERNEL_MODULES_PATH)/kernel-$(TARGET_KERNEL_USE)
+# FIXME: system_dlkm should be specified as well
+
+-include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/camera/BoardConfig.mk
+-include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
+-include device/google/cuttlefish/shared/telephony/BoardConfig.mk
+-include device/google/cuttlefish/shared/virgl/BoardConfig.mk
