@@ -73,17 +73,21 @@ bool InstanceManager::HasInstanceGroups(const uid_t uid) {
 }
 
 Result<void> InstanceManager::SetInstanceGroup(
-    const uid_t uid, const InstanceManager::InstanceGroupDir& dir,
-    const InstanceGroupInfo& info) {
+    const uid_t uid, const selector::GroupCreationInfo& group_info) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
-  // for now, the group name is determined automatically by the instance_db_
-  CF_EXPECT(instance_db.AddInstanceGroup(dir, info.host_artifacts_path));
-  auto searched_group =
-      CF_EXPECT(instance_db.FindGroup({selector::kHomeField, dir}));
-  for (auto i : info.instances) {
-    const std::string default_instance_name = std::to_string(i);
-    instance_db.AddInstance(searched_group.Get(), i, default_instance_name);
+
+  const auto group_name = group_info.group_name;
+  const auto home_dir = group_info.home;
+  const auto host_artifacts_path = group_info.host_artifacts_path;
+  const auto& per_instance_info = group_info.instances;
+
+  auto new_group = CF_EXPECT(
+      instance_db.AddInstanceGroup(group_name, home_dir, host_artifacts_path));
+
+  for (const auto& instance : per_instance_info) {
+    instance_db.AddInstance(new_group.Get(), instance.instance_id_,
+                            instance.per_instance_name_);
   }
   return {};
 }

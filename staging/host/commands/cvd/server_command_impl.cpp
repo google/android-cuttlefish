@@ -24,9 +24,17 @@
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
-namespace {
 
-Envs ConvertMap(
+std::vector<std::string> ConvertProtoArguments(
+    const google::protobuf::RepeatedPtrField<std::string>& proto_args) {
+  std::vector<std::string> args;
+  for (const auto& proto_arg : proto_args) {
+    args.emplace_back(proto_arg);
+  }
+  return args;
+}
+
+Envs ConvertProtoMap(
     const google::protobuf::Map<std::string, std::string>& proto_map) {
   Envs envs;
   for (const auto& entry : proto_map) {
@@ -34,8 +42,6 @@ Envs ConvertMap(
   }
   return envs;
 }
-
-}  // namespace
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
   cvd::Response response;
@@ -72,7 +78,7 @@ std::optional<CommandInvocationInfo> ExtractInfo(
     return std::nullopt;
   }
   const auto& bin = command_to_binary_map.at(command);
-  Envs envs = ConvertMap(request.Message().command_request().env());
+  Envs envs = ConvertProtoMap(request.Message().command_request().env());
   std::string home =
       Contains(envs, "HOME") ? envs.at("HOME") : StringFromEnv("HOME", ".");
   if (!Contains(envs, "ANDROID_HOST_OUT") ||
@@ -127,6 +133,29 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
     command.SetWorkingDirectory(fd);
   }
   return {std::move(command)};
+}
+
+Result<Command> ConstructCvdHelpCommand(
+    const std::string& bin_file, const Envs& envs,
+    const std::vector<std::string>& subcmd_args,
+    const RequestWithStdio& request) {
+  const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
+  const auto bin_path = host_artifacts_path + "/bin/" + bin_file;
+  auto client_pwd = request.Message().command_request().working_directory();
+  const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
+  Envs envs_copy{envs};
+  envs_copy["HOME"] = AbsolutePath(home);
+  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
+                                            .home = home,
+                                            .args = subcmd_args,
+                                            .envs = std::move(envs_copy),
+                                            .working_dir = client_pwd,
+                                            .command_name = bin_file,
+                                            .in = request.In(),
+                                            .out = request.Out(),
+                                            .err = request.Err()};
+  Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  return help_command;
 }
 
 }  // namespace cvd_cmd_impl
