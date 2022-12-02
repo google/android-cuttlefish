@@ -389,7 +389,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     // dmesg will go there instead of the kernel.log. On QEMU, we do this
     // bit of logic up before the hvc console is set up, so the command line
     // flags appear in the right order and "append=on" does the right thing
-    if (config.enable_kernel_log() &&
+    if (instance.enable_kernel_log() &&
         (instance.kgdb() || instance.use_bootloader())) {
       add_serial_console_ro(instance.kernel_log_pipe_name());
     }
@@ -482,7 +482,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
             "Provided too many disks (" << disk_num << "), maximum "
                                         << VmManager::kMaxDisks << "supported");
-  auto readonly = config.protected_vm() ? ",readonly" : "";
+  auto readonly = instance.protected_vm() ? ",readonly" : "";
   for (size_t i = 0; i < disk_num; i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
     auto format = i == 0 ? "" : ",format=raw";
