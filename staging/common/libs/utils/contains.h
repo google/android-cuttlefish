@@ -31,6 +31,7 @@
  * etc), the find method is used. Otherwise, the std::find function from
  * algorithm is used, which may result in a linear search.
  *
+ * See go/cf-utils-contains for more details.
  */
 namespace cuttlefish {
 namespace contains_internal_impl {

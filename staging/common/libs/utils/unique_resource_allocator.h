@@ -29,6 +29,11 @@
 
 namespace cuttlefish {
 
+/**
+ * Generic allocator that can provide RAII-aware resource reservations.
+ *
+ * See go/cf-resource-allocator-utils for more details.
+ */
 template <typename T>
 class UniqueResourceAllocator {
  public:
