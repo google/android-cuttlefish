@@ -18,7 +18,7 @@
 
 #include <map>
 #include <mutex>
-#include <thread>
+#include <sstream>
 
 #include <android-base/file.h>
 #include <fruit/fruit.h>
@@ -122,13 +122,6 @@ void InstanceManager::IssueStatusCommand(
     const SharedFD& out, const SharedFD& err,
     const std::string& config_file_path,
     const selector::LocalInstanceGroup& group) {
-  // Reads CuttlefishConfig::instance_names(), which must remain stable
-  // across changes to config file format (within server_constants.h major
-  // version).
-  auto config = CuttlefishConfig::GetFromFile(config_file_path);
-  if (!config) {
-    return;
-  }
   Command command(group.HostArtifactsPath() + "/bin/" + kStatusBin);
   command.AddParameter("--print");
   command.AddParameter("--all_instances");
@@ -140,9 +133,9 @@ void InstanceManager::IssueStatusCommand(
   }
 }
 
-Result<cvd::Status> InstanceManager::CvdFleetImpl(
-    const uid_t uid, const SharedFD& out, const SharedFD& err,
-    const std::optional<std::string>& env_config) {
+Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
+                                                  const SharedFD& out,
+                                                  const SharedFD& err) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
   const char _GroupDeviceInfoStart[] = "[\n";
@@ -153,11 +146,14 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(
 
   for (const auto& group : instance_groups) {
     CF_EXPECT(group != nullptr);
-    auto config_path = env_config && FileExists(*env_config)
-                           ? *env_config
-                           : group->GetCuttlefishConfigPath();
+    auto config_path = group->GetCuttlefishConfigPath();
     if (config_path.ok()) {
       IssueStatusCommand(out, err, *config_path, *group);
+    } else {
+      std::stringstream error_msg_stream;
+      error_msg_stream << "The config file for \"group\" " << group->GroupName()
+                       << " does not exist.\n";
+      WriteAll(err, error_msg_stream.str());
     }
     if (group == *instance_groups.crbegin()) {
       continue;
@@ -170,35 +166,20 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(
   return status;
 }
 
-Result<cvd::Status> InstanceManager::CvdFleetHelp(
-    const SharedFD& out, const SharedFD& err,
-    const std::string& host_tool_dir) {
-  Command command(host_tool_dir + kStatusBin);
-  command.AddParameter("--help");
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
-  if (int wait_result = command.Start().Wait(); wait_result != 0) {
-    WriteAll(err, "      (unknown instance status error)");
-  }
-  WriteAll(out, "\n");
-  cvd::Status status;
-  status.set_code(cvd::Status::OK);
-  return status;
-}
-
 Result<cvd::Status> InstanceManager::CvdFleet(
     const uid_t uid, const SharedFD& out, const SharedFD& err,
-    const std::optional<std::string>& env_config,
-    const std::string& host_tool_dir, const std::vector<std::string>& args) {
+    const std::vector<std::string>& fleet_cmd_args) {
   bool is_help = false;
-  for (const auto& arg : args) {
+  for (const auto& arg : fleet_cmd_args) {
     if (arg == "--help" || arg == "-help") {
       is_help = true;
       break;
     }
   }
-  return (is_help ? CvdFleetHelp(out, err, host_tool_dir + "/bin/")
-                  : CvdFleetImpl(uid, out, err, env_config));
+  CF_EXPECT(!is_help,
+            "cvd fleet --help should be handled by fleet handler itself.");
+  const auto status = CF_EXPECT(CvdFleetImpl(uid, out, err));
+  return status;
 }
 
 void InstanceManager::IssueStopCommand(
