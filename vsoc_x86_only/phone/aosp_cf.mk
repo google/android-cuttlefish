@@ -41,7 +41,6 @@ $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 #
 # Special settings for the target
 #
-$(call inherit-product, device/google/cuttlefish/vsoc_x86_only/kernel.mk)
 # FIXME: For now, this uses the "64-bit" bootloader (for why, take a look at
 #        http://u-boot.10912.n7.nabble.com/64-bit-x86-U-Boot-td244620.html)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
