@@ -118,9 +118,6 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
-  void set_gem5_debug_file(const std::string& gem5_debug_file);
-  std::string gem5_debug_file() const;
-
   void set_gem5_debug_flags(const std::string& gem5_debug_flags);
   std::string gem5_debug_flags() const;
 
@@ -132,9 +129,6 @@ class CuttlefishConfig {
 
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
-
-  void set_boot_slot(const std::string& boot_slot);
-  std::string boot_slot() const;
 
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
@@ -216,10 +210,6 @@ class CuttlefishConfig {
   void set_ril_dns(const std::string& ril_dns);
   std::string ril_dns() const;
 
-  // Kernel and bootloader logging
-  void set_enable_kernel_log(bool enable_kernel_log);
-  bool enable_kernel_log() const;
-
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
 
@@ -268,9 +258,6 @@ class CuttlefishConfig {
 
   void set_smt(bool smt);
   bool smt() const;
-
-  void set_protected_vm(bool protected_vm);
-  bool protected_vm() const;
 
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
@@ -514,6 +501,12 @@ class CuttlefishConfig {
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
     bool record_screen() const;
+    std::string gem5_debug_file() const;
+    bool protected_vm() const;
+    std::string boot_slot() const;
+
+    // Kernel and bootloader logging
+    bool enable_kernel_log() const;
 
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
@@ -640,6 +633,12 @@ class CuttlefishConfig {
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
     void set_record_screen(bool record_screen);
+    void set_gem5_debug_file(const std::string& gem5_debug_file);
+    void set_protected_vm(bool protected_vm);
+    void set_boot_slot(const std::string& boot_slot);
+
+    // Kernel and bootloader logging
+    void set_enable_kernel_log(bool enable_kernel_log);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);

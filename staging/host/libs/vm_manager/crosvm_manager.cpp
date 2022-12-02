@@ -145,7 +145,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   }
 #endif
 
-  if (config.protected_vm()) {
+  if (instance.protected_vm()) {
     crosvm_cmd.Cmd().AddParameter("--protected-vm");
   }
 
@@ -206,7 +206,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
             "Provided too many disks (" << disk_num << "), maximum "
                                         << VmManager::kMaxDisks << "supported");
   for (const auto& disk : instance.virtual_disk_paths()) {
-    if (config.protected_vm()) {
+    if (instance.protected_vm()) {
       crosvm_cmd.AddReadOnlyDisk(disk);
     } else {
       crosvm_cmd.AddReadWriteDisk(disk);
@@ -291,7 +291,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   // console is configured below on a legacy serial port, it will control
   // the main log until the virtio-console takes over.
   crosvm_cmd.AddHvcReadOnly(instance.kernel_log_pipe_name(),
-                            config.enable_kernel_log());
+                            instance.enable_kernel_log());
 
   if (instance.console()) {
     // stdin is the only currently supported way to write data to a serial port
@@ -301,7 +301,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     if (instance.kgdb() || instance.use_bootloader()) {
       crosvm_cmd.AddSerialConsoleReadWrite(instance.console_out_pipe_name(),
                                            instance.console_in_pipe_name(),
-                                           config.enable_kernel_log());
+                                           instance.enable_kernel_log());
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
       // allocated to Android's serial console, and redirect it to a sink. This
@@ -318,7 +318,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     // virtio-console driver may not be available for early messages
     // In kgdb mode, earlycon is an interactive console, and so early
     // dmesg will go there instead of the kernel.log
-    if (config.enable_kernel_log() &&
+    if (instance.enable_kernel_log() &&
         (instance.kgdb() || instance.use_bootloader())) {
       crosvm_cmd.AddSerialConsoleReadOnly(instance.kernel_log_pipe_name());
     }

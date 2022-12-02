@@ -185,8 +185,8 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
   // We check the flags are not empty first since they are optional
   if(!config.gem5_debug_flags().empty()) {
     gem5_cmd.AddParameter("--debug-flags=", config.gem5_debug_flags());
-    if(!config.gem5_debug_file().empty()) {
-      gem5_cmd.AddParameter("--debug-file=", config.gem5_debug_file());
+    if(!instance.gem5_debug_file().empty()) {
+      gem5_cmd.AddParameter("--debug-file=", instance.gem5_debug_file());
     }
   }
 
