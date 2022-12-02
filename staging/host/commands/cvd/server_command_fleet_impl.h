@@ -16,7 +16,9 @@
 
 #pragma once
 
+#include <map>
 #include <mutex>
+#include <string>
 
 #include <fruit/fruit.h>
 
@@ -32,10 +34,10 @@
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
-class CvdCommandHandler : public CvdServerHandler {
+class CvdFleetCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdCommandHandler(InstanceManager& instance_manager,
-                           SubprocessWaiter& subprocess_waiter))
+  INJECT(CvdFleetCommandHandler(InstanceManager& instance_manager,
+                                SubprocessWaiter& subprocess_waiter))
       : instance_manager_(instance_manager),
         subprocess_waiter_(subprocess_waiter) {}
 
@@ -49,15 +51,10 @@ class CvdCommandHandler : public CvdServerHandler {
   std::mutex interruptible_;
   bool interrupted_ = false;
 
-  static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-  static constexpr char kDisplayBin[] = "cvd_internal_display";
-  static constexpr char kLnBin[] = "ln";
-  static constexpr char kMkdirBin[] = "mkdir";
-
-  static constexpr char kClearBin[] =
-      "clear_placeholder";  // Unused, runs CvdClear()
-
-  static const std::map<std::string, std::string> command_to_binary_map_;
+  static constexpr char kFleetSubcmd[] = "fleet";
+  Result<cvd::Status> HandleCvdFleet(const RequestWithStdio& request,
+                                     const std::vector<std::string>& args,
+                                     const std::string& host_artifacts_path);
 };
 
 }  // namespace cvd_cmd_impl
