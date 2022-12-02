@@ -21,17 +21,18 @@
 #include <sstream>
 
 #include <android-base/file.h>
+#include <cvd_server.pb.h>
 #include <fruit/fruit.h>
-
-#include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_constants.h"
@@ -118,19 +119,30 @@ InstanceManager::GetInstanceGroupInfo(
   return {info};
 }
 
-void InstanceManager::IssueStatusCommand(
-    const SharedFD& out, const SharedFD& err,
+struct StatusCommandOutput {
+  std::string stderr_msg;
+  Json::Value stdout;
+};
+
+static Result<StatusCommandOutput> IssueStatusCommand(
     const std::string& config_file_path,
     const selector::LocalInstanceGroup& group) {
   Command command(group.HostArtifactsPath() + "/bin/" + kStatusBin);
   command.AddParameter("--print");
   command.AddParameter("--all_instances");
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
   command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
-  if (int wait_result = command.Start().Wait(); wait_result != 0) {
-    WriteAll(err, "      (unknown instance status error)");
+  StatusCommandOutput output;
+  std::string stdout_buf;
+  CF_EXPECT_EQ(RunWithManagedStdio(std::move(command), /* stdin */ nullptr,
+                                   std::addressof(stdout_buf),
+                                   std::addressof(output.stderr_msg)),
+               0);
+  if (stdout_buf.empty()) {
+    Json::Reader().parse("{}", output.stdout);
+    return output;
   }
+  output.stdout = CF_EXPECT(ParseJson(stdout_buf));
+  return output;
 }
 
 Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
@@ -148,7 +160,17 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
     CF_EXPECT(group != nullptr);
     auto config_path = group->GetCuttlefishConfigPath();
     if (config_path.ok()) {
-      IssueStatusCommand(out, err, *config_path, *group);
+      auto result = IssueStatusCommand(*config_path, *group);
+      if (!result.ok()) {
+        WriteAll(err, "      (unknown instance status error)");
+      } else {
+        const auto [stderr_msg, stdout_json] = *result;
+        WriteAll(err, stderr_msg);
+        // TODO(kwstephenkim): build a data structure that also includes
+        // selector-related information, etc.
+        WriteAll(out, stdout_json.toStyledString());
+      }
+      // move on
     } else {
       std::stringstream error_msg_stream;
       error_msg_stream << "The config file for \"group\" " << group->GroupName()
