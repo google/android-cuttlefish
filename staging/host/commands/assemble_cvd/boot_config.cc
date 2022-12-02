@@ -58,12 +58,12 @@ void WritePausedEntrypoint(std::ostream& env, const char* entrypoint,
 }
 
 void WriteAndroidEnvironment(
-    const CuttlefishConfig& config, std::ostream& env,
+    std::ostream& env,
     const CuttlefishConfig::InstanceSpecific& instance) {
   WritePausedEntrypoint(env, "run bootcmd_android", instance);
 
-  if (!config.boot_slot().empty()) {
-    env << "android_slot_suffix=_" << config.boot_slot() << '\0';
+  if (!instance.boot_slot().empty()) {
+    env << "android_slot_suffix=_" << instance.boot_slot() << '\0';
   }
   env << '\0';
 }
@@ -80,8 +80,7 @@ void WriteEFIEnvironment(
   );
 }
 
-size_t WriteEnvironment(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance,
+size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
                         const CuttlefishConfig::InstanceSpecific::BootFlow& flow,
                         const std::string& kernel_args,
                         const std::string& env_path) {
@@ -95,7 +94,7 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
 
   switch (flow) {
     case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
-      WriteAndroidEnvironment(config, env, instance);
+      WriteAndroidEnvironment(env, instance);
       break;
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
     case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
@@ -125,7 +124,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
 
   // SetupFeature
   std::string Name() const override { return "InitBootloaderEnvPartitionImpl"; }
-  bool Enabled() const override { return !config_.protected_vm(); }
+  bool Enabled() const override { return !instance_.protected_vm(); }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
@@ -169,7 +168,8 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       kernel_cmdline += " ";
       kernel_cmdline += bootconfig_args;
     }
-    if (!WriteEnvironment(config_, instance_, flow, kernel_cmdline, uboot_env_path)) {
+
+    if (!WriteEnvironment(instance_, flow, kernel_cmdline, uboot_env_path)) {
       LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path
                  << ".'";
       return false;
