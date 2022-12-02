@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <array>
 #include <map>
 #include <mutex>
 #include <string>
@@ -76,18 +75,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   static constexpr char kStartBin[] = "cvd_internal_start";
   static const std::map<std::string, std::string> command_to_binary_map_;
-
-  /*
-   * From external/gflags/src, commit:
-   *  061f68cd158fa658ec0b9b2b989ed55764870047
-   *
-   */
-  constexpr static std::array help_bool_opts_{
-      "help", "helpfull", "helpshort", "helppackage", "helpxml", "version"};
-  constexpr static std::array help_str_opts_{
-      "helpon",
-      "helpmatch",
-  };
 };
 
 }  // namespace cvd_cmd_impl
