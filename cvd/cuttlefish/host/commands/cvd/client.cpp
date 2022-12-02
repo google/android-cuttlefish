@@ -58,12 +58,12 @@ Result<SharedFD> ConnectToServer() {
   // TODO(b/206893146): Detect what the platform actually is.
   auto py_acloud_path =
       android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
-  char** new_argv = new char*[args.size() + 1];
+  std::unique_ptr<char*[]> new_argv(new char*[args.size() + 1]);
   for (size_t i = 0; i < args.size(); i++) {
     new_argv[i] = args[i].data();
   }
   new_argv[args.size()] = nullptr;
-  execv(py_acloud_path.data(), new_argv);
+  execv(py_acloud_path.data(), new_argv.get());
   PLOG(FATAL) << "execv(" << py_acloud_path << ", ...) failed";
   abort();
 }
