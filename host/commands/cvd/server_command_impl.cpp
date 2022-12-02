@@ -16,8 +16,11 @@
 
 #include "host/commands/cvd/server_command_impl.h"
 
+#include <array>
+
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -156,6 +159,34 @@ Result<Command> ConstructCvdHelpCommand(
                                             .err = request.Err()};
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
+}
+
+/*
+ * From external/gflags/src, commit:
+ *  061f68cd158fa658ec0b9b2b989ed55764870047
+ *
+ */
+constexpr static std::array help_bool_opts{
+    "help", "helpfull", "helpshort", "helppackage", "helpxml", "version"};
+constexpr static std::array help_str_opts{
+    "helpon",
+    "helpmatch",
+};
+
+bool IsHelpSubcmd(const std::vector<std::string>& args) {
+  std::vector<std::string> copied_args(args);
+  std::vector<Flag> flags;
+  bool bool_value_placeholder = false;
+  std::string str_value_placeholder;
+  for (const auto bool_opt : help_bool_opts) {
+    flags.emplace_back(GflagsCompatFlag(bool_opt, bool_value_placeholder));
+  }
+  for (const auto str_opt : help_str_opts) {
+    flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
+  }
+  ParseFlags(flags, copied_args);
+  // if there was any match, some in copied_args were consumed.
+  return (args.size() != copied_args.size());
 }
 
 }  // namespace cvd_cmd_impl
