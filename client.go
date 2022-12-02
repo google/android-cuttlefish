@@ -50,28 +50,33 @@ func (e *ApiCallError) Error() string {
 	return str
 }
 
-type APIClient struct {
-	client  *http.Client
-	baseURL string
-	dumpOut io.Writer
-	errOut  io.Writer
+type APIClientOptions struct {
+	BaseURL       string
+	ProxyURL      string
+	DumpOut       io.Writer
+	ErrOut        io.Writer
+	RetryAttempts int
+	RetryDelay    time.Duration
 }
 
-func NewAPIClient(baseURL, proxyURL string, dumpOut, errOut io.Writer) (*APIClient, error) {
+type APIClient struct {
+	*APIClientOptions
+	client *http.Client
+}
+
+func NewAPIClient(opts *APIClientOptions) (*APIClient, error) {
 	httpClient := &http.Client{}
 	// Handles http proxy
-	if proxyURL != "" {
-		proxyUrl, err := url.Parse(proxyURL)
+	if opts.ProxyURL != "" {
+		proxyUrl, err := url.Parse(opts.ProxyURL)
 		if err != nil {
 			return nil, err
 		}
 		httpClient.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
 	}
 	return &APIClient{
-		client:  httpClient,
-		baseURL: baseURL,
-		dumpOut: dumpOut,
-		errOut:  errOut,
+		APIClientOptions: opts,
+		client:           httpClient,
 	}, nil
 }
 
@@ -168,10 +173,10 @@ func (c *APIClient) webRTCPoll(sinkCh chan map[string]interface{}, host, connId 
 		path := fmt.Sprintf("/hosts/%s/connections/%s/messages?start=%d", host, connId, start)
 		var messages []map[string]interface{}
 		if err := c.doRequest("GET", path, nil, &messages); err != nil {
-			fmt.Fprintf(c.errOut, "Error polling messages: %v\n", err)
+			fmt.Fprintf(c.ErrOut, "Error polling messages: %v\n", err)
 			errCount++
 			if errCount >= maxConsecutiveErrors {
-				fmt.Fprintln(c.errOut, "Reached maximum number of consecutive polling errors, exiting")
+				fmt.Fprintln(c.ErrOut, "Reached maximum number of consecutive polling errors, exiting")
 				close(sinkCh)
 				return
 			}
@@ -188,7 +193,7 @@ func (c *APIClient) webRTCPoll(sinkCh chan map[string]interface{}, host, connId 
 		}
 		for _, message := range messages {
 			if message["message_type"] != "device_msg" {
-				fmt.Fprintf(c.errOut, "unexpected message type: %s\n", message["message_type"])
+				fmt.Fprintf(c.ErrOut, "unexpected message type: %s\n", message["message_type"])
 				continue
 			}
 			sinkCh <- message["payload"].(map[string]interface{})
@@ -218,13 +223,13 @@ func (c *APIClient) webRTCForward(srcCh chan interface{}, host, connId string, s
 		i := 0
 		for ; i < maxConsecutiveErrors; i++ {
 			if err := c.doRequest("POST", path, &forwardMsg, nil); err != nil {
-				fmt.Fprintf(c.errOut, "Error sending message to device: %v\n", err)
+				fmt.Fprintf(c.ErrOut, "Error sending message to device: %v\n", err)
 			} else {
 				break
 			}
 		}
 		if i == maxConsecutiveErrors {
-			fmt.Fprintln(c.errOut, "Reached maximum number of sending errors, exiting")
+			fmt.Fprintln(c.ErrOut, "Reached maximum number of sending errors, exiting")
 			close(stopPollCh)
 			return
 		}
@@ -287,21 +292,32 @@ func (c *APIClient) doRequest(method, path string, reqpl, respl interface{}) err
 		}
 		body = bytes.NewBuffer(json)
 	}
-	url := c.baseURL + path
+	url := c.BaseURL + path
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if err := dumpRequest(req, c.dumpOut); err != nil {
+	if err := dumpRequest(req, c.DumpOut); err != nil {
 		return err
 	}
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
+	for i := 0; i < c.RetryAttempts && (res.StatusCode == http.StatusServiceUnavailable); i++ {
+		err = dumpResponse(res, c.DumpOut)
+		res.Body.Close()
+		if err != nil {
+			return err
+		}
+		time.Sleep(c.RetryDelay)
+		if res, err = c.client.Do(req); err != nil {
+			return err
+		}
+	}
 	defer res.Body.Close()
-	if err := dumpResponse(res, c.dumpOut); err != nil {
+	if err := dumpResponse(res, c.DumpOut); err != nil {
 		return err
 	}
 	dec := json.NewDecoder(res.Body)
