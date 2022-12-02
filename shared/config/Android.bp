@@ -22,6 +22,12 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "cvd_config_auto_md.json",
+    src: "config_auto_md.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "cvd_config_foldable.json",
     src: "config_foldable.json",
     sub_dir: "cvd_config",
