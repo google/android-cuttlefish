@@ -111,21 +111,13 @@ cc_library_host_static {
     defaults: ["cvd_lib_defaults"],
 }
 
-cc_library_host_static {
-    name: "libfetch_cvd",
-    srcs: [
-        "fetch_cvd.cc",
-    ],
-    defaults: ["cvd_lib_defaults"],
-}
-
 cc_defaults {
     name: "cvd_and_fetch_cvd_defaults",
     static_libs: [
         "libcvd_parser",
         "libcvd_selector",
         "libcvd_server_client",
-        "libfetch_cvd",
+        "libcvd_fetch",
     ],
     target: {
         linux_bionic: {
