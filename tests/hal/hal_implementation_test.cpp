@@ -217,10 +217,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // These types are only used in TV.
     {"android.hardware.tv.tuner.", 1},
-
-    // TODO(b/259311835): Revert; temporary to handle merge conflicts from AOSP
-    // -> Internal
-    {"android.hardware.graphics.allocator.", 2},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
