@@ -71,12 +71,6 @@ Result<cvd::Response> CvdCommandHandler::Handle(
     return response;
   }
 
-  if (invocation_info.bin == kFleetBin) {
-    *response.mutable_status() = CF_EXPECT(HandleCvdFleet(
-        request, invocation_info.args, invocation_info.host_artifacts_path));
-    return response;
-  }
-
   std::string bin_path = invocation_info.bin;
   if (invocation_info.bin != kMkdirBin && invocation_info.bin != kLnBin) {
     auto assembly_info_result =
@@ -127,20 +121,6 @@ Result<cvd::Response> CvdCommandHandler::Handle(
   return ResponseFromSiginfo(infop);
 }
 
-Result<cvd::Status> CvdCommandHandler::HandleCvdFleet(
-    const RequestWithStdio& request, const std::vector<std::string>& args,
-    const std::string& host_artifacts_path) {
-  const auto& envs = request.Message().command_request().env();
-  std::optional<std::string> config_path = std::nullopt;
-  if (Contains(envs, kCuttlefishConfigEnvVarName)) {
-    config_path = envs.at(kCuttlefishConfigEnvVarName);
-  }
-  CF_EXPECT(request.Credentials() != std::nullopt);
-  const uid_t uid = request.Credentials()->uid;
-  return instance_manager_.CvdFleet(uid, request.Out(), request.Err(),
-                                    config_path, host_artifacts_path, args);
-}
-
 const std::map<std::string, std::string>
     CvdCommandHandler::command_to_binary_map_ = {
         {"host_bugreport", kHostBugreportBin},
@@ -152,7 +132,6 @@ const std::map<std::string, std::string>
         {"clear", kClearBin},
         {"mkdir", kMkdirBin},
         {"ln", kLnBin},
-        {"fleet", kFleetBin},
         {"display", kDisplayBin},
 };
 
