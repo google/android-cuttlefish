@@ -260,7 +260,7 @@ DEFINE_vec(gem5_binary_dir, CF_DEFAULTS_GEM5_BINARY_DIR,
               "Path to the gem5 build tree root");
 DEFINE_vec(gem5_checkpoint_dir, CF_DEFAULTS_GEM5_CHECKPOINT_DIR,
               "Path to the gem5 restore checkpoint directory");
-DEFINE_string(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
+DEFINE_vec(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
               "The file name where gem5 saves debug prints and logs");
 DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
               "The debug flags gem5 uses to print debugs to file");
@@ -273,7 +273,7 @@ DEFINE_vec(enable_vehicle_hal_grpc_server,
             "Enables the vehicle HAL "
             "emulation gRPC server on the host");
 DEFINE_vec(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
-DEFINE_string(boot_slot, CF_DEFAULTS_BOOT_SLOT,
+DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
               "Force booting into the given slot. If empty, "
               "the slot will be chosen based on the misc partition if using a "
               "bootloader. It will default to 'a' if empty and not using a "
@@ -289,7 +289,7 @@ DEFINE_string(report_anonymous_usage_stats,
               "statistics for metrics collection and analysis.");
 DEFINE_string(ril_dns, CF_DEFAULTS_RIL_DNS,
               "DNS address of mobile network (RIL)");
-DEFINE_bool(kgdb, CF_DEFAULTS_KGDB,
+DEFINE_vec(kgdb, cuttlefish::BoolToString(CF_DEFAULTS_KGDB),
             "Configure the virtual device for debugging the kernel "
             "with kgdb/kdb. The kernel must have been built with "
             "kgdb support, and serial console must be enabled.");
@@ -315,7 +315,8 @@ DEFINE_vec(modem_simulator_sim_type,
 DEFINE_vec(console, cuttlefish::BoolToString(CF_DEFAULTS_CONSOLE),
               "Enable the serial console");
 
-DEFINE_bool(enable_kernel_log, CF_DEFAULTS_ENABLE_KERNEL_LOG,
+DEFINE_vec(enable_kernel_log,
+           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_KERNEL_LOG),
             "Enable kernel console/dmesg logging");
 
 DEFINE_bool(vhost_net, CF_DEFAULTS_VHOST_NET,
@@ -375,7 +376,7 @@ DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
 DEFINE_vec(use_sdcard, CF_DEFAULTS_USE_SDCARD?"true":"false",
             "Create blank SD-Card image and expose to guest");
 
-DEFINE_bool(protected_vm, CF_DEFAULTS_PROTECTED_VM,
+DEFINE_vec(protected_vm, cuttlefish::BoolToString(CF_DEFAULTS_PROTECTED_VM),
             "Boot in Protected VM mode");
 
 DEFINE_vec(enable_audio, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_AUDIO),
@@ -736,14 +737,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   tmp_config_obj.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
 
-  tmp_config_obj.set_enable_kernel_log(FLAGS_enable_kernel_log);
-
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
 
   tmp_config_obj.set_qemu_binary_dir(FLAGS_qemu_binary_dir);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
-  tmp_config_obj.set_gem5_debug_file(FLAGS_gem5_debug_file);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
@@ -764,10 +762,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
-
-  if (!FLAGS_boot_slot.empty()) {
-      tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
-  }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
@@ -817,8 +811,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (is_bt_netsim) {
     tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
   }
-
-  tmp_config_obj.set_protected_vm(FLAGS_protected_vm);
 
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
@@ -886,6 +878,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           FLAGS_enable_bootanimation, instances_size, "enable_bootanimation"));
   std::vector<bool> record_screen_vec = CF_EXPECT(GetFlagBoolValueForInstances(
       FLAGS_record_screen, instances_size, "record_screen"));
+  std::vector<std::string> gem5_debug_file_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gem5_debug_file, instances_size));
+  std::vector<bool> protected_vm_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_protected_vm, instances_size, "protected_vm"));
+  std::vector<bool> enable_kernel_log_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_enable_kernel_log, instances_size, "enable_kernel_log"));
+  std::vector<bool> kgdb_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_kgdb, instances_size, "kgdb"));
+  std::vector<std::string> boot_slot_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_boot_slot, instances_size));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GetFlagBoolValueForInstances(
@@ -957,6 +959,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
     instance.set_record_screen(record_screen_vec[instance_index]);
+    instance.set_gem5_debug_file(gem5_debug_file_vec[instance_index]);
+    instance.set_protected_vm(protected_vm_vec[instance_index]);
+    instance.set_enable_kernel_log(enable_kernel_log_vec[instance_index]);
+    if (!boot_slot_vec[instance_index].empty()) {
+      instance.set_boot_slot(boot_slot_vec[instance_index]);
+    }
 
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(
@@ -987,7 +995,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                 << kernel_configs.size());
     instance.set_target_arch(kernel_configs[instance_index].target_arch);
     instance.set_console(console_vec[instance_index]);
-    instance.set_kgdb(console_vec[instance_index] && FLAGS_kgdb);
+    instance.set_kgdb(console_vec[instance_index] && kgdb_vec[instance_index]);
     instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);
     instance.set_gdb_port(gdb_port_vec[instance_index]);
 
@@ -1164,7 +1172,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     std::vector<std::string> virtual_disk_paths;
 
     bool os_overlay = true;
-    os_overlay &= !FLAGS_protected_vm;
+    os_overlay &= !protected_vm_vec[instance_index];
     // Gem5 already uses CoW wrappers around disk images
     os_overlay &= vm_manager_vec[0] != Gem5Manager::name();
     os_overlay &= FLAGS_use_overlay;
@@ -1176,7 +1184,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     bool persistent_disk = true;
-    persistent_disk &= !FLAGS_protected_vm;
+    persistent_disk &= !protected_vm_vec[instance_index];
     persistent_disk &= vm_manager_vec[0] != Gem5Manager::name();
     if (persistent_disk) {
       auto path = const_instance.PerInstancePath("persistent_composite.img");
@@ -1187,7 +1195,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool sdcard = true;
     sdcard &= use_sdcard_vec[instance_index];
-    sdcard &= !FLAGS_protected_vm;
+    sdcard &= !protected_vm_vec[instance_index];
     if (sdcard) {
       virtual_disk_paths.push_back(const_instance.sdcard_path());
     }
