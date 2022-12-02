@@ -75,5 +75,8 @@ Envs ConvertProtoMap(
 std::vector<std::string> ConvertProtoArguments(
     const google::protobuf::RepeatedPtrField<std::string>& proto_args);
 
+// e.g. cvd start --help, cvd stop --help
+bool IsHelpSubcmd(const std::vector<std::string>& args);
+
 }  // namespace cvd_cmd_impl
 }  // namespace cuttlefish
