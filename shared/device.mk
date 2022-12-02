@@ -672,6 +672,12 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/wpa_supplicant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wpa_supplicant.rc
 
+# VirtWifi interface configuration
+ifeq ($(DEVICE_VIRTWIFI_PORT),)
+    DEVICE_VIRTWIFI_PORT := eth2
+endif
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.virtwifi.port=${DEVICE_VIRTWIFI_PORT}
+
 # WLAN driver configuration files
 ifndef LOCAL_WPA_SUPPLICANT_OVERLAY
 LOCAL_WPA_SUPPLICANT_OVERLAY := $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf
