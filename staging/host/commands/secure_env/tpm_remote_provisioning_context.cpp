@@ -219,7 +219,7 @@ TpmRemoteProvisioningContext::GenerateHmacSha256(
 
 void TpmRemoteProvisioningContext::GetHwInfo(
     keymaster::GetHwInfoResponse* hwInfo) const {
-  hwInfo->version = 2;
+  hwInfo->version = 3;
   hwInfo->rpcAuthorName = "Google";
   hwInfo->supportedEekCurve = 2 /* CURVE_25519 */;
   hwInfo->uniqueId = "remote keymint";
