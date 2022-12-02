@@ -16,23 +16,29 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include <map>
 #include <mutex>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <fruit/fruit.h>
-
 #include "cvd_server.pb.h"
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
-#include "host/commands/cvd/server_command_impl.h"
 #include "host/commands/cvd/server_command_subprocess_waiter.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
+
+using Envs = std::unordered_map<std::string, std::string>;
+using Args = std::vector<std::string>;
 
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
@@ -52,9 +58,11 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   bool interrupted_ = false;
 
   static constexpr char kFleetSubcmd[] = "fleet";
-  Result<cvd::Status> HandleCvdFleet(const RequestWithStdio& request,
-                                     const std::vector<std::string>& args,
-                                     const std::string& host_artifacts_path);
+  Result<cvd::Status> HandleCvdFleet(const uid_t uid, const SharedFD& out,
+                                     const SharedFD& err,
+                                     const Args& cmd_args) const;
+  Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
+  bool IsHelp(const Args& cmd_args) const;
 };
 
 }  // namespace cvd_cmd_impl
