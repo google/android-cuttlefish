@@ -16,8 +16,12 @@
 
 #include "host/commands/cvd/server_command_fleet_impl.h"
 
+#include <android-base/file.h>
+
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/cvd/server_command_impl.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -44,33 +48,57 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   }
   CF_EXPECT(CanHandle(request));
   CF_EXPECT(request.Credentials() != std::nullopt);
+  const uid_t uid = request.Credentials()->uid;
 
   cvd::Response response;
   response.mutable_command_response();
 
   auto [sub_cmd, args] = ParseInvocation(request.Message());
   auto envs = ConvertProtoMap(request.Message().command_request().env());
-  CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
-            DirectoryExists(envs.at("ANDROID_HOST_OUT")));
+  if (!IsHelp(args)) {
+    CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
+              DirectoryExists(envs.at("ANDROID_HOST_OUT")));
+  }
 
   *response.mutable_status() =
-      CF_EXPECT(HandleCvdFleet(request, args, envs.at("ANDROID_HOST_OUT")));
+      CF_EXPECT(HandleCvdFleet(uid, request.Out(), request.Err(), args));
 
   return response;
 }
 
 Result<cvd::Status> CvdFleetCommandHandler::HandleCvdFleet(
-    const RequestWithStdio& request, const std::vector<std::string>& args,
-    const std::string& host_artifacts_path) {
-  const auto& envs = request.Message().command_request().env();
-  std::optional<std::string> config_path = std::nullopt;
-  if (Contains(envs, kCuttlefishConfigEnvVarName)) {
-    config_path = envs.at(kCuttlefishConfigEnvVarName);
+    const uid_t uid, const SharedFD& out, const SharedFD& err,
+    const Args& cmd_args) const {
+  if (IsHelp(cmd_args)) {
+    auto status = CF_EXPECT(CvdFleetHelp(out));
+    return status;
   }
-  CF_EXPECT(request.Credentials() != std::nullopt);
-  const uid_t uid = request.Credentials()->uid;
-  return instance_manager_.CvdFleet(uid, request.Out(), request.Err(),
-                                    config_path, host_artifacts_path, args);
+  auto status = CF_EXPECT(instance_manager_.CvdFleet(uid, out, err, cmd_args));
+  return status;
+}
+
+bool CvdFleetCommandHandler::IsHelp(const Args& args) const {
+  for (const auto& arg : args) {
+    if (arg == "--help" || arg == "-help") {
+      return true;
+    }
+  }
+  return false;
+}
+
+Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
+    const SharedFD& out) const {
+  WriteAll(out, "Simply run \"cvd fleet\" as it has no other flags.\n");
+  WriteAll(out, "\n");
+  WriteAll(out, "\"cvd fleet\" will:\n");
+  WriteAll(out,
+           "      1. tell whether the devices (i.e. \"run_cvd\" processes) are "
+           "active.\n");
+  WriteAll(out,
+           "      2. optionally list the active devices with information.\n");
+  cvd::Status status;
+  status.set_code(cvd::Status::OK);
+  return status;
 }
 
 }  // namespace cvd_cmd_impl
