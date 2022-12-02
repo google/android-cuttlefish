@@ -30,7 +30,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/client.h"
-#include "host/commands/cvd/fetch_cvd.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/selector/selector_cmdline_parser.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
