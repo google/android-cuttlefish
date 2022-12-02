@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch_cvd.h"
+#include "host/commands/cvd/fetch/fetch_cvd.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -46,7 +46,7 @@ namespace {
 
 const std::string DEFAULT_BRANCH = "aosp-master";
 const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_64_phone-userdebug";
-}
+}  // namespace
 
 using cuttlefish::CurrentDirectory;
 
@@ -61,15 +61,19 @@ DEFINE_string(bootloader_build, "", "source for the bootloader target");
 DEFINE_string(otatools_build, "", "source for the host ota tools");
 
 DEFINE_bool(download_img_zip, true, "Whether to fetch the -img-*.zip file.");
-DEFINE_bool(download_target_files_zip, false, "Whether to fetch the "
-                                              "-target_files-*.zip file.");
+DEFINE_bool(download_target_files_zip, false,
+            "Whether to fetch the "
+            "-target_files-*.zip file.");
 
 DEFINE_string(credential_source, "", "Build API credential source");
-DEFINE_string(directory, CurrentDirectory(), "Target directory to fetch "
-                                             "files into");
-DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
-DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
-                                       "in seconds. Set to 0 to not wait.");
+DEFINE_string(directory, CurrentDirectory(),
+              "Target directory to fetch "
+              "files into");
+DEFINE_bool(run_next_stage, false,
+            "Continue running the device through the next stage.");
+DEFINE_string(wait_retry_period, "20",
+              "Retry period for pending builds given "
+              "in seconds. Set to 0 to not wait.");
 DEFINE_bool(keep_downloaded_archives, false, "Keep downloaded zip/tar.");
 #ifdef __BIONIC__
 DEFINE_bool(external_dns_resolver, true,
@@ -104,7 +108,8 @@ static bool ArtifactsContains(const std::vector<Artifact>& artifacts,
 Result<std::string> TargetBuildZipFromArtifacts(
     const Build& build, const std::string& name,
     const std::vector<Artifact>& artifacts) {
-  std::string product = std::visit([](auto&& arg) { return arg.product; }, build);
+  std::string product =
+      std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
   auto match = product + "-" + name + "-" + id + ".zip";
   CF_EXPECT(ArtifactsContains(artifacts, match));
@@ -130,7 +135,8 @@ Result<std::vector<std::string>> DownloadImages(
   std::string local_path =
       CF_EXPECT(DownloadImageZip(build_api, build, target_directory));
 
-  std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
+  std::vector<std::string> files =
+      ExtractImages(local_path, target_directory, images);
   CF_EXPECT(!files.empty(), "Could not extract " << local_path);
   if (!FLAGS_keep_downloaded_archives && unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
@@ -290,9 +296,11 @@ std::string USAGE_MESSAGE =
     "<flags>\n"
     "\n"
     "\"*_build\" flags accept values in the following format:\n"
-    "\"branch/build_target\" - latest build of \"branch\" for \"build_target\"\n"
+    "\"branch/build_target\" - latest build of \"branch\" for "
+    "\"build_target\"\n"
     "\"build_id/build_target\" - build \"build_id\" for \"build_target\"\n"
-    "\"branch\" - latest build of \"branch\" for \"aosp_cf_x86_phone-userdebug\"\n"
+    "\"branch\" - latest build of \"branch\" for "
+    "\"aosp_cf_x86_phone-userdebug\"\n"
     "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
 
 std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
@@ -332,7 +340,7 @@ Result<void> ProcessHostPackage(BuildApi& build_api, const Build& default_build,
   return {};
 }
 
-} // namespace
+}  // namespace
 
 Result<void> FetchCvdMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -399,7 +407,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         std::async(std::launch::async, ProcessHostPackage, std::ref(build_api),
                    std::cref(default_build), std::cref(target_dir), &config);
 
-    if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
+    if (FLAGS_system_build != "" || FLAGS_kernel_build != "" ||
+        FLAGS_otatools_build != "") {
       auto ota_build = default_build;
       if (FLAGS_otatools_build != "") {
         ota_build =
@@ -450,9 +459,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         auto image_files = DownloadImages(build_api, system_build, target_dir,
                                           {"system.img", "product.img"});
         if (!image_files.ok() || image_files->empty()) {
-          LOG(INFO) << "Could not find system image for " << system_build
-                    << "in the img zip. Assuming a super image build, which will "
-                    << "get the system image from the target zip.";
+          LOG(INFO)
+              << "Could not find system image for " << system_build
+              << "in the img zip. Assuming a super image build, which will "
+              << "get the system image from the target zip.";
           system_in_img_zip = false;
         } else {
           LOG(INFO) << "Adding img-zip files for system build";
@@ -472,8 +482,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       CF_EXPECT(AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build,
                                  target_files, &config, target_dir));
       if (!system_in_img_zip) {
-        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system.img"})
-            != std::vector<std::string>{}) {
+        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system.img"}) !=
+            std::vector<std::string>{}) {
           std::string extracted_system = target_dir + "/IMAGES/system.img";
           std::string target_system = target_dir + "/system.img";
           CF_EXPECT(
@@ -493,9 +503,11 @@ Result<void> FetchCvdMain(int argc, char** argv) {
               "rename(\"" << extracted_product << "\", \"" << target_product
                           << "\") failed: " << strerror(errno));
         }
-        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system_ext.img"})
-            != std::vector<std::string>{}) {
-          std::string extracted_system_ext = target_dir + "/IMAGES/system_ext.img";
+        if (ExtractImages(target_files[0], target_dir,
+                          {"IMAGES/system_ext.img"}) !=
+            std::vector<std::string>{}) {
+          std::string extracted_system_ext =
+              target_dir + "/IMAGES/system_ext.img";
           std::string target_system_ext = target_dir + "/system_ext.img";
           CF_EXPECT(rename(extracted_system_ext.c_str(),
                            target_system_ext.c_str()) == 0,
@@ -503,9 +515,11 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                 << target_system_ext
                                 << "\") failed: " << strerror(errno));
         }
-        if (ExtractImages(target_files[0], target_dir, {"IMAGES/vbmeta_system.img"})
-            != std::vector<std::string>{}) {
-          std::string extracted_vbmeta_system = target_dir + "/IMAGES/vbmeta_system.img";
+        if (ExtractImages(target_files[0], target_dir,
+                          {"IMAGES/vbmeta_system.img"}) !=
+            std::vector<std::string>{}) {
+          std::string extracted_vbmeta_system =
+              target_dir + "/IMAGES/vbmeta_system.img";
           std::string target_vbmeta_system = target_dir + "/vbmeta_system.img";
           CF_EXPECT(rename(extracted_vbmeta_system.c_str(),
                            target_vbmeta_system.c_str()) == 0,
@@ -513,9 +527,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                 << "\"" << target_vbmeta_system
                                 << "\") failed: \"" << strerror(errno) << "\"");
         }
-        // This should technically call AddFilesToConfig with the produced files,
-        // but it will conflict with the ones produced from the default system image
-        // and pie doesn't care about the produced file list anyway.
+        // This should technically call AddFilesToConfig with the produced
+        // files, but it will conflict with the ones produced from the default
+        // system image and pie doesn't care about the produced file list
+        // anyway.
       }
     }
 
@@ -582,8 +597,9 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   }
   curl_global_cleanup();
 
-  // Due to constraints of the build system, artifacts intentionally cannot determine
-  // their own build id. So it's unclear which build number fetch_cvd itself was built at.
+  // Due to constraints of the build system, artifacts intentionally cannot
+  // determine their own build id. So it's unclear which build number fetch_cvd
+  // itself was built at.
   // https://android.googlesource.com/platform/build/+/979c9f3/Changes.md#build_number
   std::string fetcher_path = target_dir + "/fetcher_config.json";
   CF_EXPECT(AddFilesToConfig(GENERATED, DeviceBuild("", ""), {fetcher_path},
@@ -600,7 +616,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   }
 
   // Ignore return code. We want to make sure there is no running instance,
-  // and stop_cvd will exit with an error code if there is already no running instance.
+  // and stop_cvd will exit with an error code if there is already no running
+  // instance.
   Command stop_cmd(target_dir + "/bin/stop_cvd");
   stop_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
                          Subprocess::StdIOChannel::kStdErr);
@@ -629,7 +646,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   CF_EXPECT(filelist_fd->UNMANAGED_Dup2(0) == 0,
             "Unable to set file list to stdin. " << filelist_fd->StrError());
 
-  // TODO(b/139199114): Go into assemble_cvd when the interface is stable and implemented.
+  // TODO(b/139199114): Go into assemble_cvd when the interface is stable and
+  // implemented.
 
   std::string next_stage = target_dir + "/bin/launch_cvd";
   std::vector<const char*> next_stage_argv = {"launch_cvd"};
@@ -643,4 +661,4 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   return CF_ERR("execv returned " << errno << ":" << strerror(errno));
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
