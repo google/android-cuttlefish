@@ -24,6 +24,7 @@
       <item>0:1</item> <!-- CLOSED : STATE_FLAT -->
       <item>1:2</item> <!-- HALF_OPENED : STATE_HALF_OPENED -->
       <item>2:3</item> <!-- OPENED : STATE_FLIPPED -->
+      <item>3:1</item> <!-- REAR_DISPLAY: STATE_FLAT -->
   </string-array>
   <!-- The device states (supplied by DeviceStateManager) that should be treated as folded by the
        display fold controller. -->
