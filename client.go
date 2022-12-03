@@ -262,6 +262,10 @@ type CreateCVDRequest struct {
 	CVD *CVD `json:"cvd"`
 }
 
+type ListCVDsResponse struct {
+	CVDs []*CVD `json:"cvds"`
+}
+
 type Operation struct {
 	Name string `json:"name"`
 	Done bool   `json:"done"`
@@ -278,6 +282,14 @@ func (c *APIClient) CreateCVD(host string, req *CreateCVDRequest) (*CVD, error) 
 		return nil, err
 	}
 	return cvd, nil
+}
+
+func (c *APIClient) ListCVDs(host string) ([]*CVD, error) {
+	var res ListCVDsResponse
+	if err := c.doRequest("GET", "/hosts/"+host+"/cvds", nil, &res); err != nil {
+		return nil, err
+	}
+	return res.CVDs, nil
 }
 
 // It either populates the passed response payload reference and returns nil
