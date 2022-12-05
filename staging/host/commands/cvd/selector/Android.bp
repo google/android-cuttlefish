@@ -28,6 +28,7 @@ cc_library_host_static {
         "instance_group_record.cpp",
         "instance_record.cpp",
         "selector_cmdline_parser.cpp",
+        "selector_constants.cpp",
         "selector_flags_parser.cpp",
         "selector_option_parser_utils.cpp",
     ],
