@@ -100,15 +100,25 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.opengles.version=196608",  // OpenGL ES 3.0
     };
   }
+
+  if (instance.gpu_mode() == kGpuModeNone) {
+    // This function should probably return a result so that empty vec
+    // isn't treated as an error.
+    return {
+      "androidboot.dummy=0",
+    };
+  }
+
   return {};
 }
 
-std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
+std::string CrosvmManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
   // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
     // crosvm has an additional PCI device for an ISA bridge
     // virtio_gpu and virtio_wl precedes the first console or disk
-    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 3, num_disks);
+    return ConfigureMultipleBootDevices("pci0000:00/0000:00:",
+                                        1 + (have_gpu ? 2 : 0), num_disks);
   } else {
     // On ARM64 crosvm, block devices are on their own bridge, so we don't
     // need to calculate it, and the path is always the same
@@ -178,24 +188,31 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                                   gpu_common_3d_string, gpu_angle_string);
   }
 
-  for (const auto& display_config : instance.display_configs()) {
-    const auto display_w = std::to_string(display_config.width);
-    const auto display_h = std::to_string(display_config.height);
-    const auto display_dpi = std::to_string(display_config.dpi);
-    const auto display_rr = std::to_string(display_config.refresh_rate_hz);
-    const auto display_params = android::base::Join(
-        std::vector<std::string>{
-            "mode=windowed[" + display_w + "," + display_h + "]",
-            "horizontal-dpi=" + display_dpi,
-            "vertical-dpi=" + display_dpi,
-            "refresh-rate=" + display_rr,
-        },
-        ",");
-    crosvm_cmd.Cmd().AddParameter("--gpu-display=", display_params);
-  }
+  if (instance.hwcomposer() != kHwComposerNone) {
+    if (FileExists(instance.hwcomposer_pmem_path())) {
+      crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
+                                    instance.hwcomposer_pmem_path());
+    }
 
-  crosvm_cmd.Cmd().AddParameter("--wayland-sock=",
-                                instance.frames_socket_path());
+    for (const auto& display_config : instance.display_configs()) {
+      const auto display_w = std::to_string(display_config.width);
+      const auto display_h = std::to_string(display_config.height);
+      const auto display_dpi = std::to_string(display_config.dpi);
+      const auto display_rr = std::to_string(display_config.refresh_rate_hz);
+      const auto display_params = android::base::Join(
+          std::vector<std::string>{
+              "mode=windowed[" + display_w + "," + display_h + "]",
+              "horizontal-dpi=" + display_dpi,
+              "vertical-dpi=" + display_dpi,
+              "refresh-rate=" + display_rr,
+          },
+          ",");
+      crosvm_cmd.Cmd().AddParameter("--gpu-display=", display_params);
+    }
+
+    crosvm_cmd.Cmd().AddParameter("--wayland-sock=",
+                                  instance.frames_socket_path());
+  }
 
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
@@ -252,11 +269,6 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   if (FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
                                   instance.access_kregistry_path());
-  }
-
-  if (FileExists(instance.hwcomposer_pmem_path())) {
-    crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
-                                  instance.hwcomposer_pmem_path());
   }
 
   if (FileExists(instance.pstore_path())) {
