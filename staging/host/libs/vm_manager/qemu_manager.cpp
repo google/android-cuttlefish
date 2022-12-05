@@ -148,16 +148,25 @@ std::vector<std::string> QemuManager::ConfigureGraphics(
       "androidboot.opengles.version=196608"};  // OpenGL ES 3.0
   }
 
+  if (instance.gpu_mode() == kGpuModeNone) {
+    // This function should probably return a result so that empty vec
+    // isn't treated as an error.
+    return {
+      "androidboot.dummy=0",
+    };
+  }
+
   return {};
 }
 
-std::string QemuManager::ConfigureBootDevices(int num_disks) {
+std::string QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
   switch (arch_) {
     case Arch::X86:
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
       // virtio_gpu precedes the first console or disk
-      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 3, num_disks);
+      return ConfigureMultipleBootDevices("pci0000:00/0000:00:",
+                                          2 + (have_gpu ? 1 : 0), num_disks);
     }
     case Arch::Arm:
       return "androidboot.boot_devices=3f000000.pcie";
@@ -277,12 +286,14 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   }
 
   auto hwcomposer_pmem_size_bytes = 0;
-  if (FileExists(instance.hwcomposer_pmem_path())) {
-    hwcomposer_pmem_size_bytes = FileSize(instance.hwcomposer_pmem_path());
-    CF_EXPECT((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
-              instance.hwcomposer_pmem_path()
-                  << " file size (" << hwcomposer_pmem_size_bytes
-                  << ") not a multiple of 1MB");
+  if (instance.hwcomposer() != kHwComposerNone) {
+    if (FileExists(instance.hwcomposer_pmem_path())) {
+      hwcomposer_pmem_size_bytes = FileSize(instance.hwcomposer_pmem_path());
+      CF_EXPECT((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
+                instance.hwcomposer_pmem_path()
+                    << " file size (" << hwcomposer_pmem_size_bytes
+                    << ") not a multiple of 1MB");
+    }
   }
 
   auto pstore_size_bytes = 0;
@@ -377,12 +388,14 @@ Result<std::vector<Command>> QemuManager::StartCommands(
 
   qemu_cmd.AddParameter("-device");
 
-  bool use_gpu_gl = qemu_version.first >= 6 &&
-                    instance.gpu_mode() != kGpuModeGuestSwiftshader;
-  qemu_cmd.AddParameter(use_gpu_gl ?
-                            "virtio-gpu-gl-pci" : "virtio-gpu-pci", ",id=gpu0",
-                        ",xres=", display_config.width,
-                        ",yres=", display_config.height);
+  if (instance.hwcomposer() != kHwComposerNone) {
+    bool use_gpu_gl = qemu_version.first >= 6 &&
+                      instance.gpu_mode() != kGpuModeGuestSwiftshader;
+    qemu_cmd.AddParameter(use_gpu_gl ?
+                              "virtio-gpu-gl-pci" : "virtio-gpu-pci", ",id=gpu0",
+                          ",xres=", display_config.width,
+                          ",yres=", display_config.height);
+  }
 
   if (!instance.console()) {
     // In kgdb mode, earlycon is an interactive console, and so early

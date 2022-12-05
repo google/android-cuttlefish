@@ -141,7 +141,8 @@ std::vector<std::string> Gem5Manager::ConfigureGraphics(
   };
 }
 
-std::string Gem5Manager::ConfigureBootDevices(int /*num_disks*/) {
+std::string Gem5Manager::ConfigureBootDevices(int /*num_disks*/,
+                                              bool /*have_gpu*/) {
   switch (arch_) {
     case Arch::Arm:
     case Arch::Arm64:
