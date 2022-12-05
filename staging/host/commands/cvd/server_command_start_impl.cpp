@@ -115,6 +115,13 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   const uid_t uid = request.Credentials()->uid;
   Envs envs = ConvertProtoMap(request.Message().command_request().env());
+  if (Contains(envs, "HOME")) {
+    // As the end-user may override HOME, this could be a relative path
+    // to client's pwd, or may include "~" which is the client's actual
+    // home directory.
+    auto client_pwd = request.Message().command_request().working_directory();
+    envs["HOME"] = CF_EXPECT(ClientAbsolutePath(envs["HOME"], uid, client_pwd));
+  }
 
   // update DB if not help
   // collect group creation infos
