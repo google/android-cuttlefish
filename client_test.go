@@ -19,7 +19,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 	"time"
 
@@ -71,7 +70,7 @@ func TestRetryLogic(t *testing.T) {
 }
 
 func writeErr(w http.ResponseWriter, statusCode int) {
-	write(w, &apiv1.Error{Code: strconv.Itoa(statusCode)}, statusCode)
+	write(w, &apiv1.Error{Code: statusCode}, statusCode)
 }
 
 func writeOK(w http.ResponseWriter, data interface{}) {

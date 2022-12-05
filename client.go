@@ -37,13 +37,13 @@ func (s OpTimeoutError) Error() string {
 }
 
 type ApiCallError struct {
-	Code     string `json:"code,omitempty"`
+	Code     int    `json:"code,omitempty"`
 	ErrorMsg string `json:"error,omitempty"`
 	Details  string `json:"details,omitempty"`
 }
 
 func (e *ApiCallError) Error() string {
-	str := fmt.Sprintf("api call error %s: %s", e.Code, e.ErrorMsg)
+	str := fmt.Sprintf("api call error %d: %s", e.Code, e.ErrorMsg)
 	if e.Details != "" {
 		str += fmt.Sprintf("\n\nDETAILS: %s", e.Details)
 	}
