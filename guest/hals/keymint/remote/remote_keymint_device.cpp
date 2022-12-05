@@ -97,6 +97,7 @@ vector<KeyCharacteristics> convertKeyCharacteristics(
       case KM_TAG_ATTESTATION_ID_BRAND:
       case KM_TAG_ATTESTATION_ID_DEVICE:
       case KM_TAG_ATTESTATION_ID_IMEI:
+      case KM_TAG_ATTESTATION_ID_SECOND_IMEI:
       case KM_TAG_ATTESTATION_ID_MANUFACTURER:
       case KM_TAG_ATTESTATION_ID_MEID:
       case KM_TAG_ATTESTATION_ID_MODEL:
