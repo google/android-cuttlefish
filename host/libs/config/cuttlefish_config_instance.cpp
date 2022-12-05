@@ -695,6 +695,16 @@ std::pair<uint16_t, uint16_t> CuttlefishConfig::InstanceSpecific::webrtc_udp_por
   return ret;
 }
 
+static constexpr char kGrpcConfig[] = "grpc_config";
+std::string CuttlefishConfig::InstanceSpecific::grpc_socket_path() const {
+  return (*Dictionary())[kGrpcConfig].asString();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_grpc_socket_path(
+    const std::string& socket_path) {
+  (*Dictionary())[kGrpcConfig] = socket_path;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
@@ -1161,6 +1171,16 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
     return PerInstancePath(kInternalDirName);
   }
   auto relative_path = (std::string(kInternalDirName) + "/") + file_name;
+  return PerInstancePath(relative_path.c_str());
+}
+
+std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
+    const std::string& socket_name) const {
+  if (socket_name.size() == 0) {
+    // Don't append a / if file_name is empty.
+    return PerInstancePath(kGrpcSocketDirName);
+  }
+  auto relative_path = (std::string(kGrpcSocketDirName) + "/") + socket_name;
   return PerInstancePath(relative_path.c_str());
 }
 
