@@ -731,12 +731,14 @@ bool HostSupportsQemuCli();
 
 // GPU modes
 extern const char* const kGpuModeAuto;
-extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;
+extern const char* const kGpuModeGuestSwiftshader;
+extern const char* const kGpuModeNone;
 
 // HwComposer modes
 extern const char* const kHwComposerAuto;
 extern const char* const kHwComposerDrm;
 extern const char* const kHwComposerRanchu;
+extern const char* const kHwComposerNone;
 }  // namespace cuttlefish
