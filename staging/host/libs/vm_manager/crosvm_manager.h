@@ -36,7 +36,7 @@ class CrosvmManager : public VmManager {
   bool IsSupported() override;
   std::vector<std::string> ConfigureGraphics(
       const CuttlefishConfig::InstanceSpecific& instance) override;
-  std::string ConfigureBootDevices(int num_disks) override;
+  std::string ConfigureBootDevices(int num_disks, bool have_gpu) override;
 
   Result<std::vector<cuttlefish::Command>> StartCommands(
       const CuttlefishConfig& config) override;

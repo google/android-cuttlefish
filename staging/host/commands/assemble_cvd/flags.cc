@@ -1071,7 +1071,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     if (gpu_mode_vec[instance_index] != kGpuModeAuto &&
         gpu_mode_vec[instance_index] != kGpuModeDrmVirgl &&
         gpu_mode_vec[instance_index] != kGpuModeGfxStream &&
-        gpu_mode_vec[instance_index] != kGpuModeGuestSwiftshader) {
+        gpu_mode_vec[instance_index] != kGpuModeGuestSwiftshader &&
+        gpu_mode_vec[instance_index] != kGpuModeNone) {
       LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode_vec[instance_index];
     }
     if (gpu_mode_vec[instance_index] == kGpuModeAuto) {
@@ -1126,6 +1127,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
       if (gpu_mode_vec[instance_index] == kGpuModeDrmVirgl) {
         instance.set_hwcomposer(kHwComposerDrm);
+      } else if (gpu_mode_vec[instance_index] == kGpuModeNone) {
+        instance.set_hwcomposer(kHwComposerNone);
       } else {
         instance.set_hwcomposer(kHwComposerRanchu);
       }
