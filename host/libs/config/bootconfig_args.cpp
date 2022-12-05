@@ -80,7 +80,8 @@ std::vector<std::string> BootconfigArgsFromConfig(
   auto vmm =
       vm_manager::GetVmManager(config.vm_manager(), instance.target_arch());
   bootconfig_args.push_back(
-      vmm->ConfigureBootDevices(instance.virtual_disk_paths().size()));
+      vmm->ConfigureBootDevices(instance.virtual_disk_paths().size(),
+                                instance.hwcomposer() != kHwComposerNone));
   AppendVector(&bootconfig_args, vmm->ConfigureGraphics(instance));
 
   bootconfig_args.push_back(
@@ -90,9 +91,10 @@ std::vector<std::string> BootconfigArgsFromConfig(
 
   // TODO(b/131884992): update to specify multiple once supported.
   const auto display_configs = instance.display_configs();
-  CHECK_GE(display_configs.size(), 1);
-  bootconfig_args.push_back(
-      concat("androidboot.lcd_density=", display_configs[0].dpi));
+  if (!display_configs.empty()) {
+    bootconfig_args.push_back(
+        concat("androidboot.lcd_density=", display_configs[0].dpi));
+  }
 
   bootconfig_args.push_back(
       concat("androidboot.setupwizard_mode=", instance.setupwizard_mode()));

@@ -1,0 +1,29 @@
+/dev/block/pmem1  u:object_r:hal_graphics_composer_pmem_device:s0
+
+/dev/dri u:object_r:gpu_device:s0
+/dev/dri/card0  u:object_r:graphics_device:s0
+/dev/dri/renderD128  u:object_r:gpu_device:s0
+
+/vendor/bin/hw/android\.hardware\.graphics\.allocator-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
+/vendor/bin/hw/android\.hardware\.graphics\.allocator@4\.0-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
+/vendor/bin/hw/android\.hardware\.graphics\.composer3-service\.ranchu  u:object_r:hal_graphics_composer_default_exec:s0
+
+/vendor/lib(64)?/libdrm.so  u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/hw/android\.hardware\.graphics\.mapper@4\.0-impl\.minigbm\.so u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/hw/mapper\.minigbm\.so u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libminigbm_gralloc.so  u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libminigbm_gralloc4_utils.so  u:object_r:same_process_hal_file:s0
+
+# gfxstream (to be better factored (fewer libraries?))
+/vendor/lib(64)?/hw/vulkan\.ranchu\.so   u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libEGL_emulation\.so          u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGLESv1_CM_emulation\.so    u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGLESv2_emulation\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libOpenglCodecCommon\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libOpenglSystemCommon\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/lib_renderControl_enc\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGLESv1_enc\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGLESv2_enc\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libvulkan_enc\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libandroidemu\.so       u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libGoldfishProfiler\.so       u:object_r:same_process_hal_file:s0

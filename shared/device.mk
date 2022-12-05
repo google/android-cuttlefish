@@ -35,7 +35,6 @@ BOOT_SECURITY_PATCH = $(PLATFORM_SECURITY_PATCH)
 PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.boot_security_patch=$(BOOT_SECURITY_PATCH)
 
-PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio and wifi
 
 PRODUCT_SHIPPING_API_LEVEL := 34
@@ -48,8 +47,6 @@ PRODUCT_ENFORCE_MAC80211_HWSIM := true
 endif
 
 PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
-
-PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
 
 PRODUCT_FS_COMPRESSION := 1
 TARGET_RO_FILE_SYSTEM_TYPE ?= ext4
@@ -99,7 +96,6 @@ PRODUCT_VENDOR_PROPERTIES += \
     persist.sys.zram_enabled=1 \
     ro.hardware.keystore_desede=true \
     ro.rebootescrow.device=/dev/block/pmem0 \
-    ro.vendor.hwcomposer.pmem=/dev/block/pmem1 \
     ro.incremental.enable=1 \
     debug.c2.use_dmabufheaps=1
 
@@ -181,28 +177,6 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     GbaService
-
-#
-# Packages for the Vulkan implementation
-#
-ifeq ($(TARGET_VULKAN_SUPPORT),true)
-PRODUCT_PACKAGES += \
-    vulkan.ranchu \
-    libvulkan_enc
-endif
-
-# GL/Vk implementation for gfxstream
-PRODUCT_PACKAGES += \
-    libandroidemu \
-    libOpenglCodecCommon \
-    libOpenglSystemCommon \
-    libGLESv1_CM_emulation \
-    lib_renderControl_enc \
-    libEGL_emulation \
-    libGLESv2_enc \
-    libGLESv2_emulation \
-    libGLESv1_enc \
-    libGoldfishProfiler \
 
 #
 # Packages for testing
@@ -307,16 +281,6 @@ PRODUCT_PACKAGES += \
     fstab.cf.ext4.cts \
     fstab.cf.ext4.cts.vendor_ramdisk \
 
-ifeq ($(TARGET_VULKAN_SUPPORT),true)
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
-    frameworks/native/data/etc/android.software.vulkan.deqp.level-2023-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml \
-    frameworks/native/data/etc/android.software.opengles.deqp.level-2023-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.opengles.deqp.level.xml
-endif
-endif
-
 # Packages for HAL implementations
 
 #
@@ -354,30 +318,6 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     android.hardware.authsecret-service.example
-#
-# Hardware Composer HAL
-#
-# The device needs to avoid having both hwcomposer2.4 and hwcomposer3
-# services running at the same time so make the user manually enables
-# in order to run with --gpu_mode=drm.
-ifeq ($(TARGET_ENABLE_DRMHWCOMPOSER),true)
-DEVICE_MANIFEST_FILE += \
-    device/google/cuttlefish/shared/config/manifest_android.hardware.graphics.composer@2.4-service.xml
-PRODUCT_PACKAGES += \
-    android.hardware.graphics.composer@2.4-service \
-    hwcomposer.drm
-else
-PRODUCT_PACKAGES += \
-    android.hardware.graphics.composer3-service.ranchu
-endif
-
-#
-# Gralloc HAL
-#
-PRODUCT_PACKAGES += \
-    android.hardware.graphics.allocator-service.minigbm \
-    android.hardware.graphics.mapper@4.0-impl.minigbm \
-    mapper.minigbm
 
 #
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
