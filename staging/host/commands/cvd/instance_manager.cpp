@@ -121,7 +121,7 @@ InstanceManager::GetInstanceGroupInfo(
 
 struct StatusCommandOutput {
   std::string stderr_msg;
-  Json::Value stdout;
+  Json::Value stdout_json;
 };
 
 static Result<StatusCommandOutput> IssueStatusCommand(
@@ -138,10 +138,10 @@ static Result<StatusCommandOutput> IssueStatusCommand(
                                    std::addressof(output.stderr_msg)),
                0);
   if (stdout_buf.empty()) {
-    Json::Reader().parse("{}", output.stdout);
+    Json::Reader().parse("{}", output.stdout_json);
     return output;
   }
-  output.stdout = CF_EXPECT(ParseJson(stdout_buf));
+  output.stdout_json = CF_EXPECT(ParseJson(stdout_buf));
   return output;
 }
 
