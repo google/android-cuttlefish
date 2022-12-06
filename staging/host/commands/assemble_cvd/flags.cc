@@ -975,6 +975,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       instance.set_serial_number(FLAGS_serial_number + std::to_string(num));
     }
 
+    instance.set_grpc_socket_path(const_instance.PerInstanceGrpcSocketPath(""));
+
     // call this before all stuff that has vsock server: e.g. touchpad, keyboard, etc
     const auto vsock_guest_cid = vsock_guest_cid_vec[instance_index] + num - GetInstance();
     instance.set_vsock_guest_cid(vsock_guest_cid);

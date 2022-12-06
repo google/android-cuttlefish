@@ -248,6 +248,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(EnsureDirectoryExists(instance.instance_dir()));
       auto internal_dir = instance.instance_dir() + "/" + kInternalDirName;
       CF_EXPECT(EnsureDirectoryExists(internal_dir));
+      auto grpc_socket_dir = instance.instance_dir() + "/" + kGrpcSocketDirName;
+      CF_EXPECT(EnsureDirectoryExists(grpc_socket_dir));
       auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
       CF_EXPECT(EnsureDirectoryExists(shared_dir));
       auto recording_dir = instance.instance_dir() + "/recording";
