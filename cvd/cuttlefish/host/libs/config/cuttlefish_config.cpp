@@ -220,22 +220,6 @@ std::string CuttlefishConfig::seccomp_policy_dir() const {
   return (*dictionary_)[kSeccompPolicyDir].asString();
 }
 
-static constexpr char kEnableWebRTC[] = "enable_webrtc";
-void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
-  (*dictionary_)[kEnableWebRTC] = enable_webrtc;
-}
-bool CuttlefishConfig::enable_webrtc() const {
-  return (*dictionary_)[kEnableWebRTC].asBool();
-}
-
-static constexpr char kWebRTCAssetsDir[] = "webrtc_assets_dir";
-void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
-  (*dictionary_)[kWebRTCAssetsDir] = webrtc_assets_dir;
-}
-std::string CuttlefishConfig::webrtc_assets_dir() const {
-  return (*dictionary_)[kWebRTCAssetsDir].asString();
-}
-
 static constexpr char kWebRTCCertsDir[] = "webrtc_certs_dir";
 void CuttlefishConfig::set_webrtc_certs_dir(const std::string& certs_dir) {
   (*dictionary_)[kWebRTCCertsDir] = certs_dir;
@@ -250,36 +234,6 @@ void CuttlefishConfig::set_sig_server_port(int port) {
 }
 int CuttlefishConfig::sig_server_port() const {
   return (*dictionary_)[kSigServerPort].asInt();
-}
-
-static constexpr char kWebrtcUdpPortRange[] = "webrtc_udp_port_range";
-void CuttlefishConfig::set_webrtc_udp_port_range(
-    std::pair<uint16_t, uint16_t> range) {
-  Json::Value arr(Json::ValueType::arrayValue);
-  arr[0] = range.first;
-  arr[1] = range.second;
-  (*dictionary_)[kWebrtcUdpPortRange] = arr;
-}
-std::pair<uint16_t, uint16_t> CuttlefishConfig::webrtc_udp_port_range() const {
-  std::pair<uint16_t, uint16_t> ret;
-  ret.first = (*dictionary_)[kWebrtcUdpPortRange][0].asInt();
-  ret.second = (*dictionary_)[kWebrtcUdpPortRange][1].asInt();
-  return ret;
-}
-
-static constexpr char kWebrtcTcpPortRange[] = "webrtc_tcp_port_range";
-void CuttlefishConfig::set_webrtc_tcp_port_range(
-    std::pair<uint16_t, uint16_t> range) {
-  Json::Value arr(Json::ValueType::arrayValue);
-  arr[0] = range.first;
-  arr[1] = range.second;
-  (*dictionary_)[kWebrtcTcpPortRange] = arr;
-}
-std::pair<uint16_t, uint16_t> CuttlefishConfig::webrtc_tcp_port_range() const {
-  std::pair<uint16_t, uint16_t> ret;
-  ret.first = (*dictionary_)[kWebrtcTcpPortRange][0].asInt();
-  ret.second = (*dictionary_)[kWebrtcTcpPortRange][1].asInt();
-  return ret;
 }
 
 static constexpr char kSigServerAddress[] = "webrtc_sig_server_addr";
