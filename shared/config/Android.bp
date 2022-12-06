@@ -40,6 +40,12 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "cvd_config_minidroid.json",
+    src: "config_minidroid.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "cvd_config_phone.json",
     src: "config_phone.json",
     sub_dir: "cvd_config",
