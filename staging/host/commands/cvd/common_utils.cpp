@@ -16,8 +16,6 @@
 
 #include "host/commands/cvd/common_utils.h"
 
-#include <unistd.h>
-
 #include <memory>
 
 #include <android-base/file.h>
