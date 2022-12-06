@@ -41,10 +41,18 @@ cd - >/dev/null
 cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_prebuilts"
 Sha="$Sha,`git rev-parse HEAD`"
 cd - >/dev/null
-cd "${FLAGS_uboot}/external/arm-trusted-firmware"
-Sha="$Sha,`git rev-parse HEAD`"
-cd - >/dev/null
-cd "${FLAGS_kernel}/common"
-Sha="$Sha,`git rev-parse HEAD`"
-cd - >/dev/null
+if [ -d "${FLAGS_uboot}/external/arm-trusted-firmware/.git" ]; then
+    cd "${FLAGS_uboot}/external/arm-trusted-firmware"
+    Sha="$Sha,`git rev-parse HEAD`"
+    cd - >/dev/null
+else
+    Sha="$Sha,"'!TFA'
+fi
+if [ -d "${FLAGS_kernel}/common/.git" ]; then
+    cd "${FLAGS_kernel}/common"
+    Sha="$Sha,`git rev-parse HEAD`"
+    cd - >/dev/null
+else
+    Sha="$Sha,"'!kernelcommon'
+fi
 echo $Sha
