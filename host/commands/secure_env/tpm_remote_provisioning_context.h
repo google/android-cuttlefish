@@ -33,7 +33,8 @@ class TpmRemoteProvisioningContext
   ~TpmRemoteProvisioningContext() override = default;
   std::vector<uint8_t> DeriveBytesFromHbk(const std::string& context,
                                           size_t numBytes) const override;
-  std::unique_ptr<cppbor::Map> CreateDeviceInfo() const override;
+  std::unique_ptr<cppbor::Map> CreateDeviceInfo(
+      uint32_t csrVersion) const override;
   cppcose::ErrMsgOr<std::vector<uint8_t>> BuildProtectedDataPayload(
       bool isTestMode,                     //
       const std::vector<uint8_t>& macKey,  //
