@@ -28,6 +28,7 @@ cc_binary {
         "launch/kernel_log_monitor.cpp",
         "launch/logcat_receiver.cpp",
         "launch/log_tee_creator.cpp",
+        "launch/grpc_socket_creator.cpp",
         "launch/modem.cpp",
         "launch/metrics.cpp",
         "launch/open_wrt.cpp",
