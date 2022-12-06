@@ -649,6 +649,52 @@ std::string CuttlefishConfig::InstanceSpecific::boot_slot() const {
   return (*Dictionary())[kBootSlot].asString();
 }
 
+static constexpr char kEnableWebRTC[] = "enable_webrtc";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(bool enable_webrtc) {
+  (*Dictionary())[kEnableWebRTC] = enable_webrtc;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_webrtc() const {
+  return (*Dictionary())[kEnableWebRTC].asBool();
+}
+
+static constexpr char kWebRTCAssetsDir[] = "webrtc_assets_dir";
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
+  (*Dictionary())[kWebRTCAssetsDir] = webrtc_assets_dir;
+}
+std::string CuttlefishConfig::InstanceSpecific::webrtc_assets_dir() const {
+  return (*Dictionary())[kWebRTCAssetsDir].asString();
+}
+
+static constexpr char kWebrtcTcpPortRange[] = "webrtc_tcp_port_range";
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_tcp_port_range(
+    std::pair<uint16_t, uint16_t> range) {
+  Json::Value arr(Json::ValueType::arrayValue);
+  arr[0] = range.first;
+  arr[1] = range.second;
+  (*Dictionary())[kWebrtcTcpPortRange] = arr;
+}
+std::pair<uint16_t, uint16_t> CuttlefishConfig::InstanceSpecific::webrtc_tcp_port_range() const {
+  std::pair<uint16_t, uint16_t> ret;
+  ret.first = (*Dictionary())[kWebrtcTcpPortRange][0].asInt();
+  ret.second = (*Dictionary())[kWebrtcTcpPortRange][1].asInt();
+  return ret;
+}
+
+static constexpr char kWebrtcUdpPortRange[] = "webrtc_udp_port_range";
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_udp_port_range(
+    std::pair<uint16_t, uint16_t> range) {
+  Json::Value arr(Json::ValueType::arrayValue);
+  arr[0] = range.first;
+  arr[1] = range.second;
+  (*Dictionary())[kWebrtcUdpPortRange] = arr;
+}
+std::pair<uint16_t, uint16_t> CuttlefishConfig::InstanceSpecific::webrtc_udp_port_range() const {
+  std::pair<uint16_t, uint16_t> ret;
+  ret.first = (*Dictionary())[kWebrtcUdpPortRange][0].asInt();
+  ret.second = (*Dictionary())[kWebrtcUdpPortRange][1].asInt();
+  return ret;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
