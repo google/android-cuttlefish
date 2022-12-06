@@ -15,14 +15,6 @@ on early-init
     setprop hypervisor.memory_reclaim.supported ${ro.boot.hypervisor.vm.supported}
 
     start metrics_helper
-
-    # FIXME: Remove this hack. It is fragile.
-    insmod /system/lib/modules/rfkill.ko
-    insmod /system/lib/modules/bluetooth.ko
-    insmod /system/lib/modules/btbcm.ko
-    insmod /system/lib/modules/can-dev.ko
-    insmod /system/lib/modules/libarc4.ko
-
     # start module load in the background
     start vendor.dlkm_loader
 
