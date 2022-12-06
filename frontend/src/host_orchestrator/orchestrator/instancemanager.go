@@ -609,10 +609,8 @@ type HostValidator struct {
 }
 
 func (v *HostValidator) Validate() error {
-	cmd := v.ExecContext("grep", "-cw", "vmx", "/proc/cpuinfo")
-	err := cmd.Run()
-	if err != nil {
-		return operator.NewInternalError("Nested virtualization is not enabled.", err)
+	if ok, _ := fileExist("/dev/kvm"); !ok {
+		return operator.NewInternalError("Nested virtualization is not enabled.", nil)
 	}
 	return nil
 }
