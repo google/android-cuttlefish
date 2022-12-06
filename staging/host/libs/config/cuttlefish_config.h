@@ -124,12 +124,6 @@ class CuttlefishConfig {
   void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
   std::string seccomp_policy_dir() const;
 
-  void set_enable_webrtc(bool enable_webrtc);
-  bool enable_webrtc() const;
-
-  void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
-  std::string webrtc_assets_dir() const;
-
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
@@ -173,14 +167,6 @@ class CuttlefishConfig {
   // to bind to it and by the webrtc process to connect to and register itself
   void set_sig_server_port(int port);
   int sig_server_port() const;
-
-  // The range of UDP ports available for webrtc sessions.
-  void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
-  std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
-
-  // The range of TCP ports available for webrtc sessions.
-  void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
-  std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
 
   // The address of the signaling server
   void set_sig_server_address(const std::string& addr);
@@ -508,6 +494,15 @@ class CuttlefishConfig {
     // Kernel and bootloader logging
     bool enable_kernel_log() const;
 
+    bool enable_webrtc() const;
+    std::string webrtc_assets_dir() const;
+
+    // The range of TCP ports available for webrtc sessions.
+    std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
+
+    // The range of UDP ports available for webrtc sessions.
+    std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
+
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
     bool enable_modem_simulator() const;
@@ -639,6 +634,15 @@ class CuttlefishConfig {
 
     // Kernel and bootloader logging
     void set_enable_kernel_log(bool enable_kernel_log);
+
+    void set_enable_webrtc(bool enable_webrtc);
+    void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
+
+    // The range of TCP ports available for webrtc sessions.
+    void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
+
+    // The range of UDP ports available for webrtc sessions.
+    void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);

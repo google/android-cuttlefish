@@ -177,10 +177,10 @@ DEFINE_string(
     seccomp_policy_dir, CF_DEFAULTS_SECCOMP_POLICY_DIR,
     "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
-DEFINE_bool(start_webrtc, CF_DEFAULTS_START_WEBRTC,
+DEFINE_vec(start_webrtc, cuttlefish::BoolToString(CF_DEFAULTS_START_WEBRTC),
             "Whether to start the webrtc process.");
 
-DEFINE_string(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
+DEFINE_vec(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
               "[Experimental] Path to WebRTC webpage assets.");
 
 DEFINE_string(webrtc_certs_dir, CF_DEFAULTS_WEBRTC_CERTS_DIR,
@@ -207,11 +207,11 @@ DEFINE_int32(
 
 // TODO (jemoreira): We need a much bigger range to reliably support several
 // simultaneous connections.
-DEFINE_string(tcp_port_range, CF_DEFAULTS_TCP_PORT_RANGE,
+DEFINE_vec(tcp_port_range, CF_DEFAULTS_TCP_PORT_RANGE,
               "The minimum and maximum TCP port numbers to allocate for ICE "
               "candidates as 'min:max'. To use any port just specify '0:0'");
 
-DEFINE_string(udp_port_range, CF_DEFAULTS_UDP_PORT_RANGE,
+DEFINE_vec(udp_port_range, CF_DEFAULTS_UDP_PORT_RANGE,
               "The minimum and maximum UDP port numbers to allocate for ICE "
               "candidates as 'min:max'. To use any port just specify '0:0'");
 
@@ -234,7 +234,7 @@ DEFINE_string(sig_server_headers_file, CF_DEFAULTS_SIG_SERVER_HEADERS_FILE,
               "connection to the signaling server. Each header should be on a "
               "line by itself in the form <name>: <value>");
 
-DEFINE_string(
+DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
     "The for the device to register with the signaling server. Every "
     "appearance of the substring '{num}' in the device id will be substituted "
@@ -745,8 +745,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
-  tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
-  tmp_config_obj.set_webrtc_assets_dir(FLAGS_webrtc_assets_dir);
+  // streaming, webrtc setup
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
   tmp_config_obj.set_sig_server_secure(FLAGS_webrtc_sig_server_secure);
   // Note: This will be overridden if the sig server is started by us
@@ -755,11 +754,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_sig_server_path(FLAGS_webrtc_sig_server_path);
   tmp_config_obj.set_sig_server_strict(FLAGS_verify_sig_server_certificate);
   tmp_config_obj.set_sig_server_headers_path(FLAGS_sig_server_headers_file);
-
-  auto tcp_range  = ParsePortRange(FLAGS_tcp_port_range);
-  tmp_config_obj.set_webrtc_tcp_port_range(tcp_range);
-  auto udp_range  = ParsePortRange(FLAGS_udp_port_range);
-  tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
 
@@ -888,6 +882,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       FLAGS_kgdb, instances_size, "kgdb"));
   std::vector<std::string> boot_slot_vec =
       CF_EXPECT(GetFlagStrValueForInstances(FLAGS_boot_slot, instances_size));
+  std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_start_webrtc, instances_size, "start_webrtc"));
+  std::vector<std::string> webrtc_assets_dir_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_webrtc_assets_dir, instances_size));
+  std::vector<std::string> tcp_port_range_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_tcp_port_range, instances_size));
+  std::vector<std::string> udp_port_range_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_udp_port_range, instances_size));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GetFlagBoolValueForInstances(
@@ -1210,13 +1212,25 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // first two)
     instance.set_wifi_mac_prefix(5554 + (num - 1));
 
+    // streaming, webrtc setup
+    instance.set_enable_webrtc(start_webrtc_vec[instance_index]);
+    instance.set_webrtc_assets_dir(webrtc_assets_dir_vec[instance_index]);
+
+    auto tcp_range  = ParsePortRange(tcp_port_range_vec[instance_index]);
+    instance.set_webrtc_tcp_port_range(tcp_range);
+
+    auto udp_range  = ParsePortRange(udp_port_range_vec[instance_index]);
+    instance.set_webrtc_udp_port_range(udp_range);
+
+    // end of streaming, webrtc setup
+
     instance.set_start_webrtc_signaling_server(false);
 
     CF_EXPECT(Contains(num_to_webrtc_device_id_flag_map, num),
               "Error in looking up num to webrtc_device_id_flag_map");
     instance.set_webrtc_device_id(num_to_webrtc_device_id_flag_map[num]);
 
-    if (!is_first_instance || !FLAGS_start_webrtc) {
+    if (!is_first_instance || !start_webrtc_vec[instance_index]) {
       // Only the first instance starts the signaling server or proxy
       instance.set_start_webrtc_signaling_server(false);
       instance.set_start_webrtc_sig_server_proxy(false);
@@ -1335,17 +1349,27 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch) {
   int32_t instances_size = instance_nums.size();
   std::vector<std::string> gpu_mode_vec =
       CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gpu_mode, instances_size));
+  std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_start_webrtc, instances_size, "start_webrtc"));
+  std::string default_start_webrtc = "";
 
   for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
-    // This is the 1st place to set "start_webrtc" flag value
-    // for now, we don't set non-default options for QEMU
-    if (gpu_mode_vec[instance_index] == kGpuModeGuestSwiftshader && !FLAGS_start_webrtc) {
+    if (instance_index > 0) {
+      default_start_webrtc += ",";
+    }
+    if (gpu_mode_vec[instance_index] == kGpuModeGuestSwiftshader && !start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
       // another via a --star_<streamer> flag, while at the same time it's
       // possible to run without any streamer by setting --start_webrtc=false.
-      SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
+      default_start_webrtc += "true";
+    } else {
+      default_start_webrtc += BoolToString(start_webrtc_vec[instance_index]);
     }
   }
+  // This is the 1st place to set "start_webrtc" flag value
+  // for now, we don't set non-default options for QEMU
+  SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
+                               SET_FLAGS_DEFAULT);
 
   std::string default_bootloader =
       DefaultHostArtifactsPath("etc/bootloader_");
@@ -1365,13 +1389,12 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch) {
 }
 
 Result<void> SetDefaultFlagsForCrosvm() {
-  // This is the 1st place to set "start_webrtc" flag value
-  if (!FLAGS_start_webrtc) {
-    // This makes WebRTC the default streamer unless the user requests
-    // another via a --star_<streamer> flag, while at the same time it's
-    // possible to run without any streamer by setting --start_webrtc=false.
-    SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
-  }
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  int32_t instances_size = instance_nums.size();
+  std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_start_webrtc, instances_size, "start_webrtc"));
+  std::string default_start_webrtc = "";
 
   std::set<Arch> supported_archs{Arch::X86_64};
   bool default_enable_sandbox =
@@ -1384,8 +1407,6 @@ Result<void> SetDefaultFlagsForCrosvm() {
   std::string cur_system_image_dir = "";
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
     if (instance_index >= system_image_dir.size()) {
       cur_system_image_dir = system_image_dir[0];
@@ -1396,11 +1417,23 @@ Result<void> SetDefaultFlagsForCrosvm() {
     if (instance_index > 0) {
       default_bootloader += ",";
       default_enable_sandbox_str += ",";
+      default_start_webrtc += ",";
     }
     default_bootloader += cur_system_image_dir;
     default_enable_sandbox_str += BoolToString(default_enable_sandbox);
+    if (!start_webrtc_vec[instance_index]) {
+      // This makes WebRTC the default streamer unless the user requests
+      // another via a --star_<streamer> flag, while at the same time it's
+      // possible to run without any streamer by setting --start_webrtc=false.
+      default_start_webrtc += "true";
+    } else {
+      default_start_webrtc += BoolToString(start_webrtc_vec[instance_index]);
+    }
   }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
+                               SET_FLAGS_DEFAULT);
+  // This is the 1st place to set "start_webrtc" flag value
+  SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
                                SET_FLAGS_DEFAULT);
   // This is the 1st place to set "enable_sandbox" flag value
   SetCommandLineOptionWithMode("enable_sandbox",
@@ -1443,6 +1476,9 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
 }
 
 Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
+  auto instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  int32_t instances_size = instance_nums.size();
   CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
   std::vector<KernelConfig> kernel_configs = CF_EXPECT(ReadKernelConfig());
@@ -1486,13 +1522,20 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
     return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
   }
   if (vm_manager_vec[0] != Gem5Manager::name()) {
+    std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+        FLAGS_start_webrtc, instances_size, "start_webrtc"));
+    bool start_webrtc = false;
+    for(bool value : start_webrtc_vec) {
+      start_webrtc |= value;
+    }
+
     auto host_operator_present =
         cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH);
     // The default for starting signaling server depends on whether or not webrtc
     // is to be started and the presence of the host orchestrator.
     SetCommandLineOptionWithMode(
         "start_webrtc_sig_server",
-        FLAGS_start_webrtc && !host_operator_present ? "true" : "false",
+        start_webrtc && !host_operator_present ? "true" : "false",
         SET_FLAGS_DEFAULT);
     SetCommandLineOptionWithMode(
         "webrtc_sig_server_addr",
