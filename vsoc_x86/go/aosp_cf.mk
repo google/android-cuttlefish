@@ -45,7 +45,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 # All components inherited here go to vendor image
 #
 $(call inherit-product, device/google/cuttlefish/shared/go/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 
 #
 # Special settings for the target
