@@ -35,4 +35,10 @@
     <bool name="def_wifi_on">true</bool>
     <bool name="def_wifi_wakeup_enabled">false</bool>
     <bool name="def_vibrate_when_ringing">true</bool>
+
+    <!--
+	    Allows an on-screen keyboard to appear on the emulator by default.
+	    There is no UI for this option within Settings for Wear.
+    -->
+    <bool name="def_show_ime_with_hard_keyboard">true</bool>
 </resources>
