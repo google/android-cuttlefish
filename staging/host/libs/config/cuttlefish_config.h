@@ -55,6 +55,7 @@ constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
 constexpr char kInternalDirName[] = "internal";
+constexpr char kGrpcSocketDirName[] = "grpc_socket";
 constexpr char kSharedDirName[] = "shared";
 constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
@@ -331,6 +332,7 @@ class CuttlefishConfig {
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
     std::string PerInstanceLogPath(const std::string& file_name) const;
+    std::string PerInstanceGrpcSocketPath(const std::string& socket_name) const;
 
     std::string instance_dir() const;
 
@@ -474,6 +476,7 @@ class CuttlefishConfig {
 
     std::vector<DisplayConfig> display_configs() const;
 
+    std::string grpc_socket_path() const;
     int memory_mb() const;
     int ddr_mem_mb() const;
     std::string setupwizard_mode() const;
@@ -631,6 +634,7 @@ class CuttlefishConfig {
     void set_gem5_debug_file(const std::string& gem5_debug_file);
     void set_protected_vm(bool protected_vm);
     void set_boot_slot(const std::string& boot_slot);
+    void set_grpc_socket_path(const std::string& sockets);
 
     // Kernel and bootloader logging
     void set_enable_kernel_log(bool enable_kernel_log);
