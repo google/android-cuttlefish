@@ -75,10 +75,6 @@ class InstanceManager {
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
                                    const SharedFD& err);
-
-  static void IssueStatusCommand(const SharedFD& out, const SharedFD& err,
-                                 const std::string& config_file_path,
-                                 const selector::LocalInstanceGroup& group);
   void IssueStopCommand(const SharedFD& out, const SharedFD& err,
                         const std::string& config_file_path,
                         const selector::LocalInstanceGroup& group);
