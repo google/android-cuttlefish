@@ -269,15 +269,6 @@ bool CuttlefishConfig::sig_server_strict() const {
   return (*dictionary_)[kSigServerStrict].asBool();
 }
 
-static constexpr char kSigServerHeadersPath[] =
-    "webrtc_sig_server_headers_path";
-void CuttlefishConfig::set_sig_server_headers_path(const std::string& path) {
-  SetPath(kSigServerHeadersPath, path);
-}
-std::string CuttlefishConfig::sig_server_headers_path() const {
-  return (*dictionary_)[kSigServerHeadersPath].asString();
-}
-
 static constexpr char kHostToolsVersion[] = "host_tools_version";
 void CuttlefishConfig::set_host_tools_version(
     const std::map<std::string, uint32_t>& versions) {
