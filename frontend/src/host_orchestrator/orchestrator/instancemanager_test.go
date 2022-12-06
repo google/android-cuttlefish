@@ -35,6 +35,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+type AlwaysSucceedsValidator struct{}
+
+func (AlwaysSucceedsValidator) Validate() error {
+	return nil
+}
+
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &CVDToolInstanceManager{}
 	validRequest := func() *apiv1.CreateCVDRequest {
@@ -345,6 +351,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 		CVDDownloader:    cvdDwnlder,
 		OperationManager: om,
 		CVDExecTimeout:   testFakeBinaryDelayMs - (50 * time.Millisecond),
+		HostValidator:    &AlwaysSucceedsValidator{},
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
@@ -354,6 +361,43 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 
 	res, _ := om.Wait(op.Name, 1*time.Second)
 	if res.Error == nil {
+		t.Error("expected error")
+	}
+}
+
+type AlwaysFailsValidator struct{}
+
+func (AlwaysFailsValidator) Validate() error {
+	return errors.New("validation failed")
+}
+
+func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := execCtxAlwaysSucceeds
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	cvdDwnlder := &testCVDDwnlder{}
+	opts := CVDToolInstanceManagerOpts{
+		ExecContext:      execContext,
+		CVDBinAB:         cvdBinAB,
+		Paths:            paths,
+		CVDDownloader:    cvdDwnlder,
+		OperationManager: om,
+		HostValidator:    &AlwaysFailsValidator{},
+	}
+	im := NewCVDToolInstanceManager(&opts)
+	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+
+	_, err := im.CreateCVD(r)
+
+	if err == nil {
 		t.Error("expected error")
 	}
 }
@@ -398,7 +442,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 	res, _ := im.ListCVDs()
 
 	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
-		&apiv1.CVD{
+		{
 			Name:      "cvd-1",
 			BuildInfo: &apiv1.BuildInfo{},
 			Status:    "Running",
@@ -627,6 +671,7 @@ func newCVDToolIm(execContext ExecContext, cvdBinAB AndroidBuild, paths IMPaths,
 		Paths:            paths,
 		CVDDownloader:    cvdDwnlder,
 		OperationManager: om,
+		HostValidator:    &AlwaysSucceedsValidator{},
 	}
 	return NewCVDToolInstanceManager(&opts)
 }

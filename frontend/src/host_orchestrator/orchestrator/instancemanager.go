@@ -36,6 +36,10 @@ import (
 
 type ExecContext = func(name string, arg ...string) *exec.Cmd
 
+type Validator interface {
+	Validate() error
+}
+
 type InstanceManager interface {
 	CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error)
 
@@ -71,6 +75,7 @@ type CVDToolInstanceManager struct {
 	downloadCVDHandler *downloadCVDHandler
 	fetchCVDHandler    *fetchCVDHandler
 	startCVDHandler    *startCVDHandler
+	hostValidator      Validator
 }
 
 type CVDToolInstanceManagerOpts struct {
@@ -80,13 +85,15 @@ type CVDToolInstanceManagerOpts struct {
 	CVDDownloader    CVDDownloader
 	OperationManager OperationManager
 	CVDExecTimeout   time.Duration
+	HostValidator    Validator
 }
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
 	return &CVDToolInstanceManager{
-		execContext: opts.ExecContext,
-		paths:       opts.Paths,
-		om:          opts.OperationManager,
+		execContext:   opts.ExecContext,
+		paths:         opts.Paths,
+		om:            opts.OperationManager,
+		hostValidator: opts.HostValidator,
 		downloadCVDHandler: &downloadCVDHandler{
 			CVDBinAB: opts.CVDBinAB,
 			CVDBin:   opts.Paths.CVDBin,
@@ -104,6 +111,9 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
 	if err := validateRequest(&req); err != nil {
 		return apiv1.Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
+	}
+	if err := m.hostValidator.Validate(); err != nil {
+		return apiv1.Operation{}, err
 	}
 	op := m.om.New()
 	go m.launchCVD(req, op)
@@ -591,4 +601,16 @@ func buildCvdCommand(execContext ExecContext,
 	}
 	finalArgs = append(finalArgs, args...)
 	return execContext("sudo", finalArgs...)
+}
+
+// Validates whether the current host is valid to run CVDs.
+type HostValidator struct {
+	ExecContext ExecContext
+}
+
+func (v *HostValidator) Validate() error {
+	if ok, _ := fileExist("/dev/kvm"); !ok {
+		return operator.NewInternalError("Nested virtualization is not enabled.", nil)
+	}
+	return nil
 }
