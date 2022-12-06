@@ -229,8 +229,8 @@ int main(int argc, char** argv) {
 
   streamer_config.device_id = instance.webrtc_device_id();
   streamer_config.client_files_port = client_server->port();
-  streamer_config.tcp_port_range = cvd_config->webrtc_tcp_port_range();
-  streamer_config.udp_port_range = cvd_config->webrtc_udp_port_range();
+  streamer_config.tcp_port_range = instance.webrtc_tcp_port_range();
+  streamer_config.udp_port_range = instance.webrtc_udp_port_range();
   streamer_config.operator_server.addr = cvd_config->sig_server_address();
   streamer_config.operator_server.port = cvd_config->sig_server_port();
   streamer_config.operator_server.path = cvd_config->sig_server_path();
