@@ -151,8 +151,18 @@ class ArgumentsLexer {
       const std::vector<std::string>& args);
   Result<ArgToken> Process(const std::string& token) const;
 
+  struct FlagValuePair {
+    std::string flag_string;
+    std::string value;
+  };
+  Result<FlagValuePair> Separate(
+      const std::string& equal_included_string) const;
+  // flag_string starts with "-" or "--"
   static bool Registered(const std::string& flag_string,
                          const FlagPatterns& flag_patterns);
+  bool Registered(const std::string& flag_string) const {
+    return Registered(flag_string, flag_patterns_);
+  }
   std::unordered_set<std::string> valid_bool_values_in_lower_cases_;
   FlagPatterns flag_patterns_;
 };
