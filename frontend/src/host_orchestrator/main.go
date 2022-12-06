@@ -134,6 +134,7 @@ func main() {
 		CVDDownloader:    dw,
 		OperationManager: om,
 		CVDExecTimeout:   5 * time.Minute,
+		HostValidator:    &orchestrator.HostValidator{ExecContext: exec.Command},
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
