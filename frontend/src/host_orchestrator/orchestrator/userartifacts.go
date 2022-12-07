@@ -29,7 +29,7 @@ type UserArtifactsManagerOpts struct {
 	// The root directory where to store the artifacts.
 	RootDir string
 	// Factory of name values
-	NamesFactory func() string
+	NameFactory func() string
 }
 
 // An implementation of the UserArtifactsManager interface.
@@ -48,7 +48,7 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.RootDir, false); err != nil {
 		return nil, err
 	}
-	name := m.NamesFactory()
+	name := m.NameFactory()
 	if err := createDir(m.RootDir+"/"+name, true); err != nil {
 		return nil, err
 	}

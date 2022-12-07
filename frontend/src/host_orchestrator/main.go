@@ -140,8 +140,8 @@ func main() {
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:      imRootDir + "/user_artifacs",
-		NamesFactory: func() string { return uuid.New().String() },
+		RootDir:     imRootDir + "/user_artifacs",
+		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)

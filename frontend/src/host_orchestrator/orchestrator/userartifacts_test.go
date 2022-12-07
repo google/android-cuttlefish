@@ -24,8 +24,8 @@ func TestNewDir(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	opts := UserArtifactsManagerOpts{
-		RootDir:      dir,
-		NamesFactory: func() string { return "foo" },
+		RootDir:     dir,
+		NameFactory: func() string { return "foo" },
 	}
 	am := NewUserArtifactsManagerImpl(opts)
 
@@ -41,8 +41,8 @@ func TestNewDirAndDirNameAlreadyExists(t *testing.T) {
 	defer removeDir(t, dir)
 	testUUID := "foo"
 	opts := UserArtifactsManagerOpts{
-		RootDir:      dir,
-		NamesFactory: func() string { return testUUID },
+		RootDir:     dir,
+		NameFactory: func() string { return testUUID },
 	}
 	am := NewUserArtifactsManagerImpl(opts)
 	am.NewDir()
