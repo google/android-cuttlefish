@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -193,8 +192,7 @@ type listUploadDirectoriesHandler struct {
 func (h *listUploadDirectoriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res, err := h.m.ListDirs()
 	if err != nil {
-		log.Printf("error retrieving upload tokens: %+v", err)
-		operator.ReplyJSONErr(w, operator.NewInternalError("Failed retrieving tokens", err))
+		operator.ReplyJSONErr(w, operator.NewInternalError("Failed retrieving upload directories", err))
 		return
 	}
 	operator.ReplyJSONOK(w, res)
