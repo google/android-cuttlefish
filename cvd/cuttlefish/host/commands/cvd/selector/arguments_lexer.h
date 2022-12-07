@@ -101,7 +101,6 @@ class ArgToken {
 
   auto Type() const { return type_; }
   const auto& Token() const { return token_; }
-  auto& Token() { return token_; }
   bool operator==(const ArgToken& dst) const {
     return Type() == dst.Type() && Token() == dst.Token();
   }
@@ -116,19 +115,21 @@ class ArgumentsLexer {
   using CvdProtobufArg = google::protobuf::RepeatedPtrField<std::string>;
 
  public:
-  Result<std::vector<ArgToken>> Tokenize(
-      const std::vector<std::string>& args) const;
+  Result<std::vector<ArgToken>> Tokenize(const std::vector<std::string>& args);
+  Result<std::vector<ArgToken>> Tokenize(const CvdProtobufArg& args);
+  Result<std::vector<ArgToken>> Tokenize(const std::string& args,
+                                         const std::string delim = " ");
 
  private:
   // Lexer factory function will internally generate this,
   // and give it to ArgumentsLexer.
   struct FlagPatterns {
     /* represents flags that takes values
-     * e.g. -group_name, --group_name (which may take an additional
+     * e.g. -device_name, --device_name (which may take an additional
      * positional arg, or use its default value.)
      *
      * With the given example, this set shall be:
-     *  {"-group_name", "--group_name"}
+     *  {"-device_name", "--device_name"}
      */
     std::unordered_set<std::string> value_patterns;
     /* boolean flags
@@ -147,21 +148,11 @@ class ArgumentsLexer {
   //  e.g. --help=yes --> --help
   //       --help=faLSe --> --nohelp
   Result<std::vector<std::string>> Preprocess(
-      const std::vector<std::string>& args) const;
+      const std::vector<std::string>& args);
   Result<ArgToken> Process(const std::string& token) const;
 
-  struct FlagValuePair {
-    std::string flag_string;
-    std::string value;
-  };
-  Result<FlagValuePair> Separate(
-      const std::string& equal_included_string) const;
-  // flag_string starts with "-" or "--"
   static bool Registered(const std::string& flag_string,
                          const FlagPatterns& flag_patterns);
-  bool Registered(const std::string& flag_string) const {
-    return Registered(flag_string, flag_patterns_);
-  }
   std::unordered_set<std::string> valid_bool_values_in_lower_cases_;
   FlagPatterns flag_patterns_;
 };
