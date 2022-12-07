@@ -202,8 +202,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
       const auto display_params = android::base::Join(
           std::vector<std::string>{
               "mode=windowed[" + display_w + "," + display_h + "]",
-              "horizontal-dpi=" + display_dpi,
-              "vertical-dpi=" + display_dpi,
+              "dpi=[" + display_dpi + "," + display_dpi + "]",
               "refresh-rate=" + display_rr,
           },
           ",");
