@@ -106,3 +106,7 @@ type UploadDirectory struct {
 	// [Output Only]
 	Name string `json:"name"`
 }
+
+type ListUploadDirectoriesResponse struct {
+	Items []*UploadDirectory `json:"items"`
+}

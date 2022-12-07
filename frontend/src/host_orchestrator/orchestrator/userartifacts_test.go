@@ -15,7 +15,10 @@
 package orchestrator
 
 import (
+	"fmt"
 	"testing"
+
+	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -51,5 +54,50 @@ func TestNewDirAndDirNameAlreadyExists(t *testing.T) {
 
 	if err == nil {
 		t.Error("expected error")
+	}
+}
+
+func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	opts := UserArtifactsManagerOpts{
+		RootDir:     dir,
+		NameFactory: func() string { return "foo" },
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+
+	res, _ := am.ListDirs()
+
+	exp := &apiv1.ListUploadDirectoriesResponse{Items: make([]*apiv1.UploadDirectory, 0)}
+	if diff := cmp.Diff(exp, res); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestListTokens(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	namesCounter := 0
+	opts := UserArtifactsManagerOpts{
+		RootDir: dir,
+		NameFactory: func() string {
+			namesCounter++
+			return fmt.Sprintf("foo-%d", namesCounter)
+		},
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+	am.NewDir()
+	am.NewDir()
+
+	res, _ := am.ListDirs()
+
+	exp := &apiv1.ListUploadDirectoriesResponse{
+		Items: []*apiv1.UploadDirectory{
+			{Name: "foo-1"},
+			{Name: "foo-2"},
+		},
+	}
+	if diff := cmp.Diff(exp, res); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
 	}
 }
