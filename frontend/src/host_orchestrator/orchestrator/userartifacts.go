@@ -15,6 +15,8 @@
 package orchestrator
 
 import (
+	"io/ioutil"
+
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
 
@@ -22,6 +24,8 @@ import (
 type UserArtifactsManager interface {
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir() (*apiv1.UploadDirectory, error)
+	// List existing directories
+	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -53,4 +57,25 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 		return nil, err
 	}
 	return &apiv1.UploadDirectory{Name: name}, nil
+}
+
+func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
+	exist, err := fileExist(m.RootDir)
+	if err != nil {
+		return nil, err
+	}
+	if !exist {
+		return &apiv1.ListUploadDirectoriesResponse{Items: make([]*apiv1.UploadDirectory, 0)}, nil
+	}
+	entries, err := ioutil.ReadDir(m.RootDir)
+	if err != nil {
+		return nil, err
+	}
+	dirs := make([]*apiv1.UploadDirectory, 0)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			dirs = append(dirs, &apiv1.UploadDirectory{Name: entry.Name()})
+		}
+	}
+	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
 }

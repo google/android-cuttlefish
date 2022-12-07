@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -47,6 +48,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/operations/{name}/:wait",
 		&waitOperationHandler{c.OperationManager, c.WaitOperationDuration}).Methods("POST")
 	router.Handle("/userartifacts", &createUploadDirectoryHandler{c.UserArtifactsManager}).Methods("POST")
+	router.Handle("/userartifacts", &listUploadDirectoriesHandler{c.UserArtifactsManager}).Methods("GET")
 }
 
 type createCVDHandler struct {
@@ -179,6 +181,20 @@ func (h *createUploadDirectoryHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	res, err := h.m.NewDir()
 	if err != nil {
 		operator.ReplyJSONErr(w, operator.NewInternalError("Failed to create new directory", err))
+		return
+	}
+	operator.ReplyJSONOK(w, res)
+}
+
+type listUploadDirectoriesHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *listUploadDirectoriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	res, err := h.m.ListDirs()
+	if err != nil {
+		log.Printf("error retrieving upload tokens: %+v", err)
+		operator.ReplyJSONErr(w, operator.NewInternalError("Failed retrieving tokens", err))
 		return
 	}
 	operator.ReplyJSONOK(w, res)
