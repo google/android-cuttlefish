@@ -20,20 +20,36 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestNewToken(t *testing.T) {
+func TestNewDir(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	opts := UserArtifactsManagerOpts{
+		RootDir:      dir,
+		NamesFactory: func() string { return "foo" },
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+
+	upDir, _ := am.NewDir()
+
+	if diff := cmp.Diff("foo", upDir.Name); diff != "" {
+		t.Errorf("name mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestNewDirAndDirNameAlreadyExists(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	testUUID := "foo"
 	opts := UserArtifactsManagerOpts{
-		Dir: dir,
-		// Factory of UUID values
-		UUIDFactory: func() string { return testUUID },
+		RootDir:      dir,
+		NamesFactory: func() string { return testUUID },
 	}
 	am := NewUserArtifactsManagerImpl(opts)
+	am.NewDir()
 
-	token, _ := am.NewToken()
+	_, err := am.NewDir()
 
-	if diff := cmp.Diff(testUUID, token.Name); diff != "" {
-		t.Errorf("name mismatch (-want +got):\n%s", diff)
+	if err == nil {
+		t.Error("expected error")
 	}
 }

@@ -102,7 +102,7 @@ type ListCVDsResponse struct {
 	CVDs []*CVD `json:"cvds"`
 }
 
-type UploadToken struct {
+type UploadDirectory struct {
 	// [Output Only]
 	Name string `json:"name"`
 }

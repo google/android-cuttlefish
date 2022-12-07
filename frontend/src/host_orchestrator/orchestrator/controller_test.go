@@ -185,8 +185,8 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 
 type testUAM struct{}
 
-func (testUAM) NewToken() (*apiv1.UploadToken, error) {
-	return &apiv1.UploadToken{}, nil
+func (testUAM) NewDir() (*apiv1.UploadDirectory, error) {
+	return &apiv1.UploadDirectory{}, nil
 }
 
 func TestCreateUserArtifactsTokenIsHandled(t *testing.T) {

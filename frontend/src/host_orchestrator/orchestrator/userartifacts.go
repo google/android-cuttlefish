@@ -20,15 +20,16 @@ import (
 
 // Abstraction for managing user artifacts for launching CVDs.
 type UserArtifactsManager interface {
-	NewToken() (*apiv1.UploadToken, error)
+	// Creates a new directory for uploading user artifacts in the future.
+	NewDir() (*apiv1.UploadDirectory, error)
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
 type UserArtifactsManagerOpts struct {
-	// The directory where to store the artifacts.
-	Dir string
-	// Factory of UUID values
-	UUIDFactory func() string
+	// The root directory where to store the artifacts.
+	RootDir string
+	// Factory of name values
+	NamesFactory func() string
 }
 
 // An implementation of the UserArtifactsManager interface.
@@ -43,13 +44,13 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) UserArtifactsMan
 	}
 }
 
-func (m *UserArtifactsManagerImpl) NewToken() (*apiv1.UploadToken, error) {
-	if err := createDir(m.Dir, false); err != nil {
+func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
+	if err := createDir(m.RootDir, false); err != nil {
 		return nil, err
 	}
-	token := m.UUIDFactory()
-	if err := createDir(m.Dir+"/"+token, false); err != nil {
+	name := m.NamesFactory()
+	if err := createDir(m.RootDir+"/"+name, true); err != nil {
 		return nil, err
 	}
-	return &apiv1.UploadToken{Name: token}, nil
+	return &apiv1.UploadDirectory{Name: name}, nil
 }
