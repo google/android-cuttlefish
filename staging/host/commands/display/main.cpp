@@ -166,8 +166,7 @@ int DoAdd(const std::vector<std::string>&) {
   const std::string params = android::base::Join(
       std::vector<std::string>{
           "mode=windowed[" + w + "," + h + "]",
-          "horizontal-dpi=" + dpi,
-          "vertical-dpi=" + dpi,
+          "dpi=[" + dpi + "," + dpi + "]",
           "refresh-rate=" + rr,
       },
       ",");
