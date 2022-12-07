@@ -29,6 +29,7 @@ type Controller struct {
 	InstanceManager       InstanceManager
 	OperationManager      OperationManager
 	WaitOperationDuration time.Duration
+	UserArtifactsManager  UserArtifactsManager
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
@@ -45,6 +46,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	// reached. Be prepared to retry if the deadline was reached.
 	router.Handle("/operations/{name}/:wait",
 		&waitOperationHandler{c.OperationManager, c.WaitOperationDuration}).Methods("POST")
+	router.Handle("/userartifacts", &createUploadDirectoryHandler{c.UserArtifactsManager}).Methods("POST")
 }
 
 type createCVDHandler struct {
@@ -167,4 +169,17 @@ func (h *waitOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	operator.ReplyJSONOK(w, res.Value)
 
+}
+
+type createUploadDirectoryHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *createUploadDirectoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	res, err := h.m.NewDir()
+	if err != nil {
+		operator.ReplyJSONErr(w, operator.NewInternalError("Failed to create new directory", err))
+		return
+	}
+	operator.ReplyJSONOK(w, res)
 }

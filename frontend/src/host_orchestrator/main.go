@@ -28,6 +28,8 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -137,6 +139,11 @@ func main() {
 		HostValidator:    &orchestrator.HostValidator{ExecContext: exec.Command},
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
+	uamOpts := orchestrator.UserArtifactsManagerOpts{
+		RootDir:     imRootDir + "/user_artifacs",
+		NameFactory: func() string { return uuid.New().String() },
+	}
+	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
 		err := deviceServerLoop()
@@ -147,6 +154,7 @@ func main() {
 		InstanceManager:       im,
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,
+		UserArtifactsManager:  uam,
 	}
 	imController.AddRoutes(r)
 	// The host orchestrator currently has no use for this, since clients won't connect

@@ -86,8 +86,8 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices", func(w http.ResponseWriter, r *http.Request) {
 		listDevices(w, r, pool)
 	}).Methods("GET")
-	router.HandleFunc("/devices/{deviceId}", func (w http.ResponseWriter, r *http.Request) {
-		deviceInfo(w, r, pool);
+	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
+		deviceInfo(w, r, pool)
 	}).Methods("GET")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
@@ -187,7 +187,7 @@ func deviceInfo(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		http.NotFound(w, r)
 		return
 	}
-	ReplyJSONOK(w, apiv1.DeviceInfoReply {DeviceId: devId, RegistrationInfo: dev.info})
+	ReplyJSONOK(w, apiv1.DeviceInfoReply{DeviceId: devId, RegistrationInfo: dev.info})
 }
 
 func deviceFiles(w http.ResponseWriter, r *http.Request, pool *DevicePool, maybeIntercept func(string) *string) {
