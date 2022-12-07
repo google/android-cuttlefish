@@ -101,3 +101,8 @@ type DeviceInfoReply struct {
 type ListCVDsResponse struct {
 	CVDs []*CVD `json:"cvds"`
 }
+
+type UploadToken struct {
+	// [Output Only]
+	Name string `json:"name"`
+}
