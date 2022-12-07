@@ -221,9 +221,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.automotive.remoteaccess.", 1},
     {"android.hardware.automotive.vehicle.", 2},
 
-    // TODO(b/250036572): Implement for the interface.
-    {"android.hardware.graphics.composer3.", 2},
-
     // The interface is in development (b/251850069)
     {"android.hardware.media.c2.", 1},
 
