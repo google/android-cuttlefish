@@ -83,10 +83,83 @@ Result<void> ArgumentsSeparator::Parse() {
   return {};
 }
 
+/*
+ * prog_name, <optional cvd flags>, sub_cmd, <optional sub_cmd flags>
+ *
+ * -- could be included, which makes things complicated. However, if -- is
+ * part of cvd flags, it's ill-formatted. If -- is among sub_cmd flags,
+ * we will just forward it.
+ *
+ * If something like this is really needed, use the suggested alternative:
+ *    original: cvd --some_flag -- --this-is-value start --subcmd_args
+ * alternative: cvd --some_flag="--this-is-value" start --subcmd_args
+ *
+ */
 Result<ArgumentsSeparator::Output> ArgumentsSeparator::ParseInternal() {
   CF_EXPECT(lexer_ != nullptr);
   CF_EXPECT(!input_args_.empty());
   Output output;
+
+  auto tokenized = CF_EXPECT(lexer_->Tokenize(input_args_));
+  std::deque<ArgToken> tokens_queue{tokenized.begin(), tokenized.end()};
+
+  // take program path/name
+  CF_EXPECT(!tokens_queue.empty() &&
+            tokens_queue.front().Type() == ArgType::kPositional);
+  output.prog_path = std::move(tokens_queue.front().Token());
+  tokens_queue.pop_front();
+
+  // break loop either if there is no token or
+  // the subcommand token is consumed
+  bool cvd_flags_mode = true;
+  while (!tokens_queue.empty() && cvd_flags_mode) {
+    const auto current = std::move(tokens_queue.front());
+    const auto current_type = current.Type();
+    const auto& current_token = current.Token();
+    tokens_queue.pop_front();
+
+    // look up next if any
+    std::optional<ArgToken> next;
+    if (!tokens_queue.empty()) {
+      next = tokens_queue.front();
+    }
+
+    switch (current_type) {
+      case ArgType::kKnownValueFlag: {
+        output.cvd_args.emplace_back(current_token);
+        if (next && next->Type() == ArgType::kPositional) {
+          output.cvd_args.emplace_back(next->Token());
+          tokens_queue.pop_front();
+        }
+      } break;
+      case ArgType::kKnownFlagAndValue:
+      case ArgType::kKnownBoolFlag:
+      case ArgType::kKnownBoolNoFlag: {
+        output.cvd_args.emplace_back(current_token);
+      } break;
+      case ArgType::kPositional: {
+        output.sub_cmd = current.Token();
+        CF_EXPECT(output.sub_cmd != std::nullopt);
+        CF_EXPECT(Contains(valid_subcmds_, output.sub_cmd),
+                  "Subcommand " << *(output.sub_cmd) << " is not valid");
+        cvd_flags_mode = false;
+      } break;
+      case ArgType::kDoubleDash: {
+        return CF_ERR("--"
+                      << " is not allowed within cvd specific flags.");
+      }
+      case ArgType::kUnknownFlag:
+      case ArgType::kError: {
+        return CF_ERR(current.Token()
+                      << " in cvd-specific flags is disallowed.");
+      }
+    }
+  }
+  while (!tokens_queue.empty()) {
+    auto token = std::move(tokens_queue.front().Token());
+    output.sub_cmd_args.emplace_back(std::move(token));
+    tokens_queue.pop_front();
+  }
   return output;
 }
 
