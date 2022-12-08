@@ -350,12 +350,15 @@ PRODUCT_PACKAGES += \
 
 #
 # Audio HAL
+# Note: aidl services are loaded, however they are not fully functional yet,
+#       and are not used by the framework, only by VTS tests.
 #
 ifndef LOCAL_AUDIO_PRODUCT_PACKAGE
 LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio.service \
     android.hardware.audio@7.1-impl.ranchu \
     android.hardware.audio.effect@7.0-impl \
+    android.hardware.audio.service-aidl.example \
     android.hardware.audio.effect.service-aidl.example
 DEVICE_MANIFEST_FILE += \
     device/google/cuttlefish/guest/hals/audio/effects/manifest.xml
