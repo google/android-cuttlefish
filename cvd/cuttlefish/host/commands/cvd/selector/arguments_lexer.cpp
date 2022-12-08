@@ -101,7 +101,36 @@ bool ArgumentsLexer::Registered(const std::string& flag_string,
 }
 
 Result<ArgToken> ArgumentsLexer::Process(const std::string& token) const {
-  // TODO(kwstephenkim): implement process
+  if (token == "--") {
+    return ArgToken{ArgType::kDoubleDash, token};
+  }
+  std::regex flag_and_value_pattern("[\\-][\\-]?[^\\-]+.*=.*");
+  std::regex flag_pattern("[\\-][\\-]?[^\\-]+.*");
+  std::regex base_pattern("[^\\-]+.*");
+  if (std::regex_match(token, base_pattern)) {
+    return ArgToken{ArgType::kPositional, token};
+  }
+  if (!std::regex_match(token, flag_pattern)) {
+    return ArgToken{ArgType::kError, token};
+  }
+  // --flag=value
+  if (std::regex_match(token, flag_and_value_pattern)) {
+    auto [flag_string, value] = CF_EXPECT(Separate(token));
+    // is --flag registered?
+    if (Contains(flag_patterns_.value_patterns, flag_string)) {
+      return ArgToken{ArgType::kKnownFlagAndValue, token};
+    }
+    return ArgToken{ArgType::kUnknownFlag, token};
+  }
+  if (Contains(flag_patterns_.value_patterns, token)) {
+    return ArgToken{ArgType::kKnownValueFlag, token};
+  }
+  if (Contains(flag_patterns_.bool_patterns, token)) {
+    return ArgToken{ArgType::kKnownBoolFlag, token};
+  }
+  if (Contains(flag_patterns_.bool_no_patterns, token)) {
+    return ArgToken{ArgType::kKnownBoolNoFlag, token};
+  }
   return ArgToken{ArgType::kUnknownFlag, token};
 }
 
@@ -137,10 +166,62 @@ Result<std::vector<ArgToken>> ArgumentsLexer::Tokenize(
   return tokenized;
 }
 
+static std::string ToLower(const std::string& src) {
+  std::string lower_cased_value;
+  lower_cased_value.resize(src.size());
+  std::transform(src.begin(), src.end(), lower_cased_value.begin(), ::tolower);
+  return lower_cased_value;
+}
+
+Result<ArgumentsLexer::FlagValuePair> ArgumentsLexer::Separate(
+    const std::string& equal_included_string) const {
+  CF_EXPECT(Contains(equal_included_string, "="));
+  auto equal_sign_pos = equal_included_string.find_first_of('=');
+  auto first_token = equal_included_string.substr(0, equal_sign_pos);
+  auto second_token = equal_included_string.substr(equal_sign_pos + 1);
+  return FlagValuePair{.flag_string = first_token, .value = second_token};
+}
+
 Result<std::vector<std::string>> ArgumentsLexer::Preprocess(
     const std::vector<std::string>& args) {
-  // TODO(kwstephenkim): implement preprocess
-  return args;
+  std::vector<std::string> new_args;
+  std::regex pattern("[\\-][\\-]?[^\\-]+.*=.*");
+  for (const auto& arg : args) {
+    if (!std::regex_match(arg, pattern)) {
+      new_args.emplace_back(arg);
+      continue;
+    }
+    // needs to split based on the first '='
+    // --something=another_thing or
+    //  -something=another_thing
+    const auto [flag_string, value] = CF_EXPECT(Separate(arg));
+
+    if (Contains(flag_patterns_.bool_patterns, flag_string)) {
+      const auto low_cased_value = ToLower(value);
+      CF_EXPECT(Contains(valid_bool_values_in_lower_cases_, low_cased_value),
+                "The value for the boolean flag " << flag_string << ", "
+                                                  << value << " is not valid");
+      if (low_cased_value == "true" || low_cased_value == "yes") {
+        new_args.emplace_back(flag_string);
+        continue;
+      }
+      auto base_pos = flag_string.find_first_not_of('-');
+      auto base = flag_string.substr(base_pos);
+      new_args.emplace_back("--no" + base);
+      continue;
+    }
+
+    if (Contains(flag_patterns_.bool_no_patterns, flag_string)) {
+      CF_EXPECT(android::base::StartsWith(flag_string, "-no") ||
+                android::base::StartsWith(flag_string, "--no"));
+      // if --nohelp=XYZ, the "=XYZ" is ignored.
+      new_args.emplace_back(flag_string);
+      continue;
+    }
+
+    new_args.emplace_back(arg);
+  }
+  return new_args;
 }
 
 }  // namespace selector
