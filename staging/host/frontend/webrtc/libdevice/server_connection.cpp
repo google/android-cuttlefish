@@ -62,7 +62,6 @@ class WsConnection : public std::enable_shared_from_this<WsConnection> {
 
   WsConnection(int port, const std::string& addr, const std::string& path,
                ServerConfig::Security secure,
-               const std::vector<std::pair<std::string, std::string>>& headers,
                std::weak_ptr<ServerConnectionObserver> observer,
                std::shared_ptr<WsConnectionContext> context);
 
@@ -78,8 +77,6 @@ class WsConnection : public std::enable_shared_from_this<WsConnection> {
   void OnOpen();
   void OnClose();
   void OnWriteable();
-
-  void AddHttpHeaders(unsigned char** p, unsigned char* end) const;
 
  private:
   struct WsBuffer {
@@ -105,7 +102,6 @@ class WsConnection : public std::enable_shared_from_this<WsConnection> {
   const std::string addr_;
   const std::string path_;
   const ServerConfig::Security security_;
-  const std::vector<std::pair<std::string, std::string>> headers_;
 
   std::weak_ptr<ServerConnectionObserver> observer_;
 
@@ -128,8 +124,7 @@ class WsConnectionContext
   std::unique_ptr<ServerConnection> CreateConnection(
       int port, const std::string& addr, const std::string& path,
       ServerConfig::Security secure,
-      std::weak_ptr<ServerConnectionObserver> observer,
-      const std::vector<std::pair<std::string, std::string>>& headers);
+      std::weak_ptr<ServerConnectionObserver> observer);
 
   void RememberConnection(void*, std::weak_ptr<WsConnection>);
   void ForgetConnection(void*);
@@ -163,8 +158,7 @@ std::unique_ptr<ServerConnection> ServerConnection::Connect(
     auto ws_context = WsConnectionContext::Create();
     CHECK(ws_context) << "Failed to create websocket context";
     ret = ws_context->CreateConnection(conf.port, conf.addr, conf.path,
-                                       conf.security, observer,
-                                       conf.http_headers);
+                                       conf.security, observer);
   }
   ret->Connect();
   return ret;
@@ -379,11 +373,10 @@ class WsConnectionWrapper : public ServerConnection {
 std::unique_ptr<ServerConnection> WsConnectionContext::CreateConnection(
     int port, const std::string& addr, const std::string& path,
     ServerConfig::Security security,
-    std::weak_ptr<ServerConnectionObserver> observer,
-    const std::vector<std::pair<std::string, std::string>>& headers) {
+    std::weak_ptr<ServerConnectionObserver> observer) {
   return std::unique_ptr<ServerConnection>(
       new WsConnectionWrapper(std::make_shared<WsConnection>(
-          port, addr, path, security, headers, observer, shared_from_this())));
+          port, addr, path, security, observer, shared_from_this())));
 }
 
 std::shared_ptr<WsConnection> WsConnectionContext::GetConnection(void* raw) {
@@ -413,17 +406,15 @@ void WsConnectionContext::ForgetConnection(void* raw) {
   weak_by_ptr_.erase(raw);
 }
 
-WsConnection::WsConnection(
-    int port, const std::string& addr, const std::string& path,
-    ServerConfig::Security security,
-    const std::vector<std::pair<std::string, std::string>>& headers,
-    std::weak_ptr<ServerConnectionObserver> observer,
-    std::shared_ptr<WsConnectionContext> context)
+WsConnection::WsConnection(int port, const std::string& addr,
+                           const std::string& path,
+                           ServerConfig::Security security,
+                           std::weak_ptr<ServerConnectionObserver> observer,
+                           std::shared_ptr<WsConnectionContext> context)
     : port_(port),
       addr_(addr),
       path_(path),
       security_(security),
-      headers_(headers),
       observer_(observer),
       context_(context) {}
 
@@ -439,24 +430,6 @@ void WsConnection::Connect() {
   extended_sul_.weak_this = weak_from_this();
   lws_sul_schedule(context_->lws_context(), 0, &extended_sul_.sul,
                    CreateConnectionCallback, 1);
-}
-
-void WsConnection::AddHttpHeaders(unsigned char** p, unsigned char* end) const {
-  for (const auto& header_entry : headers_) {
-    const auto& name = header_entry.first;
-    const auto& value = header_entry.second;
-    auto res = lws_add_http_header_by_name(
-        wsi_, reinterpret_cast<const unsigned char*>(name.c_str()),
-        reinterpret_cast<const unsigned char*>(value.c_str()), value.size(), p,
-        end);
-    if (res != 0) {
-      LOG(ERROR) << "Unable to add header: " << name;
-    }
-  }
-  if (!headers_.empty()) {
-    // Let LWS know we added some headers.
-    lws_client_http_body_pending(wsi_, 1);
-  }
 }
 
 void WsConnection::OnError(const std::string& error) {
@@ -570,20 +543,6 @@ int LwsCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user,
       return with_connection([](std::shared_ptr<WsConnection> connection) {
         connection->OnWriteable();
       });
-
-    case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
-      return with_connection(
-          [in, len](std::shared_ptr<WsConnection> connection) {
-            auto p = reinterpret_cast<unsigned char**>(in);
-            auto end = (*p) + len;
-            connection->AddHttpHeaders(p, end);
-          });
-
-    case LWS_CALLBACK_CLIENT_HTTP_WRITEABLE:
-      // This callback is only called when we add additional HTTP headers, let
-      // LWS know we're done modifying the HTTP request.
-      lws_client_http_body_pending(wsi, 0);
-      return 0;
 
     default:
       LOG(VERBOSE) << "Unhandled value: " << reason;
