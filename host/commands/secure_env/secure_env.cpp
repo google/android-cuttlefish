@@ -16,6 +16,7 @@
 #include <thread>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <keymaster/android_keymaster.h>
@@ -38,6 +39,7 @@
 #include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
+#include "host/commands/secure_env/rust/kmr_ta.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_keymaster_context.h"
@@ -61,7 +63,8 @@ DEFINE_string(tpm_impl,
               "The TPM implementation. \"in_memory\" or \"host_device\"");
 
 DEFINE_string(keymint_impl, "tpm",
-              "The keymaster implementation. \"tpm\" or \"software\"");
+              "The KeyMint implementation. \"tpm\", \"software\", \"rust-tpm\" "
+              "or \"rust-software\"");
 
 DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
@@ -203,46 +206,69 @@ int SecureEnvMain(int argc, char** argv) {
   gatekeeper::GateKeeper* gatekeeper = injector.get<gatekeeper::GateKeeper*>();
   keymaster::KeymasterEnforcement* keymaster_enforcement =
       injector.get<keymaster::KeymasterEnforcement*>();
-
   std::unique_ptr<keymaster::KeymasterContext> keymaster_context;
-  if (FLAGS_keymint_impl == "software") {
-    // TODO: See if this is the right KM version.
-    keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
-        keymaster::KmVersion::KEYMINT_3, KM_SECURITY_LEVEL_SOFTWARE));
-  } else if (FLAGS_keymint_impl == "tpm") {
-    keymaster_context.reset(
-        new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
-  } else {
-    LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
-    return -1;
-  }
-  // keymaster::AndroidKeymaster puts the context pointer into a UniquePtr,
-  // taking ownership.
-  keymaster::AndroidKeymaster keymaster{
-      new ProxyKeymasterContext(*keymaster_context), kOperationTableSize,
-      keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_3,
-                                0 /* km_date */)};
-
-  auto confui_server_fd = DupFdFlag(FLAGS_confui_server_fd);
-  auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
-  auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
-  auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
-  auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
-  auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
+  std::unique_ptr<keymaster::AndroidKeymaster> keymaster;
 
   std::vector<std::thread> threads;
 
-  threads.emplace_back([keymaster_in, keymaster_out, &keymaster]() {
-    while (true) {
-      KeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
-
-      KeymasterResponder keymaster_responder(keymaster_channel, keymaster);
-
-      while (keymaster_responder.ProcessMessage()) {
-      }
+  if (android::base::StartsWith(FLAGS_keymint_impl, "rust-")) {
+    // Use the Rust reference implementation of KeyMint.
+    LOG(DEBUG) << "starting Rust KeyMint implementation";
+    int security_level;
+    if (FLAGS_keymint_impl == "rust-software") {
+      security_level = KM_SECURITY_LEVEL_SOFTWARE;
+    } else if (FLAGS_keymint_impl == "rust-tpm") {
+      security_level = KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
+    } else {
+      LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
+      return -1;
     }
-  });
 
+    int keymaster_in = FLAGS_keymaster_fd_in;
+    int keymaster_out = FLAGS_keymaster_fd_out;
+    TpmResourceManager* rm = resource_manager;
+    threads.emplace_back([rm, keymaster_in, keymaster_out, security_level]() {
+      kmr_ta_main(keymaster_in, keymaster_out, security_level, rm);
+    });
+
+  } else {
+    // Use the C++ reference implementation of KeyMint.
+    LOG(DEBUG) << "starting C++ KeyMint implementation";
+    if (FLAGS_keymint_impl == "software") {
+      // TODO: See if this is the right KM version.
+      keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
+          keymaster::KmVersion::KEYMINT_3, KM_SECURITY_LEVEL_SOFTWARE));
+    } else if (FLAGS_keymint_impl == "tpm") {
+      keymaster_context.reset(
+          new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
+    } else {
+      LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
+      return -1;
+    }
+    // keymaster::AndroidKeymaster puts the context pointer into a UniquePtr,
+    // taking ownership.
+    keymaster.reset(new keymaster::AndroidKeymaster(
+        new ProxyKeymasterContext(*keymaster_context), kOperationTableSize,
+        keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_3,
+                                  0 /* km_date */)));
+
+    auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
+    auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
+    keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
+    threads.emplace_back([keymaster_in, keymaster_out, borrowed_km]() {
+      while (true) {
+        KeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
+
+        KeymasterResponder keymaster_responder(keymaster_channel, *borrowed_km);
+
+        while (keymaster_responder.ProcessMessage()) {
+        }
+      }
+    });
+  }
+
+  auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
+  auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
   threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
     while (true) {
       GatekeeperChannel gatekeeper_channel(gatekeeper_in, gatekeeper_out);
@@ -254,11 +280,14 @@ int SecureEnvMain(int argc, char** argv) {
     }
   });
 
+  auto confui_server_fd = DupFdFlag(FLAGS_confui_server_fd);
   threads.emplace_back([confui_server_fd, resource_manager]() {
     ConfUiSignServer confui_sign_server(*resource_manager, confui_server_fd);
     // no return, infinite loop
     confui_sign_server.MainLoop();
   });
+
+  auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
   threads.emplace_back(StartKernelEventMonitor(kernel_events_fd));
 
   for (auto& t : threads) {
