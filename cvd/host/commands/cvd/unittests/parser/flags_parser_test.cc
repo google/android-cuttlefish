@@ -102,4 +102,49 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
       << "num_instances flag is missing or wrongly formatted";
 }
 
+TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+  "instances" :
+  [
+      {
+      }
+  ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
+      << "netsim_bt flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
+  const char* test_string = R""""(
+{
+   "netsim_bt": true,
+     "instances" :
+     [
+        {
+        }
+      ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
+      << "netsim_bt flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
