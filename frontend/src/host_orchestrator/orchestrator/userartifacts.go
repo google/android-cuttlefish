@@ -96,7 +96,7 @@ func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, filename string, sr
 	} else if !ok {
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
-	dst, err := ioutil.TempFile("", "cutfArtifact")
+	dst, err := ioutil.TempFile(dir, "cutfArtifact")
 	if err != nil {
 		return err
 	}
