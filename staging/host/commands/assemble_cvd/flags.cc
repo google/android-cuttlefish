@@ -229,11 +229,6 @@ DEFINE_bool(verify_sig_server_certificate,
             "trusted signing authority (Disallow self signed certificates). "
             "This is ignored if an insecure server is configured.");
 
-DEFINE_string(sig_server_headers_file, CF_DEFAULTS_SIG_SERVER_HEADERS_FILE,
-              "Path to a file containing HTTP headers to be included in the "
-              "connection to the signaling server. Each header should be on a "
-              "line by itself in the form <name>: <value>");
-
 DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
     "The for the device to register with the signaling server. Every "
@@ -753,7 +748,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_sig_server_address(FLAGS_webrtc_sig_server_addr);
   tmp_config_obj.set_sig_server_path(FLAGS_webrtc_sig_server_path);
   tmp_config_obj.set_sig_server_strict(FLAGS_verify_sig_server_certificate);
-  tmp_config_obj.set_sig_server_headers_path(FLAGS_sig_server_headers_file);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
 
