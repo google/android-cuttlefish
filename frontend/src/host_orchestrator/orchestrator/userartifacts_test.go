@@ -16,6 +16,8 @@ package orchestrator
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -99,5 +101,64 @@ func TestListTokens(t *testing.T) {
 	}
 	if diff := cmp.Diff(exp, res); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	opts := UserArtifactsManagerOpts{
+		RootDir:     dir,
+		NameFactory: func() string { return "foo" },
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+
+	err := am.CreateUpdateArtifact("bar", "xyzz", strings.NewReader("lorem ispum"))
+
+	if err == nil {
+		t.Error("expected error")
+	}
+}
+
+func TestCreateArtifactSucceeds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	opts := UserArtifactsManagerOpts{
+		RootDir:     dir,
+		NameFactory: func() string { return "foo" },
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+	am.NewDir()
+
+	err := am.CreateUpdateArtifact("foo", "xyzz", strings.NewReader("lorem ipsum"))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := ioutil.ReadFile(am.GetFullPath("foo", "xyzz"))
+	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
+		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestUpdateArtifactSucceds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	opts := UserArtifactsManagerOpts{
+		RootDir:     dir,
+		NameFactory: func() string { return "foo" },
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+	am.NewDir()
+	am.CreateUpdateArtifact("foo", "xyzz", strings.NewReader("lorem ipsum"))
+
+	err := am.CreateUpdateArtifact("foo", "xyzz", strings.NewReader("dolor sit amet"))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := ioutil.ReadFile(am.GetFullPath("foo", "xyzz"))
+	if diff := cmp.Diff("dolor sit amet", string(b)); diff != "" {
+		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
 }

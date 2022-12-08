@@ -15,9 +15,12 @@
 package orchestrator
 
 import (
+	"io"
 	"io/ioutil"
+	"os"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 // Abstraction for managing user artifacts for launching CVDs.
@@ -26,6 +29,8 @@ type UserArtifactsManager interface {
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
+	// Creates or update (if exists) an artifact.
+	CreateUpdateArtifact(dir, filename string, file io.Reader) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -42,7 +47,7 @@ type UserArtifactsManagerImpl struct {
 }
 
 // Creates a new instance of UserArtifactsManagerImpl.
-func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) UserArtifactsManager {
+func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsManagerImpl {
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
 	}
@@ -78,4 +83,33 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 		}
 	}
 	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
+}
+
+func (m *UserArtifactsManagerImpl) GetFullPath(dir, filename string) string {
+	return m.RootDir + "/" + dir + "/" + filename
+}
+
+func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, filename string, src io.Reader) error {
+	dir = m.RootDir + "/" + dir
+	if ok, err := fileExist(dir); err != nil {
+		return err
+	} else if !ok {
+		return operator.NewBadRequestError("upload directory %q does not exist", err)
+	}
+	dst, err := ioutil.TempFile("", "cutfArtifact")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(dst.Name())
+	if _, err = io.Copy(dst, src); err != nil {
+		return err
+	}
+	if err := dst.Close(); err != nil {
+		return err
+	}
+	filename = dir + "/" + filename
+	if err := os.Rename(dst.Name(), filename); err != nil {
+		return err
+	}
+	return nil
 }

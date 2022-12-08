@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"encoding/json"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -52,6 +53,9 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts",
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
+	router.Handle("/userartifacts/{name}",
+		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+
 }
 
 type handler interface {
@@ -64,6 +68,10 @@ func httpHandler(h handler) http.Handler {
 		if err != nil {
 			log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
 			replyJSONErr(w, err)
+			return
+		}
+		if res == nil {
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 		replyJSONOK(w, res)
@@ -208,4 +216,25 @@ type listUploadDirectoriesHandler struct {
 
 func (h *listUploadDirectoriesHandler) Handle(r *http.Request) (interface{}, error) {
 	return h.m.ListDirs()
+}
+
+type createUpdateUserArtifactHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	dir := vars["name"]
+	f, fheader, err := r.FormFile("file")
+	if err != nil {
+		if err == multipart.ErrMessageTooLarge {
+			return nil, &operator.AppError{
+				StatusCode: http.StatusInsufficientStorage,
+				Err:        err,
+			}
+		}
+		return nil, operator.NewBadRequestError("Invalid multipart form request", err)
+	}
+	defer r.MultipartForm.RemoveAll()
+	return nil, h.m.CreateUpdateArtifact(dir, fheader.Filename, f)
 }
