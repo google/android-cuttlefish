@@ -52,17 +52,6 @@ cc_test_host {
 }
 
 cc_test_host {
-    name: "cvd_id_allocator_test",
-    srcs: [
-        "test_id_allocator.cpp",
-    ],
-    test_options: {
-        unit_test: true,
-    },
-    defaults: ["cvd_and_fetch_cvd_defaults"],
-}
-
-cc_test_host {
     name: "cvd_selector_parser_test",
     srcs: [
         "selector_parser_ids_test_helper.cpp",
