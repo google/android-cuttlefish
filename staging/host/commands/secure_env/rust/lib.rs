@@ -81,7 +81,6 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     let keys: &dyn kmr_ta::device::RetrieveKeyMaterial =
         if security_level == SecurityLevel::TrustedEnvironment { &tpm_keys } else { &soft_keys };
     let dev = Implementation {
-        // TODO(b/242838132): add TPM-backed implementation
         keys,
         sign_info: &sign_info,
         // HAL populates attestation IDs from properties.
