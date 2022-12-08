@@ -188,11 +188,6 @@ class CuttlefishConfig {
   void set_sig_server_strict(bool strict);
   bool sig_server_strict() const;
 
-  // A file containing http headers to include in the connection to the
-  // signaling server
-  void set_sig_server_headers_path(const std::string& path);
-  std::string sig_server_headers_path() const;
-
   // The dns address of mobile network (RIL)
   void set_ril_dns(const std::string& ril_dns);
   std::string ril_dns() const;

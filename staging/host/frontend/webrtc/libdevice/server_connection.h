@@ -46,9 +46,6 @@ struct ServerConfig {
   std::string path;
   // The security level to use when connecting to the operator server.
   Security security;
-  // A list of key value pairs to include as HTTP handshake headers when
-  // connecting to the operator.
-  std::vector<std::pair<std::string, std::string>> http_headers;
 };
 
 class ServerConnectionObserver {
