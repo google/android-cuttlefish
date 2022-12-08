@@ -701,6 +701,9 @@ PRODUCT_VENDOR_PROPERTIES += \
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.launcher.depth.widget=0
 
+# Start fingerprint virtual HAL process
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.fingerprint_virtual_hal_start=true
+
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \
    dlkm_loader
