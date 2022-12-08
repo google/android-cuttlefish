@@ -45,6 +45,7 @@ cc_defaults {
         "tpm2-tss2-tcti",
     ],
     static_libs: [
+        "libc++_static",
         "libcuttlefish_host_config",
         "libgflags",
         "libscrypt_static",
@@ -98,9 +99,10 @@ rust_bindgen_host {
     static_libs: [
         "libsecure_env",
     ],
-    // The cc_library_host_static target for libsecure_env only generates x86_64 arch
-    // libraries, not x86.
-    compile_multilib: "64",
+    defaults: [
+        "cuttlefish_buildhost_only",
+        "secure_env_defaults",
+    ],
 }
 
 cc_binary_host {
@@ -111,7 +113,13 @@ cc_binary_host {
     static_libs: [
         "libsecure_env",
     ],
-    defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
+    shared_libs: [
+        "libkmr_cf_ffi",
+    ],
+    defaults: [
+        "cuttlefish_buildhost_only",
+        "secure_env_defaults",
+    ],
 }
 
 cc_test_host {

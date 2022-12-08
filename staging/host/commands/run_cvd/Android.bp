@@ -17,6 +17,34 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+// Allow the KeyMint reference implementation to be selected at build time.
+soong_config_module_type {
+    name: "keymint_impl_defaults",
+    module_type: "cc_defaults",
+    config_namespace: "secure_env",
+    variables: ["keymint_impl"],
+    properties: ["cflags"],
+}
+
+soong_config_string_variable {
+    name: "keymint_impl",
+    values: ["rust", "cpp"],
+}
+
+keymint_impl_defaults {
+    name: "secure_env_keymint_impl_defaults",
+    soong_config_variables: {
+        keymint_impl: {
+            rust: {
+                cflags: ["-DCUTTLEFISH_KEYMINT_RUST",],
+            },
+            cpp: {},
+            conditions_default: {},
+        },
+    },
+}
+
+
 cc_binary {
     name: "run_cvd",
     srcs: [
@@ -67,5 +95,6 @@ cc_binary {
         "cuttlefish_host",
         "cuttlefish_libicuuc",
         "cvd_cc_defaults",
+        "secure_env_keymint_impl_defaults",
     ],
 }
