@@ -42,6 +42,8 @@ struct HalServiceError(String);
 struct FileChannel(std::fs::File);
 
 impl kmr_hal::SerializedChannel for FileChannel {
+    const MAX_SIZE: usize = kmr_wire::DEFAULT_MAX_SIZE;
+
     fn execute(&mut self, serialized_req: &[u8]) -> binder::Result<Vec<u8>> {
         kmr_hal::write_msg(&mut self.0, serialized_req)?;
         kmr_hal::read_msg(&mut self.0)
