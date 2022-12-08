@@ -61,8 +61,7 @@ namespace selector {
  *  2. --
  *  E.g. cvd --clean start --have --some --args -- a b c d e
  *  -- is basically for subcommands. cvd itself does not use it.
- *  If -- is within cvd arguments, it is ill-formatted. If it is within
- *  subcommands arguments, we simply forward it to the subtool as is.
+ *  Therefore, -- must be within subcmd arguments, or just ahead of subcmd.
  *
  */
 class ArgumentsSeparator {
@@ -112,7 +111,6 @@ class ArgumentsSeparator {
   std::unordered_set<std::string> known_boolean_flags_;
   std::unordered_set<std::string> known_value_flags_;
   std::unordered_set<std::string> valid_subcmds_;
-  bool match_any_subcmd_;
 
   // outputs
   std::string prog_path_;
