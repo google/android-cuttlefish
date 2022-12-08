@@ -431,6 +431,9 @@ class InitializeEspImageImpl : public InitializeEspImage {
           builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPathAA64,
                         /* required */ false);
           break;
+        case Arch::RiscV64:
+          // FIXME: Implement
+          break;
         case Arch::X86:
         case Arch::X86_64:
           builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
