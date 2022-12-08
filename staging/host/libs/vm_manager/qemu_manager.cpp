@@ -161,6 +161,12 @@ std::vector<std::string> QemuManager::ConfigureGraphics(
 
 std::string QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
   switch (arch_) {
+    case Arch::Arm:
+      return "androidboot.boot_devices=3f000000.pcie";
+    case Arch::Arm64:
+      return "androidboot.boot_devices=4010000000.pcie";
+    case Arch::RiscV64:
+      return "androidboot.boot_devices=30000000.pci";
     case Arch::X86:
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
@@ -168,10 +174,6 @@ std::string QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
       return ConfigureMultipleBootDevices("pci0000:00/0000:00:",
                                           2 + (have_gpu ? 1 : 0), num_disks);
     }
-    case Arch::Arm:
-      return "androidboot.boot_devices=3f000000.pcie";
-    case Arch::Arm64:
-      return "androidboot.boot_devices=4010000000.pcie";
   }
 }
 
@@ -197,6 +199,9 @@ Result<std::vector<Command>> QemuManager::StartCommands(
       break;
     case Arch::Arm64:
       qemu_binary += "/qemu-system-aarch64";
+      break;
+    case Arch::RiscV64:
+      qemu_binary += "/qemu-system-riscv64";
       break;
     case Arch::X86:
       qemu_binary += "/qemu-system-i386";
@@ -274,6 +279,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   };
 
   bool is_arm = arch_ == Arch::Arm || arch_ == Arch::Arm64;
+  bool is_x86 = arch_ == Arch::X86 || arch_ == Arch::X86_64;
   bool is_arm64 = arch_ == Arch::Arm64;
 
   auto access_kregistry_size_bytes = 0;
@@ -308,7 +314,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
   qemu_cmd.AddParameter("-machine");
-  std::string machine = is_arm ? "virt" : "pc-i440fx-2.8,nvdimm=on";
+  std::string machine = is_x86 ? "pc-i440fx-2.8,nvdimm=on" : "virt";
   if (IsHostCompatible(arch_)) {
     machine += ",accel=kvm";
     if (is_arm) {
@@ -330,8 +336,8 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   auto maxmem = instance.memory_mb() +
                 (access_kregistry_size_bytes / 1024 / 1024) +
                 (hwcomposer_pmem_size_bytes / 1024 / 1024) +
-                (is_arm ? 0 : pstore_size_bytes / 1024 / 1024);
-  auto slots = is_arm ? "" : ",slots=2";
+                (is_x86 ? pstore_size_bytes / 1024 / 1024 : 0);
+  auto slots = is_x86 ? ",slots=2" : "";
   qemu_cmd.AddParameter("size=", instance.memory_mb(), "M",
                         ",maxmem=", maxmem, "M", slots);
 
@@ -508,7 +514,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
                           ",id=virtio-disk", i, bootindex);
   }
 
-  if (!is_arm && FileExists(instance.pstore_path())) {
+  if (is_x86 && FileExists(instance.pstore_path())) {
     // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
     // As we will pass this to ramoops, define this region first so it is always
     // located at this address. This is currently x86 only.
@@ -520,9 +526,9 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("nvdimm,memdev=objpmem0,id=ramoops");
   }
 
-  // QEMU does not implement virtio-pmem-pci for ARM64 yet; restore this
-  // when the device has been added
-  if (!is_arm) {
+  // QEMU does not implement virtio-pmem-pci for ARM64 or RISC-V yet; restore
+  // this when the device has been added
+  if (is_x86) {
     if (access_kregistry_size_bytes > 0) {
       qemu_cmd.AddParameter("-object");
       qemu_cmd.AddParameter(
@@ -590,8 +596,10 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet2,id=net2");
 #endif
 
-  qemu_cmd.AddParameter("-cpu");
-  qemu_cmd.AddParameter(IsHostCompatible(arch_) ? "host" : "max");
+  if (is_x86 || is_arm) {
+    qemu_cmd.AddParameter("-cpu");
+    qemu_cmd.AddParameter(IsHostCompatible(arch_) ? "host" : "max");
+  }
 
   qemu_cmd.AddParameter("-msg");
   qemu_cmd.AddParameter("timestamp=on");
