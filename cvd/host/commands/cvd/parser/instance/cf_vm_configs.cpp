@@ -21,6 +21,10 @@
 #include "host/libs/config/cuttlefish_config.h"
 namespace cuttlefish {
 
+std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
+    {"enable_sandbox", Json::ValueType::booleanValue},
+};
+
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::intValue},
     {"memory_mb", Json::ValueType::intValue},
@@ -40,6 +44,10 @@ bool ValidateVmManager(const Json::Value& root) {
 Result<void> ValidateVmConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kVmKeyMap), "ValidateVmConfigs ValidateTypo fail");
   CF_EXPECT(ValidateVmManager(root), "missing vm manager configs");
+  if (root.isMember("crosvm")) {
+    CF_EXPECT(ValidateTypo(root["crosvm"], kCrosvmKeyMap),
+              "ValidateVmConfigs ValidateTypo crosvm fail");
+  }
   return {};
 }
 
@@ -68,6 +76,8 @@ void InitVmConfigs(Json::Value& instances) {
                    CF_DEFAULTS_SETUPWIZARD_MODE);
   InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
   InitVmManagerConfig(instances);
+  InitBoolConfigSubGroup(instances, "vm", "crosvm", "enable_sandbox",
+                         CF_DEFAULTS_ENABLE_SANDBOX);
 }
 
 std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
@@ -79,6 +89,9 @@ std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
   result.emplace_back(
       GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
   result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
+  result.emplace_back(GenerateGflagSubGroup(instances, "enable_sandbox", "vm",
+                                            "crosvm", "enable_sandbox"));
+
   return result;
 }
 
