@@ -94,10 +94,6 @@
     <install-in-user-type package="com.android.cameraextensions">
         <install-in user-type="SYSTEM" />
         <install-in user-type="FULL" />
-   </install-in-user-type>
-   <install-in-user-type package="com.android.car.messenger">
-	<install-in user-type="FULL" />
-        <install-in user-type="SYSTEM" />
     </install-in-user-type>
     <install-in-user-type package="com.android.apps.tag">
         <install-in user-type="FULL" />
@@ -122,9 +118,6 @@
   Here the apps will have FULL only.
 -->
     <install-in-user-type package="com.android.car.datacenter">
-        <install-in user-type="FULL" />
-    </install-in-user-type>
-    <install-in-user-type package="com.android.car.dialer">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.car.goldilocks">
