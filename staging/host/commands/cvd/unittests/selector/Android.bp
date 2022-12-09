@@ -78,3 +78,15 @@ cc_test_host {
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_client_lexer_test",
+    srcs: [
+        "client_lexer_helper.cpp",
+        "client_lexer_test.cpp",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
