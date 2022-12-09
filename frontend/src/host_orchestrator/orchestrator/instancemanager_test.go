@@ -400,6 +400,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
+
 }
 
 func TestListCVDsSucceeds(t *testing.T) {
