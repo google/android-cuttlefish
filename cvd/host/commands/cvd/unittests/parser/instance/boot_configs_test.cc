@@ -25,8 +25,16 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagEmptyJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         }
     ]
 }
@@ -49,10 +57,18 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagPartialJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "extra_bootconfig_args": "androidboot.X=Y"
             }
@@ -79,11 +95,19 @@ TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagFullJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "extra_bootconfig_args": "androidboot.X=Y"
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "extra_bootconfig_args": "androidboot.X=Z"
             }
@@ -111,8 +135,16 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         }
     ]
 }
@@ -136,10 +168,18 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagPartialJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "enable_bootanimation": false
             }
@@ -166,11 +206,19 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagFullJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "enable_bootanimation": false
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "enable_bootanimation": false
             }
@@ -197,8 +245,16 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         }
     ]
 }
@@ -222,10 +278,18 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "CUTTLEFISHCVD101"
             }
@@ -252,11 +316,19 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "CUTTLEFISHCVD101"
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "CUTTLEFISHCVD102"
             }
@@ -283,8 +355,16 @@ TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagEmptyJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         }
     ]
 }
@@ -308,11 +388,19 @@ TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagPartialJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "CUTTLEFISHCVD101"
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "@random"
             }
@@ -338,11 +426,19 @@ TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagFullJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "@random"
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "security": {
                 "serial_number": "@random"
             }
@@ -368,8 +464,16 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            }
         }
     ]
 }
@@ -392,12 +496,20 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagPartialJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "kernel": {
                 }
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "kernel": {
                     "extra_kernel_cmdline": "androidboot.selinux=permissive"
@@ -427,6 +539,10 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
     "instances" :
     [
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "kernel": {
                     "extra_kernel_cmdline": "androidboot.selinux=permissive"
@@ -434,6 +550,10 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
             }
         },
         {
+            "vm": {
+                "crosvm":{
+                }
+            },
             "boot": {
                 "kernel": {
                     "extra_kernel_cmdline": "lpm_levels.sleep_disabled=1"
