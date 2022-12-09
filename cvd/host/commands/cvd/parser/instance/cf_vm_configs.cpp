@@ -45,13 +45,13 @@ void InitVmConfigs(Json::Value& instances) {
 
 std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateIntGflag(instances, "cpus", "vm", "cpus"));
-  result.emplace_back(GenerateIntGflag(instances, "memory_mb", "vm", "memory_mb"));
+  result.emplace_back(GenerateGflag(instances, "cpus", "vm", "cpus"));
+  result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
   result.emplace_back(
-      GenerateStrGflag(instances, "vm_manager", "vm", "vm_manager"));
+      GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
   result.emplace_back(
-      GenerateStrGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
-  result.emplace_back(GenerateStrGflag(instances, "uuid", "vm", "uuid"));
+      GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
+  result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
   return result;
 }
 
