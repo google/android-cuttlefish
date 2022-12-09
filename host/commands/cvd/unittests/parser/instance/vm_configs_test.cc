@@ -552,4 +552,103 @@ TEST(VmFlagsParserTest, ParseTwoInstancesUuidFlagFullJson) {
       << "uuid flag is missing or wrongly formatted";
 }
 
+TEST(VmFlagsParserTest, ParseTwoInstancesSandboxFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--enable_sandbox=false,false)"))
+      << "enable_sandbox flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesSandboxFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "enable_sandbox": true
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--enable_sandbox=false,true)"))
+      << "enable_sandbox flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesSandboxFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "enable_sandbox": true
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "enable_sandbox": true
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--enable_sandbox=true,true)"))
+      << "enable_sandbox flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
