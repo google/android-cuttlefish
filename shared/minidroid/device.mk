@@ -15,15 +15,12 @@
 #
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
-
-# FIXME: This isn't working yet. Seems to produce a slightly smaller
-#        init_boot image that U-Boot doesn't handle. U-Boot bug?
 $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_ramdisk.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
 
 $(call soong_config_append,cvd,launch_configs,cvd_config_minidroid.json)
 
-SYSTEM_PRODUCT_PROPERTIES += \
+PRODUCT_SYSTEM_PROPERTIES += \
     service.adb.listen_addrs=vsock:5555 \
     apexd.payload_metadata.path=/dev/block/by-name/payload-metadata
 
