@@ -1,23 +1,87 @@
-//! Key management interactions using the TPM.
+//! Device trait implementations using the TPM.
 
 use kmr_common::{
-    crypto,
-    crypto::{NoOpHmac, SHA256_DIGEST_LEN},
-    km_err, vec_try, vec_try_with_capacity, Error, FallibleAllocExt,
+    crypto, crypto::SHA256_DIGEST_LEN, km_err, vec_try, vec_try_with_capacity, Error,
+    FallibleAllocExt,
 };
 use kmr_ta::device::DeviceHmac;
 
 pub const ROOT_KEK_MARKER: &[u8] = b"CF Root KEK";
 
-// TPM-backed implementation of key retrieval/management functionality.
-pub struct Keys {
+/// Device HMAC implementation that uses the TPM.
+#[derive(Clone)]
+pub struct TpmHmac {
     /// Opaque pointer to a `TpmResourceManager`.
     trm: *mut libc::c_void,
 }
 
-impl Keys {
+impl TpmHmac {
     pub fn new(trm: *mut libc::c_void) -> Self {
         Self { trm }
+    }
+    fn tpm_hmac(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let mut tag = vec_try![0; 32]?;
+
+        // Safety: all slices are valid with correct lengths.
+        let rc = unsafe {
+            secure_env_tpm::tpm_hmac(
+                self.trm,
+                data.as_ptr(),
+                data.len() as u32,
+                tag.as_mut_ptr(),
+                tag.len() as u32,
+            )
+        };
+        if rc == 0 {
+            Ok(tag)
+        } else {
+            Err(km_err!(UnknownError, "HMAC calculation failed"))
+        }
+    }
+
+    fn hkdf_expand(&self, info: &[u8], out_len: usize) -> Result<Vec<u8>, Error> {
+        // HKDF expand: feed the derivation info into HMAC (using the TPM key) repeatedly.
+        let n = (out_len + SHA256_DIGEST_LEN - 1) / SHA256_DIGEST_LEN;
+        if n > 256 {
+            return Err(km_err!(UnknownError, "overflow in hkdf"));
+        }
+        let mut t = vec_try_with_capacity!(SHA256_DIGEST_LEN)?;
+        let mut okm = vec_try_with_capacity!(n * SHA256_DIGEST_LEN)?;
+        let n = n as u8;
+        for idx in 0..n {
+            let mut input = vec_try_with_capacity!(t.len() + info.len() + 1)?;
+            input.extend_from_slice(&t);
+            input.extend_from_slice(info);
+            input.push(idx + 1);
+
+            t = self.tpm_hmac(&input)?;
+            okm.try_extend_from_slice(&t)?;
+        }
+        okm.truncate(out_len);
+        Ok(okm)
+    }
+}
+
+impl kmr_ta::device::DeviceHmac for TpmHmac {
+    fn hmac(&self, _imp: &dyn crypto::Hmac, data: &[u8]) -> Result<Vec<u8>, Error> {
+        self.tpm_hmac(data)
+    }
+}
+
+impl crate::rpc::DeriveBytes for TpmHmac {
+    fn derive_bytes(&self, context: &[u8], output_len: usize) -> Result<Vec<u8>, Error> {
+        self.hkdf_expand(context, output_len)
+    }
+}
+
+// TPM-backed implementation of key retrieval/management functionality.
+pub struct Keys {
+    tpm_hmac: TpmHmac,
+}
+
+impl Keys {
+    pub fn new(trm: *mut libc::c_void) -> Self {
+        Self { tpm_hmac: TpmHmac::new(trm) }
     }
 }
 
@@ -28,7 +92,7 @@ impl kmr_ta::device::RetrieveKeyMaterial for Keys {
 
     fn kak(&self) -> Result<crypto::aes::Key, Error> {
         // Generate a TPM-bound shared secret to use as the base of HMAC key negotiation.
-        let k = tpm_hmac(self.trm, b"TPM ISharedSecret")?;
+        let k = self.tpm_hmac.tpm_hmac(b"TPM ISharedSecret")?;
         let k: [u8; 32] =
             k.try_into().map_err(|_e| km_err!(UnknownError, "unexpected HMAC size"))?;
         Ok(crypto::aes::Key::Aes256(k))
@@ -41,45 +105,14 @@ impl kmr_ta::device::RetrieveKeyMaterial for Keys {
         // Gatekeeper / ConfirmationUI.
         // TODO(b/242838132): consider installing the calculated key into the TPM and using it
         // thereafter.
-        Some(Box::new(TpmHmac { trm: self.trm }))
+        Some(Box::new(self.tpm_hmac.clone()))
     }
 
     fn unique_id_hbk(&self, _ckdf: &dyn crypto::Ckdf) -> Result<crypto::hmac::Key, Error> {
         // Generate a TPM-bound HBK to use for unique ID generation.
-        let mut k = tpm_hmac(self.trm, b"TPM unique ID HBK")?;
+        let mut k = self.tpm_hmac.tpm_hmac(b"TPM unique ID HBK")?;
         k.truncate(16);
         Ok(crypto::hmac::Key(k))
-    }
-}
-
-pub struct TpmHmac {
-    /// Opaque pointer to a `TpmResourceManager`.
-    trm: *mut libc::c_void,
-}
-
-impl kmr_ta::device::DeviceHmac for TpmHmac {
-    fn hmac(&self, _imp: &dyn crypto::Hmac, data: &[u8]) -> Result<Vec<u8>, Error> {
-        tpm_hmac(self.trm, data)
-    }
-}
-
-fn tpm_hmac(trm: *mut libc::c_void, data: &[u8]) -> Result<Vec<u8>, Error> {
-    let mut tag = vec_try![0; 32]?;
-
-    // Safety: all slices are valid with correct lengths.
-    let rc = unsafe {
-        secure_env_tpm::tpm_hmac(
-            trm,
-            data.as_ptr(),
-            data.len() as u32,
-            tag.as_mut_ptr(),
-            tag.len() as u32,
-        )
-    };
-    if rc == 0 {
-        Ok(tag)
-    } else {
-        Err(km_err!(UnknownError, "HMAC calculation failed"))
     }
 }
 
@@ -89,7 +122,7 @@ pub struct KeyDerivation {
 
 impl KeyDerivation {
     pub fn new(trm: *mut libc::c_void) -> Self {
-        Self { tpm_hmac: TpmHmac { trm } }
+        Self { tpm_hmac: TpmHmac::new(trm) }
     }
 }
 
@@ -110,25 +143,9 @@ impl kmr_common::crypto::Hkdf for KeyDerivation {
         // HKDF normally performs an initial extract step to create a pseudo-random key (PRK) for
         // use in the HKDF expand processing.  This implementation uses a TPM HMAC key for HKDF
         // expand processing instead, and so the HKDF extract step is skipped.
-
-        // HKDF expand: feed the derivation info into HMAC (using the TPM key) repeatedly.
-        let n = (out_len + SHA256_DIGEST_LEN - 1) / SHA256_DIGEST_LEN;
-        if n > 256 {
-            return Err(km_err!(UnknownError, "overflow in hkdf"));
-        }
-        let mut t = vec_try_with_capacity!(SHA256_DIGEST_LEN)?;
-        let mut okm = vec_try_with_capacity!(n * SHA256_DIGEST_LEN)?;
-        let n = n as u8;
-        for idx in 0..n {
-            let mut input = vec_try_with_capacity!(t.len() + info.len() + 1)?;
-            input.extend_from_slice(&t);
-            input.extend_from_slice(info);
-            input.push(idx + 1);
-
-            t = self.tpm_hmac.hmac(&NoOpHmac, &input)?;
-            okm.try_extend_from_slice(&t)?;
-        }
-        okm.truncate(out_len);
-        Ok(okm)
+        self.tpm_hmac.hkdf_expand(info, out_len)
     }
 }
+
+/// RPC artifact retrieval using key material derived from the TPM.
+pub type RpcArtifacts = crate::rpc::Artifacts<TpmHmac>;
