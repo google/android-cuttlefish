@@ -458,6 +458,116 @@ TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagFullJson) {
       << "use_random_serial flag is missing or wrongly formatted";
 }
 
+TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--guest_enforce_security=true,true)"))
+      << "guest_enforce_security flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "guest_enforce_security": false
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--guest_enforce_security=true,false)"))
+      << "guest_enforce_security flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "guest_enforce_security": false
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "security": {
+                "guest_enforce_security": false
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--guest_enforce_security=false,false)"))
+      << "guest_enforce_security flag is missing or wrongly formatted";
+}
+
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
   const char* test_string = R""""(
 {
