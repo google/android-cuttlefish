@@ -65,8 +65,7 @@ class InstanceManager {
   Result<InstanceGroupInfo> GetInstanceGroupInfo(const uid_t uid,
                                                  const InstanceGroupDir&);
 
-  cvd::Status CvdClear(const uid_t uid, const SharedFD& out,
-                       const SharedFD& err);
+  cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
   Result<cvd::Status> CvdFleet(const uid_t uid, const SharedFD& out,
                                const SharedFD& err,
                                const std::vector<std::string>& fleet_cmd_args);
