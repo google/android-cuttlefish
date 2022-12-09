@@ -15,9 +15,12 @@
 package orchestrator
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -85,31 +88,97 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
 }
 
-func (m *UserArtifactsManagerImpl) GetFullPath(dir, filename string) string {
+func (m *UserArtifactsManagerImpl) GetDirPath(dir string) string {
+	return m.RootDir + "/" + dir
+}
+
+func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
 
-func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, filename string, src io.Reader) error {
+func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, name string, src io.Reader) error {
 	dir = m.RootDir + "/" + dir
 	if ok, err := fileExist(dir); err != nil {
 		return err
 	} else if !ok {
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
-	dst, err := ioutil.TempFile(dir, "cutfArtifact")
+	dst := dir + "/" + name
+	if err := saveFile(dst, src); err != nil {
+		return err
+	}
+	return processFile(dst)
+}
+
+func saveFile(dst string, src io.Reader) error {
+	tmp, err := ioutil.TempFile(filepath.Dir(dst), filepath.Base(dst))
 	if err != nil {
 		return err
 	}
-	defer os.Remove(dst.Name())
-	if _, err = io.Copy(dst, src); err != nil {
+	defer os.Remove(tmp.Name())
+	if _, err = io.Copy(tmp, src); err != nil {
 		return err
 	}
-	if err := dst.Close(); err != nil {
+	if err := tmp.Close(); err != nil {
 		return err
 	}
-	filename = dir + "/" + filename
-	if err := os.Rename(dst.Name(), filename); err != nil {
-		return err
+	return os.Rename(tmp.Name(), dst)
+}
+
+const cvdHostPackageName = "cvd-host_package.tar.gz"
+
+func processFile(name string) error {
+	if filepath.Base(name) == cvdHostPackageName {
+		if err := untar(filepath.Dir(name), name); err != nil {
+			return err
+		}
+		if err := os.Remove(name); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func untar(dst string, src string) error {
+	r, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+	tr := tar.NewReader(gzr)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if header == nil {
+			continue
+		}
+		target := filepath.Join(dst, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0774); err != nil {
+					return err
+				}
+			}
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+			f.Close()
+		}
+	}
 }

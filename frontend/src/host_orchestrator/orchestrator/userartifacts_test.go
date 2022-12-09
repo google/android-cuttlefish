@@ -17,6 +17,9 @@ package orchestrator
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -135,7 +138,7 @@ func TestCreateArtifactSucceeds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, _ := ioutil.ReadFile(am.GetFullPath("foo", "xyzz"))
+	b, _ := ioutil.ReadFile(am.GetFilePath("foo", "xyzz"))
 	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
@@ -157,8 +160,43 @@ func TestUpdateArtifactSucceds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, _ := ioutil.ReadFile(am.GetFullPath("foo", "xyzz"))
+	b, _ := ioutil.ReadFile(am.GetFilePath("foo", "xyzz"))
 	if diff := cmp.Diff("dolor sit amet", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func TestUploadCVDHostPackageSucceds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	opts := UserArtifactsManagerOpts{
+		RootDir:     dir,
+		NameFactory: func() string { return "foo" },
+	}
+	am := NewUserArtifactsManagerImpl(opts)
+	am.NewDir()
+	tarFile, err := os.Open(getTestTarFilename())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tarFile.Close()
+
+	err = am.CreateUpdateArtifact("foo", "cvd-host_package.tar.gz", tarFile)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := ioutil.ReadFile(am.GetDirPath("foo") + "/foo_dir/foo.txt")
+	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
+		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
+	}
+	if ok, _ := fileExist(am.GetFilePath("foo", "cvd-host_package.tar.gz")); ok {
+		t.Error("cvd-host_package.tar.gz was not cleaned up")
+	}
+}
+
+func getTestTarFilename() string {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	return dir + "/testdata/foo.tar.gz"
 }
