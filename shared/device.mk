@@ -662,7 +662,7 @@ ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += \
     mac80211_create_radios \
     hostapd \
-    android.hardware.wifi@1.0-service \
+    android.hardware.wifi-service \
     init.wifi
 
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
