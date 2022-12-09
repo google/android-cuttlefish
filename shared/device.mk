@@ -360,6 +360,8 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio.effect@7.0-impl \
     android.hardware.audio.service-aidl.example \
     android.hardware.audio.effect.service-aidl.example
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/guest/hals/audio/effects/manifest.xml
 endif
 
 ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
@@ -684,18 +686,6 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Enable GPU-intensive background blur support on Cuttlefish when requested by apps
 PRODUCT_VENDOR_PROPERTIES += \
     ro.surface_flinger.supports_background_blur=1
-
-# Set support one-handed mode
-PRODUCT_PRODUCT_PROPERTIES += \
-    ro.support_one_handed_mode=true
-
-# Set one_handed_mode screen translate offset percentage
-PRODUCT_PRODUCT_PROPERTIES += \
-    persist.debug.one_handed_offset_percentage=50
-
-# Set one_handed_mode translate animation duration milliseconds
-PRODUCT_PRODUCT_PROPERTIES += \
-    persist.debug.one_handed_translate_animation_duration=300
 
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \
