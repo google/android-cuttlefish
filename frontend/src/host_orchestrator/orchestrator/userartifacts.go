@@ -96,35 +96,43 @@ func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
 
-const cvdHostPackageName = "cvd-host_package.tar.gz"
-
-func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, filename string, src io.Reader) error {
+func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, name string, src io.Reader) error {
 	dir = m.RootDir + "/" + dir
 	if ok, err := fileExist(dir); err != nil {
 		return err
 	} else if !ok {
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
-	dst, err := ioutil.TempFile(dir, "cutfArtifact")
+	dst := dir + "/" + name
+	if err := saveFile(dst, src); err != nil {
+		return err
+	}
+	return processFile(dst)
+}
+
+func saveFile(dst string, src io.Reader) error {
+	tmp, err := ioutil.TempFile(filepath.Dir(dst), filepath.Base(dst))
 	if err != nil {
 		return err
 	}
-	defer os.Remove(dst.Name())
-	if _, err = io.Copy(dst, src); err != nil {
+	defer os.Remove(tmp.Name())
+	if _, err = io.Copy(tmp, src); err != nil {
 		return err
 	}
-	if err := dst.Close(); err != nil {
+	if err := tmp.Close(); err != nil {
 		return err
 	}
-	filename = dir + "/" + filename
-	if err := os.Rename(dst.Name(), filename); err != nil {
-		return err
-	}
-	if filepath.Base(filename) == cvdHostPackageName {
-		if err := untar(dir, filename); err != nil {
+	return os.Rename(tmp.Name(), dst)
+}
+
+const cvdHostPackageName = "cvd-host_package.tar.gz"
+
+func processFile(name string) error {
+	if filepath.Base(name) == cvdHostPackageName {
+		if err := untar(filepath.Dir(name), name); err != nil {
 			return err
 		}
-		if err := os.Remove(filename); err != nil {
+		if err := os.Remove(name); err != nil {
 			return err
 		}
 	}
