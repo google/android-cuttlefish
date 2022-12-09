@@ -24,23 +24,50 @@ namespace cuttlefish {
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::intValue},
     {"memory_mb", Json::ValueType::intValue},
-    {"vm_manager", Json::ValueType::stringValue},
     {"setupwizard_mode", Json::ValueType::stringValue},
     {"uuid", Json::ValueType::stringValue},
+    {"crosvm", Json::ValueType::objectValue},
+    {"qemu", Json::ValueType::objectValue},
+    {"gem5", Json::ValueType::objectValue},
 };
+
+bool ValidateVmManager(const Json::Value& root) {
+  bool result =
+      root.isMember("crosvm") || root.isMember("qemu") || root.isMember("gem5");
+  return result;
+}
 
 Result<void> ValidateVmConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kVmKeyMap), "ValidateVmConfigs ValidateTypo fail");
+  CF_EXPECT(ValidateVmManager(root), "missing vm manager configs");
   return {};
+}
+
+void InitVmManagerConfig(Json::Value& instances) {
+  // Allocate and initialize with default values
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (instances[i].isMember("vm") && instances[i]["vm"].isMember("crosvm")) {
+      instances[i]["vm"]["vm_manager"] = "crosvm";
+    } else if (instances[i].isMember("vm") &&
+               instances[i]["vm"].isMember("qemu")) {
+      instances[i]["vm"]["vm_manager"] = "qemu_cli";
+    } else if (instances[i].isMember("vm") &&
+               instances[i]["vm"].isMember("gem5")) {
+      instances[i]["vm"]["vm_manager"] = "gem5";
+    } else {
+      LOG(ERROR) << "Invalid VM manager configuration";
+    }
+  }
 }
 
 void InitVmConfigs(Json::Value& instances) {
   InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
   InitIntConfig(instances, "vm", "memory_mb", CF_DEFAULTS_MEMORY_MB);
-  InitStringConfig(instances, "vm", "vm_manager", CF_DEFAULTS_VM_MANAGER);
   InitStringConfig(instances, "vm", "setupwizard_mode",
                    CF_DEFAULTS_SETUPWIZARD_MODE);
   InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
+  InitVmManagerConfig(instances);
 }
 
 std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
