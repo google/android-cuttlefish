@@ -24,6 +24,8 @@ import com.android.tradefed.device.internal.DeviceResetHandler;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.CommandStatus;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -79,7 +81,8 @@ public class PowerwashTest extends BaseHostJUnit4Test {
             long start = System.currentTimeMillis();
             boolean success = false;
             if (getDevice() instanceof RemoteAndroidVirtualDevice) {
-                success = ((RemoteAndroidVirtualDevice) getDevice()).powerwashGce();
+                CommandResult res = ((RemoteAndroidVirtualDevice) getDevice()).powerwash();
+                success = res.getStatus() == CommandStatus.SUCCESS;
             } else {
                 // We don't usually expect tests to use our feature server, but in this case we are
                 // validating the feature itself so it's fine
