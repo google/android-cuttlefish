@@ -1,0 +1,32 @@
+cc_binary {
+    name: "server_minidroid",
+    srcs: ["server.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libbinder_rpc_unstable",
+    ],
+    static_libs: [
+        "com.android.minidroid.testservice-ndk",
+        "libprotobuf-cpp-lite-ndk",
+    ],
+
+    apex_available: [
+        "//apex_available:platform",
+    ],
+}
+
+cc_binary {
+    name: "client_minidroid",
+    srcs: ["client.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libbinder_rpc_unstable",
+    ],
+    static_libs: [
+        "com.android.minidroid.testservice-ndk",
+    ],
+    apex_available: [
+        "//apex_available:platform",
+    ],
+}
+
