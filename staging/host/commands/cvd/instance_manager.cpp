@@ -228,25 +228,27 @@ void InstanceManager::IssueStopCommand(
   }
 }
 
-cvd::Status InstanceManager::CvdClear(const uid_t uid, const SharedFD& out,
+cvd::Status InstanceManager::CvdClear(const SharedFD& out,
                                       const SharedFD& err) {
   std::lock_guard lock(instance_db_mutex_);
-  auto& instance_db = GetInstanceDB(uid);
   cvd::Status status;
   const std::string config_json_name = cpp_basename(GetGlobalConfigFileLink());
-
-  auto&& instance_groups = instance_db.InstanceGroups();
-  for (const auto& group : instance_groups) {
-    auto config_path = group->GetCuttlefishConfigPath();
-    if (config_path.ok()) {
-      IssueStopCommand(out, err, *config_path, *group);
+  for (auto& [uid, instance_db] : instance_dbs_) {
+    auto&& instance_groups = instance_db.InstanceGroups();
+    for (const auto& group : instance_groups) {
+      auto config_path = group->GetCuttlefishConfigPath();
+      if (config_path.ok()) {
+        IssueStopCommand(out, err, *config_path, *group);
+      }
+      RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
+      RemoveFile(group->HomeDir() + config_json_name);
     }
-    RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
-    RemoveFile(group->HomeDir() + config_json_name);
+    instance_db.Clear();
   }
+  // TODO(kwstephenkim): we need a better mechanism to make sure that
+  // we clear all run_cvd processes.
+  instance_dbs_.clear();
   WriteAll(err, "Stopped all known instances\n");
-
-  instance_db.Clear();
   status.set_code(cvd::Status::OK);
   return status;
 }
