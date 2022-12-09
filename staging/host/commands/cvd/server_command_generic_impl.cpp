@@ -67,7 +67,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
 
   if (invocation_info.bin == kClearBin) {
     *response.mutable_status() =
-        instance_manager_.CvdClear(uid, request.Out(), request.Err());
+        instance_manager_.CvdClear(request.Out(), request.Err());
     return response;
   }
 
