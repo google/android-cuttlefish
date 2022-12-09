@@ -66,12 +66,27 @@ type CreateCVDRequest struct {
 	CVD *CVD `json:"cvd"`
 }
 
-type BuildInfo struct {
+// Represents a build from ci.android.com.
+type AndroidCIBuild struct {
 	// [REQUIRED] The Android build identifier.
 	BuildID string `json:"build_id"`
 	// [REQUIRED] A string to determine the specific product and flavor from
 	// the set of builds, e.g. aosp_cf_x86_64_phone-userdebug.
 	Target string `json:"target"`
+}
+
+// Represents a user build.
+type UserBuild struct {
+	// [REQUIRED] Name of the directory where the user artifacts are stored.
+	ArtifactsDir string `json:"artifacts_dir"`
+}
+
+// Represents the artifacts source to build the CVD.
+type BuildSource struct {
+	// A build from ci.android.com
+	AndroidCIBuild *AndroidCIBuild `json:"android_ci_build,omitempty"`
+	// A user build.
+	UserBuild *UserBuild `json:"user_build,omitempty"`
 }
 
 type Operation struct {
@@ -86,7 +101,7 @@ type CVD struct {
 	// [Output Only]
 	Name string `json:"name"`
 	// [REQUIRED]
-	BuildInfo *BuildInfo `json:"build_info"`
+	BuildSource *BuildSource `json:"build_source"`
 	// [Output Only]
 	Status string `json:"status"`
 	// [Output Only]

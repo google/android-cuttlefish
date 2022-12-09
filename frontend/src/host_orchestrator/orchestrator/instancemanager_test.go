@@ -46,9 +46,11 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	validRequest := func() *apiv1.CreateCVDRequest {
 		return &apiv1.CreateCVDRequest{
 			CVD: &apiv1.CVD{
-				BuildInfo: &apiv1.BuildInfo{
-					BuildID: "1234",
-					Target:  "aosp_cf_x86_64_phone-userdebug",
+				BuildSource: &apiv1.BuildSource{
+					AndroidCIBuild: &apiv1.AndroidCIBuild{
+						BuildID: "1234",
+						Target:  "aosp_cf_x86_64_phone-userdebug",
+					},
 				},
 			},
 		}
@@ -60,9 +62,9 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	var tests = []struct {
 		corruptRequest func(r *apiv1.CreateCVDRequest)
 	}{
-		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildInfo = nil }},
-		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildInfo.BuildID = "" }},
-		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildInfo.Target = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource = nil }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild.BuildID = "" }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild.Target = "" }},
 	}
 
 	for _, test := range tests {
@@ -95,8 +97,8 @@ func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := newCVDToolIm(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
-	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
-	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "2", Target: "foo"}}}
+	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
+	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("2", "foo")}}
 
 	op1, _ := im.CreateCVD(r1)
 	op2, _ := im.CreateCVD(r2)
@@ -131,8 +133,8 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
-	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
+	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	op1, _ := im.CreateCVD(r1)
 	op2, _ := im.CreateCVD(r2)
@@ -161,7 +163,7 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im1 := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 	op, _ := im1.CreateCVD(r)
 	om.Wait(op.Name, 1*time.Second)
 	// The second instance manager is created with the same im paths as the previous instance
@@ -189,7 +191,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -226,7 +228,7 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 	}
 	om := NewMapOM()
 	im := newCVDToolIm(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -263,7 +265,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	}
 	om := NewMapOM()
 	im := newCVDToolIm(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: &apiv1.BuildInfo{BuildID: "1", Target: "foo"}}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -296,13 +298,13 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+	buildSource := androidCISource("1", "foo")
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
 
 	op, _ := im.CreateCVD(r)
 
 	res, _ := om.Wait(op.Name, 1*time.Second)
-	want := &apiv1.CVD{Name: "cvd-1", BuildInfo: buildInfo}
+	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
 	if diff := cmp.Diff(want, res.Value); diff != "" {
 		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
 	}
@@ -321,8 +323,7 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
 	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
-	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -354,8 +355,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 		HostValidator:    &AlwaysSucceedsValidator{},
 	}
 	im := NewCVDToolInstanceManager(&opts)
-	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	op, _ := im.CreateCVD(r)
 
@@ -392,8 +392,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 		HostValidator:    &AlwaysFailsValidator{},
 	}
 	im := NewCVDToolInstanceManager(&opts)
-	buildInfo := &apiv1.BuildInfo{BuildID: "1", Target: "foo"}
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildInfo: buildInfo}}
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 
 	_, err := im.CreateCVD(r)
 
@@ -444,10 +443,10 @@ func TestListCVDsSucceeds(t *testing.T) {
 
 	want := &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{
 		{
-			Name:      "cvd-1",
-			BuildInfo: &apiv1.BuildInfo{},
-			Status:    "Running",
-			Displays:  []string{"720 x 1280 ( 320 )"},
+			Name:        "cvd-1",
+			BuildSource: &apiv1.BuildSource{},
+			Status:      "Running",
+			Displays:    []string{"720 x 1280 ( 320 )"},
 		},
 	}}
 	if diff := cmp.Diff(want, res); diff != "" {
@@ -727,4 +726,13 @@ func contains(values []string, t string) bool {
 		}
 	}
 	return false
+}
+
+func androidCISource(buildID, target string) *apiv1.BuildSource {
+	return &apiv1.BuildSource{
+		AndroidCIBuild: &apiv1.AndroidCIBuild{
+			BuildID: buildID,
+			Target:  target,
+		},
+	}
 }
