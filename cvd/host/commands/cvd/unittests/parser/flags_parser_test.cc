@@ -61,6 +61,10 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
     "instances" :
     [
         {
+          "vm": {
+            "crosvm":{
+            }
+          }
         }
     ]
 }
@@ -83,9 +87,16 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
     "instances" :
     [
         {
+          "vm": {
+            "crosvm":{
+            }
+          }
         },
         {
-
+          "vm": {
+            "crosvm":{
+            }
+          }
         }
     ]
 }
@@ -107,8 +118,12 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
 {
   "instances" :
   [
-      {
-      }
+        {
+          "vm": {
+            "crosvm":{
+            }
+          }
+        }
   ]
 }
   )"""";
@@ -131,6 +146,10 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
      "instances" :
      [
         {
+          "vm": {
+            "crosvm":{
+            }
+          }
         }
       ]
 }
