@@ -15,9 +15,12 @@
 package orchestrator
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -85,9 +88,15 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
 }
 
-func (m *UserArtifactsManagerImpl) GetFullPath(dir, filename string) string {
+func (m *UserArtifactsManagerImpl) GetDirPath(dir string) string {
+	return m.RootDir + "/" + dir
+}
+
+func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
+
+const cvdHostPackageName = "cvd-host_package.tar.gz"
 
 func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, filename string, src io.Reader) error {
 	dir = m.RootDir + "/" + dir
@@ -111,5 +120,57 @@ func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, filename string, sr
 	if err := os.Rename(dst.Name(), filename); err != nil {
 		return err
 	}
+	if filepath.Base(filename) == cvdHostPackageName {
+		if err := untar(dir, filename); err != nil {
+			return err
+		}
+		if err := os.Remove(filename); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func untar(dst string, src string) error {
+	r, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+	tr := tar.NewReader(gzr)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if header == nil {
+			continue
+		}
+		target := filepath.Join(dst, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0774); err != nil {
+					return err
+				}
+			}
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+			f.Close()
+		}
+	}
 }
