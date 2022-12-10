@@ -272,7 +272,7 @@ class ServerLoopImpl : public ServerLoop,
       auto composite_disk_path = overlay_file.composite_disk_path.c_str();
 
       unlink(overlay_path.c_str());
-      if (!CreateQcowOverlay(config_.crosvm_binary(), composite_disk_path, overlay_path)) {
+      if (!CreateQcowOverlay(instance_.crosvm_binary(), composite_disk_path, overlay_path)) {
         LOG(ERROR) << "CreateQcowOverlay failed";
         return false;
       }

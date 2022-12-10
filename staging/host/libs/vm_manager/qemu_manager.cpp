@@ -192,7 +192,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
                ? StopperResult::kStopCrash
                : StopperResult::kStopFailure;
   };
-  std::string qemu_binary = config.qemu_binary_dir();
+  std::string qemu_binary = instance.qemu_binary_dir();
   switch (arch_) {
     case Arch::Arm:
       qemu_binary += "/qemu-system-arm";
@@ -347,7 +347,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   // Assume SMT is always 2 threads per core, which is how most hardware
   // today is configured, and the way crosvm does it
   qemu_cmd.AddParameter("-smp");
-  if (config.smt()) {
+  if (instance.smt()) {
     CF_EXPECT(instance.cpus() % 2 == 0,
               "CPUs must be a multiple of 2 in SMT mode");
     qemu_cmd.AddParameter(instance.cpus(), ",cores=",
