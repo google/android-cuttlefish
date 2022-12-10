@@ -89,11 +89,12 @@ int RunCrosvmDisplayCommand(const std::vector<std::string>& args) {
   if (!config) {
     LOG(FATAL) << "Failed to get Cuttlefish config.";
   }
+  // TODO(b/260649774): Consistent executable API for selecting an instance
+  auto instance = config->ForInstance(FLAGS_instance_num);
 
-  const std::string crosvm_binary_path = config->crosvm_binary();
+  const std::string crosvm_binary_path = instance.crosvm_binary();
   const std::string crosvm_control_path =
-      config->ForInstance(FLAGS_instance_num)
-          .PerInstanceInternalPath("crosvm_control.sock");
+      instance.PerInstanceInternalPath("crosvm_control.sock");
 
   cuttlefish::Command command(crosvm_binary_path);
   command.AddParameter("gpu");
