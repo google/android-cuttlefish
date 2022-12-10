@@ -66,34 +66,16 @@ void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
                             const std::string& json_flag,
                             const bool default_value);
 
-std::string GenerateIntGflag(const Json::Value& instances,
-                             const std::string& gflag_name,
-                             const std::string& group,
-                             const std::string& json_flag);
+std::string GenerateGflag(const Json::Value& instances,
+                          const std::string& gflag_name,
+                          const std::string& group,
+                          const std::string& json_flag);
 
-std::string GenerateIntGflagSubGroup(const Json::Value& instances,
-                                  const std::string& gflag_name, const std::string& group,
-                                  const std::string& subgroup, const std::string& json_flag);
-
-std::string GenerateStrGflag(const Json::Value& instances,
-                             const std::string& gflag_name,
-                             const std::string& group,
-                             const std::string& json_flag);
-
-std::string GenerateStrGflagSubGroup(const Json::Value& instances,
-                                  const std::string& gflag_name, const std::string& group,
-                                  const std::string& subgroup, const std::string& json_flag);
-
-std::string GenerateBoolGflag(const Json::Value& instances,
-                              const std::string& gflag_name,
-                              const std::string& group,
-                              const std::string& json_flag);
-
-std::string GenerateBoolGflagSubGroup(const Json::Value& instances,
-                                      const std::string& gflag_name,
-                                      const std::string& group,
-                                      const std::string& subgroup,
-                                      const std::string& json_flag);
+std::string GenerateGflagSubGroup(const Json::Value& instances,
+                                  const std::string& gflag_name,
+                                  const std::string& group,
+                                  const std::string& subgroup,
+                                  const std::string& json_flag);
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list);
