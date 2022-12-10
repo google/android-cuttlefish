@@ -17,6 +17,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "cvd_server.pb.h"
@@ -25,7 +26,7 @@ namespace cuttlefish {
 
 struct MakeRequestParam {
   std::vector<std::string> cmd_args;
-  std::vector<std::string> env;
+  std::unordered_map<std::string, std::string> env;
   std::vector<std::string> selector_args;
 };
 

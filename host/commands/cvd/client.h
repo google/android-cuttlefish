@@ -18,6 +18,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -35,12 +36,14 @@ class CvdClient {
   Result<void> ValidateServerVersion(const std::string& host_tool_directory,
                                      int num_retries = 1);
   Result<void> StopCvdServer(bool clear);
-  Result<void> HandleAcloud(std::vector<std::string>& args,
-                            const std::vector<std::string>& env,
-                            const std::string& host_tool_directory);
-  Result<void> HandleCommand(std::vector<std::string> args,
-                             std::vector<std::string> env,
-                             const std::vector<std::string>& selector_args);
+  Result<void> HandleAcloud(
+      std::vector<std::string>& args,
+      const std::unordered_map<std::string, std::string>& env,
+      const std::string& host_tool_directory);
+  Result<void> HandleCommand(
+      std::vector<std::string> args,
+      const std::unordered_map<std::string, std::string>& env,
+      const std::vector<std::string>& selector_args);
   Result<std::string> HandleVersion(const std::string& host_tool_directory);
 
  private:
