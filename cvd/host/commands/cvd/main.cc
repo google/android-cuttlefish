@@ -38,6 +38,26 @@
 
 namespace cuttlefish {
 namespace {
+
+std::unordered_map<std::string, std::string> EnvVectorToMap(char** envp) {
+  std::unordered_map<std::string, std::string> env_map;
+  if (!envp) {
+    return env_map;
+  }
+  for (char** e = envp; *e != nullptr; e++) {
+    std::string env_var_val(*e);
+    auto tokens = android::base::Split(env_var_val, "=");
+    if (tokens.size() <= 1) {
+      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
+      continue;
+    }
+    const auto var = tokens.at(0);
+    tokens.erase(tokens.begin());
+    env_map[var] = android::base::Join(tokens, "=");
+  }
+  return env_map;
+}
+
 bool IsServerModeExpected(const SharedFD& internal_server_fd,
                           const std::string& exec_file) {
   return internal_server_fd->IsOpen() || exec_file == "/proc/self/exe";
@@ -88,11 +108,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   auto [args, selector_args] =
       CF_EXPECT(selector::GetCommandAndSelectorArguments(all_args));
-
-  std::vector<std::string> env;
-  for (char** e = envp; *e != 0; e++) {
-    env.emplace_back(*e);
-  }
+  auto env = EnvVectorToMap(envp);
 
   CvdClient client;
 
