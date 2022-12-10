@@ -177,42 +177,12 @@ void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
   }
 }
 
-std::string GenerateIntGflag(const Json::Value& instances, const std::string& gflag_name,
-                          const std::string& group, const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << instances[i][group][json_flag];
-    if (i != size - 1){ buff << ",";}
-  }
-  return buff.str();
-}
-
 // TODO(b/255384531) for using variadic functions
-std::string GenerateIntGflagSubGroup(const Json::Value& instances,
-                                     const std::string& gflag_name,
-                                     const std::string& group,
-                                     const std::string& subgroup,
-                                     const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << instances[i][group][subgroup][json_flag];
-    if (i != size - 1){ buff << ",";}
-  }
-  return buff.str();
-}
 
-std::string GenerateStrGflag(const Json::Value& instances,
-                             const std::string& gflag_name,
-                             const std::string& group,
-                             const std::string& json_flag) {
+std::string GenerateGflag(const Json::Value& instances,
+                          const std::string& gflag_name,
+                          const std::string& group,
+                          const std::string& json_flag) {
   int size = instances.size();
   std::stringstream buff;
   // Append Header
@@ -227,11 +197,11 @@ std::string GenerateStrGflag(const Json::Value& instances,
   return buff.str();
 }
 
-std::string GenerateStrGflagSubGroup(const Json::Value& instances,
-                                     const std::string& gflag_name,
-                                     const std::string& group,
-                                     const std::string& subgroup,
-                                     const std::string& json_flag) {
+std::string GenerateGflagSubGroup(const Json::Value& instances,
+                                  const std::string& gflag_name,
+                                  const std::string& group,
+                                  const std::string& subgroup,
+                                  const std::string& json_flag) {
   int size = instances.size();
   std::stringstream buff;
   // Append Header
@@ -240,45 +210,6 @@ std::string GenerateStrGflagSubGroup(const Json::Value& instances,
   for (int i = 0; i < size; i++) {
     buff << instances[i][group][subgroup][json_flag].asString();
     if (i != size - 1){ buff << ",";}
-  }
-  return buff.str();
-}
-
-inline std::string BoolToString(bool val) { return val ? "true" : "false"; }
-
-std::string GenerateBoolGflag(const Json::Value& instances,
-                              const std::string& gflag_name,
-                              const std::string& group,
-                              const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << BoolToString(instances[i][group][json_flag].asBool());
-    if (i != size - 1) {
-      buff << ",";
-    }
-  }
-  return buff.str();
-}
-
-std::string GenerateBoolGflagSubGroup(const Json::Value& instances,
-                                      const std::string& gflag_name,
-                                      const std::string& group,
-                                      const std::string& subgroup,
-                                      const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << BoolToString(instances[i][group][subgroup][json_flag].asBool());
-    if (i != size - 1) {
-      buff << ",";
-    }
   }
   return buff.str();
 }
