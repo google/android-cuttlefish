@@ -338,8 +338,8 @@ DEFINE_vec(record_screen, cuttlefish::BoolToString(CF_DEFAULTS_RECORD_SCREEN),
            "Enable screen recording. "
            "Requires --start_webrtc");
 
-DEFINE_bool(smt, CF_DEFAULTS_SMT,
-            "Enable simultaneous multithreading (SMT/HT)");
+DEFINE_vec(smt, cuttlefish::BoolToString(CF_DEFAULTS_SMT),
+           "Enable simultaneous multithreading (SMT/HT)");
 
 DEFINE_vec(
     vsock_guest_cid, std::to_string(CF_DEFAULTS_VSOCK_GUEST_CID),
@@ -736,11 +736,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
 
-  tmp_config_obj.set_qemu_binary_dir(FLAGS_qemu_binary_dir);
-  tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
-
-  tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
   // streaming, webrtc setup
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
@@ -752,8 +748,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_sig_server_strict(FLAGS_verify_sig_server_certificate);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
-
-  tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
   tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
 
@@ -903,6 +897,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       FLAGS_enable_gpu_udmabuf, instances_size, "enable_gpu_udmabuf"));
   std::vector<bool> enable_gpu_angle_vec = CF_EXPECT(GetFlagBoolValueForInstances(
       FLAGS_enable_gpu_angle, instances_size, "enable_gpu_angle"));
+  std::vector<bool> smt_vec = CF_EXPECT(GetFlagBoolValueForInstances(
+      FLAGS_smt, instances_size, "smt"));
+  std::vector<std::string> crosvm_binary_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_crosvm_binary, instances_size));
+  std::vector<std::string> seccomp_policy_dir_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_seccomp_policy_dir, instances_size));
+  std::vector<std::string> qemu_binary_dir_vec =
+      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_qemu_binary_dir, instances_size));
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dir_vec =
@@ -950,6 +952,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto instance = tmp_config_obj.ForInstance(num);
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
+
     instance.set_use_allocd(use_allocd_vec[instance_index]);
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_vehicle_hal_grpc_server(
@@ -963,6 +966,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     if (!boot_slot_vec[instance_index].empty()) {
       instance.set_boot_slot(boot_slot_vec[instance_index]);
     }
+
+    instance.set_crosvm_binary(crosvm_binary_vec[instance_index]);
+    instance.set_seccomp_policy_dir(seccomp_policy_dir_vec[instance_index]);
+    instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
 
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(
@@ -983,11 +990,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_session_id(iface_config.mobile_tap.session_id);
 
     instance.set_cpus(cpus_vec[instance_index]);
-    // TODO(weihsu): before vectorizing smt flag,
     // make sure all instances have multiple of 2 then SMT mode
     // if any of instance doesn't have multiple of 2 then NOT SMT
-    CF_EXPECT(!FLAGS_smt || cpus_vec[instance_index] % 2 == 0,
+    CF_EXPECT(!smt_vec[instance_index] || cpus_vec[instance_index] % 2 == 0,
               "CPUs must be a multiple of 2 in SMT mode");
+    instance.set_smt(smt_vec[instance_index]);
 
     // new instance specific flags (moved from common flags)
     CF_EXPECT(instance_index < kernel_configs.size(),
@@ -1316,8 +1323,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     instance_index++;
   }  // end of num_instances loop
-
-  tmp_config_obj.set_smt(FLAGS_smt);
 
   std::vector<std::string> names;
   for (const auto& instance : tmp_config_obj.Instances()) {
