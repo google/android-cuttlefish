@@ -202,6 +202,10 @@ func (testUAM) CreateUpdateArtifact(string, string, io.Reader) error {
 	return nil
 }
 
+func (testUAM) GetDirPath(string) string {
+	return ""
+}
+
 func TestCreateUploadDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/userartifacts", strings.NewReader("{}"))

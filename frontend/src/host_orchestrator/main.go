@@ -125,6 +125,11 @@ func main() {
 		HomesRootDir:     imRootDir + "/homes",
 	}
 	om := orchestrator.NewMapOM()
+	uamOpts := orchestrator.UserArtifactsManagerOpts{
+		RootDir:     imRootDir + "/user_artifacs",
+		NameFactory: func() string { return uuid.New().String() },
+	}
+	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	dw := orchestrator.NewCVDDownloader(orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL))
 	opts := orchestrator.CVDToolInstanceManagerOpts{
 		ExecContext: exec.Command,
@@ -132,18 +137,14 @@ func main() {
 			ID:     cvdBinAndroidBuildID,
 			Target: cvdBinAndroidBuildTarget,
 		},
-		Paths:            imPaths,
-		CVDDownloader:    dw,
-		OperationManager: om,
-		CVDExecTimeout:   5 * time.Minute,
-		HostValidator:    &orchestrator.HostValidator{ExecContext: exec.Command},
+		Paths:                    imPaths,
+		CVDDownloader:            dw,
+		OperationManager:         om,
+		UserArtifactsDirResolver: uam,
+		CVDExecTimeout:           5 * time.Minute,
+		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.Command},
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
-	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:     imRootDir + "/user_artifacs",
-		NameFactory: func() string { return uuid.New().String() },
-	}
-	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
 		err := deviceServerLoop()

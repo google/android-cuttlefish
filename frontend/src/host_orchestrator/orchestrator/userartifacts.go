@@ -26,8 +26,15 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
+// Resolves the user artifacts full directory.
+type UserArtifactsDirResolver interface {
+	// Given a directory name returns its full path.
+	GetDirPath(name string) string
+}
+
 // Abstraction for managing user artifacts for launching CVDs.
 type UserArtifactsManager interface {
+	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
@@ -88,8 +95,8 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
 }
 
-func (m *UserArtifactsManagerImpl) GetDirPath(dir string) string {
-	return m.RootDir + "/" + dir
+func (m *UserArtifactsManagerImpl) GetDirPath(name string) string {
+	return m.RootDir + "/" + name
 }
 
 func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
@@ -122,7 +129,10 @@ func saveFile(dst string, src io.Reader) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmp.Name(), dst)
+	if err := os.Rename(tmp.Name(), dst); err != nil {
+		return err
+	}
+	return os.Chmod(dst, 0644)
 }
 
 const cvdHostPackageName = "cvd-host_package.tar.gz"
