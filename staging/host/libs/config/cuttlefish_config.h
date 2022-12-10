@@ -107,23 +107,11 @@ class CuttlefishConfig {
     int refresh_rate_hz;
   };
 
-  void set_cuttlefish_env_path(const std::string& path);
-  std::string cuttlefish_env_path() const;
-
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
 
-  void set_qemu_binary_dir(const std::string& qemu_binary_dir);
-  std::string qemu_binary_dir() const;
-
-  void set_crosvm_binary(const std::string& crosvm_binary);
-  std::string crosvm_binary() const;
-
   void set_gem5_debug_flags(const std::string& gem5_debug_flags);
   std::string gem5_debug_flags() const;
-
-  void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
-  std::string seccomp_policy_dir() const;
 
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
@@ -237,9 +225,6 @@ class CuttlefishConfig {
   void set_rootcanal_default_commands_file(
       const std::string& rootcanal_default_commands_file);
   std::string rootcanal_default_commands_file() const;
-
-  void set_smt(bool smt);
-  bool smt() const;
 
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
@@ -501,6 +486,11 @@ class CuttlefishConfig {
     // The range of UDP ports available for webrtc sessions.
     std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
 
+    bool smt() const;
+    std::string crosvm_binary() const;
+    std::string seccomp_policy_dir() const;
+    std::string qemu_binary_dir() const;
+
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
     bool enable_modem_simulator() const;
@@ -643,6 +633,11 @@ class CuttlefishConfig {
     // The range of UDP ports available for webrtc sessions.
     void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
 
+    void set_smt(bool smt);
+    void set_crosvm_binary(const std::string& crosvm_binary);
+    void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
+    void set_qemu_binary_dir(const std::string& qemu_binary_dir);
+
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
     void set_enable_modem_simulator(bool enable_modem_simulator);
@@ -683,12 +678,14 @@ class CuttlefishConfig {
     void set_bootloader(const std::string& bootloader);
     void set_initramfs_path(const std::string& initramfs_path);
     void set_kernel_path(const std::string& kernel_path);
+
+   private:
+    void SetPath(const std::string& key, const std::string& path);
   };
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
-  void SetPath(const std::string& key, const std::string& path);
   bool LoadFromFile(const char* file);
   static CuttlefishConfig* BuildConfigImpl(const std::string& path);
 

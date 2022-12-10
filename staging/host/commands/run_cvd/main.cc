@@ -53,13 +53,11 @@ namespace cuttlefish {
 
 namespace {
 
-class CuttlefishEnvironment : public SetupFeature,
-                              public DiagnosticInformation {
+class CuttlefishEnvironment : public DiagnosticInformation {
  public:
   INJECT(
-      CuttlefishEnvironment(const CuttlefishConfig& config,
-                            const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+      CuttlefishEnvironment(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
@@ -67,38 +65,10 @@ class CuttlefishEnvironment : public SetupFeature,
     return {
         "Launcher log: " + instance_.launcher_log_path(),
         "Instance configuration: " + config_path,
-        "Instance environment: " + config_.cuttlefish_env_path(),
     };
   }
 
-  // SetupFeature
-  std::string Name() const override { return "CuttlefishEnvironment"; }
-  bool Enabled() const override { return true; }
-
  private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
-    auto env =
-        SharedFD::Open(config_.cuttlefish_env_path(), O_CREAT | O_RDWR, 0755);
-    if (!env->IsOpen()) {
-      LOG(ERROR) << "Unable to create cuttlefish.env file";
-      return false;
-    }
-    std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
-                             instance_.PerInstancePath(".") + "\"\n";
-    config_env += "export ANDROID_SERIAL=" + instance_.adb_ip_and_port() + "\n";
-    auto written = WriteAll(env, config_env);
-    if (written != config_env.size()) {
-      LOG(ERROR) << "Failed to write all of \"" << config_env << "\", "
-                 << "only wrote " << written << " bytes. Error was "
-                 << env->StrError();
-      return false;
-    }
-    return true;
-  }
-
- private:
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
@@ -143,7 +113,6 @@ fruit::Component<> runCvdComponent(
     const CuttlefishConfig::InstanceSpecific* instance) {
   return fruit::createComponent()
       .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
-      .addMultibinding<SetupFeature, CuttlefishEnvironment>()
       .addMultibinding<InstanceLifecycle, InstanceLifecycle>()
       .addMultibinding<LateInjected, InstanceLifecycle>()
       .bindInstance(*config)
