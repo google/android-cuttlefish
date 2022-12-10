@@ -38,12 +38,12 @@ class OpenWrt : public CommandSource {
     constexpr auto crosvm_for_ap_socket = "ap_control.sock";
 
     CrosvmBuilder ap_cmd;
-    ap_cmd.ApplyProcessRestarter(config_.crosvm_binary(),
+    ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(),
                                  kOpenwrtVmResetExitCode);
     ap_cmd.Cmd().AddParameter("run");
     ap_cmd.AddControlSocket(
         instance_.PerInstanceInternalPath(crosvm_for_ap_socket),
-        config_.crosvm_binary());
+        instance_.crosvm_binary());
 
     if (!config_.vhost_user_mac80211_hwsim().empty()) {
       ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
@@ -70,7 +70,7 @@ class OpenWrt : public CommandSource {
     }
     if (instance_.enable_sandbox()) {
       ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
-                                config_.seccomp_policy_dir());
+                                instance_.seccomp_policy_dir());
     } else {
       ap_cmd.Cmd().AddParameter("--disable-sandbox");
     }
