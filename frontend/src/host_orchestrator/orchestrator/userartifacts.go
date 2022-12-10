@@ -57,11 +57,11 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsMa
 }
 
 func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
-	if err := createDir(m.RootDir, false); err != nil {
+	if err := createDir(m.RootDir); err != nil {
 		return nil, err
 	}
 	name := m.NameFactory()
-	if err := createDir(m.RootDir+"/"+name, true); err != nil {
+	if err := createDirFailIfExist(m.RootDir + "/" + name); err != nil {
 		return nil, err
 	}
 	return &apiv1.UploadDirectory{Name: name}, nil
