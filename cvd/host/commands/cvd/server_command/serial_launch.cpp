@@ -28,9 +28,10 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server.h"
-#include "instance_lock.h"
-#include "server_client.h"
+#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -106,12 +107,15 @@ class SerialLaunchCommand : public CvdServerHandler {
     response.mutable_command_response();
     return response;
   }
+
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
     CF_EXPECT(executor_.Interrupt());
     return {};
   }
+
+  cvd_common::Args CmdList() const override { return {"experimental"}; }
 
   Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {
@@ -354,6 +358,7 @@ class SerialPreset : public CvdServerHandler {
            invocation.arguments.size() >= 1 &&
            Presets().count(invocation.arguments[0]) > 0;
   }
+
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
     if (interrupted_) {
@@ -391,12 +396,15 @@ class SerialPreset : public CvdServerHandler {
     response.mutable_command_response();
     return response;
   }
+
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
     CF_EXPECT(executor_.Interrupt());
     return {};
   }
+
+  cvd_common::Args CmdList() const override { return {"experimental"}; }
 
  private:
   CommandSequenceExecutor& executor_;

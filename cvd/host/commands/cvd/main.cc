@@ -138,6 +138,11 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return {};
   }
 
+  if (args.size() > 1 && android::base::Basename(args[0]) == "cvd" &&
+      args[1] == "cmd-list") {
+    return {};
+  }
+
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
   CF_EXPECT(client.HandleCommand(args, env, selector_args));
   return {};

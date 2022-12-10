@@ -20,6 +20,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -90,6 +91,8 @@ class CvdHelpHandler : public CvdServerHandler {
     CF_EXPECT(executor_.Interrupt());
     return {};
   }
+
+  cvd_common::Args CmdList() const override { return {"help"}; }
 
  private:
   std::mutex interruptible_;
