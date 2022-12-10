@@ -11,4 +11,4 @@ Before entering the kernel, the u-boot bootloader writes some information
 about the device image files into the keymint channel to prepare it with
 the authenticated version number of the operating system.
 
-[![linkage](./linkage.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/secure_env/doc/linkage.svg)
+[![linkage](./doc/linkage.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/secure_env/doc/linkage.svg)
