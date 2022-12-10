@@ -287,8 +287,30 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   return {};
 }
 
-Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
+// replace cvd -h or --help into cvd help
+static RequestWithStdio ReplaceHelp(RequestWithStdio&& src_request) {
+  auto request = std::move(src_request);
+  cvd::Request modified_proto = request.Message();
+  auto& args = *modified_proto.mutable_command_request()->mutable_args();
+  if (args.size() < 2 || android::base::Basename(args.at(0)) != "cvd") {
+    return request;
+  }
+  const auto help_arg = args.at(1);
+  if (help_arg != "--help" && help_arg != "-h" && help_arg != "-help") {
+    return request;
+  }
+
+  args[1] = "help";
+  RequestWithStdio new_request(request.Client(), modified_proto,
+                               request.FileDescriptors(),
+                               request.Credentials());
+  return new_request;
+}
+
+Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request_orig,
                                                SharedFD client) {
+  RequestWithStdio request = ReplaceHelp(std::move(request_orig));
+
   fruit::Injector<> injector(RequestComponent, this);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
