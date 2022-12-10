@@ -151,9 +151,9 @@ func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
 			cvd := &apiv1.CVD{
 				Name: item.InstanceName,
 				// TODO(b/259725479): Update when `cvd fleet` prints out build information.
-				BuildInfo: &apiv1.BuildInfo{},
-				Status:    item.Status,
-				Displays:  item.Displays,
+				BuildSource: &apiv1.BuildSource{},
+				Status:      item.Status,
+				Displays:    item.Displays,
 			}
 			cvds = append(cvds, cvd)
 		}
@@ -206,7 +206,7 @@ func (m *CVDToolInstanceManager) launchCVD_(
 	if err := createDir(m.paths.HomesRootDir, false); err != nil {
 		return nil, err
 	}
-	artifactsDir, err := m.fetchCVDHandler.Fetch(req.CVD.BuildInfo)
+	artifactsDir, err := m.fetchCVDHandler.Fetch(req.CVD.BuildSource.AndroidCIBuild)
 	if err != nil {
 		return nil, err
 	}
@@ -220,20 +220,27 @@ func (m *CVDToolInstanceManager) launchCVD_(
 		return nil, err
 	}
 	return &apiv1.CVD{
-		Name:      cvdName,
-		BuildInfo: req.CVD.BuildInfo,
+		Name:        cvdName,
+		BuildSource: req.CVD.BuildSource,
 	}, nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
-	if r.CVD.BuildInfo == nil {
-		return EmptyFieldError("BuildInfo")
+	if r.CVD.BuildSource == nil {
+		return EmptyFieldError("BuildSource")
 	}
-	if r.CVD.BuildInfo.BuildID == "" {
-		return EmptyFieldError("BuildInfo.BuildID")
+	if r.CVD.BuildSource.AndroidCIBuild != nil {
+		if r.CVD.BuildSource.AndroidCIBuild.BuildID == "" {
+			return EmptyFieldError("BuildSource.AndroidCIBuild.BuildID")
+		}
+		if r.CVD.BuildSource.AndroidCIBuild.Target == "" {
+			return EmptyFieldError("BuildSource.AndroidCIBuild.Target")
+		}
 	}
-	if r.CVD.BuildInfo.Target == "" {
-		return EmptyFieldError("BuildInfo.Target")
+	if r.CVD.BuildSource.UserBuild != nil {
+		if r.CVD.BuildSource.UserBuild.ArtifactsDir == "" {
+			return EmptyFieldError("BuildSource.UserBuild.ArtifactsDir")
+		}
 	}
 	return nil
 }
@@ -288,7 +295,7 @@ func newFetchCVDHandler(execContext ExecContext, cvdBin, artifactsDir string) *f
 	}
 }
 
-func (h *fetchCVDHandler) Fetch(info *apiv1.BuildInfo) (string, error) {
+func (h *fetchCVDHandler) Fetch(info *apiv1.AndroidCIBuild) (string, error) {
 	entry := h.getMapEntry(info)
 	entry.mutex.Lock()
 	defer entry.mutex.Unlock()
@@ -317,7 +324,7 @@ func (h *fetchCVDHandler) Fetch(info *apiv1.BuildInfo) (string, error) {
 	return outDir, nil
 }
 
-func (h *fetchCVDHandler) getMapEntry(info *apiv1.BuildInfo) *fetchCVDMapEntry {
+func (h *fetchCVDHandler) getMapEntry(info *apiv1.AndroidCIBuild) *fetchCVDMapEntry {
 	h.mapMutex.Lock()
 	defer h.mapMutex.Unlock()
 	key := fmt.Sprintf("%s_%s", info.BuildID, info.Target)
