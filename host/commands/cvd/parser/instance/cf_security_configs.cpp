@@ -24,7 +24,9 @@
 namespace cuttlefish {
 
 static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
-    {"serial_number", Json::ValueType::stringValue}};
+    {"serial_number", Json::ValueType::stringValue},
+    {"guest_enforce_security", Json::ValueType::booleanValue},
+};
 
 Result<void> ValidateSecurityConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kSecurityKeyMap),
@@ -54,14 +56,18 @@ void InitSecurityConfigs(Json::Value& instances) {
   // This init should be called after the InitSecurityConfigs call, since it
   // depends on  serial_number flag
   InitRandomSerialNumber(instances);
+  InitBoolConfig(instances, "security", "guest_enforce_security",
+                 CF_DEFAULTS_GUEST_ENFORCE_SECURITY);
 }
 
 std::vector<std::string> GenerateSecurityFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateStrGflag(instances, "serial_number", "security",
-                                       "serial_number"));
-  result.emplace_back(GenerateBoolGflag(instances, "use_random_serial",
-                                        "security", "use_random_serial"));
+  result.emplace_back(
+      GenerateGflag(instances, "serial_number", "security", "serial_number"));
+  result.emplace_back(GenerateGflag(instances, "use_random_serial", "security",
+                                    "use_random_serial"));
+  result.emplace_back(GenerateGflag(instances, "guest_enforce_security",
+                                    "security", "guest_enforce_security"));
   return result;
 }
 
