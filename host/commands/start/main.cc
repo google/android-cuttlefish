@@ -210,7 +210,8 @@ std::unordered_set<std::string> kBoolFlags = {"guest_enforce_security",
                                               "protected_vm",
                                               "enable_kernel_log",
                                               "kgdb",
-                                              "start_webrtc"};
+                                              "start_webrtc",
+                                              "smt"};
 
 struct BooleanFlag {
   bool is_bool_flag;
