@@ -30,14 +30,6 @@
 namespace cuttlefish {
 namespace selector {
 
-struct CommandAndSelectorArguments {
-  std::vector<std::string> cmd_args;
-  std::vector<std::string> selector_args;
-};
-
-Result<CommandAndSelectorArguments> GetCommandAndSelectorArguments(
-    const std::vector<std::string>& args);
-
 /**
  * This class parses the separated SelectorOptions defined in
  * cvd_server.proto.
@@ -49,9 +41,9 @@ Result<CommandAndSelectorArguments> GetCommandAndSelectorArguments(
  *  2. If the group name is already taken
  *
  */
-class SelectorFlagsParser {
+class StartSelectorParser {
  public:
-  static Result<SelectorFlagsParser> ConductSelectFlagsParser(
+  static Result<StartSelectorParser> ConductSelectFlagsParser(
       const uid_t uid, const std::vector<std::string>& selector_args,
       const std::vector<std::string>& cmd_args,
       const std::unordered_map<std::string, std::string>& envs);
@@ -65,7 +57,7 @@ class SelectorFlagsParser {
   bool IsMaybeDefaultGroup() const { return may_be_default_group_; }
 
  private:
-  SelectorFlagsParser(const std::string& system_wide_user_home,
+  StartSelectorParser(const std::string& system_wide_user_home,
                       const std::vector<std::string>& selector_args,
                       const std::vector<std::string>& cmd_args,
                       const std::unordered_map<std::string, std::string>& envs);
@@ -120,7 +112,7 @@ class SelectorFlagsParser {
   };
 
   class ParsedInstanceIdsOpt {
-    friend class SelectorFlagsParser;
+    friend class StartSelectorParser;
 
    private:
     ParsedInstanceIdsOpt(const std::vector<unsigned>& instance_ids)
@@ -143,7 +135,7 @@ class SelectorFlagsParser {
    * the instance_ids_ cannot be yet figured out, so the task is deferred
    * to CreationAnaylizer or so, which has more contexts. For example,
    * if no option at all is given, it is not an error; however, the
-   * SelectorFlagsParser alone cannot figure out the list of instance ids. The
+   * StartSelectorParser alone cannot figure out the list of instance ids. The
    * InstanceDatabase, UniqueResourceAllocator, InstanceLockFileManager will be
    * involved to automatically generate the valid, numeric instance ids.
    * If that's the case, Result{std::nullopt} could be returned.
@@ -165,6 +157,7 @@ class SelectorFlagsParser {
     std::optional<std::vector<std::string>> instance_names;
     std::optional<std::string> instance_nums_flag;
   };
+
   Result<unsigned> VerifyNumOfInstances(
       const VerifyNumOfInstancesParam& params,
       const unsigned default_n_instances = 1) const;
