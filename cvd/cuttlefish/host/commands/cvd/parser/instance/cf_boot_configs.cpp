@@ -59,11 +59,11 @@ void InitBootConfigs(Json::Value& instances) {
 
 std::vector<std::string> GenerateBootFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateStrGflag(instances, "extra_bootconfig_args", "boot",
+  result.emplace_back(GenerateGflag(instances, "extra_bootconfig_args", "boot",
                                     "extra_bootconfig_args"));
-  result.emplace_back(GenerateStrGflag(instances, "enable_bootanimation",
-                                       "boot", "enable_bootanimation"));
-  result.emplace_back(GenerateStrGflagSubGroup(instances, "extra_kernel_cmdline",
+  result.emplace_back(GenerateGflag(instances, "enable_bootanimation", "boot",
+                                    "enable_bootanimation"));
+  result.emplace_back(GenerateGflagSubGroup(instances, "extra_kernel_cmdline",
                                             "boot", "kernel",
                                             "extra_kernel_cmdline"));
   return result;
