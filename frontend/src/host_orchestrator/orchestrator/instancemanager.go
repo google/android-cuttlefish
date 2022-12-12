@@ -211,7 +211,7 @@ func (m *CVDToolInstanceManager) launchCVD_(req apiv1.CreateCVDRequest, op apiv1
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
 	homeDir := m.paths.HomesRootDir + "/" + cvdName
-	if err := createDirFailIfExist(homeDir); err != nil {
+	if err := createNewDir(homeDir); err != nil {
 		return nil, err
 	}
 	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
@@ -367,22 +367,22 @@ func (h *startCVDHandler) Launch(instanceNumber uint32, artifactsDir, homeDir st
 	return nil
 }
 
-func createDirFailIfExist(dir string) error {
+// Fails if the directory already exists.
+func createNewDir(dir string) error {
 	err := os.Mkdir(dir, 0774)
 	if err != nil {
 		return err
 	}
-	// Mkdir set the permission bits (before umask)
+	// `os.Mkdir` sets the permission bits before umask, therefore the following `os.Chmod` call.
 	return os.Chmod(dir, 0774)
 }
 
 func createDir(dir string) error {
-	err := os.Mkdir(dir, 0774)
-	if err != nil && !os.IsExist(err) {
+	if err := createNewDir(dir); os.IsExist(err) {
+		return nil
+	} else {
 		return err
 	}
-	// Mkdir set the permission bits (before umask)
-	return os.Chmod(dir, 0774)
 }
 
 type CVDDownloader interface {
