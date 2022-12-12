@@ -47,6 +47,23 @@ Envs ConvertProtoMap(
   return envs;
 }
 
+PreconditionVerification VerifyPrecondition(const RequestWithStdio& request) {
+  PreconditionVerification verification_result;
+  if (!request.Credentials()) {
+    verification_result.error_message =
+        "ucred is not available while it is necessary.";
+    return verification_result;
+  }
+  if (!Contains(request.Message().command_request().env(),
+                "ANDROID_HOST_OUT")) {
+    verification_result.error_message =
+        "ANDROID_HOST_OUT in client environment is invalid.";
+    return verification_result;
+  }
+  verification_result.is_ok = true;
+  return verification_result;
+}
+
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
   cvd::Response response;
   response.mutable_command_response();  // set oneof field
