@@ -705,52 +705,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_grpc_socket_path(
   (*Dictionary())[kGrpcConfig] = socket_path;
 }
 
-static constexpr char kSmt[] = "smt";
-void CuttlefishConfig::MutableInstanceSpecific::set_smt(bool smt) {
-  (*Dictionary())[kSmt] = smt;
-}
-bool CuttlefishConfig::InstanceSpecific::smt() const {
-  return (*Dictionary())[kSmt].asBool();
-}
-
-static constexpr char kCrosvmBinary[] = "crosvm_binary";
-std::string CuttlefishConfig::InstanceSpecific::crosvm_binary() const {
-  return (*Dictionary())[kCrosvmBinary].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_binary(
-    const std::string& crosvm_binary) {
-  (*Dictionary())[kCrosvmBinary] = crosvm_binary;
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::SetPath(
-    const std::string& key, const std::string& path) {
-  if (!path.empty()) {
-    (*Dictionary())[key] = AbsolutePath(path);
-  }
-}
-
-static constexpr char kSeccompPolicyDir[] = "seccomp_policy_dir";
-void CuttlefishConfig::MutableInstanceSpecific::set_seccomp_policy_dir(
-    const std::string& seccomp_policy_dir) {
-  if (seccomp_policy_dir.empty()) {
-    (*Dictionary())[kSeccompPolicyDir] = seccomp_policy_dir;
-    return;
-  }
-  SetPath(kSeccompPolicyDir, seccomp_policy_dir);
-}
-std::string CuttlefishConfig::InstanceSpecific::seccomp_policy_dir() const {
-  return (*Dictionary())[kSeccompPolicyDir].asString();
-}
-
-static constexpr char kQemuBinaryDir[] = "qemu_binary_dir";
-std::string CuttlefishConfig::InstanceSpecific::qemu_binary_dir() const {
-  return (*Dictionary())[kQemuBinaryDir].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_qemu_binary_dir(
-    const std::string& qemu_binary_dir) {
-  (*Dictionary())[kQemuBinaryDir] = qemu_binary_dir;
-}
-
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
@@ -820,8 +774,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
     // console can't be used since uboot doesn't support it.
     console_dev = "hvc1";
   } else {
-    // QEMU and Gem5 emulate pl011 on ARM/ARM64, but QEMU and crosvm on other
-    // architectures emulate ns16550a/uart8250 instead.
+    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
     Arch target = target_arch();
     if ((target == Arch::Arm64 || target == Arch::Arm) &&
         config_->vm_manager() != vm_manager::CrosvmManager::name()) {
