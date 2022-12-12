@@ -505,10 +505,8 @@ PRODUCT_COPY_FILES += \
 #
 # Dice HAL
 #
-ifneq ($(filter-out %_riscv64,$(TARGET_PRODUCT)),)
 PRODUCT_PACKAGES += \
     android.hardware.security.dice-service.non-secure-software
-endif
 
 #
 # Power and PowerStats HALs
