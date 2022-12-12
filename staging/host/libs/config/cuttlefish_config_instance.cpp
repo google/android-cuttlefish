@@ -751,6 +751,22 @@ void CuttlefishConfig::MutableInstanceSpecific::set_qemu_binary_dir(
   (*Dictionary())[kQemuBinaryDir] = qemu_binary_dir;
 }
 
+static constexpr char kVhostNet[] = "vhost_net";
+void CuttlefishConfig::MutableInstanceSpecific::set_vhost_net(bool vhost_net) {
+  (*Dictionary())[kVhostNet] = vhost_net;
+}
+bool CuttlefishConfig::InstanceSpecific::vhost_net() const {
+  return (*Dictionary())[kVhostNet].asBool();
+}
+
+static constexpr char kRilDns[] = "ril_dns";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_dns(const std::string& ril_dns) {
+  (*Dictionary())[kRilDns] = ril_dns;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_dns() const {
+  return (*Dictionary())[kRilDns].asString();
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
