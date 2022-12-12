@@ -39,25 +39,6 @@ Result<bool> CvdStartCommandHandler::CanHandle(
   return Contains(command_to_binary_map_, invocation.command);
 }
 
-CvdStartCommandHandler::PreconditionVerification
-CvdStartCommandHandler::VerifyPrecondition(
-    const RequestWithStdio& request) const {
-  PreconditionVerification verification_result;
-  if (!request.Credentials()) {
-    verification_result.error_message =
-        "ucred is not available while it is necessary.";
-    return verification_result;
-  }
-  if (!Contains(request.Message().command_request().env(),
-                "ANDROID_HOST_OUT")) {
-    verification_result.error_message =
-        "ANDROID_HOST_OUT in client environment is invalid.";
-    return verification_result;
-  }
-  verification_result.is_ok = true;
-  return verification_result;
-}
-
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
     const std::string& bin_file, const selector::GroupCreationInfo& group_info,
     const RequestWithStdio& request) {
