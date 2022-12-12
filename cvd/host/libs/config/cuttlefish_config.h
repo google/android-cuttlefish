@@ -55,7 +55,6 @@ constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
 constexpr char kInternalDirName[] = "internal";
-constexpr char kGrpcSocketDirName[] = "grpc_socket";
 constexpr char kSharedDirName[] = "shared";
 constexpr char kLogDirName[] = "logs";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
@@ -107,11 +106,50 @@ class CuttlefishConfig {
     int refresh_rate_hz;
   };
 
+  bool deprecated_boot_completed() const;
+  void set_deprecated_boot_completed(bool deprecated_boot_completed);
+
+  void set_cuttlefish_env_path(const std::string& path);
+  std::string cuttlefish_env_path() const;
+
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
 
+  void set_enable_bootanimation(const bool enable_bootanimation);
+  bool enable_bootanimation() const;
+
+  void set_qemu_binary_dir(const std::string& qemu_binary_dir);
+  std::string qemu_binary_dir() const;
+
+  void set_crosvm_binary(const std::string& crosvm_binary);
+  std::string crosvm_binary() const;
+
+  void set_gem5_debug_file(const std::string& gem5_debug_file);
+  std::string gem5_debug_file() const;
+
   void set_gem5_debug_flags(const std::string& gem5_debug_flags);
   std::string gem5_debug_flags() const;
+
+  void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
+  std::string seccomp_policy_dir() const;
+
+  void set_enable_webrtc(bool enable_webrtc);
+  bool enable_webrtc() const;
+
+  void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
+  std::string webrtc_assets_dir() const;
+
+  void set_webrtc_enable_adb_websocket(bool enable);
+  bool webrtc_enable_adb_websocket() const;
+
+  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
+  bool enable_vehicle_hal_grpc_server() const;
+
+  void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
+  bool enable_gnss_grpc_proxy() const;
+
+  void set_boot_slot(const std::string& boot_slot);
+  std::string boot_slot() const;
 
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
@@ -157,6 +195,14 @@ class CuttlefishConfig {
   void set_sig_server_port(int port);
   int sig_server_port() const;
 
+  // The range of UDP ports available for webrtc sessions.
+  void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
+  std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
+
+  // The range of TCP ports available for webrtc sessions.
+  void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
+  std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
+
   // The address of the signaling server
   void set_sig_server_address(const std::string& addr);
   std::string sig_server_address() const;
@@ -176,9 +222,18 @@ class CuttlefishConfig {
   void set_sig_server_strict(bool strict);
   bool sig_server_strict() const;
 
+  // A file containing http headers to include in the connection to the
+  // signaling server
+  void set_sig_server_headers_path(const std::string& path);
+  std::string sig_server_headers_path() const;
+
   // The dns address of mobile network (RIL)
   void set_ril_dns(const std::string& ril_dns);
   std::string ril_dns() const;
+
+  // Kernel and bootloader logging
+  void set_enable_kernel_log(bool enable_kernel_log);
+  bool enable_kernel_log() const;
 
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
@@ -225,6 +280,18 @@ class CuttlefishConfig {
   void set_rootcanal_default_commands_file(
       const std::string& rootcanal_default_commands_file);
   std::string rootcanal_default_commands_file() const;
+
+  void set_record_screen(bool record_screen);
+  bool record_screen() const;
+
+  void set_smt(bool smt);
+  bool smt() const;
+
+  void set_enable_audio(bool enable);
+  bool enable_audio() const;
+
+  void set_protected_vm(bool protected_vm);
+  bool protected_vm() const;
 
   void set_bootconfig_supported(bool bootconfig_supported);
   bool bootconfig_supported() const;
@@ -285,6 +352,8 @@ class CuttlefishConfig {
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
     int adb_host_port() const;
+    // Port number to connect to the fastboot server on the host
+    int fastboot_host_port() const;
     // Device-specific ID to distinguish modem simulators. Must be 4 digits.
     int modem_simulator_host_id() const;
     // Port number to connect to the gnss grpc proxy server on the host
@@ -300,6 +369,9 @@ class CuttlefishConfig {
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
     std::string ethernet_tap_name() const;
+    std::string ethernet_bridge_name() const;
+    std::string ethernet_mac() const;
+    std::string ethernet_ipv6() const;
     uint32_t session_id() const;
     bool use_allocd() const;
     int vsock_guest_cid() const;
@@ -312,7 +384,6 @@ class CuttlefishConfig {
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
     std::string PerInstanceLogPath(const std::string& file_name) const;
-    std::string PerInstanceGrpcSocketPath(const std::string& socket_name) const;
 
     std::string instance_dir() const;
 
@@ -456,7 +527,6 @@ class CuttlefishConfig {
 
     std::vector<DisplayConfig> display_configs() const;
 
-    std::string grpc_socket_path() const;
     int memory_mb() const;
     int ddr_mem_mb() const;
     std::string setupwizard_mode() const;
@@ -465,31 +535,6 @@ class CuttlefishConfig {
     bool use_sdcard() const;
     bool pause_in_bootloader() const;
     bool run_as_daemon() const;
-    bool enable_audio() const;
-    bool enable_vehicle_hal_grpc_server() const;
-    bool enable_gnss_grpc_proxy() const;
-    bool enable_bootanimation() const;
-    bool record_screen() const;
-    std::string gem5_debug_file() const;
-    bool protected_vm() const;
-    std::string boot_slot() const;
-
-    // Kernel and bootloader logging
-    bool enable_kernel_log() const;
-
-    bool enable_webrtc() const;
-    std::string webrtc_assets_dir() const;
-
-    // The range of TCP ports available for webrtc sessions.
-    std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
-
-    // The range of UDP ports available for webrtc sessions.
-    std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
-
-    bool smt() const;
-    std::string crosvm_binary() const;
-    std::string seccomp_policy_dir() const;
-    std::string qemu_binary_dir() const;
 
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
@@ -564,11 +609,15 @@ class CuttlefishConfig {
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
+    void set_fastboot_host_port(int fastboot_host_port);
     void set_camera_server_port(int camera_server_port);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
     void set_ethernet_tap_name(const std::string& ethernet_tap_name);
+    void set_ethernet_bridge_name(const std::string& set_ethernet_bridge_name);
+    void set_ethernet_mac(const std::string& mac);
+    void set_ethernet_ipv6(const std::string& ip);
     void set_session_id(uint32_t session_id);
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
@@ -611,32 +660,6 @@ class CuttlefishConfig {
     void set_use_sdcard(bool use_sdcard);
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
-    void set_enable_audio(bool enable);
-    void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
-    void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
-    void set_enable_bootanimation(const bool enable_bootanimation);
-    void set_record_screen(bool record_screen);
-    void set_gem5_debug_file(const std::string& gem5_debug_file);
-    void set_protected_vm(bool protected_vm);
-    void set_boot_slot(const std::string& boot_slot);
-    void set_grpc_socket_path(const std::string& sockets);
-
-    // Kernel and bootloader logging
-    void set_enable_kernel_log(bool enable_kernel_log);
-
-    void set_enable_webrtc(bool enable_webrtc);
-    void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
-
-    // The range of TCP ports available for webrtc sessions.
-    void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
-
-    // The range of UDP ports available for webrtc sessions.
-    void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
-
-    void set_smt(bool smt);
-    void set_crosvm_binary(const std::string& crosvm_binary);
-    void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
-    void set_qemu_binary_dir(const std::string& qemu_binary_dir);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
@@ -678,14 +701,12 @@ class CuttlefishConfig {
     void set_bootloader(const std::string& bootloader);
     void set_initramfs_path(const std::string& initramfs_path);
     void set_kernel_path(const std::string& kernel_path);
-
-   private:
-    void SetPath(const std::string& key, const std::string& path);
   };
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
+  void SetPath(const std::string& key, const std::string& path);
   bool LoadFromFile(const char* file);
   static CuttlefishConfig* BuildConfigImpl(const std::string& path);
 
@@ -731,14 +752,12 @@ bool HostSupportsQemuCli();
 
 // GPU modes
 extern const char* const kGpuModeAuto;
+extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;
-extern const char* const kGpuModeGuestSwiftshader;
-extern const char* const kGpuModeNone;
 
 // HwComposer modes
 extern const char* const kHwComposerAuto;
 extern const char* const kHwComposerDrm;
 extern const char* const kHwComposerRanchu;
-extern const char* const kHwComposerNone;
 }  // namespace cuttlefish
