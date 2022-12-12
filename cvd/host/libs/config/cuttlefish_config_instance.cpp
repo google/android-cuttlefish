@@ -575,6 +575,182 @@ bool CuttlefishConfig::InstanceSpecific::enable_gpu_angle() const {
   return (*Dictionary())[kEnableGpuAngle].asBool();
 }
 
+static constexpr char kEnableAudio[] = "enable_audio";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
+  (*Dictionary())[kEnableAudio] = enable;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_audio() const {
+  return (*Dictionary())[kEnableAudio].asBool();
+}
+
+static constexpr char kEnableVehicleHalServer[] = "enable_vehicle_hal_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*Dictionary())[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_vehicle_hal_grpc_server() const {
+  return (*Dictionary())[kEnableVehicleHalServer].asBool();
+}
+
+static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
+  (*Dictionary())[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gnss_grpc_proxy() const {
+  return (*Dictionary())[kEnableGnssGrpcProxy].asBool();
+}
+
+static constexpr char kEnableBootAnimation[] = "enable_bootanimation";
+bool CuttlefishConfig::InstanceSpecific::enable_bootanimation() const {
+  return (*Dictionary())[kEnableBootAnimation].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_bootanimation(
+    bool enable_bootanimation) {
+  (*Dictionary())[kEnableBootAnimation] = enable_bootanimation;
+}
+
+static constexpr char kRecordScreen[] = "record_screen";
+void CuttlefishConfig::MutableInstanceSpecific::set_record_screen(
+    bool record_screen) {
+  (*Dictionary())[kRecordScreen] = record_screen;
+}
+bool CuttlefishConfig::InstanceSpecific::record_screen() const {
+  return (*Dictionary())[kRecordScreen].asBool();
+}
+
+static constexpr char kGem5DebugFile[] = "gem5_debug_file";
+std::string CuttlefishConfig::InstanceSpecific::gem5_debug_file() const {
+  return (*Dictionary())[kGem5DebugFile].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gem5_debug_file(const std::string& gem5_debug_file) {
+  (*Dictionary())[kGem5DebugFile] = gem5_debug_file;
+}
+
+static constexpr char kProtectedVm[] = "protected_vm";
+void CuttlefishConfig::MutableInstanceSpecific::set_protected_vm(bool protected_vm) {
+  (*Dictionary())[kProtectedVm] = protected_vm;
+}
+bool CuttlefishConfig::InstanceSpecific::protected_vm() const {
+  return (*Dictionary())[kProtectedVm].asBool();
+}
+
+static constexpr char kEnableKernelLog[] = "enable_kernel_log";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_kernel_log(bool enable_kernel_log) {
+  (*Dictionary())[kEnableKernelLog] = enable_kernel_log;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_kernel_log() const {
+  return (*Dictionary())[kEnableKernelLog].asBool();
+}
+
+static constexpr char kBootSlot[] = "boot_slot";
+void CuttlefishConfig::MutableInstanceSpecific::set_boot_slot(const std::string& boot_slot) {
+  (*Dictionary())[kBootSlot] = boot_slot;
+}
+std::string CuttlefishConfig::InstanceSpecific::boot_slot() const {
+  return (*Dictionary())[kBootSlot].asString();
+}
+
+static constexpr char kEnableWebRTC[] = "enable_webrtc";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(bool enable_webrtc) {
+  (*Dictionary())[kEnableWebRTC] = enable_webrtc;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_webrtc() const {
+  return (*Dictionary())[kEnableWebRTC].asBool();
+}
+
+static constexpr char kWebRTCAssetsDir[] = "webrtc_assets_dir";
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
+  (*Dictionary())[kWebRTCAssetsDir] = webrtc_assets_dir;
+}
+std::string CuttlefishConfig::InstanceSpecific::webrtc_assets_dir() const {
+  return (*Dictionary())[kWebRTCAssetsDir].asString();
+}
+
+static constexpr char kWebrtcTcpPortRange[] = "webrtc_tcp_port_range";
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_tcp_port_range(
+    std::pair<uint16_t, uint16_t> range) {
+  Json::Value arr(Json::ValueType::arrayValue);
+  arr[0] = range.first;
+  arr[1] = range.second;
+  (*Dictionary())[kWebrtcTcpPortRange] = arr;
+}
+std::pair<uint16_t, uint16_t> CuttlefishConfig::InstanceSpecific::webrtc_tcp_port_range() const {
+  std::pair<uint16_t, uint16_t> ret;
+  ret.first = (*Dictionary())[kWebrtcTcpPortRange][0].asInt();
+  ret.second = (*Dictionary())[kWebrtcTcpPortRange][1].asInt();
+  return ret;
+}
+
+static constexpr char kWebrtcUdpPortRange[] = "webrtc_udp_port_range";
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_udp_port_range(
+    std::pair<uint16_t, uint16_t> range) {
+  Json::Value arr(Json::ValueType::arrayValue);
+  arr[0] = range.first;
+  arr[1] = range.second;
+  (*Dictionary())[kWebrtcUdpPortRange] = arr;
+}
+std::pair<uint16_t, uint16_t> CuttlefishConfig::InstanceSpecific::webrtc_udp_port_range() const {
+  std::pair<uint16_t, uint16_t> ret;
+  ret.first = (*Dictionary())[kWebrtcUdpPortRange][0].asInt();
+  ret.second = (*Dictionary())[kWebrtcUdpPortRange][1].asInt();
+  return ret;
+}
+
+static constexpr char kGrpcConfig[] = "grpc_config";
+std::string CuttlefishConfig::InstanceSpecific::grpc_socket_path() const {
+  return (*Dictionary())[kGrpcConfig].asString();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_grpc_socket_path(
+    const std::string& socket_path) {
+  (*Dictionary())[kGrpcConfig] = socket_path;
+}
+
+static constexpr char kSmt[] = "smt";
+void CuttlefishConfig::MutableInstanceSpecific::set_smt(bool smt) {
+  (*Dictionary())[kSmt] = smt;
+}
+bool CuttlefishConfig::InstanceSpecific::smt() const {
+  return (*Dictionary())[kSmt].asBool();
+}
+
+static constexpr char kCrosvmBinary[] = "crosvm_binary";
+std::string CuttlefishConfig::InstanceSpecific::crosvm_binary() const {
+  return (*Dictionary())[kCrosvmBinary].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_binary(
+    const std::string& crosvm_binary) {
+  (*Dictionary())[kCrosvmBinary] = crosvm_binary;
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::SetPath(
+    const std::string& key, const std::string& path) {
+  if (!path.empty()) {
+    (*Dictionary())[key] = AbsolutePath(path);
+  }
+}
+
+static constexpr char kSeccompPolicyDir[] = "seccomp_policy_dir";
+void CuttlefishConfig::MutableInstanceSpecific::set_seccomp_policy_dir(
+    const std::string& seccomp_policy_dir) {
+  if (seccomp_policy_dir.empty()) {
+    (*Dictionary())[kSeccompPolicyDir] = seccomp_policy_dir;
+    return;
+  }
+  SetPath(kSeccompPolicyDir, seccomp_policy_dir);
+}
+std::string CuttlefishConfig::InstanceSpecific::seccomp_policy_dir() const {
+  return (*Dictionary())[kSeccompPolicyDir].asString();
+}
+
+static constexpr char kQemuBinaryDir[] = "qemu_binary_dir";
+std::string CuttlefishConfig::InstanceSpecific::qemu_binary_dir() const {
+  return (*Dictionary())[kQemuBinaryDir].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_qemu_binary_dir(
+    const std::string& qemu_binary_dir) {
+  (*Dictionary())[kQemuBinaryDir] = qemu_binary_dir;
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";
@@ -1076,6 +1252,16 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
     return PerInstancePath(kInternalDirName);
   }
   auto relative_path = (std::string(kInternalDirName) + "/") + file_name;
+  return PerInstancePath(relative_path.c_str());
+}
+
+std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
+    const std::string& socket_name) const {
+  if (socket_name.size() == 0) {
+    // Don't append a / if file_name is empty.
+    return PerInstancePath(kGrpcSocketDirName);
+  }
+  auto relative_path = (std::string(kGrpcSocketDirName) + "/") + socket_name;
   return PerInstancePath(relative_path.c_str());
 }
 
