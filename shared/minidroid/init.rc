@@ -17,10 +17,10 @@ on early-init
 
 # If VM is debuggable, send logs to outside ot the VM via the serial console.
 # If non-debuggable, logs are internally consumed at /dev/null
-on early-init && property:ro.boot.microdroid.app_debuggable=1
+on early-init && property:ro.boot.microdroid.debuggable=1
     setprop ro.log.file_logger.path /dev/hvc2
 
-on early-init && property:ro.boot.microdroid.app_debuggable=0
+on early-init && property:ro.boot.microdroid.debuggable=0
     setprop ro.log.file_logger.path /dev/null
 
 on init
