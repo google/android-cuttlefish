@@ -167,6 +167,7 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     // stuck at version 3 while RKP support is being added. Will be
     // updated soon.
     {"android.hardware.identity.", 4},
+    {"android.hardware.identity.", 5},
 
     // Cuttlefish will use the default implementation (b/205758693)
     {"android.hardware.bluetooth.", 1},
