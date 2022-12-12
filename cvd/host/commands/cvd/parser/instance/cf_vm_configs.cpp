@@ -35,15 +35,9 @@ static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"gem5", Json::ValueType::objectValue},
 };
 
-bool ValidateVmManager(const Json::Value& root) {
-  bool result =
-      root.isMember("crosvm") || root.isMember("qemu") || root.isMember("gem5");
-  return result;
-}
-
 Result<void> ValidateVmConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kVmKeyMap), "ValidateVmConfigs ValidateTypo fail");
-  CF_EXPECT(ValidateVmManager(root), "missing vm manager configs");
+  CF_EXPECT(ValidateTypo(root, kVmKeyMap),
+            "ValidateVmConfigs ValidateTypo fail");
   if (root.isMember("crosvm")) {
     CF_EXPECT(ValidateTypo(root["crosvm"], kCrosvmKeyMap),
               "ValidateVmConfigs ValidateTypo crosvm fail");
@@ -55,16 +49,20 @@ void InitVmManagerConfig(Json::Value& instances) {
   // Allocate and initialize with default values
   int size = instances.size();
   for (int i = 0; i < size; i++) {
-    if (instances[i].isMember("vm") && instances[i]["vm"].isMember("crosvm")) {
-      instances[i]["vm"]["vm_manager"] = "crosvm";
-    } else if (instances[i].isMember("vm") &&
-               instances[i]["vm"].isMember("qemu")) {
-      instances[i]["vm"]["vm_manager"] = "qemu_cli";
-    } else if (instances[i].isMember("vm") &&
-               instances[i]["vm"].isMember("gem5")) {
-      instances[i]["vm"]["vm_manager"] = "gem5";
+    if (instances[i].isMember("vm")) {
+      if (instances[i]["vm"].isMember("crosvm")) {
+        instances[i]["vm"]["vm_manager"] = "crosvm";
+      } else if (instances[i]["vm"].isMember("qemu")) {
+        instances[i]["vm"]["vm_manager"] = "qemu_cli";
+      } else if (instances[i]["vm"].isMember("gem5")) {
+        instances[i]["vm"]["vm_manager"] = "gem5";
+      } else {
+        // Set vm manager to default value (crosvm)
+        instances[i]["vm"]["vm_manager"] = "crosvm";
+      }
     } else {
-      LOG(ERROR) << "Invalid VM manager configuration";
+      // vm object doesn't exisit , set the default vm manager to crosvm
+      instances[i]["vm"]["vm_manager"] = "crosvm";
     }
   }
 }
