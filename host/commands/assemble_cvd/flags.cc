@@ -25,6 +25,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/network.h"
 #include "flags.h"
 #include "flags_defaults.h"
 #include "host/commands/assemble_cvd/alloc.h"
@@ -1048,6 +1049,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_data_policy(data_policy_vec[instance_index]);
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
+    instance.set_ethernet_bridge_name("cvd-ebr");
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
     instance.set_wifi_tap_name(iface_config.wireless_tap.name);
     instance.set_ethernet_tap_name(iface_config.ethernet_tap.name);
@@ -1059,6 +1061,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_qemu_vnc_server_port(544 + num - 1);
     instance.set_adb_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
+
+    instance.set_fastboot_host_port(7520 + num - 1);
+
+    std::uint8_t ethernet_mac[6] = {};
+    std::uint8_t ethernet_ipv6[16] = {};
+    GenerateEthMacForInstance(num - 1, ethernet_mac);
+    GenerateCorrespondingIpv6ForMac(ethernet_mac, ethernet_ipv6);
+    instance.set_ethernet_mac(MacAddressToString(ethernet_mac));
+    instance.set_ethernet_ipv6(Ipv6ToString(ethernet_ipv6));
+
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
     instance.set_vehicle_hal_server_port(9300 + num - 1);
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
