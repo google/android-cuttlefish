@@ -278,6 +278,8 @@ class CuttlefishConfig {
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
     int adb_host_port() const;
+    // Port number to connect to the fastboot server on the host
+    int fastboot_host_port() const;
     // Device-specific ID to distinguish modem simulators. Must be 4 digits.
     int modem_simulator_host_id() const;
     // Port number to connect to the gnss grpc proxy server on the host
@@ -293,6 +295,9 @@ class CuttlefishConfig {
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
     std::string ethernet_tap_name() const;
+    std::string ethernet_bridge_name() const;
+    std::string ethernet_mac() const;
+    std::string ethernet_ipv6() const;
     uint32_t session_id() const;
     bool use_allocd() const;
     int vsock_guest_cid() const;
@@ -561,11 +566,15 @@ class CuttlefishConfig {
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
+    void set_fastboot_host_port(int fastboot_host_port);
     void set_camera_server_port(int camera_server_port);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
     void set_ethernet_tap_name(const std::string& ethernet_tap_name);
+    void set_ethernet_bridge_name(const std::string& set_ethernet_bridge_name);
+    void set_ethernet_mac(const std::string& mac);
+    void set_ethernet_ipv6(const std::string& ip);
     void set_session_id(uint32_t session_id);
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
