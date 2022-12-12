@@ -22,7 +22,6 @@ namespace cuttlefish {
 enum class Arch {
   Arm,
   Arm64,
-  RiscV64,
   X86,
   X86_64,
 };
