@@ -137,9 +137,9 @@ bool InitializeNetworkConfiguration(const CuttlefishConfig& cuttlefish_config,
   // newer version of cuttlefish-common, and we can use the tap device
   // directly instead.
   if (!netconfig.ObtainConfig(instance.mobile_bridge_name(),
-                              cuttlefish_config.ril_dns())) {
+                              instance.ril_dns())) {
     if (!netconfig.ObtainConfig(instance.mobile_tap_name(),
-                                cuttlefish_config.ril_dns())) {
+                                instance.ril_dns())) {
       LOG(ERROR) << "Unable to obtain the network configuration";
       return false;
     }

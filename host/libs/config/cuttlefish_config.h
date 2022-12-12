@@ -176,15 +176,8 @@ class CuttlefishConfig {
   void set_sig_server_strict(bool strict);
   bool sig_server_strict() const;
 
-  // The dns address of mobile network (RIL)
-  void set_ril_dns(const std::string& ril_dns);
-  std::string ril_dns() const;
-
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
-
-  void set_vhost_net(bool vhost_net);
-  bool vhost_net() const;
 
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
@@ -481,6 +474,10 @@ class CuttlefishConfig {
 
     // Kernel and bootloader logging
     bool enable_kernel_log() const;
+    bool vhost_net() const;
+
+    // The dns address of mobile network (RIL)
+    std::string ril_dns() const;
 
     bool enable_webrtc() const;
     std::string webrtc_assets_dir() const;
@@ -646,6 +643,11 @@ class CuttlefishConfig {
     void set_crosvm_binary(const std::string& crosvm_binary);
     void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
     void set_qemu_binary_dir(const std::string& qemu_binary_dir);
+
+    void set_vhost_net(bool vhost_net);
+
+    // The dns address of mobile network (RIL)
+    void set_ril_dns(const std::string& ril_dns);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
