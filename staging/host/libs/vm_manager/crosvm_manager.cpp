@@ -144,7 +144,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
 
-  if (config.vhost_net()) {
+  if (instance.vhost_net()) {
     crosvm_cmd.Cmd().AddParameter("--vhost-net");
   }
 
