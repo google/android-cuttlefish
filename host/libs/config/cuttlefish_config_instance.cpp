@@ -774,8 +774,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
     // console can't be used since uboot doesn't support it.
     console_dev = "hvc1";
   } else {
-    // QEMU and Gem5 emulate pl011 on ARM/ARM64, but QEMU and crosvm on other
-    // architectures emulate ns16550a/uart8250 instead.
+    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
     Arch target = target_arch();
     if ((target == Arch::Arm64 || target == Arch::Arm) &&
         config_->vm_manager() != vm_manager::CrosvmManager::name()) {
