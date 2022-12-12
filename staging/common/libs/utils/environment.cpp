@@ -89,8 +89,6 @@ Arch HostArch() {
     return Arch::Arm64;
   } else if (arch_str == "arm") {
     return Arch::Arm;
-  } else if (arch_str == "riscv64") {
-    return Arch::RiscV64;
   } else if (arch_str == "x86_64") {
     return Arch::X86_64;
   } else if (arch_str.size() == 4 && arch_str[0] == 'i' && arch_str[2] == '8' &&
