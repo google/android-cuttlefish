@@ -61,6 +61,9 @@ TARGET_USE_BTLINUX_HAL_IMPL ?= true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/android_t_baseline.mk)
 PRODUCT_VIRTUAL_AB_COMPRESSION_METHOD := gz
 
+PRODUCT_VENDOR_PROPERTIES += ro.virtual_ab.compression.threads=true
+PRODUCT_VENDOR_PROPERTIES += ro.virtual_ab.batch_writes=true
+
 # Enable Scoped Storage related
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
