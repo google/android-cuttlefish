@@ -56,8 +56,8 @@
         support PROFILE user. -->
     <integer name="config_userTypePackageWhitelistMode">2</integer>
 
-    <!-- Whether the device allows users to start in background on secondary displays.
+    <!-- Whether the device allows users to start in background visible on displays.
          Should be false for most devices, except automotive vehicle with passenger displays. -->
-    <bool name="config_multiuserUsersOnSecondaryDisplays">true</bool>
+    <bool name="config_multiuserVisibleBackgroundUsers">true</bool>
 
 </resources>
