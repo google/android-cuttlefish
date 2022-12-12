@@ -51,13 +51,6 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> FireCommand(Command&& command, const bool wait);
   bool HasHelpOpts(const std::vector<std::string>& args) const;
 
-  struct PreconditionVerification {
-    bool is_ok;
-    std::string error_message;
-  };
-  PreconditionVerification VerifyPrecondition(
-      const RequestWithStdio& request) const;
-
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file,
       const selector::GroupCreationInfo& group_info,
