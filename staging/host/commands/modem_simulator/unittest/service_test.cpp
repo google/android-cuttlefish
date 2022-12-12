@@ -22,6 +22,7 @@
 
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/modem_simulator/channel_monitor.h"
 #include "host/commands/modem_simulator/device_config.h"
 #include "host/commands/modem_simulator/modem_simulator.h"
@@ -43,13 +44,13 @@ class ModemServiceTest : public ::testing::Test {
       cuttlefish::CuttlefishConfig tmp_config_obj;
       std::string config_file = tmp_test_dir + "/.cuttlefish_config.json";
       tmp_config_obj.set_root_dir(tmp_test_dir + "/cuttlefish");
-      tmp_config_obj.set_ril_dns("8.8.8.8");
       std::vector<int> instance_nums;
       for (int i = 0; i < 1; i++) {
         instance_nums.push_back(cuttlefish::GetInstance() + i);
       }
       for (const auto &num : instance_nums) {
-        tmp_config_obj.ForInstance(num);  // Trigger creation in map
+        auto instance = tmp_config_obj.ForInstance(num);  // Trigger creation in map
+        instance.set_ril_dns(CF_DEFAULTS_RIL_DNS);
       }
 
       for (auto instance : tmp_config_obj.Instances()) {
