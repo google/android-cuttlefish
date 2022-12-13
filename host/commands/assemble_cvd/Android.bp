@@ -56,6 +56,7 @@ cc_binary {
         "libcuttlefish_graphics_detector",
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
+        "libcuttlefish_launch_cvd_proto",
         "libcuttlefish_vm_manager",
         "libgflags",
     ],
