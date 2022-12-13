@@ -373,7 +373,7 @@ func createNewDir(dir string) error {
 	if err != nil {
 		return err
 	}
-	// `os.Mkdir` sets the permission bits before umask, therefore the following `os.Chmod` call.
+	// Sets dir permission regardless of umask.
 	return os.Chmod(dir, 0774)
 }
 
