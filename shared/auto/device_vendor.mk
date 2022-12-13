@@ -88,6 +88,7 @@ ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
 endif
 PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
 
+# TODO(b/261041693): Update this to use AIDL instead after protocan is updated.
 # CAN bus HAL
 PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
 PRODUCT_PACKAGES_DEBUG += canhalctrl \
