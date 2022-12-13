@@ -173,6 +173,15 @@ bool CvdStartCommandHandler::HasHelpOpts(
   return IsHelpSubcmd(args);
 }
 
+std::vector<std::string> CvdStartCommandHandler::CmdList() const {
+  std::vector<std::string> subcmd_list;
+  subcmd_list.reserve(command_to_binary_map_.size());
+  for (const auto& [cmd, _] : command_to_binary_map_) {
+    subcmd_list.emplace_back(cmd);
+  }
+  return subcmd_list;
+}
+
 const std::map<std::string, std::string>
     CvdStartCommandHandler::command_to_binary_map_ = {
         {"start", kStartBin},

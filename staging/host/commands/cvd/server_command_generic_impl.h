@@ -28,6 +28,7 @@
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command_impl.h"
 #include "host/commands/cvd/server_command_subprocess_waiter.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
@@ -42,6 +43,7 @@ class CvdCommandHandler : public CvdServerHandler {
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   Result<void> Interrupt() override;
+  cvd_common::Args CmdList() const override;
 
  private:
   InstanceManager& instance_manager_;

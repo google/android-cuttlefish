@@ -27,6 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
@@ -67,7 +68,7 @@ class CvdRestartHandler : public CvdServerHandler {
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
-    return android::base::Basename(invocation.command) == "restart-server";
+    return android::base::Basename(invocation.command) == kRestartServer;
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
@@ -108,6 +109,8 @@ class CvdRestartHandler : public CvdServerHandler {
   }
 
   Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
+  cvd_common::Args CmdList() const override { return {kRestartServer}; }
+  constexpr static char kRestartServer[] = "restart-server";
 
  private:
   BuildApi& build_api_;

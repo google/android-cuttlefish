@@ -29,6 +29,7 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
+#include <json/json.h>
 
 #include "cvd_server.pb.h"
 
@@ -287,6 +288,52 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   return {};
 }
 
+static bool IsCmdListRequest(const RequestWithStdio& request) {
+  const auto& args = request.Message().command_request().args();
+  if (args.size() < 2) {
+    return false;
+  }
+  return (args[1] == "cmd-list");
+}
+
+/**
+ * Returns the list of valid subcommands that cvd server can handle.
+ *
+ * The server is in the best position to list all the subcommands. This list
+ * is, however, needed by the parser. For now, the parser is in the client
+ * side, and is planned to be moved to the server side eventually. Until it
+ * is done, we offer an undocumented (not present in the help message) subcmd
+ * that is "subcmd-list."  This is the implementation.
+ *
+ * TODO(kwstephenkim): move the argument separator parser from the client to
+ * the server side, and delete this function.
+ *
+ */
+static Result<cvd::Response> HandleCmdList(
+    const RequestWithStdio& request,
+    const std::vector<CvdServerHandler*>& handlers) {
+  std::unordered_set<std::string> subcmds;
+  for (const auto& handler : handlers) {
+    auto&& cmds_list = handler->CmdList();
+    for (const auto& cmd : cmds_list) {
+      subcmds.insert(cmd);
+    }
+  }
+  CF_EXPECT(!subcmds.empty());
+
+  cvd::Response response;
+  response.mutable_command_response();
+  response.mutable_status()->set_code(cvd::Status::OK);
+
+  // duplication removed
+  std::vector<std::string> subcmds_vec{subcmds.begin(), subcmds.end()};
+  const auto subcmds_str = android::base::Join(subcmds_vec, ",");
+  Json::Value subcmd_info;
+  subcmd_info["subcmd"] = subcmds_str;
+  WriteAll(request.Out(), subcmd_info.toStyledString());
+  return response;
+}
+
 // replace cvd -h or --help into cvd help
 static RequestWithStdio ReplaceHelp(RequestWithStdio&& src_request) {
   auto request = std::move(src_request);
@@ -318,6 +365,10 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request_orig,
   }
 
   auto possible_handlers = injector.getMultibindings<CvdServerHandler>();
+  if (IsCmdListRequest(request)) {
+    auto response = CF_EXPECT(HandleCmdList(request, possible_handlers));
+    return response;
+  }
 
   // Even if the interrupt callback outlives the request handler, it'll only
   // hold on to this struct which will be cleaned out when the request handler
