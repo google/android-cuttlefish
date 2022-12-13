@@ -116,6 +116,7 @@ cc_library_host_static {
 cc_defaults {
     name: "cvd_and_fetch_cvd_defaults",
     static_libs: [
+        "libcuttlefish_launch_cvd_proto",
         "libcvd_parser",
         "libcvd_selector",
         "libcvd_server_client",
