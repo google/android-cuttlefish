@@ -68,15 +68,15 @@ type IMPaths struct {
 
 // Instance manager implementation based on execution of `cvd` tool commands.
 type CVDToolInstanceManager struct {
-	execContext        ExecContext
-	paths              IMPaths
-	om                 OperationManager
-	uadr               UserArtifactsDirResolver
-	instanceCounter    uint32
-	downloadCVDHandler *downloadCVDHandler
-	fetchCVDHandler    *fetchCVDHandler
-	startCVDHandler    *startCVDHandler
-	hostValidator      Validator
+	execContext              ExecContext
+	paths                    IMPaths
+	om                       OperationManager
+	userArtifactsDirResolver UserArtifactsDirResolver
+	instanceCounter          uint32
+	downloadCVDHandler       *downloadCVDHandler
+	fetchCVDHandler          *fetchCVDHandler
+	startCVDHandler          *startCVDHandler
+	hostValidator            Validator
 }
 
 type CVDToolInstanceManagerOpts struct {
@@ -92,11 +92,11 @@ type CVDToolInstanceManagerOpts struct {
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
 	return &CVDToolInstanceManager{
-		execContext:   opts.ExecContext,
-		paths:         opts.Paths,
-		om:            opts.OperationManager,
-		uadr:          opts.UserArtifactsDirResolver,
-		hostValidator: opts.HostValidator,
+		execContext:              opts.ExecContext,
+		paths:                    opts.Paths,
+		om:                       opts.OperationManager,
+		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
+		hostValidator:            opts.HostValidator,
 		downloadCVDHandler: &downloadCVDHandler{
 			CVDBinAB: opts.CVDBinAB,
 			CVDBin:   opts.Paths.CVDBin,
@@ -118,13 +118,13 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	if err := m.hostValidator.Validate(); err != nil {
 		return apiv1.Operation{}, err
 	}
-	if err := m.downloadCVDHandler.Download(); err != nil {
-		return apiv1.Operation{}, err
-	}
 	if err := createDir(m.paths.ArtifactsRootDir); err != nil {
 		return apiv1.Operation{}, err
 	}
 	if err := createDir(m.paths.HomesRootDir); err != nil {
+		return apiv1.Operation{}, err
+	}
+	if err := m.downloadCVDHandler.Download(); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := m.om.New()
@@ -242,7 +242,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 
 func (m *CVDToolInstanceManager) launchFromUserBuild(
 	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	artifactsDir := m.uadr.GetDirPath(req.CVD.BuildSource.UserBuild.ArtifactsDir)
+	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuild.ArtifactsDir)
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
 	homeDir := m.paths.HomesRootDir + "/" + cvdName

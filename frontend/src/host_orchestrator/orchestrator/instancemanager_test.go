@@ -97,11 +97,18 @@ func (d *testCVDDwnlder) Download(_ string, _ AndroidBuild) error {
 }
 
 func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := newCVDToolIm(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("2", "foo")}}
 
