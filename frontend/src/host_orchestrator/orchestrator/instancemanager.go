@@ -194,16 +194,14 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	result = OperationResult{Value: cvd}
 }
 
-func (m *CVDToolInstanceManager) launchCVD_(
-	req apiv1.CreateCVDRequest,
-	op apiv1.Operation) (*apiv1.CVD, error) {
+func (m *CVDToolInstanceManager) launchCVD_(req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
 	if err := m.downloadCVDHandler.Download(); err != nil {
 		return nil, err
 	}
-	if err := createDir(m.paths.ArtifactsRootDir, false); err != nil {
+	if err := createDir(m.paths.ArtifactsRootDir); err != nil {
 		return nil, err
 	}
-	if err := createDir(m.paths.HomesRootDir, false); err != nil {
+	if err := createDir(m.paths.HomesRootDir); err != nil {
 		return nil, err
 	}
 	artifactsDir, err := m.fetchCVDHandler.Fetch(req.CVD.BuildSource.AndroidCIBuild)
@@ -213,7 +211,7 @@ func (m *CVDToolInstanceManager) launchCVD_(
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
 	homeDir := m.paths.HomesRootDir + "/" + cvdName
-	if err := createDir(homeDir, true); err != nil {
+	if err := createNewDir(homeDir); err != nil {
 		return nil, err
 	}
 	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
@@ -227,6 +225,9 @@ func (m *CVDToolInstanceManager) launchCVD_(
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.CVD.BuildSource == nil {
+		return EmptyFieldError("BuildSource")
+	}
+	if r.CVD.BuildSource.AndroidCIBuild == nil && r.CVD.BuildSource.UserBuild == nil {
 		return EmptyFieldError("BuildSource")
 	}
 	if r.CVD.BuildSource.AndroidCIBuild != nil {
@@ -366,15 +367,22 @@ func (h *startCVDHandler) Launch(instanceNumber uint32, artifactsDir, homeDir st
 	return nil
 }
 
-func createDir(dir string, failIfExist bool) error {
-	// TODO(b/238431258) Use `errors.Is(err, fs.ErrExist)` instead of `os.IsExist(err)`
-	// once b/236976427 is addressed.
+// Fails if the directory already exists.
+func createNewDir(dir string) error {
 	err := os.Mkdir(dir, 0774)
-	if err != nil && ((failIfExist && os.IsExist(err)) || (!os.IsExist(err))) {
+	if err != nil {
 		return err
 	}
-	// Mkdir set the permission bits (before umask)
+	// Sets dir permission regardless of umask.
 	return os.Chmod(dir, 0774)
+}
+
+func createDir(dir string) error {
+	if err := createNewDir(dir); os.IsExist(err) {
+		return nil
+	} else {
+		return err
+	}
 }
 
 type CVDDownloader interface {
