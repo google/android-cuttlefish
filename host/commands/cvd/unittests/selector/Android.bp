@@ -56,9 +56,9 @@ cc_test_host {
     srcs: [
         "parser_ids_helper.cpp",
         "parser_ids_test.cpp",
-        "selector_parser_names_test_helper.cpp",
+        "parser_names_helper.cpp",
+        "parser_names_test.cpp",
         "selector_parser_substring_test_helper.cpp",
-        "test_cvd_selector_parser_names.cpp",
         "test_cvd_selector_parser_substring.cpp",
     ],
     test_options: {
