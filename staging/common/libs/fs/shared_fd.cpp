@@ -15,9 +15,11 @@
  */
 #include "common/libs/fs/shared_fd.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <poll.h>
 #include <sys/file.h>
 #include <sys/mman.h>
@@ -477,12 +479,52 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
+  auto rval = SharedFD::Socket(AF_INET, type, 0);
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
-                    sizeof addr) < 0) {
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
+    return SharedFD::ErrorFD(rval->GetErrno());
+  }
+  return rval;
+}
+
+SharedFD SharedFD::SocketClient(const std::string& host, int port, int type) {
+  sockaddr_in addr{};
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+  addr.sin_addr.s_addr = inet_addr(host.c_str());
+  auto rval = SharedFD::Socket(AF_INET, type, 0);
+  if (!rval->IsOpen()) {
+    return rval;
+  }
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
+    return SharedFD::ErrorFD(rval->GetErrno());
+  }
+  return rval;
+}
+
+SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& interface,
+                                 int port, int type) {
+  sockaddr_in6 addr{};
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons(port);
+  inet_pton(AF_INET6, host.c_str(), &addr.sin6_addr);
+  auto rval = SharedFD::Socket(AF_INET6, type, 0);
+  if (!rval->IsOpen()) {
+    return rval;
+  }
+
+  if (!interface.empty()) {
+    ifreq ifr{};
+    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface.c_str());
+
+    if (rval->SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1) {
+      return SharedFD::ErrorFD(rval->GetErrno());
+    }
+  }
+
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
