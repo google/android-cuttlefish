@@ -33,12 +33,12 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command_subprocess_waiter.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
+using Envs = cvd_common::Envs;
 
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
@@ -50,6 +50,7 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   Result<void> Interrupt() override;
+  cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
  private:
   InstanceManager& instance_manager_;
@@ -60,9 +61,9 @@ class CvdFleetCommandHandler : public CvdServerHandler {
   static constexpr char kFleetSubcmd[] = "fleet";
   Result<cvd::Status> HandleCvdFleet(const uid_t uid, const SharedFD& out,
                                      const SharedFD& err,
-                                     const Args& cmd_args) const;
+                                     const cvd_common::Args& cmd_args) const;
   Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
-  bool IsHelp(const Args& cmd_args) const;
+  bool IsHelp(const cvd_common::Args& cmd_args) const;
 };
 
 }  // namespace cvd_cmd_impl
