@@ -21,7 +21,11 @@
 #include <unordered_map>
 
 #include <fruit/fruit.h>
+#include <google/protobuf/text_format.h>
 
+#include "launch_cvd.pb.h"
+
+#include "common/libs/utils/base64.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -49,6 +53,12 @@ using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 using google::FlagSettingMode::SET_FLAGS_VALUE;
 
 #define DEFINE_vec DEFINE_string
+#define DEFINE_proto DEFINE_string
+
+DEFINE_proto(displays_textproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
+              "Text Proto input for multi-vd multi-displays");
+DEFINE_proto(displays_binproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
+              "Binary Proto input for multi-vd multi-displays");
 
 DEFINE_vec(cpus, std::to_string(CF_DEFAULTS_CPUS),
               "Virtual CPU count.");
@@ -453,14 +463,14 @@ std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
   CHECK(android::base::ParseInt(props["height"], &display_height))
       << "Display configuration invalid 'height' in " << flag;
 
-  int display_dpi = 320;
+  int display_dpi = CF_DEFAULTS_DISPLAY_DPI;
   auto display_dpi_it = props.find("dpi");
   if (display_dpi_it != props.end()) {
     CHECK(android::base::ParseInt(display_dpi_it->second, &display_dpi))
         << "Display configuration invalid 'dpi' in " << flag;
   }
 
-  int display_refresh_rate_hz = 60;
+  int display_refresh_rate_hz = CF_DEFAULTS_DISPLAY_REFRESH_RATE;
   auto display_refresh_rate_hz_it = props.find("refresh_rate_hz");
   if (display_refresh_rate_hz_it != props.end()) {
     CHECK(android::base::ParseInt(display_refresh_rate_hz_it->second,
@@ -573,6 +583,65 @@ Result<std::vector<KernelConfig>> ReadKernelConfig() {
 }
 
 #endif  // #ifdef __ANDROID__
+
+template <typename ProtoType>
+Result<ProtoType> ParseTextProtoFlagHelper(const std::string& flag_value,
+                                       const std::string& flag_name) {
+  ProtoType proto_result;
+  google::protobuf::TextFormat::Parser p;
+  CF_EXPECT(p.ParseFromString(flag_value, &proto_result),
+            "Failed to parse: " << flag_name << ", value: " << flag_value);
+  return proto_result;
+}
+
+template <typename ProtoType>
+Result<ProtoType> ParseBinProtoFlagHelper(const std::string& flag_value,
+                                       const std::string& flag_name) {
+  ProtoType proto_result;
+  std::vector<uint8_t> output;
+  CF_EXPECT(DecodeBase64(flag_value, &output));
+  std::string serialized = std::string(output.begin(), output.end());
+
+  CF_EXPECT(proto_result.ParseFromString(serialized),
+            "Failed to parse binary proto, flag: "<< flag_name << ", value: " << flag_value);
+  return proto_result;
+}
+
+Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
+    ParseDisplaysProto() {
+  auto proto_result = FLAGS_displays_textproto.empty() ? \
+  ParseBinProtoFlagHelper<InstancesDisplays>(FLAGS_displays_binproto, "displays_binproto") : \
+  ParseTextProtoFlagHelper<InstancesDisplays>(FLAGS_displays_textproto, "displays_textproto");
+
+  std::vector<std::vector<CuttlefishConfig::DisplayConfig>> result;
+  for (int i=0; i<proto_result->instances_size(); i++) {
+    std::vector<CuttlefishConfig::DisplayConfig> display_configs;
+    const InstanceDisplays& launch_cvd_instance = proto_result->instances(i);
+    for (int display_num=0; display_num<launch_cvd_instance.displays_size(); display_num++) {
+      const InstanceDisplay& display = launch_cvd_instance.displays(display_num);
+
+      // use same code logic from ParseDisplayConfig
+      int display_dpi = CF_DEFAULTS_DISPLAY_DPI;
+      if (display.has_dpi()) {
+        display_dpi = display.dpi();
+      }
+
+      int display_refresh_rate_hz = CF_DEFAULTS_DISPLAY_REFRESH_RATE;
+      if (display.has_refresh_rate_hertz()) {
+        display_refresh_rate_hz = display.refresh_rate_hertz();
+      }
+
+      display_configs.push_back(CuttlefishConfig::DisplayConfig{
+        .width = display.width(),
+        .height = display.height(),
+        .dpi = display_dpi,
+        .refresh_rate_hz = display_refresh_rate_hz,
+        });
+    }
+    result.push_back(display_configs);
+  }
+  return result;
+}
 
 Result<bool> ParseBool(const std::string& flag_str,
                         const std::string& flag_name) {
@@ -914,6 +983,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> data_policy_vec =
       CF_EXPECT(GetFlagStrValueForInstances(FLAGS_data_policy, instances_size));
 
+  // multi-dv multi-display proto input
+  std::vector<std::vector<CuttlefishConfig::DisplayConfig>> instances_display_configs;
+  if (!FLAGS_displays_textproto.empty() || !FLAGS_displays_binproto.empty()) {
+    instances_display_configs = CF_EXPECT(ParseDisplaysProto());
+  }
+
   std::string default_enable_sandbox = "";
   std::string comma_str = "";
 
@@ -1013,21 +1088,28 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_gdb_port(gdb_port_vec[instance_index]);
 
     std::vector<CuttlefishConfig::DisplayConfig> display_configs;
-    auto display0 = ParseDisplayConfig(FLAGS_display0);
-    if (display0) {
-      display_configs.push_back(*display0);
-    }
-    auto display1 = ParseDisplayConfig(FLAGS_display1);
-    if (display1) {
-      display_configs.push_back(*display1);
-    }
-    auto display2 = ParseDisplayConfig(FLAGS_display2);
-    if (display2) {
-      display_configs.push_back(*display2);
-    }
-    auto display3 = ParseDisplayConfig(FLAGS_display3);
-    if (display3) {
-      display_configs.push_back(*display3);
+    // assume displays proto input has higher priority than original display inputs
+    if (!FLAGS_displays_textproto.empty() || !FLAGS_displays_binproto.empty()) {
+      if (instance_index < instances_display_configs.size()) {
+        display_configs = instances_display_configs[instance_index];
+      } // else display_configs is an empty vector
+    } else {
+      auto display0 = ParseDisplayConfig(FLAGS_display0);
+      if (display0) {
+        display_configs.push_back(*display0);
+      }
+      auto display1 = ParseDisplayConfig(FLAGS_display1);
+      if (display1) {
+        display_configs.push_back(*display1);
+      }
+      auto display2 = ParseDisplayConfig(FLAGS_display2);
+      if (display2) {
+        display_configs.push_back(*display2);
+      }
+      auto display3 = ParseDisplayConfig(FLAGS_display3);
+      if (display3) {
+        display_configs.push_back(*display3);
+      }
     }
 
     if (x_res_vec[instance_index] > 0 && y_res_vec[instance_index] > 0) {
