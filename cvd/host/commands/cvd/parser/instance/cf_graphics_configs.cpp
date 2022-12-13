@@ -16,6 +16,10 @@
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <google/protobuf/text_format.h>
+
+#include "launch_cvd.pb.h"
 
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -42,19 +46,60 @@ Result<void> ValidateDisplaysConfigs(const Json::Value& root) {
 Result<void> ValidateGraphicsConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kGraphicsKeyMap),
             "ValidateGraphicsConfigs ValidateTypo fail");
-  if (root.isMember("displays")) {
-    CF_EXPECT(ValidateDisplaysConfigs(root["displays"]),
-              "ValidateDisplaysConfigs fail");
+
+  if (root.isMember("displays") && root["displays"].size() != 0) {
+    int num_displays = root["displays"].size();
+    for (int i = 0; i < num_displays; i++) {
+      CF_EXPECT(ValidateDisplaysConfigs(root["displays"][i]),
+                "ValidateDisplaysConfigs fail");
+    }
   }
 
   return {};
 }
 
-void InitGraphicsConfigs(Json::Value&) {}
+void InitGraphicsConfigs(Json::Value& instances) {
+  InitIntConfigSubGroupVector(instances, "graphics", "displays", "width",
+                              CF_DEFAULTS_DISPLAY_WIDTH);
+  InitIntConfigSubGroupVector(instances, "graphics", "displays", "height",
+                              CF_DEFAULTS_DISPLAY_HEIGHT);
+  InitIntConfigSubGroupVector(instances, "graphics", "displays", "dpi",
+                              CF_DEFAULTS_DISPLAY_DPI);
+  InitIntConfigSubGroupVector(instances, "graphics", "displays",
+                              "refresh_rate_hertz",
+                              CF_DEFAULTS_DISPLAY_REFRESH_RATE);
+}
 
-std::vector<std::string> GenerateGraphicsFlags(const Json::Value&) {
+std::string GenerateDisplayFlag(const Json::Value& instances_json) {
+  using google::protobuf::TextFormat;
+  cuttlefish::InstancesDisplays all_instances_displays;
+
+  int num_instances = instances_json.size();
+  for (int i = 0; i < num_instances; i++) {
+    auto* instance = all_instances_displays.add_instances();
+    int num_displays = instances_json[i]["graphics"]["displays"].size();
+    for (int j = 0; j < num_displays; j++) {
+      Json::Value display_json = instances_json[i]["graphics"]["displays"][j];
+      auto* display = instance->add_displays();
+      display->set_width(display_json["width"].asInt());
+      display->set_height(display_json["height"].asInt());
+      display->set_dpi(display_json["dpi"].asInt());
+      display->set_refresh_rate_hertz(
+          display_json["refresh_rate_hertz"].asInt());
+    }
+  }
+
+  std::string output;
+  if (!TextFormat::PrintToString(all_instances_displays, &output)) {
+    LOG(ERROR) << "Failed to convert display proto to string ";
+    return std::string();
+  }
+  return "--displays_textproto=" + output;
+}
+
+std::vector<std::string> GenerateGraphicsFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-
+  result.emplace_back(GenerateDisplayFlag(instances));
   return result;
 }
 
