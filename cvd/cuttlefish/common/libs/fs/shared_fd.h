@@ -148,6 +148,9 @@ class SharedFD {
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
+  static SharedFD SocketClient(const std::string& host, int port, int type);
+  static SharedFD Socket6Client(const std::string& host, const std::string& interface,
+                                int port, int type);
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
