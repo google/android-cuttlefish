@@ -186,7 +186,8 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
 }
 
 Result<void> CvdClient::HandleCommand(
-    std::vector<std::string> args, std::vector<std::string> env,
+    std::vector<std::string> args,
+    const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
   std::optional<SharedFD> exe_fd;
   if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
@@ -283,9 +284,10 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
                                                  << "\nIn client");
 }
 
-Result<void> CvdClient::HandleAcloud(std::vector<std::string>& args,
-                                     const std::vector<std::string>& env,
-                                     const std::string& host_tool_directory) {
+Result<void> CvdClient::HandleAcloud(
+    std::vector<std::string>& args,
+    const std::unordered_map<std::string, std::string>& env,
+    const std::string& host_tool_directory) {
   auto server_running =
       ValidateServerVersion(android::base::Dirname(host_tool_directory));
 

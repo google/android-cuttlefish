@@ -68,7 +68,7 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
 
 Result<cvd::Status> CvdFleetCommandHandler::HandleCvdFleet(
     const uid_t uid, const SharedFD& out, const SharedFD& err,
-    const Args& cmd_args) const {
+    const cvd_common::Args& cmd_args) const {
   if (IsHelp(cmd_args)) {
     auto status = CF_EXPECT(CvdFleetHelp(out));
     return status;
@@ -77,7 +77,7 @@ Result<cvd::Status> CvdFleetCommandHandler::HandleCvdFleet(
   return status;
 }
 
-bool CvdFleetCommandHandler::IsHelp(const Args& args) const {
+bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
   for (const auto& arg : args) {
     if (arg == "--help" || arg == "-help") {
       return true;

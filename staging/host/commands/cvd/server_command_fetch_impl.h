@@ -26,6 +26,7 @@
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command_impl.h"
 #include "host/commands/cvd/server_command_subprocess_waiter.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
@@ -33,16 +34,19 @@ namespace cvd_cmd_impl {
 class CvdFetchHandler : public CvdServerHandler {
  public:
   INJECT(CvdFetchHandler(SubprocessWaiter& subprocess_waiter))
-      : subprocess_waiter_(subprocess_waiter) {}
+      : subprocess_waiter_(subprocess_waiter),
+        fetch_cmd_list_{std::vector<std::string>{"fetch", "fetch_cvd"}} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   Result<void> Interrupt() override;
+  cvd_common::Args CmdList() const override { return fetch_cmd_list_; }
 
  private:
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
   bool interrupted_ = false;
+  std::vector<std::string> fetch_cmd_list_;
 };
 
 }  // namespace cvd_cmd_impl
