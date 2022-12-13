@@ -63,7 +63,7 @@ type IMPaths struct {
 	RootDir          string
 	CVDBin           string
 	ArtifactsRootDir string
-	HomesRootDir     string
+	RuntimesRootDir  string
 }
 
 // Instance manager implementation based on execution of `cvd` tool commands.
@@ -121,7 +121,7 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	if err := createDir(m.paths.ArtifactsRootDir); err != nil {
 		return apiv1.Operation{}, err
 	}
-	if err := createDir(m.paths.HomesRootDir); err != nil {
+	if err := createDir(m.paths.RuntimesRootDir); err != nil {
 		return apiv1.Operation{}, err
 	}
 	if err := m.downloadCVDHandler.Download(); err != nil {
@@ -174,7 +174,7 @@ func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
 }
 
 func (m *CVDToolInstanceManager) GetLogsDir(name string) string {
-	return m.paths.HomesRootDir + "/" + name + "/cuttlefish_runtime/logs"
+	return m.paths.RuntimesRootDir + "/" + name + "/cuttlefish_runtime/logs"
 }
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
@@ -227,11 +227,11 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	}
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
-	homeDir := m.paths.HomesRootDir + "/" + cvdName
-	if err := createNewDir(homeDir); err != nil {
+	runtimeDir := m.paths.RuntimesRootDir + "/" + cvdName
+	if err := createNewDir(runtimeDir); err != nil {
 		return nil, err
 	}
-	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
+	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, runtimeDir); err != nil {
 		return nil, err
 	}
 	return &apiv1.CVD{
@@ -245,11 +245,11 @@ func (m *CVDToolInstanceManager) launchFromUserBuild(
 	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuild.ArtifactsDir)
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
-	homeDir := m.paths.HomesRootDir + "/" + cvdName
-	if err := createNewDir(homeDir); err != nil {
+	runtimeDir := m.paths.RuntimesRootDir + "/" + cvdName
+	if err := createNewDir(runtimeDir); err != nil {
 		return nil, err
 	}
-	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
+	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, runtimeDir); err != nil {
 		return nil, err
 	}
 	return &apiv1.CVD{

@@ -104,7 +104,7 @@ func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -140,7 +140,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -162,7 +162,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	}
 }
 
-func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
+func TestCreateCVDInstanceRuntimeDirAlreadyExist(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
@@ -170,7 +170,7 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -179,14 +179,14 @@ func TestCreateCVDInstanceHomeDirAlreadyExist(t *testing.T) {
 	op, _ := im1.CreateCVD(r)
 	om.Wait(op.Name, 1*time.Second)
 	// The second instance manager is created with the same im paths as the previous instance
-	// manager, this will lead to create an instance home dir that already exist.
+	// manager, this will lead to create an instance runtime dir that already exist.
 	im2 := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 
 	op, _ = im2.CreateCVD(r)
 
 	res, _ := om.Wait(op.Name, 1*time.Second)
 	if res.Error == nil {
-		t.Error("expected error due instance home dir already existing")
+		t.Error("expected error due instance runtime dir already existing")
 	}
 }
 
@@ -198,7 +198,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -214,7 +214,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	if stats.Mode().String() != expected {
 		t.Errorf("expected <<%q>, got %q", expected, stats.Mode().String())
 	}
-	stats, _ = os.Stat(paths.HomesRootDir)
+	stats, _ = os.Stat(paths.RuntimesRootDir)
 	if stats.Mode().String() != expected {
 		t.Errorf("expected <<%q>, got %q", expected, stats.Mode().String())
 	}
@@ -236,7 +236,7 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	im := newCVDToolIm(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
@@ -273,7 +273,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	im := newCVDToolIm(execContext, cvdBinAB, paths, &testCVDDwnlder{}, om)
@@ -286,9 +286,9 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 		t.Errorf("expected 'sudo', got %q", usedCmdName)
 	}
 	artifactsDir := paths.ArtifactsRootDir + "/1_foo"
-	homeDir := paths.HomesRootDir + "/cvd-1"
+	runtimeDir := paths.RuntimesRootDir + "/cvd-1"
 	expectedCmdArgs := []string{
-		"-u", "_cvd-executor", envVarAndroidHostOut + "=" + artifactsDir, envVarHome + "=" + homeDir,
+		"-u", "_cvd-executor", envVarAndroidHostOut + "=" + artifactsDir, envVarHome + "=" + runtimeDir,
 		paths.CVDBin, "start", daemonArg, reportAnonymousUsageStatsArg,
 		"--base_instance_num=1", "--system_image_dir=" + artifactsDir,
 	}
@@ -305,7 +305,7 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -334,7 +334,7 @@ func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	opts := CVDToolInstanceManagerOpts{
@@ -367,7 +367,7 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -390,7 +390,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -428,7 +428,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -458,12 +458,12 @@ func TestListCVDsSucceeds(t *testing.T) {
   [
           {
                   "adb_serial" : "0.0.0.0:6520",
-                  "assembly_dir" : "/var/lib/cuttlefish-common/homes/cvd-1/cuttlefish/assembly",
+                  "assembly_dir" : "/var/lib/cuttlefish-common/runtimes/cvd-1/cuttlefish/assembly",
                   "displays" :
                   [
                           "720 x 1280 ( 320 )"
                   ],
-                  "instance_dir" : "/var/lib/cuttlefish-common/homes/cvd-1/cuttlefish/instances/cvd-1",
+                  "instance_dir" : "/var/lib/cuttlefish-common/runtimes/cvd-1/cuttlefish/instances/cvd-1",
                   "instance_name" : "cvd-1",
                   "status" : "Running",
                   "web_access" : "https:///run/cuttlefish/operator:8443/client.html?deviceId=cvd-1",
@@ -482,7 +482,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 	paths := IMPaths{
 		CVDBin:           dir + "/cvd",
 		ArtifactsRootDir: dir + "/artifacts",
-		HomesRootDir:     dir + "/homes",
+		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
@@ -504,12 +504,12 @@ func TestListCVDsSucceeds(t *testing.T) {
 }
 
 func TestGetLogsDir(t *testing.T) {
-	paths := IMPaths{HomesRootDir: "/homes"}
+	paths := IMPaths{RuntimesRootDir: "/runtimes"}
 	im := NewCVDToolInstanceManager(&CVDToolInstanceManagerOpts{Paths: paths})
 
 	got := im.GetLogsDir("cvd-1")
 
-	if diff := cmp.Diff("/homes/cvd-1/cuttlefish_runtime/logs", got); diff != "" {
+	if diff := cmp.Diff("/runtimes/cvd-1/cuttlefish_runtime/logs", got); diff != "" {
 		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
 	}
 }

@@ -122,7 +122,7 @@ func main() {
 		RootDir:          imRootDir,
 		CVDBin:           imRootDir + "/cvd",
 		ArtifactsRootDir: imRootDir + "/artifacts",
-		HomesRootDir:     imRootDir + "/homes",
+		RuntimesRootDir:  imRootDir + "/runtimes",
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
