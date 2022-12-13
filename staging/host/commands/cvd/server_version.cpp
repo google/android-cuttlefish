@@ -17,12 +17,12 @@
 #include "host/commands/cvd/server.h"
 
 #include <build/version.h>
+#include <cvd_server.pb.h>
 #include <fruit/fruit.h>
-
-#include "cvd_server.pb.h"
 
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_constants.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
@@ -50,6 +50,8 @@ class CvdVersionHandler : public CvdServerHandler {
   }
 
   Result<void> Interrupt() override { return CF_ERR("Can't interrupt"); }
+
+  cvd_common::Args CmdList() const override { return {"version"}; }
 };
 
 }  // namespace

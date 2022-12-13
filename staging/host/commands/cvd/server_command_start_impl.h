@@ -44,6 +44,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
   Result<void> Interrupt() override;
+  std::vector<std::string> CmdList() const override;
 
  private:
   Result<void> UpdateInstanceDatabase(

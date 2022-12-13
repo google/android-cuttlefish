@@ -40,14 +40,7 @@ cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
     selector_opts->add_args(selector_arg);
   }
 
-  for (const std::string& e : env) {
-    auto eq_pos = e.find('=');
-    if (eq_pos == std::string::npos) {
-      LOG(WARNING) << "Environment var in unknown format: " << e;
-      continue;
-    }
-    const auto key = e.substr(0, eq_pos);
-    const auto value = e.substr(eq_pos + 1);
+  for (const auto& [key, value] : env) {
     (*command_request->mutable_env())[key] = value;
   }
 
