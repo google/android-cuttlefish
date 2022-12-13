@@ -95,4 +95,9 @@ ScopedAStatus RefRadioNetwork::setNullCipherAndIntegrityEnabled(int32_t serial, 
     return ok();
 }
 
+ScopedAStatus RefRadioNetwork::isNullCipherAndIntegrityEnabled(int32_t serial) {
+    respond()->isNullCipherAndIntegrityEnabledResponse(responseInfo(serial), true);
+    return ok();
+}
+
 }  // namespace cf::ril
