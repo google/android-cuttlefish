@@ -33,6 +33,7 @@
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -384,6 +385,7 @@ class TryAcloudCreateCommand : public CvdServerHandler {
            invocation.arguments.size() >= 1 &&
            invocation.arguments[0] == "create";
   }
+  cvd_common::Args CmdList() const override { return {}; }
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(converter_.Convert(request));
     return CF_ERR("Unreleased");
@@ -406,6 +408,9 @@ class AcloudCreateCommand : public CvdServerHandler {
     return invocation.command == "acloud" && invocation.arguments.size() >= 1 &&
            invocation.arguments[0] == "create";
   }
+
+  cvd_common::Args CmdList() const override { return {}; }
+
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
     if (interrupted_) {
