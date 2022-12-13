@@ -13,25 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
 #include <string>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
-#include "cvd_server.pb.h"
-
 namespace cuttlefish {
+namespace cvd_common {
 
-struct MakeRequestParam {
-  std::vector<std::string> cmd_args;
-  std::unordered_map<std::string, std::string> env;
-  std::vector<std::string> selector_args;
-};
+using Args = std::vector<std::string>;
+using Envs = std::unordered_map<std::string, std::string>;
 
-cvd::Request MakeRequest(
-    const MakeRequestParam& args_and_envs,
-    const cvd::WaitBehavior wait_behavior = cvd::WAIT_BEHAVIOR_COMPLETE);
-
+}  // namespace cvd_common
 }  // namespace cuttlefish
