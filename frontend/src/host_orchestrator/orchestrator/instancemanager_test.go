@@ -63,8 +63,13 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		corruptRequest func(r *apiv1.CreateCVDRequest)
 	}{
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource = nil }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild = nil }},
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild.BuildID = "" }},
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild.Target = "" }},
+		{func(r *apiv1.CreateCVDRequest) {
+			r.CVD.BuildSource.AndroidCIBuild = nil
+			r.CVD.BuildSource.UserBuild = &apiv1.UserBuild{ArtifactsDir: ""}
+		}},
 	}
 
 	for _, test := range tests {
@@ -92,11 +97,18 @@ func (d *testCVDDwnlder) Download(_ string, _ AndroidBuild) error {
 }
 
 func TestCreateCVDToolCVDIsDownloadedOnce(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
 	om := NewMapOM()
 	cvdDwnlder := &testCVDDwnlder{}
-	im := newCVDToolIm(execContext, cvdBinAB, IMPaths{}, cvdDwnlder, om)
+	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	r1 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
 	r2 := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("2", "foo")}}
 
@@ -299,6 +311,43 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	cvdDwnlder := &testCVDDwnlder{}
 	im := newCVDToolIm(execContext, cvdBinAB, paths, cvdDwnlder, om)
 	buildSource := androidCISource("1", "foo")
+	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
+
+	op, _ := im.CreateCVD(r)
+
+	res, _ := om.Wait(op.Name, 1*time.Second)
+	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
+	if diff := cmp.Diff(want, res.Value); diff != "" {
+		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
+	}
+}
+
+type fakeUADirRes struct{}
+
+func (fakeUADirRes) GetDirPath(string) string { return "" }
+
+func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := execCtxAlwaysSucceeds
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		HomesRootDir:     dir + "/homes",
+	}
+	om := NewMapOM()
+	opts := CVDToolInstanceManagerOpts{
+		ExecContext:              execContext,
+		CVDBinAB:                 cvdBinAB,
+		Paths:                    paths,
+		CVDDownloader:            &testCVDDwnlder{},
+		OperationManager:         om,
+		HostValidator:            &AlwaysSucceedsValidator{},
+		UserArtifactsDirResolver: &fakeUADirRes{},
+	}
+	im := NewCVDToolInstanceManager(&opts)
+	buildSource := &apiv1.BuildSource{UserBuild: &apiv1.UserBuild{ArtifactsDir: "baz"}}
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
 
 	op, _ := im.CreateCVD(r)

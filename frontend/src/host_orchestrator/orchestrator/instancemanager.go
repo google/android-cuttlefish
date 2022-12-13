@@ -68,32 +68,35 @@ type IMPaths struct {
 
 // Instance manager implementation based on execution of `cvd` tool commands.
 type CVDToolInstanceManager struct {
-	execContext        ExecContext
-	paths              IMPaths
-	om                 OperationManager
-	instanceCounter    uint32
-	downloadCVDHandler *downloadCVDHandler
-	fetchCVDHandler    *fetchCVDHandler
-	startCVDHandler    *startCVDHandler
-	hostValidator      Validator
+	execContext              ExecContext
+	paths                    IMPaths
+	om                       OperationManager
+	userArtifactsDirResolver UserArtifactsDirResolver
+	instanceCounter          uint32
+	downloadCVDHandler       *downloadCVDHandler
+	fetchCVDHandler          *fetchCVDHandler
+	startCVDHandler          *startCVDHandler
+	hostValidator            Validator
 }
 
 type CVDToolInstanceManagerOpts struct {
-	ExecContext      ExecContext
-	CVDBinAB         AndroidBuild
-	Paths            IMPaths
-	CVDDownloader    CVDDownloader
-	OperationManager OperationManager
-	CVDExecTimeout   time.Duration
-	HostValidator    Validator
+	ExecContext              ExecContext
+	CVDBinAB                 AndroidBuild
+	Paths                    IMPaths
+	CVDDownloader            CVDDownloader
+	OperationManager         OperationManager
+	UserArtifactsDirResolver UserArtifactsDirResolver
+	CVDExecTimeout           time.Duration
+	HostValidator            Validator
 }
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
 	return &CVDToolInstanceManager{
-		execContext:   opts.ExecContext,
-		paths:         opts.Paths,
-		om:            opts.OperationManager,
-		hostValidator: opts.HostValidator,
+		execContext:              opts.ExecContext,
+		paths:                    opts.Paths,
+		om:                       opts.OperationManager,
+		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
+		hostValidator:            opts.HostValidator,
 		downloadCVDHandler: &downloadCVDHandler{
 			CVDBinAB: opts.CVDBinAB,
 			CVDBin:   opts.Paths.CVDBin,
@@ -113,6 +116,15 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 		return apiv1.Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
 	}
 	if err := m.hostValidator.Validate(); err != nil {
+		return apiv1.Operation{}, err
+	}
+	if err := createDir(m.paths.ArtifactsRootDir); err != nil {
+		return apiv1.Operation{}, err
+	}
+	if err := createDir(m.paths.HomesRootDir); err != nil {
+		return apiv1.Operation{}, err
+	}
+	if err := m.downloadCVDHandler.Download(); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := m.om.New()
@@ -175,7 +187,20 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 			log.Printf("failed to complete operation with error: %v", err)
 		}
 	}()
-	cvd, err := m.launchCVD_(req, op)
+	var cvd *apiv1.CVD
+	var err error
+	switch {
+	case req.CVD.BuildSource.AndroidCIBuild != nil:
+		cvd, err = m.launchFromAndroidCI(req, op)
+	case req.CVD.BuildSource.UserBuild != nil:
+		cvd, err = m.launchFromUserBuild(req, op)
+	default:
+		result = OperationResult{
+			Error: operator.NewBadRequestError(
+				"Invalid CreateCVDRequest, missing BuildSource information.", nil),
+		}
+		return
+	}
 	if err != nil {
 		var details string
 		var execError *cvdCommandExecErr
@@ -194,20 +219,30 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	result = OperationResult{Value: cvd}
 }
 
-func (m *CVDToolInstanceManager) launchCVD_(req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	if err := m.downloadCVDHandler.Download(); err != nil {
-		return nil, err
-	}
-	if err := createDir(m.paths.ArtifactsRootDir); err != nil {
-		return nil, err
-	}
-	if err := createDir(m.paths.HomesRootDir); err != nil {
-		return nil, err
-	}
+func (m *CVDToolInstanceManager) launchFromAndroidCI(
+	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
 	artifactsDir, err := m.fetchCVDHandler.Fetch(req.CVD.BuildSource.AndroidCIBuild)
 	if err != nil {
 		return nil, err
 	}
+	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
+	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
+	homeDir := m.paths.HomesRootDir + "/" + cvdName
+	if err := createNewDir(homeDir); err != nil {
+		return nil, err
+	}
+	if err := m.startCVDHandler.Launch(instanceNumber, artifactsDir, homeDir); err != nil {
+		return nil, err
+	}
+	return &apiv1.CVD{
+		Name:        cvdName,
+		BuildSource: req.CVD.BuildSource,
+	}, nil
+}
+
+func (m *CVDToolInstanceManager) launchFromUserBuild(
+	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
+	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuild.ArtifactsDir)
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
 	homeDir := m.paths.HomesRootDir + "/" + cvdName
