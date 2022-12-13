@@ -18,6 +18,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -25,7 +26,7 @@ namespace cvd_cmd_impl {
 
 Result<bool> CvdFetchHandler::CanHandle(const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
-  return invocation.command == "fetch" || invocation.command == "fetch_cvd";
+  return Contains(fetch_cmd_list_, invocation.command);
 }
 
 Result<cvd::Response> CvdFetchHandler::Handle(const RequestWithStdio& request) {
