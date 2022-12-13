@@ -292,8 +292,7 @@ PRODUCT_PACKAGES += \
 #
 # Weaver aidl HAL
 #
-PRODUCT_PACKAGES += \
-    android.hardware.weaver-service.example
+# TODO(b/262418065) Add a real weaver implementation
 
 #
 # IR aidl HAL
