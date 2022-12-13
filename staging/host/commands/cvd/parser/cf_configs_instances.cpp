@@ -47,8 +47,6 @@ Result<void> ValidateInstancesConfigs(const Json::Value& root) {
   for (unsigned int i = 0; i < num_instances; i++) {
     CF_EXPECT(ValidateTypo(root[i], kInstanceKeyMap), "vm ValidateTypo fail");
 
-    // vm section is mandatory now to include vm manager parameter
-    CF_EXPECT(root[i].isMember("vm"), "missing vm configs");
     if (root[i].isMember("vm")) {
       CF_EXPECT(ValidateVmConfigs(root[i]["vm"]), "ValidateVmConfigs fail");
     }
