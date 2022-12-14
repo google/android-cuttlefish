@@ -24,11 +24,9 @@
 #include <android-base/logging.h>
 #include <android-base/result.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/client.h"
@@ -153,6 +151,11 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
       args[1] == "version") {
     auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
     std::cout << version_msg;
+    return {};
+  }
+
+  if (args.size() > 1 && android::base::Basename(args[0]) == "cvd" &&
+      args[1] == "cmd-list") {
     return {};
   }
 
