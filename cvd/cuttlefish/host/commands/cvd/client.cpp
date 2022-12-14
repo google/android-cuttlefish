@@ -158,7 +158,9 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
   CF_EXPECT(cuttlefish::SharedFD::Pipe(&read_pipe, &write_pipe),
             "Unable to create shutdown pipe: " << strerror(errno));
 
-  auto response = SendRequest(request, /*extra_fd=*/write_pipe);
+  auto response =
+      SendRequest(request, OverrideFd{/* override none of 0, 1, 2 */},
+                  /*extra_fd=*/write_pipe);
 
   // If the server is already not running then SendRequest will fail.
   // We treat this as success.
@@ -186,9 +188,10 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
 }
 
 Result<void> CvdClient::HandleCommand(
-    std::vector<std::string> args,
+    const std::vector<std::string>& args,
     const std::unordered_map<std::string, std::string>& env,
-    const std::vector<std::string>& selector_args) {
+    const std::vector<std::string>& selector_args,
+    const OverrideFd& new_control_fd) {
   std::optional<SharedFD> exe_fd;
   if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
       args[1] == "restart-server" && args[2] == "match-client") {
@@ -201,7 +204,7 @@ Result<void> CvdClient::HandleCommand(
   cvd::Request request = MakeRequest(
       {.cmd_args = args, .env = env, .selector_args = selector_args},
       cvd::WAIT_BEHAVIOR_COMPLETE);
-  auto response = CF_EXPECT(SendRequest(request, exe_fd));
+  auto response = CF_EXPECT(SendRequest(request, new_control_fd, exe_fd));
   CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
   CF_EXPECT(response.has_command_response(),
             "HandleCommand call missing CommandResponse.");
@@ -218,6 +221,7 @@ Result<void> CvdClient::SetServer(const SharedFD& server) {
 }
 
 Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request,
+                                             const OverrideFd& new_control_fds,
                                              std::optional<SharedFD> extra_fd) {
   if (!server_) {
     CF_EXPECT(SetServer(CF_EXPECT(ConnectToServer())));
@@ -229,10 +233,12 @@ Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request,
   UnixSocketMessage request_message;
 
   std::vector<SharedFD> control_fds = {
-      SharedFD::Dup(0),
-      SharedFD::Dup(1),
-      SharedFD::Dup(2),
-  };
+      (new_control_fds.stdin_override_fd ? *new_control_fds.stdin_override_fd
+                                         : SharedFD::Dup(0)),
+      (new_control_fds.stdout_override_fd ? *new_control_fds.stdout_override_fd
+                                          : SharedFD::Dup(1)),
+      (new_control_fds.stderr_override_fd ? *new_control_fds.stderr_override_fd
+                                          : SharedFD::Dup(2))};
   if (extra_fd) {
     control_fds.push_back(*extra_fd);
   }
@@ -285,27 +291,29 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
 }
 
 Result<void> CvdClient::HandleAcloud(
-    std::vector<std::string>& args,
+    const std::vector<std::string>& args,
     const std::unordered_map<std::string, std::string>& env,
     const std::string& host_tool_directory) {
   auto server_running =
       ValidateServerVersion(android::base::Dirname(host_tool_directory));
 
+  std::vector<std::string> args_copy{args};
+
   // TODO(b/206893146): Make this decision inside the server.
   if (!server_running.ok()) {
-    CallPythonAcloud(args);
+    CallPythonAcloud(args_copy);
     // no return
   }
 
-  args[0] = "try-acloud";
-  auto attempt = HandleCommand(args, env, {});
+  args_copy[0] = "try-acloud";
+  auto attempt = HandleCommand(args_copy, env, {});
   if (!attempt.ok()) {
-    CallPythonAcloud(args);
+    CallPythonAcloud(args_copy);
     // no return
   }
 
-  args[0] = "acloud";
-  CF_EXPECT(HandleCommand(args, env, {}));
+  args_copy[0] = "acloud";
+  CF_EXPECT(HandleCommand(args_copy, env, {}));
   return {};
 }
 
