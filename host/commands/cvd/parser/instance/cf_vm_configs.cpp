@@ -61,7 +61,7 @@ void InitVmManagerConfig(Json::Value& instances) {
         instances[i]["vm"]["vm_manager"] = "crosvm";
       }
     } else {
-      // vm object doesn't exisit , set the default vm manager to crosvm
+      // vm object doesn't exist , set the default vm manager to crosvm
       instances[i]["vm"]["vm_manager"] = "crosvm";
     }
   }
