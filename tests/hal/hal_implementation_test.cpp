@@ -154,6 +154,10 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.hardware.camera.common.",
     "android.hardware.camera.device.",
     "android.hardware.camera.metadata.",
+
+    // android.hardware.media.bufferpool2 is a HAL-less interface.
+    // It could be used for buffer recycling and caching by using the interface.
+    "android.hardware.media.bufferpool2."
 };
 
 /*
@@ -213,6 +217,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.automotive.occupant_awareness.", 1},
     {"android.hardware.automotive.remoteaccess.", 1},
     {"android.hardware.automotive.vehicle.", 1},
+
+    // The interface is in development (b/251850069)
+    {"android.hardware.media.c2.", 1},
 
     // These types are only used in TV.
     {"android.hardware.tv.tuner.", 1},
