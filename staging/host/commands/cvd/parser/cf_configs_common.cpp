@@ -123,6 +123,30 @@ void InitIntConfigSubGroup(Json::Value& instances, const std::string& group,
   }
 }
 
+void InitIntConfigSubGroupVector(Json::Value& instances,
+                                 const std::string& group,
+                                 const std::string& subgroup,
+                                 const std::string& json_flag,
+                                 int default_value) {
+  // Allocate and initialize with default values
+  for (int i = 0; i < instances.size(); i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(subgroup)) ||
+        (instances[i][group][subgroup].size() == 0)) {
+      instances[i][group][subgroup][0][json_flag] = default_value;
+
+    } else {
+      // Check the whole array
+      int vector_size = instances[i][group][subgroup].size();
+      for (int j = 0; j < vector_size; j++) {
+        if (!instances[i][group][subgroup][j].isMember(json_flag)) {
+          instances[i][group][subgroup][j][json_flag] = default_value;
+        }
+      }
+    }
+  }
+}
+
 void InitStringConfig(Json::Value& instances, const std::string& group,
                       const std::string& json_flag, const std::string& default_value) {
   // Allocate and initialize with default values
