@@ -17,6 +17,7 @@
 
 #include <chrono>
 #include <mutex>
+#include <sstream>
 #include <string>
 
 #include <fruit/fruit.h>
@@ -28,7 +29,8 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/server.h"
-#include "server_client.h"
+#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -46,7 +48,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
-    return invocation.command == "load";
+    return invocation.command == kLoadSubCmd;
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
@@ -73,6 +75,8 @@ class LoadConfigsCommand : public CvdServerHandler {
     return {};
   }
 
+  cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
+
   Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {
     bool help = false;
@@ -86,8 +90,10 @@ class LoadConfigsCommand : public CvdServerHandler {
     CF_EXPECT(ParseFlags(flags, args));
 
     if (help) {
-      static constexpr char kHelp[] = "Usage: cvd load";
-      CF_EXPECT(WriteAll(request.Out(), kHelp, sizeof(kHelp)) == sizeof(kHelp));
+      std::stringstream help_msg_stream;
+      help_msg_stream << "Usage: cvd " << kLoadSubCmd;
+      const auto help_msg = help_msg_stream.str();
+      CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
       return {};
     }
 
@@ -140,6 +146,8 @@ class LoadConfigsCommand : public CvdServerHandler {
   }
 
  private:
+  static constexpr char kLoadSubCmd[] = "load";
+
   CommandSequenceExecutor& executor_;
   InstanceLockFileManager& lock_file_manager_;
 
