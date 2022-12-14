@@ -98,7 +98,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     };
     let mut ta = KeyMintTa::new(hw_info, RpcInfo::V3(rpc_info_v3), imp, dev);
 
-    let mut buf = [0; kmr_wire::MAX_SIZE];
+    let mut buf = [0; kmr_wire::DEFAULT_MAX_SIZE];
     loop {
         // Read a request message from the pipe, as a 4-byte BE length followed by the message.
         let mut req_len_data = [0u8; 4];
@@ -107,7 +107,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
             return;
         }
         let req_len = u32::from_be_bytes(req_len_data) as usize;
-        if req_len > kmr_wire::MAX_SIZE {
+        if req_len > kmr_wire::DEFAULT_MAX_SIZE {
             error!("FATAL: Request too long ({})", req_len);
             return;
         }
