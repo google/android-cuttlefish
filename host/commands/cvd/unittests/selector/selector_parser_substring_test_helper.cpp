@@ -27,7 +27,7 @@ SubstringTest::SubstringTest() {
   const uid_t uid = getuid();
   auto [input, expected] = GetParam();
   auto selector_args = android::base::Tokenize(input, " ");
-  auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
       uid, selector_args, Args{}, Envs{});
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
