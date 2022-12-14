@@ -145,6 +145,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.media.audio.common.",
     "android.hardware.radio.",
     "android.hardware.uwb.fira_android.",
+    "android.hardware.power.stats.",
 
     // android.hardware.camera.device is an interface returned by
     // android.hardware.camera.provider.
