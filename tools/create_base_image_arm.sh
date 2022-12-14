@@ -165,15 +165,16 @@ else
 	rootfs_partition_size=$((${rootfs_partition_num_sectors} * 512))
 	e2fsck -fy ${IMAGE}?offset=${rootfs_partition_offset} >/dev/null 2>&1
 	imagesize=`stat -c %s "${IMAGE}"`
-	loopdev_rootfs="$(sudo losetup -f)"
-	sudo losetup --offset ${rootfs_partition_offset} --sizelimit ${rootfs_partition_size} "${loopdev_rootfs}" "${IMAGE}"
+	rootfs_partition_tempfile=$(mktemp)
+	dd if="${IMAGE}" of="${rootfs_partition_tempfile}" bs=512 skip=${rootfs_partition_start} count=${rootfs_partition_num_sectors}
 	while true; do
-		out=`sudo resize2fs -M ${loopdev_rootfs} 2>&1`
+		out=`resize2fs -M ${rootfs_partition_tempfile} 2>&1`
 		if [[ $out =~ "Nothing to do" ]]; then
 			break
 		fi
 	done
-	sudo losetup -d ${loopdev_rootfs}
+	dd if="${rootfs_partition_tempfile}" of="${IMAGE}" bs=512 seek=${rootfs_partition_start} count=${rootfs_partition_num_sectors} conv=fsync,notrunc
+	rm -f "${rootfs_partition_tempfile}"
 	truncate -s "${imagesize}" "${IMAGE}"
 	sgdisk -e "${IMAGE}"
 	e2fsck -fy ${IMAGE}?offset=${rootfs_partition_offset} || true
