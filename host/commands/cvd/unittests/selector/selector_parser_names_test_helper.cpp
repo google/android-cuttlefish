@@ -34,7 +34,7 @@ void ValidNamesTest::Init() {
   auto [input, expected_output] = GetParam();
   selector_args_ = android::base::Tokenize(input, " ");
   expected_output_ = std::move(expected_output);
-  auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
       uid, selector_args_, Args{}, Envs{});
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
@@ -45,7 +45,7 @@ InvalidNamesTest::InvalidNamesTest() {
   const uid_t uid = getuid();
   auto input = GetParam();
   auto selector_args = android::base::Tokenize(input, " ");
-  auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
       uid, selector_args, Args{}, Envs{});
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
