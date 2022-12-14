@@ -23,6 +23,7 @@ cc_library_host_static {
         "instance/cf_vm_configs.cpp",
         "instance/cf_boot_configs.cpp",
         "instance/cf_security_configs.cpp",
+        "instance/cf_graphics_configs.cpp",
         "cf_configs_common.cpp",
         "cf_configs_instances.cpp",
         "load_configs_parser.cpp",
