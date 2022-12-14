@@ -16,29 +16,26 @@
 
 #include <aidl/com/android/minidroid/testservice/ITestService.h>
 #include <android/binder_auto_utils.h>
-#include <binder_rpc_unstable.hpp>
+#include <minidroid_sd.h>
 
 #include <stdio.h>
 #include <unistd.h>
-#include <string>
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
+  if (argc != 3) {
     printf(
-        "Wrong usage of ITestService client. Please enter the CID of the "
-        "service host VM!\n");
+        "Wrong usage of ITestService client. Please enter the CID and port of "
+        "the proxy process!\n");
     return -1;
   }
 
   int service_host_cid = atoi(argv[1]);
-  int service_port =
-      aidl::com::android::minidroid::testservice::ITestService::SERVICE_PORT;
+  int service_port = atoi(argv[2]);
 
   printf("Hello Minidroid client! Connecting to CID %d and port %d\n",
          service_host_cid, service_port);
 
-  AIBinder* service = ARpcSession_setupVsockClient(
-      ARpcSession_new(), service_host_cid, service_port);
+  AIBinder* service = bi::sd::getService(service_host_cid, service_port);
   ndk::SpAIBinder binder(service);
 
   auto test_service =
