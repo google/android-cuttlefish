@@ -51,6 +51,12 @@ void InitIntConfigSubGroup(Json::Value& instances, const std::string& group,
                            const std::string& subgroup,
                            const std::string& json_flag, int default_value);
 
+void InitIntConfigSubGroupVector(Json::Value& instances,
+                                 const std::string& group,
+                                 const std::string& subgroup,
+                                 const std::string& json_flag,
+                                 int default_value);
+
 void InitStringConfig(Json::Value& instances, const std::string& group,
                       const std::string& json_flag, const std::string& default_value);
 
