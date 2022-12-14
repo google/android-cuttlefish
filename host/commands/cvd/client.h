@@ -31,19 +31,36 @@
 #include "cvd_server.pb.h"
 
 namespace cuttlefish {
+
+struct OverrideFd {
+  std::optional<SharedFD> stdin_override_fd;
+  std::optional<SharedFD> stdout_override_fd;
+  std::optional<SharedFD> stderr_override_fd;
+};
+
 class CvdClient {
  public:
   Result<void> ValidateServerVersion(const std::string& host_tool_directory,
                                      int num_retries = 1);
   Result<void> StopCvdServer(bool clear);
   Result<void> HandleAcloud(
-      std::vector<std::string>& args,
+      const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env,
       const std::string& host_tool_directory);
   Result<void> HandleCommand(
-      std::vector<std::string> args,
+      const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args);
+      const std::vector<std::string>& selector_args,
+      const OverrideFd& control_fds);
+  Result<void> HandleCommand(
+      const std::vector<std::string>& args,
+      const std::unordered_map<std::string, std::string>& env,
+      const std::vector<std::string>& selector_args) {
+    CF_EXPECT(
+        HandleCommand(args, env, selector_args,
+                      OverrideFd{std::nullopt, std::nullopt, std::nullopt}));
+    return {};
+  }
   Result<std::string> HandleVersion(const std::string& host_tool_directory);
 
  private:
@@ -51,6 +68,7 @@ class CvdClient {
 
   Result<void> SetServer(const SharedFD& server);
   Result<cvd::Response> SendRequest(const cvd::Request& request,
+                                    const OverrideFd& new_control_fds = {},
                                     std::optional<SharedFD> extra_fd = {});
   Result<void> StartCvdServer(const std::string& host_tool_directory);
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
