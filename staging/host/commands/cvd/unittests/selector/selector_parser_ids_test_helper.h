@@ -46,7 +46,7 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
   unsigned requested_num_instances_;
   std::optional<std::vector<unsigned>> expected_ids_;
   std::unordered_map<std::string, std::string> envs_;
-  std::optional<SelectorFlagsParser> parser_;
+  std::optional<StartSelectorParser> parser_;
   Result<CommandAndSelectorArguments> flag_separation_result_;
 };
 

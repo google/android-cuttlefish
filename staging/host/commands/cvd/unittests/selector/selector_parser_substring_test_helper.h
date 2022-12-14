@@ -40,7 +40,7 @@ class SubstringTest : public testing::TestWithParam<SubstringTestInput> {
   SubstringTest();
 
   bool expected_result_;
-  std::optional<SelectorFlagsParser> parser_;
+  std::optional<StartSelectorParser> parser_;
 };
 
 }  // namespace selector

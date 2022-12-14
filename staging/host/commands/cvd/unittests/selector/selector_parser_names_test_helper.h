@@ -49,14 +49,14 @@ class ValidNamesTest : public testing::TestWithParam<InputOutput> {
 
   std::vector<std::string> selector_args_;
   ExpectedOutput expected_output_;
-  std::optional<SelectorFlagsParser> parser_;
+  std::optional<StartSelectorParser> parser_;
 };
 
 class InvalidNamesTest : public testing::TestWithParam<std::string> {
  protected:
   InvalidNamesTest();
 
-  std::optional<SelectorFlagsParser> parser_;
+  std::optional<StartSelectorParser> parser_;
 };
 
 }  // namespace selector

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
+#include "host/commands/cvd/selector/start_selector_parser.h"
 
 #include <unistd.h>
 
@@ -47,17 +47,17 @@ static Result<unsigned> ParseNaturalNumber(const std::string& token) {
   return static_cast<unsigned>(value);
 }
 
-Result<SelectorFlagsParser> SelectorFlagsParser::ConductSelectFlagsParser(
+Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
     const uid_t uid, const std::vector<std::string>& selector_args,
     const std::vector<std::string>& cmd_args,
     const std::unordered_map<std::string, std::string>& envs) {
   const std::string system_wide_home = CF_EXPECT(SystemWideUserHome(uid));
-  SelectorFlagsParser parser(system_wide_home, selector_args, cmd_args, envs);
+  StartSelectorParser parser(system_wide_home, selector_args, cmd_args, envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
-SelectorFlagsParser::SelectorFlagsParser(
+StartSelectorParser::StartSelectorParser(
     const std::string& system_wide_user_home,
     const std::vector<std::string>& selector_args,
     const std::vector<std::string>& cmd_args,
@@ -70,16 +70,16 @@ SelectorFlagsParser::SelectorFlagsParser(
   may_be_default_group_ = selector_args.empty();
 }
 
-std::optional<std::string> SelectorFlagsParser::GroupName() const {
+std::optional<std::string> StartSelectorParser::GroupName() const {
   return group_name_;
 }
 
-std::optional<std::vector<std::string>> SelectorFlagsParser::PerInstanceNames()
+std::optional<std::vector<std::string>> StartSelectorParser::PerInstanceNames()
     const {
   return instance_names_;
 }
 
-Result<SelectorFlagsParser::ParsedNameFlags> SelectorFlagsParser::HandleNames(
+Result<StartSelectorParser::ParsedNameFlags> StartSelectorParser::HandleNames(
     const std::optional<std::string>& names) const {
   CF_EXPECT(names && !names.value().empty());
 
@@ -118,7 +118,7 @@ Result<SelectorFlagsParser::ParsedNameFlags> SelectorFlagsParser::HandleNames(
                       .instance_names = std::nullopt}};
 }
 
-Result<std::vector<std::string>> SelectorFlagsParser::HandleInstanceNames(
+Result<std::vector<std::string>> StartSelectorParser::HandleInstanceNames(
     const std::optional<std::string>& per_instance_names) const {
   CF_EXPECT(per_instance_names && !per_instance_names.value().empty());
 
@@ -133,15 +133,15 @@ Result<std::vector<std::string>> SelectorFlagsParser::HandleInstanceNames(
   return instance_names;
 }
 
-Result<std::string> SelectorFlagsParser::HandleGroupName(
+Result<std::string> StartSelectorParser::HandleGroupName(
     const std::optional<std::string>& group_name) const {
   CF_EXPECT(group_name && !group_name.value().empty());
   CF_EXPECT(IsValidGroupName(group_name.value()));
   return {group_name.value()};
 }
 
-Result<SelectorFlagsParser::DeviceNamesPair>
-SelectorFlagsParser::HandleDeviceNames(
+Result<StartSelectorParser::DeviceNamesPair>
+StartSelectorParser::HandleDeviceNames(
     const std::optional<std::string>& device_names) const {
   CF_EXPECT(device_names && !device_names.value().empty());
 
@@ -166,8 +166,8 @@ SelectorFlagsParser::HandleDeviceNames(
                               HandleInstanceNames(joined_instance_names)))}};
 }
 
-Result<SelectorFlagsParser::ParsedNameFlags>
-SelectorFlagsParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
+Result<StartSelectorParser::ParsedNameFlags>
+StartSelectorParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
   const std::optional<std::string>& names = name_flags.names;
   const std::optional<std::string>& device_names = name_flags.device_names;
   const std::optional<std::string>& group_name = name_flags.group_name;
@@ -237,7 +237,7 @@ std::optional<unsigned> TryFromUser(const Envs& envs) {
 }  // namespace
 
 std::optional<std::vector<unsigned>>
-SelectorFlagsParser::InstanceFromEnvironment(
+StartSelectorParser::InstanceFromEnvironment(
     const InstanceFromEnvParam& params) {
   const auto& cuttlefish_instance_env = params.cuttlefish_instance_env;
   const auto& vsoc_suffix = params.vsoc_suffix;
@@ -264,7 +264,7 @@ SelectorFlagsParser::InstanceFromEnvironment(
   return nums;
 }
 
-Result<unsigned> SelectorFlagsParser::VerifyNumOfInstances(
+Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
     const VerifyNumOfInstancesParam& params,
     const unsigned default_n_instances) const {
   const auto& num_instances_flag = params.num_instances_flag;
@@ -314,8 +314,8 @@ static Result<std::vector<unsigned>> ParseInstanceNums(
   return nums;
 }
 
-Result<SelectorFlagsParser::ParsedInstanceIdsOpt>
-SelectorFlagsParser::HandleInstanceIds(
+Result<StartSelectorParser::ParsedInstanceIdsOpt>
+StartSelectorParser::HandleInstanceIds(
     const InstanceIdsParams& instance_id_params) {
   const auto& instance_nums = instance_id_params.instance_nums;
   const auto& base_instance_num = instance_id_params.base_instance_num;
@@ -370,7 +370,7 @@ SelectorFlagsParser::HandleInstanceIds(
   return ParsedInstanceIdsOpt{instance_ids_vector};
 }
 
-Result<void> SelectorFlagsParser::ParseOptions() {
+Result<void> StartSelectorParser::ParseOptions() {
   // Handling name-related options
   std::optional<std::string> names;
   std::optional<std::string> device_name;
@@ -430,7 +430,7 @@ Result<void> SelectorFlagsParser::ParseOptions() {
  *  substr0 substr1,substr2,subtr3 ...
  */
 Result<std::unordered_set<std::string>>
-SelectorFlagsParser::FindSubstringsToMatch() {
+StartSelectorParser::FindSubstringsToMatch() {
   std::unordered_set<std::string> substring_queries;
   const auto selector_args_size = selector_args_.size();
   for (int i = 0; i < selector_args_size; i++) {
@@ -450,7 +450,7 @@ SelectorFlagsParser::FindSubstringsToMatch() {
   return {substring_queries};
 }
 
-bool SelectorFlagsParser::IsValidName(const std::string& name) const {
+bool StartSelectorParser::IsValidName(const std::string& name) const {
   return IsValidGroupName(name) || IsValidInstanceName(name) ||
          IsValidDeviceName(name);
 }
