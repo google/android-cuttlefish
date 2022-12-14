@@ -38,7 +38,7 @@ InstanceIdTest::InstanceIdTest() {
   if (cuttlefish_instance) {
     envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
   }
-  auto parse_result = SelectorFlagsParser::ConductSelectFlagsParser(
+  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
       uid, selector_args, cmd_args, envs_);
   if (parse_result.ok()) {
     parser_ = std::move(*parse_result);
