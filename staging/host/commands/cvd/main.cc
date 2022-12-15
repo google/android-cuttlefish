@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <string>
 #include <vector>
@@ -33,9 +34,10 @@
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
+#include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
@@ -78,86 +80,107 @@ Result<void> RunServer(const SharedFD& internal_server_fd,
 }
 
 struct ParseResult {
-  bool clean_;
   SharedFD internal_server_fd_;
   SharedFD carryover_client_fd_;
 };
 
-Result<ParseResult> Parse(std::vector<std::string>& args) {
+Result<ParseResult> Parse(std::vector<std::string>& all_args) {
   std::vector<Flag> flags;
-  bool clean = false;
-  flags.emplace_back(GflagsCompatFlag("clean", clean));
   SharedFD internal_server_fd;
   flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
   SharedFD carryover_client_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
 
-  CF_EXPECT(ParseFlags(flags, args));
-  ParseResult result = {clean, internal_server_fd, carryover_client_fd};
+  CF_EXPECT(ParseFlags(flags, all_args));
+  ParseResult result = {internal_server_fd, carryover_client_fd};
   return {result};
 }
 
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
-  std::vector<std::string> all_args = ArgsToVec(argc, argv);
+  cvd_common::Args all_args = ArgsToVec(argc, argv);
+  // TODO(kwstephenkim): handle this in the parser
+  if (android::base::Basename(all_args[0]) == "cvd" && all_args.size() > 1 &&
+      all_args.at(1) == "-h") {
+    all_args[1] = "--help";
+  }
+  auto env = EnvVectorToMap(envp);
+  const auto host_tool_dir =
+      android::base::Dirname(android::base::GetExecutableDirectory());
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
     return {};
   }
-
-  auto [args, selector_args] =
-      CF_EXPECT(selector::GetCommandAndSelectorArguments(all_args));
-  auto env = EnvVectorToMap(envp);
-
   CvdClient client;
 
-  auto host_tool_dir =
-      android::base::Dirname(android::base::GetExecutableDirectory());
-
   // TODO(b/206893146): Make this decision inside the server.
-  if (android::base::Basename(args[0]) == "acloud") {
-    return client.HandleAcloud(args, env, host_tool_dir);
+  if (android::base::Basename(all_args[0]) == "acloud") {
+    return client.HandleAcloud(all_args, env, host_tool_dir);
   }
 
-  auto [clean, internal_server_fd, carryover_client_fd] =
-      CF_EXPECT(Parse(args));
+  auto [internal_server_fd, carryover_client_fd] = CF_EXPECT(Parse(all_args));
 
-  if (IsServerModeExpected(internal_server_fd, args[0])) {
+  if (IsServerModeExpected(internal_server_fd, all_args[0])) {
     return RunServer(internal_server_fd, carryover_client_fd);
   }
+
+  /*
+   * For now, the parser needs a running server. The parser will
+   * be moved to the server side, and then it won't.
+   *
+   */
+  CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
+            "Unable to ensure cvd_server is running.");
+  auto frontline_parser =
+      CF_EXPECT(FrontlineParser::Parse(client, all_args, env));
+  CF_EXPECT(frontline_parser != nullptr);
 
   // Special case for `cvd kill-server`, handled by directly
   // stopping the cvd_server.
   std::vector<std::string> kill_server_cmds{"kill-server", "server-kill"};
-  if (args.size() > 1 && Contains(kill_server_cmds, args[1])) {
+  std::string subcmd = frontline_parser->SubCmd().value_or("");
+  if (Contains(kill_server_cmds, subcmd)) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
     return {};
   }
 
   // Special case for --clean flag, used to clear any existing state.
-  if (clean) {
-    LOG(INFO) << "cvd invoked with --clean; "
+  if (frontline_parser->Clean()) {
+    std::cerr << "cvd invoked with --clean. Now, "
               << "stopping the cvd_server before continuing.";
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
+    CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
+              "Unable to ensure cvd_server is running.");
   }
 
-  // Handle all remaining commands by forwarding them to the cvd_server.
-  CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
-            "Unable to ensure cvd_server is running.");
-
+  const auto prog_name = android::base::Basename(frontline_parser->ProgPath());
   // Special case for `cvd version`, handled by using the version command.
-  if (args.size() > 1 && android::base::Basename(args[0]) == "cvd" &&
-      args[1] == "version") {
+  if (prog_name == "cvd" && subcmd == "version") {
     auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
     std::cout << version_msg;
     return {};
   }
 
+  cvd_common::Args cmd_args{frontline_parser->ProgPath()};
+  if (frontline_parser->Help()) {
+    if (frontline_parser->SubCmd() != std::nullopt) {
+      CF_EXPECT(true == false, "cvd -h, --help, or help cannot be given with "
+                                   << frontline_parser->SubCmd().value());
+    }
+    subcmd = "help";
+  }
+  if (!subcmd.empty()) {
+    cmd_args.emplace_back(subcmd);
+  }
+  std::copy(frontline_parser->SubCmdArgs().begin(),
+            frontline_parser->SubCmdArgs().end(), std::back_inserter(cmd_args));
+  cvd_common::Args selector_args = frontline_parser->SelectorArgs();
+
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
-  CF_EXPECT(client.HandleCommand(args, env, selector_args));
+  CF_EXPECT(client.HandleCommand(cmd_args, env, selector_args));
   return {};
 }
 
@@ -169,7 +192,7 @@ int main(int argc, char** argv, char** envp) {
   if (result.ok()) {
     return 0;
   } else {
-    std::cerr << result.error().Message() << std::endl;
+    std::cerr << result.error().Trace() << std::endl;
     return -1;
   }
 }
