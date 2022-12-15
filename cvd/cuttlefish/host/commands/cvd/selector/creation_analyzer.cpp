@@ -53,7 +53,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
             "CreationAnalyzer::Analyze() is for cvd start only.");
   const auto client_uid = credential.uid;
   auto selector_options_parser =
-      CF_EXPECT(SelectorFlagsParser::ConductSelectFlagsParser(
+      CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
           client_uid, param.selector_args, param.cmd_args, param.envs));
   CreationAnalyzer analyzer(param, credential,
                             std::move(selector_options_parser),
@@ -64,7 +64,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze(
 
 CreationAnalyzer::CreationAnalyzer(
     const CreationAnalyzerParam& param, const ucred& credential,
-    SelectorFlagsParser&& selector_options_parser,
+    StartSelectorParser&& selector_options_parser,
     const InstanceDatabase& instance_database,
     InstanceLockFileManager& instance_file_lock_manager)
     : cmd_args_(param.cmd_args),

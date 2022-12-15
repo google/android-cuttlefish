@@ -108,7 +108,7 @@ class CreationAnalyzer {
   using IdAllocator = UniqueResourceAllocator<unsigned>;
 
   CreationAnalyzer(const CreationAnalyzerParam& param, const ucred& credential,
-                   SelectorFlagsParser&& selector_options_parser,
+                   StartSelectorParser&& selector_options_parser,
                    const InstanceDatabase& instance_database,
                    InstanceLockFileManager& instance_lock_file_manager);
 
@@ -163,7 +163,7 @@ class CreationAnalyzer {
   std::string group_name_;
 
   // internal, temporary
-  SelectorFlagsParser selector_options_parser_;
+  StartSelectorParser selector_options_parser_;
   const InstanceDatabase& instance_database_;
   InstanceLockFileManager& instance_file_lock_manager_;
 };
