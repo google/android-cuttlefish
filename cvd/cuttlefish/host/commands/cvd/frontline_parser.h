@@ -16,11 +16,17 @@
 
 #pragma once
 
+#include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/client.h"
+#include "host/commands/cvd/selector/arguments_separator.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -40,12 +46,36 @@ namespace cuttlefish {
  * side.
  */
 class FrontlineParser {
+  using ArgumentsSeparator = selector::ArgumentsSeparator;
+
  public:
-  FrontlineParser(CvdClient& client,
-                  const std::unordered_map<std::string, std::string>& env)
-      : client_(client), envs_(env) {}
+  // This call must guarantee all public methods will be valid
+  static Result<std::unique_ptr<FrontlineParser>> Parse(
+      CvdClient& client, const cvd_common::Args& all_args,
+      const cvd_common::Envs& envs);
+
+  const std::string& ProgPath() const;
+  std::optional<std::string> SubCmd() const;
+  const cvd_common::Args& SubCmdArgs() const;
+  const cvd_common::Args& SelectorArgs() const;
+  bool Clean() const { return clean_; }
+  bool Help() const { return help_; }
 
  private:
+  FrontlineParser(CvdClient& client, const cvd_common::Args& all_args,
+                  const cvd_common::Envs& envs);
+
+  // internal workers in order
+  Result<void> Separate();
+  Result<cvd_common::Args> ValidSubcmdsList();
+  Result<std::unique_ptr<ArgumentsSeparator>> CallSeparator();
+  struct FilterOutput {
+    bool clean;
+    bool help;
+    cvd_common::Args selector_args;
+  };
+  Result<FilterOutput> FilterNonSelectorArgs();
+
   /*
    * Returns the list of subcommands that cvd ever supports.
    *
@@ -56,7 +86,21 @@ class FrontlineParser {
   Result<Json::Value> ListSubcommands();
 
   CvdClient& client_;
-  const std::unordered_map<std::string, std::string> envs_;
+  std::unordered_set<std::string> known_bool_flags_;
+  std::unordered_set<std::string> known_value_flags_;
+  std::unordered_set<std::string> selector_flags_;
+  cvd_common::Args valid_subcmds_;
+  const cvd_common::Args all_args_;
+  const cvd_common::Envs envs_;
+  std::unique_ptr<ArgumentsSeparator> arguments_separator_;
+
+  // outputs
+  bool clean_;
+  bool help_;
+  /**
+   * remaining arguments to pass to the selector
+   */
+  cvd_common::Args selector_args_;
 };
 
 }  // namespace cuttlefish
