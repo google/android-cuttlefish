@@ -39,6 +39,7 @@ class ConstRef {
 
   ConstRef& operator=(const ConstRef& other) {
     inner_wrapper_ = other.inner_wrapper_;
+    return *this;
   }
 
   operator const T&() const noexcept { return inner_wrapper_.get(); }
