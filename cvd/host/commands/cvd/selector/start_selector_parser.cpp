@@ -29,6 +29,7 @@
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 
@@ -62,13 +63,10 @@ StartSelectorParser::StartSelectorParser(
     const std::vector<std::string>& selector_args,
     const std::vector<std::string>& cmd_args,
     const std::unordered_map<std::string, std::string>& envs)
-    : selector_args_(selector_args), cmd_args_(cmd_args), envs_(envs) {
-  if (Contains(envs_, "HOME") && envs_.at("HOME") != system_wide_user_home) {
-    may_be_default_group_ = false;
-    return;
-  }
-  may_be_default_group_ = selector_args.empty();
-}
+    : client_user_home_{system_wide_user_home},
+      selector_args_(selector_args),
+      cmd_args_(cmd_args),
+      envs_(envs) {}
 
 std::optional<std::string> StartSelectorParser::GroupName() const {
   return group_name_;
@@ -207,9 +205,8 @@ StartSelectorParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
 
 namespace {
 
-using Envs = std::unordered_map<std::string, std::string>;
-
-std::optional<unsigned> TryFromCuttlefishInstance(const Envs& envs) {
+std::optional<unsigned> TryFromCuttlefishInstance(
+    const cvd_common::Envs& envs) {
   if (!Contains(envs, kCuttlefishInstanceEnvVarName)) {
     return std::nullopt;
   }
@@ -221,7 +218,7 @@ std::optional<unsigned> TryFromCuttlefishInstance(const Envs& envs) {
   return parsed.ok() ? std::optional(*parsed) : std::nullopt;
 }
 
-std::optional<unsigned> TryFromUser(const Envs& envs) {
+std::optional<unsigned> TryFromUser(const cvd_common::Envs& envs) {
   if (!Contains(envs, "USER")) {
     return std::nullopt;
   }
@@ -370,7 +367,23 @@ StartSelectorParser::HandleInstanceIds(
   return ParsedInstanceIdsOpt{instance_ids_vector};
 }
 
+Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
+  std::optional<bool> disable_default_group;
+  CF_EXPECT(FilterSelectorFlag(selector_args_, kDisableDefaultGroupOpt,
+                               disable_default_group));
+  if (disable_default_group && disable_default_group.value()) {
+    // never be a default group
+    return false;
+  }
+  if (Contains(envs_, "HOME") && envs_.at("HOME") != client_user_home_) {
+    return false;
+  }
+  return selector_args_.empty();
+}
+
 Result<void> StartSelectorParser::ParseOptions() {
+  may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
+
   // Handling name-related options
   std::optional<std::string> names;
   std::optional<std::string> device_name;

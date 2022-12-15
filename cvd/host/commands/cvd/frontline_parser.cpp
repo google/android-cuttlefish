@@ -25,6 +25,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 
@@ -39,11 +40,12 @@ struct ValueFlags {
 };
 
 static const BoolFlags bool_flags{
-    .selector_flags = std::unordered_set<std::string>{},
+    .selector_flags = {selector::kDisableDefaultGroupOpt},
     .cvd_driver_flags = {"clean", "help"}};
 
 static const ValueFlags value_flags{
-    .selector_flags = {"device_name", "group_name", "name", "instance_name"},
+    .selector_flags = {selector::kDeviceNameOpt, selector::kGroupNameOpt,
+                       selector::kInstanceNameOpt, selector::kNameOpt},
     .cvd_driver_flags = {}};
 
 static std::unordered_set<std::string> Merge(
