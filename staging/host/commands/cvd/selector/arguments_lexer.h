@@ -101,6 +101,7 @@ class ArgToken {
 
   auto Type() const { return type_; }
   const auto& Token() const { return token_; }
+  auto& Token() { return token_; }
   bool operator==(const ArgToken& dst) const {
     return Type() == dst.Type() && Token() == dst.Token();
   }
