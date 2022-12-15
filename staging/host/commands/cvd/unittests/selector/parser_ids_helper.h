@@ -22,16 +22,14 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace selector {
 
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
-
 struct InstanceIdTestInput {
-  std::string input_args;
+  std::string cmd_args;
+  std::string selector_args;
   std::optional<std::string> cuttlefish_instance;
   std::optional<std::vector<unsigned>> expected_ids;
   unsigned requested_num_instances;
@@ -45,9 +43,10 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
   bool expected_result_;
   unsigned requested_num_instances_;
   std::optional<std::vector<unsigned>> expected_ids_;
-  std::unordered_map<std::string, std::string> envs_;
-  std::optional<StartSelectorParser> parser_;
-  Result<CommandAndSelectorArguments> flag_separation_result_;
+  uid_t uid_;
+  cvd_common::Args cmd_args_;
+  cvd_common::Args selector_args_;
+  cvd_common::Envs envs_;
 };
 
 }  // namespace selector
