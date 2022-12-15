@@ -16,109 +16,103 @@
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
-#include "host/commands/cvd/unittests/selector/selector_parser_ids_test_helper.h"
+#include "host/commands/cvd/selector/start_selector_parser.h"
+#include "host/commands/cvd/unittests/selector/parser_ids_helper.h"
 
 namespace cuttlefish {
 namespace selector {
 
 TEST_P(InstanceIdTest, InstanceIdCalculation) {
-  if (!flag_separation_result_.ok()) {
-    GTEST_SKIP()
-        << "Selector and Command Args separation failed. "
-        << "Developers must make sure that this does not happen. "
-        << "This is not what InstanceIdCalculation test intended to test.";
-  }
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      uid_, selector_args_, cmd_args_, envs_);
 
-  ASSERT_EQ(parser_ != std::nullopt, expected_result_);
+  ASSERT_EQ(parser.ok(), expected_result_);
   if (!expected_result_) {
     return;
   }
-  ASSERT_EQ(parser_->InstanceIds(), expected_ids_);
-  ASSERT_EQ(parser_->RequestedNumInstances(), requested_num_instances_);
+  ASSERT_EQ(parser->InstanceIds(), expected_ids_);
+  ASSERT_EQ(parser->RequestedNumInstances(), requested_num_instances_);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     CvdParser, InstanceIdTest,
     testing::Values(
-        InstanceIdTestInput{.input_args = "",
-                            .cuttlefish_instance = std::nullopt,
+        InstanceIdTestInput{.cuttlefish_instance = std::nullopt,
                             .expected_ids = std::nullopt,
                             .requested_num_instances = 1,
                             .expected_result = true},
-        InstanceIdTestInput{.input_args = "",
-                            .cuttlefish_instance = "8",
+        InstanceIdTestInput{.cuttlefish_instance = "8",
                             .expected_ids = std::vector<unsigned>{8},
                             .requested_num_instances = 1,
                             .expected_result = true},
-        InstanceIdTestInput{.input_args = "--num_instances=2",
+        InstanceIdTestInput{.cmd_args = "--num_instances=2",
                             .expected_ids = std::nullopt,
                             .requested_num_instances = 2,
                             .expected_result = true},
-        InstanceIdTestInput{.input_args = "--num_instances=2",
+        InstanceIdTestInput{.cmd_args = "--num_instances=2",
                             .cuttlefish_instance = "8",
                             .expected_ids = std::vector<unsigned>{8, 9},
                             .requested_num_instances = 2,
                             .expected_result = true},
         InstanceIdTestInput{
-            .input_args = "--base_instance_num=10 --num_instances=2",
+            .cmd_args = "--base_instance_num=10 --num_instances=2",
             .cuttlefish_instance = "8",
             .expected_ids = std::vector<unsigned>{10, 11},
             .requested_num_instances = 2,
             .expected_result = true},
-        InstanceIdTestInput{.input_args = "--instance_nums 2",
+        InstanceIdTestInput{.cmd_args = "--instance_nums 2",
                             .cuttlefish_instance = std::nullopt,
                             .expected_ids = std::vector<unsigned>{2},
                             .requested_num_instances = 1,
                             .expected_result = true},
-        InstanceIdTestInput{.input_args = "--instance_nums 2,5,6",
+        InstanceIdTestInput{.cmd_args = "--instance_nums 2,5,6",
                             .cuttlefish_instance = std::nullopt,
                             .expected_ids = std::vector<unsigned>{2, 5, 6},
                             .requested_num_instances = 3,
                             .expected_result = true},
         InstanceIdTestInput{
-            .input_args = "--instance_nums 2,5,6 --num_instances=3",
+            .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
         InstanceIdTestInput{
-            .input_args = "[--device_name=c-1,c-3,c-5] "
-                          "--instance_nums 2,5,6 --num_instances=3",
+            .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
+            .selector_args = "--device_name=c-1,c-3,c-5",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
-        InstanceIdTestInput{.input_args = "[--device_name=c-1,c-3,c-5]",
+        InstanceIdTestInput{.selector_args = "--device_name=c-1,c-3,c-5",
                             .cuttlefish_instance = std::nullopt,
                             .expected_ids = std::nullopt,
                             .requested_num_instances = 3,
                             .expected_result = true},
         // CUTTLEFISH_INSTANCE should be ignored
         InstanceIdTestInput{
-            .input_args = "--instance_nums 2,5,6 --num_instances=3",
+            .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
             .cuttlefish_instance = "8",
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
         // instance_nums and num_instances mismatch
         InstanceIdTestInput{
-            .input_args = "--instance_nums 2,5,6 --num_instances=7",
+            .cmd_args = "--instance_nums 2,5,6 --num_instances=7",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = false},
         // device_name requested 2 instances while instance_nums 3.
         InstanceIdTestInput{
-            .input_args = "[--device_name=c-1,c-3] --instance_nums 2,5,6 "
-                          "--num_instances=3",
+            .cmd_args = "--num_instances=3 --instance_nums 2,5,6",
+            .selector_args = "--device_name=c-1,c-3",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = false},
         // --base_instance_num is not allowed with --instance_nums
         InstanceIdTestInput{
-            .input_args = "--instance_nums 2,5,6 --base_instance_num=7",
+            .cmd_args = "--instance_nums 2,5,6 --base_instance_num=7",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
