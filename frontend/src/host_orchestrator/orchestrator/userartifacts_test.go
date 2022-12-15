@@ -190,6 +190,10 @@ func TestUploadCVDHostPackageSucceds(t *testing.T) {
 	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
+	b, _ = ioutil.ReadFile(am.GetDirPath("foo") + "/foo_dir/link_foo.txt")
+	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
+		t.Errorf("symlink content mismatch (-want +got):\n%s", diff)
+	}
 	if ok, _ := fileExist(am.GetFilePath("foo", "cvd-host_package.tar.gz")); ok {
 		t.Error("cvd-host_package.tar.gz was not cleaned up")
 	}

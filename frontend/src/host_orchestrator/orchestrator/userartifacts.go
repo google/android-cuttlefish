@@ -189,6 +189,10 @@ func untar(dst string, src string) error {
 				return err
 			}
 			f.Close()
+		case tar.TypeSymlink:
+			if err := os.Symlink(header.Linkname, target); err != nil {
+				return err
+			}
 		}
 	}
 }
