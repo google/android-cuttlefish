@@ -121,6 +121,14 @@ static constexpr char kNewMiscImage[] = "new_misc_image";
 std::string CuttlefishConfig::InstanceSpecific::new_misc_image() const {
   return (*Dictionary())[kNewMiscImage].asString();
 }
+static constexpr char kMiscInfoTxt[] = "misc_info_txt";
+std::string CuttlefishConfig::InstanceSpecific::misc_info_txt() const {
+  return (*Dictionary())[kMiscInfoTxt].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_misc_info_txt(
+    const std::string& misc_info) {
+  (*Dictionary())[kMiscInfoTxt] = misc_info;
+}
 void CuttlefishConfig::MutableInstanceSpecific::set_new_misc_image(
     const std::string& new_misc_image) {
   (*Dictionary())[kNewMiscImage] = new_misc_image;
