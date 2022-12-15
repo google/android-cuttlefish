@@ -54,10 +54,10 @@ cc_test_host {
 cc_test_host {
     name: "cvd_selector_parser_test",
     srcs: [
-        "selector_parser_ids_test_helper.cpp",
+        "parser_ids_helper.cpp",
+        "parser_ids_test.cpp",
         "selector_parser_names_test_helper.cpp",
         "selector_parser_substring_test_helper.cpp",
-        "test_cvd_selector_parser_ids.cpp",
         "test_cvd_selector_parser_names.cpp",
         "test_cvd_selector_parser_substring.cpp",
     ],
