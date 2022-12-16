@@ -161,6 +161,7 @@ class StartSelectorParser {
   Result<unsigned> VerifyNumOfInstances(
       const VerifyNumOfInstancesParam& params,
       const unsigned default_n_instances = 1) const;
+  Result<bool> CalcMayBeDefaultGroup();
   std::optional<std::string> group_name_;
   std::optional<std::vector<std::string>> instance_names_;
   std::unordered_set<std::string> substring_queries_;
@@ -182,6 +183,7 @@ class StartSelectorParser {
   bool may_be_default_group_;
 
   // temporarily keeps the leftover of the input cmd_args
+  const std::string client_user_home_;
   std::vector<std::string> selector_args_;
   std::vector<std::string> cmd_args_;
   std::unordered_map<std::string, std::string> envs_;
