@@ -16,7 +16,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "host/commands/cvd/unittests/selector/creation_analyzer_test_helper.h"
+#include "host/commands/cvd/unittests/selector/creation_analyzer_helper.h"
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/users.h"
