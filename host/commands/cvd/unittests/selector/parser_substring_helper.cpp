@@ -13,35 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "host/commands/cvd/unittests/selector/parser_substring_helper.h"
 
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
-#include <gtest/gtest.h>
-
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
+#include <android-base/strings.h>
 
 namespace cuttlefish {
 namespace selector {
 
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
-
-struct SubstringTestInput {
-  std::string input_args;
-  bool expected;
-};
-
-class SubstringTest : public testing::TestWithParam<SubstringTestInput> {
- protected:
-  SubstringTest();
-
-  bool expected_result_;
-  std::optional<StartSelectorParser> parser_;
-};
+SubstringTest::SubstringTest() {
+  auto [input, expected] = GetParam();
+  selector_args_ = android::base::Tokenize(input, " ");
+  expected_result_ = expected;
+}
 
 }  // namespace selector
 }  // namespace cuttlefish
