@@ -74,6 +74,7 @@ constexpr char kNameOpt[] = "name";
 constexpr char kDeviceNameOpt[] = "device_name";
 constexpr char kGroupNameOpt[] = "group_name";
 constexpr char kInstanceNameOpt[] = "instance_name";
+constexpr char kDisableDefaultGroupOpt[] = "disable_default_group";
 
 }  // namespace selector
 }  // namespace cuttlefish
