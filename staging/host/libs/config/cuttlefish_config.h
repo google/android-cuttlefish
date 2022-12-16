@@ -110,6 +110,9 @@ class CuttlefishConfig {
   void set_secure_hals(const std::set<std::string>& hals);
   std::set<SecureHal> secure_hals() const;
 
+  void set_crosvm_binary(const std::string& crosvm_binary);
+  std::string crosvm_binary() const;
+
   void set_gem5_debug_flags(const std::string& gem5_debug_flags);
   std::string gem5_debug_flags() const;
 
