@@ -27,6 +27,7 @@ import (
 	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
 	wclient "github.com/google/cloud-android-orchestration/pkg/webrtcclient"
 
+	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -246,46 +247,21 @@ func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
 	return out
 }
 
-type BuildInfo struct {
-	BuildID string `json:"build_id"`
-	Target  string `json:"target"`
-}
-
-type CVD struct {
-	Name      string     `json:"name"`
-	BuildInfo *BuildInfo `json:"build_info"`
-	Status    string     `json:"status"`
-	Displays  []string   `json:"displays"`
-}
-
-type CreateCVDRequest struct {
-	CVD *CVD `json:"cvd"`
-}
-
-type ListCVDsResponse struct {
-	CVDs []*CVD `json:"cvds"`
-}
-
-type Operation struct {
-	Name string `json:"name"`
-	Done bool   `json:"done"`
-}
-
-func (c *APIClient) CreateCVD(host string, req *CreateCVDRequest) (*CVD, error) {
-	var op Operation
+func (c *APIClient) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error) {
+	var op hoapi.Operation
 	if err := c.doRequest("POST", "/hosts/"+host+"/cvds", req, &op); err != nil {
 		return nil, err
 	}
 	path := "/hosts/" + host + "/operations/" + op.Name + "/:wait"
-	cvd := &CVD{}
+	cvd := &hoapi.CVD{}
 	if err := c.doRequest("POST", path, nil, cvd); err != nil {
 		return nil, err
 	}
 	return cvd, nil
 }
 
-func (c *APIClient) ListCVDs(host string) ([]*CVD, error) {
-	var res ListCVDsResponse
+func (c *APIClient) ListCVDs(host string) ([]*hoapi.CVD, error) {
+	var res hoapi.ListCVDsResponse
 	if err := c.doRequest("GET", "/hosts/"+host+"/cvds", nil, &res); err != nil {
 		return nil, err
 	}
