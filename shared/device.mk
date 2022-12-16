@@ -291,7 +291,9 @@ PRODUCT_PACKAGES += \
 # IR aidl HAL
 #
 PRODUCT_PACKAGES += \
-	android.hardware.ir-service.example
+	android.hardware.ir-service.example \
+	consumerir.default
+
 
 #
 # OemLock aidl HAL
