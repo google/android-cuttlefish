@@ -62,12 +62,12 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
 Result<selector::GroupCreationInfo>
 CvdStartCommandHandler::GetGroupCreationInfo(
     const std::string& subcmd, const std::vector<std::string>& subcmd_args,
-    const Envs& envs, const RequestWithStdio& request) {
+    const cvd_common::Envs& envs, const RequestWithStdio& request) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
   const auto& selector_opts =
       request.Message().command_request().selector_opts();
-  const auto selector_args = ConvertProtoArguments(selector_opts.args());
+  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
   CreationAnalyzerParam analyzer_param{
       .cmd_args = subcmd_args, .envs = envs, .selector_args = selector_args};
   auto cred = CF_EXPECT(request.Credentials());
@@ -95,7 +95,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   }
 
   const uid_t uid = request.Credentials()->uid;
-  Envs envs = ConvertProtoMap(request.Message().command_request().env());
+  cvd_common::Envs envs =
+      cvd_common::ConvertToEnvs(request.Message().command_request().env());
   if (Contains(envs, "HOME")) {
     // As the end-user may override HOME, this could be a relative path
     // to client's pwd, or may include "~" which is the client's actual
