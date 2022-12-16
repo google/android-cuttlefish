@@ -46,31 +46,47 @@ TEST_P(ValidNamesTest, FieldsNoSubstring) {
 INSTANTIATE_TEST_SUITE_P(
     CvdParser, ValidNamesTest,
     testing::Values(
-        InputOutput{.input = "--group_name=cf",
+        InputOutput{.input = "--name=cf",
                     .expected = ExpectedOutput{.group_name = "cf"}},
-        InputOutput{.input = "--instance_name=cvd,cf",
+        InputOutput{.input = "--name=cvd,cf",
                     .expected = ExpectedOutput{.per_instance_names =
                                                    std::vector<std::string>{
                                                        "cvd", "cf"}}},
-        InputOutput{.input = "--instance_name=09-1,tv-2 --group_name cf",
+        InputOutput{.input = "--name=cf-09,cf-tv",
                     .expected = ExpectedOutput{.group_name = "cf",
                                                .per_instance_names =
                                                    std::vector<std::string>{
-                                                       "09-1", "tv-2"}}},
+                                                       "09", "tv"}}},
         InputOutput{
-            .input = "--group_name=cf --instance_name 09",
+            .input = "--device_name cf-09",
             .expected = ExpectedOutput{.group_name = "cf",
                                        .per_instance_names =
                                            std::vector<std::string>{"09"}}},
-        InputOutput{.input = "--group_name=my_cool --instance_name=phone-1,tv",
+        InputOutput{.input = "--device_name my_cool-phone,my_cool-tv",
                     .expected = ExpectedOutput{.group_name = "my_cool",
                                                .per_instance_names =
                                                    std::vector<std::string>{
-                                                       "phone-1", "tv"}}},
+                                                       "phone", "tv"}}},
         InputOutput{
-            .input = "--instance_name=my-cool",
+            .input = "--group_name=my_cool --instance_name=phone",
+            .expected = ExpectedOutput{.group_name = "my_cool",
+                                       .per_instance_names =
+                                           std::vector<std::string>{"phone"}}},
+        InputOutput{.input = "--group_name=my_cool --instance_name=phone,tv",
+                    .expected = ExpectedOutput{.group_name = "my_cool",
+                                               .per_instance_names =
+                                                   std::vector<std::string>{
+                                                       "phone", "tv"}}},
+        InputOutput{
+            .input = "--group_name=my_cool",
+            .expected =
+                ExpectedOutput{
+                    .group_name = "my_cool",
+                }},
+        InputOutput{
+            .input = "--instance_name=my_cool",
             .expected = ExpectedOutput{
-                .per_instance_names = std::vector<std::string>{"my-cool"}}}));
+                .per_instance_names = std::vector<std::string>{"my_cool"}}}));
 
 TEST_P(InvalidNamesTest, InvalidInputs) {
   const uid_t uid = getuid();
@@ -81,11 +97,13 @@ TEST_P(InvalidNamesTest, InvalidInputs) {
   ASSERT_FALSE(parser.ok());
 }
 
-INSTANTIATE_TEST_SUITE_P(CvdParser, InvalidNamesTest,
-                         testing::Values("--group_name", "--group_name=?34",
-                                         "--group_name=ab-cd",
-                                         "--group_name=3a", "--instance_name",
-                                         "--instance_name=*7a"));
+INSTANTIATE_TEST_SUITE_P(
+    CvdParser, InvalidNamesTest,
+    testing::Values("--name", "--name=?34", "--device_name=abcd",
+                    "--group_name=3ab", "--name=x --device_name=y",
+                    "--name=x --group_name=cf",
+                    "--device_name=z --instance_name=p", "--instance_name=*79a",
+                    "--device_name=abcd-e,xyz-f", "--device_name=xyz-e,xyz-e"));
 
 }  // namespace selector
 }  // namespace cuttlefish
