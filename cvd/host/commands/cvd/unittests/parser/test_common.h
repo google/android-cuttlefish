@@ -21,6 +21,7 @@
 
 #include <json/json.h>
 
+#define GENERATE_MVP_FLAGS_ONLY true
 namespace cuttlefish {
 
 bool ParseJsonString(std::string& json_text, Json::Value& root);

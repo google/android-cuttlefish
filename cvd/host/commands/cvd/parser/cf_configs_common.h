@@ -19,6 +19,9 @@
 #include <iostream>
 
 #include "common/libs/utils/result.h"
+
+#define GENERATE_MVP_FLAGS_ONLY true
+
 namespace cuttlefish {
 
 Result<void> ValidateTypo(const Json::Value& root,

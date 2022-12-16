@@ -62,10 +62,12 @@ void InitSecurityConfigs(Json::Value& instances) {
 
 std::vector<std::string> GenerateSecurityFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(
-      GenerateGflag(instances, "serial_number", "security", "serial_number"));
-  result.emplace_back(GenerateGflag(instances, "use_random_serial", "security",
-                                    "use_random_serial"));
+  if (!GENERATE_MVP_FLAGS_ONLY) {
+    result.emplace_back(
+        GenerateGflag(instances, "serial_number", "security", "serial_number"));
+    result.emplace_back(GenerateGflag(instances, "use_random_serial",
+                                      "security", "use_random_serial"));
+  }
   result.emplace_back(GenerateGflag(instances, "guest_enforce_security",
                                     "security", "guest_enforce_security"));
   return result;
