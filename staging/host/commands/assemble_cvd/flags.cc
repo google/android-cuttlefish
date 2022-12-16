@@ -1426,6 +1426,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_instance_names(names);
 
+  // keep legacy values for acloud or other related tools (b/262284453)
+  tmp_config_obj.set_crosvm_binary(crosvm_binary_vec[0]);
+
   // Keep the original code here to set enable_sandbox commandline flag value
   SetCommandLineOptionWithMode("enable_sandbox", default_enable_sandbox.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
