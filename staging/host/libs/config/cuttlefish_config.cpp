@@ -169,6 +169,14 @@ void CuttlefishConfig::set_secure_hals(const std::set<std::string>& hals) {
   (*dictionary_)[kSecureHals] = hals_json_obj;
 }
 
+static constexpr char kCrosvmBinary[] = "crosvm_binary";
+std::string CuttlefishConfig::crosvm_binary() const {
+  return (*dictionary_)[kCrosvmBinary].asString();
+}
+void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
+  (*dictionary_)[kCrosvmBinary] = crosvm_binary;
+}
+
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
   return (*dictionary_)[kGem5DebugFlags].asString();
