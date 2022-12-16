@@ -16,10 +16,11 @@
 
 #define LOG_TAG "RIL_SAP"
 
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 #include <android/hardware/radio/1.1/ISap.h>
+#include <libradiocompat/Sap.h>
 
-#include <hwbinder/IPCThreadState.h>
-#include <hwbinder/ProcessState.h>
 #include <sap_service.h>
 #include "pb_decode.h"
 #include "pb_encode.h"
@@ -925,6 +926,8 @@ void sap::processUnsolResponse(MsgHeader *rsp, RilSapSocket *sapSocket) {
 
 void sap::registerService(const RIL_RadioFunctions *callbacks) {
     using namespace android::hardware;
+    namespace compat = android::hardware::radio::compat;
+
     int simCount = 1;
     const char *serviceNames[] = {
         android::RIL_getServiceName()
@@ -960,7 +963,13 @@ void sap::registerService(const RIL_RadioFunctions *callbacks) {
         sapService[i]->slotId = i;
         sapService[i]->rilSocketId = socketIds[i];
         RLOGD("registerService: starting ISap %s for slotId %d", serviceNames[i], i);
-        android::status_t status = sapService[i]->registerAsService(serviceNames[i]);
-        RLOGD("registerService: started ISap %s status %d", serviceNames[i], status);
+
+        // use a compat shim to convert HIDL interface to AIDL and publish it
+        // PLEASE NOTE this is a temporary solution
+        static auto aidlHal = ndk::SharedRefBase::make<compat::Sap>(sapService[i]);
+        const auto instance = compat::Sap::descriptor + "/"s + std::string(serviceNames[i]);
+        const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
+        RLOGD("registerService addService: instance %s, status %d", instance.c_str(), status);
+        CHECK_EQ(status, STATUS_OK);
     }
 }
