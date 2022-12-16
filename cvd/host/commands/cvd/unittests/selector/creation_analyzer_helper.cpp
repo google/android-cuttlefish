@@ -17,6 +17,8 @@
 
 #include <android-base/strings.h>
 
+#include "host/commands/cvd/types.h"
+
 namespace cuttlefish {
 namespace selector {
 namespace {
@@ -32,12 +34,14 @@ CommandInvocation MockParseInvocation(const std::vector<std::string>& args) {
     return CommandInvocation{};
   }
   if (args[0] != "cvd") {
-    return CommandInvocation{.command = args[0], .arguments = Args{}};
+    return CommandInvocation{.command = args[0],
+                             .arguments = cvd_common::Args{}};
   }
   if (args.size() == 1) {
-    return CommandInvocation{.command = "help", .arguments = Args{}};
+    return CommandInvocation{.command = "help",
+                             .arguments = cvd_common::Args{}};
   }
-  Args program_args{args.begin() + 2, args.end()};
+  cvd_common::Args program_args{args.begin() + 2, args.end()};
   return CommandInvocation{.command = args[1], .arguments = program_args};
 }
 
