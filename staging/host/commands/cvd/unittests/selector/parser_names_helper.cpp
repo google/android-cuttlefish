@@ -13,15 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/selector/selector_parser_names_test_helper.h"
-
-#include <sys/types.h>
-#include <unistd.h>
+#include "host/commands/cvd/unittests/selector/parser_names_helper.h"
 
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
 
 namespace cuttlefish {
@@ -30,26 +26,13 @@ namespace selector {
 ValidNamesTest::ValidNamesTest() { Init(); }
 
 void ValidNamesTest::Init() {
-  const uid_t uid = getuid();
   auto [input, expected_output] = GetParam();
   selector_args_ = android::base::Tokenize(input, " ");
   expected_output_ = std::move(expected_output);
-  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
-      uid, selector_args_, Args{}, Envs{});
-  if (parse_result.ok()) {
-    parser_ = std::move(*parse_result);
-  }
 }
 
 InvalidNamesTest::InvalidNamesTest() {
-  const uid_t uid = getuid();
-  auto input = GetParam();
-  auto selector_args = android::base::Tokenize(input, " ");
-  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
-      uid, selector_args, Args{}, Envs{});
-  if (parse_result.ok()) {
-    parser_ = std::move(*parse_result);
-  }
+  selector_args_ = android::base::Tokenize(GetParam(), " ");
 }
 
 }  // namespace selector

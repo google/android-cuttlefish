@@ -23,13 +23,11 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
+#include "host/commands/cvd/selector/start_selector_parser.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace selector {
-
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
 
 struct ExpectedOutput {
   std::optional<std::vector<std::string>> names;
@@ -47,16 +45,15 @@ class ValidNamesTest : public testing::TestWithParam<InputOutput> {
   ValidNamesTest();
   void Init();
 
-  std::vector<std::string> selector_args_;
+  cvd_common::Args selector_args_;
   ExpectedOutput expected_output_;
-  std::optional<StartSelectorParser> parser_;
 };
 
 class InvalidNamesTest : public testing::TestWithParam<std::string> {
  protected:
   InvalidNamesTest();
 
-  std::optional<StartSelectorParser> parser_;
+  cvd_common::Args selector_args_;
 };
 
 }  // namespace selector

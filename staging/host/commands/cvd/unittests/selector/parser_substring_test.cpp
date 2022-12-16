@@ -13,13 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/selector/selector_parser_substring_test_helper.h"
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "host/commands/cvd/unittests/selector/parser_substring_helper.h"
 
 namespace cuttlefish {
 namespace selector {
 
 TEST_P(SubstringTest, Substring) {
-  ASSERT_EQ((parser_ != std::nullopt), expected_result_);
+  const uid_t uid = getuid();
+
+  auto parse_result = StartSelectorParser::ConductSelectFlagsParser(
+      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+
+  ASSERT_EQ(parse_result.ok(), expected_result_);
 }
 
 INSTANTIATE_TEST_SUITE_P(

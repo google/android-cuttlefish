@@ -13,27 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/selector/selector_parser_names_test_helper.h"
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "host/commands/cvd/unittests/selector/parser_names_helper.h"
 
 namespace cuttlefish {
 namespace selector {
 
-TEST_P(ValidNamesTest, ValidInputs) { ASSERT_TRUE(parser_); }
+TEST_P(ValidNamesTest, ValidInputs) {
+  const uid_t uid = getuid();
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+
+  ASSERT_TRUE(parser.ok());
+}
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST_P(ValidNamesTest, FieldsNoSubstring) {
-  if (!parser_) {
-    /*
-     * We aren't testing whether or not parsing is working.
-     * That's tested in ValidInputs tests. We test fields.
-     */
-    GTEST_SKIP() << "Parsing failed, which must be tested in ValidInputs Test";
-  }
+  const uid_t uid = getuid();
 
-  ASSERT_EQ(parser_->GroupName(), expected_output_.group_name);
-  ASSERT_EQ(parser_->PerInstanceNames(), expected_output_.per_instance_names);
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+
+  ASSERT_TRUE(parser.ok());
+  ASSERT_EQ(parser->GroupName(), expected_output_.group_name);
+  ASSERT_EQ(parser->PerInstanceNames(), expected_output_.per_instance_names);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -81,7 +88,14 @@ INSTANTIATE_TEST_SUITE_P(
             .expected = ExpectedOutput{
                 .per_instance_names = std::vector<std::string>{"my_cool"}}}));
 
-TEST_P(InvalidNamesTest, InvalidInputs) { ASSERT_FALSE(parser_); }
+TEST_P(InvalidNamesTest, InvalidInputs) {
+  const uid_t uid = getuid();
+
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      uid, selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+
+  ASSERT_FALSE(parser.ok());
+}
 
 INSTANTIATE_TEST_SUITE_P(
     CvdParser, InvalidNamesTest,
