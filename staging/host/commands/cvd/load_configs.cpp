@@ -34,10 +34,14 @@
 
 namespace cuttlefish {
 
+namespace {
+
 struct DemoCommandSequence {
   std::vector<InstanceLockFile> instance_locks;
   std::vector<RequestWithStdio> requests;
 };
+
+}  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
