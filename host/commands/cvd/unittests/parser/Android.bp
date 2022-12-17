@@ -44,6 +44,7 @@ cc_test_host {
         "instance/vm_configs_test.cc",
         "instance/boot_configs_test.cc",
         "instance/metrics_configs_test.cc",
+        "instance/graphics_configs_test.cc",
     ],
     static_libs: [
         "libprotobuf-cpp-full",
