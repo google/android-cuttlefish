@@ -48,6 +48,7 @@ cc_test_host {
         "flags_parser_test.cc",
         "instance/vm_configs_test.cc",
         "instance/boot_configs_test.cc",
+        "instance/metrics_configs_test.cc",
     ],
     test_options: {
         unit_test: true,
