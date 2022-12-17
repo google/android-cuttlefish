@@ -323,10 +323,12 @@ Result<std::string> CvdClient::HandleVersion(
   std::stringstream result;
   std::string output;
   auto server_version = CF_EXPECT(GetServerVersion(host_tool_directory));
-  TextFormat::PrintToString(server_version, &output);
+  CF_EXPECT(TextFormat::PrintToString(server_version, &output),
+            "converting server_version to string failed");
   result << "Server version:" << std::endl << std::endl << output << std::endl;
 
-  TextFormat::PrintToString(CvdClient::GetClientVersion(), &output);
+  CF_EXPECT(TextFormat::PrintToString(CvdClient::GetClientVersion(), &output),
+            "converting client version to string failed");
   result << "Client version:" << std::endl << std::endl << output << std::endl;
   return {result.str()};
 }
