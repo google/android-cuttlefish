@@ -28,6 +28,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
@@ -37,7 +38,6 @@ namespace cuttlefish {
 namespace {
 
 struct DemoCommandSequence {
-  std::vector<InstanceLockFile> instance_locks;
   std::vector<RequestWithStdio> requests;
 };
 
@@ -45,9 +45,8 @@ struct DemoCommandSequence {
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
-  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor,
-                            InstanceLockFileManager& lock_file_manager))
-      : executor_(executor), lock_file_manager_(lock_file_manager) {}
+  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor))
+      : executor_(executor) {}
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -63,10 +62,6 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto commands = CF_EXPECT(CreateCommandSequence(request));
     interrupt_lock.unlock();
     CF_EXPECT(executor_.Execute(commands.requests, request.Err()));
-
-    for (auto& lock : commands.instance_locks) {
-      CF_EXPECT(lock.Status(InUseState::kInUse));
-    }
 
     cvd::Response response;
     response.mutable_command_response();
@@ -110,10 +105,6 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     DemoCommandSequence ret;
 
-    auto lock = CF_EXPECT(lock_file_manager_.TryAcquireUnusedLock());
-    CF_EXPECT(lock.has_value(), "Failed to acquire instance number (Load)");
-    ret.instance_locks.emplace_back(std::move(*lock));
-
     std::vector<cvd::Request> req_protos;
 
     auto& launch_phone = *req_protos.emplace_back().mutable_command_request();
@@ -132,8 +123,8 @@ class LoadConfigsCommand : public CvdServerHandler {
       launch_phone.add_args(parsed_flag);
     }
 
-    auto phone_instance = std::to_string(ret.instance_locks[0].Instance());
-    launch_phone.add_args("--base_instance_num=" + phone_instance);
+    launch_phone.mutable_selector_opts()->add_args(
+        std::string("--") + selector::kDisableDefaultGroupOpt);
 
     /*Verbose is disabled by default*/
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
@@ -141,8 +132,8 @@ class LoadConfigsCommand : public CvdServerHandler {
     std::vector<SharedFD> fds = {dev_null, dev_null, dev_null};
 
     for (auto& request_proto : req_protos) {
-      ret.requests.emplace_back(request.Client(), request_proto, fds,
-                                request.Credentials());
+      ret.requests.emplace_back(RequestWithStdio(
+          request.Client(), request_proto, fds, request.Credentials()));
     }
 
     return ret;
@@ -152,7 +143,6 @@ class LoadConfigsCommand : public CvdServerHandler {
   static constexpr char kLoadSubCmd[] = "load";
 
   CommandSequenceExecutor& executor_;
-  InstanceLockFileManager& lock_file_manager_;
 
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
