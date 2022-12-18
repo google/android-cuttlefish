@@ -119,7 +119,6 @@ class LoadConfigsCommand : public CvdServerHandler {
     launch_phone.add_args("cvd");
     launch_phone.add_args("start");
     launch_phone.add_args("--daemon");
-    launch_phone.add_args("--report_anonymous_usage_stats=y");
     for (auto& parsed_flag : serialized_data) {
       launch_phone.add_args(parsed_flag);
     }
