@@ -228,6 +228,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
 
     // No implementation of IRadioIms yet TODO(b/250912118)
     {"android.hardware.radio.ims.media.", 1},
+
+    // Weaver needs a real implementation (b/262418065)
+    {"android.hardware.weaver.", 2},
 };
 
 static const std::set<VersionedAidlPackage> kComingSoonAidl = {
