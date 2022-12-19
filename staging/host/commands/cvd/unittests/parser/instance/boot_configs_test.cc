@@ -19,6 +19,7 @@
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
+#ifndef GENERATE_MVP_FLAGS_ONLY
 TEST(BootFlagsParserTest, ParseTwoInstancesExtraBootConfigFlagEmptyJson) {
   const char* test_string = R""""(
 {
@@ -457,6 +458,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesRandomSerialFlagFullJson) {
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--use_random_serial=true,true)"))
       << "use_random_serial flag is missing or wrongly formatted";
 }
+#endif
 
 TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagEmptyJson) {
   const char* test_string = R""""(
@@ -568,6 +570,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagFullJson) {
       << "guest_enforce_security flag is missing or wrongly formatted";
 }
 
+#ifndef GENERATE_MVP_FLAGS_ONLY
 TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagEmptyJson) {
   const char* test_string = R""""(
 {
@@ -686,5 +689,6 @@ TEST(BootFlagsParserTest, ParseTwoInstancesKernelCmdFlagFullJson) {
       R"(--extra_kernel_cmdline=androidboot.selinux=permissive,lpm_levels.sleep_disabled=1)"))
       << "extra_kernel_cmdline flag is missing or wrongly formatted";
 }
+#endif
 
 }  // namespace cuttlefish
