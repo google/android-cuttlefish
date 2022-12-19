@@ -80,7 +80,9 @@ void InitInstancesConfigs(Json::Value& root) {
 
 std::vector<std::string> GenerateInstancesFlags(const Json::Value& root) {
   std::vector<std::string> result = GenerateVmFlags(root);
-  result = MergeResults(result, GenerateBootFlags(root));
+  if (!GENERATE_MVP_FLAGS_ONLY) {
+    result = MergeResults(result, GenerateBootFlags(root));
+  }
   result = MergeResults(result, GenerateSecurityFlags(root));
   result = MergeResults(result, GenerateGraphicsFlags(root));
   result = MergeResults(result, GenerateMetricsFlags(root));
