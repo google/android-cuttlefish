@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -57,8 +58,21 @@ static std::unordered_set<std::string> Merge(
 }
 
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
-    CvdClient& client, const cvd_common::Args& all_args,
+    CvdClient& client, const cvd_common::Args& all_args_orig,
     const cvd_common::Envs& envs) {
+  cvd_common::Args all_args{all_args_orig};
+  CF_EXPECT(!all_args.empty());
+  // TODO(kwstephenkim): implement these ad-hoc help checking in the
+  // parser.
+  if (android::base::Basename(all_args[0]) == "cvd") {
+    if (all_args.size() == 1) {
+      all_args.emplace_back("--help");
+    }
+    if (all_args.at(1) == "-h") {
+      all_args[1] = "--help";
+    }
+  }
+
   FrontlineParser* frontline_parser =
       new FrontlineParser(client, all_args, envs);
   CF_EXPECT(frontline_parser != nullptr,
