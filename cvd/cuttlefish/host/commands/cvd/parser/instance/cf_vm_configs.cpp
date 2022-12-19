@@ -86,7 +86,9 @@ std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
       GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
   result.emplace_back(
       GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
-  result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
+  if (!GENERATE_MVP_FLAGS_ONLY) {
+    result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
+  }
   result.emplace_back(GenerateGflagSubGroup(instances, "enable_sandbox", "vm",
                                             "crosvm", "enable_sandbox"));
 
