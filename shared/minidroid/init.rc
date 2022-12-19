@@ -27,6 +27,11 @@ on init
     mkdir /mnt/apk 0755 system system
     mkdir /mnt/extra-apk 0755 root root
 
+    # create an empty ld.config.txt before running any non-static exectuables
+    # (apexd and linkerconfig) to suppress "ld.config.txt not found" warnings.
+    write /linkerconfig/ld.config.txt \#
+    chmod 644 /linkerconfig/ld.config.txt
+
     # TODO: minidroid does not use microdroid_manager. If/when this is fixed
     # align this change and others related to microdroid_manager back to the
     # microdroid init.rc
