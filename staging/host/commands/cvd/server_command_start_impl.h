@@ -30,6 +30,7 @@
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command_impl.h"
 #include "host/commands/cvd/server_command_subprocess_waiter.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
@@ -50,7 +51,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> UpdateInstanceDatabase(
       const uid_t uid, const selector::GroupCreationInfo& group_creation_info);
   Result<void> FireCommand(Command&& command, const bool wait);
-  bool HasHelpOpts(const std::vector<std::string>& args) const;
+  bool HasHelpOpts(const cvd_common::Args& args) const;
 
   Result<Command> ConstructCvdNonHelpCommand(
       const std::string& bin_file,
@@ -59,8 +60,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   // call this only if !is_help
   Result<selector::GroupCreationInfo> GetGroupCreationInfo(
-      const std::string& subcmd, const std::vector<std::string>& subcmd_args,
-      const Envs& envs, const RequestWithStdio& request);
+      const std::string& subcmd, const cvd_common::Args& subcmd_args,
+      const cvd_common::Envs& envs, const RequestWithStdio& request);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;

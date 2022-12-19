@@ -38,8 +38,6 @@
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
-using Envs = cvd_common::Envs;
-
 class CvdFleetCommandHandler : public CvdServerHandler {
  public:
   INJECT(CvdFleetCommandHandler(InstanceManager& instance_manager,

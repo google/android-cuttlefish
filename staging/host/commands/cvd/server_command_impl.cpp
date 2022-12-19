@@ -29,24 +29,6 @@
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
-std::vector<std::string> ConvertProtoArguments(
-    const google::protobuf::RepeatedPtrField<std::string>& proto_args) {
-  std::vector<std::string> args;
-  for (const auto& proto_arg : proto_args) {
-    args.emplace_back(proto_arg);
-  }
-  return args;
-}
-
-Envs ConvertProtoMap(
-    const google::protobuf::Map<std::string, std::string>& proto_map) {
-  Envs envs;
-  for (const auto& entry : proto_map) {
-    envs[entry.first] = entry.second;
-  }
-  return envs;
-}
-
 PreconditionVerification VerifyPrecondition(const RequestWithStdio& request) {
   PreconditionVerification verification_result;
   if (!request.Credentials()) {
@@ -99,7 +81,8 @@ std::optional<CommandInvocationInfo> ExtractInfo(
     return std::nullopt;
   }
   const auto& bin = command_to_binary_map.at(command);
-  Envs envs = ConvertProtoMap(request.Message().command_request().env());
+  cvd_common::Envs envs =
+      cvd_common::ConvertToEnvs(request.Message().command_request().env());
   std::string home =
       Contains(envs, "HOME") ? envs.at("HOME") : StringFromEnv("HOME", ".");
   if (!Contains(envs, "ANDROID_HOST_OUT") ||
@@ -157,14 +140,14 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
 }
 
 Result<Command> ConstructCvdHelpCommand(
-    const std::string& bin_file, const Envs& envs,
+    const std::string& bin_file, const cvd_common::Envs& envs,
     const std::vector<std::string>& subcmd_args,
     const RequestWithStdio& request) {
   const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
   const auto bin_path = host_artifacts_path + "/bin/" + bin_file;
   auto client_pwd = request.Message().command_request().working_directory();
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
-  Envs envs_copy{envs};
+  cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,
