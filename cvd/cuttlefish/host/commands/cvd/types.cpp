@@ -22,7 +22,6 @@ namespace cvd_common {
 Args ConvertToArgs(
     const google::protobuf::RepeatedPtrField<std::string>& proto_args) {
   Args args;
-  args.reserve(proto_args.size());
   for (const auto& proto_arg : proto_args) {
     args.emplace_back(proto_arg);
   }
