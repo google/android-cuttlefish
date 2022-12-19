@@ -38,17 +38,20 @@ cc_test_host {
         "libcuttlefish_utils",
         "libjsoncpp",
     ],
-    static_libs: [
-        "libcvd_parser",
-        "libcuttlefish_host_config",
-        "libgmock",
-    ],
     srcs: [
         "test_common.cc",
         "flags_parser_test.cc",
         "instance/vm_configs_test.cc",
         "instance/boot_configs_test.cc",
         "instance/metrics_configs_test.cc",
+        "instance/graphics_configs_test.cc",
+    ],
+    static_libs: [
+        "libprotobuf-cpp-full",
+        "libcuttlefish_launch_cvd_proto",
+        "libcvd_parser",
+        "libcuttlefish_host_config",
+        "libgmock",
     ],
     test_options: {
         unit_test: true,
