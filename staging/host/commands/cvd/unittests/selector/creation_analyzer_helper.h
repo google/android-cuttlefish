@@ -30,9 +30,6 @@
 namespace cuttlefish {
 namespace selector {
 
-using Envs = std::unordered_map<std::string, std::string>;
-using Args = std::vector<std::string>;
-
 struct OutputInfo {
   std::string home;
   std::string host_artifacts_path;  ///< e.g. out/host/linux-x86

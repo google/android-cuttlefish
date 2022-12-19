@@ -27,13 +27,12 @@
 
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
 
 // methods shared by CvdCommandHandler and CvdStartCommandHandler
-
-using Envs = std::unordered_map<std::string, std::string>;
 struct CommandInvocationInfo {
   std::string command;
   std::string bin;
@@ -41,7 +40,7 @@ struct CommandInvocationInfo {
   std::string host_artifacts_path;
   uid_t uid;
   std::vector<std::string> args;
-  Envs envs;
+  cvd_common::Envs envs;
 };
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
@@ -60,7 +59,7 @@ struct ConstructCommandParam {
   const std::string& bin_path;
   const std::string& home;
   const std::vector<std::string>& args;
-  const Envs& envs;
+  const cvd_common::Envs& envs;
   const std::string& working_dir;
   const std::string& command_name;
   SharedFD in;
@@ -71,15 +70,9 @@ Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
 
 // Constructs a command for cvd whatever --help or --help-related-option
 Result<Command> ConstructCvdHelpCommand(
-    const std::string& bin_file, const Envs& envs,
+    const std::string& bin_file, const cvd_common::Envs& envs,
     const std::vector<std::string>& subcmd_args,
     const RequestWithStdio& request);
-
-Envs ConvertProtoMap(
-    const google::protobuf::Map<std::string, std::string>& proto_map);
-
-std::vector<std::string> ConvertProtoArguments(
-    const google::protobuf::RepeatedPtrField<std::string>& proto_args);
 
 // e.g. cvd start --help, cvd stop --help
 bool IsHelpSubcmd(const std::vector<std::string>& args);
