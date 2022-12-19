@@ -54,7 +54,8 @@ Result<cvd::Response> CvdFleetCommandHandler::Handle(
   response.mutable_command_response();
 
   auto [sub_cmd, args] = ParseInvocation(request.Message());
-  auto envs = ConvertProtoMap(request.Message().command_request().env());
+  auto envs =
+      cvd_common::ConvertToEnvs(request.Message().command_request().env());
   if (!IsHelp(args)) {
     CF_EXPECT(Contains(envs, "ANDROID_HOST_OUT") &&
               DirectoryExists(envs.at("ANDROID_HOST_OUT")));

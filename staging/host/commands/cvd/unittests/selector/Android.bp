@@ -70,8 +70,8 @@ cc_test_host {
 cc_test_host {
     name: "cvd_creation_analyzer_test",
     srcs: [
-        "creation_analyzer_test_helper.cpp",
-        "test_creation_analyzer.cpp",
+        "creation_analyzer_helper.cpp",
+        "creation_analyzer_test.cpp",
     ],
     test_options: {
         unit_test: false,
