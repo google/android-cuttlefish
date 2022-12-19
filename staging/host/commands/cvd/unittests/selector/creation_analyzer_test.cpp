@@ -16,12 +16,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "host/commands/cvd/unittests/selector/creation_analyzer_test_helper.h"
+#include "host/commands/cvd/unittests/selector/creation_analyzer_helper.h"
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -188,8 +189,6 @@ INSTANTIATE_TEST_SUITE_P(CvdCreationInfo, ValidSubCmdTest,
  * Database.
  */
 TEST(AutoHomeTest, DefaultFailAtSecondTrialTest) {
-  using Args = std::vector<std::string>;
-  using Envs = std::unordered_map<std::string, std::string>;
   auto android_host_out = StringFromEnv("ANDROID_HOST_OUT", ".");
   if (android_host_out.empty()) {
     GTEST_SKIP() << "This test requires ANDROID_HOST_OUT to be set";
@@ -197,10 +196,11 @@ TEST(AutoHomeTest, DefaultFailAtSecondTrialTest) {
   auto credential = ucred{.pid = getpid(), .uid = getuid(), .gid = getgid()};
   InstanceLockFileManager lock_manager;
   InstanceDatabase instance_db;
-  Envs envs = {{"ANDROID_HOST_OUT", android_host_out}};
-  Args empty_args;
-  std::vector<Args> cmd_args_list{Args{"--daemon --instance_nums=7"},
-                                  Args{"--daemon --instance_nums=3"}};
+  cvd_common::Envs envs = {{"ANDROID_HOST_OUT", android_host_out}};
+  cvd_common::Args empty_args;
+  std::vector<cvd_common::Args> cmd_args_list{
+      cvd_common::Args{"--daemon --instance_nums=7"},
+      cvd_common::Args{"--daemon --instance_nums=3"}};
   auto param0 = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_list[0], .envs = envs, .selector_args = empty_args};
   auto param1 = CreationAnalyzer::CreationAnalyzerParam{
@@ -223,8 +223,6 @@ TEST(AutoHomeTest, DefaultFailAtSecondTrialTest) {
 }
 
 TEST(AutoHomeTest, DefaultFollowedByNonDefaultTest) {
-  using Args = std::vector<std::string>;
-  using Envs = std::unordered_map<std::string, std::string>;
   auto android_host_out = StringFromEnv("ANDROID_HOST_OUT", ".");
   if (android_host_out.empty()) {
     GTEST_SKIP() << "This test requires ANDROID_HOST_OUT to be set";
@@ -235,14 +233,14 @@ TEST(AutoHomeTest, DefaultFollowedByNonDefaultTest) {
   auto credential = ucred{.pid = getpid(), .uid = getuid(), .gid = getgid()};
   InstanceLockFileManager lock_manager;
   InstanceDatabase instance_db;
-  Envs envs = {{"ANDROID_HOST_OUT", android_host_out}};
+  cvd_common::Envs envs = {{"ANDROID_HOST_OUT", android_host_out}};
   // needs this as the CreationAnalyzerParam takes references, not copies.
-  // i.e. .cmd_args = Args{} won't work.
-  Args empty_args;
-  Args cmd_arg_for_default{"--daemon --instance_nums=7"};
-  Args cmd_args_1st_non_default{"--daemon --instance_nums=3"};
-  Args cmd_args_2nd_non_default{"--daemon --instance_nums=5"};
-  Args selector_device_name_args{"--device_name=goog-tv"};
+  // i.e. .cmd_args = cvd_common::Args{} won't work.
+  cvd_common::Args empty_args;
+  cvd_common::Args cmd_arg_for_default{"--daemon --instance_nums=7"};
+  cvd_common::Args cmd_args_1st_non_default{"--daemon --instance_nums=3"};
+  cvd_common::Args cmd_args_2nd_non_default{"--daemon --instance_nums=5"};
+  cvd_common::Args selector_device_name_args{"--device_name=goog-tv"};
   auto param_default =
       CreationAnalyzer::CreationAnalyzerParam{.cmd_args = cmd_arg_for_default,
                                               .envs = envs,
@@ -252,7 +250,7 @@ TEST(AutoHomeTest, DefaultFollowedByNonDefaultTest) {
       .envs = envs,
       .selector_args = selector_device_name_args};
   // To make second non-default run non-default.
-  Envs envs_with_home{envs};
+  cvd_common::Envs envs_with_home{envs};
   envs_with_home["HOME"] = "/home/mocktester";
   auto param_2nd_non_default = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_2nd_non_default,
