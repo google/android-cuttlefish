@@ -60,7 +60,6 @@ PRODUCT_PACKAGES += \
     atrace \
     debuggerd \
     linker \
-    linkerconfig \
     servicemanager \
     tombstoned \
     tombstone_transmit.microdroid \
