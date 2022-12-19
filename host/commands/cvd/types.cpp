@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <string>
-#include <unordered_set>
-#include <vector>
-
-#include <cvd_server.pb.h>
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace cvd_common {
 
-using Args = std::vector<std::string>;
-using Envs = std::unordered_map<std::string, std::string>;
+Args ConvertToArgs(
+    const google::protobuf::RepeatedPtrField<std::string>& proto_args) {
+  Args args;
+  for (const auto& proto_arg : proto_args) {
+    args.emplace_back(proto_arg);
+  }
+  return args;
+}
 
 Envs ConvertToEnvs(
-    const google::protobuf::Map<std::string, std::string>& proto_map);
-
-Args ConvertToArgs(
-    const google::protobuf::RepeatedPtrField<std::string>& proto_args);
+    const google::protobuf::Map<std::string, std::string>& proto_map) {
+  cvd_common::Envs envs;
+  for (const auto& entry : proto_map) {
+    envs[entry.first] = entry.second;
+  }
+  return envs;
+}
 
 }  // namespace cvd_common
 }  // namespace cuttlefish
