@@ -969,7 +969,11 @@ void sap::registerService(const RIL_RadioFunctions *callbacks) {
         static auto aidlHal = ndk::SharedRefBase::make<compat::Sap>(sapService[i]);
         const auto instance = compat::Sap::descriptor + "/"s + std::string(serviceNames[i]);
         const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
-        RLOGD("registerService addService: instance %s, status %d", instance.c_str(), status);
-        CHECK_EQ(status, STATUS_OK);
+        if (status == STATUS_OK) {
+            RLOGD("registerService addService: instance %s, status %d", instance.c_str(), status);
+        } else {
+            RLOGE("failed to register sapService for instance %s, status %d", instance.c_str(),
+                  status);
+        }
     }
 }
