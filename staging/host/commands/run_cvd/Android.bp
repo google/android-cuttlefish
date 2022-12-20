@@ -86,6 +86,7 @@ cc_binary {
     static_libs: [
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
+        "libcuttlefish_host_config_fastboot",
         "libcuttlefish_vm_manager",
         "libcuttlefish_msg_queue",
         "libcuttlefish_metrics",
