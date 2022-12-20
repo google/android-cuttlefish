@@ -27,35 +27,41 @@
 DEFINE_int32(instance_num, 1, "Which instance to read the configs from");
 DEFINE_double(delay, 1.0, "delay interval between different coordinates");
 
-DEFINE_string(format, "", "gnss raw measurement file path for gnss grpc");
-DEFINE_string(file_path, "", "gnss raw measurement file path for gnss grpc");
+DEFINE_string(format, "", "supported file format, either kml or gpx");
+DEFINE_string(file_path, "", "path to input file location {Kml or gpx} format");
 
-constexpr char kUsageMessage[] =
-    "gps locations import commandline utility\n\n"
-    "  Usage: cvd_import_locations [option] command [args...]\n\n"
-    "  arguments:\n\n"
-    "    --frmat=[format_string]\n"
-    "      input file format for cvd_import_locations\n"
-    "         \"gpx\" for gpx input data file\n"
-    "         \"kml\" for kml input data file\n\n"
-    "    --file_path=[path]\n"
-    "      gps locations input file path\n"
-    "      if path is not specified, error will be reported\n\n"
-    "    --delay=[delay_value]\n"
-    "      delay between different gps locations ( double , default value is "
-    "1.0 second) \n\n"
-    "    --instance_num=[integer_value]\n"
-    "      running instance number , starts from 1 ( integer , default value "
-    "is 1) \n\n"
-    "  examples:\n\n"
-    "     cvd_import_locations --format=\"gpx\" --file_path=\"input.gpx\"\n"
-    "     cvd_import_locations --format=\"kml\" --file_path=\"input.kml\"\n\n"
-    "     cvd_import_locations --format=\"gpx\" --file_path=\"input.gpx\" "
-    "--delay=.5\n"
-    "     cvd_import_locations --format=\"kml\" --file_path=\"input.kml\" "
-    "--delay=.5\n\n"
-    "     cvd_import_locations --format=\"gpx\" --file_path=\"input.gpx\" "
-    "--delay=.5 --instance_num=2\n";
+const char* kUsageMessage = R""""(gps locations import commandline utility
+
+Usage: cvd_import_locations [option] command [args...]
+
+arguments:
+
+  --format=[format_string]
+    input file format for cvd_import_locations
+        "gpx" for gpx input data file
+        "kml" for kml input data file
+
+  --file_path=[path]
+    gps locations input file path
+    if path is not specified, error will be reported
+
+  --delay=[delay_value]
+    delay between different gps locations ( double , default value is 1.0 second)
+
+  --instance_num=[integer_value]
+    running instance number , starts from 1 ( integer , default value is 1)
+
+examples:
+
+    cvd_import_locations --format="gpx" --file_path="input.gpx"
+    cvd_import_locations --format="kml" --file_path="input.kml"
+
+    cvd_import_locations --format="gpx" --file_path="input.gpx" --delay=.5
+    cvd_import_locations --format="kml" --file_path="input.kml" --delay=.5
+
+    cvd_import_locations --format="gpx" --file_path="input.gpx" --delay=.5 --instance_num=2
+
+)"""";
 namespace cuttlefish {
 namespace {
 
