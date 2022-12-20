@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include <set>
+#include <sstream>
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "common/frontend/socket_vsock_proxy/client.h"
+#include "common/frontend/socket_vsock_proxy/server.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/socket2socket_proxy.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 
@@ -27,13 +28,19 @@
 #include "host/libs/config/logging.h"
 #endif // CUTTLEFISH_HOST
 
-DEFINE_string(server, "",
-              "The type of server to host, `vsock` or `tcp`. When hosting a server "
-              "of one type, the proxy will take inbound connections of this type and "
-              "make outbound connections of the other type.");
-DEFINE_uint32(tcp_port, 0, "TCP port");
-DEFINE_uint32(vsock_port, 0, "vsock port");
-DEFINE_uint32(vsock_cid, 0, "Vsock cid to initiate connections to");
+constexpr const char TRANSPORT_TCP[] = "tcp";
+constexpr const char TRANSPORT_VSOCK[] = "vsock";
+
+DEFINE_string(server_type, "",
+              "The type of server to host, `vsock` or `tcp`.");
+DEFINE_string(client_type, "",
+              "The type of server to host, `vsock` or `tcp`.");
+DEFINE_uint32(server_tcp_port, 0, "Server TCP port");
+DEFINE_string(client_tcp_host, "localhost", "Client TCP host (default localhost)");
+DEFINE_uint32(client_tcp_port, 0, "Client TCP port");
+DEFINE_uint32(server_vsock_port, 0, "vsock port");
+DEFINE_uint32(client_vsock_id, 0, "Vsock cid to initiate connections to");
+DEFINE_uint32(client_vsock_port, 0, "Vsock port to initiate connections to");
 DEFINE_int32(adbd_events_fd, -1, "A file descriptor. If set it will wait for "
                                  "AdbdStarted boot event from the kernel log "
                                  "monitor before creating a tcp-vsock tunnel."
@@ -44,9 +51,11 @@ DEFINE_int32(
     "A file descriptor. If set the passed file descriptor will be used as the "
     "server and the corresponding port flag will be ignored");
 
+namespace cuttlefish {
+namespace socket_proxy {
 namespace {
 void WaitForAdbdToBeStarted(int events_fd) {
-  auto evt_shared_fd = cuttlefish::SharedFD::Dup(events_fd);
+  auto evt_shared_fd = SharedFD::Dup(events_fd);
   close(events_fd);
   while (evt_shared_fd->IsOpen()) {
     std::optional<monitor::ReadEventResult> read_result =
@@ -65,115 +74,93 @@ void WaitForAdbdToBeStarted(int events_fd) {
   }
 }
 
-// intented to run as cuttlefish host service
-void TcpServer() {
-  LOG(DEBUG) << "starting TCP server on " << FLAGS_tcp_port
-             << " for vsock port " << FLAGS_vsock_port;
-  cuttlefish::SharedFD server;
-  if (FLAGS_server_fd < 0) {
-    server =
-        cuttlefish::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
-  } else {
-    server = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
-    close(FLAGS_server_fd);
-  }
-  CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_tcp_port;
+void ProxyServer(Server& server, Client& client) {
   LOG(DEBUG) << "Accepting client connections";
-  int last_failure_reason = 0;
-  cuttlefish::Proxy(server, [&last_failure_reason]() {
-    auto vsock_socket = cuttlefish::SharedFD::VsockClient(
-        FLAGS_vsock_cid, FLAGS_vsock_port, SOCK_STREAM);
-    if (vsock_socket->IsOpen()) {
-      last_failure_reason = 0;
-      LOG(DEBUG) << "Connected to vsock:" << FLAGS_vsock_cid << ":"
-                 << FLAGS_vsock_port;
-    } else {
-      // Don't log if the previous connection failed with the same error
-      if (last_failure_reason != vsock_socket->GetErrno()) {
-        last_failure_reason = vsock_socket->GetErrno();
-        LOG(ERROR) << "Unable to connect to vsock server: "
-                   << vsock_socket->StrError();
-      }
-    }
-    return vsock_socket;
+  Proxy(server.Start(), [&client]() {
+    return client.Start();
   });
 }
 
-cuttlefish::SharedFD OpenSocketConnection() {
-  while (true) {
-    auto sock = cuttlefish::SharedFD::SocketLocalClient(FLAGS_tcp_port, SOCK_STREAM);
-    if (sock->IsOpen()) {
-      return sock;
-    }
-    LOG(WARNING) << "could not connect on port " << FLAGS_tcp_port
-                 << ". sleeping for 1 second";
-    sleep(1);
+std::unique_ptr<Server> BuildServer() {
+  if (FLAGS_server_fd >= 0) {
+    LOG(INFO) << "[Proxy] From: fd:" << FLAGS_server_fd;
+    return std::make_unique<DupServer>(FLAGS_server_fd);
   }
-}
 
-bool socketErrorIsRecoverable(int error) {
-  std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT};
-  return !cuttlefish::Contains(unrecoverable, error);
-}
+  CHECK(FLAGS_server_type == TRANSPORT_TCP || FLAGS_server_type == TRANSPORT_VSOCK)
+      << "Must specify -server_type with tcp or vsock values";
 
-[[noreturn]] static void SleepForever() {
-  while (true) {
-    sleep(std::numeric_limits<unsigned int>::max());
+  if (FLAGS_server_type == TRANSPORT_TCP) {
+    CHECK(FLAGS_server_tcp_port != 0)
+        << "Must specify -server_tcp_port or -server_fd with -server_type=tcp flag";
   }
-}
+  if (FLAGS_server_type == TRANSPORT_VSOCK) {
+    CHECK(FLAGS_server_vsock_port != 0)
+        << "Must specify -server_vsock_port or -server_fd with -server_type=vsock flag";
+  }
 
-// intended to run inside Android guest
-void VsockServer() {
-  LOG(DEBUG) << "Starting vsock server on " << FLAGS_vsock_port;
-  cuttlefish::SharedFD vsock;
-  if (FLAGS_server_fd < 0) {
-    do {
-      vsock = cuttlefish::SharedFD::VsockServer(FLAGS_vsock_port, SOCK_STREAM);
-      if (!vsock->IsOpen() && !socketErrorIsRecoverable(vsock->GetErrno())) {
-        LOG(ERROR) << "Could not open vsock socket: " << vsock->StrError();
-        SleepForever();
-      }
-    } while (!vsock->IsOpen());
+  std::unique_ptr<Server> server = nullptr;
+
+  if (FLAGS_server_type == TRANSPORT_TCP) {
+    LOG(INFO) << "[Proxy] From: tcp:" << FLAGS_server_tcp_port;
+    server = std::make_unique<TcpServer>(FLAGS_server_tcp_port);
+  } else if (FLAGS_server_type == TRANSPORT_VSOCK) {
+    LOG(INFO) << "[Proxy] From: vsock:" << FLAGS_server_vsock_port;
+    server = std::make_unique<VsockServer>(FLAGS_server_vsock_port);
   } else {
-    vsock = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
-    close(FLAGS_server_fd);
+    LOG(FATAL) << "Unknown server type: " << FLAGS_server_type;
   }
-  CHECK(vsock->IsOpen()) << "Could not start server on " << FLAGS_vsock_port;
-  cuttlefish::Proxy(vsock, []() {
-    LOG(DEBUG) << "vsock socket accepted";
-    auto client = OpenSocketConnection();
-    CHECK(client->IsOpen()) << "error connecting to guest client";
-    return client;
-  });
+
+  return server;
 }
 
-}  // namespace
+std::unique_ptr<Client> BuildClient() {
+  CHECK(FLAGS_client_type == TRANSPORT_TCP || FLAGS_client_type == TRANSPORT_VSOCK)
+      << "Must specify -client_type with tcp or vsock values";
+
+  if (FLAGS_client_type == TRANSPORT_TCP) {
+    CHECK(FLAGS_client_tcp_port != 0)
+        << "For -client_type=tcp you must specify -client_tcp_port flag";
+  }
+  if (FLAGS_client_type == TRANSPORT_VSOCK) {
+    CHECK(FLAGS_client_vsock_id >= 0 && FLAGS_client_vsock_port >= 0)
+        << "For -client_type=vsock you must specify -client_vsock_id and -client_vsock_port flags";
+  }
+
+  std::unique_ptr<Client> client = nullptr;
+
+  if (FLAGS_client_type == TRANSPORT_TCP) {
+    LOG(INFO) << "[Proxy] To: tcp:" << FLAGS_client_tcp_host << ":" << FLAGS_client_tcp_port;
+    client = std::make_unique<TcpClient>(FLAGS_client_tcp_host, FLAGS_client_tcp_port);
+  } else if (FLAGS_client_type == TRANSPORT_VSOCK) {
+    LOG(INFO) << "[Proxy] To: vsock:" << FLAGS_client_vsock_id << ":" << FLAGS_client_vsock_port;
+    client = std::make_unique<VsockClient>(FLAGS_client_vsock_id, FLAGS_client_vsock_port);
+  } else {
+    LOG(FATAL) << "Unknown client type: " << FLAGS_client_type;
+  }
+
+  return client;
+}
+
+}
+}
+}
 
 int main(int argc, char* argv[]) {
 #ifdef CUTTLEFISH_HOST
   cuttlefish::DefaultSubprocessLogging(argv);
 #else
-  ::android::base::InitLogging(argv, android::base::LogdLogger());
+  ::android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
 #endif
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  CHECK((FLAGS_server == "tcp" && FLAGS_server_fd >= 0) || FLAGS_tcp_port != 0)
-      << "Must specify -tcp_port or -server_fd (with -server=tcp) flag";
-  CHECK((FLAGS_server == "vsock" && FLAGS_server_fd >= 0) ||
-        FLAGS_vsock_port != 0)
-      << "Must specify -vsock_port or -server_fd (with -server=vsock) flag";
-
   if (FLAGS_adbd_events_fd >= 0) {
     LOG(DEBUG) << "Wating AdbdStarted boot event from the kernel log";
-    WaitForAdbdToBeStarted(FLAGS_adbd_events_fd);
+    cuttlefish::socket_proxy::WaitForAdbdToBeStarted(FLAGS_adbd_events_fd);
   }
 
-  if (FLAGS_server == "tcp") {
-    CHECK(FLAGS_vsock_cid != 0) << "Must specify -vsock_cid flag";
-    TcpServer();
-  } else if (FLAGS_server == "vsock") {
-    VsockServer();
-  } else {
-    LOG(FATAL) << "Unknown server type: " << FLAGS_server;
-  }
+  auto server = cuttlefish::socket_proxy::BuildServer();
+  auto client = cuttlefish::socket_proxy::BuildClient();
+
+  cuttlefish::socket_proxy::ProxyServer(*server.get(), *client.get());
 }
