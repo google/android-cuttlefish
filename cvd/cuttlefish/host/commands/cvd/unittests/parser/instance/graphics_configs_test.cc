@@ -15,7 +15,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "host/commands/cvd/parser/launch_cvd_parser.h"
+#include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
@@ -33,15 +33,30 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
 }
 )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8Cg0KCwjQBRCAChjAAiA8)"""";
+  const char* expected_string = R""""(--displays_textproto=instances {
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+instances {
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
+  auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
@@ -64,15 +79,30 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
 }
   )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8Cg0KCwjQBRCAChjAAiA8)"""";
+  const char* expected_string = R""""(--displays_textproto=instances {
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+instances {
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
+  auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
@@ -105,15 +135,36 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
 }
 )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8ChoKCwjQBRCAChjAAiA8CgsI0AUQgAoYwAIgPA==)"""";
+  const char* expected_string = R""""(--displays_textproto=instances {
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+instances {
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+  displays {
+    width: 720
+    height: 1280
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
+  auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
@@ -158,15 +209,36 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
 }
   )"""";
 
-  const char* expected_string =
-      R""""(--displays_binproto=ChgKCgi4CBDYBBh4IDwKCgiQAxDYBBh4IDwKDQoLCIAUEIgOGMACIDw=)"""";
+  const char* expected_string = R""""(--displays_textproto=instances {
+  displays {
+    width: 1080
+    height: 600
+    dpi: 120
+    refresh_rate_hertz: 60
+  }
+  displays {
+    width: 400
+    height: 600
+    dpi: 120
+    refresh_rate_hertz: 60
+  }
+}
+instances {
+  displays {
+    width: 2560
+    height: 1800
+    dpi: 320
+    refresh_rate_hertz: 60
+  }
+}
+)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
+  auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
