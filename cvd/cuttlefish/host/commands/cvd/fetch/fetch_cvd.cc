@@ -221,6 +221,22 @@ Result<std::vector<std::string>> DownloadOtaTools(
   return files;
 }
 
+Result<std::string> DownloadMiscInfo(BuildApi& build_api, Build& build,
+                                     const std::string& specified_artifact,
+                                     const std::string& target_dir) {
+  std::string target_misc_info = target_dir + "/misc_info.txt";
+  const std::string& misc_info_artifact =
+      specified_artifact != "" ? specified_artifact : "misc_info.txt";
+  auto artifacts = CF_EXPECT(build_api.Artifacts(build));
+  CF_EXPECT(ArtifactsContains(artifacts, misc_info_artifact),
+            "Failed to find misc_info.txt from build artifacts");
+  CF_EXPECT(
+      build_api.ArtifactToFile(build, misc_info_artifact, target_misc_info),
+      "Could not download " << build << ":" << misc_info_artifact << " to "
+                            << target_misc_info);
+  return {target_misc_info};
+}
+
 Result<std::vector<std::string>> DownloadBoot(
     BuildApi& build_api, Build& build, const std::string& specified_artifact,
     const std::string& target_dir) {
@@ -571,6 +587,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       CF_EXPECT(AddFilesToConfig(FileSource::BOOT_BUILD, boot_build, boot_files,
                                  &config, target_dir, true));
     }
+    auto misc_info =
+        CF_EXPECT(DownloadMiscInfo(build_api, default_build, "", target_dir));
+    CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
+                               {misc_info}, &config, target_dir, true));
 
     if (FLAGS_bootloader_build != "") {
       auto bootloader_build =
