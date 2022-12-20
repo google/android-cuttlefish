@@ -101,7 +101,18 @@ void CrosvmBuilder::AddSerial(const std::string& output,
 SharedFD CrosvmBuilder::AddTap(const std::string& tap_name) {
   auto tap_fd = OpenTapInterface(tap_name);
   if (tap_fd->IsOpen()) {
-    command_.AddParameter("--tap-fd=", tap_fd);
+    command_.AddParameter("--net=tap-fd=", tap_fd);
+  } else {
+    LOG(ERROR) << "Unable to connect to \"" << tap_name
+               << "\": " << tap_fd->StrError();
+  }
+  return tap_fd;
+}
+
+SharedFD CrosvmBuilder::AddTap(const std::string& tap_name, const std::string& mac) {
+  auto tap_fd = OpenTapInterface(tap_name);
+  if (tap_fd->IsOpen()) {
+    command_.AddParameter("--net=tap-fd=", tap_fd, ",mac=\"", mac, "\"");
   } else {
     LOG(ERROR) << "Unable to connect to \"" << tap_name
                << "\": " << tap_fd->StrError();
