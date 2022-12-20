@@ -3,7 +3,7 @@
 use core::cell::RefCell;
 use kmr_common::crypto::{ec, ec::CoseKeyPurpose, Ec, KeyMaterial};
 use kmr_common::{crypto, explicit, rpc_err, vec_try, Error};
-use kmr_crypto_boring::ec::BoringEc;
+use kmr_crypto_boring::{ec::BoringEc, hmac::BoringHmac};
 use kmr_ta::device::{
     CsrSigningAlgorithm, DiceInfo, PubDiceArtifacts, RetrieveRpcArtifacts, RpcV2Req,
 };
@@ -24,7 +24,12 @@ pub struct Artifacts<T: DeriveBytes> {
 }
 
 impl<T: DeriveBytes> RetrieveRpcArtifacts for Artifacts<T> {
-    fn derive_bytes_from_hbk(&self, context: &[u8], output_len: usize) -> Result<Vec<u8>, Error> {
+    fn derive_bytes_from_hbk(
+        &self,
+        _hkdf: &dyn crypto::Hkdf,
+        context: &[u8],
+        output_len: usize,
+    ) -> Result<Vec<u8>, Error> {
         self.derive.derive_bytes(context, output_len)
     }
 
@@ -74,7 +79,7 @@ impl<T: DeriveBytes> Artifacts<T> {
 
     fn generate_dice_artifacts(&self, _test_mode: rpc::TestMode) -> Result<(), Error> {
         let ec = BoringEc::default();
-        let secret = self.derive_bytes_from_hbk(b"Device Key Seed", 32)?;
+        let secret = self.derive_bytes_from_hbk(&BoringHmac, b"Device Key Seed", 32)?;
         let (pub_cose_key, private_key) = match ec::import_raw_ed25519_key(&secret)? {
             KeyMaterial::Ec(curve, curve_type, key) => (
                 key.public_cose_key(
