@@ -21,6 +21,7 @@
 
 #include "launch_cvd.pb.h"
 
+#include "common/libs/utils/base64.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -89,12 +90,19 @@ std::string GenerateDisplayFlag(const Json::Value& instances_json) {
     }
   }
 
-  std::string output;
-  if (!TextFormat::PrintToString(all_instances_displays, &output)) {
-    LOG(ERROR) << "Failed to convert display proto to string ";
+  std::string bin_output;
+  if (!all_instances_displays.SerializeToString(&bin_output)) {
+    LOG(ERROR) << "Failed to convert display proto to binary string ";
     return std::string();
   }
-  return "--displays_textproto=" + output;
+
+  std::string base64_output;
+  if (!cuttlefish::EncodeBase64((void*)bin_output.c_str(), bin_output.size(),
+                                &base64_output)) {
+    LOG(ERROR) << "Failed to apply EncodeBase64 to binary string ";
+    return std::string();
+  }
+  return "--displays_binproto=" + base64_output;
 }
 
 std::vector<std::string> GenerateGraphicsFlags(const Json::Value& instances) {
