@@ -20,6 +20,8 @@ package {
 cc_binary {
     name: "socket_vsock_proxy",
     srcs: [
+        "client.cpp",
+        "server.cpp",
         "main.cpp",
     ],
     shared_libs: [
