@@ -65,6 +65,7 @@ DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
 DEFINE_string(misc_image, CF_DEFAULTS_MISC_IMAGE,
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
+DEFINE_string(misc_info_txt, "", "Location of the misc_info.txt file.");
 DEFINE_string(metadata_image, CF_DEFAULTS_METADATA_IMAGE,
               "Location of the metadata partition image "
               "to be generated.");
@@ -132,6 +133,7 @@ Result<void> ResolveInstanceFiles() {
   std::string default_metadata_image = "";
   std::string default_super_image = "";
   std::string default_misc_image = "";
+  std::string default_misc_info_txt = "";
   std::string default_ap_esp_image = "";
   std::string default_esp_image = "";
   std::string default_vendor_boot_image = "";
@@ -161,6 +163,8 @@ Result<void> ResolveInstanceFiles() {
     default_metadata_image += comma_str + cur_system_image_dir + "/metadata.img";
     default_super_image += comma_str + cur_system_image_dir + "/super.img";
     default_misc_image += comma_str + cur_system_image_dir + "/misc.img";
+    default_misc_info_txt +=
+        comma_str + cur_system_image_dir + "/misc_info.txt";
     default_esp_image += comma_str + cur_system_image_dir + "/esp.img";
     default_ap_esp_image += comma_str + cur_system_image_dir + "/ap_esp.img";
     default_vendor_boot_image += comma_str + cur_system_image_dir + "/vendor_boot.img";
@@ -179,6 +183,8 @@ Result<void> ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("misc_info_txt", default_misc_info_txt.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("ap_esp_image", default_ap_esp_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -1120,6 +1126,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_super_image, ",");
   std::vector<std::string> misc_image =
       android::base::Split(FLAGS_misc_image, ",");
+  std::vector<std::string> misc_info =
+      android::base::Split(FLAGS_misc_info_txt, ",");
   std::vector<std::string> metadata_image =
       android::base::Split(FLAGS_metadata_image, ",");
   std::vector<std::string> vendor_boot_image =
@@ -1180,6 +1188,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       cur_misc_image = misc_image[instance_index];
     }
     instance.set_misc_image(cur_misc_image);
+    if (instance_index >= misc_info.size()) {
+      instance.set_misc_info_txt(misc_info[0]);
+    } else {
+      instance.set_misc_info_txt(misc_info[instance_index]);
+    }
     if (instance_index >= boot_image.size()) {
       cur_boot_image = boot_image[0];
     } else {
