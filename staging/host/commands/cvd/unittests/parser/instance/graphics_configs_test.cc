@@ -33,23 +33,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
 }
 )"""";
 
-  const char* expected_string = R""""(--displays_textproto=instances {
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-instances {
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-)"""";
+  const char* expected_string =
+      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8Cg0KCwjQBRCAChjAAiA8)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
@@ -79,23 +64,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
 }
   )"""";
 
-  const char* expected_string = R""""(--displays_textproto=instances {
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-instances {
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-)"""";
+  const char* expected_string =
+      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8Cg0KCwjQBRCAChjAAiA8)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
@@ -135,29 +105,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
 }
 )"""";
 
-  const char* expected_string = R""""(--displays_textproto=instances {
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-instances {
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-  displays {
-    width: 720
-    height: 1280
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-)"""";
+  const char* expected_string =
+      R""""(--displays_binproto=Cg0KCwjQBRCAChjAAiA8ChoKCwjQBRCAChjAAiA8CgsI0AUQgAoYwAIgPA==)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
@@ -209,29 +158,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
 }
   )"""";
 
-  const char* expected_string = R""""(--displays_textproto=instances {
-  displays {
-    width: 1080
-    height: 600
-    dpi: 120
-    refresh_rate_hertz: 60
-  }
-  displays {
-    width: 400
-    height: 600
-    dpi: 120
-    refresh_rate_hertz: 60
-  }
-}
-instances {
-  displays {
-    width: 2560
-    height: 1800
-    dpi: 320
-    refresh_rate_hertz: 60
-  }
-}
-)"""";
+  const char* expected_string =
+      R""""(--displays_binproto=ChgKCgi4CBDYBBh4IDwKCgiQAxDYBBh4IDwKDQoLCIAUEIgOGMACIDw=)"""";
 
   Json::Value json_configs;
   std::string json_text(test_string);
