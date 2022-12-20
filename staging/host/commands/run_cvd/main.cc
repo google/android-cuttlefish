@@ -41,6 +41,7 @@
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/commands/run_cvd/validate.h"
 #include "host/libs/config/adb/adb.h"
+#include "host/libs/config/fastboot/fastboot.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/custom_actions.h"
@@ -123,6 +124,7 @@ fruit::Component<> runCvdComponent(
       .install(ConfigFlagPlaceholder)
       .install(CustomActionsComponent)
       .install(LaunchAdbComponent)
+      .install(LaunchFastbootComponent)
       .install(BluetoothConnectorComponent)
       .install(ConfigServerComponent)
       .install(ConsoleForwarderComponent)
