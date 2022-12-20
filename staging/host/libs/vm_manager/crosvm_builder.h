@@ -45,6 +45,7 @@ class CrosvmBuilder {
   void AddSerial(const std::string& output, const std::string& input);
 
   SharedFD AddTap(const std::string& tap_name);
+  SharedFD AddTap(const std::string& tap_name, const std::string& mac);
 
   int HvcNum();
 
