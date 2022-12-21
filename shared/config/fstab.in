@@ -17,8 +17,8 @@ system_ext /system_ext erofs ro wait,logical,first_stage_mount,slotselect,avb=vb
 system_ext /system_ext ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
 vendor /vendor erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
 vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta
-vendor_dlkm /vendor_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb
-vendor_dlkm /vendor_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
+vendor_dlkm /vendor_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_vendor,avb_keys=/avb
+vendor_dlkm /vendor_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_vendor,avb_keys=/avb
 odm_dlkm /odm_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb
 odm_dlkm /odm_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
 system_dlkm /system_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
