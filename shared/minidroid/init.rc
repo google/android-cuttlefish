@@ -145,6 +145,10 @@ on boot
     domainname localdomain
     ifup eth1
 
+    setprop sys.boot_completed 1
+    setprop dev.bootcomplete 1
+    write /dev/kmsg "VIRTUAL_DEVICE_BOOT_COMPLETED"
+
 service tombstone_transmit /system/bin/tombstone_transmit.microdroid -cid 2 -port 2000 -remove_tombstones_after_transmitting
     user system
     group system
