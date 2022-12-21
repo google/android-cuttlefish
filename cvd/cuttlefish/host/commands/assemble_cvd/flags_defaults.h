@@ -51,9 +51,6 @@
 #define CF_DEFAULTS_VERBOSITY "INFO"
 #define CF_DEFAULTS_RUN_FILE_DISCOVERY true
 #define CF_DEFAULTS_MEMORY_MB CF_DEFAULTS_DYNAMIC_INT
-// TODO: The custom actions flags definitions need to be found and used
-#define CF_DEFAULTS_CUSTOM_ACTION_CONFIG CF_DEFAULTS_DYNAMIC_STRING
-#define CF_DEFAULTS_CUSTOM_ACTIONS CF_DEFAULTS_DYNAMIC_STRING
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
 
