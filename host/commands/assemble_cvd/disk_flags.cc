@@ -80,6 +80,10 @@ DEFINE_string(
     vbmeta_system_image, CF_DEFAULTS_VBMETA_SYSTEM_IMAGE,
     "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
     "be vbmeta_system.img in the directory specified by -system_image_dir.");
+DEFINE_string(
+    vbmeta_vendor_image, CF_DEFAULTS_VBMETA_SYSTEM_IMAGE,
+    "Location of cuttlefish vbmeta_vendor image. If empty it is assumed to "
+    "be vbmeta_vendor.img in the directory specified by -system_image_dir.");
 DEFINE_string(otheros_esp_image, CF_DEFAULTS_OTHEROS_ESP_IMAGE,
               "Location of cuttlefish esp image. If the image does not exist, "
               "and --otheros_root_image is specified, an esp partition image "
@@ -139,6 +143,7 @@ Result<void> ResolveInstanceFiles() {
   std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
   std::string default_vbmeta_system_image = "";
+  std::string default_vbmeta_vendor_image = "";
 
   std::string cur_system_image_dir;
   std::string comma_str = "";
@@ -170,6 +175,7 @@ Result<void> ResolveInstanceFiles() {
     default_vendor_boot_image += comma_str + cur_system_image_dir + "/vendor_boot.img";
     default_vbmeta_image += comma_str + cur_system_image_dir + "/vbmeta.img";
     default_vbmeta_system_image += comma_str + cur_system_image_dir + "/vbmeta_system.img";
+    default_vbmeta_vendor_image += comma_str + cur_system_image_dir + "/vbmeta_vendor.img";
   }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -197,6 +203,9 @@ Result<void> ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vbmeta_system_image",
                                default_vbmeta_system_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("vbmeta_vendor_image",
+                               default_vbmeta_vendor_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return {};
@@ -295,6 +304,16 @@ std::vector<ImagePartition> android_composite_disk_config(
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_b",
       .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
+      .read_only = FLAGS_use_overlay,
+  });
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta_vendor_a",
+      .image_file_path = AbsolutePath(instance.vbmeta_vendor_image()),
+      .read_only = FLAGS_use_overlay,
+  });
+  partitions.push_back(ImagePartition{
+      .label = "vbmeta_vendor_b",
+      .image_file_path = AbsolutePath(instance.vbmeta_vendor_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -1042,7 +1061,8 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
     // libavb expects to be able to read the maximum vbmeta size, so we must
     // provide a partition which matches this or the read will fail
     for (const auto& vbmeta_image :
-         {instance_.vbmeta_image(), instance_.vbmeta_system_image()}) {
+         {instance_.vbmeta_image(), instance_.vbmeta_system_image(),
+          instance_.vbmeta_vendor_image()}) {
       if (FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
         auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
         CF_EXPECT(fd->IsOpen(), "Could not open \"" << vbmeta_image << "\": "
@@ -1136,6 +1156,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_vbmeta_image, ",");
   std::vector<std::string> vbmeta_system_image =
       android::base::Split(FLAGS_vbmeta_system_image, ",");
+  std::vector<std::string> vbmeta_vendor_image =
+      android::base::Split(FLAGS_vbmeta_vendor_image, ",");
   std::vector<std::string> otheros_esp_image =
       android::base::Split(FLAGS_otheros_esp_image, ",");
 
@@ -1223,6 +1245,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_vbmeta_system_image(vbmeta_system_image[0]);
     } else {
       instance.set_vbmeta_system_image(vbmeta_system_image[instance_index]);
+    }
+    if (instance_index >= vbmeta_vendor_image.size()) {
+      instance.set_vbmeta_vendor_image(vbmeta_vendor_image[0]);
+    } else {
+      instance.set_vbmeta_vendor_image(vbmeta_vendor_image[instance_index]);
     }
     if (instance_index >= super_image.size()) {
       instance.set_super_image(super_image[0]);
