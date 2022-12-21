@@ -135,6 +135,16 @@ bool RemoteKeymaster::Initialize() {
   std::string model_prop_value =
       android::base::GetProperty(model_prop_name, "");
 
+  // Currently modem_simulator always returns one fixed value. See
+  // `handleGetIMEI` in
+  // device/google/cuttlefish/host/commands/modem_simulator/misc_service.cpp for
+  // more details.
+  // This should be updated once the below bug is fixed -
+  // b/263188546 - Use device-specific IMEI values rather than one hardcoded
+  // value.
+  std::string imei_value = "867400022047199";
+  request.imei.Reinitialize(imei_value.data(), imei_value.size());
+
   request.brand.Reinitialize(brand_prop_value.data(), brand_prop_value.size());
   request.device.Reinitialize(device_prop_value.data(),
                               device_prop_value.size());
