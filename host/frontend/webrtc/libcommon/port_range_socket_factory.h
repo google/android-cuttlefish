@@ -29,7 +29,7 @@ namespace webrtc_streaming {
 // from its upper class should be overridden here.
 class PortRangeSocketFactory : public rtc::BasicPacketSocketFactory {
  public:
-  PortRangeSocketFactory(rtc::Thread* thread,
+  PortRangeSocketFactory(rtc::SocketFactory* socket_factory,
                          std::pair<uint16_t, uint16_t> udp_port_range,
                          std::pair<uint16_t, uint16_t> tcp_port_range);
 
@@ -37,7 +37,7 @@ class PortRangeSocketFactory : public rtc::BasicPacketSocketFactory {
       const rtc::SocketAddress& local_address, uint16_t min_port,
       uint16_t max_port) override;
 
-  rtc::AsyncPacketSocket* CreateServerTcpSocket(
+  rtc::AsyncListenSocket* CreateServerTcpSocket(
       const rtc::SocketAddress& local_address, uint16_t min_port,
       uint16_t max_port, int opts) override;
 

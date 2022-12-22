@@ -28,9 +28,8 @@
 #include <api/rtp_parameters.h>
 #include <api/task_queue/default_task_queue_factory.h>
 #include <api/video/builtin_video_bitrate_allocator_factory.h>
-#include <api/video/video_stream_encoder_create.h>
-#include <api/video/video_stream_encoder_interface.h>
 #include <api/video_codecs/builtin_video_encoder_factory.h>
+#include <api/video_codecs/video_encoder.h>
 #include <mkvmuxer/mkvmuxer.h>
 #include <mkvmuxer/mkvwriter.h>
 #include <system_wrappers/include/clock.h>
@@ -58,8 +57,7 @@ public:
   // EncodedImageCallback
   virtual webrtc::EncodedImageCallback::Result OnEncodedImage(
       const webrtc::EncodedImage& encoded_image,
-      const webrtc::CodecSpecificInfo* codec_specific_info,
-      const webrtc::RTPFragmentationHeader* fragmentation) override;
+      const webrtc::CodecSpecificInfo* codec_specific_info) override;
 
   LocalRecorder::Impl& impl_;
   std::shared_ptr<webrtc::VideoTrackSourceInterface> source_;
@@ -257,8 +255,7 @@ void LocalRecorder::Display::Stop() {
 
 webrtc::EncodedImageCallback::Result LocalRecorder::Display::OnEncodedImage(
     const webrtc::EncodedImage& encoded_image,
-    const webrtc::CodecSpecificInfo* codec_specific_info,
-    const webrtc::RTPFragmentationHeader* fragmentation) {
+    const webrtc::CodecSpecificInfo* codec_specific_info) {
   uint64_t timestamp = encoded_image.Timestamp() / kRtpTicksPerNs;
 
   std::lock_guard(impl_.mkv_mutex_);
