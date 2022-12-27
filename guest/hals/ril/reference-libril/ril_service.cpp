@@ -13421,7 +13421,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
                 serviceNames[i], i);
 
         // use a compat shim to convert HIDL interface to AIDL and publish it
-        // PLEASE NOTE this is a temporary solution
+        // TODO(bug 220004469): replace with a full AIDL implementation
         auto radioHidl = radioService[i];
         const auto slot = serviceNames[i];
         auto context = std::make_shared<compat::DriverContext>();
