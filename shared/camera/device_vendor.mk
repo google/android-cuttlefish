@@ -33,6 +33,7 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 # code coverage support, temporary require separate namespace for folders that
 # can be built successfully.
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/g3ABase
+PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gABC/native_coverage
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gAF
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gHAWB/native_coverage
 
