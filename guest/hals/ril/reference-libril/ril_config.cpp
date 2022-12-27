@@ -285,7 +285,7 @@ void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo
     radioConfigService->mRadioConfigIndicationV1_2 = NULL;
 
     // use a compat shim to convert HIDL interface to AIDL and publish it
-    // PLEASE NOTE this is a temporary solution
+    // TODO(bug 220004469): replace with a full AIDL implementation
     static auto aidlHal = ndk::SharedRefBase::make<compat::RadioConfig>(radioConfigService);
     const auto instance = compat::RadioConfig::descriptor + "/"s + std::string(serviceNames);
     const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
