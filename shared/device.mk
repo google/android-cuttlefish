@@ -41,11 +41,6 @@ PRODUCT_SHIPPING_API_LEVEL := 34
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
 
-# TODO(b/205788876) remove this condition when openwrt has an image for arm.
-ifndef PRODUCT_ENFORCE_MAC80211_HWSIM
-PRODUCT_ENFORCE_MAC80211_HWSIM := true
-endif
-
 PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
 
 PRODUCT_FS_COMPRESSION := 1
@@ -606,24 +601,6 @@ endif
 
 # wifi
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-ifneq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
-PRODUCT_PACKAGES += com.google.cf.wifi
-# Demonstrate multi-installed vendor APEXes by installing another wifi HAL vendor APEX
-# which does not include the passpoint feature XML.
-#
-# The default is set in BoardConfig.mk using bootconfig.
-# This can be changed at CVD launch-time using
-#     --extra_bootconfig_args "androidboot.vendor.apex.com.android.wifi.hal:=X"
-# or post-launch, at runtime using
-#     setprop persist.vendor.apex.com.android.wifi.hal X && reboot
-# where X is the name of the APEX file to use.
-PRODUCT_PACKAGES += com.google.cf.wifi.no-passpoint
-
-$(call add_soong_config_namespace, wpa_supplicant)
-$(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
-$(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
-PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
-else
 PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/apex/com.google.cf.wifi_hwsim
 PRODUCT_PACKAGES += com.google.cf.wifi_hwsim
 PRODUCT_PACKAGES += com.android.hardware.wifi
@@ -631,9 +608,6 @@ $(call add_soong_config_namespace, wpa_supplicant)
 $(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
 $(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
-
-$(call soong_config_append,cvdhost,enforce_mac80211_hwsim,true)
-endif
 else
 
 PRODUCT_PACKAGES += \
@@ -659,22 +633,12 @@ PRODUCT_COPY_FILES += \
     external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
     $(LOCAL_WPA_SUPPLICANT_OVERLAY):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf \
     $(LOCAL_P2P_SUPPLICANT):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/p2p_supplicant.conf
-
-ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 PRODUCT_PACKAGES += \
     mac80211_create_radios \
     hostapd \
     android.hardware.wifi-service \
     init.wifi
-
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=mac8011_hwsim_virtio
-
-$(call soong_config_append,cvdhost,enforce_mac80211_hwsim,true)
-
-else
-PRODUCT_PACKAGES += setup_wifi
-PRODUCT_VENDOR_PROPERTIES += ro.vendor.wifi_impl=virt_wifi
-endif
 
 endif
 
@@ -682,12 +646,10 @@ endif
 PRODUCT_PACKAGES += \
     android.hardware.uwb-service
 
-ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 # Wifi Runtime Resource Overlay
 PRODUCT_PACKAGES += \
     CuttlefishTetheringOverlay \
     CuttlefishWifiOverlay
-endif
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
