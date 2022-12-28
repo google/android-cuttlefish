@@ -39,8 +39,6 @@ cc_library_static {
     ],
     static_libs: [
         "libwebrtc",
-        "libwebrtc_absl_base",
-        "libwebrtc_absl_types",
     ],
     shared_libs: [
         "libbase",
