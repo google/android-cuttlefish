@@ -380,15 +380,6 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
   (*dictionary_)[kApKernelImage] = ap_kernel_image;
 }
 
-static constexpr char kApEspImage[] = "ap_esp_image";
-std::string CuttlefishConfig::ap_esp_image() const {
-  return (*dictionary_)[kApEspImage].asString();
-}
-void CuttlefishConfig::set_ap_esp_image(
-    const std::string& ap_esp_image) {
-  (*dictionary_)[kApEspImage] = ap_esp_image;
-}
-
 static constexpr char kWmediumdConfig[] = "wmediumd_config";
 void CuttlefishConfig::set_wmediumd_config(const std::string& config) {
   (*dictionary_)[kWmediumdConfig] = config;
