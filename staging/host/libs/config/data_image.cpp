@@ -337,7 +337,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
  protected:
   bool Setup() override {
     if (EspRequiredForAPBootFlow()) {
-      LOG(DEBUG) << "creating esp_image: " << config_.ap_esp_image();
+      LOG(DEBUG) << "creating esp_image: " << instance_.ap_esp_image_path();
       if (!BuildAPImage()) {
         return false;
       }
@@ -345,7 +345,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
     const auto is_not_gem5 = config_.vm_manager() != vm_manager::Gem5Manager::name();
     const auto esp_required_for_boot_flow = EspRequiredForBootFlow();
     if (is_not_gem5 && esp_required_for_boot_flow) {
-      LOG(DEBUG) << "creating esp_image: " << instance_.otheros_esp_image();
+      LOG(DEBUG) << "creating esp_image: " << instance_.otheros_esp_image_path();
       if (!BuildOSImage()) {
         return false;
       }
@@ -367,7 +367,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
   }
 
   bool BuildAPImage() {
-    auto builder = EspBuilder(config_.ap_esp_image());
+    auto builder = EspBuilder(instance_.ap_esp_image_path());
     PrepareESP(builder, CuttlefishConfig::InstanceSpecific::BootFlow::Linux);
 
     builder.File(config_.ap_kernel_image(), "vmlinuz", /* required */ true);
@@ -376,7 +376,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
   }
 
   bool BuildOSImage() {
-    auto builder = EspBuilder(instance_.otheros_esp_image());
+    auto builder = EspBuilder(instance_.otheros_esp_image_path());
 
     const auto flow = instance_.boot_flow();
     PrepareESP(builder, flow);
