@@ -144,6 +144,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
 
     // types-only packages, which never expect a default implementation
     "android.hardware.audio.common.",
+    "android.hardware.audio.core.sounddose.",
     "android.hardware.biometrics.common.",
     "android.hardware.common.",
     "android.hardware.common.fmq.",
@@ -456,17 +457,12 @@ TEST(Hal, AidlInterfacesImplemented) {
     }
 
     if (!latestRegistered && !expectedVersions.rbegin()->second.knownMissing) {
-      // TODO(b/263388737): avoid this exception - it's due to this
-      // part of the interface being put in two aidl_interface and
-      // it was merged while this test was broken.
-      if (treePackage.name != "android.hardware.audio.core.sounddose") {
-        ADD_FAILURE() << "The latest version ("
-                      << expectedVersions.rbegin()->first
-                      << ") of the module is not implemented: "
-                      << treePackage.name
-                      << " which declares the following types:\n    "
-                      << base::Join(treePackage.types, "\n    ");
-      }
+      ADD_FAILURE() << "The latest version ("
+                    << expectedVersions.rbegin()->first
+                    << ") of the module is not implemented: "
+                    << treePackage.name
+                    << " which declares the following types:\n    "
+                    << base::Join(treePackage.types, "\n    ");
     }
 
     for (const auto& [version, check] : expectedVersions) {
