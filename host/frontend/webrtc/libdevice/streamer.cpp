@@ -230,8 +230,7 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
                                                 int width, int height, int dpi,
                                                 bool touch_enabled) {
   // Usually called from an application thread
-  return impl_->signal_thread_->Invoke<std::shared_ptr<VideoSink>>(
-      RTC_FROM_HERE,
+  return impl_->signal_thread_->BlockingCall(
       [this, &label, width, height, dpi,
        touch_enabled]() -> std::shared_ptr<VideoSink> {
         if (impl_->displays_.count(label)) {
@@ -256,8 +255,8 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
 
 bool Streamer::RemoveDisplay(const std::string& label) {
   // Usually called from an application thread
-  return impl_->signal_thread_->Invoke<bool>(
-      RTC_FROM_HERE, [this, &label]() -> bool {
+  return impl_->signal_thread_->BlockingCall(
+      [this, &label]() -> bool {
         for (auto& [_, client] : impl_->clients_) {
           client->RemoveDisplay(label);
         }
@@ -269,8 +268,8 @@ bool Streamer::RemoveDisplay(const std::string& label) {
 
 std::shared_ptr<AudioSink> Streamer::AddAudioStream(const std::string& label) {
   // Usually called from an application thread
-  return impl_->signal_thread_->Invoke<std::shared_ptr<AudioSink>>(
-      RTC_FROM_HERE, [this, &label]() -> std::shared_ptr<AudioSink> {
+  return impl_->signal_thread_->BlockingCall(
+      [this, &label]() -> std::shared_ptr<AudioSink> {
         if (impl_->audio_sources_.count(label)) {
           LOG(ERROR) << "Audio stream with same label already exists: "
                      << label;
@@ -328,7 +327,7 @@ void Streamer::Register(std::weak_ptr<OperatorObserver> observer) {
   // Usually called from an application thread
   // No need to block the calling thread on this, the observer will be notified
   // when the connection is established.
-  impl_->signal_thread_->PostTask(RTC_FROM_HERE, [this, observer]() {
+  impl_->signal_thread_->PostTask([this, observer]() {
     impl_->Register(observer);
   });
 }
@@ -336,7 +335,7 @@ void Streamer::Register(std::weak_ptr<OperatorObserver> observer) {
 void Streamer::Unregister() {
   // Usually called from an application thread.
   impl_->signal_thread_->PostTask(
-      RTC_FROM_HERE, [this]() { impl_->server_connection_.reset(); });
+      [this]() { impl_->server_connection_.reset(); });
 }
 
 void Streamer::RecordDisplays(LocalRecorder& recorder) {
@@ -370,7 +369,7 @@ void Streamer::Impl::Register(std::weak_ptr<OperatorObserver> observer) {
 void Streamer::Impl::OnOpen() {
   // Called from the websocket thread.
   // Connected to operator.
-  signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
+  signal_thread_->PostTask([this]() {
     Json::Value register_obj;
     register_obj[cuttlefish::webrtc_signaling::kTypeField] =
         cuttlefish::webrtc_signaling::kRegisterType;
@@ -449,7 +448,7 @@ void Streamer::Impl::OnClose() {
   // The operator shouldn't close the connection with the client, it's up to the
   // device to decide when to disconnect.
   LOG(WARNING) << "Connection with server closed unexpectedly";
-  signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
+  signal_thread_->PostTask([this]() {
     auto observer = operator_observer_.lock();
     if (observer) {
       observer->OnClose();
@@ -459,8 +458,8 @@ void Streamer::Impl::OnClose() {
   registration_retries_left_ = kReconnectRetries;
   retry_interval_ms_ = kReconnectIntervalMs;
   signal_thread_->PostDelayedTask(
-      RTC_FROM_HERE, [this]() { Register(operator_observer_); },
-      retry_interval_ms_);
+      [this]() { Register(operator_observer_); },
+      webrtc::TimeDelta::Millis(retry_interval_ms_));
 }
 
 void Streamer::Impl::OnError(const std::string& error) {
@@ -471,16 +470,15 @@ void Streamer::Impl::OnError(const std::string& error) {
                  << " (will retry in " << retry_interval_ms_ / 1000 << "s)";
     --registration_retries_left_;
     signal_thread_->PostDelayedTask(
-        RTC_FROM_HERE,
         [this]() {
           // Need to reconnect and register again with operator
           Register(operator_observer_);
         },
-        retry_interval_ms_);
+        webrtc::TimeDelta::Millis(retry_interval_ms_));
     retry_interval_ms_ *= 2;
   } else {
     LOG(ERROR) << "Error on connection with the operator: " << error;
-    signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
+    signal_thread_->PostTask([this]() {
       auto observer = operator_observer_.lock();
       if (observer) {
         observer->OnError();
@@ -543,7 +541,7 @@ void Streamer::Impl::OnReceive(const uint8_t* msg, size_t length,
     return;
   }
   // Transition to the signal thread before member variables are accessed.
-  signal_thread_->PostTask(RTC_FROM_HERE, [this, server_message]() {
+  signal_thread_->PostTask([this, server_message]() {
     if (!server_message.isMember(cuttlefish::webrtc_signaling::kTypeField) ||
         !server_message[cuttlefish::webrtc_signaling::kTypeField].isString()) {
       LOG(ERROR) << "No message_type field from server";
@@ -627,16 +625,25 @@ Streamer::Impl::Build(
     const std::vector<webrtc::PeerConnectionInterface::IceServer>&
         per_connection_servers) {
   webrtc::PeerConnectionDependencies dependencies(&observer);
-  // PortRangeSocketFactory's super class' constructor needs to be called on the
-  // network thread or have it as a parameter
-  dependencies.packet_socket_factory.reset(new PortRangeSocketFactory(
-      network_thread_.get(), config_.udp_port_range, config_.tcp_port_range));
   auto servers = operator_config_.servers;
   servers.insert(servers.end(), per_connection_servers.begin(),
                  per_connection_servers.end());
-  return CF_EXPECT(CreatePeerConnection(peer_connection_factory_,
-                                        std::move(dependencies), servers),
-                   "Failed to build peer connection");
+  if (config_.udp_port_range != config_.tcp_port_range) {
+    // libwebrtc removed the ability to provide a packet socket factory when
+    // creating a peer connection. They plan to provide that functionality with
+    // the peer connection factory, but that's currently incomplete (the packet
+    // socket factory is ignored by the peer connection factory). The only other
+    // choice to customize port ranges is through the port allocator config, but
+    // this is suboptimal as it only allows to specify a single port range that
+    // will be use for both tcp and udp ports.
+    LOG(WARNING) << "TCP and UDP port ranges differ, TCP connections may not "
+                    "work properly";
+  }
+  return CF_EXPECT(
+      CreatePeerConnection(peer_connection_factory_, std::move(dependencies),
+                           config_.udp_port_range.first,
+                           config_.udp_port_range.second, servers),
+      "Failed to build peer connection");
 }
 
 void Streamer::Impl::SendMessageToClient(int client_id,
@@ -657,7 +664,7 @@ void Streamer::Impl::SendMessageToClient(int client_id,
 void Streamer::Impl::DestroyClientHandler(int client_id) {
   // Usually called from signal thread, could be called from websocket thread or
   // an application thread.
-  signal_thread_->PostTask(RTC_FROM_HERE, [this, client_id]() {
+  signal_thread_->PostTask([this, client_id]() {
     // This needs to be 'posted' to the thread instead of 'invoked'
     // immediately for two reasons:
     // * The client handler is destroyed by this code, it's generally a
