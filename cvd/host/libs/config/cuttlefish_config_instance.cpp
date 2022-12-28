@@ -946,6 +946,14 @@ std::string CuttlefishConfig::InstanceSpecific::ap_esp_image_path() const {
   return AbsolutePath(PerInstancePath("ap_esp.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::otheros_esp_grub_config() const {
+  return AbsolutePath(PerInstancePath("grub.cfg"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::ap_esp_grub_config() const {
+  return AbsolutePath(PerInstancePath("ap_grub.cfg"));
+}
+
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
 
 std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
