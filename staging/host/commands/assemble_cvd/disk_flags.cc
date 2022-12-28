@@ -80,10 +80,6 @@ DEFINE_string(
     vbmeta_system_image, CF_DEFAULTS_VBMETA_SYSTEM_IMAGE,
     "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
     "be vbmeta_system.img in the directory specified by -system_image_dir.");
-DEFINE_string(otheros_esp_image, CF_DEFAULTS_OTHEROS_ESP_IMAGE,
-              "Location of cuttlefish esp image. If the image does not exist, "
-              "and --otheros_root_image is specified, an esp partition image "
-              "is created with default bootloaders.");
 
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");
@@ -134,8 +130,6 @@ Result<void> ResolveInstanceFiles() {
   std::string default_super_image = "";
   std::string default_misc_image = "";
   std::string default_misc_info_txt = "";
-  std::string default_ap_esp_image = "";
-  std::string default_esp_image = "";
   std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
   std::string default_vbmeta_system_image = "";
@@ -165,8 +159,6 @@ Result<void> ResolveInstanceFiles() {
     default_misc_image += comma_str + cur_system_image_dir + "/misc.img";
     default_misc_info_txt +=
         comma_str + cur_system_image_dir + "/misc_info.txt";
-    default_esp_image += comma_str + cur_system_image_dir + "/esp.img";
-    default_ap_esp_image += comma_str + cur_system_image_dir + "/ap_esp.img";
     default_vendor_boot_image += comma_str + cur_system_image_dir + "/vendor_boot.img";
     default_vbmeta_image += comma_str + cur_system_image_dir + "/vbmeta.img";
     default_vbmeta_system_image += comma_str + cur_system_image_dir + "/vbmeta_system.img";
@@ -186,10 +178,6 @@ Result<void> ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("misc_info_txt", default_misc_info_txt.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("ap_esp_image", default_ap_esp_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("otheros_esp_image", default_esp_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vendor_boot_image",
                                default_vendor_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -208,7 +196,7 @@ std::vector<ImagePartition> linux_composite_disk_config(
 
   partitions.push_back(ImagePartition{
       .label = "linux_esp",
-      .image_file_path = AbsolutePath(instance.otheros_esp_image()),
+      .image_file_path = AbsolutePath(instance.otheros_esp_image_path()),
       .type = kEfiSystemPartition,
       .read_only = FLAGS_use_overlay,
   });
@@ -227,7 +215,7 @@ std::vector<ImagePartition> fuchsia_composite_disk_config(
 
   partitions.push_back(ImagePartition{
       .label = "fuchsia_esp",
-      .image_file_path = AbsolutePath(instance.otheros_esp_image()),
+      .image_file_path = AbsolutePath(instance.otheros_esp_image_path()),
       .type = kEfiSystemPartition,
       .read_only = FLAGS_use_overlay,
   });
@@ -331,7 +319,7 @@ std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& con
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
     partitions.push_back(ImagePartition{
         .label = "ap_esp",
-        .image_file_path = AbsolutePath(config.ap_esp_image()),
+        .image_file_path = AbsolutePath(instance.ap_esp_image_path()),
         .read_only = FLAGS_use_overlay,
     });
   }
@@ -1136,8 +1124,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_vbmeta_image, ",");
   std::vector<std::string> vbmeta_system_image =
       android::base::Split(FLAGS_vbmeta_system_image, ",");
-  std::vector<std::string> otheros_esp_image =
-      android::base::Split(FLAGS_otheros_esp_image, ",");
 
   std::vector<std::string> linux_kernel_path =
       android::base::Split(FLAGS_linux_kernel_path, ",");
@@ -1240,11 +1226,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       cur_metadata_image = metadata_image[instance_index];
     }
     instance.set_metadata_image(cur_metadata_image);
-    if (instance_index >= otheros_esp_image.size()) {
-      instance.set_otheros_esp_image(otheros_esp_image[0]);
-    } else {
-      instance.set_otheros_esp_image(otheros_esp_image[instance_index]);
-    }
     if (instance_index >= linux_kernel_path.size()) {
       instance.set_linux_kernel_path(linux_kernel_path[0]);
     } else {
