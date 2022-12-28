@@ -246,8 +246,9 @@ ConnectionController::ThisAsSetSDPObserver() {
 }
 rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
 ConnectionController::ThisAsSetRemoteSDPObserver() {
-  return new rtc::RefCountedObject<SetRemoteDescriptionObserverIntermediate>(
-      *this);
+  return rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>(
+      new rtc::RefCountedObject<SetRemoteDescriptionObserverIntermediate>(
+          *this));
 }
 
 void ConnectionController::HandleSignalingMessage(const Json::Value& msg) {
@@ -396,17 +397,6 @@ void ConnectionController::OnIceCandidate(
   reply["candidate"] = candidate_sdp;
 
   sig_handler_.SendMessage(reply);
-}
-
-// Gathering of an ICE candidate failed.
-// See https://w3c.github.io/webrtc-pc/#event-icecandidateerror
-// |host_candidate| is a stringified socket address.
-void ConnectionController::OnIceCandidateError(
-    const std::string& host_candidate, const std::string& url, int error_code,
-    const std::string& error_text) {
-  LOG(VERBOSE) << "Gathering of an ICE candidate (host candidate: "
-               << host_candidate << ", url: " << url
-               << ") failed: " << error_text;
 }
 
 // Gathering of an ICE candidate failed.

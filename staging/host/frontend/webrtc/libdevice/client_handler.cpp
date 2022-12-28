@@ -128,9 +128,10 @@ bool ClientHandler::RemoveDisplay(const std::string &label) {
   if (controller_.peer_connection()) {
     DisplayTrackAndSender &info = it->second;
 
-    bool success = controller_.peer_connection()->RemoveTrack(info.sender);
-    if (!success) {
-      LOG(ERROR) << "Failed to remove video track for display: " << label;
+    auto error = controller_.peer_connection()->RemoveTrackOrError(info.sender);
+    if (!error.ok()) {
+      LOG(ERROR) << "Failed to remove video track for display " << label << ": "
+                 << error.message();
       return false;
     }
   }
@@ -147,8 +148,8 @@ bool ClientHandler::AddAudio(
   if (!peer_connection) {
     return true;
   }
-  return AddTrackToConnection(audio_track, controller_.peer_connection(),
-                              label);
+  return AddTrackToConnection(audio_track, controller_.peer_connection(), label)
+      .get();
 }
 
 ClientVideoTrackInterface* ClientHandler::GetCameraStream() {
@@ -172,14 +173,14 @@ ClientHandler::Build(
   // created
   for (auto &[label, info] : displays_) {
     info.sender =
-        CF_EXPECT(AddTrackToConnection(info.track, peer_connection, label));
+        CF_EXPECT(AddTrackToConnection(info.track, peer_connection, label).get());
   }
   // Add the audio tracks to the peer connection
   for (auto &[audio_track, label] : audio_streams_) {
     // Audio channels are never removed from the connection by the device, so
     // it's ok to discard the returned sender here. The peer connection keeps
     // track of it anyways.
-    CF_EXPECT(AddTrackToConnection(audio_track, peer_connection, label));
+    CF_EXPECT(AddTrackToConnection(audio_track, peer_connection, label).get());
   }
 
   // libwebrtc configures the video encoder with a start bitrate of just 300kbs
