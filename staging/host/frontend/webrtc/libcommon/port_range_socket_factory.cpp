@@ -49,9 +49,9 @@ std::pair<uint16_t, uint16_t> IntersectPortRanges(
 }  // namespace
 
 PortRangeSocketFactory::PortRangeSocketFactory(
-    rtc::Thread* thread, std::pair<uint16_t, uint16_t> udp_port_range,
+    rtc::SocketFactory* socket_factory, std::pair<uint16_t, uint16_t> udp_port_range,
     std::pair<uint16_t, uint16_t> tcp_port_range)
-    : rtc::BasicPacketSocketFactory(thread),
+    : rtc::BasicPacketSocketFactory(socket_factory),
       udp_port_range_(udp_port_range),
       tcp_port_range_(tcp_port_range) {}
 
@@ -67,7 +67,7 @@ rtc::AsyncPacketSocket* PortRangeSocketFactory::CreateUdpSocket(
       local_address, port_range.first, port_range.second);
 }
 
-rtc::AsyncPacketSocket* PortRangeSocketFactory::CreateServerTcpSocket(
+rtc::AsyncListenSocket* PortRangeSocketFactory::CreateServerTcpSocket(
     const rtc::SocketAddress& local_address, uint16_t min_port,
     uint16_t max_port, int opts) {
   auto port_range = IntersectPortRanges(tcp_port_range_, min_port, max_port);

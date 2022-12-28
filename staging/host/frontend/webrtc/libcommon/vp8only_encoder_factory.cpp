@@ -34,11 +34,6 @@ std::vector<webrtc::SdpVideoFormat> VP8OnlyEncoderFactory::GetSupportedFormats()
   return ret;
 }
 
-webrtc::VideoEncoderFactory::CodecInfo VP8OnlyEncoderFactory::QueryVideoEncoder(
-    const webrtc::SdpVideoFormat& format) const {
-  return inner_->QueryVideoEncoder(format);
-}
-
 std::unique_ptr<webrtc::VideoEncoder> VP8OnlyEncoderFactory::CreateVideoEncoder(
     const webrtc::SdpVideoFormat& format) {
   return inner_->CreateVideoEncoder(format);
