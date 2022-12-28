@@ -58,8 +58,8 @@ void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
                                    int64_t timestamp_us) {
   auto video_frame =
       webrtc::VideoFrame::Builder()
-          .set_video_frame_buffer(
-              new rtc::RefCountedObject<VideoFrameWrapper>(frame))
+          .set_video_frame_buffer(rtc::scoped_refptr<webrtc::VideoFrameBuffer>(
+              new rtc::RefCountedObject<VideoFrameWrapper>(frame)))
           .set_timestamp_us(timestamp_us)
           .build();
   broadcaster_.OnFrame(video_frame);

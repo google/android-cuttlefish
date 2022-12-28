@@ -33,11 +33,13 @@ CreatePeerConnectionFactory(
     rtc::Thread* signal_thread,
     rtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module);
 
+// TODO(b/263528313): Use a packet socket factory instead of a port range.
 Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
 CreatePeerConnection(
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
         peer_connection_factory,
     webrtc::PeerConnectionDependencies dependencies,
+    uint16_t min_port, uint16_t max_port,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>&
         per_connection_servers);
 
