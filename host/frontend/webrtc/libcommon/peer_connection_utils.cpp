@@ -33,8 +33,6 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-// TODO rename as peerconnection_utils.*
-
 Result<std::unique_ptr<rtc::Thread>> CreateAndStartThread(
     const std::string& name) {
   auto thread = rtc::Thread::CreateWithSocketServer();
@@ -75,16 +73,19 @@ CreatePeerConnection(
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
         peer_connection_factory,
     webrtc::PeerConnectionDependencies dependencies,
+    uint16_t min_port, uint16_t max_port,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>& servers) {
   webrtc::PeerConnectionInterface::RTCConfiguration config;
   config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
-  config.enable_dtls_srtp = true;
   config.servers.insert(config.servers.end(), servers.begin(), servers.end());
-  auto peer_connection = peer_connection_factory->CreatePeerConnection(
+  config.set_min_port(min_port);
+  config.set_max_port(max_port);
+  auto result = peer_connection_factory->CreatePeerConnectionOrError(
       config, std::move(dependencies));
 
-  CF_EXPECT(peer_connection.get(), "Failed to create peer connection");
-  return peer_connection;
+  CF_EXPECT(result.ok(),
+            "Failed to create peer connection: " << result.error().message());
+  return result.MoveValue();
 }
 
 }  // namespace webrtc_streaming
