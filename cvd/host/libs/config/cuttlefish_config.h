@@ -365,6 +365,10 @@ class CuttlefishConfig {
 
     std::string otheros_esp_image_path() const;
 
+    std::string otheros_esp_grub_config() const;
+
+    std::string ap_esp_grub_config() const;
+
     std::string audio_server_path() const;
 
     enum class BootFlow {
