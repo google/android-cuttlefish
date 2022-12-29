@@ -765,7 +765,7 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
-        CF_EXPECT(android::base::ParseInt(flag_vec[0].c_str(),
+        CF_EXPECT(android::base::ParseInt(default_value,
         &value_vec[instance_index]),
         "Failed to parse value \"" << default_value << "\" for " << flag_name);
       } else {
