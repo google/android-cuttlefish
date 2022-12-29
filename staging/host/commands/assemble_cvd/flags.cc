@@ -54,6 +54,9 @@ using google::FlagSettingMode::SET_FLAGS_VALUE;
 
 #define DEFINE_vec DEFINE_string
 #define DEFINE_proto DEFINE_string
+#define GET_FLAG_STR_VALUE(name) GetFlagStrValueForInstances(FLAGS_ ##name, instances_size, #name, NameToDefaultValue)
+#define GET_FLAG_INT_VALUE(name) GetFlagIntValueForInstances(FLAGS_ ##name, instances_size, #name, NameToDefaultValue)
+#define GET_FLAG_BOOL_VALUE(name) GetFlagBoolValueForInstances(FLAGS_ ##name, instances_size, #name, NameToDefaultValue)
 
 DEFINE_proto(displays_textproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
               "Text Proto input for multi-vd multi-displays");
@@ -702,49 +705,101 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
   return output_map;
 }
 
+/**
+ * Returns a mapping between flag name and "gflags default_value" as strings for flags
+ * defined in the binary.
+ */
+std::map<std::string, std::string> CurrentFlagsToDefaultValue() {
+  std::map<std::string, std::string> name_to_default_value;
+  std::vector<gflags::CommandLineFlagInfo> self_flags;
+  gflags::GetAllFlags(&self_flags);
+  for (auto& flag : self_flags) {
+    name_to_default_value[flag.name] = flag.default_value;
+  }
+  return name_to_default_value;
+}
+
 Result<std::vector<bool>> GetFlagBoolValueForInstances(
-    const std::string& flag_values, int32_t instances_size, const std::string& flag_name) {
+    const std::string& flag_values, int32_t instances_size, const std::string& flag_name,
+    std::map<std::string, std::string>& NameToDefaultValue) {
   std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
   std::vector<bool> value_vec(instances_size);
+
+  CF_EXPECT(NameToDefaultValue.find(flag_name) != NameToDefaultValue.end());
+  std::vector<std::string> default_value_vec =  android::base::Split(NameToDefaultValue[flag_name], ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
     if (instance_index >= flag_vec.size()) {
       value_vec[instance_index] = CF_EXPECT(ParseBool(flag_vec[0], flag_name));
     } else {
-      value_vec[instance_index] = CF_EXPECT(ParseBool(flag_vec[instance_index], flag_name));
+      if (flag_vec[instance_index] == "unset") {
+        std::string default_value = default_value_vec[0];
+        if (instance_index < default_value_vec.size()) {
+          default_value = default_value_vec[instance_index];
+        }
+        value_vec[instance_index] = CF_EXPECT(ParseBool(default_value, flag_name));
+      } else {
+        value_vec[instance_index] = CF_EXPECT(ParseBool(flag_vec[instance_index], flag_name));
+      }
     }
   }
   return value_vec;
 }
 
 Result<std::vector<int>> GetFlagIntValueForInstances(
-    const std::string& flag_values, int32_t instances_size, const std::string& flag_name) {
+    const std::string& flag_values, int32_t instances_size, const std::string& flag_name,
+    std::map<std::string, std::string>& NameToDefaultValue) {
   std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
   std::vector<int> value_vec(instances_size);
+
+  CF_EXPECT(NameToDefaultValue.find(flag_name) != NameToDefaultValue.end());
+  std::vector<std::string> default_value_vec =  android::base::Split(NameToDefaultValue[flag_name], ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
     if (instance_index >= flag_vec.size()) {
       CF_EXPECT(android::base::ParseInt(flag_vec[0].c_str(), &value_vec[instance_index]),
       "Failed to parse value \"" << flag_vec[0] << "\" for " << flag_name);
     } else {
-      CF_EXPECT(android::base::ParseInt(flag_vec[instance_index].c_str(),
-      &value_vec[instance_index]),
-      "Failed to parse value \"" << flag_vec[instance_index] << "\" for " << flag_name);
+      if (flag_vec[instance_index] == "unset") {
+        std::string default_value = default_value_vec[0];
+        if (instance_index < default_value_vec.size()) {
+          default_value = default_value_vec[instance_index];
+        }
+        CF_EXPECT(android::base::ParseInt(flag_vec[0].c_str(),
+        &value_vec[instance_index]),
+        "Failed to parse value \"" << default_value << "\" for " << flag_name);
+      } else {
+        CF_EXPECT(android::base::ParseInt(flag_vec[instance_index].c_str(),
+        &value_vec[instance_index]),
+        "Failed to parse value \"" << flag_vec[instance_index] << "\" for " << flag_name);
+      }
     }
   }
   return value_vec;
 }
 
 Result<std::vector<std::string>> GetFlagStrValueForInstances(
-    const std::string& flag_values, int32_t instances_size) {
+    const std::string& flag_values, int32_t instances_size,
+    const std::string& flag_name, std::map<std::string, std::string>& NameToDefaultValue) {
   std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
   std::vector<std::string> value_vec(instances_size);
+
+  CF_EXPECT(NameToDefaultValue.find(flag_name) != NameToDefaultValue.end());
+  std::vector<std::string> default_value_vec =  android::base::Split(NameToDefaultValue[flag_name], ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
     if (instance_index >= flag_vec.size()) {
       value_vec[instance_index] = flag_vec[0];
     } else {
-      value_vec[instance_index] = flag_vec[instance_index];
+      if (flag_vec[instance_index] == "unset") {
+        std::string default_value = default_value_vec[0];
+        if (instance_index < default_value_vec.size()) {
+          default_value = default_value_vec[instance_index];
+        }
+        value_vec[instance_index] = default_value;
+      } else {
+        value_vec[instance_index] = flag_vec[instance_index];
+      }
     }
   }
   return value_vec;
@@ -856,124 +911,112 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
 
+  // get flag default values and store into map
+  auto NameToDefaultValue = CurrentFlagsToDefaultValue();
   // old flags but vectorized for multi-device instances
   int32_t instances_size = instance_nums.size();
   std::vector<std::string> gnss_file_paths =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gnss_file_path, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gnss_file_path));
   std::vector<std::string> fixed_location_file_paths =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_fixed_location_file_path, instances_size));
-  std::vector<int> x_res_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_x_res, instances_size, "x_res"));
-  std::vector<int> y_res_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_y_res, instances_size, "y_res"));
-  std::vector<int> dpi_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_dpi, instances_size, "dpi"));
-  std::vector<int> refresh_rate_hz_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_refresh_rate_hz, instances_size, "refresh_rate_hz"));
-  std::vector<int> memory_mb_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_memory_mb, instances_size, "memory_mb"));
-  std::vector<int> camera_server_port_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_camera_server_port, instances_size, "camera_server_port"));
-  std::vector<int> vsock_guest_cid_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_vsock_guest_cid, instances_size, "vsock_guest_cid"));
-  std::vector<int> cpus_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_cpus, instances_size, "cpus"));
-  std::vector<int> blank_data_image_mb_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_blank_data_image_mb, instances_size, "blank_data_image_mb"));
-  std::vector<int> gdb_port_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_gdb_port, instances_size, "gdb_port"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(fixed_location_file_path));
+  std::vector<int> x_res_vec = CF_EXPECT(GET_FLAG_INT_VALUE(x_res));
+  std::vector<int> y_res_vec = CF_EXPECT(GET_FLAG_INT_VALUE(y_res));
+  std::vector<int> dpi_vec = CF_EXPECT(GET_FLAG_INT_VALUE(dpi));
+  std::vector<int> refresh_rate_hz_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
+      refresh_rate_hz));
+  std::vector<int> memory_mb_vec = CF_EXPECT(GET_FLAG_INT_VALUE(memory_mb));
+  std::vector<int> camera_server_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
+      camera_server_port));
+  std::vector<int> vsock_guest_cid_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
+      vsock_guest_cid));
+  std::vector<int> cpus_vec = CF_EXPECT(GET_FLAG_INT_VALUE(cpus));
+  std::vector<int> blank_data_image_mb_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
+      blank_data_image_mb));
+  std::vector<int> gdb_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(gdb_port));
   std::vector<std::string> setupwizard_mode_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_setupwizard_mode, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(setupwizard_mode));
   std::vector<std::string> userdata_format_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_userdata_format, instances_size));
-  std::vector<bool> guest_enforce_security_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_guest_enforce_security, instances_size, "guest_enforce_security"));
-  std::vector<bool> use_random_serial_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_use_random_serial, instances_size, "use_random_serial"));
-  std::vector<bool> use_allocd_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_use_allocd, instances_size, "use_allocd"));
-  std::vector<bool> use_sdcard_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_use_sdcard, instances_size, "use_sdcard"));
-  std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_pause_in_bootloader, instances_size, "pause_in_bootloader"));
-  std::vector<bool> daemon_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_daemon, instances_size, "daemon"));
-  std::vector<bool> enable_minimal_mode_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_minimal_mode, instances_size, "enable_minimal_mode"));
-  std::vector<bool> enable_modem_simulator_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_modem_simulator, instances_size, "enable_modem_simulator"));
-  std::vector<int> modem_simulator_count_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_modem_simulator_count, instances_size, "modem_simulator_count"));
-  std::vector<int> modem_simulator_sim_type_vec = CF_EXPECT(GetFlagIntValueForInstances(
-      FLAGS_modem_simulator_sim_type, instances_size, "modem_simulator_sim_type"));
-  std::vector<bool> console_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_console, instances_size, "console"));
-  std::vector<bool> enable_audio_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_audio, instances_size, "enable_audio"));
-  std::vector<bool> enable_vehicle_hal_grpc_server_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_vehicle_hal_grpc_server, instances_size, "enable_vehicle_hal_grpc_server"));
-  std::vector<bool> start_gnss_proxy_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_start_gnss_proxy, instances_size, "start_gnss_proxy"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(userdata_format));
+  std::vector<bool> guest_enforce_security_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      guest_enforce_security));
+  std::vector<bool> use_random_serial_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      use_random_serial));
+  std::vector<bool> use_allocd_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_allocd));
+  std::vector<bool> use_sdcard_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_sdcard));
+  std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      pause_in_bootloader));
+  std::vector<bool> daemon_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(daemon));
+  std::vector<bool> enable_minimal_mode_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_minimal_mode));
+  std::vector<bool> enable_modem_simulator_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_modem_simulator));
+  std::vector<int> modem_simulator_count_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
+      modem_simulator_count));
+  std::vector<int> modem_simulator_sim_type_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
+      modem_simulator_sim_type));
+  std::vector<bool> console_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(console));
+  std::vector<bool> enable_audio_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_audio));
+  std::vector<bool> enable_vehicle_hal_grpc_server_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_vehicle_hal_grpc_server));
+  std::vector<bool> start_gnss_proxy_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      start_gnss_proxy));
   std::vector<bool> enable_bootanimation_vec =
-      CF_EXPECT(GetFlagBoolValueForInstances(
-          FLAGS_enable_bootanimation, instances_size, "enable_bootanimation"));
-  std::vector<bool> record_screen_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_record_screen, instances_size, "record_screen"));
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_bootanimation));
+  std::vector<bool> record_screen_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      record_screen));
   std::vector<std::string> gem5_debug_file_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gem5_debug_file, instances_size));
-  std::vector<bool> protected_vm_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_protected_vm, instances_size, "protected_vm"));
-  std::vector<bool> enable_kernel_log_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_kernel_log, instances_size, "enable_kernel_log"));
-  std::vector<bool> kgdb_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_kgdb, instances_size, "kgdb"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gem5_debug_file));
+  std::vector<bool> protected_vm_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      protected_vm));
+  std::vector<bool> enable_kernel_log_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_kernel_log));
+  std::vector<bool> kgdb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(kgdb));
   std::vector<std::string> boot_slot_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_boot_slot, instances_size));
-  std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_start_webrtc, instances_size, "start_webrtc"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(boot_slot));
+  std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      start_webrtc));
   std::vector<std::string> webrtc_assets_dir_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_webrtc_assets_dir, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(webrtc_assets_dir));
   std::vector<std::string> tcp_port_range_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_tcp_port_range, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(tcp_port_range));
   std::vector<std::string> udp_port_range_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_udp_port_range, instances_size));
-  std::vector<bool> vhost_net_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_vhost_net, instances_size, "vhost_net"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(udp_port_range));
+  std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      vhost_net));
   std::vector<std::string> ril_dns_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_ril_dns, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
-  std::vector<bool> enable_sandbox_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_sandbox, instances_size, "enable_sandbox"));
+  std::vector<bool> enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_sandbox));
 
   std::vector<std::string> gpu_mode_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gpu_mode, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
   std::vector<std::string> gpu_capture_binary_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gpu_capture_binary, instances_size));
-  std::vector<bool> restart_subprocesses_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_restart_subprocesses, instances_size, "restart_subprocesses"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_capture_binary));
+  std::vector<bool> restart_subprocesses_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      restart_subprocesses));
   std::vector<std::string> hwcomposer_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_hwcomposer, instances_size));
-  std::vector<bool> enable_gpu_udmabuf_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_gpu_udmabuf, instances_size, "enable_gpu_udmabuf"));
-  std::vector<bool> enable_gpu_angle_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_gpu_angle, instances_size, "enable_gpu_angle"));
-  std::vector<bool> smt_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_smt, instances_size, "smt"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(hwcomposer));
+  std::vector<bool> enable_gpu_udmabuf_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_gpu_udmabuf));
+  std::vector<bool> enable_gpu_angle_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_gpu_angle));
+  std::vector<bool> smt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(smt));
   std::vector<std::string> crosvm_binary_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_crosvm_binary, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_binary));
   std::vector<std::string> seccomp_policy_dir_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_seccomp_policy_dir, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(seccomp_policy_dir));
   std::vector<std::string> qemu_binary_dir_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_qemu_binary_dir, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(qemu_binary_dir));
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dir_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gem5_binary_dir, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gem5_binary_dir));
   std::vector<std::string> gem5_checkpoint_dir_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gem5_checkpoint_dir, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gem5_checkpoint_dir));
   std::vector<std::string> data_policy_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_data_policy, instances_size));
+      CF_EXPECT(GET_FLAG_STR_VALUE(data_policy));
 
   // multi-dv multi-display proto input
   std::vector<std::vector<CuttlefishConfig::DisplayConfig>> instances_display_configs;
@@ -1421,8 +1464,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   SetCommandLineOptionWithMode("enable_sandbox", default_enable_sandbox.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // After last SetCommandLineOptionWithMode, we could set these special flags
-  enable_sandbox_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_enable_sandbox, instances_size, "enable_sandbox"));
+  enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      enable_sandbox));
 
   instance_index = 0;
   for (const auto& num : instance_nums) {
@@ -1436,14 +1479,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
-Result<void> SetDefaultFlagsForQemu(Arch target_arch) {
+Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std::string>& NameToDefaultValue) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
   std::vector<std::string> gpu_mode_vec =
-      CF_EXPECT(GetFlagStrValueForInstances(FLAGS_gpu_mode, instances_size));
-  std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_start_webrtc, instances_size, "start_webrtc"));
+      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
+  std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      start_webrtc));
   std::string default_start_webrtc = "";
 
   for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
@@ -1481,12 +1524,12 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch) {
   return {};
 }
 
-Result<void> SetDefaultFlagsForCrosvm() {
+Result<void> SetDefaultFlagsForCrosvm(std::map<std::string, std::string>& NameToDefaultValue) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
-  std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-      FLAGS_start_webrtc, instances_size, "start_webrtc"));
+  std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+      start_webrtc));
   std::string default_start_webrtc = "";
 
   std::set<Arch> supported_archs{Arch::X86_64};
@@ -1600,11 +1643,13 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
   // Currently, all instances should use same vmm
   std::vector<std::string> vm_manager_vec =
       android::base::Split(FLAGS_vm_manager, ",");
+  // get flag default values and store into map
+  auto NameToDefaultValue = CurrentFlagsToDefaultValue();
 
   if (vm_manager_vec[0] == QemuManager::name()) {
-    CF_EXPECT(SetDefaultFlagsForQemu(kernel_configs[0].target_arch));
+    CF_EXPECT(SetDefaultFlagsForQemu(kernel_configs[0].target_arch, NameToDefaultValue));
   } else if (vm_manager_vec[0] == CrosvmManager::name()) {
-    CF_EXPECT(SetDefaultFlagsForCrosvm());
+    CF_EXPECT(SetDefaultFlagsForCrosvm(NameToDefaultValue));
   } else if (vm_manager_vec[0] == Gem5Manager::name()) {
     // TODO: Get the other architectures working
     if (kernel_configs[0].target_arch != Arch::Arm64) {
@@ -1615,8 +1660,8 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
     return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
   }
   if (vm_manager_vec[0] != Gem5Manager::name()) {
-    std::vector<bool> start_webrtc_vec = CF_EXPECT(GetFlagBoolValueForInstances(
-        FLAGS_start_webrtc, instances_size, "start_webrtc"));
+    std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
+        start_webrtc));
     bool start_webrtc = false;
     for(bool value : start_webrtc_vec) {
       start_webrtc |= value;
