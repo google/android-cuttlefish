@@ -204,7 +204,7 @@ static constexpr auto HOST_OPERATOR_SOCKET_PATH = "/run/cuttlefish/operator";
 
 DEFINE_bool(
     // The actual default for this flag is set with SetCommandLineOption() in
-    // GetKernelConfigsAndSetDefaults() at the end of this file.
+    // GetGuestConfigsAndSetDefaults() at the end of this file.
     start_webrtc_sig_server, CF_DEFAULTS_START_WEBRTC_SIG_SERVER,
     "Whether to start the webrtc signaling server. This option only applies to "
     "the first instance, if multiple instances are launched they'll share the "
@@ -487,13 +487,13 @@ std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
 }
 
 #ifdef __ANDROID__
-Result<std::vector<KernelConfig>> ReadKernelConfig() {
-  std::vector<KernelConfig> rets;
+Result<std::vector<GuestConfig>> ReadGuestConfig() {
+  std::vector<GuestConfig> rets;
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
     // QEMU isn't on Android, so always follow host arch
-    KernelConfig ret{};
+    GuestConfig ret{};
     ret.target_arch = HostArch();
     ret.bootconfig_supported = true;
     rets.push_back(ret);
@@ -501,8 +501,8 @@ Result<std::vector<KernelConfig>> ReadKernelConfig() {
   return rets;
 }
 #else
-Result<std::vector<KernelConfig>> ReadKernelConfig() {
-  std::vector<KernelConfig> kernel_configs;
+Result<std::vector<GuestConfig>> ReadGuestConfig() {
+  std::vector<GuestConfig> guest_configs;
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
   std::vector<std::string> kernel_path =
@@ -557,29 +557,29 @@ Result<std::vector<KernelConfig>> ReadKernelConfig() {
 
     std::string config = ReadFile(ikconfig_path);
 
-    KernelConfig kernel_config;
+    GuestConfig guest_config;
     if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
-      kernel_config.target_arch = Arch::Arm;
+      guest_config.target_arch = Arch::Arm;
     } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
-      kernel_config.target_arch = Arch::Arm64;
+      guest_config.target_arch = Arch::Arm64;
     } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
-      kernel_config.target_arch = Arch::X86_64;
+      guest_config.target_arch = Arch::X86_64;
     } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
-      kernel_config.target_arch = Arch::X86;
+      guest_config.target_arch = Arch::X86;
     } else {
       return CF_ERR("Unknown target architecture");
     }
-    kernel_config.bootconfig_supported =
+    guest_config.bootconfig_supported =
         config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
     // Once all Cuttlefish kernel versions are at least 5.15, this code can be
     // removed. CONFIG_CRYPTO_HCTR2=y will always be set.
-    kernel_config.hctr2_supported =
+    guest_config.hctr2_supported =
         config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos;
 
     unlink(ikconfig_path.c_str());
-    kernel_configs.push_back(kernel_config);
+    guest_configs.push_back(guest_config);
   }
-  return kernel_configs;
+  return guest_configs;
 }
 
 #endif  // #ifdef __ANDROID__
@@ -809,7 +809,7 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir,
-    const std::vector<KernelConfig>& kernel_configs,
+    const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config) {
   CuttlefishConfig tmp_config_obj;
 
@@ -833,10 +833,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   // TODO(weihsu), b/250988697: these should move to instance,
   // currently use instance[0] to setup for all instances
-  tmp_config_obj.set_bootconfig_supported(kernel_configs[0].bootconfig_supported);
+  tmp_config_obj.set_bootconfig_supported(guest_configs[0].bootconfig_supported);
   tmp_config_obj.set_filename_encryption_mode(
-      kernel_configs[0].hctr2_supported ? "hctr2" : "cts");
-  auto vmm = GetVmManager(vm_manager_vec[0], kernel_configs[0].target_arch);
+      guest_configs[0].hctr2_supported ? "hctr2" : "cts");
+  auto vmm = GetVmManager(vm_manager_vec[0], guest_configs[0].target_arch);
   if (!vmm) {
     LOG(FATAL) << "Invalid vm_manager: " << vm_manager_vec[0];
   }
@@ -1113,10 +1113,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_smt(smt_vec[instance_index]);
 
     // new instance specific flags (moved from common flags)
-    CF_EXPECT(instance_index < kernel_configs.size(),
+    CF_EXPECT(instance_index < guest_configs.size(),
               "instance_index " << instance_index << " out of boundary "
-                                << kernel_configs.size());
-    instance.set_target_arch(kernel_configs[instance_index].target_arch);
+                                << guest_configs.size());
+    instance.set_target_arch(guest_configs[instance_index].target_arch);
     instance.set_console(console_vec[instance_index]);
     instance.set_kgdb(console_vec[instance_index] && kgdb_vec[instance_index]);
     instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);
@@ -1411,7 +1411,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() && start_wmediumd) {
       std::string required_grub_image_path;
-      switch (kernel_configs[0].target_arch) {
+      switch (guest_configs[0].target_arch) {
         case Arch::Arm:
         case Arch::Arm64:
           // TODO(b/260960328) : Migrate openwrt image for arm64 into
@@ -1611,13 +1611,13 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
   }
 }
 
-Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
+Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
   CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
-  std::vector<KernelConfig> kernel_configs = CF_EXPECT(ReadKernelConfig());
+  std::vector<GuestConfig> guest_configs = CF_EXPECT(ReadGuestConfig());
 
   // TODO(weihsu), b/250988697:
   // assume all instances are using same VM manager/app/arch,
@@ -1625,15 +1625,15 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
 
   // Temporary add this checking to make sure all instances have same target_arch
   // and bootconfig_supported. This checking should be removed later.
-  for (int instance_index = 1; instance_index < kernel_configs.size(); instance_index++) {
-    CF_EXPECT(kernel_configs[0].target_arch == kernel_configs[instance_index].target_arch,
+  for (int instance_index = 1; instance_index < guest_configs.size(); instance_index++) {
+    CF_EXPECT(guest_configs[0].target_arch == guest_configs[instance_index].target_arch,
               "all instance target_arch should be same");
-    CF_EXPECT(kernel_configs[0].bootconfig_supported ==
-              kernel_configs[instance_index].bootconfig_supported,
+    CF_EXPECT(guest_configs[0].bootconfig_supported ==
+              guest_configs[instance_index].bootconfig_supported,
               "all instance bootconfig_supported should be same");
   }
   if (FLAGS_vm_manager == "") {
-    if (IsHostCompatible(kernel_configs[0].target_arch)) {
+    if (IsHostCompatible(guest_configs[0].target_arch)) {
       FLAGS_vm_manager = CrosvmManager::name();
     } else {
       FLAGS_vm_manager = QemuManager::name();
@@ -1647,12 +1647,12 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
   auto NameToDefaultValue = CurrentFlagsToDefaultValue();
 
   if (vm_manager_vec[0] == QemuManager::name()) {
-    CF_EXPECT(SetDefaultFlagsForQemu(kernel_configs[0].target_arch, NameToDefaultValue));
+    CF_EXPECT(SetDefaultFlagsForQemu(guest_configs[0].target_arch, NameToDefaultValue));
   } else if (vm_manager_vec[0] == CrosvmManager::name()) {
     CF_EXPECT(SetDefaultFlagsForCrosvm(NameToDefaultValue));
   } else if (vm_manager_vec[0] == Gem5Manager::name()) {
     // TODO: Get the other architectures working
-    if (kernel_configs[0].target_arch != Arch::Arm64) {
+    if (guest_configs[0].target_arch != Arch::Arm64) {
       return CF_ERR("Gem5 only supports ARM64");
     }
     SetDefaultFlagsForGem5();
@@ -1681,12 +1681,12 @@ Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults() {
         SET_FLAGS_DEFAULT);
   }
 
-  SetDefaultFlagsForOpenwrt(kernel_configs[0].target_arch);
+  SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
 
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
 
-  return kernel_configs;
+  return guest_configs;
 }
 
 std::string GetConfigFilePath(const CuttlefishConfig& config) {
