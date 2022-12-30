@@ -34,6 +34,7 @@
 #include "flags_defaults.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
+#include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/esp.h"
@@ -496,6 +497,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     GuestConfig ret{};
     ret.target_arch = HostArch();
     ret.bootconfig_supported = true;
+    ret.android_version_number = "0.0.0";
     rets.push_back(ret);
   }
   return rets;
@@ -577,6 +579,10 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
         config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos;
 
     unlink(ikconfig_path.c_str());
+    guest_config.android_version_number =
+        CF_EXPECT(ReadAndroidVersionFromBootImage(cur_boot_image),
+                  "Failed to read guest's android version");
+    ;
     guest_configs.push_back(guest_config);
   }
   return guest_configs;
@@ -1117,6 +1123,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "instance_index " << instance_index << " out of boundary "
                                 << guest_configs.size());
     instance.set_target_arch(guest_configs[instance_index].target_arch);
+    instance.set_guest_android_version(
+        guest_configs[instance_index].android_version_number);
     instance.set_console(console_vec[instance_index]);
     instance.set_kgdb(console_vec[instance_index] && kgdb_vec[instance_index]);
     instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);

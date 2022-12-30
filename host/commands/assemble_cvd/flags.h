@@ -17,6 +17,7 @@ struct GuestConfig {
   Arch target_arch;
   bool bootconfig_supported;
   bool hctr2_supported;
+  std::string android_version_number;
 };
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();

@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 #include <android-base/logging.h>
@@ -404,5 +405,26 @@ void RepackGem5BootImage(const std::string& initrd_path,
   // Append bootconfig trailer
   final_rd << "#BOOTCONFIG\n";
   final_rd.close();
+}
+
+Result<std::string> ReadAndroidVersionFromBootImage(
+    const std::string& boot_image_path) {
+  const std::string unpack_dir = StringFromEnv("TEMP", "/tmp");
+  bool unpack_status = UnpackBootImage(boot_image_path, unpack_dir);
+  if (!unpack_status) {
+    return CF_ERR(boot_image_path + " boot image unpack failed");
+  }
+  unlink((unpack_dir + "/kernel").c_str());
+  unlink((unpack_dir + "/ramdisk").c_str());
+  std::string boot_params = ReadFile(unpack_dir + "/boot_params");
+  unlink((unpack_dir + "/boot_params").c_str());
+  std::string os_version = ExtractValue(boot_params, "os version: ");
+  std::regex re("[1-9][0-9]*.[0-9]+.[0-9]+");
+  if (os_version == "") {
+    return CF_ERR("Could not extract os version from " + boot_image_path);
+  } else if (!std::regex_match(os_version, re)) {
+    return CF_ERR("Version string is not a valid version " + os_version);
+  }
+  return os_version;
 }
 } // namespace cuttlefish
