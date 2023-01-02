@@ -1541,7 +1541,9 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std:
   return {};
 }
 
-Result<void> SetDefaultFlagsForCrosvm(std::map<std::string, std::string>& NameToDefaultValue) {
+Result<void> SetDefaultFlagsForCrosvm(
+    const std::vector<GuestConfig>& guest_configs,
+    std::map<std::string, std::string>& NameToDefaultValue) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
@@ -1557,22 +1559,32 @@ Result<void> SetDefaultFlagsForCrosvm(std::map<std::string, std::string>& NameTo
 
   std::vector<std::string> system_image_dir =
       android::base::Split(FLAGS_system_image_dir, ",");
-  std::string cur_system_image_dir = "";
+  std::string cur_bootloader = "";
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
-    if (instance_index >= system_image_dir.size()) {
-      cur_system_image_dir = system_image_dir[0];
+    if (guest_configs[instance_index].android_version_number == "11.0.0") {
+      cur_bootloader = DefaultHostArtifactsPath("etc/bootloader_");
+      if (guest_configs[instance_index].target_arch == Arch::Arm64) {
+        cur_bootloader += "aarch64";
+      } else {
+        cur_bootloader += "x86_64";
+      }
+      cur_bootloader += "/bootloader.crosvm";
     } else {
-      cur_system_image_dir = system_image_dir[instance_index];
+      if (instance_index >= system_image_dir.size()) {
+        cur_bootloader = system_image_dir[0];
+      } else {
+        cur_bootloader = system_image_dir[instance_index];
+      }
+      cur_bootloader += "/bootloader";
     }
-    cur_system_image_dir += "/bootloader";
     if (instance_index > 0) {
       default_bootloader += ",";
       default_enable_sandbox_str += ",";
       default_start_webrtc += ",";
     }
-    default_bootloader += cur_system_image_dir;
+    default_bootloader += cur_bootloader;
     default_enable_sandbox_str += BoolToString(default_enable_sandbox);
     if (!start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
@@ -1666,7 +1678,7 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   if (vm_manager_vec[0] == QemuManager::name()) {
     CF_EXPECT(SetDefaultFlagsForQemu(guest_configs[0].target_arch, NameToDefaultValue));
   } else if (vm_manager_vec[0] == CrosvmManager::name()) {
-    CF_EXPECT(SetDefaultFlagsForCrosvm(NameToDefaultValue));
+    CF_EXPECT(SetDefaultFlagsForCrosvm(guest_configs, NameToDefaultValue));
   } else if (vm_manager_vec[0] == Gem5Manager::name()) {
     // TODO: Get the other architectures working
     if (guest_configs[0].target_arch != Arch::Arm64) {
