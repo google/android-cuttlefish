@@ -89,6 +89,8 @@ class OpenWrt : public CommandSource {
         break;
       case APBootFlow::LegacyDirect:
         ap_cmd.Cmd().AddParameter("--params=\"root=/dev/vda1\"");
+        ap_cmd.Cmd().AddParameter("--params=instancenum=" +
+                                  std::to_string(cuttlefish::GetInstance()));
         ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
         break;
       default:
