@@ -70,6 +70,7 @@ cc_defaults {
     ],
     required: [
         "cvd_internal_display",
+        "cvd_internal_env",
         "cvd_internal_host_bugreport",
         "cvd_internal_start",
         "cvd_internal_status",
