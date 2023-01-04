@@ -369,6 +369,7 @@ class InitializeEspImageImpl : public InitializeEspImage {
   bool BuildAPImage() {
     auto linux = LinuxEspBuilder(instance_.ap_esp_image_path());
     InitLinuxArgs(linux);
+    linux.Argument("instancenum", std::to_string(cuttlefish::GetInstance()));
 
     linux.Root("/dev/vda2")
          .Architecture(instance_.target_arch())
