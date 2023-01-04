@@ -181,8 +181,12 @@ fn attestation_id_info() -> kmr_wire::AttestationIdInfo {
         serial: prop("ro.serialno"),
         manufacturer: prop("ro.product.manufacturer"),
         model: prop("ro.product.model"),
-        imei: b"IMEI unavailable".to_vec(),
-        meid: b"MEID unavailable".to_vec(),
+        // Currently modem_simulator always returns one fixed value. See `handleGetIMEI` in
+        // device/google/cuttlefish/host/commands/modem_simulator/misc_service.cpp for more details.
+        // TODO(b/263188546): Use device-specific IMEI values when available.
+        imei: b"867400022047199".to_vec(),
+        imei2: vec![],
+        meid: vec![],
     }
 }
 
