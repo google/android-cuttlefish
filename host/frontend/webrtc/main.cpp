@@ -283,14 +283,16 @@ int main(int argc, char** argv) {
   const auto& actions_provider =
       injector.get<cuttlefish::CustomActionConfigProvider&>();
 
-  for (const auto& custom_action : actions_provider.CustomShellActions()) {
+  for (const auto& custom_action :
+       actions_provider.CustomShellActions(instance.id())) {
     const auto button = custom_action.button;
     streamer->AddCustomControlPanelButtonWithShellCommand(
         button.command, button.title, button.icon_name,
         custom_action.shell_command);
   }
 
-  for (const auto& custom_action : actions_provider.CustomActionServers()) {
+  for (const auto& custom_action :
+       actions_provider.CustomActionServers(instance.id())) {
     if (action_server_fds.find(custom_action.server) ==
         action_server_fds.end()) {
       LOG(ERROR) << "Custom action server not provided as command line flag: "
@@ -318,11 +320,12 @@ int main(int argc, char** argv) {
     }
   }
 
-  for (const auto& custom_action : actions_provider.CustomDeviceStateActions()) {
-      const auto button = custom_action.button;
-      streamer->AddCustomControlPanelButtonWithDeviceStates(
-          button.command, button.title, button.icon_name,
-          custom_action.device_states);
+  for (const auto& custom_action :
+       actions_provider.CustomDeviceStateActions(instance.id())) {
+    const auto button = custom_action.button;
+    streamer->AddCustomControlPanelButtonWithDeviceStates(
+        button.command, button.title, button.icon_name,
+        custom_action.device_states);
   }
 
   std::shared_ptr<cuttlefish::webrtc_streaming::OperatorObserver> operator_observer(
