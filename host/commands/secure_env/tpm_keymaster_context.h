@@ -137,6 +137,11 @@ class TpmKeymasterContext : public keymaster::KeymasterContext {
       const keymaster::SetAttestationIdsRequest& request) override {
     return attestation_context_->SetAttestationIds(request);
   }
+
+  keymaster_error_t SetAttestationIdsKM3(
+      const keymaster::SetAttestationIdsKM3Request& request) override {
+    return attestation_context_->SetAttestationIdsKM3(request);
+  }
 };
 
 }  // namespace cuttlefish
