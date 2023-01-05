@@ -140,7 +140,7 @@ Result<void> CreateLegacySymlinks(
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
-    FetcherConfig fetcher_config, const std::vector<KernelConfig>& kernel_configs,
+    FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector) {
   std::string runtime_dir_parent = AbsolutePath(FLAGS_instance_dir);
   while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
@@ -167,7 +167,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // two operations, as those will assume they can read the config object from
     // disk.
     auto config = CF_EXPECT(
-        InitializeCuttlefishConfiguration(FLAGS_instance_dir, kernel_configs,
+        InitializeCuttlefishConfiguration(FLAGS_instance_dir, guest_configs,
                                           injector, fetcher_config),
         "cuttlefish configuration initialization failed");
 
@@ -396,12 +396,12 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  auto kernel_configs =
-      CF_EXPECT(GetKernelConfigAndSetDefaults(), "Failed to parse arguments");
+  auto guest_configs =
+      CF_EXPECT(GetGuestConfigAndSetDefaults(), "Failed to parse arguments");
 
   auto config =
       CF_EXPECT(InitFilesystemAndCreateConfig(std::move(fetcher_config),
-                                              kernel_configs, injector),
+                                              guest_configs, injector),
                 "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";

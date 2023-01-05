@@ -28,17 +28,18 @@
 
 namespace cuttlefish {
 
-struct KernelConfig {
+struct GuestConfig {
   Arch target_arch;
   bool bootconfig_supported;
   bool hctr2_supported;
+  std::string android_version_number;
 };
 
-Result<std::vector<KernelConfig>> GetKernelConfigAndSetDefaults();
+Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
 // Must be called after ParseCommandLineFlags.
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir,
-    const std::vector<KernelConfig>& kernel_configs,
+    const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
