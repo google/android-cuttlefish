@@ -157,14 +157,45 @@ TEST_F(CvdIdAllocatorTest, Reclaim) {
   if (!allocator) {
     GTEST_SKIP() << "Memory allocation failed but we aren't testing it.";
   }
+  unsigned one_resource = 0;
   {
     auto take_range_5_12 = allocator->TakeRange(5, 12);
+    auto any_single_item = allocator->UniqueItem();
 
     ASSERT_TRUE(take_range_5_12);
+    ASSERT_TRUE(any_single_item);
+    one_resource = any_single_item->Get();
+
     ASSERT_FALSE(allocator->TakeRange(5, 12));
+    ASSERT_FALSE(allocator->Take(one_resource));
   }
   // take_range_5_12 went out of scope, so resources were reclaimed
   ASSERT_TRUE(allocator->TakeRange(5, 12));
+  ASSERT_TRUE(allocator->Take(one_resource));
+}
+
+TEST(CvdIdAllocatorExpandTest, Expand) {
+  std::vector<unsigned> inputs{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  auto allocator = UniqueResourceAllocator<unsigned>::New(inputs);
+  if (!allocator) {
+    GTEST_SKIP() << "Memory allocation failed but we aren't testing it.";
+  }
+  auto hold_6_to_10 = allocator->TakeRange(6, 11);
+  if (!hold_6_to_10) {
+    GTEST_SKIP() << "TakeRange(6, 11) failed but it's not what is tested here";
+  }
+
+  auto expand =
+      allocator->ExpandPool(std::vector<unsigned>{2, 4, 6, 8, 12, 14});
+  auto take_12 = allocator->Take(12);
+  auto take_14 = allocator->Take(14);
+  auto take_6 = allocator->Take(6);
+
+  std::vector<unsigned> expected_return_from_expand{2, 4, 6, 8};
+  ASSERT_EQ(expand, expected_return_from_expand);
+  ASSERT_TRUE(take_12);
+  ASSERT_TRUE(take_14);
+  ASSERT_FALSE(take_6);
 }
 
 }  // namespace cuttlefish
