@@ -549,6 +549,7 @@ class CuttlefishConfig {
     std::string bootloader() const;
     std::string initramfs_path() const;
     std::string kernel_path() const;
+    std::string guest_android_version() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -699,6 +700,7 @@ class CuttlefishConfig {
     void set_bootloader(const std::string& bootloader);
     void set_initramfs_path(const std::string& initramfs_path);
     void set_kernel_path(const std::string& kernel_path);
+    void set_guest_android_version(const std::string& guest_android_version);
 
    private:
     void SetPath(const std::string& key, const std::string& path);

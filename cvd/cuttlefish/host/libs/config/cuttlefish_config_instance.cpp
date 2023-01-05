@@ -314,6 +314,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_virtual_disk_paths(
   (*Dictionary())[kVirtualDiskPaths] = virtual_disks_json_obj;
 }
 
+static constexpr char kGuestAndroidVersion[] = "guest_android_version";
+std::string CuttlefishConfig::InstanceSpecific::guest_android_version() const {
+  return (*Dictionary())[kGuestAndroidVersion].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_guest_android_version(
+    const std::string& guest_android_version) {
+  (*Dictionary())[kGuestAndroidVersion] = guest_android_version;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
