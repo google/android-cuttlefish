@@ -68,18 +68,11 @@ class StartSelectorParser {
     std::optional<std::vector<std::string>> instance_names;
   };
   struct NameFlagsParam {
-    std::optional<std::string> device_names;
     std::optional<std::string> group_name;
     std::optional<std::string> instance_names;
   };
   Result<ParsedNameFlags> HandleNameOpts(
       const NameFlagsParam& name_flags) const;
-  struct DeviceNamesPair {
-    std::string group_name;
-    std::vector<std::string> instance_names;
-  };
-  Result<DeviceNamesPair> HandleDeviceNames(
-      const std::optional<std::string>& device_names) const;
   Result<std::vector<std::string>> HandleInstanceNames(
       const std::optional<std::string>& per_instance_names) const;
   Result<std::string> HandleGroupName(

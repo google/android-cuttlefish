@@ -52,26 +52,16 @@ INSTANTIATE_TEST_SUITE_P(
                     .expected = ExpectedOutput{.per_instance_names =
                                                    std::vector<std::string>{
                                                        "cvd", "cf"}}},
-        InputOutput{.input = "--device_name=cf-09-1,cf-tv-2",
+        InputOutput{.input = "--instance_name=09-1,tv-2 --group_name cf",
                     .expected = ExpectedOutput{.group_name = "cf",
                                                .per_instance_names =
                                                    std::vector<std::string>{
                                                        "09-1", "tv-2"}}},
         InputOutput{
-            .input = "--device_name cf-09",
+            .input = "--group_name=cf --instance_name 09",
             .expected = ExpectedOutput{.group_name = "cf",
                                        .per_instance_names =
                                            std::vector<std::string>{"09"}}},
-        InputOutput{.input = "--device_name my_cool-phone,my_cool-tv",
-                    .expected = ExpectedOutput{.group_name = "my_cool",
-                                               .per_instance_names =
-                                                   std::vector<std::string>{
-                                                       "phone", "tv"}}},
-        InputOutput{
-            .input = "--group_name=my_cool --instance_name=phone",
-            .expected = ExpectedOutput{.group_name = "my_cool",
-                                       .per_instance_names =
-                                           std::vector<std::string>{"phone"}}},
         InputOutput{.input = "--group_name=my_cool --instance_name=phone-1,tv",
                     .expected = ExpectedOutput{.group_name = "my_cool",
                                                .per_instance_names =
@@ -91,12 +81,11 @@ TEST_P(InvalidNamesTest, InvalidInputs) {
   ASSERT_FALSE(parser.ok());
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    CvdParser, InvalidNamesTest,
-    testing::Values("--group_name", "--group_name=?34", "--group_name=ab-cd",
-                    "--group_name=3ab", "--group_name=x --device_name=y-z",
-                    "--device_name=z --instance_name=p", "--instance_name=*79a",
-                    "--device_name=abcd-e,xyz-f", "--device_name=xyz-e,xyz-e"));
+INSTANTIATE_TEST_SUITE_P(CvdParser, InvalidNamesTest,
+                         testing::Values("--group_name", "--group_name=?34",
+                                         "--group_name=ab-cd",
+                                         "--group_name=3a", "--instance_name",
+                                         "--instance_name=*7a"));
 
 }  // namespace selector
 }  // namespace cuttlefish

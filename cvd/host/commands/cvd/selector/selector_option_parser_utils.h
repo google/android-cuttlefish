@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/selector/instance_database_utils.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -49,25 +48,6 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
   value_opt = value;
   return {};
 }
-
-struct VerifyNameOptionsParam {
-  std::optional<std::string> device_name;
-  std::optional<std::string> group_name;
-  std::optional<std::string> per_instance_name;
-};
-
-/*
- * There are valid combinations of --device_name, --group_name, and
- * --instance_name, let alone the syntax of each.
- *
- * --device_name respectively should be given without any of the
- * other two. --group_name and --instance_name could be given together.
- *
- * It is allowed that none of those three options is given.
- */
-Result<void> VerifyNameOptions(const VerifyNameOptionsParam& param);
-
-Result<DeviceName> SplitDeviceName(const std::string& device_name);
 
 /*
  * android::base::Split by delimeter but returns CF_ERR if any split token is
