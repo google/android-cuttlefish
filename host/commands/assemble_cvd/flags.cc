@@ -70,9 +70,9 @@ using google::FlagSettingMode::SET_FLAGS_VALUE;
 
 #define DEFINE_vec DEFINE_string
 #define DEFINE_proto DEFINE_string
-#define GET_FLAG_STR_VALUE(name) GetFlagStrValueForInstances(FLAGS_ ##name, instances_size, #name, NameToDefaultValue)
-#define GET_FLAG_INT_VALUE(name) GetFlagIntValueForInstances(FLAGS_ ##name, instances_size, #name, NameToDefaultValue)
-#define GET_FLAG_BOOL_VALUE(name) GetFlagBoolValueForInstances(FLAGS_ ##name, instances_size, #name, NameToDefaultValue)
+#define GET_FLAG_STR_VALUE(name) GetFlagStrValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
+#define GET_FLAG_INT_VALUE(name) GetFlagIntValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
+#define GET_FLAG_BOOL_VALUE(name) GetFlagBoolValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
 
 DEFINE_proto(displays_textproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
               "Text Proto input for multi-vd multi-displays");
@@ -742,12 +742,12 @@ std::map<std::string, std::string> CurrentFlagsToDefaultValue() {
 
 Result<std::vector<bool>> GetFlagBoolValueForInstances(
     const std::string& flag_values, int32_t instances_size, const std::string& flag_name,
-    std::map<std::string, std::string>& NameToDefaultValue) {
+    std::map<std::string, std::string>& name_to_default_value) {
   std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
   std::vector<bool> value_vec(instances_size);
 
-  CF_EXPECT(NameToDefaultValue.find(flag_name) != NameToDefaultValue.end());
-  std::vector<std::string> default_value_vec =  android::base::Split(NameToDefaultValue[flag_name], ",");
+  CF_EXPECT(name_to_default_value.find(flag_name) != name_to_default_value.end());
+  std::vector<std::string> default_value_vec =  android::base::Split(name_to_default_value[flag_name], ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
     if (instance_index >= flag_vec.size()) {
@@ -769,12 +769,12 @@ Result<std::vector<bool>> GetFlagBoolValueForInstances(
 
 Result<std::vector<int>> GetFlagIntValueForInstances(
     const std::string& flag_values, int32_t instances_size, const std::string& flag_name,
-    std::map<std::string, std::string>& NameToDefaultValue) {
+    std::map<std::string, std::string>& name_to_default_value) {
   std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
   std::vector<int> value_vec(instances_size);
 
-  CF_EXPECT(NameToDefaultValue.find(flag_name) != NameToDefaultValue.end());
-  std::vector<std::string> default_value_vec =  android::base::Split(NameToDefaultValue[flag_name], ",");
+  CF_EXPECT(name_to_default_value.find(flag_name) != name_to_default_value.end());
+  std::vector<std::string> default_value_vec =  android::base::Split(name_to_default_value[flag_name], ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
     if (instance_index >= flag_vec.size()) {
@@ -801,12 +801,12 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
 
 Result<std::vector<std::string>> GetFlagStrValueForInstances(
     const std::string& flag_values, int32_t instances_size,
-    const std::string& flag_name, std::map<std::string, std::string>& NameToDefaultValue) {
+    const std::string& flag_name, std::map<std::string, std::string>& name_to_default_value) {
   std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
   std::vector<std::string> value_vec(instances_size);
 
-  CF_EXPECT(NameToDefaultValue.find(flag_name) != NameToDefaultValue.end());
-  std::vector<std::string> default_value_vec =  android::base::Split(NameToDefaultValue[flag_name], ",");
+  CF_EXPECT(name_to_default_value.find(flag_name) != name_to_default_value.end());
+  std::vector<std::string> default_value_vec =  android::base::Split(name_to_default_value[flag_name], ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
     if (instance_index >= flag_vec.size()) {
@@ -933,7 +933,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
 
   // get flag default values and store into map
-  auto NameToDefaultValue = CurrentFlagsToDefaultValue();
+  auto name_to_default_value = CurrentFlagsToDefaultValue();
   // old flags but vectorized for multi-device instances
   int32_t instances_size = instance_nums.size();
   std::vector<std::string> gnss_file_paths =
@@ -1495,6 +1495,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // Keep the original code here to set enable_sandbox commandline flag value
   SetCommandLineOptionWithMode("enable_sandbox", default_enable_sandbox.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+
+  // After SetCommandLineOptionWithMode,
+  // default flag values changed, need recalculate name_to_default_value
+  name_to_default_value = CurrentFlagsToDefaultValue();
   // After last SetCommandLineOptionWithMode, we could set these special flags
   enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       enable_sandbox));
@@ -1511,7 +1515,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
-Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std::string>& NameToDefaultValue) {
+Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
@@ -1556,9 +1560,10 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std:
   return {};
 }
 
+
 Result<void> SetDefaultFlagsForCrosvm(
     const std::vector<GuestConfig>& guest_configs,
-    std::map<std::string, std::string>& NameToDefaultValue) {
+    std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
@@ -1688,12 +1693,13 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   std::vector<std::string> vm_manager_vec =
       android::base::Split(FLAGS_vm_manager, ",");
   // get flag default values and store into map
-  auto NameToDefaultValue = CurrentFlagsToDefaultValue();
+  auto name_to_default_value = CurrentFlagsToDefaultValue();
 
   if (vm_manager_vec[0] == QemuManager::name()) {
-    CF_EXPECT(SetDefaultFlagsForQemu(guest_configs[0].target_arch, NameToDefaultValue));
+
+    CF_EXPECT(SetDefaultFlagsForQemu(guest_configs[0].target_arch, name_to_default_value));
   } else if (vm_manager_vec[0] == CrosvmManager::name()) {
-    CF_EXPECT(SetDefaultFlagsForCrosvm(guest_configs, NameToDefaultValue));
+    CF_EXPECT(SetDefaultFlagsForCrosvm(guest_configs, name_to_default_value));
   } else if (vm_manager_vec[0] == Gem5Manager::name()) {
     // TODO: Get the other architectures working
     if (guest_configs[0].target_arch != Arch::Arm64) {
@@ -1704,6 +1710,9 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
     return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
   }
   if (vm_manager_vec[0] != Gem5Manager::name()) {
+    // After SetCommandLineOptionWithMode in SetDefaultFlagsForCrosvm/Qemu,
+    // default flag values changed, need recalculate name_to_default_value
+    name_to_default_value = CurrentFlagsToDefaultValue();
     std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
         start_webrtc));
     bool start_webrtc = false;
