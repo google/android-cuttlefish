@@ -24,14 +24,9 @@ namespace cuttlefish {
 namespace selector {
 
 Result<void> VerifyNameOptions(const VerifyNameOptionsParam& param) {
-  const std::optional<std::string>& name = param.name;
   const std::optional<std::string>& device_name = param.device_name;
   const std::optional<std::string>& group_name = param.group_name;
   const std::optional<std::string>& per_instance_name = param.per_instance_name;
-  if (name) {
-    CF_EXPECT(!device_name && !group_name && !per_instance_name);
-    return {};
-  }
   if (device_name) {
     CF_EXPECT(!group_name && !per_instance_name);
   }
