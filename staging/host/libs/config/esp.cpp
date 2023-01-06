@@ -79,7 +79,7 @@ bool CopyToMsdos(const std::string& image, const std::string& path,
 
 class EspBuilder final {
  public:
-  EspBuilder() = delete;
+  EspBuilder() {}
   EspBuilder(std::string image_path): image_path_(std::move(image_path)) {}
 
   EspBuilder& File(std::string from, std::string to, bool required) & {
@@ -96,7 +96,21 @@ class EspBuilder final {
     return *this;
   }
 
+  EspBuilder& Merge(EspBuilder builder) & {
+    std::move(builder.directories_.begin(), builder.directories_.end(),
+              std::back_inserter(directories_));
+    std::move(builder.files_.begin(), builder.files_.end(),
+              std::back_inserter(files_));
+    return *this;
+  }
+
   bool Build() {
+    if (image_path_.empty()) {
+      LOG(ERROR) << "Image path is required to build ESP. Empty constructor is intended to "
+                 << "be used only for the merge functionality";
+      return false;
+    }
+
     // newfs_msdos won't make a partition smaller than 257 mb
     // this should be enough for anybody..
     const auto tmp_esp_image = image_path_ + ".tmp";
@@ -151,9 +165,8 @@ class EspBuilder final {
 EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
   auto builder = EspBuilder(image_path);
   builder.Directory("EFI")
-      .Directory("EFI/BOOT")
-      .Directory("EFI/debian")
-      .Directory("EFI/modules");
+         .Directory("EFI/BOOT")
+         .Directory("EFI/modules");
 
   switch (arch) {
     case Arch::Arm:
@@ -173,6 +186,23 @@ EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
   }
 
   return std::move(builder);
+}
+
+// TODO(b/260338443, b/260337906) remove ubuntu and debian variations
+// after migrating to grub-mkimage or adding grub binaries as a prebuilt
+EspBuilder AddGrubConfig(const std::string& config) {
+  auto builder = EspBuilder();
+
+  builder.Directory("boot")
+         .Directory("EFI/debian")
+         .Directory("EFI/ubuntu")
+         .Directory("boot/grub");
+
+  builder.File(config, kGrubDebianConfigDestPath, /*required*/ true)
+         .File(config, kGrubUbuntuConfigDestPath, /*required*/ true)
+         .File(config, kGrubConfigDestPath, /*required*/ true);
+
+  return builder;
 }
 
 LinuxEspBuilder& LinuxEspBuilder::Argument(std::string key, std::string value) & {
@@ -228,15 +258,13 @@ bool LinuxEspBuilder::Build() const {
     return false;
   }
 
-  std::ostringstream os;
-  DumpConfig(os);
-  const auto dumped = os.str();
+  const auto dumped = DumpConfig();
   if (WriteAll(config_file, dumped) != dumped.size()) {
     LOG(ERROR) << "Failed to write grub config content to: " << tmp_grub_config;
     return false;
   }
 
-  builder.File(tmp_grub_config, kGrubConfigDestPath, /*required*/ true);
+  builder.Merge(AddGrubConfig(tmp_grub_config));
   builder.File(kernel_, kKernelDestPath, /*required*/ true);
   if (!initrd_.empty()) {
     builder.File(initrd_, kInitrdDestPath, /*required*/ true);
@@ -245,10 +273,12 @@ bool LinuxEspBuilder::Build() const {
   return builder.Build();
 }
 
-void LinuxEspBuilder::DumpConfig(std::ostream& o) const {
+std::string LinuxEspBuilder::DumpConfig() const {
+  std::ostringstream o;
+
   o << "set timeout=0" << std::endl
     << "menuentry \"Linux\" {" << std::endl
-    << "  linux " + kKernelDestPath + " ";
+    << "  linux " << kKernelDestPath << " ";
 
   for (int i = 0; i < arguments_.size(); i++) {
     o << arguments_[i].first << "=" << arguments_[i].second << " ";
@@ -263,6 +293,8 @@ void LinuxEspBuilder::DumpConfig(std::ostream& o) const {
     o << "  fi" << std::endl;
   }
   o << "}" << std::endl;
+
+  return o.str();
 }
 
 FuchsiaEspBuilder& FuchsiaEspBuilder::MultibootBinary(std::string multiboot) & {
@@ -303,28 +335,30 @@ bool FuchsiaEspBuilder::Build() const {
     return false;
   }
 
-  std::ostringstream os;
-  DumpConfig(os);
-  const auto dumped = os.str();
+  const auto dumped = DumpConfig();
   if (WriteAll(config_file, dumped) != dumped.size()) {
     LOG(ERROR) << "Failed to write grub config content to: " << tmp_grub_config;
     return false;
   }
 
-  builder.File(tmp_grub_config, kGrubConfigDestPath, /*required*/ true);
+  builder.Merge(AddGrubConfig(tmp_grub_config));
   builder.File(multiboot_bin_, kMultibootBinDestPath, /*required*/ true);
   builder.File(zedboot_, kZedbootDestPath, /*required*/ true);
 
   return builder.Build();
 }
 
-void FuchsiaEspBuilder::DumpConfig(std::ostream& o) const {
+std::string FuchsiaEspBuilder::DumpConfig() const {
+  std::ostringstream o;
+
   o << "set timeout=0" << std::endl
     << "menuentry \"Fuchsia\" {" << std::endl
     << "  insmod " << kMultibootModuleDestPathIA32 << std::endl
     << "  multiboot " << kMultibootBinDestPath << std::endl
     << "  module " << kZedbootDestPath << std::endl
     << "}" << std::endl;
+
+  return o.str();
 }
 
 } // namespace cuttlefish
