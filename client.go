@@ -17,6 +17,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -49,6 +50,11 @@ func (e *ApiCallError) Error() string {
 		str += fmt.Sprintf("\n\nDETAILS: %s", e.Details)
 	}
 	return str
+}
+
+func (e *ApiCallError) Is(target error) bool {
+	var a *ApiCallError
+	return errors.As(target, &a) && *a == *e
 }
 
 type APIClientOptions struct {
@@ -276,37 +282,37 @@ func (c *APIClient) doRequest(method, path string, reqpl, respl interface{}) err
 	if reqpl != nil {
 		json, err := json.Marshal(reqpl)
 		if err != nil {
-			return err
+			return fmt.Errorf("Error marshaling request: %w", err)
 		}
 		body = bytes.NewBuffer(json)
 	}
 	url := c.BaseURL + path
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error creating request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if err := dumpRequest(req, c.DumpOut); err != nil {
-		return err
+		return fmt.Errorf("Error dumping request: %w", err)
 	}
 	res, err := c.client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error sending request: %w", err)
 	}
 	for i := 0; i < c.RetryAttempts && (res.StatusCode == http.StatusServiceUnavailable); i++ {
 		err = dumpResponse(res, c.DumpOut)
 		res.Body.Close()
 		if err != nil {
-			return err
+			return fmt.Errorf("Error dumping response: %w", err)
 		}
 		time.Sleep(c.RetryDelay)
 		if res, err = c.client.Do(req); err != nil {
-			return err
+			return fmt.Errorf("Error sending request: %w", err)
 		}
 	}
 	defer res.Body.Close()
 	if err := dumpResponse(res, c.DumpOut); err != nil {
-		return err
+		return fmt.Errorf("Error dumping response: %w", err)
 	}
 	dec := json.NewDecoder(res.Body)
 	if res.StatusCode < 200 || res.StatusCode > 299 {
@@ -316,13 +322,13 @@ func (c *APIClient) doRequest(method, path string, reqpl, respl interface{}) err
 		}
 		errpl := new(ApiCallError)
 		if err := dec.Decode(errpl); err != nil {
-			return err
+			return fmt.Errorf("Error decoding response: %w", err)
 		}
 		return errpl
 	}
 	if respl != nil {
 		if err := dec.Decode(respl); err != nil {
-			return err
+			return fmt.Errorf("Error decoding response: %w", err)
 		}
 	}
 	return nil
