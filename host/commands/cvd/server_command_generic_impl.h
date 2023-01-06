@@ -46,6 +46,18 @@ class CvdCommandHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override;
 
  private:
+  struct CommandInvocationInfo {
+    std::string command;
+    std::string bin;
+    std::string home;
+    std::string host_artifacts_path;
+    uid_t uid;
+    std::vector<std::string> args;
+    cvd_common::Envs envs;
+  };
+  std::optional<CommandInvocationInfo> ExtractInfo(
+      const RequestWithStdio& request) const;
+
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
