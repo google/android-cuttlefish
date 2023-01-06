@@ -217,7 +217,6 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesInvalid) {
   }
 
   ASSERT_FALSE(db.AddInstance(*kitty_group, 1, "!yumi").ok());
-  ASSERT_FALSE(db.AddInstance(*kitty_group, 7, "yumi-tiger").ok());
   ASSERT_FALSE(db.AddInstance(*kitty_group, 7, "ti ger").ok());
 }
 
@@ -232,9 +231,9 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   auto& db = GetDb();
   // per_instance_name could be the same if the parent groups are different.
   std::vector<InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv_instance"}};
+      {1, "8"}, {10, "tv-instance"}};
   std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
-      {7, "my_favorite_phone"}, {11, "tv_instance"}, {3, "3_"}};
+      {7, "my_favorite_phone"}, {11, "tv-instance"}, {3, "3_"}};
   auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
   auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
@@ -260,9 +259,9 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   ASSERT_TRUE(result11.ok());
   ASSERT_TRUE(result3.ok());
   ASSERT_EQ(result1->Get().PerInstanceName(), "8");
-  ASSERT_EQ(result10->Get().PerInstanceName(), "tv_instance");
+  ASSERT_EQ(result10->Get().PerInstanceName(), "tv-instance");
   ASSERT_EQ(result7->Get().PerInstanceName(), "my_favorite_phone");
-  ASSERT_EQ(result11->Get().PerInstanceName(), "tv_instance");
+  ASSERT_EQ(result11->Get().PerInstanceName(), "tv-instance");
   ASSERT_EQ(result3->Get().PerInstanceName(), "3_");
   ASSERT_FALSE(result_invalid.ok());
 }

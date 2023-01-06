@@ -80,16 +80,41 @@ bool IsValidGroupName(const std::string& token) {
 }
 
 bool IsValidInstanceName(const std::string& token) {
-  std::regex regular_expr("[A-Za-z_0-9]+");
-  return std::regex_match(token, regular_expr);
+  if (token.empty()) {
+    return false;
+  }
+  std::regex base_regular_expr("[A-Za-z_0-9]+");
+  auto pieces = android::base::Split(token, "-");
+  for (const auto& piece : pieces) {
+    if (!std::regex_match(piece, base_regular_expr)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+Result<DeviceName> BreakDeviceName(const std::string& device_name) {
+  CF_EXPECT(!device_name.empty());
+  CF_EXPECT(Contains(device_name, '-'));
+  auto dash_pos = device_name.find_first_of('-');
+  // - must be neither the first nor the last character
+  CF_EXPECT(dash_pos != 0 && dash_pos != (device_name.size() - 1));
+  const auto group_name = device_name.substr(0, dash_pos);
+  const auto instance_name = device_name.substr(dash_pos + 1);
+  return DeviceName{.group_name = group_name,
+                    .per_instance_name = instance_name};
 }
 
 bool IsValidDeviceName(const std::string& token) {
-  auto pieces = android::base::Split(token, "-");
-  if (pieces.size() != 2) {
+  if (token.empty()) {
     return false;
   }
-  return IsValidGroupName(pieces[0]) && IsValidInstanceName(pieces[1]);
+  auto result = BreakDeviceName(token);
+  if (!result.ok()) {
+    return false;
+  }
+  const auto [group_name, instance_name] = *result;
+  return IsValidGroupName(group_name) && IsValidInstanceName(instance_name);
 }
 
 bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
