@@ -88,4 +88,22 @@ message CommandRequest {
   WaitBehavior wait_behavior = 4;
   SelectorOption selector_opts = 5;
 }
-message CommandResponse {}
+
+/*
+ * The fields are required to be filled only for a successful "cvd start" cmd
+ */
+message InstanceGroupInfo {
+  string group_name = 1;
+  message PerInstanceInfo {
+    string name = 1;
+    uint32 instance_id = 2;
+  }
+  repeated PerInstanceInfo instances = 2;
+  repeated string home_directories = 3;
+}
+
+message CommandResponse {
+  oneof response_report {
+    InstanceGroupInfo instance_group_info = 1;
+  }
+}

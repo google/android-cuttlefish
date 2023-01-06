@@ -47,19 +47,19 @@ class CvdClient {
       const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env,
       const std::string& host_tool_directory);
-  Result<void> HandleCommand(
+  Result<cvd::Response> HandleCommand(
       const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env,
       const std::vector<std::string>& selector_args,
       const OverrideFd& control_fds);
-  Result<void> HandleCommand(
+  Result<cvd::Response> HandleCommand(
       const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env,
       const std::vector<std::string>& selector_args) {
-    CF_EXPECT(
+    auto response = CF_EXPECT(
         HandleCommand(args, env, selector_args,
                       OverrideFd{std::nullopt, std::nullopt, std::nullopt}));
-    return {};
+    return response;
   }
   Result<std::string> HandleVersion(const std::string& host_tool_directory);
 
