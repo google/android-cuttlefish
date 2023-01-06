@@ -43,24 +43,28 @@ namespace cuttlefish {
 //       build an EFI monolith for this architecture.
 // These are the paths Debian installs the monoliths to. If another distro
 // uses an alternative monolith path, add it to this table
-const std::string kBootSrcPathIA32 = "/usr/lib/grub/i386-efi/monolithic/grubia32.efi";
-const std::string kBootDestPathIA32 = "/EFI/BOOT/BOOTIA32.EFI";
+static constexpr char kBootSrcPathIA32[] = "/usr/lib/grub/i386-efi/monolithic/grubia32.efi";
+static constexpr char kBootDestPathIA32[] = "/EFI/BOOT/BOOTIA32.EFI";
 
-const std::string kBootSrcPathAA64 = "/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi";
-const std::string kBootDestPathAA64 = "/EFI/BOOT/BOOTAA64.EFI";
+static constexpr char kBootSrcPathAA64[] = "/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi";
+static constexpr char kBootDestPathAA64[] = "/EFI/BOOT/BOOTAA64.EFI";
 
-const std::string kModulesDestPath = "/EFI/modules";
-const std::string kMultibootModuleSrcPathIA32 = "/usr/lib/grub/i386-efi/multiboot.mod";
-const std::string kMultibootModuleDestPathIA32 = kModulesDestPath + "/multiboot.mod";
+static constexpr char kMultibootModuleSrcPathIA32[] = "/usr/lib/grub/i386-efi/multiboot.mod";
+static constexpr char kMultibootModuleDestPathIA32[] = "/EFI/modules/multiboot.mod";
 
-const std::string kMultibootModuleSrcPathAA64 = "/usr/lib/grub/arm64-efi/multiboot.mod";
-const std::string kMultibootModuleDestPathAA64 = kModulesDestPath + "/multiboot.mod";
+static constexpr char kMultibootModuleSrcPathAA64[] = "/usr/lib/grub/arm64-efi/multiboot.mod";
+static constexpr char kMultibootModuleDestPathAA64[] = "/EFI/modules/multiboot.mod";
 
-const std::string kKernelDestPath = "/vmlinuz";
-const std::string kInitrdDestPath = "/initrd";
-const std::string kZedbootDestPath = "/zedboot.zbi";
-const std::string kMultibootBinDestPath = "/multiboot.bin";
-const std::string kGrubConfigDestPath = "/EFI/debian/grub.cfg";
+static constexpr char kKernelDestPath[] = "/vmlinuz";
+static constexpr char kInitrdDestPath[] = "/initrd";
+static constexpr char kZedbootDestPath[] = "/zedboot.zbi";
+static constexpr char kMultibootBinDestPath[] = "/multiboot.bin";
+
+// TODO(b/260338443, b/260337906) remove ubuntu and debian variations
+// after migrating to grub-mkimage or adding grub binaries as a prebuilt
+static constexpr char kGrubDebianConfigDestPath[] = "/EFI/debian/grub.cfg";
+static constexpr char kGrubUbuntuConfigDestPath[] = "/EFI/ubuntu/grub.cfg";
+static constexpr char kGrubConfigDestPath[] = "/boot/grub/grub.cfg";
 
 class LinuxEspBuilder final {
  public:
@@ -77,7 +81,7 @@ class LinuxEspBuilder final {
   bool Build() const;
 
  private:
-  void DumpConfig(std::ostream& o) const;
+  std::string DumpConfig() const;
 
   const std::string image_path_;
   std::vector<std::pair<std::string, std::string>> arguments_;
@@ -100,7 +104,7 @@ class FuchsiaEspBuilder {
   bool Build() const;
 
  private:
-  void DumpConfig(std::ostream& o) const;
+  std::string DumpConfig() const;
 
   const std::string image_path_;
   std::string multiboot_bin_;
