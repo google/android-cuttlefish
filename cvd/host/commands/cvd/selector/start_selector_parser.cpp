@@ -25,6 +25,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
@@ -49,71 +50,34 @@ static Result<unsigned> ParseNaturalNumber(const std::string& token) {
 }
 
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
-    const uid_t uid, const std::vector<std::string>& selector_args,
-    const std::vector<std::string>& cmd_args,
-    const std::unordered_map<std::string, std::string>& envs) {
+    const uid_t uid, const cvd_common::Args& selector_args,
+    const cvd_common::Args& cmd_args, const cvd_common::Envs& envs) {
   const std::string system_wide_home = CF_EXPECT(SystemWideUserHome(uid));
-  StartSelectorParser parser(system_wide_home, selector_args, cmd_args, envs);
+  cvd_common::Args selector_args_copied{selector_args};
+  StartSelectorParser parser(
+      system_wide_home, selector_args_copied, cmd_args, envs,
+      CF_EXPECT(SelectorCommonParser::Parse(uid, selector_args_copied, envs)));
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
 StartSelectorParser::StartSelectorParser(
     const std::string& system_wide_user_home,
-    const std::vector<std::string>& selector_args,
-    const std::vector<std::string>& cmd_args,
-    const std::unordered_map<std::string, std::string>& envs)
+    const cvd_common::Args& selector_args, const cvd_common::Args& cmd_args,
+    const cvd_common::Envs& envs, SelectorCommonParser&& common_parser)
     : client_user_home_{system_wide_user_home},
       selector_args_(selector_args),
       cmd_args_(cmd_args),
-      envs_(envs) {}
+      envs_(envs),
+      common_parser_(std::move(common_parser)) {}
 
 std::optional<std::string> StartSelectorParser::GroupName() const {
-  return group_name_;
+  return common_parser_.GroupName();
 }
 
 std::optional<std::vector<std::string>> StartSelectorParser::PerInstanceNames()
     const {
-  return instance_names_;
-}
-
-Result<std::vector<std::string>> StartSelectorParser::HandleInstanceNames(
-    const std::optional<std::string>& per_instance_names) const {
-  CF_EXPECT(per_instance_names && !per_instance_names.value().empty());
-
-  auto instance_names =
-      CF_EXPECT(SeparateButWithNoEmptyToken(per_instance_names.value(), ","));
-  for (const auto& instance_name : instance_names) {
-    CF_EXPECT(IsValidInstanceName(instance_name));
-  }
-  std::unordered_set<std::string> duplication_check{instance_names.cbegin(),
-                                                    instance_names.cend()};
-  CF_EXPECT(duplication_check.size() == instance_names.size());
-  return instance_names;
-}
-
-Result<std::string> StartSelectorParser::HandleGroupName(
-    const std::optional<std::string>& group_name) const {
-  CF_EXPECT(group_name && !group_name.value().empty());
-  CF_EXPECT(IsValidGroupName(group_name.value()), group_name.value()
-                                                      << " failed");
-  return {group_name.value()};
-}
-
-Result<StartSelectorParser::ParsedNameFlags>
-StartSelectorParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
-  std::optional<std::string> group_name_output;
-  std::optional<std::vector<std::string>> instance_names_output;
-  if (name_flags.group_name) {
-    group_name_output = CF_EXPECT(HandleGroupName(name_flags.group_name));
-  }
-
-  if (name_flags.instance_names) {
-    instance_names_output =
-        std::move(CF_EXPECT(HandleInstanceNames(name_flags.instance_names)));
-  }
-  return {ParsedNameFlags{.group_name = std::move(group_name_output),
-                          .instance_names = std::move(instance_names_output)}};
+  return common_parser_.PerInstanceNames();
 }
 
 namespace {
@@ -237,7 +201,7 @@ StartSelectorParser::HandleInstanceIds(
   unsigned num_instances =
       CF_EXPECT(VerifyNumOfInstances(VerifyNumOfInstancesParam{
           .num_instances_flag = instance_id_params.num_instances,
-          .instance_names = instance_names_,
+          .instance_names = common_parser_.PerInstanceNames(),
           .instance_nums_flag = instance_nums}));
 
   if (!instance_nums && !base_instance_num) {
@@ -288,37 +252,14 @@ Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
     // never be a default group
     return false;
   }
-  if (Contains(envs_, "HOME") && envs_.at("HOME") != client_user_home_) {
+  if (CF_EXPECT(common_parser_.HomeOverridden())) {
     return false;
   }
-  return selector_args_.empty();
+  return !common_parser_.HasDeviceSelectOption();
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
   may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
-
-  // Handling name-related options
-  std::optional<std::string> group_name;
-  std::optional<std::string> instance_name;
-
-  std::unordered_map<std::string, std::optional<std::string>> key_optional_map =
-      {
-          {kGroupNameOpt, std::optional<std::string>{}},
-          {kInstanceNameOpt, std::optional<std::string>{}},
-      };
-
-  for (auto& [flag_name, value] : key_optional_map) {
-    // value is set to std::nullopt if parsing failed or no flag_name flag is
-    // given.
-    CF_EXPECT(FilterSelectorFlag(selector_args_, flag_name, value));
-  }
-
-  NameFlagsParam name_flags_param{
-      .group_name = key_optional_map[kGroupNameOpt],
-      .instance_names = key_optional_map[kInstanceNameOpt]};
-  auto parsed_name_flags = CF_EXPECT(HandleNameOpts(name_flags_param));
-  group_name_ = parsed_name_flags.group_name;
-  instance_names_ = parsed_name_flags.instance_names;
 
   std::optional<std::string> num_instances;
   std::optional<std::string> instance_nums;
