@@ -20,9 +20,8 @@
 #include <mutex>
 #include <string>
 
+#include <cvd_server.pb.h>
 #include <fruit/fruit.h>
-
-#include "cvd_server.pb.h"
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -62,6 +61,10 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<selector::GroupCreationInfo> GetGroupCreationInfo(
       const std::string& subcmd, const cvd_common::Args& subcmd_args,
       const cvd_common::Envs& envs, const RequestWithStdio& request);
+
+  Result<cvd::Response> FillOutNewInstanceInfo(
+      cvd::Response&& response,
+      const selector::GroupCreationInfo& group_creation_info);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
