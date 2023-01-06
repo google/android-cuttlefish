@@ -323,6 +323,26 @@ void CuttlefishConfig::MutableInstanceSpecific::set_guest_android_version(
   (*Dictionary())[kGuestAndroidVersion] = guest_android_version;
 }
 
+static constexpr char kBootconfigSupported[] = "bootconfig_supported";
+bool CuttlefishConfig::InstanceSpecific::bootconfig_supported() const {
+  return (*Dictionary())[kBootconfigSupported].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_bootconfig_supported(
+    bool bootconfig_supported) {
+  (*Dictionary())[kBootconfigSupported] = bootconfig_supported;
+}
+
+static constexpr char kFilenameEncryptionMode[] = "filename_encryption_mode";
+std::string CuttlefishConfig::InstanceSpecific::filename_encryption_mode() const {
+  return (*Dictionary())[kFilenameEncryptionMode].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_filename_encryption_mode(
+    const std::string& filename_encryption_mode) {
+  auto fmt = filename_encryption_mode;
+  std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
+  (*Dictionary())[kFilenameEncryptionMode] = fmt;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
