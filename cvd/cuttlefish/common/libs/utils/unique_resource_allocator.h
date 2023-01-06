@@ -72,8 +72,6 @@ class UniqueResourceAllocator {
     Reservation(UniqueResourceAllocator& resource_pool, T&& resource)
         : resource_pool_(std::addressof(resource_pool)),
           resource_(std::move(resource)) {}
-    Reservation(UniqueResourceAllocator& resource_pool, const T& resource)
-        : resource_pool_(std::addressof(resource_pool)), resource_(resource) {}
     /*
      * Once this Reservation is std::move-ed out to other object,
      * resource_pool_ should be invalidated, and resource_ shouldn't
@@ -111,8 +109,7 @@ class UniqueResourceAllocator {
       return std::nullopt;
     }
     auto itr = available_resources_.begin();
-    Reservation r(*this, std::move(*itr));
-    available_resources_.erase(itr);
+    Reservation r(*this, RemoveFromPool(itr));
     return {std::move(r)};
   }
 
@@ -125,8 +122,7 @@ class UniqueResourceAllocator {
     ReservationSet result;
     for (int i = 0; i < n; i++) {
       auto itr = available_resources_.begin();
-      result.insert(Reservation{*this, std::move(*itr)});
-      available_resources_.erase(itr);
+      result.insert(Reservation{*this, RemoveFromPool(itr)});
     }
     return {std::move(result)};
   }
@@ -160,8 +156,7 @@ class UniqueResourceAllocator {
       return std::nullopt;
     }
     auto itr = available_resources_.find(t);
-    Reservation resource{*this, std::move(*itr)};
-    available_resources_.erase(itr);
+    Reservation resource{*this, RemoveFromPool(itr)};
     return resource;
   }
 
@@ -176,8 +171,7 @@ class UniqueResourceAllocator {
     ReservationSet resources;
     for (const auto& t : ts) {
       auto itr = available_resources_.find(t);
-      resources.insert(Reservation{*this, std::move(*itr)});
-      available_resources_.erase(itr);
+      resources.insert(Reservation{*this, RemoveFromPool(itr)});
     }
     return resources;
   }
@@ -229,12 +223,17 @@ class UniqueResourceAllocator {
     ReservationSet resources;
     for (auto cursor = start_inclusive; cursor < end_exclusive; cursor++) {
       auto itr = available_resources_.find(cursor);
-      resources.insert(Reservation{*this, std::move(*itr)});
-      available_resources_.erase(itr);
+      resources.insert(Reservation{*this, RemoveFromPool(itr)});
     }
     return resources;
   }
 
+  // make sure that itr belongs to the available_resources_
+  T RemoveFromPool(const typename std::unordered_set<T>::iterator itr) {
+    T copied = std::move(*itr);
+    available_resources_.erase(itr);
+    return copied;
+  }
   std::unordered_set<T> available_resources_;
   std::mutex mutex_;
 };
