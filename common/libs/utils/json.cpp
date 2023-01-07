@@ -17,14 +17,14 @@
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJson(const std::string& input) {
+Result<Json::Value> ParseJson(std::string_view input) {
   Json::Value root;
   JSONCPP_STRING err;
-  int raw_len = static_cast<int>(input.length());
   Json::CharReaderBuilder builder;
   const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  CF_EXPECT(reader->parse(input.c_str(), input.c_str() + raw_len, &root, &err),
-            err);
+  auto begin = input.data();
+  auto end = begin + input.length();
+  CF_EXPECT(reader->parse(begin, end, &root, &err), err);
   return root;
 }
 
