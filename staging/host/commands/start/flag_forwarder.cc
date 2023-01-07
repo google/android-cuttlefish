@@ -17,9 +17,10 @@
 
 #include <cstring>
 
-#include <sstream>
 #include <map>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <gflags/gflags.h>
@@ -28,6 +29,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
 
 /**
@@ -310,18 +312,67 @@ void FlagForwarder::UpdateFlagDefaults() const {
   }
 }
 
+// Hash table for repeatable flags (able to have repeated flag inputs)
+static std::unordered_set<std::string> kRepeatableFlags = {"custom_action_config",
+                                                    "custom_actions"};
+
 std::vector<std::string> FlagForwarder::ArgvForSubprocess(
-    const std::string& subprocess) const {
+    const std::string& subprocess, const std::vector<std::string>& args) const {
   std::vector<std::string> subprocess_argv;
+  std::map<std::string, std::vector<std::string>> name_to_value;
+
+  if (!args.empty()) {
+    for (int index = 0; index < args.size(); index++) {
+      std::string_view argument = args[index];
+      if (!android::base::ConsumePrefix(&argument, "-")) {
+        continue;
+      }
+      android::base::ConsumePrefix(&argument, "-");
+      std::size_t qual_pos = argument.find('=');
+      if (qual_pos == std::string::npos) {
+        // to handle error cases: --flag value and -flag value
+        // but it only apply to repeatable flag case
+        if (cuttlefish::Contains(kRepeatableFlags, argument)) {
+          // matched
+          LOG(FATAL) << subprocess
+                     << " has wrong flag input: " << args[index];
+        }
+        continue;
+      }
+      const std::string name(argument.substr(0, qual_pos));
+      const std::string value(
+          argument.substr(qual_pos + 1, argument.length() - qual_pos - 1));
+
+      if (cuttlefish::Contains(kRepeatableFlags, name)) {
+        // matched
+        if (!cuttlefish::Contains(name_to_value, name)) {
+          // this flag is new
+          std::vector<std::string> values;
+          name_to_value[name] = values;
+        }
+        name_to_value[name].push_back(value);
+      }
+    }
+  }
+
   for (const auto& flag : flags_) {
     if (flag->Subprocess() == subprocess) {
-      gflags::CommandLineFlagInfo flag_info =
-          gflags::GetCommandLineFlagInfoOrDie(flag->Name().c_str());
-      if (!flag_info.is_default) {
-        subprocess_argv.push_back("--" + flag->Name() + "=" + flag_info.current_value);
+      if (cuttlefish::Contains(kRepeatableFlags, flag->Name()) &&
+          cuttlefish::Contains(name_to_value, flag->Name())) {
+        // this is a repeatable flag with input values
+        for (const auto& value : name_to_value[flag->Name()]) {
+          subprocess_argv.push_back("--" + flag->Name() + "=" + value);
+        }
+      } else {
+        // normal case
+        gflags::CommandLineFlagInfo flag_info =
+            gflags::GetCommandLineFlagInfoOrDie(flag->Name().c_str());
+        if (!flag_info.is_default) {
+          subprocess_argv.push_back("--" + flag->Name() + "=" +
+                                    flag_info.current_value);
+        }
       }
     }
   }
   return subprocess_argv;
 }
-
