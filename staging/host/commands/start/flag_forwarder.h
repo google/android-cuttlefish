@@ -35,5 +35,7 @@ public:
   FlagForwarder& operator=(const FlagForwarder&) = delete;
 
   void UpdateFlagDefaults() const;
-  std::vector<std::string> ArgvForSubprocess(const std::string& subprocess) const;
+  std::vector<std::string> ArgvForSubprocess(
+      const std::string& subprocess,
+      const std::vector<std::string>& args = std::vector<std::string>()) const;
 };
