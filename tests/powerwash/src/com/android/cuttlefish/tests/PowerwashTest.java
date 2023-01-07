@@ -19,12 +19,12 @@ import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.RemoteAndroidDevice;
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
 import com.android.tradefed.device.internal.DeviceResetHandler;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 
 import org.junit.Assert;
@@ -55,6 +55,9 @@ public class PowerwashTest extends BaseHostJUnit4Test {
             description = "Force to check device type of RemoteAndroidVirtualDevice.")
     private boolean mForceRemoteAvdType = false;
 
+    private String mCuttlefishHostUser = null;
+    private Integer mCuttlefishDeviceNumOffset = null;
+
     @Test
     public void testPowerwash() throws Exception {
         if (mForceRemoteAvdType) {
@@ -81,8 +84,17 @@ public class PowerwashTest extends BaseHostJUnit4Test {
             long start = System.currentTimeMillis();
             boolean success = false;
             if (getDevice() instanceof RemoteAndroidVirtualDevice) {
-                CommandResult res = ((RemoteAndroidVirtualDevice) getDevice()).powerwash();
-                success = res.getStatus() == CommandStatus.SUCCESS;
+                mCuttlefishHostUser = ((RemoteAndroidVirtualDevice) getDevice()).getInitialUser();
+                mCuttlefishDeviceNumOffset = ((RemoteAndroidVirtualDevice) getDevice())
+                        .getInitialDeviceNumOffset();
+                if (mCuttlefishDeviceNumOffset != null && mCuttlefishHostUser != null) {
+                    success = ((RemoteAndroidVirtualDevice) getDevice())
+                            .powerwashGce(mCuttlefishHostUser, mCuttlefishDeviceNumOffset)
+                            .getStatus().equals(CommandStatus.SUCCESS);
+                } else {
+                    success = ((RemoteAndroidVirtualDevice) getDevice())
+                            .powerwash().getStatus().equals(CommandStatus.SUCCESS);
+                }
             } else {
                 // We don't usually expect tests to use our feature server, but in this case we are
                 // validating the feature itself so it's fine
