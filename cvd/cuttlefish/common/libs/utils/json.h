@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <string>
+#include <string_view>
 
 #include <json/json.h>
 
@@ -23,6 +23,6 @@
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJson(const std::string& input);
+Result<Json::Value> ParseJson(std::string_view input);
 
 }  // namespace cuttlefish
