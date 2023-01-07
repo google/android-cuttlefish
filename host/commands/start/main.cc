@@ -359,9 +359,9 @@ int main(int argc, char** argv) {
 
   // SharedFDs are std::move-d in to avoid dangling references.
   // Removing the std::move will probably make run_cvd hang as its stdin never closes.
-  auto assemble_proc = StartAssembler(std::move(assembler_stdin),
-                                      std::move(assembler_stdout),
-                                      forwarder.ArgvForSubprocess(kAssemblerBin));
+  auto assemble_proc =
+      StartAssembler(std::move(assembler_stdin), std::move(assembler_stdout),
+                     forwarder.ArgvForSubprocess(kAssemblerBin, args));
 
   if (should_generate_report) {
     WriteFiles(AvailableFilesReport(), std::move(launcher_report));
