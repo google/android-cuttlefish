@@ -1442,20 +1442,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                  (FLAGS_rootcanal_instance_num <= 0));
 
     if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() && start_wmediumd) {
-      std::string required_grub_image_path;
-      switch (guest_configs[0].target_arch) {
-        case Arch::Arm:
-        case Arch::Arm64:
-          // TODO(b/260960328) : Migrate openwrt image for arm64 into
-          // APBootFlow::Grub.
-          break;
-        case Arch::X86:
-        case Arch::X86_64:
-          required_grub_image_path = kBootSrcPathIA32;
-          break;
-      }
-
-      if (FileExists(required_grub_image_path)) {
+      if (CanGenerateEsp(guest_configs[0].target_arch)) {
         instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::Grub);
       } else {
         instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
