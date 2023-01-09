@@ -28,7 +28,7 @@
 #include "common/libs/utils/unique_resource_allocator.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/selector/selector_cmdline_parser.h"
+#include "host/commands/cvd/selector/start_selector_parser.h"
 
 namespace cuttlefish {
 namespace selector {
