@@ -376,7 +376,6 @@ DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
 }
 
 std::vector<ImagePartition> persistent_composite_disk_config(
-    const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
 
@@ -398,7 +397,7 @@ std::vector<ImagePartition> persistent_composite_disk_config(
             AbsolutePath(instance.factory_reset_protected_path()),
     });
   }
-  if (config.bootconfig_supported()) {
+  if (instance.bootconfig_supported()) {
     partitions.push_back(ImagePartition{
         .label = "bootconfig",
         .image_file_path = AbsolutePath(instance.persistent_bootconfig_path()),
@@ -498,7 +497,7 @@ class BootImageRepacker : public SetupFeature {
         bool success = RepackVendorBootImage(
             instance_.initramfs_path(), instance_.vendor_boot_image(),
             new_vendor_boot_image_path, config_.assembly_dir(),
-            config_.bootconfig_supported());
+            instance_.bootconfig_supported());
         if (!success) {
           LOG(ERROR) << "Failed to regenerate the vendor boot image with the "
                         "new ramdisk";
@@ -508,7 +507,7 @@ class BootImageRepacker : public SetupFeature {
           // ramdisk.
           bool success = RepackVendorBootImageWithEmptyRamdisk(
               instance_.vendor_boot_image(), new_vendor_boot_image_path,
-              config_.assembly_dir(), config_.bootconfig_supported());
+              config_.assembly_dir(), instance_.bootconfig_supported());
           if (!success) {
             LOG(ERROR) << "Failed to regenerate the vendor boot image without "
                           "a ramdisk";
@@ -634,7 +633,7 @@ class GeneratePersistentBootconfig : public SetupFeature {
     //  device is stopped (via stop_cvd). This is rarely an issue since OTA
     //  testing run on cuttlefish is done within one launch cycle of the device.
     //  If this ever becomes an issue, this code will have to be rewritten.
-    if(!config_.bootconfig_supported()) {
+    if(!instance_.bootconfig_supported()) {
       return {};
     }
     const auto bootconfig_path = instance_.persistent_bootconfig_path();
@@ -702,12 +701,10 @@ class GeneratePersistentBootconfig : public SetupFeature {
 class GeneratePersistentVbmeta : public SetupFeature {
  public:
   INJECT(GeneratePersistentVbmeta(
-      const CuttlefishConfig& config,
       const CuttlefishConfig::InstanceSpecific& instance,
       InitBootloaderEnvPartition& bootloader_env,
       GeneratePersistentBootconfig& bootconfig))
-      : config_(config),
-        instance_(instance),
+      : instance_(instance),
         bootloader_env_(bootloader_env),
         bootconfig_(bootconfig) {}
 
@@ -729,7 +726,7 @@ class GeneratePersistentVbmeta : public SetupFeature {
 
   bool Setup() override {
     if (!instance_.protected_vm()) {
-      if (!PrepareVBMetaImage(instance_.vbmeta_path(), config_.bootconfig_supported())) {
+      if (!PrepareVBMetaImage(instance_.vbmeta_path(), instance_.bootconfig_supported())) {
         return false;
       }
     }
@@ -790,7 +787,6 @@ class GeneratePersistentVbmeta : public SetupFeature {
     return true;
   }
 
-  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   InitBootloaderEnvPartition& bootloader_env_;
   GeneratePersistentBootconfig& bootconfig_;
@@ -982,7 +978,7 @@ class InitializeInstanceCompositeDisk : public SetupFeature {
     };
     auto persistent_disk_builder =
         DiskBuilder()
-            .Partitions(persistent_composite_disk_config(config_, instance_))
+            .Partitions(persistent_composite_disk_config(instance_))
             .VmManager(config_.vm_manager())
             .CrosvmPath(instance_.crosvm_binary())
             .ConfigPath(ipath("persistent_composite_disk_config.txt"))

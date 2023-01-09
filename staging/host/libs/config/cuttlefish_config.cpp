@@ -458,25 +458,6 @@ void CuttlefishConfig::set_rootcanal_default_commands_file(
       DefaultHostArtifactsPath(rootcanal_default_commands_file);
 }
 
-static constexpr char kBootconfigSupported[] = "bootconfig_supported";
-bool CuttlefishConfig::bootconfig_supported() const {
-  return (*dictionary_)[kBootconfigSupported].asBool();
-}
-void CuttlefishConfig::set_bootconfig_supported(bool bootconfig_supported) {
-  (*dictionary_)[kBootconfigSupported] = bootconfig_supported;
-}
-
-static constexpr char kFilenameEncryptionMode[] = "filename_encryption_mode";
-std::string CuttlefishConfig::filename_encryption_mode() const {
-  return (*dictionary_)[kFilenameEncryptionMode].asString();
-}
-void CuttlefishConfig::set_filename_encryption_mode(
-    const std::string& filename_encryption_mode) {
-  auto fmt = filename_encryption_mode;
-  std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
-  (*dictionary_)[kFilenameEncryptionMode] = fmt;
-}
-
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();
