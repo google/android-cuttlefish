@@ -219,12 +219,6 @@ class CuttlefishConfig {
       const std::string& rootcanal_default_commands_file);
   std::string rootcanal_default_commands_file() const;
 
-  void set_bootconfig_supported(bool bootconfig_supported);
-  bool bootconfig_supported() const;
-
-  void set_filename_encryption_mode(const std::string& userdata_format);
-  std::string filename_encryption_mode() const;
-
   // The path of an AP image in composite disk
   std::string ap_image_dev_path() const;
   void set_ap_image_dev_path(const std::string& dev_path);
@@ -550,6 +544,8 @@ class CuttlefishConfig {
     std::string initramfs_path() const;
     std::string kernel_path() const;
     std::string guest_android_version() const;
+    bool bootconfig_supported() const;
+    std::string filename_encryption_mode() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -701,6 +697,8 @@ class CuttlefishConfig {
     void set_initramfs_path(const std::string& initramfs_path);
     void set_kernel_path(const std::string& kernel_path);
     void set_guest_android_version(const std::string& guest_android_version);
+    void set_bootconfig_supported(bool bootconfig_supported);
+    void set_filename_encryption_mode(const std::string& userdata_format);
 
    private:
     void SetPath(const std::string& key, const std::string& path);
