@@ -151,7 +151,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     // If the bootconfig isn't supported in the guest kernel, the bootconfig
     // args need to be passed in via the uboot env. This won't be an issue for
     // protect kvm which is running a kernel with bootconfig support.
-    if (!config_.bootconfig_supported()) {
+    if (!instance_.bootconfig_supported()) {
       auto bootconfig_args = android::base::Join(
           BootconfigArgsFromConfig(config_, instance_), " ");
       // "androidboot.hardware" kernel parameter has changed to "hardware" in
