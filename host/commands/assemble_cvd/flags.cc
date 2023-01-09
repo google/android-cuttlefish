@@ -852,11 +852,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         "All instances should have same vm_manager, " << FLAGS_vm_manager);
   }
 
-  // TODO(weihsu), b/250988697: these should move to instance,
-  // currently use instance[0] to setup for all instances
-  tmp_config_obj.set_bootconfig_supported(guest_configs[0].bootconfig_supported);
-  tmp_config_obj.set_filename_encryption_mode(
-      guest_configs[0].hctr2_supported ? "hctr2" : "cts");
+  // TODO(weihsu), b/250988697: moved bootconfig_supported and hctr2_supported
+  // into each instance, but target_arch is still in todo
+  // target_arch should be in instance later
   auto vmm = GetVmManager(vm_manager_vec[0], guest_configs[0].target_arch);
   if (!vmm) {
     LOG(FATAL) << "Invalid vm_manager: " << vm_manager_vec[0];
@@ -1084,6 +1082,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
 
+    instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
+    instance.set_filename_encryption_mode(
+      guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
     instance.set_use_allocd(use_allocd_vec[instance_index]);
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_vehicle_hal_grpc_server(
@@ -1672,14 +1673,11 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   // assume all instances are using same VM manager/app/arch,
   // later that multiple instances may use different VM manager/app/arch
 
-  // Temporary add this checking to make sure all instances have same target_arch
-  // and bootconfig_supported. This checking should be removed later.
+  // Temporary add this checking to make sure all instances have same target_arch.
+  // This checking should be removed later.
   for (int instance_index = 1; instance_index < guest_configs.size(); instance_index++) {
     CF_EXPECT(guest_configs[0].target_arch == guest_configs[instance_index].target_arch,
               "all instance target_arch should be same");
-    CF_EXPECT(guest_configs[0].bootconfig_supported ==
-              guest_configs[instance_index].bootconfig_supported,
-              "all instance bootconfig_supported should be same");
   }
   if (FLAGS_vm_manager == "") {
     if (IsHostCompatible(guest_configs[0].target_arch)) {
