@@ -105,49 +105,86 @@ destroy_tap() {
     ip link delete "${1}"
 }
 
-# Create a mobile or wireless tap interface
+# Create a mobile tap interface
+# The tap device will have the IP address running on it, and
+# it will be added to a bridge with no address (for routing).
+# $1 = interface number
+# $2 = ip address base ("a.b.c")
+create_mobile_interface() {
+    tap="$(printf cvd-mtap-%02d $1)"
+    gateway="${2}.$((4*$1 - 3))"
+    netmask="/30"
+    network="${2}.$((4*$1 - 4))${netmask}"
+
+    create_tap "${tap}"
+    ip addr add "${gateway}${netmask}" broadcast + dev "${tap}"
+    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+}
+
+# Destroy a mobile tap interface
+# $1 = interface number
+# $2 = ip address base ("a.b.c")
+destroy_mobile_interface() {
+    tap="$(printf cvd-mtap-%02d $1)"
+    gateway="${2}.$((4*$1 - 3))"
+    netmask="/30"
+    network="${2}.$((4*$1 - 4))${netmask}"
+
+    iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+    ip addr del "${gateway}${netmask}" dev "${tap}"
+    destroy_tap "${tap}"
+}
+
+# Create a wireless tap interface
 # The tap device will have the IP address and DHCP server running on it, and
 # it will be added to a bridge with no address (for routing).
 # $1 = interface number
 # $2 = ip address base ("a.b.c")
-# $3 = tap name (e.g. cvd-mtap, cvd-wtap)
-# $4 = IPv6 prefix ("a:b::")
-# $5 = IPv6 prefix length
-create_interface() {
-    tap="$(printf $3-%02d $1)"
+# $3 = IPv6 prefix ("a:b::")
+# $4 = IPv6 prefix length
+create_wireless_interface() {
+    tap="$(printf cvd-wtap-%02d $1)"
     gateway="${2}.$((4*$1 - 3))"
     netmask="/30"
     network="${2}.$((4*$1 - 4))${netmask}"
-    ipv6_prefix="${4}"
-    ipv6_prefix_length="${5}"
+    dhcp_range="${2}.$((4*$1 - 2)),${2}.$((4*$1 - 2))"
+    ipv6_prefix="${3}"
+    ipv6_prefix_length="${4}"
 
     create_tap "${tap}"
     ip addr add "${gateway}${netmask}" broadcast + dev "${tap}"
+
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-        ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${2}"
+        ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
     fi
+    start_dnsmasq \
+        "${tap}" "${gateway}" "${dhcp_range}" \
+        "${ipv6_prefix}" "${ipv6_prefix_length}"
+
     iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 }
 
-# Destroy a mobile or wireless tap interface
+# Destroy a wireless tap interface
 # $1 = interface number
 # $2 = ip address base ("a.b.c")
-# $3 = tap name (e.g. cvd-mtap, cvd-wtap)
-# $4 = IPv6 prefix ("a:b::")
-# $5 = IPv6 prefix length
-destroy_interface() {
-    tap="$(printf $3-%02d $1)"
+# $3 = IPv6 prefix ("a:b::")
+# $4 = IPv6 prefix length
+destroy_wireless_interface() {
+    tap="$(printf cvd-wtap-%02d $1)"
     gateway="${2}.$((4*$1 - 3))"
     netmask="/30"
     network="${2}.$((4*$1 - 4))${netmask}"
-    ipv6_prefix="${4}"
-    ipv6_prefix_length="${5}"
+    ipv6_prefix="${3}"
+    ipv6_prefix_length="${4}"
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
-    if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
-    fi
     ip addr del "${gateway}${netmask}" dev "${tap}"
+
+    stop_dnsmasq "${tap}"
+    if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
+    fi
+
     destroy_tap "${tap}"
 }
 
@@ -211,7 +248,7 @@ destroy_bridged_interfaces() {
         iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
         stop_dnsmasq "${2}"
         if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
+            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${2}"
         fi
         ip addr del "${gateway}${netmask}" dev "${2}"
     fi
@@ -241,8 +278,8 @@ start() {
     echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 
     for i in $(seq ${num_cvd_accounts}); do
-        create_interface $i 192.168.96 cvd-wtap "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
-        create_interface $i 192.168.97 cvd-mtap
+        create_wireless_interface $i 192.168.96 "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+        create_mobile_interface $i 192.168.97
     done
     create_bridged_interfaces \
       192.168.98 "${ethernet_bridge_interface}" cvd-etap \
@@ -269,8 +306,8 @@ stop() {
       "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
 
     for i in $(seq ${num_cvd_accounts}); do
-        destroy_interface $i 192.168.97 cvd-mtap
-        destroy_interface $i 192.168.96 cvd-wtap "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+        destroy_mobile_interface $i 192.168.97
+        destroy_wireless_interface $i 192.168.96 "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
     done
 }
 
