@@ -281,12 +281,6 @@ PRODUCT_PACKAGES += \
 # Packages for HAL implementations
 
 #
-# Atrace HAL
-#
-PRODUCT_PACKAGES += \
-    android.hardware.atrace@1.0-service
-
-#
 # Weaver aidl HAL
 #
 # TODO(b/262418065) Add a real weaver implementation
