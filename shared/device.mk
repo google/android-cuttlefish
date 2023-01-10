@@ -269,12 +269,6 @@ PRODUCT_PACKAGES += \
 # Packages for HAL implementations
 
 #
-# Atrace HAL
-#
-PRODUCT_PACKAGES += \
-    android.hardware.atrace@1.0-service
-
-#
 # Weaver aidl HAL
 #
 PRODUCT_PACKAGES += \
