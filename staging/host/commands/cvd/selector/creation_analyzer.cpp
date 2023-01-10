@@ -340,7 +340,9 @@ Result<std::string> CreationAnalyzer::AnalyzeGroupName(
    * user happened to have already used the generated name, we did our best, and
    * cvd start will fail with a proper error message.
    */
-  return base_name + "_" + android::base::Join(ids, "_");
+  auto unique_suffix =
+      std::to_string(*std::min_element(ids.begin(), ids.end()));
+  return base_name + "_" + unique_suffix;
 }
 
 Result<std::string> CreationAnalyzer::AnalyzeHome() const {
