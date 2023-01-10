@@ -181,6 +181,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_system_image(
     const std::string& vbmeta_system_image) {
   (*Dictionary())[kVbmetaSystemImage] = vbmeta_system_image;
 }
+static constexpr char kVbmetaVendorDlkmImage[] = "vbmeta_vendor_dlkm_image";
+std::string CuttlefishConfig::InstanceSpecific::vbmeta_vendor_dlkm_image()
+    const {
+  return (*Dictionary())[kVbmetaVendorDlkmImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_vendor_dlkm_image(
+    const std::string& image) {
+  (*Dictionary())[kVbmetaVendorDlkmImage] = image;
+}
 static constexpr char kOtherosEspImage[] = "otheros_esp_image";
 std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
   return (*Dictionary())[kOtherosEspImage].asString();
