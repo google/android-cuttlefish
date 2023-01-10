@@ -258,8 +258,16 @@ Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
   return !common_parser_.HasDeviceSelectOption();
 }
 
+Result<bool> StartSelectorParser::CalcAcquireFileLock() {
+  std::optional<bool> must_acquire_file_lock_flag;
+  CF_EXPECT(FilterSelectorFlag(selector_args_, kAcquireFileLockOpt,
+                               must_acquire_file_lock_flag));
+  return !must_acquire_file_lock_flag || !must_acquire_file_lock_flag.value();
+}
+
 Result<void> StartSelectorParser::ParseOptions() {
   may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
+  must_acquire_file_lock_ = CF_EXPECT(CalcAcquireFileLock());
 
   std::optional<std::string> num_instances;
   std::optional<std::string> instance_nums;

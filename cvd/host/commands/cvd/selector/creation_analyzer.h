@@ -40,9 +40,13 @@ struct PerInstanceInfo {
       : instance_id_(id),
         per_instance_name_(per_instance_name),
         instance_file_lock_(std::move(instance_file_lock)) {}
+
+  PerInstanceInfo(const unsigned id, const std::string& per_instance_name)
+      : instance_id_(id), per_instance_name_(per_instance_name) {}
+
   const unsigned instance_id_;
   const std::string per_instance_name_;
-  InstanceLockFile instance_file_lock_;
+  std::optional<InstanceLockFile> instance_file_lock_;
 };
 
 /**
@@ -113,7 +117,7 @@ class CreationAnalyzer {
   /**
    * calculate n_instances_ and instance_ids_
    */
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsWithLock();
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIds();
 
   /*
    * When group name is nil, it is auto-generated using instance ids
@@ -138,7 +142,9 @@ class CreationAnalyzer {
    */
   Result<std::string> AnalyzeHome() const;
 
-  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsWithLockInternal();
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal();
+  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
+      const std::vector<unsigned>& requested_instance_ids);
 
   /*
    * Adds --webrtc_device_id when necessary to cmd_args_

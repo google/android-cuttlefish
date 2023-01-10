@@ -57,6 +57,7 @@ class StartSelectorParser {
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
   bool IsMaybeDefaultGroup() const { return may_be_default_group_; }
+  bool MustAcquireFileLock() const { return must_acquire_file_lock_; }
 
  private:
   StartSelectorParser(const std::string& system_wide_user_home,
@@ -126,7 +127,7 @@ class StartSelectorParser {
       const VerifyNumOfInstancesParam& params,
       const unsigned default_n_instances = 1) const;
   Result<bool> CalcMayBeDefaultGroup();
-
+  Result<bool> CalcAcquireFileLock();
   /**
    * The following are considered, and left empty if can't be figured out.
    *
@@ -143,6 +144,7 @@ class StartSelectorParser {
   std::optional<std::vector<unsigned>> instance_ids_;
   unsigned requested_num_instances_;
   bool may_be_default_group_;
+  bool must_acquire_file_lock_;
 
   // temporarily keeps the leftover of the input cmd_args
   const std::string client_user_home_;
