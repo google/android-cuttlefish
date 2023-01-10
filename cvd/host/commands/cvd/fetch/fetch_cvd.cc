@@ -105,19 +105,22 @@ static bool ArtifactsContains(const std::vector<Artifact>& artifacts,
  * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
  * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
  */
-std::string GetBuildZipName(const Build& build, const std::string& name) {
+Result<std::string> TargetBuildZipFromArtifacts(
+    const Build& build, const std::string& name,
+    const std::vector<Artifact>& artifacts) {
   std::string product =
       std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  return product + "-" + name + "-" + id + ".zip";
+  auto match = product + "-" + name + "-" + id + ".zip";
+  CF_EXPECT(ArtifactsContains(artifacts, match));
+  return match;
 }
 
 Result<std::string> DownloadImageZip(BuildApi& build_api, const Build& build,
                                      const std::string& target_directory) {
-  std::string img_zip_name = GetBuildZipName(build, "img");
-  auto artifacts = CF_EXPECT(build_api.Artifacts(build, img_zip_name));
-  CF_EXPECT(ArtifactsContains(artifacts, img_zip_name),
-            "Target " << build << " did not have " << img_zip_name);
+  auto artifacts = CF_EXPECT(build_api.Artifacts(build));
+  std::string img_zip_name =
+      CF_EXPECT(TargetBuildZipFromArtifacts(build, "img", artifacts));
   std::string local_path = target_directory + "/" + img_zip_name;
   CF_EXPECT(build_api.ArtifactToFile(build, img_zip_name, local_path),
             "Unable to download " << build << ":" << img_zip_name << " to "
@@ -151,13 +154,12 @@ Result<std::vector<std::string>> DownloadImages(
 Result<std::vector<std::string>> DownloadTargetFiles(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory) {
-  std::string target_files_name = GetBuildZipName(build, "target_files");
-  auto artifacts = CF_EXPECT(build_api.Artifacts(build, target_files_name));
-  CF_EXPECT(ArtifactsContains(artifacts, target_files_name),
-            "Target " << build << " did not have " << target_files_name);
-  std::string local_path = target_directory + "/" + target_files_name;
-  CF_EXPECT(build_api.ArtifactToFile(build, target_files_name, local_path),
-            "Unable to download " << build << ":" << target_files_name << " to "
+  auto artifacts = CF_EXPECT(build_api.Artifacts(build));
+  std::string target_zip =
+      CF_EXPECT(TargetBuildZipFromArtifacts(build, "target_files", artifacts));
+  std::string local_path = target_directory + "/" + target_zip;
+  CF_EXPECT(build_api.ArtifactToFile(build, target_zip, local_path),
+            "Unable to download " << build << ":" << target_zip << " to "
                                   << local_path);
   return {{local_path}};
 }
@@ -165,7 +167,7 @@ Result<std::vector<std::string>> DownloadTargetFiles(
 Result<std::vector<std::string>> DownloadHostPackage(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory) {
-  auto artifacts = CF_EXPECT(build_api.Artifacts(build, HOST_TOOLS));
+  auto artifacts = CF_EXPECT(build_api.Artifacts(build));
   CF_EXPECT(ArtifactsContains(artifacts, HOST_TOOLS),
             "Target " << build << " did not have \"" << HOST_TOOLS << "\"");
   std::string local_path = target_directory + "/" + HOST_TOOLS;
@@ -192,7 +194,7 @@ Result<std::vector<std::string>> DownloadHostPackage(
 Result<std::vector<std::string>> DownloadOtaTools(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory) {
-  auto artifacts = CF_EXPECT(build_api.Artifacts(build, OTA_TOOLS));
+  auto artifacts = CF_EXPECT(build_api.Artifacts(build));
   CF_EXPECT(ArtifactsContains(artifacts, OTA_TOOLS),
             "Target " << build << " did not have " << OTA_TOOLS);
   std::string local_path = target_directory + "/" + OTA_TOOLS;
@@ -225,7 +227,7 @@ Result<std::string> DownloadMiscInfo(BuildApi& build_api, Build& build,
   std::string target_misc_info = target_dir + "/misc_info.txt";
   const std::string& misc_info_artifact =
       specified_artifact != "" ? specified_artifact : "misc_info.txt";
-  auto artifacts = CF_EXPECT(build_api.Artifacts(build, misc_info_artifact));
+  auto artifacts = CF_EXPECT(build_api.Artifacts(build));
   CF_EXPECT(ArtifactsContains(artifacts, misc_info_artifact),
             "Failed to find misc_info.txt from build artifacts");
   CF_EXPECT(
@@ -242,7 +244,7 @@ Result<std::vector<std::string>> DownloadBoot(
   const std::string& boot_artifact =
       specified_artifact != "" ? specified_artifact : "boot.img";
   if (specified_artifact != "") {
-    auto artifacts = CF_EXPECT(build_api.Artifacts(build, boot_artifact));
+    auto artifacts = CF_EXPECT(build_api.Artifacts(build));
     if (ArtifactsContains(artifacts, boot_artifact)) {
       CF_EXPECT(build_api.ArtifactToFile(build, boot_artifact, target_boot),
                 "Could not download " << build << ":" << boot_artifact << " to "
@@ -541,6 +543,19 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                 << "\"" << target_vbmeta_system
                                 << "\") failed: \"" << strerror(errno) << "\"");
         }
+        if (ExtractImages(target_files[0], target_dir,
+                          {"IMAGES/vbmeta_vendor_dlkm.img"}) !=
+            std::vector<std::string>{}) {
+          std::string extracted_vbmeta_vendor_dlkm =
+              target_dir + "/IMAGES/vbmeta_vendor_dlkm.img";
+          std::string target_vbmeta_vendor_dlkm =
+              target_dir + "/vbmeta_vendor_dlkm.img";
+          CF_EXPECT(rename(extracted_vbmeta_vendor_dlkm.c_str(),
+                           target_vbmeta_vendor_dlkm.c_str()) == 0,
+                    "rename(\"" << extracted_vbmeta_vendor_dlkm << "\", \""
+                                << "\"" << target_vbmeta_vendor_dlkm
+                                << "\") failed: \"" << strerror(errno) << "\"");
+        }
         // This should technically call AddFilesToConfig with the produced
         // files, but it will conflict with the ones produced from the default
         // system image and pie doesn't care about the produced file list
@@ -562,16 +577,19 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       }
       CF_EXPECT(AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
                                  {local_path}, &config, target_dir));
-      auto kernel_artifacts =
-          CF_EXPECT(build_api.Artifacts(kernel_build, "initramfs.img"));
-      CF_EXPECT(ArtifactsContains(kernel_artifacts, "initramfs.img"));
-      CF_EXPECT(build_api.ArtifactToFile(kernel_build, "initramfs.img",
-                                         target_dir + "/initramfs.img"),
-                "Could not download " << kernel_build << ":initramfs.img to "
-                                      << target_dir + "/initramfs.img");
-      CF_EXPECT(AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
-                                 {target_dir + "/initramfs.img"}, &config,
-                                 target_dir));
+      auto kernel_artifacts = CF_EXPECT(build_api.Artifacts(kernel_build));
+      for (const auto& artifact : kernel_artifacts) {
+        if (artifact.Name() != "initramfs.img") {
+          continue;
+        }
+        CF_EXPECT(build_api.ArtifactToFile(kernel_build, "initramfs.img",
+                                           target_dir + "/initramfs.img"),
+                  "Could not download " << kernel_build << ":initramfs.img to "
+                                        << target_dir + "/initramfs.img");
+        CF_EXPECT(AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
+                                   {target_dir + "/initramfs.img"}, &config,
+                                   target_dir));
+      }
     }
 
     if (FLAGS_boot_build != "") {
