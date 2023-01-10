@@ -52,11 +52,11 @@ INSTANTIATE_TEST_SUITE_P(
                     .expected = ExpectedOutput{.per_instance_names =
                                                    std::vector<std::string>{
                                                        "cvd", "cf"}}},
-        InputOutput{.input = "--name=cf-09,cf-tv",
+        InputOutput{.input = "--name=cf-09-1,cf-tv-2",
                     .expected = ExpectedOutput{.group_name = "cf",
                                                .per_instance_names =
                                                    std::vector<std::string>{
-                                                       "09", "tv"}}},
+                                                       "09-1", "tv-2"}}},
         InputOutput{
             .input = "--device_name cf-09",
             .expected = ExpectedOutput{.group_name = "cf",
