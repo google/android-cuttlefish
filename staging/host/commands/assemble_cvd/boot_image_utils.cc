@@ -419,12 +419,9 @@ Result<std::string> ReadAndroidVersionFromBootImage(
   std::string boot_params = ReadFile(unpack_dir + "/boot_params");
   unlink((unpack_dir + "/boot_params").c_str());
   std::string os_version = ExtractValue(boot_params, "os version: ");
+  CF_EXPECT(os_version != "", "Could not extract os version from \"" + boot_image_path + "\"");
   std::regex re("[1-9][0-9]*.[0-9]+.[0-9]+");
-  if (os_version == "") {
-    return CF_ERR("Could not extract os version from " + boot_image_path);
-  } else if (!std::regex_match(os_version, re)) {
-    return CF_ERR("Version string is not a valid version " + os_version);
-  }
+  CF_EXPECT(std::regex_match(os_version, re), "Version string is not a valid version \"" + os_version + "\"");
   return os_version;
 }
 } // namespace cuttlefish
