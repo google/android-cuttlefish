@@ -209,9 +209,9 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.power.stats.", 2},
 
     // These types are only used in TV.
-    {"android.hardware.tv.cec.", 1},
-    {"android.hardware.tv.earc.", 1},
-    {"android.hardware.tv.hdmi.", 1},
+    {"android.hardware.tv.hdmi.cec.", 1},
+    {"android.hardware.tv.hdmi.earc.", 1},
+    {"android.hardware.tv.hdmi.connection.", 1},
 
     // These types are only used in Automotive.
     {"android.automotive.computepipe.registry.", 1},
