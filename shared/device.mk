@@ -466,7 +466,7 @@ PRODUCT_PACKAGES += \
 # KeyMint HAL
 #
 ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),)
-    LOCAL_KEYMINT_PRODUCT_PACKAGE := android.hardware.security.keymint-service.remote
+    LOCAL_KEYMINT_PRODUCT_PACKAGE := android.hardware.security.keymint-service.rust
 endif
 
 ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),android.hardware.security.keymint-service.rust)
