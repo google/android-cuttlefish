@@ -60,7 +60,7 @@ if [[ -z "${output}" ]]; then
   usage
 fi
 
-grub_cmdline="ro net.ifnames=0 8250.nr_uarts=1 console=ttyS0 loglevel=4"
+grub_cmdline="ro net.ifnames=0 console=ttyAMA0 loglevel=4"
 grub_rootfs="LABEL=rootfs"
 
 # Validate format of the input disk
