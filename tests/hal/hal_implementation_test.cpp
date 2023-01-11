@@ -41,6 +41,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.audio.effect@4.0",
     "android.hardware.audio.effect@5.0",
     "android.hardware.audio.effect@6.0",
+    "android.hardware.authsecret@1.0", // converted to AIDL, see b/182976659
     "android.hardware.automotive.audiocontrol@1.0",
     "android.hardware.automotive.audiocontrol@2.0",
     "android.hardware.automotive.can@1.0",  // converted to AIDL, see b/170405615

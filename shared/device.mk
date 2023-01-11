@@ -300,12 +300,6 @@ PRODUCT_PACKAGES += \
     android.hardware.oemlock-service.example
 
 #
-# Authsecret HAL
-#
-PRODUCT_PACKAGES += \
-    android.hardware.authsecret@1.0-service
-
-#
 # Authsecret AIDL HAL
 #
 PRODUCT_PACKAGES += \
