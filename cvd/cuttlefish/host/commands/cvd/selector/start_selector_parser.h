@@ -49,7 +49,6 @@ class StartSelectorParser {
       const std::unordered_map<std::string, std::string>& envs);
   std::optional<std::string> GroupName() const;
   std::optional<std::vector<std::string>> PerInstanceNames() const;
-  const auto& SubstringQueries() const { return substring_queries_; }
   const std::optional<std::vector<unsigned>>& InstanceIds() const {
     return instance_ids_;
   }
@@ -73,7 +72,6 @@ class StartSelectorParser {
   Result<void> ParseOptions();
 
   bool IsValidName(const std::string& name) const;
-  Result<std::unordered_set<std::string>> FindSubstringsToMatch();
   struct ParsedNameFlags {
     std::optional<std::string> group_name;
     std::optional<std::vector<std::string>> instance_names;
@@ -164,7 +162,7 @@ class StartSelectorParser {
   Result<bool> CalcMayBeDefaultGroup();
   std::optional<std::string> group_name_;
   std::optional<std::vector<std::string>> instance_names_;
-  std::unordered_set<std::string> substring_queries_;
+
   /**
    * The following are considered, and left empty if can't be figured out.
    *
