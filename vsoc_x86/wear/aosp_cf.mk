@@ -51,6 +51,7 @@ $(call inherit-product, device/google/cuttlefish/shared/wear/aosp_product.mk)
 #
 $(call inherit-product, device/google/cuttlefish/shared/wear/aosp_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/wear/device_vendor.mk)
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
 
 #
 # Special settings for the target
