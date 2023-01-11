@@ -39,13 +39,10 @@ Result<void> VerifyNameOptions(const VerifyNameOptionsParam& param) {
 }
 
 Result<DeviceName> SplitDeviceName(const std::string& device_name) {
-  CF_EXPECT(IsValidDeviceName(device_name),
-            "\"" << device_name << "\" is not a valid device name.");
-  auto tokens = android::base::Split(device_name, "-");
-  // guaranteed by IsValidDeviceName() for now
-  CF_EXPECT(tokens.size() == 2);
-  return DeviceName{.group_name = tokens.front(),
-                    .per_instance_name = tokens.back()};
+  auto group_and_instance_names = CF_EXPECT(BreakDeviceName(device_name));
+  CF_EXPECT(IsValidGroupName(group_and_instance_names.group_name));
+  CF_EXPECT(IsValidInstanceName(group_and_instance_names.per_instance_name));
+  return {group_and_instance_names};
 }
 
 Result<std::vector<std::string>> SeparateButWithNoEmptyToken(
