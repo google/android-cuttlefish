@@ -64,7 +64,15 @@ static constexpr char kMultibootBinDestPath[] = "/multiboot.bin";
 // after migrating to grub-mkimage or adding grub binaries as a prebuilt
 static constexpr char kGrubDebianConfigDestPath[] = "/EFI/debian/grub.cfg";
 static constexpr char kGrubUbuntuConfigDestPath[] = "/EFI/ubuntu/grub.cfg";
+static constexpr char kGrubConfigDestDirectoryPath[] = "/boot/grub";
 static constexpr char kGrubConfigDestPath[] = "/boot/grub/grub.cfg";
+
+const std::vector<std::string> kGrubModulesX86 =
+    {"normal", "configfile", "linux", "linuxefi", "multiboot",
+     "ls", "cat", "help", "fat", "part_msdos", "part_gpt"};
+static constexpr char kGrubModulesPath[] = "/usr/lib/grub/";
+static constexpr char kGrubModulesX86Name[] = "i386-efi";
+static constexpr char kGrubModulesArm64Name[] = "arm64-efi";
 
 class LinuxEspBuilder final {
  public:
@@ -114,5 +122,7 @@ class FuchsiaEspBuilder {
 
 bool NewfsMsdos(const std::string& data_image, int data_image_mb,
                 int offset_num_mb);
+
+bool CanGenerateEsp(Arch arch);
 
 } // namespace cuttlefish
