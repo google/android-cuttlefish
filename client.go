@@ -22,8 +22,8 @@ import (
 )
 
 type Signaling struct {
-	SendCh chan interface{}
-	RecvCh chan map[string]interface{}
+	SendCh chan any
+	RecvCh chan map[string]any
 	// The ICE servers to use in the webRTC connection.
 	ICEServers []webrtc.ICEServer
 	// The servers that were created client side and need to be sent to the device.
@@ -146,7 +146,7 @@ func (c *Controller) closeSendCh() {
 	}
 }
 
-func (c *Controller) sendSigMsg(msg interface{}) {
+func (c *Controller) sendSigMsg(msg any) {
 	c.sendMtx.Lock()
 	defer c.sendMtx.Unlock()
 	if c.sendChClosed {
