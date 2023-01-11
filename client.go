@@ -149,8 +149,8 @@ func (c *APIClient) createPolledConnection(host, device string) (*apiv1.NewConnR
 }
 
 func (c *APIClient) initHandling(host, connId string, iceServers []apiv1.IceServer) wclient.Signaling {
-	sendCh := make(chan interface{})
-	recvCh := make(chan map[string]interface{})
+	sendCh := make(chan any)
+	recvCh := make(chan map[string]any)
 
 	// The forwarding goroutine will close this channel and stop when the send
 	// channel is closed, which will cause the polling go routine to close its own
@@ -172,13 +172,13 @@ const (
 	maxConsecutiveErrors = 10
 )
 
-func (c *APIClient) webRTCPoll(sinkCh chan map[string]interface{}, host, connId string, stopCh chan bool) {
+func (c *APIClient) webRTCPoll(sinkCh chan map[string]any, host, connId string, stopCh chan bool) {
 	start := 0
 	pollInterval := initialPollInterval
 	errCount := 0
 	for {
 		path := fmt.Sprintf("/hosts/%s/connections/%s/messages?start=%d", host, connId, start)
-		var messages []map[string]interface{}
+		var messages []map[string]any
 		if err := c.doRequest("GET", path, nil, &messages); err != nil {
 			fmt.Fprintf(c.ErrOut, "Error polling messages: %v\n", err)
 			errCount++
@@ -203,7 +203,7 @@ func (c *APIClient) webRTCPoll(sinkCh chan map[string]interface{}, host, connId 
 				fmt.Fprintf(c.ErrOut, "unexpected message type: %s\n", message["message_type"])
 				continue
 			}
-			sinkCh <- message["payload"].(map[string]interface{})
+			sinkCh <- message["payload"].(map[string]any)
 			start++
 		}
 		select {
@@ -217,7 +217,7 @@ func (c *APIClient) webRTCPoll(sinkCh chan map[string]interface{}, host, connId 
 	}
 }
 
-func (c *APIClient) webRTCForward(srcCh chan interface{}, host, connId string, stopPollCh chan bool) {
+func (c *APIClient) webRTCForward(srcCh chan any, host, connId string, stopPollCh chan bool) {
 	for {
 		msg, open := <-srcCh
 		if !open {
@@ -277,7 +277,7 @@ func (c *APIClient) ListCVDs(host string) ([]*hoapi.CVD, error) {
 // It either populates the passed response payload reference and returns nil
 // error or returns an error. For responses with non-2xx status code an error
 // will be returned.
-func (c *APIClient) doRequest(method, path string, reqpl, respl interface{}) error {
+func (c *APIClient) doRequest(method, path string, reqpl, respl any) error {
 	var body io.Reader
 	if reqpl != nil {
 		json, err := json.Marshal(reqpl)
