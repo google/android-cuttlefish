@@ -89,8 +89,11 @@ class OpenWrt : public CommandSource {
         break;
       case APBootFlow::LegacyDirect:
         ap_cmd.Cmd().AddParameter("--params=\"root=/dev/vda1\"");
-        ap_cmd.Cmd().AddParameter("--params=instancenum=" +
+        ap_cmd.Cmd().AddParameter("--params=instance_num=" +
                                   std::to_string(cuttlefish::GetInstance()));
+        if (NetworkInterfaceExists(instance_.wifi_bridge_name())) {
+          ap_cmd.Cmd().AddParameter("--params=bridged_host_network=true");
+        }
         ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
         break;
       default:
