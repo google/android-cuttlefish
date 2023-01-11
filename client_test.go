@@ -72,7 +72,7 @@ func (o *TestObserver) OnFailure() {
 	}
 }
 
-func recvWithTimeOut[K interface{}](sendCh chan interface{}) (*K, error) {
+func recvWithTimeOut[K any](sendCh chan any) (*K, error) {
 	select {
 	case m := <-sendCh:
 		// Reshape instead of type check here: the client is allowed to send whatever
@@ -86,8 +86,8 @@ func recvWithTimeOut[K interface{}](sendCh chan interface{}) (*K, error) {
 func TestClientSendsInitialMessage(t *testing.T) {
 	observer := TestObserver{}
 	signaling := Signaling{
-		SendCh: make(chan interface{}),
-		RecvCh: make(chan map[string]interface{}),
+		SendCh: make(chan any),
+		RecvCh: make(chan map[string]any),
 	}
 
 	// This won't return, so run it in another routine
@@ -108,8 +108,8 @@ func TestClientSendsInitialMessage(t *testing.T) {
 func TestClientGeneratesAnswer(t *testing.T) {
 	observer := TestObserver{}
 	signaling := Signaling{
-		SendCh: make(chan interface{}),
-		RecvCh: make(chan map[string]interface{}),
+		SendCh: make(chan any),
+		RecvCh: make(chan map[string]any),
 	}
 
 	// This won't return, so run it in another routine
@@ -121,7 +121,7 @@ func TestClientGeneratesAnswer(t *testing.T) {
 	if _, err := recvWithTimeOut[RequestOfferMsg](signaling.SendCh); err != nil {
 		t.Skipf("Client didn't send request-offer in time: %v", err)
 	}
-	signaling.RecvCh <- map[string]interface{}{
+	signaling.RecvCh <- map[string]any{
 		"type": "offer",
 		"sdp":  fakeSDP,
 	}
