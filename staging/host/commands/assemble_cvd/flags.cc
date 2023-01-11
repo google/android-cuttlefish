@@ -643,12 +643,12 @@ Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
 
       // use same code logic from ParseDisplayConfig
       int display_dpi = CF_DEFAULTS_DISPLAY_DPI;
-      if (display.has_dpi()) {
+      if (display.dpi() != 0) {
         display_dpi = display.dpi();
       }
 
       int display_refresh_rate_hz = CF_DEFAULTS_DISPLAY_REFRESH_RATE;
-      if (display.has_refresh_rate_hertz()) {
+      if (display.refresh_rate_hertz() != 0) {
         display_refresh_rate_hz = display.refresh_rate_hertz();
       }
 
