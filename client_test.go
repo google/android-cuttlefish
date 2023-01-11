@@ -73,11 +73,11 @@ func writeErr(w http.ResponseWriter, statusCode int) {
 	write(w, &apiv1.Error{Code: statusCode}, statusCode)
 }
 
-func writeOK(w http.ResponseWriter, data interface{}) {
+func writeOK(w http.ResponseWriter, data any) {
 	write(w, data, http.StatusOK)
 }
 
-func write(w http.ResponseWriter, data interface{}, statusCode int) {
+func write(w http.ResponseWriter, data any, statusCode int) {
 	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
