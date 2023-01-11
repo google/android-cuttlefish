@@ -58,8 +58,6 @@ cc_test_host {
         "parser_ids_test.cpp",
         "parser_names_helper.cpp",
         "parser_names_test.cpp",
-        "parser_substring_helper.cpp",
-        "parser_substring_test.cpp",
     ],
     test_options: {
         unit_test: true,

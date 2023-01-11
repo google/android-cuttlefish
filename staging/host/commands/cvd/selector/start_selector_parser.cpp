@@ -431,36 +431,7 @@ Result<void> StartSelectorParser::ParseOptions() {
   requested_num_instances_ = parsed_ids.GetNumOfInstances();
   instance_ids_ = std::move(parsed_ids.GetInstanceIds());
 
-  if (selector_args_.empty()) {
-    return {};
-  }
-  substring_queries_ = CF_EXPECT(FindSubstringsToMatch());
   return {};
-}
-
-/*
- * The remaining arguments must be like:
- *  substr0 substr1,substr2,subtr3 ...
- */
-Result<std::unordered_set<std::string>>
-StartSelectorParser::FindSubstringsToMatch() {
-  std::unordered_set<std::string> substring_queries;
-  const auto selector_args_size = selector_args_.size();
-  for (int i = 0; i < selector_args_size; i++) {
-    /*
-     * Logically, the order does not matter. The reason why we start from
-     * behind is that pop_back() of a vector is much cheaper than pop_front()
-     */
-    const auto& substring = selector_args_.back();
-    auto tokens = android::base::Split(substring, ",");
-    for (const auto& t : tokens) {
-      CF_EXPECT(!t.empty(),
-                "Empty keyword for substring search is not allowed.");
-      substring_queries_.insert(t);
-    }
-    selector_args_.pop_back();
-  }
-  return {substring_queries};
 }
 
 bool StartSelectorParser::IsValidName(const std::string& name) const {
