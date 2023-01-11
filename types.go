@@ -56,8 +56,8 @@ func NewICECandidateMsg(candidate webrtc.ICECandidateInit) *ICECandidateMsg {
 // webrtc.SessionDescription so they don't to be redefined here.
 
 // Allows converting a generic JSON object representation, like
-// map[string]interface{}, to a specific class such as ICECandidateMsg.
-func Reshape[K interface{}](original interface{}) (*K, error) {
+// map[string]any, to a specific class such as ICECandidateMsg.
+func Reshape[K any](original any) (*K, error) {
 	str, err := json.Marshal(original)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to marshal original message: %v", err)
