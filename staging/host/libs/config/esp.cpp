@@ -54,6 +54,30 @@ bool NewfsMsdos(const std::string& data_image, int data_image_mb,
                   data_image}) == 0;
 }
 
+bool CanGenerateEsp(Arch arch) {
+  switch (arch) {
+    case Arch::Arm:
+    case Arch::Arm64:
+      // TODO(b/260960328) : Migrate openwrt image for arm64 into
+      // APBootFlow::Grub.
+      return false;
+    case Arch::X86:
+    case Arch::X86_64: {
+      const auto x86_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX86Name);
+      const auto modules_presented = all_of(kGrubModulesX86.begin(), kGrubModulesX86.end(),
+                                            [&](const std::string& m) {
+                                              return FileExists(x86_modules + m);
+                                            });
+      if (modules_presented) return true;
+
+      const auto monolith_presented = FileExists(kBootSrcPathIA32);
+      return monolith_presented;
+    }
+  }
+
+  return false;
+}
+
 bool MsdosMakeDirectories(const std::string& image_path,
                           const std::vector<std::string>& directories) {
   auto mmd = HostBinaryPath("mmd");
@@ -75,6 +99,18 @@ bool CopyToMsdos(const std::string& image, const std::string& path,
     return false;
   }
   return true;
+}
+
+bool GrubMakeImage(const std::string& prefix, const std::string& format,
+                   const std::string& directory, const std::string& output,
+                   std::vector<std::string> modules) {
+  std::vector<std::string> command = {"grub-mkimage", "--prefix", prefix,
+                                      "--format", format, "--directory", directory,
+                                      "--output", output};
+  std::move(modules.begin(), modules.end(), std::back_inserter(command));
+
+  const auto success = execute(command);
+  return success == 0;
 }
 
 class EspBuilder final {
@@ -168,6 +204,7 @@ EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
          .Directory("EFI/BOOT")
          .Directory("EFI/modules");
 
+  const auto efi_path = image_path + ".efi";
   switch (arch) {
     case Arch::Arm:
     case Arch::Arm64:
@@ -178,11 +215,21 @@ EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
                     /* required */ false);
       break;
     case Arch::X86:
-    case Arch::X86_64:
-      builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
-      builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
-                    /* required */ true);
+    case Arch::X86_64: {
+      const auto x86_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX86Name);
+
+      if (GrubMakeImage(kGrubConfigDestDirectoryPath, kGrubModulesX86Name,
+                        x86_modules, efi_path, kGrubModulesX86)) {
+        LOG(INFO) << "Loading grub_mkimage generated EFI binary";
+        builder.File(efi_path, kBootDestPathIA32, /* required */ true);
+      } else {
+        LOG(INFO) << "Loading prebuilt monolith EFI binary";
+        builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
+        builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
+                     /* required */ true);
+      }
       break;
+    }
   }
 
   return std::move(builder);
