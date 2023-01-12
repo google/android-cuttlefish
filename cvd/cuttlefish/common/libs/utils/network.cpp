@@ -25,6 +25,7 @@
 
 #include <endian.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <linux/if_ether.h>
 #include <linux/types.h>
 #include <net/ethernet.h>
@@ -97,6 +98,20 @@ bool ParseIpAddress(const std::string& address, std::uint8_t ip[4]) {
 }
 
 }  // namespace
+
+bool NetworkInterfaceExists(const std::string& interface_name) {
+  struct ifaddrs *ifa_list{}, *ifa{};
+  bool ret = false;
+  getifaddrs(&ifa_list);
+  for (ifa = ifa_list; ifa; ifa = ifa->ifa_next) {
+    if (strcmp(ifa->ifa_name, interface_name.c_str()) == 0) {
+      ret = true;
+      break;
+    }
+  }
+  freeifaddrs(ifa_list);
+  return ret;
+}
 
 SharedFD OpenTapInterface(const std::string& interface_name) {
   constexpr auto TUNTAP_DEV = "/dev/net/tun";
