@@ -49,9 +49,11 @@ bool DecodeBase64(const std::string &data, std::vector<std::uint8_t> *buffer) {
     return false;
   }
   buffer->resize(out_len);
-  return EVP_DecodeBase64(buffer->data(), &out_len, out_len,
+  auto result = EVP_DecodeBase64(buffer->data(), &out_len, out_len,
                           reinterpret_cast<const std::uint8_t *>(data.data()),
                           data.size());
+  buffer->resize(out_len); // remove padding '=' characters
+  return result;
 }
 
 }  // namespace cuttlefish
