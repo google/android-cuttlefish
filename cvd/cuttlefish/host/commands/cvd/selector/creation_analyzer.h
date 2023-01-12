@@ -72,11 +72,8 @@ struct GroupCreationInfo {
  *
  * Group name:
  *  if --group_name or --device_name is given, find the group name there
- *  if --name is given and when it is a group name (i.e. --name=<one token>
- *  and that one token is an eligible group name, and the operation is for
- *  a group -- e.g. start), use the "name" as a group name
  *  if a group name is not given, automatically generate:
- *   default_prefix + "_" + android::base::Join(instance_ids, "_")
+ *   default_prefix + "_" + one_of_ids
  *
  * Per-instance name:
  *  When not given, use std::string(id) as the per instance name of each
