@@ -77,6 +77,27 @@ cc_defaults {
     ],
 }
 
+soong_config_module_type {
+    name: "cf_cc_defaults",
+    module_type: "cc_defaults",
+    config_namespace: "cvdhost",
+    bool_variables: ["enforce_mac80211_hwsim"],
+    properties: ["cflags"],
+}
+
+// This is the customization layer driven by soong config variables.
+cf_cc_defaults {
+    name: "cvd_cc_defaults",
+    soong_config_variables: {
+        // PRODUCT_ENFORCE_MAC80211_HWSIM sets this
+        enforce_mac80211_hwsim: {
+            cflags: ["-DENFORCE_MAC80211_HWSIM=true"],
+            conditions_default: {
+                cflags: [],
+            }
+        },
+    }
+}
 // Defaults for cuttlefish modules that are available only in the guest OS (i.e. cuttlefish running
 // in a guest VM).
 cc_defaults {
@@ -102,7 +123,7 @@ cc_defaults {
     host_supported: true, // this "host" means (1)
     device_supported: true, // this is for (2)
     vendor_available: true,
-    defaults: ["cuttlefish_base"],
+    defaults: ["cuttlefish_base", "cvd_cc_defaults"],
 }
 
 // Same as "cuttlefish_host", but only for non-Android OS.
