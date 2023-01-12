@@ -45,7 +45,7 @@ static const BoolFlags bool_flags{
 
 static const ValueFlags value_flags{
     .selector_flags = {selector::kDeviceNameOpt, selector::kGroupNameOpt,
-                       selector::kInstanceNameOpt, selector::kNameOpt},
+                       selector::kInstanceNameOpt},
     .cvd_driver_flags = {}};
 
 static std::unordered_set<std::string> Merge(
