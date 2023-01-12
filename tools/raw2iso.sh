@@ -180,7 +180,7 @@ mkdir -p "${workdir}/EFI/Boot"
 cp "${mount}/usr/lib/grub/${grub_arch}/monolithic/${grub_cd}" \
   "${workdir}/${grub_blob}"
 newfs_msdos -L SYSTEM -F 12 \
-  -m 0xf8 -o 0 -c 4 -a 4 -h 64 -u 32 -S 512 -s 4096 -C 2M \
+  -m 0xf8 -o 0 -c 4 -a 6 -h 64 -u 32 -S 512 -s 8192 -C 4M \
   "${workdir}"/eltorito.img >/dev/null
 mmd -i "${workdir}"/eltorito.img EFI EFI/Boot
 mcopy -o -i "${workdir}"/eltorito.img -s "${workdir}/EFI" ::
