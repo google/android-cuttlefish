@@ -22,10 +22,11 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/config/mbr.h"
 #include "host/libs/config/esp.h"
+#include "host/libs/config/mbr.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
@@ -384,7 +385,10 @@ class InitializeEspImageImpl : public InitializeEspImage {
   bool BuildAPImage() {
     auto linux = LinuxEspBuilder(instance_.ap_esp_image_path());
     InitLinuxArgs(linux);
-    linux.Argument("instancenum", std::to_string(cuttlefish::GetInstance()));
+    linux.Argument("instance_num", std::to_string(cuttlefish::GetInstance()));
+    if (NetworkInterfaceExists(instance_.wifi_bridge_name())) {
+      linux.Argument("bridged_host_network", "true");
+    }
 
     linux.Root("/dev/vda2")
          .Architecture(instance_.target_arch())
