@@ -683,6 +683,10 @@ PRODUCT_VENDOR_PROPERTIES += \
 PRODUCT_VENDOR_PROPERTIES += \
     ro.surface_flinger.supports_background_blur=1
 
+# Disable GPU-intensive background blur for widget picker
+PRODUCT_SYSTEM_PROPERTIES += \
+    ro.launcher.depth.widget=0
+
 # Vendor Dlkm Locader
 PRODUCT_PACKAGES += \
    dlkm_loader
