@@ -61,36 +61,19 @@ class StartSelectorParser {
                       const std::vector<std::string>& cmd_args,
                       const std::unordered_map<std::string, std::string>& envs);
 
-  /*
-   * Note: name may or may not be valid. A name could be a
-   * group name or a device name or an instance name, depending
-   * on the context: i.e. the operation.
-   *
-   * This succeeds only if all selector arguments can be legitimately
-   * consumed.
-   */
   Result<void> ParseOptions();
 
-  bool IsValidName(const std::string& name) const;
   struct ParsedNameFlags {
     std::optional<std::string> group_name;
     std::optional<std::vector<std::string>> instance_names;
   };
   struct NameFlagsParam {
-    std::optional<std::string> names;
     std::optional<std::string> device_names;
     std::optional<std::string> group_name;
     std::optional<std::string> instance_names;
   };
   Result<ParsedNameFlags> HandleNameOpts(
       const NameFlagsParam& name_flags) const;
-  /*
-   * As --name could give a device list, a group list, or a per-
-   * instance list, HandleNames() will set some of them according
-   * to the syntax.
-   */
-  Result<ParsedNameFlags> HandleNames(
-      const std::optional<std::string>& names) const;
   struct DeviceNamesPair {
     std::string group_name;
     std::vector<std::string> instance_names;
