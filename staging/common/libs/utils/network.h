@@ -24,6 +24,9 @@
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
+// Check network interface with given name exists, such as cvd-ebr.
+bool NetworkInterfaceExists(const std::string& interface_name);
+
 // Creates, or connects to if it already exists, a tap network interface. The
 // user needs CAP_NET_ADMIN to create such interfaces or be the owner to connect
 // to one.
