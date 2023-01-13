@@ -48,13 +48,13 @@ func TestRetryLogic(t *testing.T) {
 
 	}))
 	defer ts.Close()
-	opts := &APIClientOptions{
+	opts := &ServiceOptions{
 		BaseURL:       ts.URL,
 		DumpOut:       io.Discard,
 		RetryAttempts: 2,
 		RetryDelay:    100 * time.Millisecond,
 	}
-	client, _ := NewAPIClient(opts)
+	client, _ := NewService(opts)
 
 	start := time.Now()
 	host, _ := client.CreateHost(&apiv1.CreateHostRequest{})
