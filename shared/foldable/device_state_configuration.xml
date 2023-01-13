@@ -34,4 +34,11 @@
       </lid-switch>
     </conditions>
   </device-state>
+  <device-state>
+    <identifier>3</identifier>
+    <name>REAR_DISPLAY_MODE</name>
+    <flags>
+      <flag>FLAG_EMULATED_ONLY</flag>
+    </flags>
+  </device-state>
 </device-state-config>
