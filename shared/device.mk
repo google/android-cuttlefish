@@ -71,6 +71,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 # partition, instead of the vendor partition, and do not need vendor
 # sepolicy
 PRODUCT_PRODUCT_PROPERTIES += \
+    persist.device_config.remote_key_provisioning_native.enable_rkpd=true \
     persist.adb.tcp.port=5555 \
     ro.com.google.locationfeatures=1 \
     persist.sys.fuse.passthrough.enable=true \
