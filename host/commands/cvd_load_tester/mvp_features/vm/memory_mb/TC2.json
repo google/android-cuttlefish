@@ -1,0 +1,15 @@
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "memory_mb": 4069
+            }
+        },
+        {
+            "vm": {
+                "memory_mb": 8192
+            }
+        }
+    ]
+}
