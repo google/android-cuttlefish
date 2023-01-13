@@ -1,0 +1,19 @@
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "memory_mb": 4096
+            },
+            "graphics":{
+                "displays":[
+                    {
+                        "width": 2560,
+                        "height": 1800,
+                        "dpi": 320
+                    }
+                ]
+			}
+        }
+    ]
+}
