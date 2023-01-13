@@ -168,7 +168,10 @@ static const std::set<std::string> kAlwaysMissingAidl = {
 
     // android.hardware.media.bufferpool2 is a HAL-less interface.
     // It could be used for buffer recycling and caching by using the interface.
-    "android.hardware.media.bufferpool2."
+    "android.hardware.media.bufferpool2.",
+
+    // Only used in android auto
+    "android.hardware.automotive.vehicle."
 };
 
 /*
@@ -231,7 +234,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.broadcastradio.", 1},
     {"android.hardware.automotive.occupant_awareness.", 1},
     {"android.hardware.automotive.remoteaccess.", 1},
-    {"android.hardware.automotive.vehicle.", 2},
 
     // The interface is in development (b/251850069)
     {"android.hardware.media.c2.", 1},
