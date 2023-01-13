@@ -6,6 +6,7 @@ set -x
 cd $1
 shift
 
+
 # Override these variables to make go not depend on HOME
 mkdir -p /tmp/go
 export GOPATH=/tmp/go
@@ -15,6 +16,15 @@ GOBIN=go
 if ! command -v go &> /dev/null
 then
   GOBIN=/usr/lib/go-1.13/bin/go
+fi
+
+version=`$GOBIN version | { read _ _ v _; echo ${v#go}; }`
+
+if [[ "$version" > "1.15" ]]; then
+  # Temporary solution until https://github.com/golang/go/issues/28194 is fixed
+  # in order to retry failed fetch requests.
+  # GOPROXY fallback was added in Go 1.15
+  export GOPROXY="proxy.golang.org|proxy.golang.org|direct"
 fi
 
 $GOBIN "$@"
