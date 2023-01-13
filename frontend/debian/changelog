@@ -1,5 +1,12 @@
-cuttlefish-frontend (0.9.25) UNRELEASED; urgency=medium
+cuttlefish-frontend (0.9.26) UNRELEASED; urgency=medium
 
+  * Change operator's web UI to tile UI
+
+ -- JaeMan Park <jaeman@google.com>  Fri, 13 Jan 2023 15:41:04 +0900
+
+cuttlefish-frontend (0.9.25) unstable; urgency=medium
+
+  [ Jorge Moreira Broche ]
   * Split source package into common and frontend
 
- -- Jorge Moreira Broche <jemoreira@google.com>  Wed, 31 Aug 2022 14:42:34 -0700
+ -- JaeMan Park <jaeman@google.com>  Fri, 13 Jan 2023 15:40:49 +0900
