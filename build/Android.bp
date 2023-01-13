@@ -71,6 +71,7 @@ cvd_host_tools = [
     "cvdremote",
     "extract-ikconfig",
     "extract-vmlinux",
+    "fastboot",
     "fsck.f2fs",
     "gnss_grpc_proxy",
     "health",
