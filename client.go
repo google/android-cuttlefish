@@ -57,7 +57,7 @@ func (e *ApiCallError) Is(target error) bool {
 	return errors.As(target, &a) && *a == *e
 }
 
-type APIClientOptions struct {
+type ServiceOptions struct {
 	BaseURL       string
 	ProxyURL      string
 	DumpOut       io.Writer
@@ -66,12 +66,30 @@ type APIClientOptions struct {
 	RetryDelay    time.Duration
 }
 
-type APIClient struct {
-	*APIClientOptions
+type Service interface {
+	CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error)
+
+	ListHosts() (*apiv1.ListHostsResponse, error)
+
+	DeleteHost(name string) error
+
+	GetInfraConfig(host string) (*apiv1.InfraConfig, error)
+
+	ConnectWebRTC(host, device string, observer wclient.Observer) (*wclient.Connection, error)
+
+	CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error)
+
+	ListCVDs(host string) ([]*hoapi.CVD, error)
+}
+
+type serviceImpl struct {
+	*ServiceOptions
 	client *http.Client
 }
 
-func NewAPIClient(opts *APIClientOptions) (*APIClient, error) {
+type ServiceBuilder func(opts *ServiceOptions) (Service, error)
+
+func NewService(opts *ServiceOptions) (Service, error) {
 	httpClient := &http.Client{}
 	// Handles http proxy
 	if opts.ProxyURL != "" {
@@ -81,13 +99,13 @@ func NewAPIClient(opts *APIClientOptions) (*APIClient, error) {
 		}
 		httpClient.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
 	}
-	return &APIClient{
-		APIClientOptions: opts,
-		client:           httpClient,
+	return &serviceImpl{
+		ServiceOptions: opts,
+		client:         httpClient,
 	}, nil
 }
 
-func (c *APIClient) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error) {
+func (c *serviceImpl) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error) {
 	var op apiv1.Operation
 	if err := c.doRequest("POST", "/hosts", req, &op); err != nil {
 		return nil, err
@@ -100,7 +118,7 @@ func (c *APIClient) CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstanc
 	return ins, nil
 }
 
-func (c *APIClient) ListHosts() (*apiv1.ListHostsResponse, error) {
+func (c *serviceImpl) ListHosts() (*apiv1.ListHostsResponse, error) {
 	var res apiv1.ListHostsResponse
 	if err := c.doRequest("GET", "/hosts", nil, &res); err != nil {
 		return nil, err
@@ -108,12 +126,12 @@ func (c *APIClient) ListHosts() (*apiv1.ListHostsResponse, error) {
 	return &res, nil
 }
 
-func (c *APIClient) DeleteHost(name string) error {
+func (c *serviceImpl) DeleteHost(name string) error {
 	path := "/hosts/" + name
 	return c.doRequest("DELETE", path, nil, nil)
 }
 
-func (c *APIClient) GetInfraConfig(host string) (*apiv1.InfraConfig, error) {
+func (c *serviceImpl) GetInfraConfig(host string) (*apiv1.InfraConfig, error) {
 	var res apiv1.InfraConfig
 	if err := c.doRequest("GET", fmt.Sprintf("/hosts/%s/infra_config", host), nil, &res); err != nil {
 		return nil, err
@@ -121,7 +139,7 @@ func (c *APIClient) GetInfraConfig(host string) (*apiv1.InfraConfig, error) {
 	return &res, nil
 }
 
-func (c *APIClient) ConnectWebRTC(host, device string, observer wclient.Observer) (*wclient.Connection, error) {
+func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observer) (*wclient.Connection, error) {
 	polledConn, err := c.createPolledConnection(host, device)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create polled connection: %w", err)
@@ -138,7 +156,7 @@ func (c *APIClient) ConnectWebRTC(host, device string, observer wclient.Observer
 	return conn, nil
 }
 
-func (c *APIClient) createPolledConnection(host, device string) (*apiv1.NewConnReply, error) {
+func (c *serviceImpl) createPolledConnection(host, device string) (*apiv1.NewConnReply, error) {
 	path := fmt.Sprintf("/hosts/%s/connections", host)
 	req := apiv1.NewConnMsg{DeviceId: device}
 	var res apiv1.NewConnReply
@@ -148,7 +166,7 @@ func (c *APIClient) createPolledConnection(host, device string) (*apiv1.NewConnR
 	return &res, nil
 }
 
-func (c *APIClient) initHandling(host, connId string, iceServers []apiv1.IceServer) wclient.Signaling {
+func (c *serviceImpl) initHandling(host, connId string, iceServers []apiv1.IceServer) wclient.Signaling {
 	sendCh := make(chan any)
 	recvCh := make(chan map[string]any)
 
@@ -172,7 +190,7 @@ const (
 	maxConsecutiveErrors = 10
 )
 
-func (c *APIClient) webRTCPoll(sinkCh chan map[string]any, host, connId string, stopCh chan bool) {
+func (c *serviceImpl) webRTCPoll(sinkCh chan map[string]any, host, connId string, stopCh chan bool) {
 	start := 0
 	pollInterval := initialPollInterval
 	errCount := 0
@@ -217,7 +235,7 @@ func (c *APIClient) webRTCPoll(sinkCh chan map[string]any, host, connId string, 
 	}
 }
 
-func (c *APIClient) webRTCForward(srcCh chan any, host, connId string, stopPollCh chan bool) {
+func (c *serviceImpl) webRTCForward(srcCh chan any, host, connId string, stopPollCh chan bool) {
 	for {
 		msg, open := <-srcCh
 		if !open {
@@ -253,7 +271,7 @@ func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
 	return out
 }
 
-func (c *APIClient) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error) {
+func (c *serviceImpl) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error) {
 	var op hoapi.Operation
 	if err := c.doRequest("POST", "/hosts/"+host+"/cvds", req, &op); err != nil {
 		return nil, err
@@ -266,7 +284,7 @@ func (c *APIClient) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.
 	return cvd, nil
 }
 
-func (c *APIClient) ListCVDs(host string) ([]*hoapi.CVD, error) {
+func (c *serviceImpl) ListCVDs(host string) ([]*hoapi.CVD, error) {
 	var res hoapi.ListCVDsResponse
 	if err := c.doRequest("GET", "/hosts/"+host+"/cvds", nil, &res); err != nil {
 		return nil, err
@@ -277,7 +295,7 @@ func (c *APIClient) ListCVDs(host string) ([]*hoapi.CVD, error) {
 // It either populates the passed response payload reference and returns nil
 // error or returns an error. For responses with non-2xx status code an error
 // will be returned.
-func (c *APIClient) doRequest(method, path string, reqpl, respl any) error {
+func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
 	var body io.Reader
 	if reqpl != nil {
 		json, err := json.Marshal(reqpl)
