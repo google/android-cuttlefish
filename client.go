@@ -166,7 +166,7 @@ func (c *serviceImpl) createPolledConnection(host, device string) (*apiv1.NewCon
 	return &res, nil
 }
 
-func (c *serviceImpl) initHandling(host, connId string, iceServers []apiv1.IceServer) wclient.Signaling {
+func (c *serviceImpl) initHandling(host, connID string, iceServers []apiv1.IceServer) wclient.Signaling {
 	sendCh := make(chan any)
 	recvCh := make(chan map[string]any)
 
@@ -174,8 +174,8 @@ func (c *serviceImpl) initHandling(host, connId string, iceServers []apiv1.IceSe
 	// channel is closed, which will cause the polling go routine to close its own
 	// channel and stop as well.
 	stopPollCh := make(chan bool)
-	go c.webRTCPoll(recvCh, host, connId, stopPollCh)
-	go c.webRTCForward(sendCh, host, connId, stopPollCh)
+	go c.webRTCPoll(recvCh, host, connID, stopPollCh)
+	go c.webRTCForward(sendCh, host, connID, stopPollCh)
 
 	return wclient.Signaling{
 		SendCh:     sendCh,
@@ -190,12 +190,12 @@ const (
 	maxConsecutiveErrors = 10
 )
 
-func (c *serviceImpl) webRTCPoll(sinkCh chan map[string]any, host, connId string, stopCh chan bool) {
+func (c *serviceImpl) webRTCPoll(sinkCh chan map[string]any, host, connID string, stopCh chan bool) {
 	start := 0
 	pollInterval := initialPollInterval
 	errCount := 0
 	for {
-		path := fmt.Sprintf("/hosts/%s/connections/%s/messages?start=%d", host, connId, start)
+		path := fmt.Sprintf("/hosts/%s/connections/%s/messages?start=%d", host, connID, start)
 		var messages []map[string]any
 		if err := c.doRequest("GET", path, nil, &messages); err != nil {
 			fmt.Fprintf(c.ErrOut, "Error polling messages: %v\n", err)
@@ -235,7 +235,7 @@ func (c *serviceImpl) webRTCPoll(sinkCh chan map[string]any, host, connId string
 	}
 }
 
-func (c *serviceImpl) webRTCForward(srcCh chan any, host, connId string, stopPollCh chan bool) {
+func (c *serviceImpl) webRTCForward(srcCh chan any, host, connID string, stopPollCh chan bool) {
 	for {
 		msg, open := <-srcCh
 		if !open {
@@ -244,7 +244,7 @@ func (c *serviceImpl) webRTCForward(srcCh chan any, host, connId string, stopPol
 			break
 		}
 		forwardMsg := apiv1.ForwardMsg{Payload: msg}
-		path := fmt.Sprintf("/hosts/%s/connections/%s/:forward", host, connId)
+		path := fmt.Sprintf("/hosts/%s/connections/%s/:forward", host, connID)
 		i := 0
 		for ; i < maxConsecutiveErrors; i++ {
 			if err := c.doRequest("POST", path, &forwardMsg, nil); err != nil {
