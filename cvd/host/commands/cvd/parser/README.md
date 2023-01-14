@@ -25,3 +25,6 @@ Canonical configs user interface groups and classes
 [![camera category diagram](./doc/camera.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/camera.svg)
 ## audio category
 [![audio category diagram](./doc/audio.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/audio.svg)
+
+## location category
+[![location category diagram](./doc/location.png)](https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/cvd/parser/doc/location.svg)
