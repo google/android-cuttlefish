@@ -26,6 +26,7 @@ using namespace android;
 // clang-format off
 static const std::set<std::string> kKnownMissingHidl = {
     "android.frameworks.cameraservice.device@2.1",
+    "android.frameworks.cameraservice.service@2.2", // converted to AIDL, see b/205764761
     "android.frameworks.displayservice@1.0", // deprecated, see b/141930622
     "android.frameworks.schedulerservice@1.0", // deprecated, see b/37226359
     "android.frameworks.vr.composer@1.0",
