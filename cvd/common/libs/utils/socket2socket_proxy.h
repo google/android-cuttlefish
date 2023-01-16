@@ -29,5 +29,5 @@ namespace cuttlefish {
 // closed in another thread. It's recommended the caller disables the default
 // behavior for SIGPIPE before calling this function, otherwise it runs the risk
 // or crashing the process when a connection breaks.
-void Proxy(SharedFD server, std::function<SharedFD()> conn_factory);
+void Proxy(const std::string& label, SharedFD server, std::function<SharedFD()> conn_factory);
 }  // namespace cuttlefish
