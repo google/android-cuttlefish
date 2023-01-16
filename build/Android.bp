@@ -109,6 +109,7 @@ cvd_host_tools = [
     "cvd_import_locations",
     "socket_vsock_proxy",
     "stop_cvd",
+    "test_cvd_load_parser",
     "tombstone_receiver",
     "toybox",
     "unpack_bootimg",
