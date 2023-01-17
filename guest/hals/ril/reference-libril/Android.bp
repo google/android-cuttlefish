@@ -25,6 +25,8 @@ cc_library {
     ],
     srcs: [
         "RefRadioIms.cpp",
+        "RefImsMedia.cpp",
+        "RefImsMediaSession.cpp",
         "RefRadioNetwork.cpp",
         "RefRadioSatellite.cpp",
         "ril.cpp",
@@ -43,6 +45,7 @@ cc_library {
         "android.hardware.radio.config-V2-ndk",
         "android.hardware.radio.data-V2-ndk",
         "android.hardware.radio.ims-V1-ndk",
+        "android.hardware.radio.ims.media-V1-ndk",
         "android.hardware.radio.messaging-V2-ndk",
         "android.hardware.radio.modem-V2-ndk",
         "android.hardware.radio.network-V2-ndk",
