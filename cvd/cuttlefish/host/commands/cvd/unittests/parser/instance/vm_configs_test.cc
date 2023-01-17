@@ -154,7 +154,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagEmptyJson) {
       << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=0,0"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=2048,2048"))
       << "memory_mb flag is missing or wrongly formatted";
 }
 
@@ -187,7 +187,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = ParseCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=0,4069"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=2048,4069"))
       << "memory_mb flag is missing or wrongly formatted";
 }
 
