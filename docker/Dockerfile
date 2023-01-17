@@ -65,8 +65,7 @@ RUN cd /root/android-cuttlefish/out \
 RUN apt-get install -y xterm
 RUN apt-get install -y curl wget unzip locales-all
 
-# to run cuttlefish docker in foreground, and test via webrtc/VNC
-RUN apt-get install -y tigervnc-viewer
+# to run cuttlefish docker in foreground, and test via webrtc
 RUN cd /root/android-cuttlefish/out \
     && apt-get install -y ./google-chrome*.deb \
     && rm -f ./google-chrome-stable_current_amd64.deb \
