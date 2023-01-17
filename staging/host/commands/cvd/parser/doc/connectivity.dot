@@ -1,0 +1,14 @@
+graph {
+  rankdir=LR
+
+connectivity--ril_dns
+connectivity--wifi
+    wifi--ap_kernel_image
+    wifi--ap_rootfs_image
+    wifi--vhost_net
+connectivity--bluetooth
+connectivity--modem_simulator
+    modem_simulator--enable
+    modem_simulator--sim_type
+    modem_simulator--count
+}
