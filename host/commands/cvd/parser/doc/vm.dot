@@ -1,0 +1,47 @@
+graph {
+  rankdir=LR
+    vm--cpus
+    vm--vm_manager
+    vm--vsock_guest_cid
+    vm--enable_minimal_mode
+    vm--restart_subprocesses
+    vm--setupwizard_mode
+    vm--smt
+    vm--use_allocd
+    vm--use_sdcard
+    vm--uuid
+    vm--file_verbosity
+    vm--verbosity
+    vm--Run_file_discovery
+    vm--config
+    vm--memory_mb
+    vm--custom_actions
+    vm--vm_manager
+        crosvm_binary_dir [label = "binary_dir"]
+        qemu_binary_dir [label = "binary_dir"]
+        gem5_binary_dir [label = "binary_dir"]
+
+        vm_manager--crosvm
+            crosvm--crosvm_binary_dir
+            crosvm--seccomp_policy_dir
+            crosvm--enable_sandbox
+        vm_manager--qemu
+            qemu--qemu_binary_dir
+        vm_manager--gem5
+            gem5--gem5_binary_dir
+            gem5--checkpoint_dir
+            gem5--debug_file
+            gem5--debug_flags
+    vm--security
+        security--guest_enforce_security
+        security--serial_number
+        security--secure_hals
+    vm--kernel
+        kernel--enable_kernel_log
+        kernel--kgdb
+        kernel--gdb_port
+        kernel--console
+        kernel--extra_kernel_cmdline
+        kernel--initramfs_path
+        kernel--path
+}
