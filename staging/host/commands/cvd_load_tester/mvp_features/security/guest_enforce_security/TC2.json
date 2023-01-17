@@ -1,0 +1,15 @@
+{
+    "instances" :
+    [
+        {
+            "security": {
+                "guest_enforce_security": false
+            }
+        },
+        {
+            "security": {
+                "guest_enforce_security": false
+            }
+        }
+    ]
+}
