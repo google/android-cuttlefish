@@ -606,7 +606,7 @@ function __gen_publish_funcs {
 
     #
     # If not overriden, host offset port will be base + instance_id * sz
-    # that is, 6444(vnc) + instance_id * no. of MAX instances in a container
+    # that is, 6520(adb) + instance_id * no. of MAX instances in a container
     # Host port offset can be overriden when cf_publish_${name} is invoked
     #
     # guest port offset is independent from host offset
