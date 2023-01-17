@@ -1,0 +1,33 @@
+graph {
+  rankdir=LR
+
+disk--bootloader
+    bootloader--boot_slot
+    bootloader--build
+    bootloader--pause
+disk--boot
+    boot_build [label = "build"]
+    boot--boot_build
+    boot--kernel
+    boot--initramfs
+    boot--extra_cmdline
+    boot--extra_bootconfig
+disk--data
+    data--format
+    data--size
+disk--metadata
+    metadata_size [label = "size"]
+    metadata--metadata_size
+disk--misc
+    misc_size [label = "size"]
+    misc--misc_size
+disk--otheros
+    otheros--esp_image
+    otheros--initramfs_path
+    otheros--kernel_path
+    otheros--root_image
+disk--super
+    super_build [label = "build"]
+    super--system
+    super--super_build
+}
