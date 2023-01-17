@@ -1,0 +1,17 @@
+
+{
+    "instances" :
+    [
+        {
+            "security": {
+            }
+        },
+        {
+            "vm": {
+            },
+            "security": {
+                "guest_enforce_security": false
+            }
+        }
+    ]
+}
