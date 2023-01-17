@@ -20,6 +20,9 @@
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 #include "host/libs/config/cuttlefish_config.h"
+
+#define UI_DEFAULTS_MEMORY_MB 2048
+
 namespace cuttlefish {
 
 std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
@@ -71,7 +74,7 @@ void InitVmManagerConfig(Json::Value& instances) {
 
 void InitVmConfigs(Json::Value& instances) {
   InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
-  InitIntConfig(instances, "vm", "memory_mb", CF_DEFAULTS_MEMORY_MB);
+  InitIntConfig(instances, "vm", "memory_mb", UI_DEFAULTS_MEMORY_MB);
   InitStringConfig(instances, "vm", "setupwizard_mode",
                    CF_DEFAULTS_SETUPWIZARD_MODE);
   InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
