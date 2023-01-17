@@ -1,0 +1,65 @@
+{
+        "instances" :
+        [
+            {
+                "vm": {
+                        "memory_mb": 4096,
+                        "custom_actions" : [
+                                {
+                                        "device_states": [
+                                                {
+                                                        "lid_switch_open": false,
+                                                        "hinge_angle_value": 0
+                                                }
+                                        ],
+                                        "button":{
+                                                "command":"device_state_closed",
+                                                "title":"Device State Closed",
+                                                "icon_name":"smartphone"
+                                        }
+                                },
+                                {
+                                        "device_states": [
+                                                {
+                                                        "lid_switch_open": true,
+                                                        "hinge_angle_value": 90
+                                                }
+                                        ],
+                                        "button":{
+                                                "command":"device_state_half_opened",
+                                                "title":"Device State Half-Opened",
+                                                "icon_name":"laptop"
+                                        }
+                                },
+                                {
+                                        "device_states": [
+                                                {
+                                                        "lid_switch_open": true,
+                                                        "hinge_angle_value": 180
+                                                }
+                                        ],
+                                        "button":{
+                                                "command":"device_state_opened",
+                                                "title":"Device State Opened",
+                                                "icon_name":"tablet"
+                                        }
+                                }
+                        ]
+                },
+                "graphics":{
+                        "displays":[
+                            {
+                                "width": 1768,
+                                "height": 2208,
+                                "dpi": 374
+                            },
+                            {
+                                "width": 832,
+                                "height": 2268,
+                                "dpi": 387
+                            }
+                        ]
+                }
+            }
+        ]
+}

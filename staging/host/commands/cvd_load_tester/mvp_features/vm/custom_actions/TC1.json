@@ -1,0 +1,40 @@
+{
+        "instances" :
+        [
+            {
+                "vm": {
+                    "memory_mb": 2048
+                }
+            },
+            {
+                "vm": {
+                    "memory_mb": 2048,
+                    "custom_actions" : [
+                            {
+                                    "shell_command":"am start -a android.intent.action.VIEW -d https://www.android1.com/",
+                                    "button":{
+                                            "command":"web",
+                                            "title":"Web Page",
+                                            "icon_name":"language"
+                                    }
+                            },
+                            {
+                                    "server":"cuttlefish_example_action_server",
+                                    "buttons":[
+                                            {
+                                                    "command":"settings",
+                                                    "title":"Quick Settings",
+                                                    "icon_name":"settings"
+                                            },
+                                            {
+                                                    "command":"alert",
+                                                    "title":"Do Not Disturb",
+                                                    "icon_name":"notifications_paused"
+                                            }
+                                    ]
+                            }
+                    ]
+                }
+            }
+        ]
+}
