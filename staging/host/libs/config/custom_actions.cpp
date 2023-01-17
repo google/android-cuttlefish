@@ -16,6 +16,7 @@
 #include "host/libs/config/custom_actions.h"
 
 #include <android-base/logging.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <json/json.h>
 
@@ -31,6 +32,7 @@
 namespace cuttlefish {
 namespace {
 
+const char* kCustomActionInstanceID = "instance_id";
 const char* kCustomActionShellCommand = "shell_command";
 const char* kCustomActionServer = "server";
 const char* kCustomActionDeviceStates = "device_states";
@@ -41,6 +43,13 @@ const char* kCustomActionButtons = "buttons";
 const char* kCustomActionButtonCommand = "command";
 const char* kCustomActionButtonTitle = "title";
 const char* kCustomActionButtonIconName = "icon_name";
+
+CustomActionInstanceID GetCustomActionInstanceIDFromJson(
+    const Json::Value& dictionary) {
+  CustomActionInstanceID config;
+  config.instance_id = dictionary[kCustomActionInstanceID].asString();
+  return config;
+}
 
 CustomShellActionConfig GetCustomShellActionConfigFromJson(
     const Json::Value& dictionary) {
@@ -93,6 +102,12 @@ CustomDeviceStateActionConfig GetCustomDeviceStateActionConfigFromJson(
     config.device_states.push_back(state);
   }
   return config;
+}
+
+Json::Value ToJson(const CustomActionInstanceID& custom_action) {
+  Json::Value json;
+  json[kCustomActionInstanceID] = custom_action.instance_id;
+  return json;
 }
 
 Json::Value ToJson(const CustomShellActionConfig& custom_action) {
@@ -170,6 +185,18 @@ std::string DefaultCustomActionConfig() {
   return "";
 }
 
+int get_instance_order(const std::string& id_str) {
+  int instance_index = 0;
+  const auto& config = CuttlefishConfig::Get();
+  for (const auto& instance : config->Instances()) {
+    if (instance.id() == id_str) {
+      break;
+    }
+    instance_index++;
+  }
+  return instance_index;
+}
+
 class CustomActionConfigImpl : public CustomActionConfigProvider {
  public:
   INJECT(CustomActionConfigImpl(ConfigFlag& config)) : config_(config) {
@@ -179,14 +206,18 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
         "build variable CVD_CUSTOM_ACTION_CONFIG. If this build variable is "
         "empty then the custom action config will be empty as well.");
     custom_action_config_flag_.Getter(
-        [this]() { return custom_action_config_; });
+        [this]() { return custom_action_config_[0]; });
     custom_action_config_flag_.Setter([this](const FlagMatch& match) {
-      if (!match.value.empty() && !FileExists(match.value)) {
+      if (!match.value.empty() &&
+          (match.value == "unset" || match.value == "\"unset\"")) {
+        custom_action_config_.push_back(DefaultCustomActionConfig());
+      } else if (!match.value.empty() && !FileExists(match.value)) {
         LOG(ERROR) << "custom_action_config file \"" << match.value << "\" "
                    << "does not exist.";
         return false;
+      } else {
+        custom_action_config_.push_back(match.value);
       }
-      custom_action_config_ = match.value;
       return true;
     });
     // TODO(schuffelen): Access ConfigFlag directly for these values.
@@ -199,6 +230,10 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
         "combined with actions in --custom_action_config.");
     custom_actions_flag_.Setter([this](const FlagMatch& match) {
       // Load the custom action from the --config preset file.
+      if (match.value == "unset" || match.value == "\"unset\"") {
+        AddEmptyJsonCustomActionConfigs();
+        return true;
+      }
       Json::CharReaderBuilder builder;
       std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
       std::string errorMessage;
@@ -213,32 +248,73 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
     });
   }
 
-  virtual const std::vector<CustomShellActionConfig>& CustomShellActions()
-      const override {
-    return custom_shell_actions_;
+  const std::vector<CustomShellActionConfig> CustomShellActions(
+      const std::string& id_str = std::string()) const override {
+    int instance_index = 0;
+    if (instance_actions_.empty()) {
+      // No Custom Action input, return empty vector
+      return {};
+    }
+
+    if (!id_str.empty()) {
+      instance_index = get_instance_order(id_str);
+    }
+    if (instance_index >= instance_actions_.size()) {
+      instance_index = 0;
+    }
+    return instance_actions_[instance_index].custom_shell_actions_;
   }
 
-  virtual const std::vector<CustomActionServerConfig>& CustomActionServers()
-      const override {
-    return custom_action_servers_;
+  const std::vector<CustomActionServerConfig> CustomActionServers(
+      const std::string& id_str = std::string()) const override {
+    int instance_index = 0;
+    if (instance_actions_.empty()) {
+      // No Custom Action input, return empty vector
+      return {};
+    }
+
+    if (!id_str.empty()) {
+      instance_index = get_instance_order(id_str);
+    }
+    if (instance_index >= instance_actions_.size()) {
+      instance_index = 0;
+    }
+    return instance_actions_[instance_index].custom_action_servers_;
   }
 
-  virtual const std::vector<CustomDeviceStateActionConfig>&
-  CustomDeviceStateActions() const override {
-    return custom_device_state_actions_;
+  const std::vector<CustomDeviceStateActionConfig> CustomDeviceStateActions(
+      const std::string& id_str = std::string()) const override {
+    int instance_index = 0;
+    if (instance_actions_.empty()) {
+      // No Custom Action input, return empty vector
+      return {};
+    }
+
+    if (!id_str.empty()) {
+      instance_index = get_instance_order(id_str);
+    }
+    if (instance_index >= instance_actions_.size()) {
+      instance_index = 0;
+    }
+    return instance_actions_[instance_index].custom_device_state_actions_;
   }
 
   // ConfigFragment
   Json::Value Serialize() const override {
     Json::Value actions_array(Json::arrayValue);
-    for (const auto& action : CustomShellActions()) {
-      actions_array.append(ToJson(action));
-    }
-    for (const auto& action : CustomActionServers()) {
-      actions_array.append(ToJson(action));
-    }
-    for (const auto& action : CustomDeviceStateActions()) {
-      actions_array.append(ToJson(action));
+    for (const auto& each_instance_actions_ : instance_actions_) {
+      actions_array.append(
+          ToJson(each_instance_actions_.custom_action_instance_id_));
+      for (const auto& action : each_instance_actions_.custom_shell_actions_) {
+        actions_array.append(ToJson(action));
+      }
+      for (const auto& action : each_instance_actions_.custom_action_servers_) {
+        actions_array.append(ToJson(action));
+      }
+      for (const auto& action :
+           each_instance_actions_.custom_device_state_actions_) {
+        actions_array.append(ToJson(action));
+      }
     }
     return actions_array;
   }
@@ -253,22 +329,31 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
   }
 
   bool Process(std::vector<std::string>& args) override {
-    custom_action_config_ = DefaultCustomActionConfig();
     if (!ParseFlags(Flags(), args)) {
       return false;
     }
-    if (custom_action_config_ != "") {
-      Json::CharReaderBuilder builder;
-      std::ifstream ifs(custom_action_config_);
-      std::string errorMessage;
-      Json::Value custom_action_array(Json::arrayValue);
-      if (!Json::parseFromStream(builder, ifs, &custom_action_array,
-                                 &errorMessage)) {
-        LOG(ERROR) << "Could not read custom actions config file "
-                   << custom_action_config_ << ": " << errorMessage;
-        return false;
+    if (custom_action_config_.empty()) {
+      // no custom action flag input
+      custom_action_config_.push_back(DefaultCustomActionConfig());
+    }
+    for (const auto& config : custom_action_config_) {
+      if (config != "") {
+        Json::CharReaderBuilder builder;
+        std::ifstream ifs(config);
+        std::string errorMessage;
+        Json::Value custom_action_array(Json::arrayValue);
+        if (!Json::parseFromStream(builder, ifs, &custom_action_array,
+                                   &errorMessage)) {
+          LOG(ERROR) << "Could not read custom actions config file " << config
+                     << ": " << errorMessage;
+          return false;
+        }
+        if (!AddJsonCustomActionConfigs(custom_action_array)) {
+          return false;
+        }
+      } else {
+        AddEmptyJsonCustomActionConfigs();
       }
-      return AddJsonCustomActionConfigs(custom_action_array);
     }
     return true;
   }
@@ -277,8 +362,22 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
   }
 
  private:
+  struct InstanceActions {
+    std::vector<CustomShellActionConfig> custom_shell_actions_;
+    std::vector<CustomActionServerConfig> custom_action_servers_;
+    std::vector<CustomDeviceStateActionConfig> custom_device_state_actions_;
+    CustomActionInstanceID custom_action_instance_id_;
+  };
+
   std::vector<Flag> Flags() const {
     return {custom_action_config_flag_, custom_actions_flag_};
+  }
+
+  void AddEmptyJsonCustomActionConfigs() {
+    InstanceActions instance_action;
+    instance_action.custom_action_instance_id_.instance_id =
+        std::to_string(instance_actions_.size());
+    instance_actions_.push_back(instance_action);
   }
 
   bool AddJsonCustomActionConfigs(const Json::Value& custom_action_array) {
@@ -286,42 +385,63 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
       LOG(ERROR) << "Expected a JSON array of custom actions";
       return false;
     }
+    InstanceActions instance_action;
+    instance_action.custom_action_instance_id_.instance_id = "-1";
+
     for (const auto& custom_action : custom_action_array) {
+      // for multi-instances case, assume instance_id, shell_command,
+      // server and device_states comes together before next instance
+      bool has_instance_id = custom_action.isMember(kCustomActionInstanceID);
       bool has_shell_command =
           custom_action.isMember(kCustomActionShellCommand);
       bool has_server = custom_action.isMember(kCustomActionServer);
       bool has_device_states =
           custom_action.isMember(kCustomActionDeviceStates);
-      if (!!has_shell_command + !!has_server + !!has_device_states != 1) {
+      if (!!has_shell_command + !!has_server + !!has_device_states +
+              !!has_instance_id !=
+          1) {
         LOG(ERROR) << "Custom action must contain exactly one of "
-                      "shell_command, server, or device_states";
+                      "shell_command, server, device_states or instance_id";
         return false;
       }
 
       if (has_shell_command) {
         auto config = GetCustomShellActionConfigFromJson(custom_action);
-        custom_shell_actions_.push_back(config);
+        instance_action.custom_shell_actions_.push_back(config);
       } else if (has_server) {
         auto config = GetCustomActionServerConfigFromJson(custom_action);
-        custom_action_servers_.push_back(config);
+        instance_action.custom_action_servers_.push_back(config);
       } else if (has_device_states) {
         auto config = GetCustomDeviceStateActionConfigFromJson(custom_action);
-        custom_device_state_actions_.push_back(config);
+        instance_action.custom_device_state_actions_.push_back(config);
+      } else if (has_instance_id) {
+        auto config = GetCustomActionInstanceIDFromJson(custom_action);
+        if (instance_action.custom_action_instance_id_.instance_id != "-1") {
+          // already has instance id, start a new instance
+          instance_actions_.push_back(instance_action);
+          instance_action = InstanceActions();
+        }
+        instance_action.custom_action_instance_id_ = config;
       } else {
         LOG(ERROR) << "Unknown custom action type.";
         return false;
       }
     }
+    if (instance_action.custom_action_instance_id_.instance_id == "-1") {
+      // default id "-1" which means no instance id assigned yet
+      // at this time, just assign the # of instance as ID
+      instance_action.custom_action_instance_id_.instance_id =
+          std::to_string(instance_actions_.size());
+    }
+    instance_actions_.push_back(instance_action);
     return true;
   }
 
     ConfigFlag& config_;
     Flag custom_action_config_flag_;
-    std::string custom_action_config_;
+    std::vector<std::string> custom_action_config_;
     Flag custom_actions_flag_;
-    std::vector<CustomShellActionConfig> custom_shell_actions_;
-    std::vector<CustomActionServerConfig> custom_action_servers_;
-    std::vector<CustomDeviceStateActionConfig> custom_device_state_actions_;
+    std::vector<InstanceActions> instance_actions_;
   };
 
 }  // namespace
