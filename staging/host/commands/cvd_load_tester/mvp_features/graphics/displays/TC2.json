@@ -1,0 +1,23 @@
+{
+    "instances" :
+    [
+        {
+            "graphics":{
+                "displays":[
+                    {
+                    }
+                ]
+                }
+        },
+        {
+            "graphics":{
+                "displays":[
+                    {
+                    },
+                    {
+                    }
+                ]
+                }
+        }
+    ]
+}

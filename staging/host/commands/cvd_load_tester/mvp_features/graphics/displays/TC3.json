@@ -1,0 +1,35 @@
+{
+    "instances" :
+    [
+        {
+            "graphics":{
+                "displays":[
+                    {
+                        "width": 1080,
+                        "height": 600,
+                        "dpi": 120,
+                        "refresh_rate_hertz": 60
+                    },
+                    {
+                        "width": 400,
+                        "height": 600,
+                        "dpi": 120,
+                        "refresh_rate_hertz": 60
+                    }
+                ]
+                }
+        },
+        {
+            "graphics":{
+                "displays":[
+                    {
+                        "width": 2560,
+                        "height": 1800,
+                        "dpi": 320,
+                        "refresh_rate_hertz": 60
+                    }
+                ]
+                }
+        }
+    ]
+}
