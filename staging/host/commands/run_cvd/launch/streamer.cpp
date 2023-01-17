@@ -267,7 +267,8 @@ class WebRtcServer : public virtual CommandSource,
                         DefaultHostArtifactsPath("usr/share/webrtc/assets"));
 
     // TODO get from launcher params
-    const auto& actions = custom_action_config_.CustomActionServers();
+    const auto& actions =
+        custom_action_config_.CustomActionServers(instance_.id());
     for (auto& action : LaunchCustomActionServers(webrtc, actions)) {
       commands.emplace_back(std::move(action));
     }
