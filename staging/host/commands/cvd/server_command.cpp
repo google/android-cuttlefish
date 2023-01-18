@@ -46,15 +46,9 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
   }
   invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
   if (invocation.arguments[0] == "cvd") {
-    if (invocation.arguments.size() == 1) {
-      // Show help if user invokes `cvd` alone.
-      invocation.command = "help";
-      invocation.arguments = {};
-    } else {  // More arguments
-      invocation.command = invocation.arguments[1];
-      invocation.arguments.erase(invocation.arguments.begin());
-      invocation.arguments.erase(invocation.arguments.begin());
-    }
+    invocation.command = invocation.arguments[1];
+    invocation.arguments.erase(invocation.arguments.begin());
+    invocation.arguments.erase(invocation.arguments.begin());
   } else {
     invocation.command = invocation.arguments[0];
     invocation.arguments.erase(invocation.arguments.begin());
