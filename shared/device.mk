@@ -72,6 +72,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 # sepolicy
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.device_config.remote_key_provisioning_native.enable_rkpd=true \
+    remote_provisioning.hostname=remoteprovisioning.googleapis.com \
     persist.adb.tcp.port=5555 \
     ro.com.google.locationfeatures=1 \
     persist.sys.fuse.passthrough.enable=true \
