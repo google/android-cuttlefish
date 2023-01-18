@@ -6,7 +6,7 @@ service bt_vhci_forwarder /apex/com.google.cf.bt/bin/bt_vhci_forwarder -virtio_c
     user bluetooth
     group bluetooth
 
-service btlinux-1.1 /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth@1.1-service.btlinux
+service btlinux /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth-service.default
     class hal
     user bluetooth
     group bluetooth net_admin net_bt_admin

@@ -32,7 +32,7 @@ apex {
     updatable: false,
     soc_specific: true,
     binaries: [
-        "android.hardware.bluetooth@1.1-service.btlinux",
+        "android.hardware.bluetooth-service.default",
         "bt_vhci_forwarder",
     ],
     prebuilts: [
@@ -40,5 +40,5 @@ apex {
         "android.hardware.bluetooth.prebuilt.xml",
         "com.google.cf.bt.rc",
     ],
-    vintf_fragments: [":manifest_android.hardware.bluetooth@1.1-service.xml"],
+    vintf_fragments: [":manifest_android.hardware.bluetooth-service.default.xml"],
 }
