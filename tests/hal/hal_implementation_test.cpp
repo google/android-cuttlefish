@@ -122,6 +122,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hidl.memory.token@1.0",
     "android.system.net.netd@1.1", // Converted to AIDL (see b/205764585)
     "android.system.suspend@1.0", // Converted to AIDL (see b/170260236)
+    "android.system.wifi.keystore@1.0", // Converted to AIDL (see b/205764502)
 };
 // clang-format on
 
