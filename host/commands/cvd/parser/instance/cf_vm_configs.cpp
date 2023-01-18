@@ -32,6 +32,7 @@ std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
     {"cpus", Json::ValueType::intValue},
     {"memory_mb", Json::ValueType::intValue},
+    {"use_sdcard", Json::ValueType::booleanValue},
     {"setupwizard_mode", Json::ValueType::stringValue},
     {"uuid", Json::ValueType::stringValue},
     {"crosvm", Json::ValueType::objectValue},
@@ -75,6 +76,7 @@ void InitVmManagerConfig(Json::Value& instances) {
 void InitVmConfigs(Json::Value& instances) {
   InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
   InitIntConfig(instances, "vm", "memory_mb", UI_DEFAULTS_MEMORY_MB);
+  InitBoolConfig(instances, "vm", "use_sdcard", CF_DEFAULTS_USE_SDCARD);
   InitStringConfig(instances, "vm", "setupwizard_mode",
                    CF_DEFAULTS_SETUPWIZARD_MODE);
   InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
@@ -113,6 +115,8 @@ std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
   std::vector<std::string> result;
   result.emplace_back(GenerateGflag(instances, "cpus", "vm", "cpus"));
   result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
+  result.emplace_back(
+      GenerateGflag(instances, "use_sdcard", "vm", "use_sdcard"));
   result.emplace_back(
       GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
   result.emplace_back(
