@@ -52,9 +52,13 @@ DEFINE_int32(
     "A file descriptor. If set the passed file descriptor will be used as the "
     "server and the corresponding port flag will be ignored");
 
+DEFINE_string(label, "socket_vsock_proxy",
+              "Label which is used only for logging. Log messages will look like [label] message");
+
 namespace cuttlefish {
 namespace socket_proxy {
 namespace {
+
 void WaitForAdbdToBeStarted(int events_fd) {
   auto evt_shared_fd = SharedFD::Dup(events_fd);
   close(events_fd);
@@ -62,29 +66,29 @@ void WaitForAdbdToBeStarted(int events_fd) {
     std::optional<monitor::ReadEventResult> read_result =
         monitor::ReadEvent(evt_shared_fd);
     if (!read_result) {
-      LOG(ERROR) << "Failed to read a complete kernel log adb event.";
+      LOG(ERROR) << "[" << FLAGS_label << "] Failed to read a complete kernel log adb event.";
       // The file descriptor can't be trusted anymore, stop waiting and try to
       // connect
       return;
     }
 
     if (read_result->event == monitor::Event::AdbdStarted) {
-      LOG(DEBUG) << "Adbd has started in the guest, connecting adb";
+      LOG(DEBUG) << "[" << FLAGS_label << "] Adbd has started in the guest, connecting adb";
       return;
     }
   }
 }
 
 void ProxyServer(Server& server, Client& client) {
-  LOG(DEBUG) << "Accepting client connections";
-  Proxy(server.Start(), [&client]() {
+  LOG(DEBUG) << "[" << FLAGS_label << "] Accepting client connections";
+  Proxy(FLAGS_label, server.Start(), [&client]() {
     return client.Start();
   });
 }
 
 std::unique_ptr<Server> BuildServer() {
   if (FLAGS_server_fd >= 0) {
-    LOG(INFO) << "[Proxy] From: fd:" << FLAGS_server_fd;
+    LOG(INFO) << "[" << FLAGS_label << "] From: fd: " << FLAGS_server_fd;
     return std::make_unique<DupServer>(FLAGS_server_fd);
   }
 
@@ -103,13 +107,13 @@ std::unique_ptr<Server> BuildServer() {
   std::unique_ptr<Server> server = nullptr;
 
   if (FLAGS_server_type == TRANSPORT_TCP) {
-    LOG(INFO) << "[Proxy] From: tcp:" << FLAGS_server_tcp_port;
+    LOG(INFO) << "[" << FLAGS_label << "] From: tcp: " << FLAGS_server_tcp_port;
     server = std::make_unique<TcpServer>(FLAGS_server_tcp_port);
   } else if (FLAGS_server_type == TRANSPORT_VSOCK) {
-    LOG(INFO) << "[Proxy] From: vsock:" << FLAGS_server_vsock_port;
+    LOG(INFO) << "[" << FLAGS_label << "] From: vsock: " << FLAGS_server_vsock_port;
     server = std::make_unique<VsockServer>(FLAGS_server_vsock_port);
   } else {
-    LOG(FATAL) << "Unknown server type: " << FLAGS_server_type;
+    LOG(FATAL) << "[" << FLAGS_label << "] Unknown server type: " << FLAGS_server_type;
   }
 
   return server;
@@ -131,13 +135,15 @@ std::unique_ptr<Client> BuildClient() {
   std::unique_ptr<Client> client = nullptr;
 
   if (FLAGS_client_type == TRANSPORT_TCP) {
-    LOG(INFO) << "[Proxy] To: tcp:" << FLAGS_client_tcp_host << ":" << FLAGS_client_tcp_port;
+    LOG(INFO) << "[" << FLAGS_label << "] To: tcp: "
+              << FLAGS_client_tcp_host << ":" << FLAGS_client_tcp_port;
     client = std::make_unique<TcpClient>(FLAGS_client_tcp_host, FLAGS_client_tcp_port);
   } else if (FLAGS_client_type == TRANSPORT_VSOCK) {
-    LOG(INFO) << "[Proxy] To: vsock:" << FLAGS_client_vsock_id << ":" << FLAGS_client_vsock_port;
+    LOG(INFO) << "[" << FLAGS_label << "] To: vsock: "
+              << FLAGS_client_vsock_id << ":" << FLAGS_client_vsock_port;
     client = std::make_unique<VsockClient>(FLAGS_client_vsock_id, FLAGS_client_vsock_port);
   } else {
-    LOG(FATAL) << "Unknown client type: " << FLAGS_client_type;
+    LOG(FATAL) << "[" << FLAGS_label << "] Unknown client type: " << FLAGS_client_type;
   }
 
   return client;
@@ -158,7 +164,7 @@ int main(int argc, char* argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   if (FLAGS_adbd_events_fd >= 0) {
-    LOG(DEBUG) << "Wating AdbdStarted boot event from the kernel log";
+    LOG(DEBUG) << "[" << FLAGS_label << "] Wating AdbdStarted boot event from the kernel log";
     cuttlefish::socket_proxy::WaitForAdbdToBeStarted(FLAGS_adbd_events_fd);
   }
 
