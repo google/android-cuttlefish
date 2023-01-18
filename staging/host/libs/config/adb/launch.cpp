@@ -161,6 +161,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
       adb_tunnel.AddParameter("--client_type=vsock");
       adb_tunnel.AddParameter("--client_vsock_port=", 5555);
       adb_tunnel.AddParameter("--client_vsock_id=", instance_.vsock_guest_cid());
+      adb_tunnel.AddParameter("--label=", "adb");
       commands.emplace_back(std::move(adb_tunnel));
     }
     return commands;
