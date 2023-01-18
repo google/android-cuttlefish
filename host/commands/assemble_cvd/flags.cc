@@ -1448,11 +1448,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                  (FLAGS_rootcanal_instance_num <= 0));
 
     if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() && start_wmediumd) {
-      if (CanGenerateEsp(guest_configs[0].target_arch)) {
-        instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::Grub);
-      } else {
-        instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
-      }
+      // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to boot
+      // 64 bit kernel using 32 bit u-boot / grub.
+      // Enable this code back after making sure it works across all popular environments
+      // if (CanGenerateEsp(guest_configs[0].target_arch)) {
+      //   instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::Grub);
+      // } else {
+      //   instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
+      // }
+      instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
     } else {
       instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::None);
     }
