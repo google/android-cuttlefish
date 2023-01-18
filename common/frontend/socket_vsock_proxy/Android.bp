@@ -22,7 +22,7 @@ cc_binary {
     srcs: [
         "client.cpp",
         "server.cpp",
-        "main.cpp",
+        "socket_vsock_proxy.cpp",
     ],
     shared_libs: [
         "libext2_blkid",
