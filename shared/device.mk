@@ -310,26 +310,13 @@ PRODUCT_PACKAGES += \
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
 #
 ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-ifeq ($(LOCAL_BLUETOOTH_PRODUCT_PACKAGE),)
-ifeq ($(TARGET_ENABLE_HOST_BLUETOOTH_EMULATION),true)
-ifeq ($(TARGET_USE_BTLINUX_HAL_IMPL),true)
-    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := android.hardware.bluetooth@1.1-service.btlinux
-else
-    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := android.hardware.bluetooth@1.1-service.remote
-endif
-else
-    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := android.hardware.bluetooth@1.1-service.sim
-endif
-    DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest_android.hardware.bluetooth@1.1-service.xml
-endif
-
 PRODUCT_COPY_FILES +=\
     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml
 
-PRODUCT_PACKAGES += $(LOCAL_BLUETOOTH_PRODUCT_PACKAGE)
-
-PRODUCT_PACKAGES += android.hardware.bluetooth.audio@2.1-impl  bt_vhci_forwarder
+PRODUCT_PACKAGES += \
+    android.hardware.bluetooth-service.default \
+    bt_vhci_forwarder
 
 # Bluetooth initialization configuration is copied to the init folder here instead of being added
 # as an init_rc attribute of the bt_vhci_forward binary.  The bt_vhci_forward binary is used by
@@ -338,7 +325,7 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/guest/commands/bt_vhci_forwarder/bt_vhci_forwarder.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/bt_vhci_forwarder.rc
 
 else
-PRODUCT_PACKAGES += com.google.cf.bt android.hardware.bluetooth.audio@2.1-impl
+PRODUCT_PACKAGES += com.google.cf.bt
 endif
 
 #
