@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
   signal(SIGPIPE, SIG_IGN);
 
-  cuttlefish::Proxy(server, OpenConnection);
+  cuttlefish::Proxy("operator", server, OpenConnection);
 
   return 0;
 }
