@@ -33,11 +33,12 @@ class FastbootProxy : public CommandSource {
                                       instance_.ethernet_bridge_name();
 
     Command tunnel(SocketVsockProxyBinary());
-    tunnel.AddParameter("--server_type=tcp");
+    tunnel.AddParameter("--server_type=", "tcp");
     tunnel.AddParameter("--server_tcp_port=", instance_.fastboot_host_port());
-    tunnel.AddParameter("--client_type=tcp");
+    tunnel.AddParameter("--client_type=", "tcp");
     tunnel.AddParameter("--client_tcp_host=", ethernet_host);
-    tunnel.AddParameter("--client_tcp_port=5554");
+    tunnel.AddParameter("--client_tcp_port=", "5554");
+    tunnel.AddParameter("--label=", "fastboot");
     commands.emplace_back(std::move(tunnel));
 
     return commands;
