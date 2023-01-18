@@ -113,10 +113,15 @@ cat >"${workdir}"/install.sh << EOF
 set -e
 set -u
 SCRIPT_DIR=\$(CDPATH= cd -- "\$(dirname -- "\${0}")" && pwd -P)
+if [ "\${1#*nvme}" != "\${1}" ]; then
+  partition=p
+else
+  partition=
+fi
 sgdisk --load-backup="\${SCRIPT_DIR}"/gpt.img \${1}
-dd if="\${SCRIPT_DIR}"/esp.img of=\${1}1 bs=16M
-mkfs.ext4 -L ROOT -U \$(cat \${SCRIPT_DIR}/rootfs_uuid) \${1}2
-mount \${1}2 /media
+dd if="\${SCRIPT_DIR}"/esp.img of=\${1}\${partition}1 bs=16M
+mkfs.ext4 -L ROOT -U \$(cat \${SCRIPT_DIR}/rootfs_uuid) \${1}\${partition}2
+mount \${1}\${partition}2 /media
 tar -C /media -Spxf \${SCRIPT_DIR}/rootfs.tar.lz4
 umount /media
 EOF
