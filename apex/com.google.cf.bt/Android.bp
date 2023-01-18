@@ -40,4 +40,5 @@ apex {
         "android.hardware.bluetooth.prebuilt.xml",
         "com.google.cf.bt.rc",
     ],
+    vintf_fragments: [":manifest_android.hardware.bluetooth-service.default.xml"],
 }
