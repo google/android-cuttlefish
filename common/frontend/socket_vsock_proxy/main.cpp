@@ -15,6 +15,7 @@
  */
 
 #include <sstream>
+#include <signal.h>
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
@@ -147,6 +148,8 @@ std::unique_ptr<Client> BuildClient() {
 }
 
 int main(int argc, char* argv[]) {
+  signal(SIGPIPE, SIG_IGN);
+
 #ifdef CUTTLEFISH_HOST
   cuttlefish::DefaultSubprocessLogging(argv);
 #else
