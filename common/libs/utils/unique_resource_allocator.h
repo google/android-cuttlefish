@@ -109,6 +109,34 @@ class UniqueResourceAllocator {
     return std::unique_ptr<UniqueResourceAllocator>(new_allocator);
   }
 
+  // Adds the elements from new pool that did not belong to and have not
+  // belonged to the current pool of the allocator. returns the leftover
+  std::vector<T> ExpandPool(std::vector<T> another_pool) {
+    std::lock_guard lock(mutex_);
+    std::vector<T> not_selected;
+    for (auto& new_item : another_pool) {
+      if (Contains(available_resources_, new_item) ||
+          Contains(allocated_resources_, new_item)) {
+        not_selected.emplace_back(std::move(new_item));
+        continue;
+      }
+      available_resources_.insert(std::move(new_item));
+    }
+    return not_selected;
+  }
+
+  std::vector<T> ExpandPool(T&& t) {
+    std::vector<T> pool_to_add;
+    pool_to_add.emplace_back(std::move(t));
+    return ExpandPool(std::move(pool_to_add));
+  }
+
+  std::vector<T> ExpandPool(const T& t) {
+    std::vector<T> pool_to_add;
+    pool_to_add.emplace_back(t);
+    return ExpandPool(std::move(pool_to_add));
+  }
+
   std::optional<Reservation> UniqueItem() {
     std::lock_guard<std::mutex> lock(mutex_);
     auto itr = available_resources_.begin();
