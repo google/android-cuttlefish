@@ -524,6 +524,12 @@ PRODUCT_PACKAGES += \
 endif
 
 #
+# Tetheroffload HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.tetheroffload-service.example
+
+#
 # Thermal HAL
 #
 PRODUCT_PACKAGES += \
