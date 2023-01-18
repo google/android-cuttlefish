@@ -307,7 +307,9 @@ static std::set<FQName> allHidlManifestInterfaces() {
     if (i.format() != vintf::HalFormat::HIDL) {
       return true;  // continue
     }
-    ret.insert(i.getFqInstance().getFqName());
+    FQName fqName;
+    CHECK(fqName.setTo(i.getFqInstance().getFqNameString()));
+    ret.insert(fqName);
     return true;  // continue
   };
   vintf::VintfObject::GetDeviceHalManifest()->forEachInstance(setInserter);
