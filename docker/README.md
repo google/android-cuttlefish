@@ -269,7 +269,7 @@ ssh vsoc-01@$ip_cf1 -- ./bin/adb -e shell
 
 ## WebRTC
 
-You can connect cuttlefish via webRTC. you can
+You can connect to cuttlefish via webRTC. you can
 connect (on the same machine as the docker container) by pointing your browser
 at ```https://$container_ip:8443/```
 
