@@ -21,7 +21,7 @@
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 namespace cuttlefish {
 TEST(FlagsParserTest, ParseInvalidJson) {

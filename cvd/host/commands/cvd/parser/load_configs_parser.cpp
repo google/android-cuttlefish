@@ -30,11 +30,6 @@
 
 namespace cuttlefish {
 
-// json parameters definitions
-static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
-    {"netsim_bt", Json::ValueType::booleanValue},
-    {"instances", Json::ValueType::arrayValue}};
-
 Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   std::string file_content;
   using android::base::ReadFileToString;
@@ -42,54 +37,6 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
                              /* follow_symlinks */ true));
   auto root = CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file");
   return root;
-}
-
-Result<void> ValidateCfConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap), "Typo in config main parameters");
-  CF_EXPECT(root.isMember("instances"), "instances object is missing");
-  CF_EXPECT(ValidateInstancesConfigs(root["instances"]), "ValidateInstancesConfigs failed");
-
-  return {};
-}
-
-std::string GenerateNumInstancesFlag(const Json::Value& root) {
-  int num_instances = root["instances"].size();
-  LOG(DEBUG) << "num_instances = " << num_instances;
-  std::string result = "--num_instances=" + std::to_string(num_instances);
-  return result;
-}
-
-std::string GenerateCommonGflag(const Json::Value& root,
-                                const std::string& gflag_name,
-                                const std::string& json_flag) {
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=" << root[json_flag].asString();
-  return buff.str();
-}
-
-std::vector<std::string> GenerateCfFlags(const Json::Value& root) {
-  std::vector<std::string> result;
-  result.emplace_back(GenerateNumInstancesFlag(root));
-  result.emplace_back(GenerateCommonGflag(root, "netsim_bt", "netsim_bt"));
-
-  result = MergeResults(result, GenerateInstancesFlags(root["instances"]));
-  return result;
-}
-
-void InitCvdConfigs(Json::Value& root) {
-  // Handle common flags
-  if (!root.isMember("netsim_bt")) {
-    root["netsim_bt"] = CF_DEFAULTS_NETSIM_BT;
-  }
-  // Handle instances flags
-  InitInstancesConfigs(root["instances"]);
-}
-
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
-  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
-  InitCvdConfigs(root);
-  return GenerateCfFlags(root);
 }
 
 }  // namespace cuttlefish
