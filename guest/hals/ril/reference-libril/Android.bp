@@ -26,6 +26,7 @@ cc_library {
     srcs: [
         "RefRadioIms.cpp",
         "RefRadioNetwork.cpp",
+        "RefRadioSatellite.cpp",
         "ril.cpp",
         "RilSapSocket.cpp",
         "ril_config.cpp",
@@ -46,6 +47,7 @@ cc_library {
         "android.hardware.radio.modem-V2-ndk",
         "android.hardware.radio.network-V2-ndk",
         "android.hardware.radio.sap-V1-ndk",
+        "android.hardware.radio.satellite-V1-ndk",
         "android.hardware.radio.sim-V2-ndk",
         "android.hardware.radio.voice-V2-ndk",
         "android.hardware.radio@1.0",

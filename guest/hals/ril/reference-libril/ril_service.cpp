@@ -18,6 +18,7 @@
 
 #include "RefRadioIms.h"
 #include "RefRadioNetwork.h"
+#include "RefRadioSatellite.h"
 
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -31,6 +32,7 @@
 #include <libradiocompat/RadioIms.h>
 #include <libradiocompat/RadioMessaging.h>
 #include <libradiocompat/RadioModem.h>
+#include <libradiocompat/RadioSatellite.h>
 #include <libradiocompat/RadioSim.h>
 #include <libradiocompat/RadioVoice.h>
 
@@ -13433,6 +13435,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         publishRadioHal<compat::RadioSim>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<compat::RadioVoice>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<cf::ril::RefRadioIms>(context, radioHidl, callbackMgr, slot);
+        publishRadioHal<cf::ril::RefRadioSatellite>(context, radioHidl, callbackMgr, slot);
 
         RLOGD("registerService: OemHook is enabled = %s", kOemHookEnabled ? "true" : "false");
         if (kOemHookEnabled) {
