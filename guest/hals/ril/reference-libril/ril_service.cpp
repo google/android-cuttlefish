@@ -106,6 +106,7 @@ int64_t nitzTimeReceived[1];
 // counter used for synchronization. It is incremented every time response callbacks are updated.
 volatile int32_t mCounterRadio[1];
 volatile int32_t mCounterOemHook[1];
+hidl_vec<uint8_t> osAppIdVec;
 #endif
 
 static pthread_rwlock_t radioServiceRwlock = PTHREAD_RWLOCK_INITIALIZER;
@@ -4435,17 +4436,15 @@ Return<void> RadioImpl_1_6::setupDataCall_1_5(int32_t serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_6::setupDataCall_1_6(int32_t serial ,
-        ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */,
+Return<void> RadioImpl_1_6::setupDataCall_1_6(
+        int32_t serial, ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */,
         const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo,
         bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason /* reason */,
         const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& /* addresses */,
-        const hidl_vec<hidl_string>& /* dnses */,
-        int32_t /* pduSessionId */,
+        const hidl_vec<hidl_string>& /* dnses */, int32_t /* pduSessionId */,
         const ::android::hardware::radio::V1_6::OptionalSliceInfo& /* sliceInfo */,
-        const ::android::hardware::radio::V1_6::OptionalTrafficDescriptor& /*trafficDescriptor*/,
+        const ::android::hardware::radio::V1_6::OptionalTrafficDescriptor& trafficDescriptor,
         bool matchAllRuleAllowed) {
-
 #if VDBG
     RLOGD("setupDataCall_1_6: serial %d", serial);
 #endif
@@ -4459,6 +4458,16 @@ Return<void> RadioImpl_1_6::setupDataCall_1_6(int32_t serial ,
         }
         return Void();
     }
+
+    if (trafficDescriptor.getDiscriminator() ==
+                V1_6::OptionalTrafficDescriptor::hidl_discriminator::value &&
+        trafficDescriptor.value().osAppId.getDiscriminator() ==
+                V1_6::OptionalOsAppId::hidl_discriminator::value) {
+        osAppIdVec = trafficDescriptor.value().osAppId.value().osAppId;
+    } else {
+        osAppIdVec = {};
+    }
+
     dispatchStrings(serial, mSlotId, RIL_REQUEST_SETUP_DATA_CALL, true, 16,
         std::to_string((int) RadioTechnology::UNKNOWN + 2).c_str(),
         std::to_string((int) dataProfileInfo.profileId).c_str(),
@@ -11101,16 +11110,6 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11* dcResponse,
     std::vector<::android::hardware::radio::V1_6::TrafficDescriptor> trafficDescriptors;
     ::android::hardware::radio::V1_6::TrafficDescriptor trafficDescriptor;
     ::android::hardware::radio::V1_6::OsAppId osAppId;
-
-    std::vector<uint8_t> osAppIdVec;
-    osAppIdVec.push_back('o');
-    osAppIdVec.push_back('s');
-    osAppIdVec.push_back('A');
-    osAppIdVec.push_back('p');
-    osAppIdVec.push_back('p');
-    osAppIdVec.push_back('I');
-    osAppIdVec.push_back('d');
-
     osAppId.osAppId = osAppIdVec;
     trafficDescriptor.osAppId.value(osAppId);
     trafficDescriptors.push_back(trafficDescriptor);
