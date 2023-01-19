@@ -119,6 +119,9 @@ else
   partition=
 fi
 sgdisk --load-backup="\${SCRIPT_DIR}"/gpt.img \${1}
+sgdisk --delete=2 \${1}
+sgdisk --new=2:129M:0 --typecode=2:8305 --change-name=2:rootfs --attributes=2:set:2 \${1}
+partx -v --update \${1}
 dd if="\${SCRIPT_DIR}"/esp.img of=\${1}\${partition}1 bs=16M
 mkfs.ext4 -L ROOT -U \$(cat \${SCRIPT_DIR}/rootfs_uuid) \${1}\${partition}2
 mount \${1}\${partition}2 /media
