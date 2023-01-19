@@ -36,7 +36,7 @@ int CvdLoadParserMain(int argc, char** argv) {
     return 1;
   }
 
-  auto serialized_data = cuttlefish::ParseCvdConfigs(*json_configs);
+  auto serialized_data = cuttlefish::ParseLaunchCvdConfigs(*json_configs);
   if (!serialized_data.ok()) {
     LOG(INFO) << "parsing json configs failed";
     return 1;
