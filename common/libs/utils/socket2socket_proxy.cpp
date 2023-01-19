@@ -46,14 +46,11 @@ void Forward(const std::string& label, SharedFD from, SharedFD to) {
 }
 
 void SetupProxying(const std::string& label, SharedFD client, SharedFD target) {
-  std::thread([&label, client, target]() {
-    LOG(DEBUG) << "[" << label << "] Launching proxy thread";
-    std::thread client2target(Forward, label, client, target);
-    Forward(label, target, client);
-    client2target.join();
-    // The actual proxying is handled in a detached thread so that this function
-    // returns immediately
-  }).detach();
+  LOG(DEBUG) << "[" << label << "] Launching proxy threads";
+  std::thread client2target(Forward, label + "_c2t", client, target);
+  std::thread target2client(Forward, label + "_t2c", target, client);
+  client2target.detach();
+  target2client.detach();
 }
 
 }  // namespace
