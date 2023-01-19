@@ -18,12 +18,21 @@ export class DeviceService {
     private sanitizer: DomSanitizer
   ) {}
 
+  compareDeviceId(x: string, y: string): number {
+    let reg: RegExp = new RegExp('cvd-[0-9]+');
+    if (reg.test(x) && reg.test(y)) {
+      return parseInt(x.substring(4)) - parseInt(y.substring(4));
+    } else {
+      return x > y ? 1 : -1;
+    }
+  }
+
   refresh(): void {
     this.httpClient
       .get<string[]>('./devices')
       .pipe(
         map((deviceIds: string[]) =>
-          deviceIds.sort().map(this.createDevice.bind(this))
+          deviceIds.sort(this.compareDeviceId).map(this.createDevice.bind(this))
         )
       )
       .subscribe((devices: Device[]) => this.devicesSubject.next(devices));
