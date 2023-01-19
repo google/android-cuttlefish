@@ -51,9 +51,6 @@ PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
 #
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
-# TODO(b/205788876) remove this when openwrt has an image for arm.
-PRODUCT_ENFORCE_MAC80211_HWSIM := false
-
 #
 # Special settings for the target
 #
