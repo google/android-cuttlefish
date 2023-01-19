@@ -65,7 +65,7 @@ class NetlinkRequest {
   void AddMacAddress(const std::array<unsigned char, 6>& address);
 
   // Creates new list.
-  // List mimmic recursive structures in a flat, contiuous representation.
+  // List mimmic recursive structures in a flat, continuous representation.
   // Each call to PushList() should have a corresponding call to PopList
   // indicating end of sub-attribute list.
   void PushList(uint16_t type);
