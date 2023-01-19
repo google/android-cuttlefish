@@ -27,6 +27,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server.h"
