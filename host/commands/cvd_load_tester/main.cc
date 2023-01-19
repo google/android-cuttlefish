@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 
 DEFINE_string(config_file_path, "", "config file path for default configs");
