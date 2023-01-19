@@ -581,14 +581,8 @@ Result<std::vector<Command>> QemuManager::StartCommands(
                         ",script=no,downscript=no", vhost_net);
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet1,id=net1");
-#ifndef ENFORCE_MAC80211_HWSIM
-  qemu_cmd.AddParameter("-netdev");
-  qemu_cmd.AddParameter("tap,id=hostnet2,ifname=", instance.wifi_tap_name(),
-                        ",script=no,downscript=no", vhost_net);
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet2,id=net2");
-#endif
+  qemu_cmd.AddParameter(
+      "virtio-net-pci-non-transitional,netdev=hostnet1,id=net1");
 
   qemu_cmd.AddParameter("-cpu");
   qemu_cmd.AddParameter(IsHostCompatible(arch_) ? "host" : "max");
