@@ -95,6 +95,7 @@ cc_binary {
     defaults: [
         "cuttlefish_host",
         "cuttlefish_libicuuc",
+        "cvd_cc_defaults",
         "secure_env_keymint_impl_defaults",
     ],
 }
