@@ -1,0 +1,17 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+aidl_interface {
+    name: "com.android.minidroid.testservice",
+    srcs: ["com/android/minidroid/testservice/ITestService.aidl"],
+    unstable: true,
+    backend: {
+        ndk: {
+            enabled: true,
+        },
+        java: {
+            enabled: false,
+        }
+    },
+}
