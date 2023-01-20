@@ -20,7 +20,7 @@ package {
 cc_test_host {
     name: "cvd_db_instance_test",
     srcs: [
-        "test_instance_record.cpp",
+        "instance_record_test.cpp",
     ],
     test_options: {
         unit_test: true,
@@ -31,7 +31,7 @@ cc_test_host {
 cc_test_host {
     name: "cvd_db_group_test",
     srcs: [
-        "test_group_record.cpp",
+        "group_record_test.cpp",
     ],
     test_options: {
         unit_test: true,
@@ -42,8 +42,8 @@ cc_test_host {
 cc_test_host {
     name: "cvd_db_test",
     srcs: [
-        "instance_database_test_helper.cpp",
-        "test_instance_database.cpp",
+        "instance_database_helper.cpp",
+        "instance_database_test.cpp",
     ],
     test_options: {
         unit_test: true,

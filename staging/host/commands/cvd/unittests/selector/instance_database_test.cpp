@@ -21,7 +21,7 @@
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/unittests/selector/instance_database_test_helper.h"
+#include "host/commands/cvd/unittests/selector/instance_database_helper.h"
 
 /*
  * SetUp creates a mock ANDROID_HOST_OUT directory where there is
