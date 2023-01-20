@@ -20,6 +20,13 @@
 
 namespace cuttlefish {
 
+typedef struct _CvdFlags {
+  std::vector<std::string> launch_cvd_flags;
+  std::vector<std::string> fetch_cvd_flags;
+} CvdFlags;
+
 Result<Json::Value> ParseJsonFile(const std::string& file_path);
+
+Result<CvdFlags> ParseCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
