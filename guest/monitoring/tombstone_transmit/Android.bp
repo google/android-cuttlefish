@@ -58,6 +58,9 @@ cc_binary {
         "tombstone_transmit_defaults",
         "cuttlefish_base",
     ],
+    cflags: [
+        "-DMICRODROID",
+    ],
 }
 
 cc_binary {
