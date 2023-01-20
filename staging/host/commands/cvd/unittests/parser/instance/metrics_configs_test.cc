@@ -15,7 +15,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
@@ -37,7 +37,7 @@ TEST(MetricsFlagsParserTest, ParseOneInstanceMetricsReportInvalidValue) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_FALSE(serialized_data.ok()) << serialized_data.error().Trace();
 }
 
@@ -57,7 +57,7 @@ TEST(MetricsFlagsParserTest, ParseOneInstancesMetricsReportFlagEmptyJson) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--report_anonymous_usage_stats=n)"))
@@ -82,7 +82,7 @@ TEST(MetricsFlagsParserTest, ParseTwoInstancesMetricsReportFlagEmptyJson) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--report_anonymous_usage_stats=n)"))
