@@ -71,7 +71,6 @@ struct GroupCreationInfo {
  *  ANDROID_HOST_OUT must be given.
  *
  * Group name:
- *  if --group_name or --device_name is given, find the group name there
  *  if a group name is not given, automatically generate:
  *   default_prefix + "_" + one_of_ids
  *
@@ -80,7 +79,7 @@ struct GroupCreationInfo {
  *
  * Number of instances:
  *  Controlled by --instance_nums, --num_instances, etc.
- *  Also controlled by --device_name or equivalent options
+ *  Also controlled by --instance_name
  *
  * p.s.
  *  dependency: (a-->b means b depends on a)
@@ -120,7 +119,7 @@ class CreationAnalyzer {
    * When group name is nil, it is auto-generated using instance ids
    *
    * If the instanc group is the default one, the group name is cvd. Otherwise,
-   * for given instance ids, {i, j, k}, the group name will be cvd_i_j_k.
+   * for given instance ids, {i}, the group name will be cvd_i.
    */
   Result<std::string> AnalyzeGroupName(
       const std::vector<PerInstanceInfo>&) const;
@@ -142,7 +141,7 @@ class CreationAnalyzer {
   Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsWithLockInternal();
 
   /*
-   * Adds --webrtc_device_id_ when necessary to cmd_args_
+   * Adds --webrtc_device_id when necessary to cmd_args_
    */
   Result<std::vector<std::string>> UpdateWebrtcDeviceId(
       std::vector<std::string>&& args,
