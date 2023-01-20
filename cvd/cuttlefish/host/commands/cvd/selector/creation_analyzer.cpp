@@ -106,37 +106,62 @@ static Result<std::vector<unsigned>> CollectUnusedIds(
   return std::vector<unsigned>{collected_ids.begin(), collected_ids.end()};
 }
 
-Result<std::vector<InstanceLockFile>>
-CreationAnalyzer::AnalyzeInstanceIdsWithLockInternal() {
-  // As this test was done earlier, this line must not fail
-  const auto n_instances = selector_options_parser_.RequestedNumInstances();
-  auto requested_instance_ids = selector_options_parser_.InstanceIds();
+Result<std::vector<PerInstanceInfo>>
+CreationAnalyzer::AnalyzeInstanceIdsInternal(
+    const std::vector<unsigned>& requested_instance_ids) {
+  CF_EXPECT(!requested_instance_ids.empty(),
+            "Instance IDs were specified, so should be one or more.");
+  auto available_instance_ids = requested_instance_ids;
+  available_instance_ids = CF_EXPECT(
+      CollectUnusedIds(instance_database_, std::move(available_instance_ids)));
+  CF_EXPECT(available_instance_ids.size() == requested_instance_ids.size(),
+            "Some of requested instance IDs are already taken.");
+  std::vector<std::string> per_instance_names;
+  if (selector_options_parser_.PerInstanceNames()) {
+    per_instance_names = *selector_options_parser_.PerInstanceNames();
+    CF_EXPECT_EQ(per_instance_names.size(), available_instance_ids.size());
+  } else {
+    for (const auto id : available_instance_ids) {
+      per_instance_names.emplace_back(std::to_string(id));
+    }
+  }
+  std::vector<PerInstanceInfo> instance_info;
+  bool must_acquire_file_locks = selector_options_parser_.MustAcquireFileLock();
+  if (!must_acquire_file_locks) {
+    for (int i = 0; i < per_instance_names.size(); i++) {
+      const auto id = available_instance_ids[i];
+      instance_info.emplace_back(id, per_instance_names[i]);
+    }
+    return instance_info;
+  }
   auto acquired_all_file_locks =
       CF_EXPECT(instance_file_lock_manager_.LockAllAvailable());
-
   auto id_to_lockfile_map =
       ConstructIdLockFileMap(std::move(acquired_all_file_locks));
 
-  // verify if any of the request IDs is beyond the InstanceFileLockManager
-  if (requested_instance_ids) {
-    for (auto const id : *requested_instance_ids) {
-      CF_EXPECT(Contains(id_to_lockfile_map, id),
-                id << " is not allowed by InstanceFileLockManager.");
-    }
+  for (int i = 0; i < available_instance_ids.size(); i++) {
+    const auto instance_name = per_instance_names[i];
+    const auto id = available_instance_ids[i];
+    CF_EXPECT(Contains(id_to_lockfile_map, id),
+              "Instance ID " << id << " lock file can't be locked.");
+    auto& lock_file = id_to_lockfile_map.at(id);
+    instance_info.emplace_back(id, instance_name, std::move(lock_file));
   }
+  return instance_info;
+}
 
-  std::vector<InstanceLockFile> allocated_ids_with_locks;
-  if (requested_instance_ids) {
-    CF_EXPECT(!requested_instance_ids->empty(),
-              "Instance IDs were specified, so should be one or more.");
-    for (const auto id : *requested_instance_ids) {
-      CF_EXPECT(Contains(id_to_lockfile_map, id),
-                "Instance ID " << id << " lock file can't be locked.");
-      auto& lock_file = id_to_lockfile_map.at(id);
-      allocated_ids_with_locks.emplace_back(std::move(lock_file));
-    }
-    return allocated_ids_with_locks;
-  }
+Result<std::vector<PerInstanceInfo>>
+CreationAnalyzer::AnalyzeInstanceIdsInternal() {
+  CF_EXPECT(selector_options_parser_.MustAcquireFileLock(),
+            "For now, cvd server always acquire the file locks "
+                << "when IDs are automatically allocated.");
+
+  // As this test was done earlier, this line must not fail
+  const auto n_instances = selector_options_parser_.RequestedNumInstances();
+  auto acquired_all_file_locks =
+      CF_EXPECT(instance_file_lock_manager_.LockAllAvailable());
+  auto id_to_lockfile_map =
+      ConstructIdLockFileMap(std::move(acquired_all_file_locks));
 
   /* generate n_instances consecutive ids. For backward compatibility,
    * we prefer n consecutive ids for now.
@@ -155,32 +180,31 @@ CreationAnalyzer::AnalyzeInstanceIdsWithLockInternal() {
   // auto-generation means the user did not specify much: e.g. "cvd start"
   // In this case, the user may expect the instance id to be 1+
   using ReservationSet = UniqueResourceAllocator<unsigned>::ReservationSet;
-  std::optional<ReservationSet> allocated_ids =
-      unique_id_allocator->TakeRange(1, 1 + n_instances);
+  std::optional<ReservationSet> allocated_ids;
+  if (selector_options_parser_.IsMaybeDefaultGroup()) {
+    allocated_ids = unique_id_allocator->TakeRange(1, 1 + n_instances);
+  }
   if (!allocated_ids) {
-    // We could not allocate [1, 1 + n -1]. Try, [k, k + n - 1]
     allocated_ids = unique_id_allocator->UniqueConsecutiveItems(n_instances);
   }
   CF_EXPECT(allocated_ids != std::nullopt, "Unique ID allocation failed.");
 
+  std::vector<InstanceLockFile> lock_files_at_ids;
   // Picks the lock files according to the ids, and discards the rest
   for (const auto& reservation : *allocated_ids) {
     const auto id = reservation.Get();
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
-    allocated_ids_with_locks.emplace_back(std::move(lock_file));
+    lock_files_at_ids.emplace_back(std::move(lock_file));
   }
-  return allocated_ids_with_locks;
-}
 
-static Result<std::vector<PerInstanceInfo>> GenerateInstanceInfo(
-    const std::optional<std::vector<std::string>>& per_instance_names_opt,
-    std::vector<InstanceLockFile>& instance_file_locks) {
   std::vector<std::string> per_instance_names;
+  const auto per_instance_names_opt =
+      selector_options_parser_.PerInstanceNames();
   if (per_instance_names_opt) {
     per_instance_names = per_instance_names_opt.value();
-    CF_EXPECT(per_instance_names.size() == instance_file_locks.size());
+    CF_EXPECT(per_instance_names.size() == lock_files_at_ids.size());
   } else {
     /*
      * What is generated here is an (per-)instance name:
@@ -189,7 +213,7 @@ static Result<std::vector<PerInstanceInfo>> GenerateInstanceInfo(
      * A full device name is a group name followed by '-' followed by
      * per-instance name. Also, see instance_record.cpp.
      */
-    for (const auto& instance_file_lock : instance_file_locks) {
+    for (const auto& instance_file_lock : lock_files_at_ids) {
       per_instance_names.emplace_back(
           std::to_string(instance_file_lock.Instance()));
     }
@@ -197,21 +221,19 @@ static Result<std::vector<PerInstanceInfo>> GenerateInstanceInfo(
 
   std::vector<PerInstanceInfo> instance_info;
   for (int i = 0; i < per_instance_names.size(); i++) {
-    InstanceLockFile i_th_file_lock = std::move(instance_file_locks[i]);
-    const auto& instance_name = per_instance_names[i];
-    instance_info.emplace_back(static_cast<unsigned>(i_th_file_lock.Instance()),
-                               instance_name, std::move(i_th_file_lock));
+    const unsigned lock_file_id =
+        static_cast<unsigned>(lock_files_at_ids.at(i).Instance());
+    instance_info.emplace_back(lock_file_id, per_instance_names[i],
+                               std::move(lock_files_at_ids[i]));
   }
-  instance_file_locks.clear();
   return instance_info;
 }
 
-Result<std::vector<PerInstanceInfo>>
-CreationAnalyzer::AnalyzeInstanceIdsWithLock() {
-  auto instance_ids_with_lock = CF_EXPECT(AnalyzeInstanceIdsWithLockInternal());
-  auto instance_file_locks = CF_EXPECT(GenerateInstanceInfo(
-      selector_options_parser_.PerInstanceNames(), instance_ids_with_lock));
-  return instance_file_locks;
+Result<std::vector<PerInstanceInfo>> CreationAnalyzer::AnalyzeInstanceIds() {
+  auto requested_instance_ids = selector_options_parser_.InstanceIds();
+  return requested_instance_ids
+             ? CF_EXPECT(AnalyzeInstanceIdsInternal(*requested_instance_ids))
+             : CF_EXPECT(AnalyzeInstanceIdsInternal());
 }
 
 /*
@@ -285,7 +307,7 @@ Result<std::vector<std::string>> CreationAnalyzer::UpdateWebrtcDeviceId(
 }
 
 Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
-  auto instance_info = CF_EXPECT(AnalyzeInstanceIdsWithLock());
+  auto instance_info = CF_EXPECT(AnalyzeInstanceIds());
   std::vector<unsigned> ids;
   ids.reserve(instance_info.size());
   for (const auto& instance : instance_info) {
