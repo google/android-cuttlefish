@@ -42,8 +42,7 @@ void start_test_service() {
   };
   auto testService = ndk::SharedRefBase::make<TestService>();
 
-  bi::sd::setupRpcServer(testService->asBinder().get(),
-                         testService->SERVICE_PORT);
+  bi::sd::setupRpcServer(testService->asBinder(), testService->SERVICE_PORT);
 }
 }  // namespace
 
