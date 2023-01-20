@@ -16,12 +16,10 @@ package orchestrator
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"net/textproto"
 	"strings"
 	"testing"
 	"time"
@@ -198,7 +196,7 @@ func (testUAM) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
 	return &apiv1.ListUploadDirectoriesResponse{}, nil
 }
 
-func (testUAM) CreateUpdateArtifact(string, string, io.Reader) error {
+func (testUAM) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
 	return nil
 }
 
@@ -239,15 +237,17 @@ func TestListUploadDirectoriesIsHandled(t *testing.T) {
 func TestUploadUserArtifactIsHandled(t *testing.T) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	partHeader := textproto.MIMEHeader{}
-	partHeader.Set("Content-Type", "text/plain")
-	partHeader.Set("Content-Disposition", "form-data; name=\"file\"; filename=\"foo.txt\"")
-	part, _ := writer.CreatePart(partHeader)
-	io.Copy(part, bytes.NewReader([]byte("bar")))
+	fw, _ := writer.CreateFormField("chunk_number")
+	io.Copy(fw, strings.NewReader("1"))
+	fw, _ = writer.CreateFormField("chunk_total")
+	io.Copy(fw, strings.NewReader("100"))
+	fw, _ = writer.CreateFormField("chunk_size_bytes")
+	io.Copy(fw, strings.NewReader("64"))
+	fw, _ = writer.CreateFormFile("file", "foo.txt")
+	io.Copy(fw, bytes.NewReader([]byte("lorem")))
 	writer.Close()
 	req, _ := http.NewRequest("PUT", "/userartifacts/foo", bytes.NewReader(body.Bytes()))
-	req.Header.Set("Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", writer.Boundary()))
-	req.Header.Set("Content-Length", fmt.Sprintf("%d", body.Len()))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 	controller := Controller{UserArtifactsManager: &testUAM{}}
 	rr := httptest.NewRecorder()
 

@@ -32,6 +32,14 @@ type UserArtifactsDirResolver interface {
 	GetDirPath(name string) string
 }
 
+type UserArtifactChunk struct {
+	Name           string
+	ChunkNumber    int
+	ChunkTotal     int
+	ChunkSizeBytes int64
+	File           io.Reader
+}
+
 // Abstraction for managing user artifacts for launching CVDs.
 type UserArtifactsManager interface {
 	UserArtifactsDirResolver
@@ -39,8 +47,8 @@ type UserArtifactsManager interface {
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
-	// Creates or update (if exists) an artifact.
-	CreateUpdateArtifact(dir, filename string, file io.Reader) error
+	// Upldate artifact with the passed chunk.
+	UpdateArtifact(dir string, chunk UserArtifactChunk) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -103,53 +111,35 @@ func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
 
-func (m *UserArtifactsManagerImpl) CreateUpdateArtifact(dir, name string, src io.Reader) error {
+func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
 	dir = m.RootDir + "/" + dir
 	if ok, err := fileExist(dir); err != nil {
 		return err
 	} else if !ok {
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
-	dst := dir + "/" + name
-	if err := saveFile(dst, src); err != nil {
+	if err := writeChunk(dir, chunk); err != nil {
 		return err
-	}
-	return processFile(dst)
-}
-
-func saveFile(dst string, src io.Reader) error {
-	tmp, err := ioutil.TempFile(filepath.Dir(dst), filepath.Base(dst))
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if _, err = io.Copy(tmp, src); err != nil {
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp.Name(), dst); err != nil {
-		return err
-	}
-	return os.Chmod(dst, 0644)
-}
-
-const cvdHostPackageName = "cvd-host_package.tar.gz"
-
-func processFile(name string) error {
-	if filepath.Base(name) == cvdHostPackageName {
-		if err := untar(filepath.Dir(name), name); err != nil {
-			return err
-		}
-		if err := os.Remove(name); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func untar(dst string, src string) error {
+func writeChunk(dir string, chunk UserArtifactChunk) error {
+	filename := dir + "/" + chunk.Name
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Seek(int64(chunk.ChunkNumber-1)*chunk.ChunkSizeBytes, 0); err != nil {
+		return err
+	}
+	if _, err = io.Copy(f, chunk.File); err != nil {
+		return err
+	}
+	return nil
+}
+
+func Untar(dst string, src string) error {
 	r, err := os.Open(src)
 	if err != nil {
 		return err
