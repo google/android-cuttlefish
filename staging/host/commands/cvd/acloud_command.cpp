@@ -31,6 +31,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
@@ -333,6 +334,8 @@ class ConvertAcloudCreateCommand {
         start_command.add_args(arg);
       }
     }
+    start_command.mutable_selector_opts()->add_args(
+        std::string("--") + selector::kAcquireFileLockOpt + "=no");
     static constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
     auto& start_env = *start_command.mutable_env();
     if (local_image) {
