@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "host/commands/cvd/parser/fetch_cvd_parser.h"
+
 #include <android-base/file.h>
 #include <gflags/gflags.h>
 
@@ -24,19 +26,22 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/commands/cvd/parser/cf_configs_instances.h"
-#include "host/commands/cvd/parser/load_configs_parser.h"
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJsonFile(const std::string& file_path) {
-  std::string file_content;
-  using android::base::ReadFileToString;
-  CF_EXPECT(ReadFileToString(file_path.c_str(), &file_content,
-                             /* follow_symlinks */ true));
-  auto root = CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file");
-  return root;
+Result<void> ValidateFetchCvdConfigs(const Json::Value&) { return {}; }
+
+std::vector<std::string> GenerateFetchCvdFlags(const Json::Value&) {
+  std::vector<std::string> result;
+  return result;
+}
+
+void InitFetchCvdConfigs(Json::Value&) {}
+
+Result<std::vector<std::string>> ParseFetchCvdConfigs(Json::Value& root) {
+  CF_EXPECT(ValidateFetchCvdConfigs(root), "Loaded Json validation failed");
+  InitFetchCvdConfigs(root);
+  return GenerateFetchCvdFlags(root);
 }
 
 }  // namespace cuttlefish

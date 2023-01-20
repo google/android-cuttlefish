@@ -27,6 +27,8 @@ cc_library_host_static {
         "instance/cf_metrics_configs.cpp",
         "cf_configs_common.cpp",
         "cf_configs_instances.cpp",
+        "launch_cvd_parser.cpp",
+        "fetch_cvd_parser.cpp",
         "load_configs_parser.cpp",
     ],
     static_libs: [
