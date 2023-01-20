@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/selector/instance_database_test_helper.h"
+#include "host/commands/cvd/unittests/selector/instance_database_helper.h"
 
 #include <algorithm>
 #include <cstdio>
