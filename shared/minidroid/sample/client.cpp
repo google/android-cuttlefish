@@ -15,7 +15,6 @@
  */
 
 #include <aidl/com/android/minidroid/testservice/ITestService.h>
-#include <android/binder_auto_utils.h>
 #include <minidroid_sd.h>
 
 #include <stdio.h>
@@ -35,8 +34,12 @@ int main(int argc, char** argv) {
   printf("Hello Minidroid client! Connecting to CID %d and port %d\n",
          service_host_cid, service_port);
 
-  AIBinder* service = bi::sd::getService(service_host_cid, service_port);
-  ndk::SpAIBinder binder(service);
+  ndk::SpAIBinder binder = bi::sd::getService(service_host_cid, service_port);
+
+  if (nullptr == binder.get()) {
+    printf("Unable to find service!\n");
+    return -1;
+  }
 
   auto test_service =
       aidl::com::android::minidroid::testservice::ITestService::fromBinder(

@@ -23,13 +23,14 @@
 #include <stdio.h>
 #include <binder_rpc_unstable.hpp>
 
-void bi::sd::setupRpcServer(AIBinder* service, int port) {
-  ARpcServer* server = ARpcServer_newVsock(service, VMADDR_CID_ANY, port);
+void bi::sd::setupRpcServer(ndk::SpAIBinder service, int port) {
+  ARpcServer* server = ARpcServer_newVsock(service.get(), VMADDR_CID_ANY, port);
 
   printf("Calling join on server!\n");
   ARpcServer_join(server);
 }
 
-AIBinder* bi::sd::getService(int cid, int port) {
-  return ARpcSession_setupVsockClient(ARpcSession_new(), cid, port);
+ndk::SpAIBinder bi::sd::getService(int cid, int port) {
+  return ndk::SpAIBinder(
+      ARpcSession_setupVsockClient(ARpcSession_new(), cid, port));
 }

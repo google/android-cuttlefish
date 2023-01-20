@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include <android/binder_ibinder.h>
+#include <android/binder_auto_utils.h>
 #include <string>
 
 namespace bi {
 namespace sd {
 
-void setupRpcServer(AIBinder* service, int port);
+void setupRpcServer(ndk::SpAIBinder service, int port);
 
-AIBinder* getService(int cid, int port);
+ndk::SpAIBinder getService(int cid, int port);
 
 }  // namespace sd
 }  // namespace bi
