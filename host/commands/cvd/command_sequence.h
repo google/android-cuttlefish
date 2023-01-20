@@ -20,6 +20,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/libs/config/inject.h"
@@ -33,7 +34,8 @@ class CommandSequenceExecutor : public LateInjected {
   Result<void> LateInject(fruit::Injector<>&) override;
 
   Result<void> Interrupt();
-  Result<void> Execute(const std::vector<RequestWithStdio>&, SharedFD report);
+  Result<std::vector<cvd::Response>> Execute(
+      const std::vector<RequestWithStdio>&, SharedFD report);
 
  private:
   std::vector<CvdServerHandler*> server_handlers_;
