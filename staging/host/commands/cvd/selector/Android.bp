@@ -29,6 +29,7 @@ cc_library_host_static {
         "instance_database_utils.cpp",
         "instance_group_record.cpp",
         "instance_record.cpp",
+        "selector_common_parser.cpp",
         "selector_constants.cpp",
         "selector_option_parser_utils.cpp",
         "start_selector_parser.cpp",
