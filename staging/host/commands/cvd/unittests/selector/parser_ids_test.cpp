@@ -78,12 +78,12 @@ INSTANTIATE_TEST_SUITE_P(
             .expected_result = true},
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
-            .selector_args = "--device_name=c-1,c-3,c-5",
+            .selector_args = "--instance_name=c-1,c-3,c-5",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
-        InstanceIdTestInput{.selector_args = "--device_name=c-1,c-3,c-5",
+        InstanceIdTestInput{.selector_args = "--instance_name=c-1,c-3,c-5",
                             .cuttlefish_instance = std::nullopt,
                             .expected_ids = std::nullopt,
                             .requested_num_instances = 3,
@@ -102,10 +102,10 @@ INSTANTIATE_TEST_SUITE_P(
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = false},
-        // device_name requested 2 instances while instance_nums 3.
+        // --instance_name requested 2 instances while instance_nums 3.
         InstanceIdTestInput{
             .cmd_args = "--num_instances=3 --instance_nums 2,5,6",
-            .selector_args = "--device_name=c-1,c-3",
+            .selector_args = "--instance_name=c-1,c-3",
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,

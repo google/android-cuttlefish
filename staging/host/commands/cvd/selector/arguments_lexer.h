@@ -126,11 +126,11 @@ class ArgumentsLexer {
   // and give it to ArgumentsLexer.
   struct FlagPatterns {
     /* represents flags that takes values
-     * e.g. -device_name, --device_name (which may take an additional
+     * e.g. -group_name, --group_name (which may take an additional
      * positional arg, or use its default value.)
      *
      * With the given example, this set shall be:
-     *  {"-device_name", "--device_name"}
+     *  {"-group_name", "--group_name"}
      */
     std::unordered_set<std::string> value_patterns;
     /* boolean flags

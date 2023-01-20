@@ -95,63 +95,22 @@ Result<std::vector<std::string>> StartSelectorParser::HandleInstanceNames(
 Result<std::string> StartSelectorParser::HandleGroupName(
     const std::optional<std::string>& group_name) const {
   CF_EXPECT(group_name && !group_name.value().empty());
-  CF_EXPECT(IsValidGroupName(group_name.value()));
+  CF_EXPECT(IsValidGroupName(group_name.value()), group_name.value()
+                                                      << " failed");
   return {group_name.value()};
-}
-
-Result<StartSelectorParser::DeviceNamesPair>
-StartSelectorParser::HandleDeviceNames(
-    const std::optional<std::string>& device_names) const {
-  CF_EXPECT(device_names && !device_names.value().empty());
-
-  auto device_name_list =
-      CF_EXPECT(SeparateButWithNoEmptyToken(device_names.value(), ","));
-  std::unordered_set<std::string> group_names;
-  std::vector<std::string> instance_names;
-  for (const auto& device_name : device_name_list) {
-    CF_EXPECT(IsValidDeviceName(device_name));
-    auto [group, instance] = CF_EXPECT(SplitDeviceName(device_name));
-    CF_EXPECT(IsValidGroupName(group) && IsValidInstanceName(instance));
-    group_names.insert(group);
-    instance_names.emplace_back(instance);
-  }
-  CF_EXPECT(group_names.size() <= 1, "Group names in --device_name options"
-                                         << " must be same across devices.");
-  const auto group_name = *(group_names.cbegin());
-  std::optional<std::string> joined_instance_names =
-      android::base::Join(instance_names, ",");
-  return {DeviceNamesPair{.group_name = group_name,
-                          .instance_names = std::move(CF_EXPECT(
-                              HandleInstanceNames(joined_instance_names)))}};
 }
 
 Result<StartSelectorParser::ParsedNameFlags>
 StartSelectorParser::HandleNameOpts(const NameFlagsParam& name_flags) const {
-  const std::optional<std::string>& device_names = name_flags.device_names;
-  const std::optional<std::string>& group_name = name_flags.group_name;
-  const std::optional<std::string>& instance_names = name_flags.instance_names;
-
-  CF_EXPECT(VerifyNameOptions(
-      VerifyNameOptionsParam{.device_name = device_names,
-                             .group_name = group_name,
-                             .per_instance_name = instance_names}));
-
-  if (device_names) {
-    auto device_names_pair = CF_EXPECT(HandleDeviceNames(device_names));
-    return {ParsedNameFlags{
-        .group_name = std::move(device_names_pair.group_name),
-        .instance_names = std::move(device_names_pair.instance_names)}};
-  }
-
   std::optional<std::string> group_name_output;
   std::optional<std::vector<std::string>> instance_names_output;
-  if (group_name) {
-    group_name_output = CF_EXPECT(HandleGroupName(group_name));
+  if (name_flags.group_name) {
+    group_name_output = CF_EXPECT(HandleGroupName(name_flags.group_name));
   }
 
-  if (instance_names) {
+  if (name_flags.instance_names) {
     instance_names_output =
-        std::move(CF_EXPECT(HandleInstanceNames(instance_names)));
+        std::move(CF_EXPECT(HandleInstanceNames(name_flags.instance_names)));
   }
   return {ParsedNameFlags{.group_name = std::move(group_name_output),
                           .instance_names = std::move(instance_names_output)}};
@@ -232,7 +191,7 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
       CF_EXPECT_EQ(*num_instances, static_cast<unsigned>(implied_n_instances),
                    "The number of instances requested by --num_instances "
                        << " are not the same as what is implied by "
-                       << " --device_name/--instance_name.");
+                       << " --instance_name.");
     }
     num_instances = implied_n_instances;
   }
@@ -339,13 +298,11 @@ Result<void> StartSelectorParser::ParseOptions() {
   may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
 
   // Handling name-related options
-  std::optional<std::string> device_name;
   std::optional<std::string> group_name;
   std::optional<std::string> instance_name;
 
   std::unordered_map<std::string, std::optional<std::string>> key_optional_map =
       {
-          {kDeviceNameOpt, std::optional<std::string>{}},
           {kGroupNameOpt, std::optional<std::string>{}},
           {kInstanceNameOpt, std::optional<std::string>{}},
       };
@@ -357,7 +314,6 @@ Result<void> StartSelectorParser::ParseOptions() {
   }
 
   NameFlagsParam name_flags_param{
-      .device_names = key_optional_map[kDeviceNameOpt],
       .group_name = key_optional_map[kGroupNameOpt],
       .instance_names = key_optional_map[kInstanceNameOpt]};
   auto parsed_name_flags = CF_EXPECT(HandleNameOpts(name_flags_param));
