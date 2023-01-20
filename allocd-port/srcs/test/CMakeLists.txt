@@ -17,7 +17,6 @@
 cmake_minimum_required(VERSION 3.18)
 project(allocd_separation)
 
-#include_directories(src)
 add_executable(
   result_test
   result_test.cc
