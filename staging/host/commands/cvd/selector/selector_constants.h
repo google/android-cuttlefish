@@ -73,6 +73,7 @@ constexpr char kInstanceNameField[] = "instance_name";
 constexpr char kGroupNameOpt[] = "group_name";
 constexpr char kInstanceNameOpt[] = "instance_name";
 constexpr char kDisableDefaultGroupOpt[] = "disable_default_group";
+constexpr char kAcquireFileLockOpt[] = "acquire_file_lock";
 
 }  // namespace selector
 }  // namespace cuttlefish
