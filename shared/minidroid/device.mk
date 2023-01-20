@@ -76,8 +76,11 @@ PRODUCT_PACKAGES += \
 
 # Test Binder RPC services
 PRODUCT_PACKAGES += \
+    minidroid_sd \
     server_minidroid \
     client_minidroid \
+
+PRODUCT_HOST_PACKAGES += proxy_minidroid
 
 # Additional packages
 PRODUCT_PACKAGES += \

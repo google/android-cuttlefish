@@ -3,11 +3,10 @@ cc_binary {
     srcs: ["server.cpp"],
     shared_libs: [
         "libbinder_ndk",
-        "libbinder_rpc_unstable",
+        "minidroid_sd",
     ],
     static_libs: [
         "com.android.minidroid.testservice-ndk",
-        "libprotobuf-cpp-lite-ndk",
     ],
 
     apex_available: [
@@ -20,7 +19,7 @@ cc_binary {
     srcs: ["client.cpp"],
     shared_libs: [
         "libbinder_ndk",
-        "libbinder_rpc_unstable",
+        "minidroid_sd",
     ],
     static_libs: [
         "com.android.minidroid.testservice-ndk",
@@ -28,5 +27,20 @@ cc_binary {
     apex_available: [
         "//apex_available:platform",
     ],
+}
+
+cc_binary {
+    name: "proxy_minidroid",
+    srcs: ["proxy.cpp"],
+    target: {
+        host: {
+            static_libs: [
+                "libcuttlefish_host_config",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_base"],
+    host_supported: true,
+    vendor: true,
 }
 
