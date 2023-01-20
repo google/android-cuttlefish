@@ -159,7 +159,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
       pos = r_pos + 1;  // Skip '\r'
     } else if (pos < commands.length()) {  // Incomplete command
       incomplete_command = commands.substr(pos);
-      LOG(DEBUG) << "incomplete command: " << incomplete_command;
+      LOG(VERBOSE) << "incomplete command: " << incomplete_command;
     }
   }
 }
