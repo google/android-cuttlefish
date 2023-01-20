@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "host/commands/cvd/parser/load_configs_parser.h"
+
 #include <android-base/file.h>
 #include <gflags/gflags.h>
 
@@ -26,7 +28,8 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
-#include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/parser/fetch_cvd_parser.h"
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 
 namespace cuttlefish {
 
@@ -37,6 +40,18 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
                              /* follow_symlinks */ true));
   auto root = CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file");
   return root;
+}
+
+Result<CvdFlags> ParseCvdConfigs(Json::Value& root) {
+  CvdFlags results;
+  results.launch_cvd_flags =
+      CF_EXPECT(ParseLaunchCvdConfigs(root),
+                "parsing json configs for launch_cvd failed");
+
+  results.fetch_cvd_flags = CF_EXPECT(
+      ParseFetchCvdConfigs(root), "parsing json configs for fetch_cvd failed");
+
+  return results;
 }
 
 }  // namespace cuttlefish
