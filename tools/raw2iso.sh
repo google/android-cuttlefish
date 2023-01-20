@@ -61,7 +61,7 @@ if [[ -z "${output}" ]]; then
 fi
 
 grub_cmdline="ro net.ifnames=0 console=ttyAMA0 loglevel=4"
-grub_rootfs="LABEL=rootfs"
+grub_rootfs="LABEL=install"
 
 # Validate format of the input disk
 /sbin/sgdisk -p "${input}" | grep -q "Disk identifier (GUID)" || \
@@ -203,7 +203,7 @@ sudo chown root:root \
 rm -f "${output}"
 touch "${output}"
 sudo xorriso \
-  -as mkisofs -r -checksum_algorithm_iso sha256,sha512 -V rootfs "${mount}" \
+  -as mkisofs -r -checksum_algorithm_iso sha256,sha512 -V install "${mount}" \
   -o "${output}" -e boot/grub/eltorito.img -no-emul-boot \
   -append_partition 2 0xef "${workdir}"/eltorito.img \
   -partition_cyl_align all
