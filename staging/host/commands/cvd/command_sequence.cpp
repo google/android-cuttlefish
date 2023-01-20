@@ -78,12 +78,12 @@ Result<void> CommandSequenceExecutor::Interrupt() {
   return {};
 }
 
-Result<void> CommandSequenceExecutor::Execute(
+Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
     const std::vector<RequestWithStdio>& requests, SharedFD report) {
   std::unique_lock interrupt_lock(interrupt_mutex_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
+  CF_EXPECT(!interrupted_, "Interrupted");
+
+  std::vector<cvd::Response> responses;
   for (const auto& request : requests) {
     auto& inner_proto = request.Message();
     if (inner_proto.has_command_request()) {
@@ -99,17 +99,16 @@ Result<void> CommandSequenceExecutor::Execute(
     interrupt_lock.lock();
     handler_stack_.pop_back();
 
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
+    CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECT(response.status().code() == cvd::Status::OK,
               "Reason: \"" << response.status().message() << "\"");
 
     static const char kDoneMsg[] = "Done\n";
     CF_EXPECT(WriteAll(request.Err(), kDoneMsg) == sizeof(kDoneMsg) - 1,
               request.Err()->StrError());
+    responses.emplace_back(std::move(response));
   }
-  return {};
+  return {responses};
 }
 
 fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent() {
