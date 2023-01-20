@@ -7,6 +7,7 @@
 #
 
 import /init.environ.rc
+import /system/etc/init/mdnsd.rc
 
 # Cgroups are mounted right before early-init using list from /etc/cgroups.json
 on early-init
@@ -137,6 +138,12 @@ on post-fs-data
     # Do not place files or directories in /data/local/tmp
     mkdir /data/local 0751 root root
     mkdir /data/local/tmp 0771 shell shell
+
+on boot
+    ifup lo
+    hostname localhost
+    domainname localdomain
+    ifup eth1
 
 service tombstone_transmit /system/bin/tombstone_transmit.microdroid -cid 2 -port 2000 -remove_tombstones_after_transmitting
     user system
