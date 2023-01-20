@@ -41,7 +41,8 @@ struct ValueFlags {
 };
 
 static const BoolFlags bool_flags{
-    .selector_flags = {selector::kDisableDefaultGroupOpt},
+    .selector_flags = {selector::kDisableDefaultGroupOpt,
+                       selector::kAcquireFileLockOpt},
     .cvd_driver_flags = {"clean", "help"}};
 
 static const ValueFlags value_flags{
