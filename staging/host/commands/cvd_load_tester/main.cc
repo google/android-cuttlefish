@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 
 DEFINE_string(config_file_path, "", "config file path for default configs");
@@ -36,7 +37,7 @@ int CvdLoadParserMain(int argc, char** argv) {
     return 1;
   }
 
-  auto serialized_data = cuttlefish::ParseCvdConfigs(*json_configs);
+  auto serialized_data = cuttlefish::ParseLaunchCvdConfigs(*json_configs);
   if (!serialized_data.ok()) {
     LOG(INFO) << "parsing json configs failed";
     return 1;
