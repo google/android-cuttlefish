@@ -74,6 +74,11 @@ PRODUCT_PACKAGES += \
     toolbox \
     toybox \
 
+# Test Binder RPC services
+PRODUCT_PACKAGES += \
+    server_minidroid \
+    client_minidroid \
+
 # Additional packages
 PRODUCT_PACKAGES += \
     com.android.runtime \
