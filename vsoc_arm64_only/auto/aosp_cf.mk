@@ -43,6 +43,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 #
 $(call inherit-product, device/google/cuttlefish/shared/auto/device_vendor.mk)
 
+# TODO(b/205788876) remove this when openwrt has an image for arm.
+PRODUCT_ENFORCE_MAC80211_HWSIM := false
+
 #
 # Special settings for the target
 #
