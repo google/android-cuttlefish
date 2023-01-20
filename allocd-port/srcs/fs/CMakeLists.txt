@@ -16,5 +16,16 @@
 
 cmake_minimum_required(VERSION 3.18)
 project(allocd_separation)
-add_subdirectory(fs)
-add_subdirectory(test)
+
+add_library(
+  cuttlefish_fs STATIC
+  epoll.cpp
+  shared_buf.cpp
+  shared_fd.cpp
+  shared_fd_stream.cpp
+  )
+
+install(TARGETS cuttlefish_fs
+  ARCHIVE DESTINATION ${PROJECT_LIBRARY_DIR})
+
+
