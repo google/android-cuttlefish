@@ -117,6 +117,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     group_creation_info =
         CF_EXPECT(GetGroupCreationInfo(subcmd, subcmd_args, envs, request));
     CF_EXPECT(UpdateInstanceDatabase(uid, *group_creation_info));
+    response = CF_EXPECT(
+        FillOutNewInstanceInfo(std::move(response), *group_creation_info));
   }
 
   Command command =
@@ -124,13 +126,21 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
           ? CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request))
           : CF_EXPECT(
                 ConstructCvdNonHelpCommand(bin, *group_creation_info, request));
-
+  if (!is_help) {
+    CF_EXPECT(
+        group_creation_info != std::nullopt,
+        "group_creation_info should be nullopt only when --help is given.");
+  }
   const bool should_wait =
       (request.Message().command_request().wait_behavior() !=
        cvd::WAIT_BEHAVIOR_START);
   FireCommand(std::move(command), should_wait);
   if (!should_wait) {
     response.mutable_status()->set_code(cvd::Status::OK);
+    if (!is_help) {
+      response = CF_EXPECT(
+          FillOutNewInstanceInfo(std::move(response), *group_creation_info));
+    }
     return response;
   }
   interrupt_lock.unlock();
@@ -141,7 +151,14 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
     }
   }
-  return ResponseFromSiginfo(infop);
+  auto final_response = ResponseFromSiginfo(infop);
+  if (is_help || !final_response.has_status() ||
+      final_response.status().code() != cvd::Status::OK) {
+    return final_response;
+  }
+  // group_creation_info is nullopt only if is_help is false
+  return FillOutNewInstanceInfo(std::move(final_response),
+                                *group_creation_info);
 }
 
 Result<void> CvdStartCommandHandler::Interrupt() {
@@ -149,6 +166,23 @@ Result<void> CvdStartCommandHandler::Interrupt() {
   interrupted_ = true;
   CF_EXPECT(subprocess_waiter_.Interrupt());
   return {};
+}
+
+Result<cvd::Response> CvdStartCommandHandler::FillOutNewInstanceInfo(
+    cvd::Response&& response,
+    const selector::GroupCreationInfo& group_creation_info) {
+  auto new_response = std::move(response);
+  auto& command_response = *(new_response.mutable_command_response());
+  auto& instance_group_info =
+      *(CF_EXPECT(command_response.mutable_instance_group_info()));
+  instance_group_info.set_group_name(group_creation_info.group_name);
+  instance_group_info.add_home_directories(group_creation_info.home);
+  for (const auto& per_instance_info : group_creation_info.instances) {
+    auto* new_entry = CF_EXPECT(instance_group_info.add_instances());
+    new_entry->set_name(per_instance_info.per_instance_name_);
+    new_entry->set_instance_id(per_instance_info.instance_id_);
+  }
+  return new_response;
 }
 
 Result<void> CvdStartCommandHandler::UpdateInstanceDatabase(
