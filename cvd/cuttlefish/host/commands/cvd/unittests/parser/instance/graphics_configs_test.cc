@@ -15,7 +15,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "host/commands/cvd/parser/load_configs_parser.h"
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
@@ -41,7 +41,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
@@ -72,7 +72,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
@@ -113,7 +113,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";
@@ -166,7 +166,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseCvdConfigs(json_configs);
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, expected_string))
       << "extra_bootconfig_args flag is missing or wrongly formatted";

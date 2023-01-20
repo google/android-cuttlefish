@@ -15,18 +15,11 @@
  */
 
 #pragma once
-
-#include <string>
-#include <vector>
-
 #include <json/json.h>
-
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseFetchCvdConfigs(
-    Json::Value& root, const std::string& target_directory,
-    const std::vector<std::string>& target_subdirectories);
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
