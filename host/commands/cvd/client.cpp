@@ -187,7 +187,7 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
   return {};
 }
 
-Result<void> CvdClient::HandleCommand(
+Result<cvd::Response> CvdClient::HandleCommand(
     const std::vector<std::string>& args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args,
@@ -208,7 +208,7 @@ Result<void> CvdClient::HandleCommand(
   CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
   CF_EXPECT(response.has_command_response(),
             "HandleCommand call missing CommandResponse.");
-  return {};
+  return {response};
 }
 
 Result<void> CvdClient::SetServer(const SharedFD& server) {
