@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <binder_rpc_unstable.hpp>
-
 #include <aidl/com/android/minidroid/testservice/BnTestService.h>
+#include <minidroid_sd.h>
+
+#include <stdio.h>
 #include <string>
 
 namespace {
@@ -42,11 +42,8 @@ void start_test_service() {
   };
   auto testService = ndk::SharedRefBase::make<TestService>();
 
-  ARpcServer* server = ARpcServer_newVsock(testService->asBinder().get(), 2,
-                                           testService->SERVICE_PORT);
-
-  printf("Calling join on server!\n");
-  ARpcServer_join(server);
+  bi::sd::setupRpcServer(testService->asBinder().get(),
+                         testService->SERVICE_PORT);
 }
 }  // namespace
 
