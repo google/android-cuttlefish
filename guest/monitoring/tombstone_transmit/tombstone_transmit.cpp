@@ -144,6 +144,10 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "tombstone watcher successfully initialized";
 
+#ifdef MICRODROID
+  property_set("tombstone_transmit.init_done", "true");
+#endif
+
   while (true) {
     std::vector<std::string> ts_paths =
         get_next_tombstones_path_blocking(file_create_notification_handle);
