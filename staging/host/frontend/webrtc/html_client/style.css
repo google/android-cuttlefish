@@ -273,6 +273,7 @@ body {
   /* Items inside this use a column Flexbox.*/
   display: flex;
   flex-direction: column;
+  padding: 1px;
 }
 #control-panel-custom-buttons {
   display: none;
@@ -283,7 +284,7 @@ body {
 }
 
 .control-panel-column button {
-  margin: 0px 0px 5px 0px;
+  margin: 0px 1px 5px 1px;
   height: 50px;
   font-size: 32px;
 
@@ -308,6 +309,7 @@ body {
 }
 
 .control-panel-column button:active {
+  margin: 0px 0px 5px 0px;
   border: solid 1px var(--button-pressed-border);
   background-color: var(--button-pressed-bg);
 }
