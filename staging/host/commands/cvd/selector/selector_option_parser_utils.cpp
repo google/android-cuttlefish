@@ -18,27 +18,8 @@
 
 #include <android-base/strings.h>
 
-#include "host/commands/cvd/selector/instance_database_utils.h"
-
 namespace cuttlefish {
 namespace selector {
-
-Result<void> VerifyNameOptions(const VerifyNameOptionsParam& param) {
-  const std::optional<std::string>& device_name = param.device_name;
-  const std::optional<std::string>& group_name = param.group_name;
-  const std::optional<std::string>& per_instance_name = param.per_instance_name;
-  if (device_name) {
-    CF_EXPECT(!group_name && !per_instance_name);
-  }
-  return {};
-}
-
-Result<DeviceName> SplitDeviceName(const std::string& device_name) {
-  auto group_and_instance_names = CF_EXPECT(BreakDeviceName(device_name));
-  CF_EXPECT(IsValidGroupName(group_and_instance_names.group_name));
-  CF_EXPECT(IsValidInstanceName(group_and_instance_names.per_instance_name));
-  return {group_and_instance_names};
-}
 
 Result<std::vector<std::string>> SeparateButWithNoEmptyToken(
     const std::string& input, const std::string& delimiter) {
