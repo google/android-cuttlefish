@@ -21,8 +21,8 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "cvd_server.pb.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/libs/config/inject.h"
 
 namespace cuttlefish {
