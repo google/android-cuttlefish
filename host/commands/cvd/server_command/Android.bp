@@ -22,6 +22,7 @@ cc_library_host_static {
     srcs: [
         "utils.cpp",
         "components.cpp",
+        "fetch.cpp",
         "help.cpp",
         "restart.cpp",
         "shutdown.cpp",

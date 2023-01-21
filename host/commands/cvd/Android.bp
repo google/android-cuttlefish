@@ -100,7 +100,6 @@ cc_library_host_static {
         "server.cc",
         "server_client.cpp",
         "server_command_generic_impl.cpp",
-        "server_command_fetch_impl.cpp",
         "server_command_fleet_impl.cpp",
         "server_command_start_impl.cpp",
         "types.cpp",
