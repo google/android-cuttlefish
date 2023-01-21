@@ -262,7 +262,7 @@ Result<bool> StartSelectorParser::CalcAcquireFileLock() {
   std::optional<bool> must_acquire_file_lock_flag;
   CF_EXPECT(FilterSelectorFlag(selector_args_, kAcquireFileLockOpt,
                                must_acquire_file_lock_flag));
-  return !must_acquire_file_lock_flag || !must_acquire_file_lock_flag.value();
+  return !must_acquire_file_lock_flag || must_acquire_file_lock_flag.value();
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
