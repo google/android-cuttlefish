@@ -25,6 +25,7 @@ cc_library_host_static {
         "help.cpp",
         "restart.cpp",
         "shutdown.cpp",
+        "subprocess_waiter.cpp",
         "version.cpp",
     ],
     defaults: ["cvd_lib_defaults"],
