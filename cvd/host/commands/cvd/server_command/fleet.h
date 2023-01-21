@@ -19,9 +19,11 @@
 #include <fruit/fruit.h>
 
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<InstanceManager>> cvdFleetCommandComponent();
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdFleetCommandComponent();
 
 }  // namespace cuttlefish

@@ -20,9 +20,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -109,7 +107,8 @@ Result<void> CvdFetchCommandHandler::Interrupt() {
   return {};
 }
 
-fruit::Component<fruit::Required<InstanceManager>> cvdFetchCommandComponent() {
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdFetchCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdFetchCommandHandler>();
 }

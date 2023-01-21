@@ -27,10 +27,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -138,7 +135,8 @@ Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
   return status;
 }
 
-fruit::Component<fruit::Required<InstanceManager>> cvdFleetCommandComponent() {
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdFleetCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdFleetCommandHandler>();
 }
