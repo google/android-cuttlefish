@@ -90,7 +90,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     if (help) {
       std::stringstream help_msg_stream;
-      help_msg_stream << "Usage: cvd " << kLoadSubCmd;
+      help_msg_stream << "Usage: cvd " << kLoadSubCmd << std::endl;
       const auto help_msg = help_msg_stream.str();
       CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
       return {};
@@ -111,8 +111,8 @@ class LoadConfigsCommand : public CvdServerHandler {
         request.Message().command_request().working_directory());
     *launch_phone.mutable_env() = request.Message().command_request().env();
 
-    /* cvd load will always crate instances in deamon mode (to be independent of
-     terminal) and will enable reporting automatically(to run automatically
+    /* cvd load will always create instances in deamon mode (to be independent
+     of terminal) and will enable reporting automatically (to run automatically
      without question during launch)
      */
     launch_phone.add_args("cvd");
