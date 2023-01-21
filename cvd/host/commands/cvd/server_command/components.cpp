@@ -17,8 +17,8 @@
 #include "host/commands/cvd/server_command/components.h"
 
 #include "host/commands/cvd/server_command/fetch.h"
+#include "host/commands/cvd/server_command/fleet.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command_fleet_impl.h"
 #include "host/commands/cvd/server_command_generic_impl.h"
 #include "host/commands/cvd/server_command_start_impl.h"
 
@@ -28,7 +28,7 @@ fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdCommandHandler>()
       .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdStartCommandHandler>()
-      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdFleetCommandHandler>()
+      .install(cvdFleetCommandComponent)
       .install(cvdFetchCommandComponent);
 }
 
