@@ -47,7 +47,6 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
-#include "host/commands/cvd/help_command.h"
 #include "host/commands/cvd/load_configs.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server_command/subcmd.h"
