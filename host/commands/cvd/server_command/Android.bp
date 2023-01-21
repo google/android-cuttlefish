@@ -22,6 +22,9 @@ cc_library_host_static {
     srcs: [
         "utils.cpp",
         "components.cpp",
+        "restart.cpp",
+        "shutdown.cpp",
+        "version.cpp",
     ],
     defaults: ["cvd_lib_defaults"],
 }
