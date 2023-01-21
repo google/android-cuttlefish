@@ -37,6 +37,8 @@ class CommandSequenceExecutor : public LateInjected {
   Result<std::vector<cvd::Response>> Execute(
       const std::vector<RequestWithStdio>&, SharedFD report);
 
+  std::vector<std::string> CmdList() const;
+
  private:
   std::vector<CvdServerHandler*> server_handlers_;
   std::vector<CvdServerHandler*> handler_stack_;
