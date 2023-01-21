@@ -16,11 +16,16 @@
 
 #pragma once
 
+#include <fruit/fruit.h>
+
+#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
 #include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
+
+fruit::Component<fruit::Required<CommandSequenceExecutor>> CvdHelpComponent();
 
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent();
 
