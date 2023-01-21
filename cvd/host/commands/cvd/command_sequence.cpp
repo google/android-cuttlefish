@@ -20,6 +20,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace {
@@ -51,8 +52,20 @@ std::string FormattedCommand(const cvd::CommandRequest command) {
   for (const auto& [name, val] : command.env()) {
     effective_command << BashEscape(name) << "=" << BashEscape(val) << " ";
   }
-  for (const auto& argument : command.args()) {
-    effective_command << BashEscape(argument) << " ";
+  auto args = cvd_common::ConvertToArgs(command.args());
+  auto selector_args =
+      cvd_common::ConvertToArgs(command.selector_opts().args());
+  if (args.empty()) {
+    return effective_command.str();
+  }
+  const auto& cmd = args.front();
+  cvd_common::Args cmd_args{args.begin() + 1, args.end()};
+  effective_command << BashEscape(cmd) << " ";
+  for (const auto& selector_arg : selector_args) {
+    effective_command << BashEscape(selector_arg) << " ";
+  }
+  for (const auto& cmd_arg : cmd_args) {
+    effective_command << BashEscape(cmd_arg) << " ";
   }
   effective_command.seekp(-1, effective_command.cur);
   effective_command << "`\n";  // Overwrite last space
@@ -109,18 +122,6 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
     responses.emplace_back(std::move(response));
   }
   return {responses};
-}
-
-std::vector<std::string> CommandSequenceExecutor::CmdList() const {
-  std::unordered_set<std::string> subcmds;
-  for (const auto& handler : server_handlers_) {
-    auto&& cmds_list = handler->CmdList();
-    for (const auto& cmd : cmds_list) {
-      subcmds.insert(cmd);
-    }
-  }
-  // duplication removed
-  return std::vector<std::string>{subcmds.begin(), subcmds.end()};
 }
 
 fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent() {
