@@ -335,7 +335,7 @@ class ConvertAcloudCreateCommand {
       }
     }
     start_command.mutable_selector_opts()->add_args(
-        std::string("--") + selector::kAcquireFileLockOpt + "=no");
+        std::string("--") + selector::kAcquireFileLockOpt + "=false");
     static constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
     auto& start_env = *start_command.mutable_env();
     if (local_image) {
