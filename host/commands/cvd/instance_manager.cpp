@@ -87,8 +87,22 @@ Result<void> InstanceManager::SetInstanceGroup(
       instance_db.AddInstanceGroup(group_name, home_dir, host_artifacts_path));
 
   for (const auto& instance : per_instance_info) {
-    CF_EXPECT(instance_db.AddInstance(new_group.Get(), instance.instance_id_,
-                                      instance.per_instance_name_));
+    auto result = instance_db.AddInstance(
+        new_group.Get(), instance.instance_id_, instance.per_instance_name_);
+    if (!result.ok()) {
+      /*
+       * The way InstanceManager uses the database is that it adds an empty
+       * group, gets an handle, and add instances to it. Thus, failing to adding
+       * an instance to the group does not always mean that the instance group
+       * addition fails. It is up to the caller. In this case, however, failing
+       * to add an instance to a new group means failing to create an instance
+       * group itself. Thus, we should remove the new instance group from the
+       * database.
+       *
+       */
+      instance_db.RemoveInstanceGroup(new_group.Get());
+      CF_EXPECT(result.ok(), result.error().Trace());
+    }
   }
   return {};
 }
