@@ -21,6 +21,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/server_command_impl.h"
 #include "host/libs/config/cuttlefish_config.h"
 

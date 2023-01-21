@@ -20,6 +20,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/inject.h"
 

@@ -25,6 +25,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 

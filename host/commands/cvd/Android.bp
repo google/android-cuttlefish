@@ -100,7 +100,6 @@ cc_library_host_static {
         "logger.cpp",
         "server.cc",
         "server_client.cpp",
-        "server_command.cpp",
         "server_command_generic_impl.cpp",
         "server_command_fetch_impl.cpp",
         "server_command_fleet_impl.cpp",
@@ -122,6 +121,7 @@ cc_defaults {
         "libcvd_parser",
         "libcvd_selector",
         "libcvd_server_client",
+        "libcvd_sub_commands",
         "libcvd_fetch",
     ],
     target: {

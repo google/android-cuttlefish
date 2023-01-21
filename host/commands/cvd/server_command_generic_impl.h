@@ -25,7 +25,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command_impl.h"
 #include "host/commands/cvd/server_command_subprocess_waiter.h"
 #include "host/commands/cvd/types.h"
