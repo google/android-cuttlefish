@@ -50,6 +50,7 @@
 #include "host/commands/cvd/help_command.h"
 #include "host/commands/cvd/load_configs.h"
 #include "host/commands/cvd/logger.h"
+#include "host/commands/cvd/server_command/subcmd.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
