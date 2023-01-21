@@ -111,6 +111,18 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
   return {responses};
 }
 
+std::vector<std::string> CommandSequenceExecutor::CmdList() const {
+  std::unordered_set<std::string> subcmds;
+  for (const auto& handler : server_handlers_) {
+    auto&& cmds_list = handler->CmdList();
+    for (const auto& cmd : cmds_list) {
+      subcmds.insert(cmd);
+    }
+  }
+  // duplication removed
+  return std::vector<std::string>{subcmds.begin(), subcmds.end()};
+}
+
 fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent() {
   return fruit::createComponent()
       .addMultibinding<LateInjected, CommandSequenceExecutor>();
