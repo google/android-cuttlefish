@@ -41,6 +41,7 @@ cc_test_host {
     srcs: [
         "test_common.cc",
         "flags_parser_test.cc",
+        "configs_inheritance_test.cc",
         "instance/vm_configs_test.cc",
         "instance/boot_configs_test.cc",
         "instance/metrics_configs_test.cc",
