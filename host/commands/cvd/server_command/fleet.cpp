@@ -14,18 +14,54 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command_fleet_impl.h"
+#include "host/commands/cvd/server_command/fleet.h"
+
+#include <sys/types.h>
+
+#include <mutex>
 
 #include <android-base/file.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-namespace cvd_cmd_impl {
+
+class CvdFleetCommandHandler : public CvdServerHandler {
+ public:
+  INJECT(CvdFleetCommandHandler(InstanceManager& instance_manager,
+                                SubprocessWaiter& subprocess_waiter))
+      : instance_manager_(instance_manager),
+        subprocess_waiter_(subprocess_waiter) {}
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<void> Interrupt() override;
+  cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
+
+ private:
+  InstanceManager& instance_manager_;
+  SubprocessWaiter& subprocess_waiter_;
+  std::mutex interruptible_;
+  bool interrupted_ = false;
+
+  static constexpr char kFleetSubcmd[] = "fleet";
+  Result<cvd::Status> HandleCvdFleet(const uid_t uid, const SharedFD& out,
+                                     const SharedFD& err,
+                                     const cvd_common::Args& cmd_args) const;
+  Result<cvd::Status> CvdFleetHelp(const SharedFD& out) const;
+  bool IsHelp(const cvd_common::Args& cmd_args) const;
+};
 
 Result<bool> CvdFleetCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -102,5 +138,9 @@ Result<cvd::Status> CvdFleetCommandHandler::CvdFleetHelp(
   return status;
 }
 
-}  // namespace cvd_cmd_impl
+fruit::Component<fruit::Required<InstanceManager>> cvdFleetCommandComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdFleetCommandHandler>();
+}
+
 }  // namespace cuttlefish
