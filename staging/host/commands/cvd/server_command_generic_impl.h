@@ -25,9 +25,9 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command_impl.h"
-#include "host/commands/cvd/server_command_subprocess_waiter.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -46,6 +46,18 @@ class CvdCommandHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override;
 
  private:
+  struct CommandInvocationInfo {
+    std::string command;
+    std::string bin;
+    std::string home;
+    std::string host_artifacts_path;
+    uid_t uid;
+    std::vector<std::string> args;
+    cvd_common::Envs envs;
+  };
+  std::optional<CommandInvocationInfo> ExtractInfo(
+      const RequestWithStdio& request) const;
+
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
