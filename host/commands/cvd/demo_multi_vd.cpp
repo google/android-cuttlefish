@@ -30,8 +30,8 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
