@@ -31,6 +31,7 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {

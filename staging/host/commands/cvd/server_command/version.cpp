@@ -21,6 +21,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/server_command/components.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"

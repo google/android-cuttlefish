@@ -20,6 +20,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/server_command/utils.h"
 
 namespace cuttlefish {
 namespace cvd_cmd_impl {
