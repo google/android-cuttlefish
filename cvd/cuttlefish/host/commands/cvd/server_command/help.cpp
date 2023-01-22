@@ -20,7 +20,9 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
+#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
@@ -55,6 +57,7 @@ class CvdHelpHandler : public CvdServerHandler {
     auto invocation = ParseInvocation(request.Message());
     return (invocation.command == "help");
   }
+
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interruptible_);
     if (interrupted_) {
@@ -66,7 +69,15 @@ class CvdHelpHandler : public CvdServerHandler {
     response.mutable_status()->set_code(cvd::Status::OK);
 
     CF_EXPECT(CanHandle(request));
-    if (ParseInvocation(request.Message()).arguments.empty()) {
+
+    auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+    const auto supported_subcmd_list = executor_.CmdList();
+    /*
+     * cvd help, cvd help invalid_token, cvd help help
+     */
+    if (subcmd_args.empty() ||
+        !Contains(supported_subcmd_list, subcmd_args.front()) ||
+        subcmd_args.front() == "help") {
       WriteAll(request.Out(), kHelpMessage);
       return response;
     }
