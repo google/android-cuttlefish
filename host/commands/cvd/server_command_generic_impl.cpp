@@ -23,7 +23,9 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 
@@ -63,7 +65,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
     return response;
   }
 
-  auto invocation_info_opt = ExtractInfo(command_to_binary_map_, request);
+  auto invocation_info_opt = ExtractInfo(request);
   CF_EXPECT(invocation_info_opt != std::nullopt);
   auto invocation_info = std::move(*invocation_info_opt);
 
@@ -130,6 +132,42 @@ std::vector<std::string> CvdCommandHandler::CmdList() const {
     subcmd_list.emplace_back(cmd);
   }
   return subcmd_list;
+}
+
+std::optional<CvdCommandHandler::CommandInvocationInfo>
+CvdCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
+  auto result_opt = request.Credentials();
+  if (!result_opt) {
+    return std::nullopt;
+  }
+  const uid_t uid = result_opt->uid;
+
+  auto [command, args] = ParseInvocation(request.Message());
+  if (!Contains(command_to_binary_map_, command)) {
+    return std::nullopt;
+  }
+  const auto& bin = command_to_binary_map_.at(command);
+  cvd_common::Envs envs =
+      cvd_common::ConvertToEnvs(request.Message().command_request().env());
+  std::string home =
+      Contains(envs, "HOME") ? envs.at("HOME") : StringFromEnv("HOME", ".");
+  if (!Contains(envs, "ANDROID_HOST_OUT") ||
+      !DirectoryExists(envs.at("ANDROID_HOST_OUT"))) {
+    return std::nullopt;
+  }
+  const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
+  // TODO(kwstephenkim): eat --base_instance_num and --num_instances
+  // or --instance_nums, and override/delete kCuttlefishInstanceEnvVarName
+  // in envs
+  CommandInvocationInfo result = {.command = command,
+                                  .bin = bin,
+                                  .home = home,
+                                  .host_artifacts_path = host_artifacts_path,
+                                  .uid = uid,
+                                  .args = args,
+                                  .envs = envs};
+  result.envs["HOME"] = home;
+  return {result};
 }
 
 const std::map<std::string, std::string>

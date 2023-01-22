@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-#include <fruit/fruit.h>
+#pragma once
 
-#include "host/commands/cvd/command_sequence.h"
+#include <string>
+#include <vector>
+
+#include "cvd_server.pb.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>> CvdHelpComponent();
+struct CommandInvocation {
+  std::string command;
+  std::vector<std::string> arguments;
+};
 
-}
+CommandInvocation ParseInvocation(const cvd::Request& request);
+
+}  // namespace cuttlefish
