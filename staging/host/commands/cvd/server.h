@@ -29,29 +29,17 @@
 
 #include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/logger.h"
-#include "host/commands/cvd/server_client.h"
-#include "host/commands/cvd/types.h"
+// including "server_command/subcmd.h" causes cyclic dependency
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
-
-class CvdServerHandler {
- public:
-  virtual ~CvdServerHandler() = default;
-
-  virtual Result<bool> CanHandle(const RequestWithStdio&) const = 0;
-  virtual Result<cvd::Response> Handle(const RequestWithStdio&) = 0;
-  virtual Result<void> Interrupt() = 0;
-  // returns the list of subcommand it can handle
-  virtual cvd_common::Args CmdList() const = 0;
-};
 
 class CvdServer {
  public:
@@ -96,20 +84,6 @@ class CvdServer {
 Result<CvdServerHandler*> RequestHandler(
     const RequestWithStdio& request,
     const std::vector<CvdServerHandler*>& handlers);
-
-fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent();
-fruit::Component<fruit::Required<BuildApi, CvdServer, InstanceManager>>
-CvdRestartComponent();
-fruit::Component<fruit::Required<CvdServer, InstanceManager>>
-cvdShutdownComponent();
-fruit::Component<> cvdVersionComponent();
-
-struct CommandInvocation {
-  std::string command;
-  std::vector<std::string> arguments;
-};
-
-CommandInvocation ParseInvocation(const cvd::Request& request);
 
 Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client);
 

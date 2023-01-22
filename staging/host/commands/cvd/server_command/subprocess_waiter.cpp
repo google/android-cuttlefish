@@ -14,30 +14,22 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command_subprocess_waiter.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
-namespace cvd_cmd_impl {
 
 Result<void> SubprocessWaiter::Setup(Subprocess subprocess) {
   std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
-  if (subprocess_) {
-    return CF_ERR("Already running");
-  }
+  CF_EXPECT(!interrupted_, "Interrupted");
+  CF_EXPECT(!subprocess_, "Already running");
 
   subprocess_ = std::move(subprocess);
-
   return {};
 }
 
 Result<siginfo_t> SubprocessWaiter::Wait() {
   std::unique_lock interrupt_lock(interruptible_);
-  if (interrupted_) {
-    return CF_ERR("Interrupted");
-  }
+  CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(subprocess_.has_value());
 
   siginfo_t infop{};
@@ -79,5 +71,4 @@ Result<void> SubprocessWaiter::Interrupt() {
   return {};
 }
 
-}  // namespace cvd_cmd_impl
 }  // namespace cuttlefish

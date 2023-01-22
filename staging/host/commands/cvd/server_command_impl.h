@@ -33,15 +33,6 @@ namespace cuttlefish {
 namespace cvd_cmd_impl {
 
 // methods shared by CvdCommandHandler and CvdStartCommandHandler
-struct CommandInvocationInfo {
-  std::string command;
-  std::string bin;
-  std::string home;
-  std::string host_artifacts_path;
-  uid_t uid;
-  std::vector<std::string> args;
-  cvd_common::Envs envs;
-};
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
@@ -50,10 +41,6 @@ struct PreconditionVerification {
   std::string error_message;
 };
 PreconditionVerification VerifyPrecondition(const RequestWithStdio& request);
-
-std::optional<CommandInvocationInfo> ExtractInfo(
-    const std::map<std::string, std::string>& command_to_binary_map,
-    const RequestWithStdio& request);
 
 struct ConstructCommandParam {
   const std::string& bin_path;

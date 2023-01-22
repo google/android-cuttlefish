@@ -25,7 +25,6 @@
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
-namespace cvd_cmd_impl {
 
 class SubprocessWaiter {
  public:
@@ -41,5 +40,4 @@ class SubprocessWaiter {
   bool interrupted_ = false;
 };
 
-}  // namespace cvd_cmd_impl
 }  // namespace cuttlefish
