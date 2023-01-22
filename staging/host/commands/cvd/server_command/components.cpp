@@ -14,47 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/components.h"
 
-#include <set>
-#include <string>
-#include <vector>
-
-#include <fruit/fruit.h>
-
-#include "cvd_server.pb.h"
-
-#include "common/libs/utils/files.h"
-#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command_fetch_impl.h"
 #include "host/commands/cvd/server_command_fleet_impl.h"
 #include "host/commands/cvd/server_command_generic_impl.h"
 #include "host/commands/cvd/server_command_start_impl.h"
 
 namespace cuttlefish {
-
-CommandInvocation ParseInvocation(const cvd::Request& request) {
-  CommandInvocation invocation;
-  if (request.contents_case() != cvd::Request::ContentsCase::kCommandRequest) {
-    return invocation;
-  }
-  if (request.command_request().args_size() == 0) {
-    return invocation;
-  }
-  for (const std::string& arg : request.command_request().args()) {
-    invocation.arguments.push_back(arg);
-  }
-  invocation.arguments[0] = cpp_basename(invocation.arguments[0]);
-  if (invocation.arguments[0] == "cvd") {
-    invocation.command = invocation.arguments[1];
-    invocation.arguments.erase(invocation.arguments.begin());
-    invocation.arguments.erase(invocation.arguments.begin());
-  } else {
-    invocation.command = invocation.arguments[0];
-    invocation.arguments.erase(invocation.arguments.begin());
-  }
-  return invocation;
-}
 
 fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent() {
   return fruit::createComponent()

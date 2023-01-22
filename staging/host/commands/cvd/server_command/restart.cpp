@@ -27,6 +27,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/components.h"
+#include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/web/build_api.h"
 
