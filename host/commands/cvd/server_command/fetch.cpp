@@ -14,23 +14,44 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command_fetch_impl.h"
+#include "host/commands/cvd/server_command/fetch.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/result.h"
+#include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace cvd_cmd_impl {
 
-Result<bool> CvdFetchHandler::CanHandle(const RequestWithStdio& request) const {
+class CvdFetchCommandHandler : public CvdServerHandler {
+ public:
+  INJECT(CvdFetchCommandHandler(SubprocessWaiter& subprocess_waiter))
+      : subprocess_waiter_(subprocess_waiter),
+        fetch_cmd_list_{std::vector<std::string>{"fetch", "fetch_cvd"}} {}
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const override;
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<void> Interrupt() override;
+  cvd_common::Args CmdList() const override { return fetch_cmd_list_; }
+
+ private:
+  SubprocessWaiter& subprocess_waiter_;
+  std::mutex interruptible_;
+  bool interrupted_ = false;
+  std::vector<std::string> fetch_cmd_list_;
+};
+
+Result<bool> CvdFetchCommandHandler::CanHandle(
+    const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
   return Contains(fetch_cmd_list_, invocation.command);
 }
 
-Result<cvd::Response> CvdFetchHandler::Handle(const RequestWithStdio& request) {
+Result<cvd::Response> CvdFetchCommandHandler::Handle(
+    const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
   if (interrupted_) {
     return CF_ERR("Interrupted");
@@ -79,12 +100,17 @@ Result<cvd::Response> CvdFetchHandler::Handle(const RequestWithStdio& request) {
   return ResponseFromSiginfo(infop);
 }
 
-Result<void> CvdFetchHandler::Interrupt() {
+Result<void> CvdFetchCommandHandler::Interrupt() {
   std::scoped_lock interrupt_lock(interruptible_);
   interrupted_ = true;
   CF_EXPECT(subprocess_waiter_.Interrupt());
   return {};
 }
 
-}  // namespace cvd_cmd_impl
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdFetchCommandComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdFetchCommandHandler>();
+}
+
 }  // namespace cuttlefish
