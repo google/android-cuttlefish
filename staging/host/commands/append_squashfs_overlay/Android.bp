@@ -25,3 +25,13 @@ rust_binary_host {
         "libclap",
     ],
 }
+
+rust_test_host {
+    name: "append_squashfs_overlay.test",
+    crate_name: "append_squashfs_overlay",
+    srcs: ["src/main.rs"],
+    rustlibs: [
+        "libclap",
+    ],
+    test_suites: ["general-tests"],
+}
