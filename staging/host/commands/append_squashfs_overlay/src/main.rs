@@ -71,8 +71,8 @@ fn merge_fs(src: &Path, overlay: &Path, dest: &Path, overwrite: bool) -> Result<
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let matches = Command::new("append_squashfs_overlay")
+fn clap_command() -> Command {
+    Command::new("append_squashfs_overlay")
         .arg(Arg::new("src").value_parser(ValueParser::path_buf()).required(true))
         .arg(Arg::new("overlay").value_parser(ValueParser::path_buf()).required(true))
         .arg(Arg::new("dest").value_parser(ValueParser::path_buf()).required(true))
@@ -83,7 +83,10 @@ fn main() -> Result<()> {
                 .action(ArgAction::SetTrue)
                 .help("whether the tool overwrite dest or not"),
         )
-        .get_matches();
+}
+
+fn main() -> Result<()> {
+    let matches = clap_command().get_matches();
 
     let src = matches.get_one::<PathBuf>("src").unwrap().as_ref();
     let overlay = matches.get_one::<PathBuf>("overlay").unwrap().as_ref();
@@ -92,4 +95,14 @@ fn main() -> Result<()> {
 
     merge_fs(src, overlay, dest, overwrite)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_args() {
+        clap_command().debug_assert();
+    }
 }
