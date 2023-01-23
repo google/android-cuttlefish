@@ -33,6 +33,7 @@
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/instance_lock.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -302,6 +303,12 @@ class SerialLaunchCommand : public CvdServerHandler {
       (*launch_cmd.mutable_env())["ANDROID_HOST_OUT"] = device.home_dir;
       (*launch_cmd.mutable_env())["ANDROID_PRODUCT_OUT"] = device.home_dir;
       launch_cmd.add_args("cvd");
+      /* TODO(kwstephenkim): remove kAcquireFileLockOpt flag when
+       * SerialLaunchCommand is re-implemented so that it does not have to
+       * acquire a file lock.
+       */
+      launch_cmd.mutable_selector_opts()->add_args(
+          std::string("--") + selector::kAcquireFileLockOpt + "=false");
       launch_cmd.add_args("start");
       launch_cmd.add_args(
           "--undefok=daemon,base_instance_num,x_res,y_res,dpi,cpus,memory_mb,"
