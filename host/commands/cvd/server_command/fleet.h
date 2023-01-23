@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/components.h"
+#pragma once
 
-#include "host/commands/cvd/server_command/fetch.h"
-#include "host/commands/cvd/server_command/fleet.h"
-#include "host/commands/cvd/server_command/generic.h"
-#include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/start.h"
+#include <fruit/fruit.h>
+
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-cvdCommandComponent() {
-  return fruit::createComponent()
-      .install(cvdGenericCommandComponent)
-      .install(cvdStartCommandComponent)
-      .install(cvdFleetCommandComponent)
-      .install(cvdFetchCommandComponent);
-}
+cvdFleetCommandComponent();
 
 }  // namespace cuttlefish
