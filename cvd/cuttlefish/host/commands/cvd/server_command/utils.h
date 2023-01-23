@@ -16,10 +16,18 @@
 
 #pragma once
 
+#include <sys/types.h>
+
+#include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "cvd_server.pb.h"
+
+#include "common/libs/utils/subprocess.h"
+#include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -29,5 +37,46 @@ struct CommandInvocation {
 };
 
 CommandInvocation ParseInvocation(const cvd::Request& request);
+
+cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
+
+struct PreconditionVerification {
+  bool is_ok;
+  std::string error_message;
+};
+PreconditionVerification VerifyPrecondition(const RequestWithStdio& request);
+
+struct ConstructCommandParam {
+  const std::string& bin_path;
+  const std::string& home;
+  const std::vector<std::string>& args;
+  const cvd_common::Envs& envs;
+  const std::string& working_dir;
+  const std::string& command_name;
+  SharedFD in;
+  SharedFD out;
+  SharedFD err;
+};
+Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
+
+// Constructs a command for cvd whatever --help or --help-related-option
+Result<Command> ConstructCvdHelpCommand(
+    const std::string& bin_file, const cvd_common::Envs& envs,
+    const std::vector<std::string>& subcmd_args,
+    const RequestWithStdio& request);
+
+// e.g. cvd start --help, cvd stop --help
+bool IsHelpSubcmd(const std::vector<std::string>& args);
+
+/**
+ * Calculates absolute path based on the client's environment
+ *
+ * If the client sent a relative path like "bin/foo", it is relative
+ * to the client's working directory, not to the server's.
+ * Likewise, if the client sent a path that starts with ~, we should
+ * replace ~ with the client user's home, not the server user's.
+ */
+Result<std::string> ClientAbsolutePath(const std::string& path, const uid_t uid,
+                                       const std::string& client_pwd);
 
 }  // namespace cuttlefish
