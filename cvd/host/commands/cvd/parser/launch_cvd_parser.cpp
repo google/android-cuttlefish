@@ -27,6 +27,7 @@
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
+#include "host/commands/cvd/parser/launch_cvd_templates.h"
 
 namespace cuttlefish {
 
@@ -81,6 +82,7 @@ void InitCvdConfigs(Json::Value& root) {
 
 Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
+  ExtractLaunchTemplates(root);
   InitCvdConfigs(root);
   return GenerateCfFlags(root);
 }
