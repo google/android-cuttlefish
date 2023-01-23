@@ -517,8 +517,8 @@ PRODUCT_PACKAGES += \
 #
 # Thermal HAL
 #
-PRODUCT_PACKAGES += \
-    android.hardware.thermal-service.example
+LOCAL_THERMAL_HAL_PRODUCT_PACKAGE ?= android.hardware.thermal-service.example
+PRODUCT_PACKAGES += $(LOCAL_THERMAL_HAL_PRODUCT_PACKAGE)
 
 #
 # NeuralNetworks HAL
