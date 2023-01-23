@@ -23,8 +23,7 @@
 
 namespace cuttlefish {
 
-fruit::Component<
-    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
 cvdGenericCommandComponent();
 
 }  // namespace cuttlefish

@@ -16,20 +16,21 @@
 
 #include "host/commands/cvd/server_command/components.h"
 
+#include "host/commands/cvd/server_command/fetch.h"
+#include "host/commands/cvd/server_command/fleet.h"
+#include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command_fetch_impl.h"
-#include "host/commands/cvd/server_command_fleet_impl.h"
-#include "host/commands/cvd/server_command_generic_impl.h"
-#include "host/commands/cvd/server_command_start_impl.h"
+#include "host/commands/cvd/server_command/start.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<InstanceManager>> cvdCommandComponent() {
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdCommandComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdCommandHandler>()
-      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdStartCommandHandler>()
-      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdFleetCommandHandler>()
-      .addMultibinding<CvdServerHandler, cvd_cmd_impl::CvdFetchHandler>();
+      .install(cvdGenericCommandComponent)
+      .install(cvdStartCommandComponent)
+      .install(cvdFleetCommandComponent)
+      .install(cvdFetchCommandComponent);
 }
 
 }  // namespace cuttlefish
