@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command_start_impl.h"
+#include "host/commands/cvd/server_command/start.h"
 
 #include <sys/types.h>
 
 #include <cstdint>
 #include <cstdlib>
+#include <map>
+#include <mutex>
+#include <string>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -27,12 +30,56 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/result.h"
+#include "cvd_server.pb.h"
+#include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-namespace cvd_cmd_impl {
+
+class CvdStartCommandHandler : public CvdServerHandler {
+ public:
+  INJECT(CvdStartCommandHandler(InstanceManager& instance_manager,
+                                SubprocessWaiter& subprocess_waiter))
+      : instance_manager_(instance_manager),
+        subprocess_waiter_(subprocess_waiter) {}
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<void> Interrupt() override;
+  std::vector<std::string> CmdList() const override;
+
+ private:
+  Result<void> UpdateInstanceDatabase(
+      const uid_t uid, const selector::GroupCreationInfo& group_creation_info);
+  Result<void> FireCommand(Command&& command, const bool wait);
+  bool HasHelpOpts(const cvd_common::Args& args) const;
+
+  Result<Command> ConstructCvdNonHelpCommand(
+      const std::string& bin_file,
+      const selector::GroupCreationInfo& group_info,
+      const RequestWithStdio& request);
+
+  // call this only if !is_help
+  Result<selector::GroupCreationInfo> GetGroupCreationInfo(
+      const std::string& subcmd, const cvd_common::Args& subcmd_args,
+      const cvd_common::Envs& envs, const RequestWithStdio& request);
+
+  Result<cvd::Response> FillOutNewInstanceInfo(
+      cvd::Response&& response,
+      const selector::GroupCreationInfo& group_creation_info);
+
+  InstanceManager& instance_manager_;
+  SubprocessWaiter& subprocess_waiter_;
+  std::mutex interruptible_;
+  bool interrupted_ = false;
+
+  static constexpr char kStartBin[] = "cvd_internal_start";
+  static const std::map<std::string, std::string> command_to_binary_map_;
+};
 
 Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -224,5 +271,10 @@ const std::map<std::string, std::string>
         {"launch_cvd", kStartBin},
 };
 
-}  // namespace cvd_cmd_impl
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdStartCommandComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdStartCommandHandler>();
+}
+
 }  // namespace cuttlefish

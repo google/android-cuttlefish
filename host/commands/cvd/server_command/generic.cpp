@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command_generic_impl.h"
+#include "host/commands/cvd/server_command/generic.h"
 
 #include <sys/types.h>
+
+#include <mutex>
 
 #include <android-base/file.h>
 
@@ -24,28 +26,76 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
-namespace cvd_cmd_impl {
 
-Result<bool> CvdCommandHandler::CanHandle(
+class CvdGenericCommandHandler : public CvdServerHandler {
+ public:
+  INJECT(CvdGenericCommandHandler(InstanceManager& instance_manager,
+                                  SubprocessWaiter& subprocess_waiter))
+      : instance_manager_(instance_manager),
+        subprocess_waiter_(subprocess_waiter) {}
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const;
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override;
+  Result<void> Interrupt() override;
+  cvd_common::Args CmdList() const override;
+
+ private:
+  struct CommandInvocationInfo {
+    std::string command;
+    std::string bin;
+    std::string home;
+    std::string host_artifacts_path;
+    uid_t uid;
+    std::vector<std::string> args;
+    cvd_common::Envs envs;
+  };
+  std::optional<CommandInvocationInfo> ExtractInfo(
+      const RequestWithStdio& request) const;
+
+  InstanceManager& instance_manager_;
+  SubprocessWaiter& subprocess_waiter_;
+  std::mutex interruptible_;
+  bool interrupted_ = false;
+
+  static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
+  static constexpr char kDisplayBin[] = "cvd_internal_display";
+  static constexpr char kEnvBin[] = "cvd_internal_env";
+  static constexpr char kLnBin[] = "ln";
+  static constexpr char kMkdirBin[] = "mkdir";
+
+  static constexpr char kClearBin[] =
+      "clear_placeholder";  // Unused, runs CvdClear()
+
+  static const std::map<std::string, std::string> command_to_binary_map_;
+};
+
+Result<bool> CvdGenericCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
   return Contains(command_to_binary_map_, invocation.command);
 }
 
-Result<void> CvdCommandHandler::Interrupt() {
+Result<void> CvdGenericCommandHandler::Interrupt() {
   std::scoped_lock interrupt_lock(interruptible_);
   interrupted_ = true;
   CF_EXPECT(subprocess_waiter_.Interrupt());
   return {};
 }
 
-Result<cvd::Response> CvdCommandHandler::Handle(
+Result<cvd::Response> CvdGenericCommandHandler::Handle(
     const RequestWithStdio& request) {
   std::unique_lock interrupt_lock(interruptible_);
   if (interrupted_) {
@@ -125,7 +175,7 @@ Result<cvd::Response> CvdCommandHandler::Handle(
   return ResponseFromSiginfo(infop);
 }
 
-std::vector<std::string> CvdCommandHandler::CmdList() const {
+std::vector<std::string> CvdGenericCommandHandler::CmdList() const {
   std::vector<std::string> subcmd_list;
   subcmd_list.reserve(command_to_binary_map_.size());
   for (const auto& [cmd, _] : command_to_binary_map_) {
@@ -134,8 +184,8 @@ std::vector<std::string> CvdCommandHandler::CmdList() const {
   return subcmd_list;
 }
 
-std::optional<CvdCommandHandler::CommandInvocationInfo>
-CvdCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
+std::optional<CvdGenericCommandHandler::CommandInvocationInfo>
+CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
   auto result_opt = request.Credentials();
   if (!result_opt) {
     return std::nullopt;
@@ -171,7 +221,7 @@ CvdCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
 }
 
 const std::map<std::string, std::string>
-    CvdCommandHandler::command_to_binary_map_ = {
+    CvdGenericCommandHandler::command_to_binary_map_ = {
         {"host_bugreport", kHostBugreportBin},
         {"cvd_host_bugreport", kHostBugreportBin},
         {"status", kStatusBin},
@@ -185,5 +235,10 @@ const std::map<std::string, std::string>
         {"env", kEnvBin},
 };
 
-}  // namespace cvd_cmd_impl
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+cvdGenericCommandComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdGenericCommandHandler>();
+}
+
 }  // namespace cuttlefish
