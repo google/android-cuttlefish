@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/demo_multi_vd.h"
+
+#include "host/commands/cvd/server_command/serial_launch.h"
+
+#include <sys/types.h>
 
 #include <chrono>
 #include <mutex>
 #include <sstream>
 #include <string>
-
-#include <fruit/fruit.h>
+#include <vector>
 
 #include "android-base/parseint.h"
 #include "android-base/strings.h"
+
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/command_sequence.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
-#include "host/commands/cvd/server_command/serial_preset.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
+// copied from "../demo_multi_vd.cpp"
 namespace cuttlefish {
 namespace {
 
@@ -203,27 +206,27 @@ class SerialLaunchCommand : public CvdServerHandler {
     auto& device_flag = flags.emplace_back();
     device_flag.Alias({FlagAliasMode::kFlagPrefix, "--device="});
     device_flag.Alias({FlagAliasMode::kFlagConsumesFollowing, "--device"});
-    device_flag.Setter([this, time, client_uid, &devices,
-                        &request](const FlagMatch& mat) {
-      auto lock = lock_file_manager_.TryAcquireUnusedLock();
-      if (!lock.ok()) {
-        WriteAll(request.Err(), lock.error().Message());
-        return false;
-      } else if (!lock->has_value()) {
-        constexpr char kError[] = "could not acquire instance lock";
-        WriteAll(request.Err(), kError, sizeof(kError));
-        return false;
-      }
-      int num = (*lock)->Instance();
-      std::string home_dir = ParentDir(client_uid) + std::to_string(time) +
-                             "_" + std::to_string(num) + "/";
-      devices.emplace_back(Device{
-          .build = mat.value,
-          .home_dir = std::move(home_dir),
-          .ins_lock = std::move(**lock),
-      });
-      return true;
-    });
+    device_flag.Setter(
+        [this, time, client_uid, &devices, &request](const FlagMatch& mat) {
+          auto lock = lock_file_manager_.TryAcquireUnusedLock();
+          if (!lock.ok()) {
+            WriteAll(request.Err(), lock.error().Message());
+            return false;
+          } else if (!lock->has_value()) {
+            constexpr char kError[] = "could not acquire instance lock";
+            WriteAll(request.Err(), kError, sizeof(kError));
+            return false;
+          }
+          int num = (*lock)->Instance();
+          std::string home_dir = ParentDir(client_uid) + std::to_string(time) +
+                                 "_" + std::to_string(num) + "/";
+          devices.emplace_back(Device{
+              .build = mat.value,
+              .home_dir = std::move(home_dir),
+              .ins_lock = std::move(**lock),
+          });
+          return true;
+        });
 
     auto args = ParseInvocation(request.Message()).arguments;
     for (const auto& arg : args) {
@@ -400,10 +403,9 @@ class SerialLaunchCommand : public CvdServerHandler {
 };
 
 fruit::Component<fruit::Required<CommandSequenceExecutor>>
-DemoMultiVdComponent() {
+cvdSerialLaunchComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, SerialLaunchCommand>()
-      .install(cvdSerialPresetComponent);
+      .addMultibinding<CvdServerHandler, SerialLaunchCommand>();
 }
 
 }  // namespace cuttlefish
