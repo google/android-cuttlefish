@@ -146,6 +146,9 @@ create_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         ip link add name "${2}" type bridge forward_delay 0 stp_state 0
         ip link set dev "${2}" up
+
+        echo 0 > /proc/sys/net/ipv6/conf/${2}/addr_gen_mode
+        echo 1 > /proc/sys/net/ipv6/conf/${2}/autoconf
     fi
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf ${3}-%02d $i)"
