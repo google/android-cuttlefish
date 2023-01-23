@@ -195,7 +195,8 @@ endif
 #
 # Common manifest for all targets
 #
-DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
+LOCAL_DEVICE_FCM_MANIFEST_FILE ?= device/google/cuttlefish/shared/config/manifest.xml
+DEVICE_MANIFEST_FILE += $(LOCAL_DEVICE_FCM_MANIFEST_FILE)
 
 #
 # General files
