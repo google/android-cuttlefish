@@ -26,8 +26,9 @@ cc_library_host_static {
 }
 
 cc_test_host {
-    name: "cvd_server_help_test",
+    name: "cvd_server_test",
     srcs: [
+        "basic_test.cpp",
         "help_test.cpp",
     ],
     static_libs: [
