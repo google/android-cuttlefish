@@ -45,7 +45,7 @@ cc_defaults {
         "libhidlbase",
         "liblog",
         "libutils",
-        "android.hardware.health-V1-ndk",
+        "android.hardware.health-V2-ndk",
     ],
 
     defaults: ["enabled_on_p_and_later"],
