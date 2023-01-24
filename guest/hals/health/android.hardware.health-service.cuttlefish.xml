@@ -1,7 +1,7 @@
 <manifest version="1.0" type="device">
     <hal format="aidl">
         <name>android.hardware.health</name>
-        <version>1</version>
+        <version>2</version>
         <fqname>IHealth/default</fqname>
     </hal>
 </manifest>
