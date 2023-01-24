@@ -17,11 +17,31 @@
 
 #include <fruit/fruit.h>
 
+#include "host/libs/config/config_flag.h"
+#include "host/libs/config/config_fragment.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
+class FastbootConfig {
+ public:
+  virtual ~FastbootConfig() = default;
+
+  virtual bool ProxyFastboot() const = 0;
+  virtual bool SetProxyFastboot(bool) = 0;
+};
+
+class FastbootConfigFragment : public ConfigFragment {};
+class FastbootConfigFlag : public FlagFeature {};
+
+fruit::Component<FastbootConfig>
+FastbootConfigComponent();
+fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>, FastbootConfigFlag>
+FastbootConfigFlagComponent();
+fruit::Component<fruit::Required<FastbootConfig>, FastbootConfigFragment>
+FastbootConfigFragmentComponent();
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific, const FastbootConfig>>
 LaunchFastbootComponent();
 
 }  // namespace cuttlefish
