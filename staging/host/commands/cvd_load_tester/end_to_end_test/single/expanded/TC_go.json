@@ -8,9 +8,9 @@
             "graphics":{
                 "displays":[
                     {
-                        "width": 1920,
-                        "height": 1080,
-                        "dpi": 213
+                        "width": 720,
+                        "height": 1280,
+                        "dpi": 320
                     }
                 ]
 			}

@@ -3,13 +3,14 @@
     [
         {
             "vm": {
-                "memory_mb": 4096
+                "memory_mb": 2048,
+				"use_sdcard" : false
             },
             "graphics":{
                 "displays":[
                     {
-                        "width": 2560,
-                        "height": 1800,
+                        "width": 720,
+                        "height": 1280,
                         "dpi": 320
                     }
                 ]
