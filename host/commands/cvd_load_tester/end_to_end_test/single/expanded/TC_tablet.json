@@ -3,13 +3,13 @@
     [
         {
             "vm": {
-                "memory_mb": 2048
+                "memory_mb": 4096
             },
             "graphics":{
                 "displays":[
                     {
-                        "width": 720,
-                        "height": 1280,
+                        "width": 2560,
+                        "height": 1800,
                         "dpi": 320
                     }
                 ]
