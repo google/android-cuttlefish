@@ -116,6 +116,29 @@ static const char* kWearableInstanceTemplate = R""""(
 }
   )"""";
 
+// Definition of auto instance template in Json format
+static const char* kAutoInstanceTemplate = R""""(
+{
+    "vm": {
+        "memory_mb": 4069
+    },
+    "graphics":{
+        "displays":[
+            {
+                "width": 1080,
+                "height": 600,
+                "dpi": 120
+            },
+            {
+                "width": 400,
+                "height": 600,
+                "dpi": 120
+            }
+        ]
+    }
+}
+  )"""";
+
 Json::Value ExtractJsonTemplate(const Json::Value& instance,
                                 const char* template_string) {
   std::string json_text(template_string);
@@ -153,7 +176,7 @@ Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
       break;
     case ConfigTemplate::AUTO:
       // Extract auto instance configs from input template
-      // TODO: Add code to extract auto instance configs from input template
+      result = ExtractJsonTemplate(instance, kAutoInstanceTemplate);
       break;
     case ConfigTemplate::SLIM:
       // Extract slim instance configs from input template
