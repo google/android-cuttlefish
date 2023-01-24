@@ -139,6 +139,25 @@ static const char* kAutoInstanceTemplate = R""""(
 }
   )"""";
 
+// Definition of auto instance template in Json format
+static const char* kSlimInstanceTemplate = R""""(
+{
+    "vm": {
+        "memory_mb": 2048,
+        "use_sdcard" : false
+    },
+    "graphics":{
+        "displays":[
+            {
+                "width": 720,
+                "height": 1280,
+                "dpi": 320
+            }
+        ]
+    }
+}
+  )"""";
+
 Json::Value ExtractJsonTemplate(const Json::Value& instance,
                                 const char* template_string) {
   std::string json_text(template_string);
@@ -180,7 +199,7 @@ Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
       break;
     case ConfigTemplate::SLIM:
       // Extract slim instance configs from input template
-      // TODO: Add code to extract slim instance configs from input template
+      result = ExtractJsonTemplate(instance, kSlimInstanceTemplate);
       break;
     case ConfigTemplate::GO:
       // Extract go instance configs from input template
