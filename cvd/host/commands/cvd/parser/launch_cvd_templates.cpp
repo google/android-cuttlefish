@@ -31,6 +31,7 @@ enum class ConfigTemplate {
   AUTO,
   SLIM,
   GO,
+  FOLDABLE,
   UNKNOWN,
 };
 
@@ -41,7 +42,8 @@ static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
     {"wearable.json", ConfigTemplate::WEARABLE},
     {"auto.json", ConfigTemplate::AUTO},
     {"slim.json", ConfigTemplate::SLIM},
-    {"go.json", ConfigTemplate::GO}};
+    {"go.json", ConfigTemplate::GO},
+    {"foldable.json", ConfigTemplate::FOLDABLE}};
 
 // Definition of phone instance template in Json format
 static const char* kPhoneInstanceTemplate = R""""(
@@ -176,6 +178,69 @@ static const char* kGoInstanceTemplate = R""""(
 }
   )"""";
 
+static const char* kFoldableInstanceTemplate = R""""(
+{
+    "vm": {
+            "memory_mb": 4096,
+            "custom_actions" : [
+                    {
+                            "device_states": [
+                                    {
+                                            "lid_switch_open": false,
+                                            "hinge_angle_value": 0
+                                    }
+                            ],
+                            "button":{
+                                    "command":"device_state_closed",
+                                    "title":"Device State Closed",
+                                    "icon_name":"smartphone"
+                            }
+                    },
+                    {
+                            "device_states": [
+                                    {
+                                            "lid_switch_open": true,
+                                            "hinge_angle_value": 90
+                                    }
+                            ],
+                            "button":{
+                                    "command":"device_state_half_opened",
+                                    "title":"Device State Half-Opened",
+                                    "icon_name":"laptop"
+                            }
+                    },
+                    {
+                            "device_states": [
+                                    {
+                                            "lid_switch_open": true,
+                                            "hinge_angle_value": 180
+                                    }
+                            ],
+                            "button":{
+                                    "command":"device_state_opened",
+                                    "title":"Device State Opened",
+                                    "icon_name":"tablet"
+                            }
+                    }
+            ]
+    },
+    "graphics":{
+            "displays":[
+                {
+                    "width": 1768,
+                    "height": 2208,
+                    "dpi": 374
+                },
+                {
+                    "width": 832,
+                    "height": 2268,
+                    "dpi": 387
+                }
+            ]
+    }
+}
+  )"""";
+
 Json::Value ExtractJsonTemplate(const Json::Value& instance,
                                 const char* template_string) {
   std::string json_text(template_string);
@@ -222,6 +287,10 @@ Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
     case ConfigTemplate::GO:
       // Extract go instance configs from input template
       result = ExtractJsonTemplate(instance, kGoInstanceTemplate);
+      break;
+    case ConfigTemplate::FOLDABLE:
+      // Extract foldable instance configs from input template
+      result = ExtractJsonTemplate(instance, kFoldableInstanceTemplate);
       break;
 
     default:

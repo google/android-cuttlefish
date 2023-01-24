@@ -47,7 +47,7 @@ static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
 
 static std::unordered_set<std::string> kSupportedImportValues = {
     "phone.json", "tablet.json", "tv.json", "wearable.json",
-    "auto.json",  "slim.json",   "go.json"};
+    "auto.json",  "slim.json",   "go.json", "foldable.json"};
 
 Result<void> ValidateInstancesConfigs(const Json::Value& root) {
   int num_instances = root.size();
