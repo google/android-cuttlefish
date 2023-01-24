@@ -98,8 +98,20 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   int vhci_fd = open(kVhciDev, O_RDWR);
+  if (vhci_fd < 0) {
+    PLOG(ERROR) << "Unable to open " << kVhciDev;
+    return -1;
+  }
   int virtio_fd = open(FLAGS_virtio_console_dev.c_str(), O_RDWR);
-  setTerminalRaw(virtio_fd);
+  if (virtio_fd < 0) {
+    PLOG(ERROR) << "Unable to open " << FLAGS_virtio_console_dev;
+    return -1;
+  }
+  int set_result = setTerminalRaw(virtio_fd);
+  if (set_result < 0) {
+    PLOG(ERROR) << "setTerminalRaw failed " << FLAGS_virtio_console_dev;
+    return -1;
+  }
 
   struct pollfd fds[2];
 
