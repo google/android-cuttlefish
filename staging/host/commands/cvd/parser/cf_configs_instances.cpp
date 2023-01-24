@@ -18,6 +18,7 @@
 
 #include <android-base/logging.h>
 #include <iostream>
+#include <unordered_set>
 
 #include "common/libs/utils/flags_validator.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
@@ -30,6 +31,7 @@
 namespace cuttlefish {
 
 static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
+    {"@import", Json::ValueType::stringValue},
     {"vm", Json::ValueType::objectValue},
     {"boot", Json::ValueType::objectValue},
     {"security", Json::ValueType::objectValue},
@@ -43,6 +45,10 @@ static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
     {"vehicle", Json::ValueType::objectValue},
     {"location", Json::ValueType::objectValue}};
 
+static std::unordered_set<std::string> kSupportedImportValues = {
+    "phone.json", "tablet.json", "tv.json", "wearable.json",
+    "auto.json",  "slim.json",   "go.json"};
+
 Result<void> ValidateInstancesConfigs(const Json::Value& root) {
   int num_instances = root.size();
   for (unsigned int i = 0; i < num_instances; i++) {
@@ -50,6 +56,12 @@ Result<void> ValidateInstancesConfigs(const Json::Value& root) {
 
     if (root[i].isMember("vm")) {
       CF_EXPECT(ValidateVmConfigs(root[i]["vm"]), "ValidateVmConfigs fail");
+    }
+
+    // Validate @import flag values are supported or not
+    if (root[i].isMember("@import")) {
+      CF_EXPECT(kSupportedImportValues.count(root[i]["@import"].asString()) > 0,
+                "@Import flag values are not supported");
     }
 
     if (root[i].isMember("boot")) {
