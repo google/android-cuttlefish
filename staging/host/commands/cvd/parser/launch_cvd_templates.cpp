@@ -19,6 +19,7 @@
 #include <string>
 
 #include "common/libs/utils/json.h"
+#include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
 
@@ -42,15 +43,46 @@ static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
     {"slim.json", ConfigTemplate::SLIM},
     {"go.json", ConfigTemplate::GO}};
 
-void ExtractInstaneTemplate(Json::Value&,
-                            const std::string& instance_template) {
+// Definition of phone instance template in Json format
+static const char* kPhoneInstanceTemplate = R""""(
+{
+    "vm": {
+        "memory_mb": 2048
+    },
+    "graphics":{
+        "displays":[
+            {
+                "width": 720,
+                "height": 1280,
+                "dpi": 320
+            }
+        ]
+    }
+}
+  )"""";
+
+Json::Value ExtractJsonTemplate(const Json::Value& instance,
+                                const char* template_string) {
+  std::string json_text(template_string);
+  Json::Value result;
+
+  Json::Reader reader;
+  reader.parse(json_text, result);
+  MergeJson(result, instance);
+  return result;
+}
+
+Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
+  std::string instance_template = instance["@import"].asString();
   ConfigTemplate selected_template =
       kSupportedTemplatesKeyMap.at(instance_template);
+
+  Json::Value result;
 
   switch (selected_template) {
     case ConfigTemplate::PHONE:
       // Extract phone instance configs from input template
-      // TODO: Add code to extract phone instance configs from input template
+      result = ExtractJsonTemplate(instance, kPhoneInstanceTemplate);
       break;
     case ConfigTemplate::TABLET:
       // Extract tablet instance configs from input template
@@ -78,9 +110,12 @@ void ExtractInstaneTemplate(Json::Value&,
       break;
 
     default:
-      // Extract instance configs from input template
+      // handle unsupported @import flag values
+      result = instance;
       break;
   }
+
+  return result;
 }
 
 void ExtractLaunchTemplates(Json::Value& root) {
@@ -88,8 +123,9 @@ void ExtractLaunchTemplates(Json::Value& root) {
   for (unsigned int i = 0; i < num_instances; i++) {
     // Validate @import flag values are supported or not
     if (root[i].isMember("@import")) {
-      // Extract instance configs from input template
-      ExtractInstaneTemplate(root[i], root[i]["@import"].asString());
+      // Extract instance configs from input template and override current
+      // instance
+      root[i] = ExtractInstaneTemplate(root[i]);
     }
   }
 }
