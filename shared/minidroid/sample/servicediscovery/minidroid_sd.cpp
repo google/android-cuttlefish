@@ -19,13 +19,16 @@
 #include <sys/socket.h>
 
 #include <android/binder_manager.h>
+#include <android/binder_process.h>
 #include <linux/vm_sockets.h>
 #include <stdio.h>
 #include <binder_rpc_unstable.hpp>
 
 void bi::sd::setupRpcServer(ndk::SpAIBinder service, int port) {
+  ABinderProcess_startThreadPool();
   ARpcServer* server = ARpcServer_newVsock(service.get(), VMADDR_CID_ANY, port);
 
+  AServiceManager_addService(service.get(), "TestService");
   printf("Calling join on server!\n");
   ARpcServer_join(server);
 }
