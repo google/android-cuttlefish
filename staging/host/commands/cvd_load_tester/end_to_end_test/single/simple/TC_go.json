@@ -1,0 +1,8 @@
+{
+    "instances" :
+    [
+        {
+            "@import" : "go.json"
+        }
+    ]
+}
