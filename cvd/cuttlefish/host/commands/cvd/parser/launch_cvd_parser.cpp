@@ -82,7 +82,7 @@ void InitCvdConfigs(Json::Value& root) {
 
 Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
-  ExtractLaunchTemplates(root);
+  ExtractLaunchTemplates(root["instances"]);
   InitCvdConfigs(root);
   return GenerateCfFlags(root);
 }

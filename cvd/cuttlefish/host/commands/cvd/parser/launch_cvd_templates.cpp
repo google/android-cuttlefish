@@ -13,11 +13,85 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android-base/file.h>
+
+#include <stdio.h>
+#include <string>
 
 #include "common/libs/utils/json.h"
 
 namespace cuttlefish {
 
-void ExtractLaunchTemplates(Json::Value&) {}
+enum class ConfigTemplate {
+  PHONE,
+  TABLET,
+  TV,
+  WEARABLE,
+  AUTO,
+  SLIM,
+  GO,
+  UNKNOWN,
+};
+
+static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
+    {"phone.json", ConfigTemplate::PHONE},
+    {"tablet.json", ConfigTemplate::TABLET},
+    {"tv.json", ConfigTemplate::TV},
+    {"wearable.json", ConfigTemplate::WEARABLE},
+    {"auto.json", ConfigTemplate::AUTO},
+    {"slim.json", ConfigTemplate::SLIM},
+    {"go.json", ConfigTemplate::GO}};
+
+void ExtractInstaneTemplate(Json::Value&,
+                            const std::string& instance_template) {
+  ConfigTemplate selected_template =
+      kSupportedTemplatesKeyMap.at(instance_template);
+
+  switch (selected_template) {
+    case ConfigTemplate::PHONE:
+      // Extract phone instance configs from input template
+      // TODO: Add code to extract phone instance configs from input template
+      break;
+    case ConfigTemplate::TABLET:
+      // Extract tablet instance configs from input template
+      // TODO: Add code to extract tablet instance configs from input template
+      break;
+    case ConfigTemplate::TV:
+      // Extract tv instance configs from input template
+      // TODO: Add code to extract tv instance configs from input template
+      break;
+    case ConfigTemplate::WEARABLE:
+      // Extract wearable instance configs from input template
+      // TODO: Add code to extract wearable instance configs from input template
+      break;
+    case ConfigTemplate::AUTO:
+      // Extract auto instance configs from input template
+      // TODO: Add code to extract auto instance configs from input template
+      break;
+    case ConfigTemplate::SLIM:
+      // Extract slim instance configs from input template
+      // TODO: Add code to extract slim instance configs from input template
+      break;
+    case ConfigTemplate::GO:
+      // Extract go instance configs from input template
+      // TODO Add code to extract go instance configs from input template
+      break;
+
+    default:
+      // Extract instance configs from input template
+      break;
+  }
+}
+
+void ExtractLaunchTemplates(Json::Value& root) {
+  int num_instances = root.size();
+  for (unsigned int i = 0; i < num_instances; i++) {
+    // Validate @import flag values are supported or not
+    if (root[i].isMember("@import")) {
+      // Extract instance configs from input template
+      ExtractInstaneTemplate(root[i], root[i]["@import"].asString());
+    }
+  }
+}
 
 }  // namespace cuttlefish
