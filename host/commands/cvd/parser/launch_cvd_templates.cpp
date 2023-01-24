@@ -79,6 +79,23 @@ static const char* kTabletInstanceTemplate = R""""(
 }
   )"""";
 
+// Definition of tablet instance template in Json format
+static const char* kTvInstanceTemplate = R""""(
+{
+    "vm": {
+        "memory_mb": 2048
+    },
+    "graphics":{
+        "displays":[
+            {
+                "width": 1920,
+                "height": 1080,
+                "dpi": 213
+            }
+        ]
+    }
+}
+  )"""";
 Json::Value ExtractJsonTemplate(const Json::Value& instance,
                                 const char* template_string) {
   std::string json_text(template_string);
@@ -108,7 +125,7 @@ Json::Value ExtractInstaneTemplate(const Json::Value& instance) {
       break;
     case ConfigTemplate::TV:
       // Extract tv instance configs from input template
-      // TODO: Add code to extract tv instance configs from input template
+      result = ExtractJsonTemplate(instance, kTvInstanceTemplate);
       break;
     case ConfigTemplate::WEARABLE:
       // Extract wearable instance configs from input template
