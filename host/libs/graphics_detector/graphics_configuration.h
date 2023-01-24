@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/graphics_detector/graphics_detector.h"
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> BootconfigArgsFromConfig(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance);
+enum class RenderingMode {
+  kNone,
+  kGuestSwiftShader,
+  kGfxstream,
+  kVirglRenderer,
+};
+Result<RenderingMode> GetRenderingMode(const std::string& mode);
+
+struct AngleFeatureOverrides {
+  std::string angle_feature_overrides_enabled;
+  std::string angle_feature_overrides_disabled;
+};
+Result<AngleFeatureOverrides> GetNeededAngleFeatures(
+    RenderingMode mode, const GraphicsAvailability& availability);
 
 }  // namespace cuttlefish
