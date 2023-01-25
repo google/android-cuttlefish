@@ -29,18 +29,3 @@ cc_binary {
     ],
 }
 
-cc_binary {
-    name: "proxy_minidroid",
-    srcs: ["proxy.cpp"],
-    target: {
-        host: {
-            static_libs: [
-                "libcuttlefish_host_config",
-            ],
-        },
-    },
-    defaults: ["cuttlefish_base"],
-    host_supported: true,
-    vendor: true,
-}
-
