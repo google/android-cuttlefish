@@ -80,8 +80,6 @@ PRODUCT_PACKAGES += \
     server_minidroid \
     client_minidroid \
 
-PRODUCT_HOST_PACKAGES += proxy_minidroid
-
 # Additional packages
 PRODUCT_PACKAGES += \
     com.android.runtime \
