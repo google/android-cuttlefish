@@ -229,9 +229,10 @@ cvd_host_seccomp_policy_aarch64 = [
 cvd_host_bootloader = [
     "bootloader_crosvm_x86_64",
     "bootloader_crosvm_aarch64",
-    "bootloader_qemu_x86_64",
     "bootloader_qemu_aarch64",
     "bootloader_qemu_arm",
+    "bootloader_qemu_riscv64",
+    "bootloader_qemu_x86_64",
 ]
 
 prebuilt_etc_host {

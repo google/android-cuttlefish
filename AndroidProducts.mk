@@ -23,6 +23,8 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_arm64_only_phone_hwasan:$(LOCAL_DIR)/vsoc_arm64_only/phone/aosp_cf_hwasan.mk \
 	aosp_cf_arm64_minidroid:$(LOCAL_DIR)/vsoc_arm64_minidroid/aosp_cf.mk \
 	aosp_cf_arm64_slim:$(LOCAL_DIR)/vsoc_arm64_only/slim/aosp_cf.mk \
+	aosp_cf_riscv64_minidroid:$(LOCAL_DIR)/vsoc_riscv64_minidroid/aosp_cf.mk \
+	aosp_cf_riscv64_slim:$(LOCAL_DIR)/vsoc_riscv64/slim/aosp_cf.mk \
 	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64/auto/aosp_cf.mk \
 	aosp_cf_x86_64_only_auto:$(LOCAL_DIR)/vsoc_x86_64_only/auto/aosp_cf.mk \
 	aosp_cf_x86_64_only_auto_md:$(LOCAL_DIR)/vsoc_x86_64_only/auto_md/aosp_cf.mk \
