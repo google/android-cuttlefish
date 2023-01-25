@@ -23,7 +23,6 @@
 #include "host/commands/cvd/unittests/server/cmd_runner.h"
 
 namespace cuttlefish {
-namespace selector {
 
 TEST(CvdBasic, CvdDefaultStart) {
   cvd_common::Envs envs;
@@ -51,5 +50,4 @@ TEST(CvdBasic, CvdDefaultStart) {
   CmdRunner::Run("cvd kill-server", envs);
 }
 
-}  // namespace selector
 }  // namespace cuttlefish

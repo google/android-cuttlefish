@@ -23,7 +23,6 @@
 #include "host/commands/cvd/unittests/server/cmd_runner.h"
 
 namespace cuttlefish {
-namespace selector {
 namespace {
 
 bool ContainsAll(const std::string& stream,
@@ -138,5 +137,4 @@ TEST(CvdSubtool, CvdStartHelp) {
   CmdRunner::Run("cvd kill-server", envs);
 }
 
-}  // namespace selector
 }  // namespace cuttlefish
