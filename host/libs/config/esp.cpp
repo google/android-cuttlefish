@@ -58,6 +58,7 @@ bool CanGenerateEsp(Arch arch) {
   switch (arch) {
     case Arch::Arm:
     case Arch::Arm64:
+    case Arch::RiscV64:
       // TODO(b/260960328) : Migrate openwrt image for arm64 into
       // APBootFlow::Grub.
       return false;
@@ -213,6 +214,9 @@ EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
       // not supported for it.
       builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPathAA64,
                     /* required */ false);
+      break;
+    case Arch::RiscV64:
+      // FIXME: Implement
       break;
     case Arch::X86:
     case Arch::X86_64: {
