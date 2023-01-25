@@ -1,0 +1,26 @@
+{
+    "instances" :
+    [
+        {
+            "@import" : "auto.json"
+        },
+        {
+            "@import" : "go.json"
+        },
+        {
+            "@import" : "phone.json"
+        },
+        {
+            "@import" : "slim.json"
+        },
+                {
+            "@import" : "tablet.json"
+        },
+                {
+            "@import" : "tv.json"
+        },
+        {
+            "@import" : "wearable.json"
+        }
+    ]
+}
