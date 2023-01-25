@@ -579,6 +579,8 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
       guest_config.target_arch = Arch::Arm;
     } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
       guest_config.target_arch = Arch::Arm64;
+    } else if (config.find("\nCONFIG_ARCH_RV64I=y") != std::string::npos) {
+      guest_config.target_arch = Arch::RiscV64;
     } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
       guest_config.target_arch = Arch::X86_64;
     } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
@@ -1548,6 +1550,8 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std:
       default_bootloader += "arm";
   } else if (target_arch == Arch::Arm64) {
       default_bootloader += "aarch64";
+  } else if (target_arch == Arch::RiscV64) {
+      default_bootloader += "riscv64";
   } else {
       default_bootloader += "x86_64";
   }

@@ -439,6 +439,9 @@ class InitializeEspImageImpl : public InitializeEspImage {
       case Arch::Arm64:
         linux.Argument("console", "ttyAMA0");
         break;
+      case Arch::RiscV64:
+        linux.Argument("console", "ttyS0");
+        break;
       case Arch::X86:
       case Arch::X86_64:
         linux.Argument("console", "ttyS0")
