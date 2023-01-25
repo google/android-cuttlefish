@@ -168,6 +168,9 @@ Result<std::vector<Command>> Gem5Manager::StartCommands(
     case Arch::Arm64:
       gem5_binary += "/build/ARM/gem5.opt";
       break;
+    case Arch::RiscV64:
+      gem5_binary += "/build/RISCV/gem5.opt";
+      break;
     case Arch::X86:
     case Arch::X86_64:
       gem5_binary += "/build/X86/gem5.opt";
