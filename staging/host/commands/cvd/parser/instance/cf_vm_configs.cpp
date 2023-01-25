@@ -96,8 +96,10 @@ std::vector<std::string> GenerateCustomConfigsFlags(
       std::string mapped_text =
           Json::writeString(factory, instances[i]["vm"]["custom_actions"]);
       // format json string string to match aosp/2374890 input format
-      mapped_text = android::base::StringReplace(mapped_text, "\n", "", true);
-      mapped_text = android::base::StringReplace(mapped_text, "\r", "", true);
+      mapped_text =
+          android::base::StringReplace(mapped_text, "\n", "\\\n", true);
+      mapped_text =
+          android::base::StringReplace(mapped_text, "\r", "\\\r", true);
       mapped_text =
           android::base::StringReplace(mapped_text, "\"", "\\\"", true);
       std::stringstream buff;
