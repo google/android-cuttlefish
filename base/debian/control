@@ -30,6 +30,7 @@ Depends: adduser,
          net-tools,
          python3,
          qemu-user-static [arm64],
+         ebtables-legacy | ebtables,
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
