@@ -2,13 +2,13 @@
     "instances" :
     [
         {
-            "@import" : "phone.json",
+            "@import" : "phone",
             "vm": {
                 "memory_mb": 4069
             }
         },
         {
-            "@import" : "tablet.json",
+            "@import" : "tablet",
             "vm": {
                 "memory_mb": 8192,
                 "cpus": 4
