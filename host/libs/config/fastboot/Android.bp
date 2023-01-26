@@ -20,7 +20,10 @@ package {
 cc_library_static {
     name: "libcuttlefish_host_config_fastboot",
     srcs: [
-        "launch.cpp",
+        "config.cpp",
+        "data.cpp",
+        "flags.cpp",
+        "launch.cpp"
     ],
     shared_libs: [
         "libbase",
