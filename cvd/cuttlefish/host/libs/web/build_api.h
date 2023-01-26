@@ -92,7 +92,8 @@ class BuildApi {
 
   Result<std::string> ProductName(const DeviceBuild&);
 
-  Result<std::vector<Artifact>> Artifacts(const DeviceBuild&);
+  Result<std::vector<Artifact>> Artifacts(const DeviceBuild& build,
+                                          const std::string& artifact_filename);
 
   Result<void> ArtifactToCallback(const DeviceBuild& build,
                                   const std::string& artifact,
@@ -102,14 +103,20 @@ class BuildApi {
                               const std::string& artifact,
                               const std::string& path);
 
-  Result<std::vector<Artifact>> Artifacts(const DirectoryBuild&);
+  Result<std::vector<Artifact>> Artifacts(const DirectoryBuild& build,
+                                          const std::string& artifact_filename);
 
   Result<void> ArtifactToFile(const DirectoryBuild& build,
                               const std::string& artifact,
                               const std::string& path);
 
-  Result<std::vector<Artifact>> Artifacts(const Build& build) {
-    auto res = std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
+  Result<std::vector<Artifact>> Artifacts(
+      const Build& build, const std::string& artifact_filename) {
+    auto res = std::visit(
+        [this, &artifact_filename](auto&& arg) {
+          return Artifacts(arg, artifact_filename);
+        },
+        build);
     return CF_EXPECT(std::move(res));
   }
 
