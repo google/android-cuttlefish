@@ -2,25 +2,25 @@
     "instances" :
     [
         {
-            "@import" : "auto.json"
+            "@import" : "auto"
         },
         {
-            "@import" : "go.json"
+            "@import" : "go"
         },
         {
-            "@import" : "phone.json"
+            "@import" : "phone"
         },
         {
-            "@import" : "slim.json"
+            "@import" : "slim"
         },
                 {
-            "@import" : "tablet.json"
+            "@import" : "tablet"
         },
                 {
-            "@import" : "tv.json"
+            "@import" : "tv"
         },
         {
-            "@import" : "wearable.json"
+            "@import" : "wearable"
         }
     ]
 }
