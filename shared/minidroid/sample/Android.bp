@@ -4,6 +4,7 @@ cc_binary {
     shared_libs: [
         "libbinder_ndk",
         "minidroid_sd",
+        "liblog",
     ],
     static_libs: [
         "com.android.minidroid.testservice-ndk",
@@ -20,6 +21,7 @@ cc_binary {
     shared_libs: [
         "libbinder_ndk",
         "minidroid_sd",
+        "liblog",
     ],
     static_libs: [
         "com.android.minidroid.testservice-ndk",
