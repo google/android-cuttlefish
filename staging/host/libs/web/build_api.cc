@@ -168,13 +168,20 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
   return json["target"]["product"].asString();
 }
 
-Result<std::vector<Artifact>> BuildApi::Artifacts(const DeviceBuild& build) {
+Result<std::vector<Artifact>> BuildApi::Artifacts(
+    const DeviceBuild& build, const std::string& artifact_filename) {
   std::string page_token = "";
   std::vector<Artifact> artifacts;
   do {
     std::string url = BUILD_API + "/builds/" + http_client.UrlEscape(build.id) +
                       "/" + http_client.UrlEscape(build.target) +
                       "/attempts/latest/artifacts?maxResults=100";
+    if (!artifact_filename.empty()) {
+      // surrounding with \Q and \E treats the text literally to avoid
+      // characters being treated as regex
+      std::string name_regex = "^\\Q" + artifact_filename + "\\E$";
+      url += "&nameRegexp=" + http_client.UrlEscape(name_regex);
+    }
     if (page_token != "") {
       url += "&pageToken=" + http_client.UrlEscape(page_token);
     }
@@ -209,7 +216,8 @@ struct CloseDir {
 
 using UniqueDir = std::unique_ptr<DIR, CloseDir>;
 
-Result<std::vector<Artifact>> BuildApi::Artifacts(const DirectoryBuild& build) {
+Result<std::vector<Artifact>> BuildApi::Artifacts(const DirectoryBuild& build,
+                                                  const std::string&) {
   std::vector<Artifact> artifacts;
   for (const auto& path : build.paths) {
     auto dir = UniqueDir(opendir(path.c_str()));
