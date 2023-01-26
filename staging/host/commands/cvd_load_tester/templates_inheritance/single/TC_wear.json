@@ -2,7 +2,7 @@
     "instances" :
     [
         {
-            "@import" : "wearable.json"
+            "@import" : "wearable"
         }
     ]
 }
