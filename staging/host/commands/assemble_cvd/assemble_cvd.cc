@@ -35,6 +35,7 @@
 #include "host/libs/config/adb/adb.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/custom_actions.h"
+#include "host/libs/config/fastboot/fastboot.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/inject.h"
 
@@ -317,6 +318,9 @@ fruit::Component<> FlagsComponent() {
       .install(AdbConfigComponent)
       .install(AdbConfigFlagComponent)
       .install(AdbConfigFragmentComponent)
+      .install(FastbootConfigComponent)
+      .install(FastbootConfigFlagComponent)
+      .install(FastbootConfigFragmentComponent)
       .install(GflagsComponent)
       .install(ConfigFlagComponent)
       .install(CustomActionsComponent);
