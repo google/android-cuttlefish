@@ -36,14 +36,10 @@ enum class ConfigTemplate {
 };
 
 static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
-    {"phone.json", ConfigTemplate::PHONE},
-    {"tablet.json", ConfigTemplate::TABLET},
-    {"tv.json", ConfigTemplate::TV},
-    {"wearable.json", ConfigTemplate::WEARABLE},
-    {"auto.json", ConfigTemplate::AUTO},
-    {"slim.json", ConfigTemplate::SLIM},
-    {"go.json", ConfigTemplate::GO},
-    {"foldable.json", ConfigTemplate::FOLDABLE}};
+    {"phone", ConfigTemplate::PHONE}, {"tablet", ConfigTemplate::TABLET},
+    {"tv", ConfigTemplate::TV},       {"wearable", ConfigTemplate::WEARABLE},
+    {"auto", ConfigTemplate::AUTO},   {"slim", ConfigTemplate::SLIM},
+    {"go", ConfigTemplate::GO},       {"foldable", ConfigTemplate::FOLDABLE}};
 
 // Definition of phone instance template in Json format
 static const char* kPhoneInstanceTemplate = R""""(
