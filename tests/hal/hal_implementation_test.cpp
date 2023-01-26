@@ -84,7 +84,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.input.classifier@1.0", // converted to AIDL, see b/205761620
     "android.hardware.ir@1.0", // converted to AIDL, see b/205000342
     "android.hardware.keymaster@3.0",
-    "android.hardware.keymaster@4.1", // Replaced by KeyMint
+    "android.hardware.keymaster@4.1", // Replaced by AIDL KeyMint, see b/111446262
     "android.hardware.light@2.0",
     "android.hardware.media.bufferpool@1.0",
     "android.hardware.media.bufferpool@2.0",
@@ -130,6 +130,7 @@ static const std::set<std::string> kKnownMissingHidl = {
 struct VersionedAidlPackage {
   std::string name;
   size_t version;
+  int bugNum;
   bool operator<(const VersionedAidlPackage& rhs) const {
     return (name < rhs.name || (name == rhs.name && version < rhs.version));
   }
@@ -159,7 +160,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.media.audio.common.",
     "android.hardware.radio.",
     "android.hardware.uwb.fira_android.",
-    //"android.hardware.power.stats.",
+    "android.hardware.keymaster.",
 
     // android.hardware.camera.device is an interface returned by
     // android.hardware.camera.provider.
@@ -174,80 +175,64 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     // It could be used for buffer recycling and caching by using the interface.
     "android.hardware.media.bufferpool2.",
 
-    // Only used in android auto
-    "android.hardware.automotive.vehicle."
+    /**
+     * These types are only used in Android TV, so don't expect them on phones.
+     * TODO(b/266868403) This test should run on TV devices to enforce the same
+     * requirements
+     */
+    "android.hardware.tv.hdmi.cec.",
+    "android.hardware.tv.hdmi.earc.",
+    "android.hardware.tv.hdmi.connection.",
+    "android.hardware.tv.tuner.",
+    "android.hardware.tv.input.",
+
+    /**
+     * These types are only used in Android Automotive, so don't expect them
+     * on phones.
+     * TODO(b/266868868) This test should run on Automotive devices to enforce
+     * the same requirements
+     */
+    "android.hardware.automotive.vehicle.",
+    "android.automotive.computepipe.registry.",
+    "android.automotive.computepipe.runner.",
+    "android.automotive.watchdog.",
+    "android.frameworks.automotive.display.",
+    "android.frameworks.automotive.powerpolicy.",
+    "android.frameworks.automotive.powerpolicy.internal.",
+    "android.frameworks.automotive.telemetry.",
+    "android.hardware.automotive.audiocontrol.",
+    "android.hardware.automotive.can.",
+    "android.hardware.automotive.evs.",
+    "android.hardware.broadcastradio.",
+    "android.hardware.automotive.occupant_awareness.",
+    "android.hardware.automotive.remoteaccess.",
+
+    /**
+     * No implementation on cuttlefish for fastboot AIDL hal because it doesn't
+     * run during normal boot, only in recovery/fastboot mode.
+     */
+    "android.hardware.fastboot.",
 };
 
 /*
  * These packages should have implementations but currently do not.
- * These should be accompanied by a bug and expected to be here temporarily.
+ * These must be accompanied by a bug and expected to be here temporarily.
  */
-static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
+static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     // Cuttlefish Identity Credential HAL implementation is currently
     // stuck at version 3 while RKP support is being added. Will be
     // updated soon.
-    {"android.hardware.identity.", 4},
-    {"android.hardware.identity.", 5},
+    {"android.hardware.identity.", 4, 266869317},
+    {"android.hardware.identity.", 5, 266869317},
 
-    // No implementations on cuttlefish for omapi aidl hal
-    {"android.se.omapi.", 1},
-
-    // These KeyMaster types are in an AIDL types-only HAL because they're used
-    // by the Identity Credential AIDL HAL. Remove this when fully porting
-    // KeyMaster to AIDL.
-    {"android.hardware.keymaster.", 1},
-    {"android.hardware.keymaster.", 2},
-    {"android.hardware.keymaster.", 3},
-    {"android.hardware.keymaster.", 4},
-
-    // Merging implementation separately
-    {"android.hardware.secure_element.", 1},
-
-    // Sound trigger doesn't have a default implementation.
-    {"android.hardware.soundtrigger3.", 1},
-    {"android.media.soundtrigger.", 1},
-
-    // No implementation on cuttlefish for fastboot AIDL hal
-    {"android.hardware.fastboot.", 1},
-
-    // No implementation on cuttlefish for power stats hal
-    {"android.hardware.power.stats.", 2},
-
-    // These types are only used in TV.
-    {"android.hardware.tv.hdmi.cec.", 1},
-    {"android.hardware.tv.hdmi.earc.", 1},
-    {"android.hardware.tv.hdmi.connection.", 1},
-
-    // These types are only used in Automotive.
-    {"android.automotive.computepipe.registry.", 1},
-    {"android.automotive.computepipe.runner.", 1},
-    {"android.automotive.watchdog.", 2},
-    {"android.automotive.watchdog.", 3},
-    {"android.frameworks.automotive.display.", 1},
-    {"android.frameworks.automotive.powerpolicy.", 1},
-    {"android.frameworks.automotive.powerpolicy.internal.", 1},
-    {"android.frameworks.automotive.telemetry.", 1},
-    {"android.frameworks.automotive.telemetry.", 2},
-    {"android.hardware.automotive.audiocontrol.", 1},
-    {"android.hardware.automotive.audiocontrol.", 2},
-    {"android.hardware.automotive.can.", 1},
-    {"android.hardware.automotive.evs.", 1},
-    {"android.hardware.broadcastradio.", 1},
-    {"android.hardware.automotive.occupant_awareness.", 1},
-    {"android.hardware.automotive.remoteaccess.", 1},
-
-    // The interface is in development (b/251850069)
-    {"android.hardware.media.c2.", 1},
-
-    // These types are only used in TV.
-    {"android.hardware.tv.tuner.", 2},
-    {"android.hardware.tv.input.", 1},
-
-    // No implementation of IRadioIms yet TODO(b/250912118)
-    {"android.hardware.radio.ims.media.", 1},
-
-    // Weaver needs a real implementation (b/262418065)
-    {"android.hardware.weaver.", 2},
+    {"android.se.omapi.", 1, 266870904},
+    {"android.hardware.secure_element.", 1, 123254068},
+    {"android.hardware.soundtrigger3.", 1, 266941225},
+    {"android.media.soundtrigger.", 1, 266941225},
+    {"android.hardware.power.stats.", 2, 266943256},
+    {"android.hardware.media.c2.", 1, 251850069},
+    {"android.hardware.radio.ims.media.", 1, 250912118},
+    {"android.hardware.weaver.", 2, 262418065},
 };
 
 // AOSP packages which are never considered
@@ -325,13 +310,13 @@ static bool isAlwaysMissingAidl(const std::string& name) {
          kAlwaysMissingAidl.end();
 }
 
-static std::set<VersionedAidlPackage> allAidlManifestInterfaces() {
-  std::set<VersionedAidlPackage> ret;
+static std::vector<VersionedAidlPackage> allAidlManifestInterfaces() {
+  std::vector<VersionedAidlPackage> ret;
   auto setInserter = [&](const vintf::ManifestInstance& i) -> bool {
     if (i.format() != vintf::HalFormat::AIDL) {
       return true;  // continue
     }
-    ret.insert({i.package() + "." + i.interface(), i.version().minorVer});
+    ret.push_back({i.package() + "." + i.interface(), i.version().minorVer, 0});
     return true;  // continue
   };
   vintf::VintfObject::GetDeviceHalManifest()->forEachInstance(setInserter);
@@ -416,8 +401,8 @@ struct AidlPackageCheck {
 };
 
 TEST(Hal, AidlInterfacesImplemented) {
-  std::set<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
-  std::set<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
+  std::vector<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
+  std::vector<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
 
   for (const auto& treePackage : AidlInterfaceMetadata::all()) {
     ASSERT_FALSE(treePackage.types.empty()) << treePackage.name;
@@ -449,14 +434,28 @@ TEST(Hal, AidlInterfacesImplemented) {
     bool latestRegistered = false;
     for (const std::string& type : treePackage.types) {
       for (auto& [version, check] : expectedVersions) {
-        if (manifest.erase({type, version}) > 0) {
+        auto it = std::remove_if(
+            manifest.begin(), manifest.end(),
+            [&type, &ver = version](const VersionedAidlPackage& package) {
+              return package.name == type && package.version == ver;
+            });
+        if (it != manifest.end()) {
+          manifest.erase(it, manifest.end());
           if (version == expectedVersions.rbegin()->first) {
             latestRegistered = true;
           }
           check.hasRegistration = true;
         }
-        if (thoughtMissing.erase({getAidlPackage(type), version}) > 0)
+        it = std::remove_if(
+            thoughtMissing.begin(), thoughtMissing.end(),
+            [&type, &ver = version](const VersionedAidlPackage& package) {
+              return package.name == getAidlPackage(type) &&
+                     package.version == ver;
+            });
+        if (it != thoughtMissing.end()) {
+          thoughtMissing.erase(it, thoughtMissing.end());
           check.knownMissing = true;
+        }
       }
     }
 
