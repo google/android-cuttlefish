@@ -20,9 +20,9 @@
 namespace cuttlefish {
 namespace selector {
 
-CmdResult::CmdResult(const std::string& stdout, const std::string& stderr,
-                     const int ret_code)
-    : stdout_{stdout}, stderr_{stderr}, code_{ret_code} {}
+CmdResult::CmdResult(const std::string& stdout_str,
+                     const std::string& stderr_str, const int ret_code)
+    : stdout_{stdout_str}, stderr_{stderr_str}, code_{ret_code} {}
 
 CmdResult CmdRunner::Run(const cvd_common::Args& args,
                          const cvd_common::Envs& envs) {
@@ -52,11 +52,12 @@ CmdRunner::CmdRunner(Command&& cmd, const cvd_common::Args& args,
 }
 
 CmdResult CmdRunner::Run() {
-  std::string stdout;
-  std::string stderr;
-  auto ret_code = RunWithManagedStdio(
-      std::move(cmd_), nullptr, std::addressof(stdout), std::addressof(stderr));
-  return CmdResult(stdout, stderr, ret_code);
+  std::string stdout_str;
+  std::string stderr_str;
+  auto ret_code =
+      RunWithManagedStdio(std::move(cmd_), nullptr, std::addressof(stdout_str),
+                          std::addressof(stderr_str));
+  return CmdResult(stdout_str, stderr_str, ret_code);
 }
 
 }  // namespace selector
