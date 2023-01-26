@@ -101,11 +101,11 @@ std::vector<std::string> GenerateCustomConfigsFlags(
       mapped_text =
           android::base::StringReplace(mapped_text, "\"", "\\\"", true);
       std::stringstream buff;
-      buff << "--custom_actions=\"" << mapped_text << "\"";
+      buff << "--custom_actions=" << mapped_text;
       result.emplace_back(buff.str());
     } else {
       // custom_actions parameter doesn't exist in the configuration file
-      result.emplace_back("--custom_actions=\"unset\"");
+      result.emplace_back("--custom_actions=unset");
     }
   }
   return result;
