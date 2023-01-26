@@ -16,9 +16,11 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -225,8 +227,7 @@ type createUpdateUserArtifactHandler struct {
 func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	dir := vars["name"]
-	f, fheader, err := r.FormFile("file")
-	if err != nil {
+	if err := r.ParseMultipartForm(0); err != nil {
 		if err == multipart.ErrMessageTooLarge {
 			return nil, &operator.AppError{
 				StatusCode: http.StatusInsufficientStorage,
@@ -236,5 +237,34 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		return nil, operator.NewBadRequestError("Invalid multipart form request", err)
 	}
 	defer r.MultipartForm.RemoveAll()
-	return nil, h.m.CreateUpdateArtifact(dir, fheader.Filename, f)
+	chunkNumberRaw := r.FormValue("chunk_number")
+	chunkTotalRaw := r.FormValue("chunk_total")
+	chunkSizeBytesRaw := r.FormValue("chunk_size_bytes")
+	f, fheader, err := r.FormFile("file")
+	if err != nil {
+		return nil, err
+	}
+	chunkNumber, err := strconv.Atoi(chunkNumberRaw)
+	if err != nil {
+		return nil, operator.NewBadRequestError(
+			fmt.Sprintf("Invalid chunk_number value: %q", chunkNumberRaw), err)
+	}
+	chunkTotal, err := strconv.Atoi(chunkTotalRaw)
+	if err != nil {
+		return nil, operator.NewBadRequestError(
+			fmt.Sprintf("Invalid chunk_total form field value: %q", chunkTotalRaw), err)
+	}
+	chunkSizeBytes, err := strconv.ParseInt(chunkSizeBytesRaw, 10, 64)
+	if err != nil {
+		return nil, operator.NewBadRequestError(
+			fmt.Sprintf("Invalid chunk_size_bytes form field value: %q", chunkSizeBytesRaw), err)
+	}
+	chunk := UserArtifactChunk{
+		Name:           fheader.Filename,
+		ChunkNumber:    chunkNumber,
+		ChunkTotal:     chunkTotal,
+		ChunkSizeBytes: chunkSizeBytes,
+		File:           f,
+	}
+	return nil, h.m.UpdateArtifact(dir, chunk)
 }

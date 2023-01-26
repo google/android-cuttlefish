@@ -17,10 +17,10 @@ package orchestrator
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -115,15 +115,22 @@ func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
 		NameFactory: func() string { return "foo" },
 	}
 	am := NewUserArtifactsManagerImpl(opts)
+	chunk := UserArtifactChunk{
+		Name:        "xyzz",
+		ChunkNumber: 1,
+		ChunkTotal:  11,
+		File:        strings.NewReader("lorem ipsum"),
+	}
 
-	err := am.CreateUpdateArtifact("bar", "xyzz", strings.NewReader("lorem ispum"))
+	err := am.UpdateArtifact("bar", chunk)
 
 	if err == nil {
 		t.Error("expected error")
 	}
 }
 
-func TestCreateArtifactSucceeds(t *testing.T) {
+func TestCreateArtifactsSucceeds(t *testing.T) {
+	wg := sync.WaitGroup{}
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	opts := UserArtifactsManagerOpts{
@@ -132,70 +139,58 @@ func TestCreateArtifactSucceeds(t *testing.T) {
 	}
 	am := NewUserArtifactsManagerImpl(opts)
 	am.NewDir()
-
-	err := am.CreateUpdateArtifact("foo", "xyzz", strings.NewReader("lorem ipsum"))
-
-	if err != nil {
-		t.Fatal(err)
+	chunk1 := UserArtifactChunk{
+		Name:           "xyzz",
+		ChunkNumber:    1,
+		ChunkTotal:     3,
+		ChunkSizeBytes: 4,
+		File:           strings.NewReader("lore"),
 	}
+	chunk2 := UserArtifactChunk{
+		Name:           "xyzz",
+		ChunkNumber:    2,
+		ChunkTotal:     3,
+		ChunkSizeBytes: 4,
+		File:           strings.NewReader("m ip"),
+	}
+	chunk3 := UserArtifactChunk{
+		Name:           "xyzz",
+		ChunkNumber:    3,
+		ChunkTotal:     3,
+		ChunkSizeBytes: 4,
+		File:           strings.NewReader("sum"),
+	}
+	chunks := [3]UserArtifactChunk{chunk1, chunk2, chunk3}
+	wg.Add(3)
+
+	for i := 0; i < len(chunks); i++ {
+		go func(i int) {
+			defer wg.Done()
+			am.UpdateArtifact("foo", chunks[i])
+		}(i)
+
+	}
+
+	wg.Wait()
 	b, _ := ioutil.ReadFile(am.GetFilePath("foo", "xyzz"))
 	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func TestUpdateArtifactSucceds(t *testing.T) {
+func TestUntar(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return "foo" },
-	}
-	am := NewUserArtifactsManagerImpl(opts)
-	am.NewDir()
-	am.CreateUpdateArtifact("foo", "xyzz", strings.NewReader("lorem ipsum"))
 
-	err := am.CreateUpdateArtifact("foo", "xyzz", strings.NewReader("dolor sit amet"))
+	Untar(dir, getTestTarFilename())
 
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, _ := ioutil.ReadFile(am.GetFilePath("foo", "xyzz"))
-	if diff := cmp.Diff("dolor sit amet", string(b)); diff != "" {
-		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func TestUploadCVDHostPackageSucceds(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	opts := UserArtifactsManagerOpts{
-		RootDir:     dir,
-		NameFactory: func() string { return "foo" },
-	}
-	am := NewUserArtifactsManagerImpl(opts)
-	am.NewDir()
-	tarFile, err := os.Open(getTestTarFilename())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tarFile.Close()
-
-	err = am.CreateUpdateArtifact("foo", "cvd-host_package.tar.gz", tarFile)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, _ := ioutil.ReadFile(am.GetDirPath("foo") + "/foo_dir/foo.txt")
+	b, _ := ioutil.ReadFile(dir + "/foo_dir/foo.txt")
 	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
-	b, _ = ioutil.ReadFile(am.GetDirPath("foo") + "/foo_dir/link_foo.txt")
+	b, _ = ioutil.ReadFile(dir + "/foo_dir/link_foo.txt")
 	if diff := cmp.Diff("foo\n", string(b)); diff != "" {
 		t.Errorf("symlink content mismatch (-want +got):\n%s", diff)
-	}
-	if ok, _ := fileExist(am.GetFilePath("foo", "cvd-host_package.tar.gz")); ok {
-		t.Error("cvd-host_package.tar.gz was not cleaned up")
 	}
 }
 
