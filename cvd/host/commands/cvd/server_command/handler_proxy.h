@@ -22,6 +22,6 @@
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<CommandSequenceExecutor>>
-cvdSerialLaunchComponent();
+cvdSerialPresetComponent();
 
-}  // namespace cuttlefish
+}
