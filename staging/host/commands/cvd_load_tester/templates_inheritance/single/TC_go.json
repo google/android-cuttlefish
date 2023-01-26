@@ -2,7 +2,7 @@
     "instances" :
     [
         {
-            "@import" : "go.json"
+            "@import" : "go"
         }
     ]
 }

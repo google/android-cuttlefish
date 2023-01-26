@@ -2,7 +2,7 @@
     "instances" :
     [
         {
-            "@import" : "tv.json"
+            "@import" : "tv"
         }
     ]
 }
