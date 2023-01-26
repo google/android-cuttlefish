@@ -417,14 +417,14 @@ func (u *filesUploader) Upload() error {
 	// Only first error will be returned.
 	var returnErr error
 	for err := range resultsChan {
-		if returnErr != nil {
-			continue
-		}
 		if err != nil {
-			returnErr = err
-			cancel()
-			// Do not return from here and let the cancellation logic to propagate, resultsChan
-			// will be closed eventually.
+			fmt.Fprintf(u.DumpOut, "Error uploading file chunk: %v\n", err)
+			if returnErr == nil {
+				returnErr = err
+				cancel()
+				// Do not return from here and let the cancellation logic to propagate, resultsChan
+				// will be closed eventually.
+			}
 		}
 	}
 	return returnErr
@@ -575,6 +575,9 @@ func writeMultipartRequest(writer *multipart.Writer, job uploadChunkJob) error {
 		return err
 	}
 	if err := addFormField(writer, "chunk_total", strconv.Itoa(job.TotalChunks)); err != nil {
+		return err
+	}
+	if err := addFormField(writer, "chunk_size_bytes", strconv.FormatInt(job.ChunkSizeBytes, 10)); err != nil {
 		return err
 	}
 	fw, err := writer.CreateFormFile("file", filepath.Base(job.Filename))
