@@ -106,6 +106,27 @@ constexpr size_t kPreferredBufferSize = 8192;
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   std::vector<char> buffer(kPreferredBufferSize);
   while (length > 0) {
+    // Wait until either in becomes readable or our fd closes.
+    constexpr ssize_t IN = 0;
+    constexpr ssize_t OUT = 1;
+    struct pollfd pollfds[2];
+    pollfds[IN].fd = in.fd_;
+    pollfds[IN].events = POLLIN;
+    pollfds[IN].revents = 0;
+    pollfds[OUT].fd = fd_;
+    pollfds[OUT].events = 0;
+    pollfds[OUT].revents = 0;
+    int res = poll(pollfds, 2, -1 /* indefinitely */);
+    if (res < 0) {
+      errno_ = errno;
+      return false;
+    }
+    if (pollfds[OUT].revents != 0) {
+      // destination was either closed, invalid or errored, either way there is no
+      // point in continuing.
+      return false;
+    }
+
     ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
     if (num_read <= 0) {
       return false;
@@ -114,12 +135,14 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
 
     ssize_t written = 0;
     do {
+      // No need to use poll for writes: even if the source closes, the data
+      // needs to be delivered to the other side.
       auto res = Write(buffer.data(), num_read);
-     if (res <= 0) {
-      // The caller will have to log an appropriate message.
-       return false;
-     }
-     written += res;
+      if (res <= 0) {
+        // The caller will have to log an appropriate message.
+        return false;
+      }
+      written += res;
     } while(written < num_read);
   }
   return true;
