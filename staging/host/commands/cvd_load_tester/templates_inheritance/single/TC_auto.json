@@ -2,7 +2,7 @@
     "instances" :
     [
         {
-            "@import" : "auto.json"
+            "@import" : "auto"
         }
     ]
 }

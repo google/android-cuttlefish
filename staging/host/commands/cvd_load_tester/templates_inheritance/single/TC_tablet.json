@@ -2,7 +2,7 @@
     "instances" :
     [
         {
-            "@import" : "tablet.json"
+            "@import" : "tablet"
         }
     ]
 }
