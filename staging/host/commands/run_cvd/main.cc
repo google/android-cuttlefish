@@ -120,6 +120,8 @@ fruit::Component<> runCvdComponent(
       .bindInstance(*instance)
       .install(AdbConfigComponent)
       .install(AdbConfigFragmentComponent)
+      .install(FastbootConfigComponent)
+      .install(FastbootConfigFragmentComponent)
       .install(bootStateMachineComponent)
       .install(ConfigFlagPlaceholder)
       .install(CustomActionsComponent)
