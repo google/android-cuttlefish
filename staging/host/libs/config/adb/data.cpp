@@ -19,7 +19,7 @@
 #include <set>
 
 namespace cuttlefish {
-namespace {}
+namespace {
 
 class AdbConfigImpl : public AdbConfig {
  public:
@@ -45,6 +45,8 @@ class AdbConfigImpl : public AdbConfig {
   std::set<AdbMode> modes_;
   bool run_connector_;
 };
+
+}  // namespace
 
 fruit::Component<AdbConfig> AdbConfigComponent() {
   return fruit::createComponent().bind<AdbConfig, AdbConfigImpl>();
