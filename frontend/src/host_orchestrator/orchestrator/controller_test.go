@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/gorilla/mux"
@@ -250,6 +251,21 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	controller := Controller{UserArtifactsManager: &testUAM{}}
 	rr := httptest.NewRecorder()
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestGetDebugVarzIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/_debug/varz", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{DebugVariablesManager: debug.NewVariablesManager(debug.StaticVariables{})}
 
 	makeRequest(rr, req, &controller)
 

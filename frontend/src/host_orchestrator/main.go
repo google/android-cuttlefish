@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
@@ -145,6 +146,11 @@ func main() {
 		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.Command},
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
+	debugStaticVars := debug.StaticVariables{
+		InitialCVDBinAndroidBuildID:     opts.CVDBinAB.ID,
+		InitialCVDBinAndroidBuildTarget: opts.CVDBinAB.Target,
+	}
+	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)
 	go func() {
 		err := deviceServerLoop()
@@ -156,6 +162,7 @@ func main() {
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,
 		UserArtifactsManager:  uam,
+		DebugVariablesManager: debugVarsManager,
 	}
 	imController.AddRoutes(r)
 	// The host orchestrator currently has no use for this, since clients won't connect

@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
@@ -34,6 +35,7 @@ type Controller struct {
 	OperationManager      OperationManager
 	WaitOperationDuration time.Duration
 	UserArtifactsManager  UserArtifactsManager
+	DebugVariablesManager *debug.VariablesManager
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
@@ -57,7 +59,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
-
+	// Debug endpoints.
+	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 }
 
 type handler interface {
@@ -267,4 +270,12 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		File:           f,
 	}
 	return nil, h.m.UpdateArtifact(dir, chunk)
+}
+
+type getDebugVariablesHandler struct {
+	m *debug.VariablesManager
+}
+
+func (h *getDebugVariablesHandler) Handle(r *http.Request) (interface{}, error) {
+	return h.m.GetVariables(), nil
 }
