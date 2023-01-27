@@ -59,7 +59,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
-	router.Handle("/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
+	// Debug endpoints.
+	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 }
 
 type handler interface {

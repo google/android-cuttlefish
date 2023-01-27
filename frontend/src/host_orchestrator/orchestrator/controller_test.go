@@ -261,7 +261,7 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 
 func TestGetDebugVarzIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/varz", strings.NewReader("{}"))
+	req, err := http.NewRequest("GET", "/_debug/varz", strings.NewReader("{}"))
 	if err != nil {
 		t.Fatal(err)
 	}
