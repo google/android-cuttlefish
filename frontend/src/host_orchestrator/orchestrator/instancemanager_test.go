@@ -322,13 +322,17 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	}
 }
 
-type fakeUADirRes struct{}
+type fakeUADirRes struct {
+	Dir string
+}
 
-func (fakeUADirRes) GetDirPath(string) string { return "" }
+func (r *fakeUADirRes) GetDirPath(string) string { return r.Dir }
 
 func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
+	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
+	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -344,7 +348,7 @@ func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
 		CVDDownloader:            &testCVDDwnlder{},
 		OperationManager:         om,
 		HostValidator:            &AlwaysSucceedsValidator{},
-		UserArtifactsDirResolver: &fakeUADirRes{},
+		UserArtifactsDirResolver: &fakeUADirRes{dir},
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	buildSource := &apiv1.BuildSource{UserBuild: &apiv1.UserBuild{ArtifactsDir: "baz"}}

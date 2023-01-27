@@ -243,6 +243,9 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 func (m *CVDToolInstanceManager) launchFromUserBuild(
 	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
 	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuild.ArtifactsDir)
+	if err := untarCVDHostPackage(artifactsDir); err != nil {
+		return nil, err
+	}
 	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
 	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
 	runtimeDir := m.paths.RuntimesRootDir + "/" + cvdName
@@ -256,6 +259,15 @@ func (m *CVDToolInstanceManager) launchFromUserBuild(
 		Name:        cvdName,
 		BuildSource: req.CVD.BuildSource,
 	}, nil
+}
+
+const CVDHostPackageName = "cvd-host_package.tar.gz"
+
+func untarCVDHostPackage(dir string) error {
+	if err := Untar(dir, dir+"/"+CVDHostPackageName); err != nil {
+		return fmt.Errorf("Failed to untar %s with error: %w", CVDHostPackageName, err)
+	}
+	return nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
