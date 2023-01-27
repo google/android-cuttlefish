@@ -96,18 +96,16 @@ std::vector<std::string> GenerateCustomConfigsFlags(
       std::string mapped_text =
           Json::writeString(factory, instances[i]["vm"]["custom_actions"]);
       // format json string string to match aosp/2374890 input format
-      mapped_text =
-          android::base::StringReplace(mapped_text, "\n", "\\\n", true);
-      mapped_text =
-          android::base::StringReplace(mapped_text, "\r", "\\\r", true);
+      mapped_text = android::base::StringReplace(mapped_text, "\n", "", true);
+      mapped_text = android::base::StringReplace(mapped_text, "\r", "", true);
       mapped_text =
           android::base::StringReplace(mapped_text, "\"", "\\\"", true);
       std::stringstream buff;
-      buff << "--custom_actions=\"" << mapped_text << "\"";
+      buff << "--custom_actions=" << mapped_text;
       result.emplace_back(buff.str());
     } else {
       // custom_actions parameter doesn't exist in the configuration file
-      result.emplace_back("--custom_actions=\"unset\"");
+      result.emplace_back("--custom_actions=unset");
     }
   }
   return result;
