@@ -33,6 +33,14 @@ sudo apt-get update
 
 sudo apt install -y debhelper ubuntu-dev-tools equivs "${extra_packages[@]}"
 
+# Resize
+sudo apt install -y cloud-utils
+sudo apt install -y cloud-guest-utils
+sudo apt install -y fdisk
+sudo growpart /dev/sdb 1
+sudo e2fsck -f -y /dev/sdb1
+sudo resize2fs /dev/sdb1
+
 # Install the cuttlefish build deps
 
 for dsc in *.dsc; do
