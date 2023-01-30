@@ -250,9 +250,6 @@ static const std::set<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.weaver.", 2},
 };
 
-static const std::set<VersionedAidlPackage> kComingSoonAidl = {
-};
-
 // AOSP packages which are never considered
 static bool isHidlPackageConsidered(const FQName& name) {
   static std::vector<std::string> gAospExclude = {
@@ -421,7 +418,6 @@ struct AidlPackageCheck {
 TEST(Hal, AidlInterfacesImplemented) {
   std::set<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
   std::set<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
-  std::set<VersionedAidlPackage> comingSoon = kComingSoonAidl;
 
   for (const auto& treePackage : AidlInterfaceMetadata::all()) {
     ASSERT_FALSE(treePackage.types.empty()) << treePackage.name;
@@ -488,11 +484,8 @@ TEST(Hal, AidlInterfacesImplemented) {
   }
 
   for (const auto& package : thoughtMissing) {
-    // TODO: b/194806512 : Remove after Wifi hostapd AIDL interface lands on aosp
-    if (comingSoon.erase(package) == 0) {
-      ADD_FAILURE() << "Interface in missing list and cannot find it anywhere: "
-                    << package.name << " V" << package.version;
-    }
+    ADD_FAILURE() << "Interface in missing list and cannot find it anywhere: "
+                  << package.name << " V" << package.version;
   }
 
   for (const auto& package : manifest) {
