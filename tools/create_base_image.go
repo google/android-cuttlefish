@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"strings"
 	"time"
+	"strconv"
 )
 
 type OnFail int
@@ -71,6 +72,7 @@ var internal_ip_flag string
 var INTERNAL_extra_source string
 var verbose bool
 var username string
+var image_disk_size_gb int
 
 // NOTE: For `gcloud compute ssh` command, `ssh_flags` will be used as SSH_ARGS rather than
 // as `--ssh_flag` repeated flag. Why? because --ssh_flag is not parsed as expected when
@@ -136,6 +138,7 @@ func init() {
 	flag.StringVar(&INTERNAL_extra_source, "INTERNAL_extra_source", "",
 		"INTERNAL_extra_source may be set to a directory containing the source for extra packages to build.")
 	flag.BoolVar(&verbose, "verbose", true, "print commands and output (default: true)")
+	flag.IntVar(&image_disk_size_gb, "image_disk_size_gb", 10, "Image disk size in GB")
 	flag.Var(&ssh_flags, "ssh_flag",
 		"Values for --ssh-flag and --scp_flag for gcloud compute ssh/scp respectively. This flag may be repeated")
 	flag.BoolVar(&host_orchestration_flag, "host_orchestration", false,
@@ -334,8 +337,8 @@ func main() {
 		`"`, `No scratch disk`)
 	gce(WarnOnFail, `compute images delete -q --project="`+build_project+
 		`" "`+dest_image+`"`, `Not respinning`)
-	gce(WarnOnFail, `compute disks create `+PZ+` --image-family="`+source_image_family+
-		`" --image-project="`+source_image_project+`" "`+dest_image+`"`)
+	gce(WarnOnFail, `compute disks create `+PZ+`  --size=`+strconv.Itoa(image_disk_size_gb)+`G `+
+		`--image-family="`+source_image_family+`" --image-project="`+source_image_project+`" "`+dest_image+`"`)
 	gce(ExitOnFail, `compute accelerator-types describe "`+gpu_type+`" `+PZ,
 		`Please use a zone with `+gpu_type+` GPUs available.`)
 	createInstance(build_instance, PZ+
