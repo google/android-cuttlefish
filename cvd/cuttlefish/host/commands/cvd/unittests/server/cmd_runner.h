@@ -27,7 +27,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace selector {
 
 class CmdResult {
  public:
@@ -70,5 +69,4 @@ class CmdRunner {
   Command cmd_;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish
