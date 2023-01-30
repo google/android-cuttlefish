@@ -13,31 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
+#include "host/commands/cvd/unittests/server/utils.h"
+
+namespace cuttlefish {
+
+int NumberOfOccurrences(const std::string& str, const std::string& substr) {
+  int cnt = 0;
+  int pos = str.find(substr, 0);
+  while (pos != std::string::npos) {
+    ++cnt;
+    pos = str.find(substr, pos + 1);
+  }
+  return cnt;
 }
 
-cc_library_host_static {
-    name: "cvd_test_cmd_utils",
-    srcs: [
-        "cmd_runner.cpp",
-        "utils.cpp",
-    ],
-    defaults: ["cvd_lib_defaults"],
-}
-
-cc_test_host {
-    name: "cvd_server_test",
-    srcs: [
-        "autogen_ids_test.cpp",
-        "basic_test.cpp",
-        "help_test.cpp",
-    ],
-    static_libs: [
-        "cvd_test_cmd_utils",
-    ],
-    test_options: {
-        unit_test: false,
-    },
-    defaults: ["cvd_and_fetch_cvd_defaults"],
-}
+}  // namespace cuttlefish
