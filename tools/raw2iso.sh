@@ -61,7 +61,7 @@ if [[ -z "${output}" ]]; then
 fi
 
 grub_cmdline="ro net.ifnames=0 console=ttyAMA0 loglevel=4"
-grub_rootfs="LABEL=rootfs"
+grub_rootfs="LABEL=install"
 
 # Validate format of the input disk
 /sbin/sgdisk -p "${input}" | grep -q "Disk identifier (GUID)" || \
@@ -113,10 +113,18 @@ cat >"${workdir}"/install.sh << EOF
 set -e
 set -u
 SCRIPT_DIR=\$(CDPATH= cd -- "\$(dirname -- "\${0}")" && pwd -P)
+if [ "\${1#*nvme}" != "\${1}" ]; then
+  partition=p
+else
+  partition=
+fi
 sgdisk --load-backup="\${SCRIPT_DIR}"/gpt.img \${1}
-dd if="\${SCRIPT_DIR}"/esp.img of=\${1}1 bs=16M
-mkfs.ext4 -L ROOT -U \$(cat \${SCRIPT_DIR}/rootfs_uuid) \${1}2
-mount \${1}2 /media
+sgdisk --delete=2 \${1}
+sgdisk --new=2:129M:0 --typecode=2:8305 --change-name=2:rootfs --attributes=2:set:2 \${1}
+partx -v --update \${1}
+dd if="\${SCRIPT_DIR}"/esp.img of=\${1}\${partition}1 bs=16M
+mkfs.ext4 -L ROOT -U \$(cat \${SCRIPT_DIR}/rootfs_uuid) \${1}\${partition}2
+mount \${1}\${partition}2 /media
 tar -C /media -Spxf \${SCRIPT_DIR}/rootfs.tar.lz4
 umount /media
 EOF
@@ -198,7 +206,7 @@ sudo chown root:root \
 rm -f "${output}"
 touch "${output}"
 sudo xorriso \
-  -as mkisofs -r -checksum_algorithm_iso sha256,sha512 -V rootfs "${mount}" \
+  -as mkisofs -r -checksum_algorithm_iso sha256,sha512 -V install "${mount}" \
   -o "${output}" -e boot/grub/eltorito.img -no-emul-boot \
   -append_partition 2 0xef "${workdir}"/eltorito.img \
   -partition_cyl_align all
