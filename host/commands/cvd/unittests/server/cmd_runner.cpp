@@ -18,7 +18,6 @@
 #include <android-base/strings.h>
 
 namespace cuttlefish {
-namespace selector {
 
 CmdResult::CmdResult(const std::string& stdout_str,
                      const std::string& stderr_str, const int ret_code)
@@ -60,5 +59,4 @@ CmdResult CmdRunner::Run() {
   return CmdResult(stdout_str, stderr_str, ret_code);
 }
 
-}  // namespace selector
 }  // namespace cuttlefish
