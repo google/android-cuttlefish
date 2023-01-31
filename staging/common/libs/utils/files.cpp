@@ -20,9 +20,12 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include <libgen.h>
+#include <linux/fiemap.h>
+#include <linux/fs.h>
+#include <sys/ioctl.h>
+#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/sendfile.h>
 #include <unistd.h>
 
 #include <array>
@@ -51,7 +54,7 @@
 namespace cuttlefish {
 
 bool FileExists(const std::string& path, bool follow_symlinks) {
-  struct stat st;
+  struct stat st {};
   return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
 }
 
@@ -64,7 +67,7 @@ std::vector<std::string> DirectoryContents(const std::string& path) {
   std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
   CHECK(dir != nullptr) << "Could not read from dir \"" << path << "\"";
   if (dir) {
-    struct dirent *ent;
+    struct dirent* ent{};
     while ((ent = readdir(dir.get()))) {
       ret.push_back(ent->d_name);
     }
@@ -73,7 +76,7 @@ std::vector<std::string> DirectoryContents(const std::string& path) {
 }
 
 bool DirectoryExists(const std::string& path, bool follow_symlinks) {
-  struct stat st;
+  struct stat st {};
   if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
     return false;
   }
@@ -155,6 +158,23 @@ bool RecursivelyRemoveDirectory(const std::string& path) {
          0;
 }
 
+namespace {
+
+bool SendFile(int out_fd, int in_fd, off64_t* offset, size_t count) {
+  while (count > 0) {
+    const auto bytes_written =
+        TEMP_FAILURE_RETRY(sendfile(out_fd, in_fd, offset, count));
+    if (bytes_written <= 0) {
+      return false;
+    }
+
+    count -= bytes_written;
+  }
+  return true;
+}
+
+}  // namespace
+
 bool Copy(const std::string& from, const std::string& to) {
   android::base::unique_fd fd_from(
       open(from.c_str(), O_RDONLY | O_CLOEXEC));
@@ -165,21 +185,52 @@ bool Copy(const std::string& from, const std::string& to) {
     return false;
   }
 
-  struct stat from_stat;
-  fstat(fd_from.get(), &from_stat);
-
-  off_t offset = 0;
-  ssize_t remain = from_stat.st_size;
-
-  while (remain != 0) {
-    if (sendfile(fd_to.get(), fd_from.get(), &offset, remain) <= 0) {
-      break;
-    }
-
-    remain = from_stat.st_size - offset;
+  off_t farthest_seek = lseek(fd_from.get(), 0, SEEK_END);
+  if (farthest_seek == -1) {
+    PLOG(ERROR) << "Could not lseek in \"" << from << "\"";
+    return false;
   }
-
-  return remain == 0;
+  if (ftruncate64(fd_to.get(), farthest_seek) < 0) {
+    PLOG(ERROR) << "Failed to ftruncate " << to;
+  }
+  off_t offset = 0;
+  while (offset < farthest_seek) {
+    off_t new_offset = lseek(fd_from.get(), offset, SEEK_HOLE);
+    if (new_offset == -1) {
+      // ENXIO is returned when there are no more blocks of this type
+      // coming.
+      if (errno == ENXIO) {
+        return true;
+      }
+      PLOG(ERROR) << "Could not lseek in \"" << from << "\"";
+      return false;
+    }
+    auto data_bytes = new_offset - offset;
+    if (lseek(fd_to.get(), offset, SEEK_SET) < 0) {
+      PLOG(ERROR) << "lseek() on " << to << " failed";
+      return false;
+    }
+    if (!SendFile(fd_to.get(), fd_from.get(), &offset, data_bytes)) {
+      PLOG(ERROR) << "sendfile() failed";
+      return false;
+    }
+    CHECK_EQ(offset, new_offset);
+    if (offset >= farthest_seek) {
+      return true;
+    }
+    new_offset = lseek(fd_from.get(), offset, SEEK_DATA);
+    if (new_offset == -1) {
+      // ENXIO is returned when there are no more blocks of this type
+      // coming.
+      if (errno == ENXIO) {
+        return true;
+      }
+      PLOG(ERROR) << "Could not lseek in \"" << from << "\"";
+      return false;
+    }
+    offset = new_offset;
+  }
+  return true;
 }
 
 std::string AbsolutePath(const std::string& path) {
@@ -204,7 +255,7 @@ std::string AbsolutePath(const std::string& path) {
 }
 
 off_t FileSize(const std::string& path) {
-  struct stat st;
+  struct stat st {};
   if (stat(path.c_str(), &st) == -1) {
     return 0;
   }
@@ -218,7 +269,7 @@ bool MakeFileExecutable(const std::string& path) {
 
 // TODO(schuffelen): Use std::filesystem::last_write_time when on C++17
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path) {
-  struct stat st;
+  struct stat st {};
   if (stat(path.c_str(), &st) == -1) {
     return std::chrono::system_clock::time_point();
   }
@@ -329,7 +380,7 @@ std::string cpp_dirname(const std::string& str) {
 }
 
 bool FileIsSocket(const std::string& path) {
-  struct stat st;
+  struct stat st {};
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
