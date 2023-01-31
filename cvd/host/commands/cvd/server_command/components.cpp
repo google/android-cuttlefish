@@ -20,7 +20,6 @@
 #include "host/commands/cvd/server_command/fleet.h"
 #include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/start.h"
 
 namespace cuttlefish {
 
@@ -28,7 +27,6 @@ fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
 cvdCommandComponent() {
   return fruit::createComponent()
       .install(cvdGenericCommandComponent)
-      .install(cvdStartCommandComponent)
       .install(cvdFleetCommandComponent)
       .install(cvdFetchCommandComponent);
 }

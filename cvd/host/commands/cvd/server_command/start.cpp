@@ -48,10 +48,12 @@ namespace cuttlefish {
 
 class CvdStartCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdStartCommandHandler(InstanceManager& instance_manager,
-                                SubprocessWaiter& subprocess_waiter))
+  INJECT(CvdStartCommandHandler(
+      InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+      HostToolTargetManager& host_tool_target_manager))
       : instance_manager_(instance_manager),
-        subprocess_waiter_(subprocess_waiter) {}
+        subprocess_waiter_(subprocess_waiter),
+        host_tool_target_manager_(host_tool_target_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -71,8 +73,9 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   // call this only if !is_help
   Result<selector::GroupCreationInfo> GetGroupCreationInfo(
-      const std::string& subcmd, const cvd_common::Args& subcmd_args,
-      const cvd_common::Envs& envs, const RequestWithStdio& request);
+      const std::string& start_bin, const std::string& subcmd,
+      const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
+      const RequestWithStdio& request);
 
   Result<cvd::Response> FillOutNewInstanceInfo(
       cvd::Response&& response,
@@ -86,13 +89,15 @@ class CvdStartCommandHandler : public CvdServerHandler {
       std::vector<std::string>&& args, const std::string& group_name,
       const std::vector<selector::PerInstanceInfo>& per_instance_info);
 
-  static Result<selector::GroupCreationInfo> UpdateArgsAndEnvs(
-      selector::GroupCreationInfo&& old_group_info);
+  Result<selector::GroupCreationInfo> UpdateArgsAndEnvs(
+      selector::GroupCreationInfo&& old_group_info,
+      const std::string& start_bin);
 
   static Result<std::string> FindStartBin(const std::string& android_host_out);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
+  HostToolTargetManager& host_tool_target_manager_;
   std::mutex interruptible_;
   bool interrupted_ = false;
 
@@ -208,8 +213,9 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
 // call this only if !is_help
 Result<selector::GroupCreationInfo>
 CvdStartCommandHandler::GetGroupCreationInfo(
-    const std::string& subcmd, const std::vector<std::string>& subcmd_args,
-    const cvd_common::Envs& envs, const RequestWithStdio& request) {
+    const std::string& start_bin, const std::string& subcmd,
+    const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
+    const RequestWithStdio& request) {
   using CreationAnalyzerParam =
       selector::CreationAnalyzer::CreationAnalyzerParam;
   const auto& selector_opts =
@@ -221,18 +227,25 @@ CvdStartCommandHandler::GetGroupCreationInfo(
   auto group_creation_info =
       CF_EXPECT(instance_manager_.Analyze(subcmd, analyzer_param, cred));
   auto final_group_creation_info =
-      CF_EXPECT(UpdateArgsAndEnvs(std::move(group_creation_info)));
+      CF_EXPECT(UpdateArgsAndEnvs(std::move(group_creation_info), start_bin));
   return final_group_creation_info;
 }
 
 Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
-    selector::GroupCreationInfo&& old_group_info) {
+    selector::GroupCreationInfo&& old_group_info,
+    const std::string& start_bin) {
   selector::GroupCreationInfo group_creation_info = std::move(old_group_info);
   group_creation_info.args = CF_EXPECT(UpdateInstanceArgs(
       std::move(group_creation_info.args), group_creation_info.instances));
-  group_creation_info.args = CF_EXPECT(UpdateWebrtcDeviceId(
-      std::move(group_creation_info.args), group_creation_info.group_name,
-      group_creation_info.instances));
+  auto webrtc_device_id_flag = host_tool_target_manager_.ReadFlag(
+      {.artifacts_path = group_creation_info.host_artifacts_path,
+       .start_bin = start_bin,
+       .flag_name = "webrtc_device_id"});
+  if (webrtc_device_id_flag.ok()) {
+    group_creation_info.args = CF_EXPECT(UpdateWebrtcDeviceId(
+        std::move(group_creation_info.args), group_creation_info.group_name,
+        group_creation_info.instances));
+  }
   group_creation_info.envs["HOME"] = group_creation_info.home;
   group_creation_info.envs[kAndroidHostOut] =
       group_creation_info.host_artifacts_path;
@@ -337,8 +350,8 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
 
   std::optional<selector::GroupCreationInfo> group_creation_info;
   if (!is_help) {
-    group_creation_info =
-        CF_EXPECT(GetGroupCreationInfo(subcmd, subcmd_args, envs, request));
+    group_creation_info = CF_EXPECT(
+        GetGroupCreationInfo(bin, subcmd, subcmd_args, envs, request));
     CF_EXPECT(UpdateInstanceDatabase(uid, *group_creation_info));
     response = CF_EXPECT(
         FillOutNewInstanceInfo(std::move(response), *group_creation_info));
@@ -451,7 +464,8 @@ std::vector<std::string> CvdStartCommandHandler::CmdList() const {
 const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
     "start", "launch_cvd"};
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+fruit::Component<
+    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
 cvdStartCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdStartCommandHandler>();
