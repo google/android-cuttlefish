@@ -144,7 +144,9 @@ class Command {
   Command& operator=(const Command&) = delete;
   ~Command();
 
-  const std::string& Executable() const { return command_[0]; }
+  const std::string& Executable() const {
+    return executable_ ? *executable_ : command_[0];
+  }
 
   Command& SetExecutable(std::string executable) & {
     executable_ = std::move(executable);
