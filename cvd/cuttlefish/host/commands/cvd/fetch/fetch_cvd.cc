@@ -541,6 +541,19 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                 << "\"" << target_vbmeta_system
                                 << "\") failed: \"" << strerror(errno) << "\"");
         }
+        if (ExtractImages(target_files[0], target_dir,
+                          {"IMAGES/vbmeta_vendor_dlkm.img"}) !=
+            std::vector<std::string>{}) {
+          std::string extracted_vbmeta_vendor_dlkm =
+              target_dir + "/IMAGES/vbmeta_vendor_dlkm.img";
+          std::string target_vbmeta_vendor_dlkm =
+              target_dir + "/vbmeta_vendor_dlkm.img";
+          CF_EXPECT(rename(extracted_vbmeta_vendor_dlkm.c_str(),
+                           target_vbmeta_vendor_dlkm.c_str()) == 0,
+                    "rename(\"" << extracted_vbmeta_vendor_dlkm << "\", \""
+                                << "\"" << target_vbmeta_vendor_dlkm
+                                << "\") failed: \"" << strerror(errno) << "\"");
+        }
         // This should technically call AddFilesToConfig with the produced
         // files, but it will conflict with the ones produced from the default
         // system image and pie doesn't care about the produced file list
