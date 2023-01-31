@@ -387,7 +387,7 @@ func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
 	return nil
 }
 
-const openConnections = 10
+const openConnections = 32
 
 type fileInfo struct {
 	Name        string
