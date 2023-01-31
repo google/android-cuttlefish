@@ -30,8 +30,10 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -72,6 +74,17 @@ class CvdStartCommandHandler : public CvdServerHandler {
       cvd::Response&& response,
       const selector::GroupCreationInfo& group_creation_info);
 
+  static Result<cvd_common::Args> UpdateInstanceArgs(
+      std::vector<std::string>&& args,
+      const std::vector<selector::PerInstanceInfo>& instances);
+
+  static Result<std::vector<std::string>> UpdateWebrtcDeviceId(
+      std::vector<std::string>&& args, const std::string& group_name,
+      const std::vector<selector::PerInstanceInfo>& per_instance_info);
+
+  static Result<selector::GroupCreationInfo> UpdateArgsAndEnvs(
+      selector::GroupCreationInfo&& old_group_info);
+
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
@@ -85,6 +98,86 @@ Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
   return Contains(command_to_binary_map_, invocation.command);
+}
+
+/*
+ * 1. Remove --num_instances, --instance_nums, --base_instance_num if any.
+ * 2. If the ids are consecutive and ordered, add:
+ *   --base_instance_num=min --num_instances=ids.size()
+ * 3. If not, --instance_nums=<ids>
+ *
+ */
+Result<cvd_common::Args> CvdStartCommandHandler::UpdateInstanceArgs(
+    std::vector<std::string>&& args,
+    const std::vector<selector::PerInstanceInfo>& instances) {
+  std::vector<unsigned> ids;
+  ids.reserve(instances.size());
+  for (const auto& instance : instances) {
+    ids.emplace_back(instance.instance_id_);
+  }
+
+  cvd_common::Args new_args{std::move(args)};
+  std::string old_instance_nums;
+  std::string old_num_instances;
+  std::string old_base_instance_num;
+
+  std::vector<Flag> instance_id_flags{
+      GflagsCompatFlag("instance_nums", old_instance_nums),
+      GflagsCompatFlag("num_instances", old_num_instances),
+      GflagsCompatFlag("base_instance_num", old_base_instance_num)};
+  // discard old ones
+  ParseFlags(instance_id_flags, new_args);
+
+  auto max = *(std::max_element(ids.cbegin(), ids.cend()));
+  auto min = *(std::min_element(ids.cbegin(), ids.cend()));
+
+  const bool is_consecutive = ((max - min) == (ids.size() - 1));
+  const bool is_sorted = std::is_sorted(ids.begin(), ids.end());
+
+  if (!is_consecutive || !is_sorted) {
+    std::string flag_value = android::base::Join(ids, ",");
+    new_args.emplace_back("--instance_nums=" + flag_value);
+    return new_args;
+  }
+
+  // sorted and consecutive, so let's use old flags
+  // like --num_instances and --base_instance_num
+  new_args.emplace_back("--num_instances=" + std::to_string(ids.size()));
+  new_args.emplace_back("--base_instance_num=" + std::to_string(min));
+  return new_args;
+}
+
+/*
+ * Adds --webrtc_device_id when necessary to cmd_args_
+ */
+Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
+    std::vector<std::string>&& args, const std::string& group_name,
+    const std::vector<selector::PerInstanceInfo>& per_instance_info) {
+  std::vector<std::string> new_args{std::move(args)};
+  std::string flag_value;
+  std::vector<Flag> webrtc_device_id_flag{
+      GflagsCompatFlag("webrtc_device_id", flag_value)};
+  std::vector<std::string> copied_args{new_args};
+  CF_EXPECT(ParseFlags(webrtc_device_id_flag, copied_args));
+
+  if (!flag_value.empty()) {
+    return new_args;
+  }
+
+  CF_EXPECT(!group_name.empty());
+  std::vector<std::string> device_name_list;
+  device_name_list.reserve(per_instance_info.size());
+  for (const auto& instance : per_instance_info) {
+    const auto& per_instance_name = instance.per_instance_name_;
+    std::string device_name{group_name};
+    device_name.append("-").append(per_instance_name);
+    device_name_list.emplace_back(device_name);
+  }
+  // take --webrtc_device_id flag away
+  new_args = std::move(copied_args);
+  new_args.emplace_back("--webrtc_device_id=" +
+                        android::base::Join(device_name_list, ","));
+  return new_args;
 }
 
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
@@ -121,6 +214,22 @@ CvdStartCommandHandler::GetGroupCreationInfo(
   auto cred = CF_EXPECT(request.Credentials());
   auto group_creation_info =
       CF_EXPECT(instance_manager_.Analyze(subcmd, analyzer_param, cred));
+  auto final_group_creation_info =
+      CF_EXPECT(UpdateArgsAndEnvs(std::move(group_creation_info)));
+  return final_group_creation_info;
+}
+
+Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
+    selector::GroupCreationInfo&& old_group_info) {
+  selector::GroupCreationInfo group_creation_info = std::move(old_group_info);
+  group_creation_info.args = CF_EXPECT(UpdateInstanceArgs(
+      std::move(group_creation_info.args), group_creation_info.instances));
+  group_creation_info.args = CF_EXPECT(UpdateWebrtcDeviceId(
+      std::move(group_creation_info.args), group_creation_info.group_name,
+      group_creation_info.instances));
+  group_creation_info.envs["HOME"] = group_creation_info.home;
+  group_creation_info.envs[selector::kAndroidHostOut] =
+      group_creation_info.host_artifacts_path;
   return group_creation_info;
 }
 
@@ -174,11 +283,13 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
           ? CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request))
           : CF_EXPECT(
                 ConstructCvdNonHelpCommand(bin, *group_creation_info, request));
+
   if (!is_help) {
     CF_EXPECT(
         group_creation_info != std::nullopt,
         "group_creation_info should be nullopt only when --help is given.");
   }
+
   const bool should_wait =
       (request.Message().command_request().wait_behavior() !=
        cvd::WAIT_BEHAVIOR_START);
