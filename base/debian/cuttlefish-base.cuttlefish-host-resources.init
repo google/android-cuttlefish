@@ -312,11 +312,6 @@ stop() {
         destroy_mobile_interface $i 192.168.97
         destroy_wireless_interface $i 192.168.96 "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
     done
-
-    # Remove legacy interfaces when updating the software.
-    destroy_bridged_interfaces \
-      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
-      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
 }
 
 usage() {
