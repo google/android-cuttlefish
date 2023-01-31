@@ -8,6 +8,7 @@
 /dev/block/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
 /dev/block/by-name/vbmeta_[ab] u:object_r:ab_block_device:s0
 /dev/block/by-name/vbmeta_system_[ab] u:object_r:ab_block_device:s0
+/dev/block/by-name/vbmeta_vendor_dlkm_[ab] u:object_r:ab_block_device:s0
 /dev/block/by-name/super u:object_r:super_block_device:s0
 /dev/block/by-name/userdata u:object_r:userdata_block_device:s0
 /dev/block/by-name/metadata u:object_r:metadata_block_device:s0
