@@ -34,7 +34,8 @@ using ::gatekeeper::ERROR_RETRY;
 using ::gatekeeper::ERROR_UNKNOWN;
 using ::gatekeeper::SizedBuffer;
 
-RemoteGateKeeperDevice::RemoteGateKeeperDevice(cuttlefish::GatekeeperChannel* channel)
+RemoteGateKeeperDevice::RemoteGateKeeperDevice(
+    cuttlefish::SharedFdGatekeeperChannel* channel)
     : gatekeeper_channel_(channel), error_(0) {}
 
 RemoteGateKeeperDevice::~RemoteGateKeeperDevice() {}

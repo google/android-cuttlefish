@@ -51,6 +51,11 @@ cc_library_headers {
         "//apex_available:platform",
         "com.android.virt",
     ],
+    target: {
+        windows: {
+            enabled: true,
+        },
+    },
 }
 
 cc_defaults {
@@ -61,9 +66,11 @@ cc_defaults {
     ],
     target: {
         host: {
-            host_ldlibs: ["-lrt"],
             cflags: ["-DCUTTLEFISH_HOST"],
             compile_multilib: "64",
+        },
+        linux: {
+            host_ldlibs: ["-lrt"],
         },
         // We don't need Darwin host-side builds
         darwin: {
