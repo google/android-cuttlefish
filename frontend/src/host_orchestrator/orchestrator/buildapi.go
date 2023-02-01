@@ -26,14 +26,14 @@ type BuildAPI interface {
 	GetLatestGreenBuildID(branch, target string) (string, error)
 }
 
-func NewBuildAPI(baseURL string) BuildAPI {
-	return &buildAPIImpl{
-		BaseURL: baseURL,
-	}
+type AndroidCIBuildAPI struct {
+	BaseURL string
 }
 
-type buildAPIImpl struct {
-	BaseURL string
+func NewAndroidCIBuildAPI(baseURL string) *AndroidCIBuildAPI {
+	return &AndroidCIBuildAPI{
+		BaseURL: baseURL,
+	}
 }
 
 type listBuildResponse struct {
@@ -44,7 +44,7 @@ type build struct {
 	BuildID string `json:"buildId"`
 }
 
-func (s *buildAPIImpl) GetLatestGreenBuildID(branch, target string) (string, error) {
+func (s *AndroidCIBuildAPI) GetLatestGreenBuildID(branch, target string) (string, error) {
 	const format = "%s/android/internal/build/v3/builds?" +
 		"branch=%s&target=%s&buildAttemptStatus=complete&buildType=submitted&maxResults=1&successful=true"
 	url := fmt.Sprintf(format, s.BaseURL, url.PathEscape(branch), url.PathEscape(target))

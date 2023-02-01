@@ -223,6 +223,7 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 }
 
 const (
+	// TODO(b/267525748): Make these values configurable.
 	defaultBranch = "aosp-master"
 	defaultTarget = "aosp_cf_x86_64_phone-userdebug"
 )
