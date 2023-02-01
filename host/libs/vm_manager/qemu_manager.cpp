@@ -121,40 +121,46 @@ bool QemuManager::IsSupported() {
   return HostSupportsQemuCli();
 }
 
-std::vector<std::string> QemuManager::ConfigureGraphics(
+Result<std::vector<std::string>> QemuManager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
+  std::vector<std::string> props;
   if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
     // Override the default HAL search paths in all cases. We do this because
     // the HAL search path allows for fallbacks, and fallbacks in conjunction
     // with properities lead to non-deterministic behavior while loading the
     // HALs.
-    return {
+    props = {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
         "androidboot.hardware.egl=angle",
         "androidboot.hardware.vulkan=pastel",
-        "androidboot.opengles.version=196609"};  // OpenGL ES 3.1
-  }
-
-  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-    return {
-      "androidboot.cpuvulkan.version=0",
-      "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=ranchu",
-      "androidboot.hardware.hwcomposer.mode=client",
-      "androidboot.hardware.egl=mesa",
-      // No "hardware" Vulkan support, yet
-      "androidboot.opengles.version=196608"};  // OpenGL ES 3.0
-  }
-
-  if (instance.gpu_mode() == kGpuModeNone) {
+        "androidboot.opengles.version=196609",
+    };  // OpenGL ES 3.1
+  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+    props = {
+        "androidboot.cpuvulkan.version=0",
+        "androidboot.hardware.gralloc=minigbm",
+        "androidboot.hardware.hwcomposer=ranchu",
+        "androidboot.hardware.hwcomposer.mode=client",
+        "androidboot.hardware.egl=mesa",
+        // No "hardware" Vulkan support, yet
+        "androidboot.opengles.version=196608",
+    };  // OpenGL ES 3.0
+  } else if (instance.gpu_mode() == kGpuModeNone) {
     // This function should probably return a result so that empty vec
     // isn't treated as an error.
-    return {
-      "androidboot.dummy=0",
+    props = {
+        "androidboot.dummy=0",
     };
+  } else {
+    return CF_ERR("Unhandled GPU mode" << instance.gpu_mode());
   }
+
+  props.push_back("androidboot.hardware.angle_feature_overrides_enabled=" +
+                  instance.gpu_angle_feature_overrides_enabled());
+  props.push_back("androidboot.hardware.angle_feature_overrides_disabled=" +
+                  instance.gpu_angle_feature_overrides_disabled());
 
   return {};
 }

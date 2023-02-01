@@ -57,14 +57,15 @@ bool CrosvmManager::IsSupported() {
 #endif
 }
 
-std::vector<std::string> CrosvmManager::ConfigureGraphics(
+Result<std::vector<std::string>> CrosvmManager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
+  std::vector<std::string> props;
   if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
-    return {
+    props = {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_2),
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
@@ -73,10 +74,8 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.hardware.vulkan=pastel",
         "androidboot.opengles.version=196609",  // OpenGL ES 3.1
     };
-  }
-
-  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-    return {
+  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+    props = {
         "androidboot.cpuvulkan.version=0",
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=ranchu",
@@ -86,10 +85,9 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         // No "hardware" Vulkan support, yet
         "androidboot.opengles.version=196608",  // OpenGL ES 3.0
     };
-  }
-  if (instance.gpu_mode() == kGpuModeGfxStream) {
+  } else if (instance.gpu_mode() == kGpuModeGfxStream) {
     std::string gles_impl = instance.enable_gpu_angle() ? "angle" : "emulation";
-    return {
+    props = {
         "androidboot.cpuvulkan.version=0",
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
@@ -99,17 +97,22 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.hardware.gltransport=virtio-gpu-asg",
         "androidboot.opengles.version=196608",  // OpenGL ES 3.0
     };
-  }
-
-  if (instance.gpu_mode() == kGpuModeNone) {
+  } else if (instance.gpu_mode() == kGpuModeNone) {
     // This function should probably return a result so that empty vec
     // isn't treated as an error.
-    return {
-      "androidboot.dummy=0",
+    props = {
+        "androidboot.dummy=0",
     };
+  } else {
+    return CF_ERR("Unhandled GPU mode" << instance.gpu_mode());
   }
 
-  return {};
+  props.push_back("androidboot.hardware.angle_feature_overrides_enabled=" +
+                  instance.gpu_angle_feature_overrides_enabled());
+  props.push_back("androidboot.hardware.angle_feature_overrides_disabled=" +
+                  instance.gpu_angle_feature_overrides_disabled());
+
+  return props;
 }
 
 std::string CrosvmManager::ConfigureBootDevices(int num_disks, bool have_gpu) {

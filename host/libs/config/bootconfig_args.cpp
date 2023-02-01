@@ -71,7 +71,7 @@ std::vector<std::string> VmManagerBootconfig(
 
 }  // namespace
 
-std::vector<std::string> BootconfigArgsFromConfig(
+Result<std::vector<std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> bootconfig_args;
@@ -82,7 +82,9 @@ std::vector<std::string> BootconfigArgsFromConfig(
   bootconfig_args.push_back(
       vmm->ConfigureBootDevices(instance.virtual_disk_paths().size(),
                                 instance.hwcomposer() != kHwComposerNone));
-  AppendVector(&bootconfig_args, vmm->ConfigureGraphics(instance));
+
+  auto graphics_args = CF_EXPECT(vmm->ConfigureGraphics(instance));
+  AppendVector(&bootconfig_args, graphics_args);
 
   bootconfig_args.push_back(
       concat("androidboot.serialno=", instance.serial_number()));

@@ -61,7 +61,7 @@ class VmManager {
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;
-  virtual std::vector<std::string> ConfigureGraphics(
+  virtual Result<std::vector<std::string>> ConfigureGraphics(
       const CuttlefishConfig::InstanceSpecific& instance) = 0;
   virtual std::string ConfigureBootDevices(int num_disks, bool have_gpu) = 0;
 
