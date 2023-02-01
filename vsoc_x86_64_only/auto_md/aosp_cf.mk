@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# Setet board, as displays are set in the config_BOARD.json file (in
+# Set board, as displays are set in the config_BOARD.json file (in
 # that file, display0 is main, display1 is cluster, and any other displays
 # are passenger displays - notice that the maximum allowed is 4 total).
 TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/auto_md/android-info.txt
