@@ -503,11 +503,15 @@ class CuttlefishConfig {
     int modem_simulator_sim_type() const;
 
     std::string gpu_mode() const;
+    std::string gpu_angle_feature_overrides_enabled() const;
+    std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
-    bool restart_subprocesses() const;
-    std::string hwcomposer() const;
     bool enable_gpu_udmabuf() const;
     bool enable_gpu_angle() const;
+
+    std::string hwcomposer() const;
+
+    bool restart_subprocesses() const;
 
     // android artifacts
     std::string boot_image() const;
@@ -525,6 +529,7 @@ class CuttlefishConfig {
     std::string vbmeta_image() const;
     std::string vbmeta_system_image() const;
     std::string vbmeta_vendor_dlkm_image() const;
+    std::string new_vbmeta_vendor_dlkm_image() const;
 
     // otheros artifacts
     std::string otheros_esp_image() const;
@@ -665,11 +670,15 @@ class CuttlefishConfig {
     void set_modem_simulator_sim_type(int sim_type);
 
     void set_gpu_mode(const std::string& name);
+    void set_gpu_angle_feature_overrides_enabled(const std::string& overrides);
+    void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
-    void set_restart_subprocesses(bool restart_subprocesses);
-    void set_hwcomposer(const std::string&);
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
     void set_enable_gpu_angle(const bool enable_gpu_angle);
+
+    void set_hwcomposer(const std::string&);
+
+    void set_restart_subprocesses(bool restart_subprocesses);
 
     // system image files
     void set_boot_image(const std::string& boot_image);
@@ -687,6 +696,8 @@ class CuttlefishConfig {
     void set_vbmeta_image(const std::string& vbmeta_image);
     void set_vbmeta_system_image(const std::string& vbmeta_system_image);
     void set_vbmeta_vendor_dlkm_image(
+        const std::string& vbmeta_vendor_dlkm_image);
+    void set_new_vbmeta_vendor_dlkm_image(
         const std::string& vbmeta_vendor_dlkm_image);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
