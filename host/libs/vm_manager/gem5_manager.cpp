@@ -123,7 +123,7 @@ bool Gem5Manager::IsSupported() {
   return HostSupportsQemuCli();
 }
 
-std::vector<std::string> Gem5Manager::ConfigureGraphics(
+Result<std::vector<std::string>> Gem5Manager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
   // TODO: Add support for the gem5 gpu models
 
@@ -131,12 +131,16 @@ std::vector<std::string> Gem5Manager::ConfigureGraphics(
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  return {
+  return std::vector<std::string>{
       "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
       "androidboot.hardware.hwcomposer.mode=noop",
       "androidboot.hardware.egl=angle",
+      "androidboot.hardware.angle_feature_overrides_enabled=" +
+          instance.gpu_angle_feature_overrides_enabled(),
+      "androidboot.hardware.angle_feature_overrides_disabled=" +
+          instance.gpu_angle_feature_overrides_disabled(),
       "androidboot.hardware.vulkan=pastel",
   };
 }
