@@ -17,11 +17,13 @@
 #include "host/commands/cvd/common_utils.h"
 
 #include <memory>
+#include <sstream>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 
 namespace cuttlefish {
 
@@ -55,6 +57,23 @@ cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
   command_request->set_wait_behavior(wait_behavior);
 
   return request;
+}
+
+Result<std::string> StopBin(const std::string& android_host_out) {
+  std::string bin_dir_path = android_host_out + "/bin/";
+  std::vector<std::string> bins_to_try{"cvd_internal_stop", "stop_cvd"};
+  std::string stop_bin;
+  for (const auto& bin : bins_to_try) {
+    std::stringstream bin_path;
+    bin_path << bin_dir_path << bin;
+    if (FileExists(bin_path.str()) && !DirectoryExists(bin_path.str())) {
+      stop_bin = bin;
+      break;
+    }
+  }
+  CF_EXPECT(!stop_bin.empty(),
+            "Executable to stop cvd doesn't exist in " << android_host_out);
+  return stop_bin;
 }
 
 }  // namespace cuttlefish

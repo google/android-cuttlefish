@@ -31,14 +31,12 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/instance_database.h"
 
 namespace cuttlefish {
-
-constexpr char kStatusBin[] = "cvd_internal_status";
-constexpr char kStopBin[] = "cvd_internal_stop";
 
 class InstanceManager {
  public:
@@ -74,9 +72,9 @@ class InstanceManager {
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
                                    const SharedFD& err);
-  void IssueStopCommand(const SharedFD& out, const SharedFD& err,
-                        const std::string& config_file_path,
-                        const selector::LocalInstanceGroup& group);
+  Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
+                                const std::string& config_file_path,
+                                const selector::LocalInstanceGroup& group);
 
   selector::InstanceDatabase& GetInstanceDB(const uid_t uid);
   InstanceLockFileManager& lock_manager_;

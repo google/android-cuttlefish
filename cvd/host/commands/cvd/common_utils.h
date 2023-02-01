@@ -22,6 +22,8 @@
 
 #include "cvd_server.pb.h"
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 struct MakeRequestParam {
@@ -33,5 +35,11 @@ struct MakeRequestParam {
 cvd::Request MakeRequest(
     const MakeRequestParam& args_and_envs,
     const cvd::WaitBehavior wait_behavior = cvd::WAIT_BEHAVIOR_COMPLETE);
+
+constexpr char kStatusBin[] = "cvd_internal_status";
+// The name of environment variable that points to the host out directory
+constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
+
+Result<std::string> StopBin(const std::string& host_artifacts_path);
 
 }  // namespace cuttlefish
