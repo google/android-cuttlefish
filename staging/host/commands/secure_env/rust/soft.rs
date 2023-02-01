@@ -27,14 +27,14 @@ use kmr_ta::device::RetrieveKeyMaterial;
 pub struct Keys;
 
 impl RetrieveKeyMaterial for Keys {
-    fn root_kek(&self, _context: &[u8]) -> Result<crypto::RawKeyMaterial, Error> {
+    fn root_kek(&self, _context: &[u8]) -> Result<crypto::OpaqueOr<crypto::hmac::Key>, Error> {
         // Matches `MASTER_KEY` in system/keymaster/key_blob_utils/software_keyblobs.cpp
-        Ok(crypto::RawKeyMaterial([0; 16].to_vec()))
+        Ok(crypto::hmac::Key::new([0; 16].to_vec()).into())
     }
-    fn kak(&self) -> Result<crypto::aes::Key, Error> {
+    fn kak(&self) -> Result<crypto::OpaqueOr<crypto::aes::Key>, Error> {
         // Matches `kFakeKeyAgreementKey` in
         // system/keymaster/km_openssl/soft_keymaster_enforcement.cpp.
-        Ok(crypto::aes::Key::Aes256([0; 32]))
+        Ok(crypto::aes::Key::Aes256([0; 32]).into())
     }
     fn unique_id_hbk(&self, _ckdf: &dyn crypto::Ckdf) -> Result<crypto::hmac::Key, Error> {
         // Matches value used in system/keymaster/contexts/pure_soft_keymaster_context.cpp.
