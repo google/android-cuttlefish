@@ -101,16 +101,16 @@ impl Keys {
 }
 
 impl kmr_ta::device::RetrieveKeyMaterial for Keys {
-    fn root_kek(&self, _context: &[u8]) -> Result<crypto::RawKeyMaterial, Error> {
-        Ok(crypto::RawKeyMaterial(ROOT_KEK_MARKER.to_vec()))
+    fn root_kek(&self, _context: &[u8]) -> Result<crypto::OpaqueOr<crypto::hmac::Key>, Error> {
+        Ok(crypto::OpaqueOr::Opaque(crypto::OpaqueKeyMaterial(ROOT_KEK_MARKER.to_vec())))
     }
 
-    fn kak(&self) -> Result<crypto::aes::Key, Error> {
+    fn kak(&self) -> Result<crypto::OpaqueOr<crypto::aes::Key>, Error> {
         // Generate a TPM-bound shared secret to use as the base of HMAC key negotiation.
         let k = self.tpm_hmac.tpm_hmac(b"TPM ISharedSecret")?;
         let k: [u8; 32] =
             k.try_into().map_err(|_e| km_err!(UnknownError, "unexpected HMAC size"))?;
-        Ok(crypto::aes::Key::Aes256(k))
+        Ok(crypto::aes::Key::Aes256(k).into())
     }
 
     fn hmac_key_agreed(&self, _key: &crypto::hmac::Key) -> Option<Box<dyn DeviceHmac>> {
@@ -142,22 +142,49 @@ impl KeyDerivation {
 }
 
 impl kmr_common::crypto::Hkdf for KeyDerivation {
-    fn hkdf(&self, salt: &[u8], ikm: &[u8], info: &[u8], out_len: usize) -> Result<Vec<u8>, Error> {
-        if ikm != ROOT_KEK_MARKER {
+    fn hkdf(
+        &self,
+        _salt: &[u8],
+        _ikm: &[u8],
+        _info: &[u8],
+        _out_len: usize,
+    ) -> Result<Vec<u8>, Error> {
+        // HKDF normally performs an initial extract step to create a pseudo-random key (PRK) for
+        // use in the HKDF expand processing.  This implementation uses a TPM HMAC key for HKDF
+        // expand processing instead, and so we cannot do a full HKDF call.
+        Err(km_err!(UnknownError, "unexpected call to full hkdf opearation"))
+    }
+
+    fn extract(
+        &self,
+        _salt: &[u8],
+        _ikm: &[u8],
+    ) -> Result<crypto::OpaqueOr<crypto::hmac::Key>, Error> {
+        // Because we are using a TPM HMAC key for HKDF; there is nothing to extract
+        Err(km_err!(UnknownError, "unexpected call to hkdf extract"))
+    }
+
+    fn expand(
+        &self,
+        prk: &crypto::OpaqueOr<crypto::hmac::Key>,
+        info: &[u8],
+        out_len: usize,
+    ) -> Result<Vec<u8>, Error> {
+        let key_material = match prk {
+            crypto::OpaqueOr::Opaque(key_material) => &key_material.0,
+            _ => {
+                return Err(km_err!(
+                    UnknownError,
+                    "unexpected root kek type used in key derivation"
+                ))
+            }
+        };
+        if key_material != ROOT_KEK_MARKER {
             // This code expects that the value from `Keys::root_kek()` above will be passed
             // unmodified to this function in its (only) use as key derivation.  If this is not the
             // case, then the assumptions below around TPM use may no longer be correct.
             return Err(km_err!(UnknownError, "unexpected root kek in key derivation"));
         }
-        if !salt.is_empty() {
-            // Similarly, we ignore the salt on the assumption that it is empty. If this changes,
-            // then assumptions about use of this trait implementation may be wrong.
-            return Err(km_err!(UnknownError, "unexpected non-empty salt in key derivation"));
-        }
-
-        // HKDF normally performs an initial extract step to create a pseudo-random key (PRK) for
-        // use in the HKDF expand processing.  This implementation uses a TPM HMAC key for HKDF
-        // expand processing instead, and so the HKDF extract step is skipped.
         self.tpm_hmac.hkdf_expand(info, out_len)
     }
 }
