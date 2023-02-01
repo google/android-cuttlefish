@@ -68,10 +68,14 @@ type CreateCVDRequest struct {
 
 // Represents a build from ci.android.com.
 type AndroidCIBuild struct {
-	// [REQUIRED] The Android build identifier.
+	// The branch name. If omitted the passed `BuildID` will determine the branch, if `BuildID` is omitted as well
+	// `aosp-master` will be used.
+	Branch string `json:"branch"`
+	// Uniquely identifies a branch's snapshot. If omitted, the latest green snapshot of the used branch will
+	// be used.
 	BuildID string `json:"build_id"`
-	// [REQUIRED] A string to determine the specific product and flavor from
-	// the set of builds, e.g. aosp_cf_x86_64_phone-userdebug.
+	// A string to determine the specific product and flavor from the set of builds.
+	// Defaults to `aosp_cf_x86_64_phone-userdebug`.
 	Target string `json:"target"`
 }
 
