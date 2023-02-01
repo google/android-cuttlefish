@@ -55,6 +55,7 @@
 #include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
+#include "host/libs/graphics_detector/graphics_configuration.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
@@ -1235,16 +1236,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_config_server_port(calc_vsock_port(6800));
 
     // gpu related settings
-    instance.set_gpu_mode(gpu_mode_vec[instance_index]);
-    if (gpu_mode_vec[instance_index] != kGpuModeAuto &&
-        gpu_mode_vec[instance_index] != kGpuModeDrmVirgl &&
-        gpu_mode_vec[instance_index] != kGpuModeGfxStream &&
-        gpu_mode_vec[instance_index] != kGpuModeGuestSwiftshader &&
-        gpu_mode_vec[instance_index] != kGpuModeNone) {
-      LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode_vec[instance_index];
+    auto gpu_mode = gpu_mode_vec[instance_index];
+    if (gpu_mode != kGpuModeAuto && gpu_mode != kGpuModeDrmVirgl &&
+        gpu_mode != kGpuModeGfxStream && gpu_mode != kGpuModeGuestSwiftshader &&
+        gpu_mode != kGpuModeNone) {
+      LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode;
     }
 
-    if (gpu_mode_vec[instance_index] == kGpuModeAuto) {
+    if (gpu_mode == kGpuModeAuto) {
       // TODO (263209317) Android R Cuttlefish is currently not compatible
       // with accelerated graphics. rammuthiah@ to debug and resolve.
       if (guest_configs[instance_index].android_version_number == "11.0.0") {
@@ -1252,40 +1251,46 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                   << instance_index
                   << ". Accelerated rendering support is not compatible, "
                      "enabling --gpu_mode=guest_swiftshader.";
-        instance.set_gpu_mode(kGpuModeGuestSwiftshader);
+        gpu_mode = kGpuModeGuestSwiftshader;
       } else if (ShouldEnableAcceleratedRendering(graphics_availability)) {
         LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
             "rendering support.";
         if (vm_manager_vec[0] == QemuManager::name()) {
           LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
-          instance.set_gpu_mode(kGpuModeDrmVirgl);
+          gpu_mode = kGpuModeDrmVirgl;
         } else {
           LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
-          instance.set_gpu_mode(kGpuModeGfxStream);
+          gpu_mode = kGpuModeGfxStream;
         }
       } else {
         LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
             "accelerated rendering support, enabling "
             "--gpu_mode=guest_swiftshader.";
-        instance.set_gpu_mode(kGpuModeGuestSwiftshader);
+        gpu_mode = kGpuModeGuestSwiftshader;
       }
-    } else if (gpu_mode_vec[instance_index] == kGpuModeGfxStream ||
-               gpu_mode_vec[instance_index] == kGpuModeDrmVirgl) {
+    } else if (gpu_mode == kGpuModeGfxStream || gpu_mode == kGpuModeDrmVirgl) {
       if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
-        LOG(ERROR) << "--gpu_mode="
-                   << gpu_mode_vec[instance_index]
+        LOG(ERROR) << "--gpu_mode=" << gpu_mode
                    << " was requested but the prerequisites for accelerated "
-                   "rendering were not detected so the device may not "
-                   "function correctly. Please consider switching to "
-                   "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+                      "rendering were not detected so the device may not "
+                      "function correctly. Please consider switching to "
+                      "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
       }
     }
+    instance.set_gpu_mode(gpu_mode);
+
+    auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
+        CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
+    instance.set_gpu_angle_feature_overrides_enabled(
+        angle_features.angle_feature_overrides_enabled);
+    instance.set_gpu_angle_feature_overrides_disabled(
+        angle_features.angle_feature_overrides_disabled);
 
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
     if (!gpu_capture_binary_vec[instance_index].empty()) {
-      CF_EXPECT(gpu_mode_vec[instance_index] == kGpuModeGfxStream,
-          "GPU capture only supported with --gpu_mode=gfxstream");
+      CF_EXPECT(gpu_mode == kGpuModeGfxStream,
+                "GPU capture only supported with --gpu_mode=gfxstream");
 
       // GPU capture runs in a detached mode where the "launcher" process
       // intentionally exits immediately.
@@ -1296,15 +1301,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);
     if (!hwcomposer_vec[instance_index].empty()) {
       if (hwcomposer_vec[instance_index] == kHwComposerRanchu) {
-        CF_EXPECT(gpu_mode_vec[instance_index] != kGpuModeDrmVirgl,
-            "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
+        CF_EXPECT(gpu_mode != kGpuModeDrmVirgl,
+                  "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
       }
     }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode_vec[instance_index] == kGpuModeDrmVirgl) {
+      if (gpu_mode == kGpuModeDrmVirgl) {
         instance.set_hwcomposer(kHwComposerDrm);
-      } else if (gpu_mode_vec[instance_index] == kGpuModeNone) {
+      } else if (gpu_mode == kGpuModeNone) {
         instance.set_hwcomposer(kHwComposerNone);
       } else {
         instance.set_hwcomposer(kHwComposerRanchu);
@@ -1322,7 +1327,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily disable
     // auto-enabling sandbox when gpu is enabled (b/152323505).
     default_enable_sandbox += comma_str;
-    if ((gpu_mode_vec[instance_index] != kGpuModeGuestSwiftshader) || console_vec[instance_index]) {
+    if ((gpu_mode != kGpuModeGuestSwiftshader) || console_vec[instance_index]) {
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
     } else {
@@ -1330,13 +1335,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     comma_str = ",";
 
-    if (vmm->ConfigureGraphics(const_instance).empty()) {
-      LOG(FATAL) << "Invalid (gpu_mode=," << gpu_mode_vec[instance_index] <<
-      " hwcomposer= " << hwcomposer_vec[instance_index] <<
-      ") does not work with vm_manager=" << vm_manager_vec[0];
+    auto graphics_check = vmm->ConfigureGraphics(const_instance);
+    if (!graphics_check.ok()) {
+      LOG(FATAL) << graphics_check.error().Message();
     }
 
-    if (gpu_mode_vec[instance_index] != kGpuModeDrmVirgl &&
+    if (gpu_mode != kGpuModeDrmVirgl &&
         gpu_mode_vec[instance_index] != kGpuModeGfxStream) {
       if (vm_manager_vec[0] == QemuManager::name()) {
         instance.set_keyboard_server_port(calc_vsock_port(7000));

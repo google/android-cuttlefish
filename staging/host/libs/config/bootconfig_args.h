@@ -19,11 +19,12 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-std::vector<std::string> BootconfigArgsFromConfig(
+Result<std::vector<std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance);
 

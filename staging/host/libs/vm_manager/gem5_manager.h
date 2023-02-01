@@ -35,7 +35,7 @@ class Gem5Manager : public VmManager {
   virtual ~Gem5Manager() = default;
 
   bool IsSupported() override;
-  std::vector<std::string> ConfigureGraphics(
+  Result<std::vector<std::string>> ConfigureGraphics(
       const CuttlefishConfig::InstanceSpecific& instance) override;
   std::string ConfigureBootDevices(int num_disks, bool have_gpu) override;
 
