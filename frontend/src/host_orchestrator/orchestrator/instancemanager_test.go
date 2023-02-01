@@ -64,8 +64,6 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	}{
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource = nil }},
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild = nil }},
-		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild.BuildID = "" }},
-		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild.Target = "" }},
 		{func(r *apiv1.CreateCVDRequest) {
 			r.CVD.BuildSource.AndroidCIBuild = nil
 			r.CVD.BuildSource.UserBuild = &apiv1.UserBuild{ArtifactsDir: ""}
@@ -317,6 +315,60 @@ func TestCreateCVDSucceeds(t *testing.T) {
 
 	res, _ := om.Wait(op.Name, 1*time.Second)
 	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
+	if diff := cmp.Diff(want, res.Value); diff != "" {
+		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
+	}
+}
+
+const fakeLatesGreenBuildID = "9551522"
+
+type fakeBuildAPI struct{}
+
+func (fakeBuildAPI) GetLatestGreenBuildID(string, string) (string, error) {
+	return fakeLatesGreenBuildID, nil
+}
+
+func TestCreateCVDLatesGreenSucceeds(t *testing.T) {
+	dir := tempDir(t)
+	defer removeDir(t, dir)
+	execContext := execCtxAlwaysSucceeds
+	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+	paths := IMPaths{
+		CVDBin:           dir + "/cvd",
+		ArtifactsRootDir: dir + "/artifacts",
+		RuntimesRootDir:  dir + "/runtimes",
+	}
+	om := NewMapOM()
+	opts := CVDToolInstanceManagerOpts{
+		ExecContext:      execContext,
+		CVDBinAB:         cvdBinAB,
+		Paths:            paths,
+		CVDDownloader:    &testCVDDwnlder{},
+		OperationManager: om,
+		HostValidator:    &AlwaysSucceedsValidator{},
+		BuildAPI:         &fakeBuildAPI{},
+	}
+	im := NewCVDToolInstanceManager(&opts)
+	r := apiv1.CreateCVDRequest{
+		CVD: &apiv1.CVD{
+			BuildSource: &apiv1.BuildSource{
+				AndroidCIBuild: &apiv1.AndroidCIBuild{},
+			},
+		},
+	}
+
+	op, _ := im.CreateCVD(r)
+
+	res, _ := om.Wait(op.Name, 1*time.Second)
+	want := &apiv1.CVD{
+		Name: "cvd-1",
+		BuildSource: &apiv1.BuildSource{
+			AndroidCIBuild: &apiv1.AndroidCIBuild{
+				BuildID: fakeLatesGreenBuildID,
+				Target:  defaultTarget,
+			},
+		},
+	}
 	if diff := cmp.Diff(want, res.Value); diff != "" {
 		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
 	}
