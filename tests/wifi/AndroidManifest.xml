@@ -20,13 +20,6 @@
     android:versionName="1.0"
     android:sharedUserId="android.uid.system">
 
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-
-   <uses-sdk
-        android:minSdkVersion="19"
-        android:targetSdkVersion="25" />
-
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="com.android.cuttlefish.wifi.tests" />
