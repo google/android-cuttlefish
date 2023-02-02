@@ -60,4 +60,7 @@
          Should be false for most devices, except automotive vehicle with passenger displays. -->
     <bool name="config_multiuserVisibleBackgroundUsers">true</bool>
 
+    <!-- Enable multi-user IME sessions -->
+    <string translatable="false" name="config_deviceSpecificInputMethodManagerService">com.android.server.inputmethod.InputMethodManagerServiceProxy$Lifecycle</string>
+
 </resources>
