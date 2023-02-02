@@ -77,6 +77,7 @@ type CVDToolInstanceManager struct {
 	fetchCVDHandler          *fetchCVDHandler
 	startCVDHandler          *startCVDHandler
 	hostValidator            Validator
+	buildAPI                 BuildAPI
 }
 
 type CVDToolInstanceManagerOpts struct {
@@ -88,6 +89,7 @@ type CVDToolInstanceManagerOpts struct {
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	CVDExecTimeout           time.Duration
 	HostValidator            Validator
+	BuildAPI                 BuildAPI
 }
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
@@ -108,6 +110,7 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 			CVDBin:      opts.Paths.CVDBin,
 			Timeout:     opts.CVDExecTimeout,
 		},
+		buildAPI: opts.BuildAPI,
 	}
 }
 
@@ -219,9 +222,32 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	result = OperationResult{Value: cvd}
 }
 
+const (
+	// TODO(b/267525748): Make these values configurable.
+	defaultBranch = "aosp-master"
+	defaultTarget = "aosp_cf_x86_64_phone-userdebug"
+)
+
 func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	artifactsDir, err := m.fetchCVDHandler.Fetch(req.CVD.BuildSource.AndroidCIBuild)
+	build := req.CVD.BuildSource.AndroidCIBuild
+	branch := build.Branch
+	if branch == "" {
+		branch = defaultBranch
+	}
+	target := build.Target
+	if target == "" {
+		target = defaultTarget
+	}
+	buildID := build.BuildID
+	if buildID == "" {
+		var err error
+		buildID, err = m.buildAPI.GetLatestGreenBuildID(branch, target)
+		if err != nil {
+			return nil, err
+		}
+	}
+	artifactsDir, err := m.fetchCVDHandler.Fetch(buildID, target)
 	if err != nil {
 		return nil, err
 	}
@@ -235,8 +261,13 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 		return nil, err
 	}
 	return &apiv1.CVD{
-		Name:        cvdName,
-		BuildSource: req.CVD.BuildSource,
+		Name: cvdName,
+		BuildSource: &apiv1.BuildSource{
+			AndroidCIBuild: &apiv1.AndroidCIBuild{
+				BuildID: buildID,
+				Target:  target,
+			},
+		},
 	}, nil
 }
 
@@ -276,14 +307,6 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	}
 	if r.CVD.BuildSource.AndroidCIBuild == nil && r.CVD.BuildSource.UserBuild == nil {
 		return EmptyFieldError("BuildSource")
-	}
-	if r.CVD.BuildSource.AndroidCIBuild != nil {
-		if r.CVD.BuildSource.AndroidCIBuild.BuildID == "" {
-			return EmptyFieldError("BuildSource.AndroidCIBuild.BuildID")
-		}
-		if r.CVD.BuildSource.AndroidCIBuild.Target == "" {
-			return EmptyFieldError("BuildSource.AndroidCIBuild.Target")
-		}
 	}
 	if r.CVD.BuildSource.UserBuild != nil {
 		if r.CVD.BuildSource.UserBuild.ArtifactsDir == "" {
@@ -343,8 +366,8 @@ func newFetchCVDHandler(execContext ExecContext, cvdBin, artifactsDir string) *f
 	}
 }
 
-func (h *fetchCVDHandler) Fetch(info *apiv1.AndroidCIBuild) (string, error) {
-	entry := h.getMapEntry(info)
+func (h *fetchCVDHandler) Fetch(buildID, target string) (string, error) {
+	entry := h.getMapEntry(buildID, target)
 	entry.mutex.Lock()
 	defer entry.mutex.Unlock()
 	if entry.result != nil {
@@ -353,8 +376,8 @@ func (h *fetchCVDHandler) Fetch(info *apiv1.AndroidCIBuild) (string, error) {
 	// NOTE: The artifacts directory gets created during the execution of `cvd fetch` granting
 	// owners permission to the user executing `cvd` which is relevant when extracting
 	// cvd-host_package.tar.gz.
-	outDir := fmt.Sprintf("%s/%s_%s", h.artifactsDir, info.BuildID, info.Target)
-	buildArg := fmt.Sprintf("--default_build=%s/%s", info.BuildID, info.Target)
+	outDir := fmt.Sprintf("%s/%s_%s", h.artifactsDir, buildID, target)
+	buildArg := fmt.Sprintf("--default_build=%s/%s", buildID, target)
 	dirArg := fmt.Sprintf("--directory=%s", outDir)
 	cvdCmd := cvdCommand{
 		execContext:    h.execContext,
@@ -372,10 +395,10 @@ func (h *fetchCVDHandler) Fetch(info *apiv1.AndroidCIBuild) (string, error) {
 	return outDir, nil
 }
 
-func (h *fetchCVDHandler) getMapEntry(info *apiv1.AndroidCIBuild) *fetchCVDMapEntry {
+func (h *fetchCVDHandler) getMapEntry(buildID, target string) *fetchCVDMapEntry {
 	h.mapMutex.Lock()
 	defer h.mapMutex.Unlock()
-	key := fmt.Sprintf("%s_%s", info.BuildID, info.Target)
+	key := fmt.Sprintf("%s_%s", buildID, target)
 	entry := h.map_[key]
 	if entry == nil {
 		entry = &fetchCVDMapEntry{}
