@@ -21,14 +21,12 @@
 namespace cuttlefish {
 
 struct GraphicsAvailability {
-  bool has_gl = false;
-  bool has_gles1 = false;
-  bool has_gles2 = false;
   bool has_egl = false;
+  bool has_gles2 = false;
+  bool has_gles3 = false;
   bool has_vulkan = false;
 
   std::string egl_client_extensions;
-
   std::string egl_version;
   std::string egl_vendor;
   std::string egl_extensions;
@@ -39,9 +37,18 @@ struct GraphicsAvailability {
   std::string gles2_renderer;
   std::string gles2_extensions;
 
+  bool can_init_gles3_on_egl_surfaceless = false;
+  std::string gles3_vendor;
+  std::string gles3_version;
+  std::string gles3_renderer;
+  std::string gles3_extensions;
+
   bool has_discrete_gpu = false;
   std::string discrete_gpu_device_name;
   std::string discrete_gpu_device_extensions;
+
+  // See b/264575911.
+  bool vulkan_has_issue_with_precision_qualifiers_on_yuv_samplers = false;
 };
 
 bool ShouldEnableAcceleratedRendering(const GraphicsAvailability& availability);
