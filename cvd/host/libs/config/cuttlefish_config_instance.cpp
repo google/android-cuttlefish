@@ -181,15 +181,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_system_image(
     const std::string& vbmeta_system_image) {
   (*Dictionary())[kVbmetaSystemImage] = vbmeta_system_image;
 }
-static constexpr char kVbmetaVendorDlkmImage[] = "vbmeta_vendor_dlkm_image";
-std::string CuttlefishConfig::InstanceSpecific::vbmeta_vendor_dlkm_image()
-    const {
-  return (*Dictionary())[kVbmetaVendorDlkmImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_vendor_dlkm_image(
-    const std::string& image) {
-  (*Dictionary())[kVbmetaVendorDlkmImage] = image;
-}
 static constexpr char kOtherosEspImage[] = "otheros_esp_image";
 std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
   return (*Dictionary())[kOtherosEspImage].asString();
@@ -579,30 +570,6 @@ std::string CuttlefishConfig::InstanceSpecific::gpu_mode() const {
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(const std::string& name) {
   (*Dictionary())[kGpuMode] = name;
-}
-
-static constexpr char kGpuAngleFeatureOverridesEnabled[] =
-    "gpu_angle_feature_overrides_enabled";
-std::string
-CuttlefishConfig::InstanceSpecific::gpu_angle_feature_overrides_enabled()
-    const {
-  return (*Dictionary())[kGpuAngleFeatureOverridesEnabled].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_gpu_angle_feature_overrides_enabled(const std::string& overrides) {
-  (*Dictionary())[kGpuAngleFeatureOverridesEnabled] = overrides;
-}
-
-static constexpr char kGpuAngleFeatureOverridesDisabled[] =
-    "gpu_angle_feature_overrides_disabled";
-std::string
-CuttlefishConfig::InstanceSpecific::gpu_angle_feature_overrides_disabled()
-    const {
-  return (*Dictionary())[kGpuAngleFeatureOverridesDisabled].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_gpu_angle_feature_overrides_disabled(const std::string& overrides) {
-  (*Dictionary())[kGpuAngleFeatureOverridesDisabled] = overrides;
 }
 
 static constexpr char kGpuCaptureBinary[] = "gpu_capture_binary";
