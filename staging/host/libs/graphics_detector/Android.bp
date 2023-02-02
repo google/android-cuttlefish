@@ -30,41 +30,14 @@ cc_library_headers {
 }
 
 cc_library_static {
-    name: "libcuttlefish_graphics_configuration",
-    srcs: [
-        "graphics_configuration.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libjsoncpp",
-        "liblog",
-    ],
-    static_libs: [
-        "libcuttlefish_host_config",
-    ],
-    defaults: ["cuttlefish_host"],
-}
-
-cc_library_static {
     name: "libcuttlefish_graphics_detector",
     srcs: [
-        "egl.cpp",
-        "gles.cpp",
-        "img.cpp",
-        "lib.cpp",
         "graphics_detector.cpp",
-        "graphics_detector_gl.cpp",
-        "graphics_detector_vk.cpp",
-        "graphics_detector_vk_precision_qualifiers_on_yuv_samplers.cpp",
-        "subprocess.cpp",
-        "vk.cpp",
-    ],
-    local_include_dirs: [
-        "include",
     ],
     header_libs: [
         "egl_headers",
         "gl_headers",
+        "vulkan_headers",
     ],
     shared_libs: [
         "libbase",

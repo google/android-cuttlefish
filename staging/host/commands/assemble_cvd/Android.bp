@@ -53,7 +53,6 @@ cc_binary {
         "libext2_uuid",
         "libimage_aggregator",
         "libsparse",
-        "libcuttlefish_graphics_configuration",
         "libcuttlefish_graphics_detector",
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
