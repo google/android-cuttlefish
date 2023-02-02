@@ -29,5 +29,9 @@ cc_test {
         "libbase",
         "libvintf",
     ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
     test_suites: ["device-tests"],
 }
