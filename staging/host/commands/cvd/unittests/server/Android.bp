@@ -31,6 +31,7 @@ cc_test_host {
     srcs: [
         "autogen_ids_test.cpp",
         "basic_test.cpp",
+        "clear_test.cpp",
         "help_test.cpp",
     ],
     static_libs: [
