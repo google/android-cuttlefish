@@ -295,15 +295,19 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
       .read_only = FLAGS_use_overlay,
   });
-  if (FileExists(instance.vbmeta_vendor_dlkm_image())) {
+  auto vbmeta_vendor_dlkm_img = instance.new_vbmeta_vendor_dlkm_image();
+  if (!FileExists(vbmeta_vendor_dlkm_img)) {
+    vbmeta_vendor_dlkm_img = instance.vbmeta_vendor_dlkm_image();
+  }
+  if (FileExists(vbmeta_vendor_dlkm_img)) {
     partitions.push_back(ImagePartition{
         .label = "vbmeta_vendor_dlkm_a",
-        .image_file_path = AbsolutePath(instance.vbmeta_vendor_dlkm_image()),
+        .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
         .read_only = FLAGS_use_overlay,
     });
     partitions.push_back(ImagePartition{
         .label = "vbmeta_vendor_dlkm_b",
-        .image_file_path = AbsolutePath(instance.vbmeta_vendor_dlkm_image()),
+        .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
         .read_only = FLAGS_use_overlay,
     });
   }
@@ -1370,6 +1374,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
           const_instance.PerInstancePath("metadata.img");
       instance.set_new_metadata_image(new_metadata_image_path);
     }
+    instance.set_new_vbmeta_vendor_dlkm_image(
+        const_instance.PerInstancePath("vbmeta_vendor_dlkm_repacked.img"));
 
     if (FileHasContent(cur_misc_image)) {
       instance.set_new_misc_image(cur_misc_image);
