@@ -20,6 +20,7 @@
 #include "RefRadioIms.h"
 #include "RefRadioNetwork.h"
 #include "RefRadioSatellite.h"
+#include "RefRadioModem.h"
 
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -13439,14 +13440,13 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         publishRadioHal<cf::ril::RefRadioSatellite>(context, radioHidl, callbackMgr, slot);
         publishRadioHal<cf::ril::RefImsMedia>(context, radioHidl, callbackMgr,
                                               std::string("default"));
-
+        publishRadioHal<cf::ril::RefRadioModem>(context, radioHidl, callbackMgr, slot);
         RLOGD("registerService: OemHook is enabled = %s", kOemHookEnabled ? "true" : "false");
         if (kOemHookEnabled) {
             oemHookService[i] = new OemHookImpl;
             oemHookService[i]->mSlotId = i;
             // status = oemHookService[i]->registerAsService(serviceNames[i]);
         }
-
         ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
         CHECK_EQ(ret, 0);
     }
