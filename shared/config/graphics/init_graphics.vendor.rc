@@ -11,5 +11,3 @@ on early-init
     setprop ro.hardware.vulkan ${ro.boot.hardware.vulkan}
     setprop ro.cpuvulkan.version ${ro.boot.cpuvulkan.version}
     setprop ro.opengles.version ${ro.boot.opengles.version}
-    setprop debug.angle.feature_overrides_enabled ${ro.boot.hardware.angle_feature_overrides_enabled}
-    setprop debug.angle.feature_overrides_disabled ${ro.boot.hardware.angle_feature_overrides_disabled}
