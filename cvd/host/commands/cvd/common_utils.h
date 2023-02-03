@@ -44,4 +44,16 @@ constexpr char kAndroidSoongHostOut[] = "ANDROID_SOONG_HOST_OUT";
 
 Result<std::string> StopBin(const std::string& host_artifacts_path);
 
+template <typename Ostream, typename... Args>
+Ostream& ConcatToStream(Ostream& out, Args&&... args) {
+  (out << ... << std::forward<Args>(args));
+  return out;
+}
+
+template <typename... Args>
+std::string ConcatToString(Args&&... args) {
+  std::stringstream concatenator;
+  return ConcatToStream(concatenator, std::forward<Args>(args)...).str();
+}
+
 }  // namespace cuttlefish
