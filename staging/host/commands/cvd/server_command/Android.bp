@@ -23,6 +23,7 @@ cc_library_host_static {
         "utils.cpp",
         "components.cpp",
         "fetch.cpp",
+        "flags_collector.cpp",
         "fleet.cpp",
         "generic.cpp",
         "help.cpp",
