@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"testing"
 	"time"
@@ -29,6 +30,7 @@ import (
 	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/go-multierror"
 )
 
 func TestRetryLogic(t *testing.T) {
@@ -156,6 +158,39 @@ func TestUploadFilesSucceeds(t *testing.T) {
 
 	if len(uploads) != 0 {
 		t.Errorf("missing chunk uploads:  %v", uploads)
+	}
+}
+
+func TestDeleteHosts(t *testing.T) {
+	existingNames := map[string]struct{}{"bar": {}, "baz": {}}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "DELETE" {
+			panic("unexpected method: " + r.Method)
+		}
+		re := regexp.MustCompile(`^/hosts/(.*)$`)
+		matches := re.FindStringSubmatch(r.URL.Path)
+		if len(matches) != 2 {
+			panic("unexpected path: " + r.URL.Path)
+		}
+		if _, ok := existingNames[matches[1]]; ok {
+			writeOK(w, "")
+		} else {
+			writeErr(w, 404)
+		}
+	}))
+	defer ts.Close()
+	opts := &ServiceOptions{
+		BaseURL: ts.URL,
+		DumpOut: io.Discard,
+	}
+	srv, _ := NewService(opts)
+
+	err := srv.DeleteHosts([]string{"foo", "bar", "baz", "quz"})
+
+	merr, _ := err.(*multierror.Error)
+	errs := merr.WrappedErrors()
+	if len(errs) != 2 {
+		t.Errorf("expected 2, got: %d", len(errs))
 	}
 }
 
