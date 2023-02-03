@@ -20,6 +20,7 @@
 #include <libxml/parser.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/scope_guard.h"
 
 namespace cuttlefish {
 namespace {
@@ -49,7 +50,7 @@ void XmlDocDeleter::operator()(struct _xmlDoc* doc) {
  *  xmlNodeListGetString(doc, grandchild, 1);
  */
 FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
-  std::unordered_map<std::string, std::string> field_value_map;
+  std::unordered_map<std::string, std::optional<std::string>> field_value_map;
   for (xmlNode* child = flag.xmlChildrenNode; child != nullptr;
        child = child->next) {
     if (!child->name) {
@@ -57,7 +58,7 @@ FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
     }
     std::string field_name = reinterpret_cast<const char*>(child->name);
     if (!child->xmlChildrenNode) {
-      field_value_map[field_name] = "";
+      field_value_map[field_name] = std::nullopt;
       continue;
     }
     auto* xml_node_text = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
@@ -73,36 +74,18 @@ FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
   return FlagInfo::Create(field_value_map);
 }
 
-std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* node) {
-  if (!node) {
-    return {};
-  }
-
+// root must not be nullptr
+std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* all_flags) {
   std::vector<FlagInfoPtr> flags;
-  // if it is <flag> node
-  if (node->name &&
-      xmlStrcmp(node->name, reinterpret_cast<const xmlChar*>("flag")) == 0) {
-    auto flag_info = ParseFlagNode(doc, *node);
-    // we don't assume that a flag node is nested.
-    if (flag_info) {
-      flags.push_back(std::move(flag_info));
-      return flags;
-    }
-    return {};
-  }
-
-  if (!node->xmlChildrenNode) {
-    return {};
-  }
-
-  for (xmlNode* child_node = node->xmlChildrenNode; child_node != nullptr;
-       child_node = child_node->next) {
-    auto child_flags = ParseXml(doc, child_node);
-    if (child_flags.empty()) {
+  for (xmlNode* flag = all_flags->xmlChildrenNode; flag != nullptr;
+       flag = flag->next) {
+    if (!flag || !flag->name ||
+        xmlStrcmp(flag->name, reinterpret_cast<const xmlChar*>("flag")) != 0) {
       continue;
     }
-    for (auto& child_flag : child_flags) {
-      flags.push_back(std::move(child_flag));
+    auto flag_info = ParseFlagNode(doc, *flag);
+    if (flag_info) {
+      flags.emplace_back(std::move(flag_info));
     }
   }
   return flags;
@@ -113,7 +96,7 @@ XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
       xmlReadMemory(xml_str.data(), xml_str.size(), NULL, NULL, 0);
   XmlDocPtr doc_uniq_ptr = XmlDocPtr(doc, XmlDocDeleter());
   if (!doc) {
-    LOG(ERROR) << "helpxml parsing failed: " << xml_str;
+    LOG(ERROR) << "helpxml parsing failed.";
     return nullptr;
   }
   return doc_uniq_ptr;
@@ -121,13 +104,16 @@ XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
 
 std::optional<std::vector<FlagInfoPtr>> LoadFromXml(XmlDocPtr&& doc) {
   std::vector<FlagInfoPtr> flags;
-  XmlDocPtr moved_doc = std::move(doc);
-  xmlNode* root = xmlDocGetRootElement(moved_doc.get());
-  if (!root) {
-    LOG(ERROR) << "Failed to get the root element from XML doc.";
-    return std::nullopt;
+  ScopeGuard exit_action([]() { xmlCleanupParser(); });
+  {
+    XmlDocPtr moved_doc = std::move(doc);
+    xmlNode* root = xmlDocGetRootElement(moved_doc.get());
+    if (!root) {
+      LOG(ERROR) << "Failed to get the root element from XML doc.";
+      return std::nullopt;
+    }
+    flags = ParseXml(moved_doc.get(), root);
   }
-  flags = ParseXml(moved_doc.get(), root);
   return flags;
 }
 
@@ -136,11 +122,7 @@ std::optional<std::vector<FlagInfoPtr>> LoadFromXml(XmlDocPtr&& doc) {
 std::unique_ptr<FlagInfo> FlagInfo::Create(
     const FlagInfoFieldMap& field_value_map) {
   if (!Contains(field_value_map, "name") ||
-      field_value_map.at("name").empty()) {
-    return nullptr;
-  }
-  if (!Contains(field_value_map, "type") ||
-      field_value_map.at("type").empty()) {
+      field_value_map.at("name").value_or("").empty()) {
     return nullptr;
   }
   FlagInfo* new_flag_info = new FlagInfo(field_value_map);
