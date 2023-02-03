@@ -352,7 +352,24 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     android.hardware.audio@7.1-impl.ranchu \
     android.hardware.audio.effect@7.0-impl \
     android.hardware.audio.service-aidl.example \
-    android.hardware.audio.effect.service-aidl.example
+    android.hardware.audio.effect.service-aidl.example \
+    libaecsw \
+    libagcsw \
+    libbassboostsw \
+    libbundleaidl \
+    libdownmixaidl \
+    libdynamicsprocessingaidl \
+    libenvreverbsw \
+    libequalizersw \
+    libhapticgeneratoraidl \
+    libloudnessenhanceraidl \
+    libnssw \
+    libpresetreverbsw \
+    libreverbaidl \
+    libtinyxml2 \
+    libvirtualizersw \
+    libvisualizeraidl \
+    libvolumesw
 DEVICE_MANIFEST_FILE += \
     device/google/cuttlefish/guest/hals/audio/effects/manifest.xml
 endif
