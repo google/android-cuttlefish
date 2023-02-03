@@ -122,7 +122,11 @@ bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
     return false;
   }
   const auto host_bin_path = host_artifacts_path + "/bin";
-  std::vector<std::string> contents = DirectoryContents(host_bin_path);
+  auto contents_result = DirectoryContents(host_bin_path);
+  if (!contents_result.ok()) {
+    return false;
+  }
+  std::vector<std::string> contents = std::move(*contents_result);
   std::set<std::string> contents_set{std::move_iterator(contents.begin()),
                                      std::move_iterator(contents.end())};
   std::set<std::string> launchers = {"cvd", "launch_cvd"};
