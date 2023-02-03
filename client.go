@@ -37,6 +37,7 @@ import (
 	wclient "github.com/google/cloud-android-orchestration/pkg/webrtcclient"
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -80,7 +81,7 @@ type Service interface {
 
 	ListHosts() (*apiv1.ListHostsResponse, error)
 
-	DeleteHost(name string) error
+	DeleteHosts(names []string) error
 
 	GetInfraConfig(host string) (*apiv1.InfraConfig, error)
 
@@ -139,9 +140,23 @@ func (c *serviceImpl) ListHosts() (*apiv1.ListHostsResponse, error) {
 	return &res, nil
 }
 
-func (c *serviceImpl) DeleteHost(name string) error {
-	path := "/hosts/" + name
-	return c.doRequest("DELETE", path, nil, nil)
+func (c *serviceImpl) DeleteHosts(names []string) error {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var merr error
+	for _, name := range names {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			if err := c.doRequest("DELETE", "/hosts/"+name, nil, nil); err != nil {
+				mu.Lock()
+				defer mu.Unlock()
+				merr = multierror.Append(merr, fmt.Errorf("Delete host %q failed: %w", name, err))
+			}
+		}(name)
+	}
+	wg.Wait()
+	return merr
 }
 
 func (c *serviceImpl) GetInfraConfig(host string) (*apiv1.InfraConfig, error) {
