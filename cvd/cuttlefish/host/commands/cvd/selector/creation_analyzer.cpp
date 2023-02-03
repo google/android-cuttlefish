@@ -93,6 +93,12 @@ static Result<std::vector<unsigned>> CollectUnusedIds(
     std::vector<unsigned>&& id_pool) {
   std::deque<unsigned> collected_ids;
   while (!id_pool.empty()) {
+    /*
+     * As pop_back() is efficient in a vector than pop_front(), we do
+     * pop_back(). To keep the order though, we should push_front() to
+     * collected_ids. If collected_ids is a vector, push_front() is not
+     * efficient, so we keep collected_ids as a deque.
+     */
     const auto id = id_pool.back();
     id_pool.pop_back();
     auto subset =
@@ -100,7 +106,7 @@ static Result<std::vector<unsigned>> CollectUnusedIds(
     CF_EXPECT(subset.size() < 2,
               "Cvd Instance Database has two instances with the id: " << id);
     if (subset.empty()) {
-      collected_ids.push_back(id);
+      collected_ids.push_front(id);
     }
   }
   return std::vector<unsigned>{collected_ids.begin(), collected_ids.end()};
