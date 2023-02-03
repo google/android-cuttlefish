@@ -14,6 +14,10 @@
         <fqname>IRadioIms/slot1</fqname>
     </hal>
     <hal format="aidl">
+        <name>android.hardware.radio.ims.media</name>
+        <fqname>IImsMedia/default</fqname>
+    </hal>
+    <hal format="aidl">
         <name>android.hardware.radio.messaging</name>
         <version>2</version>
         <fqname>IRadioMessaging/slot1</fqname>

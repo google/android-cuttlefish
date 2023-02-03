@@ -230,7 +230,6 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.hardware.soundtrigger3.", 1, 266941225},
     {"android.media.soundtrigger.", 1, 266941225},
     {"android.hardware.media.c2.", 1, 251850069},
-    {"android.hardware.radio.ims.media.", 1, 250912118},
     {"android.hardware.weaver.", 2, 262418065},
 };
 
