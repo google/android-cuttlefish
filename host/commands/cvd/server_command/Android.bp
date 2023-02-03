@@ -25,6 +25,8 @@ cc_library_host_static {
         "fetch.cpp",
         "flags_collector.cpp",
         "fleet.cpp",
+        "host_tool_target.cpp",
+        "host_tool_target_manager.cpp",
         "generic.cpp",
         "help.cpp",
         "restart.cpp",
