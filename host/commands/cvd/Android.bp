@@ -61,6 +61,10 @@ cc_defaults {
         "libcuttlefish_host_config",
         "libcuttlefish_web",
         "libgflags",
+        "libicui18n",
+        "libicuuc",
+        "libicuuc_stubdata",
+        "libxml2",
     ],
     header_libs: [
         "libgtest_prod_headers",
