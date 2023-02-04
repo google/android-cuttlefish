@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <algorithm>
-#include <deque>
 #include <regex>
 #include <set>
 #include <string>
@@ -85,31 +84,12 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
   return mapping;
 }
 
-/*
- * Filters out the ids in id_pool that already exist in instance_database
- */
-static Result<std::vector<unsigned>> CollectUnusedIds(
-    const InstanceDatabase& instance_database,
-    std::vector<unsigned>&& id_pool) {
-  std::deque<unsigned> collected_ids;
-  while (!id_pool.empty()) {
-    /*
-     * As pop_back() is efficient in a vector than pop_front(), we do
-     * pop_back(). To keep the order though, we should push_front() to
-     * collected_ids. If collected_ids is a vector, push_front() is not
-     * efficient, so we keep collected_ids as a deque.
-     */
-    const auto id = id_pool.back();
-    id_pool.pop_back();
-    auto subset =
-        CF_EXPECT(instance_database.FindInstances(Query{kInstanceIdField, id}));
-    CF_EXPECT(subset.size() < 2,
-              "Cvd Instance Database has two instances with the id: " << id);
-    if (subset.empty()) {
-      collected_ids.push_front(id);
-    }
-  }
-  return std::vector<unsigned>{collected_ids.begin(), collected_ids.end()};
+static Result<void> IsIdAvailable(const InstanceDatabase& instance_database,
+                                  const unsigned id) {
+  auto subset =
+      CF_EXPECT(instance_database.FindInstances(Query{kInstanceIdField, id}));
+  CF_EXPECT(subset.empty());
+  return {};
 }
 
 Result<std::vector<PerInstanceInfo>>
@@ -117,25 +97,25 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
     const std::vector<unsigned>& requested_instance_ids) {
   CF_EXPECT(!requested_instance_ids.empty(),
             "Instance IDs were specified, so should be one or more.");
-  auto available_instance_ids = requested_instance_ids;
-  available_instance_ids = CF_EXPECT(
-      CollectUnusedIds(instance_database_, std::move(available_instance_ids)));
-  CF_EXPECT(available_instance_ids.size() == requested_instance_ids.size(),
-            "Some of requested instance IDs are already taken.");
+  for (const auto id : requested_instance_ids) {
+    CF_EXPECT(IsIdAvailable(instance_database_, id),
+              "instance ID #" << id << " is requeested but not available.");
+  }
+
   std::vector<std::string> per_instance_names;
   if (selector_options_parser_.PerInstanceNames()) {
     per_instance_names = *selector_options_parser_.PerInstanceNames();
-    CF_EXPECT_EQ(per_instance_names.size(), available_instance_ids.size());
+    CF_EXPECT_EQ(per_instance_names.size(), requested_instance_ids.size());
   } else {
-    for (const auto id : available_instance_ids) {
-      per_instance_names.emplace_back(std::to_string(id));
+    for (const auto id : requested_instance_ids) {
+      per_instance_names.push_back(std::to_string(id));
     }
   }
   std::vector<PerInstanceInfo> instance_info;
   bool must_acquire_file_locks = selector_options_parser_.MustAcquireFileLock();
   if (!must_acquire_file_locks) {
     for (int i = 0; i < per_instance_names.size(); i++) {
-      const auto id = available_instance_ids[i];
+      const auto id = requested_instance_ids[i];
       instance_info.emplace_back(id, per_instance_names[i]);
     }
     return instance_info;
@@ -145,15 +125,30 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
   auto id_to_lockfile_map =
       ConstructIdLockFileMap(std::move(acquired_all_file_locks));
 
-  for (int i = 0; i < available_instance_ids.size(); i++) {
+  for (int i = 0; i < requested_instance_ids.size(); i++) {
     const auto instance_name = per_instance_names[i];
-    const auto id = available_instance_ids[i];
+    const auto id = requested_instance_ids[i];
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
     instance_info.emplace_back(id, instance_name, std::move(lock_file));
   }
   return instance_info;
+}
+
+/*
+ * Filters out the ids in id_pool that already exist in instance_database
+ */
+static Result<std::vector<unsigned>> CollectUnusedIds(
+    const InstanceDatabase& instance_database,
+    std::vector<unsigned>&& id_pool) {
+  std::vector<unsigned> collected_ids;
+  for (const auto id : id_pool) {
+    if (IsIdAvailable(instance_database, id).ok()) {
+      collected_ids.push_back(id);
+    }
+  }
+  return collected_ids;
 }
 
 Result<std::vector<PerInstanceInfo>>
@@ -175,7 +170,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   std::vector<unsigned> id_pool;
   id_pool.reserve(id_to_lockfile_map.size());
   for (const auto& [id, _] : id_to_lockfile_map) {
-    id_pool.emplace_back(id);
+    id_pool.push_back(id);
   }
   auto unused_id_pool =
       CF_EXPECT(CollectUnusedIds(instance_database_, std::move(id_pool)));
@@ -202,7 +197,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
-    lock_files_at_ids.emplace_back(std::move(lock_file));
+    lock_files_at_ids.push_back(std::move(lock_file));
   }
 
   std::vector<std::string> per_instance_names;
@@ -220,7 +215,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
      * per-instance name. Also, see instance_record.cpp.
      */
     for (const auto& instance_file_lock : lock_files_at_ids) {
-      per_instance_names.emplace_back(
+      per_instance_names.push_back(
           std::to_string(instance_file_lock.Instance()));
     }
   }
@@ -273,14 +268,14 @@ static Result<std::vector<std::string>> UpdateInstanceArgs(
 
   if (!is_consecutive || !is_sorted) {
     std::string flag_value = android::base::Join(ids, ",");
-    new_args.emplace_back("--instance_nums=" + flag_value);
+    new_args.push_back("--instance_nums=" + flag_value);
     return new_args;
   }
 
   // sorted and consecutive, so let's use old flags
   // like --num_instances and --base_instance_num
-  new_args.emplace_back("--num_instances=" + std::to_string(ids.size()));
-  new_args.emplace_back("--base_instance_num=" + std::to_string(min));
+  new_args.push_back("--num_instances=" + std::to_string(ids.size()));
+  new_args.push_back("--base_instance_num=" + std::to_string(min));
   return new_args;
 }
 
@@ -303,12 +298,12 @@ Result<std::vector<std::string>> CreationAnalyzer::UpdateWebrtcDeviceId(
   for (const auto& instance : per_instance_info) {
     const auto& per_instance_name = instance.per_instance_name_;
     std::string device_name = group_name_ + "-" + per_instance_name;
-    device_name_list.emplace_back(device_name);
+    device_name_list.push_back(device_name);
   }
   // take --webrtc_device_id flag away
   new_args = std::move(copied_args);
-  new_args.emplace_back("--webrtc_device_id=" +
-                        android::base::Join(device_name_list, ","));
+  new_args.push_back("--webrtc_device_id=" +
+                     android::base::Join(device_name_list, ","));
   return new_args;
 }
 
@@ -317,7 +312,7 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   std::vector<unsigned> ids;
   ids.reserve(instance_info.size());
   for (const auto& instance : instance_info) {
-    ids.emplace_back(instance.instance_id_);
+    ids.push_back(instance.instance_id_);
   }
   cmd_args_ = CF_EXPECT(UpdateInstanceArgs(std::move(cmd_args_), ids));
 
@@ -346,8 +341,9 @@ Result<std::string> CreationAnalyzer::AnalyzeGroupName(
   }
   // auto-generate group name
   std::vector<unsigned> ids;
+  ids.reserve(per_instance_infos.size());
   for (const auto& per_instance_info : per_instance_infos) {
-    ids.emplace_back(per_instance_info.instance_id_);
+    ids.push_back(per_instance_info.instance_id_);
   }
   std::string base_name = GenDefaultGroupName();
   if (selector_options_parser_.IsMaybeDefaultGroup()) {
