@@ -32,7 +32,7 @@ $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
-PRODUCT_EXTRA_VNDK_VERSIONS := 28 29 30 31
+PRODUCT_EXTRA_VNDK_VERSIONS := 29 30 31
 
 TARGET_PRODUCT_PROP := $(LOCAL_PATH)/product.prop
 
