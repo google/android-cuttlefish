@@ -35,6 +35,21 @@ static constexpr char kProcDir[] = "/proc";
 
 // collects all pids whose owner is uid
 Result<std::vector<pid_t>> CollectPids(const uid_t uid = getuid());
+
+/* collects all pids that meet the following:
+ *
+ * 1. Belongs to the uid
+ * 2. cpp_basename(`cat /proc/<pid>/cmdline`.front()) == exec_name
+ * 3. cpp_basename(exec_name) == exec_name
+ *
+ */
+Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
+                                                 const uid_t uid = getuid());
+
+// "exec_path" is treated as an absolute path
+Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_path,
+                                                 const uid_t uid = getuid());
+
 Result<uid_t> OwnerUid(const pid_t pid);
 
 // retrieves command line args for the pid
