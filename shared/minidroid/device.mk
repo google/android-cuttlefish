@@ -60,6 +60,7 @@ PRODUCT_PACKAGES += \
     debuggerd \
     linker \
     servicemanager \
+    service \
     tombstoned \
     tombstone_transmit.microdroid \
     cgroups.json \
