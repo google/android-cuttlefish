@@ -20,8 +20,10 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <iostream>
 #include <map>
 #include <mutex>
+#include <sstream>
 #include <string>
 
 #include <android-base/parseint.h>
@@ -183,7 +185,8 @@ Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
 Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
     const std::string& bin_file, const selector::GroupCreationInfo& group_info,
     const RequestWithStdio& request) {
-  const auto bin_path = group_info.host_artifacts_path + "/bin/" + bin_file;
+  auto bin_path = group_info.host_artifacts_path;
+  bin_path.append("/bin/").append(bin_file);
   CF_EXPECT(!group_info.home.empty());
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,
@@ -231,6 +234,39 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
   group_creation_info.envs[selector::kAndroidHostOut] =
       group_creation_info.host_artifacts_path;
   return group_creation_info;
+}
+
+static std::ostream& operator<<(std::ostream& out, const cvd_common::Args& v) {
+  if (v.empty()) {
+    return out;
+  }
+  for (int i = 0; i < v.size() - 1; i++) {
+    out << v.at(i) << " ";
+  }
+  out << v.back();
+  return out;
+}
+
+static void ShowLaunchCommand(const std::string& bin,
+                              const cvd_common::Args& args,
+                              const cvd_common::Envs& envs) {
+  std::stringstream ss;
+  std::vector<std::string> interesting_env_names{
+      "HOME", selector::kAndroidHostOut, "ANDROID_PRODUCT_OUT",
+      kCuttlefishInstanceEnvVarName, kCuttlefishConfigEnvVarName};
+  for (const auto& interesting_env_name : interesting_env_names) {
+    if (Contains(envs, interesting_env_name)) {
+      ss << interesting_env_name << "=\"" << envs.at(interesting_env_name)
+         << "\" ";
+    }
+  }
+  ss << " " << bin << " " << args;
+  LOG(ERROR) << "launcher command: " << ss.str();
+}
+
+static void ShowLaunchCommand(const std::string& bin,
+                              selector::GroupCreationInfo& group_info) {
+  ShowLaunchCommand(bin, group_info.args, group_info.envs);
 }
 
 Result<cvd::Response> CvdStartCommandHandler::Handle(
@@ -288,6 +324,12 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     CF_EXPECT(
         group_creation_info != std::nullopt,
         "group_creation_info should be nullopt only when --help is given.");
+  }
+
+  if (is_help) {
+    ShowLaunchCommand(command.Executable(), subcmd_args, envs);
+  } else {
+    ShowLaunchCommand(command.Executable(), *group_creation_info);
   }
 
   const bool should_wait =
