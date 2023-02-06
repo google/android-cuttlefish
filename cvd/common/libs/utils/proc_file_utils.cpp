@@ -24,6 +24,8 @@
 
 #include <android-base/parseint.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 
 namespace cuttlefish {
@@ -39,6 +41,58 @@ static std::string ConcatToString(Args&&... args) {
 
 static std::string PidDirPath(const pid_t pid) {
   return ConcatToString(kProcDir, "/", pid);
+}
+
+/* ReadFile does not work for /proc/<pid>/<some files>
+ * ReadFile requires the file size to be known in advance,
+ * which is not the case here.
+ */
+static Result<std::string> ReadAll(const std::string& file_path) {
+  SharedFD fd = SharedFD::Open(file_path, O_RDONLY);
+  CF_EXPECT(fd->IsOpen());
+  // should be good size to read all Envs or Args,
+  // whichever bigger
+  const int buf_size = 1024;
+  std::string output;
+  ssize_t nread = 0;
+  do {
+    std::vector<char> buf(buf_size);
+    nread = ReadExact(fd, buf.data(), buf_size);
+    CF_EXPECT(nread >= 0, "ReadExact returns " << nread);
+    output.append(buf.begin(), buf.end());
+  } while (nread > 0);
+  return output;
+}
+
+/**
+ * Tokenizes the given string, using '\0' as a delimiter
+ *
+ * android::base::Tokenize works mostly except the delimiter can't be '\0'.
+ * The /proc/<pid>/environ file has the list of environment variables, delimited
+ * by '\0'. Needs a dedicated tokenizer.
+ *
+ */
+static std::vector<std::string> TokenizeByNullChar(const std::string& input) {
+  if (input.empty()) {
+    return {};
+  }
+  std::vector<std::string> tokens;
+  std::string token;
+  for (int i = 0; i < input.size(); i++) {
+    if (input.at(i) != '\0') {
+      token.append(1, input.at(i));
+    } else {
+      if (token.empty()) {
+        break;
+      }
+      tokens.push_back(token);
+      token.clear();
+    }
+  }
+  if (!token.empty()) {
+    tokens.push_back(token);
+  }
+  return tokens;
 }
 
 Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
@@ -64,6 +118,20 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
     pids.push_back(pid);
   }
   return pids;
+}
+
+Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
+  std::string cmdline_file_path = PidDirPath(pid) + "/cmdline";
+  auto owner = CF_EXPECT(OwnerUid(pid));
+  CF_EXPECT(getuid() == owner);
+  std::string contents = CF_EXPECT(ReadAll(cmdline_file_path));
+  return TokenizeByNullChar(contents);
+}
+
+Result<std::string> GetCmdline(const pid_t pid) {
+  auto args = CF_EXPECT(GetCmdArgs(pid));
+  CF_EXPECT(!args.empty());
+  return args.front();
 }
 
 Result<uid_t> OwnerUid(const pid_t pid) {
