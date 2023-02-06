@@ -8,6 +8,7 @@
 
 import /init.environ.rc
 import /system/etc/init/mdnsd.rc
+import /system/etc/init/servicemanager.rc
 
 # Cgroups are mounted right before early-init using list from /etc/cgroups.json
 on early-init
@@ -27,6 +28,19 @@ on early-init && property:ro.boot.microdroid.debuggable=0
 on init
     mkdir /mnt/apk 0755 system system
     mkdir /mnt/extra-apk 0755 root root
+
+    # Mount binderfs
+    mkdir /dev/binderfs
+    mount binder binder /dev/binderfs stats=global
+    chmod 0755 /dev/binderfs
+
+    symlink /dev/binderfs/binder /dev/binder
+    symlink /dev/binderfs/hwbinder /dev/hwbinder
+    symlink /dev/binderfs/vndbinder /dev/vndbinder
+
+    chmod 0666 /dev/binderfs/hwbinder
+    chmod 0666 /dev/binderfs/binder
+    chmod 0666 /dev/binderfs/vndbinder
 
     # create an empty ld.config.txt before running any non-static exectuables
     # (apexd and linkerconfig) to suppress "ld.config.txt not found" warnings.
@@ -51,6 +65,7 @@ on init
     setprop apex_config.done true
 
     setprop ro.debuggable ${ro.boot.microdroid.debuggable:-0}
+    start servicemanager
 
 on property:dev.bootcomplete=1
     # Stop ueventd to save memory
