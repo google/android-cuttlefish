@@ -31,6 +31,15 @@
 
 namespace cuttlefish {
 
+// utility struct for std::variant uses
+template <typename... Ts>
+struct Overload : Ts... {
+  using Ts::operator()...;
+};
+
+template <typename... Ts>
+Overload(Ts...) -> Overload<Ts...>;
+
 struct CommandInvocation {
   std::string command;
   std::vector<std::string> arguments;
