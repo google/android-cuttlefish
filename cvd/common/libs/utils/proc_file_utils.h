@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <string>
 #include <vector>
 
 #include "common/libs/utils/result.h"
@@ -32,8 +33,14 @@ namespace cuttlefish {
 
 static constexpr char kProcDir[] = "/proc";
 
-// collect all pids whose owner is uid
+// collects all pids whose owner is uid
 Result<std::vector<pid_t>> CollectPids(const uid_t uid = getuid());
 Result<uid_t> OwnerUid(const pid_t pid);
+
+// retrieves command line args for the pid
+Result<std::vector<std::string>> GetCmdArgs(const pid_t pid);
+
+// retrieves the path to the executable file used for the pid
+Result<std::string> GetCmdline(const pid_t pid);
 
 }  // namespace cuttlefish
