@@ -218,11 +218,12 @@ Result<cvd::Status> InstanceManager::CvdFleet(
   return status;
 }
 
-void InstanceManager::IssueStopCommand(
+Result<void> InstanceManager::IssueStopCommand(
     const SharedFD& out, const SharedFD& err,
     const std::string& config_file_path,
     const selector::LocalInstanceGroup& group) {
-  Command command(group.HostArtifactsPath() + "/bin/" + kStopBin);
+  const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
+  Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
@@ -240,6 +241,7 @@ void InstanceManager::IssueStopCommand(
     }
     WriteAll(err, "InstanceLockFileManager failed to acquire lock");
   }
+  return {};
 }
 
 cvd::Status InstanceManager::CvdClear(const SharedFD& out,
@@ -252,7 +254,10 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
     for (const auto& group : instance_groups) {
       auto config_path = group->GetCuttlefishConfigPath();
       if (config_path.ok()) {
-        IssueStopCommand(out, err, *config_path, *group);
+        auto stop_result = IssueStopCommand(out, err, *config_path, *group);
+        if (!stop_result.ok()) {
+          LOG(ERROR) << stop_result.error().Message();
+        }
       }
       RemoveFile(group->HomeDir() + "/cuttlefish_runtime");
       RemoveFile(group->HomeDir() + config_json_name);
