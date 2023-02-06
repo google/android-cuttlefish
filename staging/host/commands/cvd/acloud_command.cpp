@@ -27,6 +27,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -65,12 +66,10 @@ const std::vector<std::string> _VENDOR_BOOT_IMAGE_NAME =
  */
 std::string FindImage(const std::string& search_path,
                       const std::vector<std::string>& pattern) {
-  struct stat statbuf;
-  std::string image;
   const std::string& search_path_extend = search_path + "/";
   for (const auto& name : pattern) {
-    image = search_path_extend + name;
-    if (stat(image.c_str(), &statbuf) == 0) {
+    const std::string image = search_path_extend + name;
+    if (FileExists(image)) {
       return image;
     }
   }
