@@ -126,6 +126,7 @@ TpmRemoteProvisioningContext::GenerateBcc(bool testMode) const {
   }
   ED25519_keypair_from_seed(pubKey.data(), privKey.data(), seed.data());
 
+  const auto issuer_and_subject = "Cuttlefish secure env";
   auto coseKey = cppbor::Map()
                      .add(CoseKey::KEY_TYPE, OCTET_KEY_PAIR)
                      .add(CoseKey::ALGORITHM, EDDSA)
@@ -134,8 +135,8 @@ TpmRemoteProvisioningContext::GenerateBcc(bool testMode) const {
                      .canonicalize();
   auto sign1Payload =
       cppbor::Map()
-          .add(1 /* Issuer */, "Issuer")
-          .add(2 /* Subject */, "Subject")
+          .add(1 /* Issuer */, issuer_and_subject)
+          .add(2 /* Subject */, issuer_and_subject)
           .add(-4670552 /* Subject Pub Key */, coseKey.encode())
           .add(-4670553 /* Key Usage (little-endian order) */,
                std::vector<uint8_t>{0x20} /* keyCertSign = 1<<5 */)
