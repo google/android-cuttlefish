@@ -134,6 +134,39 @@ Result<std::string> GetCmdline(const pid_t pid) {
   return args.front();
 }
 
+Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
+                                                 const uid_t uid) {
+  CF_EXPECT(cpp_basename(exec_name) == exec_name);
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto cmdline = GetCmdline(pid);
+    if (!cmdline.ok()) {
+      continue;
+    }
+    if (cpp_basename(*cmdline) == exec_name) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
+Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_name,
+                                                 const uid_t uid) {
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto cmdline = GetCmdline(pid);
+    if (!cmdline.ok()) {
+      continue;
+    }
+    if (*cmdline == exec_name) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
 Result<uid_t> OwnerUid(const pid_t pid) {
   auto proc_pid_path = PidDirPath(pid);
   struct stat buf;
