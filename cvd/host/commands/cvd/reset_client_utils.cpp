@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>  // std::endl
 #include <string>
 #include <unordered_set>
 
@@ -31,6 +32,7 @@
 #include "common/libs/utils/proc_file_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -136,6 +138,7 @@ static Result<void> RunStopCvdOnEach(const std::vector<pid_t>& run_cvd_pids,
     auto run_cvd_info_result = AnalyzeRunCvdProcess(pid);
     if (!run_cvd_info_result.ok()) {
       LOG(ERROR) << "Failed to collect information for run_cvd at #" << pid
+                 << std::endl
                  << run_cvd_info_result.error().Trace();
       continue;
     }

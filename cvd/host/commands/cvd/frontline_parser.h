@@ -51,8 +51,8 @@ class FrontlineParser {
  public:
   // This call must guarantee all public methods will be valid
   static Result<std::unique_ptr<FrontlineParser>> Parse(
-      CvdClient& client, const cvd_common::Args& all_args,
-      const cvd_common::Envs& envs);
+      CvdClient& client, const std::vector<std::string>& internal_cmds,
+      const cvd_common::Args& all_args, const cvd_common::Envs& envs);
 
   const std::string& ProgPath() const;
   std::optional<std::string> SubCmd() const;
@@ -62,7 +62,9 @@ class FrontlineParser {
   bool Help() const { return help_; }
 
  private:
-  FrontlineParser(CvdClient& client, const cvd_common::Args& all_args,
+  FrontlineParser(CvdClient& client,
+                  const std::vector<std::string>& internal_cmds,
+                  const cvd_common::Args& all_args,
                   const cvd_common::Envs& envs);
 
   // internal workers in order
@@ -92,6 +94,7 @@ class FrontlineParser {
   cvd_common::Args valid_subcmds_;
   const cvd_common::Args all_args_;
   const cvd_common::Envs envs_;
+  const std::vector<std::string>& internal_cmds_;
   std::unique_ptr<ArgumentsSeparator> arguments_separator_;
 
   // outputs
