@@ -140,6 +140,12 @@ void SapImpl::sendFailedResponse(MsgId msgId, int32_t token, int numPointers, ..
     }
     va_end(ap);
     Return<void> retStatus;
+
+    if (sapCallback == NULL) {
+        RLOGE("sendFailedResponse: sapCallback == NULL; msgId = %d; token = %d", msgId, token);
+        return;
+    }
+
     switch(msgId) {
         case MsgId_RIL_SIM_SAP_CONNECT:
             retStatus = sapCallback->connectResponse(token, SapConnectRsp::CONNECT_FAILURE, 0);
