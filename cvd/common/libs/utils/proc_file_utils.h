@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "common/libs/utils/result.h"
@@ -57,5 +58,8 @@ Result<std::vector<std::string>> GetCmdArgs(const pid_t pid);
 
 // retrieves the path to the executable file used for the pid
 Result<std::string> GetCmdline(const pid_t pid);
+
+// retrieves the environment variables of the process, pid
+Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid);
 
 }  // namespace cuttlefish

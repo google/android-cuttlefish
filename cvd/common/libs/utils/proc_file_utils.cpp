@@ -20,7 +20,6 @@
 
 #include <regex>
 #include <sstream>
-#include <string>
 
 #include <android-base/parseint.h>
 
@@ -172,6 +171,27 @@ Result<uid_t> OwnerUid(const pid_t pid) {
   struct stat buf;
   CF_EXPECT_EQ(::stat(proc_pid_path.data(), &buf), 0);
   return buf.st_uid;
+}
+
+Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
+  std::string environ_file_path = PidDirPath(pid) + "/environ";
+  auto owner = CF_EXPECT(OwnerUid(pid));
+  CF_EXPECT(getuid() == owner);
+  std::string environ = CF_EXPECT(ReadAll(environ_file_path));
+  std::vector<std::string> lines = TokenizeByNullChar(environ);
+  // now, each line looks like:  HOME=/home/user
+  std::unordered_map<std::string, std::string> envs;
+  for (const auto& line : lines) {
+    auto pos = line.find_first_of('=');
+    if (pos == std::string::npos) {
+      LOG(ERROR) << "Found an invalid env: " << line << " and ignored.";
+      continue;
+    }
+    std::string key = line.substr(0, pos);
+    std::string value = line.substr(pos + 1);
+    envs[key] = value;
+  }
+  return envs;
 }
 
 }  // namespace cuttlefish
