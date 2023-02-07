@@ -30,8 +30,6 @@ prebuilt_etc {
 
 apex {
     name: "com.google.cf.wifi_hwsim",
-    // Name expected by wpa_supplicant when it looks for config files.
-    apex_name: "com.android.wifi.hal",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",

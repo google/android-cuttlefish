@@ -32,8 +32,6 @@ prebuilt_etc {
 
 apex_defaults {
     name: "com.google.cf.wifi.defaults",
-    // Name expected by wpa_supplicant when it looks for config files.
-    apex_name: "com.android.wifi.hal",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
@@ -63,11 +61,9 @@ apex {
     prebuilts: [
         "android.hardware.wifi.passpoint.prebuilt.xml",
     ],
-    multi_install_skip_symbol_files: true,
 }
 
 apex {
     name: "com.google.cf.wifi.no-passpoint",
     defaults: ["com.google.cf.wifi.defaults"],
-    multi_install_skip_symbol_files: true,
 }
