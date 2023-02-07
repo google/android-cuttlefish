@@ -35,6 +35,7 @@
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/logger.h"
 // including "server_command/subcmd.h" causes cyclic dependency
+#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/web/build_api.h"
@@ -43,7 +44,8 @@ namespace cuttlefish {
 
 class CvdServer {
  public:
-  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&, ServerLogger&));
+  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&,
+                   HostToolTargetManager&, ServerLogger&));
   ~CvdServer();
 
   Result<void> StartServer(SharedFD server);
@@ -71,6 +73,7 @@ class CvdServer {
   BuildApi& build_api_;
   EpollPool& epoll_pool_;
   InstanceManager& instance_manager_;
+  HostToolTargetManager& host_tool_target_manager_;
   ServerLogger& server_logger_;
   std::atomic_bool running_ = true;
 
