@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -32,10 +33,11 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
-#include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -87,19 +89,20 @@ class CvdStartCommandHandler : public CvdServerHandler {
   static Result<selector::GroupCreationInfo> UpdateArgsAndEnvs(
       selector::GroupCreationInfo&& old_group_info);
 
+  static Result<std::string> FindStartBin(const std::string& android_host_out);
+
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
   bool interrupted_ = false;
 
-  static constexpr char kStartBin[] = "cvd_internal_start";
-  static const std::map<std::string, std::string> command_to_binary_map_;
+  static const std::array<std::string, 2> supported_commands_;
 };
 
 Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
   auto invocation = ParseInvocation(request.Message());
-  return Contains(command_to_binary_map_, invocation.command);
+  return Contains(supported_commands_, invocation.command);
 }
 
 /*
@@ -231,7 +234,13 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
       std::move(group_creation_info.args), group_creation_info.group_name,
       group_creation_info.instances));
   group_creation_info.envs["HOME"] = group_creation_info.home;
-  group_creation_info.envs[selector::kAndroidHostOut] =
+  group_creation_info.envs[kAndroidHostOut] =
+      group_creation_info.host_artifacts_path;
+  /* b/253644566
+   *
+   * Old branches used kAndroidSoongHostOut instead of kAndroidHostOut
+   */
+  group_creation_info.envs[kAndroidSoongHostOut] =
       group_creation_info.host_artifacts_path;
   return group_creation_info;
 }
@@ -251,9 +260,12 @@ static void ShowLaunchCommand(const std::string& bin,
                               const cvd_common::Args& args,
                               const cvd_common::Envs& envs) {
   std::stringstream ss;
-  std::vector<std::string> interesting_env_names{
-      "HOME", selector::kAndroidHostOut, "ANDROID_PRODUCT_OUT",
-      kCuttlefishInstanceEnvVarName, kCuttlefishConfigEnvVarName};
+  std::vector<std::string> interesting_env_names{"HOME",
+                                                 kAndroidHostOut,
+                                                 kAndroidSoongHostOut,
+                                                 "ANDROID_PRODUCT_OUT",
+                                                 kCuttlefishInstanceEnvVarName,
+                                                 kCuttlefishConfigEnvVarName};
   for (const auto& interesting_env_name : interesting_env_names) {
     if (Contains(envs, interesting_env_name)) {
       ss << interesting_env_name << "=\"" << envs.at(interesting_env_name)
@@ -267,6 +279,22 @@ static void ShowLaunchCommand(const std::string& bin,
 static void ShowLaunchCommand(const std::string& bin,
                               selector::GroupCreationInfo& group_info) {
   ShowLaunchCommand(bin, group_info.args, group_info.envs);
+}
+
+Result<std::string> CvdStartCommandHandler::FindStartBin(
+    const std::string& android_host_out) {
+  std::string parent_dir = android_host_out + "/bin";
+  std::array<std::string, 2> supported_bins{"cvd_internal_start", "launch_cvd"};
+  std::string start_bin;
+  for (const auto& bin : supported_bins) {
+    std::string path = parent_dir + "/" + bin;
+    if (FileExists(path) && !DirectoryExists(path)) {
+      start_bin = bin;
+      break;
+    }
+  }
+  CF_EXPECT(!start_bin.empty());
+  return start_bin;
 }
 
 Result<cvd::Response> CvdStartCommandHandler::Handle(
@@ -297,13 +325,15 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     auto client_pwd = request.Message().command_request().working_directory();
     envs["HOME"] = CF_EXPECT(ClientAbsolutePath(envs["HOME"], uid, client_pwd));
   }
+  CF_EXPECT(Contains(envs, kAndroidHostOut));
+  const auto bin = CF_EXPECT(FindStartBin(envs.at(kAndroidHostOut)));
 
   // update DB if not help
   // collect group creation infos
   auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
-  CF_EXPECT(subcmd == "start", "subcmd should be start but is " << subcmd);
+  CF_EXPECT(Contains(supported_commands_, subcmd),
+            "subcmd should be start but is " << subcmd);
   const bool is_help = HasHelpOpts(subcmd_args);
-  const auto bin = command_to_binary_map_.at(subcmd);
 
   std::optional<selector::GroupCreationInfo> group_creation_info;
   if (!is_help) {
@@ -411,18 +441,15 @@ bool CvdStartCommandHandler::HasHelpOpts(
 
 std::vector<std::string> CvdStartCommandHandler::CmdList() const {
   std::vector<std::string> subcmd_list;
-  subcmd_list.reserve(command_to_binary_map_.size());
-  for (const auto& [cmd, _] : command_to_binary_map_) {
+  subcmd_list.reserve(supported_commands_.size());
+  for (const auto& cmd : supported_commands_) {
     subcmd_list.emplace_back(cmd);
   }
   return subcmd_list;
 }
 
-const std::map<std::string, std::string>
-    CvdStartCommandHandler::command_to_binary_map_ = {
-        {"start", kStartBin},
-        {"launch_cvd", kStartBin},
-};
+const std::array<std::string, 2> CvdStartCommandHandler::supported_commands_{
+    "start", "launch_cvd"};
 
 fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
 cvdStartCommandComponent() {

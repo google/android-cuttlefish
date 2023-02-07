@@ -29,6 +29,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
