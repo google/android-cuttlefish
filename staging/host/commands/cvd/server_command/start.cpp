@@ -81,9 +81,14 @@ class CvdStartCommandHandler : public CvdServerHandler {
       cvd::Response&& response,
       const selector::GroupCreationInfo& group_creation_info);
 
-  static Result<cvd_common::Args> UpdateInstanceArgs(
-      std::vector<std::string>&& args,
-      const std::vector<selector::PerInstanceInfo>& instances);
+  struct UpdatedArgsAndEnvs {
+    cvd_common::Args args;
+    cvd_common::Envs envs;
+  };
+  Result<UpdatedArgsAndEnvs> UpdateInstanceArgsAndEnvs(
+      cvd_common::Args&& args, cvd_common::Envs&& envs,
+      const std::vector<selector::PerInstanceInfo>& instances,
+      const std::string& artifacts_path, const std::string& start_bin);
 
   static Result<std::vector<std::string>> UpdateWebrtcDeviceId(
       std::vector<std::string>&& args, const std::string& group_name,
@@ -110,16 +115,11 @@ Result<bool> CvdStartCommandHandler::CanHandle(
   return Contains(supported_commands_, invocation.command);
 }
 
-/*
- * 1. Remove --num_instances, --instance_nums, --base_instance_num if any.
- * 2. If the ids are consecutive and ordered, add:
- *   --base_instance_num=min --num_instances=ids.size()
- * 3. If not, --instance_nums=<ids>
- *
- */
-Result<cvd_common::Args> CvdStartCommandHandler::UpdateInstanceArgs(
-    std::vector<std::string>&& args,
-    const std::vector<selector::PerInstanceInfo>& instances) {
+Result<CvdStartCommandHandler::UpdatedArgsAndEnvs>
+CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
+    cvd_common::Args&& args, cvd_common::Envs&& envs,
+    const std::vector<selector::PerInstanceInfo>& instances,
+    const std::string& artifacts_path, const std::string& start_bin) {
   std::vector<unsigned> ids;
   ids.reserve(instances.size());
   for (const auto& instance : instances) {
@@ -138,6 +138,14 @@ Result<cvd_common::Args> CvdStartCommandHandler::UpdateInstanceArgs(
   // discard old ones
   ParseFlags(instance_id_flags, new_args);
 
+  auto check_flag = [artifacts_path, start_bin,
+                     this](const std::string& flag_name) -> Result<void> {
+    CF_EXPECT(
+        host_tool_target_manager_.ReadFlag({.artifacts_path = artifacts_path,
+                                            .start_bin = start_bin,
+                                            .flag_name = flag_name}));
+    return {};
+  };
   auto max = *(std::max_element(ids.cbegin(), ids.cend()));
   auto min = *(std::min_element(ids.cbegin(), ids.cend()));
 
@@ -146,15 +154,26 @@ Result<cvd_common::Args> CvdStartCommandHandler::UpdateInstanceArgs(
 
   if (!is_consecutive || !is_sorted) {
     std::string flag_value = android::base::Join(ids, ",");
+    CF_EXPECT(check_flag("instance_nums"));
     new_args.emplace_back("--instance_nums=" + flag_value);
-    return new_args;
+    return UpdatedArgsAndEnvs{.args = std::move(new_args),
+                              .envs = std::move(envs)};
   }
 
   // sorted and consecutive, so let's use old flags
   // like --num_instances and --base_instance_num
-  new_args.emplace_back("--num_instances=" + std::to_string(ids.size()));
-  new_args.emplace_back("--base_instance_num=" + std::to_string(min));
-  return new_args;
+  if (ids.size() > 1) {
+    CF_EXPECT(check_flag("num_instances"),
+              "--num_instances is not supported but multi-tenancy requested.");
+    new_args.emplace_back("--num_instances=" + std::to_string(ids.size()));
+  }
+  cvd_common::Envs new_envs{std::move(envs)};
+  if (check_flag("base_instance_num").ok()) {
+    new_args.emplace_back("--base_instance_num=" + std::to_string(min));
+  }
+  envs[kCuttlefishInstanceEnvVarName] = std::to_string(min);
+  return UpdatedArgsAndEnvs{.args = std::move(new_args),
+                            .envs = std::move(new_envs)};
 }
 
 /*
@@ -235,8 +254,15 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
     selector::GroupCreationInfo&& old_group_info,
     const std::string& start_bin) {
   selector::GroupCreationInfo group_creation_info = std::move(old_group_info);
-  group_creation_info.args = CF_EXPECT(UpdateInstanceArgs(
-      std::move(group_creation_info.args), group_creation_info.instances));
+  // update instance related-flags, envs
+  const auto& instances = group_creation_info.instances;
+  const auto& host_artifacts_path = group_creation_info.host_artifacts_path;
+  auto [new_args, new_envs] = CF_EXPECT(UpdateInstanceArgsAndEnvs(
+      std::move(group_creation_info.args), std::move(group_creation_info.envs),
+      instances, host_artifacts_path, start_bin));
+  group_creation_info.args = std::move(new_args);
+  group_creation_info.envs = std::move(new_envs);
+
   auto webrtc_device_id_flag = host_tool_target_manager_.ReadFlag(
       {.artifacts_path = group_creation_info.host_artifacts_path,
        .start_bin = start_bin,
@@ -246,6 +272,7 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
         std::move(group_creation_info.args), group_creation_info.group_name,
         group_creation_info.instances));
   }
+
   group_creation_info.envs["HOME"] = group_creation_info.home;
   group_creation_info.envs[kAndroidHostOut] =
       group_creation_info.host_artifacts_path;
