@@ -50,7 +50,7 @@ void XmlDocDeleter::operator()(struct _xmlDoc* doc) {
  *  xmlNodeListGetString(doc, grandchild, 1);
  */
 FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
-  std::unordered_map<std::string, std::optional<std::string>> field_value_map;
+  std::unordered_map<std::string, std::string> field_value_map;
   for (xmlNode* child = flag.xmlChildrenNode; child != nullptr;
        child = child->next) {
     if (!child->name) {
@@ -58,7 +58,7 @@ FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
     }
     std::string field_name = reinterpret_cast<const char*>(child->name);
     if (!child->xmlChildrenNode) {
-      field_value_map[field_name] = std::nullopt;
+      field_value_map[field_name] = "";
       continue;
     }
     auto* xml_node_text = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
@@ -85,7 +85,7 @@ std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* all_flags) {
     }
     auto flag_info = ParseFlagNode(doc, *flag);
     if (flag_info) {
-      flags.emplace_back(std::move(flag_info));
+      flags.push_back(std::move(flag_info));
     }
   }
   return flags;
@@ -122,7 +122,11 @@ std::optional<std::vector<FlagInfoPtr>> LoadFromXml(XmlDocPtr&& doc) {
 std::unique_ptr<FlagInfo> FlagInfo::Create(
     const FlagInfoFieldMap& field_value_map) {
   if (!Contains(field_value_map, "name") ||
-      field_value_map.at("name").value_or("").empty()) {
+      field_value_map.at("name").empty()) {
+    return nullptr;
+  }
+  if (!Contains(field_value_map, "type") ||
+      field_value_map.at("type").empty()) {
     return nullptr;
   }
   FlagInfo* new_flag_info = new FlagInfo(field_value_map);
