@@ -29,36 +29,25 @@ namespace cuttlefish {
 
 class HostToolTarget {
  public:
-  struct FlagInfoRequest {
-    std::string operation_;
-    std::string flag_name_;
-  };
   // artifacts_path: ANDROID_HOST_OUT, or so
-  static Result<HostToolTarget> Create(const std::string& artifacts_path);
-
+  static Result<HostToolTarget> Create(const std::string& artifacts_path,
+                                       const std::string& start_bin);
   bool IsDirty() const;
-  Result<FlagInfo> GetFlagInfo(const FlagInfoRequest& request) const;
-  bool HasField(const FlagInfoRequest& request) const {
-    return GetFlagInfo(request).ok();
+  Result<FlagInfo> GetFlagInfo(const std::string& flag_name) const;
+  bool HasField(const std::string& flag_name) const {
+    return GetFlagInfo(flag_name).ok();
   }
-  Result<std::string> GetBinName(const std::string& operation) const;
 
  private:
-  using SupportedFlagMap = std::unordered_map<std::string, FlagInfoPtr>;
-  struct OperationImplementation {
-    std::string bin_name_;
-    SupportedFlagMap supported_flags_;
-  };
-  HostToolTarget(const std::string& artifacts_path, const time_t dir_time_stamp,
-                 std::unordered_map<std::string, OperationImplementation>&&
-                     op_to_impl_map);
+  HostToolTarget(const std::string& artifacts_path,
+                 const std::string& start_bin, const time_t dir_time_stamp_,
+                 std::vector<FlagInfoPtr>&& flags);
 
   // time stamp on creation
   const std::string artifacts_path_;
+  const std::string start_bin_;
   const time_t dir_time_stamp_;
-  // map from "start", "stop", etc, to "cvd_internal_start", "stop_cvd", etc
-  // with the supported flags if those implementation offers --helpxml.
-  std::unordered_map<std::string, OperationImplementation> op_to_impl_map_;
+  std::unordered_map<std::string, FlagInfoPtr> supported_flags_;
 };
 
 }  // namespace cuttlefish

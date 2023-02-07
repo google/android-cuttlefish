@@ -16,11 +16,9 @@
 
 #pragma once
 
-#include <functional>
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include <fruit/fruit.h>
 
@@ -32,25 +30,21 @@ namespace cuttlefish {
 
 struct HostToolFlagRequestForm {
   std::string artifacts_path;
-  // operations like stop, start, status, etc
-  std::string op;
+  std::string start_bin;
   std::string flag_name;
-};
-
-struct HostToolExecNameRequestForm {
-  std::string artifacts_path;
-  // operations like stop, start, status, etc
-  std::string op;
 };
 
 class HostToolTargetManager {
  public:
-  virtual ~HostToolTargetManager() = default;
-  virtual Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) = 0;
-  virtual Result<std::string> ExecBaseName(
-      const HostToolExecNameRequestForm& request) = 0;
-};
+  INJECT(HostToolTargetManager()) {}
 
-fruit::Component<HostToolTargetManager> HostToolTargetManagerComponent();
+  Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request);
+
+ private:
+  using HostToolTargetMap = std::unordered_map<std::string, HostToolTarget>;
+  // map from artifact dir to host tool target information object
+  HostToolTargetMap host_target_table_;
+  std::mutex table_mutex_;
+};
 
 }  // namespace cuttlefish
