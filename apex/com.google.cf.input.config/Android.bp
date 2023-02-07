@@ -18,8 +18,6 @@ package {
 
 apex {
     name: "com.google.cf.input.config",
-    // InputDevice expects input config files in /apex/com.android.input.config/etc
-    apex_name: "com.android.input.config",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
