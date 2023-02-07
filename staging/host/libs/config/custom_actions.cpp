@@ -169,7 +169,11 @@ std::string DefaultCustomActionConfig() {
   auto custom_action_config_dir =
       DefaultHostArtifactsPath("etc/cvd_custom_action_config");
   if (DirectoryExists(custom_action_config_dir)) {
-    auto custom_action_configs = DirectoryContents(custom_action_config_dir);
+    auto directory_contents_result =
+        DirectoryContents(custom_action_config_dir);
+    CHECK(directory_contents_result.ok())
+        << directory_contents_result.error().Trace();
+    auto custom_action_configs = std::move(*directory_contents_result);
     // Two entries are always . and ..
     if (custom_action_configs.size() > 3) {
       LOG(ERROR) << "Expected at most one custom action config in "
