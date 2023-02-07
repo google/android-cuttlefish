@@ -62,15 +62,13 @@ bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
 }
 
-std::vector<std::string> DirectoryContents(const std::string& path) {
+Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   std::vector<std::string> ret;
   std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
-  CHECK(dir != nullptr) << "Could not read from dir \"" << path << "\"";
-  if (dir) {
-    struct dirent* ent{};
-    while ((ent = readdir(dir.get()))) {
-      ret.push_back(ent->d_name);
-    }
+  CF_EXPECT(dir != nullptr, "Could not read from dir \"" << path << "\"");
+  struct dirent* ent{};
+  while ((ent = readdir(dir.get()))) {
+    ret.emplace_back(ent->d_name);
   }
   return ret;
 }
