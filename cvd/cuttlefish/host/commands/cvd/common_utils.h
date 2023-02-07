@@ -39,6 +39,8 @@ cvd::Request MakeRequest(
 constexpr char kStatusBin[] = "cvd_internal_status";
 // The name of environment variable that points to the host out directory
 constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
+// kAndroidHostOut for old branches
+constexpr char kAndroidSoongHostOut[] = "ANDROID_SOONG_HOST_OUT";
 
 Result<std::string> StopBin(const std::string& host_artifacts_path);
 
