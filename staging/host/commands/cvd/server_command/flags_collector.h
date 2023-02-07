@@ -26,18 +26,21 @@ namespace cuttlefish {
 
 class FlagInfo {
  public:
-  using FlagInfoFieldMap =
-      std::unordered_map<std::string, std::optional<std::string>>;
+  using FlagInfoFieldMap = std::unordered_map<std::string, std::string>;
   static std::unique_ptr<FlagInfo> Create(
       const FlagInfoFieldMap& field_value_map);
   const std::string& Name() const { return name_; }
+  const std::string& Type() const { return type_; }
 
  private:
+  // field_value_map must have needed fields; guaranteed by the factory
+  // function, static Create().
   FlagInfo(const FlagInfoFieldMap& field_value_map)
-      : name_(field_value_map.at("name").value_or("")) {}
+      : name_(field_value_map.at("name")), type_(field_value_map.at("type")) {}
 
   // TODO(kwstephenkim): add more fields
   std::string name_;
+  std::string type_;
 };
 
 using FlagInfoPtr = std::unique_ptr<FlagInfo>;
