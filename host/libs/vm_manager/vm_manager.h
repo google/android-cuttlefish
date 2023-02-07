@@ -61,9 +61,12 @@ class VmManager {
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;
-  virtual std::vector<std::string> ConfigureGraphics(
-      const CuttlefishConfig::InstanceSpecific& instance) = 0;
-  virtual std::string ConfigureBootDevices(int num_disks, bool have_gpu) = 0;
+
+  virtual Result<std::unordered_map<std::string, std::string>>
+  ConfigureGraphics(const CuttlefishConfig::InstanceSpecific& instance) = 0;
+
+  virtual Result<std::unordered_map<std::string, std::string>>
+  ConfigureBootDevices(int num_disks, bool have_gpu) = 0;
 
   // Starts the VMM. It will usually build a command and pass it to the
   // command_starter function, although it may start more than one. The
@@ -80,8 +83,9 @@ VmManagerComponent();
 
 std::unique_ptr<VmManager> GetVmManager(const std::string&, Arch arch);
 
-std::string ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
-                                         int num_disks);
+Result<std::unordered_map<std::string, std::string>>
+ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
+                             int num_disks);
 
 } // namespace vm_manager
 } // namespace cuttlefish
