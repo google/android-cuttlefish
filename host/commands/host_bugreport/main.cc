@@ -48,7 +48,7 @@ void SaveFile(ZipWriter& writer, const std::string& zip_path,
   }
 }
 
-int CvdHostBugreportMain(int argc, char** argv) {
+Result<void> CvdHostBugreportMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -77,14 +77,18 @@ int CvdHostBugreportMain(int argc, char** argv) {
     save("launcher.log");
     save("logcat");
     save("metrics.log");
-    auto tombstones = DirectoryContents(instance.PerInstancePath("tombstones"));
+    auto tombstones =
+        CF_EXPECT(DirectoryContents(instance.PerInstancePath("tombstones")),
+                  "Cannot read from tombstones directory.");
     for (const auto& tombstone : tombstones) {
       if (tombstone == "." || tombstone == "..") {
         continue;
       }
       save("tombstones/" + tombstone);
     }
-    auto recordings = DirectoryContents(instance.PerInstancePath("recording"));
+    auto recordings =
+        CF_EXPECT(DirectoryContents(instance.PerInstancePath("recording")),
+                  "Cannot read from recording directory.");
     for (const auto& recording : recordings) {
       if (recording == "." || recording == "..") {
         continue;
@@ -97,12 +101,14 @@ int CvdHostBugreportMain(int argc, char** argv) {
 
   LOG(INFO) << "Saved to \"" << FLAGS_output << "\"";
 
-  return 0;
+  return {};
 }
 
 }  // namespace
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::CvdHostBugreportMain(argc, argv);
+  auto result = cuttlefish::CvdHostBugreportMain(argc, argv);
+  CHECK(result.ok()) << result.error().Message();
+  return 0;
 }
