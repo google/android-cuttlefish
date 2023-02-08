@@ -28,6 +28,7 @@ cc_library {
         "flags_validator.cpp",
         "json.cpp",
         "network.cpp",
+        "proc_file_utils.cpp",
         "scope_guard.cpp",
         "shared_fd_flag.cpp",
         "socket2socket_proxy.cpp",
@@ -63,6 +64,7 @@ cc_test_host {
     name: "libcuttlefish_utils_test",
     srcs: [
         "flag_parser_test.cpp",
+        "proc_file_utils_test.cpp",
         "result_test.cpp",
         "unique_resource_allocator_test.cpp",
         "unix_sockets_test.cpp",
