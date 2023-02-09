@@ -61,6 +61,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
+	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
 }
 
 type handler interface {
@@ -278,4 +279,10 @@ type getDebugVariablesHandler struct {
 
 func (h *getDebugVariablesHandler) Handle(r *http.Request) (interface{}, error) {
 	return h.m.GetVariables(), nil
+}
+
+func okHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 }
