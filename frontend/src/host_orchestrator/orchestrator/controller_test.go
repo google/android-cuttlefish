@@ -274,6 +274,21 @@ func TestGetDebugVarzIsHandled(t *testing.T) {
 	}
 }
 
+func TestGetStatuszIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/_debug/statusz", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func makeRequest(w http.ResponseWriter, r *http.Request, controller *Controller) {
 	router := mux.NewRouter()
 	controller.AddRoutes(router)
