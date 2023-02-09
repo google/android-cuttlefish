@@ -85,4 +85,29 @@ TEST(HostToolManager, KnownFlags) {
   ASSERT_FALSE(bad_flag.ok());
 }
 
+TEST(HostToolManager, KnownBins) {
+  std::string android_host_out = StringFromEnv("ANDROID_HOST_OUT", "");
+  if (android_host_out.empty()) {
+    GTEST_SKIP() << "Set ANDROID_HOST_OUT";
+  }
+  fruit::Injector<HostToolTargetManager> injector(CreateManagerComponent);
+  HostToolTargetManager& host_tool_manager =
+      injector.get<HostToolTargetManager&>();
+
+  auto start_bin = host_tool_manager.ExecBaseName(
+      {.artifacts_path = android_host_out, .op = "start"});
+  auto stop_bin = host_tool_manager.ExecBaseName(
+      {.artifacts_path = android_host_out, .op = "stop"});
+  auto bad_bin = host_tool_manager.ExecBaseName(
+      {.artifacts_path = android_host_out, .op = "bad"});
+
+  ASSERT_TRUE(start_bin.ok()) << start_bin.error().Trace();
+  ASSERT_TRUE(stop_bin.ok()) << stop_bin.error().Trace();
+  ASSERT_FALSE(bad_bin.ok()) << "bad_bin should be CF_ERR but is " << *bad_bin;
+  ASSERT_TRUE(*start_bin == "cvd_internal_start" || *start_bin == "launch_cvd")
+      << "start_bin was " << *start_bin;
+  ASSERT_TRUE(*stop_bin == "cvd_internal_stop" || *stop_bin == "stop_cvd")
+      << "stop_bin was " << *stop_bin;
+}
+
 }  // namespace cuttlefish

@@ -107,4 +107,13 @@ Result<FlagInfo> HostToolTarget::GetFlagInfo(
   return copied;
 }
 
+Result<std::string> HostToolTarget::GetBinName(
+    const std::string& operation) const {
+  CF_EXPECT(Contains(op_to_impl_map_, operation),
+            "Operation \"" << operation << "\" is not supported by "
+                           << "the host tool target object at "
+                           << artifacts_path_);
+  return op_to_impl_map_.at(operation).bin_name_;
+}
+
 }  // namespace cuttlefish
