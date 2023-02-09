@@ -176,8 +176,8 @@
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_PATH "/register_device"
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_PORT 443
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_SECURE true
-#define CF_DEFAULTS_TCP_PORT_RANGE "15550:15558"
-#define CF_DEFAULTS_UDP_PORT_RANGE "15550:15558"
+#define CF_DEFAULTS_TCP_PORT_RANGE "15550:15599"
+#define CF_DEFAULTS_UDP_PORT_RANGE "15550:15599"
 
 // Adb default parameters
 // TODO : Replaceconstants with these flags, they're currently defined throug
