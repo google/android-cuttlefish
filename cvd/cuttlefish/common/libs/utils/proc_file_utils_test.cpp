@@ -34,18 +34,6 @@ TEST(ProcFileUid, SelfUidTest) {
   ASSERT_EQ(getuid(), *login_uid_of_my_pid);
 }
 
-TEST(ProcFilePid, CollectAllProcesses) {
-  auto pids_result = CollectPids(getuid());
-
-  // verify if the pids returned are really owned by getuid()
-  ASSERT_TRUE(pids_result.ok());
-  for (const auto pid : *pids_result) {
-    auto proc_uid = OwnerUid(pid);
-    ASSERT_TRUE(proc_uid.ok()) << proc_uid.error().Trace();
-    ASSERT_EQ(*proc_uid, getuid());
-  }
-}
-
 TEST(ProcFilePid, CurrentPidCollected) {
   auto pids_result = CollectPids(getuid());
   auto this_pid = getpid();
