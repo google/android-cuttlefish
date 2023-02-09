@@ -27,6 +27,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/flags_collector.h"
 #include "host/commands/cvd/server_command/host_tool_target.h"
+#include "host/commands/cvd/server_command/operation_to_bins_map.h"
 
 namespace cuttlefish {
 
@@ -39,21 +40,11 @@ struct HostToolFlagRequestForm {
 
 class HostToolTargetManager {
  public:
-  INJECT(HostToolTargetManager());
-
-  Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request);
-
- private:
-  Result<void> EnsureExistence(const std::string& artifacts_path);
-  Result<void> UpdateOutdated(const std::string& artifacts_path);
-
-  using HostToolTargetMap = std::unordered_map<std::string, HostToolTarget>;
-
-  // map from artifact dir to host tool target information object
-  HostToolTargetMap host_target_table_;
-  std::unordered_map<std::string, std::vector<std::string>>
-      op_to_possible_bins_map_;
-  std::mutex table_mutex_;
+  virtual ~HostToolTargetManager() = default;
+  virtual Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) = 0;
 };
+
+fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
+HostToolTargetManagerComponent();
 
 }  // namespace cuttlefish
