@@ -171,7 +171,7 @@ CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
   if (check_flag("base_instance_num").ok()) {
     new_args.emplace_back("--base_instance_num=" + std::to_string(min));
   }
-  envs[kCuttlefishInstanceEnvVarName] = std::to_string(min);
+  new_envs[kCuttlefishInstanceEnvVarName] = std::to_string(min);
   return UpdatedArgsAndEnvs{.args = std::move(new_args),
                             .envs = std::move(new_envs)};
 }
