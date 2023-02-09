@@ -27,6 +27,8 @@ class HostToolTargetManagerImpl : public HostToolTargetManager {
   INJECT(HostToolTargetManagerImpl(const OperationToBinsMap&));
 
   Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) override;
+  Result<std::string> ExecBaseName(
+      const HostToolExecNameRequestForm& request) override;
 
  private:
   Result<void> EnsureExistence(const std::string& artifacts_path);
@@ -85,6 +87,17 @@ Result<FlagInfo> HostToolTargetManagerImpl::ReadFlag(
           .flag_name_ = request.flag_name,
       }));
   return flag_info;
+}
+
+Result<std::string> HostToolTargetManagerImpl::ExecBaseName(
+    const HostToolExecNameRequestForm& request) {
+  std::lock_guard<std::mutex> lock(table_mutex_);
+  CF_EXPECT(
+      EnsureExistence(request.artifacts_path),
+      "Could not create HostToolTarget object for " << request.artifacts_path);
+  auto& host_target = host_target_table_.at(request.artifacts_path);
+  auto base_name = CF_EXPECT(host_target.GetBinName(request.op));
+  return base_name;
 }
 
 fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
