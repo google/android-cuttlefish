@@ -284,8 +284,8 @@ auto ErrorFromType(Result<T>&& value) {
 
 #define CF_COMPARE_EXPECT4(COMPARE_OP, LHS_RESULT, RHS_RESULT, MSG)         \
   ({                                                                        \
-    decltype(LHS_RESULT)&& lhs_macro_intermediate_result = LHS_RESULT;      \
-    decltype(RHS_RESULT)&& rhs_macro_intermediate_result = RHS_RESULT;      \
+    auto&& lhs_macro_intermediate_result = LHS_RESULT;                      \
+    auto&& rhs_macro_intermediate_result = RHS_RESULT;                      \
     bool comparison_result = lhs_macro_intermediate_result COMPARE_OP       \
         rhs_macro_intermediate_result;                                      \
     if (!comparison_result) {                                               \
