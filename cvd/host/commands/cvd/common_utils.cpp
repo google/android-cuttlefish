@@ -46,10 +46,22 @@ cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
     (*command_request->mutable_env())[key] = value;
   }
 
-  if (!Contains(command_request->env(), "ANDROID_HOST_OUT")) {
-    // see b/254418863
-    (*command_request->mutable_env())["ANDROID_HOST_OUT"] =
-        android::base::Dirname(android::base::GetExecutableDirectory());
+  /*
+   * the client must set the kAndroidHostOut environment variable. There were,
+   * however, a few branches where kAndroidSoongHostOut replaced
+   * kAndroidHostOut. Cvd server eventually read kAndroidHostOut only and set
+   * both for the subtools.
+   *
+   * If none of the two are set, cvd server tries to use the parent directory of
+   * the client cvd executable as env[kAndroidHostOut].
+   *
+   */
+  if (!Contains(command_request->env(), kAndroidHostOut)) {
+    const std::string new_android_host_out =
+        Contains(command_request->env(), kAndroidSoongHostOut)
+            ? (*command_request->mutable_env())[kAndroidSoongHostOut]
+            : android::base::Dirname(android::base::GetExecutableDirectory());
+    (*command_request->mutable_env())[kAndroidHostOut] = new_android_host_out;
   }
 
   std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
