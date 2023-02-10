@@ -388,13 +388,13 @@ Result<std::vector<Command>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("none");
   }
 
-  auto display_configs = instance.display_configs();
-  CF_EXPECT(display_configs.size() >= 1);
-  auto display_config = display_configs[0];
-
-  qemu_cmd.AddParameter("-device");
-
   if (instance.hwcomposer() != kHwComposerNone) {
+    auto display_configs = instance.display_configs();
+    CF_EXPECT(display_configs.size() >= 1);
+    auto display_config = display_configs[0];
+
+    qemu_cmd.AddParameter("-device");
+
     bool use_gpu_gl = qemu_version.first >= 6 &&
                       instance.gpu_mode() != kGpuModeGuestSwiftshader;
     qemu_cmd.AddParameter(use_gpu_gl ?
