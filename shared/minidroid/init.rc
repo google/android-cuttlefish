@@ -9,6 +9,11 @@
 import /init.environ.rc
 import /system/etc/init/mdnsd.rc
 import /system/etc/init/servicemanager.rc
+import /system/etc/init/logd.rc
+# TODO(b/267320398): this file does not exist in -user builds, but init can
+# continue despite that. Remove the import once we can rely on .rc files from
+# /system/etc/init getting loaded automatically.
+import /system/etc/init/logcatd.rc
 
 # Cgroups are mounted right before early-init using list from /etc/cgroups.json
 on early-init
@@ -16,14 +21,6 @@ on early-init
     setrlimit nice 40 40
 
     start ueventd
-
-# If VM is debuggable, send logs to outside ot the VM via the serial console.
-# If non-debuggable, logs are internally consumed at /dev/null
-on early-init && property:ro.boot.microdroid.debuggable=1
-    setprop ro.log.file_logger.path /dev/hvc2
-
-on early-init && property:ro.boot.microdroid.debuggable=0
-    setprop ro.log.file_logger.path /dev/null
 
 on init
     mkdir /mnt/apk 0755 system system
@@ -46,6 +43,9 @@ on init
     # (apexd and linkerconfig) to suppress "ld.config.txt not found" warnings.
     write /linkerconfig/ld.config.txt \#
     chmod 644 /linkerconfig/ld.config.txt
+
+    # Start logd before any other services run to ensure we capture all of their logs.
+    start logd
 
     # TODO: minidroid does not use microdroid_manager. If/when this is fixed
     # align this change and others related to microdroid_manager back to the
