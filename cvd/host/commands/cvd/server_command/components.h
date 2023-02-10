@@ -21,6 +21,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/libs/web/build_api.h"
 

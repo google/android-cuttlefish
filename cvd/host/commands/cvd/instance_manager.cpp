@@ -62,8 +62,11 @@ Result<std::string> InstanceManager::GetCuttlefishConfigPath(
   return selector::GetCuttlefishConfigPath(home);
 }
 
-InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager)
-    : lock_manager_(lock_manager) {}
+InstanceManager::InstanceManager(
+    InstanceLockFileManager& lock_manager,
+    HostToolTargetManager& host_tool_target_manager)
+    : lock_manager_(lock_manager),
+      host_tool_target_manager_(host_tool_target_manager) {}
 
 selector::InstanceDatabase& InstanceManager::GetInstanceDB(const uid_t uid) {
   if (!Contains(instance_dbs_, uid)) {
@@ -232,6 +235,15 @@ Result<cvd::Status> InstanceManager::CvdFleet(
             "cvd fleet --help should be handled by fleet handler itself.");
   const auto status = CF_EXPECT(CvdFleetImpl(uid, out, err));
   return status;
+}
+
+Result<std::string> InstanceManager::StopBin(
+    const std::string& host_android_out) {
+  const auto stop_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+      .artifacts_path = host_android_out,
+      .op = "stop",
+  }));
+  return stop_bin;
 }
 
 Result<void> InstanceManager::IssueStopCommand(
