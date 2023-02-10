@@ -67,7 +67,7 @@ func (e *ApiCallError) Is(target error) bool {
 }
 
 type ServiceOptions struct {
-	BaseURL        string
+	RootEndpoint   string
 	ProxyURL       string
 	DumpOut        io.Writer
 	ErrOut         io.Writer
@@ -334,7 +334,7 @@ func (c *serviceImpl) UploadFiles(host, uploadDir string, filenames []string) er
 	}
 	uploader := &filesUploader{
 		Client:         c.client,
-		EndpointURL:    c.BaseURL + "/hosts/" + host + "/userartifacts/" + uploadDir,
+		EndpointURL:    c.RootEndpoint + "/hosts/" + host + "/userartifacts/" + uploadDir,
 		Filenames:      filenames,
 		ChunkSizeBytes: c.ChunkSizeBytes,
 		DumpOut:        c.DumpOut,
@@ -354,7 +354,7 @@ func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
 		}
 		body = bytes.NewBuffer(json)
 	}
-	url := c.BaseURL + path
+	url := c.RootEndpoint + path
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return fmt.Errorf("Error creating request: %w", err)
@@ -639,4 +639,20 @@ func dumpResponse(r *http.Response, w io.Writer) error {
 	}
 	fmt.Fprintf(w, "%s\n", dump)
 	return nil
+}
+
+func BuildRootEndpoint(serviceURL, version, zone string) string {
+	result := serviceURL + "/" + version
+	if zone != "" {
+		result += "/zones/" + zone
+	}
+	return result
+}
+
+func BuildWebRTCStreamURL(rootEndpoint, host, cvd string) string {
+	return fmt.Sprintf("%s/hosts/%s/devices/%s/files/client.html", rootEndpoint, host, cvd)
+}
+
+func BuildCVDLogsURL(rootEndpoint, host, cvd string) string {
+	return fmt.Sprintf("%s/hosts/%s/cvds/%s/logs/", rootEndpoint, host, cvd)
 }

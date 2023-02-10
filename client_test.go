@@ -55,7 +55,7 @@ func TestRetryLogic(t *testing.T) {
 	}))
 	defer ts.Close()
 	opts := &ServiceOptions{
-		BaseURL:       ts.URL,
+		RootEndpoint:  ts.URL,
 		DumpOut:       io.Discard,
 		RetryAttempts: 2,
 		RetryDelay:    100 * time.Millisecond,
@@ -82,8 +82,8 @@ func TestUploadFilesChunkSizeBytesIsZeroPanic(t *testing.T) {
 		}
 	}()
 	opts := &ServiceOptions{
-		BaseURL: "https://test.com",
-		DumpOut: io.Discard,
+		RootEndpoint: "https://test.com",
+		DumpOut:      io.Discard,
 	}
 	srv, _ := NewService(opts)
 
@@ -145,7 +145,7 @@ func TestUploadFilesSucceeds(t *testing.T) {
 	}))
 	defer ts.Close()
 	opts := &ServiceOptions{
-		BaseURL:        ts.URL,
+		RootEndpoint:   ts.URL,
 		DumpOut:        io.Discard,
 		ChunkSizeBytes: 2,
 	}
@@ -180,8 +180,8 @@ func TestDeleteHosts(t *testing.T) {
 	}))
 	defer ts.Close()
 	opts := &ServiceOptions{
-		BaseURL: ts.URL,
-		DumpOut: io.Discard,
+		RootEndpoint: ts.URL,
+		DumpOut:      io.Discard,
 	}
 	srv, _ := NewService(opts)
 
