@@ -331,7 +331,7 @@ int main(int argc, char** argv) {
   if (cuttlefish::CuttlefishConfig::ConfigExists()) {
     auto previous_config = cuttlefish::CuttlefishConfig::Get();
     CHECK(previous_config);
-    CHECK(previous_config->Instances().size() > 0);
+    CHECK(!previous_config->Instances().empty());
     auto previous_instance = previous_config->Instances()[0];
     const auto& disks = previous_instance.virtual_disk_paths();
     auto overlay = previous_instance.PerInstancePath("overlay.img");
@@ -344,7 +344,7 @@ int main(int argc, char** argv) {
         << "\" and any image files.";
   }
 
-  CHECK(instance_nums->size() > 0) << "Expected at least one instance";
+  CHECK(!instance_nums->empty()) << "Expected at least one instance";
   auto instance_num_str = std::to_string(*instance_nums->begin());
   setenv(cuttlefish::kCuttlefishInstanceEnvVarName, instance_num_str.c_str(),
          /* overwrite */ 1);
