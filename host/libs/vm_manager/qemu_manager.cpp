@@ -281,6 +281,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   bool is_arm = arch_ == Arch::Arm || arch_ == Arch::Arm64;
   bool is_x86 = arch_ == Arch::X86 || arch_ == Arch::X86_64;
   bool is_arm64 = arch_ == Arch::Arm64;
+  bool is_riscv64 = arch_ == Arch::RiscV64;
 
   auto access_kregistry_size_bytes = 0;
   if (FileExists(instance.access_kregistry_path())) {
@@ -614,7 +615,11 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("qemu-xhci,id=xhci");
 
-  qemu_cmd.AddParameter("-bios");
+  if (is_riscv64) {
+    qemu_cmd.AddParameter("-kernel");
+  } else {
+    qemu_cmd.AddParameter("-bios");
+  }
   qemu_cmd.AddParameter(instance.bootloader());
 
   if (instance.gdb_port() > 0) {
