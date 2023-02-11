@@ -166,7 +166,7 @@ std::string QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
     case Arch::Arm64:
       return "androidboot.boot_devices=4010000000.pcie";
     case Arch::RiscV64:
-      return "androidboot.boot_devices=30000000.pci";
+      return "androidboot.boot_devices=soc/30000000.pci";
     case Arch::X86:
     case Arch::X86_64: {
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
