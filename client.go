@@ -367,7 +367,7 @@ func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
 	if err != nil {
 		return fmt.Errorf("Error sending request: %w", err)
 	}
-	for i := 0; i < c.RetryAttempts && (res.StatusCode == http.StatusServiceUnavailable); i++ {
+	for i := 0; i < c.RetryAttempts && isRetryableErrorCode(res.StatusCode); i++ {
 		err = dumpResponse(res, c.DumpOut)
 		res.Body.Close()
 		if err != nil {
@@ -655,4 +655,9 @@ func BuildWebRTCStreamURL(rootEndpoint, host, cvd string) string {
 
 func BuildCVDLogsURL(rootEndpoint, host, cvd string) string {
 	return fmt.Sprintf("%s/hosts/%s/cvds/%s/logs/", rootEndpoint, host, cvd)
+}
+
+func isRetryableErrorCode(code int) bool {
+	return code == http.StatusServiceUnavailable ||
+		code == http.StatusBadGateway
 }
