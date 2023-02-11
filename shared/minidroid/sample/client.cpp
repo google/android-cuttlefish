@@ -20,24 +20,27 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define LOG_TAG "client_minidroid"
+#include <log/log.h>
+
 int main(int argc, char** argv) {
   if (argc != 3) {
-    printf(
+    LOG_FATAL(
         "Wrong usage of ITestService client. Please enter the CID and port of "
-        "the proxy process!\n");
+        "the proxy process!");
     return -1;
   }
 
   int service_host_cid = atoi(argv[1]);
   int service_port = atoi(argv[2]);
 
-  printf("Hello Minidroid client! Connecting to CID %d and port %d\n",
-         service_host_cid, service_port);
+  ALOGI("Hello Minidroid client! Connecting to CID %d and port %d",
+        service_host_cid, service_port);
 
   ndk::SpAIBinder binder = bi::sd::getService(service_host_cid, service_port);
 
   if (nullptr == binder.get()) {
-    printf("Unable to find service!\n");
+    LOG_FATAL("Unable to find service!");
     return -1;
   }
 
@@ -50,7 +53,7 @@ int main(int argc, char** argv) {
   int32_t result = 0;
   test_service->addInteger(4, 6, &result);
 
-  printf("Finished client. 4 + 6 is %d\n", result);
+  ALOGI("Finished client. 4 + 6 is %d", result);
 
   return 0;
 }
