@@ -12,6 +12,9 @@ aidl_interface {
         },
         java: {
             enabled: false,
+        },
+        rust: {
+            enabled: true,
         }
     },
 }
