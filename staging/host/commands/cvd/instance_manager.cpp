@@ -16,6 +16,8 @@
 
 #include "host/commands/cvd/instance_manager.h"
 
+#include <signal.h>
+
 #include <map>
 #include <mutex>
 #include <sstream>
@@ -40,6 +42,20 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
+namespace {
+
+// Returns true only if command terminated normally, and returns 0
+Result<void> RunCommand(Command&& command) {
+  auto subprocess = std::move(command.Start());
+  siginfo_t infop{};
+  // This blocks until the process exits, but doesn't reap it.
+  auto result = subprocess.Wait(&infop, WEXITED);
+  CF_EXPECT(result != -1, "Lost track of subprocess pid");
+  CF_EXPECT(infop.si_code == CLD_EXITED && infop.si_status == 0);
+  return {};
+}
+
+}  // namespace
 
 Result<std::string> InstanceManager::GetCuttlefishConfigPath(
     const std::string& home) {
@@ -228,7 +244,30 @@ Result<void> InstanceManager::IssueStopCommand(
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, out);
   command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, err);
   command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
-  if (int wait_result = command.Start().Wait(); wait_result != 0) {
+  auto wait_result = RunCommand(std::move(command));
+  /**
+   * --clear_instance_dirs may not be available for old branches. This causes
+   * the stop_cvd to terminates with a non-zero exit code due to the parsing
+   * error. Then, we will try to re-run it without the flag.
+   */
+  if (!wait_result.ok()) {
+    std::stringstream error_msg;
+    error_msg << stop_bin << " was executed internally, and failed. It might "
+              << "be failing to parse the new --clear_instance_dirs. Will try "
+              << "without the flag.\n";
+    WriteAll(err, error_msg.str());
+    Command no_clear_instance_dir_command(group.HostArtifactsPath() + "/bin/" +
+                                          stop_bin);
+    no_clear_instance_dir_command.RedirectStdIO(
+        Subprocess::StdIOChannel::kStdOut, out);
+    no_clear_instance_dir_command.RedirectStdIO(
+        Subprocess::StdIOChannel::kStdErr, err);
+    no_clear_instance_dir_command.AddEnvironmentVariable(
+        kCuttlefishConfigEnvVarName, config_file_path);
+    wait_result = RunCommand(std::move(no_clear_instance_dir_command));
+  }
+
+  if (!wait_result.ok()) {
     WriteAll(err,
              "Warning: error stopping instances for dir \"" + group.HomeDir() +
                  "\".\nThis can happen if instances are already stopped.\n");
