@@ -20,18 +20,21 @@
 #include <stdio.h>
 #include <string>
 
+#define LOG_TAG "server_minidroid"
+#include <log/log.h>
+
 namespace {
 
 void start_test_service() {
   class TestService
       : public aidl::com::android::minidroid::testservice::BnTestService {
     ndk::ScopedAStatus sayHello() override {
-      printf("Hello World!\n");
+      ALOGI("Hello World!\n");
       return ndk::ScopedAStatus::ok();
     }
 
     ndk::ScopedAStatus printText(const std::string& text) override {
-      printf("%s\n", text.c_str());
+      ALOGI("%s\n", text.c_str());
       return ndk::ScopedAStatus::ok();
     }
 
@@ -47,7 +50,7 @@ void start_test_service() {
 }  // namespace
 
 int main() {
-  printf("Hello Minidroid server!\n");
+  ALOGI("Hello Minidroid server!\n");
 
   start_test_service();
 
