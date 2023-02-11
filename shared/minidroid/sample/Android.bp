@@ -46,6 +46,8 @@ rust_binary {
     srcs: ["client.rs"],
     rustlibs: [
         "com.android.minidroid.testservice-rust",
+        "liblog_rust",
+        "liblogger",
         "librpcbinder_rs",
     ],
     apex_available: [
