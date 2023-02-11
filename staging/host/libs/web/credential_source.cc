@@ -114,11 +114,7 @@ Result<RefreshCredentialSource> RefreshCredentialSource::FromOauth2ClientFile(
   auto& client_secret = credential["client_secret"];
   CF_EXPECT(client_secret.type() == Json::ValueType::stringValue);
 
-  CF_EXPECT(credential.isMember("token_response"));
-  auto& token_response = credential["token_response"];
-  CF_EXPECT(token_response.type() == Json::ValueType::objectValue);
-
-  CF_EXPECT(token_response.isMember("refresh_token"));
+  CF_EXPECT(credential.isMember("refresh_token"));
   auto& refresh_token = credential["refresh_token"];
   CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
 
