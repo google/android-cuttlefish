@@ -95,6 +95,7 @@ PRODUCT_PACKAGES += \
     minidroid_sd \
     server_minidroid \
     client_minidroid \
+    client_minidroid_rust \
 
 # Additional packages
 PRODUCT_PACKAGES += \
