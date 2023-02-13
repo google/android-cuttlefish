@@ -13,6 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include "common/libs/utils/environment.h"
@@ -22,32 +26,28 @@
 
 namespace cuttlefish {
 
-static Result<std::string> StartBin(const std::string& android_host_out) {
-  if (FileExists(android_host_out + "/bin/cvd_internal_start")) {
-    return "cvd_internal_start";
-  }
-  if (FileExists(android_host_out + "/bin/launch_cvd")) {
-    return "launch_cvd";
-  }
-  return CF_ERR(android_host_out << " does not have launcher");
-}
-
 TEST(HostToolTarget, KnownFlags) {
   std::string android_host_out = StringFromEnv("ANDROID_HOST_OUT", "");
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  auto start_bin_result = StartBin(android_host_out);
-  if (!start_bin_result.ok()) {
-    GTEST_SKIP() << start_bin_result.error().Message();
-  }
+  std::unordered_map<std::string, std::vector<std::string>> ops_to_op_impl_map{
+      {"start", std::vector<std::string>{"cvd_internal_start", "launch_cvd"}}};
 
   auto host_tool_target =
-      HostToolTarget::Create(android_host_out, *start_bin_result);
+      HostToolTarget::Create(android_host_out, ops_to_op_impl_map);
   ASSERT_TRUE(host_tool_target.ok()) << host_tool_target.error().Trace();
 
-  auto daemon_flag = host_tool_target->GetFlagInfo("daemon");
-  auto bad_flag = host_tool_target->GetFlagInfo("@never_exist@");
+  auto daemon_flag =
+      host_tool_target->GetFlagInfo(HostToolTarget::FlagInfoRequest{
+          .operation_ = "start",
+          .flag_name_ = "daemon",
+      });
+
+  auto bad_flag = host_tool_target->GetFlagInfo(HostToolTarget::FlagInfoRequest{
+      .operation_ = "start",
+      .flag_name_ = "@never_exist@",
+  });
 
   ASSERT_TRUE(daemon_flag.ok()) << daemon_flag.error().Trace();
   ASSERT_EQ(daemon_flag->Name(), "daemon");
@@ -64,21 +64,17 @@ TEST(HostToolManager, KnownFlags) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  auto start_bin_result = StartBin(android_host_out);
-  if (!start_bin_result.ok()) {
-    GTEST_SKIP() << start_bin_result.error().Message();
-  }
   fruit::Injector<HostToolTargetManager> injector(CreateManagerComponent);
   HostToolTargetManager& host_tool_manager =
       injector.get<HostToolTargetManager&>();
 
   auto daemon_flag =
       host_tool_manager.ReadFlag({.artifacts_path = android_host_out,
-                                  .start_bin = *start_bin_result,
+                                  .op = "start",
                                   .flag_name = "daemon"});
   auto bad_flag =
       host_tool_manager.ReadFlag({.artifacts_path = android_host_out,
-                                  .start_bin = *start_bin_result,
+                                  .op = "start",
                                   .flag_name = "@never_exist@"});
 
   ASSERT_TRUE(daemon_flag.ok()) << daemon_flag.error().Trace();
