@@ -79,11 +79,24 @@ Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
     const std::string& sub_cmd, const CreationAnalyzerParam& param,
     const ucred& credential) {
   const uid_t uid = credential.uid;
+  std::unique_lock lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
+  lock.unlock();
 
   auto group_creation_info = CF_EXPECT(CreationAnalyzer::Analyze(
       sub_cmd, param, credential, instance_db, lock_manager_));
   return {group_creation_info};
+}
+
+Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
+    const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
+    const uid_t uid) {
+  std::unique_lock lock(instance_db_mutex_);
+  auto& instance_db = GetInstanceDB(uid);
+  lock.unlock();
+  auto group =
+      CF_EXPECT(GroupSelector::Select(selector_args, uid, instance_db, envs));
+  return {group};
 }
 
 bool InstanceManager::HasInstanceGroups(const uid_t uid) {
