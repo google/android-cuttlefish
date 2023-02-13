@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "common/libs/utils/result.h"
@@ -32,8 +34,32 @@ namespace cuttlefish {
 
 static constexpr char kProcDir[] = "/proc";
 
-// collect all pids whose owner is uid
+// collects all pids whose owner is uid
 Result<std::vector<pid_t>> CollectPids(const uid_t uid = getuid());
+
+/* collects all pids that meet the following:
+ *
+ * 1. Belongs to the uid
+ * 2. cpp_basename(`cat /proc/<pid>/cmdline`.front()) == exec_name
+ * 3. cpp_basename(exec_name) == exec_name
+ *
+ */
+Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
+                                                 const uid_t uid = getuid());
+
+// "exec_path" is treated as an absolute path
+Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_path,
+                                                 const uid_t uid = getuid());
+
 Result<uid_t> OwnerUid(const pid_t pid);
+
+// retrieves command line args for the pid
+Result<std::vector<std::string>> GetCmdArgs(const pid_t pid);
+
+// retrieves the path to the executable file used for the pid
+Result<std::string> GetCmdline(const pid_t pid);
+
+// retrieves the environment variables of the process, pid
+Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid);
 
 }  // namespace cuttlefish
