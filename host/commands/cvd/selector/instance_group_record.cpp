@@ -30,6 +30,39 @@ LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
       internal_group_name_(GenInternalGroupName()),
       group_name_(group_name) {}
 
+LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
+    : home_dir_{src.home_dir_},
+      host_artifacts_path_{src.host_artifacts_path_},
+      internal_group_name_{src.internal_group_name_},
+      group_name_{src.group_name_},
+      instances_{CopyInstances(src.instances_)} {}
+
+LocalInstanceGroup& LocalInstanceGroup::operator=(
+    const LocalInstanceGroup& src) {
+  if (this == std::addressof(src)) {
+    return *this;
+  }
+  home_dir_ = src.home_dir_;
+  host_artifacts_path_ = src.host_artifacts_path_;
+  internal_group_name_ = src.internal_group_name_;
+  group_name_ = src.group_name_;
+  instances_ = CopyInstances(src.instances_);
+  return *this;
+}
+
+Set<std::unique_ptr<LocalInstance>> LocalInstanceGroup::CopyInstances(
+    const Set<std::unique_ptr<LocalInstance>>& src_instances) {
+  Set<std::unique_ptr<LocalInstance>> copied;
+  // Due to the const reference to the parent, LocalInstanceGroup,
+  // the LocalInstance class does not have a copy constructor
+  for (const auto& src_instance : src_instances) {
+    LocalInstance* new_instance = new LocalInstance(
+        *this, src_instance->InstanceId(), src_instance->PerInstanceName());
+    copied.emplace(new_instance);
+  }
+  return copied;
+}
+
 Result<std::string> LocalInstanceGroup::GetCuttlefishConfigPath() const {
   return ::cuttlefish::selector::GetCuttlefishConfigPath(HomeDir());
 }

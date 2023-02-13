@@ -40,6 +40,9 @@ class LocalInstanceGroup {
   friend InstanceDatabase;
 
  public:
+  LocalInstanceGroup(const LocalInstanceGroup& src);
+  LocalInstanceGroup& operator=(const LocalInstanceGroup& src);
+
   const std::string& InternalGroupName() const { return internal_group_name_; }
   const std::string& GroupName() const { return group_name_; }
   const std::string& HomeDir() const { return home_dir_; }
@@ -70,6 +73,9 @@ class LocalInstanceGroup {
  private:
   LocalInstanceGroup(const std::string& group_name, const std::string& home_dir,
                      const std::string& host_artifacts_path);
+  // Eventually copies the instances of a src to *this
+  Set<std::unique_ptr<LocalInstance>> CopyInstances(
+      const Set<std::unique_ptr<LocalInstance>>& src_instances);
   std::string home_dir_;
   std::string host_artifacts_path_;
 
