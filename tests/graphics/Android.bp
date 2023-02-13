@@ -31,7 +31,9 @@ java_test_host {
         "device-tests",
     ],
     libs: [
+        "cts-tradefed",
         "tradefed",
+        "compatibility-host-util",
     ],
     static_libs: [
         "cuttlefish_host_test_utils",
@@ -39,6 +41,9 @@ java_test_host {
     plugins: [
         "auto_annotation_plugin",
         "auto_value_plugin",
+    ],
+    data: [
+        ":CuttlefishDisplayHotplugHelperApp",
     ],
 }
 
