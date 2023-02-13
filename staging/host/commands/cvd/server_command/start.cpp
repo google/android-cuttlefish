@@ -142,7 +142,7 @@ CvdStartCommandHandler::UpdateInstanceArgsAndEnvs(
                      this](const std::string& flag_name) -> Result<void> {
     CF_EXPECT(
         host_tool_target_manager_.ReadFlag({.artifacts_path = artifacts_path,
-                                            .start_bin = start_bin,
+                                            .op = "start",
                                             .flag_name = flag_name}));
     return {};
   };
@@ -265,7 +265,7 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
 
   auto webrtc_device_id_flag = host_tool_target_manager_.ReadFlag(
       {.artifacts_path = group_creation_info.host_artifacts_path,
-       .start_bin = start_bin,
+       .op = "start",
        .flag_name = "webrtc_device_id"});
   if (webrtc_device_id_flag.ok()) {
     group_creation_info.args = CF_EXPECT(UpdateWebrtcDeviceId(
