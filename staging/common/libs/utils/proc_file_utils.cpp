@@ -20,10 +20,11 @@
 
 #include <regex>
 #include <sstream>
-#include <string>
 
 #include <android-base/parseint.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 
 namespace cuttlefish {
@@ -39,6 +40,58 @@ static std::string ConcatToString(Args&&... args) {
 
 static std::string PidDirPath(const pid_t pid) {
   return ConcatToString(kProcDir, "/", pid);
+}
+
+/* ReadFile does not work for /proc/<pid>/<some files>
+ * ReadFile requires the file size to be known in advance,
+ * which is not the case here.
+ */
+static Result<std::string> ReadAll(const std::string& file_path) {
+  SharedFD fd = SharedFD::Open(file_path, O_RDONLY);
+  CF_EXPECT(fd->IsOpen());
+  // should be good size to read all Envs or Args,
+  // whichever bigger
+  const int buf_size = 1024;
+  std::string output;
+  ssize_t nread = 0;
+  do {
+    std::vector<char> buf(buf_size);
+    nread = ReadExact(fd, buf.data(), buf_size);
+    CF_EXPECT(nread >= 0, "ReadExact returns " << nread);
+    output.append(buf.begin(), buf.end());
+  } while (nread > 0);
+  return output;
+}
+
+/**
+ * Tokenizes the given string, using '\0' as a delimiter
+ *
+ * android::base::Tokenize works mostly except the delimiter can't be '\0'.
+ * The /proc/<pid>/environ file has the list of environment variables, delimited
+ * by '\0'. Needs a dedicated tokenizer.
+ *
+ */
+static std::vector<std::string> TokenizeByNullChar(const std::string& input) {
+  if (input.empty()) {
+    return {};
+  }
+  std::vector<std::string> tokens;
+  std::string token;
+  for (int i = 0; i < input.size(); i++) {
+    if (input.at(i) != '\0') {
+      token.append(1, input.at(i));
+    } else {
+      if (token.empty()) {
+        break;
+      }
+      tokens.push_back(token);
+      token.clear();
+    }
+  }
+  if (!token.empty()) {
+    tokens.push_back(token);
+  }
+  return tokens;
 }
 
 Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
@@ -66,11 +119,79 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
   return pids;
 }
 
+Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
+  std::string cmdline_file_path = PidDirPath(pid) + "/cmdline";
+  auto owner = CF_EXPECT(OwnerUid(pid));
+  CF_EXPECT(getuid() == owner);
+  std::string contents = CF_EXPECT(ReadAll(cmdline_file_path));
+  return TokenizeByNullChar(contents);
+}
+
+Result<std::string> GetCmdline(const pid_t pid) {
+  auto args = CF_EXPECT(GetCmdArgs(pid));
+  CF_EXPECT(!args.empty());
+  return args.front();
+}
+
+Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
+                                                 const uid_t uid) {
+  CF_EXPECT(cpp_basename(exec_name) == exec_name);
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto cmdline = GetCmdline(pid);
+    if (!cmdline.ok()) {
+      continue;
+    }
+    if (cpp_basename(*cmdline) == exec_name) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
+Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_name,
+                                                 const uid_t uid) {
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto cmdline = GetCmdline(pid);
+    if (!cmdline.ok()) {
+      continue;
+    }
+    if (*cmdline == exec_name) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
 Result<uid_t> OwnerUid(const pid_t pid) {
   auto proc_pid_path = PidDirPath(pid);
   struct stat buf;
   CF_EXPECT_EQ(::stat(proc_pid_path.data(), &buf), 0);
   return buf.st_uid;
+}
+
+Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
+  std::string environ_file_path = PidDirPath(pid) + "/environ";
+  auto owner = CF_EXPECT(OwnerUid(pid));
+  CF_EXPECT(getuid() == owner);
+  std::string environ = CF_EXPECT(ReadAll(environ_file_path));
+  std::vector<std::string> lines = TokenizeByNullChar(environ);
+  // now, each line looks like:  HOME=/home/user
+  std::unordered_map<std::string, std::string> envs;
+  for (const auto& line : lines) {
+    auto pos = line.find_first_of('=');
+    if (pos == std::string::npos) {
+      LOG(ERROR) << "Found an invalid env: " << line << " and ignored.";
+      continue;
+    }
+    std::string key = line.substr(0, pos);
+    std::string value = line.substr(pos + 1);
+    envs[key] = value;
+  }
+  return envs;
 }
 
 }  // namespace cuttlefish
