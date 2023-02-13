@@ -206,6 +206,7 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.hardware.broadcastradio.",
     "android.hardware.automotive.occupant_awareness.",
     "android.hardware.automotive.remoteaccess.",
+    "android.hardware.automotive.ivn.",
 
     /**
      * No implementation on cuttlefish for fastboot AIDL hal because it doesn't
