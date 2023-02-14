@@ -22,16 +22,32 @@
 
 namespace cuttlefish {
 
-HostToolTargetManager::HostToolTargetManager() {
-  using Candidates = std::vector<std::string>;
-  op_to_possible_bins_map_["stop"] =
-      Candidates{"cvd_internal_stop", "stop_cvd"};
-  op_to_possible_bins_map_["start"] =
-      Candidates{"cvd_internal_start", "launch_cvd"};
-}
+class HostToolTargetManagerImpl : public HostToolTargetManager {
+ public:
+  INJECT(HostToolTargetManagerImpl(const OperationToBinsMap&));
+
+  Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) override;
+
+ private:
+  Result<void> EnsureExistence(const std::string& artifacts_path);
+  Result<void> UpdateOutdated(const std::string& artifacts_path);
+
+  using HostToolTargetMap = std::unordered_map<std::string, HostToolTarget>;
+
+  // map from artifact dir to host tool target information object
+  HostToolTargetMap host_target_table_;
+  // predefined mapping from an operation to potential executable binary names
+  // e.g. "start" -> {"cvd_internal_start", "launch_cvd"}
+  const OperationToBinsMap& op_to_possible_bins_map_;
+  std::mutex table_mutex_;
+};
+
+HostToolTargetManagerImpl::HostToolTargetManagerImpl(
+    const OperationToBinsMap& op_to_bins_map)
+    : op_to_possible_bins_map_{op_to_bins_map} {}
 
 // use this only after acquiring the table_mutex_
-Result<void> HostToolTargetManager::EnsureExistence(
+Result<void> HostToolTargetManagerImpl::EnsureExistence(
     const std::string& artifacts_path) {
   if (!Contains(host_target_table_, artifacts_path)) {
     HostToolTarget new_host_tool_target = CF_EXPECT(
@@ -41,7 +57,7 @@ Result<void> HostToolTargetManager::EnsureExistence(
   return {};
 }
 
-Result<void> HostToolTargetManager::UpdateOutdated(
+Result<void> HostToolTargetManagerImpl::UpdateOutdated(
     const std::string& artifacts_path) {
   CF_EXPECT(Contains(host_target_table_, artifacts_path));
   auto& host_target = host_target_table_.at(artifacts_path);
@@ -55,7 +71,7 @@ Result<void> HostToolTargetManager::UpdateOutdated(
   return {};
 }
 
-Result<FlagInfo> HostToolTargetManager::ReadFlag(
+Result<FlagInfo> HostToolTargetManagerImpl::ReadFlag(
     const HostToolFlagRequestForm& request) {
   std::lock_guard<std::mutex> lock(table_mutex_);
   CF_EXPECT(
@@ -69,6 +85,12 @@ Result<FlagInfo> HostToolTargetManager::ReadFlag(
           .flag_name_ = request.flag_name,
       }));
   return flag_info;
+}
+
+fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
+HostToolTargetManagerComponent() {
+  return fruit::createComponent()
+      .bind<HostToolTargetManager, HostToolTargetManagerImpl>();
 }
 
 }  // namespace cuttlefish
