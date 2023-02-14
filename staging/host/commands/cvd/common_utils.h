@@ -45,10 +45,7 @@ constexpr char kStatusBin[] = "cvd_internal_status";
 constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
 // kAndroidHostOut for old branches
 constexpr char kAndroidSoongHostOut[] = "ANDROID_SOONG_HOST_OUT";
-
 constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
-
-Result<std::string> StopBin(const std::string& host_artifacts_path);
 
 template <typename Ostream, typename... Args>
 Ostream& ConcatToStream(Ostream& out, Args&&... args) {
