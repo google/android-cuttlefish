@@ -282,6 +282,7 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
    */
   group_creation_info.envs[kAndroidSoongHostOut] =
       group_creation_info.host_artifacts_path;
+  group_creation_info.envs[kCvdMarkEnv] = "true";
   return group_creation_info;
 }
 
