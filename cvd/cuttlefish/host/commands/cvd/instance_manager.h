@@ -35,6 +35,7 @@
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
 #include "host/commands/cvd/selector/instance_database.h"
+#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
 
@@ -50,7 +51,7 @@ class InstanceManager {
     std::set<int> instances;
   };
 
-  INJECT(InstanceManager(InstanceLockFileManager&));
+  INJECT(InstanceManager(InstanceLockFileManager&, HostToolTargetManager&));
 
   Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,
                                     const CreationAnalyzerParam& param,
@@ -75,10 +76,11 @@ class InstanceManager {
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,
                                 const selector::LocalInstanceGroup& group);
+  Result<std::string> StopBin(const std::string& host_android_out);
 
   selector::InstanceDatabase& GetInstanceDB(const uid_t uid);
   InstanceLockFileManager& lock_manager_;
-
+  HostToolTargetManager& host_tool_target_manager_;
   mutable std::mutex instance_db_mutex_;
   std::unordered_map<uid_t, selector::InstanceDatabase> instance_dbs_;
 

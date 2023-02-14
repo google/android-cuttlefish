@@ -34,6 +34,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -45,8 +46,9 @@ namespace cuttlefish {
 
 class CvdGenericCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdGenericCommandHandler(InstanceManager& instance_manager,
-                                  SubprocessWaiter& subprocess_waiter));
+  INJECT(CvdGenericCommandHandler(
+      InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+      HostToolTargetManager& host_tool_target_manager));
 
   Result<bool> CanHandle(const RequestWithStdio& request) const;
   Result<cvd::Response> Handle(const RequestWithStdio& request) override;
@@ -89,6 +91,7 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
+  HostToolTargetManager& host_tool_target_manager_;
   std::mutex interruptible_;
   bool interrupted_ = false;
   using BinGeneratorType = std::function<Result<std::string>(
@@ -106,22 +109,32 @@ class CvdGenericCommandHandler : public CvdServerHandler {
 };
 
 CvdGenericCommandHandler::CvdGenericCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter)
+    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter,
+    HostToolTargetManager& host_tool_target_manager)
     : instance_manager_(instance_manager),
       subprocess_waiter_(subprocess_waiter),
+      host_tool_target_manager_(host_tool_target_manager),
       command_to_binary_map_{
           {"host_bugreport", kHostBugreportBin},
           {"cvd_host_bugreport", kHostBugreportBin},
           {"status", kStatusBin},
           {"cvd_status", kStatusBin},
           {"stop",
-           [](const std::string& host_artifacts_path) -> Result<std::string> {
-             auto stop_bin = CF_EXPECT(StopBin(host_artifacts_path));
+           [this](
+               const std::string& host_artifacts_path) -> Result<std::string> {
+             auto stop_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+                 .artifacts_path = host_artifacts_path,
+                 .op = "stop",
+             }));
              return stop_bin;
            }},
           {"stop_cvd",
-           [](const std::string& host_artifacts_path) -> Result<std::string> {
-             auto stop_bin = CF_EXPECT(StopBin(host_artifacts_path));
+           [this](
+               const std::string& host_artifacts_path) -> Result<std::string> {
+             auto stop_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+                 .artifacts_path = host_artifacts_path,
+                 .op = "stop",
+             }));
              return stop_bin;
            }},
           {"clear", kClearBin},
@@ -317,7 +330,8 @@ Result<std::string> CvdGenericCommandHandler::GetBin(
   return bin;
 }
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+fruit::Component<
+    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
 cvdGenericCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdGenericCommandHandler>();
