@@ -107,7 +107,7 @@ Result<void> HandleReset(CvdClient& client,
     LOG(ERROR) << "However, cvd reset will continue cleaning up.";
   }
   // cvd reset handler placeholder. identical to cvd kill-server for now.
-  CF_EXPECT(KillAllCuttlefishInstances());
+  CF_EXPECT(KillAllCuttlefishInstances(false));
   return {};
 }
 
