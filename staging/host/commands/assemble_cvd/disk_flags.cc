@@ -27,6 +27,7 @@
 #include <fstream>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
@@ -311,9 +312,13 @@ std::vector<ImagePartition> android_composite_disk_config(
         .read_only = FLAGS_use_overlay,
     });
   }
+  auto super_image = instance.new_super_image();
+  if (!FileExists(super_image)) {
+    super_image = instance.super_image();
+  }
   partitions.push_back(ImagePartition{
       .label = "super",
-      .image_file_path = AbsolutePath(instance.super_image()),
+      .image_file_path = AbsolutePath(super_image),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -463,14 +468,24 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
-class BootImageRepacker : public SetupFeature {
+namespace {
+constexpr size_t RoundDown(size_t a, size_t divisor) {
+  return a / divisor * divisor;
+}
+constexpr size_t RoundUp(size_t a, size_t divisor) {
+  return RoundDown(a + divisor, divisor);
+}
+}  // namespace
+
+class KernelRamdiskRepacker : public SetupFeature {
  public:
-  INJECT(BootImageRepacker(const CuttlefishConfig& config,
-                           const CuttlefishConfig::InstanceSpecific& instance))
+  INJECT(
+      KernelRamdiskRepacker(const CuttlefishConfig& config,
+                            const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
   // SetupFeature
-  std::string Name() const override { return "BootImageRepacker"; }
+  std::string Name() const override { return "KernelRamdiskRepacker"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Enabled() const override {
     // If we are booting a protected VM, for now, assume that image repacking
@@ -480,6 +495,171 @@ class BootImageRepacker : public SetupFeature {
   }
 
  protected:
+  // Steps for building a vendor_dlkm.img:
+  // 1. call mkuserimg_mke2fs to build an image
+  // 2. call avbtool to add hashtree footer, so that init/bootloader can verify
+  // AVB chain
+  static bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
+                              const std::string& output_image) {
+    if (is_erofs) {
+      LOG(ERROR)
+          << "Building vendor_dlkm in EROFS format is currently not supported!";
+      return false;
+    }
+    // We are using directory size as an estimate of final image size. To avoid
+    // any rounding errors, add 256K of head room.
+    const auto fs_size = RoundUp(GetDiskUsage(src_dir) + 256 * 1024, 4096);
+    LOG(INFO) << "vendor_dlkm src dir " << src_dir << " has size "
+              << fs_size / 1024 << " KB";
+    const auto mkfs = HostBinaryPath("mkuserimg_mke2fs");
+    Command mkfs_cmd(mkfs);
+    // Arbitrary UUID/seed, just to keep output consistent between runs
+    mkfs_cmd.AddParameter("--mke2fs_uuid");
+    mkfs_cmd.AddParameter("cb09b942-ed4e-46a1-81dd-7d535bf6c4b1");
+    mkfs_cmd.AddParameter("--mke2fs_hash_seed");
+    mkfs_cmd.AddParameter("765d8aba-d93f-465a-9fcf-14bb794eb7f4");
+    // Arbitrary date, just to keep output consistent
+    mkfs_cmd.AddParameter("-T");
+    mkfs_cmd.AddParameter("900979200000");
+
+    mkfs_cmd.AddParameter(src_dir);
+    mkfs_cmd.AddParameter(output_image);
+    mkfs_cmd.AddParameter("ext4");
+    mkfs_cmd.AddParameter("/vendor_dlkm");
+    mkfs_cmd.AddParameter(std::to_string(fs_size));
+    int exit_code = mkfs_cmd.Start().Wait();
+    if (exit_code != 0) {
+      LOG(ERROR) << "Failed to build vendor_dlkm ext4 image";
+      return false;
+    }
+    auto avbtool_path = HostBinaryPath("avbtool");
+    Command avb_cmd(avbtool_path);
+    // Add host binary path to PATH, so that avbtool can locate host util
+    // binaries such as 'fec'
+    auto PATH =
+        StringFromEnv("PATH", "") + ":" + cpp_dirname(avb_cmd.Executable());
+    // Must unset an existing environment variable in order to modify it
+    avb_cmd.UnsetFromEnvironment("PATH");
+    avb_cmd.AddEnvironmentVariable("PATH", PATH);
+
+    avb_cmd.AddParameter("add_hashtree_footer");
+    // Arbitrary salt to keep output consistent
+    avb_cmd.AddParameter("--salt");
+    avb_cmd.AddParameter("62BBAAA0", "E4BD99E783AC");
+    avb_cmd.AddParameter("--image");
+    avb_cmd.AddParameter(output_image);
+    avb_cmd.AddParameter("--partition_name");
+    avb_cmd.AddParameter("vendor_dlkm");
+
+    exit_code = avb_cmd.Start().Wait();
+    if (exit_code != 0) {
+      LOG(ERROR) << "Failed to add avb footer to vendor_dlkm image "
+                 << output_image;
+      return false;
+    }
+
+    return true;
+  }
+  static bool RepackSuperWithVendorDLKM(const std::string& superimg_path,
+                                        const std::string& vendor_dlkm_path) {
+    Command lpadd(HostBinaryPath("lpadd"));
+    lpadd.AddParameter("--replace");
+    lpadd.AddParameter(superimg_path);
+    lpadd.AddParameter("vendor_dlkm_a");
+    lpadd.AddParameter("google_vendor_dynamic_partitions_a");
+    lpadd.AddParameter(vendor_dlkm_path);
+    const auto exit_code = lpadd.Start().Wait();
+    return exit_code == 0;
+  }
+
+  bool RebuildSuperIfNeeded() {
+    const auto superimg_build_dir = instance_.instance_dir() + "/superimg";
+    const auto vendor_dlkm_build_dir = superimg_build_dir + "/vendor_dlkm";
+    const auto new_vendor_dlkm_img =
+        superimg_build_dir + "/vendor_dlkm_repacked.img";
+    const auto tmp_vendor_dlkm_img = new_vendor_dlkm_img + ".tmp";
+    if (!EnsureDirectoryExists(vendor_dlkm_build_dir).ok()) {
+      LOG(ERROR) << "Failed to create directory " << vendor_dlkm_build_dir;
+      return false;
+    }
+    // TODO(b/149866755) For now, we assume that vendor_dlkm is ext4. Add
+    // logic to handle EROFS once the feature stablizes.
+    if (!BuildVendorDLKM(vendor_dlkm_build_dir, false, tmp_vendor_dlkm_img)) {
+      LOG(ERROR) << "Failed to build vendor_dlkm image from "
+                 << vendor_dlkm_build_dir;
+      return false;
+    }
+    if (ReadFile(tmp_vendor_dlkm_img) == ReadFile(new_vendor_dlkm_img)) {
+      LOG(INFO) << "vendor_dlkm unchanged, skip super image rebuilding.";
+      return true;
+    }
+    if (!RenameFile(tmp_vendor_dlkm_img, new_vendor_dlkm_img)) {
+      return false;
+    }
+    const auto new_super_img = instance_.new_super_image();
+    if (!Copy(instance_.super_image(), new_super_img)) {
+      PLOG(ERROR) << "Failed to copy super image " << instance_.super_image()
+                  << " to " << new_super_img;
+      return false;
+    }
+    if (!RepackSuperWithVendorDLKM(new_super_img, new_vendor_dlkm_img)) {
+      LOG(ERROR) << "Failed to repack super image with new vendor dlkm image.";
+      return false;
+    }
+    if (!RebuildVbmetaVendor(new_vendor_dlkm_img,
+                             instance_.new_vbmeta_vendor_dlkm_image())) {
+      LOG(ERROR) << "Failed to rebuild vbmeta vendor.";
+      return false;
+    }
+    SetCommandLineOptionWithMode("super_image", new_super_img.c_str(),
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode(
+        "vbmeta_vendor_dlkm_image",
+        instance_.new_vbmeta_vendor_dlkm_image().c_str(),
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    return true;
+  }
+  static bool RebuildVbmetaVendor(const std::string& vendor_dlkm_img,
+                                  const std::string& vbmeta_path) {
+    auto avbtool_path = HostBinaryPath("avbtool");
+    Command vbmeta_cmd(avbtool_path);
+    vbmeta_cmd.AddParameter("make_vbmeta_image");
+    vbmeta_cmd.AddParameter("--output");
+    vbmeta_cmd.AddParameter(vbmeta_path);
+    vbmeta_cmd.AddParameter("--algorithm");
+    vbmeta_cmd.AddParameter("SHA256_RSA4096");
+    vbmeta_cmd.AddParameter("--key");
+    vbmeta_cmd.AddParameter(
+        DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
+
+    vbmeta_cmd.AddParameter("--include_descriptors_from_image");
+    vbmeta_cmd.AddParameter(vendor_dlkm_img);
+    vbmeta_cmd.AddParameter("--padding_size");
+    vbmeta_cmd.AddParameter("4096");
+
+    bool success = vbmeta_cmd.Start().Wait();
+    if (success != 0) {
+      LOG(ERROR) << "Unable to create vbmeta. Exited with status " << success;
+      return false;
+    }
+
+    const auto vbmeta_size = FileSize(vbmeta_path);
+    if (vbmeta_size > VBMETA_MAX_SIZE) {
+      LOG(ERROR) << "Generated vbmeta - " << vbmeta_path
+                 << " is larger than the expected " << VBMETA_MAX_SIZE
+                 << ". Stopping.";
+      return false;
+    }
+    if (vbmeta_size != VBMETA_MAX_SIZE) {
+      auto fd = SharedFD::Open(vbmeta_path, O_RDWR);
+      if (!fd->IsOpen() || fd->Truncate(VBMETA_MAX_SIZE) != 0) {
+        LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " "
+                   << vbmeta_path << "` failed: " << fd->StrError();
+        return false;
+      }
+    }
+    return true;
+  }
   bool Setup() override {
     if (!FileHasContent(instance_.boot_image())) {
       LOG(ERROR) << "File not found: " << instance_.boot_image();
@@ -543,6 +723,9 @@ class BootImageRepacker : public SetupFeature {
         SetCommandLineOptionWithMode(
             "vendor_boot_image", new_vendor_boot_image_path.c_str(),
             google::FlagSettingMode::SET_FLAGS_DEFAULT);
+        if (!RebuildSuperIfNeeded()) {
+          return false;
+        }
       }
     }
     return true;
@@ -555,11 +738,9 @@ class BootImageRepacker : public SetupFeature {
 
 class Gem5ImageUnpacker : public SetupFeature {
  public:
-  INJECT(Gem5ImageUnpacker(
-      const CuttlefishConfig& config,
-      BootImageRepacker& bir))
-      : config_(config),
-        bir_(bir) {}
+  INJECT(Gem5ImageUnpacker(const CuttlefishConfig& config,
+                           KernelRamdiskRepacker& bir))
+      : config_(config), bir_(bir) {}
 
   // SetupFeature
   std::string Name() const override { return "Gem5ImageUnpacker"; }
@@ -633,7 +814,7 @@ class Gem5ImageUnpacker : public SetupFeature {
 
  private:
   const CuttlefishConfig& config_;
-  BootImageRepacker& bir_;
+  KernelRamdiskRepacker& bir_;
 };
 
 class GeneratePersistentBootconfig : public SetupFeature {
@@ -1099,7 +1280,7 @@ static fruit::Component<> DiskChangesComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .addMultibinding<SetupFeature, InitializeMetadataImage>()
-      .addMultibinding<SetupFeature, BootImageRepacker>()
+      .addMultibinding<SetupFeature, KernelRamdiskRepacker>()
       .addMultibinding<SetupFeature, VbmetaEnforceMinimumSize>()
       .addMultibinding<SetupFeature, BootloaderPresentCheck>()
       .addMultibinding<SetupFeature, Gem5ImageUnpacker>()
@@ -1185,6 +1366,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::string cur_initramfs_path;
   std::string cur_boot_image;
   std::string cur_vendor_boot_image;
+  std::string cur_super_image;
   std::string cur_metadata_image;
   std::string cur_misc_image;
   int cur_blank_metadata_image_mb{};
@@ -1244,10 +1426,12 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
           vbmeta_vendor_dlkm_image[instance_index]);
     }
     if (instance_index >= super_image.size()) {
-      instance.set_super_image(super_image[0]);
+      cur_super_image = super_image[0];
     } else {
-      instance.set_super_image(super_image[instance_index]);
+      cur_super_image = super_image[instance_index];
     }
+    instance.set_super_image(cur_super_image);
+    instance.set_new_super_image(cur_super_image);
     if (instance_index >= data_image.size()) {
       instance.set_data_image(data_image[0]);
     } else {
@@ -1357,6 +1541,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       if (cur_initramfs_path.size()) {
         // change the new flag value to corresponding instance
         instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
+        const std::string new_super_image_path =
+            const_instance.PerInstancePath("super_repacked.img");
+        instance.set_new_super_image(new_super_image_path.c_str());
       }
     }
 

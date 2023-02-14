@@ -64,6 +64,8 @@ cc_binary {
     required: [
         "mkenvimage_slim",
         "lz4",
+        "avbtool",
+        "mkuserimg_mke2fs",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }
