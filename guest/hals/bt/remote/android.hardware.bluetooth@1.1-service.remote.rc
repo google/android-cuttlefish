@@ -1,4 +1,0 @@
-service vendor.bluetooth-1-1 /vendor/bin/hw/android.hardware.bluetooth@1.1-service.remote
-    class hal
-    user bluetooth
-    group bluetooth
