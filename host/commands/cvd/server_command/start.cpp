@@ -98,7 +98,7 @@ class CvdStartCommandHandler : public CvdServerHandler {
       selector::GroupCreationInfo&& old_group_info,
       const std::string& start_bin);
 
-  static Result<std::string> FindStartBin(const std::string& android_host_out);
+  Result<std::string> FindStartBin(const std::string& android_host_out);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
@@ -324,17 +324,10 @@ static void ShowLaunchCommand(const std::string& bin,
 
 Result<std::string> CvdStartCommandHandler::FindStartBin(
     const std::string& android_host_out) {
-  std::string parent_dir = android_host_out + "/bin";
-  std::array<std::string, 2> supported_bins{"cvd_internal_start", "launch_cvd"};
-  std::string start_bin;
-  for (const auto& bin : supported_bins) {
-    std::string path = parent_dir + "/" + bin;
-    if (FileExists(path) && !DirectoryExists(path)) {
-      start_bin = bin;
-      break;
-    }
-  }
-  CF_EXPECT(!start_bin.empty());
+  auto start_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+      .artifacts_path = android_host_out,
+      .op = "start",
+  }));
   return start_bin;
 }
 
