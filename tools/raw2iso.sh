@@ -187,8 +187,8 @@ sudo rm -rf "${mount}"/var/tmp/*
 mkdir -p "${workdir}/EFI/Boot"
 cp "${mount}/usr/lib/grub/${grub_arch}/monolithic/${grub_cd}" \
   "${workdir}/${grub_blob}"
-newfs_msdos -L SYSTEM -F 12 \
-  -m 0xf8 -o 0 -c 4 -a 6 -h 64 -u 32 -S 512 -s 8192 -C 4M \
+truncate -s 4M "${workdir}"/eltorito.img
+/sbin/mkfs.msdos -n SYSTEM -F 12 -M 0xf8 -h 0 -s 4 -g 64/32 -S 512 \
   "${workdir}"/eltorito.img >/dev/null
 mmd -i "${workdir}"/eltorito.img EFI EFI/Boot
 mcopy -o -i "${workdir}"/eltorito.img -s "${workdir}/EFI" ::
