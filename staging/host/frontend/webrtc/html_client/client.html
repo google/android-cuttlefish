@@ -24,17 +24,6 @@
     </head>
 
     <body>
-      <script>
-        // Set the theme as soon as possible, before most elements in the UI
-        //  have been loaded.
-        const params = new URLSearchParams(location.search);
-        let theme = params.get("theme");
-        if (theme === "light") {
-          document.querySelector('body').classList.add('light-theme');
-        } else if (theme === "dark") {
-          document.querySelector('body').classList.add('dark-theme');
-        }
-      </script>
       <div id="loader"></div>
       <div id="error-message-div">
         <h3 id="error-message" class="hidden">
