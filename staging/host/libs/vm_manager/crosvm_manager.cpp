@@ -89,6 +89,9 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
   }
   if (instance.gpu_mode() == kGpuModeGfxStream) {
     std::string gles_impl = instance.enable_gpu_angle() ? "angle" : "emulation";
+    std::string gltransport = (instance.guest_android_version() == "11.0.0")
+                                  ? "virtio-gpu-pipe"
+                                  : "virtio-gpu-asg";
     std::string gles_version = instance.enable_gpu_angle() ? "196608" : "196609";
     return {
         "androidboot.cpuvulkan.version=0",
@@ -97,7 +100,7 @@ std::vector<std::string> CrosvmManager::ConfigureGraphics(
         "androidboot.hardware.hwcomposer.display_finder_mode=drm",
         "androidboot.hardware.egl=" + gles_impl,
         "androidboot.hardware.vulkan=ranchu",
-        "androidboot.hardware.gltransport=virtio-gpu-asg",
+        "androidboot.hardware.gltransport=" + gltransport,
         "androidboot.opengles.version=" + gles_version,
     };
   }
