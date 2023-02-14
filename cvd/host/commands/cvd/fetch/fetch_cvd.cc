@@ -595,10 +595,14 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       CF_EXPECT(AddFilesToConfig(FileSource::BOOT_BUILD, boot_build, boot_files,
                                  &config, target_dir, true));
     }
-    auto misc_info =
-        CF_EXPECT(DownloadMiscInfo(build_api, default_build, "", target_dir));
-    CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
-                               {misc_info}, &config, target_dir, true));
+    // Some older builds might not have misc_info.txt, so permit errors on
+    // fetching misc_info.txt
+    auto misc_info = DownloadMiscInfo(build_api, default_build, "", target_dir);
+    if (misc_info.ok()) {
+      CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
+                                 {misc_info.value()}, &config, target_dir,
+                                 true));
+    }
 
     if (FLAGS_bootloader_build != "") {
       auto bootloader_build =
