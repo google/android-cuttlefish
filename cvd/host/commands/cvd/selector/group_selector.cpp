@@ -15,6 +15,7 @@
  */
 
 #include "host/commands/cvd/selector/group_selector.h"
+#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
@@ -39,7 +40,7 @@ Result<LocalInstanceGroup> GroupSelector::Select(
   unused_arg_list.append("}");
   CF_EXPECT(selector_args_copied.empty(),
             "Unused selector options : " << unused_arg_list);
-  GroupSelector group_selector(uid, std::move(common_parser),
+  GroupSelector group_selector(uid, std::move(common_parser), envs,
                                instance_database);
   auto group = CF_EXPECT(group_selector.FindGroup());
   return group;
@@ -65,7 +66,24 @@ Result<LocalInstanceGroup> GroupSelector::FindGroup() {
   }
   // search by group and instances
   // search by HOME if overridden
-  return CF_ERR("Unsupported. Use HOME=<home dir> cvd stop");
+  Queries queries;
+  if (IsHomeOverridden()) {
+    CF_EXPECT(common_parser_.Home());
+    queries.emplace_back(kHomeField, common_parser_.Home().value());
+  }
+  if (common_parser_.GroupName()) {
+    queries.emplace_back(kGroupNameField, common_parser_.GroupName().value());
+  }
+  if (common_parser_.PerInstanceNames()) {
+    const auto per_instance_names = common_parser_.PerInstanceNames().value();
+    for (const auto& per_instance_name : per_instance_names) {
+      queries.emplace_back(kInstanceNameField, per_instance_name);
+    }
+  }
+  CF_EXPECT(!queries.empty());
+  auto groups = CF_EXPECT(instance_database_.FindGroups(queries));
+  CF_EXPECT(groups.size() == 1, "groups.size() = " << groups.size());
+  return *(groups.cbegin());
 }
 
 Result<LocalInstanceGroup> GroupSelector::FindDefaultGroup() {

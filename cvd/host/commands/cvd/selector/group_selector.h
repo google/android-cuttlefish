@@ -35,9 +35,11 @@ class GroupSelector {
 
  private:
   GroupSelector(const uid_t uid, SelectorCommonParser&& selector_common_parser,
+                const cvd_common::Envs& envs,
                 const InstanceDatabase& instance_database)
       : client_uid_{uid},
         common_parser_(std::move(selector_common_parser)),
+        envs_(envs),
         instance_database_(instance_database) {}
 
   /*
@@ -56,6 +58,7 @@ class GroupSelector {
 
   const uid_t client_uid_;
   SelectorCommonParser common_parser_;
+  const cvd_common::Envs& envs_;
   const InstanceDatabase& instance_database_;
 };
 
