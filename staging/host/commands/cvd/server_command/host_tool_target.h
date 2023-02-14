@@ -45,6 +45,7 @@ class HostToolTarget {
   bool HasField(const FlagInfoRequest& request) const {
     return GetFlagInfo(request).ok();
   }
+  Result<std::string> GetBinName(const std::string& operation) const;
 
  private:
   using SupportedFlagMap = std::unordered_map<std::string, FlagInfoPtr>;
