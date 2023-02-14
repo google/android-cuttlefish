@@ -28,4 +28,6 @@
     <!-- True if the firmware supports ap MAC randomization -->
     <bool name="config_wifi_ap_mac_randomization_supported">true</bool>
 
+    <bool name ="config_wifi5ghzSupport">true</bool>
+
 </resources>
