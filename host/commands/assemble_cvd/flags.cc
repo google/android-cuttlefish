@@ -179,10 +179,6 @@ DEFINE_string(bluetooth_controller_properties_file,
               CF_DEFAULTS_BLUETOOTH_CONTROLLER_PROPERTIES_FILE,
               "The configuartion file path for root-canal which is a Bluetooth "
               "emulator.");
-DEFINE_string(
-    bluetooth_default_commands_file,
-    CF_DEFAULTS_BLUETOOTH_DEFAULT_COMMANDS_FILE,
-    "The default commands which root-canal executes when it launches.");
 
 /**
  * crosvm sandbox feature requires /var/empty and seccomp directory
@@ -859,8 +855,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);
 
   // netsim flags allow all radios or selecting a specific radio
-  tmp_config_obj.set_rootcanal_default_commands_file(
-      FLAGS_bluetooth_default_commands_file);
   tmp_config_obj.set_rootcanal_config_file(
       FLAGS_bluetooth_controller_properties_file);
 

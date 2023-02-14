@@ -1,4 +1,0 @@
-add beacon be:ac:01:55:00:01 1000
-add_device_to_phy 0 1
-add beacon be:ac:01:55:00:02 1000
-add_device_to_phy 1 1
