@@ -128,10 +128,10 @@ bool CvdInstanceDatabaseTest::AddGroups(
 }
 
 bool CvdInstanceDatabaseTest::AddInstances(
-    const ConstRef<LocalInstanceGroup> group,
+    const std::string& group_name,
     const std::vector<InstanceInfo>& instances_info) {
   for (const auto& [id, per_instance_name] : instances_info) {
-    if (!db_.AddInstance(group, id, per_instance_name).ok()) {
+    if (!db_.AddInstance(group_name, id, per_instance_name).ok()) {
       SetErrorCode(ErrorCode::kInstanceDabaseError,
                    "Failed to add instance " + per_instance_name);
       return false;

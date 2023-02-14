@@ -119,8 +119,8 @@ Result<void> InstanceManager::SetInstanceGroup(
       instance_db.AddInstanceGroup(group_name, home_dir, host_artifacts_path));
 
   for (const auto& instance : per_instance_info) {
-    auto result = instance_db.AddInstance(
-        new_group.Get(), instance.instance_id_, instance.per_instance_name_);
+    auto result = instance_db.AddInstance(group_name, instance.instance_id_,
+                                          instance.per_instance_name_);
     if (!result.ok()) {
       /*
        * The way InstanceManager uses the database is that it adds an empty
