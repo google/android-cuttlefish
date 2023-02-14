@@ -16,35 +16,17 @@
 
 #pragma once
 
-#include <functional>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/cvd/server_command/flags_collector.h"
-#include "host/commands/cvd/server_command/host_tool_target.h"
-#include "host/commands/cvd/server_command/operation_to_bins_map.h"
-
 namespace cuttlefish {
 
-struct HostToolFlagRequestForm {
-  std::string artifacts_path;
-  // operations like stop, start, status, etc
-  std::string op;
-  std::string flag_name;
-};
+using OperationToBinsMap =
+    std::unordered_map<std::string, std::vector<std::string>>;
 
-class HostToolTargetManager {
- public:
-  virtual ~HostToolTargetManager() = default;
-  virtual Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) = 0;
-};
-
-fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
-HostToolTargetManagerComponent();
+fruit::Component<OperationToBinsMap> OperationToBinsMapComponent();
 
 }  // namespace cuttlefish

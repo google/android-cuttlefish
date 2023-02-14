@@ -56,7 +56,9 @@ TEST(HostToolTarget, KnownFlags) {
 }
 
 fruit::Component<HostToolTargetManager> CreateManagerComponent() {
-  return fruit::createComponent();
+  return fruit::createComponent()
+      .install(HostToolTargetManagerComponent)
+      .install(OperationToBinsMapComponent);
 }
 
 TEST(HostToolManager, KnownFlags) {
