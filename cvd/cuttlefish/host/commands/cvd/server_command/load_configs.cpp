@@ -107,23 +107,23 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     std::vector<cvd::Request> req_protos;
 
-    auto& launch_phone = *req_protos.emplace_back().mutable_command_request();
-    launch_phone.set_working_directory(
+    auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
+    launch_cmd.set_working_directory(
         request.Message().command_request().working_directory());
-    *launch_phone.mutable_env() = request.Message().command_request().env();
+    *launch_cmd.mutable_env() = request.Message().command_request().env();
 
     /* cvd load will always create instances in deamon mode (to be independent
      of terminal) and will enable reporting automatically (to run automatically
      without question during launch)
      */
-    launch_phone.add_args("cvd");
-    launch_phone.add_args("start");
-    launch_phone.add_args("--daemon");
+    launch_cmd.add_args("cvd");
+    launch_cmd.add_args("start");
+    launch_cmd.add_args("--daemon");
     for (auto& parsed_flag : cvd_flags.launch_cvd_flags) {
-      launch_phone.add_args(parsed_flag);
+      launch_cmd.add_args(parsed_flag);
     }
 
-    launch_phone.mutable_selector_opts()->add_args(
+    launch_cmd.mutable_selector_opts()->add_args(
         std::string("--") + selector::kDisableDefaultGroupOpt);
 
     /*Verbose is disabled by default*/
