@@ -38,10 +38,18 @@ struct HostToolFlagRequestForm {
   std::string flag_name;
 };
 
+struct HostToolExecNameRequestForm {
+  std::string artifacts_path;
+  // operations like stop, start, status, etc
+  std::string op;
+};
+
 class HostToolTargetManager {
  public:
   virtual ~HostToolTargetManager() = default;
   virtual Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) = 0;
+  virtual Result<std::string> ExecBaseName(
+      const HostToolExecNameRequestForm& request) = 0;
 };
 
 fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
