@@ -59,6 +59,13 @@ class InstanceDatabase {
   Result<void> AddInstance(const std::string& group_name, const unsigned id,
                            const std::string& instance_name);
 
+  struct InstanceInfo {
+    const unsigned id;
+    const std::string name;
+  };
+  Result<void> AddInstances(const std::string& group_name,
+                            const std::vector<InstanceInfo>& instances);
+
   /*
    *  auto group = CF_EXPEC(FindGroups(...));
    *  RemoveInstanceGroup(group)

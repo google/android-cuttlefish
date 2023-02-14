@@ -107,6 +107,13 @@ Result<void> InstanceDatabase::AddInstance(const std::string& group_name,
   return (*itr)->AddInstance(id, instance_name);
 }
 
+Result<void> InstanceDatabase::AddInstances(
+    const std::string& group_name, const std::vector<InstanceInfo>& instances) {
+  for (const auto& instance_info : instances) {
+    CF_EXPECT(AddInstance(group_name, instance_info.id, instance_info.name));
+  }
+  return {};
+}
 bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
   auto itr = FindIterator(group);
   // *itr is the reference to the unique pointer object
