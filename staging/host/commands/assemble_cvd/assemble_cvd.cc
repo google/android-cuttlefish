@@ -210,6 +210,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("os_composite.img");
       preserving.insert("sdcard.img");
       preserving.insert("boot_repacked.img");
+      preserving.insert("vendor_dlkm_repacked.img");
       preserving.insert("vendor_boot_repacked.img");
       preserving.insert("access-kregistry");
       preserving.insert("hwcomposer-pmem");
