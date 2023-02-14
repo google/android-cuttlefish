@@ -42,6 +42,9 @@ std::string cpp_dirname(const std::string& str);
 std::string cpp_basename(const std::string& str);
 // Whether a file exists and is a unix socket
 bool FileIsSocket(const std::string& path);
+// Get disk usage of a path. If this path is a directory, disk usage will
+// account for all files under this folder(recursively).
+int GetDiskUsage(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
