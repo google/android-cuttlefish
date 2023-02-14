@@ -31,14 +31,14 @@ namespace cuttlefish {
 
 Result<void> ValidateFetchCvdConfigs(const Json::Value&) { return {}; }
 
-std::vector<std::string> GenerateFetchCvdFlags(const Json::Value&) {
-  std::vector<std::string> result;
+FetchCvdConfigs GenerateFetchCvdFlags(const Json::Value&) {
+  FetchCvdConfigs result;
   return result;
 }
 
 void InitFetchCvdConfigs(Json::Value&) {}
 
-Result<std::vector<std::string>> ParseFetchCvdConfigs(Json::Value& root) {
+Result<FetchCvdConfigs> ParseFetchCvdConfigs(Json::Value& root) {
   CF_EXPECT(ValidateFetchCvdConfigs(root), "Loaded Json validation failed");
   InitFetchCvdConfigs(root);
   return GenerateFetchCvdFlags(root);
