@@ -36,11 +36,17 @@ cvd::Request MakeRequest(
     const MakeRequestParam& args_and_envs,
     const cvd::WaitBehavior wait_behavior = cvd::WAIT_BEHAVIOR_COMPLETE);
 
+// name of environment variable to mark the launch_cvd initiated by the cvd
+// server
+static constexpr char kCvdMarkEnv[] = "_STARTED_BY_CVD_SERVER_";
+
 constexpr char kStatusBin[] = "cvd_internal_status";
 // The name of environment variable that points to the host out directory
 constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
 // kAndroidHostOut for old branches
 constexpr char kAndroidSoongHostOut[] = "ANDROID_SOONG_HOST_OUT";
+
+constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
 
 Result<std::string> StopBin(const std::string& host_artifacts_path);
 
