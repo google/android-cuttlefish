@@ -39,6 +39,7 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/start_impl.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -99,6 +100,9 @@ class CvdStartCommandHandler : public CvdServerHandler {
       const std::string& start_bin);
 
   Result<std::string> FindStartBin(const std::string& android_host_out);
+
+  Result<void> SetBuildId(const uid_t uid, const std::string& group_name,
+                          const std::string& home);
 
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
@@ -403,6 +407,14 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   if (!should_wait) {
     response.mutable_status()->set_code(cvd::Status::OK);
     if (!is_help) {
+      /* TODO(kwstephenkim): make build ID available for non-blocking start
+       *
+       * For now, cvd start is waiting for launch_cvd. Thus, the control does
+       * not yet reach here. However, if it does, kernel.log might not be
+       * ready to read yet at this point, so SetBuildId() can't be called.
+       *
+       * This should be resolved.
+       */
       response = CF_EXPECT(
           FillOutNewInstanceInfo(std::move(response), *group_creation_info));
     }
@@ -416,6 +428,11 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
     }
   }
+  if (!is_help) {
+    CF_EXPECT(SetBuildId(uid, group_creation_info->group_name,
+                         group_creation_info->home));
+  }
+
   auto final_response = ResponseFromSiginfo(infop);
   if (is_help || !final_response.has_status() ||
       final_response.status().code() != cvd::Status::OK) {
@@ -424,6 +441,15 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response),
                                 *group_creation_info);
+}
+
+Result<void> CvdStartCommandHandler::SetBuildId(const uid_t uid,
+                                                const std::string& group_name,
+                                                const std::string& home) {
+  // build id can't be found before this point
+  const auto build_id = CF_EXPECT(cvd_start_impl::ExtractBuildId(home));
+  CF_EXPECT(instance_manager_.SetBuildId(uid, group_name, build_id));
+  return {};
 }
 
 Result<void> CvdStartCommandHandler::Interrupt() {
