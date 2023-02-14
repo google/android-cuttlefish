@@ -26,25 +26,11 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
+#include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/parser/launch_cvd_templates.h"
 
 namespace cuttlefish {
-
-// json parameters definitions
-static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
-    {"netsim_bt", Json::ValueType::booleanValue},
-    {"instances", Json::ValueType::arrayValue}};
-
-Result<void> ValidateCfConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap),
-            "Typo in config main parameters");
-  CF_EXPECT(root.isMember("instances"), "instances object is missing");
-  CF_EXPECT(ValidateInstancesConfigs(root["instances"]),
-            "ValidateInstancesConfigs failed");
-
-  return {};
-}
 
 std::string GenerateNumInstancesFlag(const Json::Value& root) {
   int num_instances = root["instances"].size();

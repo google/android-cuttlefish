@@ -22,7 +22,6 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-Result<void> ValidateGraphicsConfigs(const Json::Value& root);
 void InitGraphicsConfigs(Json::Value& root);
 std::vector<std::string> GenerateGraphicsFlags(const Json::Value& root);
 };  // namespace cuttlefish
