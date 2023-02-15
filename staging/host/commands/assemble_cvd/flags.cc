@@ -1321,7 +1321,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     comma_str = ",";
 
-    if (vmm->ConfigureGraphics(const_instance).empty()) {
+    if (!vmm->ConfigureGraphics(const_instance).ok()) {
       LOG(FATAL) << "Invalid (gpu_mode=," << gpu_mode_vec[instance_index] <<
       " hwcomposer= " << hwcomposer_vec[instance_index] <<
       ") does not work with vm_manager=" << vm_manager_vec[0];

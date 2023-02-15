@@ -51,19 +51,20 @@ std::unique_ptr<VmManager> GetVmManager(const std::string& name, Arch arch) {
   return vmm;
 }
 
-std::string ConfigureMultipleBootDevices(const std::string& pci_path,
-                                         int pci_offset, int num_disks) {
+Result<std::unordered_map<std::string, std::string>>
+ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
+                             int num_disks) {
   int num_boot_devices =
       (num_disks < VmManager::kDefaultNumBootDevices) ? num_disks : VmManager::kDefaultNumBootDevices;
-  std::string boot_devices_prop = "androidboot.boot_devices=";
+  std::string boot_devices_prop_val = "";
   for (int i = 0; i < num_boot_devices; i++) {
     std::stringstream stream;
     stream << std::setfill('0') << std::setw(2) << std::hex
            << pci_offset + i + VmManager::kDefaultNumHvcs + VmManager::kMaxDisks - num_disks;
-    boot_devices_prop += pci_path + stream.str() + ".0,";
+    boot_devices_prop_val += pci_path + stream.str() + ".0,";
   }
-  boot_devices_prop.pop_back();
-  return {boot_devices_prop};
+  boot_devices_prop_val.pop_back();
+  return {{{"androidboot.boot_devices", boot_devices_prop_val}}};
 }
 
 class VmmCommands : public CommandSource {

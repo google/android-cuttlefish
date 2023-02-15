@@ -853,10 +853,11 @@ class GeneratePersistentBootconfig : public SetupFeature {
     CF_EXPECT(bootconfig_fd->IsOpen(),
               "Unable to open bootconfig file: " << bootconfig_fd->StrError());
 
-    const std::string bootconfig =
-        android::base::Join(BootconfigArgsFromConfig(config_, instance_),
-                            "\n") +
-        "\n";
+    const auto bootconfig_args =
+        CF_EXPECT(BootconfigArgsFromConfig(config_, instance_));
+    const auto bootconfig =
+        CF_EXPECT(BootconfigArgsString(bootconfig_args, "\n")) + "\n";
+
     LOG(DEBUG) << "bootconfig size is " << bootconfig.size();
     ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
     CF_EXPECT(WriteAll(bootconfig_fd, bootconfig) == bootconfig.size(),
