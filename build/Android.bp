@@ -111,6 +111,7 @@ cvd_host_tools = [
     "cvd_send_sms",
     "cvd_update_location",
     "cvd_import_locations",
+    "simg2img",
     "socket_vsock_proxy",
     "stop_cvd",
     "test_cvd_load_parser",
