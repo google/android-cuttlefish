@@ -64,7 +64,7 @@ fn merge_fs(src: &Path, overlay: &Path, dest: &Path, overwrite: bool) -> Result<
     let mut dest = File::create(dest)?;
     let mut overlay = File::open(overlay)?;
 
-    src.seek(SeekFrom::Start(0))?;
+    src.rewind()?;
     let mut src_handle = src.take(align_size(bytes_used, ROOTDEV_OVERLAY_ALIGN));
     copy(&mut src_handle, &mut dest)?;
     copy(&mut overlay, &mut dest)?;
