@@ -101,6 +101,7 @@ cc_library_host_static {
         "instance_manager.cpp",
         "load_configs.cpp",
         "logger.cpp",
+        "reset_client_utils.cpp",
         "server.cc",
         "server_client.cpp",
         "types.cpp",
