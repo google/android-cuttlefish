@@ -245,13 +245,22 @@ StartSelectorParser::HandleInstanceIds(
 }
 
 Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
-  std::optional<bool> disable_default_group;
-  CF_EXPECT(FilterSelectorFlag(selector_args_, kDisableDefaultGroupOpt,
-                               disable_default_group));
-  if (disable_default_group && disable_default_group.value()) {
-    // never be a default group
+  auto disable_default_group_flag = CF_EXPECT(
+      SelectorFlags::Get().GetFlag<bool>(SelectorFlags::kDisableDefaultGroup));
+  auto flag_value =
+      CF_EXPECT(disable_default_group_flag.FilterFlag(selector_args_));
+  if (flag_value && *flag_value) {
     return false;
   }
+  /*
+   * --disable_default_group instructs that the default group
+   * should be disabled anyway. If not given, the logic to determine
+   * whether this group is the default one or not is:
+   *  If HOME is not overridden and no selector options, then
+   *   the default group
+   *  Or, not a default group
+   *
+   */
   if (CF_EXPECT(common_parser_.HomeOverridden())) {
     return false;
   }
