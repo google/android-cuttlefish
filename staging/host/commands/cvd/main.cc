@@ -35,6 +35,7 @@
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/frontline_parser.h"
+#include "host/commands/cvd/reset_client_utils.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
@@ -97,6 +98,19 @@ Result<ParseResult> Parse(std::vector<std::string>& all_args) {
   return {result};
 }
 
+Result<void> HandleReset(CvdClient& client,
+                         const cvd_common::Envs& /* envs placeholder */) {
+  auto kill_server_result = client.StopCvdServer(/*clear=*/true);
+  if (!kill_server_result.ok()) {
+    LOG(ERROR) << "cvd kill-server returned error"
+               << kill_server_result.error().Trace();
+    LOG(ERROR) << "However, cvd reset will continue cleaning up.";
+  }
+  // cvd reset handler placeholder. identical to cvd kill-server for now.
+  CF_EXPECT(KillAllCuttlefishInstances());
+  return {};
+}
+
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
@@ -129,8 +143,10 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
    */
   CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
             "Unable to ensure cvd_server is running.");
-  auto frontline_parser =
-      CF_EXPECT(FrontlineParser::Parse(client, all_args, env));
+  std::vector<std::string> client_internal_commands{"kill-server",
+                                                    "server-kill", "reset"};
+  auto frontline_parser = CF_EXPECT(
+      FrontlineParser::Parse(client, client_internal_commands, all_args, env));
   CF_EXPECT(frontline_parser != nullptr);
 
   // Special case for `cvd kill-server`, handled by directly
@@ -139,6 +155,11 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   std::string subcmd = frontline_parser->SubCmd().value_or("");
   if (Contains(kill_server_cmds, subcmd)) {
     CF_EXPECT(client.StopCvdServer(/*clear=*/true));
+    return {};
+  }
+
+  if (subcmd == "reset") {
+    CF_EXPECT(HandleReset(client, env));
     return {};
   }
 
