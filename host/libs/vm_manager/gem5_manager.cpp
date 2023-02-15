@@ -123,7 +123,8 @@ bool Gem5Manager::IsSupported() {
   return HostSupportsQemuCli();
 }
 
-std::vector<std::string> Gem5Manager::ConfigureGraphics(
+Result<std::unordered_map<std::string, std::string>>
+Gem5Manager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
   // TODO: Add support for the gem5 gpu models
 
@@ -131,25 +132,25 @@ std::vector<std::string> Gem5Manager::ConfigureGraphics(
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  return {
-      "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
-      "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=" + instance.hwcomposer(),
-      "androidboot.hardware.hwcomposer.mode=noop",
-      "androidboot.hardware.egl=angle",
-      "androidboot.hardware.vulkan=pastel",
-  };
+  return {{
+      {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
+      {"androidboot.hardware.gralloc", "minigbm"},
+      {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
+      {"androidboot.hardware.hwcomposer.mode", "noop"},
+      {"androidboot.hardware.egl", "angle"},
+      {"androidboot.hardware.vulkan", "pastel"},
+  }};
 }
 
-std::string Gem5Manager::ConfigureBootDevices(int /*num_disks*/,
-                                              bool /*have_gpu*/) {
+Result<std::unordered_map<std::string, std::string>>
+Gem5Manager::ConfigureBootDevices(int /*num_disks*/, bool /*have_gpu*/) {
   switch (arch_) {
     case Arch::Arm:
     case Arch::Arm64:
-      return "androidboot.boot_devices=30000000.pci";
+      return {{{"androidboot.boot_devices", "30000000.pci"}}};
     // TODO: Add x86 support
     default:
-      return "";
+      return CF_ERR("Unhandled arch");
   }
 }
 
