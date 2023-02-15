@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include <sstream>
 #include <signal.h>
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
+
+#include <memory>
+#include <sstream>
 
 #include "common/frontend/socket_vsock_proxy/client.h"
 #include "common/frontend/socket_vsock_proxy/server.h"
@@ -77,13 +79,6 @@ void WaitForAdbdToBeStarted(int events_fd) {
       return;
     }
   }
-}
-
-void ProxyServer(Server& server, Client& client) {
-  LOG(DEBUG) << "[" << FLAGS_label << "] Accepting client connections";
-  Proxy(FLAGS_label, server.Start(), [&client]() {
-    return client.Start();
-  });
 }
 
 std::unique_ptr<Server> BuildServer() {
@@ -171,5 +166,9 @@ int main(int argc, char* argv[]) {
   auto server = cuttlefish::socket_proxy::BuildServer();
   auto client = cuttlefish::socket_proxy::BuildClient();
 
-  cuttlefish::socket_proxy::ProxyServer(*server.get(), *client.get());
+  LOG(DEBUG) << "[" << FLAGS_label << "] Accepting client connections";
+  auto proxy = cuttlefish::ProxyAsync(FLAGS_label, server->Start(), [&client] {
+    return client->Start();
+  });
+  proxy->Join();
 }
