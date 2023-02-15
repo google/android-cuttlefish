@@ -64,10 +64,10 @@ constexpr char kInstanceNameField[] = "instance_name";
 constexpr char kGroupNameOpt[] = "group_name";
 constexpr char kInstanceNameOpt[] = "instance_name";
 constexpr char kDisableDefaultGroupOpt[] = "disable_default_group";
-constexpr char kAcquireFileLockOpt[] = "acquire_file_lock";
 
 class SelectorFlags {
  public:
+  static constexpr char kAcquireFileLock[] = "acquire_file_lock";
   static const SelectorFlags& Get();
 
   template <typename T>
@@ -81,7 +81,7 @@ class SelectorFlags {
     flags_.EnrollFlag(GroupNameFlag(kGroupNameOpt));
     flags_.EnrollFlag(InstanceNameFlag(kInstanceNameOpt));
     flags_.EnrollFlag(DisableDefaultGroupFlag(kDisableDefaultGroupOpt));
-    flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLockOpt));
+    flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLock));
   }
 
   SelectorFlag<std::string> GroupNameFlag(const std::string& name);

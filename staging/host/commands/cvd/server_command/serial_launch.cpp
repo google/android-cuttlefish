@@ -308,7 +308,8 @@ class SerialLaunchCommand : public CvdServerHandler {
        * acquire a file lock.
        */
       launch_cmd.mutable_selector_opts()->add_args(
-          std::string("--") + selector::kAcquireFileLockOpt + "=false");
+          std::string("--") + selector::SelectorFlags::kAcquireFileLock +
+          "=false");
       launch_cmd.add_args("start");
       launch_cmd.add_args(
           "--undefok=daemon,base_instance_num,x_res,y_res,dpi,cpus,memory_mb,"
