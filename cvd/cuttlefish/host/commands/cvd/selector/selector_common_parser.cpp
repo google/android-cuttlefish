@@ -50,24 +50,16 @@ Result<bool> SelectorCommonParser::HomeOverridden() const {
 
 Result<void> SelectorCommonParser::ParseOptions() {
   // Handling name-related options
-  std::optional<std::string> group_name;
-  std::optional<std::string> instance_name;
+  auto group_name_flag = CF_EXPECT(
+      SelectorFlags::Get().GetFlag<std::string>(SelectorFlags::kGroupName));
+  auto instance_name_flag = CF_EXPECT(
+      SelectorFlags::Get().GetFlag<std::string>(SelectorFlags::kInstanceName));
+  auto group_name_opt = CF_EXPECT(group_name_flag.FilterFlag(*selector_args_));
+  auto instance_name_opt =
+      CF_EXPECT(instance_name_flag.FilterFlag(*selector_args_));
 
-  std::unordered_map<std::string, std::optional<std::string>> key_optional_map =
-      {
-          {kGroupNameOpt, std::optional<std::string>{}},
-          {kInstanceNameOpt, std::optional<std::string>{}},
-      };
-
-  for (auto& [flag_name, value] : key_optional_map) {
-    // value is set to std::nullopt if parsing failed or no flag_name flag is
-    // given.
-    CF_EXPECT(FilterSelectorFlag(*selector_args_, flag_name, value));
-  }
-
-  NameFlagsParam name_flags_param{
-      .group_name = key_optional_map[kGroupNameOpt],
-      .instance_names = key_optional_map[kInstanceNameOpt]};
+  NameFlagsParam name_flags_param{.group_name = group_name_opt,
+                                  .instance_names = instance_name_opt};
   auto parsed_name_flags = CF_EXPECT(HandleNameOpts(name_flags_param));
   group_name_ = parsed_name_flags.group_name;
   instance_names_ = parsed_name_flags.instance_names;
