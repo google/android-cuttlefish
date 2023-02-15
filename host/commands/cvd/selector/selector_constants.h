@@ -61,11 +61,11 @@ constexpr char kInstanceNameField[] = "instance_name";
  *
  */
 // names of the flags, which are also used for search
-constexpr char kGroupNameOpt[] = "group_name";
-constexpr char kInstanceNameOpt[] = "instance_name";
 
 class SelectorFlags {
  public:
+  static constexpr char kGroupName[] = "group_name";
+  static constexpr char kInstanceName[] = "instance_name";
   static constexpr char kAcquireFileLock[] = "acquire_file_lock";
   static constexpr char kDisableDefaultGroup[] = "disable_default_group";
   static const SelectorFlags& Get();
@@ -78,8 +78,8 @@ class SelectorFlags {
 
  private:
   SelectorFlags() {
-    flags_.EnrollFlag(GroupNameFlag(kGroupNameOpt));
-    flags_.EnrollFlag(InstanceNameFlag(kInstanceNameOpt));
+    flags_.EnrollFlag(GroupNameFlag(kGroupName));
+    flags_.EnrollFlag(InstanceNameFlag(kInstanceName));
     flags_.EnrollFlag(DisableDefaultGroupFlag(kDisableDefaultGroup, false));
     flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLock, true));
   }
