@@ -42,7 +42,7 @@ struct ValueFlags {
 
 static const BoolFlags bool_flags{
     .selector_flags = {selector::kDisableDefaultGroupOpt,
-                       selector::kAcquireFileLockOpt},
+                       selector::SelectorFlags::kAcquireFileLock},
     .cvd_driver_flags = {"clean", "help"}};
 
 static const ValueFlags value_flags{
