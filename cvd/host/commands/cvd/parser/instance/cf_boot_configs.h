@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-
 namespace cuttlefish {
 void InitBootConfigs(Json::Value& root);
 std::vector<std::string> GenerateBootFlags(const Json::Value& root);
