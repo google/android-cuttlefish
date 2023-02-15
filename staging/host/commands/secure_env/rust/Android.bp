@@ -48,3 +48,22 @@ rust_ffi_host {
     ],
     defaults: ["cuttlefish_buildhost_only"],
 }
+
+rust_test_host {
+    name: "libkmr_cf_test",
+    srcs: ["lib.rs"],
+    rustlibs: [
+        "libenv_logger",
+        "libhex",
+        "libkmr_common",
+        "libkmr_crypto_boring",
+        "libkmr_ta",
+        "libkmr_tests",
+        "libkmr_wire",
+        "liblibc",
+        "liblog_rust",
+        "libsecure_env_tpm",
+    ],
+    defaults: ["cuttlefish_buildhost_only"],
+    test_suites: ["general-tests"],
+}
