@@ -74,18 +74,36 @@ FlagInfoPtr ParseFlagNode(struct _xmlDoc* doc, xmlNode& flag) {
   return FlagInfo::Create(field_value_map);
 }
 
-// root must not be nullptr
-std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* all_flags) {
+std::vector<FlagInfoPtr> ParseXml(struct _xmlDoc* doc, xmlNode* node) {
+  if (!node) {
+    return {};
+  }
+
   std::vector<FlagInfoPtr> flags;
-  for (xmlNode* flag = all_flags->xmlChildrenNode; flag != nullptr;
-       flag = flag->next) {
-    if (!flag || !flag->name ||
-        xmlStrcmp(flag->name, reinterpret_cast<const xmlChar*>("flag")) != 0) {
-      continue;
-    }
-    auto flag_info = ParseFlagNode(doc, *flag);
+  // if it is <flag> node
+  if (node->name &&
+      xmlStrcmp(node->name, reinterpret_cast<const xmlChar*>("flag")) == 0) {
+    auto flag_info = ParseFlagNode(doc, *node);
+    // we don't assume that a flag node is nested.
     if (flag_info) {
       flags.push_back(std::move(flag_info));
+      return flags;
+    }
+    return {};
+  }
+
+  if (!node->xmlChildrenNode) {
+    return {};
+  }
+
+  for (xmlNode* child_node = node->xmlChildrenNode; child_node != nullptr;
+       child_node = child_node->next) {
+    auto child_flags = ParseXml(doc, child_node);
+    if (child_flags.empty()) {
+      continue;
+    }
+    for (auto& child_flag : child_flags) {
+      flags.push_back(std::move(child_flag));
     }
   }
   return flags;
