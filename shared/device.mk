@@ -357,6 +357,7 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     libdynamicsprocessingaidl \
     libenvreverbsw \
     libequalizersw \
+    libextensioneffect \
     libhapticgeneratoraidl \
     libloudnessenhanceraidl \
     libnssw \
