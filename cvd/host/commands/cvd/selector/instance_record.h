@@ -58,8 +58,6 @@ class LocalInstance {
   const LocalInstanceGroup& parent_group_;
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
-  std::string internal_group_name_;
-  std::string group_name_;  ///< for now, the same as internal_group_name_
   /** the instance specific name to be appended to the group name
    *
    * by default, to_string(instance_id_). The default value is decided by
