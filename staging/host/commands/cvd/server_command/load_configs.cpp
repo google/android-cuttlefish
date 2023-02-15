@@ -120,7 +120,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
 
     launch_cmd.mutable_selector_opts()->add_args(
-        std::string("--") + selector::kDisableDefaultGroupOpt);
+        std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
 
     /*Verbose is disabled by default*/
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);

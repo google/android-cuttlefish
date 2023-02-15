@@ -76,6 +76,8 @@ class SelectorFlag {
     return value;
   }
 
+  // Parses the arguments. If flag is given, returns the parsed value. If not,
+  // returns the default value if any. If no default value, it returns CF_ERR.
   Result<T> ParseFlag(cvd_common::Args& args) {
     auto value_opt = CF_EXPECT(FilterFlag(args));
     if (!value_opt) {
