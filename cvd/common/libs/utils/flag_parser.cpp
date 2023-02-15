@@ -16,20 +16,16 @@
 
 #include "common/libs/utils/flag_parser.h"
 
+#include <algorithm>
 #include <cerrno>
-#include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <functional>
-#include <optional>
-#include <ostream>
-#include <string>
+#include <iostream>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -276,14 +272,24 @@ bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
         HasAlias({FlagAliasMode::kFlagPrefix, "--" + name + "="}) &&
         HasAlias({FlagAliasMode::kFlagConsumesFollowing, "-" + name}) &&
         HasAlias({FlagAliasMode::kFlagConsumesFollowing, "--" + name});
-    if (has_bool_aliases && has_other_aliases) {
-      LOG(ERROR) << "Expected exactly one of has_bool_aliases and "
-                 << "has_other_aliases, got both for \"" << name << "\".";
+    bool has_help_aliases = HasAlias({FlagAliasMode::kFlagExact, "-help"}) &&
+                            HasAlias({FlagAliasMode::kFlagExact, "--help"});
+    std::vector<bool> has_aliases = {has_bool_aliases, has_other_aliases,
+                                     has_help_aliases};
+    const auto true_count =
+        std::count(has_aliases.cbegin(), has_aliases.cend(), true);
+    if (true_count > 1) {
+      LOG(ERROR) << "Expected exactly one of has_bool_aliases, "
+                 << "has_other_aliases, and has_help_aliases, got "
+                 << true_count << " for \"" << name << "\".";
       return false;
-    } else if (!has_bool_aliases && !has_other_aliases) {
+    }
+    if (true_count == 0) {
       continue;
     }
     found_alias = true;
+    std::string type_str =
+        (has_bool_aliases || has_help_aliases) ? "bool" : "string";
     // Lifted from external/gflags/src/gflags_reporting.cc:DescribeOneFlagInXML
     out << "<flag>\n";
     out << "  <file>file.cc</file>\n";
@@ -293,7 +299,7 @@ bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
     auto value = getter_ ? XmlEscape((*getter_)()) : std::string{""};
     out << "  <default>" << value << "</default>\n";
     out << "  <current>" << value << "</current>\n";
-    out << "  <type>" << (has_bool_aliases ? "bool" : "string") << "</type>\n";
+    out << "  <type>" << type_str << "</type>\n";
     out << "</flag>\n";
   }
   return found_alias;
@@ -368,6 +374,64 @@ Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text) {
       .Alias({FlagAliasMode::kFlagExact, "-help"})
       .Alias({FlagAliasMode::kFlagExact, "--help"})
       .Setter(setter);
+}
+
+static bool GflagsCompatBoolFlagSetter(const std::string& name, bool& value,
+                                       const FlagMatch& match) {
+  const auto& key = match.key;
+  if (key == "-" + name || key == "--" + name) {
+    value = true;
+    return true;
+  } else if (key == "-no" + name || key == "--no" + name) {
+    value = false;
+    return true;
+  } else if (key == "-" + name + "=" || key == "--" + name + "=") {
+    if (match.value == "true") {
+      value = true;
+      return true;
+    } else if (match.value == "false") {
+      value = false;
+      return true;
+    } else {
+      LOG(ERROR) << "Unexpected boolean value \"" << match.value << "\""
+                 << " for \"" << name << "\"";
+      return false;
+    }
+  }
+  LOG(ERROR) << "Unexpected key \"" << match.key << "\""
+             << " for \"" << name << "\"";
+  return false;
+}
+
+static Flag GflagsCompatBoolFlagBase(const std::string& name) {
+  return Flag()
+      .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
+      .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
+      .Alias({FlagAliasMode::kFlagExact, "-" + name})
+      .Alias({FlagAliasMode::kFlagExact, "--" + name})
+      .Alias({FlagAliasMode::kFlagExact, "-no" + name})
+      .Alias({FlagAliasMode::kFlagExact, "--no" + name});
+}
+
+Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out,
+                 const std::string& text) {
+  const std::string name = "helpxml";
+  auto setter = [name, &out, &text, &flags](const FlagMatch& match) {
+    bool print_xml = false;
+    auto parse_success = GflagsCompatBoolFlagSetter(name, print_xml, match);
+    if (!parse_success) {
+      return false;
+    }
+    if (!print_xml) {
+      return true;
+    }
+    if (!text.empty()) {
+      out << text << std::endl;
+    }
+    WriteGflagsCompatXml(flags, out);
+    return false;
+  };
+  return GflagsCompatBoolFlagBase(name).Setter(setter);
 }
 
 Flag InvalidFlagGuard() {
@@ -451,38 +515,10 @@ Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
 }
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
-  return Flag()
-      .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
-      .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
-      .Alias({FlagAliasMode::kFlagExact, "-" + name})
-      .Alias({FlagAliasMode::kFlagExact, "--" + name})
-      .Alias({FlagAliasMode::kFlagExact, "-no" + name})
-      .Alias({FlagAliasMode::kFlagExact, "--no" + name})
+  return GflagsCompatBoolFlagBase(name)
       .Getter([&value]() { return value ? "true" : "false"; })
       .Setter([name, &value](const FlagMatch& match) {
-        const auto& key = match.key;
-        if (key == "-" + name || key == "--" + name) {
-          value = true;
-          return true;
-        } else if (key == "-no" + name || key == "--no" + name) {
-          value = false;
-          return true;
-        } else if (key == "-" + name + "=" || key == "--" + name + "=") {
-          if (match.value == "true") {
-            value = true;
-            return true;
-          } else if (match.value == "false") {
-            value = false;
-            return true;
-          } else {
-            LOG(ERROR) << "Unexpected boolean value \"" << match.value << "\""
-                       << " for \"" << name << "\"";
-            return false;
-          }
-        }
-        LOG(ERROR) << "Unexpected key \"" << match.key << "\""
-                   << " for \"" << name << "\"";
-        return false;
+        return GflagsCompatBoolFlagSetter(name, value, match);
       });
 };
 
