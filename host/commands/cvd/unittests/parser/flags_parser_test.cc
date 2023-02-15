@@ -51,7 +51,7 @@ TEST(FlagsParserTest, ParseJsonWithSpellingError) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_FALSE(serialized_data.ok());
 }
 
@@ -75,7 +75,7 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=1"))
       << "num_instances flag is missing or wrongly formatted";
@@ -107,7 +107,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=2"))
       << "num_instances flag is missing or wrongly formatted";
@@ -133,7 +133,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
       << "netsim_bt flag is missing or wrongly formatted";
@@ -160,7 +160,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
       << "netsim_bt flag is missing or wrongly formatted";
