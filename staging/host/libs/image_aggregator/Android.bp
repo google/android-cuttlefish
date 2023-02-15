@@ -36,17 +36,20 @@ cc_library_static {
     name: "libimage_aggregator",
     srcs: [
         "image_aggregator.cc",
+        "sparse_image_utils.cc",
     ],
     export_include_dirs: ["."],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
+        "libjsoncpp",
         "libprotobuf-cpp-lite",
         "libz",
     ],
     static_libs: [
         "libcdisk_spec",
+        "libcuttlefish_host_config",
         "libext2_uuid",
         "libsparse",
     ],
