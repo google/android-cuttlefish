@@ -16,10 +16,13 @@
 
 #include "host/commands/cvd/acloud_command.h"
 
-#include <optional>
-#include <vector>
 #include <sys/stat.h>
 
+#include <fstream>
+#include <optional>
+#include <vector>
+
+#include <android-base/file.h>
 #include <android-base/strings.h>
 #include <android-base/parseint.h>
 
@@ -101,7 +104,8 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
 class ConvertAcloudCreateCommand {
  public:
   INJECT(ConvertAcloudCreateCommand(InstanceLockFileManager& lock_file_manager))
-      : lock_file_manager_(lock_file_manager) {}
+      : fetch_cvd_args_file_(""), fetch_command_str_(""),
+      lock_file_manager_(lock_file_manager) {}
 
   Result<ConvertedAcloudCreateCommand> Convert(
       const RequestWithStdio& request) {
@@ -149,6 +153,15 @@ class ConvertAcloudCreateCommand {
             .Alias({FlagAliasMode::kFlagConsumesFollowing, "--local-boot-image"})
             .Setter([&local_kernel_image](const FlagMatch& m) {
               local_kernel_image = m.value;
+              return true;
+            }));
+
+    std::optional<std::string> image_download_dir;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--image-download-dir"})
+            .Setter([&image_download_dir](const FlagMatch& m) {
+              image_download_dir = m.value;
               return true;
             }));
 
@@ -310,6 +323,10 @@ class ConvertAcloudCreateCommand {
 
     auto dir = TempDir() + "/acloud_cvd_temp/local-instance-" +
                std::to_string(lock->Instance());
+    auto host_dir = dir;
+    if (image_download_dir) {
+      host_dir = image_download_dir.value();
+    }
 
     auto host_artifacts_path = request_command.env().find(kAndroidHostOut);
     CF_EXPECT(host_artifacts_path != request_command.env().end(),
@@ -346,15 +363,19 @@ class ConvertAcloudCreateCommand {
       fetch_command.add_args("cvd");
       fetch_command.add_args("fetch");
       fetch_command.add_args("--directory");
-      fetch_command.add_args(dir);
+      fetch_command.add_args(host_dir);
+      fetch_command_str_ = "";
       if (branch || build_id || build_target) {
         fetch_command.add_args("--default_build");
+        fetch_command_str_ += "--default_build=";
         auto target = build_target ? "/" + *build_target : "";
         auto build = build_id.value_or(branch.value_or("aosp-master"));
         fetch_command.add_args(build + target);
+        fetch_command_str_ += (build + target);
       }
       if (system_branch || system_build_id || system_build_target) {
         fetch_command.add_args("--system_build");
+        fetch_command_str_ += "--system_build=";
         auto target = system_build_target.value_or(build_target.value_or(""));
         if (target != "") {
           target = "/" + target;
@@ -362,9 +383,11 @@ class ConvertAcloudCreateCommand {
         auto build =
             system_build_id.value_or(system_branch.value_or("aosp-master"));
         fetch_command.add_args(build + target);
+        fetch_command_str_ += (build + target);
       }
       if (bootloader_branch || bootloader_build_id || bootloader_build_target) {
         fetch_command.add_args("--bootloader_build");
+        fetch_command_str_ += "--bootloader_build";
         auto target = bootloader_build_target.value_or("");
         if (target != "") {
           target = "/" + target;
@@ -372,16 +395,35 @@ class ConvertAcloudCreateCommand {
         auto build =
             bootloader_build_id.value_or(bootloader_branch.value_or("aosp_u-boot-mainline"));
         fetch_command.add_args(build + target);
+        fetch_command_str_ += (build + target);
       }
       if (kernel_branch || kernel_build_id || kernel_build_target) {
         fetch_command.add_args("--kernel_build");
+        fetch_command_str_ += "--kernel_build=";
         auto target = kernel_build_target.value_or("kernel_virt_x86_64");
         auto build = kernel_build_id.value_or(
             branch.value_or("aosp_kernel-common-android-mainline"));
         fetch_command.add_args(build + "/" + target);
+        fetch_command_str_ += (build + "/" + target);
       }
       auto& fetch_env = *fetch_command.mutable_env();
       fetch_env[kAndroidHostOut] = host_artifacts_path->second;
+
+      struct stat statbuf;
+      fetch_cvd_args_file_ = host_dir + "/fetch-cvd-args.txt";
+      if (stat(fetch_cvd_args_file_.c_str(), &statbuf) == 0) {
+        // file exists
+        std::string read_str;
+        using android::base::ReadFileToString;
+        CF_EXPECT(ReadFileToString(fetch_cvd_args_file_.c_str(),
+                                   &read_str,
+                                   /* follow_symlinks */ true));
+        if (read_str == fetch_command_str_) {
+          // same fetch cvd command, reuse original dir
+          fetch_command_str_ = "";
+          request_protos.pop_back();
+        }
+      }
 
       cvd::Request& ln_request = request_protos.emplace_back();
       auto& ln_command = *ln_request.mutable_command_request();
@@ -389,8 +431,8 @@ class ConvertAcloudCreateCommand {
       ln_command.add_args("ln");
       ln_command.add_args("-f");
       ln_command.add_args("-s");
-      ln_command.add_args(dir);
-      ln_command.add_args(dir + "/host_bins");
+      ln_command.add_args(host_dir);
+      ln_command.add_args(host_dir + "/host_bins");
       auto& ln_env = *ln_command.mutable_env();
       ln_env[kAndroidHostOut] = host_artifacts_path->second;
     }
@@ -408,6 +450,7 @@ class ConvertAcloudCreateCommand {
       start_command.add_args("-config");
       start_command.add_args(flavor.value());
     }
+
     if (local_kernel_image) {
       // kernel image has 1st priority than boot image
       struct stat statbuf;
@@ -455,6 +498,7 @@ class ConvertAcloudCreateCommand {
         }
       }
     }
+
     if (launch_args) {
       for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
         start_command.add_args(arg);
@@ -472,8 +516,8 @@ class ConvertAcloudCreateCommand {
                 "Missing " << kAndroidProductOut);
       start_env[kAndroidProductOut] = product_out->second;
     } else {
-      start_env[kAndroidHostOut] = dir;
-      start_env[kAndroidProductOut] = dir;
+      start_env[kAndroidHostOut] = host_dir;
+      start_env[kAndroidProductOut] = host_dir;
     }
     start_env[kCuttlefishInstanceEnvVarName] = std::to_string(lock->Instance());
     start_env["HOME"] = dir;
@@ -498,6 +542,9 @@ class ConvertAcloudCreateCommand {
     return ret;
   }
 
+ public:
+  std::string fetch_cvd_args_file_;
+  std::string fetch_command_str_;
  private:
   InstanceLockFileManager& lock_file_manager_;
 };
@@ -561,6 +608,13 @@ class AcloudCommand : public CvdServerHandler {
     CF_EXPECT(executor_.Execute(converted.requests, request.Err()));
 
     CF_EXPECT(converted.lock.Status(InUseState::kInUse));
+
+    if (converter_.fetch_command_str_ != "") {
+      // has cvd fetch command, update the fetch cvd command file
+      using android::base::WriteStringToFile;
+      CF_EXPECT(WriteStringToFile(converter_.fetch_command_str_,
+                                  converter_.fetch_cvd_args_file_), true);
+    }
 
     cvd::Response response;
     response.mutable_command_response();
