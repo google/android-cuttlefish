@@ -62,11 +62,11 @@ impl<T: DeriveBytes> RetrieveRpcArtifacts for Artifacts<T> {
         Ok(dice_info)
     }
 
-    fn sign_data<'a>(
+    fn sign_data(
         &self,
         ec: &dyn crypto::Ec,
         data: &[u8],
-        _rpc_v2: Option<RpcV2Req<'a>>,
+        _rpc_v2: Option<RpcV2Req>,
     ) -> Result<Vec<u8>, Error> {
         // DICE artifacts should have been initialized via `get_dice_info` by the time this
         // method is called.
