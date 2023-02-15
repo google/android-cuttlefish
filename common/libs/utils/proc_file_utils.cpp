@@ -127,7 +127,7 @@ Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
   return TokenizeByNullChar(contents);
 }
 
-Result<std::string> GetCmdline(const pid_t pid) {
+Result<std::string> GetExecutablePath(const pid_t pid) {
   auto args = CF_EXPECT(GetCmdArgs(pid));
   CF_EXPECT(!args.empty());
   return args.front();
@@ -139,27 +139,27 @@ Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
   auto input_pids = CF_EXPECT(CollectPids(uid));
   std::vector<pid_t> output_pids;
   for (const auto pid : input_pids) {
-    auto cmdline = GetCmdline(pid);
-    if (!cmdline.ok()) {
+    auto pid_exec_path = GetExecutablePath(pid);
+    if (!pid_exec_path.ok()) {
       continue;
     }
-    if (cpp_basename(*cmdline) == exec_name) {
+    if (cpp_basename(*pid_exec_path) == exec_name) {
       output_pids.push_back(pid);
     }
   }
   return output_pids;
 }
 
-Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_name,
+Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_path,
                                                  const uid_t uid) {
   auto input_pids = CF_EXPECT(CollectPids(uid));
   std::vector<pid_t> output_pids;
   for (const auto pid : input_pids) {
-    auto cmdline = GetCmdline(pid);
-    if (!cmdline.ok()) {
+    auto pid_exec_path = GetExecutablePath(pid);
+    if (!pid_exec_path.ok()) {
       continue;
     }
-    if (*cmdline == exec_name) {
+    if (*pid_exec_path == exec_path) {
       output_pids.push_back(pid);
     }
   }
@@ -176,7 +176,7 @@ Result<uid_t> OwnerUid(const pid_t pid) {
 Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
   std::string environ_file_path = PidDirPath(pid) + "/environ";
   auto owner = CF_EXPECT(OwnerUid(pid));
-  CF_EXPECT(getuid() == owner);
+  CF_EXPECT(getuid() == owner, "Owned by another user of uid" << owner);
   std::string environ = CF_EXPECT(ReadAll(environ_file_path));
   std::vector<std::string> lines = TokenizeByNullChar(environ);
   // now, each line looks like:  HOME=/home/user
