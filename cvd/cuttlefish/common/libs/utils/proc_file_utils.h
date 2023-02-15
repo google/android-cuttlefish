@@ -57,7 +57,7 @@ Result<uid_t> OwnerUid(const pid_t pid);
 Result<std::vector<std::string>> GetCmdArgs(const pid_t pid);
 
 // retrieves the path to the executable file used for the pid
-Result<std::string> GetCmdline(const pid_t pid);
+Result<std::string> GetExecutablePath(const pid_t pid);
 
 // retrieves the environment variables of the process, pid
 Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid);
