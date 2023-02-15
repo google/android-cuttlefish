@@ -63,11 +63,11 @@ constexpr char kInstanceNameField[] = "instance_name";
 // names of the flags, which are also used for search
 constexpr char kGroupNameOpt[] = "group_name";
 constexpr char kInstanceNameOpt[] = "instance_name";
-constexpr char kDisableDefaultGroupOpt[] = "disable_default_group";
 
 class SelectorFlags {
  public:
   static constexpr char kAcquireFileLock[] = "acquire_file_lock";
+  static constexpr char kDisableDefaultGroup[] = "disable_default_group";
   static const SelectorFlags& Get();
 
   template <typename T>
@@ -80,16 +80,16 @@ class SelectorFlags {
   SelectorFlags() {
     flags_.EnrollFlag(GroupNameFlag(kGroupNameOpt));
     flags_.EnrollFlag(InstanceNameFlag(kInstanceNameOpt));
-    flags_.EnrollFlag(DisableDefaultGroupFlag(kDisableDefaultGroupOpt));
-    flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLock));
+    flags_.EnrollFlag(DisableDefaultGroupFlag(kDisableDefaultGroup, false));
+    flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLock, true));
   }
 
   SelectorFlag<std::string> GroupNameFlag(const std::string& name);
   SelectorFlag<std::string> InstanceNameFlag(const std::string& name);
   SelectorFlag<bool> DisableDefaultGroupFlag(const std::string& name,
-                                             const bool default_val = false);
+                                             const bool default_val);
   SelectorFlag<bool> AcquireFileLockFlag(const std::string& name,
-                                         const bool default_val = true);
+                                         const bool default_val);
 
   FlagCollection flags_;
 };
