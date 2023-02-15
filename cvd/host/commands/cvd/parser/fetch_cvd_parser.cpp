@@ -29,8 +29,6 @@
 
 namespace cuttlefish {
 
-Result<void> ValidateFetchCvdConfigs(const Json::Value&) { return {}; }
-
 FetchCvdConfigs GenerateFetchCvdFlags(const Json::Value&) {
   FetchCvdConfigs result;
   return result;
@@ -38,8 +36,7 @@ FetchCvdConfigs GenerateFetchCvdFlags(const Json::Value&) {
 
 void InitFetchCvdConfigs(Json::Value&) {}
 
-Result<FetchCvdConfigs> ParseFetchCvdConfigs(Json::Value& root) {
-  CF_EXPECT(ValidateFetchCvdConfigs(root), "Loaded Json validation failed");
+FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root) {
   InitFetchCvdConfigs(root);
   return GenerateFetchCvdFlags(root);
 }

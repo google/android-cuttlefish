@@ -48,12 +48,9 @@ Result<CvdFlags> ParseCvdConfigs(Json::Value& root) {
 
   CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
 
-  results.launch_cvd_flags =
-      CF_EXPECT(ParseLaunchCvdConfigs(root),
-                "parsing json configs for launch_cvd failed");
+  results.launch_cvd_flags = ParseLaunchCvdConfigs(root);
 
-  results.fetch_cvd_flags = CF_EXPECT(
-      ParseFetchCvdConfigs(root), "parsing json configs for fetch_cvd failed");
+  results.fetch_cvd_flags = ParseFetchCvdConfigs(root);
 
   return results;
 }

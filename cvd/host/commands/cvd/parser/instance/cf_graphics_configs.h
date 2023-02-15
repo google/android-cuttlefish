@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-
 namespace cuttlefish {
 void InitGraphicsConfigs(Json::Value& root);
 std::vector<std::string> GenerateGraphicsFlags(const Json::Value& root);

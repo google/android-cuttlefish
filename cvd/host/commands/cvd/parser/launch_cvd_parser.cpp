@@ -65,7 +65,7 @@ void InitCvdConfigs(Json::Value& root) {
   InitInstancesConfigs(root["instances"]);
 }
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
+std::vector<std::string> ParseLaunchCvdConfigs(Json::Value& root) {
   ExtractLaunchTemplates(root["instances"]);
   InitCvdConfigs(root);
   return GenerateCfFlags(root);
