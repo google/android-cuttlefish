@@ -142,6 +142,20 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     return true;
   }
 
+  std::unordered_map<std::string, std::string> ReplaceKernelBootArgs(
+      const std::unordered_map<std::string, std::string>& args) {
+    std::unordered_map<std::string, std::string> ret;
+    std::transform(std::begin(args), std::end(args),
+                   std::inserter(ret, ret.end()), [](const auto& kv) {
+                     const auto& k = kv.first;
+                     const auto& v = kv.second;
+                     return std::make_pair(
+                         android::base::StringReplace(k, " kernel.", " ", true),
+                         v);
+                   });
+    return ret;
+  }
+
   bool PrepareBootEnvImage(const std::string& image_path,
                            const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
     auto tmp_boot_env_image_path = image_path + ".tmp";
@@ -152,21 +166,41 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     // args need to be passed in via the uboot env. This won't be an issue for
     // protect kvm which is running a kernel with bootconfig support.
     if (!instance_.bootconfig_supported()) {
-      auto bootconfig_args = android::base::Join(
-          BootconfigArgsFromConfig(config_, instance_), " ");
+      auto bootconfig_args_result =
+          BootconfigArgsFromConfig(config_, instance_);
+      if (!bootconfig_args_result.ok()) {
+        LOG(ERROR) << "Unable to get bootconfig args from config: "
+                   << bootconfig_args_result.error().Message();
+        return false;
+      }
+      auto bootconfig_args = std::move(bootconfig_args_result.value());
+
       // "androidboot.hardware" kernel parameter has changed to "hardware" in
       // bootconfig and needs to be replaced before being used in the kernel
       // cmdline.
-      bootconfig_args = android::base::StringReplace(
-          bootconfig_args, " hardware=", " androidboot.hardware=", true);
+      auto bootconfig_hardware_it = bootconfig_args.find("hardware");
+      if (bootconfig_hardware_it != bootconfig_args.end()) {
+        bootconfig_args["androidboot.hardware"] =
+            bootconfig_hardware_it->second;
+        bootconfig_args.erase(bootconfig_hardware_it);
+      }
+
       // TODO(b/182417593): Until we pass the module parameters through
       // modules.options, we pass them through bootconfig using
       // 'kernel.<key>=<value>' But if we don't support bootconfig, we need to
       // rename them back to the old cmdline version
-      bootconfig_args =
-          android::base::StringReplace(bootconfig_args, " kernel.", " ", true);
+      bootconfig_args = ReplaceKernelBootArgs(bootconfig_args);
+
+      auto bootconfig_result =
+          BootconfigArgsString(bootconfig_args_result.value(), " ");
+      if (!bootconfig_result.ok()) {
+        LOG(ERROR) << "Unable to get bootconfig args string from config: "
+                   << bootconfig_result.error().Message();
+        return false;
+      }
+
       kernel_cmdline += " ";
-      kernel_cmdline += bootconfig_args;
+      kernel_cmdline += bootconfig_result.value();
     }
 
     if (!WriteEnvironment(instance_, flow, kernel_cmdline, uboot_env_path)) {

@@ -17,14 +17,19 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <unordered_map>
 
+#include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-std::vector<std::string> BootconfigArgsFromConfig(
+Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance);
+
+Result<std::string> BootconfigArgsString(
+    const std::unordered_map<std::string, std::string>& args,
+    const std::string& separator);
 
 }  // namespace cuttlefish
