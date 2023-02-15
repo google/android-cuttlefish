@@ -21,6 +21,7 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/selector/flag.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -56,21 +57,42 @@ constexpr char kInstanceIdField[] = "instance_id";
 constexpr char kInstanceNameField[] = "instance_name";
 
 /**
- * these are used not by instance db but by selector front-end
- *
- * E.g. --instance_name, -group_name, etc
- *
- * A device name is group name followed by "-" followed by a per-
- * instance name (or, interchangeably, instance_name).
- *
- * E.g. "cvd-1" could be a device name, "cvd" being the group name,
- * and "1" being the instance name.
+ * The authentic collection of selector flags
  *
  */
+// names of the flags, which are also used for search
 constexpr char kGroupNameOpt[] = "group_name";
 constexpr char kInstanceNameOpt[] = "instance_name";
 constexpr char kDisableDefaultGroupOpt[] = "disable_default_group";
 constexpr char kAcquireFileLockOpt[] = "acquire_file_lock";
+
+class SelectorFlags {
+ public:
+  static const SelectorFlags& Get();
+
+  template <typename T>
+  Result<SelectorFlag<T>> GetFlag(const std::string& search_key) const {
+    auto flag = CF_EXPECT(flags_.GetFlag<T>(search_key));
+    return flag;
+  }
+
+ private:
+  SelectorFlags() {
+    flags_.EnrollFlag(GroupNameFlag(kGroupNameOpt));
+    flags_.EnrollFlag(InstanceNameFlag(kInstanceNameOpt));
+    flags_.EnrollFlag(DisableDefaultGroupFlag(kDisableDefaultGroupOpt));
+    flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLockOpt));
+  }
+
+  SelectorFlag<std::string> GroupNameFlag(const std::string& name);
+  SelectorFlag<std::string> InstanceNameFlag(const std::string& name);
+  SelectorFlag<bool> DisableDefaultGroupFlag(const std::string& name,
+                                             const bool default_val = false);
+  SelectorFlag<bool> AcquireFileLockFlag(const std::string& name,
+                                         const bool default_val = true);
+
+  FlagCollection flags_;
+};
 
 }  // namespace selector
 }  // namespace cuttlefish
