@@ -17,10 +17,24 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <thread>
 
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
+
+class ProxyServer {
+ public:
+  ProxyServer(std::string label, SharedFD server, std::function<SharedFD()> clients_factory);
+  void Join();
+  ~ProxyServer();
+
+ private:
+  SharedFD stop_fd_;
+  std::thread server_;
+};
+
 // Executes a TCP proxy
 // Accept() is called on the server in a loop, for every client connection a
 // target connection is created through the conn_factory callback and data is
@@ -29,5 +43,8 @@ namespace cuttlefish {
 // closed in another thread. It's recommended the caller disables the default
 // behavior for SIGPIPE before calling this function, otherwise it runs the risk
 // or crashing the process when a connection breaks.
-void Proxy(const std::string& label, SharedFD server, std::function<SharedFD()> conn_factory);
+void Proxy(std::string label, SharedFD server, std::function<SharedFD()> conn_factory);
+std::unique_ptr<ProxyServer> ProxyAsync(std::string label, SharedFD server,
+                                        std::function<SharedFD()> conn_factory);
+
 }  // namespace cuttlefish
