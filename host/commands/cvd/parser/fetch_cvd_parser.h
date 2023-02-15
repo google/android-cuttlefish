@@ -16,7 +16,6 @@
 
 #pragma once
 #include <json/json.h>
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -30,6 +29,6 @@ struct FetchCvdConfigs {
   std::vector<FetchCvdDeviceConfigs> instances;
 };
 
-Result<FetchCvdConfigs> ParseFetchCvdConfigs(Json::Value& root);
+FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
