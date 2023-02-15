@@ -55,10 +55,9 @@ class SelectorCommonParser {
 
  private:
   SelectorCommonParser(const std::string& client_user_home,
-                       cvd_common::Args& selector_args,
                        const cvd_common::Envs& envs);
 
-  Result<void> ParseOptions();
+  Result<void> ParseOptions(cvd_common::Args& selector_args);
   struct ParsedNameFlags {
     std::optional<std::string> group_name;
     std::optional<std::vector<std::string>> instance_names;
@@ -76,12 +75,8 @@ class SelectorCommonParser {
 
   // temporarily keeps the leftover of the input cmd_args
   // Will be never used after parsing is done
-  // Never be nullptr as it is addressof(object).
   std::string client_user_home_;
-  // these are pointers as the SelectorCommonParser is movable, and
-  // selector_args_ and envs_ must not be moved along with other fields
-  cvd_common::Args* selector_args_;
-  const cvd_common::Envs* envs_;
+  const cvd_common::Envs& envs_;
 
   // processed result
   std::optional<std::string> group_name_;
