@@ -161,6 +161,77 @@ func TestUploadFilesSucceeds(t *testing.T) {
 	}
 }
 
+func TestUploadFilesExponentialBackoff(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
+	timestamps := make([]time.Time, 0)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		timestamps = append(timestamps, time.Now())
+		if len(timestamps) < 3 {
+			writeErr(w, 500)
+			return
+		}
+		writeOK(w, struct{}{})
+	}))
+	defer ts.Close()
+	opts := &ServiceOptions{
+		RootEndpoint:   ts.URL,
+		DumpOut:        io.Discard,
+		ChunkSizeBytes: 2,
+		ChunkUploadBackOffOpts: BackOffOpts{
+			InitialDuration: 100 * time.Millisecond,
+			Multiplier:      2,
+			MaxElapsedTime:  1 * time.Minute,
+		},
+	}
+	srv, _ := NewService(opts)
+
+	err := srv.UploadFiles("foo", "bar", []string{waldoFile})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if timestamps[1].Sub(timestamps[0]) < 100*time.Millisecond {
+		t.Fatal("first retry shouldn't be in less than 100ms")
+	}
+	if timestamps[2].Sub(timestamps[1]) < 200*time.Millisecond {
+		t.Fatal("first retry shouldn't be in less than 200ms")
+	}
+}
+
+func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
+	retries := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		retries = retries + 1
+		writeErr(w, 500)
+	}))
+	defer ts.Close()
+	opts := &ServiceOptions{
+		RootEndpoint:   ts.URL,
+		DumpOut:        io.Discard,
+		ChunkSizeBytes: 2,
+		ChunkUploadBackOffOpts: BackOffOpts{
+			InitialDuration: 100 * time.Millisecond,
+			Multiplier:      2,
+			MaxElapsedTime:  1 * time.Second,
+		},
+	}
+	srv, _ := NewService(opts)
+
+	err := srv.UploadFiles("foo", "bar", []string{waldoFile})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	expRetries := 4
+	if retries != expRetries {
+		t.Fatalf("expected %d, got %d", expRetries, retries)
+	}
+}
+
 func TestDeleteHosts(t *testing.T) {
 	existingNames := map[string]struct{}{"bar": {}, "baz": {}}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

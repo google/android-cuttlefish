@@ -36,6 +36,7 @@ import (
 	apiv1 "github.com/google/cloud-android-orchestration/api/v1"
 	wclient "github.com/google/cloud-android-orchestration/pkg/webrtcclient"
 
+	"github.com/cenkalti/backoff/v4"
 	hoapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pion/webrtc/v3"
@@ -66,14 +67,22 @@ func (e *ApiCallError) Is(target error) bool {
 	return errors.As(target, &a) && *a == *e
 }
 
+type BackOffOpts struct {
+	InitialDuration     time.Duration
+	RandomizationFactor float64
+	Multiplier          float64
+	MaxElapsedTime      time.Duration
+}
+
 type ServiceOptions struct {
-	RootEndpoint   string
-	ProxyURL       string
-	DumpOut        io.Writer
-	ErrOut         io.Writer
-	RetryAttempts  int
-	RetryDelay     time.Duration
-	ChunkSizeBytes int64
+	RootEndpoint           string
+	ProxyURL               string
+	DumpOut                io.Writer
+	ErrOut                 io.Writer
+	RetryAttempts          int
+	RetryDelay             time.Duration
+	ChunkSizeBytes         int64
+	ChunkUploadBackOffOpts BackOffOpts
 }
 
 type Service interface {
@@ -340,6 +349,7 @@ func (c *serviceImpl) UploadFiles(host, uploadDir string, filenames []string) er
 		Filenames:      filenames,
 		ChunkSizeBytes: c.ChunkSizeBytes,
 		DumpOut:        c.DumpOut,
+		BackOffOpts:    c.ChunkUploadBackOffOpts,
 	}
 	return uploader.Upload()
 }
@@ -421,6 +431,7 @@ type filesUploader struct {
 	Filenames      []string
 	ChunkSizeBytes int64
 	DumpOut        io.Writer
+	BackOffOpts
 }
 
 func (u *filesUploader) Upload() error {
@@ -497,6 +508,7 @@ func (u *filesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 			EndpointURL: u.EndpointURL,
 			DumpOut:     u.DumpOut,
 			JobsChan:    jobsChan,
+			BackOffOpts: u.BackOffOpts,
 		}
 		go func() {
 			defer wg.Done()
@@ -528,15 +540,36 @@ type uploadChunkWorker struct {
 	EndpointURL string
 	DumpOut     io.Writer
 	JobsChan    <-chan uploadChunkJob
+	BackOffOpts
 }
 
 // Returns a channel that will return the result for each of the handled `uploadChunkJob` instances.
 func (w *uploadChunkWorker) Start() <-chan error {
 	ch := make(chan error)
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = w.BackOffOpts.InitialDuration
+	b.RandomizationFactor = w.BackOffOpts.RandomizationFactor
+	b.Multiplier = w.BackOffOpts.Multiplier
+	b.MaxElapsedTime = w.BackOffOpts.MaxElapsedTime
+	b.Reset()
 	go func() {
 		defer close(ch)
 		for job := range w.JobsChan {
-			ch <- w.upload(job)
+			var err error
+			for {
+				err = w.upload(job)
+				if err == nil {
+					b.Reset()
+					break
+				}
+				duration := b.NextBackOff()
+				if duration == backoff.Stop {
+					break
+				} else {
+					time.Sleep(duration)
+				}
+			}
+			ch <- err
 		}
 	}()
 	return ch
@@ -666,4 +699,13 @@ func BuildCVDLogsURL(rootEndpoint, host, cvd string) string {
 func isRetryableErrorCode(code int) bool {
 	return code == http.StatusServiceUnavailable ||
 		code == http.StatusBadGateway
+}
+
+func DefaultChunkUploadBackOffOpts() BackOffOpts {
+	return BackOffOpts{
+		InitialDuration:     500 * time.Millisecond,
+		RandomizationFactor: 0.5,
+		Multiplier:          1.5,
+		MaxElapsedTime:      2 * time.Minute,
+	}
 }
