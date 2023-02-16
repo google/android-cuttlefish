@@ -28,37 +28,6 @@
 
 namespace cuttlefish {
 
-static std::map<std::string, Json::ValueType> kGraphicsKeyMap = {
-    {"displays", Json::ValueType::arrayValue},
-};
-static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
-    {"width", Json::ValueType::intValue},
-    {"height", Json::ValueType::intValue},
-    {"dpi", Json::ValueType::intValue},
-    {"refresh_rate_hertz", Json::ValueType::intValue},
-};
-
-Result<void> ValidateDisplaysConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kDisplayKeyMap),
-            "ValidateDisplaysConfigs ValidateTypo fail");
-  return {};
-}
-
-Result<void> ValidateGraphicsConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kGraphicsKeyMap),
-            "ValidateGraphicsConfigs ValidateTypo fail");
-
-  if (root.isMember("displays") && root["displays"].size() != 0) {
-    int num_displays = root["displays"].size();
-    for (int i = 0; i < num_displays; i++) {
-      CF_EXPECT(ValidateDisplaysConfigs(root["displays"][i]),
-                "ValidateDisplaysConfigs fail");
-    }
-  }
-
-  return {};
-}
-
 void InitGraphicsConfigs(Json::Value& instances) {
   InitIntConfigSubGroupVector(instances, "graphics", "displays", "width",
                               CF_DEFAULTS_DISPLAY_WIDTH);

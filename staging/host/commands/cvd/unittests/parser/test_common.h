@@ -21,6 +21,8 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 #define GENERATE_MVP_FLAGS_ONLY true
 namespace cuttlefish {
 
@@ -31,5 +33,6 @@ bool FindConfig(const std::vector<std::string>& vec,
 
 bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
                             const std::string& str);
+Result<std::vector<std::string>> LaunchCvdParserTester(Json::Value& root);
 
 }  // namespace cuttlefish

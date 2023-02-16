@@ -16,10 +16,19 @@
 
 #pragma once
 #include <json/json.h>
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> ParseFetchCvdConfigs(Json::Value& root);
+struct FetchCvdDeviceConfigs {
+  std::string system_build;
+  std::string kernel_build;
+};
+
+struct FetchCvdConfigs {
+  std::string credential;
+  std::vector<FetchCvdDeviceConfigs> instances;
+};
+
+FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
