@@ -29,4 +29,7 @@ bool ParseJsonString(std::string& json_text, Json::Value& root);
 bool FindConfig(const std::vector<std::string>& vec,
                 const std::string& element);
 
+bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
+                            const std::string& str);
+
 }  // namespace cuttlefish
