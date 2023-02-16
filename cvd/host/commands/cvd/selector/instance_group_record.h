@@ -90,6 +90,7 @@ class LocalInstanceGroup {
    * To create InstanceRecords, we should create InstanceGroup first.
    */
   FRIEND_TEST(CvdInstanceRecordUnitTest, Fields);
+  FRIEND_TEST(CvdInstanceRecordUnitTest, Copy);
 
   friend class CvdInstanceGroupUnitTest;
   friend class CvdInstanceGroupSearchUnitTest;
