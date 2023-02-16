@@ -23,17 +23,6 @@
 
 namespace cuttlefish {
 
-static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
-    {"serial_number", Json::ValueType::stringValue},
-    {"guest_enforce_security", Json::ValueType::booleanValue},
-};
-
-Result<void> ValidateSecurityConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kSecurityKeyMap),
-            "ValidateSecurityConfigs ValidateTypo fail");
-  return {};
-}
-
 /*This function is created to cover the initiation use_random_serial flag
 when the json value of serial_number equal "@random"
 */

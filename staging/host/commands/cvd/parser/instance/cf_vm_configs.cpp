@@ -25,32 +25,6 @@
 
 namespace cuttlefish {
 
-std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
-    {"enable_sandbox", Json::ValueType::booleanValue},
-};
-
-static std::map<std::string, Json::ValueType> kVmKeyMap = {
-    {"cpus", Json::ValueType::intValue},
-    {"memory_mb", Json::ValueType::intValue},
-    {"use_sdcard", Json::ValueType::booleanValue},
-    {"setupwizard_mode", Json::ValueType::stringValue},
-    {"uuid", Json::ValueType::stringValue},
-    {"crosvm", Json::ValueType::objectValue},
-    {"qemu", Json::ValueType::objectValue},
-    {"gem5", Json::ValueType::objectValue},
-    {"custom_actions", Json::ValueType::arrayValue},
-};
-
-Result<void> ValidateVmConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kVmKeyMap),
-            "ValidateVmConfigs ValidateTypo fail");
-  if (root.isMember("crosvm")) {
-    CF_EXPECT(ValidateTypo(root["crosvm"], kCrosvmKeyMap),
-              "ValidateVmConfigs ValidateTypo crosvm fail");
-  }
-  return {};
-}
-
 void InitVmManagerConfig(Json::Value& instances) {
   // Allocate and initialize with default values
   int size = instances.size();

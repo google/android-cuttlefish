@@ -29,6 +29,7 @@ cc_library_host_static {
         "cf_configs_instances.cpp",
         "launch_cvd_templates.cpp",
         "launch_cvd_parser.cpp",
+        "cf_flags_validator.cpp",
         "fetch_cvd_parser.cpp",
         "load_configs_parser.cpp",
     ],
