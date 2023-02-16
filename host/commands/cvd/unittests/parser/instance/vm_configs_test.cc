@@ -760,4 +760,68 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSandboxFlagFullJson) {
       << "enable_sandbox flag is missing or wrongly formatted";
 }
 
+TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagEmptyJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--custom_actions=unset)"))
+      << "custom_actions flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
+  const char* test_string = R""""(
+{
+        "instances" :
+        [
+            {
+            },
+            {
+                "vm": {
+                        "custom_actions" : [
+                                {
+                                        "device_states": [
+                                                {
+                                                        "lid_switch_open": false,
+                                                        "hinge_angle_value": 0
+                                                }
+                                        ]
+                                }
+                        ]
+                }
+            }
+        ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  std::string expected_custom_actions =
+      R"""(--custom_actions=[{\"device_states\":[{\"hinge_angle_value\":0,\"lid_switch_open\":false}]}])""";
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = ParseLaunchCvdConfigs(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(
+      FindConfigIgnoreSpaces(*serialized_data, R"(--custom_actions=unset)"))
+      << "custom_actions flag is missing or wrongly formatted";
+
+  EXPECT_TRUE(FindConfigIgnoreSpaces(*serialized_data, expected_custom_actions))
+      << "custom_actions flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
