@@ -42,6 +42,7 @@ bool IsSparseImage(const std::string& image_path) {
 
 bool ConvertToRawImage(const std::string& image_path) {
   if (!IsSparseImage(image_path)) {
+    LOG(INFO) << "Skip non-sparse image " << image_path;
     return false;
   }
 
