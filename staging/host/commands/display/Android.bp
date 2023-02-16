@@ -29,6 +29,7 @@ cc_binary {
         "libjsoncpp",
     ],
     static_libs: [
+        "libcuttlefish_display_flags",
         "libcuttlefish_host_config",
         "libgflags",
     ],
