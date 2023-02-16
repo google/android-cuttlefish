@@ -57,6 +57,9 @@
   <string name="config_wlan_network_service_package" translatable="false">com.android.ims</string>
   <string name="config_qualified_networks_service_package">com.android.qns</string>
   <string name="config_gba_package">com.android.gbaservice</string>
+  <string name="config_ims_mmtel_package">com.android.imsstack</string>
+  <string name="config_ims_rcs_package">com.android.imsstack</string>
+
 
   <!-- Enable Night display, which requires HWC 2.0. -->
   <bool name="config_nightDisplayAvailable">true</bool>

@@ -184,6 +184,13 @@ PRODUCT_PACKAGES += \
     GbaService
 
 #
+# Package for AOSP ImsStack
+#
+PRODUCT_PACKAGES += \
+    ImsStack \
+    libimsstack
+
+#
 # Packages for testing
 #
 PRODUCT_PACKAGES += \
