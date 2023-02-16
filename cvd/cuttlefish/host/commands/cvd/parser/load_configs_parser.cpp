@@ -28,6 +28,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
+#include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/launch_cvd_parser.h"
 
@@ -44,12 +45,12 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
 
 Result<CvdFlags> ParseCvdConfigs(Json::Value& root) {
   CvdFlags results;
-  results.launch_cvd_flags =
-      CF_EXPECT(ParseLaunchCvdConfigs(root),
-                "parsing json configs for launch_cvd failed");
 
-  results.fetch_cvd_flags = CF_EXPECT(
-      ParseFetchCvdConfigs(root), "parsing json configs for fetch_cvd failed");
+  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
+
+  results.launch_cvd_flags = ParseLaunchCvdConfigs(root);
+
+  results.fetch_cvd_flags = ParseFetchCvdConfigs(root);
 
   return results;
 }
