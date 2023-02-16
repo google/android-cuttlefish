@@ -51,6 +51,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
+#include "host/commands/assemble_cvd/display_flags.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
@@ -93,23 +94,12 @@ DEFINE_vec(gdb_port, std::to_string(CF_DEFAULTS_GDB_PORT),
              "kernel must have been built with CONFIG_RANDOMIZE_BASE "
              "disabled.");
 
-constexpr const char kDisplayHelp[] =
-    "Comma separated key=value pairs of display properties. Supported "
-    "properties:\n"
-    " 'width': required, width of the display in pixels\n"
-    " 'height': required, height of the display in pixels\n"
-    " 'dpi': optional, default 320, density of the display\n"
-    " 'refresh_rate_hz': optional, default 60, display refresh rate in Hertz\n"
-    ". Example usage: \n"
-    "--display0=width=1280,height=720\n"
-    "--display1=width=1440,height=900,dpi=480,refresh_rate_hz=30\n";
-
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
 // when assemble_cvd switches to using the new flag parsing library.
-DEFINE_string(display0, CF_DEFAULTS_DISPLAY0, kDisplayHelp);
-DEFINE_string(display1, CF_DEFAULTS_DISPLAY1, kDisplayHelp);
-DEFINE_string(display2, CF_DEFAULTS_DISPLAY2, kDisplayHelp);
-DEFINE_string(display3, CF_DEFAULTS_DISPLAY3, kDisplayHelp);
+DEFINE_string(display0, CF_DEFAULTS_DISPLAY0, cuttlefish::kDisplayHelp);
+DEFINE_string(display1, CF_DEFAULTS_DISPLAY1, cuttlefish::kDisplayHelp);
+DEFINE_string(display2, CF_DEFAULTS_DISPLAY2, cuttlefish::kDisplayHelp);
+DEFINE_string(display3, CF_DEFAULTS_DISPLAY3, cuttlefish::kDisplayHelp);
 
 // TODO(b/171305898): mark these as deprecated after multi-display is fully
 // enabled.
@@ -446,60 +436,6 @@ std::string StrForInstance(const std::string& prefix, int num) {
   std::ostringstream stream;
   stream << prefix << std::setfill('0') << std::setw(2) << num;
   return stream.str();
-}
-
-std::optional<CuttlefishConfig::DisplayConfig> ParseDisplayConfig(
-    const std::string& flag) {
-  if (flag.empty()) {
-    return std::nullopt;
-  }
-
-  std::unordered_map<std::string, std::string> props;
-
-  const std::vector<std::string> pairs = android::base::Split(flag, ",");
-  for (const std::string& pair : pairs) {
-    const std::vector<std::string> keyvalue = android::base::Split(pair, "=");
-    CHECK_EQ(2, keyvalue.size()) << "Invalid display: " << flag;
-
-    const std::string& prop_key = keyvalue[0];
-    const std::string& prop_val = keyvalue[1];
-    props[prop_key] = prop_val;
-  }
-
-  CHECK(props.find("width") != props.end())
-      << "Display configuration missing 'width' in " << flag;
-  CHECK(props.find("height") != props.end())
-      << "Display configuration missing 'height' in " << flag;
-
-  int display_width;
-  CHECK(android::base::ParseInt(props["width"], &display_width))
-      << "Display configuration invalid 'width' in " << flag;
-
-  int display_height;
-  CHECK(android::base::ParseInt(props["height"], &display_height))
-      << "Display configuration invalid 'height' in " << flag;
-
-  int display_dpi = CF_DEFAULTS_DISPLAY_DPI;
-  auto display_dpi_it = props.find("dpi");
-  if (display_dpi_it != props.end()) {
-    CHECK(android::base::ParseInt(display_dpi_it->second, &display_dpi))
-        << "Display configuration invalid 'dpi' in " << flag;
-  }
-
-  int display_refresh_rate_hz = CF_DEFAULTS_DISPLAY_REFRESH_RATE;
-  auto display_refresh_rate_hz_it = props.find("refresh_rate_hz");
-  if (display_refresh_rate_hz_it != props.end()) {
-    CHECK(android::base::ParseInt(display_refresh_rate_hz_it->second,
-                                  &display_refresh_rate_hz))
-        << "Display configuration invalid 'refresh_rate_hz' in " << flag;
-  }
-
-  return CuttlefishConfig::DisplayConfig{
-      .width = display_width,
-      .height = display_height,
-      .dpi = display_dpi,
-      .refresh_rate_hz = display_refresh_rate_hz,
-  };
 }
 
 #ifdef __ANDROID__
@@ -1155,19 +1091,19 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         display_configs = instances_display_configs[instance_index];
       } // else display_configs is an empty vector
     } else {
-      auto display0 = ParseDisplayConfig(FLAGS_display0);
+      auto display0 = CF_EXPECT(ParseDisplayConfig(FLAGS_display0));
       if (display0) {
         display_configs.push_back(*display0);
       }
-      auto display1 = ParseDisplayConfig(FLAGS_display1);
+      auto display1 = CF_EXPECT(ParseDisplayConfig(FLAGS_display1));
       if (display1) {
         display_configs.push_back(*display1);
       }
-      auto display2 = ParseDisplayConfig(FLAGS_display2);
+      auto display2 = CF_EXPECT(ParseDisplayConfig(FLAGS_display2));
       if (display2) {
         display_configs.push_back(*display2);
       }
-      auto display3 = ParseDisplayConfig(FLAGS_display3);
+      auto display3 = CF_EXPECT(ParseDisplayConfig(FLAGS_display3));
       if (display3) {
         display_configs.push_back(*display3);
       }
