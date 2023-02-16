@@ -23,31 +23,6 @@
 
 namespace cuttlefish {
 
-static std::map<std::string, Json::ValueType> kernelkeyMap = {
-    {"extra_kernel_cmdline", Json::ValueType::stringValue},
-};
-
-static std::map<std::string, Json::ValueType> kBootKeyMap = {
-    {"extra_bootconfig_args", Json::ValueType::stringValue},
-    {"kernel", Json::ValueType::objectValue},
-    {"enable_bootanimation", Json::ValueType::booleanValue},
-};
-
-Result<void> ValidateKernelConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kernelkeyMap), "ValidateKernelConfigs ValidateTypo fail");
-  return {};
-}
-
-Result<void> ValidateBootConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kBootKeyMap), "ValidateBootConfigs ValidateTypo fail");
-
-   if (root.isMember("kernel")) {
-    CF_EXPECT(ValidateKernelConfigs(root["kernel"]), "ValidateKernelConfigs fail");
-  }
-
-  return {};
-}
-
 void InitBootConfigs(Json::Value& instances) {
   InitStringConfig(instances, "boot", "extra_bootconfig_args",
                    CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
