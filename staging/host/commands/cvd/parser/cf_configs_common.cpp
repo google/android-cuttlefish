@@ -254,12 +254,15 @@ std::vector<std::string> MergeResults(std::vector<std::string> first_list,
  * @param dst : destination json object tree(modified in place)
  * @param src : input json object tree to be merged
  */
-void MergeJson(Json::Value& dst, const Json::Value& src) {
-  if (!dst.isObject() || !src.isObject()) return;
-
+void MergeTwoJsonObjs(Json::Value& dst, const Json::Value& src) {
+  // Merge all members of src into dst
   for (const auto& key : src.getMemberNames()) {
-    if (dst[key].isObject()) {
-      MergeJson(dst[key], src[key]);
+    if (src[key].type() == Json::arrayValue) {
+      for (int i = 0; i < src[key].size(); i++) {
+        MergeTwoJsonObjs(dst[key][i], src[key][i]);
+      }
+    } else if (src[key].type() == Json::objectValue) {
+      MergeTwoJsonObjs(dst[key], src[key]);
     } else {
       dst[key] = src[key];
     }
