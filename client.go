@@ -94,6 +94,8 @@ type Service interface {
 	CreateUpload(host string) (string, error)
 
 	UploadFiles(host, uploadDir string, filenames []string) error
+
+	RootURI() string
 }
 
 type serviceImpl struct {
@@ -400,6 +402,10 @@ func (c *serviceImpl) doRequest(method, path string, reqpl, respl any) error {
 		}
 	}
 	return nil
+}
+
+func (s *serviceImpl) RootURI() string {
+	return s.RootEndpoint
 }
 
 const openConnections = 32
