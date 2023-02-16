@@ -66,7 +66,7 @@ TEST(FlagsInheritanceTest, MergeTwoIndependentJson) {
   EXPECT_TRUE(ParseJsonString(dst_text, dst_object)) << "Invalid Json string";
   EXPECT_TRUE(ParseJsonString(src_text, src_object)) << "Invalid Json string";
 
-  cuttlefish::MergeJson(dst_object, src_object);
+  cuttlefish::MergeTwoJsonObjs(dst_object, src_object);
   EXPECT_TRUE(dst_object["instances"][0].isMember("graphics"));
   EXPECT_TRUE(dst_object["instances"][0]["graphics"].isMember("displays"));
   EXPECT_TRUE(
@@ -125,7 +125,7 @@ TEST(FlagsInheritanceTest, MergeTwoOverlappedJson) {
   EXPECT_TRUE(ParseJsonString(dst_text, dst_object)) << "Invalid Json string";
   EXPECT_TRUE(ParseJsonString(src_text, src_object)) << "Invalid Json string";
 
-  cuttlefish::MergeJson(dst_object, src_object);
+  cuttlefish::MergeTwoJsonObjs(dst_object, src_object);
   EXPECT_TRUE(dst_object["instances"][0].isMember("graphics"));
   EXPECT_TRUE(dst_object["instances"][0]["graphics"].isMember("displays"));
   EXPECT_TRUE(
