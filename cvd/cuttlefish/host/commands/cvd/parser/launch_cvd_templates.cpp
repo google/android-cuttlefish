@@ -244,7 +244,7 @@ Json::Value ExtractJsonTemplate(const Json::Value& instance,
 
   Json::Reader reader;
   reader.parse(json_text, result);
-  MergeJson(result, instance);
+  MergeTwoJsonObjs(result, instance);
   return result;
 }
 
