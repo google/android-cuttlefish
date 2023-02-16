@@ -724,6 +724,9 @@ class DeviceControlApp {
   }
 
   #onAdbConnected() {
+    if (this.#adbConnected) {
+       return;
+    }
     // Screen changed messages are not reported until after boot has completed.
     // Certain default adb buttons change screen state, so wait for boot
     // completion before enabling these buttons.
