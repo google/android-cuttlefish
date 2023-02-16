@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-
 namespace cuttlefish {
 std::vector<std::string> GenerateMetricsFlags(const Json::Value& root);
 };  // namespace cuttlefish

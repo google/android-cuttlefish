@@ -19,6 +19,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "host/commands/cvd/parser/cf_flags_validator.h"
+#include "host/commands/cvd/parser/launch_cvd_parser.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
@@ -50,6 +52,11 @@ bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
     }
   }
   return false;
+}
+
+Result<std::vector<std::string>> LaunchCvdParserTester(Json::Value& root) {
+  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
+  return ParseLaunchCvdConfigs(root);
 }
 
 }  // namespace cuttlefish
