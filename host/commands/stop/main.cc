@@ -20,6 +20,7 @@
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -180,6 +181,7 @@ std::tuple<std::int32_t, bool> GetFlagValues(int argc, char** argv) {
           .Help("If provided, deletes the instance dir after attempting to "
                 "stop each instance."));
   flags.emplace_back(HelpFlag(flags));
+  flags.emplace_back(HelpXmlFlag(flags, std::cout));
   flags.emplace_back(UnexpectedArgumentGuard());
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
