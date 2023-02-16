@@ -31,21 +31,6 @@
 
 namespace cuttlefish {
 
-// json parameters definitions
-static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
-    {"netsim_bt", Json::ValueType::booleanValue},
-    {"instances", Json::ValueType::arrayValue}};
-
-Result<void> ValidateCfConfigs(const Json::Value& root) {
-  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap),
-            "Typo in config main parameters");
-  CF_EXPECT(root.isMember("instances"), "instances object is missing");
-  CF_EXPECT(ValidateInstancesConfigs(root["instances"]),
-            "ValidateInstancesConfigs failed");
-
-  return {};
-}
-
 std::string GenerateNumInstancesFlag(const Json::Value& root) {
   int num_instances = root["instances"].size();
   LOG(DEBUG) << "num_instances = " << num_instances;
@@ -80,8 +65,7 @@ void InitCvdConfigs(Json::Value& root) {
   InitInstancesConfigs(root["instances"]);
 }
 
-Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
-  CF_EXPECT(ValidateCfConfigs(root), "Loaded Json validation failed");
+std::vector<std::string> ParseLaunchCvdConfigs(Json::Value& root) {
   ExtractLaunchTemplates(root["instances"]);
   InitCvdConfigs(root);
   return GenerateCfFlags(root);
