@@ -33,5 +33,23 @@ bool FindConfig(const std::vector<std::string>& vec,
   auto it = find(vec.begin(), vec.end(), element);
   return it != vec.end();
 }
+bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
+                            const std::string& str) {
+  std::string target = str;
+  target.erase(std::remove(target.begin(), target.end(), ' '), target.end());
+  target.erase(std::remove(target.begin(), target.end(), '\t'), target.end());
+
+  for (const auto& s : vec) {
+    std::string current = s;
+    current.erase(std::remove(current.begin(), current.end(), ' '),
+                  current.end());
+    current.erase(std::remove(current.begin(), current.end(), '\t'),
+                  target.end());
+    if (current == target) {
+      return true;
+    }
+  }
+  return false;
+}
 
 }  // namespace cuttlefish
