@@ -15,15 +15,12 @@
  */
 
 #pragma once
-
 #include <string>
 #include <vector>
 
 #include <json/json.h>
 
-#include "common/libs/utils/result.h"
-
 namespace cuttlefish {
-Result<void> InitSecurityConfigs(Json::Value& root);
-Result<std::vector<std::string>> GenerateSecurityFlags(const Json::Value& root);
+void InitSecurityConfigs(Json::Value& root);
+std::vector<std::string> GenerateSecurityFlags(const Json::Value& root);
 };  // namespace cuttlefish

@@ -21,7 +21,7 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/flag.h"
+#include "host/commands/cvd/selector/flag.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -67,27 +67,29 @@ class SelectorFlags {
   static constexpr char kGroupName[] = "group_name";
   static constexpr char kInstanceName[] = "instance_name";
   static constexpr char kAcquireFileLock[] = "acquire_file_lock";
-  static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
-  static constexpr char kVerbosity[] = "verbosity";
+  static constexpr char kDisableDefaultGroup[] = "disable_default_group";
   static const SelectorFlags& Get();
-  static Result<SelectorFlags> New();
 
-  Result<CvdFlagProxy> GetFlag(const std::string& search_key) const {
-    auto flag = CF_EXPECT(flags_.GetFlag(search_key));
+  template <typename T>
+  Result<SelectorFlag<T>> GetFlag(const std::string& search_key) const {
+    auto flag = CF_EXPECT(flags_.GetFlag<T>(search_key));
     return flag;
   }
 
-  std::vector<CvdFlagProxy> Flags() const { return flags_.Flags(); }
-  const auto& FlagsAsCollection() const { return flags_; }
-
  private:
-  SelectorFlags() = default;
+  SelectorFlags() {
+    flags_.EnrollFlag(GroupNameFlag(kGroupName));
+    flags_.EnrollFlag(InstanceNameFlag(kInstanceName));
+    flags_.EnrollFlag(DisableDefaultGroupFlag(kDisableDefaultGroup, false));
+    flags_.EnrollFlag(AcquireFileLockFlag(kAcquireFileLock, true));
+  }
 
-  static CvdFlag<std::string> GroupNameFlag(const std::string& name);
-  static CvdFlag<std::string> InstanceNameFlag(const std::string& name);
-  static CvdFlag<bool> AcquireFileLockFlag(const std::string& name,
-                                           const bool default_val);
-  static CvdFlag<std::string> VerbosityFlag(const std::string& name);
+  SelectorFlag<std::string> GroupNameFlag(const std::string& name);
+  SelectorFlag<std::string> InstanceNameFlag(const std::string& name);
+  SelectorFlag<bool> DisableDefaultGroupFlag(const std::string& name,
+                                             const bool default_val);
+  SelectorFlag<bool> AcquireFileLockFlag(const std::string& name,
+                                         const bool default_val);
 
   FlagCollection flags_;
 };

@@ -33,7 +33,8 @@ namespace selector {
 class SelectorCommonParser {
  public:
   // parses common selector options, and drop the used selector_args
-  static Result<SelectorCommonParser> Parse(cvd_common::Args& selector_args,
+  static Result<SelectorCommonParser> Parse(const uid_t client_uid,
+                                            cvd_common::Args& selector_args,
                                             const cvd_common::Envs& envs);
 
   std::optional<std::string> GroupName() const { return group_name_; }
@@ -44,7 +45,6 @@ class SelectorCommonParser {
 
   // CF_ERR --> unknown, true --> overridden, false --> not overridden.
   Result<bool> HomeOverridden() const;
-  std::optional<std::string> Home() const;
 
   /*
    * returns if selector flags has device select options: e.g. --group_name

@@ -16,8 +16,6 @@
 
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
-#include <memory>
-
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "host/commands/cvd/common_utils.h"
@@ -26,7 +24,7 @@ namespace cuttlefish {
 
 class HostToolTargetManagerImpl : public HostToolTargetManager {
  public:
-  HostToolTargetManagerImpl() = default;
+  INJECT(HostToolTargetManagerImpl(const OperationToBinsMap&));
 
   Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) override;
   Result<std::string> ExecBaseName(
@@ -42,15 +40,20 @@ class HostToolTargetManagerImpl : public HostToolTargetManager {
   HostToolTargetMap host_target_table_;
   // predefined mapping from an operation to potential executable binary names
   // e.g. "start" -> {"cvd_internal_start", "launch_cvd"}
+  const OperationToBinsMap& op_to_possible_bins_map_;
   std::mutex table_mutex_;
 };
+
+HostToolTargetManagerImpl::HostToolTargetManagerImpl(
+    const OperationToBinsMap& op_to_bins_map)
+    : op_to_possible_bins_map_{op_to_bins_map} {}
 
 // use this only after acquiring the table_mutex_
 Result<void> HostToolTargetManagerImpl::EnsureExistence(
     const std::string& artifacts_path) {
   if (!Contains(host_target_table_, artifacts_path)) {
-    HostToolTarget new_host_tool_target =
-        CF_EXPECT(HostToolTarget::Create(artifacts_path));
+    HostToolTarget new_host_tool_target = CF_EXPECT(
+        HostToolTarget::Create(artifacts_path, op_to_possible_bins_map_));
     host_target_table_.emplace(artifacts_path, std::move(new_host_tool_target));
   }
   return {};
@@ -63,10 +66,9 @@ Result<void> HostToolTargetManagerImpl::UpdateOutdated(
   if (!host_target.IsDirty()) {
     return {};
   }
-  LOG(INFO) << artifacts_path << " is new, so updating HostToolTarget";
-  host_target_table_.erase(artifacts_path);
-  HostToolTarget new_host_tool_target =
-      CF_EXPECT(HostToolTarget::Create(artifacts_path));
+  LOG(ERROR) << artifacts_path << " is new, so updating HostToolTarget";
+  HostToolTarget new_host_tool_target = CF_EXPECT(
+      HostToolTarget::Create(artifacts_path, op_to_possible_bins_map_));
   host_target_table_.emplace(artifacts_path, std::move(new_host_tool_target));
   return {};
 }
@@ -98,9 +100,10 @@ Result<std::string> HostToolTargetManagerImpl::ExecBaseName(
   return base_name;
 }
 
-std::unique_ptr<HostToolTargetManager> NewHostToolTargetManager() {
-  return std::unique_ptr<HostToolTargetManager>(
-      new HostToolTargetManagerImpl());
+fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
+HostToolTargetManagerComponent() {
+  return fruit::createComponent()
+      .bind<HostToolTargetManager, HostToolTargetManagerImpl>();
 }
 
 }  // namespace cuttlefish

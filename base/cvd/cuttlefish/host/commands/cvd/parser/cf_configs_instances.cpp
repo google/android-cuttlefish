@@ -16,45 +16,33 @@
 
 #include "host/commands/cvd/parser/cf_configs_instances.h"
 
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include <android-base/logging.h>
-#include <json/json.h>
+#include <iostream>
 
-#include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
-#include "host/commands/cvd/parser/instance/cf_disk_configs.h"
 #include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
+#include "host/commands/cvd/parser/instance/cf_metrics_configs.h"
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
-#include "host/commands/cvd/parser/instance/cf_streaming_configs.h"
 #include "host/commands/cvd/parser/instance/cf_vm_configs.h"
 
 namespace cuttlefish {
 
-Result<void> InitInstancesConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, "", {"name"}));
-  }
-  CF_EXPECT(InitBootConfigs(instances));
-  CF_EXPECT(InitDiskConfigs(instances));
-  CF_EXPECT(InitGraphicsConfigs(instances));
-  CF_EXPECT(InitSecurityConfigs(instances));
-  CF_EXPECT(InitStreamingConfigs(instances));
-  CF_EXPECT(InitVmConfigs(instances));
-  return {};
+void InitInstancesConfigs(Json::Value& root) {
+  InitVmConfigs(root);
+  InitBootConfigs(root);
+  InitSecurityConfigs(root);
+  InitGraphicsConfigs(root);
 }
 
-Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& instances) {
-  std::vector<std::string> result = CF_EXPECT(GenerateBootFlags(instances));
-  result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateGraphicsFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateStreamingFlags(instances)));
-  result = MergeResults(result, CF_EXPECT(GenerateVmFlags(instances)));
+std::vector<std::string> GenerateInstancesFlags(const Json::Value& root) {
+  std::vector<std::string> result = GenerateVmFlags(root);
+  if (!GENERATE_MVP_FLAGS_ONLY) {
+    result = MergeResults(result, GenerateBootFlags(root));
+  }
+  result = MergeResults(result, GenerateSecurityFlags(root));
+  result = MergeResults(result, GenerateGraphicsFlags(root));
+  result = MergeResults(result, GenerateMetricsFlags(root));
 
   return result;
 }

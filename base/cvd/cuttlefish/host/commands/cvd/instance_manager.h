@@ -25,17 +25,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
+#include <fruit/fruit.h>
+
 #include "cvd_server.pb.h"
+
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
-#include "host/commands/cvd/selector/group_selector.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
-#include "host/commands/cvd/selector/instance_selector.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -45,76 +44,35 @@ class InstanceManager {
   using CreationAnalyzer = selector::CreationAnalyzer;
   using CreationAnalyzerParam = CreationAnalyzer::CreationAnalyzerParam;
   using GroupCreationInfo = selector::GroupCreationInfo;
-  using LocalInstanceGroup = selector::LocalInstanceGroup;
-  using LocalInstance = selector::LocalInstance;
-  using GroupSelector = selector::GroupSelector;
-  using InstanceSelector = selector::InstanceSelector;
-  using Queries = selector::Queries;
-  using Query = selector::Query;
-  template <typename T>
-  using Set = selector::Set<T>;
 
-  InstanceManager(InstanceLockFileManager&, HostToolTargetManager&);
+  using InstanceGroupDir = std::string;
+  struct InstanceGroupInfo {
+    std::string host_artifacts_path;
+    std::set<int> instances;
+  };
 
-  // For cvd start
+  INJECT(InstanceManager(InstanceLockFileManager&, HostToolTargetManager&));
+
   Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,
                                     const CreationAnalyzerParam& param,
                                     const ucred& credential);
 
-  Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
-                                         const cvd_common::Envs& envs,
-                                         const uid_t uid);
-
-  Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
-                                         const Queries& extra_queries,
-                                         const cvd_common::Envs& envs,
-                                         const uid_t uid);
-
-  Result<LocalInstance::Copy> SelectInstance(
-      const cvd_common::Args& selector_args, const Queries& extra_queries,
-      const cvd_common::Envs& envs, const uid_t uid);
-
-  Result<LocalInstance::Copy> SelectInstance(
-      const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
-      const uid_t uid);
-
   bool HasInstanceGroups(const uid_t uid);
   Result<void> SetInstanceGroup(const uid_t uid,
                                 const selector::GroupCreationInfo& group_info);
-  void RemoveInstanceGroup(const uid_t uid, const std::string&);
+  void RemoveInstanceGroup(const uid_t uid, const InstanceGroupDir&);
+  Result<InstanceGroupInfo> GetInstanceGroupInfo(const uid_t uid,
+                                                 const InstanceGroupDir&);
 
   cvd::Status CvdClear(const SharedFD& out, const SharedFD& err);
+  Result<cvd::Status> CvdFleet(const uid_t uid, const SharedFD& out,
+                               const SharedFD& err,
+                               const std::vector<std::string>& fleet_cmd_args);
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
-  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
-
-  Result<std::vector<LocalInstanceGroup>> FindGroups(const uid_t uid,
-                                                     const Query& query) const;
-  Result<std::vector<LocalInstanceGroup>> FindGroups(
-      const uid_t uid, const Queries& queries) const;
-  Result<std::vector<LocalInstance::Copy>> FindInstances(
-      const uid_t uid, const Query& query) const;
-  Result<std::vector<LocalInstance::Copy>> FindInstances(
-      const uid_t uid, const Queries& queries) const;
-
-  Result<LocalInstanceGroup> FindGroup(const uid_t uid,
-                                       const Query& query) const;
-  Result<LocalInstanceGroup> FindGroup(const uid_t uid,
-                                       const Queries& queries) const;
-  Result<Json::Value> Serialize(const uid_t uid);
-  Result<void> LoadFromJson(const uid_t uid, const Json::Value&);
-  std::vector<std::string> AllGroupNames(uid_t uid) const;
-
-  struct UserGroupSelectionSummary {
-    // Index to group name. This is the index printed in the menu
-    // This field offers mapping between the number/index the user
-    // selects and the group that is to be chosen
-    std::unordered_map<int, std::string> idx_to_group_name;
-    std::string menu;
-  };
-  Result<UserGroupSelectionSummary> GroupSummaryMenu(uid_t uid) const;
-
  private:
+  Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
+                                   const SharedFD& err);
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,
                                 const selector::LocalInstanceGroup& group);
@@ -125,6 +83,8 @@ class InstanceManager {
   HostToolTargetManager& host_tool_target_manager_;
   mutable std::mutex instance_db_mutex_;
   std::unordered_map<uid_t, selector::InstanceDatabase> instance_dbs_;
+
+  using Query = selector::Query;
 };
 
 }  // namespace cuttlefish

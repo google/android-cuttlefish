@@ -15,35 +15,32 @@
  */
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
 
-#include <string>
-#include <vector>
+#include <android-base/logging.h>
 
-#include <json/json.h>
-
-#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-Result<void> InitBootConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_ENABLE_BOOTANIMATION,
-                         {"boot", "enable_bootanimation"}));
-    CF_EXPECT(InitConfig(instance, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
-                         {"boot", "extra_bootconfig_args"}));
-  }
-  return {};
+void InitBootConfigs(Json::Value& instances) {
+  InitStringConfig(instances, "boot", "extra_bootconfig_args",
+                   CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
+  InitBoolConfig(instances, "boot", "enable_bootanimation",
+                 CF_DEFAULTS_ENABLE_BOOTANIMATION);
+  InitStringConfigSubGroup(instances, "boot", "kernel", "extra_kernel_cmdline",
+                           CF_DEFAULTS_EXTRA_KERNEL_CMDLINE);
 }
 
-Result<std::vector<std::string>> GenerateBootFlags(
-    const Json::Value& instances) {
+std::vector<std::string> GenerateBootFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(
-      CF_EXPECT(Base64EncodeGflag(instances, "extra_bootconfig_args_base64",
-                                  {"boot", "extra_bootconfig_args"})));
-  result.emplace_back(CF_EXPECT(GenerateGflag(
-      instances, "enable_bootanimation", {"boot", "enable_bootanimation"})));
+  result.emplace_back(GenerateGflag(instances, "extra_bootconfig_args", "boot",
+                                    "extra_bootconfig_args"));
+  result.emplace_back(GenerateGflag(instances, "enable_bootanimation", "boot",
+                                    "enable_bootanimation"));
+  result.emplace_back(GenerateGflagSubGroup(instances, "extra_kernel_cmdline",
+                                            "boot", "kernel",
+                                            "extra_kernel_cmdline"));
   return result;
 }
 

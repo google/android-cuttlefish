@@ -18,7 +18,6 @@
 
 #include <unistd.h>
 
-#include <iostream>
 #include <sstream>
 #include <string_view>
 
@@ -32,7 +31,7 @@
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/selector/selector_option_parser_utils.h"
 #include "host/commands/cvd/types.h"
-#include "host/libs/config/config_constants.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
@@ -73,12 +72,12 @@ StartSelectorParser::StartSelectorParser(
       common_parser_(std::move(common_parser)) {}
 
 std::optional<std::string> StartSelectorParser::GroupName() const {
-  return group_name_;
+  return common_parser_.GroupName();
 }
 
 std::optional<std::vector<std::string>> StartSelectorParser::PerInstanceNames()
     const {
-  return per_instance_names_;
+  return common_parser_.PerInstanceNames();
 }
 
 namespace {
@@ -94,6 +93,19 @@ std::optional<unsigned> TryFromCuttlefishInstance(
   }
   auto parsed = ParseNaturalNumber(cuttlefish_instance);
   return parsed.ok() ? std::optional(*parsed) : std::nullopt;
+}
+
+std::optional<unsigned> TryFromUser(const cvd_common::Envs& envs) {
+  if (!Contains(envs, "USER")) {
+    return std::nullopt;
+  }
+  std::string_view user{envs.at("USER")};
+  if (user.empty() || !android::base::ConsumePrefix(&user, kVsocUserPrefix)) {
+    return std::nullopt;
+  }
+  const auto& vsoc_num = user;
+  auto vsoc_id = ParseNaturalNumber(vsoc_num.data());
+  return vsoc_id.ok() ? std::optional(*vsoc_id) : std::nullopt;
 }
 
 }  // namespace
@@ -189,7 +201,7 @@ StartSelectorParser::HandleInstanceIds(
   unsigned num_instances =
       CF_EXPECT(VerifyNumOfInstances(VerifyNumOfInstancesParam{
           .num_instances_flag = instance_id_params.num_instances,
-          .instance_names = PerInstanceNames(),
+          .instance_names = common_parser_.PerInstanceNames(),
           .instance_nums_flag = instance_nums}));
 
   if (!instance_nums && !base_instance_num) {
@@ -222,7 +234,7 @@ StartSelectorParser::HandleInstanceIds(
     unsigned base = CF_EXPECT(ParseNaturalNumber(*base_instance_num));
     calculator.BaseInstanceNum(static_cast<std::int32_t>(base));
   }
-  auto instance_ids = CF_EXPECT(calculator.CalculateFromFlags());
+  auto instance_ids = std::move(CF_EXPECT(calculator.CalculateFromFlags()));
   CF_EXPECT(!instance_ids.empty(),
             "CalculateFromFlags() must be called when --num_instances or "
                 << "--base_instance_num is given, and must not return an "
@@ -233,8 +245,17 @@ StartSelectorParser::HandleInstanceIds(
 }
 
 Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
+  auto disable_default_group_flag = CF_EXPECT(
+      SelectorFlags::Get().GetFlag<bool>(SelectorFlags::kDisableDefaultGroup));
+  auto flag_value =
+      CF_EXPECT(disable_default_group_flag.FilterFlag(selector_args_));
+  if (flag_value && *flag_value) {
+    return false;
+  }
   /*
-   * the logic to determine whether this group is the default one or not:
+   * --disable_default_group instructs that the default group
+   * should be disabled anyway. If not given, the logic to determine
+   * whether this group is the default one or not is:
    *  If HOME is not overridden and no selector options, then
    *   the default group
    *  Or, not a default group
@@ -246,99 +267,35 @@ Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
   return !common_parser_.HasDeviceSelectOption();
 }
 
-static bool IsTrue(const std::string& value) {
-  std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
-  std::string value_in_lower_case = value;
-  /*
-   * https://en.cppreference.com/w/cpp/string/byte/tolower
-   *
-   * char should be converted to unsigned char first.
-   */
-  std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
-                 value_in_lower_case.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return Contains(true_strings, value_in_lower_case);
-}
-
-static bool IsFalse(const std::string& value) {
-  std::unordered_set<std::string> false_strings = {"n", "no", "false"};
-  std::string value_in_lower_case = value;
-  /*
-   * https://en.cppreference.com/w/cpp/string/byte/tolower
-   *
-   * char should be converted to unsigned char first.
-   */
-  std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
-                 value_in_lower_case.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return Contains(false_strings, value_in_lower_case);
-}
-
-static std::optional<std::string> GetAcquireFileLockEnvValue(
-    const cvd_common::Envs& envs) {
-  if (!Contains(envs, SelectorFlags::kAcquireFileLockEnv)) {
-    return std::nullopt;
-  }
-  auto env_value = envs.at(SelectorFlags::kAcquireFileLockEnv);
-  if (env_value.empty()) {
-    return std::nullopt;
-  }
-  return env_value;
-}
-
 Result<bool> StartSelectorParser::CalcAcquireFileLock() {
-  // if the flag is set, flag has the highest priority
-  auto must_acquire_file_lock_flag =
-      CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kAcquireFileLock));
-  std::optional<bool> value_opt =
-      CF_EXPECT(must_acquire_file_lock_flag.FilterFlag<bool>(selector_args_));
-  if (value_opt) {
-    return *value_opt;
-  }
-  // flag is not set. see if there is the environment variable set
-  auto env_value_opt = GetAcquireFileLockEnvValue(envs_);
-  if (env_value_opt) {
-    auto value_string = *env_value_opt;
-    if (IsTrue(value_string)) {
-      return true;
-    }
-    if (IsFalse(value_string)) {
-      return false;
-    }
-    return CF_ERR("In \"" << SelectorFlags::kAcquireFileLockEnv << "="
-                          << value_string << ",\" \"" << value_string
-                          << "\" is an invalid value. Try true or false.");
-  }
-  // nothing set, falls back to the default value of the flag
-  auto default_value =
-      CF_EXPECT(must_acquire_file_lock_flag.DefaultValue<bool>());
-  return default_value;
+  auto must_acquire_file_lock_flag = CF_EXPECT(
+      SelectorFlags::Get().GetFlag<bool>(SelectorFlags::kAcquireFileLock));
+  const bool value =
+      CF_EXPECT(must_acquire_file_lock_flag.ParseFlag(selector_args_));
+  return value;
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
   may_be_default_group_ = CF_EXPECT(CalcMayBeDefaultGroup());
   must_acquire_file_lock_ = CF_EXPECT(CalcAcquireFileLock());
 
-  group_name_ = common_parser_.GroupName();
-  per_instance_names_ = common_parser_.PerInstanceNames();
-
   std::optional<std::string> num_instances;
   std::optional<std::string> instance_nums;
   std::optional<std::string> base_instance_num;
   // set num_instances as std::nullptr or the value of --num_instances
-  CF_EXPECT(FilterSelectorFlag(cmd_args_, "num_instances", num_instances));
-  CF_EXPECT(FilterSelectorFlag(cmd_args_, "instance_nums", instance_nums));
-  CF_EXPECT(
-      FilterSelectorFlag(cmd_args_, "base_instance_num", base_instance_num));
+  FilterSelectorFlag(cmd_args_, "num_instances", num_instances);
+  FilterSelectorFlag(cmd_args_, "instance_nums", instance_nums);
+  FilterSelectorFlag(cmd_args_, "base_instance_num", base_instance_num);
 
   InstanceIdsParams instance_nums_param{
       .num_instances = std::move(num_instances),
       .instance_nums = std::move(instance_nums),
       .base_instance_num = std::move(base_instance_num),
-      .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_)};
+      .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_),
+      .vsoc_suffix = TryFromUser(envs_)};
   auto parsed_ids = CF_EXPECT(HandleInstanceIds(instance_nums_param));
   requested_num_instances_ = parsed_ids.GetNumOfInstances();
-  instance_ids_ = parsed_ids.GetInstanceIds();
+  instance_ids_ = std::move(parsed_ids.GetInstanceIds());
 
   return {};
 }

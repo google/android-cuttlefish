@@ -14,205 +14,197 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-
-#include <cstdio>
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
-#include <android-base/scopeguard.h>
-#include <android-base/strings.h>
+#include <android-base/result.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/client.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
-// TODO(315772518) Re-enable once metrics send is reenabled
-// #include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "host/commands/cvd/run_server.h"
+#include "host/commands/cvd/reset_client_utils.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
+#include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
 namespace {
 
-/**
- * Returns --verbosity value if ever exist in the entire commandline args
- *
- * Note that this will also pick up from the subtool arguments:
- *  e.g. cvd start --verbosity=DEBUG
- *
- * This may be incorrect as the verbosity should be ideally applied to the
- * launch_cvd/cvd_internal_start only.
- *
- * However, parsing the --verbosity flag only from the driver is quite
- * complicated as we do not know the full list of the subcommands,
- * the subcommands flags, and even the selector/driver flags.
- *
- * Thus, we live with the corner case for now.
- */
-android::base::LogSeverity CvdVerbosityOption(const int argc, char** argv) {
-  cvd_common::Args all_args = ArgsToVec(argc, argv);
-  std::string verbosity_flag_value;
-  std::vector<Flag> verbosity_flag{
-      GflagsCompatFlag("verbosity", verbosity_flag_value)};
-  if (!ParseFlags(verbosity_flag, all_args).ok()) {
-    LOG(ERROR) << "Verbosity flag parsing failed, so use the default value.";
-    return GetMinimumVerbosity();
+std::unordered_map<std::string, std::string> EnvVectorToMap(char** envp) {
+  std::unordered_map<std::string, std::string> env_map;
+  if (!envp) {
+    return env_map;
   }
-  if (verbosity_flag_value.empty()) {
-    return GetMinimumVerbosity();
+  for (char** e = envp; *e != nullptr; e++) {
+    std::string env_var_val(*e);
+    auto tokens = android::base::Split(env_var_val, "=");
+    if (tokens.size() <= 1) {
+      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
+      continue;
+    }
+    const auto var = tokens.at(0);
+    tokens.erase(tokens.begin());
+    env_map[var] = android::base::Join(tokens, "=");
   }
-  auto encoded_verbosity = EncodeVerbosity(verbosity_flag_value);
-  return (encoded_verbosity.ok() ? *encoded_verbosity : GetMinimumVerbosity());
+  return env_map;
 }
 
-/**
- * Terminates a cvd server listening on "cvd_server"
- *
- * So far, the server processes across users were listing on the "cvd_server"
- * socket. And, so far, we had one user. Now, we have multiple users. Each
- * server listens to cvd_server_<uid>. The thing is if there is a server process
- * started out of an old executable it will be listening to "cvd_server," and
- * thus we should kill the server process first.
- */
-Result<void> KillOldServer() {
-  CvdClient client_to_old_server(kCvdDefaultVerbosity, "cvd_server");
-  auto result = client_to_old_server.StopCvdServer(/*clear=*/true);
-  if (!result.ok()) {
-    LOG(ERROR) << "Old server listening on \"cvd_server\" socket "
-               << "must be killed first but failed to terminate it.";
-    LOG(ERROR) << "Perhaps, try cvd reset -y";
-    CF_EXPECT(std::move(result));
+bool IsServerModeExpected(const SharedFD& internal_server_fd,
+                          const std::string& exec_file) {
+  return internal_server_fd->IsOpen() || exec_file == "/proc/self/exe";
+}
+
+Result<void> RunServer(const SharedFD& internal_server_fd,
+                       const SharedFD& carryover_client_fd) {
+  if (!internal_server_fd->IsOpen()) {
+    return CF_ERR(
+        "Expected to be in server mode, but didn't get a server "
+        "fd: "
+        << internal_server_fd->StrError());
   }
+  CF_EXPECT(CvdServerMain(internal_server_fd, carryover_client_fd));
   return {};
 }
 
-Result<void> CvdMain(int argc, char** argv, char** envp,
-                     const android::base::LogSeverity verbosity) {
-  CF_EXPECT(KillOldServer());
+struct ParseResult {
+  SharedFD internal_server_fd_;
+  SharedFD carryover_client_fd_;
+};
+
+Result<ParseResult> Parse(std::vector<std::string>& all_args) {
+  std::vector<Flag> flags;
+  SharedFD internal_server_fd;
+  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
+  SharedFD carryover_client_fd;
+  flags.emplace_back(
+      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
+
+  CF_EXPECT(ParseFlags(flags, all_args));
+  ParseResult result = {internal_server_fd, carryover_client_fd};
+  return {result};
+}
+
+Result<void> HandleReset(CvdClient& client,
+                         const cvd_common::Envs& /* envs placeholder */) {
+  auto kill_server_result = client.StopCvdServer(/*clear=*/true);
+  if (!kill_server_result.ok()) {
+    LOG(ERROR) << "cvd kill-server returned error"
+               << kill_server_result.error().Trace();
+    LOG(ERROR) << "However, cvd reset will continue cleaning up.";
+  }
+  // cvd reset handler placeholder. identical to cvd kill-server for now.
+  CF_EXPECT(KillAllCuttlefishInstances(false));
+  return {};
+}
+
+Result<void> CvdMain(int argc, char** argv, char** envp) {
+  android::base::InitLogging(argv, android::base::StderrLogger);
 
   cvd_common::Args all_args = ArgsToVec(argc, argv);
-  CF_EXPECT(!all_args.empty());
-
-  if (IsServerModeExpected(all_args[0])) {
-    auto parsed = CF_EXPECT(ParseIfServer(all_args));
-    return RunServer(
-        {.internal_server_fd = std::move(parsed.internal_server_fd),
-         .carryover_client_fd = std::move(parsed.carryover_client_fd),
-         .memory_carryover_fd = std::move(parsed.memory_carryover_fd),
-         .verbosity_level = parsed.verbosity_level,
-         .acloud_translator_optout = parsed.acloud_translator_optout,
-         .restarted_in_process = parsed.restarted_in_process});
-  }
-
-  auto env = EnvpToMap(envp);
-  // TODO(315772518) Re-enable once metrics send is skipped in a env
-  // without network support
-  // CvdMetrics::SendCvdMetrics(all_args);
+  auto env = EnvVectorToMap(envp);
+  const auto host_tool_dir =
+      android::base::Dirname(android::base::GetExecutableDirectory());
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
     return {};
   }
-
-  CvdClient client(verbosity);
+  CvdClient client;
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
-    return client.HandleAcloud(all_args, env);
+    return client.HandleAcloud(all_args, env, host_tool_dir);
   }
 
-  if (android::base::Basename(all_args[0]) == "cvd") {
-    CF_EXPECT(client.HandleCvdCommand(all_args, env));
+  auto [internal_server_fd, carryover_client_fd] = CF_EXPECT(Parse(all_args));
+
+  if (IsServerModeExpected(internal_server_fd, all_args[0])) {
+    return RunServer(internal_server_fd, carryover_client_fd);
+  }
+
+  /*
+   * For now, the parser needs a running server. The parser will
+   * be moved to the server side, and then it won't.
+   *
+   */
+  CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
+            "Unable to ensure cvd_server is running.");
+  std::vector<std::string> client_internal_commands{"kill-server",
+                                                    "server-kill", "reset"};
+  auto frontline_parser = CF_EXPECT(
+      FrontlineParser::Parse(client, client_internal_commands, all_args, env));
+  CF_EXPECT(frontline_parser != nullptr);
+
+  // Special case for `cvd kill-server`, handled by directly
+  // stopping the cvd_server.
+  std::vector<std::string> kill_server_cmds{"kill-server", "server-kill"};
+  std::string subcmd = frontline_parser->SubCmd().value_or("");
+  if (Contains(kill_server_cmds, subcmd)) {
+    CF_EXPECT(client.StopCvdServer(/*clear=*/true));
     return {};
   }
 
-  CF_EXPECT(client.ValidateServerVersion(),
-            "Unable to ensure cvd_server is running.");
-  CF_EXPECT(client.HandleCommand(all_args, env, {}));
+  if (subcmd == "reset") {
+    CF_EXPECT(HandleReset(client, env));
+    return {};
+  }
 
+  // Special case for --clean flag, used to clear any existing state.
+  if (frontline_parser->Clean()) {
+    std::cerr << "cvd invoked with --clean. Now, "
+              << "stopping the cvd_server before continuing.";
+    CF_EXPECT(client.StopCvdServer(/*clear=*/true));
+    CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
+              "Unable to ensure cvd_server is running.");
+  }
+
+  const auto prog_name = android::base::Basename(frontline_parser->ProgPath());
+  cvd_common::Args cmd_args{frontline_parser->ProgPath()};
+  if (frontline_parser->Help()) {
+    subcmd = "help";
+  }
+  if (!subcmd.empty()) {
+    cmd_args.emplace_back(subcmd);
+  }
+  std::copy(frontline_parser->SubCmdArgs().begin(),
+            frontline_parser->SubCmdArgs().end(), std::back_inserter(cmd_args));
+  cvd_common::Args selector_args = frontline_parser->SelectorArgs();
+
+  // Special case for `cvd version`, handled by using the version command.
+  if (prog_name == "cvd" && subcmd == "version") {
+    auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
+    std::cout << version_msg;
+    return {};
+  }
+
+  // TODO(schuffelen): Deduplicate when calls to setenv are removed.
+  CF_EXPECT(client.HandleCommand(cmd_args, env, selector_args));
   return {};
-}
-
-/**
- * Returns the URL as a colored string
- *
- * If stderr is not terminal, no color.
- * If stderr is a tty, tries to use ".deb" file color
- * If .deb is not available in LS_COLORS, uses .zip
- * color. If none are available, use a default color that
- * is red.
- */
-std::string ColoredUrl(const std::string& url) {
-  if (!isatty(STDERR_FILENO)) {
-    return url;
-  }
-  std::string coloring_prefix = "\033[01;31m";
-  std::string output;
-  auto ls_colors = StringFromEnv("LS_COLORS", "");
-  std::vector<std::string> colors_vec = android::base::Tokenize(ls_colors, ":");
-  std::unordered_map<std::string, std::string> colors;
-  for (const auto& color_entry : colors_vec) {
-    std::vector<std::string> tokenized =
-        android::base::Tokenize(color_entry, "=");
-    if (tokenized.size() != 2) {
-      continue;
-    }
-    colors[tokenized.front()] = tokenized.back();
-  }
-
-  android::base::ScopeGuard return_action([&coloring_prefix, url, &output]() {
-    static constexpr char kRestoreColor[] = "\033[0m";
-    output = fmt::format("{}{}{}", coloring_prefix, url, kRestoreColor);
-  });
-  auto deb_color_itr = colors.find("*.deb");
-  auto zip_color_itr = colors.find("*.zip");
-  if (deb_color_itr == colors.end() && zip_color_itr == colors.end()) {
-    return output;
-  }
-  coloring_prefix = fmt::format(
-      "{}{}m", "\033[",
-      (deb_color_itr == colors.end() ? colors["*.zip"] : colors["*.deb"]));
-  return output;
 }
 
 }  // namespace
 }  // namespace cuttlefish
 
 int main(int argc, char** argv, char** envp) {
-  android::base::LogSeverity verbosity =
-      cuttlefish::CvdVerbosityOption(argc, argv);
-  android::base::InitLogging(argv, android::base::StderrLogger);
-  // set verbosity for this process
-  cuttlefish::SetMinimumVerbosity(verbosity);
-
-  auto result = cuttlefish::CvdMain(argc, argv, envp, verbosity);
+  auto result = cuttlefish::CvdMain(argc, argv, envp);
   if (result.ok()) {
     return 0;
   } else {
-    // TODO: we should not print the stack trace, instead, we should rely on
-    // each handler to print the error message directly in the client's
-    // std::cerr. We print the stack trace only in the verbose mode.
-    std::cerr << result.error().FormatForEnv(isatty(STDERR_FILENO))
-              << std::endl;
-    // TODO(kwstephenkim): better coloring
-    constexpr char kUserReminder[] =
-        R"(    If the error above is unclear, please copy the text into an issue at:)";
-    constexpr char kCuttlefishBugUrl[] = "http://go/cuttlefish-bug";
-    std::cerr << std::endl << kUserReminder << std::endl;
-    std::cerr << "        " << cuttlefish::ColoredUrl(kCuttlefishBugUrl)
-              << std::endl
-              << std::endl;
+    std::cerr << result.error().Trace() << std::endl;
     return -1;
   }
 }

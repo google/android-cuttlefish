@@ -22,9 +22,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/client.h"
-#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/arguments_separator.h"
 #include "host/commands/cvd/types.h"
 
@@ -49,25 +49,23 @@ class FrontlineParser {
   using ArgumentsSeparator = selector::ArgumentsSeparator;
 
  public:
-  struct ParserParam {
-    // commands supported by the server
-    std::vector<std::string> server_supported_subcmds;
-    // commands supported by the client itself
-    std::vector<std::string> internal_cmds;
-    cvd_common::Args all_args;
-    FlagCollection cvd_flags;
-  };
-
   // This call must guarantee all public methods will be valid
-  static Result<std::unique_ptr<FrontlineParser>> Parse(ParserParam param);
+  static Result<std::unique_ptr<FrontlineParser>> Parse(
+      CvdClient& client, const std::vector<std::string>& internal_cmds,
+      const cvd_common::Args& all_args, const cvd_common::Envs& envs);
 
   const std::string& ProgPath() const;
   std::optional<std::string> SubCmd() const;
   const cvd_common::Args& SubCmdArgs() const;
-  const cvd_common::Args& CvdArgs() const;
+  const cvd_common::Args& SelectorArgs() const;
+  bool Clean() const { return clean_; }
+  bool Help() const { return help_; }
 
  private:
-  FrontlineParser(const ParserParam& parser);
+  FrontlineParser(CvdClient& client,
+                  const std::vector<std::string>& internal_cmds,
+                  const cvd_common::Args& all_args,
+                  const cvd_common::Envs& envs);
 
   // internal workers in order
   Result<void> Separate();
@@ -80,11 +78,32 @@ class FrontlineParser {
   };
   Result<FilterOutput> FilterNonSelectorArgs();
 
-  cvd_common::Args server_supported_subcmds_;
+  /*
+   * Returns the list of subcommands that cvd ever supports.
+   *
+   * The tool is for now intended to be internal to the parser that uses
+   * command line arguments separator.
+   *
+   */
+  Result<Json::Value> ListSubcommands();
+
+  CvdClient& client_;
+  std::unordered_set<std::string> known_bool_flags_;
+  std::unordered_set<std::string> known_value_flags_;
+  std::unordered_set<std::string> selector_flags_;
+  cvd_common::Args valid_subcmds_;
   const cvd_common::Args all_args_;
-  const std::vector<std::string> internal_cmds_;
-  FlagCollection cvd_flags_;
+  const cvd_common::Envs envs_;
+  const std::vector<std::string>& internal_cmds_;
   std::unique_ptr<ArgumentsSeparator> arguments_separator_;
+
+  // outputs
+  bool clean_;
+  bool help_;
+  /**
+   * remaining arguments to pass to the selector
+   */
+  cvd_common::Args selector_args_;
 };
 
 }  // namespace cuttlefish

@@ -20,6 +20,7 @@
 #include <libxml/parser.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/scope_guard.h"
 
 namespace cuttlefish {
 namespace {
@@ -113,7 +114,7 @@ XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
       xmlReadMemory(xml_str.data(), xml_str.size(), NULL, NULL, 0);
   XmlDocPtr doc_uniq_ptr = XmlDocPtr(doc, XmlDocDeleter());
   if (!doc) {
-    LOG(ERROR) << "helpxml parsing failed: " << xml_str;
+    LOG(ERROR) << "helpxml parsing failed.";
     return nullptr;
   }
   return doc_uniq_ptr;
@@ -121,13 +122,16 @@ XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
 
 std::optional<std::vector<FlagInfoPtr>> LoadFromXml(XmlDocPtr&& doc) {
   std::vector<FlagInfoPtr> flags;
-  XmlDocPtr moved_doc = std::move(doc);
-  xmlNode* root = xmlDocGetRootElement(moved_doc.get());
-  if (!root) {
-    LOG(ERROR) << "Failed to get the root element from XML doc.";
-    return std::nullopt;
+  ScopeGuard exit_action([]() { xmlCleanupParser(); });
+  {
+    XmlDocPtr moved_doc = std::move(doc);
+    xmlNode* root = xmlDocGetRootElement(moved_doc.get());
+    if (!root) {
+      LOG(ERROR) << "Failed to get the root element from XML doc.";
+      return std::nullopt;
+    }
+    flags = ParseXml(moved_doc.get(), root);
   }
-  flags = ParseXml(moved_doc.get(), root);
   return flags;
 }
 

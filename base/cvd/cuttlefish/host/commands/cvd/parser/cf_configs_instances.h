@@ -15,18 +15,11 @@
  */
 
 #pragma once
-
-#include <string>
-#include <vector>
-
 #include <json/json.h>
-
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-Result<void> InitInstancesConfigs(Json::Value& root);
-Result<std::vector<std::string>> GenerateInstancesFlags(
-    const Json::Value& root);
+void InitInstancesConfigs(Json::Value& root);
+std::vector<std::string> GenerateInstancesFlags(const Json::Value& root);
 
 };  // namespace cuttlefish

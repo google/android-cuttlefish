@@ -15,18 +15,15 @@
  */
 #pragma once
 
-#include <memory>
+#include <fruit/fruit.h>
 
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
-
 /*
 cvd load component is responsible of loading, translation and creation of
 cuttlefish instances based on input json configuration file
 */
-std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
-    CommandSequenceExecutor& executor);
-
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
+LoadConfigsComponent();
 }  // namespace cuttlefish
