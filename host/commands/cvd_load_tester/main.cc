@@ -42,9 +42,22 @@ int CvdLoadParserMain(int argc, char** argv) {
     return 1;
   }
   LOG(INFO) << "Parsing succeeded";
-  for (auto& parsed_flag : cvd_flags->launch_cvd_flags) {
-    LOG(INFO) << parsed_flag;
+  for (auto& parsed_launch_flag : cvd_flags->launch_cvd_flags) {
+    LOG(INFO) << parsed_launch_flag;
   }
+
+  LOG(INFO) << "credential = " << cvd_flags->fetch_cvd_flags.credential;
+
+  int i = 0;
+  for (auto& parsed_fetch_instance_flag :
+       cvd_flags->fetch_cvd_flags.instances) {
+    LOG(INFO) << i << " -- " << parsed_fetch_instance_flag.default_build << ","
+              << parsed_fetch_instance_flag.system_build << ","
+              << parsed_fetch_instance_flag.kernel_build << ","
+              << parsed_fetch_instance_flag.use_fetch_artifact;
+    i++;
+  }
+
   return 0;
 }
 }  // namespace cuttlefish
