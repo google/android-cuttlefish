@@ -303,5 +303,44 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   ASSERT_FALSE(result_invalid.ok());
 }
 
+TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
+  // starting set up
+  if (!SetUpOk() || !AddGroups({"miau", "nyah"})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  auto& db = GetDb();
+  std::vector<InstanceInfo> miau_group_instance_id_name_pairs{
+      {1, "8"}, {10, "tv_instance"}};
+  std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
+      {7, "my_favorite_phone"}, {11, "tv_instance"}};
+  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
+  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
+  if (!miau_group.ok() || !nyah_group.ok()) {
+    GTEST_SKIP() << "miau or nyah "
+                 << " group was not found";
+  }
+  if (!AddInstances(*miau_group, miau_group_instance_id_name_pairs) ||
+      !AddInstances(*nyah_group, nyah_group_instance_id_name_pairs)) {
+    GTEST_SKIP() << Error().msg;
+  }
+  // end of set up
+
+  auto result_miau = db.FindGroups({kInstanceNameField, "8"});
+  auto result_both = db.FindGroups({kInstanceNameField, "tv_instance"});
+  auto result_nyah = db.FindGroups({kInstanceNameField, "my_favorite_phone"});
+  auto result_invalid = db.FindGroups({kInstanceNameField, "name_never_seen"});
+
+  ASSERT_TRUE(result_miau.ok());
+  ASSERT_TRUE(result_both.ok());
+  ASSERT_TRUE(result_nyah.ok());
+  ASSERT_TRUE(result_invalid.ok());
+  ASSERT_EQ(result_miau->size(), 1);
+  ASSERT_EQ(result_both->size(), 2);
+  ASSERT_EQ(result_nyah->size(), 1);
+  ASSERT_TRUE(result_invalid->empty())
+      << "result_invalid should be empty but with size: "
+      << result_invalid->size();
+}
+
 }  // namespace selector
 }  // namespace cuttlefish
