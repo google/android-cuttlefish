@@ -45,6 +45,7 @@ class SelectorCommonParser {
 
   // CF_ERR --> unknown, true --> overridden, false --> not overridden.
   Result<bool> HomeOverridden() const;
+  std::optional<std::string> Home() const;
 
   /*
    * returns if selector flags has device select options: e.g. --group_name
