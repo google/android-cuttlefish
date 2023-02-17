@@ -84,6 +84,8 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   };
   Result<BinPathInfo> NonCvdBinPath(const std::string& subcmd,
                                     const cvd_common::Envs& envs) const;
+  Result<BinPathInfo> CvdHelpBinPath(const std::string& subcmd,
+                                     const cvd_common::Envs& envs) const;
   Result<BinPathInfo> CvdBinPath(const std::string& subcmd,
                                  const cvd_common::Envs& envs,
                                  const std::string& home,
@@ -176,7 +178,6 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
     response.mutable_status()->set_message(error_message);
     return response;
   }
-
   auto invocation_info = CF_EXPECT(ExtractInfo(request));
   if (invocation_info.bin == kClearBin) {
     *response.mutable_status() =
@@ -241,6 +242,23 @@ CvdGenericCommandHandler::NonCvdBinPath(const std::string& subcmd,
 }
 
 Result<CvdGenericCommandHandler::BinPathInfo>
+CvdGenericCommandHandler::CvdHelpBinPath(const std::string& subcmd,
+                                         const cvd_common::Envs& envs) const {
+  auto tool_dir_path = envs.at(kAndroidHostOut);
+  if (!DirectoryExists(tool_dir_path + "/bin")) {
+    tool_dir_path =
+        android::base::Dirname(android::base::GetExecutableDirectory());
+  }
+  auto bin_path_base = CF_EXPECT(GetBin(subcmd, tool_dir_path));
+  // no need of executable directory. Will look up by PATH
+  // bin_path_base is like ln, mkdir, etc.
+  return BinPathInfo{
+      .bin_ = bin_path_base,
+      .bin_path_ = tool_dir_path.append("/bin/").append(bin_path_base),
+      .host_artifacts_path_ = envs.at(kAndroidHostOut)};
+}
+
+Result<CvdGenericCommandHandler::BinPathInfo>
 CvdGenericCommandHandler::CvdBinPath(const std::string& subcmd,
                                      const cvd_common::Envs& envs,
                                      const std::string& home,
@@ -270,34 +288,63 @@ CvdGenericCommandHandler::CvdBinPath(const std::string& subcmd,
                      .host_artifacts_path_ = host_artifacts_path};
 }
 
+/*
+ * commands like ln, mkdir, clear
+ *  -> bin, bin, system_wide_home, N/A, cmd_args, envs
+ *
+ * help command
+ *  -> android_out/bin, bin, system_wide_home, android_out, cmd_args, envs
+ *
+ * non-help command
+ *  -> group->a/o/bin, bin, group->home, group->android_out, cmd_args, envs
+ *
+ */
 Result<CvdGenericCommandHandler::CommandInvocationInfo>
 CvdGenericCommandHandler::ExtractInfo(const RequestWithStdio& request) const {
   auto result_opt = request.Credentials();
   CF_EXPECT(result_opt != std::nullopt);
   const uid_t uid = result_opt->uid;
 
-  auto [command, args] = ParseInvocation(request.Message());
-  CF_EXPECT(Contains(command_to_binary_map_, command));
+  auto [subcmd, cmd_args] = ParseInvocation(request.Message());
+  CF_EXPECT(Contains(command_to_binary_map_, subcmd));
 
   cvd_common::Envs envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
-  std::string home =
-      Contains(envs, "HOME") ? envs.at("HOME") : StringFromEnv("HOME", ".");
+  const auto& selector_opts =
+      request.Message().command_request().selector_opts();
+  const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
   CF_EXPECT(Contains(envs, kAndroidHostOut) &&
             DirectoryExists(envs.at(kAndroidHostOut)));
 
   std::unordered_set<std::string> non_cvd_op{"clear", "mkdir", "ln"};
-  auto bin_path_info = Contains(non_cvd_op, command)
-                           ? CF_EXPECT(NonCvdBinPath(command, envs))
-                           : CF_EXPECT(CvdBinPath(command, envs, home, uid));
-  const auto& [bin, bin_path, host_artifacts_path] = bin_path_info;
-  CommandInvocationInfo result = {.command = command,
+  if (Contains(non_cvd_op, subcmd) || IsHelpSubcmd(cmd_args)) {
+    const auto [bin, bin_path, host_artifacts_path] =
+        Contains(non_cvd_op, subcmd) ? CF_EXPECT(NonCvdBinPath(subcmd, envs))
+                                     : CF_EXPECT(CvdHelpBinPath(subcmd, envs));
+    return CommandInvocationInfo{
+        .command = subcmd,
+        .bin = bin,
+        .bin_path = bin_path,
+        .home = CF_EXPECT(SystemWideUserHome(uid)),
+        .host_artifacts_path = envs.at(kAndroidHostOut),
+        .uid = uid,
+        .args = cmd_args,
+        .envs = envs};
+  }
+
+  auto instance_group =
+      CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
+  auto android_host_out = instance_group.HostArtifactsPath();
+  auto home = instance_group.HomeDir();
+  auto bin = CF_EXPECT(GetBin(subcmd, android_host_out));
+  auto bin_path = ConcatToString(android_host_out, "/bin/", bin);
+  CommandInvocationInfo result = {.command = subcmd,
                                   .bin = bin,
                                   .bin_path = bin_path,
                                   .home = home,
-                                  .host_artifacts_path = host_artifacts_path,
+                                  .host_artifacts_path = android_host_out,
                                   .uid = uid,
-                                  .args = args,
+                                  .args = cmd_args,
                                   .envs = envs};
   result.envs["HOME"] = home;
   return {result};

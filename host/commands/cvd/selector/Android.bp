@@ -23,6 +23,7 @@ cc_library_host_static {
         "arguments_lexer.cpp",
         "arguments_separator.cpp",
         "creation_analyzer.cpp",
+        "group_selector.cpp",
         "instance_database.cpp",
         "instance_database_impl.cpp",
         "instance_database_types.cpp",
