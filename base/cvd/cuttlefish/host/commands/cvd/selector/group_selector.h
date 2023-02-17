@@ -21,7 +21,6 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/selector/instance_database.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/selector_common_parser.h"
 #include "host/commands/cvd/types.h"
 
@@ -30,9 +29,19 @@ namespace selector {
 
 class GroupSelector {
  public:
-  static Result<GroupSelector> GetSelector(
-      const cvd_common::Args& selector_args, const Queries& extra_queries,
-      const cvd_common::Envs& envs);
+  static Result<LocalInstanceGroup> Select(
+      const cvd_common::Args& selector_args, const uid_t uid,
+      const InstanceDatabase& instance_database, const cvd_common::Envs& envs);
+
+ private:
+  GroupSelector(const uid_t uid, SelectorCommonParser&& selector_common_parser,
+                const cvd_common::Envs& envs,
+                const InstanceDatabase& instance_database)
+      : client_uid_{uid},
+        common_parser_(std::move(selector_common_parser)),
+        envs_(envs),
+        instance_database_(instance_database) {}
+
   /*
    * If default, try running single instance group. If multiple, try to find
    * HOME == SystemWideUserHome. If not exists, give up.
@@ -41,20 +50,16 @@ class GroupSelector {
    *
    * If group not given, not yet supported. Will be in next CLs
    */
-  Result<LocalInstanceGroup> FindGroup(
-      const InstanceDatabase& instance_database);
+  Result<LocalInstanceGroup> FindGroup();
+  bool RequestsDefaultGroup() const;
+  Result<LocalInstanceGroup> FindDefaultGroup();
+  bool IsHomeOverridden() const;
+  Result<LocalInstanceGroup> FindByHomeIfOverridden() const;
 
- private:
-  GroupSelector(const Queries& queries)
-      : queries_{queries} {}
-
-  // used by Select()
-  static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
-
-  Result<LocalInstanceGroup> FindDefaultGroup(
-      const InstanceDatabase& instance_database);
-
-  const Queries queries_;
+  const uid_t client_uid_;
+  SelectorCommonParser common_parser_;
+  const cvd_common::Envs& envs_;
+  const InstanceDatabase& instance_database_;
 };
 
 }  // namespace selector

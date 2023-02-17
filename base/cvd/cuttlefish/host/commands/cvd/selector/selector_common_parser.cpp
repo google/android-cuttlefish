@@ -45,6 +45,13 @@ Result<bool> SelectorCommonParser::HomeOverridden() const {
   return Contains(envs_, "HOME") && (client_user_home_ != envs_.at("HOME"));
 }
 
+std::optional<std::string> SelectorCommonParser::Home() const {
+  if (Contains(envs_, "HOME")) {
+    return envs_.at("HOME");
+  }
+  return std::nullopt;
+}
+
 Result<void> SelectorCommonParser::ParseOptions(
     cvd_common::Args& selector_args) {
   // Handling name-related options
