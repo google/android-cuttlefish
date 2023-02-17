@@ -23,7 +23,7 @@
 #include <zlib.h>
 
 #include "common/libs/utils/files.h"
-#include "host/libs/config/config_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 using std::uint32_t;
 
@@ -46,7 +46,7 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
     return {};
   }
   auto files_result = DirectoryContents(full_path);
-  CHECK(files_result.ok()) << files_result.error().FormatForEnv();
+  CHECK(files_result.ok()) << files_result.error().Trace();
   std::vector<std::string> files = std::move(*files_result);
   for (auto it = files.begin(); it != files.end();) {
     if (*it == "." || *it == "..") {
