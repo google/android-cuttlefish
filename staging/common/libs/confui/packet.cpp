@@ -98,6 +98,7 @@ static std::optional<ParsedPacket> ParseRawData(
   }
   ConfUiPacketInfo data_to_return;
   std::vector<int> lengths;
+  lengths.reserve(n);
   for (int i = 1; i <= n; i++) {
     if (!IsOnlyDigits(tokens[2 + i])) {
       ConfUiLog(ERROR) << tokens[2 + i] << " should be a number but is not.";
