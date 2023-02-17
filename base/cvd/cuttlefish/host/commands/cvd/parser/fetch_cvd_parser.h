@@ -19,6 +19,18 @@
 
 namespace cuttlefish {
 
-std::vector<std::string> ParseLaunchCvdConfigs(Json::Value& root);
+struct FetchCvdDeviceConfigs {
+  bool use_fetch_artifact;
+  std::string default_build;
+  std::string system_build;
+  std::string kernel_build;
+};
+
+struct FetchCvdConfigs {
+  std::string credential;
+  std::vector<FetchCvdDeviceConfigs> instances;
+};
+
+FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
