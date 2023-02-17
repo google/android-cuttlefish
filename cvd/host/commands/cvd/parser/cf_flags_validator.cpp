@@ -30,6 +30,7 @@ namespace cuttlefish {
 
 // json main parameters definitions
 static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
+    {"credential", Json::ValueType::stringValue},
     {"netsim_bt", Json::ValueType::booleanValue},
     {"instances", Json::ValueType::arrayValue}};
 
@@ -96,10 +97,22 @@ static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
     {"guest_enforce_security", Json::ValueType::booleanValue},
 };
 
+// supported import values for disk category
+static std::map<std::string, Json::ValueType> kDiskKeyMap = {
+    {"default_build", Json::ValueType::stringValue},
+    {"system_build", Json::ValueType::stringValue},
+    {"kernel_build", Json::ValueType::stringValue},
+};
+
 // Validate the security json parameters
 Result<void> ValidateSecurityConfigs(const Json::Value& root) {
   CF_EXPECT(ValidateTypo(root, kSecurityKeyMap),
             "ValidateSecurityConfigs ValidateTypo fail");
+  return {};
+}
+Result<void> ValidateDiskConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kDiskKeyMap),
+            "ValidateDiskConfigs ValidateTypo fail");
   return {};
 }
 
@@ -180,6 +193,10 @@ Result<void> ValidateInstancesConfigs(const Json::Value& root) {
     if (root[i].isMember("security")) {
       CF_EXPECT(ValidateSecurityConfigs(root[i]["security"]),
                 "ValidateSecurityConfigs fail");
+    }
+    if (root[i].isMember("disk")) {
+      CF_EXPECT(ValidateDiskConfigs(root[i]["disk"]),
+                "ValidateDiskConfigs fail");
     }
     if (root[i].isMember("graphics")) {
       CF_EXPECT(ValidateGraphicsConfigs(root[i]["graphics"]),
