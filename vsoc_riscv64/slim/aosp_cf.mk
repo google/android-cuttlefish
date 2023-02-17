@@ -27,11 +27,39 @@ TARGET_FLATTEN_APEX := false
 # TODO: this list should come via mainline_system.mk, but for now list
 # just the modules that work for riscv64.
 PRODUCT_PACKAGES := \
+    android.system.suspend-service \
+    apexd \
+    bootanim \
+    boringssl_self_test \
+    cgroups.json \
+    com.android.adbd \
+    com.android.i18n \
+    com.android.runtime \
+    fsck.f2fs \
+    hwservicemanager \
     init.environ.rc \
     init_first_stage \
     init_system \
+    keystore2 \
+    libEGL \
+    libETC1 \
+    libGLESv1_CM \
+    libGLESv2 \
+    libGLESv3 \
+    libpower \
+    libpowermanager \
+    libvulkan \
     linker \
+    logcat \
+    logd \
+    servicemanager \
     shell_and_utilities \
+    surfaceflinger \
+    system_compatibility_matrix.xml \
+    system_manifest.xml \
+    task_profiles.json \
+    vdc \
+    vold \
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/default_art_config.mk)
 PRODUCT_USES_DEFAULT_ART_CONFIG := false
@@ -81,7 +109,7 @@ TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/slim/android-info.txt
 # TODO: FIXME: Stop workaround for slim/device_vendor.mk #####################
 
 # TODO(b/205788876) remove this when openwrt has an image for riscv64
-PRODUCT_ENFORCE_MAC80211_HWSIM := false
+#PRODUCT_ENFORCE_MAC80211_HWSIM := false
 
 #
 # Special settings for the target
