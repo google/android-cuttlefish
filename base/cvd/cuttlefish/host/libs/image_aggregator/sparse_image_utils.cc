@@ -31,7 +31,7 @@ namespace cuttlefish {
 bool IsSparseImage(const std::string& image_path) {
   std::ifstream file(image_path, std::ios::binary);
   if (!file) {
-    LOG(FATAL) << "Could not open '" << image_path << "'";
+    LOG(FATAL) << "Could not open " << image_path;
     return false;
   }
   char buffer[5] = {0};
@@ -42,7 +42,7 @@ bool IsSparseImage(const std::string& image_path) {
 
 bool ConvertToRawImage(const std::string& image_path) {
   if (!IsSparseImage(image_path)) {
-    LOG(DEBUG) << "Skip non-sparse image " << image_path;
+    LOG(INFO) << "Skip non-sparse image " << image_path;
     return false;
   }
 
@@ -61,17 +61,13 @@ bool ConvertToRawImage(const std::string& image_path) {
   }
 
   // Replace the original sparse image with the raw image.
-  if (unlink(image_path.c_str()) != 0) {
-    PLOG(FATAL) << "Unable to delete original sparse image";
-  }
-
-  Command mv_cmd("/bin/mv");
+  Command mv_cmd("/usr/bin/mv");
   mv_cmd.AddParameter("-f");
   mv_cmd.AddParameter(tmp_raw_image_path);
   mv_cmd.AddParameter(image_path);
   success = mv_cmd.Start().Wait();
   if (success != 0) {
-    LOG(FATAL) << "Unable to rename raw image " << success;
+    LOG(FATAL) << "Unable to replace original sparse image " << success;
     return false;
   }
 
