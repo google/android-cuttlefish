@@ -67,6 +67,7 @@ class SelectorFlags {
   static constexpr char kGroupName[] = "group_name";
   static constexpr char kInstanceName[] = "instance_name";
   static constexpr char kAcquireFileLock[] = "acquire_file_lock";
+  static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
   static constexpr char kDisableDefaultGroup[] = "disable_default_group";
   static const SelectorFlags& Get();
 

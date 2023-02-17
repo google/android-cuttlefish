@@ -267,12 +267,72 @@ Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
   return !common_parser_.HasDeviceSelectOption();
 }
 
+static bool IsTrue(const std::string& value) {
+  std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
+  std::string value_in_lower_case = value;
+  /*
+   * https://en.cppreference.com/w/cpp/string/byte/tolower
+   *
+   * char should be converted to unsigned char first.
+   */
+  std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
+                 value_in_lower_case.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return Contains(true_strings, value_in_lower_case);
+}
+
+static bool IsFalse(const std::string& value) {
+  std::unordered_set<std::string> true_strings = {"n", "no", "false"};
+  std::string value_in_lower_case = value;
+  /*
+   * https://en.cppreference.com/w/cpp/string/byte/tolower
+   *
+   * char should be converted to unsigned char first.
+   */
+  std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
+                 value_in_lower_case.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return Contains(true_strings, value_in_lower_case);
+}
+
+static std::optional<std::string> GetAcquireFileLockEnvValue(
+    const cvd_common::Envs& envs) {
+  if (!Contains(envs, SelectorFlags::kAcquireFileLockEnv)) {
+    return std::nullopt;
+  }
+  auto env_value = envs.at(SelectorFlags::kAcquireFileLockEnv);
+  if (env_value.empty()) {
+    return std::nullopt;
+  }
+  return env_value;
+}
+
 Result<bool> StartSelectorParser::CalcAcquireFileLock() {
+  // if the flag is set, flag has the highest priority
   auto must_acquire_file_lock_flag = CF_EXPECT(
       SelectorFlags::Get().GetFlag<bool>(SelectorFlags::kAcquireFileLock));
-  const bool value =
-      CF_EXPECT(must_acquire_file_lock_flag.ParseFlag(selector_args_));
-  return value;
+  const auto value_opt =
+      CF_EXPECT(must_acquire_file_lock_flag.FilterFlag(selector_args_));
+  if (value_opt) {
+    return *value_opt;
+  }
+  // flag is not set. see if there is the environment variable set
+  auto env_value_opt = GetAcquireFileLockEnvValue(envs_);
+  if (env_value_opt) {
+    auto value_string = *env_value_opt;
+    if (IsTrue(value_string)) {
+      return true;
+    }
+    if (IsFalse(value_string)) {
+      return false;
+    }
+    return CF_ERR("In \"" << SelectorFlags::kAcquireFileLockEnv << "="
+                          << value_string << ",\" \"" << value_string
+                          << "\" is an invalid value. Try true or false.");
+  }
+  // nothing set, falls back to the default value of the flag
+  auto default_value = CF_EXPECT(must_acquire_file_lock_flag.DefaultValue());
+  return default_value;
 }
 
 Result<void> StartSelectorParser::ParseOptions() {
