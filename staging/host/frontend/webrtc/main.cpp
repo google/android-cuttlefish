@@ -132,6 +132,7 @@ int main(int argc, char** argv) {
       cuttlefish::SharedFD::Accept(*input_sockets.switches_server);
 
   std::vector<std::thread> touch_accepters;
+  touch_accepters.reserve(input_sockets.touch_servers.size());
   for (const auto& touch : input_sockets.touch_servers) {
     auto label = touch.first;
     touch_accepters.emplace_back([label, &input_sockets]() {

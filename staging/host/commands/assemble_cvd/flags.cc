@@ -1410,6 +1410,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }  // end of num_instances loop
 
   std::vector<std::string> names;
+  names.reserve(tmp_config_obj.Instances().size());
   for (const auto& instance : tmp_config_obj.Instances()) {
     names.emplace_back(instance.instance_name());
   }
