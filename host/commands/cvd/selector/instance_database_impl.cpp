@@ -127,6 +127,21 @@ InstanceDatabase::FindGroupsByGroupName(const std::string& group_name) const {
                    GenerateTooManyInstancesErrorMsg(1, kGroupNameField));
 }
 
+Result<Set<ConstRef<LocalInstanceGroup>>>
+InstanceDatabase::FindGroupsByInstanceName(
+    const std::string& instance_name) const {
+  auto subset = CollectToSet<LocalInstanceGroup>(
+      local_instance_groups_,
+      [&instance_name](const std::unique_ptr<LocalInstanceGroup>& group) {
+        if (!group) {
+          return false;
+        }
+        auto instance_set_result = group->FindByInstanceName(instance_name);
+        return instance_set_result.ok() && (instance_set_result->size() == 1);
+      });
+  return subset;
+}
+
 Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesById(
     const std::string& id) const {
   int parsed_int = 0;
