@@ -20,6 +20,8 @@
 namespace cuttlefish {
 
 struct FetchCvdDeviceConfigs {
+  bool use_fetch_artifact;
+  std::string default_build;
   std::string system_build;
   std::string kernel_build;
 };
