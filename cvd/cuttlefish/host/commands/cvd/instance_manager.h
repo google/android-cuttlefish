@@ -34,6 +34,7 @@
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
+#include "host/commands/cvd/selector/group_selector.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
@@ -44,6 +45,8 @@ class InstanceManager {
   using CreationAnalyzer = selector::CreationAnalyzer;
   using CreationAnalyzerParam = CreationAnalyzer::CreationAnalyzerParam;
   using GroupCreationInfo = selector::GroupCreationInfo;
+  using LocalInstanceGroup = selector::LocalInstanceGroup;
+  using GroupSelector = selector::GroupSelector;
 
   using InstanceGroupDir = std::string;
   struct InstanceGroupInfo {
@@ -53,9 +56,14 @@ class InstanceManager {
 
   INJECT(InstanceManager(InstanceLockFileManager&, HostToolTargetManager&));
 
+  // For cvd start
   Result<GroupCreationInfo> Analyze(const std::string& sub_cmd,
                                     const CreationAnalyzerParam& param,
                                     const ucred& credential);
+
+  Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
+                                         const cvd_common::Envs& envs,
+                                         const uid_t uid);
 
   bool HasInstanceGroups(const uid_t uid);
   Result<void> SetInstanceGroup(const uid_t uid,
