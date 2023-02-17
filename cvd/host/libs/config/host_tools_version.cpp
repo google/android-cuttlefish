@@ -56,6 +56,7 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
     }
   }
   std::vector<std::future<uint32_t>> calculations;
+  calculations.reserve(files.size());
   for (auto& file : files) {
     file = path + "/" + file; // mutate in place in files vector
     calculations.emplace_back(
