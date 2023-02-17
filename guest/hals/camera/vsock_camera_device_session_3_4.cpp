@@ -341,6 +341,7 @@ Status VsockCameraDeviceSession::processOneCaptureRequest(
   }
 
   std::vector<uint64_t> buffer_ids;
+  buffer_ids.reserve(request.outputBuffers.size());
   for (size_t i = 0; i < request.outputBuffers.size(); i++) {
     buffer_cache_.update(request.outputBuffers[i]);
     buffer_ids.emplace_back(request.outputBuffers[i].bufferId);
