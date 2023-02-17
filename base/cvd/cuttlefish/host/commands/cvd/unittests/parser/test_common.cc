@@ -46,7 +46,7 @@ bool FindConfigIgnoreSpaces(const std::vector<std::string>& vec,
     current.erase(std::remove(current.begin(), current.end(), ' '),
                   current.end());
     current.erase(std::remove(current.begin(), current.end(), '\t'),
-                  current.end());
+                  target.end());
     if (current == target) {
       return true;
     }

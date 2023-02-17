@@ -18,7 +18,7 @@
 
 #include <sys/stat.h>
 
-#include <map>
+#include <fruit/fruit.h>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -28,33 +28,13 @@
 #include "host/commands/cvd/server_command/flags_collector.h"
 
 namespace cuttlefish {
-namespace {
-
-const std::map<std::string, std::vector<std::string>>& OpToBinsMap() {
-  static const auto& map = *new std::map<std::string, std::vector<std::string>>{
-      {"stop", {"cvd_internal_stop", "stop_cvd"}},
-      {"stop_cvd", {"cvd_internal_stop", "stop_cvd"}},
-      {"start", {"cvd_internal_start", "launch_cvd"}},
-      {"launch_cvd", {"cvd_internal_start", "launch_cvd"}},
-      {"status", {"cvd_internal_status", "cvd_status"}},
-      {"cvd_status", {"cvd_internal_status", "cvd_status"}},
-      {"restart", {"restart_cvd"}},
-      {"powerwash", {"powerwash_cvd"}},
-      {"powerbtn", {"powerbtn_cvd"}},
-      {"suspend", {"snapshot_util_cvd"}},
-      {"resume", {"snapshot_util_cvd"}},
-      {"snapshot_take", {"snapshot_util_cvd"}},
-  };
-  return map;
-}
-
-}  // namespace
 
 Result<HostToolTarget> HostToolTarget::Create(
-    const std::string& artifacts_path) {
+    const std::string& artifacts_path,
+    const OperationToBinsMap& supported_operations) {
   std::string bin_dir_path = ConcatToString(artifacts_path, "/bin");
   std::unordered_map<std::string, OperationImplementation> op_to_impl_map;
-  for (const auto& [op, candidates] : OpToBinsMap()) {
+  for (const auto& [op, candidates] : supported_operations) {
     for (const auto& bin_name : candidates) {
       const auto bin_path = ConcatToString(bin_dir_path, "/", bin_name);
       if (!FileExists(bin_path)) {
@@ -70,20 +50,12 @@ Result<HostToolTarget> HostToolTarget::Create(
         ConcatToString(artifacts_path, "/bin/", op_impl.bin_name_);
     Command command(bin_path);
     command.AddParameter("--helpxml");
-    // b/276497044
-    command.UnsetFromEnvironment(kAndroidHostOut);
-    command.AddEnvironmentVariable(kAndroidHostOut, artifacts_path);
-    command.UnsetFromEnvironment(kAndroidSoongHostOut);
-    command.AddEnvironmentVariable(kAndroidSoongHostOut, artifacts_path);
-
     std::string xml_str;
-    std::string err_out;
+    // Caution: anything --helpxml often returns non-zero return code.
     RunWithManagedStdio(std::move(command), nullptr, std::addressof(xml_str),
-                        std::addressof(err_out));
+                        nullptr);
     auto flags_opt = CollectFlagsFromHelpxml(xml_str);
     if (!flags_opt) {
-      LOG(ERROR) << bin_path << " --helpxml failed.";
-      LOG(ERROR) << err_out;
       continue;
     }
     auto flags = std::move(*flags_opt);

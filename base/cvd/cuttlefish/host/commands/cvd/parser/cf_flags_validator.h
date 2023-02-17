@@ -15,13 +15,10 @@
  */
 
 #pragma once
-
 #include <json/json.h>
-
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-
 Result<void> ValidateCfConfigs(const Json::Value& root);
 
 }  // namespace cuttlefish

@@ -20,7 +20,8 @@
 #include <gtest/gtest.h>
 
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/result_matchers.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -30,9 +31,12 @@ TEST(HostToolTarget, KnownFlags) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
+  std::unordered_map<std::string, std::vector<std::string>> ops_to_op_impl_map{
+      {"start", std::vector<std::string>{"cvd_internal_start", "launch_cvd"}}};
 
-  auto host_tool_target = HostToolTarget::Create(android_host_out);
-  EXPECT_THAT(host_tool_target, IsOk());
+  auto host_tool_target =
+      HostToolTarget::Create(android_host_out, ops_to_op_impl_map);
+  ASSERT_TRUE(host_tool_target.ok()) << host_tool_target.error().Trace();
 
   auto daemon_flag =
       host_tool_target->GetFlagInfo(HostToolTarget::FlagInfoRequest{
@@ -45,10 +49,16 @@ TEST(HostToolTarget, KnownFlags) {
       .flag_name_ = "@never_exist@",
   });
 
-  EXPECT_THAT(daemon_flag, IsOk());
+  ASSERT_TRUE(daemon_flag.ok()) << daemon_flag.error().Trace();
   ASSERT_EQ(daemon_flag->Name(), "daemon");
   ASSERT_TRUE(daemon_flag->Type() == "string" || daemon_flag->Type() == "bool");
-  EXPECT_THAT(bad_flag, IsError());
+  ASSERT_FALSE(bad_flag.ok());
+}
+
+fruit::Component<HostToolTargetManager> CreateManagerComponent() {
+  return fruit::createComponent()
+      .install(HostToolTargetManagerComponent)
+      .install(OperationToBinsMapComponent);
 }
 
 TEST(HostToolManager, KnownFlags) {
@@ -56,21 +66,23 @@ TEST(HostToolManager, KnownFlags) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  auto host_tool_manager = NewHostToolTargetManager();
+  fruit::Injector<HostToolTargetManager> injector(CreateManagerComponent);
+  HostToolTargetManager& host_tool_manager =
+      injector.get<HostToolTargetManager&>();
 
   auto daemon_flag =
-      host_tool_manager->ReadFlag({.artifacts_path = android_host_out,
-                                   .op = "start",
-                                   .flag_name = "daemon"});
+      host_tool_manager.ReadFlag({.artifacts_path = android_host_out,
+                                  .op = "start",
+                                  .flag_name = "daemon"});
   auto bad_flag =
-      host_tool_manager->ReadFlag({.artifacts_path = android_host_out,
-                                   .op = "start",
-                                   .flag_name = "@never_exist@"});
+      host_tool_manager.ReadFlag({.artifacts_path = android_host_out,
+                                  .op = "start",
+                                  .flag_name = "@never_exist@"});
 
-  EXPECT_THAT(daemon_flag, IsOk());
+  ASSERT_TRUE(daemon_flag.ok()) << daemon_flag.error().Trace();
   ASSERT_EQ(daemon_flag->Name(), "daemon");
   ASSERT_TRUE(daemon_flag->Type() == "string" || daemon_flag->Type() == "bool");
-  EXPECT_THAT(bad_flag, IsError());
+  ASSERT_FALSE(bad_flag.ok());
 }
 
 TEST(HostToolManager, KnownBins) {
@@ -78,18 +90,20 @@ TEST(HostToolManager, KnownBins) {
   if (android_host_out.empty()) {
     GTEST_SKIP() << "Set ANDROID_HOST_OUT";
   }
-  auto host_tool_manager = NewHostToolTargetManager();
+  fruit::Injector<HostToolTargetManager> injector(CreateManagerComponent);
+  HostToolTargetManager& host_tool_manager =
+      injector.get<HostToolTargetManager&>();
 
-  auto start_bin = host_tool_manager->ExecBaseName(
+  auto start_bin = host_tool_manager.ExecBaseName(
       {.artifacts_path = android_host_out, .op = "start"});
-  auto stop_bin = host_tool_manager->ExecBaseName(
+  auto stop_bin = host_tool_manager.ExecBaseName(
       {.artifacts_path = android_host_out, .op = "stop"});
-  auto bad_bin = host_tool_manager->ExecBaseName(
+  auto bad_bin = host_tool_manager.ExecBaseName(
       {.artifacts_path = android_host_out, .op = "bad"});
 
-  EXPECT_THAT(start_bin, IsOk());
-  EXPECT_THAT(stop_bin, IsOk());
-  EXPECT_THAT(bad_bin, IsError());
+  ASSERT_TRUE(start_bin.ok()) << start_bin.error().Trace();
+  ASSERT_TRUE(stop_bin.ok()) << stop_bin.error().Trace();
+  ASSERT_FALSE(bad_bin.ok()) << "bad_bin should be CF_ERR but is " << *bad_bin;
   ASSERT_TRUE(*start_bin == "cvd_internal_start" || *start_bin == "launch_cvd")
       << "start_bin was " << *start_bin;
   ASSERT_TRUE(*stop_bin == "cvd_internal_stop" || *stop_bin == "stop_cvd")

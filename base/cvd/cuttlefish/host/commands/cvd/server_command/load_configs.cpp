@@ -15,49 +15,37 @@
  */
 #include "host/commands/cvd/server_command/load_configs.h"
 
-#include <iostream>
+#include <chrono>
 #include <mutex>
 #include <sstream>
 #include <string>
-#include <string_view>
-#include <vector>
 
-#include <json/json.h>
+#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+
 namespace {
 
-constexpr char kSummaryHelpText[] =
-    R"(Loads the given JSON configuration file and launches devices based on the options provided)";
-
-constexpr char kDetailedHelpText[] = R"(
-Warning: This command is deprecated, use cvd start --config_file instead.
-
-Usage:
-cvd load <config_filepath> [--override=<key>:<value>]
-
-Reads the fields in the JSON configuration file and translates them to corresponding start command and flags.  
-
-Optionally fetches remote artifacts prior to launching the cuttlefish environment.
-
-The --override flag can be used to give new values for properties in the config file without needing to edit the file directly.  Convenient for one-off invocations.
-)";
+using DemoCommandSequence = std::vector<RequestWithStdio>;
 
 }  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
  public:
-  LoadConfigsCommand(CommandSequenceExecutor& executor) : executor_(executor) {}
+  INJECT(LoadConfigsCommand(CommandSequenceExecutor& executor))
+      : executor_(executor) {}
   ~LoadConfigsCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -78,7 +66,6 @@ class LoadConfigsCommand : public CvdServerHandler {
     response.mutable_command_response();
     return response;
   }
-
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
@@ -88,81 +75,58 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool ShouldInterceptHelp() const override { return true; }
-
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return kDetailedHelpText;
-  }
-
-  Result<std::vector<RequestWithStdio>> CreateCommandSequence(
+  Result<DemoCommandSequence> CreateCommandSequence(
       const RequestWithStdio& request) {
+    bool help = false;
+
+    std::vector<Flag> flags;
+    flags.emplace_back(GflagsCompatFlag("help", help));
+    std::string config_path;
+    flags.emplace_back(GflagsCompatFlag("config_path", config_path));
+
     auto args = ParseInvocation(request.Message()).arguments;
-    auto working_directory =
-        request.Message().command_request().working_directory();
-    const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
-    auto cvd_flags = CF_EXPECT(GetCvdFlags(flags));
+    CF_EXPECT(ParseFlags(flags, args));
 
-    std::vector<cvd::Request> req_protos;
-    const auto& client_env = request.Message().command_request().env();
-
-    if (!cvd_flags.fetch_cvd_flags.empty()) {
-      auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
-      *fetch_cmd.mutable_env() = client_env;
-      fetch_cmd.add_args("cvd");
-      fetch_cmd.add_args("fetch");
-      for (const auto& flag : cvd_flags.fetch_cvd_flags) {
-        fetch_cmd.add_args(flag);
-      }
+    if (help) {
+      std::stringstream help_msg_stream;
+      help_msg_stream << "Usage: cvd " << kLoadSubCmd << std::endl;
+      const auto help_msg = help_msg_stream.str();
+      CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
+      return {};
     }
 
-    auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
-    *mkdir_cmd.mutable_env() = client_env;
-    mkdir_cmd.add_args("cvd");
-    mkdir_cmd.add_args("mkdir");
-    mkdir_cmd.add_args("-p");
-    mkdir_cmd.add_args(cvd_flags.load_directories.launch_home_directory);
+    Json::Value json_configs =
+        CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
+
+    auto cvd_flags =
+        CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
+
+    std::vector<cvd::Request> req_protos;
 
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
     launch_cmd.set_working_directory(
-        cvd_flags.load_directories.host_package_directory);
-    *launch_cmd.mutable_env() = client_env;
-    (*launch_cmd.mutable_env())["HOME"] =
-        cvd_flags.load_directories.launch_home_directory;
-    (*launch_cmd.mutable_env())[kAndroidHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
-      (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
-    }
+        request.Message().command_request().working_directory());
+    *launch_cmd.mutable_env() = request.Message().command_request().env();
 
-    /* cvd load will always create instances in daemon mode (to be independent
+    /* cvd load will always create instances in deamon mode (to be independent
      of terminal) and will enable reporting automatically (to run automatically
      without question during launch)
      */
     launch_cmd.add_args("cvd");
     launch_cmd.add_args("start");
     launch_cmd.add_args("--daemon");
-
-    for (const auto& parsed_flag : cvd_flags.launch_cvd_flags) {
+    for (auto& parsed_flag : cvd_flags.launch_cvd_flags) {
       launch_cmd.add_args(parsed_flag);
     }
-    // Add system flag for multi-build scenario
-    launch_cmd.add_args(cvd_flags.load_directories.system_image_directory_flag);
 
-    auto selector_opts = launch_cmd.mutable_selector_opts();
-
-    for (const auto& flag : cvd_flags.selector_flags) {
-      selector_opts->add_args(flag);
-    }
+    launch_cmd.mutable_selector_opts()->add_args(
+        std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
 
     /*Verbose is disabled by default*/
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
     CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
     std::vector<SharedFD> fds = {dev_null, dev_null, dev_null};
-    std::vector<RequestWithStdio> ret;
+    DemoCommandSequence ret;
 
     for (auto& request_proto : req_protos) {
       ret.emplace_back(RequestWithStdio(request.Client(), request_proto, fds,
@@ -181,9 +145,10 @@ class LoadConfigsCommand : public CvdServerHandler {
   bool interrupted_ = false;
 };
 
-std::unique_ptr<CvdServerHandler> NewLoadConfigsCommand(
-    CommandSequenceExecutor& executor) {
-  return std::unique_ptr<CvdServerHandler>(new LoadConfigsCommand(executor));
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
+LoadConfigsComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, LoadConfigsCommand>();
 }
 
 }  // namespace cuttlefish

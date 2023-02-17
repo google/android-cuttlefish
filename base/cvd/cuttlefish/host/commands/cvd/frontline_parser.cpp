@@ -23,75 +23,110 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 
+struct BoolFlags {
+  std::unordered_set<std::string> selector_flags;
+  std::unordered_set<std::string> cvd_driver_flags;
+};
+
+struct ValueFlags {
+  std::unordered_set<std::string> selector_flags;
+  std::unordered_set<std::string> cvd_driver_flags;
+};
+
+static const BoolFlags bool_flags{
+    .selector_flags = {selector::SelectorFlags::kDisableDefaultGroup,
+                       selector::SelectorFlags::kAcquireFileLock},
+    .cvd_driver_flags = {"clean", "help"}};
+
+static const ValueFlags value_flags{
+    .selector_flags = {selector::SelectorFlags::kGroupName,
+                       selector::SelectorFlags::kInstanceName},
+    .cvd_driver_flags = {}};
+
+static std::unordered_set<std::string> Merge(
+    const std::unordered_set<std::string>& s1,
+    const std::unordered_set<std::string>& s2) {
+  std::unordered_set<std::string> out{s1};
+  out.insert(s2.begin(), s2.end());
+  return out;
+}
+
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
-    ParserParam param) {
-  CF_EXPECT(!param.all_args.empty());
-  FrontlineParser* frontline_parser = new FrontlineParser(param);
+    CvdClient& client, const std::vector<std::string>& internal_cmds,
+    const cvd_common::Args& all_args_orig, const cvd_common::Envs& envs) {
+  cvd_common::Args all_args{all_args_orig};
+  CF_EXPECT(!all_args.empty());
+  // TODO(kwstephenkim): implement these ad-hoc help checking in the
+  // parser.
+  if (android::base::Basename(all_args[0]) == "cvd") {
+    if (all_args.size() == 1) {
+      all_args.emplace_back("--help");
+    }
+    if (all_args.at(1) == "-h") {
+      all_args[1] = "--help";
+    }
+  }
+
+  FrontlineParser* frontline_parser =
+      new FrontlineParser(client, internal_cmds, all_args, envs);
   CF_EXPECT(frontline_parser != nullptr,
             "Memory allocation for FrontlineParser failed.");
   CF_EXPECT(frontline_parser->Separate());
   return std::unique_ptr<FrontlineParser>(frontline_parser);
 }
 
-FrontlineParser::FrontlineParser(const ParserParam& param)
-    : server_supported_subcmds_{param.server_supported_subcmds},
-      all_args_(param.all_args),
-      internal_cmds_(param.internal_cmds),
-      cvd_flags_(param.cvd_flags) {}
+FrontlineParser::FrontlineParser(
+    CvdClient& client, const std::vector<std::string>& internal_cmds,
+    const cvd_common::Args& all_args,
+    const std::unordered_map<std::string, std::string>& envs)
+    : client_(client),
+      all_args_(all_args),
+      envs_{envs},
+      internal_cmds_(internal_cmds) {
+  known_bool_flags_ =
+      Merge(bool_flags.selector_flags, bool_flags.cvd_driver_flags);
+  known_value_flags_ =
+      Merge(value_flags.selector_flags, value_flags.cvd_driver_flags);
+  selector_flags_ =
+      Merge(bool_flags.selector_flags, value_flags.selector_flags);
+}
 
 Result<void> FrontlineParser::Separate() {
+  valid_subcmds_ = CF_EXPECT(ValidSubcmdsList());
   arguments_separator_ = CF_EXPECT(CallSeparator());
+  auto filtered_output = CF_EXPECT(FilterNonSelectorArgs());
+  clean_ = filtered_output.clean;
+  help_ = filtered_output.help;
+  selector_args_ = std::move(filtered_output.selector_args);
   return {};
 }
 
 Result<cvd_common::Args> FrontlineParser::ValidSubcmdsList() {
-  cvd_common::Args valid_subcmds(server_supported_subcmds_);
+  auto valid_subcmd_json = CF_EXPECT(ListSubcommands());
+  CF_EXPECT(valid_subcmd_json.isMember("subcmd"),
+            "Server returned the list of subcommands in Json but it is missing "
+                << " \"subcmd\" field");
+  std::string valid_subcmd_string = valid_subcmd_json["subcmd"].asString();
+  auto valid_subcmds = android::base::Tokenize(valid_subcmd_string, ",");
   std::copy(internal_cmds_.cbegin(), internal_cmds_.cend(),
             std::back_inserter(valid_subcmds));
   return valid_subcmds;
 }
 
-static Result<std::unordered_set<std::string>> BoolFlagNames(
-    const std::vector<CvdFlagProxy>& flags) {
-  std::unordered_set<std::string> output;
-  for (const auto& flag : flags) {
-    if (flag.GetType() == CvdFlagProxy::FlagType::kBool) {
-      output.insert(CF_EXPECT(flag.Name()));
-    }
-  }
-  return output;
-}
-
-static Result<std::unordered_set<std::string>> ValueFlagNames(
-    const std::vector<CvdFlagProxy>& flags) {
-  std::unordered_set<std::string> output;
-  for (const auto& flag : flags) {
-    if (flag.GetType() == CvdFlagProxy::FlagType::kInt32 ||
-        flag.GetType() == CvdFlagProxy::FlagType::kString) {
-      output.insert(CF_EXPECT(flag.Name()));
-    }
-  }
-  return output;
-}
-
 Result<std::unique_ptr<selector::ArgumentsSeparator>>
 FrontlineParser::CallSeparator() {
-  auto valid_subcmds_vector = CF_EXPECT(ValidSubcmdsList());
-  std::unordered_set<std::string> valid_subcmds{valid_subcmds_vector.begin(),
-                                                valid_subcmds_vector.end()};
-  auto cvd_flags = cvd_flags_.Flags();
-
-  auto known_bool_flags = CF_EXPECT(BoolFlagNames(cvd_flags));
-  auto known_value_flags = CF_EXPECT(ValueFlagNames(cvd_flags));
-
+  std::unordered_set<std::string> valid_subcmds{valid_subcmds_.begin(),
+                                                valid_subcmds_.end()};
   ArgumentsSeparator::FlagsRegistration flag_registration{
-      .known_boolean_flags = known_bool_flags,
-      .known_value_flags = known_value_flags,
+      .known_boolean_flags = known_bool_flags_,
+      .known_value_flags = known_value_flags_,
       .valid_subcommands = valid_subcmds};
   auto arguments_separator =
       CF_EXPECT(ArgumentsSeparator::Parse(flag_registration, all_args_));
@@ -111,8 +146,50 @@ const cvd_common::Args& FrontlineParser::SubCmdArgs() const {
   return arguments_separator_->SubCmdArgs();
 }
 
-const cvd_common::Args& FrontlineParser::CvdArgs() const {
-  return arguments_separator_->CvdArgs();
+Result<FrontlineParser::FilterOutput> FrontlineParser::FilterNonSelectorArgs() {
+  auto cvd_args = arguments_separator_->CvdArgs();
+  bool clean = false;
+  bool help = false;
+  std::vector<Flag> gflags;
+  gflags.emplace_back(GflagsCompatFlag("clean", clean));
+  gflags.emplace_back(GflagsCompatFlag("help", help));
+  CF_EXPECT(ParseFlags(gflags, cvd_args));
+  FilterOutput output{
+      .clean = clean, .help = help, .selector_args = std::move(cvd_args)};
+  return output;
+}
+
+const cvd_common::Args& FrontlineParser::SelectorArgs() const {
+  return selector_args_;
+}
+
+Result<Json::Value> FrontlineParser::ListSubcommands() {
+  std::vector<std::string> args{"cvd", "cmd-list"};
+  SharedFD read_pipe, write_pipe;
+  CF_EXPECT(cuttlefish::SharedFD::Pipe(&read_pipe, &write_pipe),
+            "Unable to create shutdown pipe: " << strerror(errno));
+  OverrideFd new_control_fd{.stdout_override_fd = write_pipe};
+  CF_EXPECT(client_.HandleCommand(args, envs_, std::vector<std::string>{},
+                                  new_control_fd));
+
+  write_pipe->Close();
+  const int kChunkSize = 512;
+  char buf[kChunkSize + 1] = {0};
+  std::stringstream ss;
+  do {
+    auto n_read = ReadExact(read_pipe, buf, kChunkSize);
+    CF_EXPECT(n_read >= 0 && (n_read <= kChunkSize));
+    if (n_read == 0) {
+      break;
+    }
+    buf[n_read] = 0;  // null-terminate the C-style string
+    ss << buf;
+    if (n_read < sizeof(buf) - 1) {
+      break;
+    }
+  } while (true);
+  auto json_output = CF_EXPECT(ParseJson(ss.str()));
+  return json_output;
 }
 
 }  // namespace cuttlefish

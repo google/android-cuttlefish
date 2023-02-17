@@ -13,153 +13,194 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android-base/file.h>
+#include <gflags/gflags.h>
 
-#include "host/commands/cvd/parser/cf_flags_validator.h"
-
-#include <map>
+#include <stdio.h>
+#include <fstream>
 #include <string>
 #include <unordered_set>
-#include <vector>
-
-#include <json/json.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flags_validator.h"
-#include "common/libs/utils/result.h"
+#include "common/libs/utils/json.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
-namespace {
 
-using Json::ValueType::arrayValue;
-using Json::ValueType::booleanValue;
-using Json::ValueType::intValue;
-using Json::ValueType::objectValue;
-using Json::ValueType::stringValue;
-using Json::ValueType::uintValue;
+// json main parameters definitions
+static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
+    {"netsim_bt", Json::ValueType::booleanValue},
+    {"instances", Json::ValueType::arrayValue}};
 
-const auto& kRoot = *new ConfigNode{.type = objectValue, .children = {
-  {"netsim_bt", ConfigNode{.type = booleanValue}},
-  {"netsim_uwb", ConfigNode{.type = booleanValue}},
-  {"instances", ConfigNode{.type = arrayValue, .children = {
-    {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-        {"@import", ConfigNode{.type = stringValue}},
-        {"name", ConfigNode{.type = stringValue}},
-        {"vm", ConfigNode{.type = objectValue, .children = {
-          {"cpus", ConfigNode{.type = uintValue}},
-          {"memory_mb", ConfigNode{.type = uintValue}},
-          {"use_sdcard", ConfigNode{.type = booleanValue}},
-          {"setupwizard_mode", ConfigNode{.type = stringValue}},
-          {"uuid", ConfigNode{.type = stringValue}},
-          {"crosvm", ConfigNode{.type = objectValue, .children = {
-            {"enable_sandbox", ConfigNode{.type = booleanValue}},
-          }}},
-          {"custom_actions", ConfigNode{.type = arrayValue, .children = {
-            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-              {"shell_command", ConfigNode{.type = stringValue}},
-              {"button", ConfigNode{.type = objectValue, .children = {
-                {"command", ConfigNode{.type = stringValue}},
-                {"title", ConfigNode{.type = stringValue}},
-                {"icon_name", ConfigNode{.type = stringValue}},
-              }}},
-              {"server", ConfigNode{.type = stringValue}},
-              {"buttons", ConfigNode{.type = arrayValue, .children = {
-                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-                  {"command", ConfigNode{.type = stringValue}},
-                  {"title", ConfigNode{.type = stringValue}},
-                  {"icon_name", ConfigNode{.type = stringValue}},
-                }}},
-              }}},
-              {"device_states", ConfigNode{.type = arrayValue, .children = {
-                {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children = {
-                  {"lid_switch_open", ConfigNode{.type = booleanValue}},
-                  {"hinge_angle_value", ConfigNode{.type = intValue}},
-                }}},
-              }}},
-            }}},
-          }}},
-        }}},
-        {"boot", ConfigNode{.type = objectValue, .children = {
-          {"kernel", ConfigNode{.type = objectValue, .children = {
-            {"build", ConfigNode{.type = stringValue}},
-          }}},
-          {"enable_bootanimation", ConfigNode{.type = booleanValue}},
-          {"extra_bootconfig_args", ConfigNode{.type = stringValue}},
-          {"build", ConfigNode{.type = stringValue}},
-          {"bootloader", ConfigNode{.type = objectValue, .children = {
-            {"build", ConfigNode{.type = stringValue}},
-          }}},
-        }}},
-        {"security", ConfigNode{.type = objectValue, .children = {
-          {"serial_number", ConfigNode{.type = stringValue}},
-          {"use_random_serial", ConfigNode{.type = stringValue}},
-          {"guest_enforce_security", ConfigNode{.type = booleanValue}},
-        }}},
-        {"disk", ConfigNode{.type = objectValue, .children = {
-          {"default_build", ConfigNode{.type = stringValue}},
-          {"super", ConfigNode{.type = objectValue, .children = {
-            {"system", ConfigNode{.type = stringValue}},
-          }}},
-          {"download_img_zip", ConfigNode{.type = booleanValue}},
-          {"download_target_zip_files", ConfigNode{.type = booleanValue}},
-          {"blank_data_image_mb", ConfigNode{.type = uintValue}},
-          {"otatools", ConfigNode{.type = stringValue}},
-        }}},
-        {"graphics", ConfigNode{.type = objectValue, .children = {
-          {"displays", ConfigNode{.type = arrayValue, .children = {
-            {kArrayValidationSentinel, ConfigNode{.type = objectValue, .children {
-              {"width", ConfigNode{.type = uintValue}},
-              {"height", ConfigNode{.type = uintValue}},
-              {"dpi", ConfigNode{.type = uintValue}},
-              {"refresh_rate_hertz", ConfigNode{.type = uintValue}},
-            }}},
-          }}},
-          {"record_screen", ConfigNode{.type = booleanValue}},
-        }}},
-        {"streaming", ConfigNode{.type = objectValue, .children = {
-          {"device_id", ConfigNode{.type = stringValue}},
-        }}},
-      }}},
-    }}},
-  {"fetch", ConfigNode{.type = objectValue, .children = {
-      {"api_key", ConfigNode{.type = stringValue}},
-      {"credential_source", ConfigNode{.type = stringValue}},
-      {"wait_retry_period", ConfigNode{.type = uintValue}},
-      {"external_dns_resolver", ConfigNode{.type = booleanValue}},
-      {"keep_downloaded_archives", ConfigNode{.type = booleanValue}},
-      {"api_base_url", ConfigNode{.type = stringValue}},
-    }}},
-  {"metrics", ConfigNode{.type = objectValue, .children = {
-      {"enable", ConfigNode{.type = booleanValue}},
-    }}},
-  {"common", ConfigNode{.type = objectValue, .children = {
-    {"group_name", ConfigNode{.type = stringValue}},
-    {"host_package", ConfigNode{.type = stringValue}},
-  }}},
-},
+// instance object parameters definitions
+static std::map<std::string, Json::ValueType> kInstanceKeyMap = {
+    {"@import", Json::ValueType::stringValue},
+    {"vm", Json::ValueType::objectValue},
+    {"boot", Json::ValueType::objectValue},
+    {"security", Json::ValueType::objectValue},
+    {"disk", Json::ValueType::objectValue},
+    {"graphics", Json::ValueType::objectValue},
+    {"camera", Json::ValueType::objectValue},
+    {"connectivity", Json::ValueType::objectValue},
+    {"audio", Json::ValueType::objectValue},
+    {"streaming", Json::ValueType::objectValue},
+    {"adb", Json::ValueType::objectValue},
+    {"vehicle", Json::ValueType::objectValue},
+    {"location", Json::ValueType::objectValue}};
+
+// supported import values for @import key
+static std::unordered_set<std::string> kSupportedImportValues = {
+    "phone", "tablet", "tv", "wearable", "auto", "slim", "go", "foldable"};
+
+// supported import values for vm category and crosvm subcategory
+static std::map<std::string, Json::ValueType> kVmKeyMap = {
+    {"cpus", Json::ValueType::intValue},
+    {"memory_mb", Json::ValueType::intValue},
+    {"use_sdcard", Json::ValueType::booleanValue},
+    {"setupwizard_mode", Json::ValueType::stringValue},
+    {"uuid", Json::ValueType::stringValue},
+    {"crosvm", Json::ValueType::objectValue},
+    {"qemu", Json::ValueType::objectValue},
+    {"gem5", Json::ValueType::objectValue},
+    {"custom_actions", Json::ValueType::arrayValue},
+};
+static std::map<std::string, Json::ValueType> kCrosvmKeyMap = {
+    {"enable_sandbox", Json::ValueType::booleanValue},
 };
 
-}  // namespace
+// supported import values for boot category and kernel subcategory
+static std::map<std::string, Json::ValueType> kBootKeyMap = {
+    {"extra_bootconfig_args", Json::ValueType::stringValue},
+    {"kernel", Json::ValueType::objectValue},
+    {"enable_bootanimation", Json::ValueType::booleanValue},
+};
+static std::map<std::string, Json::ValueType> kernelkeyMap = {
+    {"extra_kernel_cmdline", Json::ValueType::stringValue},
+};
 
-Result<void> ValidateCfConfigs(const Json::Value& root) {
-  static const auto& kSupportedImportValues =
-      *new std::unordered_set<std::string>{"phone", "tablet", "tv", "wearable",
-                                           "auto",  "slim",   "go", "foldable"};
+// supported import values for graphics category and displays subcategory
+static std::map<std::string, Json::ValueType> kGraphicsKeyMap = {
+    {"displays", Json::ValueType::arrayValue},
+};
+static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
+    {"width", Json::ValueType::intValue},
+    {"height", Json::ValueType::intValue},
+    {"dpi", Json::ValueType::intValue},
+    {"refresh_rate_hertz", Json::ValueType::intValue},
+};
 
-  CF_EXPECT(Validate(root, kRoot), "Validation failure in [root object] ->");
-  for (const auto& instance : root["instances"]) {
-    // TODO(chadreynolds): update `ExtractLaunchTemplates` to return a Result
-    // and check import values there, then remove this check
-    if (instance.isMember("@import")) {
-      const std::string import_value = instance["@import"].asString();
-      CF_EXPECTF(kSupportedImportValues.find(import_value) !=
-                     kSupportedImportValues.end(),
-                 "import value of \"{}\" is not supported", import_value);
+// supported import values for security category
+static std::map<std::string, Json::ValueType> kSecurityKeyMap = {
+    {"serial_number", Json::ValueType::stringValue},
+    {"guest_enforce_security", Json::ValueType::booleanValue},
+};
+
+// Validate the security json parameters
+Result<void> ValidateSecurityConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kSecurityKeyMap),
+            "ValidateSecurityConfigs ValidateTypo fail");
+  return {};
+}
+
+// Validate the displays json parameters
+Result<void> ValidateDisplaysConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kDisplayKeyMap),
+            "ValidateDisplaysConfigs ValidateTypo fail");
+  return {};
+}
+
+// Validate the graphics json parameters
+Result<void> ValidateGraphicsConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kGraphicsKeyMap),
+            "ValidateGraphicsConfigs ValidateTypo fail");
+
+  if (root.isMember("displays") && root["displays"].size() != 0) {
+    int num_displays = root["displays"].size();
+    for (int i = 0; i < num_displays; i++) {
+      CF_EXPECT(ValidateDisplaysConfigs(root["displays"][i]),
+                "ValidateDisplaysConfigs fail");
     }
-    CF_EXPECT(ValidateConfig<std::string>(instance, ValidateSetupWizardMode,
-                                          {"vm", "setupwizard_mode"}),
-              "Invalid value for setupwizard_mode flag");
   }
+
+  return {};
+}
+
+// Validate the vm json parameters
+Result<void> ValidateVmConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kVmKeyMap),
+            "ValidateVmConfigs ValidateTypo fail");
+  if (root.isMember("crosvm")) {
+    CF_EXPECT(ValidateTypo(root["crosvm"], kCrosvmKeyMap),
+              "ValidateVmConfigs ValidateTypo crosvm fail");
+  }
+  return {};
+}
+
+// Validate the kernel json parameters
+Result<void> ValidateKernelConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kernelkeyMap),
+            "ValidateKernelConfigs ValidateTypo fail");
+  return {};
+}
+
+// Validate the boot json parameters
+Result<void> ValidateBootConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kBootKeyMap),
+            "ValidateBootConfigs ValidateTypo fail");
+
+  if (root.isMember("kernel")) {
+    CF_EXPECT(ValidateKernelConfigs(root["kernel"]),
+              "ValidateKernelConfigs fail");
+  }
+
+  return {};
+}
+
+// Validate the instances json parameters
+Result<void> ValidateInstancesConfigs(const Json::Value& root) {
+  int num_instances = root.size();
+  for (unsigned int i = 0; i < num_instances; i++) {
+    CF_EXPECT(ValidateTypo(root[i], kInstanceKeyMap), "vm ValidateTypo fail");
+
+    if (root[i].isMember("vm")) {
+      CF_EXPECT(ValidateVmConfigs(root[i]["vm"]), "ValidateVmConfigs fail");
+    }
+
+    // Validate @import flag values are supported or not
+    if (root[i].isMember("@import")) {
+      CF_EXPECT(kSupportedImportValues.count(root[i]["@import"].asString()) > 0,
+                "@Import flag values are not supported");
+    }
+
+    if (root[i].isMember("boot")) {
+      CF_EXPECT(ValidateBootConfigs(root[i]["boot"]),
+                "ValidateBootConfigs fail");
+    }
+    if (root[i].isMember("security")) {
+      CF_EXPECT(ValidateSecurityConfigs(root[i]["security"]),
+                "ValidateSecurityConfigs fail");
+    }
+    if (root[i].isMember("graphics")) {
+      CF_EXPECT(ValidateGraphicsConfigs(root[i]["graphics"]),
+                "ValidateGraphicsConfigs fail");
+    }
+  }
+  CF_EXPECT(ValidateStringConfig(root, "vm", "setupwizard_mode",
+                                 ValidateStupWizardMode),
+            "Invalid value for setupwizard_mode flag");
+
+  return {};
+}
+
+// Validate cuttlefish config json parameters
+Result<void> ValidateCfConfigs(const Json::Value& root) {
+  CF_EXPECT(ValidateTypo(root, kConfigsKeyMap),
+            "Typo in config main parameters");
+  CF_EXPECT(root.isMember("instances"), "instances object is missing");
+  CF_EXPECT(ValidateInstancesConfigs(root["instances"]),
+            "ValidateInstancesConfigs failed");
+
   return {};
 }
 
