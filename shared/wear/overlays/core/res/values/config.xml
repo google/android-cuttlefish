@@ -113,4 +113,7 @@
   <bool name="config_wearAllowAllAppsForegroundLocation">true</bool>
   <bool name="config_telephonySingleSimDefaultSubscription">false</bool>
   <bool name="config_disableTaskSnapshots">true</bool>
+
+  <!-- Restrict Wear to single user -->
+  <integer name="config_multiuserMaximumUsers">1</integer>
 </resources>
