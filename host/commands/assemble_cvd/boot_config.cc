@@ -192,7 +192,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       bootconfig_args = ReplaceKernelBootArgs(bootconfig_args);
 
       auto bootconfig_result =
-          BootconfigArgsString(bootconfig_args_result.value(), " ");
+          BootconfigArgsString(bootconfig_args, " ");
       if (!bootconfig_result.ok()) {
         LOG(ERROR) << "Unable to get bootconfig args string from config: "
                    << bootconfig_result.error().Message();
