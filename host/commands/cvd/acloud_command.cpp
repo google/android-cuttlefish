@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/acloud_command.h"
 
+#include <stdio.h>
 #include <sys/stat.h>
 
 #include <fstream>
@@ -321,11 +322,11 @@ class ConvertAcloudCreateCommand {
     CF_EXPECT(lock.has_value(), "Could not acquire instance lock");
     CF_EXPECT(CF_EXPECT(lock->Status()) == InUseState::kNotInUse);
 
-    auto dir = TempDir() + "/acloud_cvd_temp/local-instance-" +
+    auto device_workspace = TempDir() + "/acloud_cvd_temp/local-instance-" +
                std::to_string(lock->Instance());
-    auto host_dir = dir;
+    auto host_dir = TempDir() + "/acloud_image_artifacts/";
     if (image_download_dir) {
-      host_dir = image_download_dir.value();
+      host_dir = image_download_dir.value() + "/acloud_image_artifacts/";
     }
 
     auto host_artifacts_path = request_command.env().find(kAndroidHostOut);
@@ -333,20 +334,22 @@ class ConvertAcloudCreateCommand {
               "Missing " << kAndroidHostOut);
 
     std::vector<cvd::Request> request_protos;
+    cvd::Request& mkdir_request = request_protos.emplace_back();
+    auto& mkdir_command = *mkdir_request.mutable_command_request();
+    mkdir_command.add_args("cvd");
+    mkdir_command.add_args("mkdir");
+    mkdir_command.add_args("-p");
+    mkdir_command.add_args(device_workspace);
+    auto& mkdir_env = *mkdir_command.mutable_env();
+    mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
+
+    // remove existing symlink host_bins, b/268599652#comment6
+    remove((device_workspace + "/host_bins").c_str());
     if (local_image) {
       CF_EXPECT(!(system_branch || system_build_target || system_build_id),
                 "--local-image incompatible with --system-* flags");
       CF_EXPECT(!(bootloader_branch || bootloader_build_target || bootloader_build_id),
                 "--local-image incompatible with --bootloader-* flags");
-      cvd::Request& mkdir_request = request_protos.emplace_back();
-      auto& mkdir_command = *mkdir_request.mutable_command_request();
-      mkdir_command.add_args("cvd");
-      mkdir_command.add_args("mkdir");
-      mkdir_command.add_args("-p");
-      mkdir_command.add_args(dir);
-      auto& mkdir_env = *mkdir_command.mutable_env();
-      mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
-
       cvd::Request& ln_request = request_protos.emplace_back();
       auto& ln_command = *ln_request.mutable_command_request();
       ln_command.add_args("cvd");
@@ -354,10 +357,35 @@ class ConvertAcloudCreateCommand {
       ln_command.add_args("-f");
       ln_command.add_args("-s");
       ln_command.add_args(host_artifacts_path->second);
-      ln_command.add_args(dir + "/host_bins");
+      ln_command.add_args(device_workspace + "/host_bins");
       auto& ln_env = *ln_command.mutable_env();
       ln_env[kAndroidHostOut] = host_artifacts_path->second;
     } else {
+      if (!DirectoryExists(host_dir)) {
+        // fetch/download directory doesn't exist, create directory
+        cvd::Request& mkdir_request = request_protos.emplace_back();
+        auto& mkdir_command = *mkdir_request.mutable_command_request();
+        mkdir_command.add_args("cvd");
+        mkdir_command.add_args("mkdir");
+        mkdir_command.add_args("-p");
+        mkdir_command.add_args(host_dir);
+        auto& mkdir_env = *mkdir_command.mutable_env();
+        mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
+      }
+      if (branch || build_id || build_target) {
+        auto target = build_target ? *build_target : "";
+        auto build = build_id.value_or(branch.value_or("aosp-master"));
+        host_dir += (build + target);
+      } else {
+        host_dir += "aosp-master";
+      }
+      // TODO(weihsu): if we fetch default ID such as aosp-master,
+      // cvd fetch will fetch the latest release. There is a potential
+      // issue that two different fetch with same default ID may
+      // download different releases.
+      // Eventually, we should match python acloud behavior to translate
+      // default ID (aosp-master) to real ID to solve this issue.
+
       cvd::Request& fetch_request = request_protos.emplace_back();
       auto& fetch_command = *fetch_request.mutable_command_request();
       fetch_command.add_args("cvd");
@@ -375,7 +403,7 @@ class ConvertAcloudCreateCommand {
       }
       if (system_branch || system_build_id || system_build_target) {
         fetch_command.add_args("--system_build");
-        fetch_command_str_ += "--system_build=";
+        fetch_command_str_ += " --system_build=";
         auto target = system_build_target.value_or(build_target.value_or(""));
         if (target != "") {
           target = "/" + target;
@@ -387,7 +415,7 @@ class ConvertAcloudCreateCommand {
       }
       if (bootloader_branch || bootloader_build_id || bootloader_build_target) {
         fetch_command.add_args("--bootloader_build");
-        fetch_command_str_ += "--bootloader_build";
+        fetch_command_str_ += " --bootloader_build=";
         auto target = bootloader_build_target.value_or("");
         if (target != "") {
           target = "/" + target;
@@ -399,7 +427,7 @@ class ConvertAcloudCreateCommand {
       }
       if (kernel_branch || kernel_build_id || kernel_build_target) {
         fetch_command.add_args("--kernel_build");
-        fetch_command_str_ += "--kernel_build=";
+        fetch_command_str_ += " --kernel_build=";
         auto target = kernel_build_target.value_or("kernel_virt_x86_64");
         auto build = kernel_build_id.value_or(
             branch.value_or("aosp_kernel-common-android-mainline"));
@@ -409,9 +437,8 @@ class ConvertAcloudCreateCommand {
       auto& fetch_env = *fetch_command.mutable_env();
       fetch_env[kAndroidHostOut] = host_artifacts_path->second;
 
-      struct stat statbuf;
       fetch_cvd_args_file_ = host_dir + "/fetch-cvd-args.txt";
-      if (stat(fetch_cvd_args_file_.c_str(), &statbuf) == 0) {
+      if (FileExists(fetch_cvd_args_file_)) {
         // file exists
         std::string read_str;
         using android::base::ReadFileToString;
@@ -432,7 +459,7 @@ class ConvertAcloudCreateCommand {
       ln_command.add_args("-f");
       ln_command.add_args("-s");
       ln_command.add_args(host_dir);
-      ln_command.add_args(host_dir + "/host_bins");
+      ln_command.add_args(device_workspace + "/host_bins");
       auto& ln_env = *ln_command.mutable_env();
       ln_env[kAndroidHostOut] = host_artifacts_path->second;
     }
@@ -521,8 +548,8 @@ class ConvertAcloudCreateCommand {
       start_env[kAndroidProductOut] = host_dir;
     }
     start_env[kCuttlefishInstanceEnvVarName] = std::to_string(lock->Instance());
-    start_env["HOME"] = dir;
-    *start_command.mutable_working_directory() = dir;
+    start_env["HOME"] = device_workspace;
+    *start_command.mutable_working_directory() = device_workspace;
 
     std::vector<SharedFD> fds;
     if (verbose) {
