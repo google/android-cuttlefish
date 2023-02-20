@@ -76,7 +76,8 @@ int main(int argc, char* argv[]) {
     req["iface_type"] = "mtap";
     request_list.append(req);
     req["iface_type"] = "wtap";
-
+    request_list.append(req);
+    req["iface_type"] = "wifiap";
     request_list.append(req);
     config["config_request"]["request_list"] = request_list;
 
