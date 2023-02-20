@@ -130,6 +130,7 @@ fruit::Component<> runCvdComponent(
       .install(BluetoothConnectorComponent)
       .install(ConfigServerComponent)
       .install(ConsoleForwarderComponent)
+      .install(EchoServerComponent)
       .install(GnssGrpcProxyServerComponent)
       .install(LogcatReceiverComponent)
       .install(KernelLogMonitorComponent)

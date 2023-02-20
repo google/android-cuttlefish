@@ -28,6 +28,7 @@ std::string LogcatReceiverBinary();
 std::string MetricsBinary();
 std::string ModemSimulatorBinary();
 std::string RootCanalBinary();
+std::string EchoServerBinary();
 std::string SocketVsockProxyBinary();
 std::string TombstoneReceiverBinary();
 std::string VehicleHalGrpcServerBinary();
