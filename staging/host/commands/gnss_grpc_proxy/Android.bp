@@ -52,7 +52,7 @@ cc_library_static {
     ],
 }
 
-cc_binary {
+cc_binary_host {
     name: "gnss_grpc_proxy",
     shared_libs: [
         "libext2_blkid",
@@ -67,6 +67,7 @@ cc_binary {
         "libcuttlefish_host_config",
         "libgflags",
         "libcvd_gnss_grpc_proxy",
+        "libgrpc++_reflection",
     ],
     srcs: [
         "gnss_grpc_proxy.cpp",
