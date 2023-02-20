@@ -22,6 +22,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/custom_actions.h"
@@ -72,6 +73,8 @@ fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 RootCanalComponent();
+
+fruit::Component<fruit::Required<GrpcSocketCreator>> EchoServerComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
