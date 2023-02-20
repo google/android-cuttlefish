@@ -61,6 +61,7 @@ cvd_host_tools = [
     "cvd",
     "cvd_internal_display",
     "cvd_internal_env",
+    "echo_server",
     "cvd_internal_host_bugreport",
     "cvd_internal_start",
     "cvd_internal_status",
