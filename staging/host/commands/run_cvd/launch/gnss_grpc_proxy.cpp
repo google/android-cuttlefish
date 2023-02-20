@@ -23,9 +23,9 @@ namespace {
 
 class GnssGrpcProxyServer : public CommandSource {
  public:
-  INJECT(
-      GnssGrpcProxyServer(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
+  INJECT(GnssGrpcProxyServer(const CuttlefishConfig::InstanceSpecific& instance,
+                             GrpcSocketCreator& grpc_socket))
+      : instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
@@ -40,6 +40,8 @@ class GnssGrpcProxyServer : public CommandSource {
                                      fixed_location_grpc_proxy_out_rd_);
     gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=",
                                      gnss_grpc_proxy_server_port);
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_socket=",
+                                     grpc_socket_.CreateGrpcSocket(Name()));
     if (!instance_.gnss_file_path().empty()) {
       // If path is provided, proxy will start as local mode.
       gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=",
@@ -91,11 +93,13 @@ class GnssGrpcProxyServer : public CommandSource {
   SharedFD gnss_grpc_proxy_out_rd_;
   SharedFD fixed_location_grpc_proxy_in_wr_;
   SharedFD fixed_location_grpc_proxy_out_rd_;
+  GrpcSocketCreator& grpc_socket_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+                                 GrpcSocketCreator>>
 GnssGrpcProxyServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, GnssGrpcProxyServer>()

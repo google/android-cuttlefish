@@ -56,7 +56,8 @@ ConfigServerComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 ConsoleForwarderComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+                                 GrpcSocketCreator>>
 GnssGrpcProxyServerComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig>>
