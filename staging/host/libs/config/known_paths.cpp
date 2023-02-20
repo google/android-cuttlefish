@@ -56,6 +56,8 @@ std::string RootCanalBinary() {
   return HostBinaryPath("root-canal");
 }
 
+std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }
+
 std::string SocketVsockProxyBinary() {
   return HostBinaryPath("socket_vsock_proxy");
 }
