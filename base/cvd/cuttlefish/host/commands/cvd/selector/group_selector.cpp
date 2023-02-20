@@ -15,6 +15,7 @@
  */
 
 #include "host/commands/cvd/selector/group_selector.h"
+#include "host/commands/cvd/selector/device_selector_utils.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
@@ -38,8 +39,10 @@ Result<LocalInstanceGroup> GroupSelector::Select(
     unused_arg_list.pop_back();
   }
   unused_arg_list.append("}");
-  CF_EXPECT(selector_args_copied.empty(),
-            "Unused selector options : " << unused_arg_list);
+  if (!selector_args_copied.empty()) {
+    LOG(ERROR) << "Warning: there are unused selector options. "
+               << unused_arg_list;
+  }
   GroupSelector group_selector(uid, std::move(common_parser), envs,
                                instance_database);
   auto group = CF_EXPECT(group_selector.FindGroup());
@@ -87,13 +90,7 @@ Result<LocalInstanceGroup> GroupSelector::FindGroup() {
 }
 
 Result<LocalInstanceGroup> GroupSelector::FindDefaultGroup() {
-  const auto& all_groups = instance_database_.InstanceGroups();
-  if (all_groups.size() == 1) {
-    return *(all_groups.front());
-  }
-  std::string system_wide_home = CF_EXPECT(SystemWideUserHome(client_uid_));
-  auto group =
-      CF_EXPECT(instance_database_.FindGroup({kHomeField, system_wide_home}));
+  auto group = CF_EXPECT(GetDefaultGroup(instance_database_, client_uid_));
   return group;
 }
 

@@ -30,7 +30,7 @@ namespace cuttlefish {
 namespace selector {
 
 Result<LocalInstanceGroup> GetDefaultGroup(
-    const InstanceDatabase& instance_database);
+    const InstanceDatabase& instance_database, const uid_t client_uid);
 
 }  // namespace selector
 }  // namespace cuttlefish
