@@ -22,6 +22,8 @@
 #include <string>
 
 #include <grpc/grpc.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
@@ -74,6 +76,7 @@ DEFINE_int32(fixed_location_out_fd, -1,
 DEFINE_int32(gnss_grpc_port,
              -1,
              "Service port for gnss grpc");
+DEFINE_string(gnss_grpc_socket, "", "Service socket path for gnss grpc");
 
 DEFINE_string(gnss_file_path, "",
               "gnss raw measurement file path for gnss grpc");
@@ -401,6 +404,8 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
 };
 
 void RunServer() {
+  grpc::EnableDefaultHealthCheckService(true);
+  grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   auto gnss_in = cuttlefish::SharedFD::Dup(FLAGS_gnss_in_fd);
   close(FLAGS_gnss_in_fd);
   if (!gnss_in->IsOpen()) {
@@ -454,6 +459,10 @@ void RunServer() {
     ServerBuilder builder;
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    if (!FLAGS_gnss_grpc_socket.empty()) {
+      builder.AddListeningPort("unix:" + FLAGS_gnss_grpc_socket,
+                               grpc::InsecureServerCredentials());
+    }
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&service);
