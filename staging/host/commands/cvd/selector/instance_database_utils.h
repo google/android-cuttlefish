@@ -159,6 +159,9 @@ Result<typename std::remove_reference<S>::type> AtMostOne(
 template <typename RetSet, typename AnyContainer>
 RetSet Intersection(const RetSet& u, AnyContainer&& v) {
   RetSet result;
+  if (u.empty() || v.empty()) {
+    return result;
+  }
   for (auto const& e : v) {
     if (Contains(u, e)) {
       result.insert(e);
@@ -170,6 +173,9 @@ RetSet Intersection(const RetSet& u, AnyContainer&& v) {
 template <typename RetSet, typename AnyContainer, typename... Containers>
 RetSet Intersection(const RetSet& u, AnyContainer&& v, Containers&&... s) {
   RetSet first = Intersection(u, std::forward<AnyContainer>(v));
+  if (first.empty()) {
+    return first;
+  }
   return Intersection(first, std::forward<Containers>(s)...);
 }
 
