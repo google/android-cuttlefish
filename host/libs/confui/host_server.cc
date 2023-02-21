@@ -62,24 +62,23 @@ static std::unique_ptr<ConfUiMessage> WrapWithSecureFlag(
   }
 }
 
-HostServer& HostServer::Get(
-    HostModeCtrl& host_mode_ctrl,
-    cuttlefish::ScreenConnectorFrameRenderer& screen_connector,
-    SharedFD from_guest_fd, SharedFD to_guest_fd) {
-  static HostServer host_server{host_mode_ctrl, screen_connector, from_guest_fd,
-                                to_guest_fd};
+HostServer& HostServer::Get(HostModeCtrl& host_mode_ctrl,
+                            ConfUiRenderer& host_renderer,
+                            SharedFD from_guest_fd, SharedFD to_guest_fd) {
+  static HostServer host_server{host_mode_ctrl, host_renderer,
+                                std::move(from_guest_fd),
+                                std::move(to_guest_fd)};
   return host_server;
 }
 
-HostServer::HostServer(
-    cuttlefish::HostModeCtrl& host_mode_ctrl,
-    cuttlefish::ScreenConnectorFrameRenderer& screen_connector,
-    SharedFD from_guest_fd, SharedFD to_guest_fd)
+HostServer::HostServer(HostModeCtrl& host_mode_ctrl,
+                       ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
+                       SharedFD to_guest_fd)
     : display_num_(0),
+      host_renderer_{host_renderer},
       host_mode_ctrl_(host_mode_ctrl),
-      screen_connector_{screen_connector},
-      from_guest_fifo_fd_(from_guest_fd),
-      to_guest_fifo_fd_(to_guest_fd) {
+      from_guest_fifo_fd_(std::move(from_guest_fd)),
+      to_guest_fifo_fd_(std::move(to_guest_fd)) {
   const size_t max_elements = 20;
   auto ignore_new =
       [](ThreadSafeQueue<std::unique_ptr<ConfUiMessage>>::QueueImpl*) {
@@ -244,8 +243,8 @@ bool HostServer::IsConfUiActive() {
 }
 
 std::shared_ptr<Session> HostServer::CreateSession(const std::string& name) {
-  return std::make_shared<Session>(name, display_num_, host_mode_ctrl_,
-                                   screen_connector_);
+  return std::make_shared<Session>(name, display_num_, host_renderer_,
+                                   host_mode_ctrl_);
 }
 
 static bool IsUserAbort(ConfUiMessage& msg) {
