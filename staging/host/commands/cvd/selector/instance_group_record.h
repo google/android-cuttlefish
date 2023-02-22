@@ -51,6 +51,7 @@ class LocalInstanceGroup {
   const Set<std::unique_ptr<LocalInstance>>& Instances() const {
     return instances_;
   }
+
   /**
    * return error if instance id of instance is taken AND that taken id
    * belongs to this group
@@ -69,6 +70,9 @@ class LocalInstanceGroup {
    */
   Result<Set<ConstRef<LocalInstance>>> FindByInstanceName(
       const std::string& instance_name) const;
+
+  // returns all instances in the dedicated data type
+  Result<Set<ConstRef<LocalInstance>>> FindAllInstances() const;
 
  private:
   LocalInstanceGroup(const std::string& group_name, const std::string& home_dir,
@@ -90,6 +94,7 @@ class LocalInstanceGroup {
    * To create InstanceRecords, we should create InstanceGroup first.
    */
   FRIEND_TEST(CvdInstanceRecordUnitTest, Fields);
+  FRIEND_TEST(CvdInstanceRecordUnitTest, Copy);
 
   friend class CvdInstanceGroupUnitTest;
   friend class CvdInstanceGroupSearchUnitTest;
