@@ -56,6 +56,7 @@ Result<HostToolTarget> HostToolTarget::Create(
                         nullptr);
     auto flags_opt = CollectFlagsFromHelpxml(xml_str);
     if (!flags_opt) {
+      LOG(ERROR) << bin_path << " --helpxml failed.";
       continue;
     }
     auto flags = std::move(*flags_opt);
