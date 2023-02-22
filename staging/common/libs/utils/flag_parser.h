@@ -145,7 +145,7 @@ bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text = "");
 
 /* If a "-helpxml" is present, prints all the flags in XML and fails. */
-Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&,
+Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&, bool& value,
                  const std::string& text = "");
 
 /* Catches unrecognized arguments that begin with `-`, and errors out. This
