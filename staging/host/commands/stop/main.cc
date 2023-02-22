@@ -22,7 +22,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -168,7 +167,13 @@ void ReleaseAllocdResources(SharedFD allocd_sock, uint32_t session_id) {
   LOG(INFO) << "Stop Session operation: " << resp["config_status"];
 }
 
-std::tuple<std::int32_t, bool> GetFlagValues(int argc, char** argv) {
+struct FlagVaules {
+  std::int32_t wait_for_launcher;
+  bool clear_instance_dirs;
+  bool helpxml;
+};
+
+FlagVaules GetFlagValues(int argc, char** argv) {
   std::int32_t wait_for_launcher = 5;
   bool clear_instance_dirs = false;
   std::vector<Flag> flags;
@@ -181,13 +186,15 @@ std::tuple<std::int32_t, bool> GetFlagValues(int argc, char** argv) {
           .Help("If provided, deletes the instance dir after attempting to "
                 "stop each instance."));
   flags.emplace_back(HelpFlag(flags));
-  flags.emplace_back(HelpXmlFlag(flags, std::cout));
+  bool helpxml = false;
+  flags.emplace_back(HelpXmlFlag(flags, std::cout, helpxml));
   flags.emplace_back(UnexpectedArgumentGuard());
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
-  CHECK(ParseFlags(flags, args)) << "Could not process command line flags.";
+  auto parse_result = ParseFlags(flags, args);
+  CHECK(parse_result || helpxml) << "Could not process command line flags.";
 
-  return {wait_for_launcher, clear_instance_dirs};
+  return {wait_for_launcher, clear_instance_dirs, helpxml};
 }
 
 int StopCvdMain(const std::int32_t wait_for_launcher,
@@ -231,8 +238,18 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  const auto [wait_for_launcher, clear_instance_dirs] =
+  const auto [wait_for_launcher, clear_instance_dirs, helpxml] =
       cuttlefish::GetFlagValues(argc, argv);
 
+  if (helpxml) {
+    /*
+     * b/269925398
+     *
+     * CHECK(false) should not be executed if --helpxml is given.
+     * The return code does not have to be the same. It is good if
+     * CHECK(false) and --helpxml return the same return code.
+     */
+    return 134;
+  }
   return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs);
 }
