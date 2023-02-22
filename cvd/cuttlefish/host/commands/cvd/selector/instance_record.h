@@ -49,7 +49,30 @@ class LocalInstance {
   unsigned InstanceId() const;
   const std::string& PerInstanceName() const;
   std::string DeviceName() const;
+
   const LocalInstanceGroup& ParentGroup() const;
+
+  class Copy {
+    friend class LocalInstance;
+
+   public:
+    const std::string& InternalName() const { return internal_name_; }
+    const std::string& InternalDeviceName() const {
+      return internal_device_name_;
+    }
+    unsigned InstanceId() const { return instance_id_; }
+    const std::string& PerInstanceName() const { return per_instance_name_; }
+    const std::string& DeviceName() const { return device_name_; }
+
+   private:
+    Copy(const LocalInstance& src);
+    std::string internal_name_;
+    std::string internal_device_name_;
+    unsigned instance_id_;
+    std::string per_instance_name_;
+    std::string device_name_;
+  };
+  Copy GetCopy() const;
 
  private:
   LocalInstance(const LocalInstanceGroup& parent_group,
@@ -58,8 +81,6 @@ class LocalInstance {
   const LocalInstanceGroup& parent_group_;
   unsigned instance_id_;
   std::string internal_name_;  ///< for now, it is to_string(instance_id_)
-  std::string internal_group_name_;
-  std::string group_name_;  ///< for now, the same as internal_group_name_
   /** the instance specific name to be appended to the group name
    *
    * by default, to_string(instance_id_). The default value is decided by
