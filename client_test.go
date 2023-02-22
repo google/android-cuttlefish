@@ -266,7 +266,7 @@ func TestDeleteHosts(t *testing.T) {
 }
 
 func createTempDir(t *testing.T) string {
-	dir, err := os.MkdirTemp("", "cvdremoteTest")
+	dir, err := os.MkdirTemp("", "cvdrTest")
 	if err != nil {
 		t.Fatal(err)
 	}
