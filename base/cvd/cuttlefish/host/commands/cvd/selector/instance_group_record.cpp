@@ -16,31 +16,25 @@
 
 #include "host/commands/cvd/selector/instance_group_record.h"
 
-#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
-LocalInstanceGroup::LocalInstanceGroup(const InstanceGroupParam& param)
-    : home_dir_{param.home_dir},
-      host_artifacts_path_{param.host_artifacts_path},
-      product_out_path_{param.product_out_path},
+LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
+                                       const std::string& home_dir,
+                                       const std::string& host_artifacts_path)
+    : home_dir_{home_dir},
+      host_artifacts_path_{host_artifacts_path},
       internal_group_name_(GenInternalGroupName()),
-      group_name_(param.group_name),
-      start_time_(param.start_time) {
-  LOG(VERBOSE) << "Creating a group \"" << group_name_ << "\" ("
-               << Format(start_time_) << ")";
-}
+      group_name_(group_name) {}
 
 LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
     : home_dir_{src.home_dir_},
       host_artifacts_path_{src.host_artifacts_path_},
-      product_out_path_{src.product_out_path_},
       internal_group_name_{src.internal_group_name_},
       group_name_{src.group_name_},
-      start_time_{src.start_time_},
       instances_{CopyInstances(src.instances_)} {}
 
 LocalInstanceGroup& LocalInstanceGroup::operator=(
@@ -50,7 +44,6 @@ LocalInstanceGroup& LocalInstanceGroup::operator=(
   }
   home_dir_ = src.home_dir_;
   host_artifacts_path_ = src.host_artifacts_path_;
-  product_out_path_ = src.product_out_path_;
   internal_group_name_ = src.internal_group_name_;
   group_name_ = src.group_name_;
   instances_ = CopyInstances(src.instances_);
@@ -131,38 +124,6 @@ bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
     }
   }
   return false;
-}
-
-Json::Value LocalInstanceGroup::Serialize() const {
-  Json::Value group_json;
-  group_json[kJsonGroupName] = group_name_;
-  group_json[kJsonHomeDir] = home_dir_;
-  group_json[kJsonHostArtifactPath] = host_artifacts_path_;
-  group_json[kJsonProductOutPath] = product_out_path_;
-  group_json[kJsonStartTime] = SerializeTimePoint(start_time_);
-
-  int i = 0;
-  Json::Value instances_array_json;
-  for (const auto& instance : instances_) {
-    Json::Value instance_json = Serialize(instance);
-    instance_json[kJsonParent] = group_name_;
-    instances_array_json[i] = instance_json;
-    i++;
-  }
-  group_json[kJsonInstances] = instances_array_json;
-  return group_json;
-}
-
-Json::Value LocalInstanceGroup::Serialize(
-    const std::unique_ptr<LocalInstance>& instance) const {
-  Json::Value instance_json;
-  if (!instance) {
-    return instance_json;
-  }
-  instance_json[LocalInstance::kJsonInstanceName] = instance->PerInstanceName();
-  instance_json[LocalInstance::kJsonInstanceId] =
-      std::to_string(instance->InstanceId());
-  return instance_json;
 }
 
 }  // namespace selector

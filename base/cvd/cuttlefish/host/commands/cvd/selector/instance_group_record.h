@@ -19,7 +19,8 @@
 #include <memory>
 #include <string>
 
-#include "common/libs/utils/json.h"
+#include <gtest/gtest.h>
+
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -36,15 +37,9 @@ class InstanceDatabase;
  * Needs design changes to support both Remote Instances
  */
 class LocalInstanceGroup {
+  friend InstanceDatabase;
+
  public:
-  struct InstanceGroupParam {
-    std::string group_name;
-    std::string home_dir;
-    std::string host_artifacts_path;
-    std::string product_out_path;
-    TimeStamp start_time;
-  };
-  LocalInstanceGroup(const InstanceGroupParam& param);
   LocalInstanceGroup(const LocalInstanceGroup& src);
   LocalInstanceGroup& operator=(const LocalInstanceGroup& src);
 
@@ -52,13 +47,10 @@ class LocalInstanceGroup {
   const std::string& GroupName() const { return group_name_; }
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostArtifactsPath() const { return host_artifacts_path_; }
-  const std::string& ProductOutPath() const { return product_out_path_; }
   Result<std::string> GetCuttlefishConfigPath() const;
   const Set<std::unique_ptr<LocalInstance>>& Instances() const {
     return instances_;
   }
-  Json::Value Serialize() const;
-  auto StartTime() const { return start_time_; }
 
   /**
    * return error if instance id of instance is taken AND that taken id
@@ -67,6 +59,7 @@ class LocalInstanceGroup {
   Result<void> AddInstance(const unsigned instance_id,
                            const std::string& instance_name);
   bool HasInstance(const unsigned instance_id) const;
+
   Result<Set<ConstRef<LocalInstance>>> FindById(const unsigned id) const;
   /**
    * Find by per-instance name.
@@ -81,29 +74,30 @@ class LocalInstanceGroup {
   // returns all instances in the dedicated data type
   Result<Set<ConstRef<LocalInstance>>> FindAllInstances() const;
 
-  static constexpr const char kJsonGroupName[] = "Group Name";
-  static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
-  static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
-  static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
-  static constexpr const char kJsonStartTime[] = "Start Time";
-  static constexpr const char kJsonInstances[] = "Instances";
-  static constexpr const char kJsonParent[] = "Parent Group";
-
  private:
+  LocalInstanceGroup(const std::string& group_name, const std::string& home_dir,
+                     const std::string& host_artifacts_path);
   // Eventually copies the instances of a src to *this
   Set<std::unique_ptr<LocalInstance>> CopyInstances(
       const Set<std::unique_ptr<LocalInstance>>& src_instances);
-  Json::Value Serialize(const std::unique_ptr<LocalInstance>& instance) const;
-
   std::string home_dir_;
   std::string host_artifacts_path_;
-  std::string product_out_path_;
 
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
   std::string group_name_;
-  TimeStamp start_time_;
   Set<std::unique_ptr<LocalInstance>> instances_;
+
+  /*
+   * Expose constructor to the tests in InstanceRecord unit test suite.
+   *
+   * To create InstanceRecords, we should create InstanceGroup first.
+   */
+  FRIEND_TEST(CvdInstanceRecordUnitTest, Fields);
+  FRIEND_TEST(CvdInstanceRecordUnitTest, Copy);
+
+  friend class CvdInstanceGroupUnitTest;
+  friend class CvdInstanceGroupSearchUnitTest;
 };
 
 }  // namespace selector

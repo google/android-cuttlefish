@@ -19,7 +19,6 @@
 #include <string>
 
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -33,12 +32,8 @@ class LocalInstanceGroup;
  */
 class LocalInstance {
   friend class LocalInstanceGroup;
-  friend class InstanceDatabase;
 
  public:
-  static constexpr const char kJsonInstanceId[] = "Instance Id";
-  static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
-
   /* names:
    *
    * Many components in Cuttlefish traditionally expect the name to be "cvd-N,"
@@ -59,40 +54,8 @@ class LocalInstance {
 
   class Copy {
     friend class LocalInstance;
-    struct MockParentParam {
-      std::string home_dir;
-      std::string host_artifacts_path;
-      std::string internal_group_name;
-      std::string group_name;
-      TimeStamp start_time;
-    };
 
    public:
-    /* when Copy is used, it is already disconnected from the original parent
-     * group. Thus, it should carry the snapshot of needed information about
-     * the parent group
-     */
-    class MockParent {
-     public:
-      MockParent(const MockParentParam&);
-      const std::string& InternalGroupName() const {
-        return internal_group_name_;
-      }
-      const std::string& GroupName() const { return group_name_; }
-      const std::string& HomeDir() const { return home_dir_; }
-      const std::string& HostArtifactsPath() const {
-        return host_artifacts_path_;
-      }
-      auto StartTime() const { return start_time_; }
-
-     private:
-      std::string home_dir_;
-      std::string host_artifacts_path_;
-      std::string internal_group_name_;
-      std::string group_name_;
-      TimeStamp start_time_;
-    };
-    Copy(const LocalInstance& src);
     const std::string& InternalName() const { return internal_name_; }
     const std::string& InternalDeviceName() const {
       return internal_device_name_;
@@ -100,15 +63,14 @@ class LocalInstance {
     unsigned InstanceId() const { return instance_id_; }
     const std::string& PerInstanceName() const { return per_instance_name_; }
     const std::string& DeviceName() const { return device_name_; }
-    const MockParent& ParentGroup() const { return mock_group_; }
 
    private:
+    Copy(const LocalInstance& src);
     std::string internal_name_;
     std::string internal_device_name_;
     unsigned instance_id_;
     std::string per_instance_name_;
     std::string device_name_;
-    MockParent mock_group_;
   };
   Copy GetCopy() const;
 
