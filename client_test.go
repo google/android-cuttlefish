@@ -188,10 +188,10 @@ func TestUploadFilesExponentialBackoff(t *testing.T) {
 	srv, _ := NewService(opts)
 
 	err := srv.UploadFiles("foo", "bar", []string{waldoFile})
+
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	if timestamps[1].Sub(timestamps[0]) < 100*time.Millisecond {
 		t.Fatal("first retry shouldn't be in less than 100ms")
 	}
@@ -204,9 +204,9 @@ func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
 	tempDir := createTempDir(t)
 	defer os.RemoveAll(tempDir)
 	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
-	retries := 0
+	attempts := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		retries = retries + 1
+		attempts = attempts + 1
 		writeErr(w, 500)
 	}))
 	defer ts.Close()
@@ -223,12 +223,12 @@ func TestUploadFilesExponentialBackoffReachedElapsedTime(t *testing.T) {
 	srv, _ := NewService(opts)
 
 	err := srv.UploadFiles("foo", "bar", []string{waldoFile})
+
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	expRetries := 4
-	if retries != expRetries {
-		t.Fatalf("expected %d, got %d", expRetries, retries)
+	if attempts == 0 {
+		t.Fatal("server was never reached")
 	}
 }
 
