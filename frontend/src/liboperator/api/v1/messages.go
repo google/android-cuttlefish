@@ -68,8 +68,7 @@ type CreateCVDRequest struct {
 
 // Represents a build from ci.android.com.
 type AndroidCIBuild struct {
-	// The branch name. If omitted the passed `BuildID` will determine the branch, if `BuildID` is omitted as well
-	// `aosp-master` will be used.
+	// The branch name. If omitted the passed `BuildID` will determine the branch.
 	Branch string `json:"branch"`
 	// Uniquely identifies a branch's snapshot. If omitted, the latest green snapshot of the used branch will
 	// be used.
@@ -79,8 +78,19 @@ type AndroidCIBuild struct {
 	Target string `json:"target"`
 }
 
+type AndroidCIBuildSource struct {
+	// Main build defaults to branch "aosp-master" using latest green build id.
+	MainBuild *AndroidCIBuild `json:"main_build,omitempty"`
+	// Uses this specific kernel build target if set.
+	KernelBuild *AndroidCIBuild `json:"kernel_build,omitempty"`
+	// Uses this specific bootloader build target if set.
+	BootloaderBuild *AndroidCIBuild `json:"bootloader_build,omitempty"`
+	// Uses this specific system build target if set.
+	SystemBuild *AndroidCIBuild `json:"system_build,omitempty"`
+}
+
 // Represents a user build.
-type UserBuild struct {
+type UserBuildSource struct {
 	// [REQUIRED] Name of the directory where the user artifacts are stored.
 	ArtifactsDir string `json:"artifacts_dir"`
 }
@@ -88,9 +98,9 @@ type UserBuild struct {
 // Represents the artifacts source to build the CVD.
 type BuildSource struct {
 	// A build from ci.android.com
-	AndroidCIBuild *AndroidCIBuild `json:"android_ci_build,omitempty"`
+	AndroidCIBuildSource *AndroidCIBuildSource `json:"android_ci_build_source,omitempty"`
 	// A user build.
-	UserBuild *UserBuild `json:"user_build,omitempty"`
+	UserBuildSource *UserBuildSource `json:"user_build_source,omitempty"`
 }
 
 type Operation struct {
