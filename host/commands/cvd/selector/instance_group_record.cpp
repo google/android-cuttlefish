@@ -102,6 +102,18 @@ Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindByInstanceName(
                    GenerateTooManyInstancesErrorMsg(1, kInstanceNameField));
 }
 
+Result<Set<ConstRef<LocalInstance>>> LocalInstanceGroup::FindAllInstances()
+    const {
+  auto subset = CollectToSet<LocalInstance>(
+      instances_, [](const std::unique_ptr<LocalInstance>& instance) {
+        if (instance) {
+          return true;
+        }
+        return false;
+      });
+  return subset;
+}
+
 bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
   for (const auto& instance : instances_) {
     if (!instance) {

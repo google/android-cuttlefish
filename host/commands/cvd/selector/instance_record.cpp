@@ -52,5 +52,17 @@ const LocalInstanceGroup& LocalInstance::ParentGroup() const {
   return parent_group_;
 }
 
+LocalInstance::Copy LocalInstance::GetCopy() const {
+  Copy copy(*this);
+  return copy;
+}
+
+LocalInstance::Copy::Copy(const LocalInstance& src)
+    : internal_name_{src.InternalName()},
+      internal_device_name_{src.InternalDeviceName()},
+      instance_id_{src.InstanceId()},
+      per_instance_name_{src.PerInstanceName()},
+      device_name_{src.DeviceName()} {}
+
 }  // namespace selector
 }  // namespace cuttlefish
