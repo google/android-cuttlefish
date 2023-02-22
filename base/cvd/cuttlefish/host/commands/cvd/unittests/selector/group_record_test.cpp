@@ -30,11 +30,7 @@ static std::string TestBinDir() { return "/opt/android11"; }
 
 class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
-  CvdInstanceGroupUnitTest()
-      : group_({.group_name = GroupName(),
-                .home_dir = HomeDir(),
-                .host_artifacts_path = TestBinDir(),
-                .product_out_path = TestBinDir()}) {}
+  CvdInstanceGroupUnitTest() : group_(GroupName(), HomeDir(), TestBinDir()) {}
   LocalInstanceGroup& Get() { return group_; }
   LocalInstanceGroup group_;
 };
@@ -43,10 +39,7 @@ class CvdInstanceGroupUnitTest : public testing::Test {
 class CvdInstanceGroupSearchUnitTest : public testing::Test {
  protected:
   CvdInstanceGroupSearchUnitTest()
-      : group_({.group_name = GroupName(),
-                .home_dir = HomeDir(),
-                .host_artifacts_path = TestBinDir(),
-                .product_out_path = TestBinDir()}) {
+      : group_(GroupName(), HomeDir(), TestBinDir()) {
     is_setup_ =
         (Get().AddInstance(1, "tv_instance").ok() &&
          Get().AddInstance(2, "2").ok() && Get().AddInstance(3, "phone").ok() &&
