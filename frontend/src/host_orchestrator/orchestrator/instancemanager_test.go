@@ -47,9 +47,11 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		return &apiv1.CreateCVDRequest{
 			CVD: &apiv1.CVD{
 				BuildSource: &apiv1.BuildSource{
-					AndroidCIBuild: &apiv1.AndroidCIBuild{
-						BuildID: "1234",
-						Target:  "aosp_cf_x86_64_phone-userdebug",
+					AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+						MainBuild: &apiv1.AndroidCIBuild{
+							BuildID: "1234",
+							Target:  "aosp_cf_x86_64_phone-userdebug",
+						},
 					},
 				},
 			},
@@ -63,10 +65,10 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 		corruptRequest func(r *apiv1.CreateCVDRequest)
 	}{
 		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource = nil }},
-		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuild = nil }},
+		{func(r *apiv1.CreateCVDRequest) { r.CVD.BuildSource.AndroidCIBuildSource = nil }},
 		{func(r *apiv1.CreateCVDRequest) {
-			r.CVD.BuildSource.AndroidCIBuild = nil
-			r.CVD.BuildSource.UserBuild = &apiv1.UserBuild{ArtifactsDir: ""}
+			r.CVD.BuildSource.AndroidCIBuildSource = nil
+			r.CVD.BuildSource.UserBuildSource = &apiv1.UserBuildSource{ArtifactsDir: ""}
 		}},
 	}
 
@@ -352,7 +354,7 @@ func TestCreateCVDLatesGreenSucceeds(t *testing.T) {
 	r := apiv1.CreateCVDRequest{
 		CVD: &apiv1.CVD{
 			BuildSource: &apiv1.BuildSource{
-				AndroidCIBuild: &apiv1.AndroidCIBuild{},
+				AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{},
 			},
 		},
 	}
@@ -363,9 +365,11 @@ func TestCreateCVDLatesGreenSucceeds(t *testing.T) {
 	want := &apiv1.CVD{
 		Name: "cvd-1",
 		BuildSource: &apiv1.BuildSource{
-			AndroidCIBuild: &apiv1.AndroidCIBuild{
-				BuildID: fakeLatesGreenBuildID,
-				Target:  defaultTarget,
+			AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+				MainBuild: &apiv1.AndroidCIBuild{
+					BuildID: fakeLatesGreenBuildID,
+					Target:  defaultTarget,
+				},
 			},
 		},
 	}
@@ -403,7 +407,7 @@ func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
 		UserArtifactsDirResolver: &fakeUADirRes{dir},
 	}
 	im := NewCVDToolInstanceManager(&opts)
-	buildSource := &apiv1.BuildSource{UserBuild: &apiv1.UserBuild{ArtifactsDir: "baz"}}
+	buildSource := &apiv1.BuildSource{UserBuildSource: &apiv1.UserBuildSource{ArtifactsDir: "baz"}}
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
 
 	op, _ := im.CreateCVD(r)
@@ -835,9 +839,11 @@ func contains(values []string, t string) bool {
 
 func androidCISource(buildID, target string) *apiv1.BuildSource {
 	return &apiv1.BuildSource{
-		AndroidCIBuild: &apiv1.AndroidCIBuild{
-			BuildID: buildID,
-			Target:  target,
+		AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+			MainBuild: &apiv1.AndroidCIBuild{
+				BuildID: buildID,
+				Target:  target,
+			},
 		},
 	}
 }

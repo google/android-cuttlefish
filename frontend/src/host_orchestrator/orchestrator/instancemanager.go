@@ -193,9 +193,9 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	var cvd *apiv1.CVD
 	var err error
 	switch {
-	case req.CVD.BuildSource.AndroidCIBuild != nil:
+	case req.CVD.BuildSource.AndroidCIBuildSource != nil:
 		cvd, err = m.launchFromAndroidCI(req, op)
-	case req.CVD.BuildSource.UserBuild != nil:
+	case req.CVD.BuildSource.UserBuildSource != nil:
 		cvd, err = m.launchFromUserBuild(req, op)
 	default:
 		result = OperationResult{
@@ -230,7 +230,12 @@ const (
 
 func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	build := req.CVD.BuildSource.AndroidCIBuild
+	var build apiv1.AndroidCIBuild
+	if req.CVD.BuildSource != nil &&
+		req.CVD.BuildSource.AndroidCIBuildSource != nil &&
+		req.CVD.BuildSource.AndroidCIBuildSource.MainBuild != nil {
+		build = *req.CVD.BuildSource.AndroidCIBuildSource.MainBuild
+	}
 	branch := build.Branch
 	if branch == "" {
 		branch = defaultBranch
@@ -263,9 +268,11 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	return &apiv1.CVD{
 		Name: cvdName,
 		BuildSource: &apiv1.BuildSource{
-			AndroidCIBuild: &apiv1.AndroidCIBuild{
-				BuildID: buildID,
-				Target:  target,
+			AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+				MainBuild: &apiv1.AndroidCIBuild{
+					BuildID: buildID,
+					Target:  target,
+				},
 			},
 		},
 	}, nil
@@ -273,7 +280,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 
 func (m *CVDToolInstanceManager) launchFromUserBuild(
 	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuild.ArtifactsDir)
+	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuildSource.ArtifactsDir)
 	if err := untarCVDHostPackage(artifactsDir); err != nil {
 		return nil, err
 	}
@@ -305,11 +312,11 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	if r.CVD.BuildSource == nil {
 		return EmptyFieldError("BuildSource")
 	}
-	if r.CVD.BuildSource.AndroidCIBuild == nil && r.CVD.BuildSource.UserBuild == nil {
+	if r.CVD.BuildSource.AndroidCIBuildSource == nil && r.CVD.BuildSource.UserBuildSource == nil {
 		return EmptyFieldError("BuildSource")
 	}
-	if r.CVD.BuildSource.UserBuild != nil {
-		if r.CVD.BuildSource.UserBuild.ArtifactsDir == "" {
+	if r.CVD.BuildSource.UserBuildSource != nil {
+		if r.CVD.BuildSource.UserBuildSource.ArtifactsDir == "" {
 			return EmptyFieldError("BuildSource.UserBuild.ArtifactsDir")
 		}
 	}
