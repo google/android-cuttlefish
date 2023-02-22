@@ -114,7 +114,7 @@ XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
       xmlReadMemory(xml_str.data(), xml_str.size(), NULL, NULL, 0);
   XmlDocPtr doc_uniq_ptr = XmlDocPtr(doc, XmlDocDeleter());
   if (!doc) {
-    LOG(ERROR) << "helpxml parsing failed.";
+    LOG(ERROR) << "helpxml parsing failed: " << xml_str;
     return nullptr;
   }
   return doc_uniq_ptr;
