@@ -290,4 +290,58 @@ Result<void> KillAllCuttlefishInstances(const DeviceClearOptions& options) {
   return {};
 }
 
+Result<void> KillCvdServerProcess() {
+  std::vector<pid_t> self_exe_pids =
+      CF_EXPECT(CollectPidsByArgv0(kServerExecPath));
+  if (self_exe_pids.empty()) {
+    LOG(ERROR) << "cvd server is not running.";
+    return {};
+  }
+  std::vector<pid_t> cvd_server_pids;
+  /**
+   * Finds processes whose executable path is kServerExecPath, and
+   * that is owned by getuid(), and that has the "INTERNAL_server_fd"
+   * in the arguments list.
+   */
+  for (const auto pid : self_exe_pids) {
+    auto proc_info_result = ExtractProcInfo(pid);
+    if (!proc_info_result.ok()) {
+      LOG(ERROR) << "Failed to extract process info for pid " << pid;
+      continue;
+    }
+    auto owner_uid_result = OwnerUid(pid);
+    if (!owner_uid_result.ok()) {
+      LOG(ERROR) << "Failed to find the uid for pid " << pid;
+      continue;
+    }
+    if (getuid() != *owner_uid_result) {
+      continue;
+    }
+    for (const auto& arg : proc_info_result->args_) {
+      if (Contains(arg, "INTERNAL_server_fd")) {
+        cvd_server_pids.push_back(pid);
+        break;
+      }
+    }
+  }
+  if (cvd_server_pids.empty()) {
+    LOG(ERROR)
+        << "Cvd server process is not found. Perhaps, it is not running.";
+    return {};
+  }
+  if (cvd_server_pids.size() > 1) {
+    LOG(ERROR) << "There are " << cvd_server_pids.size() << " server processes "
+               << "running while it should be up to 1.";
+  }
+  for (const auto pid : cvd_server_pids) {
+    auto kill_ret = kill(pid, SIGKILL);
+    if (kill_ret != 0) {
+      LOG(ERROR) << "kill(" << pid << ", SIGKILL) failed.";
+    } else {
+      LOG(ERROR) << "Cvd server process #" << pid << " is killed.";
+    }
+  }
+  return {};
+}
+
 }  // namespace cuttlefish
