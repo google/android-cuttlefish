@@ -144,7 +144,6 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   crosvm_cmd.Cmd().AddParameter("run");
   crosvm_cmd.AddControlSocket(GetControlSocketPath(instance, crosvm_socket),
                               instance.crosvm_binary());
-
   if (!instance.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
@@ -354,6 +353,17 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
   crosvm_log_tee_cmd.AddParameter("--process_name=crosvm");
   crosvm_log_tee_cmd.AddParameter("--log_fd_in=", crosvm_logs);
+  crosvm_log_tee_cmd.SetStopper([](Subprocess* proc) {
+    // Ask nicely so that log_tee gets a chance to process all the logs.
+    int rval = kill(proc->pid(), SIGINT);
+    if (rval != 0) {
+      LOG(ERROR) << "Failed to stop log_tee nicely, attempting to KILL";
+      return KillSubprocess(proc) == StopperResult::kStopSuccess
+                 ? StopperResult::kStopCrash
+                 : StopperResult::kStopFailure;
+    }
+    return StopperResult::kStopSuccess;
+  });
 
   // Serial port for logcat, redirected to a pipe
   crosvm_cmd.AddHvcReadOnly(instance.logcat_pipe_name());
@@ -438,6 +448,10 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 
   std::vector<Command> ret;
 
+  // log_tee must be added before crosvm_cmd to ensure all of crosvm's logs are
+  // captured during shutdown. Processes are stopped in reverse order.
+  ret.push_back(std::move(crosvm_log_tee_cmd));
+
   if (gpu_capture_enabled) {
     const std::string gpu_capture_basename =
         cpp_basename(instance.gpu_capture_binary());
@@ -495,7 +509,6 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     ret.push_back(std::move(crosvm_cmd.Cmd()));
   }
 
-  ret.push_back(std::move(crosvm_log_tee_cmd));
   return ret;
 }
 
