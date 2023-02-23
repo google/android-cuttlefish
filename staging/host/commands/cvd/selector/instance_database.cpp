@@ -37,6 +37,9 @@ InstanceDatabase::InstanceDatabase() {
   instance_handlers_[kInstanceIdField] = [this](const Value& field_value) {
     return FindInstancesById(field_value);
   };
+  instance_handlers_[kGroupNameField] = [this](const Value& field_value) {
+    return FindInstancesByGroupName(field_value);
+  };
   instance_handlers_[kInstanceNameField] = [this](const Value& field_value) {
     return FindInstancesByInstanceName(field_value);
   };
