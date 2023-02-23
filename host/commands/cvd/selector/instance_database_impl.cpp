@@ -174,5 +174,21 @@ InstanceDatabase::FindInstancesByInstanceName(
       collector, local_instance_groups_);
 }
 
+Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesByGroupName(
+    const Value& group_name) const {
+  auto collector =
+      [&group_name](const std::unique_ptr<LocalInstanceGroup>& group)
+      -> Result<Set<ConstRef<LocalInstance>>> {
+    CF_EXPECT(group != nullptr);
+    if (group->GroupName() != group_name) {
+      Set<ConstRef<LocalInstance>> empty_set;
+      return empty_set;
+    }
+    return (group->FindAllInstances());
+  };
+  return CollectAllElements<LocalInstance, LocalInstanceGroup>(
+      collector, local_instance_groups_);
+}
+
 }  // namespace selector
 }  // namespace cuttlefish
