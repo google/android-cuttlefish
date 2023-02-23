@@ -116,8 +116,10 @@ class InstanceDatabase {
   Result<Set<ConstRef<LocalInstanceGroup>>> FindGroupsByInstanceName(
       const Value& instance_name) const;
   Result<Set<ConstRef<LocalInstance>>> FindInstancesById(const Value& id) const;
-  Result<Set<ConstRef<LocalInstance>>> FindInstancesByInstanceName(
+  Result<Set<ConstRef<LocalInstance>>> FindInstancesByGroupName(
       const Value& instance_specific_name) const;
+  Result<Set<ConstRef<LocalInstance>>> FindInstancesByInstanceName(
+      const Value& group_name) const;
 
   std::vector<std::unique_ptr<LocalInstanceGroup>> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
