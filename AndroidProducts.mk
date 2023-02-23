@@ -25,8 +25,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_arm64_slim:$(LOCAL_DIR)/vsoc_arm64_only/slim/aosp_cf.mk \
 	aosp_cf_riscv64_minidroid:$(LOCAL_DIR)/vsoc_riscv64_minidroid/aosp_cf.mk \
 	aosp_cf_riscv64_slim:$(LOCAL_DIR)/vsoc_riscv64/slim/aosp_cf.mk \
-	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64/auto/aosp_cf.mk \
-	aosp_cf_x86_64_only_auto:$(LOCAL_DIR)/vsoc_x86_64_only/auto/aosp_cf.mk \
+	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64_only/auto/aosp_cf.mk \
 	aosp_cf_x86_64_pc:$(LOCAL_DIR)/vsoc_x86_64/pc/aosp_cf.mk \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf.mk \
 	aosp_cf_x86_64_phone_vendor:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf_vendor.mk \
@@ -37,7 +36,6 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_only_phone_hsum:$(LOCAL_DIR)/vsoc_x86_64_only/phone/aosp_cf_hsum.mk \
 	aosp_cf_x86_64_slim:$(LOCAL_DIR)/vsoc_x86_64_only/slim/aosp_cf.mk \
 	aosp_cf_x86_64_wear:$(LOCAL_DIR)/vsoc_x86_64_only/wear/aosp_cf.mk \
-	aosp_cf_x86_auto:$(LOCAL_DIR)/vsoc_x86/auto/aosp_cf.mk \
 	aosp_cf_x86_pasan:$(LOCAL_DIR)/vsoc_x86/pasan/aosp_cf.mk \
 	aosp_cf_x86_phone:$(LOCAL_DIR)/vsoc_x86/phone/aosp_cf.mk \
 	aosp_cf_x86_only_phone:$(LOCAL_DIR)/vsoc_x86_only/phone/aosp_cf.mk \
@@ -52,7 +50,7 @@ COMMON_LUNCH_CHOICES := \
 	aosp_cf_x86_64_pc-userdebug \
 	aosp_cf_x86_64_phone-userdebug \
 	aosp_cf_x86_64_foldable-userdebug \
-	aosp_cf_x86_64_only_auto-userdebug \
+	aosp_cf_x86_64_auto-userdebug \
 	aosp_cf_x86_phone-userdebug \
 	aosp_cf_x86_tv-userdebug \
 	aosp_cf_x86_64_tv-userdebug
