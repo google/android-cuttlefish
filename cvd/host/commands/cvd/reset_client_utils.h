@@ -80,4 +80,6 @@ struct DeviceClearOptions {
  */
 Result<void> KillAllCuttlefishInstances(const DeviceClearOptions& options);
 
+Result<void> KillCvdServerProcess();
+
 }  // namespace cuttlefish
