@@ -51,13 +51,15 @@ static bool IsTrue(const std::string& value) {
 }
 
 static Result<RunCvdProcInfo> AnalyzeRunCvdProcess(const pid_t pid) {
-  auto envs = CF_EXPECT(GetEnvs(pid));
+  auto proc_info = CF_EXPECT(ExtractProcInfo(pid));
   RunCvdProcInfo info;
-  info.pid_ = pid;
-  CF_EXPECT(Contains(envs, "HOME"));
-  info.pid_ = pid;
-  info.home_ = envs.at("HOME");
-  info.envs_ = std::move(envs);
+  info.pid_ = proc_info.pid_;
+  info.exec_path_ = proc_info.actual_exec_path_;
+  CF_EXPECT(Contains(proc_info.envs_, "HOME"));
+  info.home_ = proc_info.envs_.at("HOME");
+  info.envs_ = std::move(proc_info.envs_);
+  info.cmd_args_ = std::move(proc_info.args_);
+
   if (!Contains(info.envs_, kAndroidHostOut) &&
       !Contains(info.envs_, kAndroidSoongHostOut)) {
     const std::string server_host_out =

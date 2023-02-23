@@ -31,7 +31,9 @@ namespace cuttlefish {
 struct RunCvdProcInfo {
   pid_t pid_;
   std::string home_;
+  std::string exec_path_;
   cvd_common::Envs envs_;
+  cvd_common::Args cmd_args_;
   std::string stop_cvd_path_;
   bool is_cvd_server_started_;
 };
