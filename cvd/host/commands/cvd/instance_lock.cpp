@@ -37,29 +37,18 @@
 
 namespace cuttlefish {
 
-InstanceLockFile::InstanceLockFile(SharedFD fd, int instance_num)
-    : fd_(fd), instance_num_(instance_num) {}
+InstanceLockFile::InstanceLockFile(LockFile&& lock_file, const int instance_num)
+    : lock_file_(std::move(lock_file)), instance_num_(instance_num) {}
 
 int InstanceLockFile::Instance() const { return instance_num_; }
 
 Result<InUseState> InstanceLockFile::Status() const {
-  CF_EXPECT(fd_->LSeek(0, SEEK_SET) == 0, fd_->StrError());
-  char state_char = static_cast<char>(InUseState::kNotInUse);
-  CF_EXPECT(fd_->Read(&state_char, 1) >= 0, fd_->StrError());
-  switch (state_char) {
-    case static_cast<char>(InUseState::kInUse):
-      return InUseState::kInUse;
-    case static_cast<char>(InUseState::kNotInUse):
-      return InUseState::kNotInUse;
-    default:
-      return CF_ERR("Unexpected state value \"" << state_char << "\"");
-  }
+  auto in_use_state = CF_EXPECT(lock_file_.Status());
+  return in_use_state;
 }
 
 Result<void> InstanceLockFile::Status(InUseState state) {
-  CF_EXPECT(fd_->LSeek(0, SEEK_SET) == 0, fd_->StrError());
-  char state_char = static_cast<char>(state);
-  CF_EXPECT(fd_->Write(&state_char, 1) == 1, fd_->StrError());
+  CF_EXPECT(lock_file_.Status(state));
   return {};
 }
 
@@ -67,44 +56,25 @@ bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
   if (instance_num_ != other.instance_num_) {
     return instance_num_ < other.instance_num_;
   }
-  return fd_ < other.fd_;
+  return lock_file_ < other.lock_file_;
 }
 
 InstanceLockFileManager::InstanceLockFileManager() {}
 
-// Replicates tempfile.gettempdir() in Python
-std::string TempDir() {
-  std::vector<std::string> try_dirs = {
-      StringFromEnv("TMPDIR", ""),
-      StringFromEnv("TEMP", ""),
-      StringFromEnv("TMP", ""),
-      "/tmp",
-      "/var/tmp",
-      "/usr/tmp",
-  };
-  for (const auto& try_dir : try_dirs) {
-    if (DirectoryExists(try_dir)) {
-      return try_dir;
-    }
-  }
-  return CurrentDirectory();
-}
-
-static Result<SharedFD> OpenLockFile(int instance_num) {
+Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   std::stringstream path;
   path << TempDir() << "/acloud_cvd_temp/";
   CF_EXPECT(EnsureDirectoryExists(path.str()));
   path << "local-instance-" << instance_num << ".lock";
-  auto fd = SharedFD::Open(path.str(), O_CREAT | O_RDWR, 0666);
-  CF_EXPECT(fd->IsOpen(), "open(\"" << path.str() << "\"): " << fd->StrError());
-  return fd;
+  return path.str();
 }
 
 Result<InstanceLockFile> InstanceLockFileManager::AcquireLock(
     int instance_num) {
-  auto fd = CF_EXPECT(OpenLockFile(instance_num));
-  CF_EXPECT(fd->Flock(LOCK_EX));
-  return InstanceLockFile(fd, instance_num);
+  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
+  LockFile lock_file =
+      CF_EXPECT(lock_file_manager_.AcquireLock(lock_file_path));
+  return InstanceLockFile(std::move(lock_file), instance_num);
 }
 
 Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireLocks(
@@ -118,16 +88,13 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireLocks(
 
 Result<std::optional<InstanceLockFile>> InstanceLockFileManager::TryAcquireLock(
     int instance_num) {
-  auto fd = CF_EXPECT(OpenLockFile(instance_num));
-  auto flock_result = fd->Flock(LOCK_EX | LOCK_NB);
-  if (flock_result.ok()) {
-    return InstanceLockFile(fd, instance_num);
-    // TODO(schuffelen): Include the error code in the Result
-  } else if (!flock_result.ok() && fd->GetErrno() == EWOULDBLOCK) {
-    return {};
+  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
+  std::optional<LockFile> lock_file_opt =
+      CF_EXPECT(lock_file_manager_.TryAcquireLock(lock_file_path));
+  if (!lock_file_opt) {
+    return std::nullopt;
   }
-  CF_EXPECT(std::move(flock_result));
-  return {};
+  return InstanceLockFile(std::move(*lock_file_opt), instance_num);
 }
 
 Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
