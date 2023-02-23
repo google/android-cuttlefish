@@ -303,6 +303,36 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   ASSERT_FALSE(result_invalid.ok());
 }
 
+TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
+  // starting set up
+  if (!SetUpOk() || !AddGroups({"miau", "nyah"})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  auto& db = GetDb();
+  std::vector<InstanceInfo> nyah_group_instance_id_name_pairs{
+      {7, "my_favorite_phone"}, {11, "tv_instance"}};
+  auto nyah_group = db.FindGroup({kHomeField, Workspace() + "/" + "nyah"});
+  if (!nyah_group.ok()) {
+    GTEST_SKIP() << "nyah group was not found";
+  }
+  if (!AddInstances(*nyah_group, nyah_group_instance_id_name_pairs)) {
+    GTEST_SKIP() << Error().msg;
+  }
+  // end of set up
+
+  auto result_nyah = db.FindInstances({kGroupNameField, "nyah"});
+  auto result_invalid = db.FindInstance({kGroupNameField, "name_never_seen"});
+
+  ASSERT_TRUE(result_nyah.ok());
+  std::set<std::string> nyah_instance_names;
+  for (const auto& instance : *result_nyah) {
+    nyah_instance_names.insert(instance.Get().PerInstanceName());
+  }
+  std::set<std::string> expected{"my_favorite_phone", "tv_instance"};
+  ASSERT_EQ(nyah_instance_names, expected);
+  ASSERT_FALSE(result_invalid.ok());
+}
+
 TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
   // starting set up
   if (!SetUpOk() || !AddGroups({"miau", "nyah"})) {
