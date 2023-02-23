@@ -135,7 +135,7 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
 }
 
 Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
-  LOG(DEBUG) << "Stoppping monitored subprocesses";
+  LOG(DEBUG) << "Stopping monitored subprocesses";
   auto stop = [](const auto& it) {
     auto stop_result = it.proc->Stop();
     if (stop_result == StopperResult::kStopFailure) {
