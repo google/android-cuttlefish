@@ -312,13 +312,10 @@ class ConvertAcloudCreateCommand {
 
     CF_EXPECT(local_instance_set == true,
               "Only '--local-instance' is supported");
-    std::optional<InstanceLockFile> lock;
-    if (local_instance.has_value()) {
-      // TODO(schuffelen): Block here if it can be interruptible
-      lock = CF_EXPECT(lock_file_manager_.TryAcquireLock(*local_instance));
-    } else {
-      lock = CF_EXPECT(lock_file_manager_.TryAcquireUnusedLock());
-    }
+    std::optional<InstanceLockFile> lock =
+        local_instance.has_value()
+            ? CF_EXPECT(lock_file_manager_.TryAcquireLock(*local_instance))
+            : CF_EXPECT(lock_file_manager_.TryAcquireUnusedLock());
     CF_EXPECT(lock.has_value(), "Could not acquire instance lock");
     CF_EXPECT(CF_EXPECT(lock->Status()) == InUseState::kNotInUse);
 
