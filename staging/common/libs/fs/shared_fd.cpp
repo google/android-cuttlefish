@@ -446,11 +446,11 @@ SharedFD SharedFD::Fifo(const std::string& path, mode_t mode) {
     }
   }
 
-  int fd = TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode));
-  if (fd == -1) {
+  int rval = TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode));
+  if (rval == -1) {
     return ErrorFD(errno);
   }
-  return Open(path, mode);
+  return Open(path, O_RDWR);
 }
 
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
