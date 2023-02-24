@@ -99,7 +99,5 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   InstanceDatabase db_;
 };
 
-using CvdInstanceDatabaseJsonTest = CvdInstanceDatabaseTest;
-
 }  // namespace selector
 }  // namespace cuttlefish
