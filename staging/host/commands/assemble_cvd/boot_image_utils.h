@@ -44,4 +44,7 @@ void RepackGem5BootImage(const std::string& initrd_path,
                          const std::string& input_ramdisk_path);
 Result<std::string> ReadAndroidVersionFromBootImage(
     const std::string& boot_image_path);
+
+void UnpackRamdisk(const std::string& original_ramdisk_path,
+                   const std::string& ramdisk_stage_dir);
 }
