@@ -31,9 +31,7 @@ namespace cuttlefish {
 struct RunCvdProcInfo {
   pid_t pid_;
   std::string home_;
-  std::string exec_path_;
   cvd_common::Envs envs_;
-  cvd_common::Args cmd_args_;
   std::string stop_cvd_path_;
   bool is_cvd_server_started_;
 };
@@ -44,10 +42,9 @@ class RunCvdProcessManager {
   RunCvdProcessManager(const RunCvdProcessManager&) = delete;
   RunCvdProcessManager(RunCvdProcessManager&&) = default;
   void ShowAll();
-  Result<void> KillAllCuttlefishInstances(const bool cvd_server_children_only,
-                                          const bool clear_runtime_dirs) {
-    auto stop_cvd_result =
-        RunStopCvdForEach(cvd_server_children_only, clear_runtime_dirs);
+  Result<void> KillAllCuttlefishInstances(
+      const bool cvd_server_children_only = false) {
+    auto stop_cvd_result = RunStopCvdForEach(cvd_server_children_only);
     if (!stop_cvd_result.ok()) {
       LOG(ERROR) << stop_cvd_result.error().Message();
     }
@@ -57,18 +54,11 @@ class RunCvdProcessManager {
 
  private:
   RunCvdProcessManager() = default;
-  static Result<void> RunStopCvd(const RunCvdProcInfo& run_cvd_info,
-                                 const bool clear_runtime_dirs);
-  Result<void> RunStopCvdForEach(const bool cvd_server_children_only,
-                                 const bool clear_runtime_dirs);
+  static Result<void> RunStopCvd(const RunCvdProcInfo& run_cvd_info);
+  Result<void> RunStopCvdForEach(const bool cvd_server_children_only);
   Result<void> SendSignals(const bool cvd_server_children_only);
   Result<std::vector<RunCvdProcInfo>> CollectInfo();
   std::vector<RunCvdProcInfo> run_cvd_processes_;
-};
-
-struct DeviceClearOptions {
-  bool cvd_server_children_only;
-  bool clear_instance_dirs;
 };
 
 /*
@@ -78,8 +68,7 @@ struct DeviceClearOptions {
  * If cvd_server_children_only is set, it kills the run_cvd processes that were
  * started by a cvd server process.
  */
-Result<void> KillAllCuttlefishInstances(const DeviceClearOptions& options);
-
-Result<void> KillCvdServerProcess();
+Result<void> KillAllCuttlefishInstances(
+    const bool cvd_server_children_only = false);
 
 }  // namespace cuttlefish
