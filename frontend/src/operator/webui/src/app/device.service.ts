@@ -1,8 +1,7 @@
 import {Injectable} from '@angular/core';
-import {map} from 'rxjs/operators';
-import {Observable, ReplaySubject, Subject} from 'rxjs';
+import {map, mergeMap, shareReplay} from 'rxjs/operators';
+import {Observable, Subject, merge} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
-import {Device} from './device-interface';
 import {DeviceInfo} from './device-info-interface';
 import {DomSanitizer} from '@angular/platform-browser';
 
@@ -10,8 +9,19 @@ import {DomSanitizer} from '@angular/platform-browser';
   providedIn: 'root',
 })
 export class DeviceService {
-  private devicesSubject: Subject<Device[]> = new ReplaySubject<Device[]>(1);
-  private devicesObservable = this.devicesSubject.asObservable();
+  private refreshSubject = new Subject<void>();
+  private deviceFromServer = this.httpClient
+    .get<string[]>('./devices')
+    .pipe(
+      map((deviceIds: string[]) =>
+        deviceIds.sort((a, b) => a.localeCompare(b, undefined, {numeric: true}))
+      )
+    );
+
+  private devices = merge(
+    this.deviceFromServer,
+    this.refreshSubject.pipe(mergeMap(() => this.deviceFromServer))
+  ).pipe(shareReplay(1));
 
   constructor(
     private readonly httpClient: HttpClient,
@@ -19,23 +29,11 @@ export class DeviceService {
   ) {}
 
   refresh(): void {
-    this.httpClient
-      .get<string[]>('./devices')
-      .pipe(
-        map((deviceIds: string[]) =>
-          deviceIds.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(this.createDevice.bind(this))
-        )
-      )
-      .subscribe((devices: Device[]) => this.devicesSubject.next(devices));
-  }
-
-  createDevice(deviceId: string): Device {
-    return new Device(deviceId);
+    this.refreshSubject.next();
   }
 
   getDevices() {
-    this.refresh();
-    return this.devicesObservable;
+    return this.devices;
   }
 
   getDeviceInfo(deviceId: string): Observable<DeviceInfo> {

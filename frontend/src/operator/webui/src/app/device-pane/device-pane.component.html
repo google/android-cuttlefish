@@ -14,8 +14,8 @@
         <mat-slide-toggle
           color="primary"
           [checked]="displaysService.isVisibleDevice(device)"
-          (change)="displaysService.onToggle(device)"
-          >{{ device.deviceId }}</mat-slide-toggle
+          (change)="displaysService.toggleVisibility(device)"
+          >{{ device }}</mat-slide-toggle
         >
         <button mat-icon-button class="menu" title="menu">
           <mat-icon>more_vert</mat-icon>
