@@ -136,6 +136,7 @@ fruit::Component<> runCvdComponent(
       .install(KernelLogMonitorComponent)
       .install(MetricsServiceComponent)
       .install(OpenWrtComponent)
+      .install(OpenwrtControlServerComponent)
       .install(RootCanalComponent)
       .install(NetsimServerComponent)
       .install(SecureEnvComponent)
