@@ -1,0 +1,107 @@
+// Copyright (C) 2023 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_library_host_static {
+    name: "libopenwrt_control_server",
+    shared_libs: [
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+    generated_headers: [
+        "OpenwrtControlServerProto_h",
+    ],
+    generated_sources: [
+        "OpenwrtControlServerProto_cc",
+    ],
+    export_generated_headers: [
+        "OpenwrtControlServerProto_h",
+    ],
+    defaults: ["cuttlefish_host"],
+    include_dirs: [
+        "external/grpc-grpc/include",
+        "external/protobuf/src",
+    ],
+}
+
+cc_binary_host {
+    name: "openwrt_control_server",
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_utils",
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libopenwrt_control_server",
+        "libgrpc++_reflection",
+    ],
+    srcs: [
+        "main.cpp",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+filegroup {
+    name: "OpenwrtControlServerProto",
+    srcs: [
+        "openwrt_control.proto",
+    ],
+}
+
+genrule {
+    name: "OpenwrtControlServerProto_h",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/openwrt_control_server -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        ":OpenwrtControlServerProto",
+    ],
+    out: [
+        "openwrt_control.grpc.pb.h",
+        "openwrt_control.pb.h",
+    ],
+}
+
+genrule {
+    name: "OpenwrtControlServerProto_cc",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/openwrt_control_server -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        ":OpenwrtControlServerProto",
+    ],
+    out: [
+        "openwrt_control.grpc.pb.cc",
+        "openwrt_control.pb.cc",
+    ],
+}

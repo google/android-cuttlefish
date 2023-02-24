@@ -60,6 +60,7 @@ cc_binary {
         "launch/modem.cpp",
         "launch/metrics.cpp",
         "launch/open_wrt.cpp",
+        "launch/openwrt_control_server.cpp",
         "launch/echo_server.cpp",
         "launch/root_canal.cpp",
         "launch/secure_env.cpp",

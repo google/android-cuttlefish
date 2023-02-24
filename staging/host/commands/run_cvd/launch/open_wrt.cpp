@@ -15,9 +15,12 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <android-base/logging.h>
+
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/config/openwrt_args.h"
 #include "host/libs/vm_manager/crosvm_builder.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 
@@ -82,6 +85,7 @@ class OpenWrt : public CommandSource {
     ap_cmd.AddSerialConsoleReadOnly(boot_logs_path);
     ap_cmd.AddHvcReadOnly(logs_path);
 
+    auto openwrt_args = OpenwrtArgsFromConfig(instance_);
     switch (instance_.ap_boot_flow()) {
       case APBootFlow::Grub:
         ap_cmd.AddReadWriteDisk(instance_.persistent_ap_composite_disk_path());
@@ -89,10 +93,9 @@ class OpenWrt : public CommandSource {
         break;
       case APBootFlow::LegacyDirect:
         ap_cmd.Cmd().AddParameter("--params=\"root=/dev/vda1\"");
-        ap_cmd.Cmd().AddParameter("--params=instance_num=" +
-                                  std::to_string(cuttlefish::GetInstance()));
-        if (NetworkInterfaceExists(instance_.wifi_bridge_name())) {
-          ap_cmd.Cmd().AddParameter("--params=bridged_host_network=true");
+        for (auto& openwrt_arg : openwrt_args) {
+          ap_cmd.Cmd().AddParameter("--params=" + openwrt_arg.first + "=" +
+                                    openwrt_arg.second);
         }
         ap_cmd.Cmd().AddParameter(config_.ap_kernel_image());
         break;
