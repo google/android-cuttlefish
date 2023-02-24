@@ -16,9 +16,50 @@
 
 #pragma once
 
+#include <sys/types.h>
+
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
+
+struct RunCvdProcInfo {
+  pid_t pid_;
+  std::string home_;
+  cvd_common::Envs envs_;
+  std::string stop_cvd_path_;
+  bool is_cvd_server_started_;
+};
+
+class RunCvdProcessManager {
+ public:
+  static Result<RunCvdProcessManager> Get();
+  RunCvdProcessManager(const RunCvdProcessManager&) = delete;
+  RunCvdProcessManager(RunCvdProcessManager&&) = default;
+  void ShowAll();
+  Result<void> KillAllCuttlefishInstances(
+      const bool cvd_server_children_only = false) {
+    auto stop_cvd_result = RunStopCvdForEach(cvd_server_children_only);
+    if (!stop_cvd_result.ok()) {
+      LOG(ERROR) << stop_cvd_result.error().Message();
+    }
+    CF_EXPECT(SendSignals(cvd_server_children_only));
+    return {};
+  }
+
+ private:
+  RunCvdProcessManager() = default;
+  static Result<void> RunStopCvd(const RunCvdProcInfo& run_cvd_info);
+  Result<void> RunStopCvdForEach(const bool cvd_server_children_only);
+  Result<void> SendSignals(const bool cvd_server_children_only);
+  Result<std::vector<RunCvdProcInfo>> CollectInfo();
+  std::vector<RunCvdProcInfo> run_cvd_processes_;
+};
 
 /*
  * Runs stop_cvd for all cuttlefish instances found based on run_cvd processes,
