@@ -195,10 +195,10 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
   }
   const auto& instances = kitty_group->Get().Instances();
 
-  ASSERT_TRUE(db.AddInstance(*kitty_group, 1, "yumi").ok());
-  ASSERT_FALSE(db.AddInstance(*kitty_group, 3, "yumi").ok());
-  ASSERT_FALSE(db.AddInstance(*kitty_group, 1, "tiger").ok());
-  ASSERT_TRUE(db.AddInstance(*kitty_group, 3, "tiger").ok());
+  ASSERT_TRUE(db.AddInstance("yah_ong", 1, "yumi").ok());
+  ASSERT_FALSE(db.AddInstance("yah_ong", 3, "yumi").ok());
+  ASSERT_FALSE(db.AddInstance("yah_ong", 1, "tiger").ok());
+  ASSERT_TRUE(db.AddInstance("yah_ong", 3, "tiger").ok());
   for (auto const& instance_unique_ptr : instances) {
     ASSERT_TRUE(instance_unique_ptr->PerInstanceName() == "yumi" ||
                 instance_unique_ptr->PerInstanceName() == "tiger");
@@ -216,8 +216,8 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesInvalid) {
                  << " group was not found";
   }
 
-  ASSERT_FALSE(db.AddInstance(*kitty_group, 1, "!yumi").ok());
-  ASSERT_FALSE(db.AddInstance(*kitty_group, 7, "ti ger").ok());
+  ASSERT_FALSE(db.AddInstance("yah_ong", 1, "!yumi").ok());
+  ASSERT_FALSE(db.AddInstance("yah_ong", 7, "ti ger").ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
@@ -240,8 +240,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
     GTEST_SKIP() << "miau or nyah group"
                  << " group was not found";
   }
-  if (!AddInstances(*miau_group, miau_group_instance_id_name_pairs) ||
-      !AddInstances(*nyah_group, nyah_group_instance_id_name_pairs)) {
+  if (!AddInstances("miau", miau_group_instance_id_name_pairs) ||
+      !AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
     GTEST_SKIP() << Error().msg;
   }
   // The end of set up
@@ -282,8 +282,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
   }
-  if (!AddInstances(*miau_group, miau_group_instance_id_name_pairs) ||
-      !AddInstances(*nyah_group, nyah_group_instance_id_name_pairs)) {
+  if (!AddInstances("miau", miau_group_instance_id_name_pairs) ||
+      !AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
     GTEST_SKIP() << Error().msg;
   }
   // end of set up
@@ -315,7 +315,7 @@ TEST_F(CvdInstanceDatabaseTest, FindInstancesByGroupName) {
   if (!nyah_group.ok()) {
     GTEST_SKIP() << "nyah group was not found";
   }
-  if (!AddInstances(*nyah_group, nyah_group_instance_id_name_pairs)) {
+  if (!AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
     GTEST_SKIP() << Error().msg;
   }
   // end of set up
@@ -349,8 +349,8 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
   }
-  if (!AddInstances(*miau_group, miau_group_instance_id_name_pairs) ||
-      !AddInstances(*nyah_group, nyah_group_instance_id_name_pairs)) {
+  if (!AddInstances("miau", miau_group_instance_id_name_pairs) ||
+      !AddInstances("nyah", nyah_group_instance_id_name_pairs)) {
     GTEST_SKIP() << Error().msg;
   }
   // end of set up
