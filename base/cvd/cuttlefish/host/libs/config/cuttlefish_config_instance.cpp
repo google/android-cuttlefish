@@ -1071,6 +1071,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_wifi_bridge_name(
   (*Dictionary())[kWifiBridgeName] = wifi_bridge_name;
 }
 
+static constexpr char kUseBridgedWifiTap[] = "use_bridged_wifi_tap";
+bool CuttlefishConfig::InstanceSpecific::use_bridged_wifi_tap() const {
+  return (*Dictionary())[kUseBridgedWifiTap].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_use_bridged_wifi_tap(
+    bool use_bridged_wifi_tap) {
+  (*Dictionary())[kUseBridgedWifiTap] = use_bridged_wifi_tap;
+}
+
 static constexpr char kEthernetTapName[] = "ethernet_tap_name";
 std::string CuttlefishConfig::InstanceSpecific::ethernet_tap_name() const {
   return (*Dictionary())[kEthernetTapName].asString();
