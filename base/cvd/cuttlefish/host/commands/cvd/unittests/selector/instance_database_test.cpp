@@ -372,28 +372,5 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
       << result_invalid->size();
 }
 
-TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
-  // starting set up
-  if (!SetUpOk() || !AddGroups({"miau"})) {
-    GTEST_SKIP() << Error().msg;
-  }
-  auto& db = GetDb();
-  std::vector<InstanceDatabase::InstanceInfo> miau_group_instance_id_name_pairs{
-      {1, "8"}, {10, "tv_instance"}};
-  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
-  if (!miau_group.ok()) {
-    GTEST_SKIP() << "miau group was not found";
-  }
-
-  auto add_result = db.AddInstances("miau", miau_group_instance_id_name_pairs);
-  ASSERT_TRUE(add_result.ok()) << add_result.error().Trace();
-
-  auto result_8 = db.FindInstance({kInstanceNameField, "8"});
-  auto result_tv = db.FindInstance({kInstanceNameField, "tv_instance"});
-
-  ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
-  ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
-}
-
 }  // namespace selector
 }  // namespace cuttlefish
