@@ -63,13 +63,16 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
 
   trackById = ktdTrackById;
 
-  readonly minPanelWidth = 330;
-  readonly minPanelHeight = 100;
-  readonly defaultDisplayWidth = 720;
-  readonly defaultDisplayHeight = 1280;
-  readonly defaultDisplayZoom = 0.5;
+  private readonly minPanelWidth = 330;
+  private readonly minPanelHeight = 100;
+  private readonly defaultDisplayWidth = 720;
+  private readonly defaultDisplayHeight = 1280;
+  private readonly defaultDisplayZoom = 0.5;
 
-  readonly freeScale = 0;
+  private readonly iconPanelWidth = 58;
+  private readonly panelTitleHeight = 40;
+
+  private readonly freeScale = 0;
 
   constructor(
     public displaysService: DisplaysService,
@@ -174,12 +177,18 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
       return item;
 
     const zoom = Math.min(
-      (item.w - 58) / item.display_width,
-      (item.h - 40) / item.display_height
+      (item.w - this.iconPanelWidth) / item.display_width,
+      (item.h - this.panelTitleHeight) / item.display_height
     );
 
-    item.w = Math.max(this.minPanelWidth, zoom * item.display_width + 58);
-    item.h = Math.max(this.minPanelHeight, zoom * item.display_height + 40);
+    item.w = Math.max(
+      this.minPanelWidth,
+      zoom * item.display_width + this.iconPanelWidth
+    );
+    item.h = Math.max(
+      this.minPanelHeight,
+      zoom * item.display_height + this.panelTitleHeight
+    );
     item.zoom = zoom;
 
     return item;
@@ -198,8 +207,14 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       const zoom = item.zoom;
 
-      item.w = Math.max(this.minPanelWidth, zoom * item.display_width + 58);
-      item.h = Math.max(this.minPanelHeight, zoom * item.display_height + 40);
+      item.w = Math.max(
+        this.minPanelWidth,
+        zoom * item.display_width + this.iconPanelWidth
+      );
+      item.h = Math.max(
+        this.minPanelHeight,
+        zoom * item.display_height + this.panelTitleHeight
+      );
     }
 
     return item;
