@@ -1,10 +1,28 @@
-import {Component} from '@angular/core';
+import {Component, Injectable, HostListener} from '@angular/core';
+import {DisplaysService} from './displays.service';
 
+@Injectable()
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  title = 'webui';
+  constructor(private displaysService: DisplaysService) {}
+
+  @HostListener('window:message', ['$event'])
+  onWindowMessage(e: MessageEvent) {
+    if (e.origin === window.location.origin) {
+      const message = e.data;
+
+      if (!('type' in message) || !('payload' in message)) return;
+
+      switch (message.type) {
+        case 'display_info': {
+          this.displaysService.onDeviceDisplayInfo(message.payload);
+          break;
+        }
+      }
+    }
+  }
 }

@@ -1,5 +1,4 @@
 import {Component} from '@angular/core';
-import {Device} from '../device-interface';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
 import {first} from 'rxjs/operators';
@@ -17,15 +16,19 @@ export class DevicePaneComponent {
     public displaysService: DisplaysService
   ) {}
 
+  ngOnInit(): void {
+    this.deviceService.refresh();
+  }
+
   onRefresh(): void {
     this.deviceService.refresh();
   }
 
   showAll(): void {
-    this.devices.pipe(first()).subscribe((devices: Device[]) => {
+    this.devices.pipe(first()).subscribe((devices: string[]) => {
       devices.forEach(device => {
         if (!this.displaysService.isVisibleDevice(device)) {
-          this.displaysService.onToggle(device);
+          this.displaysService.toggleVisibility(device);
         }
       });
     });

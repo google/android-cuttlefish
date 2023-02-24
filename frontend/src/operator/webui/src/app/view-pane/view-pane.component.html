@@ -1,39 +1,31 @@
 <div #viewPane>
   <ktd-grid
     class="view-pane"
-    [cols]="cols"
-    [rowHeight]="rowHeight"
-    [layout]="layout"
-    [compactType]="compactType"
-    [preventCollision]="preventCollision"
-    [scrollableParent]="autoScroll ? document : null"
+    compactType="horizontal"
+    rowHeight="1"
     scrollSpeed="4"
-    (dragStarted)="onDragStarted($event)"
-    (resizeStarted)="onResizeStarted($event)"
-    (dragEnded)="onDragEnded($event)"
-    (resizeEnded)="onResizeEnded($event)"
-    (layoutUpdated)="onLayoutUpdated($event)"
+    [cols]="cols"
+    [layout]="(resultLayout | async)!"
+    [scrollableParent]="document"
+    (layoutUpdated)="layoutUpdated$.next($event)"
   >
     <ktd-grid-item
+      *ngFor="let display of resultLayout | async; trackBy:trackById"
       class="device-viewer"
-      *ngFor="let display of visibleDevices | async"
-      [id]="display.deviceId"
-      [transition]="currentTransition"
-      [dragStartThreshold]="dragStartThreshold"
-      [draggable]="!disableDrag"
-      [resizable]="!disableResize"
+      dragStartThreshold="0"
+      transition="transform 500ms ease, width 500ms ease, height 500ms ease"
+      [id]="display.id"
     >
       <div class="device-viewer-display">
         <div ktdGridDragHandle class="viewer-header">
-          {{ display.deviceId }}
+          {{ display.id }}
           <div class="grid-item-remove-handle"
-          *ngIf="!disableRemove"
-          (click)="displaysService.onToggle(display)"></div>
+          (click)="displaysService.toggleVisibility(display.id)"></div>
         </div>
         <div class="fit-iframe">
           <iframe
-            [src]="display.deviceId | safedeviceurl"
-            [title]="display.deviceId"
+            [src]="display.id | safedeviceurl"
+            [title]="display.id"
           ></iframe>
         </div>
       </div>
