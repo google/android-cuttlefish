@@ -108,8 +108,9 @@ bool ResourceManager::AddInterface(const std::string& iface, IfaceType ty,
         break;
       }
       case IfaceType::etap: {
-        auto w = std::make_shared<EthernetIface>(
-            iface, uid, small_id, resource_id, "cvd-ebr", kEthernetIp);
+        auto w = std::make_shared<EthernetIface>(iface, uid, small_id,
+                                                 resource_id, "cvd-ebr",
+                                                 kEthernetIp);
         w->SetUseEbtablesLegacy(use_ebtables_legacy_);
         w->SetHasIpv4(use_ipv4_bridge_);
         w->SetHasIpv6(use_ipv6_bridge_);
@@ -175,7 +176,7 @@ bool ResourceManager::RemoveInterface(const std::string& iface, IfaceType ty) {
     LOG(WARNING) << "Interface not managed: " << iface;
   }
 
-  if (removedIface) {
+  if (isManagedIface) {
     LOG(INFO) << "Removed interface: " << iface;
   } else {
     LOG(WARNING) << "Could not remove interface: " << iface;
