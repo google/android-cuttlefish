@@ -21,6 +21,7 @@
 #include <regex>
 #include <sstream>
 
+#include <android-base/file.h>
 #include <android-base/parseint.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -128,9 +129,12 @@ Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
 }
 
 Result<std::string> GetExecutablePath(const pid_t pid) {
-  auto args = CF_EXPECT(GetCmdArgs(pid));
-  CF_EXPECT(!args.empty());
-  return args.front();
+  std::string exec_target_path;
+  std::string proc_exe_path = ConcatToString("/proc/", pid, "/exe");
+  CF_EXPECT(
+      android::base::Readlink(proc_exe_path, std::addressof(exec_target_path)),
+      proc_exe_path << " Should be a symbolic link but it is not.");
+  return exec_target_path;
 }
 
 Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
@@ -166,6 +170,25 @@ Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_path,
   return output_pids;
 }
 
+Result<std::vector<pid_t>> CollectPidsByArgv0(const std::string& expected_argv0,
+                                              const uid_t uid) {
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto argv_result = GetCmdArgs(pid);
+    if (!argv_result.ok()) {
+      continue;
+    }
+    if (argv_result->empty()) {
+      continue;
+    }
+    if (argv_result->front() == expected_argv0) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
 Result<uid_t> OwnerUid(const pid_t pid) {
   auto proc_pid_path = PidDirPath(pid);
   struct stat buf;
@@ -192,6 +215,13 @@ Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
     envs[key] = value;
   }
   return envs;
+}
+
+Result<ProcInfo> ExtractProcInfo(const pid_t pid) {
+  return ProcInfo{.pid_ = pid,
+                  .actual_exec_path_ = CF_EXPECT(GetExecutablePath(pid)),
+                  .envs_ = CF_EXPECT(GetEnvs(pid)),
+                  .args_ = CF_EXPECT(GetCmdArgs(pid))};
 }
 
 }  // namespace cuttlefish
