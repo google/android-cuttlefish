@@ -18,65 +18,32 @@
 # All components inherited here go to system image (same as GSI system)
 #
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
-#$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
-
-# TODO: FIXME: Start workaround for generic_system.mk ########################
-TARGET_NO_RECOVERY := true
-TARGET_FLATTEN_APEX := false
-
-# TODO: this list should come via mainline_system.mk, but for now list
-# just the modules that work for riscv64.
-PRODUCT_PACKAGES := \
-    android.system.suspend-service \
-    adbd_system_api \
-    apexd \
-    bootanim \
-    boringssl_self_test \
-    cgroups.json \
-    com.android.adbd \
-    com.android.conscrypt \
-    com.android.i18n \
-    com.android.runtime \
-    fsck.f2fs \
-    hwservicemanager \
-    init.environ.rc \
-    init_first_stage \
-    init_system \
-    keystore2 \
-    libEGL \
-    libETC1 \
-    libGLESv1_CM \
-    libGLESv2 \
-    libGLESv3 \
-    libpower \
-    libpowermanager \
-    libvulkan \
-    linker \
-    logcat \
-    logd \
-    odsign \
-    servicemanager \
-    shell_and_utilities \
-    surfaceflinger \
-    system_compatibility_matrix.xml \
-    system_manifest.xml \
-    task_profiles.json \
-    usbd \
-    vdc \
-    vold \
-
-PRODUCT_COPY_FILES += \
-    system/core/rootdir/init.usb.rc:system/etc/init/hw/init.usb.rc \
-    system/core/rootdir/init.usb.configfs.rc:system/etc/init/hw/init.usb.configfs.rc \
-    system/core/rootdir/etc/hosts:system/etc/hosts
-
-$(call inherit-product, $(SRC_TARGET_DIR)/product/default_art_config.mk)
-PRODUCT_USES_DEFAULT_ART_CONFIG := false
-
-PRODUCT_BRAND := generic
-# TODO: FIXME: Stop workaround for generic_system.mk #########################
+$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
 
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := relaxed
+
+# TODO: FIXME: Start workaround for generic_system.mk ########################
+
+# TODO(b/271573990): It is currently required that dexpreopt be enabled for
+# userdebug builds, but dexpreopt is not yet supported for this architecture.
+# In the interim, this flag allows us to indicate that we cannot run dex2oat
+# to build the ART boot image. Once the requirement is relaxed or support
+# is enabled for this architecture, this flag can be removed.
+PRODUCT_USES_DEFAULT_ART_CONFIG := false
+
+# TODO: FIXME: Stop workaround for generic_system.mk #########################
+
+#
+# All components inherited here go to system_ext image
+#
+$(call inherit-product, $(SRC_TARGET_DIR)/product/media_system_ext.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_system_ext.mk)
+
+#
+# All components inherited here go to product image
+#
+$(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+PRODUCT_PACKAGES += FakeSystemApp
 
 #
 # All components inherited here go to system_ext image (same as GSI system_ext)
@@ -104,6 +71,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
+# TODO: FIXME: Enable swiftshader for graphics.
+#$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
