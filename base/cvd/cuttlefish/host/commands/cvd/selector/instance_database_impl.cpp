@@ -76,7 +76,15 @@ Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
 Result<void> InstanceDatabase::AddInstance(const std::string& group_name,
                                            const unsigned id,
                                            const std::string& instance_name) {
-  LocalInstanceGroup* group_ptr = CF_EXPECT(FindMutableGroup(group_name));
+  LocalInstanceGroup* group_ptr = nullptr;
+  for (auto& group_uniq_ptr : local_instance_groups_) {
+    if (group_uniq_ptr && group_uniq_ptr->GroupName() == group_name) {
+      group_ptr = group_uniq_ptr.get();
+      break;
+    }
+  }
+  CF_EXPECT(group_ptr != nullptr,
+            "Instance Group named as " << group_name << " is not found.");
   LocalInstanceGroup& group = *group_ptr;
 
   CF_EXPECT(IsValidInstanceName(instance_name),
@@ -97,36 +105,6 @@ Result<void> InstanceDatabase::AddInstance(const std::string& group_name,
     return CF_ERR("instance name " << instance_name << " is taken");
   }
   return (*itr)->AddInstance(id, instance_name);
-}
-
-Result<void> InstanceDatabase::AddInstances(
-    const std::string& group_name, const std::vector<InstanceInfo>& instances) {
-  for (const auto& instance_info : instances) {
-    CF_EXPECT(AddInstance(group_name, instance_info.id, instance_info.name));
-  }
-  return {};
-}
-
-Result<void> InstanceDatabase::SetBuildId(const std::string& group_name,
-                                          const std::string& build_id) {
-  auto* group_ptr = CF_EXPECT(FindMutableGroup(group_name));
-  auto& group = *group_ptr;
-  group.SetBuildId(build_id);
-  return {};
-}
-
-Result<LocalInstanceGroup*> InstanceDatabase::FindMutableGroup(
-    const std::string& group_name) {
-  LocalInstanceGroup* group_ptr = nullptr;
-  for (auto& group_uniq_ptr : local_instance_groups_) {
-    if (group_uniq_ptr && group_uniq_ptr->GroupName() == group_name) {
-      group_ptr = group_uniq_ptr.get();
-      break;
-    }
-  }
-  CF_EXPECT(group_ptr != nullptr,
-            "Instance Group named as " << group_name << " is not found.");
-  return group_ptr;
 }
 
 bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {

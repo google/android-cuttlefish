@@ -118,37 +118,24 @@ Result<void> InstanceManager::SetInstanceGroup(
   auto new_group = CF_EXPECT(
       instance_db.AddInstanceGroup(group_name, home_dir, host_artifacts_path));
 
-  using InstanceInfo = selector::InstanceDatabase::InstanceInfo;
-  std::vector<InstanceInfo> instances_info;
   for (const auto& instance : per_instance_info) {
-    InstanceInfo info{.name = instance.per_instance_name_,
-                      .id = instance.instance_id_};
-    instances_info.push_back(info);
+    auto result = instance_db.AddInstance(group_name, instance.instance_id_,
+                                          instance.per_instance_name_);
+    if (!result.ok()) {
+      /*
+       * The way InstanceManager uses the database is that it adds an empty
+       * group, gets an handle, and add instances to it. Thus, failing to adding
+       * an instance to the group does not always mean that the instance group
+       * addition fails. It is up to the caller. In this case, however, failing
+       * to add an instance to a new group means failing to create an instance
+       * group itself. Thus, we should remove the new instance group from the
+       * database.
+       *
+       */
+      instance_db.RemoveInstanceGroup(new_group.Get());
+      CF_EXPECT(result.ok(), result.error().Trace());
+    }
   }
-  auto result = instance_db.AddInstances(group_name, instances_info);
-  if (!result.ok()) {
-    /*
-     * The way InstanceManager uses the database is that it adds an empty
-     * group, gets an handle, and add instances to it. Thus, failing to adding
-     * an instance to the group does not always mean that the instance group
-     * addition fails. It is up to the caller. In this case, however, failing
-     * to add an instance to a new group means failing to create an instance
-     * group itself. Thus, we should remove the new instance group from the
-     * database.
-     *
-     */
-    instance_db.RemoveInstanceGroup(new_group.Get());
-    return CF_ERR(result.error().Trace());
-  }
-  return {};
-}
-
-Result<void> InstanceManager::SetBuildId(const uid_t uid,
-                                         const std::string& group_name,
-                                         const std::string& build_id) {
-  std::lock_guard assemblies_lock(instance_db_mutex_);
-  auto& instance_db = GetInstanceDB(uid);
-  CF_EXPECT(instance_db.SetBuildId(group_name, build_id));
   return {};
 }
 
