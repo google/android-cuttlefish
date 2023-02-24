@@ -349,4 +349,10 @@ cvd::Status InstanceManager::CvdClear(const SharedFD& out,
   return status;
 }
 
+Result<std::optional<InstanceLockFile>> InstanceManager::TryAcquireLock(
+    int instance_num) {
+  std::lock_guard lock(instance_db_mutex_);
+  return CF_EXPECT(lock_manager_.TryAcquireLock(instance_num));
+}
+
 }  // namespace cuttlefish
