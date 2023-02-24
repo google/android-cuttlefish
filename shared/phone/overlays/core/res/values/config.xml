@@ -65,4 +65,7 @@
 
   <!-- Is the device capable of hot swapping an UICC Card -->
   <bool name="config_hotswapCapable">true</bool>
+
+  <!-- Whether using the new SubscriptionManagerService or the old SubscriptionController -->
+  <bool name="config_using_subscription_manager_service">true</bool>
 </resources>
