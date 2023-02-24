@@ -37,9 +37,13 @@ IfaceConfig DefaultNetworkInterfaces(int num) {
   config.mobile_tap.resource_id = 0;
   config.mobile_tap.session_id = 0;
 
-  config.wireless_tap.name = StrForInstance("cvd-wtap-", num);
-  config.wireless_tap.resource_id = 0;
-  config.wireless_tap.session_id = 0;
+  config.bridged_wireless_tap.name = StrForInstance("cvd-wtap-", num);
+  config.bridged_wireless_tap.resource_id = 0;
+  config.bridged_wireless_tap.session_id = 0;
+
+  config.non_bridged_wireless_tap.name = StrForInstance("cvd-wifiap-", num);
+  config.non_bridged_wireless_tap.resource_id = 0;
+  config.non_bridged_wireless_tap.session_id = 0;
 
   config.ethernet_tap.name = StrForInstance("cvd-etap-", num);
   config.ethernet_tap.resource_id = 0;
@@ -65,6 +69,8 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   req["iface_type"] = "mtap";
   request_list.append(req);
   req["iface_type"] = "wtap";
+  request_list.append(req);
+  req["iface_type"] = "wifiap";
   request_list.append(req);
   req["iface_type"] = "etap";
   request_list.append(req);
@@ -96,6 +102,7 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   Json::Value resp_list = resp["response_list"];
   Json::Value mtap_resp;
   Json::Value wtap_resp;
+  Json::Value wifiap_resp;
   Json::Value etap_resp;
   for (Json::Value::ArrayIndex i = 0; i != resp_list.size(); ++i) {
     auto ty = StrToIfaceTy(resp_list[i]["iface_type"].asString());
@@ -107,6 +114,10 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
       }
       case IfaceType::wtap: {
         wtap_resp = resp_list[i];
+        break;
+      }
+      case IfaceType::wifiap: {
+        wifiap_resp = resp_list[i];
         break;
       }
       case IfaceType::etap: {
@@ -127,6 +138,10 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
     LOG(ERROR) << "Missing wtap response from allocd";
     return std::nullopt;
   }
+  if (!wifiap_resp.isMember("iface_type")) {
+    LOG(ERROR) << "Missing wifiap response from allocd";
+    return std::nullopt;
+  }
   if (!etap_resp.isMember("iface_type")) {
     LOG(ERROR) << "Missing etap response from allocd";
     return std::nullopt;
@@ -136,9 +151,14 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   config.mobile_tap.resource_id = mtap_resp["resource_id"].asUInt();
   config.mobile_tap.session_id = session_id;
 
-  config.wireless_tap.name = wtap_resp["iface_name"].asString();
-  config.wireless_tap.resource_id = wtap_resp["resource_id"].asUInt();
-  config.wireless_tap.session_id = session_id;
+  config.bridged_wireless_tap.name = wtap_resp["iface_name"].asString();
+  config.bridged_wireless_tap.resource_id = wtap_resp["resource_id"].asUInt();
+  config.bridged_wireless_tap.session_id = session_id;
+
+  config.non_bridged_wireless_tap.name = wifiap_resp["iface_name"].asString();
+  config.non_bridged_wireless_tap.resource_id =
+      wifiap_resp["resource_id"].asUInt();
+  config.non_bridged_wireless_tap.session_id = session_id;
 
   config.ethernet_tap.name = etap_resp["iface_name"].asString();
   config.ethernet_tap.resource_id = etap_resp["resource_id"].asUInt();

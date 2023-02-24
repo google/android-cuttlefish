@@ -85,20 +85,20 @@ bool ResourceManager::AddInterface(const std::string& iface, IfaceType ty,
     const char* idp = iface.c_str() + (iface.size() - 3);
     int small_id = atoi(idp);
     switch (ty) {
+      case IfaceType::wifiap:
+        // TODO(seungjaeyoo) : Support AddInterface for wifiap
+        break;
       case IfaceType::mtap:
+        // TODO(seungjaeyoo) : Support AddInterface for mtap uses IP prefix
+        // different from kMobileIp.
         res = std::make_shared<MobileIface>(iface, uid, small_id, resource_id,
                                             kMobileIp);
         allocatedIface = res->AcquireResource();
         pending_add_.insert({resource_id, res});
         break;
       case IfaceType::wtap: {
-        // TODO (paulkirth): change this to cvd-wbr, to test w/ today's
-        // debian package, this is required since the number of wireless
-        // bridges provided by the debian package has gone from 10 down to
-        // 1, but our debian packages in cloudtop are not up to date
-        auto w = std::make_shared<EthernetIface>(iface, uid, small_id,
-                                                 resource_id, "cvd-wbr-01",
-                                                 kWirelessIp);
+        auto w = std::make_shared<EthernetIface>(
+            iface, uid, small_id, resource_id, "cvd-wbr", kWirelessIp);
         w->SetUseEbtablesLegacy(use_ebtables_legacy_);
         w->SetHasIpv4(use_ipv4_bridge_);
         w->SetHasIpv6(use_ipv6_bridge_);
@@ -148,7 +148,12 @@ bool ResourceManager::RemoveInterface(const std::string& iface, IfaceType ty) {
   bool removedIface = false;
   if (isManagedIface) {
     switch (ty) {
+      case IfaceType::wifiap:
+        // TODO(seungjaeyoo) : Support RemoveInterface for wifiap
+        break;
       case IfaceType::mtap: {
+        // TODO(seungjaeyoo) : Support RemoveInterface for mtap uses IP prefix
+        // different from kMobileIp.
         const char* idp = iface.c_str() + (iface.size() - 3);
         int id = atoi(idp);
         removedIface = DestroyMobileIface(iface, id, kMobileIp);
