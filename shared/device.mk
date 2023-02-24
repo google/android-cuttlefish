@@ -368,6 +368,7 @@ LOCAL_AUDIO_PRODUCT_PACKAGE := \
     libhapticgeneratoraidl \
     libloudnessenhanceraidl \
     libnssw \
+    libpreprocessingaidl \
     libpresetreverbsw \
     libreverbaidl \
     libtinyxml2 \
