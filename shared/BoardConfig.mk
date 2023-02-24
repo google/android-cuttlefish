@@ -18,7 +18,7 @@
 # Common BoardConfig for all supported architectures.
 #
 
-TARGET_KERNEL_USE ?= 6.1
+TARGET_KERNEL_USE ?= 5.15
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
 SYSTEM_DLKM_SRC ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)
 TARGET_KERNEL_PATH ?= $(SYSTEM_DLKM_SRC)/kernel-$(TARGET_KERNEL_USE)
