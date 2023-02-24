@@ -81,7 +81,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
     unsigned id;
     std::string per_instance_name;
   };
-  bool AddInstances(const ConstRef<LocalInstanceGroup> group,
+  bool AddInstances(const std::string& group_name,
                     const std::vector<InstanceInfo>& instances_info);
   InstanceDatabase& GetDb() { return db_; }
   const SetupError& Error() const { return error_; }
