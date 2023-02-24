@@ -230,6 +230,9 @@ class ServerLoopImpl : public ServerLoop,
   bool PowerwashFiles() {
     DeleteFifos();
 
+    // TODO(b/269669405): Figure out why this file is not being deleted
+    unlink(instance_.PerInstanceInternalPath("crosvm_control.sock").c_str());
+
     // TODO(schuffelen): Clean up duplication with assemble_cvd
     unlink(instance_.PerInstancePath("NVChip").c_str());
 
