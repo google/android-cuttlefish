@@ -10,7 +10,7 @@
     (layoutUpdated)="layoutUpdated$.next($event)"
   >
     <ktd-grid-item
-      *ngFor="let display of resultLayout | async; trackBy:trackById"
+      *ngFor="let display of resultLayout | async; trackBy: trackById"
       class="device-viewer"
       dragStartThreshold="0"
       transition="transform 500ms ease, width 500ms ease, height 500ms ease"
@@ -19,11 +19,28 @@
       <div class="device-viewer-display">
         <div ktdGridDragHandle class="viewer-header">
           {{ display.id }}
-          <div class="grid-item-remove-handle"
-          (click)="displaysService.toggleVisibility(display.id)"></div>
+          <div
+            class="grid-item-remove-handle"
+            (click)="displaysService.toggleVisibility(display.id)"
+          ></div>
         </div>
-        <div class="fit-iframe">
+        <div
+          class="fit-panel loading-message"
+          *ngIf="
+            display.display_width === null || display.display_height === null
+          "
+          (click)="forceShowDevice(display.id)"
+        >
+          Waiting for the display to be turned on.<br />
+          Click to show the device anyway.
+        </div>
+        <div class="fit-panel">
           <iframe
+            [ngClass]="{
+              hidden:
+                display.display_width === null ||
+                display.display_height === null
+            }"
             [src]="display.id | safedeviceurl"
             [title]="display.id"
           ></iframe>
