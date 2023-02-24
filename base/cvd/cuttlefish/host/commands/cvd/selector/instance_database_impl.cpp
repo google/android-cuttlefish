@@ -76,7 +76,15 @@ Result<ConstRef<LocalInstanceGroup>> InstanceDatabase::AddInstanceGroup(
 Result<void> InstanceDatabase::AddInstance(const std::string& group_name,
                                            const unsigned id,
                                            const std::string& instance_name) {
-  LocalInstanceGroup* group_ptr = CF_EXPECT(FindMutableGroup(group_name));
+  LocalInstanceGroup* group_ptr = nullptr;
+  for (auto& group_uniq_ptr : local_instance_groups_) {
+    if (group_uniq_ptr && group_uniq_ptr->GroupName() == group_name) {
+      group_ptr = group_uniq_ptr.get();
+      break;
+    }
+  }
+  CF_EXPECT(group_ptr != nullptr,
+            "Instance Group named as " << group_name << " is not found.");
   LocalInstanceGroup& group = *group_ptr;
 
   CF_EXPECT(IsValidInstanceName(instance_name),
@@ -106,29 +114,6 @@ Result<void> InstanceDatabase::AddInstances(
   }
   return {};
 }
-
-Result<void> InstanceDatabase::SetBuildId(const std::string& group_name,
-                                          const std::string& build_id) {
-  auto* group_ptr = CF_EXPECT(FindMutableGroup(group_name));
-  auto& group = *group_ptr;
-  group.SetBuildId(build_id);
-  return {};
-}
-
-Result<LocalInstanceGroup*> InstanceDatabase::FindMutableGroup(
-    const std::string& group_name) {
-  LocalInstanceGroup* group_ptr = nullptr;
-  for (auto& group_uniq_ptr : local_instance_groups_) {
-    if (group_uniq_ptr && group_uniq_ptr->GroupName() == group_name) {
-      group_ptr = group_uniq_ptr.get();
-      break;
-    }
-  }
-  CF_EXPECT(group_ptr != nullptr,
-            "Instance Group named as " << group_name << " is not found.");
-  return group_ptr;
-}
-
 bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
   auto itr = FindIterator(group);
   // *itr is the reference to the unique pointer object

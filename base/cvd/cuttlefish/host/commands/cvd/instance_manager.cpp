@@ -143,15 +143,6 @@ Result<void> InstanceManager::SetInstanceGroup(
   return {};
 }
 
-Result<void> InstanceManager::SetBuildId(const uid_t uid,
-                                         const std::string& group_name,
-                                         const std::string& build_id) {
-  std::lock_guard assemblies_lock(instance_db_mutex_);
-  auto& instance_db = GetInstanceDB(uid);
-  CF_EXPECT(instance_db.SetBuildId(group_name, build_id));
-  return {};
-}
-
 void InstanceManager::RemoveInstanceGroup(
     const uid_t uid, const InstanceManager::InstanceGroupDir& dir) {
   std::lock_guard assemblies_lock(instance_db_mutex_);
