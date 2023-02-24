@@ -30,12 +30,12 @@ interface DeviceGridItem extends KtdGridLayoutItem {
   y: number;
   w: number;
   h: number;
-  display_width: number;
-  display_height: number;
+  display_width: number | null;
+  display_height: number | null;
   zoom: number;
   visible: boolean;
   placed: boolean;
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | number | boolean | undefined | null;
 }
 
 interface DeviceGridItemUpdate {
@@ -64,7 +64,12 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   trackById = ktdTrackById;
 
   readonly minPanelWidth = 330;
-  readonly minPanelHeight = 40;
+  readonly minPanelHeight = 100;
+  readonly defaultDisplayWidth = 720;
+  readonly defaultDisplayHeight = 1280;
+  readonly defaultDisplayZoom = 0.5;
+
+  readonly freeScale = 0;
 
   constructor(
     public displaysService: DisplaysService,
@@ -159,7 +164,14 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
   private adjustNewLayout(item: DeviceGridItem): DeviceGridItem {
-    if (item.display_width === 0 || item.display_height === 0) return item;
+    if (item.display_width === null || item.display_height === null)
+      return item;
+
+    if (
+      item.display_width === this.freeScale ||
+      item.display_height === this.freeScale
+    )
+      return item;
 
     const zoom = Math.min(
       (item.w - 58) / item.display_width,
@@ -174,10 +186,21 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private adjustDisplayInfo(item: DeviceGridItem): DeviceGridItem {
-    const zoom = item.zoom;
+    if (item.display_width === null || item.display_height === null)
+      return item;
 
-    item.w = Math.max(this.minPanelWidth, zoom * item.display_width + 58);
-    item.h = Math.max(this.minPanelHeight, zoom * item.display_height + 40);
+    if (
+      item.display_width === this.freeScale ||
+      item.display_height === this.freeScale
+    ) {
+      item.w = this.defaultDisplayZoom * this.defaultDisplayWidth;
+      item.h = this.defaultDisplayZoom * this.defaultDisplayHeight;
+    } else {
+      const zoom = item.zoom;
+
+      item.w = Math.max(this.minPanelWidth, zoom * item.display_width + 58);
+      item.h = Math.max(this.minPanelHeight, zoom * item.display_height + 40);
+    }
 
     return item;
   }
@@ -254,6 +277,20 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     map(items => items.filter(item => item.visible))
   );
 
+  forceShowDevice(deviceId: string) {
+    this.displaysService.onDeviceDisplayInfo({
+      device_id: deviceId,
+      displays: [
+        {
+          display_id: '0',
+          width: this.freeScale,
+          height: this.freeScale,
+          rotation: 0,
+        },
+      ],
+    });
+  }
+
   private readonly visibleDeviceSource = 'visible_device';
   private readonly displayInfoSource = 'display_info';
   private readonly layoutUpdateSource = 'layout_update';
@@ -265,9 +302,9 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
       y: 0,
       w: this.minPanelWidth,
       h: this.minPanelHeight,
-      display_width: 0,
-      display_height: 0,
-      zoom: 0.5,
+      display_width: null,
+      display_height: null,
+      zoom: this.defaultDisplayZoom,
       visible: false,
       placed: false,
     };
