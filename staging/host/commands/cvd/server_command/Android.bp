@@ -36,6 +36,7 @@ cc_library_host_static {
         "serial_preset.cpp",
         "shutdown.cpp",
         "start.cpp",
+        "start_impl.cpp",
         "subprocess_waiter.cpp",
         "version.cpp",
     ],
