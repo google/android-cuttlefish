@@ -69,6 +69,10 @@ fruit::Component<
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 OpenWrtComponent();
 
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+                                 GrpcSocketCreator>>
+OpenwrtControlServerComponent();
+
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
