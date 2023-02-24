@@ -1145,7 +1145,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_wifi_bridge_name("cvd-wbr");
     instance.set_ethernet_bridge_name("cvd-ebr");
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
-    instance.set_wifi_tap_name(iface_config.wireless_tap.name);
+    if (NetworkInterfaceExists(iface_config.non_bridged_wireless_tap.name)) {
+      instance.set_use_bridged_wifi_tap(false);
+      instance.set_wifi_tap_name(iface_config.non_bridged_wireless_tap.name);
+    } else {
+      instance.set_use_bridged_wifi_tap(true);
+      instance.set_wifi_tap_name(iface_config.bridged_wireless_tap.name);
+    }
     instance.set_ethernet_tap_name(iface_config.ethernet_tap.name);
 
     instance.set_uuid(FLAGS_uuid);
