@@ -17,4 +17,7 @@
 <resources>
     <!--  Maximum number of supported users -->
     <integer name="config_multiuserMaximumUsers">4</integer>
+
+    <!-- Whether using the new SubscriptionManagerService or the old SubscriptionController -->
+    <bool name="config_using_subscription_manager_service">true</bool>
 </resources>
