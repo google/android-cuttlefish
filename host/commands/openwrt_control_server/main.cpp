@@ -1,6 +1,5 @@
 /*
  *
- * Copyright 2015 gRPC authors.
  * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +16,10 @@
  *
  */
 
+#include <fstream>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <string>
 
 #include <gflags/gflags.h>
@@ -26,29 +27,69 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "echo.grpc.pb.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "openwrt_control.grpc.pb.h"
 
-using echoserver::EchoReply;
-using echoserver::EchoRequest;
-using echoserver::EchoService;
+using google::protobuf::Empty;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using openwrtcontrolserver::OpenwrtControlService;
+using openwrtcontrolserver::OpenwrtIpaddrReply;
 
 DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 
-class EchoServiceImpl final : public EchoService::Service {
-  Status Echo(ServerContext* context, const EchoRequest* request,
-              EchoReply* reply) override {
-    reply->set_message(request->message());
+DEFINE_bool(bridged_wifi_tap, false,
+            "True for using cvd-wtap-XX, false for using cvd-wifiap-XX");
+DEFINE_string(launcher_log_path, "", "File path for launcher.log");
+DEFINE_string(openwrt_log_path, "", "File path for crosvm_openwrt.log");
+
+namespace cuttlefish {
+
+class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
+  Status OpenwrtIpaddr(ServerContext* context, const Empty* request,
+                       OpenwrtIpaddrReply* response) override {
+    // TODO(seungjaeyoo) : Find IP address from crosvm_openwrt.log when using
+    // cvd-wtap-XX after disabling DHCP inside OpenWRT in bridged_wifi_tap mode.
+    auto result = FindIpaddrLauncherLog();
+
+    response->set_is_error(!TypeIsSuccess(result));
+    if (TypeIsSuccess(result)) {
+      response->set_ipaddr(*result);
+    }
     return Status::OK;
+  }
+
+  Result<std::string> FindIpaddrLauncherLog() {
+    if (!FileExists(FLAGS_launcher_log_path)) {
+      return CF_ERR("launcher.log doesn't exist");
+    }
+
+    std::regex re("wan_ipaddr=[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+");
+    std::smatch matches;
+    std::ifstream ifs(FLAGS_launcher_log_path);
+    std::string line, last_match;
+    while (std::getline(ifs, line)) {
+      if (std::regex_search(line, matches, re)) {
+        last_match = matches[0];
+      }
+    }
+
+    if (last_match.empty()) {
+      return CF_ERR("IP address is not found from launcher.log");
+    } else {
+      return last_match.substr(last_match.find('=') + 1);
+    }
   }
 };
 
+}  // namespace cuttlefish
+
 void RunServer() {
   std::string server_address("unix:" + FLAGS_grpc_uds_path);
-  EchoServiceImpl service;
+  cuttlefish::OpenwrtControlServiceImpl service;
 
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
