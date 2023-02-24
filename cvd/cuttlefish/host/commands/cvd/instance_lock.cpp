@@ -175,7 +175,7 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
   CF_EXPECT(ReadFileToString(kPath, &proc_net_dev, /* follow_symlinks */ true));
 
   auto lines = android::base::Split(proc_net_dev, "\n");
-  std::set<int> etaps, mtaps, wtaps;
+  std::set<int> etaps, mtaps, wtaps, wifiaps;
   for (const auto& line : lines) {
     std::set<int>* tap_set = nullptr;
     if (android::base::StartsWith(line, "cvd-etap-")) {
@@ -184,6 +184,8 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
       tap_set = &mtaps;
     } else if (android::base::StartsWith(line, "cvd-wtap-")) {
       tap_set = &wtaps;
+    } else if (android::base::StartsWith(line, "cvd-wifiap-")) {
+      tap_set = &wifiaps;
     } else {
       continue;
     }
@@ -195,7 +197,10 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
   std::set<int> emwtaps;
   std::set_intersection(emtaps.begin(), emtaps.end(), wtaps.begin(),
                         wtaps.end(), std::inserter(emwtaps, emwtaps.begin()));
-  return emwtaps;
+  std::set<int> result;
+  std::set_intersection(emwtaps.begin(), emwtaps.end(), wifiaps.begin(),
+                        wifiaps.end(), std::inserter(result, result.begin()));
+  return result;
 }
 
 Result<std::optional<InstanceLockFile>>
