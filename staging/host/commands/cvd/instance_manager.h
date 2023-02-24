@@ -68,6 +68,8 @@ class InstanceManager {
   bool HasInstanceGroups(const uid_t uid);
   Result<void> SetInstanceGroup(const uid_t uid,
                                 const selector::GroupCreationInfo& group_info);
+  Result<void> SetBuildId(const uid_t uid, const std::string& group_name,
+                          const std::string& build_id);
   void RemoveInstanceGroup(const uid_t uid, const InstanceGroupDir&);
   Result<InstanceGroupInfo> GetInstanceGroupInfo(const uid_t uid,
                                                  const InstanceGroupDir&);
