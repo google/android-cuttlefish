@@ -19,14 +19,18 @@
 #include <sys/file.h>
 
 #include <algorithm>
+#include <regex>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include <android-base/file.h>
+#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -159,6 +163,39 @@ InstanceLockFileManager::LockAllAvailable() {
   return acquired_lock_files;
 }
 
+static std::string DevicePatternString(
+    const std::unordered_map<std::string, std::set<int>>& device_to_ids_map) {
+  std::string device_pattern_str("^[[:space:]]*cvd-(");
+  for (const auto& [key, _] : device_to_ids_map) {
+    device_pattern_str.append(key).append("|");
+  }
+  if (!device_to_ids_map.empty()) {
+    *device_pattern_str.rbegin() = ')';
+  }
+  device_pattern_str.append("-[0-9]+");
+  return device_pattern_str;
+}
+
+struct TypeAndId {
+  std::string device_type;
+  int id;
+};
+// call this if the line is a network device line
+static Result<TypeAndId> ParseMatchedLine(
+    const std::smatch& device_string_match) {
+  std::string device_string = *device_string_match.begin();
+  auto tokens = android::base::Tokenize(device_string, "-");
+  CF_EXPECT_GE(tokens.size(), 3);
+  const auto cvd = tokens.front();
+  int id = 0;
+  CF_EXPECT(android::base::ParseInt(tokens.back(), &id));
+  // '-'.join(tokens[1:-1])
+  tokens.pop_back();
+  tokens.erase(tokens.begin());
+  const auto device_type = android::base::Join(tokens, "-");
+  return TypeAndId{.device_type = device_type, .id = id};
+}
+
 Result<std::set<int>>
 InstanceLockFileManager::FindPotentialInstanceNumsFromNetDevices() {
   // Estimate this by looking at available tap devices
@@ -175,31 +212,43 @@ cvd-wtap-02:       0       0    0    0    0     0          0         0        0 
   CF_EXPECT(ReadFileToString(kPath, &proc_net_dev, /* follow_symlinks */ true));
 
   auto lines = android::base::Split(proc_net_dev, "\n");
-  std::set<int> etaps, mtaps, wtaps, wifiaps;
+  std::unordered_map<std::string, std::set<int>> device_to_ids_map{
+      {"etap", std::set<int>{}},
+      {"mtap", std::set<int>{}},
+      {"wtap", std::set<int>{}},
+      {"wifiap", std::set<int>{}},
+  };
+  // "^[[:space:]]*cvd-(etap|mtap|wtap|wifiap)-[0-9]+"
+  std::string device_pattern_str = DevicePatternString(device_to_ids_map);
+
+  std::regex device_pattern(device_pattern_str);
   for (const auto& line : lines) {
-    std::set<int>* tap_set = nullptr;
-    if (android::base::StartsWith(line, "cvd-etap-")) {
-      tap_set = &etaps;
-    } else if (android::base::StartsWith(line, "cvd-mtap-")) {
-      tap_set = &mtaps;
-    } else if (android::base::StartsWith(line, "cvd-wtap-")) {
-      tap_set = &wtaps;
-    } else if (android::base::StartsWith(line, "cvd-wifiap-")) {
-      tap_set = &wifiaps;
-    } else {
+    std::smatch device_string_match;
+    if (!std::regex_search(line, device_string_match, device_pattern)) {
       continue;
     }
-    tap_set->insert(std::stoi(line.substr(std::string{"cvd-etap-"}.size())));
+    const auto [device_type, id] =
+        CF_EXPECT(ParseMatchedLine(device_string_match));
+    CF_EXPECT(Contains(device_to_ids_map, device_type));
+    device_to_ids_map[device_type].insert(id);
   }
-  std::set<int> emtaps;
-  std::set_intersection(etaps.begin(), etaps.end(), mtaps.begin(), mtaps.end(),
-                        std::inserter(emtaps, emtaps.begin()));
-  std::set<int> emwtaps;
-  std::set_intersection(emtaps.begin(), emtaps.end(), wtaps.begin(),
-                        wtaps.end(), std::inserter(emwtaps, emwtaps.begin()));
-  std::set<int> result;
-  std::set_intersection(emwtaps.begin(), emwtaps.end(), wifiaps.begin(),
-                        wifiaps.end(), std::inserter(result, result.begin()));
+
+  std::set<int> result{device_to_ids_map["etap"]};  // any set except "wifiap"
+  for (const auto& [device_type, id_set] : device_to_ids_map) {
+    /*
+     * b/2457509
+     *
+     * Until the debian host packages are sufficiently up-to-date, the wifiap
+     * devices wouldn't show up in /proc/net/dev.
+     */
+    if (device_type == "wifiap" && id_set.empty()) {
+      continue;
+    }
+    std::set<int> tmp;
+    std::set_intersection(result.begin(), result.end(), id_set.begin(),
+                          id_set.end(), std::inserter(tmp, tmp.begin()));
+    result = std::move(tmp);
+  }
   return result;
 }
 
