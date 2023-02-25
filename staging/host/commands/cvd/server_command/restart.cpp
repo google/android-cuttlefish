@@ -99,10 +99,10 @@ class CvdRestartHandler : public CvdServerHandler {
     } else if (arguments.size() > 0 && arguments[0] == "latest") {
       new_exe = CF_EXPECT(LatestCvdAsFd(build_api_));
     } else if (arguments.size() == 0) {
-      static constexpr char kSelf[] = "/proc/self/exe";
-      new_exe = SharedFD::Open(kSelf, O_RDONLY);
-      CF_EXPECT(new_exe->IsOpen(),
-                "Failed to open \"" << kSelf << "\": " << new_exe->StrError());
+      new_exe = SharedFD::Open(kServerExecPath, O_RDONLY);
+      CF_EXPECT(new_exe->IsOpen(), "Failed to open \""
+                                       << kServerExecPath
+                                       << "\": " << new_exe->StrError());
     } else {
       return CF_ERR("Unrecognized command line");
     }
