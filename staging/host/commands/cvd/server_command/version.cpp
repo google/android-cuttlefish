@@ -21,6 +21,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_command/components.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
@@ -45,7 +46,7 @@ class CvdVersionHandler : public CvdServerHandler {
     version.set_major(cvd::kVersionMajor);
     version.set_minor(cvd::kVersionMinor);
     version.set_build(android::build::GetBuildNumber());
-    version.set_crc32(FileCrc("/proc/self/exe"));
+    version.set_crc32(FileCrc(kServerExecPath));
     response.mutable_status()->set_code(cvd::Status::OK);
     return response;
   }
