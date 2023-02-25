@@ -242,6 +242,43 @@ class ConvertAcloudCreateCommand {
               return true;
             }));
 
+    std::optional<std::string> boot_build_id;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-build-id"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_build_id"})
+            .Setter([&boot_build_id](const FlagMatch& m) {
+              boot_build_id = m.value;
+              return true;
+            }));
+    std::optional<std::string> boot_build_target;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-build-target"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_build_target"})
+            .Setter([&boot_build_target](const FlagMatch& m) {
+              boot_build_target = m.value;
+              return true;
+            }));
+    std::optional<std::string> boot_branch;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-branch"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_branch"})
+            .Setter([&boot_branch](const FlagMatch& m) {
+              boot_branch = m.value;
+              return true;
+            }));
+    std::optional<std::string> boot_artifact;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot-artifact"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--boot_artifact"})
+            .Setter([&boot_artifact](const FlagMatch& m) {
+              boot_artifact = m.value;
+              return true;
+            }));
+
     std::optional<std::string> launch_args;
     flags.emplace_back(
         Flag()
@@ -350,6 +387,8 @@ class ConvertAcloudCreateCommand {
                 "--local-image incompatible with --system-* flags");
       CF_EXPECT(!(bootloader_branch || bootloader_build_target || bootloader_build_id),
                 "--local-image incompatible with --bootloader-* flags");
+      CF_EXPECT(!(boot_branch || boot_build_target || boot_build_id || boot_artifact),
+                "--local-image incompatible with --boot-* flags");
       cvd::Request& ln_request = request_protos.emplace_back();
       auto& ln_command = *ln_request.mutable_command_request();
       ln_command.add_args("cvd");
@@ -424,6 +463,27 @@ class ConvertAcloudCreateCommand {
             bootloader_build_id.value_or(bootloader_branch.value_or("aosp_u-boot-mainline"));
         fetch_command.add_args(build + target);
         fetch_command_str_ += (build + target);
+      }
+      if (boot_branch || boot_build_id || boot_build_target) {
+        fetch_command.add_args("--boot_build");
+        fetch_command_str_ += " --boot_build=";
+        auto target = boot_build_target.value_or("");
+        if (target != "") {
+          target = "/" + target;
+        }
+        auto build =
+            boot_build_id.value_or(boot_branch.value_or("aosp-master"));
+        fetch_command.add_args(build + target);
+        fetch_command_str_ += (build + target);
+      }
+      if (boot_artifact) {
+        CF_EXPECT(boot_branch || boot_build_target || boot_build_id,
+                "--boot-artifact must combine with other --boot-* flags");
+        fetch_command.add_args("--boot_artifact");
+        fetch_command_str_ += " --boot_artifact=";
+        auto target = boot_artifact.value_or("");
+        fetch_command.add_args(target);
+        fetch_command_str_ += (target);
       }
       if (kernel_branch || kernel_build_id || kernel_build_target) {
         fetch_command.add_args("--kernel_build");
