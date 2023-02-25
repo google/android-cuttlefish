@@ -75,7 +75,7 @@ cvd::Version CvdClient::GetClientVersion() {
   client_version.set_major(cvd::kVersionMajor);
   client_version.set_minor(cvd::kVersionMinor);
   client_version.set_build(android::build::GetBuildNumber());
-  client_version.set_crc32(FileCrc("/proc/self/exe"));
+  client_version.set_crc32(FileCrc(kServerExecPath));
   return client_version;
 }
 
@@ -126,7 +126,7 @@ Result<void> CvdClient::ValidateServerVersion(
                  << ") does not match server version ("
                  << server_version.build() << std::endl;
   }
-  auto self_crc32 = FileCrc("/proc/self/exe");
+  auto self_crc32 = FileCrc(kServerExecPath);
   if (server_version.crc32() != self_crc32) {
     LOG(VERBOSE) << "cvd_server client checksum (" << self_crc32
                  << ") doesn't match server checksum ("
@@ -195,11 +195,10 @@ Result<cvd::Response> CvdClient::HandleCommand(
   std::optional<SharedFD> exe_fd;
   if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
       args[1] == "restart-server" && args[2] == "match-client") {
-    constexpr char kSelf[] = "/proc/self/exe";
-    exe_fd = SharedFD::Open(kSelf, O_RDONLY);
-    CF_EXPECT((*exe_fd)->IsOpen(), "Failed to open \"" << kSelf << "\": \""
-                                                       << (*exe_fd)->StrError()
-                                                       << "\"");
+    exe_fd = SharedFD::Open(kServerExecPath, O_RDONLY);
+    CF_EXPECT((*exe_fd)->IsOpen(), "Failed to open \""
+                                       << kServerExecPath << "\": \""
+                                       << (*exe_fd)->StrError() << "\"");
   }
   cvd::Request request = MakeRequest(
       {.cmd_args = args, .env = env, .selector_args = selector_args},
@@ -267,7 +266,7 @@ Result<void> CvdClient::StartCvdServer(const std::string& host_tool_directory) {
   // TODO(b/196114111): Investigate fully "daemonizing" the cvd_server.
   CF_EXPECT(setenv("ANDROID_HOST_OUT", host_tool_directory.c_str(),
                    /*overwrite=*/true) == 0);
-  Command command("/proc/self/exe");
+  Command command(kServerExecPath);
   command.AddParameter("-INTERNAL_server_fd=", server_fd);
   SubprocessOptions options;
   options.ExitWithParent(false);
