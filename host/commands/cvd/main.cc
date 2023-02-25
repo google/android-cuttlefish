@@ -33,6 +33,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/client.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/reset_client_utils.h"
@@ -65,7 +66,7 @@ std::unordered_map<std::string, std::string> EnvVectorToMap(char** envp) {
 
 bool IsServerModeExpected(const SharedFD& internal_server_fd,
                           const std::string& exec_file) {
-  return internal_server_fd->IsOpen() || exec_file == "/proc/self/exe";
+  return internal_server_fd->IsOpen() || exec_file == kServerExecPath;
 }
 
 Result<void> RunServer(const SharedFD& internal_server_fd,
