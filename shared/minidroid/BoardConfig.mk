@@ -104,6 +104,11 @@ PRODUCT_COPY_FILES += \
 BOARD_BOOTLOADER_IN_UPDATE_PACKAGE := true
 BOARD_RAMDISK_USE_LZ4 := true
 
+# Default to minidroid, if not set.
+LOCAL_ANDROIDBOOT_HARDWARE ?= minidroid
+# Default to minidroid's primary init .rc, if not set.
+LOCAL_ANDROIDBOOT_INIT_RC ?= /system/etc/init/hw/init.minidroid.rc
+
 BOARD_KERNEL_CMDLINE += printk.devkmsg=on
 BOARD_KERNEL_CMDLINE += audit=1
 BOARD_KERNEL_CMDLINE += panic=-1
@@ -112,12 +117,12 @@ BOARD_KERNEL_CMDLINE += cma=0
 BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 BOARD_KERNEL_CMDLINE += init=/init
-BOARD_BOOTCONFIG += androidboot.hardware=minidroid
+BOARD_BOOTCONFIG += androidboot.hardware=$(LOCAL_ANDROIDBOOT_HARDWARE)
+BOARD_BOOTCONFIG += \
+    androidboot.init_rc=$(LOCAL_ANDROIDBOOT_INIT_RC)
 BOARD_BOOTCONFIG += kernel.mac80211_hwsim.radios=0
 BOARD_BOOTCONFIG += \
     kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size=16384
-BOARD_BOOTCONFIG += \
-    androidboot.init_rc=/system/etc/init/hw/init.minidroid.rc
 BOARD_BOOTCONFIG += \
     androidboot.microdroid.debuggable=1 \
     androidboot.adb.enabled=1
