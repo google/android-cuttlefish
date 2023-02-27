@@ -59,6 +59,16 @@ class InstanceDatabase {
   Result<void> AddInstance(const std::string& group_name, const unsigned id,
                            const std::string& instance_name);
 
+  struct InstanceInfo {
+    const unsigned id;
+    const std::string name;
+  };
+  Result<void> AddInstances(const std::string& group_name,
+                            const std::vector<InstanceInfo>& instances);
+
+  Result<void> SetBuildId(const std::string& group_name,
+                          const std::string& build_id);
+
   /*
    *  auto group = CF_EXPEC(FindGroups(...));
    *  RemoveInstanceGroup(group)
@@ -120,6 +130,8 @@ class InstanceDatabase {
       const Value& instance_specific_name) const;
   Result<Set<ConstRef<LocalInstance>>> FindInstancesByInstanceName(
       const Value& group_name) const;
+
+  Result<LocalInstanceGroup*> FindMutableGroup(const std::string& group_name);
 
   std::vector<std::unique_ptr<LocalInstanceGroup>> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
