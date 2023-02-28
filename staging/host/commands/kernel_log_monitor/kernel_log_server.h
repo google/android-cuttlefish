@@ -42,6 +42,7 @@ enum Event : int32_t {
                          * that we're booting a device.
                          */
   DisplayPowerModeChanged = 10,
+  FastbootdStarted = 11
 };
 
 enum class SubscriptionAction {
