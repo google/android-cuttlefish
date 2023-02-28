@@ -7,11 +7,11 @@ interface DisplayInfo {
   display_id: string;
   width: number;
   height: number;
-  rotation: number;
 }
 
 interface DeviceDisplays {
   device_id: string;
+  rotation: number;
   displays: DisplayInfo[];
 }
 
