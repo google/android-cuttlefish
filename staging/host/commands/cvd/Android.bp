@@ -99,6 +99,7 @@ cc_library_host_static {
         "epoll_loop.cpp",
         "instance_lock.cpp",
         "instance_manager.cpp",
+        "lock_file.cpp",
         "logger.cpp",
         "reset_client_utils.cpp",
         "server.cc",
