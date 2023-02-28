@@ -85,7 +85,6 @@ func (s *AndroidCIBuildAPI) DownloadArtifact(name, buildID, target string, dst i
 	}
 	_, err = io.Copy(dst, res.Body)
 	return err
-	return nil
 }
 
 func (s *AndroidCIBuildAPI) getSignedURL(name, buildID, target string) (string, error) {
