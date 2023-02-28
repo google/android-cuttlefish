@@ -100,6 +100,8 @@ class RemoteKeymaster {
   GetHwInfoResponse GetHwInfo();
   SetAttestationIdsResponse SetAttestationIds(
       const SetAttestationIdsRequest& request);
+  SetAttestationIdsKM3Response SetAttestationIdsKM3(
+      const SetAttestationIdsKM3Request& request);
 
   // CF HAL and remote sides are always compiled together, so will never
   // disagree about message versions.
