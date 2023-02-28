@@ -185,7 +185,7 @@ fn attestation_id_info() -> kmr_wire::AttestationIdInfo {
         // device/google/cuttlefish/host/commands/modem_simulator/misc_service.cpp for more details.
         // TODO(b/263188546): Use device-specific IMEI values when available.
         imei: b"867400022047199".to_vec(),
-        imei2: vec![],
+        imei2: b"867400022047199".to_vec(),
         meid: vec![],
     }
 }

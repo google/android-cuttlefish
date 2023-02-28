@@ -112,6 +112,11 @@ keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
         attestation->push_back(entry);
         break;
 
+      case KM_TAG_ATTESTATION_ID_SECOND_IMEI:
+        found_mismatch |= !matchAttestationId(entry.blob, ids.second_imei);
+        attestation->push_back(entry);
+        break;
+
       default:
         // Ignore non-ID tags.
         break;
@@ -188,4 +193,12 @@ keymaster_error_t TpmAttestationRecordContext::SetAttestationIds(
   return KM_ERROR_OK;
 }
 
+keymaster_error_t TpmAttestationRecordContext::SetAttestationIdsKM3(
+    const keymaster::SetAttestationIdsKM3Request& request) {
+  SetAttestationIds(request.base);
+  attestation_ids_.second_imei.assign(request.second_imei.begin(),
+                                      request.second_imei.end());
+
+  return KM_ERROR_OK;
+}
 }  // namespace cuttlefish

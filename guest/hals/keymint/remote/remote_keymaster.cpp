@@ -112,8 +112,8 @@ bool RemoteKeymaster::Initialize() {
   }
 
   // Pass attestation IDs to the remote KM implementation.
-  // Skip IMEI and MEID as those aren't present on emulators.
-  SetAttestationIdsRequest request(message_version());
+  // Skip MEID as it is not present on emulators.
+  SetAttestationIdsKM3Request requestKM3(message_version());
 
   static constexpr char brand_prop_name[] = "ro.product.brand";
   static constexpr char device_prop_name[] = "ro.product.device";
@@ -143,23 +143,29 @@ bool RemoteKeymaster::Initialize() {
   // b/263188546 - Use device-specific IMEI values rather than one hardcoded
   // value.
   std::string imei_value = "867400022047199";
-  request.imei.Reinitialize(imei_value.data(), imei_value.size());
+  requestKM3.base.imei.Reinitialize(imei_value.data(), imei_value.size());
 
-  request.brand.Reinitialize(brand_prop_value.data(), brand_prop_value.size());
-  request.device.Reinitialize(device_prop_value.data(),
-                              device_prop_value.size());
-  request.product.Reinitialize(product_prop_value.data(),
-                               product_prop_value.size());
-  request.serial.Reinitialize(serial_prop_value.data(),
-                              serial_prop_value.size());
-  request.manufacturer.Reinitialize(manufacturer_prop_value.data(),
-                                    manufacturer_prop_value.size());
-  request.model.Reinitialize(model_prop_value.data(), model_prop_value.size());
+  requestKM3.base.brand.Reinitialize(brand_prop_value.data(),
+                                     brand_prop_value.size());
+  requestKM3.base.device.Reinitialize(device_prop_value.data(),
+                                      device_prop_value.size());
+  requestKM3.base.product.Reinitialize(product_prop_value.data(),
+                                       product_prop_value.size());
+  requestKM3.base.serial.Reinitialize(serial_prop_value.data(),
+                                      serial_prop_value.size());
+  requestKM3.base.manufacturer.Reinitialize(manufacturer_prop_value.data(),
+                                            manufacturer_prop_value.size());
+  requestKM3.base.model.Reinitialize(model_prop_value.data(),
+                                     model_prop_value.size());
 
-  SetAttestationIdsResponse response = SetAttestationIds(request);
-  if (response.error != KM_ERROR_OK) {
+  std::string second_imei_value = "867400022047199";
+  requestKM3.second_imei.Reinitialize(second_imei_value.data(),
+                                      second_imei_value.size());
+
+  SetAttestationIdsKM3Response responseKM3 = SetAttestationIdsKM3(requestKM3);
+  if (responseKM3.error != KM_ERROR_OK) {
     LOG(ERROR) << "Failed to configure keymaster attestation IDs: "
-               << response.error;
+               << responseKM3.error;
     return false;
   }
 
@@ -388,6 +394,13 @@ SetAttestationIdsResponse RemoteKeymaster::SetAttestationIds(
     const SetAttestationIdsRequest& request) {
   SetAttestationIdsResponse response(message_version());
   ForwardCommand(SET_ATTESTATION_IDS, request, &response);
+  return response;
+}
+
+SetAttestationIdsKM3Response RemoteKeymaster::SetAttestationIdsKM3(
+    const SetAttestationIdsKM3Request& request) {
+  SetAttestationIdsKM3Response response(message_version());
+  ForwardCommand(SET_ATTESTATION_IDS_KM3, request, &response);
   return response;
 }
 
