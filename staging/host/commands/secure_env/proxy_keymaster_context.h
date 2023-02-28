@@ -168,6 +168,11 @@ class ProxyKeymasterContext : public keymaster::KeymasterContext {
     return wrapped_.SetAttestationIds(request);
   }
 
+  keymaster_error_t SetAttestationIdsKM3(
+      const keymaster::SetAttestationIdsKM3Request& request) override {
+    return wrapped_.SetAttestationIdsKM3(request);
+  }
+
  private:
   KeymasterContext& wrapped_;
 };
