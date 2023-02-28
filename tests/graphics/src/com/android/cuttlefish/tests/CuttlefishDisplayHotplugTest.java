@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.platform.test.annotations.LargeTest;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -81,12 +80,9 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
         return runner.run(DEFAULT_TIMEOUT_MS, fullCommand.toArray(new String[0]));
     }
 
-    private File getApk(String fileName) throws FileNotFoundException {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
-        return buildHelper.getTestFile(fileName);
-    }
-
     private static final String HELPER_APP_APK = "CuttlefishDisplayHotplugHelperApp.apk";
+
+    private static final String HELPER_APP_PKG = "com.android.cuttlefish.displayhotplughelper";
 
     private static final String HELPER_APP_ACTIVITY = "com.android.cuttlefish.displayhotplughelper/.DisplayHotplugHelperApp";
 
@@ -100,16 +96,13 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
 
     @Before
     public void setUp() throws Exception {
-        getDevice().uninstallPackage(HELPER_APP_APK);
-        String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
-
-        String installError = getDevice().installPackage(getApk(HELPER_APP_APK), false, options);
-        assertThat(installError).isNull();
+        getDevice().uninstallPackage(HELPER_APP_PKG);
+        installPackage(HELPER_APP_APK);
     }
 
     @After
     public void tearDown() throws Exception {
-        getDevice().uninstallPackage(HELPER_APP_APK);
+        getDevice().uninstallPackage(HELPER_APP_PKG);
     }
 
     /**
