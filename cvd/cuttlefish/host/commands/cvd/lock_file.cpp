@@ -47,7 +47,7 @@ Result<InUseState> LockFile::Status() const {
     case static_cast<char>(InUseState::kNotInUse):
       return InUseState::kNotInUse;
     default:
-      return CF_ERRF("Unexpected state value \"{}\"", state_char);
+      return CF_ERR("Unexpected state value \"" << state_char << "\"");
   }
 }
 
@@ -75,15 +75,7 @@ Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
   auto parent_dir = android::base::Dirname(file_path);
   CF_EXPECT(EnsureDirectoryExists(parent_dir));
   auto fd = SharedFD::Open(file_path.data(), O_CREAT | O_RDWR, 0666);
-  int result = chmod(file_path.c_str(), 0666);
-  if (result) {
-    LOG(DEBUG) << "failed: chmod 666 " << file_path;
-  }
-  result = chmod(parent_dir.c_str(), 0755);
-  if (result) {
-    LOG(DEBUG) << "failed: chmod 755 " << parent_dir;
-  }
-  CF_EXPECTF(fd->IsOpen(), "open(\"{}\"): {}", file_path, fd->StrError());
+  CF_EXPECT(fd->IsOpen(), "open(\"" << file_path << "\"): " << fd->StrError());
   return fd;
 }
 
