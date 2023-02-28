@@ -26,7 +26,7 @@ namespace cuttlefish {
 
 class ProxyServer {
  public:
-  ProxyServer(std::string label, SharedFD server, std::function<SharedFD()> clients_factory);
+  ProxyServer(SharedFD server, std::function<SharedFD()> clients_factory);
   void Join();
   ~ProxyServer();
 
@@ -43,8 +43,7 @@ class ProxyServer {
 // closed in another thread. It's recommended the caller disables the default
 // behavior for SIGPIPE before calling this function, otherwise it runs the risk
 // or crashing the process when a connection breaks.
-void Proxy(std::string label, SharedFD server, std::function<SharedFD()> conn_factory);
-std::unique_ptr<ProxyServer> ProxyAsync(std::string label, SharedFD server,
-                                        std::function<SharedFD()> conn_factory);
+void Proxy(SharedFD server, std::function<SharedFD()> conn_factory);
+std::unique_ptr<ProxyServer> ProxyAsync(SharedFD server, std::function<SharedFD()> conn_factory);
 
 }  // namespace cuttlefish
