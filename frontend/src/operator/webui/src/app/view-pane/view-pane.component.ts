@@ -295,12 +295,12 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   forceShowDevice(deviceId: string) {
     this.displaysService.onDeviceDisplayInfo({
       device_id: deviceId,
+      rotation: 0,
       displays: [
         {
           display_id: '0',
           width: this.freeScale,
           height: this.freeScale,
-          rotation: 0,
         },
       ],
     });
