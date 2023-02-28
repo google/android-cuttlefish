@@ -92,6 +92,7 @@ bool KeymasterResponder::ProcessMessage() {
                             ConfigureVerifiedBootInfo)
     HANDLE_MESSAGE_W_RETURN(GET_ROOT_OF_TRUST, GetRootOfTrust)
     HANDLE_MESSAGE_W_RETURN(SET_ATTESTATION_IDS, SetAttestationIds)
+    HANDLE_MESSAGE_W_RETURN(SET_ATTESTATION_IDS_KM3, SetAttestationIdsKM3)
 #undef HANDLE_MESSAGE_W_RETURN
 #define HANDLE_MESSAGE_W_RETURN_NO_ARG(ENUM_NAME, METHOD_NAME) \
   case ENUM_NAME: {                                            \
