@@ -36,6 +36,7 @@ struct AttestationIds {
   std::vector<uint8_t> meid;
   std::vector<uint8_t> manufacturer;
   std::vector<uint8_t> model;
+  std::vector<uint8_t> second_imei;
 };
 
 class TpmAttestationRecordContext : public keymaster::AttestationContext {
@@ -60,6 +61,8 @@ public:
                           const std::vector<uint8_t>& vbmeta_digest);
  keymaster_error_t SetAttestationIds(
      const keymaster::SetAttestationIdsRequest& request);
+ keymaster_error_t SetAttestationIdsKM3(
+     const keymaster::SetAttestationIdsKM3Request& request);
 
 private:
  std::vector<uint8_t> vbmeta_digest_;
