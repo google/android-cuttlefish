@@ -23,6 +23,7 @@ namespace socket_proxy {
 class Server {
  public:
   virtual SharedFD Start() = 0;
+  virtual std::string Describe() const = 0;
   virtual ~Server() = default;
 };
 
@@ -30,6 +31,7 @@ class TcpServer : public Server {
  public:
   TcpServer(int port);
   SharedFD Start() override;
+  std::string Describe() const override;
 
  private:
   int port_;
@@ -39,6 +41,7 @@ class VsockServer : public Server {
  public:
   VsockServer(int port);
   SharedFD Start() override;
+  std::string Describe() const override;
 
  private:
   int port_;
@@ -48,9 +51,11 @@ class DupServer : public Server {
  public:
   DupServer(int fd);
   SharedFD Start() override;
+  std::string Describe() const override;
 
  private:
-  SharedFD fd_;
+  int fd_;
+  SharedFD sfd_;
 };
 
 }
