@@ -21,12 +21,8 @@
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-
-std::string FromSeverity(const android::base::LogSeverity severity);
-Result<android::base::LogSeverity> ToSeverity(const std::string& value);
 
 std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
                                   android::base::LogSeverity severity,
@@ -69,7 +65,5 @@ TeeLogger LogToFiles(const std::vector<std::string>& files,
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
                               const std::string& log_prefix = "",
                               MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
-
-std::string StripColorCodes(const std::string& str);
 
 } // namespace cuttlefish
