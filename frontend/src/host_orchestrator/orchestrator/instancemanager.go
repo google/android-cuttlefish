@@ -19,10 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -84,7 +81,6 @@ type CVDToolInstanceManagerOpts struct {
 	ExecContext              ExecContext
 	CVDBinAB                 AndroidBuild
 	Paths                    IMPaths
-	CVDDownloader            CVDDownloader
 	OperationManager         OperationManager
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	CVDExecTimeout           time.Duration
@@ -100,9 +96,9 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 		hostValidator:            opts.HostValidator,
 		downloadCVDHandler: &downloadCVDHandler{
-			CVDBinAB: opts.CVDBinAB,
-			CVDBin:   opts.Paths.CVDBin,
-			Dwnlder:  opts.CVDDownloader,
+			Build:    opts.CVDBinAB,
+			Filename: opts.Paths.CVDBin,
+			BuildAPI: opts.BuildAPI,
 		},
 		fetchCVDHandler: newFetchCVDHandler(opts.ExecContext, opts.Paths.CVDBin, opts.Paths.ArtifactsRootDir),
 		startCVDHandler: &startCVDHandler{
@@ -323,27 +319,50 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-type downloadCVDResult struct {
-	Error error
-}
-
+// Makes sure `cvd` gets downloaded once.
 type downloadCVDHandler struct {
-	CVDBinAB AndroidBuild
-	CVDBin   string
-	Dwnlder  CVDDownloader
-	mutex    sync.Mutex
-	result   *downloadCVDResult
+	Build    AndroidBuild
+	Filename string
+	BuildAPI BuildAPI
+
+	mutex sync.Mutex
 }
 
-func (s *downloadCVDHandler) Download() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	if s.result != nil {
-		return s.result.Error
+func (h *downloadCVDHandler) Download() error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	if err := h.download(); err != nil {
+		return fmt.Errorf("failed downloading cvd file: %w", err)
 	}
-	err := s.Dwnlder.Download(s.CVDBin, s.CVDBinAB)
-	s.result = &downloadCVDResult{err}
-	return err
+	return os.Chmod(h.Filename, 0750)
+}
+
+func (h *downloadCVDHandler) download() error {
+	exist, err := fileExist(h.Filename)
+	if err != nil {
+		return fmt.Errorf("failed to test if the `cvd` file %q does exist: %w", h.Filename, err)
+	}
+	if exist {
+		return nil
+	}
+	f, err := os.Create(h.Filename)
+	if err != nil {
+		return fmt.Errorf("failed to create the `cvd` file %q: %w", h.Filename, err)
+	}
+	var downloadErr error
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("failed closing `cvd` file %q file, error: %v", h.Filename, err)
+		}
+		if downloadErr != nil {
+			if err := os.Remove(h.Filename); err != nil {
+				log.Printf("failed removing  `cvd` file %q: %v", h.Filename, err)
+			}
+		}
+
+	}()
+	downloadErr = h.BuildAPI.DownloadArtifact("cvd", h.Build.ID, h.Build.Target, f)
+	return downloadErr
 }
 
 type fetchCVDResult struct {
@@ -460,123 +479,6 @@ func createDir(dir string) error {
 	} else {
 		return err
 	}
-}
-
-type CVDDownloader interface {
-	Download(filename string, build AndroidBuild) error
-}
-
-type cvdDownloaderImpl struct {
-	ad      ArtifactDownloader
-	osChmod func(string, os.FileMode) error
-}
-
-func NewCVDDownloader(ad ArtifactDownloader) CVDDownloader {
-	return &cvdDownloaderImpl{ad, os.Chmod}
-}
-
-func (h *cvdDownloaderImpl) Download(filename string, build AndroidBuild) error {
-	exist, err := fileExist(filename)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return nil
-	}
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if err := h.ad.Download(f, build, "cvd"); err != nil {
-		if removeErr := os.Remove(filename); err != nil {
-			return fmt.Errorf("%w; %v", err, removeErr)
-		}
-		return err
-	}
-	return h.osChmod(filename, 0750)
-}
-
-// Represents a downloader of artifacts hosted in Android Build (https://ci.android.com).
-type ArtifactDownloader interface {
-	Download(dst io.Writer, build AndroidBuild, name string) error
-}
-
-// Downloads the artifacts using the signed URL returned by the Android Build service.
-type SignedURLArtifactDownloader struct {
-	client *http.Client
-	url    string
-}
-
-func NewSignedURLArtifactDownloader(client *http.Client, URL string) *SignedURLArtifactDownloader {
-	return &SignedURLArtifactDownloader{client, URL}
-}
-
-func (d *SignedURLArtifactDownloader) Download(dst io.Writer, build AndroidBuild, name string) error {
-	signedURL, err := d.getSignedURL(&build, name)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("GET", signedURL, nil)
-	if err != nil {
-		return err
-	}
-	res, err := d.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return d.parseErrorResponse(res.Body)
-	}
-	_, err = io.Copy(dst, res.Body)
-	return err
-}
-
-func (d *SignedURLArtifactDownloader) getSignedURL(build *AndroidBuild, name string) (string, error) {
-	url := BuildGetSignedURL(d.url, *build, name)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return "", err
-	}
-	res, err := d.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return "", d.parseErrorResponse(res.Body)
-	}
-	decoder := json.NewDecoder(res.Body)
-	body := struct {
-		SignedURL string `json:"signedUrl"`
-	}{}
-	err = decoder.Decode(&body)
-	return body.SignedURL, err
-}
-
-func (d *SignedURLArtifactDownloader) parseErrorResponse(body io.ReadCloser) error {
-	decoder := json.NewDecoder(body)
-	errRes := struct {
-		Error struct {
-			Message string
-			Code    int
-		}
-	}{}
-	err := decoder.Decode(&errRes)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf(errRes.Error.Message)
-}
-
-func BuildGetSignedURL(baseURL string, build AndroidBuild, name string) string {
-	uri := fmt.Sprintf("/android/internal/build/v3/builds/%s/%s/attempts/%s/artifacts/%s/url?redirect=false",
-		url.PathEscape(build.ID),
-		url.PathEscape(build.Target),
-		"latest",
-		name)
-	return baseURL + uri
 }
 
 func fileExist(name string) (bool, error) {
