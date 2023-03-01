@@ -104,6 +104,8 @@ class CvdStartCommandHandler : public CvdServerHandler {
   Result<void> SetBuildId(const uid_t uid, const std::string& group_name,
                           const std::string& home);
 
+  void MarkLockfilesInUse(selector::GroupCreationInfo& group_info);
+
   InstanceManager& instance_manager_;
   SubprocessWaiter& subprocess_waiter_;
   HostToolTargetManager& host_tool_target_manager_;
@@ -112,6 +114,20 @@ class CvdStartCommandHandler : public CvdServerHandler {
 
   static const std::array<std::string, 2> supported_commands_;
 };
+
+void CvdStartCommandHandler::MarkLockfilesInUse(
+    selector::GroupCreationInfo& group_info) {
+  auto& instances = group_info.instances;
+  for (auto& instance : instances) {
+    if (!instance.instance_file_lock_) {
+      continue;
+    }
+    auto result = instance.instance_file_lock_->Status(InUseState::kInUse);
+    if (!result.ok()) {
+      LOG(ERROR) << result.error().Message();
+    }
+  }
+}
 
 Result<bool> CvdStartCommandHandler::CanHandle(
     const RequestWithStdio& request) const {
@@ -417,6 +433,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
        */
       response = CF_EXPECT(
           FillOutNewInstanceInfo(std::move(response), *group_creation_info));
+      MarkLockfilesInUse(*group_creation_info);
     }
     return response;
   }
@@ -438,6 +455,7 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       final_response.status().code() != cvd::Status::OK) {
     return final_response;
   }
+  MarkLockfilesInUse(*group_creation_info);
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response),
                                 *group_creation_info);
