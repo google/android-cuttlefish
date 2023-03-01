@@ -154,6 +154,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return RunServer(internal_server_fd, carryover_client_fd);
   }
 
+  CF_EXPECT_EQ(android::base::Basename(all_args[0]), "cvd");
+
   std::vector<std::string> client_internal_commands{"kill-server",
                                                     "server-kill", "reset"};
   FrontlineParser::ParserParam client_param{
@@ -193,6 +195,24 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
    */
   CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
             "Unable to ensure cvd_server is running.");
+
+  std::vector<std::string> version_command{"version"};
+  FrontlineParser::ParserParam version_param{
+      .server_supported_subcmds = std::vector<std::string>{},
+      .internal_cmds = version_command,
+      .all_args = all_args,
+  };
+  auto version_parser_result = FrontlineParser::Parse(version_param);
+  if (version_parser_result.ok()) {
+    auto version_parser = std::move(*version_parser_result);
+    CF_EXPECT(version_parser != nullptr);
+    const auto subcmd = version_parser->SubCmd().value_or("");
+    CF_EXPECT_EQ(subcmd, "version");
+    auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
+    std::cout << version_msg;
+    return {};
+  }
+
   FrontlineParser::ParserParam server_param{
       .server_supported_subcmds = CF_EXPECT(client.ValidSubcmdsList(env)),
       .internal_cmds = std::vector<std::string>{},
@@ -213,13 +233,6 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   std::copy(frontline_parser->SubCmdArgs().begin(),
             frontline_parser->SubCmdArgs().end(), std::back_inserter(cmd_args));
   cvd_common::Args selector_args = frontline_parser->SelectorArgs();
-
-  // Special case for `cvd version`, handled by using the version command.
-  if (prog_name == "cvd" && subcmd == "version") {
-    auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
-    std::cout << version_msg;
-    return {};
-  }
 
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
   CF_EXPECT(client.HandleCommand(cmd_args, env, selector_args));
