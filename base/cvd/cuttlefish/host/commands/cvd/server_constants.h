@@ -23,65 +23,36 @@
 #include <string>
 #include <vector>
 
+#include <fruit/fruit.h>
+
 #include "cvd_server.pb.h"
 
 #include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/unix_sockets.h"
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/epoll_loop.h"
-#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/logger.h"
 // including "server_command/subcmd.h" causes cyclic dependency
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/libs/config/inject.h"
 #include "host/libs/web/build_api.h"
 
 namespace cuttlefish {
 
-struct ServerMainParam {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  std::optional<bool> acloud_translator_optout;
-  std::unique_ptr<ServerLogger> server_logger;
-  /* scoped logger that carries the stderr of the carried-over
-   * client. The client may have called "cvd restart-server."
-   *
-   * The scoped_logger should expire just after AcceptCarryoverClient()
-   */
-  std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
-  // If true, the server restarted in the previous server process
-  // This is common for restart-server operations.
-  bool restarted_in_process;
-};
-Result<int> CvdServerMain(ServerMainParam&& fds);
-
 class CvdServer {
-  // for server_logger_.
-  // server_logger_ shouldn't be exposed to anything but CvdServerMain()
-  friend Result<int> CvdServerMain(ServerMainParam&& fds);
-
  public:
-  CvdServer(BuildApi&, EpollPool&, InstanceLockFileManager&, InstanceManager&,
-            HostToolTargetManager&, ServerLogger&);
+  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&,
+                   HostToolTargetManager&, ServerLogger&));
   ~CvdServer();
 
   Result<void> StartServer(SharedFD server);
-  struct ExecParam {
-    SharedFD new_exe;
-    SharedFD carryover_client_fd;  // the client that called cvd restart-server
-    std::optional<SharedFD>
-        in_memory_data_fd;  // fd to carry over in-memory data
-    bool verbose;
-  };
-  Result<void> Exec(ExecParam&&);
+  Result<void> Exec(SharedFD new_exe, SharedFD client);
   Result<void> AcceptCarryoverClient(SharedFD client);
   void Stop();
   void Join();
-  Result<void> InstanceDbFromJson(const std::string& json_string);
 
  private:
   struct OngoingRequest {
@@ -89,6 +60,9 @@ class CvdServer {
     std::mutex mutex;
     std::thread::id thread_id;
   };
+
+  /* this has to be static due to the way fruit includes components */
+  static fruit::Component<> RequestComponent(CvdServer*);
 
   Result<void> AcceptClient(EpollEvent);
   Result<void> HandleMessage(EpollEvent);
@@ -98,7 +72,6 @@ class CvdServer {
   SharedFD server_fd_;
   BuildApi& build_api_;
   EpollPool& epoll_pool_;
-  InstanceLockFileManager& instance_lockfile_manager_;
   InstanceManager& instance_manager_;
   HostToolTargetManager& host_tool_target_manager_;
   ServerLogger& server_logger_;
@@ -109,12 +82,12 @@ class CvdServer {
   // TODO(schuffelen): Move this thread pool to another class.
   std::mutex threads_mutex_;
   std::vector<std::thread> threads_;
-
-  // translator optout
-  std::atomic<bool> optout_;
 };
 
-// Read all contents from the file
-Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd);
+Result<CvdServerHandler*> RequestHandler(
+    const RequestWithStdio& request,
+    const std::vector<CvdServerHandler*>& handlers);
+
+Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client);
 
 }  // namespace cuttlefish

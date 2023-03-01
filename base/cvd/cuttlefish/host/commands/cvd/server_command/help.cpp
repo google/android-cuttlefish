@@ -14,72 +14,44 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/help.h"
+#include "host/commands/cvd/server.h"
 
-#include <fcntl.h>
-
-#include <memory>
 #include <mutex>
-#include <ostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
+#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
-namespace {
 
-constexpr char kHelpIntroText[] = R"(Cuttlefish Virtual Device (CVD) CLI.
+static constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
 
-usage: cvd <selector/driver options> <command> <args>
+usage: cvd <command> <args>
 
-Selector Options:
-  -group_name <name>     Specify the name of the instance group created
-                         or selected.
-  -instance_name <name>  Selects the device of the given name to perform the
-                         commands for.
-  -instance_name <names> Takes the names of the devices to create within an
-                         instance group. The 'names' is comma-separated.
+Commands:
+  help                Print this message.
+  help <command>      Print help for a command.
+  start               Start a device.
+  stop                Stop a running device.
+  clear               Stop all running devices and delete all instance and assembly directories.
+  fleet               View the current fleet status.
+  kill-server         Kill the cvd_server background process.
+  server-kill         Same as kill-server
+  restart-server      Restart the cvd_server background process.
+  status              Check and print the state of a running instance.
+  host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
 
-Driver Options:
-  -help                  Print this message
-  -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
-                         severity. (Required: cvd >= v1.3)
-  -acquire_file_lock     If the flag is given, the cvd server attempts to
-                         acquire the instance lock file lock. (default: true)
-
-Commands (cvd help <command> for more information):)";
-
-constexpr char kSummaryHelpText[] =
-    "Used to display help information for other commands";
-
-constexpr char kDetailedHelpText[] =
-    R"(cvd help - used to display help text for cvd and its commands
-
-Example usage:
-  cvd help - displays summary help for available commands
-
-  cvd help <command> - displays more detailed help for the specific command
+Args:
+  <command args>      Each command has its own set of args. See cvd help <command>.
+  --clean             If provided, runs cvd kill-server before the requested command.
 )";
-
-}  // namespace
 
 class CvdHelpHandler : public CvdServerHandler {
  public:
-  CvdHelpHandler(
-      const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers)
-      : request_handlers_(request_handlers) {}
+  INJECT(CvdHelpHandler(CommandSequenceExecutor& executor))
+      : executor_(executor) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
@@ -91,85 +63,57 @@ class CvdHelpHandler : public CvdServerHandler {
     if (interrupted_) {
       return CF_ERR("Interrupted");
     }
+
+    cvd::Response response;
+    response.mutable_command_response();  // Sets oneof member
+    response.mutable_status()->set_code(cvd::Status::OK);
+
     CF_EXPECT(CanHandle(request));
 
-    std::string output;
-    auto args = ParseInvocation(request.Message()).arguments;
-    if (args.empty()) {
-      output = CF_EXPECT(TopLevelHelp());
-    } else {
-      output = CF_EXPECT(SubCommandHelp(args));
+    auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
+    const auto supported_subcmd_list = executor_.CmdList();
+    /*
+     * cvd help, cvd help invalid_token, cvd help help
+     */
+    if (subcmd_args.empty() ||
+        !Contains(supported_subcmd_list, subcmd_args.front()) ||
+        subcmd_args.front() == "help") {
+      WriteAll(request.Out(), kHelpMessage);
+      return response;
     }
-    auto response = CF_EXPECT(WriteToFd(request.Out(), output));
+
+    cvd::Request modified_proto = request.Message();
+    auto& args = *modified_proto.mutable_command_request()->mutable_args();
+    args.erase(args.begin());
+    args.Add("--help");
+
+    RequestWithStdio inner_cmd(request.Client(), modified_proto,
+                               request.FileDescriptors(),
+                               request.Credentials());
+
     interrupt_lock.unlock();
+    executor_.Execute({inner_cmd}, SharedFD::Open("/dev/null", O_RDWR));
+
     return response;
   }
-
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interruptible_);
     interrupted_ = true;
+    CF_EXPECT(executor_.Interrupt());
     return {};
   }
 
   cvd_common::Args CmdList() const override { return {"help"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool ShouldInterceptHelp() const override { return true; }
-
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return kDetailedHelpText;
-  }
-
  private:
-  Result<RequestWithStdio> GetLookupRequest(const std::string& arg) {
-    cvd::Request lookup;
-    auto& lookup_cmd = *lookup.mutable_command_request();
-    lookup_cmd.add_args("cvd");
-    lookup_cmd.add_args(arg);
-    auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
-    CF_EXPECT(dev_null->IsOpen(), dev_null->StrError());
-    return RequestWithStdio(dev_null, lookup, {dev_null, dev_null, dev_null},
-                            {});
-  }
-
-  Result<std::string> TopLevelHelp() {
-    std::stringstream help_message;
-    help_message << kHelpIntroText << std::endl;
-    for (const auto& handler : request_handlers_) {
-      std::string command_list = android::base::Join(handler->CmdList(), ", ");
-      // exclude commands without any command list values as not intended for
-      // use by users or sub-subcommands
-      if (!command_list.empty()) {
-        help_message << "\t" << command_list << " - ";
-        help_message << CF_EXPECT(handler->SummaryHelp()) << std::endl
-                     << std::endl;
-      }
-    }
-    return help_message.str();
-  }
-
-  Result<std::string> SubCommandHelp(std::vector<std::string>& args) {
-    CF_EXPECT(
-        !args.empty(),
-        "Cannot process subcommand help without valid subcommand argument");
-    auto lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
-    auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
-
-    std::stringstream help_message;
-    help_message << CF_EXPECT(handler->DetailedHelp(args)) << std::endl;
-    return help_message.str();
-  }
-
   std::mutex interruptible_;
   bool interrupted_ = false;
-  const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers_;
+  CommandSequenceExecutor& executor_;
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdServerHandler>>& request_handlers) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdHelpHandler(request_handlers));
+fruit::Component<fruit::Required<CommandSequenceExecutor>> CvdHelpComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdHelpHandler>();
 }
 
 }  // namespace cuttlefish

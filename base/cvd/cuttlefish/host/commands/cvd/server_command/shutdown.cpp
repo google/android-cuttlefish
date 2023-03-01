@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/shutdown.h"
+#include "host/commands/cvd/server.h"
 
 #include <sys/types.h>
+
+#include <fruit/fruit.h>
 
 #include "cvd_server.pb.h"
 
@@ -24,7 +26,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/server_command/components.h"
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
@@ -32,7 +34,8 @@ namespace {
 
 class CvdShutdownHandler : public CvdServerHandler {
  public:
-  CvdShutdownHandler(CvdServer& server, InstanceManager& instance_manager)
+  INJECT(CvdShutdownHandler(CvdServer& server,
+                            InstanceManager& instance_manager))
       : server_(server), instance_manager_(instance_manager) {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -43,6 +46,7 @@ class CvdShutdownHandler : public CvdServerHandler {
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(request.Credentials() != std::nullopt);
+    const uid_t uid = request.Credentials()->uid;
 
     cvd::Response response;
     response.mutable_shutdown_response();
@@ -62,7 +66,7 @@ class CvdShutdownHandler : public CvdServerHandler {
       }
     }
 
-    if (instance_manager_.HasInstanceGroups()) {
+    if (instance_manager_.HasInstanceGroups(uid)) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
           "Cannot shut down cvd_server while devices are being tracked. "
@@ -93,10 +97,10 @@ class CvdShutdownHandler : public CvdServerHandler {
 
 }  // namespace
 
-std::unique_ptr<CvdServerHandler> NewCvdShutdownHandler(
-    CvdServer& server, InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdShutdownHandler(server, instance_manager));
+fruit::Component<fruit::Required<CvdServer, InstanceManager>>
+cvdShutdownComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdShutdownHandler>();
 }
 
 }  // namespace cuttlefish

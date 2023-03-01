@@ -15,34 +15,37 @@
 
 #pragma once
 
-#include <memory>
-#include <mutex>
 #include <vector>
+
+#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/libs/config/inject.h"
 
 namespace cuttlefish {
 
-class CommandSequenceExecutor {
+class CommandSequenceExecutor : public LateInjected {
  public:
-  CommandSequenceExecutor(
-      const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers);
+  INJECT(CommandSequenceExecutor());
+
+  Result<void> LateInject(fruit::Injector<>&) override;
 
   Result<void> Interrupt();
   Result<std::vector<cvd::Response>> Execute(
       const std::vector<RequestWithStdio>&, SharedFD report);
-  Result<cvd::Response> ExecuteOne(const RequestWithStdio&, SharedFD report);
 
   std::vector<std::string> CmdList() const;
-  Result<CvdServerHandler*> GetHandler(const RequestWithStdio& request);
 
  private:
-  const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers_;
+  std::vector<CvdServerHandler*> server_handlers_;
   std::vector<CvdServerHandler*> handler_stack_;
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
 };
+
+fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent();
+
 }  // namespace cuttlefish

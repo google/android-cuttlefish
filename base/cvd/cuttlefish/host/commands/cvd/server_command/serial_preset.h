@@ -15,14 +15,13 @@
  */
 #pragma once
 
-#include <memory>
+#include <fruit/fruit.h>
 
 #include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewSerialPreset(
-    CommandSequenceExecutor& executor);
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
+cvdSerialPresetComponent();
 
-}  // namespace cuttlefish
+}
