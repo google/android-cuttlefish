@@ -32,38 +32,39 @@ namespace cuttlefish {
 namespace {
 
 void Forward(const std::string& label, SharedFD from, SharedFD to) {
-  LOG(DEBUG) << label << ": Proxy thread started. Starting copying data";
+  LOG(DEBUG) << "[" << label << "] Proxy thread started. Starting copying data";
   auto success = to->CopyAllFrom(*from);
   if (!success) {
     if (from->GetErrno()) {
-      LOG(ERROR) << label << ": Error reading: " << from->StrError();
+      LOG(ERROR) << "[" << label << "] Error reading: " << from->StrError();
     }
     if (to->GetErrno()) {
-      LOG(ERROR) << label << ": Error writing: " << to->StrError();
+      LOG(ERROR) << "[" << label << "] Error writing: " << to->StrError();
     }
   }
   to->Shutdown(SHUT_WR);
-  LOG(DEBUG) << label << ": Proxy thread completed";
+  LOG(DEBUG) << "[" << label << "] Proxy thread completed";
 }
 
-void SetupProxying(SharedFD client, SharedFD target) {
-  LOG(DEBUG) << "Launching proxy threads";
-  std::thread client2target(Forward, "c2t", client, target);
-  std::thread target2client(Forward, "t2c", target, client);
+void SetupProxying(const std::string& label, SharedFD client, SharedFD target) {
+  LOG(DEBUG) << "[" << label << "] Launching proxy threads";
+  std::thread client2target(Forward, label + "_c2t", client, target);
+  std::thread target2client(Forward, label + "_t2c", target, client);
   client2target.detach();
   target2client.detach();
 }
 
 }  // namespace
 
-ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_factory)
-    : stop_fd_(SharedFD::Event()) {
+ProxyServer::ProxyServer(std::string label, SharedFD server,
+                         std::function<SharedFD()> clients_factory) : stop_fd_(SharedFD::Event()) {
 
   if (!stop_fd_->IsOpen()) {
     LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
     return;
   }
-  server_ = std::thread([&, server_fd = std::move(server),
+  server_ = std::thread([&, label = std::move(label),
+                            server_fd = std::move(server),
                             clients_factory = std::move(clients_factory)]() {
     constexpr ssize_t SERVER = 0;
     constexpr ssize_t STOP = 1;
@@ -79,7 +80,7 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
 
       const int poll_result = SharedFD::Poll(server_poll, -1);
       if (poll_result < 0) {
-        LOG(ERROR) << "Failed to poll to wait for incoming connection";
+        LOG(ERROR) << "[" << label << "] Failed to poll to wait for incoming connection";
         continue;
       }
       if (server_poll[STOP].revents & POLLIN) {
@@ -95,14 +96,16 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
       // connection without blocking on that
       auto client = SharedFD::Accept(*server_fd);
       if (!client->IsOpen()) {
-        LOG(ERROR) << "Failed to accept incoming connection: " << client->StrError();
+        LOG(ERROR) << "[" << label << "] Failed to accept incoming connection: "
+                   << client->StrError();
         continue;
       }
       auto target = clients_factory();
       if (target->IsOpen()) {
-        SetupProxying(client, target);
+        SetupProxying(label, client, target);
       } else {
-        LOG(ERROR) << "Cannot connect to the target to setup proxying: " << target->StrError();
+        LOG(ERROR) << "[" << label << "] Cannot connect to the target to setup proxying: "
+                   << target->StrError();
       }
       // The client will close when it goes out of scope here if the target
       // didn't open.
@@ -123,14 +126,15 @@ ProxyServer::~ProxyServer() {
   Join();
 }
 
-void Proxy(SharedFD server, std::function<SharedFD()> conn_factory) {
-  ProxyServer proxy(std::move(server), std::move(conn_factory));
+void Proxy(std::string label, SharedFD server, std::function<SharedFD()> conn_factory) {
+  ProxyServer proxy(std::move(label), std::move(server), std::move(conn_factory));
   proxy.Join();
 }
 
-std::unique_ptr<ProxyServer> ProxyAsync(SharedFD server, std::function<SharedFD()> conn_factory) {
+std::unique_ptr<ProxyServer> ProxyAsync(std::string label, SharedFD server,
+                                        std::function<SharedFD()> conn_factory) {
   return std::unique_ptr<ProxyServer>(
-      new ProxyServer(std::move(server), std::move(conn_factory)));
+      new ProxyServer(std::move(label), std::move(server), std::move(conn_factory)));
 }
 
 }  // namespace cuttlefish
