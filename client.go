@@ -16,8 +16,11 @@ package webrtcclient
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"sync"
 
+	wlog "github.com/pion/logging"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -206,14 +209,23 @@ type Connection struct {
 }
 
 // Connects to a device. Blocks until the connection is established successfully
-// or fails. If the returned error is not nil the Connection should be
-// ignored.
+// or fails. If the returned error is not nil the Connection should be ignored.
 func NewConnection(signaling *Signaling, observer Observer) (*Connection, error) {
+	// The default logger in webrtc uses os.Stdout, but Stderr is a much better choice.
+	return NewConnectionWithLogger(signaling, observer, os.Stderr)
+}
+
+func NewConnectionWithLogger(signaling *Signaling, observer Observer, logger io.Writer) (*Connection, error) {
+	lf := wlog.NewDefaultLoggerFactory()
+	lf.Writer = logger
+	api := webrtc.NewAPI(webrtc.WithSettingEngine(webrtc.SettingEngine{
+		LoggerFactory: lf,
+	}))
 	cfg := webrtc.Configuration{
 		SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
 		ICEServers:   signaling.ICEServers,
 	}
-	pc, err := webrtc.NewPeerConnection(cfg)
+	pc, err := api.NewPeerConnection(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create peer connection: %w", err)
 	}
