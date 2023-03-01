@@ -129,6 +129,29 @@ class SelectorFlagProxy {
     return ptr->DefaultValue();
   }
 
+  // returns CF_ERR if parsing error,
+  // returns std::nullopt if parsing was okay but the flag wasn't given
+  template <typename T>
+  Result<void> FilterFlag(cvd_common::Args& args, std::optional<T>& output) {
+    output = std::nullopt;
+    auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    CF_EXPECT(ptr != nullptr);
+    output = CF_EXPECT(ptr->FilterFlag(args));
+    return {};
+  }
+
+  // Parses the arguments. If flag is given, returns the parsed value. If not,
+  // returns the default value if any. If no default value, it returns CF_ERR.
+  template <typename T>
+  Result<void> ParseFlag(cvd_common::Args& args, T& output) {
+    bool has_default_value = CF_EXPECT(HasDefaultValue());
+    CF_EXPECT(has_default_value == true);
+    auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    CF_EXPECT(ptr != nullptr);
+    output = CF_EXPECT(ptr->ParseFlag(args));
+    return {};
+  }
+
  private:
   std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,
                SelectorFlag<std::string>>
@@ -145,16 +168,12 @@ class FlagCollection {
     return {};
   }
 
-  template <typename T>
-  Result<SelectorFlag<T>> GetFlag(const std::string& name) const {
+  Result<SelectorFlagProxy> GetFlag(const std::string& name) const {
     const auto itr = name_flag_map_.find(name);
     CF_EXPECT(itr != name_flag_map_.end(),
               "Flag \"" << name << "\" is not found.");
-    const SelectorFlagProxy& flag_wrapper = itr->second;
-    const auto* flag_ptr = flag_wrapper.GetFlag<T>();
-    CF_EXPECT(flag_ptr != nullptr,
-              "The type of the requested flag \"" << name << "\" is wrong.");
-    return *flag_ptr;
+    const SelectorFlagProxy& flag_proxy = itr->second;
+    return flag_proxy;
   }
 
   std::vector<SelectorFlagProxy> Flags() const;
