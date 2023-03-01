@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/selector/arguments_separator.h"
@@ -49,10 +48,16 @@ class FrontlineParser {
   using ArgumentsSeparator = selector::ArgumentsSeparator;
 
  public:
+  struct ParserParam {
+    // commands supported by the server
+    std::vector<std::string> server_supported_subcmds;
+    // commands supported by the client itself
+    std::vector<std::string> internal_cmds;
+    cvd_common::Args all_args;
+  };
+
   // This call must guarantee all public methods will be valid
-  static Result<std::unique_ptr<FrontlineParser>> Parse(
-      CvdClient& client, const std::vector<std::string>& internal_cmds,
-      const cvd_common::Args& all_args, const cvd_common::Envs& envs);
+  static Result<std::unique_ptr<FrontlineParser>> Parse(ParserParam param);
 
   const std::string& ProgPath() const;
   std::optional<std::string> SubCmd() const;
@@ -62,10 +67,7 @@ class FrontlineParser {
   bool Help() const { return help_; }
 
  private:
-  FrontlineParser(CvdClient& client,
-                  const std::vector<std::string>& internal_cmds,
-                  const cvd_common::Args& all_args,
-                  const cvd_common::Envs& envs);
+  FrontlineParser(const ParserParam& parser);
 
   // internal workers in order
   Result<void> Separate();
@@ -78,23 +80,12 @@ class FrontlineParser {
   };
   Result<FilterOutput> FilterNonSelectorArgs();
 
-  /*
-   * Returns the list of subcommands that cvd ever supports.
-   *
-   * The tool is for now intended to be internal to the parser that uses
-   * command line arguments separator.
-   *
-   */
-  Result<Json::Value> ListSubcommands();
-
-  CvdClient& client_;
   std::unordered_set<std::string> known_bool_flags_;
   std::unordered_set<std::string> known_value_flags_;
   std::unordered_set<std::string> selector_flags_;
-  cvd_common::Args valid_subcmds_;
+  cvd_common::Args server_supported_subcmds_;
   const cvd_common::Args all_args_;
-  const cvd_common::Envs envs_;
-  const std::vector<std::string>& internal_cmds_;
+  const std::vector<std::string> internal_cmds_;
   std::unique_ptr<ArgumentsSeparator> arguments_separator_;
 
   // outputs
