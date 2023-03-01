@@ -94,7 +94,7 @@ type Service interface {
 
 	GetInfraConfig(host string) (*apiv1.InfraConfig, error)
 
-	ConnectWebRTC(host, device string, observer wclient.Observer) (*wclient.Connection, error)
+	ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer) (*wclient.Connection, error)
 
 	CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error)
 
@@ -178,7 +178,7 @@ func (c *serviceImpl) GetInfraConfig(host string) (*apiv1.InfraConfig, error) {
 	return &res, nil
 }
 
-func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observer) (*wclient.Connection, error) {
+func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer) (*wclient.Connection, error) {
 	polledConn, err := c.createPolledConnection(host, device)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create polled connection: %w", err)
@@ -188,7 +188,7 @@ func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observ
 		return nil, fmt.Errorf("Failed to obtain infra config: %w", err)
 	}
 	signaling := c.initHandling(host, polledConn.ConnId, infraConfig.IceServers)
-	conn, err := wclient.NewConnection(&signaling, observer)
+	conn, err := wclient.NewConnectionWithLogger(&signaling, observer, logger)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to device over webrtc: %w", err)
 	}
