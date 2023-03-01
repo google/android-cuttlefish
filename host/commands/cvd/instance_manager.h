@@ -80,6 +80,8 @@ class InstanceManager {
                                const std::vector<std::string>& fleet_cmd_args);
   static Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
+  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
+
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
                                    const SharedFD& err);
