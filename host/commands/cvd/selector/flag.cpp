@@ -16,8 +16,29 @@
 
 #include "host/commands/cvd/selector/flag.h"
 
+#include "host/commands/cvd/common_utils.h"
+
 namespace cuttlefish {
 namespace selector {
+
+Result<std::string> SelectorFlagProxy::Name() const {
+  auto decoder = Overload{
+      [](const SelectorFlag<bool>& bool_flag) -> Result<std::string> {
+        return bool_flag.Name();
+      },
+      [](const SelectorFlag<std::int32_t>& int32_flag) -> Result<std::string> {
+        return int32_flag.Name();
+      },
+      [](const SelectorFlag<std::string>& string_flag) -> Result<std::string> {
+        return string_flag.Name();
+      },
+      [](auto) -> Result<std::string> {
+        return CF_ERR("The type is not handled by SelectorFlagProxy");
+      },
+  };
+  auto name = CF_EXPECT(std::visit(decoder, flag_));
+  return name;
+}
 
 std::vector<SelectorFlagProxy> FlagCollection::Flags() const {
   std::vector<SelectorFlagProxy> flags;

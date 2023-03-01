@@ -41,8 +41,6 @@ namespace selector {
 template <typename T>
 class SelectorFlag {
  public:
-  using ValueType = T;
-
   SelectorFlag(const std::string& name) : name_(name) {}
 
   SelectorFlag(const std::string& name, const T& default_value)
@@ -114,6 +112,8 @@ class SelectorFlagProxy {
     return std::get_if<SelectorFlag<T>>(&flag_);
   }
 
+  Result<std::string> Name() const;
+
  private:
   std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,
                SelectorFlag<std::string>>
@@ -122,9 +122,6 @@ class SelectorFlagProxy {
 
 class FlagCollection {
  public:
-  using FlagType = std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,
-                                SelectorFlag<std::string>>;
-
   template <typename T>
   Result<void> EnrollFlag(SelectorFlag<T>&& flag) {
     CF_EXPECT(!Contains(name_flag_map_, flag.Name()),
