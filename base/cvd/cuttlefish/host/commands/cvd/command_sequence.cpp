@@ -15,10 +15,10 @@
 
 #include "host/commands/cvd/command_sequence.h"
 
-#include <memory>
+#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "host/commands/cvd/request_context.h"
+#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
 
@@ -74,9 +74,12 @@ std::string FormattedCommand(const cvd::CommandRequest command) {
 
 }  // namespace
 
-CommandSequenceExecutor::CommandSequenceExecutor(
-    const std::vector<std::unique_ptr<CvdServerHandler>>& server_handlers)
-    : server_handlers_(server_handlers) {}
+CommandSequenceExecutor::CommandSequenceExecutor() {}
+
+Result<void> CommandSequenceExecutor::LateInject(fruit::Injector<>& injector) {
+  server_handlers_ = injector.getMultibindings<CvdServerHandler>();
+  return {};
+}
 
 Result<void> CommandSequenceExecutor::Interrupt() {
   std::unique_lock interrupt_lock(interrupt_mutex_);
@@ -113,16 +116,12 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
     CF_EXPECT(response.status().code() == cvd::Status::OK,
               "Reason: \"" << response.status().message() << "\"");
 
+    static const char kDoneMsg[] = "Done\n";
+    CF_EXPECT(WriteAll(request.Err(), kDoneMsg) == sizeof(kDoneMsg) - 1,
+              request.Err()->StrError());
     responses.emplace_back(std::move(response));
   }
   return {responses};
-}
-
-Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
-    const RequestWithStdio& request, SharedFD report) {
-  auto response_in_vector = CF_EXPECT(Execute({request}, report));
-  CF_EXPECT_EQ(response_in_vector.size(), 1);
-  return response_in_vector.front();
 }
 
 std::vector<std::string> CommandSequenceExecutor::CmdList() const {
@@ -137,9 +136,9 @@ std::vector<std::string> CommandSequenceExecutor::CmdList() const {
   return std::vector<std::string>{subcmds.begin(), subcmds.end()};
 }
 
-Result<CvdServerHandler*> CommandSequenceExecutor::GetHandler(
-    const RequestWithStdio& request) {
-  return CF_EXPECT(RequestHandler(request, server_handlers_));
+fruit::Component<CommandSequenceExecutor> CommandSequenceExecutorComponent() {
+  return fruit::createComponent()
+      .addMultibinding<LateInjected, CommandSequenceExecutor>();
 }
 
 }  // namespace cuttlefish

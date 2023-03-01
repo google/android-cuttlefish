@@ -28,10 +28,11 @@ namespace cuttlefish {
 TEST(CvdClear, ClearAfterThreeStarts) {
   cvd_common::Envs envs;
   envs["HOME"] = StringFromEnv("HOME", "");
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd kill-server", envs);
 
   cvd_common::Args start_two_instances_args{
       "cvd",
+      "--disable_default_group",
       "start",
       "--report_anonymous_usage_stats=yes",
       "--daemon",
@@ -39,6 +40,7 @@ TEST(CvdClear, ClearAfterThreeStarts) {
       "--num_instances=2"};
   cvd_common::Args start_three_instances_args{
       "cvd",
+      "--disable_default_group",
       "start",
       "--report_anonymous_usage_stats=yes",
       "--daemon",
@@ -46,6 +48,7 @@ TEST(CvdClear, ClearAfterThreeStarts) {
       "--num_instances=3"};
   cvd_common::Args start_one_instances_args{
       "cvd",
+      "--disable_default_group",
       "start",
       "--report_anonymous_usage_stats=yes",
       "--daemon",
@@ -71,7 +74,7 @@ TEST(CvdClear, ClearAfterThreeStarts) {
   ASSERT_FALSE(Contains(cmd_fleet.Stdout(), "instance_name"));
 
   // clean up for the next test
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd kill-server", envs);
 }
 
 }  // namespace cuttlefish

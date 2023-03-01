@@ -28,7 +28,7 @@ TEST(CvdBasic, CvdDefaultStart) {
   cvd_common::Envs envs;
   const auto home_dir = StringFromEnv("HOME", "");
   envs["HOME"] = home_dir;
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd kill-server", envs);
 
   cvd_common::Args start_args{"cvd", "start",
                               "--report_anonymous_usage_stats=yes", "--daemon"};
@@ -47,7 +47,7 @@ TEST(CvdBasic, CvdDefaultStart) {
   ASSERT_FALSE(Contains(cmd_fleet.Stdout(), home_dir));
 
   // clean up for the next test
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd kill-server", envs);
 }
 
 }  // namespace cuttlefish

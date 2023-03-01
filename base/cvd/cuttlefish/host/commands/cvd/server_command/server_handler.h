@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
@@ -34,14 +31,6 @@ class CvdServerHandler {
   virtual Result<void> Interrupt() = 0;
   // returns the list of subcommand it can handle
   virtual cvd_common::Args CmdList() const = 0;
-  // TODO make pure virtual once every implementation has overrides
-  virtual Result<std::string> SummaryHelp() const {
-    return "Consider contributing a CL with help text if you read this :)";
-  }
-  virtual bool ShouldInterceptHelp() const { return false; }
-  virtual Result<std::string> DetailedHelp(std::vector<std::string>&) const {
-    return "Consider contributing a CL with help text if you read this :)";
-  }
 };
 
 }  // namespace cuttlefish

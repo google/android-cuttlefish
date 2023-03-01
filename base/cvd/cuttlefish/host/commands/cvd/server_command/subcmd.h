@@ -16,5 +16,6 @@
 
 #pragma once
 
+#include "host/commands/cvd/server_command/components.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/utils.h"

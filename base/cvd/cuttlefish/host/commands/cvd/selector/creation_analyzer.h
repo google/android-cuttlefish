@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <sys/types.h>
 #include <sys/socket.h>  // for ucred
 
 #include <memory>
@@ -58,13 +57,10 @@ struct PerInstanceInfo {
 struct GroupCreationInfo {
   std::string home;
   std::string host_artifacts_path;  ///< e.g. out/host/linux-x86
-  // set to host_artifacts_path if no ANDROID_PRODUCT_OUT
-  std::string product_out_path;
   std::string group_name;
   std::vector<PerInstanceInfo> instances;
   std::vector<std::string> args;
   std::unordered_map<std::string, std::string> envs;
-  bool is_default_group { false };
 };
 
 /**
@@ -103,11 +99,6 @@ class CreationAnalyzer {
     const std::vector<std::string>& selector_args;
   };
 
-  struct GroupInfo {
-    std::string group_name;
-    const bool default_group;
-  };
-
   static Result<GroupCreationInfo> Analyze(
       const std::string& cmd, const CreationAnalyzerParam& param,
       const ucred& credential, const InstanceDatabase& instance_database,
@@ -134,7 +125,7 @@ class CreationAnalyzer {
    * If the instanc group is the default one, the group name is cvd. Otherwise,
    * for given instance ids, {i}, the group name will be cvd_i.
    */
-  Result<GroupInfo> ExtractGroup(
+  Result<std::string> AnalyzeGroupName(
       const std::vector<PerInstanceInfo>&) const;
 
   /**
@@ -170,6 +161,7 @@ class CreationAnalyzer {
 
   // information to return later
   std::string home_;
+  std::string host_artifacts_path_;  ///< e.g. out/host/linux-x86
   std::string group_name_;
 
   // internal, temporary

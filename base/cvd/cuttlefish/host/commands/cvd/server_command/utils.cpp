@@ -16,17 +16,13 @@
 
 #include "host/commands/cvd/server_command/utils.h"
 
-#include <fmt/core.h>
-
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/users.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server.h"
-#include "host/libs/config/config_constants.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -53,11 +49,21 @@ CommandInvocation ParseInvocation(const cvd::Request& request) {
   return invocation;
 }
 
-Result<void> VerifyPrecondition(const RequestWithStdio& request) {
-  CF_EXPECT(
-      Contains(request.Message().command_request().env(), kAndroidHostOut),
-      "ANDROID_HOST_OUT in client environment is invalid.");
-  return {};
+PreconditionVerification VerifyPrecondition(const RequestWithStdio& request) {
+  PreconditionVerification verification_result;
+  if (!request.Credentials()) {
+    verification_result.error_message =
+        "ucred is not available while it is necessary.";
+    return verification_result;
+  }
+  if (!Contains(request.Message().command_request().env(),
+                "ANDROID_HOST_OUT")) {
+    verification_result.error_message =
+        "ANDROID_HOST_OUT in client environment is invalid.";
+    return verification_result;
+  }
+  verification_result.is_ok = true;
+  return verification_result;
 }
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop) {
@@ -116,7 +122,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
 }
 
 Result<Command> ConstructCvdHelpCommand(
-    const std::string& bin_file, cvd_common::Envs envs,
+    const std::string& bin_file, const cvd_common::Envs& envs,
     const std::vector<std::string>& subcmd_args,
     const RequestWithStdio& request) {
   const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
@@ -125,7 +131,6 @@ Result<Command> ConstructCvdHelpCommand(
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
   cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
-  envs[kAndroidSoongHostOut] = envs.at(kAndroidHostOut);
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,
                                             .args = subcmd_args,
@@ -137,45 +142,6 @@ Result<Command> ConstructCvdHelpCommand(
                                             .err = request.Err()};
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
-}
-
-Result<Command> ConstructCvdGenericNonHelpCommand(
-    const ConstructNonHelpForm& request_form, const RequestWithStdio& request) {
-  cvd_common::Envs envs{request_form.envs};
-  envs["HOME"] = request_form.home;
-  envs[kAndroidHostOut] = request_form.android_host_out;
-  envs[kAndroidSoongHostOut] = request_form.android_host_out;
-  const auto bin_path = ConcatToString(request_form.android_host_out, "/bin/",
-                                       request_form.bin_file);
-
-  if (request_form.verbose) {
-    std::stringstream verbose_stream;
-    verbose_stream << "HOME=" << request_form.home << " ";
-    verbose_stream << kAndroidHostOut << "=" << envs.at(kAndroidHostOut) << " "
-                   << kAndroidSoongHostOut << "="
-                   << envs.at(kAndroidSoongHostOut) << " ";
-    verbose_stream << bin_path << "\\" << std::endl;
-    for (const auto& cmd_arg : request_form.cmd_args) {
-      verbose_stream << cmd_arg << " ";
-    }
-    if (!request_form.cmd_args.empty()) {
-      // remove trailing " ", and add a new line
-      verbose_stream.seekp(-1, std::ios_base::end);
-      verbose_stream << std::endl;
-    }
-    WriteAll(request.Err(), verbose_stream.str());
-  }
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = bin_path,
-      .home = request_form.home,
-      .args = request_form.cmd_args,
-      .envs = envs,
-      .working_dir = request.Message().command_request().working_directory(),
-      .command_name = request_form.bin_file,
-      .in = request.In(),
-      .out = request.Out(),
-      .err = request.Err()};
-  return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
 /*
@@ -190,7 +156,7 @@ constexpr static std::array help_str_opts{
     "helpmatch",
 };
 
-Result<bool> IsHelpSubcmd(const std::vector<std::string>& args) {
+bool IsHelpSubcmd(const std::vector<std::string>& args) {
   std::vector<std::string> copied_args(args);
   std::vector<Flag> flags;
   flags.reserve(help_bool_opts.size() + help_str_opts.size());
@@ -202,87 +168,33 @@ Result<bool> IsHelpSubcmd(const std::vector<std::string>& args) {
   for (const auto str_opt : help_str_opts) {
     flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
   }
-  CF_EXPECT(ParseFlags(flags, copied_args));
+  ParseFlags(flags, copied_args);
   // if there was any match, some in copied_args were consumed.
   return (args.size() != copied_args.size());
 }
 
-static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";
-static constexpr char kTerminalCyan[] = "\033[0;36m";
-static constexpr char kTerminalRed[] = "\033[0;31m";
-static constexpr char kTerminalReset[] = "\033[0m";
-
-std::string TerminalColor(const bool is_tty, TerminalColors color) {
-  if (!is_tty) {
-    return "";
+Result<std::string> ClientAbsolutePath(const std::string& path, const uid_t uid,
+                                       const std::string& client_pwd) {
+  if (path.empty()) {
+    return path;
   }
-  switch (color) {
-    case TerminalColors::kReset: {
-      return kTerminalReset;
-    }
-    case TerminalColors::kBoldRed: {
-      return kTerminalBoldRed;
-    }
-    case TerminalColors::kCyan: {
-      return kTerminalCyan;
-    }
-    case TerminalColors::kRed: {
-      return kTerminalRed;
-    }
-    default:
-      return kTerminalReset;
+  auto first_char = *(path.cbegin());
+  if (first_char == '/') {
+    return path;
   }
-}
+  if (first_char == '~') {
+    auto system_wide_user_home = CF_EXPECT(SystemWideUserHome(uid));
+    auto abs_user_home = AbsolutePath(system_wide_user_home);
+    CF_EXPECT(!abs_user_home.empty());
+    return android::base::StringReplace(path, "~", abs_user_home, false);
+  }
 
-Result<cvd::Response> NoGroupResponse(const RequestWithStdio& request) {
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
-  auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed), "no device",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
-
-  response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> NoTTYResponse(const RequestWithStdio& request) {
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-  const uid_t uid = CF_EXPECT(request.Credentials()).uid;
-  const bool is_tty = request.Out()->IsOpen() && request.Out()->IsATTY();
-  auto notice = fmt::format(
-      "Command `{}{}{}` is not applicable:\n  {}{}{} (uid: '{}{}{}')",
-      TerminalColor(is_tty, TerminalColors::kRed),
-      fmt::join(request.Message().command_request().args(), " "),
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kBoldRed),
-      "No terminal/tty for selecting one of multiple Cuttlefish groups",
-      TerminalColor(is_tty, TerminalColors::kReset),
-      TerminalColor(is_tty, TerminalColors::kCyan), uid,
-      TerminalColor(is_tty, TerminalColors::kReset));
-  CF_EXPECT_EQ(WriteAll(request.Out(), notice + "\n"), notice.size() + 1);
-  response.mutable_status()->set_message(notice);
-  return response;
-}
-
-Result<cvd::Response> WriteToFd(SharedFD fd, const std::string& output) {
-  cvd::Response response;
-  auto written_size = WriteAll(fd, output);
-  CF_EXPECT_EQ(output.size(), written_size, fd->StrError());
-  response.mutable_command_response();  // Sets oneof member
-  response.mutable_status()->set_code(cvd::Status::OK);
-  return response;
+  // likely relative path
+  CF_EXPECT(!client_pwd.empty() && client_pwd[0] == '/');
+  auto prefix = (*client_pwd.rbegin() == '/') ? client_pwd : (client_pwd + "/");
+  auto result_abs_path = AbsolutePath(prefix + path);
+  CF_EXPECT(!result_abs_path.empty());
+  return result_abs_path;
 }
 
 }  // namespace cuttlefish
