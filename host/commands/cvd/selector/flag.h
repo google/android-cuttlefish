@@ -112,7 +112,22 @@ class SelectorFlagProxy {
     return std::get_if<SelectorFlag<T>>(&flag_);
   }
 
+  /*
+   * If the actual type of flag_ is not handled by SelectorFlagProxy, it is a
+   * developer error, and the Name() and HasDefaultValue() will returns
+   * CF_ERR
+   */
   Result<std::string> Name() const;
+  Result<bool> HasDefaultValue() const;
+
+  template <typename T>
+  Result<T> DefaultValue() const {
+    const bool has_default_value = CF_EXPECT(HasDefaultValue());
+    CF_EXPECT(has_default_value == true);
+    const auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    CF_EXPECT(ptr != nullptr);
+    return ptr->DefaultValue();
+  }
 
  private:
   std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,

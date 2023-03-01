@@ -40,6 +40,25 @@ Result<std::string> SelectorFlagProxy::Name() const {
   return name;
 }
 
+Result<bool> SelectorFlagProxy::HasDefaultValue() const {
+  auto decoder = Overload{
+      [](const SelectorFlag<bool>& bool_flag) -> Result<bool> {
+        return bool_flag.HasDefaultValue();
+      },
+      [](const SelectorFlag<std::int32_t>& int32_flag) -> Result<bool> {
+        return int32_flag.HasDefaultValue();
+      },
+      [](const SelectorFlag<std::string>& string_flag) -> Result<bool> {
+        return string_flag.HasDefaultValue();
+      },
+      [](auto) -> Result<bool> {
+        return CF_ERR("The type is not handled by SelectorFlagProxy");
+      },
+  };
+  auto has_default_value = CF_EXPECT(std::visit(decoder, flag_));
+  return has_default_value;
+}
+
 std::vector<SelectorFlagProxy> FlagCollection::Flags() const {
   std::vector<SelectorFlagProxy> flags;
   flags.reserve(name_flag_map_.size());
