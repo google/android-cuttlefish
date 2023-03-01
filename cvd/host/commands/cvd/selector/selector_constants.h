@@ -71,9 +71,8 @@ class SelectorFlags {
   static constexpr char kDisableDefaultGroup[] = "disable_default_group";
   static const SelectorFlags& Get();
 
-  template <typename T>
-  Result<SelectorFlag<T>> GetFlag(const std::string& search_key) const {
-    auto flag = CF_EXPECT(flags_.GetFlag<T>(search_key));
+  Result<SelectorFlagProxy> GetFlag(const std::string& search_key) const {
+    auto flag = CF_EXPECT(flags_.GetFlag(search_key));
     return flag;
   }
 
