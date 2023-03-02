@@ -51,11 +51,6 @@ constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 constexpr char kEthernetConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_ETHERNET_CONNECTED";
-// TODO(b/131864854): Replace this with a string less likely to change
-constexpr char kAdbdStartedMessage[] =
-    "init: starting service 'adbd'...";
-constexpr char kFastbootdStartedMessage[] =
-    "init: starting service 'fastbootd'...";
 constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";
