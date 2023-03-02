@@ -15,18 +15,22 @@
  */
 #include "host/libs/config/fastboot/fastboot.h"
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/command_source.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
 
-class FastbootProxy : public CommandSource {
+class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
  public:
   INJECT(FastbootProxy(const CuttlefishConfig::InstanceSpecific& instance,
-                       const FastbootConfig& fastboot_config))
-      : instance_(instance), fastboot_config_(fastboot_config) {}
+                       const FastbootConfig& fastboot_config,
+                       KernelLogPipeProvider& log_pipe_provider))
+      : instance_(instance),
+        fastboot_config_(fastboot_config),
+        log_pipe_provider_(log_pipe_provider) {}
 
   Result<std::vector<Command>> Commands() override {
     std::vector<Command> commands;
@@ -34,6 +38,9 @@ class FastbootProxy : public CommandSource {
                                       instance_.ethernet_bridge_name();
 
     Command tunnel(SocketVsockProxyBinary());
+    tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
+    tunnel.AddParameter("--start_event_id=", monitor::Event::FastbootdStarted);
+    tunnel.AddParameter("--stop_event_id=", monitor::Event::AdbdStarted);
     tunnel.AddParameter("--server_type=", "tcp");
     tunnel.AddParameter("--server_tcp_port=", instance_.fastboot_host_port());
     tunnel.AddParameter("--client_type=", "tcp");
@@ -52,19 +59,30 @@ class FastbootProxy : public CommandSource {
   }
 
  private:
-  bool Setup() override { return true; }
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override {
+    return {static_cast<SetupFeature*>(&log_pipe_provider_)};
+  }
+
+  bool Setup() override {
+    kernel_log_pipe_ = log_pipe_provider_.KernelLogPipe();
+    return kernel_log_pipe_->IsOpen();
+  }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
   const FastbootConfig& fastboot_config_;
+  KernelLogPipeProvider& log_pipe_provider_;
+  SharedFD kernel_log_pipe_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific, const FastbootConfig>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+                                 const FastbootConfig,
+                                 KernelLogPipeProvider>>
 LaunchFastbootComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, FastbootProxy>()
+      .addMultibinding<KernelLogPipeConsumer, FastbootProxy>()
       .addMultibinding<SetupFeature, FastbootProxy>();
 }
 
