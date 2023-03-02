@@ -113,7 +113,4 @@
   <bool name="config_wearAllowAllAppsForegroundLocation">true</bool>
   <bool name="config_telephonySingleSimDefaultSubscription">false</bool>
   <bool name="config_disableTaskSnapshots">true</bool>
-
-  <!-- Whether using the new SubscriptionManagerService or the old SubscriptionController -->
-  <bool name="config_using_subscription_manager_service">true</bool>
 </resources>
