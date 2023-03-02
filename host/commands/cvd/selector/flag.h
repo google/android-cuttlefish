@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <string>
@@ -99,6 +100,12 @@ class SelectorFlagProxy {
   friend class FlagCollection;
 
  public:
+  enum class FlagType : std::uint32_t {
+    kUnknown = 0,
+    kBool,
+    kInt32,
+    kString,
+  };
   template <typename T>
   SelectorFlagProxy(SelectorFlag<T>&& flag) : flag_{std::move(flag)} {}
 
@@ -119,6 +126,8 @@ class SelectorFlagProxy {
    */
   Result<std::string> Name() const;
   Result<bool> HasDefaultValue() const;
+
+  FlagType GetType() const;
 
   template <typename T>
   Result<T> DefaultValue() const {

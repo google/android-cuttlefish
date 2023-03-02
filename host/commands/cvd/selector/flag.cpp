@@ -22,41 +22,33 @@ namespace cuttlefish {
 namespace selector {
 
 Result<std::string> SelectorFlagProxy::Name() const {
-  auto decoder = Overload{
-      [](const SelectorFlag<bool>& bool_flag) -> Result<std::string> {
-        return bool_flag.Name();
-      },
-      [](const SelectorFlag<std::int32_t>& int32_flag) -> Result<std::string> {
-        return int32_flag.Name();
-      },
-      [](const SelectorFlag<std::string>& string_flag) -> Result<std::string> {
-        return string_flag.Name();
-      },
-      [](auto) -> Result<std::string> {
-        return CF_ERR("The type is not handled by SelectorFlagProxy");
-      },
+  CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type");
+  auto decode_name = Overload{
+      [](auto&& param) -> std::string { return param.Name(); },
   };
-  auto name = CF_EXPECT(std::visit(decoder, flag_));
-  return name;
+  return std::visit(decode_name, flag_);
+}
+
+SelectorFlagProxy::FlagType SelectorFlagProxy::GetType() const {
+  auto decode_type = Overload{
+      [](const SelectorFlag<bool>&) -> FlagType { return FlagType::kBool; },
+      [](const SelectorFlag<std::int32_t>&) -> FlagType {
+        return FlagType::kInt32;
+      },
+      [](const SelectorFlag<std::string>&) -> FlagType {
+        return FlagType::kString;
+      },
+      [](auto) -> FlagType { return FlagType::kUnknown; },
+  };
+  return std::visit(decode_type, flag_);
 }
 
 Result<bool> SelectorFlagProxy::HasDefaultValue() const {
-  auto decoder = Overload{
-      [](const SelectorFlag<bool>& bool_flag) -> Result<bool> {
-        return bool_flag.HasDefaultValue();
-      },
-      [](const SelectorFlag<std::int32_t>& int32_flag) -> Result<bool> {
-        return int32_flag.HasDefaultValue();
-      },
-      [](const SelectorFlag<std::string>& string_flag) -> Result<bool> {
-        return string_flag.HasDefaultValue();
-      },
-      [](auto) -> Result<bool> {
-        return CF_ERR("The type is not handled by SelectorFlagProxy");
-      },
+  CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type of typeid");
+  auto decode_default_value = Overload{
+      [](auto&& flag) -> bool { return flag.HasDefaultValue(); },
   };
-  auto has_default_value = CF_EXPECT(std::visit(decoder, flag_));
-  return has_default_value;
+  return std::visit(decode_default_value, flag_);
 }
 
 std::vector<SelectorFlagProxy> FlagCollection::Flags() const {
