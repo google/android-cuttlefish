@@ -35,6 +35,7 @@ android::base::LogSeverity LogFileSeverity();
 enum class MetadataLevel {
   FULL,
   ONLY_MESSAGE,
+  TAG_AND_MESSAGE
 };
 
 struct SeverityTarget {
@@ -62,6 +63,7 @@ private:
 TeeLogger LogToFiles(const std::vector<std::string>& files,
                      const std::string& log_prefix = "");
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& log_prefix = "");
+                              const std::string& log_prefix = "",
+                              MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
 
 } // namespace cuttlefish
