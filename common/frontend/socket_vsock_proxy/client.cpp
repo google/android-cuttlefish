@@ -77,10 +77,6 @@ SharedFD TcpClient::Start() {
   return client;
 }
 
-std::string TcpClient::Describe() const {
-  return fmt::format("tcp: {}:{}", host_, port_);
-}
-
 VsockClient::VsockClient(int id, int port) : id_(id), port_(port) {}
 
 SharedFD VsockClient::Start() {
@@ -98,10 +94,6 @@ SharedFD VsockClient::Start() {
     }
   }
   return vsock_socket;
-}
-
-std::string VsockClient::Describe() const {
-  return fmt::format("vsock: {}:{}", id_, port_);
 }
 
 }
