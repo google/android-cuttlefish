@@ -23,6 +23,7 @@ namespace socket_proxy {
 class Client {
  public:
   virtual SharedFD Start() = 0;
+  virtual std::string Describe() const = 0;
   virtual ~Client() = default;
 };
 
@@ -30,6 +31,7 @@ class TcpClient : public Client {
  public:
   TcpClient(std::string host, int port);
   SharedFD Start() override;
+  std::string Describe() const override;
 
  private:
   std::string host_;
@@ -41,6 +43,7 @@ class VsockClient : public Client {
  public:
   VsockClient(int id, int port);
   SharedFD Start() override;
+  std::string Describe() const override;
 
  private:
   int id_;
