@@ -84,8 +84,6 @@ fn main() {
 
 fn inner_main() -> Result<(), HalServiceError> {
     // Initialize android logging.
-    // TODO(b/239476536): log to the kernel logger, so output generated before Cuttlefish's logcat
-    // exporter starts is visible.
     android_logger::init_once(
         android_logger::Config::default()
             .with_tag("keymint-hal")
