@@ -46,10 +46,6 @@ SharedFD TcpServer::Start() {
   return server;
 }
 
-std::string TcpServer::Describe() const {
-  return fmt::format("tcp: {}", port_);
-}
-
 VsockServer::VsockServer(int port) : port_(port) {}
 
 // Intended to run in the guest
@@ -70,21 +66,13 @@ SharedFD VsockServer::Start() {
   return server;
 }
 
-std::string VsockServer::Describe() const {
-  return fmt::format("vsock: {}", port_);
-}
-
-DupServer::DupServer(int fd) : fd_(fd), sfd_(SharedFD::Dup(fd_)) {
+DupServer::DupServer(int fd) : fd_(SharedFD::Dup(fd)) {
   close(fd);
 }
 
 SharedFD DupServer::Start() {
-  CHECK(sfd_->IsOpen()) << "Could not start duplicate server for passed fd";
-  return sfd_;
-}
-
-std::string DupServer::Describe() const {
-  return fmt::format("fd: {}", fd_);
+  CHECK(fd_->IsOpen()) << "Could not start duplicate server for passed fd";
+  return fd_;
 }
 
 }

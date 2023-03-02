@@ -15,11 +15,8 @@
 
 #pragma once
 
-#include "common/libs/utils/tee_logging.h"
-
 namespace cuttlefish {
 
-void DefaultSubprocessLogging(char* argv[],
-                              MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
+void DefaultSubprocessLogging(char* argv[]);
 
 } // namespace cuttlefish
