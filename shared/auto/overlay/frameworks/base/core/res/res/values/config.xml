@@ -44,7 +44,4 @@
     <integer-array translatable="false" name="config_localPrivateDisplayPorts">
         <item>1</item> <!-- ClusterDisplay -->
     </integer-array>
-
-    <!-- Whether using the new SubscriptionManagerService or the old SubscriptionController -->
-    <bool name="config_using_subscription_manager_service">true</bool>
 </resources>
