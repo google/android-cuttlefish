@@ -41,10 +41,21 @@ namespace cuttlefish {
 template <typename T>
 class CvdFlag {
  public:
-  CvdFlag(const std::string& name) : name_(name) {}
+  using GflagFactoryCallback =
+      std::function<Flag(const std::string& name, T& value_out)>;
+  CvdFlag(const std::string& name)
+      : name_(name),
+        gflag_factory_cb([](const std::string& name, T& value_out) {
+          return GflagsCompatFlag(name, value_out);
+        }) {}
 
   CvdFlag(const std::string& name, const T& default_value)
-      : name_(name), default_value_(default_value) {}
+      : name_(name),
+        default_value_(default_value),
+        gflag_factory_cb([](const std::string& name, T& value_out) {
+          return GflagsCompatFlag(name, value_out);
+        }) {}
+
   std::string Name() const { return name_; }
   std::string HelpMessage() const { return help_msg_; }
   CvdFlag& SetHelpMessage(const std::string& help_msg) & {
@@ -61,6 +72,15 @@ class CvdFlag {
     return *default_value_;
   }
 
+  CvdFlag& SetGflagFactory(GflagFactoryCallback factory) & {
+    gflag_factory_cb = std::move(factory);
+    return *this;
+  }
+  CvdFlag SetGflagFactory(GflagFactoryCallback factory) && {
+    gflag_factory_cb = std::move(factory);
+    return *this;
+  }
+
   // returns CF_ERR if parsing error,
   // returns std::nullopt if parsing was okay but the flag wasn't given
   Result<std::optional<T>> FilterFlag(cvd_common::Args& args) {
@@ -68,14 +88,14 @@ class CvdFlag {
     if (args_initial_size == 0) {
       return std::nullopt;
     }
-    T value;
-    CF_EXPECT(ParseFlags({GflagsCompatFlag(name_, value)}, args),
+
+    CF_EXPECT(ParseFlags({gflag_factory_cb(name_, value_)}, args),
               "Failed to parse --" << name_);
     if (args.size() == args_initial_size) {
       // not consumed
       return std::nullopt;
     }
-    return value;
+    return value_;
   }
 
   // Parses the arguments. If flag is given, returns the parsed value. If not,
@@ -93,6 +113,14 @@ class CvdFlag {
   const std::string name_;
   std::string help_msg_;
   std::optional<T> default_value_;
+  // not to return but to keep the value buffer for GflagCompatFlag().
+  T value_;
+  /**
+   * A callback function to generate Flag defined in
+   * common/libs/utils/flag_parser.h. The name is this CvdFlag's name.
+   * The value is a buffer that is kept in this object
+   */
+  GflagFactoryCallback gflag_factory_cb;
 };
 
 class CvdFlagProxy {
