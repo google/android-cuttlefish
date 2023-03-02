@@ -21,7 +21,6 @@
 #include "host/libs/config/config_fragment.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
-#include "host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 
@@ -42,9 +41,7 @@ fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>, FastbootConfigFlag
 FastbootConfigFlagComponent();
 fruit::Component<fruit::Required<FastbootConfig>, FastbootConfigFragment>
 FastbootConfigFragmentComponent();
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 const FastbootConfig,
-                                 KernelLogPipeProvider>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific, const FastbootConfig>>
 LaunchFastbootComponent();
 
 }  // namespace cuttlefish

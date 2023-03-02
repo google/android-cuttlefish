@@ -61,9 +61,7 @@ class KernelLogMonitor : public CommandSource,
 
   // KernelLogPipeProvider
   SharedFD KernelLogPipe() override {
-    CHECK(!event_pipe_read_ends_.empty()) << "No more kernel pipes left. Make sure you inhereted "
-                                             "KernelLogPipeProvider and provided multibinding "
-                                             "from KernelLogPipeConsumer to your type.";
+    CHECK(!event_pipe_read_ends_.empty()) << "No more kernel pipes left";
     SharedFD ret = event_pipe_read_ends_.back();
     event_pipe_read_ends_.pop_back();
     return ret;
