@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/selector/flag.h"
+#include "host/commands/cvd/flag.h"
 
 #include "host/commands/cvd/common_utils.h"
 
 namespace cuttlefish {
-namespace selector {
 
-Result<std::string> SelectorFlagProxy::Name() const {
+Result<std::string> CvdFlagProxy::Name() const {
   CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type");
   auto decode_name = Overload{
       [](auto&& param) -> std::string { return param.Name(); },
@@ -29,21 +28,17 @@ Result<std::string> SelectorFlagProxy::Name() const {
   return std::visit(decode_name, flag_);
 }
 
-SelectorFlagProxy::FlagType SelectorFlagProxy::GetType() const {
+CvdFlagProxy::FlagType CvdFlagProxy::GetType() const {
   auto decode_type = Overload{
-      [](const SelectorFlag<bool>&) -> FlagType { return FlagType::kBool; },
-      [](const SelectorFlag<std::int32_t>&) -> FlagType {
-        return FlagType::kInt32;
-      },
-      [](const SelectorFlag<std::string>&) -> FlagType {
-        return FlagType::kString;
-      },
+      [](const CvdFlag<bool>&) -> FlagType { return FlagType::kBool; },
+      [](const CvdFlag<std::int32_t>&) -> FlagType { return FlagType::kInt32; },
+      [](const CvdFlag<std::string>&) -> FlagType { return FlagType::kString; },
       [](auto) -> FlagType { return FlagType::kUnknown; },
   };
   return std::visit(decode_type, flag_);
 }
 
-Result<bool> SelectorFlagProxy::HasDefaultValue() const {
+Result<bool> CvdFlagProxy::HasDefaultValue() const {
   CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type of typeid");
   auto decode_default_value = Overload{
       [](auto&& flag) -> bool { return flag.HasDefaultValue(); },
@@ -51,8 +46,8 @@ Result<bool> SelectorFlagProxy::HasDefaultValue() const {
   return std::visit(decode_default_value, flag_);
 }
 
-std::vector<SelectorFlagProxy> FlagCollection::Flags() const {
-  std::vector<SelectorFlagProxy> flags;
+std::vector<CvdFlagProxy> FlagCollection::Flags() const {
+  std::vector<CvdFlagProxy> flags;
   flags.reserve(name_flag_map_.size());
   for (const auto& [name, flag] : name_flag_map_) {
     flags.push_back(flag);
@@ -60,5 +55,4 @@ std::vector<SelectorFlagProxy> FlagCollection::Flags() const {
   return flags;
 }
 
-}  // namespace selector
 }  // namespace cuttlefish
