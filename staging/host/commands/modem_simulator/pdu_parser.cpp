@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 #include <thread>
-
 namespace cuttlefish {
 
 static const std::string kWithoutServiceCenterAddress     = "00";
@@ -270,6 +269,24 @@ std::string PDUParser::BCDToString(std::string& data) {
 
   if (dst[length -1] == 'F') {
     dst.replace(length -1, length, "\0");
+  }
+  return dst;
+}
+
+// This function is a reverse of the function PDUParser::BCDToString
+std::string PDUParser::StringToBCD(std::string_view data) {
+  std::string dst;
+  if (data.empty()) {
+    return "";
+  }
+  int length = data.size();
+  for (int i = 0; i < length; i += 2) {
+    if (i + 1 < length) {
+      dst += data[i + 1];
+    } else {
+      dst += 'F';
+    }
+    dst += data[i];
   }
   return dst;
 }
