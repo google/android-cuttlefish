@@ -158,4 +158,11 @@ void ModemSimulator::SetTimeZone(std::string timezone) {
   }
 }
 
+bool ModemSimulator::SetPhoneNumber(std::string_view number) {
+  if (sim_service_) {
+    return sim_service_->SetPhoneNumber(number);
+  }
+  return false;
+}
+
 }  // namespace cuttlefish
