@@ -57,13 +57,15 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
                                    const std::string& command);
   void HandleSimAuthentication(const Client& client,
                                    const std::string& command);
-
+  void HandlePhoneNumberUpdate(const Client& client,
+                               const std::string& command);
   void SavePinStateToIccProfile();
   void SaveFacilityLockToIccProfile();
   bool IsFDNEnabled();
   bool IsFixedDialNumber(std::string_view number);
   XMLElement* GetIccProfile();
   std::string GetPhoneNumber();
+  bool SetPhoneNumber(std::string_view number);
 
   enum SimStatus {
     SIM_STATUS_ABSENT = 0,
@@ -82,7 +84,7 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
   void InitializeSimFileSystemAndSimState();
   void InitializeFacilityLock();
   void OnSimStatusChanged();
-
+  XMLElement* GetPhoneNumberElement();
   NetworkService* network_service_;
 
   /* SimStatus */
