@@ -32,6 +32,7 @@ class PDUParser {
   std::string GetPhoneNumberFromAddress();
 
   static std::string BCDToString(std::string& data);
+  static std::string StringToBCD(std::string_view data);
 
  private:
   bool DecodePDU(std::string& pdu);
