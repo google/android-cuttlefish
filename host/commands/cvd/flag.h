@@ -202,6 +202,8 @@ class CvdFlagProxy {
 
 class FlagCollection {
  public:
+  using ValueVariant = CvdFlagProxy::ValueVariant;
+
   template <typename T>
   Result<void> EnrollFlag(CvdFlag<T>&& flag) {
     CF_EXPECT(!Contains(name_flag_map_, flag.Name()),
@@ -222,7 +224,7 @@ class FlagCollection {
   std::vector<CvdFlagProxy> Flags() const;
 
   struct FlagValuePair {
-    std::optional<std::variant<std::int32_t, bool, std::string>> value_opt;
+    std::optional<ValueVariant> value_opt;
     CvdFlagProxy flag;
   };
 
