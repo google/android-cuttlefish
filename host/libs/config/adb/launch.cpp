@@ -15,6 +15,7 @@
  */
 #include "host/libs/config/adb/adb.h"
 
+#include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -121,7 +122,6 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
     std::vector<Command> commands;
     if (helper_.VsockTunnelEnabled()) {
       Command adb_tunnel(SocketVsockProxyBinary());
-      adb_tunnel.AddParameter("-adbd_events_fd=", kernel_log_pipe_);
       /**
        * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host. It assumes
        * that another sv proxy runs inside the guest. see:
@@ -136,6 +136,8 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
        * instance.adb_host_port()
        *
        */
+      adb_tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
+      adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
       adb_tunnel.AddParameter("--server_type=tcp");
       adb_tunnel.AddParameter("--server_fd=", tcp_server_);
       adb_tunnel.AddParameter("--client_type=vsock");
@@ -145,7 +147,6 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
     }
     if (helper_.VsockHalfTunnelEnabled()) {
       Command adb_tunnel(SocketVsockProxyBinary());
-      adb_tunnel.AddParameter("-adbd_events_fd=", kernel_log_pipe_);
       /*
        * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host, and
        * cooperates with the adbd inside the guest. See this file:
@@ -156,6 +157,8 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
        * should be therefore tcp, and the port should differ from instance to
        * instance and be equal to instance.adb_host_port()
        */
+      adb_tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
+      adb_tunnel.AddParameter("--start_event_id=", monitor::Event::AdbdStarted);
       adb_tunnel.AddParameter("--server_type=tcp");
       adb_tunnel.AddParameter("--server_fd=", tcp_server_);
       adb_tunnel.AddParameter("--client_type=vsock");
