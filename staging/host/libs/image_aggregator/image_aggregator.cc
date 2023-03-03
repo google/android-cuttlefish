@@ -504,6 +504,7 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& header_file,
                          const std::string& footer_file,
                          const std::string& output_composite_path) {
+  DeAndroidSparse(partitions);
   std::vector<MultipleImagePartition> multiple_image_partitions;
   for (const auto& partition : partitions) {
     multiple_image_partitions.push_back(ToMultipleImagePartition(partition));
