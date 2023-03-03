@@ -120,4 +120,5 @@
 
   <!-- Restrict Wear to single user -->
   <integer name="config_multiuserMaximumUsers">1</integer>
+  <bool name="config_windowIsRound">true</bool>
 </resources>
