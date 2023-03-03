@@ -50,15 +50,20 @@ Result<std::unordered_map<std::string, std::string>> VmManagerBootconfig(
   std::unordered_map<std::string, std::string> bootconfig_args;
   if (instance.console()) {
     bootconfig_args["androidboot.console"] = instance.console_dev();
+    bootconfig_args["androidboot.serialconsole"] = "1";
   } else {
     // Specify an invalid path under /dev, so the init process will disable the
     // console service due to the console not being found. On physical devices,
-    // it is enough to not specify androidboot.console= *and* not specify the
-    // console= kernel command line parameter, because the console and kernel
-    // dmesg are muxed. However, on cuttlefish, we don't need to mux, and would
-    // prefer to retain the kernel dmesg logging, so we must work around init
-    // falling back to the check for /dev/console (which we'll always have).
-    bootconfig_args["androidboot.console"] = "invalid";
+    // *and on older kernels* it is enough to not specify androidboot.console=
+    // *and* not specify the console= kernel command line parameter, because
+    // the console and kernel dmesg are muxed. However, on cuttlefish, we don't
+    // need to mux, and would prefer to retain the kernel dmesg logging, so we
+    // must work around init falling back to the check for /dev/console (which
+    // we'll always have).
+    //bootconfig_args["androidboot.console"] = "invalid";
+    // The bug above has been fixed in Android 14 and later so we can just
+    // specify androidboot.serialconsole=0 instead.
+    bootconfig_args["androidboot.serialconsole"] = "0";
   }
   return bootconfig_args;
 }
