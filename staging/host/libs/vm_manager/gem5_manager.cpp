@@ -132,14 +132,26 @@ Gem5Manager::ConfigureGraphics(
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  return {{
+
+  std::unordered_map<std::string, std::string> bootconfig_args = {
       {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
       {"androidboot.hardware.gralloc", "minigbm"},
       {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
       {"androidboot.hardware.hwcomposer.mode", "noop"},
       {"androidboot.hardware.egl", "angle"},
       {"androidboot.hardware.vulkan", "pastel"},
-  }};
+  };
+
+  if (!instance.gpu_angle_feature_overrides_enabled().empty()) {
+    bootconfig_args["androidboot.hardware.angle_feature_overrides_enabled"] =
+        instance.gpu_angle_feature_overrides_enabled();
+  }
+  if (!instance.gpu_angle_feature_overrides_disabled().empty()) {
+    bootconfig_args["androidboot.hardware.angle_feature_overrides_disabled"] =
+        instance.gpu_angle_feature_overrides_disabled();
+  }
+
+  return bootconfig_args;
 }
 
 Result<std::unordered_map<std::string, std::string>>
