@@ -188,10 +188,10 @@ TARGET_USES_HWC2 := true
 # The compiler will occasionally generate movaps, etc.
 BOARD_MALLOC_ALIGNMENT := 16
 
-# Disable sparse on all filesystem images
-TARGET_USERIMAGES_SPARSE_EROFS_DISABLED ?= true
-TARGET_USERIMAGES_SPARSE_EXT_DISABLED ?= true
-TARGET_USERIMAGES_SPARSE_F2FS_DISABLED ?= true
+# Enable sparse on all filesystem images
+TARGET_USERIMAGES_SPARSE_EROFS_DISABLED ?= false
+TARGET_USERIMAGES_SPARSE_EXT_DISABLED ?= false
+TARGET_USERIMAGES_SPARSE_F2FS_DISABLED ?= false
 
 # Make the userdata partition 6G to accommodate ASAN and CTS
 BOARD_USERDATAIMAGE_PARTITION_SIZE := $(TARGET_USERDATAIMAGE_PARTITION_SIZE)
