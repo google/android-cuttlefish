@@ -23,6 +23,7 @@ java_test_host {
     ],
     data_native_bins: [
         "cvd",
+        "cvd_internal_display",
     ],
     test_options: {
         unit_test: false,
