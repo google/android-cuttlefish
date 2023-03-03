@@ -1,5 +1,8 @@
 (/.*)?                       u:object_r:vendor_file:s0
 /bin/rename_netiface         u:object_r:rename_netiface_exec:s0
 /bin/setup_wifi              u:object_r:setup_wifi_exec:s0
+/bin/init\.wifi            u:object_r:init_wifi_sh_exec:s0
 /bin/hw/wpa_supplicant_cf    u:object_r:hal_wifi_supplicant_default_exec:s0
+/bin/hw/hostapd_cf           u:object_r:hal_wifi_hostapd_default_exec:s0
+/bin/mac80211_create_radios  u:object_r:mac80211_create_radios_exec:s0
 /etc/permissions(/.*)?       u:object_r:vendor_configs_file:s0
