@@ -54,6 +54,7 @@ cc_binary {
         "libimage_aggregator",
         "libsparse",
         "libcuttlefish_display_flags",
+        "libcuttlefish_graphics_configuration",
         "libcuttlefish_graphics_detector",
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
