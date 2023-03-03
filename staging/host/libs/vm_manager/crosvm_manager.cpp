@@ -60,14 +60,15 @@ bool CrosvmManager::IsSupported() {
 Result<std::unordered_map<std::string, std::string>>
 CrosvmManager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  std::unordered_map<std::string, std::string> bootconfig_args;
-
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
+
+  std::unordered_map<std::string, std::string> bootconfig_args;
+
   if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
-    return {{
+    bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_2)},
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
@@ -75,11 +76,9 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.egl", "angle"},
         {"androidboot.hardware.vulkan", "pastel"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
-    }};
-  }
-
-  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-    return {{
+    };
+  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+    bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", "ranchu"},
@@ -88,16 +87,14 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.egl", "mesa"},
         // No "hardware" Vulkan support, yet
         {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
-    }};
-  }
-
-  if (instance.gpu_mode() == kGpuModeGfxStream) {
+    };
+  } else if (instance.gpu_mode() == kGpuModeGfxStream) {
     std::string gles_impl = instance.enable_gpu_angle() ? "angle" : "emulation";
     std::string gltransport = (instance.guest_android_version() == "11.0.0")
                                   ? "virtio-gpu-pipe"
                                   : "virtio-gpu-asg";
     std::string gles_version = instance.enable_gpu_angle() ? "196608" : "196609";
-    return {{
+    bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
@@ -106,14 +103,23 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "ranchu"},
         {"androidboot.hardware.gltransport", gltransport},
         {"androidboot.opengles.version", gles_version},
-    }};
-  }
-
-  if (instance.gpu_mode() == kGpuModeNone) {
+    };
+  } else if (instance.gpu_mode() == kGpuModeNone) {
     return {};
+  } else {
+    return CF_ERR("Unknown GPU mode " << instance.gpu_mode());
   }
 
-  return CF_ERR("Unknown GPU mode " << instance.gpu_mode());
+  if (!instance.gpu_angle_feature_overrides_enabled().empty()) {
+    bootconfig_args["androidboot.hardware.angle_feature_overrides_enabled"] =
+        instance.gpu_angle_feature_overrides_enabled();
+  }
+  if (!instance.gpu_angle_feature_overrides_disabled().empty()) {
+    bootconfig_args["androidboot.hardware.angle_feature_overrides_disabled"] =
+        instance.gpu_angle_feature_overrides_disabled();
+  }
+
+  return bootconfig_args;
 }
 
 Result<std::unordered_map<std::string, std::string>>
