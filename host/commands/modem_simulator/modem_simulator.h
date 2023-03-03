@@ -47,7 +47,7 @@ class ModemSimulator {
   }
 
   void SetTimeZone(std::string timezone);
-
+  bool SetPhoneNumber(std::string_view number);
  private:
   int32_t modem_id_;
   std::unique_ptr<ChannelMonitor> channel_monitor_;
