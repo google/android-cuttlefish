@@ -30,26 +30,35 @@
 
 cuttlefish::FetcherConfig AvailableFilesReport() {
   std::string current_directory = cuttlefish::AbsolutePath(cuttlefish::CurrentDirectory());
+  cuttlefish::FetcherConfig config;
+
   if (cuttlefish::FileExists(current_directory + "/fetcher_config.json")) {
-    cuttlefish::FetcherConfig config;
     config.LoadFromFile(current_directory + "/fetcher_config.json");
+    return config;
+  }
+
+  // If needed check if `fetch_config.json` exists inside the $HOME directory.
+  // `assemble_cvd` will perform a similar check.
+  std::string home_directory =
+      cuttlefish::StringFromEnv("HOME", cuttlefish::CurrentDirectory());
+  std::string fetcher_config_path = home_directory + "/fetcher_config.json";
+  if (cuttlefish::FileExists(fetcher_config_path)) {
+    config.LoadFromFile(fetcher_config_path);
     return config;
   }
 
   std::set<std::string> files;
 
-  std::string psuedo_fetcher_dir =
-      cuttlefish::StringFromEnv("ANDROID_HOST_OUT",
-                         cuttlefish::StringFromEnv("HOME", current_directory));
-  std::string psuedo_fetcher_config =
-      psuedo_fetcher_dir + "/launcher_pseudo_fetcher_config.json";
-  files.insert(psuedo_fetcher_config);
+  std::string pseudo_fetcher_dir = cuttlefish::StringFromEnv(
+      "ANDROID_HOST_OUT", cuttlefish::StringFromEnv("HOME", current_directory));
+  std::string pseudo_fetcher_config =
+      pseudo_fetcher_dir + "/launcher_pseudo_fetcher_config.json";
+  files.insert(pseudo_fetcher_config);
 
-  cuttlefish::FetcherConfig config;
   config.RecordFlags();
   for (const auto& file : files) {
     config.add_cvd_file(cuttlefish::CvdFile(cuttlefish::FileSource::LOCAL_FILE, "", "", file));
   }
-  config.SaveToFile(psuedo_fetcher_config);
+  config.SaveToFile(pseudo_fetcher_config);
   return config;
 }
