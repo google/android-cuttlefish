@@ -124,12 +124,15 @@ bool QemuManager::IsSupported() {
 Result<std::unordered_map<std::string, std::string>>
 QemuManager::ConfigureGraphics(
     const CuttlefishConfig::InstanceSpecific& instance) {
+  // Override the default HAL search paths in all cases. We do this because
+  // the HAL search path allows for fallbacks, and fallbacks in conjunction
+  // with properities lead to non-deterministic behavior while loading the
+  // HALs.
+
+  std::unordered_map<std::string, std::string> bootconfig_args;
+
   if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
-    // Override the default HAL search paths in all cases. We do this because
-    // the HAL search path allows for fallbacks, and fallbacks in conjunction
-    // with properities lead to non-deterministic behavior while loading the
-    // HALs.
-    return {{
+    bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_2)},
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
@@ -137,11 +140,9 @@ QemuManager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "pastel"},
         // OpenGL ES 3.1
         {"androidboot.opengles.version", "196609"},
-    }};
-  }
-
-  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-    return {{
+    };
+  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+    bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
         {"androidboot.hardware.hwcomposer", "ranchu"},
@@ -150,14 +151,23 @@ QemuManager::ConfigureGraphics(
         // No "hardware" Vulkan support, yet
         // OpenGL ES 3.0
         {"androidboot.opengles.version", "196608"},
-    }};
-  }
-
-  if (instance.gpu_mode() == kGpuModeNone) {
+    };
+  } else if (instance.gpu_mode() == kGpuModeNone) {
     return {};
+  } else {
+    return CF_ERR("Unhandled GPU mode: " << instance.gpu_mode());
   }
 
-  return CF_ERR("Unhandled GPU mode: " << instance.gpu_mode());
+  if (!instance.gpu_angle_feature_overrides_enabled().empty()) {
+    bootconfig_args["androidboot.hardware.angle_feature_overrides_enabled"] =
+        instance.gpu_angle_feature_overrides_enabled();
+  }
+  if (!instance.gpu_angle_feature_overrides_disabled().empty()) {
+    bootconfig_args["androidboot.hardware.angle_feature_overrides_disabled"] =
+        instance.gpu_angle_feature_overrides_disabled();
+  }
+
+  return bootconfig_args;
 }
 
 Result<std::unordered_map<std::string, std::string>>
