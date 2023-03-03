@@ -445,10 +445,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
       instance_manager_.RemoveInstanceGroup(uid, group_creation_info->home);
     }
   }
-  if (!is_help) {
-    CF_EXPECT(SetBuildId(uid, group_creation_info->group_name,
-                         group_creation_info->home));
-  }
 
   auto final_response = ResponseFromSiginfo(infop);
   if (is_help || !final_response.has_status() ||
@@ -456,6 +452,18 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     return final_response;
   }
   MarkLockfilesInUse(*group_creation_info);
+
+  if (!is_help) {
+    auto set_build_id_result = SetBuildId(uid, group_creation_info->group_name,
+                                          group_creation_info->home);
+    if (!set_build_id_result.ok()) {
+      LOG(ERROR) << "Failed to set a build Id for "
+                 << group_creation_info->group_name << " but will continue.";
+      LOG(ERROR) << "The error message was : "
+                 << set_build_id_result.error().Trace();
+    }
+  }
+
   // group_creation_info is nullopt only if is_help is false
   return FillOutNewInstanceInfo(std::move(final_response),
                                 *group_creation_info);
