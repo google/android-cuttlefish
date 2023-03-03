@@ -97,6 +97,7 @@ cc_library_host_static {
         "demo_multi_vd.cpp",
         "frontline_parser.cpp",
         "epoll_loop.cpp",
+        "handle_reset.cpp",
         "instance_lock.cpp",
         "instance_manager.cpp",
         "lock_file.cpp",
