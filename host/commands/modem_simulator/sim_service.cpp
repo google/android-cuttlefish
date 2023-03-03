@@ -349,6 +349,10 @@ std::vector<CommandHandler> SimService::InitializeCommandHandlers() {
                     [this](const Client& client, std::string& cmd) {
                     this->HandleSimAuthentication(client, cmd);
                     }),
+      CommandHandler("+REMOTEUPADATEPHONENUMBER",
+                    [this](const Client& client, std::string& cmd) {
+                      this->HandlePhoneNumberUpdate(client,cmd);
+                    }),
   };
   return (command_handlers);
 }
@@ -725,27 +729,8 @@ XMLElement* SimService::GetIccProfile() {
 }
 
 std::string SimService::GetPhoneNumber() {
-  XMLElement *root = sim_file_system_.GetRootElement();
-  if (!root) return "";
-
-  auto path = SimFileSystem::GetUsimEFPath(SimFileSystem::EFId::EF_MSISDN);
-
-  size_t pos = 0;
-  auto parent = root;
-  while (pos < path.length()) {
-    std::string sub_path(path.substr(pos, 4));
-    auto app = SimFileSystem::FindAttribute(parent, "path", sub_path);
-    if (!app) return "";
-    pos += 4;
-    parent = app;
-  }
-
-  XMLElement* ef = SimFileSystem::FindAttribute(parent, "id", "6F40");
-  if (!ef) return "";
-
-  XMLElement *final = SimFileSystem::FindAttribute(ef, "cmd", "B2");;
+  XMLElement* final = GetPhoneNumberElement();
   if (!final) return "";
-
   std::string record = final->GetText();
   int footerOffset = record.length() - kFooterSizeBytes * 2;
   int numberLength = (record[footerOffset] - '0') * 16 +
@@ -762,6 +747,33 @@ std::string SimService::GetPhoneNumber() {
   }
 
   return PDUParser::BCDToString(bcd_number);
+}
+
+bool SimService::SetPhoneNumber(std::string_view number) {
+  if (number.size() > kMaxNumberSizeBytes) {  // Invalid number length
+    return false;
+  }
+  XMLElement* elem = GetPhoneNumberElement();
+  if (!elem) return false;
+  std::string record = elem->GetText();
+  int footerOffset = record.length() - kFooterSizeBytes * 2;
+  std::string bcd_number = PDUParser::StringToBCD(number);
+  int newLength = 0;
+  // Skip Type(91) and Country Code(68)
+  if (number.size() == 12 && number.compare("68") == 0) {
+    record.replace(footerOffset + 6, bcd_number.size(), bcd_number);
+    newLength = 8;
+  } else { // Skip Type(81)
+    record.replace(footerOffset + 4, bcd_number.size(), bcd_number);
+    newLength = (bcd_number.size() + 2) / 2;
+  }
+
+  record[footerOffset] = '0' + newLength / 16;
+  record[footerOffset + 1] = '0' + (newLength % 16);
+
+  elem->SetText(record.c_str());
+  sim_file_system_.doc.SaveFile(sim_file_system_.file_path.c_str());
+  return true;
 }
 
 SimService::SimStatus SimService::GetSimStatus() const {
@@ -991,6 +1003,28 @@ void SimService::OnSimStatusChanged() {
   if (ptr) {
     ptr->OnSimStatusChanged(sim_status_);
   }
+}
+
+XMLElement* SimService::GetPhoneNumberElement() {
+  XMLElement* root = sim_file_system_.GetRootElement();
+  if (!root) return nullptr;
+
+  auto path = SimFileSystem::GetUsimEFPath(SimFileSystem::EFId::EF_MSISDN);
+
+  size_t pos = 0;
+  auto parent = root;
+  while (pos < path.length()) {
+    std::string sub_path(path.substr(pos, 4));
+    auto app = SimFileSystem::FindAttribute(parent, "path", sub_path);
+    if (!app) return nullptr;
+    pos += 4;
+    parent = app;
+  }
+
+  XMLElement* ef = SimFileSystem::FindAttribute(parent, "id", "6F40");
+  if (!ef) return nullptr;
+
+  return SimFileSystem::FindAttribute(ef, "cmd", "B2");
 }
 
 bool SimService::checkPin1AndAdjustSimStatus(std::string_view pin) {
@@ -1693,5 +1727,12 @@ void SimService::HandleSimAuthentication(const Client& client,
   client.SendCommandResponse(responses);
 }
 
+void SimService::HandlePhoneNumberUpdate(const Client& client,
+                                         const std::string& command) {
+  (void)client;
+  CommandParser cmd(command);
+  cmd.SkipWhiteSpace();
+  SetPhoneNumber(cmd.GetNextStr(' '));
+}
 
 }  // namespace cuttlefish
