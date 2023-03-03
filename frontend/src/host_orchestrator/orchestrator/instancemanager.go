@@ -497,13 +497,13 @@ func (h *artifactsManager) downloadWithBuildAPI(outDir, buildID, target string, 
 	for _, name := range artifactNames {
 		ch := make(chan error)
 		chans = append(chans, ch)
-		go func() {
+		go func(name string) {
 			defer close(ch)
 			filename := outDir + "/" + name
 			if err := downloadArtifactToFile(h.buildAPI, filename, name, buildID, target); err != nil {
 				ch <- err
 			}
-		}()
+		}(name)
 	}
 	var merr error
 	for _, ch := range chans {
@@ -706,14 +706,14 @@ func updateBuildsWithLatestGreenBuildID(buildAPI BuildAPI, builds []*apiv1.Andro
 	for _, build := range builds {
 		ch := make(chan error)
 		chans = append(chans, ch)
-		go func() {
+		go func(build *apiv1.AndroidCIBuild) {
 			defer close(ch)
 			if build != nil && build.BuildID == "" {
 				if err := updateBuildWithLatestGreenBuildID(buildAPI, build); err != nil {
 					ch <- err
 				}
 			}
-		}()
+		}(build)
 	}
 	var merr error
 	for _, ch := range chans {
