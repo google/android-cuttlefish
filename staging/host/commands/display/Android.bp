@@ -17,21 +17,21 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
+cc_binary_host {
     name: "cvd_internal_display",
     srcs: [
         "main.cpp",
     ],
-    shared_libs: [
+    stl: "libc++_static",
+    static_libs: [
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libjsoncpp",
-    ],
-    static_libs: [
         "libcuttlefish_display_flags",
         "libcuttlefish_host_config",
         "libgflags",
+        "libjsoncpp",
+        "liblog",
     ],
     defaults: ["cuttlefish_host"],
 }
