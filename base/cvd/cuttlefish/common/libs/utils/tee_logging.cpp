@@ -191,15 +191,21 @@ void TeeLogger::operator()(
   for (const auto& destination : destinations_) {
     std::string msg_with_prefix = prefix_ + message;
     std::string output_string;
-    if (destination.metadata_level == MetadataLevel::ONLY_MESSAGE) {
-      output_string = msg_with_prefix + std::string("\n");
-    } else {
-      struct tm now;
-      time_t t = time(nullptr);
-      localtime_r(&t, &now);
-      output_string =
-          StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag,
-                                file, line, msg_with_prefix.c_str());
+    switch (destination.metadata_level) {
+      case MetadataLevel::ONLY_MESSAGE:
+        output_string = msg_with_prefix + std::string("\n");
+        break;
+      case MetadataLevel::TAG_AND_MESSAGE:
+        output_string = fmt::format("{}] {}{}", tag, msg_with_prefix, "\n");
+        break;
+      default:
+        struct tm now;
+        time_t t = time(nullptr);
+        localtime_r(&t, &now);
+        output_string =
+            StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag,
+                                  file, line, msg_with_prefix.c_str());
+        break;
     }
     if (severity >= destination.severity) {
       if (destination.target->IsATTY()) {
@@ -235,11 +241,12 @@ TeeLogger LogToFiles(const std::vector<std::string>& files,
 }
 
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files,
-                              const std::string& prefix) {
+                              const std::string& prefix,
+                              MetadataLevel stderr_level) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
   log_severities.push_back(SeverityTarget{ConsoleSeverity(),
                                           SharedFD::Dup(/* stderr */ 2),
-                                          MetadataLevel::ONLY_MESSAGE});
+                                          stderr_level});
   return TeeLogger(log_severities, prefix);
 }
 
