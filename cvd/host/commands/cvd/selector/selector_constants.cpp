@@ -168,5 +168,10 @@ const SelectorFlags& SelectorFlags::Get() {
   return singleton_selector_flags;
 }
 
+const SelectorFlags SelectorFlags::New() {
+  SelectorFlags selector_flags;
+  return selector_flags;
+}
+
 }  // namespace selector
 }  // namespace cuttlefish
