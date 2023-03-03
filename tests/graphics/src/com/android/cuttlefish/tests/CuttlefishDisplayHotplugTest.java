@@ -72,11 +72,20 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
 
     private static final String CVD_BINARY_BASENAME = "cvd";
 
+    private static final String CVD_DISPLAY_BINARY_BASENAME = "cvd_internal_display";
+
     private CommandResult runCvdCommand(Collection<String> commandArgs) throws FileNotFoundException {
-        String cvdBinary = runner.getHostBinaryPath(CVD_BINARY_BASENAME);
+        // TODO: Switch back to using `cvd` after either:
+        //  * Commands under `cvd` can be used with instances launched through `launch_cvd`.
+        //  * ATP launches instances using `cvd start` instead of `launch_cvd`.
+        String cvdBinary = runner.getHostBinaryPath(CVD_DISPLAY_BINARY_BASENAME);
 
         List<String> fullCommand = new ArrayList<String>(commandArgs);
         fullCommand.add(0, cvdBinary);
+
+        // Remove the "display" part of the command until switching back to `cvd`.
+        fullCommand.remove(1);
+
         return runner.run(DEFAULT_TIMEOUT_MS, fullCommand.toArray(new String[0]));
     }
 
