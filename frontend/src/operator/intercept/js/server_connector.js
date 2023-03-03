@@ -195,3 +195,66 @@ class PollingConnector extends Connector {
     this.#pollerSchedule = setTimeout(pollerRoutine, currentPollDelay);
   }
 }
+
+class DisplayInfo {
+  display_id = '';
+  width = 0;
+  height = 0;
+
+  constructor(display_id, width, height) {
+    this.display_id = display_id;
+    this.width = width;
+    this.height = height;
+  }
+}
+
+class DeviceDisplays {
+  device_id = '';
+  rotation = 0;
+  displays = [];
+
+  constructor(rotation) {
+    this.device_id = deviceId();
+    this.rotation = rotation;
+  }
+
+  addDisplay(display_id, width, height) {
+    this.displays.push(new DisplayInfo(display_id, width, height));
+  }
+}
+
+export class DeviceFrameMessage {
+  static TYPE_DISPLAYS_INFO = 'displays_info';
+
+  static [Symbol.hasInstance](instance) {
+    return (('type' in instance) && ('payload' in instance));
+  }
+
+  type = '';
+  payload = {};
+
+  constructor(type, payload) {
+    this.type = type;
+    this.payload = payload;
+  }
+}
+
+class ParentController {
+  createDeviceDisplaysMessage(rotation) {
+    return new DeviceDisplays(rotation);
+  }
+
+  postMessageToParent(type, payload) {
+    if (window.parent === window) return;
+
+    window.parent.postMessage(new DeviceFrameMessage(type, payload));
+  }
+
+  postDisplaysInfo(info) {
+    this.postMessageToParent(DeviceFrameMessage.TYPE_DISPLAYS_INFO, info);
+  }
+}
+
+export function createParentController() {
+  return new ParentController();
+}

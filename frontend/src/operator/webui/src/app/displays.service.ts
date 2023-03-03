@@ -2,18 +2,7 @@ import {Injectable} from '@angular/core';
 import {Subject, merge} from 'rxjs';
 import {map, mergeMap} from 'rxjs/operators';
 import {DeviceService} from './device.service';
-
-interface DisplayInfo {
-  display_id: string;
-  width: number;
-  height: number;
-}
-
-interface DeviceDisplays {
-  device_id: string;
-  rotation: number;
-  displays: DisplayInfo[];
-}
+import {DeviceDisplays} from '../../../intercept/js/server_connector';
 
 @Injectable({
   providedIn: 'root',
