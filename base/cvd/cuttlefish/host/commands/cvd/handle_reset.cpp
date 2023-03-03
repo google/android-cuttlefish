@@ -25,15 +25,11 @@
 
 #include <chrono>
 #include <iostream>
-#include <optional>
 #include <string>
 #include <thread>
 
-#include <android-base/logging.h>
-
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/reset_client_utils.h"
 
 namespace cuttlefish {
@@ -43,7 +39,6 @@ struct ParsedFlags {
   bool clean_runtime_dir;
   bool device_by_cvd_only;
   bool is_confirmed_by_flag;
-  std::optional<android::base::LogSeverity> log_level;
 };
 
 static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
@@ -56,42 +51,30 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
   bool clean_runtime_dir = true;
   bool device_by_cvd_only = false;
   bool is_confirmed_by_flag = false;
-  std::string verbosity_flag_value;
-
-  Flag y_flag =
-      Flag()
-          .Alias({FlagAliasMode::kFlagExact, "-y"})
-          .Alias({FlagAliasMode::kFlagExact, "--yes"})
-          .Setter([&is_confirmed_by_flag](const FlagMatch&) -> Result<void> {
-            is_confirmed_by_flag = true;
-            return {};
-          });
+  Flag y_flag = Flag()
+                    .Alias({FlagAliasMode::kFlagExact, "-y"})
+                    .Alias({FlagAliasMode::kFlagExact, "--yes"})
+                    .Setter([&is_confirmed_by_flag](const FlagMatch&) {
+                      is_confirmed_by_flag = true;
+                      return true;
+                    });
   Flag help_flag = Flag()
                        .Alias({FlagAliasMode::kFlagExact, "-h"})
                        .Alias({FlagAliasMode::kFlagExact, "--help"})
-                       .Setter([&is_help](const FlagMatch&) -> Result<void> {
+                       .Setter([&is_help](const FlagMatch&) {
                          is_help = true;
-                         return {};
+                         return true;
                        });
   std::vector<Flag> flags{
-      GflagsCompatFlag("device-by-cvd-only", device_by_cvd_only),
-      y_flag,
-      GflagsCompatFlag("clean-runtime-dir", clean_runtime_dir),
-      help_flag,
-      GflagsCompatFlag("verbosity", verbosity_flag_value),
+      GflagsCompatFlag("device-by-cvd-only", device_by_cvd_only), y_flag,
+      GflagsCompatFlag("clean-runtime-dir", clean_runtime_dir), help_flag,
       UnexpectedArgumentGuard()};
   CF_EXPECT(ParseFlags(flags, subcmd_args));
 
-  std::optional<android::base::LogSeverity> verbosity;
-  if (!verbosity_flag_value.empty()) {
-    verbosity = CF_EXPECT(EncodeVerbosity(verbosity_flag_value),
-                          "invalid verbosity level");
-  }
   return ParsedFlags{.is_help = is_help,
                      .clean_runtime_dir = clean_runtime_dir,
                      .device_by_cvd_only = device_by_cvd_only,
-                     .is_confirmed_by_flag = is_confirmed_by_flag,
-                     .log_level = verbosity};
+                     .is_confirmed_by_flag = is_confirmed_by_flag};
 }
 
 static bool GetUserConfirm() {
@@ -131,7 +114,7 @@ static Result<void> TimedKillCvdServer(CvdClient& client, const int timeout) {
     auto stop_server_result = client.StopCvdServer(clear_running_devices_first);
     if (!stop_server_result.ok()) {
       LOG(ERROR) << "cvd kill-server returned error"
-                 << stop_server_result.error().FormatForEnv();
+                 << stop_server_result.error().Trace();
       LOG(ERROR) << "However, cvd reset will continue cleaning up.";
     }
     sem_post(binary_sem);
@@ -149,7 +132,7 @@ static Result<void> TimedKillCvdServer(CvdClient& client, const int timeout) {
     LOG(ERROR) << "Sleeping " << timeout << " seconds, and "
                << "will send sigkill to the server.";
     using namespace std::chrono_literals;
-    std::this_thread::sleep_for(std::chrono::seconds(timeout));
+    std::this_thread::sleep_for(operator""s((unsigned long long)timeout));
     auto result_kill = KillCvdServerProcess();
     worker_process.Stop();
     // TODO(kwstephenkim): Compose error messages, and propagate
@@ -177,9 +160,6 @@ static Result<void> TimedKillCvdServer(CvdClient& client, const int timeout) {
 Result<void> HandleReset(CvdClient& client,
                          const cvd_common::Args& subcmd_args) {
   auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
-  if (options.log_level) {
-    SetMinimumVerbosity(options.log_level.value());
-  }
   if (options.is_help) {
     std::cout << kHelpMessage << std::endl;
     return {};
@@ -194,7 +174,7 @@ Result<void> HandleReset(CvdClient& client,
 
   auto result = TimedKillCvdServer(client, 50);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().FormatForEnv();
+    LOG(ERROR) << result.error().Trace();
     LOG(ERROR) << "Cvd reset continues cleaning up devices.";
   }
   // cvd reset handler placeholder. identical to cvd kill-server for now.
