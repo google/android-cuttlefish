@@ -21,6 +21,7 @@
 
 #include <android-base/strings.h>
 
+#include "common/libs/utils/files.h"
 #include "host/commands/cvd/common_utils.h"
 
 namespace cuttlefish {
@@ -34,6 +35,10 @@ static Result<std::string> ExtractBuildIdLineValue(
     const std::string& home_dir) {
   std::string kernel_log_path =
       ConcatToString(home_dir, "/cuttlefish_runtime/kernel.log");
+  if (!FileExists(kernel_log_path)) {
+    kernel_log_path =
+        ConcatToString(home_dir, "/cuttlefish_runtime_runtime/kernel.log");
+  }
   std::ifstream kernel_log_file(kernel_log_path);
   CF_EXPECT(kernel_log_file.is_open(),
             "The " << kernel_log_path << " is not open.");
