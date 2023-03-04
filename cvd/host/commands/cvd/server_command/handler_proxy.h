@@ -23,6 +23,6 @@
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<CommandSequenceExecutor>>
-CvdCmdlistComponent();
+CvdHandlerProxyComponent();
 
 }  // namespace cuttlefish

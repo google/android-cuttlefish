@@ -78,6 +78,7 @@ class SelectorFlags {
   }
 
   std::vector<CvdFlagProxy> Flags() const { return flags_.Flags(); }
+  const auto& FlagsAsCollection() const { return flags_; }
 
  private:
   SelectorFlags() {
