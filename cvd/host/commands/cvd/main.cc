@@ -135,18 +135,14 @@ Result<FlagCollection> CvdFlags() {
 }
 
 struct CvdDriverOptions {
-  bool clean;
   bool help;
 };
 Result<CvdDriverOptions> FilterDriverOptions(const FlagCollection& cvd_flags,
                                              cvd_common::Args& cvd_args) {
   auto help_flag = CF_EXPECT(cvd_flags.GetFlag("help"));
-  auto clean_flag = CF_EXPECT(cvd_flags.GetFlag("clean"));
   bool is_help = false;
   CF_EXPECT(help_flag.ParseFlag(cvd_args, is_help));
-  bool is_clean = false;
-  CF_EXPECT(clean_flag.ParseFlag(cvd_args, is_clean));
-  return CvdDriverOptions{.clean = is_clean, .help = is_help};
+  return CvdDriverOptions{.help = is_help};
 }
 
 cvd_common::Args AllArgs(const std::string& prog_path,
@@ -192,7 +188,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   CF_EXPECT_EQ(android::base::Basename(all_args[0]), "cvd");
 
-  // TODO(kwstephenkim): --clean and --help should be handled here.
+  // TODO(kwstephenkim): --help should be handled here.
   // And, the FrontlineParser takes any positional argument as
   // a valid subcommand.
 
@@ -210,22 +206,13 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     auto client_parser = std::move(*client_parser_result);
     CF_EXPECT(client_parser != nullptr);
     auto cvd_args = client_parser->CvdArgs();
-    auto [is_clean, is_help] =
-        CF_EXPECT(FilterDriverOptions(cvd_flags, cvd_args));
+    auto is_help = CF_EXPECT(FilterDriverOptions(cvd_flags, cvd_args)).help;
     all_args = AllArgs(client_parser->ProgPath(), cvd_args,
                        client_parser->SubCmd(), client_parser->SubCmdArgs());
 
     if (!is_help && client_parser->SubCmd()) {
       HandleClientCommands(client, client_parser, env);
       return {};
-    }
-    // Special case for --clean flag, used to clear any existing state.
-    if (is_clean) {
-      std::cerr << "cvd invoked with --clean. Now, "
-                << "stopping the cvd_server before continuing.";
-      CF_EXPECT(client.StopCvdServer(/*clear=*/true));
-      CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
-                "Unable to ensure cvd_server is running.");
     }
     if (is_help) {
       // could be simply "cvd"
