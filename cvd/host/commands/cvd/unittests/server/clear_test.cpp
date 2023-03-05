@@ -28,7 +28,7 @@ namespace cuttlefish {
 TEST(CvdClear, ClearAfterThreeStarts) {
   cvd_common::Envs envs;
   envs["HOME"] = StringFromEnv("HOME", "");
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   cvd_common::Args start_two_instances_args{
       "cvd",
@@ -74,7 +74,7 @@ TEST(CvdClear, ClearAfterThreeStarts) {
   ASSERT_FALSE(Contains(cmd_fleet.Stdout(), "instance_name"));
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 }  // namespace cuttlefish
