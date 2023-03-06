@@ -77,7 +77,7 @@ Result<RenderingMode> GetRenderingMode(const std::string& mode) {
   if (mode == std::string(kGpuModeDrmVirgl)) {
     return RenderingMode::kVirglRenderer;
   }
-  if (mode == std::string(kGpuModeGfxStream)) {
+  if (mode == std::string(kGpuModeGfxstream)) {
     return RenderingMode::kGfxstream;
   }
   if (mode == std::string(kGpuModeGuestSwiftshader)) {

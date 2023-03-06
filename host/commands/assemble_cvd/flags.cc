@@ -1188,7 +1188,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // gpu related settings
     auto gpu_mode = gpu_mode_vec[instance_index];
     if (gpu_mode != kGpuModeAuto && gpu_mode != kGpuModeDrmVirgl &&
-        gpu_mode != kGpuModeGfxStream && gpu_mode != kGpuModeGuestSwiftshader &&
+        gpu_mode != kGpuModeGfxstream && gpu_mode != kGpuModeGuestSwiftshader &&
         gpu_mode != kGpuModeNone) {
       LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode;
     }
@@ -1201,7 +1201,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           gpu_mode = kGpuModeDrmVirgl;
         } else {
           LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
-          gpu_mode = kGpuModeGfxStream;
+          gpu_mode = kGpuModeGfxstream;
         }
       } else {
         LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
@@ -1209,7 +1209,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
             "--gpu_mode=guest_swiftshader.";
         gpu_mode = kGpuModeGuestSwiftshader;
       }
-    } else if (gpu_mode == kGpuModeGfxStream || gpu_mode == kGpuModeDrmVirgl) {
+    } else if (gpu_mode == kGpuModeGfxstream || gpu_mode == kGpuModeDrmVirgl) {
       if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
         LOG(ERROR) << "--gpu_mode=" << gpu_mode
                    << " was requested but the prerequisites for accelerated "
@@ -1230,7 +1230,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
     if (!gpu_capture_binary_vec[instance_index].empty()) {
-      CF_EXPECT(gpu_mode == kGpuModeGfxStream,
+      CF_EXPECT(gpu_mode == kGpuModeGfxstream,
                 "GPU capture only supported with --gpu_mode=gfxstream");
 
       // GPU capture runs in a detached mode where the "launcher" process
@@ -1281,7 +1281,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       LOG(FATAL) << graphics_check.error().Message();
     }
 
-    if (gpu_mode != kGpuModeDrmVirgl && gpu_mode != kGpuModeGfxStream) {
+    if (gpu_mode != kGpuModeDrmVirgl && gpu_mode != kGpuModeGfxstream) {
       if (vm_manager_vec[0] == QemuManager::name()) {
         instance.set_keyboard_server_port(calc_vsock_port(7000));
         instance.set_touch_server_port(calc_vsock_port(7100));

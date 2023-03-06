@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
   } else if (instance.gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
     user_friendly_gpu_mode = "VirglRenderer (Accelerated Host GPU Rendering)";
-  } else if (instance.gpu_mode() == cuttlefish::kGpuModeGfxStream) {
+  } else if (instance.gpu_mode() == cuttlefish::kGpuModeGfxstream) {
     user_friendly_gpu_mode = "Gfxstream (Accelerated Host GPU Rendering)";
   } else {
     user_friendly_gpu_mode = instance.gpu_mode();
