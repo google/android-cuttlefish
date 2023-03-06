@@ -42,7 +42,7 @@ mod tests;
 
 /// Main routine for the KeyMint TA. Only returns if there is a fatal error.
 pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: *mut libc::c_void) {
-    let _ = env_logger::try_init();
+    let _ = env_logger::builder().filter_level(log::LevelFilter::Info).try_init();
     info!(
         "KeyMint TA running with fd_id={}, fd_out={}, security_level={:?}",
         fd_in, fd_out, security_level,
