@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+-include device/google/cuttlefish/shared/virgl/BoardConfig.mk
+
 #
 # All components inherited here go to system image (same as GSI system)
 #
@@ -68,6 +70,7 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 PRODUCT_VENDOR_PROPERTIES += \
