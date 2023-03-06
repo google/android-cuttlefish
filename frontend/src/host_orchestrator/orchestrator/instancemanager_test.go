@@ -228,91 +228,119 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	var usedCmdName string
-	var usedCmdArgs []string
-	execContext := func(name string, args ...string) *exec.Cmd {
-		if contains(args, "start") {
-			usedCmdName = name
-			usedCmdArgs = args
-		}
-		return exec.Command("true")
-	}
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
-	}
-	om := NewMapOM()
-	im := newCVDToolIm(execContext, cvdBinAB, paths, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
-
-	op, _ := im.CreateCVD(r)
-
-	om.Wait(op.Name, 1*time.Second)
-	if usedCmdName != "sudo" {
-		t.Errorf("expected 'sudo', got %q", usedCmdName)
-	}
-	artifactsDir := paths.ArtifactsRootDir + "/1_foo__cvd"
-	runtimeDir := paths.RuntimesRootDir + "/cvd-1"
-	expectedCmdArgs := []string{
-		"-u", "_cvd-executor", envVarAndroidHostOut + "=" + artifactsDir, envVarHome + "=" + runtimeDir,
-		paths.CVDBin, "start", daemonArg, reportAnonymousUsageStatsArg,
-		"--base_instance_num=1", "--system_image_dir=" + artifactsDir,
-	}
-	if !reflect.DeepEqual(usedCmdArgs, expectedCmdArgs) {
-		t.Errorf("invalid args\nexpected: %+v\ngot:      %+v", expectedCmdArgs, usedCmdArgs)
-	}
-}
-
-func TestCreateCVDWithSpecificKernelBuildVerifyStartCVDCmdArgs(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	var usedCmdName string
-	var usedCmdArgs []string
-	execContext := func(name string, args ...string) *exec.Cmd {
-		if contains(args, "start") {
-			usedCmdName = name
-			usedCmdArgs = args
-		}
-		return exec.Command("true")
-	}
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
-	}
-	om := NewMapOM()
-	im := newCVDToolIm(execContext, cvdBinAB, paths, om)
-	r := apiv1.CreateCVDRequest{
-		CVD: &apiv1.CVD{
-			BuildSource: &apiv1.BuildSource{
-				AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
-					MainBuild: &apiv1.AndroidCIBuild{
-						BuildID: "1",
-						Target:  "foo",
-					},
-					KernelBuild: &apiv1.AndroidCIBuild{
-						BuildID: "137",
-						Target:  "bar",
+	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s"+
+		" HOME=%[1]s/runtimes/cvd-1 %[1]s/cvd start --daemon --report_anonymous_usage_stats=y"+
+		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
+	tests := []struct {
+		name string
+		req  apiv1.CreateCVDRequest
+		exp  string
+	}{
+		{
+			name: "android ci build default",
+			req: apiv1.CreateCVDRequest{
+				CVD: &apiv1.CVD{
+					BuildSource: &apiv1.BuildSource{
+						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{},
 					},
 				},
 			},
+			exp: fmt.Sprintf(goldenPrefixFmt,
+				fmt.Sprintf("%s_%s__cvd", fakeLatesGreenBuildID, mainBuildDefaultTarget)),
+		},
+		{
+			name: "android ci build specific main build",
+			req: apiv1.CreateCVDRequest{
+				CVD: &apiv1.CVD{
+					BuildSource: &apiv1.BuildSource{
+						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+							MainBuild: &apiv1.AndroidCIBuild{
+								BuildID: "1",
+								Target:  "foo",
+							},
+						},
+					},
+				},
+			},
+			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd"),
+		},
+		{
+			name: "android ci build specific kernel build",
+			req: apiv1.CreateCVDRequest{
+				CVD: &apiv1.CVD{
+					BuildSource: &apiv1.BuildSource{
+						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+							MainBuild: &apiv1.AndroidCIBuild{
+								BuildID: "1",
+								Target:  "foo",
+							},
+							KernelBuild: &apiv1.AndroidCIBuild{
+								BuildID: "137",
+								Target:  "bar",
+							},
+						},
+					},
+				},
+			},
+			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd") +
+				" --kernel_path=" + dir + "/artifacts/137_bar__kernel/bzImage",
+		},
+		{
+			name: "android ci build specific bootloader build",
+			req: apiv1.CreateCVDRequest{
+				CVD: &apiv1.CVD{
+					BuildSource: &apiv1.BuildSource{
+						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+							MainBuild: &apiv1.AndroidCIBuild{
+								BuildID: "1",
+								Target:  "foo",
+							},
+							BootloaderBuild: &apiv1.AndroidCIBuild{
+								BuildID: "137",
+								Target:  "bar",
+							},
+						},
+					},
+				},
+			},
+			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd") +
+				" --bootloader=" + dir + "/artifacts/137_bar__bootloader/u-boot.rom",
 		},
 	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var usedCmdName string
+			var usedCmdArgs []string
+			execContext := func(name string, args ...string) *exec.Cmd {
+				if contains(args, "start") {
+					usedCmdName = name
+					usedCmdArgs = args
+				}
+				return exec.Command("true")
+			}
+			cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
+			paths := IMPaths{
+				CVDBin:           dir + "/cvd",
+				ArtifactsRootDir: dir + "/artifacts",
+				RuntimesRootDir:  dir + "/runtimes",
+			}
+			om := NewMapOM()
+			im := newCVDToolIm(execContext, cvdBinAB, paths, om)
 
-	op, _ := im.CreateCVD(r)
+			op, err := im.CreateCVD(tc.req)
 
-	om.Wait(op.Name, 1*time.Second)
-	wantFmt := "sudo -u _cvd-executor ANDROID_HOST_OUT=/tmp/%[1]s/artifacts/1_foo__cvd" +
-		" HOME=/tmp/%[1]s/runtimes/cvd-1 /tmp/%[1]s/cvd start --daemon --report_anonymous_usage_stats=y" +
-		" --base_instance_num=1 --system_image_dir=/tmp/%[1]s/artifacts/1_foo__cvd" +
-		" --kernel_path=/tmp/%[1]s/artifacts/137_bar__kernel/bzImage"
-	want := fmt.Sprintf(wantFmt, path.Base(dir))
-	got := usedCmdName + " " + strings.Join(usedCmdArgs, " ")
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("command line mismatch (-want +got):\n%s", diff)
+			if err != nil {
+				t.Fatal(err)
+			}
+			om.Wait(op.Name, 1*time.Second)
+			got := usedCmdName + " " + strings.Join(usedCmdArgs, " ")
+			if diff := cmp.Diff(tc.exp, got); diff != "" {
+				t.Errorf("command line mismatch (-want +got):\n%s", diff)
+			}
+			// Cleanup
+			os.RemoveAll(dir)
+			os.MkdirAll(dir, 0774)
+		})
 	}
 }
 
@@ -335,48 +363,6 @@ func TestCreateCVDSucceeds(t *testing.T) {
 
 	res, _ := om.Wait(op.Name, 1*time.Second)
 	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
-	if diff := cmp.Diff(want, res.Value); diff != "" {
-		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func TestCreateCVDLatesGreenSucceeds(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	execContext := execCtxAlwaysSucceeds
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
-	}
-	om := NewMapOM()
-	opts := CVDToolInstanceManagerOpts{
-		ExecContext:      execContext,
-		CVDBinAB:         cvdBinAB,
-		Paths:            paths,
-		OperationManager: om,
-		HostValidator:    &AlwaysSucceedsValidator{},
-		BuildAPI:         &fakeBuildAPI{},
-	}
-	im := NewCVDToolInstanceManager(&opts)
-	r := apiv1.CreateCVDRequest{
-		CVD: &apiv1.CVD{
-			BuildSource: &apiv1.BuildSource{
-				AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{},
-			},
-		},
-	}
-
-	op, _ := im.CreateCVD(r)
-
-	res, _ := om.Wait(op.Name, 1*time.Second)
-	want := &apiv1.CVD{
-		Name: "cvd-1",
-		BuildSource: &apiv1.BuildSource{
-			AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{},
-		},
-	}
 	if diff := cmp.Diff(want, res.Value); diff != "" {
 		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
 	}

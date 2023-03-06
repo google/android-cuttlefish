@@ -235,7 +235,9 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 
 func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	var mainBuild, kernelBuild *apiv1.AndroidCIBuild = defaultMainBuild(), nil
+	var mainBuild *apiv1.AndroidCIBuild = defaultMainBuild()
+	var kernelBuild *apiv1.AndroidCIBuild
+	var bootloaderBuild *apiv1.AndroidCIBuild
 	if req.CVD.BuildSource != nil && req.CVD.BuildSource.AndroidCIBuildSource != nil {
 		buildSource := req.CVD.BuildSource.AndroidCIBuildSource
 		if buildSource.MainBuild != nil {
@@ -245,13 +247,17 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 			kernelBuild = &apiv1.AndroidCIBuild{}
 			*kernelBuild = *buildSource.KernelBuild
 		}
+		if buildSource.BootloaderBuild != nil {
+			bootloaderBuild = &apiv1.AndroidCIBuild{}
+			*bootloaderBuild = *buildSource.BootloaderBuild
+		}
 	}
-	if err := updateBuildsWithLatestGreenBuildID(m.buildAPI, []*apiv1.AndroidCIBuild{mainBuild, kernelBuild}); err != nil {
+	if err := updateBuildsWithLatestGreenBuildID(
+		m.buildAPI, []*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild}); err != nil {
 		return nil, err
 	}
-	var mainBuildDir, kernelBuildDir string
-	var mainBuildErr, kernelBuildErr error
-	errors := []error{mainBuildErr, kernelBuildErr}
+	var mainBuildDir, kernelBuildDir, bootloaderBuildDir string
+	var mainBuildErr, kernelBuildErr, bootloaderBuildErr error
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -262,15 +268,23 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			kernelBuildDir, kernelBuildErr =
-				m.artifactsMngr.DownloadKernelBundle(kernelBuild.BuildID, kernelBuild.Target)
+			kernelBuildDir, kernelBuildErr = m.artifactsMngr.DownloadKernelBundle(
+				kernelBuild.BuildID, kernelBuild.Target)
+		}()
+	}
+	if bootloaderBuild != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			bootloaderBuildDir, bootloaderBuildErr = m.artifactsMngr.DownloadBootloaderBundle(
+				bootloaderBuild.BuildID, bootloaderBuild.Target)
 		}()
 	}
 	wg.Wait()
 	var merr error
-	for _, err := range errors {
+	for _, err := range []error{mainBuildErr, kernelBuildErr, bootloaderBuildErr} {
 		if err != nil {
-			merr = multierror.Append(merr, mainBuildErr)
+			merr = multierror.Append(merr, err)
 		}
 	}
 	if merr != nil {
@@ -287,6 +301,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 		MainArtifactsDir: mainBuildDir,
 		RuntimeDir:       runtimeDir,
 		KernelDir:        kernelBuildDir,
+		BootloaderDir:    bootloaderBuildDir,
 	}
 	if err := m.startCVDHandler.Start(startParams); err != nil {
 		return nil, err
@@ -455,6 +470,20 @@ func (h *artifactsManager) DownloadKernelBundle(buildID, target string) (string,
 	return h.download(buildID, target, f)
 }
 
+func (h *artifactsManager) DownloadBootloaderBundle(buildID, target string) (string, error) {
+	f := func() (string, error) {
+		outDir := fmt.Sprintf("%s/%s_%s__bootloader", h.rootDir, buildID, target)
+		if err := createDir(outDir); err != nil {
+			return "", err
+		}
+		if err := h.downloadWithBuildAPI(outDir, buildID, target, []string{"u-boot.rom"}); err != nil {
+			return "", err
+		}
+		return outDir, nil
+	}
+	return h.download(buildID, target, f)
+}
+
 func (h *artifactsManager) download(buildID, target string, downloadFunc func() (string, error)) (string, error) {
 	entry := h.getMapEntry(buildID, target)
 	entry.mutex.Lock()
@@ -530,7 +559,10 @@ type startCVDParams struct {
 	InstanceNumber   uint32
 	MainArtifactsDir string
 	RuntimeDir       string
-	KernelDir        string
+	// OPTIONAL. If set, kernel relevant artifacts will be pulled from this dir.
+	KernelDir string
+	// OPTIONAL. If set, bootloader relevant artifacts will be pulled from this dir.
+	BootloaderDir string
 }
 
 func (h *startCVDHandler) Start(p startCVDParams) error {
@@ -546,6 +578,9 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 	}
 	if p.KernelDir != "" {
 		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
+	}
+	if p.BootloaderDir != "" {
+		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
 	}
 	err := cvdCmd.Run()
 	if err != nil {
