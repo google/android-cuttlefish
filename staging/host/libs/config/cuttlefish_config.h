@@ -778,7 +778,7 @@ bool HostSupportsQemuCli();
 // GPU modes
 extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeDrmVirgl;
-extern const char* const kGpuModeGfxStream;
+extern const char* const kGpuModeGfxstream;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeNone;
 
