@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <mutex>
-
 #include <fruit/fruit.h>
 
 #include "host/commands/cvd/instance_manager.h"
@@ -26,6 +24,6 @@
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-cvdFetchCommandComponent();
+CvdCrosVmComponent();
 
 }  // namespace cuttlefish
