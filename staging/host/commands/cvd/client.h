@@ -26,9 +26,11 @@
 #include <build/version.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/unix_sockets.h"
 #include "cvd_server.pb.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -62,6 +64,7 @@ class CvdClient {
     return response;
   }
   Result<std::string> HandleVersion(const std::string& host_tool_directory);
+  Result<cvd_common::Args> ValidSubcmdsList(const cvd_common::Envs& envs);
 
  private:
   std::optional<UnixMessageSocket> server_;
@@ -74,6 +77,7 @@ class CvdClient {
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
   Result<cvd::Version> GetServerVersion(const std::string& host_tool_directory);
 
+  Result<Json::Value> ListSubcommands(const cvd_common::Envs& envs);
   static cvd::Version GetClientVersion();
 };
 
