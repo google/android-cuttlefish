@@ -655,14 +655,6 @@ bool CuttlefishConfig::InstanceSpecific::enable_gpu_udmabuf() const {
   return (*Dictionary())[kEnableGpuUdmabuf].asBool();
 }
 
-static constexpr char kEnableGpuAngle[] = "enable_gpu_angle";
-void CuttlefishConfig::MutableInstanceSpecific::set_enable_gpu_angle(const bool enable_gpu_angle) {
-  (*Dictionary())[kEnableGpuAngle] = enable_gpu_angle;
-}
-bool CuttlefishConfig::InstanceSpecific::enable_gpu_angle() const {
-  return (*Dictionary())[kEnableGpuAngle].asBool();
-}
-
 static constexpr char kEnableAudio[] = "enable_audio";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
   (*Dictionary())[kEnableAudio] = enable;
