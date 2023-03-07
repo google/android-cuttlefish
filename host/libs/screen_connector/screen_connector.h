@@ -72,7 +72,7 @@ class ScreenConnector : public ScreenConnectorInfo,
     auto instance = config->ForDefaultInstance();
     ScreenConnector<ProcessedFrameType>* raw_ptr = nullptr;
     if (instance.gpu_mode() == cuttlefish::kGpuModeDrmVirgl ||
-        instance.gpu_mode() == cuttlefish::kGpuModeGfxStream ||
+        instance.gpu_mode() == cuttlefish::kGpuModeGfxstream ||
         instance.gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
       raw_ptr = new ScreenConnector<ProcessedFrameType>(
           std::make_unique<WaylandScreenConnector>(frames_fd), host_mode_ctrl);

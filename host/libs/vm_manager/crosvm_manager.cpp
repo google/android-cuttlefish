@@ -88,7 +88,7 @@ CrosvmManager::ConfigureGraphics(
         // No "hardware" Vulkan support, yet
         {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
     };
-  } else if (instance.gpu_mode() == kGpuModeGfxStream) {
+  } else if (instance.gpu_mode() == kGpuModeGfxstream) {
     std::string gles_impl = instance.enable_gpu_angle() ? "angle" : "emulation";
     std::string gltransport = (instance.guest_android_version() == "11.0.0")
                                   ? "virtio-gpu-pipe"
@@ -193,7 +193,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   } else if (gpu_mode == kGpuModeDrmVirgl) {
     crosvm_cmd.Cmd().AddParameter("--gpu=backend=virglrenderer",
                                   gpu_common_3d_string);
-  } else if (gpu_mode == kGpuModeGfxStream) {
+  } else if (gpu_mode == kGpuModeGfxstream) {
     crosvm_cmd.Cmd().AddParameter("--gpu=backend=gfxstream,gles31=true",
                                   gpu_common_3d_string, gpu_angle_string);
   }
