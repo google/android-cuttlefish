@@ -14,15 +14,14 @@
 # limitations under the License.
 #
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, device/google/cuttlefish/shared/minidroid/device.mk)
 
-$(call inherit-product, device/google/cuttlefish/vsoc_arm64/bootloader.mk)
+$(call inherit-product, device/google/cuttlefish/vsoc_arm_minidroid/bootloader.mk)
 
-PRODUCT_NAME := aosp_cf_arm64_minidroid
-PRODUCT_DEVICE := vsoc_arm64_minidroid
+PRODUCT_NAME := aosp_cf_arm_minidroid
+PRODUCT_DEVICE := vsoc_arm_minidroid
 PRODUCT_MANUFACTURER := Google
-PRODUCT_MODEL := Cuttlefish arm64 minidroid
+PRODUCT_MODEL := Cuttlefish arm minidroid
 
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
