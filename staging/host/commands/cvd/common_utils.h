@@ -20,9 +20,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "cvd_server.pb.h"
-
 #include "common/libs/utils/result.h"
+#include "cvd_server.pb.h"
 
 namespace cuttlefish {
 
