@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
--include device/google/cuttlefish/shared/virgl/BoardConfig.mk
-
 #
 # All components inherited here go to system image (same as GSI system)
 #
