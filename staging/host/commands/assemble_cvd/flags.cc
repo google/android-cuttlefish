@@ -137,12 +137,9 @@ DEFINE_vec(hwcomposer, CF_DEFAULTS_HWCOMPOSER,
 DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
               "Path to the GPU capture binary to use when capturing GPU traces"
               "(ngfx, renderdoc, etc)");
-DEFINE_vec(enable_gpu_udmabuf, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_UDMABUF),
-            "Use the udmabuf driver for zero-copy virtio-gpu");
-DEFINE_vec(enable_gpu_angle,
-           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_ANGLE),
-           "Use ANGLE to provide GLES implementation (always true for"
-           " guest_swiftshader");
+DEFINE_vec(enable_gpu_udmabuf,
+           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_UDMABUF),
+           "Use the udmabuf driver for zero-copy virtio-gpu");
 
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
             "Acquire static resources from the resource allocator daemon.");
@@ -956,10 +953,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       restart_subprocesses));
   std::vector<std::string> hwcomposer_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(hwcomposer));
-  std::vector<bool> enable_gpu_udmabuf_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_gpu_udmabuf));
-  std::vector<bool> enable_gpu_angle_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_gpu_angle));
+  std::vector<bool> enable_gpu_udmabuf_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_gpu_udmabuf));
   std::vector<bool> smt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(smt));
   std::vector<std::string> crosvm_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_binary));
@@ -1188,8 +1183,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // gpu related settings
     auto gpu_mode = gpu_mode_vec[instance_index];
     if (gpu_mode != kGpuModeAuto && gpu_mode != kGpuModeDrmVirgl &&
-        gpu_mode != kGpuModeGfxstream && gpu_mode != kGpuModeGuestSwiftshader &&
-        gpu_mode != kGpuModeNone) {
+        gpu_mode != kGpuModeGfxstream &&
+        gpu_mode != kGpuModeGfxstreamGuestAngle &&
+        gpu_mode != kGpuModeGuestSwiftshader && gpu_mode != kGpuModeNone) {
       LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode;
     }
     if (gpu_mode == kGpuModeAuto) {
@@ -1209,7 +1205,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
             "--gpu_mode=guest_swiftshader.";
         gpu_mode = kGpuModeGuestSwiftshader;
       }
-    } else if (gpu_mode == kGpuModeGfxstream || gpu_mode == kGpuModeDrmVirgl) {
+    } else if (gpu_mode == kGpuModeGfxstream ||
+               gpu_mode == kGpuModeGfxstreamGuestAngle ||
+               gpu_mode == kGpuModeDrmVirgl) {
       if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
         LOG(ERROR) << "--gpu_mode=" << gpu_mode
                    << " was requested but the prerequisites for accelerated "
@@ -1230,7 +1228,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
     if (!gpu_capture_binary_vec[instance_index].empty()) {
-      CF_EXPECT(gpu_mode == kGpuModeGfxstream,
+      CF_EXPECT(gpu_mode == kGpuModeGfxstream ||
+                    gpu_mode == kGpuModeGfxstreamGuestAngle,
                 "GPU capture only supported with --gpu_mode=gfxstream");
 
       // GPU capture runs in a detached mode where the "launcher" process
@@ -1258,7 +1257,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_enable_gpu_udmabuf(enable_gpu_udmabuf_vec[instance_index]);
-    instance.set_enable_gpu_angle(enable_gpu_angle_vec[instance_index]);
 
     // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
     // then set_enable_sandbox later.

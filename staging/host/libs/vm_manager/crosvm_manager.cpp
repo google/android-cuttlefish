@@ -88,12 +88,14 @@ CrosvmManager::ConfigureGraphics(
         // No "hardware" Vulkan support, yet
         {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
     };
-  } else if (instance.gpu_mode() == kGpuModeGfxstream) {
-    std::string gles_impl = instance.enable_gpu_angle() ? "angle" : "emulation";
-    std::string gltransport = (instance.guest_android_version() == "11.0.0")
-                                  ? "virtio-gpu-pipe"
-                                  : "virtio-gpu-asg";
-    std::string gles_version = instance.enable_gpu_angle() ? "196608" : "196609";
+  } else if (instance.gpu_mode() == kGpuModeGfxstream ||
+             instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+    const bool uses_angle = instance.gpu_mode() == kGpuModeGfxstreamGuestAngle;
+    const std::string gles_impl = uses_angle ? "angle" : "emulation";
+    const std::string gles_version = uses_angle ? "196608" : "196609";
+    const std::string gltransport =
+        (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
+                                                       : "virtio-gpu-asg";
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -178,7 +180,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   const auto gpu_mode = instance.gpu_mode();
 
   const std::string gpu_angle_string =
-      instance.enable_gpu_angle() ? ",angle=true" : "";
+      gpu_mode == kGpuModeGfxstreamGuestAngle ? ",angle=true" : "";
   // 256MB so it is small enough for a 32-bit kernel.
   const std::string gpu_pci_bar_size = ",pci-bar-size=268435456";
   const std::string gpu_udmabuf_string =
@@ -193,7 +195,8 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   } else if (gpu_mode == kGpuModeDrmVirgl) {
     crosvm_cmd.Cmd().AddParameter("--gpu=backend=virglrenderer",
                                   gpu_common_3d_string);
-  } else if (gpu_mode == kGpuModeGfxstream) {
+  } else if (gpu_mode == kGpuModeGfxstream ||
+             gpu_mode == kGpuModeGfxstreamGuestAngle) {
     crosvm_cmd.Cmd().AddParameter("--gpu=backend=gfxstream,gles31=true",
                                   gpu_common_3d_string, gpu_angle_string);
   }
