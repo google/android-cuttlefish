@@ -87,6 +87,7 @@ const char* kInstances = "instances";
 const char* const kGpuModeAuto = "auto";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
+const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeNone = "none";
 
