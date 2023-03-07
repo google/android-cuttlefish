@@ -24,6 +24,8 @@
 #include <android-base/file.h>
 #include <google/protobuf/text_format.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
@@ -330,6 +332,46 @@ Result<std::string> CvdClient::HandleVersion(
             "converting client version to string failed");
   result << "Client version:" << std::endl << std::endl << output << std::endl;
   return {result.str()};
+}
+
+Result<Json::Value> CvdClient::ListSubcommands(const cvd_common::Envs& envs) {
+  cvd_common::Args args{"cvd", "cmd-list"};
+  SharedFD read_pipe, write_pipe;
+  CF_EXPECT(cuttlefish::SharedFD::Pipe(&read_pipe, &write_pipe),
+            "Unable to create shutdown pipe: " << strerror(errno));
+  OverrideFd new_control_fd{.stdout_override_fd = write_pipe};
+  CF_EXPECT(
+      HandleCommand(args, envs, std::vector<std::string>{}, new_control_fd));
+
+  write_pipe->Close();
+  const int kChunkSize = 512;
+  char buf[kChunkSize + 1] = {0};
+  std::stringstream ss;
+  do {
+    auto n_read = ReadExact(read_pipe, buf, kChunkSize);
+    CF_EXPECT(n_read >= 0 && (n_read <= kChunkSize));
+    if (n_read == 0) {
+      break;
+    }
+    buf[n_read] = 0;  // null-terminate the C-style string
+    ss << buf;
+    if (n_read < sizeof(buf) - 1) {
+      break;
+    }
+  } while (true);
+  auto json_output = CF_EXPECT(ParseJson(ss.str()));
+  return json_output;
+}
+
+Result<cvd_common::Args> CvdClient::ValidSubcmdsList(
+    const cvd_common::Envs& envs) {
+  auto valid_subcmd_json = CF_EXPECT(ListSubcommands(envs));
+  CF_EXPECT(valid_subcmd_json.isMember("subcmd"),
+            "Server returned the list of subcommands in Json but it is missing "
+                << " \"subcmd\" field");
+  std::string valid_subcmd_string = valid_subcmd_json["subcmd"].asString();
+  auto valid_subcmds = android::base::Tokenize(valid_subcmd_string, ",");
+  return valid_subcmds;
 }
 
 }  // end of namespace cuttlefish
