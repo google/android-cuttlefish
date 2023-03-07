@@ -27,6 +27,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
 #include "host/commands/cvd/selector/instance_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
@@ -124,10 +125,30 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     crosvm_cmd << socket_file_path << std::endl;
     WriteAll(request.Err(), crosvm_cmd.str());
 
-    cvd::Response response;
-    response.mutable_command_response();
-    response.mutable_status()->set_code(cvd::Status::OK);
-    return response;
+    cvd_common::Args crosvm_args{crosvm_op};
+    crosvm_args.insert(crosvm_args.end(), subcmd_args.begin(),
+                       subcmd_args.end());
+    crosvm_args.push_back(socket_file_path);
+    envs["HOME"] = home;
+    envs[kAndroidHostOut] = android_host_out;
+    envs[kAndroidSoongHostOut] = android_host_out;
+    ConstructCommandParam construct_cmd_param{
+        .bin_path = crosvm_bin_path,
+        .home = home,
+        .args = crosvm_args,
+        .envs = envs,
+        .working_dir = request.Message().command_request().working_directory(),
+        .command_name = "crosvm",
+        .in = request.In(),
+        .out = request.Out(),
+        .err = request.Err()};
+    Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+    SubprocessOptions options;
+    CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+    interrupt_lock.unlock();
+
+    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
+    return ResponseFromSiginfo(infop);
   }
 
   Result<void> Interrupt() override {
