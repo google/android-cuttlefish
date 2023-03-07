@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 The Android Open Source Project
+# Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,7 @@
 # limitations under the License.
 #
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
-$(call inherit-product, device/google/cuttlefish/shared/minidroid/device.mk)
-
-$(call inherit-product, device/google/cuttlefish/vsoc_arm64/bootloader.mk)
-
-PRODUCT_NAME := aosp_cf_arm64_minidroid
-PRODUCT_DEVICE := vsoc_arm64_minidroid
-PRODUCT_MANUFACTURER := Google
-PRODUCT_MODEL := Cuttlefish arm64 minidroid
-
-PRODUCT_VENDOR_PROPERTIES += \
-    ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
-    ro.soc.model=$(PRODUCT_DEVICE)
+TARGET_NO_BOOTLOADER := false
+# FIXME: Copying the QEMU bootloader for now, but this should be updated..
+BOARD_PREBUILT_BOOTLOADER := \
+    device/google/cuttlefish_prebuilts/bootloader/qemu_arm/u-boot.bin
