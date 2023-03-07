@@ -513,7 +513,6 @@ class CuttlefishConfig {
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
     bool enable_gpu_udmabuf() const;
-    bool enable_gpu_angle() const;
 
     std::string hwcomposer() const;
 
@@ -682,7 +681,6 @@ class CuttlefishConfig {
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
     void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
-    void set_enable_gpu_angle(const bool enable_gpu_angle);
 
     void set_hwcomposer(const std::string&);
 
@@ -779,6 +777,7 @@ bool HostSupportsQemuCli();
 extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxstream;
+extern const char* const kGpuModeGfxstreamGuestAngle;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeNone;
 
