@@ -26,6 +26,7 @@ enum class RenderingMode {
   kNone,
   kGuestSwiftShader,
   kGfxstream,
+  kGfxstreamGuestAngle,
   kVirglRenderer,
 };
 Result<RenderingMode> GetRenderingMode(const std::string& mode);

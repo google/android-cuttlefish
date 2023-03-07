@@ -240,9 +240,14 @@ int main(int argc, char** argv) {
   if (instance.gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
   } else if (instance.gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
-    user_friendly_gpu_mode = "VirglRenderer (Accelerated Host GPU Rendering)";
+    user_friendly_gpu_mode =
+        "VirglRenderer (Accelerated Rendering using Host OpenGL)";
   } else if (instance.gpu_mode() == cuttlefish::kGpuModeGfxstream) {
-    user_friendly_gpu_mode = "Gfxstream (Accelerated Host GPU Rendering)";
+    user_friendly_gpu_mode =
+        "Gfxstream (Accelerated Rendering using Host OpenGL and Vulkan)";
+  } else if (instance.gpu_mode() == cuttlefish::kGpuModeGfxstreamGuestAngle) {
+    user_friendly_gpu_mode =
+        "Gfxstream (Accelerated Rendering using Host Vulkan)";
   } else {
     user_friendly_gpu_mode = instance.gpu_mode();
   }
