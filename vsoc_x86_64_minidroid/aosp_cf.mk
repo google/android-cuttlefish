@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, device/google/cuttlefish/shared/minidroid/device.mk)
 
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
