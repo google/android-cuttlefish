@@ -25,6 +25,15 @@
 
 namespace cuttlefish {
 
+// utility struct for std::variant uses
+template <typename... Ts>
+struct Overload : Ts... {
+  using Ts::operator()...;
+};
+
+template <typename... Ts>
+Overload(Ts...) -> Overload<Ts...>;
+
 struct MakeRequestParam {
   std::vector<std::string> cmd_args;
   std::unordered_map<std::string, std::string> env;

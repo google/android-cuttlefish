@@ -24,6 +24,7 @@ cc_library_host_static {
         "arguments_separator.cpp",
         "creation_analyzer.cpp",
         "device_selector_utils.cpp",
+        "flag.cpp",
         "group_selector.cpp",
         "instance_database.cpp",
         "instance_database_impl.cpp",
