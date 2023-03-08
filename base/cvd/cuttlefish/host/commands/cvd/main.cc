@@ -146,8 +146,12 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
             "Unable to ensure cvd_server is running.");
   std::vector<std::string> client_internal_commands{"kill-server",
                                                     "server-kill", "reset"};
-  auto frontline_parser = CF_EXPECT(
-      FrontlineParser::Parse(client, client_internal_commands, all_args, env));
+  FrontlineParser::ParserParam param{
+      .server_supported_subcmds = CF_EXPECT(client.ValidSubcmdsList(env)),
+      .internal_cmds = client_internal_commands,
+      .all_args = all_args,
+  };
+  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(param));
   CF_EXPECT(frontline_parser != nullptr);
 
   // Special case for `cvd kill-server`, handled by directly
