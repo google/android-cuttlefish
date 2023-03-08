@@ -359,9 +359,15 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	buildSource := androidCISource("1", "foo")
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
 
-	op, _ := im.CreateCVD(r)
+	op, err := im.CreateCVD(r)
 
-	res, _ := om.Wait(op.Name, 1*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := om.Wait(op.Name, 1*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
 	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
 	if diff := cmp.Diff(want, res.Value); diff != "" {
 		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
