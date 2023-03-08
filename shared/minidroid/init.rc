@@ -56,7 +56,10 @@ on init
     restorecon /mnt/extra-apk
 
     # Wait for apexd to finish activating APEXes before starting more processes.
-    wait_for_prop apexd.status activated
+    # Note that minidroid starts apexd in VM mode in which apexd doesn't wait for init after setting
+    # apexd.status to activated, but immediately transitions to ready. Therefore, it's not safe to
+    # wait for the activated status, by the time this line is reached it may be already be ready.
+    wait_for_prop apexd.status ready
     perform_apex_config
 
     # Notify to microdroid_manager that perform_apex_config is done.
