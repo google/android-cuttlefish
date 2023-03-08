@@ -454,7 +454,7 @@ bool WriteEnd(SharedFD out, const GptEnd& end) {
 void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
   for (const auto& partition : partitions) {
     if (!ConvertToRawImage(partition.image_file_path)) {
-      LOG(INFO) << "Failed to desparse " << partition.image_file_path;
+      LOG(DEBUG) << "Failed to desparse " << partition.image_file_path;
     }
   }
 }
