@@ -34,8 +34,9 @@ DEFINE_int32(
     "How many seconds to wait for the launcher to respond to the status "
     "command. A value of zero means wait indefinitely.");
 
-DEFINE_int32(boot_timeout, 360, "How many seconds to wait for the device to "
-                                 "reboot.");
+DEFINE_int32(boot_timeout, 500,
+             "How many seconds to wait for the device to "
+             "reboot.");
 
 namespace cuttlefish {
 namespace {
