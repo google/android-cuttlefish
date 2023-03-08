@@ -64,9 +64,8 @@ std::unordered_map<std::string, std::string> EnvVectorToMap(char** envp) {
   return env_map;
 }
 
-bool IsServerModeExpected(const SharedFD& internal_server_fd,
-                          const std::string& exec_file) {
-  return internal_server_fd->IsOpen() || exec_file == kServerExecPath;
+bool IsServerModeExpected(const std::string& exec_file) {
+  return exec_file == kServerExecPath;
 }
 
 Result<void> RunServer(const SharedFD& internal_server_fd,
@@ -86,7 +85,7 @@ struct ParseResult {
   SharedFD carryover_client_fd_;
 };
 
-Result<ParseResult> Parse(std::vector<std::string>& all_args) {
+Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   std::vector<Flag> flags;
   SharedFD internal_server_fd;
   flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
@@ -112,10 +111,28 @@ Result<void> HandleReset(CvdClient& client,
   return {};
 }
 
+Result<void> HandleClientCommands(
+    CvdClient& client, std::unique_ptr<FrontlineParser>& client_parser,
+    const cvd_common::Envs& envs) {
+  // Special case for `cvd kill-server`, handled by directly
+  // stopping the cvd_server.
+  std::vector<std::string> kill_server_cmds{"kill-server", "server-kill"};
+  std::string subcmd = client_parser->SubCmd().value_or("");
+  if (Contains(kill_server_cmds, subcmd)) {
+    CF_EXPECT(client.StopCvdServer(/*clear=*/true));
+    return {};
+  }
+  CF_EXPECT_EQ(subcmd, "reset", "unsupported subcmd: " << subcmd);
+  CF_EXPECT(HandleReset(client, envs));
+  return {};
+}
+
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
 
   cvd_common::Args all_args = ArgsToVec(argc, argv);
+  CF_EXPECT(!all_args.empty());
+
   auto env = EnvVectorToMap(envp);
   const auto host_tool_dir =
       android::base::Dirname(android::base::GetExecutableDirectory());
@@ -124,17 +141,49 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     CF_EXPECT(FetchCvdMain(argc, argv));
     return {};
   }
-  CvdClient client;
 
+  CvdClient client;
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
     return client.HandleAcloud(all_args, env, host_tool_dir);
   }
 
-  auto [internal_server_fd, carryover_client_fd] = CF_EXPECT(Parse(all_args));
-
-  if (IsServerModeExpected(internal_server_fd, all_args[0])) {
+  if (IsServerModeExpected(all_args[0])) {
+    auto [internal_server_fd, carryover_client_fd] =
+        CF_EXPECT(ParseIfServer(all_args));
     return RunServer(internal_server_fd, carryover_client_fd);
+  }
+
+  std::vector<std::string> client_internal_commands{"kill-server",
+                                                    "server-kill", "reset"};
+  FrontlineParser::ParserParam client_param{
+      .server_supported_subcmds = std::vector<std::string>{},
+      .internal_cmds = client_internal_commands,
+      .all_args = all_args,
+  };
+  auto client_parser_result = FrontlineParser::Parse(client_param);
+  if (client_parser_result.ok()) {
+    auto client_parser = std::move(*client_parser_result);
+    CF_EXPECT(client_parser != nullptr);
+    if (!client_parser->Help() && client_parser->SubCmd()) {
+      HandleClientCommands(client, client_parser, env);
+      return {};
+    }
+    // Special case for --clean flag, used to clear any existing state.
+    if (client_parser->Clean()) {
+      std::cerr << "cvd invoked with --clean. Now, "
+                << "stopping the cvd_server before continuing.";
+      CF_EXPECT(client.StopCvdServer(/*clear=*/true));
+      CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
+                "Unable to ensure cvd_server is running.");
+    }
+    if (client_parser->Help()) {
+      // could be simply "cvd"
+      if (all_args.size() <= 1) {
+        all_args.push_back("help");
+      }
+      all_args[1] = "help";
+    }
   }
 
   /*
@@ -144,40 +193,16 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
    */
   CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
             "Unable to ensure cvd_server is running.");
-  std::vector<std::string> client_internal_commands{"kill-server",
-                                                    "server-kill", "reset"};
-  FrontlineParser::ParserParam param{
+  FrontlineParser::ParserParam server_param{
       .server_supported_subcmds = CF_EXPECT(client.ValidSubcmdsList(env)),
-      .internal_cmds = client_internal_commands,
+      .internal_cmds = std::vector<std::string>{},
       .all_args = all_args,
   };
-  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(param));
+  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(server_param));
   CF_EXPECT(frontline_parser != nullptr);
 
-  // Special case for `cvd kill-server`, handled by directly
-  // stopping the cvd_server.
-  std::vector<std::string> kill_server_cmds{"kill-server", "server-kill"};
-  std::string subcmd = frontline_parser->SubCmd().value_or("");
-  if (Contains(kill_server_cmds, subcmd)) {
-    CF_EXPECT(client.StopCvdServer(/*clear=*/true));
-    return {};
-  }
-
-  if (subcmd == "reset") {
-    CF_EXPECT(HandleReset(client, env));
-    return {};
-  }
-
-  // Special case for --clean flag, used to clear any existing state.
-  if (frontline_parser->Clean()) {
-    std::cerr << "cvd invoked with --clean. Now, "
-              << "stopping the cvd_server before continuing.";
-    CF_EXPECT(client.StopCvdServer(/*clear=*/true));
-    CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
-              "Unable to ensure cvd_server is running.");
-  }
-
   const auto prog_name = android::base::Basename(frontline_parser->ProgPath());
+  std::string subcmd = frontline_parser->SubCmd().value_or("");
   cvd_common::Args cmd_args{frontline_parser->ProgPath()};
   if (frontline_parser->Help()) {
     subcmd = "help";
