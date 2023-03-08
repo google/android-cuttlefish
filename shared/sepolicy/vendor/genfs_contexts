@@ -109,6 +109,10 @@ cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00, 0x1)
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
+# qemu (riscv64)
+cf_pci_block_device(/devices/platform/soc/30000000.pci/pci0000:00, 0xc, 11)
+cf_pci_gpu_device(/devices/platform/soc/30000000.pci/pci0000:00, 0x1)
+
 # common on all platforms / vm managers
 genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.1/rtc u:object_r:sysfs_rtc:s0
