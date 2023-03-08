@@ -515,14 +515,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.keystore.app_attest_key.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.keystore.app_attest_key.xml
 
 #
-# Dice HAL
-#
-ifneq ($(filter-out %_riscv64,$(TARGET_PRODUCT)),)
-PRODUCT_PACKAGES += \
-    android.hardware.security.dice-service.non-secure-software
-endif
-
-#
 # Power and PowerStats HALs
 #
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
