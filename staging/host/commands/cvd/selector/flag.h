@@ -41,8 +41,6 @@ namespace selector {
 template <typename T>
 class SelectorFlag {
  public:
-  using ValueType = T;
-
   SelectorFlag(const std::string& name) : name_(name) {}
 
   SelectorFlag(const std::string& name, const T& default_value)
@@ -91,38 +89,97 @@ class SelectorFlag {
     return *value_opt;
   }
 
+ private:
   const std::string name_;
   std::string help_msg_;
   std::optional<T> default_value_;
 };
 
+class SelectorFlagProxy {
+  friend class FlagCollection;
+
+ public:
+  template <typename T>
+  SelectorFlagProxy(SelectorFlag<T>&& flag) : flag_{std::move(flag)} {}
+
+  template <typename T>
+  const SelectorFlag<T>* GetFlag() const {
+    return std::get_if<SelectorFlag<T>>(&flag_);
+  }
+
+  template <typename T>
+  SelectorFlag<T>* GetFlag() {
+    return std::get_if<SelectorFlag<T>>(&flag_);
+  }
+
+  /*
+   * If the actual type of flag_ is not handled by SelectorFlagProxy, it is a
+   * developer error, and the Name() and HasDefaultValue() will returns
+   * CF_ERR
+   */
+  Result<std::string> Name() const;
+  Result<bool> HasDefaultValue() const;
+
+  template <typename T>
+  Result<T> DefaultValue() const {
+    const bool has_default_value = CF_EXPECT(HasDefaultValue());
+    CF_EXPECT(has_default_value == true);
+    const auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    CF_EXPECT(ptr != nullptr);
+    return ptr->DefaultValue();
+  }
+
+  // returns CF_ERR if parsing error,
+  // returns std::nullopt if parsing was okay but the flag wasn't given
+  template <typename T>
+  Result<void> FilterFlag(cvd_common::Args& args, std::optional<T>& output) {
+    output = std::nullopt;
+    auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    CF_EXPECT(ptr != nullptr);
+    output = CF_EXPECT(ptr->FilterFlag(args));
+    return {};
+  }
+
+  // Parses the arguments. If flag is given, returns the parsed value. If not,
+  // returns the default value if any. If no default value, it returns CF_ERR.
+  template <typename T>
+  Result<void> ParseFlag(cvd_common::Args& args, T& output) {
+    bool has_default_value = CF_EXPECT(HasDefaultValue());
+    CF_EXPECT(has_default_value == true);
+    auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    CF_EXPECT(ptr != nullptr);
+    output = CF_EXPECT(ptr->ParseFlag(args));
+    return {};
+  }
+
+ private:
+  std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,
+               SelectorFlag<std::string>>
+      flag_;
+};
+
 class FlagCollection {
  public:
-  using FlagType = std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,
-                                SelectorFlag<std::string>>;
-
   template <typename T>
   Result<void> EnrollFlag(SelectorFlag<T>&& flag) {
     CF_EXPECT(!Contains(name_flag_map_, flag.Name()),
               flag.Name() << " is already registered.");
-    name_flag_map_.emplace(flag.Name(), std::move(flag));
+    name_flag_map_.emplace(flag.Name(), SelectorFlagProxy(std::move(flag)));
     return {};
   }
 
-  template <typename T>
-  Result<SelectorFlag<T>> GetFlag(const std::string& name) const {
+  Result<SelectorFlagProxy> GetFlag(const std::string& name) const {
     const auto itr = name_flag_map_.find(name);
     CF_EXPECT(itr != name_flag_map_.end(),
               "Flag \"" << name << "\" is not found.");
-    const FlagType& flag_var = itr->second;
-    const auto* flag_ptr = std::get_if<SelectorFlag<T>>(&flag_var);
-    CF_EXPECT(flag_ptr != nullptr,
-              "The type of the requested flag \"" << name << "\" is wrong.");
-    return *flag_ptr;
+    const SelectorFlagProxy& flag_proxy = itr->second;
+    return flag_proxy;
   }
 
+  std::vector<SelectorFlagProxy> Flags() const;
+
  private:
-  std::unordered_map<std::string, FlagType> name_flag_map_;
+  std::unordered_map<std::string, SelectorFlagProxy> name_flag_map_;
 };
 
 }  // namespace selector
