@@ -29,7 +29,6 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
-#include <json/json.h>
 
 #include "cvd_server.pb.h"
 
@@ -48,6 +47,7 @@
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/logger.h"
+#include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/load_configs.h"
 #include "host/commands/cvd/server_command/operation_to_bins_map.h"
@@ -102,6 +102,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .bindInstance(server->build_api_)
       .bindInstance(server->host_tool_target_manager_)
       .install(AcloudCommandComponent)
+      .install(CvdCmdlistComponent)
       .install(CommandSequenceExecutorComponent)
       .install(cvdCommandComponent)
       .install(cvdGenericCommandComponent)
@@ -296,52 +297,6 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   return {};
 }
 
-static bool IsCmdListRequest(const RequestWithStdio& request) {
-  const auto& args = request.Message().command_request().args();
-  if (args.size() < 2) {
-    return false;
-  }
-  return (args[1] == "cmd-list");
-}
-
-/**
- * Returns the list of valid subcommands that cvd server can handle.
- *
- * The server is in the best position to list all the subcommands. This list
- * is, however, needed by the parser. For now, the parser is in the client
- * side, and is planned to be moved to the server side eventually. Until it
- * is done, we offer an undocumented (not present in the help message) subcmd
- * that is "subcmd-list."  This is the implementation.
- *
- * TODO(kwstephenkim): move the argument separator parser from the client to
- * the server side, and delete this function.
- *
- */
-static Result<cvd::Response> HandleCmdList(
-    const RequestWithStdio& request,
-    const std::vector<CvdServerHandler*>& handlers) {
-  std::unordered_set<std::string> subcmds;
-  for (const auto& handler : handlers) {
-    auto&& cmds_list = handler->CmdList();
-    for (const auto& cmd : cmds_list) {
-      subcmds.insert(cmd);
-    }
-  }
-  CF_EXPECT(!subcmds.empty());
-
-  cvd::Response response;
-  response.mutable_command_response();
-  response.mutable_status()->set_code(cvd::Status::OK);
-
-  // duplication removed
-  std::vector<std::string> subcmds_vec{subcmds.begin(), subcmds.end()};
-  const auto subcmds_str = android::base::Join(subcmds_vec, ",");
-  Json::Value subcmd_info;
-  subcmd_info["subcmd"] = subcmds_str;
-  WriteAll(request.Out(), subcmd_info.toStyledString());
-  return response;
-}
-
 Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
                                                SharedFD client) {
   fruit::Injector<> injector(RequestComponent, this);
@@ -351,10 +306,6 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio request,
   }
 
   auto possible_handlers = injector.getMultibindings<CvdServerHandler>();
-  if (IsCmdListRequest(request)) {
-    auto response = CF_EXPECT(HandleCmdList(request, possible_handlers));
-    return response;
-  }
 
   // Even if the interrupt callback outlives the request handler, it'll only
   // hold on to this struct which will be cleaned out when the request handler
