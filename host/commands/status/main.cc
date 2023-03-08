@@ -41,6 +41,7 @@ struct StatusFlags {
   std::string instance_name;
   bool print = false;
   bool all_instances = false;
+  bool help_xml = false;
 };
 
 Result<StatusFlags> GetFlagValues(int argc, char** argv) {
@@ -61,6 +62,7 @@ Result<StatusFlags> GetFlagValues(int argc, char** argv) {
       GflagsCompatFlag("all_instances", flag_values.all_instances)
           .Help("List all instances status and instance config information."));
   flags.emplace_back(HelpFlag(flags));
+  flags.emplace_back(HelpXmlFlag(flags, std::cout, flag_values.help_xml));
   flags.emplace_back(UnexpectedArgumentGuard());
 
   std::vector<std::string> args =
