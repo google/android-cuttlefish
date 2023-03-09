@@ -30,8 +30,8 @@ prebuilt_etc {
     installable: false,
 }
 
-apex_defaults {
-    name: "com.google.cf.wifi.defaults",
+apex {
+    name: "com.google.cf.wifi",
     manifest: "apex_manifest.json",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
@@ -42,28 +42,23 @@ apex_defaults {
     soc_specific: true,
     binaries: [
         "rename_netiface",
-        "setup_wifi",
         "wpa_supplicant_cf",
+        "setup_wifi",
+        "//device/generic/goldfish:mac80211_create_radios",
+        "hostapd_cf",
     ],
+    sh_binaries: ["init.wifi_apex"],
     prebuilts: [
+        "android.hardware.wifi.direct.prebuilt.xml",
+        "android.hardware.wifi.passpoint.prebuilt.xml",
         "android.hardware.wifi.prebuilt.xml",
         "com.google.cf.wifi.rc",
         "wpa_supplicant.conf.cf",
         "wpa_supplicant_overlay.conf.cf",
+        "p2p_supplicant.conf.cf",
     ],
-    // TODO(b/202992812): Use the vintf_fragment from the wpa_supplicant project.
-    vintf_fragments: ["com.google.cf.wifi.xml"],
-}
-
-apex {
-    name: "com.google.cf.wifi",
-    defaults: ["com.google.cf.wifi.defaults"],
-    prebuilts: [
-        "android.hardware.wifi.passpoint.prebuilt.xml",
+    vintf_fragments: [
+        ":android.hardware.wifi.supplicant.xml",
+        ":android.hardware.wifi.hostapd.xml",
     ],
-}
-
-apex {
-    name: "com.google.cf.wifi.no-passpoint",
-    defaults: ["com.google.cf.wifi.defaults"],
 }
