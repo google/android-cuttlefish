@@ -50,7 +50,6 @@ static constexpr char kCvdMarkEnv[] = "_STARTED_BY_CVD_SERVER_";
 
 constexpr char kServerExecPath[] = "/proc/self/exe";
 
-constexpr char kStatusBin[] = "cvd_internal_status";
 // The name of environment variable that points to the host out directory
 constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
 // kAndroidHostOut for old branches

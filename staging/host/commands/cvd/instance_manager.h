@@ -27,10 +27,10 @@
 
 #include <fruit/fruit.h>
 
-#include "cvd_server.pb.h"
-
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/creation_analyzer.h"
@@ -85,6 +85,12 @@ class InstanceManager {
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,
                                    const SharedFD& err);
+  struct StatusCommandOutput {
+    std::string stderr_msg;
+    Json::Value stdout_json;
+  };
+  Result<StatusCommandOutput> IssueStatusCommand(
+      const selector::LocalInstanceGroup& group, const SharedFD& err);
   Result<void> IssueStopCommand(const SharedFD& out, const SharedFD& err,
                                 const std::string& config_file_path,
                                 const selector::LocalInstanceGroup& group);
