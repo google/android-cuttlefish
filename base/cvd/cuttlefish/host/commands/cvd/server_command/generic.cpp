@@ -123,8 +123,24 @@ CvdGenericCommandHandler::CvdGenericCommandHandler(
       command_to_binary_map_{
           {"host_bugreport", kHostBugreportBin},
           {"cvd_host_bugreport", kHostBugreportBin},
-          {"status", kStatusBin},
-          {"cvd_status", kStatusBin},
+          {"status",
+           [this](
+               const std::string& host_artifacts_path) -> Result<std::string> {
+             auto stat_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+                 .artifacts_path = host_artifacts_path,
+                 .op = "status",
+             }));
+             return stat_bin;
+           }},
+          {"cvd_status",
+           [this](
+               const std::string& host_artifacts_path) -> Result<std::string> {
+             auto stat_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+                 .artifacts_path = host_artifacts_path,
+                 .op = "status",
+             }));
+             return stat_bin;
+           }},
           {"stop",
            [this](
                const std::string& host_artifacts_path) -> Result<std::string> {
