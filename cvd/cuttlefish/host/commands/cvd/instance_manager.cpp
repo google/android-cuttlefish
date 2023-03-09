@@ -31,7 +31,6 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
@@ -178,29 +177,70 @@ InstanceManager::GetInstanceGroupInfo(
   return {info};
 }
 
-struct StatusCommandOutput {
-  std::string stderr_msg;
-  Json::Value stdout_json;
+template <typename... Args>
+static Command GetCommand(const std::string& prog_path, Args&&... args) {
+  Command command(prog_path);
+  (command.AddParameter(args), ...);
+  return command;
+}
+
+struct ExecCommandResult {
+  std::string stdout_buf;
+  std::string stderr_buf;
 };
 
-static Result<StatusCommandOutput> IssueStatusCommand(
-    const std::string& config_file_path,
-    const selector::LocalInstanceGroup& group) {
-  Command command(group.HostArtifactsPath() + "/bin/" + kStatusBin);
-  command.AddParameter("--print");
-  command.AddParameter("--all_instances");
-  command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
-  StatusCommandOutput output;
-  std::string stdout_buf;
+static Result<ExecCommandResult> ExecCommand(Command&& command) {
+  ExecCommandResult command_result;
   CF_EXPECT_EQ(RunWithManagedStdio(std::move(command), /* stdin */ nullptr,
-                                   std::addressof(stdout_buf),
-                                   std::addressof(output.stderr_msg)),
+                                   std::addressof(command_result.stdout_buf),
+                                   std::addressof(command_result.stderr_buf)),
                0);
-  if (stdout_buf.empty()) {
-    Json::Reader().parse("{}", output.stdout_json);
+  return command_result;
+}
+
+Result<InstanceManager::StatusCommandOutput>
+InstanceManager::IssueStatusCommand(const selector::LocalInstanceGroup& group,
+                                    const SharedFD& err) {
+  std::string not_supported_version_msg = " does not comply with cvd fleet.\n";
+  const auto host_android_out = group.HostArtifactsPath();
+  auto status_bin = CF_EXPECT(host_tool_target_manager_.ExecBaseName({
+      .artifacts_path = host_android_out,
+      .op = "status",
+  }));
+  const auto prog_path = host_android_out + "/bin/" + status_bin;
+  Command with_args = GetCommand(prog_path, "--all_instances", "--print");
+  with_args.SetEnvironment({ConcatToString("HOME=", group.HomeDir())});
+  auto command_result = ExecCommand(std::move(with_args));
+  if (command_result.ok()) {
+    StatusCommandOutput output;
+    if (command_result->stdout_buf.empty()) {
+      WriteAll(err, ConcatToString(group.GroupName(), "-*",
+                                   not_supported_version_msg));
+      Json::Reader().parse("{}", output.stdout_json);
+      return output;
+    }
+    output.stdout_json = CF_EXPECT(ParseJson(command_result->stdout_buf));
     return output;
   }
-  output.stdout_json = CF_EXPECT(ParseJson(stdout_buf));
+  StatusCommandOutput output;
+  int index = 0;
+  for (const auto& instance_ref : CF_EXPECT(group.FindAllInstances())) {
+    const auto id = instance_ref.Get().InstanceId();
+    Command without_args = GetCommand(prog_path);
+    std::vector<std::string> new_envs{
+        ConcatToString("HOME=", group.HomeDir()),
+        ConcatToString(kCuttlefishInstanceEnvVarName, "=", std::to_string(id))};
+    without_args.SetEnvironment(new_envs);
+    auto second_command_result =
+        CF_EXPECT(ExecCommand(std::move(without_args)));
+    if (second_command_result.stdout_buf.empty()) {
+      WriteAll(err,
+               instance_ref.Get().DeviceName() + not_supported_version_msg);
+      second_command_result.stdout_buf.append("{}");
+    }
+    output.stdout_json[index] =
+        CF_EXPECT(ParseJson(second_command_result.stdout_buf));
+  }
   return output;
 }
 
@@ -217,25 +257,17 @@ Result<cvd::Status> InstanceManager::CvdFleetImpl(const uid_t uid,
 
   for (const auto& group : instance_groups) {
     CF_EXPECT(group != nullptr);
-    auto config_path = group->GetCuttlefishConfigPath();
-    if (config_path.ok()) {
-      auto result = IssueStatusCommand(*config_path, *group);
-      if (!result.ok()) {
-        WriteAll(err, "      (unknown instance status error)");
-      } else {
-        const auto [stderr_msg, stdout_json] = *result;
-        WriteAll(err, stderr_msg);
-        // TODO(kwstephenkim): build a data structure that also includes
-        // selector-related information, etc.
-        WriteAll(out, stdout_json.toStyledString());
-      }
-      // move on
+    auto result = IssueStatusCommand(*group, err);
+    if (!result.ok()) {
+      WriteAll(err, "      (unknown instance status error)");
     } else {
-      std::stringstream error_msg_stream;
-      error_msg_stream << "The config file for \"group\" " << group->GroupName()
-                       << " does not exist.\n";
-      WriteAll(err, error_msg_stream.str());
+      const auto [stderr_msg, stdout_json] = *result;
+      WriteAll(err, stderr_msg);
+      // TODO(kwstephenkim): build a data structure that also includes
+      // selector-related information, etc.
+      WriteAll(out, stdout_json.toStyledString());
     }
+    // move on
     if (group == *instance_groups.crbegin()) {
       continue;
     }
