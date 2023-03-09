@@ -312,7 +312,6 @@ BOARD_BOOTCONFIG += \
     kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size=16384
 
 BOARD_BOOTCONFIG += \
-    androidboot.vendor.apex.com.android.wifi.hal=com.google.cf.wifi_hwsim \
     androidboot.vendor.apex.com.google.emulated.camera.provider.hal=com.google.emulated.camera.provider.hal \
 
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
