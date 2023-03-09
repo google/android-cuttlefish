@@ -8,7 +8,7 @@ declare class DisplayInfo {
   height: number;
 }
 
-declare class DeviceDisplays {
+declare class DeviceDisplaysMessageImpl {
   device_id: string;
   rotation: number;
   displays: DisplayInfo[];

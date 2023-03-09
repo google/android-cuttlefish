@@ -92,6 +92,56 @@ class Connector {
   }
 }
 
+// Returns real implementation for ParentController that is implemented using
+// window.postMessage.
+export function createParentController() {
+  return new PostMsgParentController();
+}
+
+// ParentController object provides methods for sending information from device
+// UI to operator UI. This class is just an interface and real implementation is
+// at the operator side. This class shouldn't be instantiated directly.
+class ParentController {
+  constructor() {
+    if (this.constructor === DeviceDisplays) {
+      throw new Error('ParentController is an abstract class');
+    }
+  }
+
+  // Create and return a message object that contains display information of
+  // device. Created object can be sent to operator UI using send() method.
+  // rotation argument is device's physycan rotation so it will be commonly
+  // applied to all displays.
+  createDeviceDisplaysMessage(rotation) {
+    throw 'Not implemented';
+  }
+}
+
+// This class represents displays information for a device. This message is
+// intended to be sent to operator UI to determine panel size of device UI.
+// This is an abstract class and should not be instantiated directly. This
+// message is created using createDeviceDisplaysMessage method of
+// ParentController. Real implementation of this class is at operator side.
+export class DeviceDisplaysMessage {
+  constructor(parentController, rotation) {
+    if (this.constructor === DeviceDisplaysMessage) {
+      throw new Error('DeviceDisplaysMessage is an abstract class');
+    }
+  }
+
+  // Add a display information to deviceDisplays message.
+  addDisplay(display_id, width, height) {
+    throw 'Not implemented'
+  }
+
+  // Send DeviceDisplaysMessage created using createDeviceDisplaysMessage to
+  // operator UI. If operator UI does not exist (in the case device web page
+  // is opened directly), the message will just be ignored.
+  send() {
+    throw 'Not implemented'
+  }
+}
+
 // End of Server Connector Interface.
 
 // The following code is internal and shouldn't be accessed outside this file.
@@ -196,7 +246,7 @@ class PollingConnector extends Connector {
   }
 }
 
-class DisplayInfo {
+export class DisplayInfo {
   display_id = '';
   width = 0;
   height = 0;
@@ -208,18 +258,25 @@ class DisplayInfo {
   }
 }
 
-class DeviceDisplays {
+export class DeviceDisplaysMessageImpl {
   device_id = '';
   rotation = 0;
   displays = [];
+  parentController = null;
 
-  constructor(rotation) {
+  constructor(parentController, rotation) {
     this.device_id = deviceId();
+    this.parentController = parentController;
     this.rotation = rotation;
   }
 
   addDisplay(display_id, width, height) {
     this.displays.push(new DisplayInfo(display_id, width, height));
+  }
+
+  send() {
+    this.parentController.postMessageToParent(
+        DeviceFrameMessage.TYPE_DISPLAYS_INFO, this);
   }
 }
 
@@ -239,9 +296,9 @@ export class DeviceFrameMessage {
   }
 }
 
-class ParentController {
+class PostMsgParentController {
   createDeviceDisplaysMessage(rotation) {
-    return new DeviceDisplays(rotation);
+    return new DeviceDisplaysMessageImpl(this, rotation);
   }
 
   postMessageToParent(type, payload) {
@@ -249,12 +306,4 @@ class ParentController {
 
     window.parent.postMessage(new DeviceFrameMessage(type, payload));
   }
-
-  postDisplaysInfo(info) {
-    this.postMessageToParent(DeviceFrameMessage.TYPE_DISPLAYS_INFO, info);
-  }
-}
-
-export function createParentController() {
-  return new ParentController();
 }
