@@ -100,7 +100,7 @@ void GenerateGem5File(const CuttlefishConfig& config,
   starter_fs_ofstream << fs_mem_pci;
 
   // system settings
-  starter_fs_ofstream << "  root.system.cpu_cluster = [devices.CpuCluster(root.system, " << num_cores << ", \"" << cpu_freq << "\", \"1.0V\", " << cpu_class << ", " << l1_icache_class << ", " << l1_dcache_class << ", " << l2_Cache_class << ")]\n";
+  starter_fs_ofstream << "  root.system.cpu_cluster = [devices.CpuCluster(root.system, " << num_cores << ", \"" << cpu_freq << "\", \"1.0V\", " << cpu_class << ", " << l1_icache_class << ", " << l1_dcache_class << ", " << walk_cache_class << ", " << l2_Cache_class << ")]\n";
   starter_fs_ofstream << "  root.system.addCaches(has_caches, last_cache_level=2)\n";
   starter_fs_ofstream << "  root.system.realview.setupBootLoader(root.system, SysPaths.binary)\n";
   starter_fs_ofstream << "  root.system.workload.dtb_filename = os.path.join(m5.options.outdir, 'system.dtb')\n";
