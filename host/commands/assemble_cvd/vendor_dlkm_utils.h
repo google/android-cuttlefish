@@ -19,6 +19,10 @@
 
 namespace cuttlefish {
 
+bool SplitRamdiskModules(const std::string& ramdisk_path,
+                         const std::string& ramdisk_stage_dir,
+                         const std::string& vendor_dlkm_build_dir);
+
 bool WriteFsConfig(const char* output_path, const std::string& fs_root,
                    const std::string& mount_point);
 
