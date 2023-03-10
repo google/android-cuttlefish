@@ -99,7 +99,7 @@ bool PDUParser::DecodePDU(std::string& pdu) {
     int offset = ud_length / 8;
     pos -= offset * 2;
   } else if (data_code_scheme_ == "08") {  // GSM_UCS2
-    pos += ud_length;
+    pos += ud_length * 2 + 2;
   } else {
     pos += ud_length * 2 + 2;
   }
