@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <string>
@@ -29,29 +30,28 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-namespace selector {
 
 /**
- * Data structure to represent user-facing flags
+ * Data structure to represent cvd user-facing flags
  *
  * Flag in flag_parser.h is more on parsing. gflags library would be
- * slowly depreicated. The SelectorFlag is a specification for
+ * slowly depreicated. The cvd driver and selector flags are a specification for
  * a user-facing flag.
  */
 template <typename T>
-class SelectorFlag {
+class CvdFlag {
  public:
-  SelectorFlag(const std::string& name) : name_(name) {}
+  CvdFlag(const std::string& name) : name_(name) {}
 
-  SelectorFlag(const std::string& name, const T& default_value)
+  CvdFlag(const std::string& name, const T& default_value)
       : name_(name), default_value_(default_value) {}
   std::string Name() const { return name_; }
   std::string HelpMessage() const { return help_msg_; }
-  SelectorFlag& SetHelpMessage(const std::string& help_msg) & {
+  CvdFlag& SetHelpMessage(const std::string& help_msg) & {
     help_msg_ = help_msg;
     return *this;
   }
-  SelectorFlag SetHelpMessage(const std::string& help_msg) && {
+  CvdFlag SetHelpMessage(const std::string& help_msg) && {
     help_msg_ = help_msg;
     return *this;
   }
@@ -95,21 +95,27 @@ class SelectorFlag {
   std::optional<T> default_value_;
 };
 
-class SelectorFlagProxy {
+class CvdFlagProxy {
   friend class FlagCollection;
 
  public:
+  enum class FlagType : std::uint32_t {
+    kUnknown = 0,
+    kBool,
+    kInt32,
+    kString,
+  };
   template <typename T>
-  SelectorFlagProxy(SelectorFlag<T>&& flag) : flag_{std::move(flag)} {}
+  CvdFlagProxy(CvdFlag<T>&& flag) : flag_{std::move(flag)} {}
 
   template <typename T>
-  const SelectorFlag<T>* GetFlag() const {
-    return std::get_if<SelectorFlag<T>>(&flag_);
+  const CvdFlag<T>* GetFlag() const {
+    return std::get_if<CvdFlag<T>>(&flag_);
   }
 
   template <typename T>
-  SelectorFlag<T>* GetFlag() {
-    return std::get_if<SelectorFlag<T>>(&flag_);
+  CvdFlag<T>* GetFlag() {
+    return std::get_if<CvdFlag<T>>(&flag_);
   }
 
   /*
@@ -120,11 +126,13 @@ class SelectorFlagProxy {
   Result<std::string> Name() const;
   Result<bool> HasDefaultValue() const;
 
+  FlagType GetType() const;
+
   template <typename T>
   Result<T> DefaultValue() const {
     const bool has_default_value = CF_EXPECT(HasDefaultValue());
     CF_EXPECT(has_default_value == true);
-    const auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    const auto* ptr = CF_EXPECT(std::get_if<CvdFlag<T>>(&flag_));
     CF_EXPECT(ptr != nullptr);
     return ptr->DefaultValue();
   }
@@ -134,7 +142,7 @@ class SelectorFlagProxy {
   template <typename T>
   Result<void> FilterFlag(cvd_common::Args& args, std::optional<T>& output) {
     output = std::nullopt;
-    auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    auto* ptr = CF_EXPECT(std::get_if<CvdFlag<T>>(&flag_));
     CF_EXPECT(ptr != nullptr);
     output = CF_EXPECT(ptr->FilterFlag(args));
     return {};
@@ -146,41 +154,40 @@ class SelectorFlagProxy {
   Result<void> ParseFlag(cvd_common::Args& args, T& output) {
     bool has_default_value = CF_EXPECT(HasDefaultValue());
     CF_EXPECT(has_default_value == true);
-    auto* ptr = CF_EXPECT(std::get_if<SelectorFlag<T>>(&flag_));
+    auto* ptr = CF_EXPECT(std::get_if<CvdFlag<T>>(&flag_));
     CF_EXPECT(ptr != nullptr);
     output = CF_EXPECT(ptr->ParseFlag(args));
     return {};
   }
 
  private:
-  std::variant<SelectorFlag<std::int32_t>, SelectorFlag<bool>,
-               SelectorFlag<std::string>>
+  std::variant<CvdFlag<std::int32_t>, CvdFlag<bool>, CvdFlag<std::string>>
       flag_;
 };
 
 class FlagCollection {
  public:
   template <typename T>
-  Result<void> EnrollFlag(SelectorFlag<T>&& flag) {
+  Result<void> EnrollFlag(CvdFlag<T>&& flag) {
     CF_EXPECT(!Contains(name_flag_map_, flag.Name()),
               flag.Name() << " is already registered.");
-    name_flag_map_.emplace(flag.Name(), SelectorFlagProxy(std::move(flag)));
+    const auto name = flag.Name();
+    name_flag_map_.emplace(name, CvdFlagProxy(std::move(flag)));
     return {};
   }
 
-  Result<SelectorFlagProxy> GetFlag(const std::string& name) const {
+  Result<CvdFlagProxy> GetFlag(const std::string& name) const {
     const auto itr = name_flag_map_.find(name);
     CF_EXPECT(itr != name_flag_map_.end(),
               "Flag \"" << name << "\" is not found.");
-    const SelectorFlagProxy& flag_proxy = itr->second;
+    const CvdFlagProxy& flag_proxy = itr->second;
     return flag_proxy;
   }
 
-  std::vector<SelectorFlagProxy> Flags() const;
+  std::vector<CvdFlagProxy> Flags() const;
 
  private:
-  std::unordered_map<std::string, SelectorFlagProxy> name_flag_map_;
+  std::unordered_map<std::string, CvdFlagProxy> name_flag_map_;
 };
 
-}  // namespace selector
 }  // namespace cuttlefish
