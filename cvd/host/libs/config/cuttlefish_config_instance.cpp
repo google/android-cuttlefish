@@ -23,7 +23,6 @@
 #include "common/libs/utils/flags_validator.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -1069,17 +1068,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_mobile_tap_name(
   (*Dictionary())[kMobileTapName] = mobile_tap_name;
 }
 
-static constexpr char kMobileMac[] = "mobile_mac";
-std::string CuttlefishConfig::InstanceSpecific::mobile_mac() const {
-  return (*Dictionary())[kMobileMac].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_mobile_mac(
-    const std::string& mac) {
-  (*Dictionary())[kMobileMac] = mac;
-}
-
-// TODO(b/199103204): remove this as well when
-// PRODUCT_ENFORCE_MAC80211_HWSIM is removed
 static constexpr char kWifiTapName[] = "wifi_tap_name";
 std::string CuttlefishConfig::InstanceSpecific::wifi_tap_name() const {
   return (*Dictionary())[kWifiTapName].asString();
@@ -1096,15 +1084,6 @@ std::string CuttlefishConfig::InstanceSpecific::wifi_bridge_name() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_wifi_bridge_name(
     const std::string& wifi_bridge_name) {
   (*Dictionary())[kWifiBridgeName] = wifi_bridge_name;
-}
-
-static constexpr char kWifiMac[] = "wifi_mac";
-std::string CuttlefishConfig::InstanceSpecific::wifi_mac() const {
-  return (*Dictionary())[kWifiMac].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac(
-    const std::string& mac) {
-  (*Dictionary())[kWifiMac] = mac;
 }
 
 static constexpr char kUseBridgedWifiTap[] = "use_bridged_wifi_tap";
