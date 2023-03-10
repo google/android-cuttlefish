@@ -92,7 +92,6 @@ CrosvmManager::ConfigureGraphics(
              instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
     const bool uses_angle = instance.gpu_mode() == kGpuModeGfxstreamGuestAngle;
     const std::string gles_impl = uses_angle ? "angle" : "emulation";
-    const std::string gles_version = uses_angle ? "196608" : "196609";
     const std::string gltransport =
         (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
                                                        : "virtio-gpu-asg";
@@ -104,7 +103,7 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.egl", gles_impl},
         {"androidboot.hardware.vulkan", "ranchu"},
         {"androidboot.hardware.gltransport", gltransport},
-        {"androidboot.opengles.version", gles_version},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
   } else if (instance.gpu_mode() == kGpuModeNone) {
     return {};
