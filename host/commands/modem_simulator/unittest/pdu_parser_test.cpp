@@ -21,6 +21,10 @@ TEST(PDUParserTest, IsValidPDU_true) {
   std::string pdu = "0001000D91688118109844F0000017AFD7903AB55A9BBA69D639D4ADCBF99E3DCCAE9701";
   cuttlefish::PDUParser smspdu(pdu);
   EXPECT_TRUE(smspdu.IsValidPDU());
+
+  std::string pdu_unicode = "000100048145540008024F60";
+  cuttlefish::PDUParser pduUnicode(pdu_unicode);
+  EXPECT_TRUE(pduUnicode.IsValidPDU());
 }
 
 TEST(PDUParserTest, IsValidPDU_false) {
