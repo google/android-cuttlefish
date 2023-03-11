@@ -1,5 +1,4 @@
 atrace debugfs_tracing_debug file b/230656878
-init init capability b/199386018
 init logcat_exec file b/216584034
 init sysfs_devices_block file b/225071527
 init system_lib_file dir b/133444385
