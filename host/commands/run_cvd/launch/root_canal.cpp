@@ -37,7 +37,15 @@ class RootCanal : public CommandSource {
     if (!Enabled()) {
       return {};
     }
-    Command command(RootCanalBinary());
+
+    // Create the root-canal command with the process_restarter
+    // as runner to restart root-canal when it crashes.
+    Command command(HostBinaryPath("process_restarter"));
+    command.AddParameter("-when_killed");
+    command.AddParameter("-when_dumped");
+    command.AddParameter("-when_exited_with_failure");
+    command.AddParameter("--");
+    command.AddParameter(RootCanalBinary());
 
     // Test port
     command.AddParameter("--test_port=", config_.rootcanal_test_port());

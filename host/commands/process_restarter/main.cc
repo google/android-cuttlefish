@@ -21,40 +21,63 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <optional>
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
+#include <gflags/gflags.h>
 
 #include "common/libs/utils/result.h"
 #include "host/libs/config/logging.h"
 
+DEFINE_bool(when_dumped, false, "restart when the process crashed");
+DEFINE_bool(when_killed, false, "restart when the process was killed");
+DEFINE_bool(when_exited_with_failure, false,
+            "restart when the process exited with a code !=0");
+DEFINE_int32(when_exited_with_code, -1,
+             "restart when the process exited with a specific code");
+
 namespace cuttlefish {
 namespace {
 
-Result<int> RunProcessRestarter(const char* exit_code_string,
-                                const char* exec_filepath, char** exec_args) {
+static bool ShouldRestartProcess(siginfo_t const& info) {
+  if (info.si_code == CLD_DUMPED && FLAGS_when_dumped) {
+    return true;
+  }
+  if (info.si_code == CLD_KILLED && FLAGS_when_killed) {
+    return true;
+  }
+  if (info.si_code == CLD_EXITED && FLAGS_when_exited_with_failure &&
+      info.si_status != 0) {
+    return true;
+  }
+  if (info.si_code == CLD_EXITED &&
+      info.si_status == FLAGS_when_exited_with_code) {
+    return true;
+  }
+  return false;
+}
+
+Result<int> RunProcessRestarter(const char* exec_cmd, char** exec_args) {
   LOG(VERBOSE) << "process_restarter starting";
-  int restart_exit_code;
-  CF_EXPECT(android::base::ParseInt(exit_code_string, &restart_exit_code),
-            "Unable to parse exit code as int" << exit_code_string);
   siginfo_t infop;
+
   do {
-    LOG(VERBOSE) << "Starting monitored process " << exec_filepath;
+    LOG(VERBOSE) << "Starting monitored process " << exec_cmd;
     pid_t pid = fork();
     CF_EXPECT(pid != -1, "fork failed (" << strerror(errno) << ")");
     if (pid == 0) {                     // child process
       prctl(PR_SET_PDEATHSIG, SIGHUP);  // Die when parent dies
-      execvp(exec_filepath, exec_args);
+      execvp(exec_cmd, exec_args);
       // if exec returns, it failed
       return CF_ERRNO("exec failed (" << strerror(errno) << ")");
     } else {  // parent process
       int return_val = TEMP_FAILURE_RETRY(waitid(P_PID, pid, &infop, WEXITED));
       CF_EXPECT(return_val != -1,
                 "waitid call failed (" << strerror(errno) << ")");
-      LOG(VERBOSE) << exec_filepath
-                   << " exited with exit code: " << infop.si_status;
+      LOG(VERBOSE) << exec_cmd << " exited with exit code: " << infop.si_status;
     }
-  } while (infop.si_code == CLD_EXITED && infop.si_status == restart_exit_code);
+  } while (ShouldRestartProcess(infop));
   return {infop.si_status};
 }
 
@@ -62,15 +85,23 @@ Result<int> RunProcessRestarter(const char* exit_code_string,
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
   // these stderr logs are directed to log tee and logged at the proper level
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
   ::android::base::SetMinimumLogSeverity(android::base::VERBOSE);
-  if (argc < 3) {
-    LOG(ERROR) << argc << " arguments provided, expected at least:"
-               << " <filename> <restart_exit_code> <crosvm>";
-    return EXIT_FAILURE;
-  }
-  auto result = cuttlefish::RunProcessRestarter(argv[1], argv[2], argv + 2);
+
+  gflags::SetUsageMessage(R"#(
+    This program launches and automatically restarts the input command
+    following the selected restart conditions.
+    Example usage:
+
+      ./process_restarter -when_dumped -- my_program --arg1 --arg2
+  )#");
+
+  // Parse command line flags with remove_flags=true
+  // so that the remainder is the command to execute.
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  auto result = cuttlefish::RunProcessRestarter(argv[1], argv + 1);
   if (!result.ok()) {
     LOG(ERROR) << result.error().Message();
     LOG(DEBUG) << result.error().Trace();
