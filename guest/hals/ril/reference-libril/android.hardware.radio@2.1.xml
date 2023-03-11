@@ -33,10 +33,6 @@
         <fqname>IRadioNetwork/slot1</fqname>
     </hal>
     <hal format="aidl">
-        <name>android.hardware.radio.satellite</name>
-        <fqname>IRadioSatellite/slot1</fqname>
-    </hal>
-    <hal format="aidl">
         <name>android.hardware.radio.sim</name>
         <version>2</version>
         <fqname>IRadioSim/slot1</fqname>
