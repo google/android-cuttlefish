@@ -108,10 +108,8 @@ ENABLE_CARTELEMETRY_SERVICE ?= true
 
 ifeq ($(ENABLE_MOCK_EVSHAL), true)
 CUSTOMIZE_EVS_SERVICE_PARAMETER := true
-PRODUCT_PACKAGES += \
-    android.hardware.automotive.evs-aidl-default-service \
-    cardisplayproxyd
-
+PRODUCT_PACKAGES += android.hardware.automotive.evs@1.1-service \
+    android.frameworks.automotive.display@1.0-service
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/evs/init.evs.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.evs.rc
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
