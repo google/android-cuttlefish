@@ -92,8 +92,7 @@ class Connector {
   }
 }
 
-// Returns real implementation for ParentController that is implemented using
-// window.postMessage.
+// Returns real implementation for ParentController.
 export function createParentController() {
   return new PostMsgParentController();
 }
