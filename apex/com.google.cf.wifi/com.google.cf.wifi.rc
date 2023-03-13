@@ -1,12 +1,33 @@
 service rename_eth0 /apex/com.android.wifi.hal/bin/rename_netiface eth0 buried_eth0
     oneshot
 
+# For legacy wifi without openwrt
 service setup_wifi /apex/com.android.wifi.hal/bin/setup_wifi
     oneshot
 
-service wpa_supplicant /apex/com.android.wifi.hal/bin/hw/wpa_supplicant_cf -g@android:wpa_wlan0
+# For wifi with openwrt
+service init_wifi_sh /apex/com.android.wifi.hal/bin/init.wifi
+    class late_start
+    user root
+    group root wakelock wifi
+    oneshot
+    disabled    # Started on post-fs-data
+
+service wpa_supplicant /apex/com.android.wifi.hal/bin/hw/wpa_supplicant_cf \
+        -O/data/vendor/wifi/wpa/sockets -puse_p2p_group_interface=1p2p_device=1 \
+        -m/apex/com.android.wifi.hal/etc/wifi/p2p_supplicant.conf \
+        -g@android:wpa_wlan0 -dd
     interface aidl android.hardware.wifi.supplicant.ISupplicant/default
     socket wpa_wlan0 dgram 660 wifi wifi
     group system wifi inet
+    disabled
+    oneshot
+
+service hostapd /apex/com.android.wifi.hal/bin/hw/hostapd_cf
+    interface aidl android.hardware.wifi.hostapd.IHostapd/default
+    class main
+    capabilities NET_ADMIN NET_RAW
+    user wifi
+    group wifi net_raw net_admin
     disabled
     oneshot
