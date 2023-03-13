@@ -57,7 +57,9 @@ bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd,
                        const std::uint8_t dhcp_server_ip[4]);
 
 void GenerateCorrespondingIpv6ForMac(const std::uint8_t mac[6], std::uint8_t out[16]);
+void GenerateMobileMacForInstance(int index, std::uint8_t out[6]);
 void GenerateEthMacForInstance(int index, std::uint8_t out[6]);
+void GenerateWifiMacForInstance(int index, std::uint8_t out[6]);
 
 std::string MacAddressToString(const std::uint8_t mac[6]);
 std::string Ipv6ToString(const std::uint8_t ip[16]);

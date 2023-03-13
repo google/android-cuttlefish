@@ -267,13 +267,13 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   // GPU capture can only support named files and not file descriptors due to
   // having to pass arguments to crosvm via a wrapper script.
   if (!gpu_capture_enabled) {
-    crosvm_cmd.AddTap(instance.mobile_tap_name());
+    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac());
     crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac());
 
     // TODO(b/199103204): remove this as well when
     // PRODUCT_ENFORCE_MAC80211_HWSIM is removed
 #ifndef ENFORCE_MAC80211_HWSIM
-    wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
+    wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name(), instance.wifi_mac());
 #endif
   }
 
