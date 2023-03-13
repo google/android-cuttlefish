@@ -97,6 +97,23 @@ bool ParseIpAddress(const std::string& address, std::uint8_t ip[4]) {
   return ParseAddress(address, ".", 4, 10, ip);
 }
 
+/**
+ * Generate mac address following:
+ * 00:1a:11:e0:cf:index
+ * ________ __    ______
+ *    |      |          |
+ *    |       type (e0, e1, etc)
+*/
+void GenerateMacForInstance(int index, uint8_t type, std::uint8_t out[6]) {
+  // the first octet must be even
+  out[0] = 0x00;
+  out[1] = 0x1a;
+  out[2] = 0x11;
+  out[3] = type;
+  out[4] = 0xcf;
+  out[5] = static_cast<std::uint8_t>(index);
+}
+
 }  // namespace
 
 bool NetworkInterfaceExists(const std::string& interface_name) {
@@ -377,25 +394,16 @@ std::string Ipv6ToString(const std::uint8_t ip[16]) {
   return result.str();
 }
 
-/**
- * Generate mac address following:
- * 00:1a:11:ee:cf:index
- * ________ __    _____
- *    |      |         |
- *    |       Ethernet  - Instance postfix
- * Google Prefix
- *
- * This is needed to predict IPv6 link-local address
- * to access the device (fastboot).
-*/
+void GenerateMobileMacForInstance(int index, std::uint8_t out[6]) {
+  GenerateMacForInstance(index, 0xe0, out);
+}
+
 void GenerateEthMacForInstance(int index, std::uint8_t out[6]) {
-  // the first octet must be even
-  out[0] = 0x00;
-  out[1] = 0x1a;
-  out[2] = 0x11;
-  out[3] = 0xee;
-  out[4] = 0xcf;
-  out[5] = static_cast<std::uint8_t>(index);
+  GenerateMacForInstance(index, 0xe1, out);
+}
+
+void GenerateWifiMacForInstance(int index, std::uint8_t out[6]) {
+  GenerateMacForInstance(index, 0xe2, out);
 }
 
 /**
