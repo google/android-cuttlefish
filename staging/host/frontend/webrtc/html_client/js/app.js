@@ -117,8 +117,20 @@ class DeviceDetailsUpdater {
   }
 }  // DeviceDetailsUpdater
 
+class EmptyDeviceDisplaysMessage {
+  addDisplay(display_id, width, height) {}
+  send() {}
+}
+
+class EmptyParentController {
+  createDeviceDisplaysMessage(rotation) {
+    return new EmptyDeviceDisplaysMessage();
+  }
+}
+
 class DeviceControlApp {
   #deviceConnection = {};
+  #parentController = null;
   #currentRotation = 0;
   #currentScreenStyles = {};
   #displayDescriptions = [];
@@ -128,8 +140,9 @@ class DeviceControlApp {
   #micActive = false;
   #adbConnected = false;
 
-  constructor(deviceConnection) {
+  constructor(deviceConnection, parentController) {
     this.#deviceConnection = deviceConnection;
+    this.#parentController = parentController;
   }
 
   start() {
@@ -547,6 +560,14 @@ class DeviceControlApp {
 
   #updateDeviceDisplaysInfo() {
     let labels = document.querySelectorAll('.device-display-info');
+
+    // #currentRotation is device's physical rotation and currently used to
+    // determine display's rotation. It would be obtained from device's
+    // accelerometer sensor.
+    let deviceDisplaysMessage =
+        this.#parentController.createDeviceDisplaysMessage(
+            this.#currentRotation);
+
     labels.forEach(l => {
       let deviceDisplay = l.closest('.device-display');
       if (deviceDisplay == null) {
@@ -586,6 +607,9 @@ class DeviceControlApp {
           let streamWidth = streamSettings.width;
           let streamHeight = streamSettings.height;
 
+          deviceDisplaysMessage.addDisplay(
+              displayId, streamWidth, streamHeight);
+
           text += `${streamWidth}x${streamHeight}`;
         }
       }
@@ -596,6 +620,8 @@ class DeviceControlApp {
 
       l.textContent = text;
     });
+
+    deviceDisplaysMessage.send();
   }
 
   #onControlMessage(message) {
@@ -1073,7 +1099,13 @@ window.addEventListener("load", async evt => {
     document.title = deviceId;
     let deviceConnection =
         await ConnectDevice(deviceId, await connectorModule.createConnector());
-    let deviceControlApp = new DeviceControlApp(deviceConnection);
+    let parentController = null;
+    if (connectorModule.createParentController) {
+      parentController = connectorModule.createParentController();
+    } else {
+      parentController = new EmptyParentController();
+    }
+    let deviceControlApp = new DeviceControlApp(deviceConnection, parentController);
     deviceControlApp.start();
     document.getElementById('device-connection').style.display = 'block';
   } catch(err) {
