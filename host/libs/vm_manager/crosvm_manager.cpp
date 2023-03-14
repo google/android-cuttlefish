@@ -201,7 +201,7 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
-    if (FileExists(instance.hwcomposer_pmem_path())) {
+    if (!instance.mte() && FileExists(instance.hwcomposer_pmem_path())) {
       crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
                                     instance.hwcomposer_pmem_path());
     }
@@ -228,6 +228,9 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
   crosvm_cmd.Cmd().AddParameter("--cpus=", instance.cpus());
+  if (instance.mte()) {
+    crosvm_cmd.Cmd().AddParameter("--mte");
+  }
 
   auto disk_num = instance.virtual_disk_paths().size();
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
@@ -277,12 +280,12 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 #endif
   }
 
-  if (FileExists(instance.access_kregistry_path())) {
+  if (!instance.mte() && FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
                                   instance.access_kregistry_path());
   }
 
-  if (FileExists(instance.pstore_path())) {
+  if (!instance.mte() && FileExists(instance.pstore_path())) {
     crosvm_cmd.Cmd().AddParameter("--pstore=path=", instance.pstore_path(),
                                   ",size=", FileSize(instance.pstore_path()));
   }
