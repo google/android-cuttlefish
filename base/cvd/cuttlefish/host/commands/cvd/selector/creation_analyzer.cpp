@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <algorithm>
+#include <map>
 #include <regex>
 #include <set>
 #include <string>
@@ -152,6 +153,10 @@ static Result<std::vector<unsigned>> CollectUnusedIds(
   return collected_ids;
 }
 
+struct NameLockFilePair {
+  std::string name;
+  InstanceLockFile lock_file;
+};
 Result<std::vector<PerInstanceInfo>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   CF_EXPECT(selector_options_parser_.MustAcquireFileLock(),
@@ -182,51 +187,34 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   // auto-generation means the user did not specify much: e.g. "cvd start"
   // In this case, the user may expect the instance id to be 1+
   using ReservationSet = UniqueResourceAllocator<unsigned>::ReservationSet;
-  std::optional<ReservationSet> allocated_ids;
+  std::optional<ReservationSet> allocated_ids_opt;
   if (selector_options_parser_.IsMaybeDefaultGroup()) {
-    allocated_ids = unique_id_allocator->TakeRange(1, 1 + n_instances);
+    allocated_ids_opt = unique_id_allocator->TakeRange(1, 1 + n_instances);
   }
-  if (!allocated_ids) {
-    allocated_ids = unique_id_allocator->UniqueConsecutiveItems(n_instances);
+  if (!allocated_ids_opt) {
+    allocated_ids_opt =
+        unique_id_allocator->UniqueConsecutiveItems(n_instances);
   }
-  CF_EXPECT(allocated_ids != std::nullopt, "Unique ID allocation failed.");
+  CF_EXPECT(allocated_ids_opt != std::nullopt, "Unique ID allocation failed.");
 
-  std::vector<InstanceLockFile> lock_files_at_ids;
-  // Picks the lock files according to the ids, and discards the rest
-  for (const auto& reservation : *allocated_ids) {
-    const auto id = reservation.Get();
-    CF_EXPECT(Contains(id_to_lockfile_map, id),
-              "Instance ID " << id << " lock file can't be locked.");
-    auto& lock_file = id_to_lockfile_map.at(id);
-    lock_files_at_ids.push_back(std::move(lock_file));
+  std::vector<unsigned> allocated_ids;
+  allocated_ids.reserve(allocated_ids_opt->size());
+  for (const auto& reservation : *allocated_ids_opt) {
+    allocated_ids.push_back(reservation.Get());
   }
+  std::sort(allocated_ids.begin(), allocated_ids.end());
 
-  std::vector<std::string> per_instance_names;
   const auto per_instance_names_opt =
       selector_options_parser_.PerInstanceNames();
   if (per_instance_names_opt) {
-    per_instance_names = per_instance_names_opt.value();
-    CF_EXPECT(per_instance_names.size() == lock_files_at_ids.size());
-  } else {
-    /*
-     * What is generated here is an (per-)instance name:
-     *  See: go/cf-naming-clarification
-     *
-     * A full device name is a group name followed by '-' followed by
-     * per-instance name. Also, see instance_record.cpp.
-     */
-    for (const auto& instance_file_lock : lock_files_at_ids) {
-      per_instance_names.push_back(
-          std::to_string(instance_file_lock.Instance()));
-    }
+    CF_EXPECT(per_instance_names_opt->size() == allocated_ids.size());
   }
-
   std::vector<PerInstanceInfo> instance_info;
-  for (int i = 0; i < per_instance_names.size(); i++) {
-    const unsigned lock_file_id =
-        static_cast<unsigned>(lock_files_at_ids.at(i).Instance());
-    instance_info.emplace_back(lock_file_id, per_instance_names[i],
-                               std::move(lock_files_at_ids[i]));
+  for (size_t i = 0; i != allocated_ids.size(); i++) {
+    const auto id = allocated_ids.at(i);
+    std::string name = (per_instance_names_opt ? per_instance_names_opt->at(i)
+                                               : std::to_string(id));
+    instance_info.emplace_back(id, name, std::move(id_to_lockfile_map.at(id)));
   }
   return instance_info;
 }
