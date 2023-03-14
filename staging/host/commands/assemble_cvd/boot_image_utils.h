@@ -21,6 +21,11 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
+
+// Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the
+// headers
+static constexpr size_t VBMETA_MAX_SIZE = 65536ul;
+
 bool RepackBootImage(const std::string& new_kernel_path,
                      const std::string& boot_image_path,
                      const std::string& new_boot_image_path,
