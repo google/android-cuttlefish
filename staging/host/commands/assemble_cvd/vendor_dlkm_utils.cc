@@ -34,6 +34,36 @@ constexpr size_t RoundUp(size_t a, size_t divisor) {
   return RoundDown(a + divisor, divisor);
 }
 
+bool AddVbmetaFooter(const std::string& output_image,
+                     const std::string& partition_name) {
+  auto avbtool_path = HostBinaryPath("avbtool");
+  Command avb_cmd(avbtool_path);
+  // Add host binary path to PATH, so that avbtool can locate host util
+  // binaries such as 'fec'
+  auto PATH =
+      StringFromEnv("PATH", "") + ":" + cpp_dirname(avb_cmd.Executable());
+  // Must unset an existing environment variable in order to modify it
+  avb_cmd.UnsetFromEnvironment("PATH");
+  avb_cmd.AddEnvironmentVariable("PATH", PATH);
+
+  avb_cmd.AddParameter("add_hashtree_footer");
+  // Arbitrary salt to keep output consistent
+  avb_cmd.AddParameter("--salt");
+  avb_cmd.AddParameter("62BBAAA0", "E4BD99E783AC");
+  avb_cmd.AddParameter("--image");
+  avb_cmd.AddParameter(output_image);
+  avb_cmd.AddParameter("--partition_name");
+  avb_cmd.AddParameter(partition_name);
+
+  auto exit_code = avb_cmd.Start().Wait();
+  if (exit_code != 0) {
+    LOG(ERROR) << "Failed to add avb footer to image " << output_image;
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace
 
 // Steps for building a vendor_dlkm.img:
@@ -73,33 +103,7 @@ bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
     LOG(ERROR) << "Failed to build vendor_dlkm ext4 image";
     return false;
   }
-  auto avbtool_path = HostBinaryPath("avbtool");
-  Command avb_cmd(avbtool_path);
-  // Add host binary path to PATH, so that avbtool can locate host util
-  // binaries such as 'fec'
-  auto PATH =
-      StringFromEnv("PATH", "") + ":" + cpp_dirname(avb_cmd.Executable());
-  // Must unset an existing environment variable in order to modify it
-  avb_cmd.UnsetFromEnvironment("PATH");
-  avb_cmd.AddEnvironmentVariable("PATH", PATH);
-
-  avb_cmd.AddParameter("add_hashtree_footer");
-  // Arbitrary salt to keep output consistent
-  avb_cmd.AddParameter("--salt");
-  avb_cmd.AddParameter("62BBAAA0", "E4BD99E783AC");
-  avb_cmd.AddParameter("--image");
-  avb_cmd.AddParameter(output_image);
-  avb_cmd.AddParameter("--partition_name");
-  avb_cmd.AddParameter("vendor_dlkm");
-
-  exit_code = avb_cmd.Start().Wait();
-  if (exit_code != 0) {
-    LOG(ERROR) << "Failed to add avb footer to vendor_dlkm image "
-               << output_image;
-    return false;
-  }
-
-  return true;
+  return AddVbmetaFooter(output_image, "vendor_dlkm");
 }
 
 bool RepackSuperWithVendorDLKM(const std::string& superimg_path,
