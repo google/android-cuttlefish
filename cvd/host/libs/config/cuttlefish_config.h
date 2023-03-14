@@ -292,10 +292,8 @@ class CuttlefishConfig {
     std::string fixed_location_file_path() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
-    std::string mobile_mac() const;
     std::string wifi_bridge_name() const;
     std::string wifi_tap_name() const;
-    std::string wifi_mac() const;
     bool use_bridged_wifi_tap() const;
     std::string ethernet_tap_name() const;
     std::string ethernet_bridge_name() const;
@@ -481,6 +479,7 @@ class CuttlefishConfig {
     bool record_screen() const;
     std::string gem5_debug_file() const;
     bool protected_vm() const;
+    bool mte() const;
     std::string boot_slot() const;
 
     // Kernel and bootloader logging
@@ -591,10 +590,8 @@ class CuttlefishConfig {
     void set_camera_server_port(int camera_server_port);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
-    void set_mobile_mac(const std::string& mac);
     void set_wifi_bridge_name(const std::string& wifi_bridge_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
-    void set_wifi_mac(const std::string& mac);
     void set_use_bridged_wifi_tap(bool use_bridged_wifi_tap);
     void set_ethernet_tap_name(const std::string& ethernet_tap_name);
     void set_ethernet_bridge_name(const std::string& set_ethernet_bridge_name);
@@ -649,6 +646,7 @@ class CuttlefishConfig {
     void set_record_screen(bool record_screen);
     void set_gem5_debug_file(const std::string& gem5_debug_file);
     void set_protected_vm(bool protected_vm);
+    void set_mte(bool mte);
     void set_boot_slot(const std::string& boot_slot);
     void set_grpc_socket_path(const std::string& sockets);
 
