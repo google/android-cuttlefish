@@ -508,7 +508,6 @@ endif
 
 PRODUCT_PACKAGES += \
     $(LOCAL_KEYMINT_PRODUCT_PACKAGE) \
-    RemoteProvisioner
 
 # Indicate that KeyMint includes support for the ATTEST_KEY key purpose.
 PRODUCT_COPY_FILES += \
