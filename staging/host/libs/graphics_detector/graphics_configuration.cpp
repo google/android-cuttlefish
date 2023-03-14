@@ -56,13 +56,16 @@ std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
 }
 
 AngleFeatures GetNeededAngleFeaturesBasedOnQuirks(
-    const RenderingMode mode, const GraphicsAvailability& /*availability*/) {
+    const RenderingMode mode, const GraphicsAvailability& availability) {
   AngleFeatures features = {};
   switch (mode) {
     case RenderingMode::kGfxstream:
       break;
     case RenderingMode::kGfxstreamGuestAngle: {
-      // TODO: Handle Nvidia YUV quirk.
+      if (availability
+              .vulkan_has_issue_with_precision_qualifiers_on_yuv_samplers) {
+        features.ignore_precision_qualifiers = true;
+      }
       break;
     }
     case RenderingMode::kGuestSwiftShader:
