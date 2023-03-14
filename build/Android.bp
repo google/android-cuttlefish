@@ -110,6 +110,7 @@ cvd_host_tools = [
     "root-canal",
     "run_cvd",
     "secure_env",
+    "sefcontext_compile",
     "cvd_send_sms",
     "cvd_update_location",
     "cvd_import_locations",
