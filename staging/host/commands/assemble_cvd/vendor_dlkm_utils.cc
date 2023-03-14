@@ -13,10 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-
+#include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
+
 #include <fcntl.h>
+
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
@@ -32,6 +40,110 @@ constexpr size_t RoundDown(size_t a, size_t divisor) {
 }
 constexpr size_t RoundUp(size_t a, size_t divisor) {
   return RoundDown(a + divisor, divisor);
+}
+
+template <typename Container>
+bool WriteLinesToFile(const Container& lines, const char* path) {
+  android::base::unique_fd fd(
+      open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640));
+  if (!fd.ok()) {
+    PLOG(ERROR) << "Failed to open " << path;
+    return false;
+  }
+  for (const auto& line : lines) {
+    if (!android::base::WriteFully(fd, line.data(), line.size())) {
+      PLOG(ERROR) << "Failed to write to " << path;
+      return false;
+    }
+    const char c = '\n';
+    if (write(fd.get(), &c, 1) != 1) {
+      PLOG(ERROR) << "Failed to write to " << path;
+      return false;
+    }
+  }
+  return true;
+}
+
+// Recursively enumerate files in |dir|, and invoke the callback function with
+// path to each file/directory.
+Result<void> WalkDirectory(
+    const std::string& dir,
+    const std::function<bool(const std::string&)>& callback) {
+  const auto files = CF_EXPECT(DirectoryContents(dir));
+  for (const auto& filename : files) {
+    if (filename == "." || filename == "..") {
+      continue;
+    }
+    auto file_path = dir + "/";
+    file_path.append(filename);
+    callback(file_path);
+    if (DirectoryExists(file_path)) {
+      WalkDirectory(file_path, callback);
+    }
+  }
+  return {};
+}
+
+// Generate a filesystem_config.txt for all files in |fs_root|
+bool WriteFsConfig(const char* output_path, const std::string& fs_root,
+                   const std::string& mount_point) {
+  android::base::unique_fd fd(
+      open(output_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
+  if (!fd.ok()) {
+    PLOG(ERROR) << "Failed to open " << output_path;
+    return false;
+  }
+  if (!android::base::WriteStringToFd(
+          " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n", fd)) {
+    PLOG(ERROR) << "Failed to write to " << output_path;
+    return false;
+  }
+  WalkDirectory(fs_root, [&fd, &output_path, &mount_point,
+                          &fs_root](const std::string& file_path) {
+    const auto filename = file_path.substr(
+        fs_root.back() == '/' ? fs_root.size() : fs_root.size() + 1);
+    std::string fs_context = " 0 0 644 capabilities=0x0\n";
+    if (DirectoryExists(file_path)) {
+      fs_context = " 0 0 755 capabilities=0x0\n";
+    }
+    if (!android::base::WriteStringToFd(
+            mount_point + "/" + filename + fs_context, fd)) {
+      PLOG(ERROR) << "Failed to write to " << output_path;
+      return false;
+    }
+    return true;
+  });
+  return true;
+}
+
+bool GenerateFileContexts(const char* output_path,
+                          const std::string& mount_point) {
+  const auto file_contexts_txt = std::string(output_path) + ".txt";
+  android::base::unique_fd fd(open(file_contexts_txt.c_str(),
+                                   O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
+                                   0644));
+  if (!fd.ok()) {
+    PLOG(ERROR) << "Failed to open " << output_path;
+    return false;
+  }
+  if (!android::base::WriteStringToFd(mount_point +
+                                          "(/.*)?       "
+                                          "  u:object_r:vendor_file:s0\n",
+                                      fd)) {
+    return false;
+  }
+  if (!android::base::WriteStringToFd(
+          mount_point + "/etc(/.*)?       "
+                        "  u:object_r:vendor_configs_file:s0\n",
+          fd)) {
+    return false;
+  }
+  Command cmd(HostBinaryPath("sefcontext_compile"));
+  cmd.AddParameter("-o");
+  cmd.AddParameter(output_path);
+  cmd.AddParameter(file_contexts_txt);
+  const auto exit_code = cmd.Start().Wait();
+  return exit_code == 0;
 }
 
 bool AddVbmetaFooter(const std::string& output_image,
@@ -67,8 +179,13 @@ bool AddVbmetaFooter(const std::string& output_image,
 }  // namespace
 
 // Steps for building a vendor_dlkm.img:
-// 1. call mkuserimg_mke2fs to build an image
-// 2. call avbtool to add hashtree footer, so that init/bootloader can verify
+// 1. Generate filesystem_config.txt , which contains standard linux file
+// permissions, we use 0755 for directories, and 0644 for all files
+// 2. Write file_contexts, which contains all selinux labels
+// 3. Call  sefcontext_compile to compile file_contexts
+// 4. call mkuserimg_mke2fs to build an image, using filesystem_config and
+// file_contexts previously generated
+// 5. call avbtool to add hashtree footer, so that init/bootloader can verify
 // AVB chain
 bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
                      const std::string& output_image) {
@@ -77,9 +194,18 @@ bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
         << "Building vendor_dlkm in EROFS format is currently not supported!";
     return false;
   }
+  const auto fs_config = output_image + ".fs_config";
+  if (!WriteFsConfig(fs_config.c_str(), src_dir, "/vendor_dlkm")) {
+    return false;
+  }
+  const auto file_contexts_bin = output_image + ".file_contexts";
+  if (!GenerateFileContexts(file_contexts_bin.c_str(), "/vendor_dlkm")) {
+    return false;
+  }
+
   // We are using directory size as an estimate of final image size. To avoid
-  // any rounding errors, add 256K of head room.
-  const auto fs_size = RoundUp(GetDiskUsage(src_dir) + 256 * 1024, 4096);
+  // any rounding errors, add 16M of head room.
+  const auto fs_size = RoundUp(GetDiskUsage(src_dir) + 16 * 1024 * 1024, 4096);
   LOG(INFO) << "vendor_dlkm src dir " << src_dir << " has size "
             << fs_size / 1024 << " KB";
   const auto mkfs = HostBinaryPath("mkuserimg_mke2fs");
@@ -93,11 +219,17 @@ bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
   mkfs_cmd.AddParameter("-T");
   mkfs_cmd.AddParameter("900979200000");
 
+  // selinux permission to keep selinux happy
+  mkfs_cmd.AddParameter("--fs_config");
+  mkfs_cmd.AddParameter(fs_config);
+
   mkfs_cmd.AddParameter(src_dir);
   mkfs_cmd.AddParameter(output_image);
   mkfs_cmd.AddParameter("ext4");
   mkfs_cmd.AddParameter("/vendor_dlkm");
   mkfs_cmd.AddParameter(std::to_string(fs_size));
+  mkfs_cmd.AddParameter(file_contexts_bin);
+
   int exit_code = mkfs_cmd.Start().Wait();
   if (exit_code != 0) {
     LOG(ERROR) << "Failed to build vendor_dlkm ext4 image";
