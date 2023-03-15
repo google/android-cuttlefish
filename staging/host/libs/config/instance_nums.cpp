@@ -19,6 +19,7 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -49,21 +50,25 @@ static Result<std::optional<std::int32_t>> ParseNumInstancesFlag(
 // Failed result: The flag was specified in an invalid way
 // Empty set: The flag was not specified
 // Set with members: The flag was specified with a valid value
-static Result<std::set<std::int32_t>> ParseInstanceNums(
+static Result<std::vector<std::int32_t>> ParseInstanceNums(
     const std::string& instance_nums_str) {
   if (instance_nums_str == "") {
     return {};
   }
-  std::set<std::int32_t> instance_nums;
+  std::vector<std::int32_t> instance_nums;
   std::vector<std::string> split_str =
       android::base::Split(instance_nums_str, ",");
+  std::set<std::int32_t> duplication_check_set;
   for (const auto& instance_num_str : split_str) {
     std::int32_t instance_num;
     CF_EXPECT(android::base::ParseInt(instance_num_str.c_str(), &instance_num),
               "Unable to parse \"" << instance_num_str << "\" in "
                                    << "`--instance_nums=\"" << instance_nums_str
                                    << "\"`");
-    instance_nums.insert(instance_num);
+    CF_EXPECT(!Contains(duplication_check_set, instance_num),
+              instance_num << " is duplicated in -instance_nums flag.");
+    duplication_check_set.insert(instance_num);
+    instance_nums.push_back(instance_num);
   }
   return instance_nums;
 }
@@ -71,7 +76,7 @@ static Result<std::set<std::int32_t>> ParseInstanceNums(
 // Failed result: The flag was specified in an invalid way
 // Empty set: The flag was not specified
 // Set with members: The flag was specified with a valid value
-static Result<std::set<std::int32_t>> ParseInstanceNumsFlag(
+static Result<std::vector<std::int32_t>> ParseInstanceNumsFlag(
     std::vector<std::string>& flags) {
   std::string value;
   auto flag = GflagsCompatFlag("instance_nums", value);
@@ -130,7 +135,7 @@ static Result<std::optional<std::int32_t>> GflagsNumInstancesFlag() {
 // Failed result: The flag was specified in an invalid way
 // Empty set: The flag was not specified
 // Set with members: The flag was specified with a valid value
-static Result<std::set<std::int32_t>> GflagsInstanceNumsFlag() {
+static Result<std::vector<std::int32_t>> GflagsInstanceNumsFlag() {
   gflags::CommandLineFlagInfo info;
   if (!gflags::GetCommandLineFlagInfo("instance_nums", &info)) {
     return {};
@@ -185,12 +190,12 @@ InstanceNumsCalculator InstanceNumsCalculator::InstanceNums(
 }
 
 InstanceNumsCalculator& InstanceNumsCalculator::InstanceNums(
-    std::set<std::int32_t> set) & {
+    std::vector<std::int32_t> set) & {
   instance_nums_ = std::move(set);
   return *this;
 }
 InstanceNumsCalculator InstanceNumsCalculator::InstanceNums(
-    std::set<std::int32_t> set) && {
+    std::vector<std::int32_t> set) && {
   return InstanceNums(std::move(set));
 }
 
@@ -204,9 +209,9 @@ void InstanceNumsCalculator::TrySet(T& field, Result<T> result) {
   }
 }
 
-Result<std::set<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
+Result<std::vector<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
   CF_EXPECT(Result<void>(setter_result_));
-  std::optional<std::set<std::int32_t>> instance_nums_opt;
+  std::optional<std::vector<std::int32_t>> instance_nums_opt;
   if (!instance_nums_.empty()) {
     instance_nums_opt = instance_nums_;
   }
@@ -225,23 +230,23 @@ Result<std::set<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
     return instance_nums_;
   }
 
-  std::set<std::int32_t> instance_nums;
+  std::vector<std::int32_t> instance_nums;
   for (int i = 0; i < num_instances_.value_or(1); i++) {
-    instance_nums.insert(i + *base_instance_num_);
+    instance_nums.push_back(i + *base_instance_num_);
   }
   return instance_nums;
 }
 
-Result<std::set<std::int32_t>> InstanceNumsCalculator::Calculate() {
+Result<std::vector<std::int32_t>> InstanceNumsCalculator::Calculate() {
   CF_EXPECT(Result<void>(setter_result_));
 
   if (!instance_nums_.empty() || base_instance_num_) {
     return CalculateFromFlags();
   }
 
-  std::set<std::int32_t> instance_nums;
+  std::vector<std::int32_t> instance_nums;
   for (int i = 0; i < num_instances_.value_or(1); i++) {
-    instance_nums.insert(i + GetInstance());
+    instance_nums.push_back(i + GetInstance());
   }
   CF_EXPECT(instance_nums.size() > 0, "no instance nums");
   return instance_nums;
