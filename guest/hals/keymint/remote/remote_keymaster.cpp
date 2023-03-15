@@ -24,7 +24,7 @@
 
 namespace keymaster {
 
-RemoteKeymaster::RemoteKeymaster(cuttlefish::KeymasterChannel* channel,
+RemoteKeymaster::RemoteKeymaster(cuttlefish::SharedFdKeymasterChannel* channel,
                                  int32_t message_version)
     : channel_(channel), message_version_(message_version) {}
 

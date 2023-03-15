@@ -22,7 +22,7 @@
 
 namespace keymaster {
 
-RemoteKeymaster::RemoteKeymaster(cuttlefish::KeymasterChannel* channel)
+RemoteKeymaster::RemoteKeymaster(cuttlefish::SharedFdKeymasterChannel* channel)
     : channel_(channel) {}
 
 RemoteKeymaster::~RemoteKeymaster() {
