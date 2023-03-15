@@ -23,13 +23,14 @@ namespace cuttlefish {
 
 class GatekeeperResponder {
 private:
-  cuttlefish::GatekeeperChannel& channel_;
-  gatekeeper::GateKeeper& gatekeeper_;
-public:
-  GatekeeperResponder(cuttlefish::GatekeeperChannel& channel,
-                      gatekeeper::GateKeeper& gatekeeper);
+ cuttlefish::GatekeeperChannel& channel_;
+ gatekeeper::GateKeeper& gatekeeper_;
 
-  bool ProcessMessage();
+public:
+ GatekeeperResponder(cuttlefish::GatekeeperChannel& channel,
+                     gatekeeper::GateKeeper& gatekeeper);
+
+ bool ProcessMessage();
 };
 
 }  // namespace cuttlefish
