@@ -614,7 +614,7 @@ Result<bool> ParseBool(const std::string& flag_str,
 
 Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     const CuttlefishConfig& tmp_config_obj,
-    const std::set<std::int32_t>& instance_nums,
+    const std::vector<std::int32_t>& instance_nums,
     const std::string& webrtc_device_id_flag) {
   std::unordered_map<int, std::string> output_map;
   if (webrtc_device_id_flag.empty()) {
