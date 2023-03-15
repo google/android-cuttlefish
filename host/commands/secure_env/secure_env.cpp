@@ -27,8 +27,8 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/security/confui_sign.h"
-#include "common/libs/security/gatekeeper_channel.h"
-#include "common/libs/security/keymaster_channel.h"
+#include "common/libs/security/gatekeeper_channel_sharedfd.h"
+#include "common/libs/security/keymaster_channel_sharedfd.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/secure_env/confui_sign_server.h"
@@ -257,7 +257,7 @@ int SecureEnvMain(int argc, char** argv) {
     keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
     threads.emplace_back([keymaster_in, keymaster_out, borrowed_km]() {
       while (true) {
-        KeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
+        SharedFdKeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
 
         KeymasterResponder keymaster_responder(keymaster_channel, *borrowed_km);
 
@@ -271,7 +271,8 @@ int SecureEnvMain(int argc, char** argv) {
   auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
   threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
     while (true) {
-      GatekeeperChannel gatekeeper_channel(gatekeeper_in, gatekeeper_out);
+      SharedFdGatekeeperChannel gatekeeper_channel(gatekeeper_in,
+                                                   gatekeeper_out);
 
       GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 

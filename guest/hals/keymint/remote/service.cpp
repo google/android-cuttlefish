@@ -89,7 +89,7 @@ int main(int, char** argv) {
                << " a raw terminal: " << fd->StrError();
   }
 
-  cuttlefish::KeymasterChannel keymasterChannel(fd, fd);
+  cuttlefish::SharedFdKeymasterChannel keymasterChannel(fd, fd);
 
   keymaster::RemoteKeymaster remote_keymaster(
       &keymasterChannel, keymaster::MessageVersion(
