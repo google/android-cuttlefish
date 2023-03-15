@@ -22,10 +22,11 @@
 namespace cuttlefish {
 
 class KeymasterResponder {
-private:
+ private:
   cuttlefish::KeymasterChannel& channel_;
   keymaster::AndroidKeymaster& keymaster_;
-public:
+
+ public:
   KeymasterResponder(cuttlefish::KeymasterChannel& channel,
                      keymaster::AndroidKeymaster& keymaster);
 
