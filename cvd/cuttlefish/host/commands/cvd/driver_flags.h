@@ -32,6 +32,7 @@ namespace cuttlefish {
 
 class DriverFlags {
  public:
+  static constexpr char kClean[] = "clean";
   static constexpr char kHelp[] = "help";
   static const DriverFlags& Get();
 
@@ -41,10 +42,14 @@ class DriverFlags {
   }
 
   std::vector<CvdFlagProxy> Flags() const { return flags_.Flags(); }
-  CvdFlag<bool> HelpFlag();
 
  private:
-  DriverFlags() { flags_.EnrollFlag(HelpFlag()); }
+  DriverFlags() {
+    flags_.EnrollFlag(CleanFlag(kClean, false));
+    flags_.EnrollFlag(HelpFlag());
+  }
+  CvdFlag<bool> CleanFlag(const std::string& name, const bool default_val);
+  CvdFlag<bool> HelpFlag();
 
   FlagCollection flags_;
 };
