@@ -95,6 +95,7 @@ cc_library_host_static {
         "command_sequence.cpp",
         "common_utils.cpp",
         "demo_multi_vd.cpp",
+        "driver_flags.cpp",
         "flag.cpp",
         "frontline_parser.cpp",
         "epoll_loop.cpp",
