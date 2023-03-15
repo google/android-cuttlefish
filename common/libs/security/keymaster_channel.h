@@ -16,14 +16,10 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 
 #include <keymaster/android_keymaster_messages.h>
 #include <keymaster/serializable.h>
-
-#include "common/libs/fs/shared_fd.h"
 
 namespace keymaster {
 
@@ -33,13 +29,13 @@ namespace keymaster {
  * @payload: start of the serialized command specific payload
  */
 struct keymaster_message {
-    AndroidKeymasterCommand cmd : 31;
-    bool is_response : 1;
-    std::uint32_t payload_size;
-    std::uint8_t payload[0];
+  AndroidKeymasterCommand cmd : 31;
+  bool is_response : 1;
+  std::uint32_t payload_size;
+  std::uint8_t payload[0];
 };
 
-} // namespace keymaster
+}  // namespace keymaster
 
 namespace cuttlefish {
 
@@ -51,7 +47,7 @@ using keymaster::keymaster_message;
  * CreateKeymasterMessage. Wipes memory from the keymaster_message instances.
  */
 class KeymasterCommandDestroyer {
-public:
+ public:
   void operator()(keymaster_message* ptr);
 };
 
@@ -72,19 +68,13 @@ ManagedKeymasterMessage CreateKeymasterMessage(AndroidKeymasterCommand command,
  * IPC/RPC calls. Sends messages over a file descriptor.
  */
 class KeymasterChannel {
-public:
-  KeymasterChannel(SharedFD input, SharedFD output);
-
-  bool SendRequest(AndroidKeymasterCommand command,
-                   const keymaster::Serializable& message);
-  bool SendResponse(AndroidKeymasterCommand command,
-                    const keymaster::Serializable& message);
-  ManagedKeymasterMessage ReceiveMessage();
-private:
-  SharedFD input_;
-  SharedFD output_;
-  bool SendMessage(AndroidKeymasterCommand command, bool response,
-                   const keymaster::Serializable& message);
+ public:
+  virtual bool SendRequest(AndroidKeymasterCommand command,
+                           const keymaster::Serializable& message) = 0;
+  virtual bool SendResponse(AndroidKeymasterCommand command,
+                            const keymaster::Serializable& message) = 0;
+  virtual ManagedKeymasterMessage ReceiveMessage() = 0;
+  virtual ~KeymasterChannel() {}
 };
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

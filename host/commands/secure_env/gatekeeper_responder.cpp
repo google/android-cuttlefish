@@ -20,10 +20,9 @@
 
 namespace cuttlefish {
 
-GatekeeperResponder::GatekeeperResponder(
-    cuttlefish::GatekeeperChannel& channel, gatekeeper::GateKeeper& gatekeeper)
-    : channel_(channel), gatekeeper_(gatekeeper) {
-}
+GatekeeperResponder::GatekeeperResponder(cuttlefish::GatekeeperChannel& channel,
+                                         gatekeeper::GateKeeper& gatekeeper)
+    : channel_(channel), gatekeeper_(gatekeeper) {}
 
 bool GatekeeperResponder::ProcessMessage() {
   auto request = channel_.ReceiveMessage();
