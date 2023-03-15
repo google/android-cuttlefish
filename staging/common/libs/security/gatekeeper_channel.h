@@ -18,8 +18,6 @@
 
 #include "gatekeeper/gatekeeper_messages.h"
 
-#include "common/libs/fs/shared_fd.h"
-
 #include <memory>
 
 namespace gatekeeper {
@@ -32,13 +30,13 @@ namespace gatekeeper {
  * @payload: start of the serialized command specific payload
  */
 struct GatekeeperRawMessage {
-    uint32_t cmd : 31;
-    bool is_response : 1;
-    uint32_t payload_size;
-    uint8_t payload[0];
+  uint32_t cmd : 31;
+  bool is_response : 1;
+  uint32_t payload_size;
+  uint8_t payload[0];
 };
 
-} // namespace gatekeeper
+}  // namespace gatekeeper
 
 namespace cuttlefish {
 
@@ -46,10 +44,11 @@ using gatekeeper::GatekeeperRawMessage;
 
 /**
  * A destroyer for GatekeeperRawMessage instances created with
- * CreateGatekeeperMessage. Wipes memory from the GatekeeperRawMessage instances.
+ * CreateGatekeeperMessage. Wipes memory from the GatekeeperRawMessage
+ * instances.
  */
 class GatekeeperCommandDestroyer {
-public:
+ public:
   void operator()(GatekeeperRawMessage* ptr);
 };
 
@@ -61,27 +60,22 @@ using ManagedGatekeeperMessage =
  * Allocates memory for a GatekeeperRawMessage carrying a message of size
  * `payload_size`.
  */
-ManagedGatekeeperMessage CreateGatekeeperMessage(
-    uint32_t command, bool is_response, size_t payload_size);
+ManagedGatekeeperMessage CreateGatekeeperMessage(uint32_t command,
+                                                 bool is_response,
+                                                 size_t payload_size);
 
 /*
- * Interface for communication channels that synchronously communicate Gatekeeper
- * IPC/RPC calls. Sends messages over a file descriptor.
+ * Interface for communication channels that synchronously communicate
+ * Gatekeeper IPC/RPC calls.
  */
 class GatekeeperChannel {
-public:
-  GatekeeperChannel(SharedFD input, SharedFD output);
-
-  bool SendRequest(uint32_t command,
-                   const gatekeeper::GateKeeperMessage& message);
-  bool SendResponse(uint32_t command,
-                    const gatekeeper::GateKeeperMessage& message);
-  ManagedGatekeeperMessage ReceiveMessage();
-private:
-  SharedFD input_;
-  SharedFD output_;
-  bool SendMessage(uint32_t command, bool response,
-                   const gatekeeper::GateKeeperMessage& message);
+ public:
+  virtual bool SendRequest(uint32_t command,
+                           const gatekeeper::GateKeeperMessage& message) = 0;
+  virtual bool SendResponse(uint32_t command,
+                            const gatekeeper::GateKeeperMessage& message) = 0;
+  virtual ManagedGatekeeperMessage ReceiveMessage() = 0;
+  virtual ~GatekeeperChannel() {}
 };
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

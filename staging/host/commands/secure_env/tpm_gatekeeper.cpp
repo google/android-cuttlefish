@@ -24,6 +24,10 @@
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_rc.h>
 
+#ifdef _WIN32
+#include <sysinfoapi.h>
+#endif
+
 #include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_auth.h"
 #include "host/commands/secure_env/tpm_hmac.h"
@@ -109,10 +113,14 @@ void TpmGatekeeper::ComputeSignature(
 }
 
 uint64_t TpmGatekeeper::GetMillisecondsSinceBoot() const {
+#ifdef _WIN32
+  return GetTickCount64();
+#else
   struct timespec time;
   int res = clock_gettime(CLOCK_BOOTTIME, &time);
   if (res < 0) return 0;
   return (time.tv_sec * 1000) + (time.tv_nsec / 1000 / 1000);
+#endif
 }
 
 gatekeeper::failure_record_t DefaultRecord(
