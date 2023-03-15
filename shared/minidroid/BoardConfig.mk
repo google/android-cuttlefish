@@ -16,7 +16,7 @@
 
 # FIXME: Split up and merge back in with shared/BoardConfig.mk
 
-TARGET_KERNEL_USE ?= 6.1
+TARGET_KERNEL_USE ?= 5.15
 TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
 TARGET_KERNEL_PATH ?= kernel/prebuilts/$(TARGET_KERNEL_USE)/$(TARGET_KERNEL_ARCH)/kernel-$(TARGET_KERNEL_USE)
 KERNEL_MODULES_PATH ?= \
