@@ -245,8 +245,11 @@ We recommend that each docker container should be assigned an ip address and tha
 If assigning a public IP is not feasible, we offer a environment variable, ```ip_${name}``` and a bash function, ```cf_get_ip```.
 Those returns the internal IP valid on the docker host. 
 
-As the internal ip returned by ```cf_get_ip``` and also stored in ```ip_${name}``` is not recognized outside the docker host, if
-remote access to the container is desired, extra steps are required. It is described in the [Port Forwarding](#port-forwarding) section.
+As the internal ip returned by ```cf_get_ip``` and also stored in
+```ip_${name}``` is not recognized outside the docker host, if remote
+access to the container is desired, extra steps are required. It is
+described in the [IPvlan](#ipvlan) and [Port Forwarding](#port-forwarding)
+sections.
 
 ## ADB
 
@@ -322,6 +325,31 @@ Note that 127.0.0.1 is not meant to be the docker host.
 
 We do not believe ssh tunneling works smoothly for WebRTC. WebRTC uses tcp and udp ports. Not sure if UDP ports are for 
 ssh tunneling. 
+
+## IPvlan
+
+You can expose the container directly on a LAN by creating an IPvlan,
+which is the recommended approach to avoid WebRTC issues associated
+with port forwarding. This effectively creates an additional IP address
+for your host that gets routed to the container. For example, to create
+an IPvlan that assigns the IP address 192.168.1.123 to your container,
+use something like the following command:
+
+```bash
+docker network create -d ipvlan --subnet=192.168.1.0/24 --gateway=192.168.1.1 --ip-range=192.168.1.123/32 -o parent=eth0 myvlan
+```
+
+See the [Docker documentation](https://docs.docker.com/network/ipvlan/)
+for details. Once you've done this, you can specify the name of the
+IPvlan when creating the container:
+
+```bash
+cf_docker_create --network myvlan
+```
+
+Make sure not to expose this IP address to the Internet, as Cuttlefish
+will allow passwordless authentication as the user `vsoc-01` on the
+SSH port.
 
 ## Port Forwarding
 

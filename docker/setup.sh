@@ -97,6 +97,7 @@ function help_on_container_create {
 	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
 	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
 	echo "       -v | --vsock_guest_cid           : facilitate the new vsock_guest_cid option"
+	echo "       -N | --network net               : connect container to specified network"
 	echo "       -h | --help                      : print this help message"
 }
 
@@ -225,6 +226,7 @@ function cf_docker_create {
   local -a shared_dir_pairs=()
   local vsock_guest_cid="false"
   local n_cf_instances=1
+  local network="bridge"
 
   # m | --share_dir dir1:dir2
   # n | --n_cf_instances
@@ -238,7 +240,7 @@ function cf_docker_create {
   singleshot="false" # could've been updated to "true" by previous cf_docker_create
 
   local params
-  if params=$(getopt -o 'm:n:A::C::svxh' -l 'share_dir:,n_cf_instances:,android::,cuttlefish::,singleshot,vsock_guest_cid,with_host_x,help' --name "$0" -- "$@"); then
+  if params=$(getopt -o 'm:n:A::C::svxN:h' -l 'share_dir:,n_cf_instances:,android::,cuttlefish::,singleshot,vsock_guest_cid,with_host_x,network:,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
 	  while true; do
 		  case "$1" in
@@ -305,6 +307,10 @@ function cf_docker_create {
 			    -v|--vsock_guest_cid)
 				  vsock_guest_cid="true"
 				  shift 1
+				  ;;
+			    -N|--network)
+				  network=$2
+				  shift 2
 				  ;;
 			    -h|--help)
 				  need_help="true"
@@ -405,6 +411,7 @@ function cf_docker_create {
                 -l "vsock_guest_cid=${vsock_guest_cid}" \
 		        --privileged \
 		        -v /sys/fs/cgroup:/sys/fs/cgroup:rw ${volumes[@]} \
+		        --network "${network}" \
 		        cuttlefish
 
 	    echo "Waiting for ${name} to boot."
