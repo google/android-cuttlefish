@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         LOG(FATAL) << "Could not make " << device << " a raw terminal: " << fd->StrError();
     }
 
-    cuttlefish::GatekeeperChannel gatekeeperChannel(fd, fd);
+    cuttlefish::SharedFdGatekeeperChannel gatekeeperChannel(fd, fd);
 
     std::shared_ptr<RemoteGateKeeperDevice> gatekeeper =
         ndk::SharedRefBase::make<RemoteGateKeeperDevice>(&gatekeeperChannel);
