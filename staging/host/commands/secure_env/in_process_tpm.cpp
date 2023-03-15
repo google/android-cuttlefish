@@ -15,16 +15,19 @@
 
 #include "in_process_tpm.h"
 
-#include <endian.h>
 #include <stddef.h>
 
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
 
+#include <android-base/endian.h>
+
 #include "host/commands/secure_env/tpm_commands.h"
 
 extern "C" {
+#ifndef _WIN32
 typedef int SOCKET;
+#endif
 #include "TpmBuildSwitches.h"
 #include "TpmTcpProtocol.h"
 #include "Simulator_fp.h"
@@ -83,7 +86,7 @@ class InProcessTpm::Impl {
     LOG(VERBOSE) << "Sending TPM command "
                 << TpmCommandName(be32toh(header->ordinal));
     _IN_BUFFER input = {
-        .BufferSize = request.size(),
+        .BufferSize = static_cast<unsigned long>(request.size()),
         .Buffer = request.data(),
     };
     _OUT_BUFFER output = {
