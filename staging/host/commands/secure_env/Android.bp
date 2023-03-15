@@ -24,11 +24,7 @@ cc_defaults {
         "libbase",
         "libcppbor_external",
         "libcppcose_rkp",
-        "libcuttlefish_fs",
-        "libcuttlefish_kernel_log_monitor_utils",
         "libcuttlefish_security",
-        "libcuttlefish_utils",
-        "libfruit",
         "libgatekeeper",
         "libjsoncpp",
         "libkeymaster_portable",
@@ -38,7 +34,6 @@ cc_defaults {
         "libcrypto",
         "libcutils",
         "libpuresoftkeymasterdevice_host",
-        "ms-tpm-20-ref-lib",
         "tpm2-tss2-esys",
         "tpm2-tss2-mu",
         "tpm2-tss2-rc",
@@ -46,21 +41,34 @@ cc_defaults {
     ],
     static_libs: [
         "libc++_static",
-        "libcuttlefish_host_config",
-        "libgflags",
         "libscrypt_static",
+        "ms-tpm-20-ref-lib",
     ],
     cflags: [
         "-fno-rtti", // Required for libkeymaster_portable
     ],
+    target: {
+        not_windows: {
+            static_libs: [
+                "libcuttlefish_host_config",
+            ],
+            shared_libs: [
+                "libcuttlefish_fs",
+                "libcuttlefish_kernel_log_monitor_utils",
+                "libcuttlefish_utils",
+                "libfruit",
+            ],
+        },
+        windows: {
+            cflags: [
+                "-DNOGDI",
+            ],
+        },
+    },
 }
 
-cc_library_host_static {
-    name: "libsecure_env",
-    srcs: [
+common_libsecure_srcs = [
         "composite_serialization.cpp",
-        "confui_sign_server.cpp",
-        "device_tpm.cpp",
         "encrypted_serializable.cpp",
         "fragile_tpm_storage.cpp",
         "gatekeeper_responder.cpp",
@@ -70,7 +78,6 @@ cc_library_host_static {
         "json_serializable.cpp",
         "keymaster_responder.cpp",
         "primary_key_builder.cpp",
-        "secure_env.cpp",
         "tpm_attestation_record.cpp",
         "tpm_auth.cpp",
         "tpm_commands.cpp",
@@ -85,6 +92,13 @@ cc_library_host_static {
         "tpm_remote_provisioning_context.cpp",
         "tpm_resource_manager.cpp",
         "tpm_serialize.cpp",
+]
+
+cc_library_host_static {
+    name: "libsecure_env_linux",
+    srcs: common_libsecure_srcs + [
+        "confui_sign_server.cpp",
+        "device_tpm.cpp",
     ],
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
 }
@@ -97,7 +111,7 @@ rust_bindgen_host {
     wrapper_src: "tpm_ffi.h",
     vendor_available: true,
     static_libs: [
-        "libsecure_env",
+        "libsecure_env_linux",
     ],
     defaults: [
         "cuttlefish_buildhost_only",
@@ -111,7 +125,8 @@ cc_binary_host {
         "secure_env.cpp",
     ],
     static_libs: [
-        "libsecure_env",
+        "libsecure_env_linux",
+        "libgflags",
     ],
     shared_libs: [
         "libkmr_cf_ffi",
@@ -122,6 +137,30 @@ cc_binary_host {
     ],
 }
 
+cc_library {
+    name: "libsecure_env_win",
+    srcs: common_libsecure_srcs + [
+        "secure_env_windows_lib.cpp",
+    ],
+    header_libs: [
+        "cuttlefish_common_headers",
+    ],
+    target: {
+        windows: {
+            enabled: true,
+        },
+        not_windows: {
+            enabled: false,
+        },
+        host: {
+            compile_multilib: "64",
+        },
+    },
+    device_supported: false,
+    host_supported: true,
+    defaults: ["secure_env_defaults"],
+ }
+
 cc_test_host {
     name: "libsecure_env_test",
     srcs: [
@@ -129,7 +168,7 @@ cc_test_host {
         "encrypted_serializable_test.cpp",
     ],
     static_libs: [
-        "libsecure_env",
+        "libsecure_env_linux",
     ],
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
     test_options: {

@@ -20,7 +20,7 @@
 #include <string>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/keymaster_channel.h"
+#include "common/libs/security/keymaster_channel_sharedfd.h"
 #include "gtest/gtest.h"
 
 namespace cuttlefish {
@@ -30,7 +30,7 @@ TEST(KeymasterChannel, SendAndReceiveRequest) {
   SharedFD write_fd;
   ASSERT_TRUE(SharedFD::Pipe(&read_fd, &write_fd)) << "Failed to create pipe";
 
-  KeymasterChannel channel{read_fd, write_fd};
+  SharedFdKeymasterChannel channel{read_fd, write_fd};
 
   char buffer[] = {1, 2, 3, 4, 5, 6};
   keymaster::Buffer request(buffer, sizeof(buffer));
@@ -55,7 +55,7 @@ TEST(KeymasterChannel, SendAndReceiveResponse) {
   SharedFD write_fd;
   ASSERT_TRUE(SharedFD::Pipe(&read_fd, &write_fd)) << "Failed to create pipe";
 
-  KeymasterChannel channel{read_fd, write_fd};
+  SharedFdKeymasterChannel channel{read_fd, write_fd};
 
   char buffer[] = {1, 2, 3, 4, 5, 6};
   keymaster::Buffer request(buffer, sizeof(buffer));
