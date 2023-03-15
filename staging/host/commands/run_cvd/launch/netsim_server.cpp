@@ -22,9 +22,9 @@ namespace {
 // NetsimServer launches netsim server with fifos for radio HALs.
 //
 // netsimd -s '{devices:[
-//  {serial:"0.0.0.0:5000", chips:[
+//  {name:"0.0.0.0:5000", chips:[
 //    {kind:"BLUETOOTH", fdIn:10, fdOut:11}]},
-//  {serial:"0.0.0.0:5010", chips:[
+//  {name:"0.0.0.0:5010", chips:[
 //    {kind:"BLUETOOTH", fdIn:14, fdOut:15}]}]}
 
 // Chip and Device classes pass SharedFD fifos between ResultSetup and Commands
@@ -49,10 +49,10 @@ class Chip {
 
 class Device {
  public:
-  Device(std::string serial) : serial_(serial) {}
+  Device(std::string name) : name_(name) {}
 
   void Append(Command& c) const {
-    c.AppendToLastParameter(R"({serial:")", serial_, R"(",chips:[)");
+    c.AppendToLastParameter(R"({name:")", name_, R"(",chips:[)");
     for (int i = 0; i < chips.size(); ++i) {
       chips[i].Append(c);
       if (chips.size() - i > 1) {
@@ -65,7 +65,7 @@ class Device {
   std::vector<Chip> chips;
 
  private:
-  std::string serial_;
+  std::string name_;
 };
 
 class NetsimServer : public CommandSource {
