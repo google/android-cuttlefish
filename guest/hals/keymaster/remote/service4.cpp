@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
                 << fd->StrError();
   }
 
-  cuttlefish::KeymasterChannel keymasterChannel(fd, fd);
+  cuttlefish::SharedFdKeymasterChannel keymasterChannel(fd, fd);
 
   auto remoteKeymaster = new keymaster::RemoteKeymaster(&keymasterChannel);
 
