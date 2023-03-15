@@ -47,6 +47,7 @@ apex {
     prebuilts: [
         "android.hardware.telephony.gsm.prebuilt.xml",
         "android.hardware.telephony.ims.prebuilt.xml",
+        "android.hardware.telephony.satellite.prebuilt.xml",
         "com.google.cf.rild.rc",
         "ld.config.txt",
     ],

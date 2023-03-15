@@ -199,6 +199,11 @@ PRODUCT_PACKAGES += \
 
 endif
 
+#
+# Satellite vendor service for CF
+#
+PRODUCT_PACKAGES += CFSatelliteService
+
 # PRODUCT_AAPT_CONFIG and PRODUCT_AAPT_PREF_CONFIG are intentionally not set to
 # pick up every density resources.
 
