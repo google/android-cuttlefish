@@ -76,6 +76,8 @@ class SelectorFlags {
     return flag;
   }
 
+  std::vector<CvdFlagProxy> Flags() const { return flags_.Flags(); }
+
  private:
   SelectorFlags() {
     flags_.EnrollFlag(GroupNameFlag(kGroupName));
