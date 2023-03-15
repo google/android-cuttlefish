@@ -18,6 +18,10 @@
 #include <android-base/endian.h>
 #include <android-base/logging.h>
 
+#ifdef _WIN32
+#include <sysinfoapi.h>
+#endif
+
 #include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_hmac.h"
 #include "host/commands/secure_env/tpm_key_blob_maker.h"
@@ -109,12 +113,16 @@ bool TpmKeymasterEnforcement::auth_token_timed_out(const hw_auth_token_t& token,
 }
 
 uint64_t TpmKeymasterEnforcement::get_current_time_ms() const {
+#ifdef _WIN32
+  return GetTickCount64();
+#else
   struct timespec tp;
   int err = clock_gettime(CLOCK_BOOTTIME, &tp);
   if (err) {
     return 0;
   }
   return timespec_to_ms(tp);
+#endif
 }
 
 keymaster_security_level_t TpmKeymasterEnforcement::SecurityLevel() const {
