@@ -55,4 +55,52 @@ std::vector<CvdFlagProxy> FlagCollection::Flags() const {
   return flags;
 }
 
+template <typename T>
+static Result<std::optional<CvdFlagProxy::ValueVariant>> FilterKnownTypeFlag(
+    const CvdFlag<T>& flag, cvd_common::Args& args) {
+  std::optional<T> opt = CF_EXPECT(flag.FilterFlag(args));
+  if (!opt) {
+    return std::nullopt;
+  }
+  CvdFlagProxy::ValueVariant value_variant = *opt;
+  return value_variant;
+}
+
+Result<std::optional<CvdFlagProxy::ValueVariant>> CvdFlagProxy::FilterFlag(
+    cvd_common::Args& args) const {
+  CF_EXPECT(GetType() != FlagType::kUnknown, "Unsupported flag type of typeid");
+  std::optional<CvdFlagProxy::ValueVariant> output;
+  auto filter_flag = Overload{
+      [&args](const CvdFlag<std::int32_t>& int32_t_flag)
+          -> Result<std::optional<ValueVariant>> {
+        return FilterKnownTypeFlag(int32_t_flag, args);
+      },
+      [&args](const CvdFlag<bool>& bool_flag)
+          -> Result<std::optional<ValueVariant>> {
+        return FilterKnownTypeFlag(bool_flag, args);
+      },
+      [&args](const CvdFlag<std::string>& string_flag)
+          -> Result<std::optional<ValueVariant>> {
+        return FilterKnownTypeFlag(string_flag, args);
+      },
+      [](auto) -> Result<std::optional<ValueVariant>> {
+        return CF_ERR("Invalid type is passed to FlagCollection::FilterFlags");
+      },
+  };
+  output = CF_EXPECT(std::visit(filter_flag, flag_));
+  return output;
+}
+
+Result<std::unordered_map<std::string, FlagCollection::FlagValuePair>>
+FlagCollection::FilterFlags(cvd_common::Args& args) const {
+  std::unordered_map<std::string, FlagCollection::FlagValuePair> output;
+  for (const auto& [name, flag_proxy] : name_flag_map_) {
+    output.emplace(
+        name,
+        FlagValuePair{.flag = flag_proxy,
+                      .value_opt = CF_EXPECT(flag_proxy.FilterFlag(args))});
+  }
+  return output;
+}
+
 }  // namespace cuttlefish

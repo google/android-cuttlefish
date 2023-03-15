@@ -20,6 +20,16 @@
 
 namespace cuttlefish {
 
+CvdFlag<bool> DriverFlags::CleanFlag(const std::string& name,
+                                     const bool default_val) {
+  CvdFlag<bool> clean_flag(name, default_val);
+  std::stringstream help;
+  help << "--" << name << "=true to clean up devices and restart cvd server "
+       << "before the operation is executed";
+  clean_flag.SetHelpMessage(help.str());
+  return clean_flag;
+}
+
 CvdFlag<bool> DriverFlags::HelpFlag() {
   const bool default_val = false;
   CvdFlag<bool> help_flag(kHelp, default_val);
