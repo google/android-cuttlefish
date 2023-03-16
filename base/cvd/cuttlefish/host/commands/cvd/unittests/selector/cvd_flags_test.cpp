@@ -29,64 +29,39 @@ TEST_F(CvdFlagCollectionTest, Leftover) {
   ASSERT_EQ(input_, cvd_common::Args{"--not_consumed"});
 }
 
-TEST_F(CvdFlagCollectionTest, AllGivenFlagsListed) {
+TEST_F(CvdFlagCollectionTest, AllFlagsListed) {
   auto output_result = flag_collection_.FilterFlags(input_);
   ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
   ASSERT_EQ(input_, cvd_common::Args{"--not_consumed"});
   auto output = std::move(*output_result);
 
-  ASSERT_FALSE(Contains(output, "help"));
+  ASSERT_TRUE(Contains(output, "help"));
   ASSERT_TRUE(Contains(output, "name"));
   ASSERT_TRUE(Contains(output, "enable_vnc"));
   ASSERT_TRUE(Contains(output, "id"));
-  ASSERT_FALSE(Contains(output, "not-given"));
-  ASSERT_FALSE(Contains(output, "not-consumed"));
+  ASSERT_TRUE(Contains(output, "not-given"));
 }
 
-TEST_F(CvdFlagCollectionTest, DefaultValueFlagsAlsoListed) {
-  auto output_result = flag_collection_.CalculateFlags(input_);
+TEST_F(CvdFlagCollectionTest, ValueTest) {
+  auto output_result = flag_collection_.FilterFlags(input_);
   ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
   ASSERT_EQ(input_, cvd_common::Args{"--not_consumed"});
   auto output = std::move(*output_result);
 
-  ASSERT_TRUE(Contains(output, "help"));
-  ASSERT_TRUE(Contains(output, "name"));
-  ASSERT_TRUE(Contains(output, "enable_vnc"));
-  ASSERT_TRUE(Contains(output, "id"));
-  ASSERT_FALSE(Contains(output, "not-given"));
-  ASSERT_FALSE(Contains(output, "not-consumed"));
-}
+  ASSERT_TRUE(output.at("help").value_opt);
+  ASSERT_TRUE(output.at("name").value_opt);
+  ASSERT_TRUE(output.at("enable_vnc").value_opt);
+  ASSERT_TRUE(output.at("id").value_opt);
+  ASSERT_FALSE(output.at("not-given").value_opt);
 
-TEST_F(CvdFlagCollectionTest, ValueTest) {
-  auto output_result = flag_collection_.CalculateFlags(input_);
-  ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
-  auto output = std::move(*output_result);
-  // without these verified, the code below will crash
-  ASSERT_TRUE(Contains(output, "help"));
-  ASSERT_TRUE(Contains(output, "name"));
-  ASSERT_TRUE(Contains(output, "enable_vnc"));
-  ASSERT_TRUE(Contains(output, "id"));
-  const auto help_output = output.at("help");
-  const auto name_output = output.at("name");
-  const auto enable_vnc_output = output.at("enable_vnc");
-  const auto id_output = output.at("id");
-
-  auto help_value_result = FlagCollection::GetValue<bool>(help_output.value);
-  auto name_value_result =
-      FlagCollection::GetValue<std::string>(name_output.value);
-  auto enable_vnc_value_result =
-      FlagCollection::GetValue<bool>(enable_vnc_output.value);
-  auto id_value_result =
-      FlagCollection::GetValue<std::int32_t>(id_output.value);
-
-  ASSERT_TRUE(help_value_result.ok());
-  ASSERT_TRUE(name_value_result.ok());
-  ASSERT_TRUE(enable_vnc_value_result.ok());
-  ASSERT_TRUE(id_value_result.ok());
-  ASSERT_EQ(*help_value_result, false);
-  ASSERT_EQ(*name_value_result, "foo");
-  ASSERT_EQ(*enable_vnc_value_result, true);
-  ASSERT_EQ(*id_value_result, 9);
+  auto help_result = Get<bool>(output.at("help").value_opt);
+  ASSERT_TRUE(help_result.ok() && *help_result);
+  auto enable_vnc_result = Get<bool>(output.at("enable_vnc").value_opt);
+  ASSERT_TRUE(enable_vnc_result.ok() && *enable_vnc_result);
+  auto name_result = Get<std::string>(output.at("name").value_opt);
+  ASSERT_TRUE(name_result.ok() && *name_result == "foo");
+  auto id_result = Get<std::int32_t>(output.at("id").value_opt);
+  ASSERT_TRUE(id_result.ok() && *id_result == 9);
 }
 
 TEST(CvdFlagTest, FlagProxyFilter) {

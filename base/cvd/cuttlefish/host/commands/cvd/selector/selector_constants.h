@@ -70,6 +70,7 @@ class SelectorFlags {
   static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
   static constexpr char kDisableDefaultGroup[] = "disable_default_group";
   static const SelectorFlags& Get();
+  static const SelectorFlags New();
 
   Result<CvdFlagProxy> GetFlag(const std::string& search_key) const {
     auto flag = CF_EXPECT(flags_.GetFlag(search_key));
@@ -77,6 +78,7 @@ class SelectorFlags {
   }
 
   std::vector<CvdFlagProxy> Flags() const { return flags_.Flags(); }
+  const auto& FlagsAsCollection() const { return flags_; }
 
  private:
   SelectorFlags() {

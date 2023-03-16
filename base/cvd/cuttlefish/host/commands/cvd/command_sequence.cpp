@@ -116,9 +116,6 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
     CF_EXPECT(response.status().code() == cvd::Status::OK,
               "Reason: \"" << response.status().message() << "\"");
 
-    static const char kDoneMsg[] = "Done\n";
-    CF_EXPECT(WriteAll(request.Err(), kDoneMsg) == sizeof(kDoneMsg) - 1,
-              request.Err()->StrError());
     responses.emplace_back(std::move(response));
   }
   return {responses};
