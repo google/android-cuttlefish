@@ -27,7 +27,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_riscv64_minidroid:$(LOCAL_DIR)/vsoc_riscv64_minidroid/aosp_cf.mk \
 	aosp_cf_riscv64_slim:$(LOCAL_DIR)/vsoc_riscv64/slim/aosp_cf.mk \
 	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64_only/auto/aosp_cf.mk \
-	aosp_cf_x86_64_pc:$(LOCAL_DIR)/vsoc_x86_64/pc/aosp_cf.mk \
+	aosp_cf_x86_64_pc:$(LOCAL_DIR)/vsoc_x86_64_only/pc/aosp_cf.mk \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf.mk \
 	aosp_cf_x86_64_phone_vendor:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf_vendor.mk \
 	aosp_cf_x86_64_tv:$(LOCAL_DIR)/vsoc_x86_64/tv/aosp_cf.mk \
