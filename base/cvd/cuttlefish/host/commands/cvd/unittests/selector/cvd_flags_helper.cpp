@@ -23,7 +23,7 @@
 namespace cuttlefish {
 
 CvdFlagCollectionTest::CvdFlagCollectionTest() {
-  std::string in_str = "--name=foo --not_consumed --enable_vnc --id 9";
+  std::string in_str = "--help --name=foo --not_consumed --enable_vnc --id 9";
   input_ = android::base::Tokenize(in_str, " ");
   CvdFlag<bool> Help("help", false);
   CvdFlag<std::string> Name("name");
