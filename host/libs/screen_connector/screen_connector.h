@@ -22,13 +22,17 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <type_traits>
+#include <unordered_set>
 
 #include <android-base/logging.h>
+#include <fruit/fruit.h>
 
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/size_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/confui/host_mode_ctrl.h"
@@ -51,6 +55,27 @@ class ScreenConnector : public ScreenConnectorInfo,
 
   using FrameMultiplexer = ScreenConnectorInputMultiplexer<ProcessedFrameType>;
 
+  INJECT(ScreenConnector(WaylandScreenConnector& sc_android_src,
+                         HostModeCtrl& host_mode_ctrl))
+      : sc_android_src_(sc_android_src),
+        host_mode_ctrl_{host_mode_ctrl},
+        on_next_frame_cnt_{0},
+        render_confui_cnt_{0},
+        sc_frame_multiplexer_{host_mode_ctrl_} {
+    auto config = cuttlefish::CuttlefishConfig::Get();
+    if (!config) {
+      LOG(FATAL) << "CuttlefishConfig is not available.";
+    }
+    auto instance = config->ForDefaultInstance();
+    std::unordered_set<std::string_view> valid_gpu_modes{
+        cuttlefish::kGpuModeDrmVirgl, cuttlefish::kGpuModeGfxstream,
+        cuttlefish::kGpuModeGfxstreamGuestAngle,
+        cuttlefish::kGpuModeGuestSwiftshader};
+    if (!Contains(valid_gpu_modes, instance.gpu_mode())) {
+      LOG(FATAL) << "Invalid gpu mode: " << instance.gpu_mode();
+    }
+  }
+
   /**
    * This is the type of the callback function WebRTC is supposed to provide
    * ScreenConnector with.
@@ -66,23 +91,6 @@ class ScreenConnector : public ScreenConnectorInfo,
       /* ScImpl enqueues this type into the Q */
       ProcessedFrameType& msg)>;
 
-  static std::unique_ptr<ScreenConnector<ProcessedFrameType>> Get(
-      const int frames_fd, HostModeCtrl& host_mode_ctrl) {
-    auto config = cuttlefish::CuttlefishConfig::Get();
-    auto instance = config->ForDefaultInstance();
-    ScreenConnector<ProcessedFrameType>* raw_ptr = nullptr;
-    if (instance.gpu_mode() == cuttlefish::kGpuModeDrmVirgl ||
-        instance.gpu_mode() == cuttlefish::kGpuModeGfxstream ||
-        instance.gpu_mode() == cuttlefish::kGpuModeGfxstreamGuestAngle ||
-        instance.gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
-      raw_ptr = new ScreenConnector<ProcessedFrameType>(
-          std::make_unique<WaylandScreenConnector>(frames_fd), host_mode_ctrl);
-    } else {
-      LOG(FATAL) << "Invalid gpu mode: " << instance.gpu_mode();
-    }
-    return std::unique_ptr<ScreenConnector<ProcessedFrameType>>(raw_ptr);
-  }
-
   virtual ~ScreenConnector() = default;
 
   /**
@@ -95,7 +103,7 @@ class ScreenConnector : public ScreenConnectorInfo,
     callback_from_streamer_ = std::move(frame_callback);
     streamer_callback_set_cv_.notify_all();
 
-    sc_android_src_->SetFrameCallback(
+    sc_android_src_.SetFrameCallback(
         [this](std::uint32_t display_number, std::uint32_t frame_w,
                std::uint32_t frame_h, std::uint32_t frame_stride_bytes,
                std::uint8_t* frame_bytes) {
@@ -125,7 +133,7 @@ class ScreenConnector : public ScreenConnectorInfo,
   }
 
   void SetDisplayEventCallback(DisplayEventCallback event_callback) {
-    sc_android_src_->SetDisplayEventCallback(std::move(event_callback));
+    sc_android_src_.SetDisplayEventCallback(std::move(event_callback));
   }
 
   /* returns the processed frame that also includes meta-info such as success/fail
@@ -167,17 +175,10 @@ class ScreenConnector : public ScreenConnectorInfo,
   }
 
  protected:
-  ScreenConnector(std::unique_ptr<WaylandScreenConnector>&& impl,
-                  HostModeCtrl& host_mode_ctrl)
-      : sc_android_src_{std::move(impl)},
-        host_mode_ctrl_{host_mode_ctrl},
-        on_next_frame_cnt_{0},
-        render_confui_cnt_{0},
-        sc_frame_multiplexer_{host_mode_ctrl_} {}
   ScreenConnector() = delete;
 
  private:
-  std::unique_ptr<WaylandScreenConnector> sc_android_src_;
+  WaylandScreenConnector& sc_android_src_;
   HostModeCtrl& host_mode_ctrl_;
   unsigned long long int on_next_frame_cnt_;
   unsigned long long int render_confui_cnt_;

@@ -25,7 +25,8 @@
 
 namespace cuttlefish {
 
-WaylandScreenConnector::WaylandScreenConnector(int frames_fd) {
+WaylandScreenConnector::WaylandScreenConnector(ANNOTATED(FramesFd, int)
+                                                   frames_fd) {
   int wayland_fd = fcntl(frames_fd, F_DUPFD_CLOEXEC, 3);
   CHECK(wayland_fd != -1) << "Unable to dup server, errno " << errno;
   close(frames_fd);

@@ -20,6 +20,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <libyuv.h>
 
@@ -98,6 +99,22 @@ fruit::Component<cuttlefish::CustomActionConfigProvider> WebRtcComponent() {
       .install(cuttlefish::ConfigFlagPlaceholder)
       .install(cuttlefish::CustomActionsComponent);
 };
+
+fruit::Component<
+    cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
+    cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
+CreateConfirmationUIComponent(
+    int* frames_fd, cuttlefish::confui::PipeConnectionPair* pipe_io_pair) {
+  using cuttlefish::ScreenConnectorFrameRenderer;
+  using ScreenConnector = cuttlefish::DisplayHandler::ScreenConnector;
+  return fruit::createComponent()
+      .bindInstance<
+          fruit::Annotated<cuttlefish::WaylandScreenConnector::FramesFd, int>>(
+          *frames_fd)
+      .bindInstance(*pipe_io_pair)
+      .bind<ScreenConnectorFrameRenderer, ScreenConnector>();
+}
+
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -161,26 +178,30 @@ int main(int argc, char** argv) {
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto instance = cvd_config->ForDefaultInstance();
-  auto& host_mode_ctrl = cuttlefish::HostModeCtrl::Get();
-  auto screen_connector_ptr = cuttlefish::DisplayHandler::ScreenConnector::Get(
-      FLAGS_frame_server_fd, host_mode_ctrl);
-  auto& screen_connector = *(screen_connector_ptr.get());
-  cuttlefish::confui::ConfUiRenderer conf_ui_renderer{screen_connector};
-  auto client_server = cuttlefish::ClientFilesServer::New(FLAGS_client_dir);
-  CHECK(client_server) << "Failed to initialize client files server";
 
-  // create confirmation UI service, giving host_mode_ctrl and
-  // screen_connector
-  // keep this singleton object alive until the webRTC process ends
   cuttlefish::confui::PipeConnectionPair conf_ui_comm_fd_pair{
       .from_guest_ = cuttlefish::SharedFD::Dup(FLAGS_confui_out_fd),
       .to_guest_ = cuttlefish::SharedFD::Dup(FLAGS_confui_in_fd)};
   close(FLAGS_confui_in_fd);
   close(FLAGS_confui_out_fd);
-  cuttlefish::confui::HostServer host_confui_server(
-      host_mode_ctrl, conf_ui_renderer, conf_ui_comm_fd_pair);
-  cuttlefish::confui::HostVirtualInput confui_virtual_input(host_confui_server,
-                                                            host_mode_ctrl);
+
+  int frames_fd = FLAGS_frame_server_fd;
+  fruit::Injector<
+      cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
+      cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
+      conf_ui_components_injector(CreateConfirmationUIComponent,
+                                  std::addressof(frames_fd),
+                                  &conf_ui_comm_fd_pair);
+  auto& screen_connector =
+      conf_ui_components_injector.get<DisplayHandler::ScreenConnector&>();
+
+  auto client_server = cuttlefish::ClientFilesServer::New(FLAGS_client_dir);
+  CHECK(client_server) << "Failed to initialize client files server";
+  auto& host_confui_server =
+      conf_ui_components_injector.get<cuttlefish::confui::HostServer&>();
+  auto& confui_virtual_input =
+      conf_ui_components_injector.get<cuttlefish::confui::HostVirtualInput&>();
+
   StreamerConfig streamer_config;
 
   streamer_config.device_id = instance.webrtc_device_id();
