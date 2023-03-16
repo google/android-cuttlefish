@@ -165,6 +165,7 @@ int main(int argc, char** argv) {
   auto screen_connector_ptr = cuttlefish::DisplayHandler::ScreenConnector::Get(
       FLAGS_frame_server_fd, host_mode_ctrl);
   auto& screen_connector = *(screen_connector_ptr.get());
+  cuttlefish::confui::ConfUiRenderer conf_ui_renderer{screen_connector};
   auto client_server = cuttlefish::ClientFilesServer::New(FLAGS_client_dir);
   CHECK(client_server) << "Failed to initialize client files server";
 
@@ -177,7 +178,7 @@ int main(int argc, char** argv) {
   close(FLAGS_confui_out_fd);
 
   auto& host_confui_server = cuttlefish::confui::HostServer::Get(
-      host_mode_ctrl, screen_connector, confui_from_guest_fd,
+      host_mode_ctrl, conf_ui_renderer, confui_from_guest_fd,
       confui_to_guest_fd);
 
   StreamerConfig streamer_config;
