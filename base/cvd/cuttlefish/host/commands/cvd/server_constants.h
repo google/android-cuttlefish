@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,80 +14,16 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <atomic>
-#include <map>
-#include <optional>
-#include <shared_mutex>
-#include <string>
-#include <vector>
-
-#include <fruit/fruit.h>
-
-#include "cvd_server.pb.h"
-
-#include "common/libs/fs/epoll.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/unix_sockets.h"
-#include "host/commands/cvd/epoll_loop.h"
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/logger.h"
-// including "server_command/subcmd.h" causes cyclic dependency
-#include "host/commands/cvd/server_command/host_tool_target_manager.h"
-#include "host/commands/cvd/server_command/server_handler.h"
-#include "host/libs/config/inject.h"
-#include "host/libs/web/build_api.h"
-
 namespace cuttlefish {
+namespace cvd {
 
-class CvdServer {
- public:
-  INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&,
-                   HostToolTargetManager&, ServerLogger&));
-  ~CvdServer();
+// Major version uprevs are backwards incompatible.
+// Minor version uprevs are backwards compatible within major version.
+constexpr int kVersionMajor = 1;
+constexpr int kVersionMinor = 2;
 
-  Result<void> StartServer(SharedFD server);
-  Result<void> Exec(SharedFD new_exe, SharedFD client);
-  Result<void> AcceptCarryoverClient(SharedFD client);
-  void Stop();
-  void Join();
+// Pathname of the abstract cvd_server socket.
+constexpr char kServerSocketPath[] = "cvd_server";
 
- private:
-  struct OngoingRequest {
-    CvdServerHandler* handler;
-    std::mutex mutex;
-    std::thread::id thread_id;
-  };
-
-  /* this has to be static due to the way fruit includes components */
-  static fruit::Component<> RequestComponent(CvdServer*);
-
-  Result<void> AcceptClient(EpollEvent);
-  Result<void> HandleMessage(EpollEvent);
-  Result<cvd::Response> HandleRequest(RequestWithStdio, SharedFD client);
-  Result<void> BestEffortWakeup();
-
-  SharedFD server_fd_;
-  BuildApi& build_api_;
-  EpollPool& epoll_pool_;
-  InstanceManager& instance_manager_;
-  HostToolTargetManager& host_tool_target_manager_;
-  ServerLogger& server_logger_;
-  std::atomic_bool running_ = true;
-
-  std::mutex ongoing_requests_mutex_;
-  std::set<std::shared_ptr<OngoingRequest>> ongoing_requests_;
-  // TODO(schuffelen): Move this thread pool to another class.
-  std::mutex threads_mutex_;
-  std::vector<std::thread> threads_;
-};
-
-Result<CvdServerHandler*> RequestHandler(
-    const RequestWithStdio& request,
-    const std::vector<CvdServerHandler*>& handlers);
-
-Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client);
-
+}  // namespace cvd
 }  // namespace cuttlefish
