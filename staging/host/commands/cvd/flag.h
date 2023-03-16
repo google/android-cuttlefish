@@ -202,12 +202,19 @@ class CvdFlagProxy {
 
 class FlagCollection {
  public:
+  using ValueVariant = CvdFlagProxy::ValueVariant;
+
+  Result<void> EnrollFlag(CvdFlagProxy&& flag) {
+    auto name = CF_EXPECT(flag.Name());
+    CF_EXPECT(!Contains(name_flag_map_, name),
+              name << " is already registered.");
+    name_flag_map_.emplace(name, std::move(flag));
+    return {};
+  }
+
   template <typename T>
   Result<void> EnrollFlag(CvdFlag<T>&& flag) {
-    CF_EXPECT(!Contains(name_flag_map_, flag.Name()),
-              flag.Name() << " is already registered.");
-    const auto name = flag.Name();
-    name_flag_map_.emplace(name, CvdFlagProxy(std::move(flag)));
+    CF_EXPECT(EnrollFlag(CvdFlagProxy(std::move(flag))));
     return {};
   }
 
@@ -222,7 +229,7 @@ class FlagCollection {
   std::vector<CvdFlagProxy> Flags() const;
 
   struct FlagValuePair {
-    std::optional<std::variant<std::int32_t, bool, std::string>> value_opt;
+    std::optional<ValueVariant> value_opt;
     CvdFlagProxy flag;
   };
 
