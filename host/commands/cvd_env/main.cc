@@ -34,6 +34,26 @@ using grpc::InsecureChannelCredentials;
 namespace cuttlefish {
 namespace {
 
+constexpr char kCvdEnvHelpMessage[] =
+    "cvd env: cuttlefish environment controller\n"
+    "Basic usage: cvd env [instance_name] [sub_command] [args] [options]\n"
+    "Sub commands:\n"
+    "  ls: list services and methods for given arguments\n"
+    "    Usage: cvd env [instance_name] ls [service] [method] [-l]\n"
+    "      service(optional) : gRPC service name\n"
+    "      method(optional)  : method name for given service\n"
+    "      -l(optional)      : Use a long listing format\n"
+    "  type: get detailed information for given request/reply type\n"
+    "    Usage: cvd env [instance_name] type [service] [method] [type]\n"
+    "      service           : gRPC service name\n"
+    "      method            : method name in given service\n"
+    "      type              : Protocol buffer type name in given method\n"
+    "  call: request a rpc with given method\n"
+    "    Usage: cvd env [instance_name] call [service] [method] [request]\n"
+    "      service           : gRPC service name\n"
+    "      method            : method name in given service\n"
+    "      request           : Protobuffer with text format\n";
+
 bool PrintStream(std::stringstream* ss, const grpc::string& output) {
   (*ss) << output;
   return true;
@@ -258,10 +278,23 @@ Result<void> HandleCallCmd(const std::vector<std::string>& server_address_list,
   return {};
 }
 
+bool ContainHelpOption(int argc, char** argv) {
+  for (int i = 0; i < argc; i++) {
+    if (strcmp(argv[i], "--help") || strcmp(argv[i], "-help")) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Result<void> CvdEnvMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  CF_EXPECT(argc >= 3, " need to specify a receiver and a command");
+  if (ContainHelpOption(argc, argv)) {
+    std::cout << kCvdEnvHelpMessage;
+    return {};
+  }
 
+  CF_EXPECT(argc >= 3, " need to specify a receiver and a command");
   const auto& receiver = argv[1];
   const auto& cmd = argv[2];
 
