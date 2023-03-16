@@ -99,3 +99,15 @@ cc_test_host {
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_flags_test",
+    srcs: [
+        "cvd_flags_helper.cpp",
+        "cvd_flags_test.cpp",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
