@@ -25,13 +25,12 @@ namespace cuttlefish {
 namespace confui {
 
 Session::Session(const std::string& session_name,
-                 const std::uint32_t display_num, HostModeCtrl& host_mode_ctrl,
-                 ScreenConnectorFrameRenderer& screen_connector,
-                 const std::string& locale)
+                 const std::uint32_t display_num, ConfUiRenderer& host_renderer,
+                 HostModeCtrl& host_mode_ctrl, const std::string& locale)
     : session_id_{session_name},
       display_num_{display_num},
+      renderer_{host_renderer},
       host_mode_ctrl_{host_mode_ctrl},
-      screen_connector_{screen_connector},
       locale_{locale},
       state_{MainLoopState::kInit},
       saved_state_{MainLoopState::kInit} {}
@@ -66,32 +65,14 @@ bool Session::IsConfUiActive() const {
   return false;
 }
 
-bool Session::IsInverted() const {
-  return Contains(ui_options_, teeui::UIOption::AccessibilityInverted);
-}
-
-bool Session::IsMagnified() const {
-  return Contains(ui_options_, teeui::UIOption::AccessibilityMagnified);
-}
-
 bool Session::RenderDialog() {
-  renderer_ = ConfUiRenderer::GenerateRenderer(
-      display_num_, prompt_text_, locale_, IsInverted(), IsMagnified());
-  if (!renderer_) {
+  auto result =
+      renderer_.RenderDialog(display_num_, prompt_text_, locale_, ui_options_);
+  if (!result.ok()) {
+    LOG(ERROR) << result.error().Trace();
     return false;
   }
-  auto teeui_frame = renderer_->RenderRawFrame();
-  if (!teeui_frame) {
-    return false;
-  }
-  ConfUiLog(VERBOSE) << "actually trying to render the frame"
-                     << thread::GetName();
-  auto frame_width = teeui_frame->Width();
-  auto frame_height = teeui_frame->Height();
-  auto frame_stride_bytes = teeui_frame->ScreenStrideBytes();
-  auto frame_bytes = reinterpret_cast<std::uint8_t*>(teeui_frame->data());
-  return screen_connector_.RenderConfirmationUi(
-      display_num_, frame_width, frame_height, frame_stride_bytes, frame_bytes);
+  return true;
 }
 
 MainLoopState Session::Transition(SharedFD& hal_cli, const FsmInput fsm_input,
