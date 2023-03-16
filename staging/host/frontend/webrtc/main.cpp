@@ -180,7 +180,8 @@ int main(int argc, char** argv) {
   auto& host_confui_server = cuttlefish::confui::HostServer::Get(
       host_mode_ctrl, conf_ui_renderer, confui_from_guest_fd,
       confui_to_guest_fd);
-
+  cuttlefish::confui::HostVirtualInput confui_virtual_input(host_confui_server,
+                                                            host_mode_ctrl);
   StreamerConfig streamer_config;
 
   streamer_config.device_id = instance.webrtc_device_id();
@@ -202,7 +203,7 @@ int main(int argc, char** argv) {
 
   KernelLogEventsHandler kernel_logs_event_handler(kernel_log_events_client);
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      input_sockets, &kernel_logs_event_handler, host_confui_server);
+      input_sockets, &kernel_logs_event_handler, confui_virtual_input);
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";
