@@ -179,13 +179,6 @@ void HostServer::UserAbortEvent() {
   SendUserSelection(input);
 }
 
-bool HostServer::IsConfUiActive() {
-  if (!curr_session_) {
-    return false;
-  }
-  return curr_session_->IsConfUiActive();
-}
-
 // read the comments in the header file
 [[noreturn]] void HostServer::MainLoop() {
   while (true) {
@@ -220,6 +213,9 @@ bool HostServer::IsConfUiActive() {
       auto [x, y] = touch_event.GetLocation();
       const bool is_confirm = curr_session_->IsConfirm(x, y);
       const bool is_cancel = curr_session_->IsCancel(x, y);
+      ConfUiLog(INFO) << "Touch at [" << x << ", " << y << "] was "
+                      << (is_cancel ? "CANCEL"
+                                    : (is_confirm ? "CONFIRM" : "INVALID"));
       if (!is_confirm && !is_cancel) {
         // ignore, take the next input
         continue;
