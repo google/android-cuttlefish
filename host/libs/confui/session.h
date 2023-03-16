@@ -46,8 +46,6 @@ class Session {
           ConfUiRenderer& host_renderer, HostModeCtrl& host_mode_ctrl,
           const std::string& locale = "en");
 
-  bool IsConfUiActive() const;
-
   std::string GetId() { return session_id_; }
 
   MainLoopState GetState() { return state_; }
