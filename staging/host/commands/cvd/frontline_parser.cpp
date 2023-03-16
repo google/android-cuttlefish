@@ -28,34 +28,6 @@
 
 namespace cuttlefish {
 
-struct BoolFlags {
-  std::unordered_set<std::string> selector_flags;
-  std::unordered_set<std::string> cvd_driver_flags;
-};
-
-struct ValueFlags {
-  std::unordered_set<std::string> selector_flags;
-  std::unordered_set<std::string> cvd_driver_flags;
-};
-
-static const BoolFlags bool_flags{
-    .selector_flags = {selector::SelectorFlags::kDisableDefaultGroup,
-                       selector::SelectorFlags::kAcquireFileLock},
-    .cvd_driver_flags = {"clean", "help"}};
-
-static const ValueFlags value_flags{
-    .selector_flags = {selector::SelectorFlags::kGroupName,
-                       selector::SelectorFlags::kInstanceName},
-    .cvd_driver_flags = {}};
-
-static std::unordered_set<std::string> Merge(
-    const std::unordered_set<std::string>& s1,
-    const std::unordered_set<std::string>& s2) {
-  std::unordered_set<std::string> out{s1};
-  out.insert(s2.begin(), s2.end());
-  return out;
-}
-
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
     ParserParam param) {
   CF_EXPECT(!param.all_args.empty());
@@ -80,21 +52,11 @@ Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
 FrontlineParser::FrontlineParser(const ParserParam& param)
     : server_supported_subcmds_{param.server_supported_subcmds},
       all_args_(param.all_args),
-      internal_cmds_(param.internal_cmds) {
-  known_bool_flags_ =
-      Merge(bool_flags.selector_flags, bool_flags.cvd_driver_flags);
-  known_value_flags_ =
-      Merge(value_flags.selector_flags, value_flags.cvd_driver_flags);
-  selector_flags_ =
-      Merge(bool_flags.selector_flags, value_flags.selector_flags);
-}
+      internal_cmds_(param.internal_cmds),
+      cvd_flags_(param.cvd_flags) {}
 
 Result<void> FrontlineParser::Separate() {
   arguments_separator_ = CF_EXPECT(CallSeparator());
-  auto filtered_output = CF_EXPECT(FilterNonSelectorArgs());
-  clean_ = filtered_output.clean;
-  help_ = filtered_output.help;
-  selector_args_ = std::move(filtered_output.selector_args);
   return {};
 }
 
@@ -105,14 +67,42 @@ Result<cvd_common::Args> FrontlineParser::ValidSubcmdsList() {
   return valid_subcmds;
 }
 
+static Result<std::unordered_set<std::string>> BoolFlagNames(
+    const std::vector<CvdFlagProxy>& flags) {
+  std::unordered_set<std::string> output;
+  for (const auto& flag : flags) {
+    if (flag.GetType() == CvdFlagProxy::FlagType::kBool) {
+      output.insert(CF_EXPECT(flag.Name()));
+    }
+  }
+  return output;
+}
+
+static Result<std::unordered_set<std::string>> ValueFlagNames(
+    const std::vector<CvdFlagProxy>& flags) {
+  std::unordered_set<std::string> output;
+  for (const auto& flag : flags) {
+    if (flag.GetType() == CvdFlagProxy::FlagType::kInt32 ||
+        flag.GetType() == CvdFlagProxy::FlagType::kString) {
+      output.insert(CF_EXPECT(flag.Name()));
+    }
+  }
+  return output;
+}
+
 Result<std::unique_ptr<selector::ArgumentsSeparator>>
 FrontlineParser::CallSeparator() {
   auto valid_subcmds_vector = CF_EXPECT(ValidSubcmdsList());
   std::unordered_set<std::string> valid_subcmds{valid_subcmds_vector.begin(),
                                                 valid_subcmds_vector.end()};
+  auto cvd_flags = cvd_flags_.Flags();
+
+  auto known_bool_flags = CF_EXPECT(BoolFlagNames(cvd_flags));
+  auto known_value_flags = CF_EXPECT(ValueFlagNames(cvd_flags));
+
   ArgumentsSeparator::FlagsRegistration flag_registration{
-      .known_boolean_flags = known_bool_flags_,
-      .known_value_flags = known_value_flags_,
+      .known_boolean_flags = known_bool_flags,
+      .known_value_flags = known_value_flags,
       .valid_subcommands = valid_subcmds};
   auto arguments_separator =
       CF_EXPECT(ArgumentsSeparator::Parse(flag_registration, all_args_));
@@ -132,21 +122,8 @@ const cvd_common::Args& FrontlineParser::SubCmdArgs() const {
   return arguments_separator_->SubCmdArgs();
 }
 
-Result<FrontlineParser::FilterOutput> FrontlineParser::FilterNonSelectorArgs() {
-  auto cvd_args = arguments_separator_->CvdArgs();
-  bool clean = false;
-  bool help = false;
-  std::vector<Flag> gflags;
-  gflags.emplace_back(GflagsCompatFlag("clean", clean));
-  gflags.emplace_back(GflagsCompatFlag("help", help));
-  CF_EXPECT(ParseFlags(gflags, cvd_args));
-  FilterOutput output{
-      .clean = clean, .help = help, .selector_args = std::move(cvd_args)};
-  return output;
-}
-
-const cvd_common::Args& FrontlineParser::SelectorArgs() const {
-  return selector_args_;
+const cvd_common::Args& FrontlineParser::CvdArgs() const {
+  return arguments_separator_->CvdArgs();
 }
 
 }  // namespace cuttlefish
