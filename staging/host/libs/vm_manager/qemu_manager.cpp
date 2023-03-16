@@ -292,7 +292,6 @@ Result<std::vector<Command>> QemuManager::StartCommands(
 
   bool is_arm = arch_ == Arch::Arm || arch_ == Arch::Arm64;
   bool is_x86 = arch_ == Arch::X86 || arch_ == Arch::X86_64;
-  bool is_arm64 = arch_ == Arch::Arm64;
   bool is_riscv64 = arch_ == Arch::RiscV64;
 
   auto access_kregistry_size_bytes = 0;
@@ -336,12 +335,10 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   } else if (is_arm) {
     // QEMU doesn't support GICv3 with TCG yet
     machine += ",gic-version=2";
-    if (is_arm64) {
-      // Only enable MTE in TCG mode. We haven't started to run on ARMv8/ARMv9
-      // devices with KVM and MTE, so MTE will always require TCG
-      machine += ",mte=on";
-    }
     CF_EXPECT(instance.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
+  }
+  if (instance.mte()) {
+    machine += ",mte=on";
   }
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
