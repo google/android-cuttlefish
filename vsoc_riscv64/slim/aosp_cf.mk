@@ -130,6 +130,12 @@ $(call inherit-product, device/google/cuttlefish/vsoc_riscv64/bootloader.mk)
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
 
+# TODO(b/206676167): This property can be removed when renderscript is removed.
+# Prevents framework from attempting to load renderscript libraries, which are
+# not supported on this architecture.
+PRODUCT_SYSTEM_PROPERTIES += \
+    config.disable_renderscript=1 \
+
 PRODUCT_NAME := aosp_cf_riscv64_slim
 PRODUCT_DEVICE := vsoc_riscv64
 PRODUCT_MANUFACTURER := Google
