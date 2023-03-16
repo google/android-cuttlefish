@@ -83,6 +83,7 @@
   cuttlefish::ForCurrentInstance("CUTTLEFISHCVD")
 #define CF_DEFAULTS_SECURE_HALS "keymint,gatekeeper"
 #define CF_DEFAULTS_PROTECTED_VM false
+#define CF_DEFAULTS_MTE false
 
 // Kernel default parameters
 #define CF_DEFAULTS_ENABLE_KERNEL_LOG true
