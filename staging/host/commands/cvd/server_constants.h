@@ -20,7 +20,7 @@ namespace cvd {
 // Major version uprevs are backwards incompatible.
 // Minor version uprevs are backwards compatible within major version.
 constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 1;
+constexpr int kVersionMinor = 2;
 
 // Pathname of the abstract cvd_server socket.
 constexpr char kServerSocketPath[] = "cvd_server";
