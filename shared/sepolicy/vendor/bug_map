@@ -6,3 +6,5 @@ init system_lib_file file b/133444385
 kernel kernel capability b/179966921
 migrate_legacy_obb_data dalvikcache_data_file file b/152338071
 priv_app radio_vendor_data_file dir b/188833462
+dlkm_loader dlkm_loader capability b/149866755
+dlkm_loader kernel process b/149866755
