@@ -29,6 +29,7 @@ cc_library_host_static {
         "host_tool_target.cpp",
         "host_tool_target_manager.cpp",
         "generic.cpp",
+        "handler_proxy.cpp",
         "help.cpp",
         "operation_to_bins_map.cpp",
         "load_configs.cpp",
