@@ -21,7 +21,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
-#include "host/libs/config/config_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -114,7 +114,7 @@ static Result<std::optional<std::int32_t>> GflagsBaseInstanceFlag() {
     return {};
   }
   CF_EXPECT(info.type == "int32");
-  return std::atoi(info.current_value.c_str());
+  return *reinterpret_cast<const std::int32_t*>(info.flag_ptr);
 }
 
 // Failed result: The flag was specified in an invalid way
@@ -129,7 +129,7 @@ static Result<std::optional<std::int32_t>> GflagsNumInstancesFlag() {
     return {};
   }
   CF_EXPECT(info.type == "int32");
-  return std::atoi(info.current_value.c_str());
+  return *reinterpret_cast<const std::int32_t*>(info.flag_ptr);
 }
 
 // Failed result: The flag was specified in an invalid way
@@ -144,7 +144,7 @@ static Result<std::vector<std::int32_t>> GflagsInstanceNumsFlag() {
     return {};
   }
   CF_EXPECT(info.type == "string");
-  auto contents = info.current_value;
+  auto contents = *reinterpret_cast<const std::string*>(info.flag_ptr);
   return CF_EXPECT(ParseInstanceNums(contents));
 }
 
