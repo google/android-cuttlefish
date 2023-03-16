@@ -481,6 +481,7 @@ class CuttlefishConfig {
     bool record_screen() const;
     std::string gem5_debug_file() const;
     bool protected_vm() const;
+    bool mte() const;
     std::string boot_slot() const;
 
     // Kernel and bootloader logging
@@ -649,6 +650,7 @@ class CuttlefishConfig {
     void set_record_screen(bool record_screen);
     void set_gem5_debug_file(const std::string& gem5_debug_file);
     void set_protected_vm(bool protected_vm);
+    void set_mte(bool mte);
     void set_boot_slot(const std::string& boot_slot);
     void set_grpc_socket_path(const std::string& sockets);
 
