@@ -712,6 +712,14 @@ bool CuttlefishConfig::InstanceSpecific::protected_vm() const {
   return (*Dictionary())[kProtectedVm].asBool();
 }
 
+static constexpr char kMte[] = "mte";
+void CuttlefishConfig::MutableInstanceSpecific::set_mte(bool mte) {
+  (*Dictionary())[kMte] = mte;
+}
+bool CuttlefishConfig::InstanceSpecific::mte() const {
+  return (*Dictionary())[kMte].asBool();
+}
+
 static constexpr char kEnableKernelLog[] = "enable_kernel_log";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_kernel_log(bool enable_kernel_log) {
   (*Dictionary())[kEnableKernelLog] = enable_kernel_log;
