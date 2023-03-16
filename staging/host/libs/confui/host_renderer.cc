@@ -421,9 +421,15 @@ bool ConfUiRenderer::IsMagnified(
 }
 
 bool ConfUiRenderer::IsInConfirm(const std::uint32_t x, const std::uint32_t y) {
+  if (!renderer_impl_) {
+    ConfUiLog(INFO) << "renderer_impl_ is nullptr";
+  }
   return renderer_impl_ && renderer_impl_->IsInConfirm(x, y);
 }
 bool ConfUiRenderer::IsInCancel(const std::uint32_t x, const std::uint32_t y) {
+  if (!renderer_impl_) {
+    ConfUiLog(INFO) << "renderer_impl_ is nullptr";
+  }
   return renderer_impl_ && renderer_impl_->IsInCancel(x, y);
 }
 

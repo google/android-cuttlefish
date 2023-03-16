@@ -18,6 +18,8 @@
 
 #include <cstdint>
 
+#include "host/libs/confui/host_server.h"
+
 namespace cuttlefish {
 namespace confui {
 enum class ConfUiKeys : std::uint32_t { Confirm = 7, Cancel = 8 };
@@ -28,11 +30,17 @@ enum class ConfUiKeys : std::uint32_t { Confirm = 7, Cancel = 8 };
  */
 class HostVirtualInput {
  public:
-  virtual void TouchEvent(const int x, const int y, const bool is_down) = 0;
-  virtual void UserAbortEvent() = 0;
-  virtual ~HostVirtualInput() = default;
+  HostVirtualInput(HostServer& host_server, HostModeCtrl& host_mode_ctrl);
+
+  void TouchEvent(const int x, const int y, const bool is_down);
+  void UserAbortEvent();
+  ~HostVirtualInput() = default;
   // guarantees that if this returns true, it is confirmation UI mode
-  virtual bool IsConfUiActive() = 0;
+  bool IsConfUiActive();
+
+ private:
+  HostServer& host_server_;
+  HostModeCtrl& host_mode_ctrl_;
 };
 }  // namespace confui
 }  // namespace cuttlefish
