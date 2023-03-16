@@ -135,6 +135,33 @@ Result<std::string> GetFullMethodName(const std::string& server_address,
   return full_service_name + "/" + method_name;
 }
 
+Result<std::string> GetFullTypeName(const std::string& server_address,
+                                    const std::string& service_name,
+                                    const std::string& method_name,
+                                    const std::string& type_name) {
+  // Run grpc_cli ls -l for given method to extract full type name.
+  // Example output:
+  //   rpc OpenwrtIpaddr(google.protobuf.Empty) returns
+  //   (openwrtcontrolserver.OpenwrtIpaddrReply) {}
+  const auto& full_method_name =
+      CF_EXPECT(GetFullMethodName(server_address, service_name, method_name));
+  std::vector<std::string> grpc_arguments{"grpc_cli", "ls", "-l",
+                                          server_address, full_method_name};
+  auto grpc_result = RunGrpcCommand(grpc_arguments);
+
+  std::vector<std::string> candidates;
+  for (auto& full_type_name : android::base::Split(grpc_result, "()")) {
+    if (android::base::EndsWith(full_type_name, type_name)) {
+      candidates.emplace_back(full_type_name);
+    }
+  }
+
+  CF_EXPECT(candidates.size() > 0, service_name + " is not found.");
+  CF_EXPECT(candidates.size() < 2, service_name + " is ambiguous.");
+
+  return candidates[0];
+}
+
 Result<void> HandleLsCmd(const std::vector<std::string>& server_address_list,
                          const std::vector<std::string>& args,
                          const std::vector<std::string>& options) {
@@ -179,8 +206,26 @@ Result<void> HandleLsCmd(const std::vector<std::string>& server_address_list,
 Result<void> HandleTypeCmd(const std::vector<std::string>& server_address_list,
                            const std::vector<std::string>& args,
                            const std::vector<std::string>& options) {
-  // TODO(b/264201498)
-  LOG(INFO) << "TODO(b/264201498)";
+  CF_EXPECT(args.size() > 2,
+            "need to specify a service name, a method name, and type_name");
+  CF_EXPECT(args.size() < 4, "too many arguments");
+
+  std::vector<std::string> grpc_arguments{"grpc_cli", "type"};
+  const auto& service_name = args[0];
+  const auto& method_name = args[1];
+  const auto& type_name = args[2];
+
+  const auto& server_address =
+      CF_EXPECT(GetServerAddress(server_address_list, service_name));
+  grpc_arguments.push_back(server_address);
+  const auto& full_type_name = CF_EXPECT(
+      GetFullTypeName(server_address, service_name, method_name, type_name));
+  grpc_arguments.push_back(full_type_name);
+
+  grpc_arguments.insert(grpc_arguments.end(), options.begin(), options.end());
+
+  std::cout << RunGrpcCommand(grpc_arguments);
+
   return {};
 }
 
