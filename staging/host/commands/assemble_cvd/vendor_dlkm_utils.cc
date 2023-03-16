@@ -19,6 +19,7 @@
 
 #include <fcntl.h>
 
+#include <fcntl.h>
 #include <map>
 #include <queue>
 #include <set>
@@ -29,6 +30,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/ramdisk_modules.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -38,6 +40,7 @@ namespace {
 constexpr size_t RoundDown(size_t a, size_t divisor) {
   return a / divisor * divisor;
 }
+
 constexpr size_t RoundUp(size_t a, size_t divisor) {
   return RoundDown(a + divisor, divisor);
 }
@@ -64,25 +67,6 @@ bool WriteLinesToFile(const Container& lines, const char* path) {
   return true;
 }
 
-// Recursively enumerate files in |dir|, and invoke the callback function with
-// path to each file/directory.
-Result<void> WalkDirectory(
-    const std::string& dir,
-    const std::function<bool(const std::string&)>& callback) {
-  const auto files = CF_EXPECT(DirectoryContents(dir));
-  for (const auto& filename : files) {
-    if (filename == "." || filename == "..") {
-      continue;
-    }
-    auto file_path = dir + "/";
-    file_path.append(filename);
-    callback(file_path);
-    if (DirectoryExists(file_path)) {
-      WalkDirectory(file_path, callback);
-    }
-  }
-  return {};
-}
 
 // Generate a filesystem_config.txt for all files in |fs_root|
 bool WriteFsConfig(const char* output_path, const std::string& fs_root,
@@ -114,6 +98,107 @@ bool WriteFsConfig(const char* output_path, const std::string& fs_root,
     return true;
   });
   return true;
+}
+
+std::vector<std::string> GetRamdiskModules(
+    const std::vector<std::string>& all_modules) {
+  static const auto ramdisk_modules_allow_list =
+      std::set<std::string>(RAMDISK_MODULES.begin(), RAMDISK_MODULES.end());
+  std::vector<std::string> ramdisk_modules;
+  for (const auto& mod_path : all_modules) {
+    if (mod_path.empty()) {
+      continue;
+    }
+    const auto mod_name = cpp_basename(mod_path);
+    if (ramdisk_modules_allow_list.count(mod_name) != 0) {
+      ramdisk_modules.emplace_back(mod_path);
+    }
+  }
+  return ramdisk_modules;
+}
+
+// Filter the dependency map |deps| to only contain nodes in |allow_list|
+std::map<std::string, std::vector<std::string>> FilterDependencies(
+    const std::map<std::string, std::vector<std::string>>& deps,
+    const std::set<std::string>& allow_list) {
+  std::map<std::string, std::vector<std::string>> new_deps;
+  for (const auto& mod_name : allow_list) {
+    new_deps[mod_name].clear();
+  }
+  for (const auto& [mod_name, children] : deps) {
+    if (!allow_list.count(mod_name)) {
+      continue;
+    }
+    for (const auto& child : children) {
+      if (!allow_list.count(child)) {
+        continue;
+      }
+      new_deps[mod_name].emplace_back(child);
+    }
+  }
+  return new_deps;
+}
+
+// Write dependency map to modules.dep file
+bool WriteDepsToFile(
+    const std::map<std::string, std::vector<std::string>>& deps,
+    const std::string& output_path) {
+  std::stringstream ss;
+  for (const auto& [key, val] : deps) {
+    ss << key << ":";
+    for (const auto& dep : val) {
+      ss << " " << dep;
+    }
+    ss << "\n";
+  }
+  if (!android::base::WriteStringToFile(ss.str(), output_path)) {
+    PLOG(ERROR) << "Failed to write modules.dep to " << output_path;
+    return false;
+  }
+  return true;
+}
+
+// Parse modules.dep into an in-memory data structure, key is path to a kernel
+// module, value is all dependency modules
+std::map<std::string, std::vector<std::string>> LoadModuleDeps(
+    const std::string& filename) {
+  std::map<std::string, std::vector<std::string>> dependency_map;
+  const auto dep_str = android::base::Trim(ReadFile(filename));
+  const auto dep_lines = android::base::Split(dep_str, "\n");
+  for (const auto& line : dep_lines) {
+    const auto mod_name = line.substr(0, line.find(":"));
+    const auto deps =
+        android::base::Tokenize(line.substr(mod_name.size() + 1), " ");
+    if (!deps.empty()) {
+      dependency_map[mod_name] = deps;
+    }
+  }
+
+  return dependency_map;
+}
+
+// Recursively compute all modules which |start_nodes| depend on
+std::set<std::string> ComputeTransitiveClosure(
+    const std::vector<std::string>& start_nodes,
+    const std::map<std::string, std::vector<std::string>>& dependencies) {
+  std::deque<std::string> queue(start_nodes.begin(), start_nodes.end());
+  std::set<std::string> visited;
+  while (!queue.empty()) {
+    const auto cur = queue.front();
+    queue.pop_front();
+    if (visited.find(cur) != visited.end()) {
+      continue;
+    }
+    visited.insert(cur);
+    const auto it = dependencies.find(cur);
+    if (it == dependencies.end()) {
+      continue;
+    }
+    for (const auto& dep : it->second) {
+      queue.emplace_back(dep);
+    }
+  }
+  return visited;
 }
 
 bool GenerateFileContexts(const char* output_path,
@@ -288,6 +373,55 @@ bool RebuildVbmetaVendor(const std::string& vendor_dlkm_img,
       return false;
     }
   }
+  return true;
+}
+
+bool SplitRamdiskModules(const std::string& ramdisk_path,
+                         const std::string& ramdisk_stage_dir,
+                         const std::string& vendor_dlkm_build_dir) {
+  const auto target_modules_dir = vendor_dlkm_build_dir + "/lib/modules";
+  const auto ret = EnsureDirectoryExists(target_modules_dir);
+  CHECK(ret.ok()) << ret.error().Message();
+  UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
+  const auto module_load_file =
+      android::base::Trim(FindFile(ramdisk_stage_dir.c_str(), "modules.load"));
+  if (module_load_file.empty()) {
+    LOG(ERROR) << "Failed to find modules.dep file in input ramdisk "
+               << ramdisk_path;
+    return false;
+  }
+  LOG(INFO) << "modules.load location " << module_load_file;
+  const auto module_list =
+      android::base::Tokenize(ReadFile(module_load_file), "\n");
+  const auto module_base_dir = cpp_dirname(module_load_file);
+  const auto deps = LoadModuleDeps(module_base_dir + "/modules.dep");
+  const auto ramdisk_modules =
+      ComputeTransitiveClosure(GetRamdiskModules(module_list), deps);
+  std::set<std::string> vendor_dlkm_modules;
+
+  // Move non-ramdisk modules to vendor_dlkm
+  for (const auto& module_path : module_list) {
+    if (!ramdisk_modules.count(module_path)) {
+      const auto vendor_dlkm_module_location =
+          target_modules_dir + "/" + module_path;
+      EnsureDirectoryExists(cpp_dirname(vendor_dlkm_module_location));
+      RenameFile(module_base_dir + "/" + module_path,
+                 vendor_dlkm_module_location);
+      vendor_dlkm_modules.emplace(module_path);
+    }
+  }
+  LOG(INFO) << "There are " << ramdisk_modules.size() << " ramdisk modules and "
+            << vendor_dlkm_modules.size() << " vendor_dlkm modules";
+
+  // Write updated modules.dep and modules.load files
+  CHECK(WriteDepsToFile(FilterDependencies(deps, ramdisk_modules),
+                        module_base_dir + "/modules.dep"));
+  CHECK(WriteDepsToFile(FilterDependencies(deps, vendor_dlkm_modules),
+                        target_modules_dir + "/modules.dep"));
+  CHECK(WriteLinesToFile(ramdisk_modules, module_load_file.c_str()));
+  CHECK(WriteLinesToFile(vendor_dlkm_modules,
+                         (target_modules_dir + "/modules.load").c_str()));
+  PackRamdisk(ramdisk_stage_dir, ramdisk_path);
   return true;
 }
 
