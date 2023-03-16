@@ -29,7 +29,6 @@
 #include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/server_common.h"
 #include "host/libs/confui/sign.h"
-#include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -44,8 +43,7 @@ namespace confui {
 class Session {
  public:
   Session(const std::string& session_name, const std::uint32_t display_num,
-          HostModeCtrl& host_mode_ctrl,
-          ScreenConnectorFrameRenderer& screen_connector,
+          ConfUiRenderer& host_renderer, HostModeCtrl& host_mode_ctrl,
           const std::string& locale = "en");
 
   bool IsConfUiActive() const;
@@ -78,12 +76,10 @@ class Session {
   void CleanUp();
 
   bool IsConfirm(const int x, const int y) {
-    return renderer_->IsInConfirm(x, y);
+    return renderer_.IsInConfirm(x, y);
   }
 
-  bool IsCancel(const int x, const int y) {
-    return renderer_->IsInCancel(x, y);
-  }
+  bool IsCancel(const int x, const int y) { return renderer_.IsInCancel(x, y); }
 
   // tell if grace period has passed
   bool IsReadyForUserInput() const;
@@ -117,14 +113,10 @@ class Session {
 
   void ScheduleToTerminate();
 
-  bool IsInverted() const;
-  bool IsMagnified() const;
-
   const std::string session_id_;
   const std::uint32_t display_num_;
-  std::unique_ptr<ConfUiRenderer> renderer_;
+  ConfUiRenderer& renderer_;
   HostModeCtrl& host_mode_ctrl_;
-  ScreenConnectorFrameRenderer& screen_connector_;
 
   // only context to save
   std::string prompt_text_;
