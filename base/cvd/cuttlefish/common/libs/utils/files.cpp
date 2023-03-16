@@ -48,6 +48,7 @@
 #include <android-base/logging.h>
 #include <android-base/macros.h>
 
+#include "android-base/strings.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -279,7 +280,8 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
 bool RenameFile(const std::string& old_name, const std::string& new_name) {
   LOG(DEBUG) << "Renaming " << old_name << " to " << new_name;
   if(rename(old_name.c_str(), new_name.c_str())) {
-    LOG(ERROR) << "File rename failed due to " << strerror(errno);
+    LOG(ERROR) << "File rename `" << old_name << "` to `" << new_name
+               << "` failed due to " << strerror(errno);
     return false;
   }
 
@@ -297,6 +299,10 @@ std::string ReadFile(const std::string& file) {
   in.seekg(0, std::ios::end);
   if (in.fail()) {
     // TODO(schuffelen): Return a failing Result instead
+    return "";
+  }
+  if (in.tellg() == std::ifstream::pos_type(-1)) {
+    PLOG(ERROR) << "Failed to seek on " << file;
     return "";
   }
   contents.resize(in.tellg());
@@ -399,6 +405,38 @@ int GetDiskUsage(const std::string& path) {
   CHECK_GT(bytes_read, 0) << "Failed to read from pipe " << strerror(errno);
   std::move(subprocess).Wait();
   return atoi(text_output.data()) * 1024;
+}
+
+std::string FindFile(const std::string& path, const std::string& target_name) {
+  std::string ret;
+  WalkDirectory(path,
+                [&ret, &target_name](const std::string& filename) mutable {
+                  if (cpp_basename(filename) == target_name) {
+                    ret = filename;
+                  }
+                  return true;
+                });
+  return ret;
+}
+
+// Recursively enumerate files in |dir|, and invoke the callback function with
+// path to each file/directory.
+Result<void> WalkDirectory(
+    const std::string& dir,
+    const std::function<bool(const std::string&)>& callback) {
+  const auto files = CF_EXPECT(DirectoryContents(dir));
+  for (const auto& filename : files) {
+    if (filename == "." || filename == "..") {
+      continue;
+    }
+    auto file_path = dir + "/";
+    file_path.append(filename);
+    callback(file_path);
+    if (DirectoryExists(file_path)) {
+      WalkDirectory(file_path, callback);
+    }
+  }
+  return {};
 }
 
 }  // namespace cuttlefish
