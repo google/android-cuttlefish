@@ -23,6 +23,7 @@
 #include <tuple>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <freetype/ftglyph.h>  // $(croot)/external/freetype
 #include <teeui/utils.h>       // $(croot)/system/teeui/libteeui/.../include
 
