@@ -37,7 +37,6 @@
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/reset_client_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/commands/cvd/types.h"
@@ -129,12 +128,7 @@ Result<void> HandleClientCommands(
 }
 
 Result<FlagCollection> CvdFlags() {
-  selector::SelectorFlags selector_flag_spec = selector::SelectorFlags::New();
   FlagCollection cvd_flags;
-  auto selector_flags = selector_flag_spec.Flags();
-  for (auto& selector_flag : selector_flags) {
-    CF_EXPECT(cvd_flags.EnrollFlag(std::move(selector_flag)));
-  }
   cvd_flags.EnrollFlag(CvdFlag<bool>("clean", false));
   cvd_flags.EnrollFlag(CvdFlag<bool>("help", false));
   return cvd_flags;
@@ -198,6 +192,10 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 
   CF_EXPECT_EQ(android::base::Basename(all_args[0]), "cvd");
 
+  // TODO(kwstephenkim): --clean and --help should be handled here.
+  // And, the FrontlineParser takes any positional argument as
+  // a valid subcommand.
+
   std::vector<std::string> client_internal_commands{"kill-server",
                                                     "server-kill", "reset"};
   FlagCollection cvd_flags = CF_EXPECT(CvdFlags());
@@ -260,26 +258,11 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return {};
   }
 
-  FrontlineParser::ParserParam server_param{
-      .server_supported_subcmds = CF_EXPECT(client.ValidSubcmdsList(env)),
-      .internal_cmds = std::vector<std::string>{},
-      .all_args = all_args,
-      .cvd_flags = cvd_flags};
-  auto frontline_parser = CF_EXPECT(FrontlineParser::Parse(server_param));
-  CF_EXPECT(frontline_parser != nullptr);
-
-  const auto prog_name = android::base::Basename(frontline_parser->ProgPath());
-  std::string subcmd = frontline_parser->SubCmd().value_or("");
-  cvd_common::Args cmd_args{frontline_parser->ProgPath()};
-  if (!subcmd.empty()) {
-    cmd_args.emplace_back(subcmd);
-  }
-  std::copy(frontline_parser->SubCmdArgs().begin(),
-            frontline_parser->SubCmdArgs().end(), std::back_inserter(cmd_args));
-  cvd_common::Args selector_args = frontline_parser->CvdArgs();
-
+  const cvd_common::Args new_cmd_args{"cvd", "process"};
+  CF_EXPECT(!all_args.empty());
+  const cvd_common::Args new_selector_args{all_args.begin(), all_args.end()};
   // TODO(schuffelen): Deduplicate when calls to setenv are removed.
-  CF_EXPECT(client.HandleCommand(cmd_args, env, selector_args));
+  CF_EXPECT(client.HandleCommand(new_cmd_args, env, new_selector_args));
   return {};
 }
 
