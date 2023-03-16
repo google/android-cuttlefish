@@ -36,6 +36,7 @@ cc_library_static {
         "host_renderer.cc",
         "host_server.cc",
         "host_utils.cc",
+        "host_virtual_input.cc",
         "secure_input.cc",
         "server_common.cc",
         "session.cc",
