@@ -57,14 +57,6 @@ bool Session::IsReadyForUserInput() const {
   return (right_now - *start_time_) >= GetGracePeriod();
 }
 
-bool Session::IsConfUiActive() const {
-  if (state_ == MainLoopState::kInSession ||
-      state_ == MainLoopState::kWaitStop) {
-    return true;
-  }
-  return false;
-}
-
 bool Session::RenderDialog() {
   auto result =
       renderer_.RenderDialog(display_num_, prompt_text_, locale_, ui_options_);
