@@ -113,12 +113,17 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
       per_instance_names.push_back(std::to_string(id));
     }
   }
+
+  std::map<unsigned, std::string> id_name_pairs;
+  for (size_t i = 0; i != requested_instance_ids.size(); i++) {
+    id_name_pairs[requested_instance_ids.at(i)] = per_instance_names.at(i);
+  }
+
   std::vector<PerInstanceInfo> instance_info;
   bool must_acquire_file_locks = selector_options_parser_.MustAcquireFileLock();
   if (!must_acquire_file_locks) {
-    for (int i = 0; i < per_instance_names.size(); i++) {
-      const auto id = requested_instance_ids[i];
-      instance_info.emplace_back(id, per_instance_names[i]);
+    for (const auto& [id, name] : id_name_pairs) {
+      instance_info.emplace_back(id, name);
     }
     return instance_info;
   }
@@ -126,10 +131,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
       CF_EXPECT(instance_file_lock_manager_.LockAllAvailable());
   auto id_to_lockfile_map =
       ConstructIdLockFileMap(std::move(acquired_all_file_locks));
-
-  for (int i = 0; i < requested_instance_ids.size(); i++) {
-    const auto instance_name = per_instance_names[i];
-    const auto id = requested_instance_ids[i];
+  for (const auto& [id, instance_name] : id_name_pairs) {
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
