@@ -35,18 +35,18 @@
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/logging.h"
 #include "host/libs/confui/host_mode_ctrl.h"
+#include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/host_virtual_input.h"
 #include "host/libs/confui/server_common.h"
 #include "host/libs/confui/session.h"
-#include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
 namespace confui {
 class HostServer : public HostVirtualInput {
  public:
   static HostServer& Get(HostModeCtrl& host_mode_ctrl,
-                         ScreenConnectorFrameRenderer& screen_connector,
-                         SharedFD from_guest_fd, SharedFD to_guest_fd);
+                         ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
+                         SharedFD to_guest_fd);
 
   void Start();  // start this server itself
   virtual ~HostServer() {}
@@ -58,8 +58,8 @@ class HostServer : public HostVirtualInput {
 
  private:
   explicit HostServer(HostModeCtrl& host_mode_ctrl,
-                      ScreenConnectorFrameRenderer& screen_connector,
-                      SharedFD from_guest_fd, SharedFD to_guest_fd);
+                      ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
+                      SharedFD to_guest_fd);
   HostServer() = delete;
 
   /**
@@ -134,8 +134,8 @@ class HostServer : public HostVirtualInput {
   }
 
   const std::uint32_t display_num_;
+  ConfUiRenderer& host_renderer_;
   HostModeCtrl& host_mode_ctrl_;
-  ScreenConnectorFrameRenderer& screen_connector_;
 
   std::shared_ptr<Session> curr_session_;
 
