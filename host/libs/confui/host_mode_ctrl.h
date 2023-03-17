@@ -22,6 +22,8 @@
 #include <functional>
 #include <mutex>
 
+#include <fruit/fruit.h>
+
 #include "common/libs/confui/confui.h"
 #include "host/libs/confui/host_utils.h"
 
@@ -36,7 +38,7 @@ namespace cuttlefish {
 class HostModeCtrl {
  public:
   enum class ModeType : std::uint8_t { kAndroidMode = 55, kConfUI_Mode = 77 };
-
+  INJECT(HostModeCtrl()) : atomic_mode_(ModeType::kAndroidMode) {}
   /**
    * The thread that enqueues Android frames will call this to wait until
    * the mode is kAndroidMode
@@ -109,7 +111,6 @@ class HostModeCtrl {
   }
 
  private:
-  HostModeCtrl() : atomic_mode_(ModeType::kAndroidMode) {}
   std::mutex mode_mtx_;
   std::condition_variable and_mode_cv_;
   std::condition_variable confui_mode_cv_;
