@@ -31,17 +31,6 @@ namespace cuttlefish {
 Result<std::unique_ptr<FrontlineParser>> FrontlineParser::Parse(
     ParserParam param) {
   CF_EXPECT(!param.all_args.empty());
-  // TODO(kwstephenkim): implement these ad-hoc help checking in the
-  // parser.
-  if (android::base::Basename(param.all_args[0]) == "cvd") {
-    if (param.all_args.size() == 1) {
-      param.all_args.emplace_back("--help");
-    }
-    if (param.all_args.at(1) == "-h") {
-      param.all_args[1] = "--help";
-    }
-  }
-
   FrontlineParser* frontline_parser = new FrontlineParser(param);
   CF_EXPECT(frontline_parser != nullptr,
             "Memory allocation for FrontlineParser failed.");
