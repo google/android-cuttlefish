@@ -37,6 +37,7 @@
 #include "host/commands/cvd/selector/group_selector.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
+#include "host/commands/cvd/selector/instance_selector.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
@@ -49,6 +50,7 @@ class InstanceManager {
   using LocalInstanceGroup = selector::LocalInstanceGroup;
   using LocalInstance = selector::LocalInstance;
   using GroupSelector = selector::GroupSelector;
+  using InstanceSelector = selector::InstanceSelector;
   using Queries = selector::Queries;
   using Query = selector::Query;
   template <typename T>
@@ -64,6 +66,10 @@ class InstanceManager {
   Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
                                          const cvd_common::Envs& envs,
                                          const uid_t uid);
+
+  Result<LocalInstance::Copy> SelectInstance(
+      const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
+      const uid_t uid);
 
   bool HasInstanceGroups(const uid_t uid);
   Result<void> SetInstanceGroup(const uid_t uid,
