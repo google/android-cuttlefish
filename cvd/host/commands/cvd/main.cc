@@ -239,10 +239,13 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     auto version_parser = std::move(*version_parser_result);
     CF_EXPECT(version_parser != nullptr);
     const auto subcmd = version_parser->SubCmd().value_or("");
-    CF_EXPECT_EQ(subcmd, "version");
-    auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
-    std::cout << version_msg;
-    return {};
+    if (subcmd == "version") {
+      auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
+      std::cout << version_msg;
+      return {};
+    }
+    CF_EXPECT(subcmd.empty(),
+              "subcmd is expected to be \"\" but is " << subcmd);
   }
 
   const cvd_common::Args new_cmd_args{"cvd", "process"};
