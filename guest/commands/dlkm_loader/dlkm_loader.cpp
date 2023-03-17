@@ -21,22 +21,16 @@
 int main(int, char **argv) {
   android::base::InitLogging(argv, android::base::KernelLogger);
   LOG(INFO) << "dlkm loader successfully initialized";
-  if (android::base::GetBoolProperty("ro.boot.ramdisk_hotswapped", false)) {
-    LOG(INFO) << "Init ramdisk has been hot swapped, this device is likely "
-                 "booting with a custom list of kernel modules, skip loading "
-                 "modules from vendor_dlkm.";
-  } else {
-    Modprobe m({"/vendor/lib/modules"}, "modules.load");
-    // We should continue loading kernel modules even if some modules fail to
-    // load. If we abort loading early, the unloaded modules can cause more
-    // problems, making debugging hard.
-    // e.g. , bluetooth module break, but we
-    // might also see graphics problems, because graphics module gets loaded
-    // after bluetooth, and we aborted loading early.
-    CHECK(m.LoadListedModules(false))
-        << "modules from vendor dlkm weren't loaded correctly";
-    LOG(INFO) << "module load count is " << m.GetModuleCount();
-  }
+  Modprobe m({"/vendor/lib/modules"}, "modules.load");
+  // We should continue loading kernel modules even if some modules fail to
+  // load. If we abort loading early, the unloaded modules can cause more
+  // problems, making debugging hard.
+  // e.g. , bluetooth module break, but we
+  // might also see graphics problems, because graphics module gets loaded
+  // after bluetooth, and we aborted loading early.
+  CHECK(m.LoadListedModules(false))
+      << "modules from vendor dlkm weren't loaded correctly";
+  LOG(INFO) << "module load count is " << m.GetModuleCount();
 
   android::base::SetProperty("vendor.dlkm.modules.ready", "true");
   return 0;

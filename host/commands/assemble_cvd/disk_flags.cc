@@ -485,14 +485,20 @@ class KernelRamdiskRepacker : public SetupFeature {
   }
 
  protected:
-  bool RebuildSuperIfNeeded() {
-    const auto superimg_build_dir = instance_.instance_dir() + "/superimg";
-    const auto vendor_dlkm_build_dir = superimg_build_dir + "/vendor_dlkm";
+  bool RepackVendorDLKM(const std::string& superimg_build_dir,
+                        const std::string& vendor_dlkm_build_dir,
+                        const std::string& ramdisk_path) {
     const auto new_vendor_dlkm_img =
         superimg_build_dir + "/vendor_dlkm_repacked.img";
     const auto tmp_vendor_dlkm_img = new_vendor_dlkm_img + ".tmp";
     if (!EnsureDirectoryExists(vendor_dlkm_build_dir).ok()) {
       LOG(ERROR) << "Failed to create directory " << vendor_dlkm_build_dir;
+      return false;
+    }
+    const auto ramdisk_stage_dir = instance_.instance_dir() + "/ramdisk_staged";
+    if (!SplitRamdiskModules(ramdisk_path, ramdisk_stage_dir,
+                             vendor_dlkm_build_dir)) {
+      LOG(ERROR) << "Failed to move ramdisk modules to vendor_dlkm";
       return false;
     }
     // TODO(b/149866755) For now, we assume that vendor_dlkm is ext4. Add
@@ -572,8 +578,21 @@ class KernelRamdiskRepacker : public SetupFeature {
           instance_.new_vendor_boot_image();
       // Repack the vendor boot images if kernels and/or ramdisks are passed in.
       if (instance_.initramfs_path().size()) {
+        const auto superimg_build_dir = instance_.instance_dir() + "/superimg";
+        const auto ramdisk_repacked =
+            instance_.instance_dir() + "/ramdisk_repacked";
+        if (!Copy(instance_.initramfs_path(), ramdisk_repacked)) {
+          LOG(ERROR) << "Failed to copy " << instance_.initramfs_path()
+                     << " to " << ramdisk_repacked;
+          return false;
+        }
+        const auto vendor_dlkm_build_dir = superimg_build_dir + "/vendor_dlkm";
+        if (!RepackVendorDLKM(superimg_build_dir, vendor_dlkm_build_dir,
+                              ramdisk_repacked)) {
+          return false;
+        }
         bool success = RepackVendorBootImage(
-            instance_.initramfs_path(), instance_.vendor_boot_image(),
+            ramdisk_repacked, instance_.vendor_boot_image(),
             new_vendor_boot_image_path, config_.assembly_dir(),
             instance_.bootconfig_supported());
         if (!success) {
@@ -595,9 +614,6 @@ class KernelRamdiskRepacker : public SetupFeature {
         SetCommandLineOptionWithMode(
             "vendor_boot_image", new_vendor_boot_image_path.c_str(),
             google::FlagSettingMode::SET_FLAGS_DEFAULT);
-        if (!RebuildSuperIfNeeded()) {
-          return false;
-        }
       }
     }
     return true;
