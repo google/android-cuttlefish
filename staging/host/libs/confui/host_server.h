@@ -41,11 +41,16 @@
 
 namespace cuttlefish {
 namespace confui {
+struct PipeConnectionPair {
+  SharedFD from_guest_;
+  SharedFD to_guest_;
+};
+
 class HostServer {
  public:
-  static HostServer& Get(HostModeCtrl& host_mode_ctrl,
-                         ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
-                         SharedFD to_guest_fd);
+  explicit HostServer(HostModeCtrl& host_mode_ctrl,
+                      ConfUiRenderer& host_renderer,
+                      const PipeConnectionPair& fd_pair);
 
   void Start();  // start this server itself
   virtual ~HostServer() {}
@@ -55,9 +60,6 @@ class HostServer {
   void UserAbortEvent();
 
  private:
-  explicit HostServer(HostModeCtrl& host_mode_ctrl,
-                      ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
-                      SharedFD to_guest_fd);
   HostServer() = delete;
 
   /**

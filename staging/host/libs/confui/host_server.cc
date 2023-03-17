@@ -62,23 +62,14 @@ static std::unique_ptr<ConfUiMessage> WrapWithSecureFlag(
   }
 }
 
-HostServer& HostServer::Get(HostModeCtrl& host_mode_ctrl,
-                            ConfUiRenderer& host_renderer,
-                            SharedFD from_guest_fd, SharedFD to_guest_fd) {
-  static HostServer host_server{host_mode_ctrl, host_renderer,
-                                std::move(from_guest_fd),
-                                std::move(to_guest_fd)};
-  return host_server;
-}
-
 HostServer::HostServer(HostModeCtrl& host_mode_ctrl,
-                       ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
-                       SharedFD to_guest_fd)
+                       ConfUiRenderer& host_renderer,
+                       const PipeConnectionPair& fd_pair)
     : display_num_(0),
       host_renderer_{host_renderer},
       host_mode_ctrl_(host_mode_ctrl),
-      from_guest_fifo_fd_(std::move(from_guest_fd)),
-      to_guest_fifo_fd_(std::move(to_guest_fd)) {
+      from_guest_fifo_fd_(fd_pair.from_guest_),
+      to_guest_fifo_fd_(fd_pair.to_guest_) {
   const size_t max_elements = 20;
   auto ignore_new =
       [](ThreadSafeQueue<std::unique_ptr<ConfUiMessage>>::QueueImpl*) {
