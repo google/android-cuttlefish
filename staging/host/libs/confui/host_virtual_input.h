@@ -18,6 +18,8 @@
 
 #include <cstdint>
 
+#include <fruit/fruit.h>
+
 #include "host/libs/confui/host_server.h"
 
 namespace cuttlefish {
@@ -30,7 +32,8 @@ enum class ConfUiKeys : std::uint32_t { Confirm = 7, Cancel = 8 };
  */
 class HostVirtualInput {
  public:
-  HostVirtualInput(HostServer& host_server, HostModeCtrl& host_mode_ctrl);
+  INJECT(HostVirtualInput(HostServer& host_server,
+                          HostModeCtrl& host_mode_ctrl));
 
   void TouchEvent(const int x, const int y, const bool is_down);
   void UserAbortEvent();
