@@ -25,6 +25,7 @@ cc_library_static {
     shared_libs: [
         "libcuttlefish_fs",
         "libbase",
+        "libfruit",
         "libjsoncpp",
         "liblog",
     ],
