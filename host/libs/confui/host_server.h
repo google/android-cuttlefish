@@ -36,13 +36,12 @@
 #include "host/libs/config/logging.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_renderer.h"
-#include "host/libs/confui/host_virtual_input.h"
 #include "host/libs/confui/server_common.h"
 #include "host/libs/confui/session.h"
 
 namespace cuttlefish {
 namespace confui {
-class HostServer : public HostVirtualInput {
+class HostServer {
  public:
   static HostServer& Get(HostModeCtrl& host_mode_ctrl,
                          ConfUiRenderer& host_renderer, SharedFD from_guest_fd,
@@ -52,9 +51,8 @@ class HostServer : public HostVirtualInput {
   virtual ~HostServer() {}
 
   // implement input interfaces. called by webRTC
-  void TouchEvent(const int x, const int y, const bool is_down) override;
-  void UserAbortEvent() override;
-  bool IsConfUiActive() override;
+  void TouchEvent(const int x, const int y, const bool is_down);
+  void UserAbortEvent();
 
  private:
   explicit HostServer(HostModeCtrl& host_mode_ctrl,
