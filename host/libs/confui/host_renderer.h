@@ -25,6 +25,7 @@
 
 #include <android-base/logging.h>
 #include <freetype/ftglyph.h>  // $(croot)/external/freetype
+#include <fruit/fruit.h>
 #include <teeui/utils.h>       // $(croot)/system/teeui/libteeui/.../include
 
 #include "common/libs/confui/confui.h"
@@ -63,7 +64,7 @@ class TeeUiFrameWrapper {
 class ConfUiRendererImpl;
 class ConfUiRenderer {
  public:
-  ConfUiRenderer(ScreenConnectorFrameRenderer& screen_connector);
+  INJECT(ConfUiRenderer(ScreenConnectorFrameRenderer& screen_connector));
   ~ConfUiRenderer();
   Result<void> RenderDialog(const std::uint32_t display_num,
                             const std::string& prompt_text,
