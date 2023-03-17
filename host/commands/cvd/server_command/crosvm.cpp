@@ -50,41 +50,6 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     return Contains(crosvm_operations_, invocation.command);
   }
 
-  Result<selector::LocalInstance::Copy> NarrowDownToInstance(
-      const selector::LocalInstanceGroup& group,
-      cvd_common::Args selector_opts) const {
-    auto& instances = group.Instances();
-    CF_EXPECT(!instances.empty(),
-              "The group " << group.GroupName() << " does not have instance.");
-    if (group.Instances().size() == 1) {
-      auto& instance_uniq_ptr = *(instances.begin());
-      CF_EXPECT(instance_uniq_ptr != nullptr);
-      return instance_uniq_ptr->GetCopy();
-    }
-
-    auto selector_flags = selector::SelectorFlags::New();
-    auto instance_name_flag =
-        CF_EXPECT(selector_flags.GetFlag("instance_name"));
-    std::optional<std::string> instance_name_flag_value;
-    CF_EXPECT(
-        instance_name_flag.FilterFlag(selector_opts, instance_name_flag_value));
-    CF_EXPECT(
-        instance_name_flag_value != std::nullopt,
-        "Cannot pin point the instance with in the \"" << group.GroupName());
-
-    auto name_tokens = android::base::Tokenize(*instance_name_flag_value, ",");
-    CF_EXPECT_EQ(name_tokens.size(), 1,
-                 "Too many or little instance names are given.");
-    for (const auto& instance : instances) {
-      if (instance && instance->PerInstanceName() == name_tokens.front()) {
-        return instance->GetCopy();
-      }
-    }
-    return CF_ERR("Instance named "
-                  << name_tokens.front() << " is not found in "
-                  << " the group named " << group.GroupName());
-  }
-
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     // TODO(kwstephenkim): implement "--help"
     std::unique_lock interrupt_lock(interruptible_);
@@ -99,12 +64,9 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto instance_group =
-        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
-    // Unfortunately, for now, cvd selector always returns the instance group
-    // that the individual device might belong to
-    const auto instance =
-        CF_EXPECT(NarrowDownToInstance(instance_group, selector_args));
+    auto instance =
+        CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
+    const auto& instance_group = instance.ParentGroup();
     const auto instance_id = instance.InstanceId();
     auto home = instance_group.HomeDir();
     const auto socket_file_path =
