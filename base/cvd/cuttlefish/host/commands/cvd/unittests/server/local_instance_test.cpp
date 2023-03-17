@@ -21,6 +21,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "host/commands/cvd/types.h"
+#include "host/commands/cvd/unittests/server/cmd_runner.h"
 #include "host/commands/cvd/unittests/server/local_instance_helper.h"
 
 namespace cuttlefish {
@@ -28,7 +29,7 @@ namespace acloud {
 
 TEST(CvdDriver, CvdLocalInstance) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd reset", envs);
 
   // 1st test normal case
   auto cmd_local_instance_local_image =
@@ -73,7 +74,7 @@ TEST(CvdDriver, CvdLocalInstance) {
   ASSERT_TRUE(cmd_stop.Success()) << cmd_stop.Stderr();
 
   // clean up for the next test
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd reset", envs);
 }
 
 TEST_F(CvdInstanceLocalTest, CvdLocalInstanceRemoteImage) {
@@ -87,7 +88,7 @@ TEST_F(CvdInstanceLocalTest, CvdLocalInstanceRemoteImage) {
 
 TEST(CvdDriver, CvdLocalInstanceRemoteImageKernelImage) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd reset", envs);
 
   // 5th test local instance, remote image, --kernel-branch, --kernel-build-id,
   // --kernel-build-target, --image-download-dir --build-target flags
@@ -116,7 +117,7 @@ TEST(CvdDriver, CvdLocalInstanceRemoteImageKernelImage) {
   cmd_stop = CmdRunner::Run("cvd stop", envs);
 
   // clean up for the next test
-  CmdRunner::Run("cvd reset -y", envs);
+  CmdRunner::Run("cvd reset", envs);
 }
 
 // CvdInstanceLocalTest is testing different flags with "cvd acloud create --local-instance"
@@ -136,6 +137,12 @@ TEST_F(CvdInstanceLocalTest, CvdLocalInstanceRemoteImageSystem) {
       "--build-target cf_x86_64_phone-userdebug --system-branch git_master "
       "--system-build-id 9684420 --system-build-target aosp_x86_64-userdebug");
   ASSERT_TRUE(cmd_result.Success()) << cmd_result.Stderr();
+}
+
+TEST_F(CvdInstanceLocalTest, Empty) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
 }
 
 }  // namespace acloud
