@@ -45,6 +45,21 @@ cc_test_host {
 }
 
 cc_test_host {
+    name: "cvd_acloud_local_test",
+    srcs: [
+        "local_instance_helper.cpp",
+        "local_instance_test.cpp",
+    ],
+    static_libs: [
+        "cvd_test_cmd_utils",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
+
+cc_test_host {
     name: "cvd_flag_collector_test",
     srcs: [
         "collect_flags_test.cpp",
