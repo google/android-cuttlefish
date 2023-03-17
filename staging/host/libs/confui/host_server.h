@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <fruit/fruit.h>
 #include <teeui/utils.h>
 
 #include "common/libs/concurrency/multiplexer.h"
@@ -48,9 +49,8 @@ struct PipeConnectionPair {
 
 class HostServer {
  public:
-  explicit HostServer(HostModeCtrl& host_mode_ctrl,
-                      ConfUiRenderer& host_renderer,
-                      const PipeConnectionPair& fd_pair);
+  INJECT(HostServer(HostModeCtrl& host_mode_ctrl, ConfUiRenderer& host_renderer,
+                    const PipeConnectionPair& fd_pair));
 
   void Start();  // start this server itself
   virtual ~HostServer() {}

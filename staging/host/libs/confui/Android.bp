@@ -47,6 +47,7 @@ cc_library_static {
         "libcn-cbor",
         "libcuttlefish_fs",
         "libbase",
+        "libfruit",
         "libjsoncpp",
         "liblog",
         "libcrypto",
