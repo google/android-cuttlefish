@@ -826,6 +826,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
 
+#ifdef ENFORCE_MAC80211_HWSIM
+  tmp_config_obj.set_virtio_mac80211_hwsim(true);
+#else
+  tmp_config_obj.set_virtio_mac80211_hwsim(false);
+#endif
+
   tmp_config_obj.set_vhost_user_mac80211_hwsim(FLAGS_vhost_user_mac80211_hwsim);
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
@@ -1146,13 +1152,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_ethernet_bridge_name("cvd-ebr");
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
 
-#ifdef ENFORCE_MAC80211_HWSIM
-    const bool enforce_mac80211_hwsim = true;
-#else
-    const bool enforce_mac80211_hwsim = false;
-#endif
     if (NetworkInterfaceExists(iface_config.non_bridged_wireless_tap.name) &&
-        enforce_mac80211_hwsim) {
+        tmp_config_obj.virtio_mac80211_hwsim()) {
       instance.set_use_bridged_wifi_tap(false);
       instance.set_wifi_tap_name(iface_config.non_bridged_wireless_tap.name);
     } else {
@@ -1376,7 +1377,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // Start wmediumd process for the first instance if
     // vhost_user_mac80211_hwsim is not specified.
-    const bool start_wmediumd = enforce_mac80211_hwsim &&
+    const bool start_wmediumd = tmp_config_obj.virtio_mac80211_hwsim() &&
                                 FLAGS_vhost_user_mac80211_hwsim.empty() &&
                                 is_first_instance;
     if (start_wmediumd) {
