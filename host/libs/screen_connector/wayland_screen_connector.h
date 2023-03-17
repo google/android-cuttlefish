@@ -18,6 +18,8 @@
 
 #include <memory>
 
+#include <fruit/fruit.h>
+
 #include "host/libs/screen_connector/screen_connector_common.h"
 #include "host/libs/wayland/wayland_server.h"
 
@@ -25,7 +27,9 @@ namespace cuttlefish {
 
 class WaylandScreenConnector {
  public:
-  WaylandScreenConnector(int frames_fd);
+  struct FramesFd {};
+  INJECT(WaylandScreenConnector(ANNOTATED(FramesFd, int) frames_fd));
+
   void SetFrameCallback(GenerateProcessedFrameCallbackImpl frame_callback);
 
   void SetDisplayEventCallback(DisplayEventCallback event_callback);
