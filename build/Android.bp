@@ -172,6 +172,10 @@ cvd_host_model_simulator_files = [
     "numeric_operator.xml_host",
 ]
 
+cvd_host_acloud_data = [
+    "default.config_host",
+]
+
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
     "balloon_device.policy_x86_64",
@@ -263,6 +267,7 @@ cvd_host_package_customization {
             deps: cvd_host_webrtc_assets +
                 cvd_host_avb_testkey +
                 cvd_host_model_simulator_files +
+                cvd_host_acloud_data +
                 cvd_host_bootloader +
                 cvd_bluetooth_config_files +
                 cvd_openwrt_images,
