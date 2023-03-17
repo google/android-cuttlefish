@@ -55,6 +55,7 @@ class DisplayHandler {
  public:
   using ScreenConnector = cuttlefish::ScreenConnector<WebRtcScProcessedFrame>;
   using GenerateProcessedFrameCallback = ScreenConnector::GenerateProcessedFrameCallback;
+  using WebRtcScProcessedFrame = cuttlefish::WebRtcScProcessedFrame;
 
   DisplayHandler(webrtc_streaming::Streamer& streamer,
                  ScreenConnector& screen_connector);
