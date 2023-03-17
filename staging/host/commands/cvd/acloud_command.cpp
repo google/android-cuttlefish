@@ -24,8 +24,9 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
+#include <google/protobuf/text_format.h>
 
 #include "cvd_server.pb.h"
 
@@ -35,6 +36,8 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/users.h"
+#include "host/commands/cvd/acloud_config.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"
@@ -211,6 +214,16 @@ class ConvertAcloudCreateCommand {
             .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build_target"})
             .Setter([&build_target](const FlagMatch& m) {
               build_target = m.value;
+              return true;
+            }));
+
+    std::optional<std::string> config_file;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--config-file"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--config_file"})
+            .Setter([&config_file](const FlagMatch& m) {
+              config_file = m.value;
               return true;
             }));
 
@@ -404,6 +417,16 @@ class ConvertAcloudCreateCommand {
     mkdir_command.add_args(device_workspace);
     auto& mkdir_env = *mkdir_command.mutable_env();
     mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
+
+    const uid_t uid = request.Credentials()->uid;
+    // default user config path
+    std::string user_config_path = CF_EXPECT(GetDefaultConfigFile(uid));
+
+    if (config_file) {
+      user_config_path = config_file.value();
+    }
+    AcloudConfig acloud_config =
+        CF_EXPECT(LoadAcloudConfig(user_config_path, uid));
 
     // remove existing symlink host_bins, b/268599652#comment6
     remove((device_workspace + "/host_bins").c_str());
@@ -627,6 +650,12 @@ class ConvertAcloudCreateCommand {
 
     if (launch_args) {
       for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
+        start_command.add_args(arg);
+      }
+    }
+    if (acloud_config.launch_args != "") {
+      for (const auto& arg :
+           CF_EXPECT(BashTokenize(acloud_config.launch_args))) {
         start_command.add_args(arg);
       }
     }

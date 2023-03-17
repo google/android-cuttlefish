@@ -1,0 +1,112 @@
+// Copyright 2016 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cuttlefish.acloud;
+
+// Default values to use when user did not provide a value.
+// Each field should match a field in user_config.UserConfig.
+message DefaultUserConfig {
+  optional string machine_type = 1;
+  optional string network = 2;
+  // Default extra data disk size.
+  optional int32 extra_data_disk_size_gb = 3;
+  // Metadata for creating Compute Engine instance
+  // The map will be updated with values from user config.
+  map<string, string> metadata_variable = 4;
+  // [CVD only] The name of the stable host image
+  optional string stable_host_image_name = 5;
+  // [CVD only] The project where stable host image is
+  optional string stable_host_image_project = 6;
+  // [GOLDFISH only] The name of the stable host image
+  optional string stable_goldfish_host_image_name = 7;
+  // [GOLDFISH only] The project where stable host image is
+  optional string stable_goldfish_host_image_project = 8;
+  // [CHEEPS only] The name of the stable host image
+  optional string stable_cheeps_host_image_name = 9;
+  // [CHEEPS only] The project where stable host image is
+  optional string stable_cheeps_host_image_project = 10;
+  // The pattern of the instance name, e.g. ins-{uuid}-{build_id}-{build_target}
+  // the parts in {} will be automatically replaced with the actual value if
+  // you specify them in the pattern, uuid will be automatically generated.
+  optional string instance_name_pattern = 11;
+  // [CVD only] Version of fetch_cvd to use.
+  optional string fetch_cvd_version = 12;
+}
+
+// Internal configuration
+// TODO: Currently we specify resolutions and orientations
+// for all device types in the same config. And all branches are
+// using the same config at data/default.config. However,
+// each branch only supports a subset of devices. So ideally,
+// we should have one config per branch, and only specify supported
+// devices for that branch in the config.
+message InternalConfig {
+  optional DefaultUserConfig default_usr_cfg = 1;
+  // Device resolution
+  map<string, string> device_resolution_map = 2;
+  // Device default orientation
+  map<string, string> device_default_orientation_map = 3;
+  // Minimum gce instance size, e.g. n1-standard-1
+  optional string min_machine_size = 4;
+  // The name of the default disk image, e.g. avd-system.tar.gz
+  optional string disk_image_name = 5;
+  // The mime type of the disk image, e.g. 'application/x-tar'
+  optional string disk_image_mime_type = 6;
+  // The file extension of disk image, e.g. ".tar.gz"
+  optional string disk_image_extension = 7;
+  // The name of the raw image name that should apper in the tar gz file.
+  // e.g. "disk.raw"
+  optional string disk_raw_image_name = 8;
+  // The file extension of a raw linux image file, e.g. "img"
+  // If file is of this type, it will be compressed to avd-system.tar.gz
+  optional string disk_raw_image_extension = 9;
+  // Default data disk device to use when extra_data_disk_size_gb
+  // is greater than 0
+  optional string default_extra_data_disk_device = 10;
+  // A map from size_gb to the name of a precreated_data_image
+  map<int32, string> precreated_data_image = 11;
+  // Branches and corresponding minimum build_ids for which
+  // this config is valid for.
+  map<string, int32> valid_branch_and_min_build_id = 12;
+
+  // Path of a file where Oauth2 credential data will be cached.
+  // For example, ".acloud_oauth2.dat". This file will be created under
+  // the home directory if the user is authenticated via Oauth2 method.
+  // The file name by convention usually starts with a dot noting it is
+  // a hidden file.
+  optional string creds_cache_file = 13;
+  // user_agent is a string noting which software it is.
+  // It is used during the Oauth2 authentication flow. It is okay to
+  // make up a value, e.g. "acloud".
+  optional string user_agent = 14;
+
+  // Error messages to be displayed to user when the user
+  // does not have access to the cloud project.
+  // Key is the name of the project.
+  // Value is the error message to show.
+  map<string, string> no_project_access_msg_map = 15;
+
+  // [CVD only] The kernel build target: "kernel". This is unlikely to change.
+  optional string kernel_build_target = 16;
+
+  // [GOLDFISH only] The emulator build target:
+  // "emulator-linux_x64_nolocationui". It's very unlikely that this will ever
+  // change.
+  optional string emulator_build_target = 17;
+
+  // Common hw property
+  map<string, string> common_hw_property_map = 18;
+}
