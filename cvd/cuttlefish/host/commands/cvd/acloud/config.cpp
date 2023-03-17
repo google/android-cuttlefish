@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/acloud/config.h"
-
 #include <fstream>
 
 #include <google/protobuf/text_format.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/users.h"
+#include "host/commands/cvd/acloud_config.h"
 
 namespace cuttlefish {
 
 AcloudConfig::AcloudConfig(const acloud::UserConfig& usr_cfg)
-    : launch_args(usr_cfg.launch_args()), use_cvdr(usr_cfg.use_cvdr()) {
+    : launch_args(usr_cfg.launch_args()) {
   // TODO(weihsu): Add back fields/variables (except of cheeps and emulator
   // fields) in config files. Remove cheeps (Android on ChromeOS) and emulator
   // fields.
