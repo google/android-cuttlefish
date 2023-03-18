@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -53,6 +54,7 @@ class LocalInstanceGroup {
   const Set<std::unique_ptr<LocalInstance>>& Instances() const {
     return instances_;
   }
+  Json::Value Serialize() const;
 
   /**
    * return error if instance id of instance is taken AND that taken id
@@ -87,6 +89,7 @@ class LocalInstanceGroup {
   // Eventually copies the instances of a src to *this
   Set<std::unique_ptr<LocalInstance>> CopyInstances(
       const Set<std::unique_ptr<LocalInstance>>& src_instances);
+  Json::Value Serialize(const std::unique_ptr<LocalInstance>& instance) const;
   std::string home_dir_;
   std::string host_artifacts_path_;
   std::string product_out_path_;
@@ -98,6 +101,15 @@ class LocalInstanceGroup {
   // which is also after the device completes the boot.
   std::optional<std::string> build_id_;
   Set<std::unique_ptr<LocalInstance>> instances_;
+
+  static constexpr const char kJsonGroupName[] = "Group Name";
+  static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
+  static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
+  static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
+  static constexpr const char kJsonInstances[] = "Instances";
+  static constexpr const char kJsonParent[] = "Parent Group";
+  static constexpr const char kJsonBuildId[] = "Build Id";
+  static constexpr const char kJsonUnknownBuildId[] = "Unknown Build";
 
   /*
    * Expose constructor to the tests in InstanceRecord unit test suite.
