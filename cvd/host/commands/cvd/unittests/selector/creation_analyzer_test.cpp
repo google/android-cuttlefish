@@ -209,7 +209,10 @@ TEST(AutoHomeTest, DefaultFailAtSecondTrialTest) {
   auto result_1st_exec = CreationAnalyzer::Analyze("start", param0, credential,
                                                    instance_db, lock_manager);
   auto result_db_addition =
-      instance_db.AddInstanceGroup("cvd", TestUserHome(), android_host_out);
+      instance_db.AddInstanceGroup({.group_name = "cvd",
+                                    .home_dir = TestUserHome(),
+                                    .host_artifacts_path = android_host_out,
+                                    .product_out_path = android_host_out});
   if (!result_db_addition.ok()) {
     GTEST_SKIP() << "This test requires mock group addition to work.";
   }
@@ -261,7 +264,10 @@ TEST(AutoHomeTest, DefaultFollowedByNonDefaultTest) {
   auto result_default = CreationAnalyzer::Analyze(
       "start", param_default, credential, instance_db, lock_manager);
   auto result_db_addition =
-      instance_db.AddInstanceGroup("cvd", TestUserHome(), android_host_out);
+      instance_db.AddInstanceGroup({.group_name = "cvd",
+                                    .home_dir = TestUserHome(),
+                                    .host_artifacts_path = android_host_out,
+                                    .product_out_path = android_host_out});
   if (!result_db_addition.ok()) {
     GTEST_SKIP() << "This test requires mock group addition to work.";
   }
