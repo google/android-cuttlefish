@@ -121,10 +121,14 @@ Result<void> InstanceManager::SetInstanceGroup(
   const auto group_name = group_info.group_name;
   const auto home_dir = group_info.home;
   const auto host_artifacts_path = group_info.host_artifacts_path;
+  const auto product_out_path = group_info.product_out_path;
   const auto& per_instance_info = group_info.instances;
 
   auto new_group = CF_EXPECT(
-      instance_db.AddInstanceGroup(group_name, home_dir, host_artifacts_path));
+      instance_db.AddInstanceGroup({.group_name = group_name,
+                                    .home_dir = home_dir,
+                                    .host_artifacts_path = host_artifacts_path,
+                                    .product_out_path = product_out_path}));
 
   using InstanceInfo = selector::InstanceDatabase::InstanceInfo;
   std::vector<InstanceInfo> instances_info;

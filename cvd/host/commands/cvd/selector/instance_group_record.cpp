@@ -22,13 +22,12 @@
 namespace cuttlefish {
 namespace selector {
 
-LocalInstanceGroup::LocalInstanceGroup(const std::string& group_name,
-                                       const std::string& home_dir,
-                                       const std::string& host_artifacts_path)
-    : home_dir_{home_dir},
-      host_artifacts_path_{host_artifacts_path},
+LocalInstanceGroup::LocalInstanceGroup(const InstanceGroupParam& param)
+    : home_dir_{param.home_dir},
+      host_artifacts_path_{param.host_artifacts_path},
+      product_out_path_{param.product_out_path},
       internal_group_name_(GenInternalGroupName()),
-      group_name_(group_name) {}
+      group_name_(param.group_name) {}
 
 LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
     : home_dir_{src.home_dir_},

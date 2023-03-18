@@ -119,7 +119,12 @@ bool CvdInstanceDatabaseTest::AddGroups(
       SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
       return false;
     }
-    if (!db_.AddInstanceGroup(base_name, home, android_artifacts_path_).ok()) {
+    InstanceDatabase::AddInstanceGroupParam param{
+        .group_name = base_name,
+        .home_dir = home,
+        .host_artifacts_path = android_artifacts_path_,
+        .product_out_path = android_artifacts_path_};
+    if (!db_.AddInstanceGroup(param).ok()) {
       SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
       return false;
     }

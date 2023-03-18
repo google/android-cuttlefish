@@ -41,14 +41,19 @@ class InstanceDatabase {
   InstanceDatabase();
   bool IsEmpty() const;
 
+  struct AddInstanceGroupParam {
+    std::string group_name;
+    std::string home_dir;
+    std::string host_artifacts_path;
+    std::string product_out_path;
+  };
   /** Adds instance group.
    *
    * If group_name or home_dir is already taken or host_artifacts_path is
    * not likely an artifacts path, CF_ERR is returned.
    */
   Result<ConstRef<LocalInstanceGroup>> AddInstanceGroup(
-      const std::string& group_name, const std::string& home_dir,
-      const std::string& host_artifacts_path);
+      const AddInstanceGroupParam& param);
 
   /**
    * Adds instance to the group.
