@@ -35,6 +35,7 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/g3ABase
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gABC/native_coverage
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gAF
+PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gafd
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gHAWB/native_coverage
 
 PRODUCT_COPY_FILES += \
