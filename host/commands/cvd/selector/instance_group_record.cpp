@@ -32,6 +32,7 @@ LocalInstanceGroup::LocalInstanceGroup(const InstanceGroupParam& param)
 LocalInstanceGroup::LocalInstanceGroup(const LocalInstanceGroup& src)
     : home_dir_{src.home_dir_},
       host_artifacts_path_{src.host_artifacts_path_},
+      product_out_path_{src.product_out_path_},
       internal_group_name_{src.internal_group_name_},
       group_name_{src.group_name_},
       build_id_{src.build_id_},
@@ -44,6 +45,7 @@ LocalInstanceGroup& LocalInstanceGroup::operator=(
   }
   home_dir_ = src.home_dir_;
   host_artifacts_path_ = src.host_artifacts_path_;
+  product_out_path_ = src.product_out_path_;
   internal_group_name_ = src.internal_group_name_;
   group_name_ = src.group_name_;
   build_id_ = src.build_id_;
@@ -129,6 +131,38 @@ bool LocalInstanceGroup::HasInstance(const unsigned instance_id) const {
 
 void LocalInstanceGroup::SetBuildId(const std::string& build_id) {
   build_id_ = build_id;
+}
+
+Json::Value LocalInstanceGroup::Serialize() const {
+  Json::Value group_json;
+  group_json[kJsonGroupName] = group_name_;
+  group_json[kJsonHomeDir] = home_dir_;
+  group_json[kJsonHostArtifactPath] = host_artifacts_path_;
+  group_json[kJsonProductOutPath] = product_out_path_;
+  auto build_id_opt = BuildId();
+  group_json[kJsonBuildId] = build_id_opt ? *build_id_opt : kJsonUnknownBuildId;
+  int i = 0;
+  Json::Value instances_array_json;
+  for (const auto& instance : instances_) {
+    Json::Value instance_json = Serialize(instance);
+    instance_json[kJsonParent] = group_name_;
+    instances_array_json[i] = instance_json;
+    i++;
+  }
+  group_json[kJsonInstances] = instances_array_json;
+  return group_json;
+}
+
+Json::Value LocalInstanceGroup::Serialize(
+    const std::unique_ptr<LocalInstance>& instance) const {
+  Json::Value instance_json;
+  if (!instance) {
+    return instance_json;
+  }
+  instance_json[LocalInstance::kJsonInstanceName] = instance->PerInstanceName();
+  instance_json[LocalInstance::kJsonInstanceId] =
+      std::to_string(instance->InstanceId());
+  return instance_json;
 }
 
 }  // namespace selector
