@@ -16,6 +16,8 @@
 
 # If downstream target does not want telephony, do not include this file
 
+ifneq ($(TARGET_NO_TELEPHONY), true)
+
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
 
 PRODUCT_VENDOR_PROPERTIES += \
@@ -40,4 +42,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml \
     frameworks/native/data/etc/android.hardware.telephony.ims.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.ims.xml \
     frameworks/native/data/etc/android.hardware.telephony.satellite.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.satellite.xml
-endif
+endif # if not LOCAL_PREFER_VENDOR_APEX
+
+endif # if not TARGET_NO_TELEPHONY
