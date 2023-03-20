@@ -309,6 +309,29 @@ Result<void> RunCvdProcessManager::SendSignals(
   return {};
 }
 
+void RunCvdProcessManager::DeleteLockFiles(
+    const bool cvd_server_children_only) {
+  for (const auto& group_info : cf_groups_) {
+    if (cvd_server_children_only && !group_info.is_cvd_server_started_) {
+      continue;
+    }
+    const auto& instances = group_info.instances_;
+    std::string lock_file_prefix = "/tmp/acloud_cvd_temp/local-instance-";
+    for (const auto& [id, _] : instances) {
+      std::stringstream lock_file_path_stream;
+      lock_file_path_stream << lock_file_prefix << id << ".lock";
+      auto lock_file_path = lock_file_path_stream.str();
+      if (FileExists(lock_file_path) && !DirectoryExists(lock_file_path)) {
+        if (RemoveFile(lock_file_path)) {
+          LOG(ERROR) << "Reset the lock file: " << lock_file_path;
+        } else {
+          LOG(ERROR) << "Failed to reset lock file: " << lock_file_path;
+        }
+      }
+    }
+  }
+}
+
 Result<void> KillAllCuttlefishInstances(const DeviceClearOptions& options) {
   RunCvdProcessManager manager = CF_EXPECT(RunCvdProcessManager::Get());
   CF_EXPECT(manager.KillAllCuttlefishInstances(options.cvd_server_children_only,
