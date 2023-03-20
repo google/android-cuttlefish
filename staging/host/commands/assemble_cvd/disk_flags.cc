@@ -1320,7 +1320,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       cur_super_image = super_image[instance_index];
     }
     instance.set_super_image(cur_super_image);
-    instance.set_new_super_image(cur_super_image);
     if (instance_index >= data_image.size()) {
       instance.set_data_image(data_image[0]);
     } else {
@@ -1430,16 +1429,16 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       if (cur_initramfs_path.size()) {
         // change the new flag value to corresponding instance
         instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
-        const std::string new_super_image_path =
-            const_instance.PerInstancePath("super_repacked.img");
-        instance.set_new_super_image(new_super_image_path.c_str());
       }
     }
 
-    if (SuperImageNeedsRebuilding(fetcher_config)) {
+    // We will need to rebuild vendor_dlkm if custom ramdisk is specified, as a
+    // result super image would need to be rebuilt as well.
+    if (SuperImageNeedsRebuilding(fetcher_config) ||
+        cur_initramfs_path.size()) {
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
-      instance.set_super_image(new_super_image_path);
+      instance.set_new_super_image(new_super_image_path);
     }
 
     if (FileExists(cur_metadata_image) &&
