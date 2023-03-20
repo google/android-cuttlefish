@@ -16,13 +16,14 @@
 
 #include "host/libs/graphics_detector/subprocess.h"
 
+#include <dlfcn.h>
+#include <poll.h>
+#include <sys/prctl.h>
+#include <sys/wait.h>
+
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-
-#include <dlfcn.h>
-#include <poll.h>
-#include <sys/wait.h>
 
 #include <android-base/logging.h>
 #include <android-base/scopeguard.h>
@@ -133,6 +134,7 @@ SubprocessResult DoWithSubprocessCheck(const std::string& message,
   LOG(VERBOSE) << "Running " << message << " in subprocess...";
   pid_t pid = fork();
   if (pid == 0) {
+    prctl(PR_SET_NAME, "gfxDtctCanSegv");
     function();
     std::exit(0);
   }
