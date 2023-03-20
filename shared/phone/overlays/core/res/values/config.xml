@@ -65,4 +65,7 @@
 
   <!-- Is the device capable of hot swapping an UICC Card -->
   <bool name="config_hotswapCapable">true</bool>
+
+  <!-- String indicating the package name of the vendor satellite service implementation -->
+  <string name="config_satellite_service_package" translatable="false">com.google.android.telephony.satellite</string>
 </resources>
