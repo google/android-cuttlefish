@@ -273,8 +273,8 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
     if (SuperImageNeedsRebuilding(fetcher_config_)) {
-      CF_EXPECT(
-          RebuildSuperImage(fetcher_config_, config_, instance_.super_image()));
+      CF_EXPECT(RebuildSuperImage(fetcher_config_, config_,
+                                  instance_.new_super_image()));
     }
     return {};
   }
