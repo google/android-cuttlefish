@@ -45,7 +45,6 @@ Commands:
 
 Args:
   <command args>      Each command has its own set of args. See cvd help <command>.
-  --clean             If provided, runs cvd kill-server before the requested command.
 )";
 
 class CvdHelpHandler : public CvdServerHandler {

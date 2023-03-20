@@ -69,7 +69,17 @@ class RunCvdProcessManager {
     if (!stop_cvd_result.ok()) {
       LOG(ERROR) << stop_cvd_result.error().Message();
     }
-    CF_EXPECT(SendSignals(cvd_server_children_only));
+    auto send_signals_result = SendSignals(cvd_server_children_only);
+    if (!send_signals_result.ok()) {
+      LOG(ERROR) << send_signals_result.error().Message();
+    }
+    DeleteLockFiles(cvd_server_children_only);
+    cf_groups_.clear();
+    auto recollect_info_result = CollectInfo();
+    if (!recollect_info_result.ok()) {
+      LOG(ERROR) << "Recollecting run_cvd processes information failed.";
+      LOG(ERROR) << recollect_info_result.error().Trace();
+    }
     return {};
   }
 
@@ -81,6 +91,7 @@ class RunCvdProcessManager {
                              const bool clear_runtime_dirs);
   Result<void> SendSignals(const bool cvd_server_children_only);
   Result<RunCvdProcInfo> AnalyzeRunCvdProcess(const pid_t pid);
+  void DeleteLockFiles(const bool cvd_server_children_only);
   Result<std::vector<GroupProcInfo>> CollectInfo();
   std::vector<GroupProcInfo> cf_groups_;
 };
