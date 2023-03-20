@@ -72,3 +72,14 @@ cc_test_host {
     },
     defaults: ["cvd_and_fetch_cvd_defaults"],
 }
+
+cc_test_host {
+    name: "cvd_frontline_parser_test",
+    srcs: [
+        "frontline_parser_test.cpp",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    defaults: ["cvd_and_fetch_cvd_defaults"],
+}
