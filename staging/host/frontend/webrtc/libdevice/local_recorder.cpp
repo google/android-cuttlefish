@@ -121,6 +121,14 @@ void LocalRecorder::AddDisplay(
   std::unique_ptr<Display> display(new Display(*impl_));
   display->source_ = source;
 
+  std::lock_guard lock(impl_->mkv_mutex_);
+  display->video_track_number_ =
+      impl_->segment_.AddVideoTrack(width, height, 0);
+  if (display->video_track_number_ == 0) {
+    LOG(ERROR) << "Failed to add video track to webm muxer";
+    return;
+  }
+
   display->video_encoder_ =
       impl_->encoder_factory_->CreateVideoEncoder(webrtc::SdpVideoFormat("VP8"));
   if (!display->video_encoder_) {
@@ -163,14 +171,6 @@ void LocalRecorder::AddDisplay(
   display->encoder_thread_ = std::thread([](Display* display) {
     display->EncoderLoop();
   }, display.get());
-
-  std::lock_guard lock(impl_->mkv_mutex_);
-  display->video_track_number_ =
-      impl_->segment_.AddVideoTrack(width, height, 0);
-  if (display->video_track_number_ == 0) {
-    LOG(ERROR) << "Failed to add video track to webm muxer";
-    return;
-  }
 
   impl_->displays_.emplace_back(std::move(display));
 }
