@@ -62,7 +62,7 @@ bool MaybeCvdStart(const CmdResult& result) {
 
 TEST(CvdDriver, CvdHelp) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   auto cmd_help = CmdRunner::Run("cvd help", envs);
   auto cmd_dash_help = CmdRunner::Run("cvd --help", envs);
@@ -73,12 +73,12 @@ TEST(CvdDriver, CvdHelp) {
   ASSERT_TRUE(MaybeCvdHelp(cmd_dash_help));
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 TEST(CvdDriver, CvdOnly) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   auto cmd_help = CmdRunner::Run("cvd help", envs);
   auto cmd_only = CmdRunner::Run("cvd", envs);
@@ -88,13 +88,13 @@ TEST(CvdDriver, CvdOnly) {
   ASSERT_EQ(cmd_help.Stdout(), cmd_only.Stdout());
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 // this test is expected to fail. included proactively.
 TEST(CvdDriver, CvdHelpWrong) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   auto cmd_help_ref = CmdRunner::Run("cvd help", envs);
   auto cmd_help_wrong = CmdRunner::Run("cvd help not_exist", envs);
@@ -104,12 +104,12 @@ TEST(CvdDriver, CvdHelpWrong) {
   EXPECT_EQ(cmd_help_ref.Stdout(), cmd_help_wrong.Stdout());
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 TEST(CvdSubtool, CvdStopHelp) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   auto cmd_stop_help = CmdRunner::Run("cvd help stop", envs);
 
@@ -119,12 +119,12 @@ TEST(CvdSubtool, CvdStopHelp) {
       << "stdout: " << cmd_stop_help.Stdout();
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 TEST(CvdSubtool, CvdStartHelp) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   auto cmd_start_help = CmdRunner::Run("cvd help start", envs);
 
@@ -134,7 +134,7 @@ TEST(CvdSubtool, CvdStartHelp) {
       << "stdout: " << cmd_start_help.Stdout();
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 }  // namespace cuttlefish

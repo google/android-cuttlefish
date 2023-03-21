@@ -28,23 +28,46 @@ namespace cuttlefish {
 
 static constexpr char kHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
 
-usage: cvd <command> <args>
+usage: cvd <selector/driver options> <command> <args>
+
+Selector Options:
+  -group_name <name>     Specify the name of the instance group created
+                         or selected.
+  -instance_name <name>  Selects the device of the given name to perform the
+                         commands for.
+  -instance_name <names> Takes the names of the devices to create within an
+                         instance group. The 'names' is comma-separated.
+
+Driver Options:
+  --help                 Print this message
+  -disable_default_group If the flag is true, the group's runtime files are
+                         not populated under the user's HOME. Instead the
+                         files are created under an automatically-generated
+                         directory. (default: false)
+  -acquire_file_lock     If the flag is given, the cvd server attempts to
+                         acquire the instance lock file lock. (default: true)
 
 Commands:
-  help                Print this message.
-  help <command>      Print help for a command.
-  start               Start a device.
-  stop                Stop a running device.
-  clear               Stop all running devices and delete all instance and assembly directories.
-  fleet               View the current fleet status.
-  kill-server         Kill the cvd_server background process.
-  server-kill         Same as kill-server
-  restart-server      Restart the cvd_server background process.
-  status              Check and print the state of a running instance.
-  host_bugreport      Capture a host bugreport, including configs, logs, and tombstones.
+  help                   Print this message.
+  help <command>         Print help for a command.
+  start                  Start a device.
+  stop                   Stop a running device.
+  clear                  Stop all running devices and delete all instance and
+                         assembly directories.
+  fleet                  View the current fleet status.
+  kill-server            Kill the cvd_server background process.
+  server-kill            Same as kill-server
+  restart-server         Restart the cvd_server background process.
+  status                 Check and print the state of a running instance.
+  host_bugreport         Capture a host bugreport, including configs, logs, and
+                         tombstones.
 
 Args:
-  <command args>      Each command has its own set of args. See cvd help <command>.
+  <command args>         Each command has its own set of args.
+                         See cvd help <command>.
+
+Experimental:
+  reset                  See cvd reset --help. Requires cvd >= v1.2
 )";
 
 class CvdHelpHandler : public CvdServerHandler {
