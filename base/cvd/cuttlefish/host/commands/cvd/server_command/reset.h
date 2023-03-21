@@ -16,12 +16,10 @@
 
 #pragma once
 
-#include <memory>
-
-#include "host/commands/cvd/server_command/server_handler.h"
+#include <fruit/fruit.h>
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler();
+fruit::Component<> CvdResetComponent();
 
 }  // namespace cuttlefish

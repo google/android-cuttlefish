@@ -257,6 +257,23 @@ Result<void> RunCvdProcessManager::RunStopCvdAll(
   return {};
 }
 
+static bool IsStillRunCvd(const pid_t pid) {
+  std::string pid_dir = ConcatToString("/proc/", pid);
+  if (!FileExists(pid_dir)) {
+    return false;
+  }
+  auto owner_result = OwnerUid(pid_dir);
+  if (!owner_result.ok() || (getuid() != *owner_result)) {
+    return false;
+  }
+  auto extract_proc_info_result = ExtractProcInfo(pid);
+  if (!extract_proc_info_result.ok()) {
+    return false;
+  }
+  return (cpp_basename(extract_proc_info_result->actual_exec_path_) ==
+          "run_cvd");
+}
+
 Result<void> RunCvdProcessManager::SendSignals(
     const bool cvd_server_children_only) {
   auto recollected_run_cvd_pids = CF_EXPECT(CollectPidsByExecName("run_cvd"));
@@ -272,19 +289,21 @@ Result<void> RunCvdProcessManager::SendSignals(
           // pid is alive but reassigned to non-run_cvd process
           continue;
         }
-        if (!FileExists(ConcatToString("/proc/", pid))) {
-          // pid was already killed during stop cvd
-          // or by previous kill -9 pid
+        if (!IsStillRunCvd(pid)) {
+          // pid is now assigned to a different process
           continue;
         }
         auto ret_sigkill = kill(pid, SIGKILL);
         if (ret_sigkill == 0) {
-          LOG(ERROR) << "SIGKILL was delivered to pid #" << pid
-                     << " but we will still send SIGHUP";
+          LOG(ERROR) << "SIGKILL was delivered to pid #" << pid;
         } else {
-          LOG(ERROR) << "SIGKILL was not delivered to pid #" << pid
-                     << " and thus we will send SIGHUP";
+          LOG(ERROR) << "SIGKILL was not delivered to pid #" << pid;
         }
+        if (!IsStillRunCvd(pid)) {
+          continue;
+        }
+        LOG(ERROR) << "Will still send SIGHUP as run_cvd #" << pid
+                   << " has not been terminated by SIGKILL.";
         auto ret_sighup = kill(pid, SIGHUP);
         if (ret_sighup != 0) {
           LOG(ERROR) << "SIGHUP sent to process #" << pid << " but all failed.";
