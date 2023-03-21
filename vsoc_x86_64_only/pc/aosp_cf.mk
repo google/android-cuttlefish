@@ -17,7 +17,7 @@
 #
 # All components inherited here go to system image (same as GSI system)
 #
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
 
 #
@@ -42,7 +42,7 @@ $(call inherit-product, device/google/cuttlefish/shared/pc/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
 PRODUCT_NAME := aosp_cf_x86_64_pc
-PRODUCT_DEVICE := vsoc_x86_64
+PRODUCT_DEVICE := vsoc_x86_64_only
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86_64 pc
 
