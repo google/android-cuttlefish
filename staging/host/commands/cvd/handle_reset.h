@@ -52,6 +52,8 @@ description:
   1. Gracefully stops all devices that the cvd client can reach.
   2. Forcefully stops all run_cvd processes and their subprocesses.
   3. Kill the cvd server itself if unresponsive.
-  4. Optionally, cleans up the runtime files of the stopped devices.)";
+  4. Reset the states of the involved instance lock files
+     -- If cvd reset stops a device, it resets the corresponding lock file.
+  5. Optionally, cleans up the runtime files of the stopped devices.)";
 
 }  // namespace cuttlefish
