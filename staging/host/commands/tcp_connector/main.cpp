@@ -28,20 +28,10 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 
-// Copied from net/bluetooth/hci.h
-#define HCI_MAX_ACL_SIZE 1024
-#define HCI_MAX_FRAME_SIZE (HCI_MAX_ACL_SIZE + 4)
-
-// Include H4 header byte, and reserve more buffer size in the case of excess
-// packet.
-constexpr const size_t kBufferSize = (HCI_MAX_FRAME_SIZE + 1) * 2;
-
-DEFINE_int32(bt_in, -1, "A pipe for bt communication");
-DEFINE_int32(bt_out, -1, "A pipe for bt communication");
-DEFINE_int32(hci_port, -1, "A port for bt hci command");
-DEFINE_int32(link_port, -1, "A pipe for bt link layer command");
-DEFINE_int32(test_port, -1, "A pipe for rootcanal test channel");
-DEFINE_int32(link_ble_port, -1, "A pipe for bt link layer for ble command");
+DEFINE_int32(fifo_in, -1, "A pipe for incoming communication");
+DEFINE_int32(fifo_out, -1, "A pipe for outgoing communication");
+DEFINE_int32(data_port, -1, "A port for datas");
+DEFINE_int32(buffer_size, -1, "The buffer size");
 
 void openSocket(cuttlefish::SharedFD* fd, int port) {
   static std::mutex mutex;
@@ -52,49 +42,49 @@ void openSocket(cuttlefish::SharedFD* fd, int port) {
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  auto bt_in = cuttlefish::SharedFD::Dup(FLAGS_bt_in);
-  if (!bt_in->IsOpen()) {
-    LOG(ERROR) << "Error dupping fd " << FLAGS_bt_in << ": "
-               << bt_in->StrError();
+  auto fifo_in = cuttlefish::SharedFD::Dup(FLAGS_fifo_in);
+  if (!fifo_in->IsOpen()) {
+    LOG(ERROR) << "Error dupping fd " << FLAGS_fifo_in << ": "
+               << fifo_in->StrError();
     return 1;
   }
-  close(FLAGS_bt_in);
+  close(FLAGS_fifo_in);
 
-  auto bt_out = cuttlefish::SharedFD::Dup(FLAGS_bt_out);
-  if (!bt_out->IsOpen()) {
-    LOG(ERROR) << "Error dupping fd " << FLAGS_bt_out << ": "
-               << bt_out->StrError();
+  auto fifo_out = cuttlefish::SharedFD::Dup(FLAGS_fifo_out);
+  if (!fifo_out->IsOpen()) {
+    LOG(ERROR) << "Error dupping fd " << FLAGS_fifo_out << ": "
+               << fifo_out->StrError();
     return 1;
   }
-  close(FLAGS_bt_out);
+  close(FLAGS_fifo_out);
   cuttlefish::SharedFD sock;
-  openSocket(&sock, FLAGS_hci_port);
+  openSocket(&sock, FLAGS_data_port);
 
   auto guest_to_host = std::thread([&]() {
     while (true) {
-      char buf[kBufferSize];
-      auto read = bt_in->Read(buf, sizeof(buf));
+      char buf[FLAGS_buffer_size];
+      auto read = fifo_in->Read(buf, sizeof(buf));
       while (cuttlefish::WriteAll(sock, buf, read) == -1) {
         LOG(ERROR) << "failed to write to socket, retry.";
         // Wait for the host process to be ready
         sleep(1);
-        openSocket(&sock, FLAGS_hci_port);
+        openSocket(&sock, FLAGS_data_port);
       }
     }
   });
 
   auto host_to_guest = std::thread([&]() {
     while (true) {
-      char buf[kBufferSize];
+      char buf[FLAGS_buffer_size];
       auto read = sock->Read(buf, sizeof(buf));
       if (read == -1) {
         LOG(ERROR) << "failed to read from socket, retry.";
         // Wait for the host process to be ready
         sleep(1);
-        openSocket(&sock, FLAGS_hci_port);
+        openSocket(&sock, FLAGS_data_port);
         continue;
       }
-      cuttlefish::WriteAll(bt_out, buf, read);
+      cuttlefish::WriteAll(fifo_out, buf, read);
     }
   });
   guest_to_host.join();

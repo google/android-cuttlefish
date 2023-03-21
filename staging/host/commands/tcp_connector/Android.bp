@@ -19,7 +19,7 @@ package {
 }
 
 cc_binary {
-    name: "bt_connector",
+    name: "tcp_connector",
     srcs: [
         "main.cpp",
     ],
