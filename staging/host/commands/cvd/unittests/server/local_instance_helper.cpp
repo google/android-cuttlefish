@@ -43,14 +43,14 @@ CmdResult CvdInstanceLocalTest::Execute(const std::string& cmd_) {
 
   auto cmd_stop = CmdRunner::Run("cvd stop", envs);
   // clean up for the next test
-  CmdRunner::Run("cvd reset", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   return result;
 }
 
 bool CvdInstanceLocalTest::InitCmd() {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd reset", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   return true;
 }
