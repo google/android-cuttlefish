@@ -264,14 +264,6 @@ bool CuttlefishConfig::enable_host_bluetooth() const {
   return (*dictionary_)[kenableHostBluetooth].asBool();
 }
 
-static constexpr char kenableHostBluetoothConnector[] = "enable_host_bluetooth_connector";
-void CuttlefishConfig::set_enable_host_bluetooth_connector(bool enable_host_bluetooth) {
-  (*dictionary_)[kenableHostBluetoothConnector] = enable_host_bluetooth;
-}
-bool CuttlefishConfig::enable_host_bluetooth_connector() const {
-  return (*dictionary_)[kenableHostBluetoothConnector].asBool();
-}
-
 static constexpr char kNetsimRadios[] = "netsim_radios";
 
 void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
@@ -347,14 +339,6 @@ std::vector<std::string> CuttlefishConfig::extra_bootconfig_args() const {
     bootconfig.push_back(arg.asString());
   }
   return bootconfig;
-}
-
-static constexpr char kVirtioMac80211Hwsim[] = "virtio_mac80211_hwsim";
-void CuttlefishConfig::set_virtio_mac80211_hwsim(bool virtio_mac80211_hwsim) {
-  (*dictionary_)[kVirtioMac80211Hwsim] = virtio_mac80211_hwsim;
-}
-bool CuttlefishConfig::virtio_mac80211_hwsim() const {
-  return (*dictionary_)[kVirtioMac80211Hwsim].asBool();
 }
 
 static constexpr char kVhostUserMac80211Hwsim[] = "vhost_user_mac80211_hwsim";
