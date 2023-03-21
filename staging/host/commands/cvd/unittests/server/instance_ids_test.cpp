@@ -28,7 +28,7 @@ namespace cuttlefish {
 TEST(CvdInstanceIds, CvdTakenInstanceIds) {
   cvd_common::Envs envs;
   envs["HOME"] = StringFromEnv("HOME", "");
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   cvd_common::Args start_1_2_args{"cvd",
                                   "--disable_default_group",
@@ -77,7 +77,7 @@ TEST(CvdInstanceIds, CvdTakenInstanceIds) {
   ASSERT_TRUE(cmd_start_4_5_6.Success()) << cmd_start_4_5_6.Stderr();
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 }  // namespace cuttlefish
