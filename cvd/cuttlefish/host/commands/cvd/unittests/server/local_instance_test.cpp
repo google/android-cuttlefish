@@ -29,7 +29,7 @@ namespace acloud {
 
 TEST(CvdDriver, CvdLocalInstance) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd reset", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   // 1st test normal case
   auto cmd_local_instance_local_image =
@@ -74,7 +74,7 @@ TEST(CvdDriver, CvdLocalInstance) {
   ASSERT_TRUE(cmd_stop.Success()) << cmd_stop.Stderr();
 
   // clean up for the next test
-  CmdRunner::Run("cvd reset", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 TEST_F(CvdInstanceLocalTest, CvdLocalInstanceRemoteImage) {
@@ -88,7 +88,7 @@ TEST_F(CvdInstanceLocalTest, CvdLocalInstanceRemoteImage) {
 
 TEST(CvdDriver, CvdLocalInstanceRemoteImageKernelImage) {
   cvd_common::Envs envs;
-  CmdRunner::Run("cvd reset", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   // 5th test local instance, remote image, --kernel-branch, --kernel-build-id,
   // --kernel-build-target, --image-download-dir --build-target flags
@@ -117,7 +117,7 @@ TEST(CvdDriver, CvdLocalInstanceRemoteImageKernelImage) {
   cmd_stop = CmdRunner::Run("cvd stop", envs);
 
   // clean up for the next test
-  CmdRunner::Run("cvd reset", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 // CvdInstanceLocalTest is testing different flags with "cvd acloud create --local-instance"
