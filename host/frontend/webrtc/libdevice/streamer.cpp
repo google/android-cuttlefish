@@ -172,6 +172,7 @@ class Streamer::Impl : public ServerConnectionObserver,
   std::unique_ptr<CameraStreamer> camera_streamer_;
   int registration_retries_left_ = kRegistrationRetries;
   int retry_interval_ms_ = kRetryFirstIntervalMs;
+  LocalRecorder* recorder_ = nullptr;
 };
 
 Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
@@ -179,13 +180,13 @@ Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
 
 /* static */
 std::unique_ptr<Streamer> Streamer::Create(
-    const StreamerConfig& cfg,
+    const StreamerConfig& cfg, LocalRecorder* recorder,
     std::shared_ptr<ConnectionObserverFactory> connection_observer_factory) {
-
   rtc::LogMessage::LogToDebug(rtc::LS_ERROR);
 
   std::unique_ptr<Streamer::Impl> impl(new Streamer::Impl());
   impl->config_ = cfg;
+  impl->recorder_ = recorder;
   impl->connection_observer_factory_ = connection_observer_factory;
 
   auto network_thread_result = CreateAndStartThread("network-thread");
@@ -246,6 +247,17 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
 
         for (auto& [_, client] : impl_->clients_) {
           client->AddDisplay(video_track, label);
+        }
+
+        if (impl_->recorder_) {
+          rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source2 =
+              source;
+          auto deleter = [](webrtc::VideoTrackSourceInterface* source) {
+            source->Release();
+          };
+          std::shared_ptr<webrtc::VideoTrackSourceInterface> source_shared(
+              source2.release(), deleter);
+          impl_->recorder_->AddDisplay(width, height, source_shared);
         }
 
         return std::shared_ptr<VideoSink>(
@@ -336,19 +348,6 @@ void Streamer::Unregister() {
   // Usually called from an application thread.
   impl_->signal_thread_->PostTask(
       [this]() { impl_->server_connection_.reset(); });
-}
-
-void Streamer::RecordDisplays(LocalRecorder& recorder) {
-  for (auto& [key, display] : impl_->displays_) {
-    rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source =
-        display.source;
-    auto deleter = [](webrtc::VideoTrackSourceInterface* source) {
-      source->Release();
-    };
-    std::shared_ptr<webrtc::VideoTrackSourceInterface> source_shared(
-        source.release(), deleter);
-    recorder.AddDisplay(display.width, display.height, source_shared);
-  }
 }
 
 void Streamer::Impl::Register(std::weak_ptr<OperatorObserver> observer) {
