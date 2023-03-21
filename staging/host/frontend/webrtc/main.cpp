@@ -225,18 +225,8 @@ int main(int argc, char** argv) {
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
       input_sockets, &kernel_logs_event_handler, confui_virtual_input);
 
-  auto streamer = Streamer::Create(streamer_config, observer_factory);
-  CHECK(streamer) << "Could not create streamer";
-
-  auto display_handler =
-      std::make_shared<DisplayHandler>(*streamer, screen_connector);
-
-  if (instance.camera_server_port()) {
-    auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
-                                                 instance.vsock_guest_cid());
-    observer_factory->SetCameraHandler(camera_controller);
-  }
-
+  // The recorder is created first, so displays added in callbacks to the
+  // Streamer can also be added to the LocalRecorder.
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
   if (instance.record_screen()) {
     int recording_num = 0;
@@ -249,8 +239,19 @@ int main(int argc, char** argv) {
     } while (cuttlefish::FileExists(recording_path));
     local_recorder = LocalRecorder::Create(recording_path);
     CHECK(local_recorder) << "Could not create local recorder";
+  }
 
-    streamer->RecordDisplays(*local_recorder);
+  auto streamer =
+      Streamer::Create(streamer_config, local_recorder.get(), observer_factory);
+  CHECK(streamer) << "Could not create streamer";
+
+  auto display_handler =
+      std::make_shared<DisplayHandler>(*streamer, screen_connector);
+
+  if (instance.camera_server_port()) {
+    auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
+                                                 instance.vsock_guest_cid());
+    observer_factory->SetCameraHandler(camera_controller);
   }
 
   observer_factory->SetDisplayHandler(display_handler);
