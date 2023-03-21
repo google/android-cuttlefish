@@ -68,7 +68,7 @@ class Streamer {
   // client connection. Unregister() needs to be called to stop accepting
   // connections.
   static std::unique_ptr<Streamer> Create(
-      const StreamerConfig& cfg,
+      const StreamerConfig& cfg, LocalRecorder* recorder,
       std::shared_ptr<ConnectionObserverFactory> factory);
   ~Streamer() = default;
 
@@ -109,7 +109,6 @@ class Streamer {
   void Register(std::weak_ptr<OperatorObserver> operator_observer);
   void Unregister();
 
-  void RecordDisplays(LocalRecorder& recorder);
  private:
   /*
    * Private Implementation idiom.
