@@ -33,6 +33,7 @@ cc_library_host_static {
         "help.cpp",
         "operation_to_bins_map.cpp",
         "load_configs.cpp",
+        "reset.cpp",
         "restart.cpp",
         "serial_launch.cpp",
         "serial_preset.cpp",
