@@ -28,7 +28,7 @@ namespace cuttlefish {
 TEST(CvdAutoGenId, CvdTwoFollowedByFive) {
   cvd_common::Envs envs;
   envs["HOME"] = StringFromEnv("HOME", "");
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 
   cvd_common::Args start_two_instances_args{
       "cvd",
@@ -61,14 +61,14 @@ TEST(CvdAutoGenId, CvdTwoFollowedByFive) {
   ASSERT_EQ(NumberOfOccurrences(cmd_fleet.Stdout(), "instance_name"), 5)
       << cmd_fleet.Stdout();
 
-  auto cmd_stop = CmdRunner::Run("cvd kill-server", envs);
+  auto cmd_stop = CmdRunner::Run("cvd reset -y", envs);
   ASSERT_TRUE(cmd_stop.Success()) << cmd_stop.Stderr();
 
   cmd_fleet = CmdRunner::Run("cvd fleet", envs);
   ASSERT_FALSE(Contains(cmd_fleet.Stdout(), "instance_name"));
 
   // clean up for the next test
-  CmdRunner::Run("cvd kill-server", envs);
+  CmdRunner::Run("cvd reset -y", envs);
 }
 
 }  // namespace cuttlefish
