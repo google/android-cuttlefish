@@ -280,7 +280,7 @@ Result<void> HandleCallCmd(const std::vector<std::string>& server_address_list,
 
 bool ContainHelpOption(int argc, char** argv) {
   for (int i = 0; i < argc; i++) {
-    if (strcmp(argv[i], "--help") || strcmp(argv[i], "-help")) {
+    if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-help") == 0) {
       return true;
     }
   }
