@@ -283,7 +283,7 @@ static bool IsTrue(const std::string& value) {
 }
 
 static bool IsFalse(const std::string& value) {
-  std::unordered_set<std::string> true_strings = {"n", "no", "false"};
+  std::unordered_set<std::string> false_strings = {"n", "no", "false"};
   std::string value_in_lower_case = value;
   /*
    * https://en.cppreference.com/w/cpp/string/byte/tolower
@@ -293,7 +293,7 @@ static bool IsFalse(const std::string& value) {
   std::transform(value_in_lower_case.begin(), value_in_lower_case.end(),
                  value_in_lower_case.begin(),
                  [](unsigned char c) { return std::tolower(c); });
-  return Contains(true_strings, value_in_lower_case);
+  return Contains(false_strings, value_in_lower_case);
 }
 
 static std::optional<std::string> GetAcquireFileLockEnvValue(

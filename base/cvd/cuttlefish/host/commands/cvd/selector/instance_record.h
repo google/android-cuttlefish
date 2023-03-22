@@ -56,6 +56,7 @@ class LocalInstance {
     friend class LocalInstance;
 
    public:
+    Copy(const LocalInstance& src);
     const std::string& InternalName() const { return internal_name_; }
     const std::string& InternalDeviceName() const {
       return internal_device_name_;
@@ -65,7 +66,6 @@ class LocalInstance {
     const std::string& DeviceName() const { return device_name_; }
 
    private:
-    Copy(const LocalInstance& src);
     std::string internal_name_;
     std::string internal_device_name_;
     unsigned instance_id_;
