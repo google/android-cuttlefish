@@ -23,6 +23,7 @@ cc_library_host_static {
         "utils.cpp",
         "cmd_list.cpp",
         "components.cpp",
+        "crosvm.cpp",
         "fetch.cpp",
         "flags_collector.cpp",
         "fleet.cpp",
