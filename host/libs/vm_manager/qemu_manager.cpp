@@ -615,9 +615,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   // behavior changes upstream.
   if (is_riscv64) {
     qemu_cmd.AddParameter("-cpu");
-    qemu_cmd.AddParameter("rv64",
-                          ",v=true,elen=64,vlen=128",
-                          ",zba=true,zbb=true,zbs=true");
+    qemu_cmd.AddParameter("rv64,v=true,elen=64,vlen=128");
   }
 
   qemu_cmd.AddParameter("-msg");
