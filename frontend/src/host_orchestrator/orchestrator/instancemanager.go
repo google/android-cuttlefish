@@ -87,6 +87,7 @@ type CVDToolInstanceManagerOpts struct {
 	CVDExecTimeout           time.Duration
 	HostValidator            Validator
 	BuildAPI                 BuildAPI
+	UUIDGen                  func() string
 }
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
@@ -105,7 +106,9 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 			opts.ExecContext,
 			opts.Paths.CVDBin,
 			opts.Paths.ArtifactsRootDir,
-			opts.BuildAPI),
+			opts.BuildAPI,
+			opts.UUIDGen,
+		),
 		startCVDHandler: &startCVDHandler{
 			ExecContext: opts.ExecContext,
 			CVDBin:      opts.Paths.CVDBin,
@@ -238,6 +241,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	var mainBuild *apiv1.AndroidCIBuild = defaultMainBuild()
 	var kernelBuild *apiv1.AndroidCIBuild
 	var bootloaderBuild *apiv1.AndroidCIBuild
+	var systemImgBuild *apiv1.AndroidCIBuild
 	if req.CVD.BuildSource != nil && req.CVD.BuildSource.AndroidCIBuildSource != nil {
 		buildSource := req.CVD.BuildSource.AndroidCIBuildSource
 		if buildSource.MainBuild != nil {
@@ -251,9 +255,13 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 			bootloaderBuild = &apiv1.AndroidCIBuild{}
 			*bootloaderBuild = *buildSource.BootloaderBuild
 		}
+		if buildSource.SystemImageBuild != nil {
+			systemImgBuild = &apiv1.AndroidCIBuild{}
+			*systemImgBuild = *buildSource.SystemImageBuild
+		}
 	}
-	if err := updateBuildsWithLatestGreenBuildID(
-		m.buildAPI, []*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild}); err != nil {
+	if err := updateBuildsWithLatestGreenBuildID(m.buildAPI,
+		[]*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild, systemImgBuild}); err != nil {
 		return nil, err
 	}
 	var mainBuildDir, kernelBuildDir, bootloaderBuildDir string
@@ -262,7 +270,18 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		mainBuildDir, mainBuildErr = m.artifactsMngr.DownloadCVDBundle(mainBuild.BuildID, mainBuild.Target)
+		if systemImgBuild == nil {
+			mainBuildDir, mainBuildErr =
+				m.artifactsMngr.DownloadCVDBundle(mainBuild.BuildID, mainBuild.Target)
+		} else {
+			args := fetchCVDToolArgs{
+				MainBuildID:      mainBuild.BuildID,
+				MainTarget:       mainBuild.Target,
+				SystemImgBuildID: systemImgBuild.BuildID,
+				SystemImgTarget:  systemImgBuild.Target,
+			}
+			mainBuildDir, mainBuildErr = m.artifactsMngr.DownloadCustomCVDBundle(args)
+		}
 	}()
 	if kernelBuild != nil {
 		wg.Add(1)
@@ -411,23 +430,26 @@ func (h *downloadCVDHandler) download() error {
 // Downloads and organizes the OS artifacts.
 //
 // Artifacts will be organized the next way:
-//  1. $ROOT_DIR/<BUILD_ID>_<TARGET>_full will store a full download.
-//  2. $ROOT_DIR/<BUILD_ID>_<TARGET>_kernel_only will store kernel artifacts only.
+//  1. $ROOT_DIR/<BUILD_ID>_<TARGET>__cvd will store a full download.
+//  2. $ROOT_DIR/<BUILD_ID>_<TARGET>__kernel will store kernel artifacts only.
 type artifactsManager struct {
 	execContext ExecContext
 	cvdBin      string
 	rootDir     string
 	buildAPI    BuildAPI
+	uuidGen     func() string
 	map_        map[string]*downloadArtifactsMapEntry
 	mapMutex    sync.Mutex
 }
 
-func newArtifactsManager(execContext ExecContext, cvdBin, rootDir string, buildAPI BuildAPI) *artifactsManager {
+func newArtifactsManager(
+	execContext ExecContext, cvdBin, rootDir string, buildAPI BuildAPI, uuidGen func() string) *artifactsManager {
 	return &artifactsManager{
 		execContext: execContext,
 		cvdBin:      cvdBin,
 		rootDir:     rootDir,
 		buildAPI:    buildAPI,
+		uuidGen:     uuidGen,
 		map_:        make(map[string]*downloadArtifactsMapEntry),
 	}
 }
@@ -442,18 +464,25 @@ type downloadArtifactsMapEntry struct {
 	result *downloadArtifactsResult
 }
 
+type bundleType int
+
+const (
+	cvdBundleType bundleType = iota
+	kernelBundleType
+	bootloaderBundleType
+	systemImgBundleType
+)
+
 func (h *artifactsManager) DownloadCVDBundle(buildID, target string) (string, error) {
 	f := func() (string, error) {
 		outDir := fmt.Sprintf("%s/%s_%s__cvd", h.rootDir, buildID, target)
-		// NOTE: The artifacts directory gets created during the execution of `cvd fetch` granting
-		// owners permission to the user executing `cvd` which is relevant when extracting
-		// cvd-host_package.tar.gz.
-		if err := h.downloadWithFetchCVDTool(outDir, buildID, target); err != nil {
+		fetchCVDArgs := fetchCVDToolArgs{MainBuildID: buildID, MainTarget: target}
+		if err := h.downloadWithFetchCVDTool(outDir, fetchCVDArgs); err != nil {
 			return "", err
 		}
 		return outDir, nil
 	}
-	return h.download(buildID, target, f)
+	return h.syncDownload(buildID+target+"cvd", f)
 }
 
 func (h *artifactsManager) DownloadKernelBundle(buildID, target string) (string, error) {
@@ -467,7 +496,7 @@ func (h *artifactsManager) DownloadKernelBundle(buildID, target string) (string,
 		}
 		return outDir, nil
 	}
-	return h.download(buildID, target, f)
+	return h.syncDownload(buildID+target+"kernel", f)
 }
 
 func (h *artifactsManager) DownloadBootloaderBundle(buildID, target string) (string, error) {
@@ -481,11 +510,25 @@ func (h *artifactsManager) DownloadBootloaderBundle(buildID, target string) (str
 		}
 		return outDir, nil
 	}
-	return h.download(buildID, target, f)
+	return h.syncDownload(buildID+target+"bootloader", f)
 }
 
-func (h *artifactsManager) download(buildID, target string, downloadFunc func() (string, error)) (string, error) {
-	entry := h.getMapEntry(buildID, target)
+// A custom cvd bundle puts artifacts from different builds into the final directory so it can only be reused
+// if the same arguments are used.
+func (h *artifactsManager) DownloadCustomCVDBundle(args fetchCVDToolArgs) (string, error) {
+	f := func() (string, error) {
+		outDir := fmt.Sprintf("%s/%s__custom_cvd", h.rootDir, h.uuidGen())
+		if err := h.downloadWithFetchCVDTool(outDir, args); err != nil {
+			return "", err
+		}
+		return outDir, nil
+	}
+	return h.syncDownload(fmt.Sprintf("%v", args), f)
+}
+
+// Synchronizes downloads to avoid downloading same bundle more than once.
+func (h *artifactsManager) syncDownload(key string, downloadFunc func() (string, error)) (string, error) {
+	entry := h.getMapEntry(key)
 	entry.mutex.Lock()
 	defer entry.mutex.Unlock()
 	if entry.result != nil {
@@ -496,10 +539,9 @@ func (h *artifactsManager) download(buildID, target string, downloadFunc func() 
 	return entry.result.OutDir, entry.result.Error
 }
 
-func (h *artifactsManager) getMapEntry(buildID, target string) *downloadArtifactsMapEntry {
+func (h *artifactsManager) getMapEntry(key string) *downloadArtifactsMapEntry {
 	h.mapMutex.Lock()
 	defer h.mapMutex.Unlock()
-	key := fmt.Sprintf("%s_%s", buildID, target)
 	entry := h.map_[key]
 	if entry == nil {
 		entry = &downloadArtifactsMapEntry{}
@@ -508,15 +550,31 @@ func (h *artifactsManager) getMapEntry(buildID, target string) *downloadArtifact
 	return entry
 }
 
-func (h *artifactsManager) downloadWithFetchCVDTool(outDir, buildID, target string) error {
-	buildArg := fmt.Sprintf("--default_build=%s/%s", buildID, target)
-	dirArg := fmt.Sprintf("--directory=%s", outDir)
+type fetchCVDToolArgs struct {
+	MainBuildID      string
+	MainTarget       string
+	SystemImgBuildID string
+	SystemImgTarget  string
+}
+
+// The artifacts directory gets created during the execution of `cvd fetch` granting owners permission to the
+// user executing `cvd` which is relevant when extracting cvd-host_package.tar.gz.
+func (h *artifactsManager) downloadWithFetchCVDTool(outDir string, args fetchCVDToolArgs) error {
+	cmdArgs := []string{
+		"fetch",
+		fmt.Sprintf("--directory=%s", outDir),
+		fmt.Sprintf("--default_build=%s/%s", args.MainBuildID, args.MainTarget),
+	}
+	if args.SystemImgBuildID != "" {
+		cmdArgs = append(cmdArgs,
+			fmt.Sprintf("--system_build=%s/%s", args.SystemImgBuildID, args.SystemImgTarget))
+	}
 	cvdCmd := cvdCommand{
 		execContext:    h.execContext,
 		androidHostOut: "",
 		home:           "",
 		cvdBin:         h.cvdBin,
-		args:           []string{"fetch", buildArg, dirArg},
+		args:           cmdArgs,
 	}
 	return cvdCmd.Run()
 }
