@@ -94,6 +94,11 @@ PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhaldump \
     canhalsend
 
+# Occupant Awareness HAL
+PRODUCT_PACKAGES += android.hardware.automotive.occupant_awareness@1.0-service
+include packages/services/Car/car_product/occupant_awareness/OccupantAwareness.mk
+BOARD_SEPOLICY_DIRS += packages/services/Car/car_product/occupant_awareness/sepolicy
+
 # EVS
 # By default, we enable EvsManager, a sample EVS app, and a mock EVS HAL implementation.
 # If you want to use your own EVS HAL implementation, please set ENABLE_MOCK_EVSHAL as false
