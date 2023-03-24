@@ -111,6 +111,9 @@ cc_library_host_static {
         "server_client.cpp",
         "types.cpp",
     ],
+    static_libs: [
+        "libcvd_selector",
+    ],
     defaults: ["cvd_lib_defaults"],
 }
 
