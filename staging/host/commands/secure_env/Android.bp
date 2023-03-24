@@ -121,16 +121,31 @@ rust_bindgen_host {
 
 cc_binary_host {
     name: "secure_env",
-    srcs: [
-        "secure_env.cpp",
-    ],
     static_libs: [
-        "libsecure_env_linux",
-        "libgflags",
+        "libgflags_cuttlefish",
     ],
-    shared_libs: [
-        "libkmr_cf_ffi",
-    ],
+    target: {
+        windows: {
+            enabled: true,
+            srcs: [
+                "secure_env_windows_main.cpp",
+            ],
+            shared_libs: [
+                "libsecure_env_win",
+            ],
+        },
+        linux: {
+            srcs: [
+                "secure_env_linux_main.cpp",
+            ],
+            static_libs: [
+                "libsecure_env_linux",
+            ],
+            shared_libs: [
+                "libkmr_cf_ffi",
+            ],
+        },
+    },
     defaults: [
         "cuttlefish_buildhost_only",
         "secure_env_defaults",
