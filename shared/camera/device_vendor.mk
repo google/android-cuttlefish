@@ -38,6 +38,11 @@ PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gAF
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gafd
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gHAWB/native_coverage
 
+# go/lyric-soong-variables
+$(call soong_config_set,lyric,camera_hardware,cuttlefish)
+$(call soong_config_set,lyric,tuning_product,cuttlefish)
+$(call soong_config_set,google3a_config,target_device,cuttlefish)
+
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.concurrent.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.concurrent.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml \
