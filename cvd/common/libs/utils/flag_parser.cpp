@@ -431,7 +431,7 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
     value = print_xml;
     out << "<?xml version=\"1.0\"?>" << std::endl << "<AllFlags>" << std::endl;
     WriteGflagsCompatXml(flags, out);
-    out << "</AllFlags>";
+    out << "</AllFlags>" << std::flush;
     return false;
   };
   return GflagsCompatBoolFlagBase(name).Setter(setter);
