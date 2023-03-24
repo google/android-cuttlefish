@@ -53,24 +53,6 @@ class OpenWrt : public CommandSource {
                                 config_.vhost_user_mac80211_hwsim());
     }
     SharedFD wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
-    // Only run the leases workaround if we are not using the new network
-    // bridge architecture - in that case, we have a wider DHCP address
-    // space and stale leases should be much less of an issue
-    if (!FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases") &&
-        wifi_tap->IsOpen()) {
-      // TODO(schuffelen): QEMU also needs this and this is not the best place
-      // for this code. Find a better place to put it.
-      auto lease_file =
-          ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-") +
-          ".leases";
-      std::uint8_t dhcp_server_ip[] = {
-          192, 168, 96, (std::uint8_t)(ForCurrentInstance(1) * 4 - 3)};
-      if (!ReleaseDhcpLeases(lease_file, wifi_tap, dhcp_server_ip)) {
-        LOG(ERROR)
-            << "Failed to release wifi DHCP leases. Connecting to the wifi "
-            << "network may not work.";
-      }
-    }
     if (instance_.enable_sandbox()) {
       ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
                                 instance_.seccomp_policy_dir());
