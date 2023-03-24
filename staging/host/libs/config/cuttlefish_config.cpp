@@ -349,6 +349,14 @@ std::vector<std::string> CuttlefishConfig::extra_bootconfig_args() const {
   return bootconfig;
 }
 
+static constexpr char kVirtioMac80211Hwsim[] = "virtio_mac80211_hwsim";
+void CuttlefishConfig::set_virtio_mac80211_hwsim(bool virtio_mac80211_hwsim) {
+  (*dictionary_)[kVirtioMac80211Hwsim] = virtio_mac80211_hwsim;
+}
+bool CuttlefishConfig::virtio_mac80211_hwsim() const {
+  return (*dictionary_)[kVirtioMac80211Hwsim].asBool();
+}
+
 static constexpr char kVhostUserMac80211Hwsim[] = "vhost_user_mac80211_hwsim";
 void CuttlefishConfig::set_vhost_user_mac80211_hwsim(const std::string& path) {
   (*dictionary_)[kVhostUserMac80211Hwsim] = path;

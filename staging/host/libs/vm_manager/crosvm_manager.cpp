@@ -159,12 +159,11 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--vhost-net");
   }
 
-#ifdef ENFORCE_MAC80211_HWSIM
-  if (!config.vhost_user_mac80211_hwsim().empty()) {
+  if (config.virtio_mac80211_hwsim() &&
+      !config.vhost_user_mac80211_hwsim().empty()) {
     crosvm_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
                                   config.vhost_user_mac80211_hwsim());
   }
-#endif
 
   if (instance.protected_vm()) {
     crosvm_cmd.Cmd().AddParameter("--protected-vm");
@@ -273,11 +272,9 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac());
     crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac());
 
-    // TODO(b/199103204): remove this as well when
-    // PRODUCT_ENFORCE_MAC80211_HWSIM is removed
-#ifndef ENFORCE_MAC80211_HWSIM
-    wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name(), instance.wifi_mac());
-#endif
+    if (!config.virtio_mac80211_hwsim()) {
+      wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
+    }
   }
 
   if (!instance.mte() && FileExists(instance.access_kregistry_path())) {
@@ -435,27 +432,6 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
 
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", instance.bootloader());
-
-  // TODO(b/199103204): remove this as well when PRODUCT_ENFORCE_MAC80211_HWSIM
-  // is removed
-  // Only run the leases workaround if we are not using the new network
-  // bridge architecture - in that case, we have a wider DHCP address
-  // space and stale leases should be much less of an issue
-  if (!FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases") &&
-      wifi_tap->IsOpen()) {
-    // TODO(schuffelen): QEMU also needs this and this is not the best place for
-    // this code. Find a better place to put it.
-    auto lease_file =
-        ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-") + ".leases";
-
-    std::uint8_t dhcp_server_ip[] = {
-        192, 168, 96, (std::uint8_t)(ForCurrentInstance(1) * 4 - 3)};
-    if (!ReleaseDhcpLeases(lease_file, wifi_tap, dhcp_server_ip)) {
-      LOG(ERROR)
-          << "Failed to release wifi DHCP leases. Connecting to the wifi "
-          << "network may not work.";
-    }
-  }
 
   std::vector<Command> ret;
 
