@@ -187,6 +187,9 @@ class CuttlefishConfig {
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
 
+  void set_virtio_mac80211_hwsim(bool virtio_mac80211_hwsim);
+  bool virtio_mac80211_hwsim() const;
+
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
 
