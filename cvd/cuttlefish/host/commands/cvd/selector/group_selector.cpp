@@ -58,7 +58,6 @@ bool GroupSelector::IsHomeOverridden() const {
 }
 
 bool GroupSelector::RequestsDefaultGroup() const {
-  auto home_overridden_result = common_parser_.HomeOverridden();
   return !common_parser_.HasDeviceSelectOption() && !IsHomeOverridden();
 }
 
