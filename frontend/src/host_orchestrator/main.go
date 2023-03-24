@@ -131,7 +131,6 @@ func main() {
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
-	dw := orchestrator.NewCVDDownloader(orchestrator.NewSignedURLArtifactDownloader(http.DefaultClient, abURL))
 	opts := orchestrator.CVDToolInstanceManagerOpts{
 		ExecContext: exec.Command,
 		CVDBinAB: orchestrator.AndroidBuild{
@@ -139,12 +138,11 @@ func main() {
 			Target: cvdBinAndroidBuildTarget,
 		},
 		Paths:                    imPaths,
-		CVDDownloader:            dw,
 		OperationManager:         om,
 		UserArtifactsDirResolver: uam,
 		CVDExecTimeout:           5 * time.Minute,
 		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.Command},
-		BuildAPI:                 orchestrator.NewAndroidCIBuildAPI(abURL),
+		BuildAPI:                 orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL),
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	debugStaticVars := debug.StaticVariables{

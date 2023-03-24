@@ -1,10 +1,24 @@
-name: CI
+name: Presubmit 
 
 on: [pull_request, push]
 
 jobs:
-  build:
+  build-orchestrator:
     runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install dependencies
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.13.15'
+    - run: go version
+    - name: Vet Test Build
+      run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
+  build-debian-package:
+    runs-on: ubuntu-latest
+    if: ${{ always() && needs.build-orchestrator.result == 'success' }}
+    needs: [build-orchestrator]
     container:
       # don't forget to also update debs-builder-docker/Dockerfile.debbld when updating this base image
       image: debian@sha256:6a8bad8d20e1ca5ecbb7a314e51df6fca73fcce19af2778550671bdd1cbe7b43 # aka stable-20211011

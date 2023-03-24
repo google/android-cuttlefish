@@ -70,16 +70,15 @@ type CreateCVDRequest struct {
 type AndroidCIBuild struct {
 	// The branch name. If omitted the passed `BuildID` will determine the branch.
 	Branch string `json:"branch"`
-	// Uniquely identifies a branch's snapshot. If omitted, the latest green snapshot of the used branch will
+	// Uniquely identifies a branch's snapshot. If empty, the latest green snapshot of the used branch will
 	// be used.
 	BuildID string `json:"build_id"`
 	// A string to determine the specific product and flavor from the set of builds.
-	// Defaults to `aosp_cf_x86_64_phone-userdebug`.
 	Target string `json:"target"`
 }
 
 type AndroidCIBuildSource struct {
-	// Main build defaults to branch "aosp-master" using latest green build id.
+	// Main build. If omitted, defaults to branch "aosp-master" and target `aosp_cf_x86_64_phone-userdebug`.
 	MainBuild *AndroidCIBuild `json:"main_build,omitempty"`
 	// Uses this specific kernel build target if set.
 	KernelBuild *AndroidCIBuild `json:"kernel_build,omitempty"`
