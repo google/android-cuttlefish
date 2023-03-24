@@ -62,7 +62,20 @@ LocalInstance::Copy::Copy(const LocalInstance& src)
       internal_device_name_{src.InternalDeviceName()},
       instance_id_{src.InstanceId()},
       per_instance_name_{src.PerInstanceName()},
-      device_name_{src.DeviceName()} {}
+      device_name_{src.DeviceName()},
+      mock_group_{MockParentParam{
+          .home_dir = src.ParentGroup().HomeDir(),
+          .host_artifacts_path = src.ParentGroup().HostArtifactsPath(),
+          .internal_group_name = src.ParentGroup().InternalGroupName(),
+          .group_name = src.ParentGroup().GroupName(),
+          .build_id = src.ParentGroup().BuildId()}} {}
+
+LocalInstance::Copy::MockParent::MockParent(const MockParentParam& params)
+    : home_dir_{params.home_dir},
+      host_artifacts_path_{params.host_artifacts_path},
+      internal_group_name_{params.internal_group_name},
+      group_name_{params.group_name},
+      build_id_{params.build_id} {}
 
 }  // namespace selector
 }  // namespace cuttlefish

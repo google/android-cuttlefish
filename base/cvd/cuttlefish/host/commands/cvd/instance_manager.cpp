@@ -23,7 +23,6 @@
 #include <sstream>
 
 #include <android-base/file.h>
-#include <cvd_server.pb.h>
 #include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -33,6 +32,7 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
@@ -92,10 +92,19 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
     const uid_t uid) {
   std::unique_lock lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
-  lock.unlock();
   auto group =
       CF_EXPECT(GroupSelector::Select(selector_args, uid, instance_db, envs));
   return {group};
+}
+
+Result<InstanceManager::LocalInstance::Copy> InstanceManager::SelectInstance(
+    const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
+    const uid_t uid) {
+  std::unique_lock lock(instance_db_mutex_);
+  auto& instance_db = GetInstanceDB(uid);
+  auto instance_copy = CF_EXPECT(
+      InstanceSelector::Select(selector_args, uid, instance_db, envs));
+  return instance_copy;
 }
 
 bool InstanceManager::HasInstanceGroups(const uid_t uid) {

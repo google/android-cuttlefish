@@ -29,9 +29,20 @@ namespace selector {
 
 class InstanceSelector {
  public:
-  static Result<InstanceSelector> GetSelector(
-      const cvd_common::Args& selector_args, const Queries& extra_queries,
-      const cvd_common::Envs& envs);
+  static Result<LocalInstance::Copy> Select(
+      const cvd_common::Args& selector_args, const uid_t uid,
+      const InstanceDatabase& instance_database, const cvd_common::Envs& envs);
+
+ private:
+  InstanceSelector(const uid_t uid,
+                   SelectorCommonParser&& selector_common_parser,
+                   const cvd_common::Envs& envs,
+                   const InstanceDatabase& instance_database)
+      : client_uid_{uid},
+        common_parser_(std::move(selector_common_parser)),
+        envs_(envs),
+        instance_database_(instance_database) {}
+
   /*
    * If default, try running single instance group. If multiple, try to find
    * HOME == SystemWideUserHome. If not exists, give up.
@@ -40,18 +51,17 @@ class InstanceSelector {
    *
    * If group not given, not yet supported. Will be in next CLs
    */
-  Result<LocalInstance::Copy> FindInstance(
-      const InstanceDatabase& instance_database);
+  Result<LocalInstance::Copy> FindInstance();
+  bool RequestsDefaultInstance() const;
+  Result<LocalInstance::Copy> FindDefaultInstance();
+  bool IsHomeOverridden() const;
+  bool HasCuttlefishInstance() const;
+  Result<LocalInstance::Copy> FindByHomeIfOverridden() const;
 
- private:
-  InstanceSelector( Queries& queries)
-      : queries_(queries) {}
-  static bool IsHomeOverridden(const SelectorCommonParser& common_parser);
-
-  Result<LocalInstance::Copy> FindDefaultInstance(
-      const InstanceDatabase& instance_database);
-
-  const Queries queries_;
+  const uid_t client_uid_;
+  SelectorCommonParser common_parser_;
+  const cvd_common::Envs& envs_;
+  const InstanceDatabase& instance_database_;
 };
 
 }  // namespace selector
