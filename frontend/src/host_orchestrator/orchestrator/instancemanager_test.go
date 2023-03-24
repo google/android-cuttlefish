@@ -217,7 +217,7 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 		t.Errorf("expected 'sudo', got %q", usedCmdName)
 	}
 	expectedCmdArgs := []string{
-		"-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=", paths.CVDBin, "fetch",
+		"-u", "_cvd-executor", envVarHome + "=", paths.CVDBin, "fetch",
 		"--default_build=1/foo", "--directory=" + paths.ArtifactsRootDir + "/1_foo__cvd",
 	}
 	if !reflect.DeepEqual(usedCmdArgs, expectedCmdArgs) {
@@ -228,8 +228,8 @@ func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s"+
-		" HOME=%[1]s/runtimes/cvd-1 %[1]s/cvd start --daemon --report_anonymous_usage_stats=y"+
+	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes/cvd-1 "+
+		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
 		name string

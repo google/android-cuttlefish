@@ -711,16 +711,14 @@ func (c *cvdCommand) startCVDServer() error {
 	return cmd.Run()
 }
 
-func buildCvdCommand(execContext ExecContext,
-	androidHostOut string, home string,
-	cvdBin string, args ...string) *exec.Cmd {
-	finalArgs := []string{"-u", cvdUser,
-		envVarAndroidHostOut + "=" + androidHostOut,
-		envVarHome + "=" + home,
-		cvdBin,
+func buildCvdCommand(execContext ExecContext, androidHostOut string, home string, cvdBin string, args ...string) *exec.Cmd {
+	newArgs := []string{"-u", cvdUser, envVarHome + "=" + home}
+	if androidHostOut != "" {
+		newArgs = append(newArgs, envVarAndroidHostOut+"="+androidHostOut)
 	}
-	finalArgs = append(finalArgs, args...)
-	return execContext("sudo", finalArgs...)
+	newArgs = append(newArgs, cvdBin)
+	newArgs = append(newArgs, args...)
+	return execContext("sudo", newArgs...)
 }
 
 // Validates whether the current host is valid to run CVDs.
