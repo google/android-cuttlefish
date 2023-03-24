@@ -58,8 +58,7 @@ DEFINE_int32(kernel_events_fd, -1,
              "is used by secure_env to monitor for "
              "device reboots.");
 
-DEFINE_string(tpm_impl,
-              "in_memory",
+DEFINE_string(tpm_impl, "in_memory",
               "The TPM implementation. \"in_memory\" or \"host_device\"");
 
 DEFINE_string(keymint_impl, "tpm",
