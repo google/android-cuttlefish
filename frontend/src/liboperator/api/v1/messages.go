@@ -84,8 +84,8 @@ type AndroidCIBuildSource struct {
 	KernelBuild *AndroidCIBuild `json:"kernel_build,omitempty"`
 	// Uses this specific bootloader build target if set.
 	BootloaderBuild *AndroidCIBuild `json:"bootloader_build,omitempty"`
-	// Uses this specific system build target if set.
-	SystemBuild *AndroidCIBuild `json:"system_build,omitempty"`
+	// Uses this specific system image build target if set.
+	SystemImageBuild *AndroidCIBuild `json:"system_image_build,omitempty"`
 }
 
 // Represents a user build.
