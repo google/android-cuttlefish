@@ -564,14 +564,17 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                  {local_path}, &config, target_dir));
       auto kernel_artifacts =
           CF_EXPECT(build_api.Artifacts(kernel_build, "initramfs.img"));
-      CF_EXPECT(ArtifactsContains(kernel_artifacts, "initramfs.img"));
-      CF_EXPECT(build_api.ArtifactToFile(kernel_build, "initramfs.img",
-                                         target_dir + "/initramfs.img"),
-                "Could not download " << kernel_build << ":initramfs.img to "
-                                      << target_dir + "/initramfs.img");
-      CF_EXPECT(AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
-                                 {target_dir + "/initramfs.img"}, &config,
-                                 target_dir));
+
+      // Certain kernel builds don't have corresponding ramdisks.
+      if (ArtifactsContains(kernel_artifacts, "initramfs.img")) {
+        CF_EXPECT(build_api.ArtifactToFile(kernel_build, "initramfs.img",
+                                           target_dir + "/initramfs.img"),
+                  "Could not download " << kernel_build << ":initramfs.img to "
+                                        << target_dir + "/initramfs.img");
+        CF_EXPECT(AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
+                                   {target_dir + "/initramfs.img"}, &config,
+                                   target_dir));
+      }
     }
 
     if (FLAGS_boot_build != "") {
