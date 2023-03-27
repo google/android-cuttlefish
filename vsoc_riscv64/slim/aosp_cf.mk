@@ -46,17 +46,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
 PRODUCT_PACKAGES += FakeSystemApp
 
 #
-# All components inherited here go to system_ext image (same as GSI system_ext)
-#
-$(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_system_ext.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_system_ext.mk)
-
-#
-# All components inherited here go to product image (same as GSI product)
-#
-$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
-
-#
 # All components inherited here go to vendor image
 #
 LOCAL_PREFER_VENDOR_APEX := true
