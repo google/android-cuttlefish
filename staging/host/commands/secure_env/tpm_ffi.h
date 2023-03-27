@@ -32,9 +32,6 @@ extern "C" {
 uint32_t tpm_hmac(void* trm, const uint8_t* data, uint32_t data_len,
                   uint8_t* tag, uint32_t tag_len);
 
-void secure_env_log(const char* file, unsigned int line, int severity,
-                    const char* tag, const char* msg);
-
 #ifdef __cplusplus
 }
 #endif
