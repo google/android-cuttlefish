@@ -15,14 +15,11 @@
 
 #pragma once
 
-#include <optional>
-#include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 #include <gtest/gtest.h>
+
+#include "host/commands/cvd/unittests/server/cmd_runner.h"
 
 namespace cuttlefish {
 namespace acloud {
@@ -33,31 +30,11 @@ namespace acloud {
  */
 class CvdInstanceLocalTest : public ::testing::Test {
  protected:
-  enum class ErrorCode : std::int32_t {
-    kOk,
-    kFileError,
-    kInstanceDabaseError,
-  };
-
-  struct SetupError {
-    ErrorCode error_code;
-    std::string msg;
-  };
-
   CvdInstanceLocalTest();
-  ~CvdInstanceLocalTest();
-
-  bool SetUpOk() const { return error_.error_code == ErrorCode::kOk; }
-
-  const SetupError& Error() const { return error_; }
-
   CmdResult Execute(const std::string& cmd_);
 
  private:
-  bool InitCmd();
-  // set error_ when there is an error
-  void SetErrorCode(const ErrorCode error_code, const std::string& msg);
-  SetupError error_;
+  void InitCmd();
 };
 
 }  // namespace acloud
