@@ -22,6 +22,7 @@ rust_library_host {
     srcs: [ "lib.rs" ],
     crate_name: "kmr_cf",
     rustlibs: [
+        "libenv_logger",
         "libhex",
         "libkmr_common",
         "libkmr_crypto_boring",
@@ -52,6 +53,7 @@ rust_test_host {
     name: "libkmr_cf_test",
     srcs: ["lib.rs"],
     rustlibs: [
+        "libenv_logger",
         "libhex",
         "libkmr_common",
         "libkmr_crypto_boring",
