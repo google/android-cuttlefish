@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
+
+#include <atomic>
 
 #include <fruit/fruit.h>
 
@@ -21,7 +24,8 @@
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
-DemoMultiVdComponent();
+fruit::Component<fruit::Required<CommandSequenceExecutor,
+                     std::atomic<bool>>>
+AcloudCommandComponent();
 
 }
