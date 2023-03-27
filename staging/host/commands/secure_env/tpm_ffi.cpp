@@ -22,10 +22,8 @@
 
 using cuttlefish::TpmResourceManager;
 
-extern "C" {
-
-uint32_t tpm_hmac(void* trm, const uint8_t* data, uint32_t data_len,
-                  uint8_t* tag, uint32_t tag_len) {
+extern "C" uint32_t tpm_hmac(void* trm, const uint8_t* data, uint32_t data_len,
+                             uint8_t* tag, uint32_t tag_len) {
   if (trm == nullptr) {
     LOG(ERROR) << "No TPM resource manager provided";
     return 1;
@@ -44,35 +42,4 @@ uint32_t tpm_hmac(void* trm, const uint8_t* data, uint32_t data_len,
   }
   memcpy(tag, hmac->buffer, tag_len);
   return 0;
-}
-
-void secure_env_log(const char* file, unsigned int line, int severity,
-                    const char* tag, const char* msg) {
-  android::base::LogSeverity severity_enum;
-  switch (severity) {
-    case 0:
-      severity_enum = android::base::LogSeverity::VERBOSE;
-      break;
-    case 1:
-      severity_enum = android::base::LogSeverity::DEBUG;
-      break;
-    case 2:
-      severity_enum = android::base::LogSeverity::INFO;
-      break;
-    case 3:
-      severity_enum = android::base::LogSeverity::WARNING;
-      break;
-    default:
-    case 4:
-      severity_enum = android::base::LogSeverity::ERROR;
-      break;
-    case 5:
-      severity_enum = android::base::LogSeverity::FATAL_WITHOUT_ABORT;
-      break;
-    case 6:
-      severity_enum = android::base::LogSeverity::FATAL;
-      break;
-  }
-  android::base::LogMessage::LogLine(file, line, severity_enum, tag, msg);
-}
 }
