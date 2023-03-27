@@ -21,7 +21,6 @@
 
 #include "common/libs/utils/contains.h"
 #include "host/commands/cvd/types.h"
-#include "host/commands/cvd/unittests/server/cmd_runner.h"
 #include "host/commands/cvd/unittests/server/local_instance_helper.h"
 
 namespace cuttlefish {
@@ -137,12 +136,6 @@ TEST_F(CvdInstanceLocalTest, CvdLocalInstanceRemoteImageSystem) {
       "--build-target cf_x86_64_phone-userdebug --system-branch git_master "
       "--system-build-id 9684420 --system-build-target aosp_x86_64-userdebug");
   ASSERT_TRUE(cmd_result.Success()) << cmd_result.Stderr();
-}
-
-TEST_F(CvdInstanceLocalTest, Empty) {
-  if (!SetUpOk()) {
-    GTEST_SKIP() << Error().msg;
-  }
 }
 
 }  // namespace acloud

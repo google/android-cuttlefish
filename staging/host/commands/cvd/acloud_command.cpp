@@ -16,9 +16,9 @@
 
 #include "host/commands/cvd/acloud_command.h"
 
-#include <stdio.h>
 #include <sys/stat.h>
 
+#include <cstdio>
 #include <fstream>
 #include <optional>
 #include <vector>
@@ -28,8 +28,6 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
-#include "cvd_server.pb.h"
-
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
@@ -37,6 +35,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
+#include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud_config.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
