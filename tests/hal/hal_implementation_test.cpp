@@ -351,18 +351,22 @@ static std::set<std::string> getMissingHidl() {
     const DeviceType type = getDeviceType();
     switch (type) {
       case DeviceType::AUTOMOTIVE:
+        LOG(INFO) << "Determined this is an Automotive device";
         break;
       case DeviceType::TV:
         missingHidl.insert(kAutomotiveOnlyHidl.begin(),
                            kAutomotiveOnlyHidl.end());
+        LOG(INFO) << "Determined this is a TV device";
         break;
       case DeviceType::WATCH:
         missingHidl.insert(kAutomotiveOnlyHidl.begin(),
                            kAutomotiveOnlyHidl.end());
+        LOG(INFO) << "Determined this is a Wear device";
         break;
       case DeviceType::PHONE:
         missingHidl.insert(kAutomotiveOnlyHidl.begin(),
                            kAutomotiveOnlyHidl.end());
+        LOG(INFO) << "Determined this is a Phone device";
         break;
       case DeviceType::UNKNOWN:
         CHECK(false) << "getDeviceType return UNKNOWN type.";
