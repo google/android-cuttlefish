@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,29 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/unittests/server/cmd_runner.h"
 #include "host/commands/cvd/unittests/server/local_instance_helper.h"
 
-#include <algorithm>
-#include <cstdio>
-#include <cstdlib>
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 namespace acloud {
 
-CvdInstanceLocalTest::CvdInstanceLocalTest()
-    : error_{.error_code = ErrorCode::kOk, .msg = ""} {
-  InitCmd();
-}
-
-CvdInstanceLocalTest::~CvdInstanceLocalTest() { }
-
-
-void CvdInstanceLocalTest::SetErrorCode(const ErrorCode error_code,
-                                           const std::string& msg) {
-  error_.error_code = error_code;
-  error_.msg = msg;
-}
+CvdInstanceLocalTest::CvdInstanceLocalTest() { InitCmd(); }
 
 CmdResult CvdInstanceLocalTest::Execute(const std::string& cmd_) {
   cvd_common::Envs envs;
@@ -48,13 +33,10 @@ CmdResult CvdInstanceLocalTest::Execute(const std::string& cmd_) {
   return result;
 }
 
-bool CvdInstanceLocalTest::InitCmd() {
+void CvdInstanceLocalTest::InitCmd() {
   cvd_common::Envs envs;
   CmdRunner::Run("cvd reset -y", envs);
-
-  return true;
 }
-
 
 }  // namespace acloud
 }  // namespace cuttlefish
