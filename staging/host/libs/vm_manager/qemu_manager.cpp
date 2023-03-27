@@ -152,6 +152,23 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.0
         {"androidboot.opengles.version", "196608"},
     };
+  } else if (instance.gpu_mode() == kGpuModeGfxstream ||
+             instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+    const bool uses_angle = instance.gpu_mode() == kGpuModeGfxstreamGuestAngle;
+    const std::string gles_impl = uses_angle ? "angle" : "emulation";
+    const std::string gltransport =
+        (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
+                                                       : "virtio-gpu-asg";
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", "0"},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.egl", gles_impl},
+        {"androidboot.hardware.vulkan", "ranchu"},
+        {"androidboot.hardware.gltransport", gltransport},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
   } else if (instance.gpu_mode() == kGpuModeNone) {
     return {};
   } else {
@@ -393,6 +410,10 @@ Result<std::vector<Command>> QemuManager::StartCommands(
 
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
+  } else if (instance.gpu_mode() == kGpuModeGfxstream ||
+             instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+    qemu_cmd.AddParameter("-vnc");
+    qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("none");
@@ -405,10 +426,18 @@ Result<std::vector<Command>> QemuManager::StartCommands(
 
     qemu_cmd.AddParameter("-device");
 
-    bool use_gpu_gl = qemu_version.first >= 6 &&
-                      instance.gpu_mode() != kGpuModeGuestSwiftshader;
-    qemu_cmd.AddParameter(use_gpu_gl ?
-                              "virtio-gpu-gl-pci" : "virtio-gpu-pci", ",id=gpu0",
+    std::string gpu_device;
+    if (instance.gpu_mode() == kGpuModeGuestSwiftshader ||
+        qemu_version.first < 6) {
+        gpu_device = "virtio-gpu-pci";
+    } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+        gpu_device = "virtio-gpu-gl-pci";
+    } else if (instance.gpu_mode() == kGpuModeGfxstream ||
+               instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+        gpu_device = "virtio-gpu-rutabaga-pci";
+    }
+
+    qemu_cmd.AddParameter(gpu_device, ",id=gpu0",
                           ",xres=", display_config.width,
                           ",yres=", display_config.height);
   }
