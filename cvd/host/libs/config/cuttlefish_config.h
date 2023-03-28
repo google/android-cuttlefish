@@ -124,6 +124,10 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
+  // Bluetooth is enabled by bt_connector and rootcanal
+  void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
+  bool enable_host_bluetooth_connector() const;
+
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
     Bluetooth = 0b00000001,
@@ -182,9 +186,6 @@ class CuttlefishConfig {
 
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
-
-  void set_virtio_mac80211_hwsim(bool virtio_mac80211_hwsim);
-  bool virtio_mac80211_hwsim() const;
 
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
