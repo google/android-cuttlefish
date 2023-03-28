@@ -27,7 +27,7 @@ use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use libc::c_int;
-use log::{debug, error, info};
+use log::{error, info, trace};
 use std::io::{Read, Write};
 use std::os::unix::io::FromRawFd;
 
@@ -139,9 +139,9 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         }
 
         // Pass to the TA to process.
-        debug!("-> TA: received data: (len={}) {}", req_data.len(), hex::encode(&req_data));
+        trace!("-> TA: received data: (len={})", req_data.len());
         let rsp = ta.process(req_data);
-        debug!("<- TA: send data: (len={}) {}", rsp.len(), hex::encode(&rsp));
+        trace!("<- TA: send data: (len={})", rsp.len());
 
         // Send the response message down the pipe, as a 4-byte BE length followed by the message.
         let rsp_len: u32 = match rsp.len().try_into() {
