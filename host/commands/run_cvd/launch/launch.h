@@ -40,10 +40,6 @@ std::vector<T> single_element_emplace(T&& element) {
   return vec;
 }
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
-BluetoothConnectorComponent();
-
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  KernelLogPipeProvider>
 KernelLogMonitorComponent();
