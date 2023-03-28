@@ -107,10 +107,17 @@ Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
 Result<InstanceManager::LocalInstance::Copy> InstanceManager::SelectInstance(
     const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
     const uid_t uid) {
+  return SelectInstance(selector_args, {}, envs, uid);
+}
+
+Result<InstanceManager::LocalInstance::Copy> InstanceManager::SelectInstance(
+    const cvd_common::Args& selector_args, const Queries& extra_queries,
+    const cvd_common::Envs& envs, const uid_t uid) {
   std::unique_lock lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
-  auto instance_copy = CF_EXPECT(
-      InstanceSelector::Select(selector_args, uid, instance_db, envs));
+  auto instance_selector = CF_EXPECT(
+      InstanceSelector::GetSelector(selector_args, extra_queries, envs, uid));
+  auto instance_copy = CF_EXPECT(instance_selector.FindInstance(instance_db));
   return instance_copy;
 }
 
