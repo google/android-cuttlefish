@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -50,6 +49,16 @@ func (fakeBuildAPI) GetLatestGreenBuildID(string, string) (string, error) {
 func (fakeBuildAPI) DownloadArtifact(string, string, string, io.Writer) error {
 	return nil
 }
+
+const fakeProductName = "aosp_foo_x86_64"
+
+func (fakeBuildAPI) ProductName(buildID, target string) (string, error) {
+	return fakeProductName, nil
+}
+
+const fakeUUID = "123e4567-"
+
+var fakeUUIDGen = func() string { return fakeUUID }
 
 func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 	im := &CVDToolInstanceManager{}
@@ -188,48 +197,11 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	}
 }
 
-func TestCreateCVDVerifyFetchCVDCmdArgs(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	var usedCmdName string
-	var usedCmdArgs []string
-	execContext := func(name string, args ...string) *exec.Cmd {
-		if contains(args, "fetch") {
-			usedCmdName = name
-			usedCmdArgs = args
-		}
-		return exec.Command("true")
-	}
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
-	}
-	om := NewMapOM()
-	im := newCVDToolIm(execContext, cvdBinAB, paths, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
-
-	op, _ := im.CreateCVD(r)
-
-	om.Wait(op.Name, 1*time.Second)
-	if usedCmdName != "sudo" {
-		t.Errorf("expected 'sudo', got %q", usedCmdName)
-	}
-	expectedCmdArgs := []string{
-		"-u", "_cvd-executor", envVarAndroidHostOut + "=", envVarHome + "=", paths.CVDBin, "fetch",
-		"--default_build=1/foo", "--directory=" + paths.ArtifactsRootDir + "/1_foo__cvd",
-	}
-	if !reflect.DeepEqual(usedCmdArgs, expectedCmdArgs) {
-		t.Errorf("invalid args\nexpected: %+v\ngot:      %+v", expectedCmdArgs, usedCmdArgs)
-	}
-}
-
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s"+
-		" HOME=%[1]s/runtimes/cvd-1 %[1]s/cvd start --daemon --report_anonymous_usage_stats=y"+
+	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes/cvd-1 "+
+		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
 		name string
@@ -306,6 +278,26 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd") +
 				" --bootloader=" + dir + "/artifacts/137_bar__bootloader/u-boot.rom",
 		},
+		{
+			name: "android ci build with system image build",
+			req: apiv1.CreateCVDRequest{
+				CVD: &apiv1.CVD{
+					BuildSource: &apiv1.BuildSource{
+						AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
+							MainBuild: &apiv1.AndroidCIBuild{
+								BuildID: "1",
+								Target:  "foo",
+							},
+							SystemImageBuild: &apiv1.AndroidCIBuild{
+								BuildID: "137",
+								Target:  "bar",
+							},
+						},
+					},
+				},
+			},
+			exp: fmt.Sprintf(goldenPrefixFmt, fakeUUID+"__custom_cvd"),
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -318,14 +310,21 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				}
 				return exec.Command("true")
 			}
-			cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-			paths := IMPaths{
-				CVDBin:           dir + "/cvd",
-				ArtifactsRootDir: dir + "/artifacts",
-				RuntimesRootDir:  dir + "/runtimes",
-			}
 			om := NewMapOM()
-			im := newCVDToolIm(execContext, cvdBinAB, paths, om)
+			opts := CVDToolInstanceManagerOpts{
+				ExecContext: execContext,
+				CVDBinAB:    AndroidBuild{ID: "1", Target: "xyzzy"},
+				Paths: IMPaths{
+					CVDBin:           dir + "/cvd",
+					ArtifactsRootDir: dir + "/artifacts",
+					RuntimesRootDir:  dir + "/runtimes",
+				},
+				OperationManager: om,
+				HostValidator:    &AlwaysSucceedsValidator{},
+				BuildAPI:         &fakeBuildAPI{},
+				UUIDGen:          fakeUUIDGen,
+			}
+			im := NewCVDToolInstanceManager(&opts)
 
 			op, err := im.CreateCVD(tc.req)
 

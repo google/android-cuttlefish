@@ -43,7 +43,7 @@ const (
 	DefaultWebUIUrl       = ""
 
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
-	defaultCVDBinAndroidBuildID     = "8687975"
+	defaultCVDBinAndroidBuildID     = "9802869"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-userdebug"
 	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
 )
@@ -143,6 +143,7 @@ func main() {
 		CVDExecTimeout:           5 * time.Minute,
 		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.Command},
 		BuildAPI:                 orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL),
+		UUIDGen:                  func() string { return uuid.New().String() },
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	debugStaticVars := debug.StaticVariables{
