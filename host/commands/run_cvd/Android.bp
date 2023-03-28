@@ -49,7 +49,6 @@ cc_binary {
     name: "run_cvd",
     srcs: [
         "boot_state_machine.cc",
-        "launch/bluetooth_connector.cpp",
         "launch/config_server.cpp",
         "launch/console_forwarder.cpp",
         "launch/gnss_grpc_proxy.cpp",
