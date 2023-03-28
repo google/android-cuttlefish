@@ -1,6 +1,6 @@
-import {Component, Injectable, HostListener} from '@angular/core';
+import {Component, HostListener, Injectable} from '@angular/core';
+
 import {DisplaysService} from './displays.service';
-import {DeviceFrameMessage} from '../../../intercept/js/server_connector';
 
 @Injectable()
 @Component({
@@ -16,10 +16,10 @@ export class AppComponent {
     if (e.origin === window.location.origin) {
       const message = e.data;
 
-      if (!(message instanceof DeviceFrameMessage)) return;
+      if (!('type' in message && 'payload' in message)) return;
 
       switch (message.type) {
-        case DeviceFrameMessage.TYPE_DISPLAYS_INFO: {
+        case 'displays_info': {
           this.displaysService.onDeviceDisplayInfo(message.payload);
           break;
         }

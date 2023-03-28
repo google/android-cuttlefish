@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core';
 import {Subject, merge} from 'rxjs';
 import {map, mergeMap} from 'rxjs/operators';
 import {DeviceService} from './device.service';
-import {DeviceDisplaysMessageImpl} from '../../../intercept/js/server_connector';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +23,7 @@ export class DisplaysService {
     )
   );
 
-  private displayInfoChanged = new Subject<DeviceDisplaysMessageImpl>();
+  private displayInfoChanged = new Subject<any>();
 
   constructor(private deviceService: DeviceService) {}
 
@@ -50,7 +49,7 @@ export class DisplaysService {
     return this.displayInfoChanged.asObservable();
   }
 
-  onDeviceDisplayInfo(deviceDisplays: DeviceDisplaysMessageImpl) {
+  onDeviceDisplayInfo(deviceDisplays: any) {
     if (deviceDisplays.displays.length === 0) return;
 
     this.displayInfoChanged.next(deviceDisplays);
