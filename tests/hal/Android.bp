@@ -27,7 +27,10 @@ cc_test {
     ],
     shared_libs: [
         "libbase",
+        "libbinder",
         "libvintf",
+        "libutils",
+        "packagemanager_aidl-cpp",
     ],
     cflags: [
         "-Wall",
