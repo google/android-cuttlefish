@@ -134,9 +134,11 @@ keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
 keymaster::Buffer TpmAttestationRecordContext::GenerateUniqueId(
     uint64_t creation_date_time, const keymaster_blob_t& application_id,
     bool reset_since_rotation, keymaster_error_t* error) const {
-  *error = KM_ERROR_OK;
-  return keymaster::generate_unique_id(unique_id_hbk_, creation_date_time,
-                                       application_id, reset_since_rotation);
+  keymaster::Buffer unique_id;
+  *error = keymaster::generate_unique_id(unique_id_hbk_, creation_date_time,
+                                         application_id, reset_since_rotation,
+                                         &unique_id);
+  return unique_id;
 }
 
 const VerifiedBootParams* TpmAttestationRecordContext::GetVerifiedBootParams(
