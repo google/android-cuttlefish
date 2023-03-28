@@ -335,9 +335,7 @@ class ConnectionObserverImpl
         location_message_sender));
   }
   void OnLocationMessage(const uint8_t *msg, size_t size) override {
-    std::stringstream s_stream;
-    s_stream << msg;
-    std::string msgstr = s_stream.str();
+    std::string msgstr(msg, msg + size);
 
     std::vector<std::string> inputs = android::base::Split(msgstr, ",");
 
