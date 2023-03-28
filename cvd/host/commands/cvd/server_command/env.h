@@ -24,6 +24,6 @@
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-CvdCrosVmComponent();
+CvdEnvComponent();
 
 }  // namespace cuttlefish
