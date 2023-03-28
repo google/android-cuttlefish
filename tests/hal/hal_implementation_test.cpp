@@ -425,14 +425,7 @@ static std::vector<VersionedAidlPackage> allAidlManifestInterfaces() {
   return ret;
 }
 
-class Hal : public testing::Test {
- public:
-  void SetUp() override {
-    if (base::GetProperty("ro.product.board", "") != "cutf") GTEST_SKIP();
-  }
-};
-
-TEST_F(Hal, AllHidlInterfacesAreInAosp) {
+TEST(Hal, AllHidlInterfacesAreInAosp) {
   for (const FQName& name : allHidlManifestInterfaces()) {
     EXPECT_TRUE(isAospHidlInterface(name))
         << "This device should only have AOSP interfaces, not: "
@@ -440,7 +433,7 @@ TEST_F(Hal, AllHidlInterfacesAreInAosp) {
   }
 }
 
-TEST_F(Hal, HidlInterfacesImplemented) {
+TEST(Hal, HidlInterfacesImplemented) {
   // instances -> major version -> minor versions
   std::map<std::string, std::map<size_t, std::set<size_t>>> unimplemented;
 
@@ -495,7 +488,7 @@ TEST_F(Hal, HidlInterfacesImplemented) {
   }
 }
 
-TEST_F(Hal, AllAidlInterfacesAreInAosp) {
+TEST(Hal, AllAidlInterfacesAreInAosp) {
   for (const auto& package : allAidlManifestInterfaces()) {
     EXPECT_TRUE(isAospAidlInterface(package.name))
         << "This device should only have AOSP interfaces, not: "
@@ -508,7 +501,7 @@ struct AidlPackageCheck {
   bool knownMissing;
 };
 
-TEST_F(Hal, AidlInterfacesImplemented) {
+TEST(Hal, AidlInterfacesImplemented) {
   std::vector<VersionedAidlPackage> manifest = allAidlManifestInterfaces();
   std::vector<VersionedAidlPackage> thoughtMissing = kKnownMissingAidl;
 
