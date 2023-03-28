@@ -124,10 +124,6 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
-  // Bluetooth is enabled by bt_connector and rootcanal
-  void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
-  bool enable_host_bluetooth_connector() const;
-
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
     Bluetooth = 0b00000001,
