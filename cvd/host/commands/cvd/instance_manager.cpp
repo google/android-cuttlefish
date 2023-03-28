@@ -90,11 +90,18 @@ Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
 Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
     const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
     const uid_t uid) {
+  return SelectGroup(selector_args, {}, envs, uid);
+}
+
+Result<InstanceManager::LocalInstanceGroup> InstanceManager::SelectGroup(
+    const cvd_common::Args& selector_args, const Queries& extra_queries,
+    const cvd_common::Envs& envs, const uid_t uid) {
   std::unique_lock lock(instance_db_mutex_);
   auto& instance_db = GetInstanceDB(uid);
-  auto group =
-      CF_EXPECT(GroupSelector::Select(selector_args, uid, instance_db, envs));
-  return {group};
+  auto group_selector = CF_EXPECT(
+      GroupSelector::GetSelector(selector_args, extra_queries, envs, uid));
+  auto group = CF_EXPECT(group_selector.FindGroup(instance_db));
+  return group;
 }
 
 Result<InstanceManager::LocalInstance::Copy> InstanceManager::SelectInstance(
