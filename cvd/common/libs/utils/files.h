@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <chrono>
@@ -29,16 +28,13 @@ bool FileExists(const std::string& path, bool follow_symlinks = true);
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
-Result<void> EnsureDirectoryExists(const std::string& directory_path,
-                                   const mode_t mode = S_IRWXU | S_IRWXG |
-                                                       S_IROTH | S_IXOTH);
+Result<void> EnsureDirectoryExists(const std::string& directory_path);
 bool IsDirectoryEmpty(const std::string& path);
 bool RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);
-Result<std::string> RenameFile(const std::string& current_filepath,
-                               const std::string& target_filepath);
+bool RenameFile(const std::string& old_name, const std::string& new_name);
 std::string ReadFile(const std::string& file);
 bool MakeFileExecutable(const std::string& path);
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
@@ -70,5 +66,8 @@ std::string FindFile(const std::string& path, const std::string& target_name);
 Result<void> WalkDirectory(
     const std::string& dir,
     const std::function<bool(const std::string&)>& callback);
+
+Result<void> WaitForFile(const std::string& path, int timeoutSec);
+Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec);
 
 }  // namespace cuttlefish
