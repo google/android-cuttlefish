@@ -194,7 +194,7 @@ public class CFSatelliteService extends SatelliteImplBase {
     }
 
     @Override
-    public void provisionSatelliteService(@NonNull String token, @NonNull String regionId,
+    public void provisionSatelliteService(@NonNull String token, @NonNull byte[] provisionData,
             @NonNull IIntegerConsumer errorCallback) {
         logd("provisionSatelliteService");
         runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
