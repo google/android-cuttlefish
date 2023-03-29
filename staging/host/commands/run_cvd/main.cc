@@ -127,6 +127,7 @@ fruit::Component<> runCvdComponent(
       .install(CustomActionsComponent)
       .install(LaunchAdbComponent)
       .install(LaunchFastbootComponent)
+      .install(BluetoothConnectorComponent)
       .install(ConfigServerComponent)
       .install(ConsoleForwarderComponent)
       .install(EchoServerComponent)
