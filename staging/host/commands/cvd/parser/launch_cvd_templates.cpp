@@ -45,7 +45,7 @@ static std::map<std::string, ConfigTemplate> kSupportedTemplatesKeyMap = {
 static const char* kPhoneInstanceTemplate = R""""(
 {
     "vm": {
-        "memory_mb": 2048
+        "memory_mb": 4096
     },
     "graphics":{
         "displays":[
