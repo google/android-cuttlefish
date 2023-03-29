@@ -74,7 +74,8 @@ CvdServer::CvdServer(BuildApi& build_api, EpollPool& epoll_pool,
       instance_manager_(instance_manager),
       host_tool_target_manager_(host_tool_target_manager),
       server_logger_(server_logger),
-      running_(true) {
+      running_(true),
+      optout_(false) {
   std::scoped_lock lock(threads_mutex_);
   for (auto i = 0; i < kNumThreads; i++) {
     threads_.emplace_back([this]() {
@@ -104,6 +105,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .bindInstance(server->instance_manager_)
       .bindInstance(server->build_api_)
       .bindInstance(server->host_tool_target_manager_)
+      .bindInstance(server->optout_)
       .install(AcloudCommandComponent)
       .install(CvdCmdlistComponent)
       .install(CommandSequenceExecutorComponent)
