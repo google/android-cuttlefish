@@ -28,8 +28,9 @@ use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use libc::c_int;
 use log::{error, info, trace};
+use std::ffi::CString;
 use std::io::{Read, Write};
-use std::os::unix::io::FromRawFd;
+use std::os::unix::{ffi::OsStrExt, io::FromRawFd};
 
 pub mod attest;
 mod clock;
@@ -42,9 +43,10 @@ mod tests;
 
 /// Main routine for the KeyMint TA. Only returns if there is a fatal error.
 pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: *mut libc::c_void) {
-    let _ = env_logger::builder().filter_level(log::LevelFilter::Info).try_init();
+    log::set_logger(&AndroidCppLogger).unwrap();
+    log::set_max_level(log::LevelFilter::Debug); // Filtering happens elsewhere
     info!(
-        "KeyMint TA running with fd_id={}, fd_out={}, security_level={:?}",
+        "KeyMint TA running with fd_in={}, fd_out={}, security_level={:?}",
         fd_in, fd_out, security_level,
     );
 
@@ -165,4 +167,47 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         }
         let _ = outfile.flush();
     }
+}
+
+// TODO(schuffelen): Use android_logger when rust works with host glibc, see aosp/1415969
+struct AndroidCppLogger;
+
+impl log::Log for AndroidCppLogger {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool {
+        // Filtering is done in the underlying C++ logger, so indicate to the Rust code that all
+        // logs should be included
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        let file = record.file().unwrap_or("(no file)");
+        let file_basename =
+            std::path::Path::new(file).file_name().unwrap_or(std::ffi::OsStr::new("(no file)"));
+        let file = CString::new(file_basename.as_bytes())
+            .unwrap_or_else(|_| CString::new("(invalid file)").unwrap());
+        let line = record.line().unwrap_or(0);
+        let severity = match record.level() {
+            log::Level::Trace => 0,
+            log::Level::Debug => 1,
+            log::Level::Info => 2,
+            log::Level::Warn => 3,
+            log::Level::Error => 4,
+        };
+        let tag = CString::new("secure_env::".to_owned() + record.target())
+            .unwrap_or_else(|_| CString::new("(invalid tag)").unwrap());
+        let msg = CString::new(format!("{}", record.args()))
+            .unwrap_or_else(|_| CString::new("(invalid msg)").unwrap());
+        unsafe {
+            // Safety: All pointer arguments are generated from valid owned CString instances
+            secure_env_tpm::secure_env_log(
+                file.as_ptr(),
+                line,
+                severity,
+                tag.as_ptr(),
+                msg.as_ptr(),
+            );
+        }
+    }
+
+    fn flush(&self) {}
 }
