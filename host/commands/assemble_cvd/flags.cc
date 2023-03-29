@@ -862,6 +862,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // crosvm should create fifos for Bluetooth
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth || is_bt_netsim);
 
+  // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
+  tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
+
   // These flags inform NetsimServer::ResultSetup which radios it owns.
   if (is_bt_netsim) {
     tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
