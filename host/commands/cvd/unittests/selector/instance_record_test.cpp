@@ -25,8 +25,11 @@ namespace selector {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  LocalInstanceGroup parent_group("super", "/home/user",
-                                  "/home/user/download/bin");
+  LocalInstanceGroup parent_group(
+      {.group_name = "super",
+       .home_dir = "/home/user",
+       .host_artifacts_path = "/home/user/download/bin",
+       .product_out_path = "/home/user/download/bin"});
   if (!parent_group.AddInstance(3, "phone").ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
@@ -55,8 +58,11 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Copy) {
-  LocalInstanceGroup parent_group("super", "/home/user",
-                                  "/home/user/download/bin");
+  LocalInstanceGroup parent_group(
+      {.group_name = "super",
+       .home_dir = "/home/user",
+       .host_artifacts_path = "/home/user/download/bin",
+       .product_out_path = "/home/user/download/bin"});
   if (!parent_group.AddInstance(3, "phone").ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
