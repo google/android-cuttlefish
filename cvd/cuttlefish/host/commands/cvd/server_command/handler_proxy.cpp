@@ -86,9 +86,8 @@ class CvdServerHandlerProxy : public CvdServerHandler {
         MakeRequest({.cmd_args = new_exec_args,
                      .env = envs,
                      .selector_args = selector_args},
-                    request.Message().command_request().wait_behavior());
-    exec_request.mutable_command_request()->set_working_directory(
-        request.Message().command_request().working_directory());
+                    request.Message().command_request().wait_behavior(),
+                    request.Message().command_request().working_directory());
 
     RequestWithStdio forwarded_request(
         request.Client(), std::move(exec_request), request.FileDescriptors(),
