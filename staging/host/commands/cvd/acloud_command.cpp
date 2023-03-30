@@ -48,6 +48,16 @@
 
 namespace cuttlefish {
 
+static constexpr char kTranslatorHelpMessage[] = R"(Cuttlefish Virtual Device (CVD) CLI.
+
+usage: cvd acloud translator <args>
+
+Args:
+  --opt-out              Opt-out CVD Acloud and choose to run original Python Acloud.
+  --opt-in               Opt-in and run CVD Acloud as default.
+Both -opt-out and --opt-in are mutually exclusive.
+)";
+
 namespace {
 
 struct ConvertedAcloudCreateCommand {
@@ -737,6 +747,59 @@ class TryAcloudCommand : public CvdServerHandler {
   ConvertAcloudCreateCommand& converter_;
 };
 
+class AcloudTranslatorCommand : public CvdServerHandler {
+ public:
+  INJECT(AcloudTranslatorCommand(std::atomic<bool>& optout))
+      : optout_(optout) {}
+  ~AcloudTranslatorCommand() = default;
+
+  Result<bool> CanHandle(const RequestWithStdio& request) const override {
+    auto invocation = ParseInvocation(request.Message());
+    return invocation.command == "translator";
+  }
+
+  cvd_common::Args CmdList() const override { return {}; }
+
+  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    CF_EXPECT(CanHandle(request));
+    auto invocation = ParseInvocation(request.Message());
+    if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
+      return CF_ERR("Translator command not support");
+    }
+
+    // cvd acloud translator --opt-out
+    // cvd acloud translator --opt-in
+    cvd::Response response;
+    response.mutable_command_response();
+    bool help = false;
+    bool flag_optout = false;
+    bool flag_optin = false;
+    std::vector<Flag> translator_flags = {
+      GflagsCompatFlag("help", help),
+      GflagsCompatFlag("opt-out", flag_optout),
+      GflagsCompatFlag("opt-in", flag_optin),
+    };
+    CF_EXPECT(ParseFlags(translator_flags, invocation.arguments),
+          "Failed to process translator flag.");
+    if (help) {
+      WriteAll(request.Out(), kTranslatorHelpMessage);
+      return response;
+    }
+    CF_EXPECT(flag_optout != flag_optin,
+          "Only one of --opt-out or --opt-in should be given.");
+    if (flag_optout) {
+      optout_ = true;
+    } else if (flag_optin) {
+      optout_ = false;
+    }
+    return response;
+  }
+  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
+
+ private:
+  std::atomic<bool>& optout_;
+};
+
 class AcloudCommand : public CvdServerHandler {
  public:
   INJECT(AcloudCommand(CommandSequenceExecutor& executor,
@@ -792,11 +855,13 @@ class AcloudCommand : public CvdServerHandler {
 
 }  // namespace
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
+fruit::Component<fruit::Required<CommandSequenceExecutor,
+                     std::atomic<bool>>>
 AcloudCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, AcloudCommand>()
-      .addMultibinding<CvdServerHandler, TryAcloudCommand>();
+      .addMultibinding<CvdServerHandler, TryAcloudCommand>()
+      .addMultibinding<CvdServerHandler, AcloudTranslatorCommand>();
 }
 
 }  // namespace cuttlefish
