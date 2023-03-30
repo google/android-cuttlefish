@@ -314,10 +314,13 @@ Result<GroupCreationInfo> CreationAnalyzer::Analyze() {
   home_ = CF_EXPECT(AnalyzeHome());
   envs_["HOME"] = home_;
 
-  CF_EXPECT(envs_.find(kAndroidHostOut) != envs_.end());
-  host_artifacts_path_ = envs_.at(kAndroidHostOut);
+  CF_EXPECT(Contains(envs_, kAndroidHostOut));
+  std::string android_product_out_path = Contains(envs_, kAndroidProductOut)
+                                             ? envs_.at(kAndroidProductOut)
+                                             : envs_.at(kAndroidHostOut);
   GroupCreationInfo report = {.home = home_,
-                              .host_artifacts_path = host_artifacts_path_,
+                              .host_artifacts_path = envs_.at(kAndroidHostOut),
+                              .product_out_path = android_product_out_path,
                               .group_name = group_name_,
                               .instances = std::move(instance_info),
                               .args = cmd_args_,
