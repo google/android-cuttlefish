@@ -82,6 +82,9 @@ class CvdServer {
   // TODO(schuffelen): Move this thread pool to another class.
   std::mutex threads_mutex_;
   std::vector<std::thread> threads_;
+
+  // translator optout
+  std::atomic<bool> optout_;
 };
 
 Result<CvdServerHandler*> RequestHandler(
