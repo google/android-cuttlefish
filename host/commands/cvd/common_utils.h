@@ -16,11 +16,10 @@
 
 #pragma once
 
-#include <string>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
 
-#include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 
 namespace cuttlefish {
@@ -40,9 +39,12 @@ struct MakeRequestParam {
   std::vector<std::string> selector_args;
 };
 
-cvd::Request MakeRequest(
-    const MakeRequestParam& args_and_envs,
-    const cvd::WaitBehavior wait_behavior = cvd::WAIT_BEHAVIOR_COMPLETE);
+cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
+                         const cvd::WaitBehavior wait_behavior,
+                         const std::string& working_dir);
+
+cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
+                         const std::string& working_dir);
 
 // name of environment variable to mark the launch_cvd initiated by the cvd
 // server
