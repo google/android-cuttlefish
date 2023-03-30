@@ -81,7 +81,8 @@ std::vector<std::string> VmManagerKernelCmdline(
       // crosvm sets up the ramoops.xx= flags for us, but QEMU does not.
       // See external/crosvm/x86_64/src/lib.rs
       // this feature is not supported on aarch64
-      vm_manager_cmdline.push_back("ramoops.mem_address=0x100000000");
+      // check guest's /proc/iomem when you need to change mem_address or mem_size
+      vm_manager_cmdline.push_back("ramoops.mem_address=0x150000000");
       vm_manager_cmdline.push_back("ramoops.mem_size=0x200000");
       vm_manager_cmdline.push_back("ramoops.console_size=0x80000");
       vm_manager_cmdline.push_back("ramoops.record_size=0x80000");
