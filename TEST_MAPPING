@@ -29,5 +29,10 @@
     {
       "name": "CtsScopedStorageDeviceOnlyTest"
     }
+  ],
+  "auto-presubmit": [
+    {
+      "name": "hal_implementation_test"
+    }
   ]
 }
