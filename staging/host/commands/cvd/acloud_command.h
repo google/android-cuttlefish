@@ -16,13 +16,16 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <fruit/fruit.h>
 
 #include "host/commands/cvd/command_sequence.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
+fruit::Component<fruit::Required<CommandSequenceExecutor,
+                     std::atomic<bool>>>
 AcloudCommandComponent();
 
 }
