@@ -554,7 +554,7 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   }
 
   if (is_x86 && FileExists(instance.pstore_path())) {
-    // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
+    // QEMU will assign the NVDIMM (ramoops pstore region) 150000000-1501fffff
     // As we will pass this to ramoops, define this region first so it is always
     // located at this address. This is currently x86 only.
     qemu_cmd.AddParameter("-object");
