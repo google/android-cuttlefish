@@ -26,9 +26,9 @@
 namespace cuttlefish {
 namespace selector {
 
-Result<LocalInstance::Copy> InstanceSelector::Select(
-    const cvd_common::Args& selector_args, const uid_t uid,
-    const InstanceDatabase& instance_database, const cvd_common::Envs& envs) {
+Result<InstanceSelector> InstanceSelector::GetSelector(
+    const cvd_common::Args& selector_args, const Queries& extra_queries,
+    const cvd_common::Envs& envs, const uid_t uid) {
   cvd_common::Args selector_args_copied{selector_args};
   SelectorCommonParser common_parser =
       CF_EXPECT(SelectorCommonParser::Parse(uid, selector_args_copied, envs));
@@ -47,46 +47,19 @@ Result<LocalInstance::Copy> InstanceSelector::Select(
     LOG(ERROR) << "Warning: there are unused selector options. "
                << unused_arg_list;
   }
-  InstanceSelector instance_selector(uid, std::move(common_parser), envs,
-                                     instance_database);
-  auto instance = CF_EXPECT(instance_selector.FindInstance());
-  return instance;
-}
 
-bool InstanceSelector::IsHomeOverridden() const {
-  auto home_overridden_result = common_parser_.HomeOverridden();
-  if (!home_overridden_result.ok()) {
-    return false;
-  }
-  return *home_overridden_result;
-}
-
-bool InstanceSelector::RequestsDefaultInstance() const {
-  return !common_parser_.HasDeviceSelectOption() && !IsHomeOverridden() &&
-         !HasCuttlefishInstance();
-}
-
-bool InstanceSelector::HasCuttlefishInstance() const {
-  return Contains(envs_, kCuttlefishInstanceEnvVarName);
-}
-
-Result<LocalInstance::Copy> InstanceSelector::FindInstance() {
-  if (RequestsDefaultInstance()) {
-    auto default_instance = CF_EXPECT(FindDefaultInstance());
-    return default_instance;
-  }
   // search by instance and instances
   // search by HOME if overridden
   Queries queries;
-  if (IsHomeOverridden()) {
-    CF_EXPECT(common_parser_.Home());
-    queries.emplace_back(kHomeField, common_parser_.Home().value());
+  if (IsHomeOverridden(common_parser)) {
+    CF_EXPECT(common_parser.Home());
+    queries.emplace_back(kHomeField, common_parser.Home().value());
   }
-  if (common_parser_.GroupName()) {
-    queries.emplace_back(kGroupNameField, common_parser_.GroupName().value());
+  if (common_parser.GroupName()) {
+    queries.emplace_back(kGroupNameField, common_parser.GroupName().value());
   }
-  if (common_parser_.PerInstanceNames()) {
-    const auto per_instance_names = common_parser_.PerInstanceNames().value();
+  if (common_parser.PerInstanceNames()) {
+    const auto per_instance_names = common_parser.PerInstanceNames().value();
     CF_EXPECT_LE(per_instance_names.size(), 1,
                  "Instance Selector only picks up to 1 instance and thus "
                  "only take up to 1 instance_name");
@@ -94,9 +67,9 @@ Result<LocalInstance::Copy> InstanceSelector::FindInstance() {
       queries.emplace_back(kInstanceNameField, per_instance_names.front());
     }
   }
-  if (HasCuttlefishInstance()) {
+  if (Contains(envs, kCuttlefishInstanceEnvVarName)) {
     int id;
-    const std::string instance_id_str = envs_.at(kCuttlefishInstanceEnvVarName);
+    const std::string instance_id_str = envs.at(kCuttlefishInstanceEnvVarName);
     if (android::base::ParseInt(instance_id_str, std::addressof(id))) {
       queries.emplace_back(kInstanceIdField, std::to_string(id));
     } else {
@@ -104,16 +77,40 @@ Result<LocalInstance::Copy> InstanceSelector::FindInstance() {
                  << " was given but it must have one valid instance ID.";
     }
   }
-  // check CUTTLEFISH_INSTANCE envs
-  CF_EXPECT(!queries.empty());
-  auto instances = CF_EXPECT(instance_database_.FindInstances(queries));
+
+  for (const auto& extra_query : extra_queries) {
+    queries.push_back(extra_query);
+  }
+
+  InstanceSelector instance_selector(uid, queries);
+  return instance_selector;
+}
+
+bool InstanceSelector::IsHomeOverridden(
+    const SelectorCommonParser& common_parser) {
+  auto home_overridden_result = common_parser.HomeOverridden();
+  if (!home_overridden_result.ok()) {
+    return false;
+  }
+  return *home_overridden_result;
+}
+
+Result<LocalInstance::Copy> InstanceSelector::FindInstance(
+    const InstanceDatabase& instance_database) {
+  if (queries_.empty()) {
+    auto default_instance = CF_EXPECT(FindDefaultInstance(instance_database));
+    return default_instance;
+  }
+
+  auto instances = CF_EXPECT(instance_database.FindInstances(queries_));
   CF_EXPECT(instances.size() == 1, "instances.size() = " << instances.size());
   auto& instance = *(instances.cbegin());
   return instance.Get().GetCopy();
 }
 
-Result<LocalInstance::Copy> InstanceSelector::FindDefaultInstance() {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_database_, client_uid_));
+Result<LocalInstance::Copy> InstanceSelector::FindDefaultInstance(
+    const InstanceDatabase& instance_database) {
+  auto group = CF_EXPECT(GetDefaultGroup(instance_database, client_uid_));
   const auto instances = CF_EXPECT(group.FindAllInstances());
   CF_EXPECT_EQ(instances.size(), 1,
                "Default instance is the single instance in the default group.");

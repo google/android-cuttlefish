@@ -57,6 +57,8 @@ struct PerInstanceInfo {
 struct GroupCreationInfo {
   std::string home;
   std::string host_artifacts_path;  ///< e.g. out/host/linux-x86
+  // set to host_artifacts_path if no ANDROID_PRODUCT_OUT
+  std::string product_out_path;
   std::string group_name;
   std::vector<PerInstanceInfo> instances;
   std::vector<std::string> args;
@@ -161,7 +163,6 @@ class CreationAnalyzer {
 
   // information to return later
   std::string home_;
-  std::string host_artifacts_path_;  ///< e.g. out/host/linux-x86
   std::string group_name_;
 
   // internal, temporary
