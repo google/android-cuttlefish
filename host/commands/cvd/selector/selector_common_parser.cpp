@@ -59,10 +59,10 @@ Result<void> SelectorCommonParser::ParseOptions(
       CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kGroupName));
   auto instance_name_flag =
       CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kInstanceName));
-  std::optional<std::string> group_name_opt;
-  CF_EXPECT(group_name_flag.FilterFlag(selector_args, group_name_opt));
-  std::optional<std::string> instance_name_opt;
-  CF_EXPECT(instance_name_flag.FilterFlag(selector_args, instance_name_opt));
+  std::optional<std::string> group_name_opt =
+      CF_EXPECT(group_name_flag.FilterFlag<std::string>(selector_args));
+  std::optional<std::string> instance_name_opt =
+      CF_EXPECT(instance_name_flag.FilterFlag<std::string>(selector_args));
 
   NameFlagsParam name_flags_param{.group_name = group_name_opt,
                                   .instance_names = instance_name_opt};
