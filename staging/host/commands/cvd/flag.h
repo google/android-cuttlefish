@@ -101,7 +101,7 @@ class CvdFlag {
 
   // Parses the arguments. If flag is given, returns the parsed value. If not,
   // returns the default value if any. If no default value, it returns CF_ERR.
-  Result<T> ParseFlag(cvd_common::Args& args) const {
+  Result<T> CalculateFlag(cvd_common::Args& args) const {
     auto value_opt = CF_EXPECT(FilterFlag(args));
     if (!value_opt) {
       CF_EXPECT(default_value_ != std::nullopt);
@@ -167,25 +167,24 @@ class CvdFlagProxy {
   // returns CF_ERR if parsing error,
   // returns std::nullopt if parsing was okay but the flag wasn't given
   template <typename T>
-  Result<void> FilterFlag(cvd_common::Args& args,
-                          std::optional<T>& output) const {
-    output = std::nullopt;
+  Result<std::optional<T>> FilterFlag(cvd_common::Args& args) const {
+    std::optional<T> output;
     const auto* ptr = CF_EXPECT(std::get_if<CvdFlag<T>>(&flag_));
     CF_EXPECT(ptr != nullptr);
     output = CF_EXPECT(ptr->FilterFlag(args));
-    return {};
+    return output;
   }
 
   // Parses the arguments. If flag is given, returns the parsed value. If not,
   // returns the default value if any. If no default value, it returns CF_ERR.
   template <typename T>
-  Result<void> ParseFlag(cvd_common::Args& args, T& output) const {
+  Result<T> CalculateFlag(cvd_common::Args& args) const {
     bool has_default_value = CF_EXPECT(HasDefaultValue());
     CF_EXPECT(has_default_value == true);
     const auto* ptr = CF_EXPECT(std::get_if<CvdFlag<T>>(&flag_));
     CF_EXPECT(ptr != nullptr);
-    output = CF_EXPECT(ptr->ParseFlag(args));
-    return {};
+    T output = CF_EXPECT(ptr->CalculateFlag(args));
+    return output;
   }
 
   using ValueVariant = std::variant<std::int32_t, bool, std::string>;
