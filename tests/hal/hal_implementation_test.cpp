@@ -159,6 +159,7 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
     "android.hardware.automotive.audiocontrol",
     "android.hardware.automotive.can",
     "android.hardware.broadcastradio",
+    "android.hardware.automotive.occupant_awareness",
     "android.hardware.automotive.remoteaccess",
     "android.hardware.automotive.vehicle",
 };
@@ -232,7 +233,6 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.frameworks.automotive.powerpolicy.", 2, 274160980},
     {"android.hardware.automotive.evs.", 2, 274162534},
     {"android.hardware.automotive.ivn.", 1, 274139217},
-    {"android.hardware.automotive.occupant_awareness.", 1, 0},
 };
 
 // AOSP packages which are never considered
