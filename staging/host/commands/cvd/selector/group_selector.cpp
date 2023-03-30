@@ -16,15 +16,14 @@
 
 #include "host/commands/cvd/selector/group_selector.h"
 #include "host/commands/cvd/selector/device_selector_utils.h"
-#include "host/commands/cvd/selector/instance_database_types.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
-Result<LocalInstanceGroup> GroupSelector::Select(
-    const cvd_common::Args& selector_args, const uid_t uid,
-    const InstanceDatabase& instance_database, const cvd_common::Envs& envs) {
+Result<GroupSelector> GroupSelector::GetSelector(
+    const cvd_common::Args& selector_args, const Queries& extra_queries,
+    const cvd_common::Envs& envs, const uid_t uid) {
   cvd_common::Args selector_args_copied{selector_args};
   SelectorCommonParser common_parser =
       CF_EXPECT(SelectorCommonParser::Parse(uid, selector_args_copied, envs));
@@ -43,53 +42,55 @@ Result<LocalInstanceGroup> GroupSelector::Select(
     LOG(ERROR) << "Warning: there are unused selector options. "
                << unused_arg_list;
   }
-  GroupSelector group_selector(uid, std::move(common_parser), envs,
-                               instance_database);
-  auto group = CF_EXPECT(group_selector.FindGroup());
-  return group;
+
+  // search by group and instances
+  // search by HOME if overridden
+  Queries queries;
+  if (IsHomeOverridden(common_parser)) {
+    CF_EXPECT(common_parser.Home());
+    queries.emplace_back(kHomeField, common_parser.Home().value());
+  }
+  if (common_parser.GroupName()) {
+    queries.emplace_back(kGroupNameField, common_parser.GroupName().value());
+  }
+  if (common_parser.PerInstanceNames()) {
+    const auto per_instance_names = common_parser.PerInstanceNames().value();
+    for (const auto& per_instance_name : per_instance_names) {
+      queries.emplace_back(kInstanceNameField, per_instance_name);
+    }
+  }
+
+  for (const auto& extra_query : extra_queries) {
+    queries.push_back(extra_query);
+  }
+
+  GroupSelector group_selector(uid, queries);
+  return group_selector;
 }
 
-bool GroupSelector::IsHomeOverridden() const {
-  auto home_overridden_result = common_parser_.HomeOverridden();
+bool GroupSelector::IsHomeOverridden(
+    const SelectorCommonParser& common_parser) {
+  auto home_overridden_result = common_parser.HomeOverridden();
   if (!home_overridden_result.ok()) {
     return false;
   }
   return *home_overridden_result;
 }
 
-bool GroupSelector::RequestsDefaultGroup() const {
-  return !common_parser_.HasDeviceSelectOption() && !IsHomeOverridden();
-}
-
-Result<LocalInstanceGroup> GroupSelector::FindGroup() {
-  if (RequestsDefaultGroup()) {
-    auto default_group = CF_EXPECT(FindDefaultGroup());
+Result<LocalInstanceGroup> GroupSelector::FindGroup(
+    const InstanceDatabase& instance_database) {
+  if (queries_.empty()) {
+    auto default_group = CF_EXPECT(FindDefaultGroup(instance_database));
     return default_group;
   }
-  // search by group and instances
-  // search by HOME if overridden
-  Queries queries;
-  if (IsHomeOverridden()) {
-    CF_EXPECT(common_parser_.Home());
-    queries.emplace_back(kHomeField, common_parser_.Home().value());
-  }
-  if (common_parser_.GroupName()) {
-    queries.emplace_back(kGroupNameField, common_parser_.GroupName().value());
-  }
-  if (common_parser_.PerInstanceNames()) {
-    const auto per_instance_names = common_parser_.PerInstanceNames().value();
-    for (const auto& per_instance_name : per_instance_names) {
-      queries.emplace_back(kInstanceNameField, per_instance_name);
-    }
-  }
-  CF_EXPECT(!queries.empty());
-  auto groups = CF_EXPECT(instance_database_.FindGroups(queries));
+  auto groups = CF_EXPECT(instance_database.FindGroups(queries_));
   CF_EXPECT(groups.size() == 1, "groups.size() = " << groups.size());
   return *(groups.cbegin());
 }
 
-Result<LocalInstanceGroup> GroupSelector::FindDefaultGroup() {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_database_, client_uid_));
+Result<LocalInstanceGroup> GroupSelector::FindDefaultGroup(
+    const InstanceDatabase& instance_database) {
+  auto group = CF_EXPECT(GetDefaultGroup(instance_database, client_uid_));
   return group;
 }
 
