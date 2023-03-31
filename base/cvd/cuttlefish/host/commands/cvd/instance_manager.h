@@ -67,6 +67,15 @@ class InstanceManager {
                                          const cvd_common::Envs& envs,
                                          const uid_t uid);
 
+  Result<LocalInstanceGroup> SelectGroup(const cvd_common::Args& selector_args,
+                                         const Queries& extra_queries,
+                                         const cvd_common::Envs& envs,
+                                         const uid_t uid);
+
+  Result<LocalInstance::Copy> SelectInstance(
+      const cvd_common::Args& selector_args, const Queries& extra_queries,
+      const cvd_common::Envs& envs, const uid_t uid);
+
   Result<LocalInstance::Copy> SelectInstance(
       const cvd_common::Args& selector_args, const cvd_common::Envs& envs,
       const uid_t uid);

@@ -75,17 +75,32 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
 
   // group_name : "meow"
   auto result_bad_home =
-      db.AddInstanceGroup("meow", "/path/to/never/exists", HostArtifactsPath());
+      db.AddInstanceGroup({.group_name = "meow",
+                           .home_dir = "/path/to/never/exists",
+                           .host_artifacts_path = HostArtifactsPath(),
+                           .product_out_path = HostArtifactsPath()});
   auto result_bad_host_bin_dir =
-      db.AddInstanceGroup("meow", home, "/path/to/never/exists");
-  auto result_both_bad = db.AddInstanceGroup("meow", "/path/to/never/exists",
-                                             "/path/to/never/exists");
+      db.AddInstanceGroup({.group_name = "meow",
+                           .home_dir = home,
+                           .host_artifacts_path = "/path/to/never/exists",
+                           .product_out_path = "/path/to/never/exists"});
+  auto result_both_bad =
+      db.AddInstanceGroup({.group_name = "meow",
+                           .home_dir = "/path/to/never/exists",
+                           .host_artifacts_path = "/path/to/never/exists",
+                           .product_out_path = "/path/to/never/exists"});
   auto result_bad_group_name =
-      db.AddInstanceGroup("0invalid_group_name", home, HostArtifactsPath());
+      db.AddInstanceGroup({.group_name = "0invalid_group_name",
+                           .home_dir = home,
+                           .host_artifacts_path = HostArtifactsPath(),
+                           .product_out_path = HostArtifactsPath()});
   // Everything is correct but one thing: the host artifacts directory does not
   // have host tool files such as launch_cvd
   auto result_non_qualifying_host_tool_dir =
-      db.AddInstanceGroup("meow", home, invalid_host_artifacts_path);
+      db.AddInstanceGroup({.group_name = "meow",
+                           .home_dir = home,
+                           .host_artifacts_path = invalid_host_artifacts_path,
+                           .product_out_path = invalid_host_artifacts_path});
 
   ASSERT_FALSE(result_bad_home.ok());
   ASSERT_FALSE(result_bad_host_bin_dir.ok());
@@ -108,8 +123,16 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup("meow", home0, HostArtifactsPath()).ok());
-  ASSERT_TRUE(db.AddInstanceGroup("miaou", home1, HostArtifactsPath()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup({.group_name = "meow",
+                                   .home_dir = home0,
+                                   .host_artifacts_path = HostArtifactsPath(),
+                                   .product_out_path = HostArtifactsPath()})
+                  .ok());
+  ASSERT_TRUE(db.AddInstanceGroup({.group_name = "miaou",
+                                   .home_dir = home1,
+                                   .host_artifacts_path = HostArtifactsPath(),
+                                   .product_out_path = HostArtifactsPath()})
+                  .ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -122,8 +145,16 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
-  ASSERT_TRUE(db.AddInstanceGroup("meow", home, HostArtifactsPath()).ok());
-  ASSERT_FALSE(db.AddInstanceGroup("meow", home, HostArtifactsPath()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup({.group_name = "meow",
+                                   .home_dir = home,
+                                   .host_artifacts_path = HostArtifactsPath(),
+                                   .product_out_path = HostArtifactsPath()})
+                  .ok());
+  ASSERT_FALSE(db.AddInstanceGroup({.group_name = "meow",
+                                    .home_dir = home,
+                                    .host_artifacts_path = HostArtifactsPath(),
+                                    .product_out_path = HostArtifactsPath()})
+                   .ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
