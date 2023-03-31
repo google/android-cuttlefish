@@ -156,6 +156,7 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
     "android.hardware.automotive.can",
     "android.hardware.automotive.evs",
     "android.hardware.broadcastradio",
+    "android.hardware.automotive.occupant_awareness",
     "android.hardware.automotive.remoteaccess",
     "android.hardware.automotive.vehicle",
 };
@@ -226,7 +227,6 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.automotive.computepipe.registry.", 2, 273549907},
     {"android.automotive.computepipe.runner.", 2, 273549907},
     {"android.frameworks.automotive.display.", 1, 274161444},
-    {"android.hardware.automotive.occupant_awareness.", 1, 274164202},
     {"android.hardware.automotive.audiocontrol.", 2, 0},
 };
 
