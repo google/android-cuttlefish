@@ -222,8 +222,30 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   return output;
 }
 
+/**
+ * Terminates a cvd server listening on "cvd_server"
+ *
+ * So far, the server processes across users were listing on the "cvd_server"
+ * socket. And, so far, we had one user. Now, we have multiple users. Each
+ * server listens to cvd_server_<uid>. The thing is if there is a server process
+ * started out of an old executable it will be listening to "cvd_server," and
+ * thus we should kill the server process first.
+ */
+Result<void> KillOldServer() {
+  CvdClient client_to_old_server("cvd_server");
+  auto result = client_to_old_server.StopCvdServer(/*clear=*/true);
+  if (!result.ok()) {
+    LOG(ERROR) << "Old server listening on \"cvd_server\" socket "
+               << "must be killed first but failed to terminate it.";
+    LOG(ERROR) << "Perhaps, try cvd reset -y";
+    CF_EXPECT(result.ok(), result.error().Trace());
+  }
+  return {};
+}
+
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
+  CF_EXPECT(KillOldServer());
 
   cvd_common::Args all_args = ArgsToVec(argc, argv);
   CF_EXPECT(!all_args.empty());
