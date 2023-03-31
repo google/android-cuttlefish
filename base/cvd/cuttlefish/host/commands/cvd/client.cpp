@@ -204,7 +204,7 @@ Result<cvd::Response> CvdClient::HandleCommand(
   }
   cvd::Request request = MakeRequest(
       {.cmd_args = args, .env = env, .selector_args = selector_args},
-      cvd::WAIT_BEHAVIOR_COMPLETE);
+      cvd::WAIT_BEHAVIOR_COMPLETE, "");
   auto response = CF_EXPECT(SendRequest(request, new_control_fd, exe_fd));
   CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
   CF_EXPECT(response.has_command_response(),
