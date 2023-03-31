@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 
+#include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/selector/constant_reference.h"
 #include "host/commands/cvd/selector/instance_database_types.h"
@@ -47,11 +48,13 @@ class LocalInstanceGroup {
   const std::string& GroupName() const { return group_name_; }
   const std::string& HomeDir() const { return home_dir_; }
   const std::string& HostArtifactsPath() const { return host_artifacts_path_; }
+  const std::string& ProductOutPath() const { return product_out_path_; }
   const std::optional<std::string>& BuildId() const { return build_id_; }
   Result<std::string> GetCuttlefishConfigPath() const;
   const Set<std::unique_ptr<LocalInstance>>& Instances() const {
     return instances_;
   }
+  Json::Value Serialize() const;
 
   /**
    * return error if instance id of instance is taken AND that taken id
@@ -76,13 +79,20 @@ class LocalInstanceGroup {
   Result<Set<ConstRef<LocalInstance>>> FindAllInstances() const;
 
  private:
-  LocalInstanceGroup(const std::string& group_name, const std::string& home_dir,
-                     const std::string& host_artifacts_path);
+  struct InstanceGroupParam {
+    std::string group_name;
+    std::string home_dir;
+    std::string host_artifacts_path;
+    std::string product_out_path;
+  };
+  LocalInstanceGroup(const InstanceGroupParam& param);
   // Eventually copies the instances of a src to *this
   Set<std::unique_ptr<LocalInstance>> CopyInstances(
       const Set<std::unique_ptr<LocalInstance>>& src_instances);
+  Json::Value Serialize(const std::unique_ptr<LocalInstance>& instance) const;
   std::string home_dir_;
   std::string host_artifacts_path_;
+  std::string product_out_path_;
 
   // for now, "cvd", which is "cvd-".remove_suffix(1)
   std::string internal_group_name_;
@@ -91,6 +101,15 @@ class LocalInstanceGroup {
   // which is also after the device completes the boot.
   std::optional<std::string> build_id_;
   Set<std::unique_ptr<LocalInstance>> instances_;
+
+  static constexpr const char kJsonGroupName[] = "Group Name";
+  static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
+  static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
+  static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
+  static constexpr const char kJsonInstances[] = "Instances";
+  static constexpr const char kJsonParent[] = "Parent Group";
+  static constexpr const char kJsonBuildId[] = "Build Id";
+  static constexpr const char kJsonUnknownBuildId[] = "Unknown Build";
 
   /*
    * Expose constructor to the tests in InstanceRecord unit test suite.

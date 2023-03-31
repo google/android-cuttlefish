@@ -313,6 +313,8 @@ Result<selector::GroupCreationInfo> CvdStartCommandHandler::UpdateArgsAndEnvs(
   group_creation_info.envs["HOME"] = group_creation_info.home;
   group_creation_info.envs[kAndroidHostOut] =
       group_creation_info.host_artifacts_path;
+  group_creation_info.envs[kAndroidProductOut] =
+      group_creation_info.product_out_path;
   /* b/253644566
    *
    * Old branches used kAndroidSoongHostOut instead of kAndroidHostOut
