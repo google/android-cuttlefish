@@ -28,11 +28,11 @@ using namespace android;
 
 // clang-format off
 static const std::set<std::string> kAutomotiveOnlyHidl = {
-    "android.frameworks.automotive.display@1.0",
     "android.hardware.automotive.evs@1.1",
 };
 
 static const std::set<std::string> kKnownMissingHidl = {
+    "android.frameworks.automotive.display@1.0", // converted to AIDL, see b/170401743
     "android.frameworks.cameraservice.device@2.1",
     "android.frameworks.cameraservice.service@2.2", // converted to AIDL, see b/205764761
     "android.frameworks.displayservice@1.0", // deprecated, see b/141930622
