@@ -232,11 +232,7 @@ class FlagCollection {
     CvdFlagProxy flag;
   };
 
-  // do not consider default values
   Result<std::unordered_map<std::string, FlagValuePair>> FilterFlags(
-      cvd_common::Args& args) const;
-  // consider default values
-  Result<std::unordered_map<std::string, FlagValuePair>> CalculateFlags(
       cvd_common::Args& args) const;
 
  private:
