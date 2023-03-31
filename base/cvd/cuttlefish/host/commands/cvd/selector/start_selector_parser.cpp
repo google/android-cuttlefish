@@ -247,10 +247,8 @@ StartSelectorParser::HandleInstanceIds(
 Result<bool> StartSelectorParser::CalcMayBeDefaultGroup() {
   auto disable_default_group_flag = CF_EXPECT(
       SelectorFlags::Get().GetFlag(SelectorFlags::kDisableDefaultGroup));
-  std::optional<bool> flag_value = false;
-  CF_EXPECT(
-      disable_default_group_flag.FilterFlag(selector_args_, flag_value).ok());
-  if (flag_value && *flag_value) {
+  if (CF_EXPECT(
+          disable_default_group_flag.CalculateFlag<bool>(selector_args_))) {
     return false;
   }
   /*
@@ -312,8 +310,8 @@ Result<bool> StartSelectorParser::CalcAcquireFileLock() {
   // if the flag is set, flag has the highest priority
   auto must_acquire_file_lock_flag =
       CF_EXPECT(SelectorFlags::Get().GetFlag(SelectorFlags::kAcquireFileLock));
-  std::optional<bool> value_opt;
-  CF_EXPECT(must_acquire_file_lock_flag.FilterFlag(selector_args_, value_opt));
+  std::optional<bool> value_opt =
+      CF_EXPECT(must_acquire_file_lock_flag.FilterFlag<bool>(selector_args_));
   if (value_opt) {
     return *value_opt;
   }

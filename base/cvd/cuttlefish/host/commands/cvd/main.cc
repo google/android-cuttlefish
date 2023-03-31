@@ -109,8 +109,7 @@ Result<FlagCollection> CvdFlags() {
 Result<bool> FilterDriverHelpOptions(const FlagCollection& cvd_flags,
                                      cvd_common::Args& cvd_args) {
   auto help_flag = CF_EXPECT(cvd_flags.GetFlag("help"));
-  bool is_help = false;
-  CF_EXPECT(help_flag.ParseFlag(cvd_args, is_help));
+  bool is_help = CF_EXPECT(help_flag.CalculateFlag<bool>(cvd_args));
   return is_help;
 }
 
