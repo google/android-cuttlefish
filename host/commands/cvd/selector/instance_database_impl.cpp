@@ -24,6 +24,7 @@
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 
