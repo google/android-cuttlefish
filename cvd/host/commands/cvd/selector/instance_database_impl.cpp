@@ -20,6 +20,7 @@
 #include <regex>
 #include <sstream>
 
+#include <android-base/file.h>
 #include <android-base/parseint.h>
 
 #include "common/libs/utils/contains.h"
@@ -147,7 +148,27 @@ Result<Set<ConstRef<LocalInstanceGroup>>> InstanceDatabase::FindGroupsByHome(
   auto subset = CollectToSet<LocalInstanceGroup>(
       local_instance_groups_,
       [&home](const std::unique_ptr<LocalInstanceGroup>& group) {
-        return (group && (group->HomeDir() == home));
+        if (!group) {
+          return false;
+        }
+        if (group->HomeDir() == home) {
+          return true;
+        }
+        if (group->HomeDir().empty() || home.empty()) {
+          return false;
+        }
+        // The two paths must be an absolute path.
+        // this is guaranteed by the CreationAnalyzer
+        std::string home_realpath;
+        std::string group_home_realpath;
+        if (!android::base::Realpath(home, std::addressof(home_realpath))) {
+          return false;
+        }
+        if (!android::base::Realpath(group->HomeDir(),
+                                     std::addressof(group_home_realpath))) {
+          return false;
+        }
+        return home_realpath == group_home_realpath;
       });
   return AtMostOne(subset, GenerateTooManyInstancesErrorMsg(1, kHomeField));
 }
