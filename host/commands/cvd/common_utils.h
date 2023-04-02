@@ -79,9 +79,13 @@ std::string ConcatToString(Args&&... args) {
 Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir);
 
 struct InputPathForm {
-  /** if nullopt, uses the process' current working dir */
+  /** If nullopt, uses the process' current working dir
+   *  But if there is no preceding .. or ., this field is not used.
+   */
   std::optional<std::string> current_working_dir;
-  /** if nullopt, use SystemWideUserHome() */
+  /** If nullopt, use SystemWideUserHome()
+   *  But, if there's no preceding ~, this field is not used.
+   */
   std::optional<std::string> home_dir;
   std::string path_to_convert;
   bool follow_symlink;
