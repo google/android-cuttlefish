@@ -117,7 +117,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CvdResetComponent)
       .install(CvdRestartComponent)
       .install(cvdShutdownComponent)
-      .install(cvdStartCommandComponent)
+      .install(CvdStartCommandComponent)
       .install(cvdVersionComponent)
       .install(DemoMultiVdComponent)
       .install(LoadConfigsComponent);
