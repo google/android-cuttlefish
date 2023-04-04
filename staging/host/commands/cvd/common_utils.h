@@ -16,10 +16,14 @@
 
 #pragma once
 
+#include <sys/types.h>
+
+#include <optional>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
 
+#include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 
 namespace cuttlefish {
@@ -69,5 +73,31 @@ std::string ConcatToString(Args&&... args) {
   std::stringstream concatenator;
   return ConcatToStream(concatenator, std::forward<Args>(args)...).str();
 }
+
+// given /a/b/c/d/e, ensures
+// all directories from /a through /a/b/c/d/e exist
+Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir);
+
+struct InputPathForm {
+  /** if nullopt, uses the process' current working dir */
+  std::optional<std::string> current_working_dir;
+  /** if nullopt, use SystemWideUserHome() */
+  std::optional<std::string> home_dir;
+  std::string path_to_convert;
+  bool follow_symlink;
+};
+
+/**
+ * Returns emulated absolute path with a different process'/thread's
+ * context.
+ *
+ * This is useful when daemon(0, 0)-started server process wants to
+ * figure out a relative path that came from its client.
+ *
+ * The call mostly succeeds. It fails only if:
+ *  home_dir isn't given so supposed to relies on the local SystemWideUserHome()
+ *  but SystemWideUserHome() call fails.
+ */
+Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info);
 
 }  // namespace cuttlefish
