@@ -458,11 +458,31 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
   cvd_common::Envs envs =
       cvd_common::ConvertToEnvs(request.Message().command_request().env());
   if (Contains(envs, "HOME")) {
-    // As the end-user may override HOME, this could be a relative path
-    // to client's pwd, or may include "~" which is the client's actual
-    // home directory.
-    auto client_pwd = request.Message().command_request().working_directory();
-    envs["HOME"] = CF_EXPECT(ClientAbsolutePath(envs["HOME"], uid, client_pwd));
+    if (envs.at("HOME").empty()) {
+      envs.erase("HOME");
+    } else {
+      // As the end-user may override HOME, this could be a relative path
+      // to client's pwd, or may include "~" which is the client's actual
+      // home directory.
+      auto client_pwd = request.Message().command_request().working_directory();
+      const auto given_home_dir = envs.at("HOME");
+      /*
+       * Imagine this scenario:
+       *   client$ export HOME=/tmp/new/dir
+       *   client$ HOME="~/subdir" cvd start
+       *
+       * The value of ~ isn't sent to the server. The server can't figure that
+       * out as it might be overridden before the cvd start command.
+       */
+      CF_EXPECT(!android::base::StartsWith(given_home_dir, "~") &&
+                    !android::base::StartsWith(given_home_dir, "~/"),
+                "The HOME directory should not start with ~");
+      envs["HOME"] = CF_EXPECT(
+          EmulateAbsolutePath({.current_working_dir = client_pwd,
+                               .home_dir = CF_EXPECT(SystemWideUserHome(uid)),
+                               .path_to_convert = given_home_dir,
+                               .follow_symlink = false}));
+    }
   }
   CF_EXPECT(Contains(envs, kAndroidHostOut));
   const auto bin = CF_EXPECT(FindStartBin(envs.at(kAndroidHostOut)));
