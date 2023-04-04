@@ -89,13 +89,18 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     CF_EXPECT(subprocess_waiter_.Interrupt());
     return {};
   }
-
   cvd_common::Args CmdList() const override {
     return cvd_common::Args(cvd_env_operations_.begin(),
                             cvd_env_operations_.end());
   }
 
  private:
+  Result<void> VerifyPrecondition(const RequestWithStdio& request) const {
+    auto verification = cuttlefish::VerifyPrecondition(request);
+    CF_EXPECT(verification.is_ok == true, verification.error_message);
+    return {};
+  }
+
   Result<Command> HelpCommand(const RequestWithStdio& request,
                               const cvd_common::Args& subcmd_args,
                               const cvd_common::Envs& envs) {
