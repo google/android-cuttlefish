@@ -25,6 +25,7 @@
 
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
+#include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
 
@@ -37,18 +38,17 @@ struct Overload : Ts... {
 template <typename... Ts>
 Overload(Ts...) -> Overload<Ts...>;
 
-struct MakeRequestParam {
-  std::vector<std::string> cmd_args;
-  std::unordered_map<std::string, std::string> env;
-  std::vector<std::string> selector_args;
+struct MakeRequestForm {
+  cvd_common::Args cmd_args;
+  cvd_common::Envs env;
+  cvd_common::Args selector_args;
+  std::optional<std::string> working_dir;
 };
 
-cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
-                         const cvd::WaitBehavior wait_behavior,
-                         const std::string& working_dir);
+cvd::Request MakeRequest(const MakeRequestForm& request_form,
+                         const cvd::WaitBehavior wait_behavior);
 
-cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
-                         const std::string& working_dir);
+cvd::Request MakeRequest(const MakeRequestForm& request_form);
 
 // name of environment variable to mark the launch_cvd initiated by the cvd
 // server
@@ -79,9 +79,13 @@ std::string ConcatToString(Args&&... args) {
 Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir);
 
 struct InputPathForm {
-  /** if nullopt, uses the process' current working dir */
+  /** If nullopt, uses the process' current working dir
+   *  But if there is no preceding .. or ., this field is not used.
+   */
   std::optional<std::string> current_working_dir;
-  /** if nullopt, use SystemWideUserHome() */
+  /** If nullopt, use SystemWideUserHome()
+   *  But, if there's no preceding ~, this field is not used.
+   */
   std::optional<std::string> home_dir;
   std::string path_to_convert;
   bool follow_symlink;
