@@ -49,6 +49,7 @@
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/crosvm.h"
+#include "host/commands/cvd/server_command/env.h"
 #include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/handler_proxy.h"
 #include "host/commands/cvd/server_command/load_configs.h"
@@ -111,6 +112,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CommandSequenceExecutorComponent)
       .install(CvdCrosVmComponent)
       .install(cvdCommandComponent)
+      .install(CvdEnvComponent)
       .install(cvdGenericCommandComponent)
       .install(CvdHandlerProxyComponent)
       .install(CvdHelpComponent)
