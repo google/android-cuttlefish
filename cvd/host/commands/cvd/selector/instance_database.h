@@ -55,6 +55,9 @@ class InstanceDatabase {
   Result<ConstRef<LocalInstanceGroup>> AddInstanceGroup(
       const AddInstanceGroupParam& param);
 
+  Json::Value Serialize() const;
+  Result<void> LoadFromJson(const Json::Value&);
+
   /**
    * Adds instance to the group.
    *
@@ -79,6 +82,7 @@ class InstanceDatabase {
    *  RemoveInstanceGroup(group)
    */
   bool RemoveInstanceGroup(const LocalInstanceGroup& group);
+  bool RemoveInstanceGroup(const std::string& group_name);
   void Clear();
 
   Result<Set<ConstRef<LocalInstanceGroup>>> FindGroups(
@@ -138,9 +142,13 @@ class InstanceDatabase {
 
   Result<LocalInstanceGroup*> FindMutableGroup(const std::string& group_name);
 
+  Result<void> LoadGroupFromJson(const Json::Value& group_json);
+
   std::vector<std::unique_ptr<LocalInstanceGroup>> local_instance_groups_;
   Map<FieldName, ConstGroupHandler> group_handlers_;
   Map<FieldName, ConstInstanceHandler> instance_handlers_;
+
+  static constexpr const char kJsonGroups[] = "Groups";
 };
 
 }  // namespace selector
