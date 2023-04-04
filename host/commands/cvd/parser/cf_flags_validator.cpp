@@ -56,8 +56,8 @@ static std::unordered_set<std::string> kSupportedImportValues = {
 
 // supported import values for vm category and crosvm subcategory
 static std::map<std::string, Json::ValueType> kVmKeyMap = {
-    {"cpus", Json::ValueType::intValue},
-    {"memory_mb", Json::ValueType::intValue},
+    {"cpus", Json::ValueType::uintValue},
+    {"memory_mb", Json::ValueType::uintValue},
     {"use_sdcard", Json::ValueType::booleanValue},
     {"setupwizard_mode", Json::ValueType::stringValue},
     {"uuid", Json::ValueType::stringValue},
@@ -85,10 +85,10 @@ static std::map<std::string, Json::ValueType> kGraphicsKeyMap = {
     {"displays", Json::ValueType::arrayValue},
 };
 static std::map<std::string, Json::ValueType> kDisplayKeyMap = {
-    {"width", Json::ValueType::intValue},
-    {"height", Json::ValueType::intValue},
-    {"dpi", Json::ValueType::intValue},
-    {"refresh_rate_hertz", Json::ValueType::intValue},
+    {"width", Json::ValueType::uintValue},
+    {"height", Json::ValueType::uintValue},
+    {"dpi", Json::ValueType::uintValue},
+    {"refresh_rate_hertz", Json::ValueType::uintValue},
 };
 
 // supported import values for security category
