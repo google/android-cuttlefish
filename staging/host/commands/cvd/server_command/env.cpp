@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/crosvm.h"
+#include "host/commands/cvd/server_command/env.h"
 
 #include <android-base/strings.h>
 
@@ -38,17 +38,17 @@
 
 namespace cuttlefish {
 
-class CvdCrosVmCommandHandler : public CvdServerHandler {
+class CvdEnvCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdCrosVmCommandHandler(InstanceManager& instance_manager,
-                                 SubprocessWaiter& subprocess_waiter))
+  INJECT(CvdEnvCommandHandler(InstanceManager& instance_manager,
+                              SubprocessWaiter& subprocess_waiter))
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
-        crosvm_operations_{"suspend", "resume", "snapshot"} {}
+        cvd_env_operations_{"env"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
-    return Contains(crosvm_operations_, invocation.command);
+    return Contains(cvd_env_operations_, invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
@@ -60,9 +60,10 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     cvd_common::Envs envs =
         cvd_common::ConvertToEnvs(request.Message().command_request().env());
 
-    auto [crosvm_op, subcmd_args] = ParseInvocation(request.Message());
+    auto [_, subcmd_args] = ParseInvocation(request.Message());
+
     /*
-     * crosvm suspend/resume/snapshot support --help only. Not --helpxml, etc.
+     * cvd_env --help only. Not --helpxml, etc.
      *
      * Otherwise, IsHelpSubcmd() should be used here instead.
      */
@@ -72,9 +73,8 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     bool is_help = help_parse_result.ok() && (*help_parse_result);
 
     Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, crosvm_op, subcmd_args, envs))
-                : CF_EXPECT(NonHelpCommand(request, uid, crosvm_op, subcmd_args,
-                                           envs));
+        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
+                : CF_EXPECT(NonHelpCommand(request, uid, subcmd_args, envs));
     SubprocessOptions options;
     CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
     interrupt_lock.unlock();
@@ -90,8 +90,8 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     return {};
   }
   cvd_common::Args CmdList() const override {
-    return cvd_common::Args(crosvm_operations_.begin(),
-                            crosvm_operations_.end());
+    return cvd_common::Args(cvd_env_operations_.begin(),
+                            cvd_env_operations_.end());
   }
 
  private:
@@ -102,19 +102,15 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   }
 
   Result<Command> HelpCommand(const RequestWithStdio& request,
-                              const std::string& crosvm_op,
                               const cvd_common::Args& subcmd_args,
-                              cvd_common::Envs envs) {
+                              const cvd_common::Envs& envs) {
     CF_EXPECT(Contains(envs, kAndroidHostOut));
-    cvd_common::Args crosvm_args{crosvm_op};
-    crosvm_args.insert(crosvm_args.end(), subcmd_args.begin(),
-                       subcmd_args.end());
     return CF_EXPECT(
-        ConstructCvdHelpCommand("crosvm", envs, crosvm_args, request));
+        ConstructCvdHelpCommand(kCvdEnvBin, envs, subcmd_args, request));
   }
 
   Result<Command> NonHelpCommand(const RequestWithStdio& request,
-                                 const uid_t uid, const std::string& crosvm_op,
+                                 const uid_t uid,
                                  const cvd_common::Args& subcmd_args,
                                  const cvd_common::Envs& envs) {
     const auto& selector_opts =
@@ -124,24 +120,21 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     auto instance =
         CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
     const auto& instance_group = instance.ParentGroup();
-    const auto instance_id = instance.InstanceId();
-    auto home = instance_group.HomeDir();
-    const auto socket_file_path =
-        ConcatToString(home, "/cuttlefish_runtime.", instance_id,
-                       "/internal/"
-                       "crosvm_control.sock");
+    const auto& home = instance_group.HomeDir();
 
-    auto android_host_out = instance_group.HostArtifactsPath();
-    auto crosvm_bin_path = ConcatToString(android_host_out, "/bin/crosvm");
+    const auto& android_host_out = instance_group.HostArtifactsPath();
+    auto cvd_env_bin_path =
+        ConcatToString(android_host_out, "/bin/", kCvdEnvBin);
+    const auto& internal_device_name = instance.InternalDeviceName();
 
-    cvd_common::Args crosvm_args{crosvm_op};
-    crosvm_args.insert(crosvm_args.end(), subcmd_args.begin(),
-                       subcmd_args.end());
-    crosvm_args.push_back(socket_file_path);
+    cvd_common::Args cvd_env_args{internal_device_name};
+    cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
+                        subcmd_args.end());
+
     return CF_EXPECT(
-        ConstructCvdGenericNonHelpCommand({.bin_file = "crosvm",
+        ConstructCvdGenericNonHelpCommand({.bin_file = kCvdEnvBin,
                                            .envs = envs,
-                                           .cmd_args = std::move(crosvm_args),
+                                           .cmd_args = cvd_env_args,
                                            .android_host_out = android_host_out,
                                            .home = home,
                                            .verbose = true},
@@ -152,13 +145,15 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   SubprocessWaiter& subprocess_waiter_;
   std::mutex interruptible_;
   bool interrupted_ = false;
-  std::vector<std::string> crosvm_operations_;
+  std::vector<std::string> cvd_env_operations_;
+
+  static constexpr char kCvdEnvBin[] = "cvd_internal_env";
 };
 
 fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-CvdCrosVmComponent() {
+CvdEnvComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdCrosVmCommandHandler>();
+      .addMultibinding<CvdServerHandler, CvdEnvCommandHandler>();
 }
 
 }  // namespace cuttlefish
