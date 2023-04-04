@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
 /*
-** Copyright 2017, The Android Open Source Project.
+** Copyright 2023, The Android Open Source Project.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -82,11 +82,6 @@ Only the three quirks included above are recognized at this point:
 
 <MediaCodecs>
     <Settings>
-        <Setting name="max-video-encoder-input-buffers" value="12" />
+      <Domain name="tv" enabled="true" />
     </Settings>
-
-    <Include href="media_codecs_google_tv.xml" />
-    <Include href="media_codecs_google_audio.xml" />
-    <Include href="media_codecs_google_telephony.xml" />
-    <Include href="media_codecs_google_video.xml" />
 </MediaCodecs>
