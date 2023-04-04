@@ -24,6 +24,7 @@ cc_library_host_static {
         "cmd_list.cpp",
         "components.cpp",
         "crosvm.cpp",
+        "display.cpp",
         "env.cpp",
         "fetch.cpp",
         "flags_collector.cpp",
