@@ -214,28 +214,4 @@ bool IsHelpSubcmd(const std::vector<std::string>& args) {
   return (args.size() != copied_args.size());
 }
 
-Result<std::string> ClientAbsolutePath(const std::string& path, const uid_t uid,
-                                       const std::string& client_pwd) {
-  if (path.empty()) {
-    return path;
-  }
-  auto first_char = *(path.cbegin());
-  if (first_char == '/') {
-    return path;
-  }
-  if (first_char == '~') {
-    auto system_wide_user_home = CF_EXPECT(SystemWideUserHome(uid));
-    auto abs_user_home = AbsolutePath(system_wide_user_home);
-    CF_EXPECT(!abs_user_home.empty());
-    return android::base::StringReplace(path, "~", abs_user_home, false);
-  }
-
-  // likely relative path
-  CF_EXPECT(!client_pwd.empty() && client_pwd[0] == '/');
-  auto prefix = (*client_pwd.rbegin() == '/') ? client_pwd : (client_pwd + "/");
-  auto result_abs_path = AbsolutePath(prefix + path);
-  CF_EXPECT(!result_abs_path.empty());
-  return result_abs_path;
-}
-
 }  // namespace cuttlefish
