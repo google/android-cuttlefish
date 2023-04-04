@@ -36,23 +36,25 @@ namespace {
 
 constexpr char kCvdEnvHelpMessage[] =
     "cvd env: cuttlefish environment controller\n"
-    "Basic usage: cvd env [instance_name] [sub_command] [args] [options]\n"
+    "Basic usage: cvd [selector options] env [sub_command] [args] [options]\n"
     "Sub commands:\n"
     "  ls: list services and methods for given arguments\n"
-    "    Usage: cvd env [instance_name] ls [service] [method] [-l]\n"
+    "    Usage: cvd [selector options] env ls [service] [method] [-l]\n"
     "      service(optional) : gRPC service name\n"
     "      method(optional)  : method name for given service\n"
     "      -l(optional)      : Use a long listing format\n"
     "  type: get detailed information for given request/reply type\n"
-    "    Usage: cvd env [instance_name] type [service] [method] [type]\n"
+    "    Usage: cvd [selector options] env type [service] [method] [type]\n"
     "      service           : gRPC service name\n"
     "      method            : method name in given service\n"
     "      type              : Protocol buffer type name in given method\n"
     "  call: request a rpc with given method\n"
-    "    Usage: cvd env [instance_name] call [service] [method] [request]\n"
+    "    Usage: cvd [selector options] env call [service] [method] [request]\n"
     "      service           : gRPC service name\n"
     "      method            : method name in given service\n"
-    "      request           : Protobuffer with text format\n";
+    "      request           : Protobuffer with text format\n\n"
+    "* \"cvd [selector_options] env\" can be replaced with:\n"
+    "    \"cvd_internal_env [internal device name]\"\n";
 
 bool PrintStream(std::stringstream* ss, const grpc::string& output) {
   (*ss) << output;
