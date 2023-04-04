@@ -133,6 +133,15 @@ Result<LocalInstanceGroup*> InstanceDatabase::FindMutableGroup(
   return group_ptr;
 }
 
+bool InstanceDatabase::RemoveInstanceGroup(const std::string& group_name) {
+  auto group_result = FindGroup({kGroupNameField, group_name});
+  if (!group_result.ok()) {
+    return false;
+  }
+  const LocalInstanceGroup& group = group_result->Get();
+  return RemoveInstanceGroup(group);
+}
+
 bool InstanceDatabase::RemoveInstanceGroup(const LocalInstanceGroup& group) {
   auto itr = FindIterator(group);
   // *itr is the reference to the unique pointer object
@@ -245,6 +254,76 @@ Result<Set<ConstRef<LocalInstance>>> InstanceDatabase::FindInstancesByGroupName(
   };
   return CollectAllElements<LocalInstance, LocalInstanceGroup>(
       collector, local_instance_groups_);
+}
+
+Json::Value InstanceDatabase::Serialize() const {
+  Json::Value instance_db_json;
+  int i = 0;
+  Json::Value group_array;
+  for (const auto& local_instance_group : local_instance_groups_) {
+    group_array[i] = local_instance_group->Serialize();
+    ++i;
+  }
+  instance_db_json[kJsonGroups] = group_array;
+  return instance_db_json;
+}
+
+Result<void> InstanceDatabase::LoadGroupFromJson(
+    const Json::Value& group_json) {
+  const std::string group_name =
+      group_json[LocalInstanceGroup::kJsonGroupName].asString();
+  const std::string home_dir =
+      group_json[LocalInstanceGroup::kJsonHomeDir].asString();
+  const std::string host_artifacts_path =
+      group_json[LocalInstanceGroup::kJsonHostArtifactPath].asString();
+  const std::string product_out_path =
+      group_json[LocalInstanceGroup::kJsonProductOutPath].asString();
+  const std::string build_id_value =
+      group_json[LocalInstanceGroup::kJsonBuildId].asString();
+  std::optional<std::string> build_id;
+  if (build_id_value != LocalInstanceGroup::kJsonUnknownBuildId) {
+    build_id = build_id_value;
+  }
+  const auto new_group_ref =
+      CF_EXPECT(AddInstanceGroup({.group_name = group_name,
+                                  .home_dir = home_dir,
+                                  .host_artifacts_path = host_artifacts_path,
+                                  .product_out_path = product_out_path}));
+  if (build_id) {
+    CF_EXPECT(SetBuildId(group_name, *build_id));
+  }
+  const Json::Value& instances_json_array =
+      group_json[LocalInstanceGroup::kJsonInstances];
+  for (int i = 0; i < instances_json_array.size(); i++) {
+    const Json::Value& instance_json = instances_json_array[i];
+    const std::string instance_name =
+        instance_json[LocalInstance::kJsonInstanceName].asString();
+    const std::string instance_id =
+        instance_json[LocalInstance::kJsonInstanceId].asString();
+    int id;
+    auto parse_result =
+        android::base::ParseInt(instance_id, std::addressof(id));
+    if (!parse_result) {
+      CF_EXPECT(parse_result == true,
+                "Invalid instance ID in instance json: " << instance_id);
+      RemoveInstanceGroup(new_group_ref.Get());
+    }
+    auto add_instance_result = AddInstance(group_name, id, instance_name);
+    if (!add_instance_result.ok()) {
+      RemoveInstanceGroup(new_group_ref.Get());
+      CF_EXPECT(add_instance_result.ok(), add_instance_result.error().Trace());
+    }
+  }
+  return {};
+}
+
+Result<void> InstanceDatabase::LoadFromJson(const Json::Value& db_json) {
+  const Json::Value& group_array = db_json[kJsonGroups];
+  int n_groups = group_array.size();
+  for (int i = 0; i < n_groups; i++) {
+    CF_EXPECT(LoadGroupFromJson(group_array[i]));
+  }
+  return {};
 }
 
 }  // namespace selector
