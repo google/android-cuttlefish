@@ -33,17 +33,15 @@
 
 namespace cuttlefish {
 
-cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
-                         const std::string& working_dir) {
-  return MakeRequest(args_and_envs, cvd::WAIT_BEHAVIOR_COMPLETE, working_dir);
+cvd::Request MakeRequest(const MakeRequestForm& request_form) {
+  return MakeRequest(request_form, cvd::WAIT_BEHAVIOR_COMPLETE);
 }
 
-cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
-                         cvd::WaitBehavior wait_behavior,
-                         const std::string& working_dir) {
-  const auto& args = args_and_envs.cmd_args;
-  const auto& env = args_and_envs.env;
-  const auto& selector_args = args_and_envs.selector_args;
+cvd::Request MakeRequest(const MakeRequestForm& request_form,
+                         cvd::WaitBehavior wait_behavior) {
+  const auto& args = request_form.cmd_args;
+  const auto& env = request_form.env;
+  const auto& selector_args = request_form.selector_args;
   cvd::Request request;
   auto command_request = request.mutable_command_request();
   for (const std::string& arg : args) {
@@ -76,11 +74,11 @@ cvd::Request MakeRequest(const MakeRequestParam& args_and_envs,
     (*command_request->mutable_env())[kAndroidHostOut] = new_android_host_out;
   }
 
-  if (working_dir.empty()) {
+  if (!request_form.working_dir) {
     std::unique_ptr<char, void (*)(void*)> cwd(getcwd(nullptr, 0), &free);
     command_request->set_working_directory(cwd.get());
   } else {
-    command_request->set_working_directory(working_dir);
+    command_request->set_working_directory(request_form.working_dir.value());
   }
   command_request->set_wait_behavior(wait_behavior);
 
