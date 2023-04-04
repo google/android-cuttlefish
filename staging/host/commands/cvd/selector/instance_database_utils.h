@@ -29,10 +29,6 @@
 namespace cuttlefish {
 namespace selector {
 
-// given /a/b/c/d/e, ensures
-// all directories from /a through /a/b/c/d/e exist
-Result<void> EnsureDirectoryExistsAllTheWay(const std::string& dir);
-
 Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
 std::string GenInternalGroupName();
