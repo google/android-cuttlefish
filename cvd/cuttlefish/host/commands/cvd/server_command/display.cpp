@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/display.h"
+#include "host/commands/cvd/server_command/crosvm.h"
 
 #include <android-base/strings.h>
 
@@ -82,13 +82,18 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
     CF_EXPECT(subprocess_waiter_.Interrupt());
     return {};
   }
-
   cvd_common::Args CmdList() const override {
     return cvd_common::Args(cvd_display_operations_.begin(),
                             cvd_display_operations_.end());
   }
 
  private:
+  Result<void> VerifyPrecondition(const RequestWithStdio& request) const {
+    auto verification = cuttlefish::VerifyPrecondition(request);
+    CF_EXPECT(verification.is_ok == true, verification.error_message);
+    return {};
+  }
+
   Result<Command> HelpCommand(const RequestWithStdio& request, const uid_t uid,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
