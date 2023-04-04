@@ -107,7 +107,6 @@ class CvdGenericCommandHandler : public CvdServerHandler {
   std::map<std::string, BinType> command_to_binary_map_;
 
   static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-  static constexpr char kDisplayBin[] = "cvd_internal_display";
   static constexpr char kLnBin[] = "ln";
   static constexpr char kMkdirBin[] = "mkdir";
   static constexpr char kClearBin[] =
@@ -162,7 +161,6 @@ CvdGenericCommandHandler::CvdGenericCommandHandler(
           {"clear", kClearBin},
           {"mkdir", kMkdirBin},
           {"ln", kLnBin},
-          {"display", kDisplayBin},
       } {}
 
 Result<bool> CvdGenericCommandHandler::CanHandle(
