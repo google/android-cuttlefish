@@ -50,8 +50,13 @@ Result<HostToolTarget> HostToolTarget::Create(
         ConcatToString(artifacts_path, "/bin/", op_impl.bin_name_);
     Command command(bin_path);
     command.AddParameter("--helpxml");
+    // b/276497044
+    command.UnsetFromEnvironment(kAndroidHostOut);
+    command.AddEnvironmentVariable(kAndroidHostOut, artifacts_path);
+    command.UnsetFromEnvironment(kAndroidSoongHostOut);
+    command.AddEnvironmentVariable(kAndroidSoongHostOut, artifacts_path);
+
     std::string xml_str;
-    // Caution: anything --helpxml often returns non-zero return code.
     RunWithManagedStdio(std::move(command), nullptr, std::addressof(xml_str),
                         nullptr);
     auto flags_opt = CollectFlagsFromHelpxml(xml_str);
