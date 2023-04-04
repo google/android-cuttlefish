@@ -40,8 +40,8 @@ namespace cuttlefish {
 
 class CvdEnvCommandHandler : public CvdServerHandler {
  public:
-  CvdEnvCommandHandler(InstanceManager& instance_manager,
-                       SubprocessWaiter& subprocess_waiter)
+  INJECT(CvdEnvCommandHandler(InstanceManager& instance_manager,
+                              SubprocessWaiter& subprocess_waiter))
       : instance_manager_{instance_manager},
         subprocess_waiter_(subprocess_waiter),
         cvd_env_operations_{"env"} {}
@@ -75,7 +75,8 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     Command command =
         is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, envs))
                 : CF_EXPECT(NonHelpCommand(request, uid, subcmd_args, envs));
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start()));
+    SubprocessOptions options;
+    CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
     interrupt_lock.unlock();
 
     auto infop = CF_EXPECT(subprocess_waiter_.Wait());
@@ -88,13 +89,18 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     CF_EXPECT(subprocess_waiter_.Interrupt());
     return {};
   }
-
   cvd_common::Args CmdList() const override {
     return cvd_common::Args(cvd_env_operations_.begin(),
                             cvd_env_operations_.end());
   }
 
  private:
+  Result<void> VerifyPrecondition(const RequestWithStdio& request) const {
+    auto verification = cuttlefish::VerifyPrecondition(request);
+    CF_EXPECT(verification.is_ok == true, verification.error_message);
+    return {};
+  }
+
   Result<Command> HelpCommand(const RequestWithStdio& request,
                               const cvd_common::Args& subcmd_args,
                               const cvd_common::Envs& envs) {
@@ -144,10 +150,10 @@ class CvdEnvCommandHandler : public CvdServerHandler {
   static constexpr char kCvdEnvBin[] = "cvd_internal_env";
 };
 
-std::unique_ptr<CvdServerHandler> NewCvdEnvCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter) {
-  return std::unique_ptr<CvdServerHandler>(
-      new CvdEnvCommandHandler(instance_manager, subprocess_waiter));
+fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
+CvdEnvComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, CvdEnvCommandHandler>();
 }
 
 }  // namespace cuttlefish

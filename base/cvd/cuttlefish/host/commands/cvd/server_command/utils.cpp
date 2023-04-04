@@ -16,6 +16,7 @@
 
 #include "host/commands/cvd/server_command/utils.h"
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -122,7 +123,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
 }
 
 Result<Command> ConstructCvdHelpCommand(
-    const std::string& bin_file, const cvd_common::Envs& envs,
+    const std::string& bin_file, cvd_common::Envs envs,
     const std::vector<std::string>& subcmd_args,
     const RequestWithStdio& request) {
   const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
@@ -131,6 +132,7 @@ Result<Command> ConstructCvdHelpCommand(
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
   cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
+  envs[kAndroidSoongHostOut] = envs.at(kAndroidHostOut);
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,
                                             .args = subcmd_args,
@@ -142,6 +144,45 @@ Result<Command> ConstructCvdHelpCommand(
                                             .err = request.Err()};
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
+}
+
+Result<Command> ConstructCvdGenericNonHelpCommand(
+    const ConstructNonHelpForm& request_form, const RequestWithStdio& request) {
+  cvd_common::Envs envs{request_form.envs};
+  envs["HOME"] = request_form.home;
+  envs[kAndroidHostOut] = request_form.android_host_out;
+  envs[kAndroidSoongHostOut] = request_form.android_host_out;
+  const auto bin_path = ConcatToString(request_form.android_host_out, "/bin/",
+                                       request_form.bin_file);
+
+  if (request_form.verbose) {
+    std::stringstream verbose_stream;
+    verbose_stream << "HOME=" << request_form.home << " ";
+    verbose_stream << kAndroidHostOut << "=" << envs.at(kAndroidHostOut) << " "
+                   << kAndroidSoongHostOut << "="
+                   << envs.at(kAndroidSoongHostOut) << " ";
+    verbose_stream << bin_path << "\\" << std::endl;
+    for (const auto& cmd_arg : request_form.cmd_args) {
+      verbose_stream << cmd_arg << " ";
+    }
+    if (!request_form.cmd_args.empty()) {
+      // remove trailing " ", and add a new line
+      verbose_stream.seekp(-1, std::ios_base::end);
+      verbose_stream << std::endl;
+    }
+    WriteAll(request.Err(), verbose_stream.str());
+  }
+  ConstructCommandParam construct_cmd_param{
+      .bin_path = bin_path,
+      .home = request_form.home,
+      .args = request_form.cmd_args,
+      .envs = envs,
+      .working_dir = request.Message().command_request().working_directory(),
+      .command_name = request_form.bin_file,
+      .in = request.In(),
+      .out = request.Out(),
+      .err = request.Err()};
+  return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
 /*
