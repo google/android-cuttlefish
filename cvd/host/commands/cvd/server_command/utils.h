@@ -60,10 +60,22 @@ struct ConstructCommandParam {
 Result<Command> ConstructCommand(const ConstructCommandParam& cmd_param);
 
 // Constructs a command for cvd whatever --help or --help-related-option
-Result<Command> ConstructCvdHelpCommand(
-    const std::string& bin_file, const cvd_common::Envs& envs,
-    const std::vector<std::string>& subcmd_args,
-    const RequestWithStdio& request);
+Result<Command> ConstructCvdHelpCommand(const std::string& bin_file,
+                                        cvd_common::Envs envs,
+                                        const cvd_common::Args& _args,
+                                        const RequestWithStdio& request);
+
+// Constructs a command for cvd non-start-op
+struct ConstructNonHelpForm {
+  std::string bin_file;
+  cvd_common::Envs envs;
+  cvd_common::Args cmd_args;
+  std::string android_host_out;
+  std::string home;
+  bool verbose;
+};
+Result<Command> ConstructCvdGenericNonHelpCommand(
+    const ConstructNonHelpForm& request_form, const RequestWithStdio& request);
 
 // e.g. cvd start --help, cvd stop --help
 bool IsHelpSubcmd(const std::vector<std::string>& args);
