@@ -30,4 +30,4 @@ fruit::Component<fruit::Required<
     CommandSequenceExecutor,
     fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
 AcloudCommandComponent();
-}
+}  // namespace cuttlefish
