@@ -24,12 +24,26 @@ namespace cuttlefish {
 namespace {
 
 constexpr const char kEglLib[] = "libEGL.so";
+constexpr const char kEglLibAlt[] = "libEGL.so.1";
+
+std::optional<Lib> LoadEglLib() {
+  for (const auto* possible_name : {kEglLib, kEglLibAlt}) {
+    auto lib_opt = Lib::Load(possible_name);
+    if (!lib_opt) {
+      LOG(VERBOSE) << "Failed to load " << possible_name;
+    } else {
+      LOG(VERBOSE) << "Loaded " << possible_name;
+      return std::move(lib_opt);
+    }
+  }
+  return std::nullopt;
+}
 
 }  // namespace
 
 /*static*/
 std::optional<Egl> Egl::Load() {
-  auto lib_opt = Lib::Load(kEglLib);
+  auto lib_opt = LoadEglLib();
   if (!lib_opt) {
     return std::nullopt;
   }
