@@ -22,10 +22,10 @@ namespace {
 // NetsimServer launches netsim server with fifos for radio HALs.
 //
 // netsimd -s '{devices:[
-//  {name:"0.0.0.0:5000", chips:[
-//    {kind:"BLUETOOTH", fdIn:10, fdOut:11}]},
-//  {name:"0.0.0.0:5010", chips:[
-//    {kind:"BLUETOOTH", fdIn:14, fdOut:15}]}]}
+//  {"name":"0.0.0.0:5000", "chips":[
+//    {"kind":"BLUETOOTH", "fdIn":10, "fdOut":11}]},
+//  {"name":"0.0.0.0:5010", "chips":[
+//    {"kind":"BLUETOOTH", "fdIn":14, "fdOut":15}]}]}
 
 // Chip and Device classes pass SharedFD fifos between ResultSetup and Commands
 // and format the netsim json command line.
@@ -39,8 +39,8 @@ class Chip {
 
   // Append the chip information as Json to the command.
   void Append(Command& c) const {
-    c.AppendToLastParameter(R"({kind:")", kind_, R"(",fdIn:)", fd_in,
-                            ",fdOut:", fd_out, "}");
+    c.AppendToLastParameter(R"({"kind":")", kind_, R"(","fdIn":)", fd_in,
+                            R"(,"fdOut":)", fd_out, "}");
   }
 
  private:
@@ -52,7 +52,7 @@ class Device {
   Device(std::string name) : name_(name) {}
 
   void Append(Command& c) const {
-    c.AppendToLastParameter(R"({name:")", name_, R"(",chips:[)");
+    c.AppendToLastParameter(R"({"name":")", name_, R"(","chips":[)");
     for (int i = 0; i < chips.size(); ++i) {
       chips[i].Append(c);
       if (chips.size() - i > 1) {
@@ -94,7 +94,7 @@ class NetsimServer : public CommandSource {
   // validated during ResultSetup, contains all the SharedFDs and meta-data.
 
   void AddDevicesParameter(Command& c) {
-    c.AddParameter("{devices:[");
+    c.AddParameter(R"({"devices":[)");
     for (int i = 0; i < devices_.size(); ++i) {
       devices_[i].Append(c);
       if (devices_.size() - i > 1) {
