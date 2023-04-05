@@ -29,7 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOG_NDEBUG 0
+// #define LOG_NDEBUG 0
 #define LOG_TAG "AT"
 #include <utils/Log.h>
 
