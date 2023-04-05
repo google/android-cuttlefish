@@ -35,6 +35,7 @@ enum FileSource {
   GENERATED,
   BOOTLOADER_BUILD,
   BOOT_BUILD,
+  HOST_PACKAGE_BUILD,
 };
 
 /*
