@@ -108,7 +108,9 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .bindInstance(server->instance_manager_)
       .bindInstance(server->build_api_)
       .bindInstance(server->host_tool_target_manager_)
-      .bindInstance(server->optout_)
+      .bindInstance<
+          fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>(
+          server->optout_)
       .install(AcloudCommandComponent)
       .install(CvdCmdlistComponent)
       .install(CommandSequenceExecutorComponent)
