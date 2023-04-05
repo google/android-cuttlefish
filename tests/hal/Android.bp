@@ -36,5 +36,8 @@ cc_test {
         "-Wall",
         "-Werror",
     ],
-    test_suites: ["device-tests"],
+    test_suites: [
+        "device-tests",
+        "automotive-tests",
+    ],
 }
