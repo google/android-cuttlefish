@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "host/commands/cvd/server_command/acloud.h"
 
 #include <atomic>
 
 #include <fruit/fruit.h>
 
-#include "host/commands/cvd/command_sequence.h"
-#include "host/commands/cvd/server_command/acloud_common.h"
+#include "host/commands/cvd/acloud/converter.h"
+#include "host/commands/cvd/server_command/acloud.h"
+#include "host/commands/cvd/server_command/acloud_command.h"
+#include "host/commands/cvd/server_command/acloud_translator.h"
+#include "host/commands/cvd/server_command/try_acloud.h"
 
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<
     CommandSequenceExecutor,
     fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
-CvdAcloudComponent();
-
+CvdAcloudComponent() {
+  return fruit::createComponent()
+      .install(AcloudCreateConvertCommandComponent)
+      .install(AcloudCommandComponent)
+      .install(TryAcloudCommandComponent)
+      .install(AcloudTranslatorCommandComponent);
 }
+
+}  // namespace cuttlefish
