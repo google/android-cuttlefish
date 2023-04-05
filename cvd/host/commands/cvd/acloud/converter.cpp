@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "host/commands/cvd/acloud/converter.h"
+
 #include <sys/stat.h>
 
 #include <cstdio>
@@ -26,7 +28,6 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -40,30 +41,12 @@
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
-#include "host/commands/cvd/server_command/acloud.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-
-static constexpr char kTranslatorHelpMessage[] =
-    R"(Cuttlefish Virtual Device (CVD) CLI.
-
-usage: cvd acloud translator <args>
-
-Args:
-  --opt-out              Opt-out CVD Acloud and choose to run original Python Acloud.
-  --opt-in               Opt-in and run CVD Acloud as default.
-Both -opt-out and --opt-in are mutually exclusive.
-)";
-
 namespace {
-
-struct ConvertedAcloudCreateCommand {
-  InstanceLockFile lock;
-  std::vector<RequestWithStdio> requests;
-};
 
 // Image names to search
 const std::vector<std::string> _KERNEL_IMAGE_NAMES = {"kernel", "bzImage",
@@ -111,13 +94,19 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
   return android::base::Split(stdout_str, "\n");
 }
 
-class ConvertAcloudCreateCommand {
+}  // namespace
+
+// body of pure virtual destructor required by C++
+ConvertAcloudCreateCommand::~ConvertAcloudCreateCommand() {}
+
+class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
  public:
-  INJECT(ConvertAcloudCreateCommand(InstanceLockFileManager& lock_file_manager))
+  INJECT(ConvertAcloudCreateCommandImpl(
+      InstanceLockFileManager& lock_file_manager))
       : fetch_cvd_args_file_(""),
         fetch_command_str_(""),
         lock_file_manager_(lock_file_manager) {}
-
+  ~ConvertAcloudCreateCommandImpl() override = default;
   Result<ConvertedAcloudCreateCommand> Convert(
       const RequestWithStdio& request) {
     auto arguments = ParseInvocation(request.Message()).arguments;
@@ -712,181 +701,25 @@ class ConvertAcloudCreateCommand {
     return ret;
   }
 
- public:
-  std::string fetch_cvd_args_file_;
-  std::string fetch_command_str_;
+  const std::string& FetchCvdArgsFile() const override {
+    return fetch_cvd_args_file_;
+  }
+
+  const std::string& FetchCommandString() const override {
+    return fetch_command_str_;
+  }
 
  private:
+  std::string fetch_cvd_args_file_;
+  std::string fetch_command_str_;
   InstanceLockFileManager& lock_file_manager_;
 };
 
-static bool IsSubOperationSupported(const RequestWithStdio& request) {
-  auto invocation = ParseInvocation(request.Message());
-  if (invocation.arguments.empty()) {
-    return false;
-  }
-  return invocation.arguments[0] == "create";
-}
-
-class TryAcloudCommand : public CvdServerHandler {
- public:
-  INJECT(TryAcloudCommand(ConvertAcloudCreateCommand& converter,
-                          ANNOTATED(AcloudTranslatorOptOut,
-                                    const std::atomic<bool>&) optout))
-      : converter_(converter), optout_(optout) {}
-  ~TryAcloudCommand() = default;
-
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
-    return invocation.command == "try-acloud";
-  }
-
-  cvd_common::Args CmdList() const override { return {"try-acloud"}; }
-
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    CF_EXPECT(CanHandle(request));
-    CF_EXPECT(IsSubOperationSupported(request));
-    CF_EXPECT(converter_.Convert(request));
-    // currently, optout/optin feature only works in local instance
-    // remote instance still uses legacy python acloud
-    CF_EXPECT(!optout_);
-    cvd::Response response;
-    response.mutable_command_response();
-    return response;
-  }
-  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
-
- private:
-  ConvertAcloudCreateCommand& converter_;
-  const std::atomic<bool>& optout_;
-};
-
-class AcloudTranslatorCommand : public CvdServerHandler {
- public:
-  INJECT(AcloudTranslatorCommand(ANNOTATED(AcloudTranslatorOptOut,
-                                           std::atomic<bool>&) optout))
-      : optout_(optout) {}
-  ~AcloudTranslatorCommand() = default;
-
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
-    if (invocation.arguments.size() >= 2) {
-      if (invocation.command == "acloud" &&
-          invocation.arguments[0] == "translator") {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  cvd_common::Args CmdList() const override { return {}; }
-
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    CF_EXPECT(CanHandle(request));
-    auto invocation = ParseInvocation(request.Message());
-    if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
-      return CF_ERR("Translator command not support");
-    }
-
-    // cvd acloud translator --opt-out
-    // cvd acloud translator --opt-in
-    cvd::Response response;
-    response.mutable_command_response();
-    bool help = false;
-    bool flag_optout = false;
-    bool flag_optin = false;
-    std::vector<Flag> translator_flags = {
-        GflagsCompatFlag("help", help),
-        GflagsCompatFlag("opt-out", flag_optout),
-        GflagsCompatFlag("opt-in", flag_optin),
-    };
-    CF_EXPECT(ParseFlags(translator_flags, invocation.arguments),
-              "Failed to process translator flag.");
-    if (help) {
-      WriteAll(request.Out(), kTranslatorHelpMessage);
-      return response;
-    }
-    CF_EXPECT(flag_optout != flag_optin,
-              "Only one of --opt-out or --opt-in should be given.");
-    optout_ = flag_optout;
-    return response;
-  }
-  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
-
- private:
-  std::atomic<bool>& optout_;
-};
-
-class AcloudCommand : public CvdServerHandler {
- public:
-  INJECT(AcloudCommand(CommandSequenceExecutor& executor,
-                       ConvertAcloudCreateCommand& converter))
-      : executor_(executor), converter_(converter) {}
-  ~AcloudCommand() = default;
-
-  Result<bool> CanHandle(const RequestWithStdio& request) const override {
-    auto invocation = ParseInvocation(request.Message());
-    if (invocation.arguments.size() >= 2) {
-      if (invocation.command == "acloud" &&
-          invocation.arguments[0] == "translator") {
-        return false;
-      }
-    }
-    return invocation.command == "acloud";
-  }
-
-  cvd_common::Args CmdList() const override { return {"acloud"}; }
-
-  Result<cvd::Response> Handle(const RequestWithStdio& request) override {
-    std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
-    CF_EXPECT(CanHandle(request));
-    CF_EXPECT(IsSubOperationSupported(request));
-    auto converted = CF_EXPECT(converter_.Convert(request));
-    interrupt_lock.unlock();
-    CF_EXPECT(executor_.Execute(converted.requests, request.Err()));
-
-    CF_EXPECT(converted.lock.Status(InUseState::kInUse));
-
-    if (converter_.fetch_command_str_ != "") {
-      // has cvd fetch command, update the fetch cvd command file
-      using android::base::WriteStringToFile;
-      CF_EXPECT(WriteStringToFile(converter_.fetch_command_str_,
-                                  converter_.fetch_cvd_args_file_),
-                true);
-    }
-
-    cvd::Response response;
-    response.mutable_command_response();
-    return response;
-  }
-  Result<void> Interrupt() override {
-    std::scoped_lock interrupt_lock(interrupt_mutex_);
-    interrupted_ = true;
-    CF_EXPECT(executor_.Interrupt());
-    return {};
-  }
-
- private:
-  CommandSequenceExecutor& executor_;
-  ConvertAcloudCreateCommand& converter_;
-
-  std::mutex interrupt_mutex_;
-  bool interrupted_ = false;
-};
-
-}  // namespace
-
-fruit::Component<fruit::Required<
-    CommandSequenceExecutor,
-    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
-AcloudCommandComponent() {
+fruit::Component<fruit::Required<InstanceLockFileManager>,
+                 ConvertAcloudCreateCommand>
+AcloudCreateConvertCommandComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, AcloudCommand>()
-      .addMultibinding<CvdServerHandler, TryAcloudCommand>()
-      .addMultibinding<CvdServerHandler, AcloudTranslatorCommand>();
+      .bind<ConvertAcloudCreateCommand, ConvertAcloudCreateCommandImpl>();
 }
 
 }  // namespace cuttlefish
