@@ -64,6 +64,7 @@ cc_binary {
         "launch/openwrt_control_server.cpp",
         "launch/echo_server.cpp",
         "launch/root_canal.cpp",
+        "launch/pica.cpp",
         "launch/secure_env.cpp",
         "launch/streamer.cpp",
         "launch/tombstone_receiver.cpp",
