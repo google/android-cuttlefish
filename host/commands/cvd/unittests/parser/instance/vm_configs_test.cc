@@ -173,7 +173,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
             "vm": {
                 "crosvm":{
                 },
-                "memory_mb": 4069
+                "memory_mb": 4096
             }
         }
     ]
@@ -187,7 +187,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=2048,4069"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=2048,4096"))
       << "memory_mb flag is missing or wrongly formatted";
 }
 
@@ -200,7 +200,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
             "vm": {
                 "crosvm":{
                 },
-                "memory_mb": 4069
+                "memory_mb": 4096
             }
         },
         {
@@ -221,7 +221,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesMemoryFlagFullJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=4069,8192"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--memory_mb=4096,8192"))
       << "memory_mb flag is missing or wrongly formatted";
 }
 
