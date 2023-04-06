@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "host/commands/cvd/acloud/config.h"
+
 #include <fstream>
 
 #include <google/protobuf/text_format.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/users.h"
-#include "host/commands/cvd/acloud_config.h"
 
 namespace cuttlefish {
 
