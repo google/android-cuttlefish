@@ -118,7 +118,7 @@ static const char* kWearableInstanceTemplate = R""""(
 static const char* kAutoInstanceTemplate = R""""(
 {
     "vm": {
-        "memory_mb": 4069
+        "memory_mb": 4096
     },
     "graphics":{
         "displays":[
