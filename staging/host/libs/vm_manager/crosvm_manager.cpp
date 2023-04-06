@@ -407,6 +407,14 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
       instance.PerInstanceInternalPath("confui_fifo_vm.out"),
       instance.PerInstanceInternalPath("confui_fifo_vm.in"));
 
+  if (config.enable_host_uwb()) {
+    crosvm_cmd.AddHvcReadWrite(
+        instance.PerInstanceInternalPath("uwb_fifo_vm.out"),
+        instance.PerInstanceInternalPath("uwb_fifo_vm.in"));
+  } else {
+    crosvm_cmd.AddHvcSink();
+  }
+
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }
