@@ -21,6 +21,10 @@ cc_library_host_static {
     name: "libcvd_sub_commands",
     srcs: [
         "utils.cpp",
+        "acloud.cpp",
+        "acloud_command.cpp",
+        "acloud_common.cpp",
+        "acloud_translator.cpp",
         "cmd_list.cpp",
         "components.cpp",
         "crosvm.cpp",
@@ -44,7 +48,11 @@ cc_library_host_static {
         "start.cpp",
         "start_impl.cpp",
         "subprocess_waiter.cpp",
+        "try_acloud.cpp",
         "version.cpp",
+    ],
+    static_libs: [
+        "libcvd_acloud",
     ],
     defaults: ["cvd_lib_defaults"],
 }

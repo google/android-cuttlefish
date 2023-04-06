@@ -90,8 +90,6 @@ cc_defaults {
 cc_library_host_static {
     name: "libcvd_server_client",
     srcs: [
-        "acloud_command.cpp",
-        "acloud_config.cpp",
         "build_api.cpp",
         "client.cpp",
         "command_sequence.cpp",
@@ -121,6 +119,7 @@ cc_defaults {
     name: "cvd_and_fetch_cvd_defaults",
     static_libs: [
         "libcuttlefish_launch_cvd_proto",
+        "libcvd_acloud",
         "libcvd_parser",
         "libcvd_selector",
         "libcvd_server_client",
@@ -162,11 +161,4 @@ cc_binary_host {
         "cvd_and_fetch_cvd",
     ],
     defaults: ["cvd_and_fetch_cvd_defaults"],
-}
-
-prebuilt_etc_host {
-    name: "default.config_host",
-    src: "data/default.config",
-    filename: "default.config",
-    sub_dir: "acloud/data",
 }
