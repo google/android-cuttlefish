@@ -121,6 +121,12 @@ class CuttlefishConfig {
   void set_gem5_debug_flags(const std::string& gem5_debug_flags);
   std::string gem5_debug_flags() const;
 
+  void set_enable_host_uwb(bool enable_host_uwb);
+  bool enable_host_uwb() const;
+
+  void set_enable_host_uwb_connector(bool enable_host_uwb);
+  bool enable_host_uwb_connector() const;
+
   void set_enable_host_bluetooth(bool enable_host_bluetooth);
   bool enable_host_bluetooth() const;
 
@@ -204,6 +210,9 @@ class CuttlefishConfig {
 
   void set_wmediumd_config(const std::string& path);
   std::string wmediumd_config() const;
+
+  void set_pica_uci_port(int pica_uci_port);
+  int pica_uci_port() const;
 
   void set_rootcanal_args(const std::string& rootcanal_args);
   std::vector<std::string> rootcanal_args() const;
