@@ -16,42 +16,35 @@
 
 #pragma once
 
-#include <mutex>
-#include <string>
-#include <vector>
+#include <atomic>
 
+#include <fruit/fruit.h>
+
+#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
 struct ConvertedAcloudCreateCommand {
-  std::vector<RequestWithStdio> prep_requests;
-  RequestWithStdio start_request;
-  std::string fetch_command_str;
-  std::string fetch_cvd_args_file;
-  bool verbose;
-  bool interrupt_lock_released;
+  InstanceLockFile lock;
+  std::vector<RequestWithStdio> requests;
 };
 
-namespace acloud_impl {
+class ConvertAcloudCreateCommand {
+ public:
+  virtual Result<ConvertedAcloudCreateCommand> Convert(
+      const RequestWithStdio& request) = 0;
+  virtual const std::string& FetchCvdArgsFile() const = 0;
+  virtual const std::string& FetchCommandString() const = 0;
+  /*
+   * Android prouction build system appears to mandate virtual
+   * destructor.
+   */
+  virtual ~ConvertAcloudCreateCommand() = 0;
+};
 
-/*
- * Converts the acloud create commands.
- *
- * Given that the lock is already acquired, it may start a subprocess
- * using waiter. If it runs multiple subprocesses in turn using the same
- * waiter, it acquire the lock before Start() and release the lock before
- * Wait(). The interrupt_lock_released in the return value says whether
- * the lock is released or not.
- * The input parameters waiter, callback_unlock and callback_lock
- * provide locking system to support interrupt.
- *
- */
-Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request, SubprocessWaiter& waiter,
-    std::function<Result<void>(void)> callback_unlock,
-    std::function<Result<void>(void)> callback_lock);
+fruit::Component<fruit::Required<InstanceLockFileManager>,
+                 ConvertAcloudCreateCommand>
+AcloudCreateConvertCommandComponent();
 
-}  // namespace acloud_impl
 }  // namespace cuttlefish

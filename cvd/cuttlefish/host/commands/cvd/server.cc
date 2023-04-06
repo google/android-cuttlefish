@@ -42,12 +42,12 @@
 #include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/acloud_command.h"
 #include "host/commands/cvd/build_api.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/logger.h"
+#include "host/commands/cvd/server_command/acloud.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/crosvm.h"
 #include "host/commands/cvd/server_command/display.h"
@@ -111,7 +111,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .bindInstance<
           fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>(
           server->optout_)
-      .install(AcloudCommandComponent)
+      .install(CvdAcloudComponent)
       .install(CvdCmdlistComponent)
       .install(CommandSequenceExecutorComponent)
       .install(CvdCrosVmComponent)
