@@ -35,8 +35,8 @@
 # hvc8 for confirmation UI
 /dev/hvc8  u:object_r:confirmationui_device:s0
 
-# hvc9 for metrics
-/dev/hvc9  u:object_r:metrics_helper_device:s0
+# hvc9 for uwb
+/dev/hvc9  u:object_r:uwb_device:s0
 
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0
