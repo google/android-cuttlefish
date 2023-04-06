@@ -300,7 +300,7 @@ class DeviceConnection {
   }
 
   async #useDevice(
-      in_use, senders_arr, device_opt, requestedFn = () => {in_use}) {
+      in_use, senders_arr, device_opt, requestedFn = () => {in_use}, enabledFn = (stream) => {}) {
     // An empty array means no tracks are currently in use
     if (senders_arr.length > 0 === !!in_use) {
       return in_use;
@@ -314,6 +314,7 @@ class DeviceConnection {
         if (!!in_use != requestedFn()) {
           return requestedFn();
         }
+        enabledFn(stream);
         stream.getTracks().forEach(track => {
           console.info(`Using ${track.kind} device: ${track.label}`);
           senders_arr.push(this.#pc.addTrack(track));
@@ -360,7 +361,8 @@ class DeviceConnection {
     this.#cameraRequested = !!in_use;
     return this.#useDevice(
         in_use, this.#micSenders, {audio: false, video: true},
-        () => this.#cameraRequested);
+        () => this.#cameraRequested,
+        (stream) => this.sendCameraResolution(stream));
   }
 
   sendCameraResolution(stream) {
