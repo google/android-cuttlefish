@@ -29,6 +29,7 @@ std::string MetricsBinary();
 std::string ModemSimulatorBinary();
 std::string OpenwrtControlServerBinary();
 std::string RootCanalBinary();
+std::string PicaBinary();
 std::string EchoServerBinary();
 std::string SocketVsockProxyBinary();
 std::string TombstoneReceiverBinary();
