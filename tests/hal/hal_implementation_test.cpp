@@ -164,6 +164,26 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
     "android.hardware.automotive.vehicle",
 };
 
+static const std::set<std::string> kTvOnlyAidl = {
+    /**
+     * These types are only used in Android TV, so don't expect them on other
+     * devices.
+     * TODO(b/266868403) This test should run on TV devices to enforce the same
+     * requirements
+     */
+    "android.hardware.tv.hdmi.cec",        "android.hardware.tv.hdmi.earc",
+    "android.hardware.tv.hdmi.connection", "android.hardware.tv.tuner",
+    "android.hardware.tv.input",
+};
+
+static const std::set<std::string> kRadioOnlyAidl = {
+    // Not all devices have radio capabilities
+    "android.hardware.radio.config",    "android.hardware.radio.data",
+    "android.hardware.radio.messaging", "android.hardware.radio.modem",
+    "android.hardware.radio.network",   "android.hardware.radio.sap",
+    "android.hardware.radio.sim",       "android.hardware.radio.voice",
+};
+
 /*
  * Always missing AIDL packages that are not served on Cuttlefish.
  * These are typically types-only packages.
@@ -191,17 +211,6 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     // android.hardware.media.bufferpool2 is a HAL-less interface.
     // It could be used for buffer recycling and caching by using the interface.
     "android.hardware.media.bufferpool2",
-
-    /**
-     * These types are only used in Android TV, so don't expect them on phones.
-     * TODO(b/266868403) This test should run on TV devices to enforce the same
-     * requirements
-     */
-    "android.hardware.tv.hdmi.cec",
-    "android.hardware.tv.hdmi.earc",
-    "android.hardware.tv.hdmi.connection",
-    "android.hardware.tv.tuner",
-    "android.hardware.tv.input",
 
     /**
      * No implementation on cuttlefish for fastboot AIDL hal because it doesn't
@@ -391,20 +400,23 @@ static bool isMissingAidl(const std::string& packageName) {
     switch (type) {
       case DeviceType::AUTOMOTIVE:
         missingAidl.insert(kPhoneOnlyAidl.begin(), kPhoneOnlyAidl.end());
+        missingAidl.insert(kTvOnlyAidl.begin(), kTvOnlyAidl.end());
         break;
       case DeviceType::TV:
         missingAidl.insert(kAutomotiveOnlyAidl.begin(),
                            kAutomotiveOnlyAidl.end());
-        missingAidl.insert(kPhoneOnlyAidl.begin(), kPhoneOnlyAidl.end());
+        missingAidl.insert(kRadioOnlyAidl.begin(), kRadioOnlyAidl.end());
         break;
       case DeviceType::WATCH:
         missingAidl.insert(kAutomotiveOnlyAidl.begin(),
                            kAutomotiveOnlyAidl.end());
         missingAidl.insert(kPhoneOnlyAidl.begin(), kPhoneOnlyAidl.end());
+        missingAidl.insert(kTvOnlyAidl.begin(), kTvOnlyAidl.end());
         break;
       case DeviceType::PHONE:
         missingAidl.insert(kAutomotiveOnlyAidl.begin(),
                            kAutomotiveOnlyAidl.end());
+        missingAidl.insert(kTvOnlyAidl.begin(), kTvOnlyAidl.end());
         break;
       case DeviceType::UNKNOWN:
         CHECK(false) << "getDeviceType return UNKNOWN type.";
