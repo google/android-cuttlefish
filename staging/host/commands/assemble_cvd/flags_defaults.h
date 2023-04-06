@@ -147,7 +147,7 @@
 #define CF_DEFAULTS_WMEDIUMD_CONFIG CF_DEFAULTS_DYNAMIC_STRING
 
 // UWB default parameters
-#define CF_DEFAULTS_ENABLE_HOST_UWB true
+#define CF_DEFAULTS_ENABLE_HOST_UWB false
 #define CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM 0
 
 // Bluetooth default parameters
