@@ -1,0 +1,3 @@
+service vendor.uwb_hal /vendor/bin/hw/android.hardware.uwb-service
+    class hal
+    user uwb
