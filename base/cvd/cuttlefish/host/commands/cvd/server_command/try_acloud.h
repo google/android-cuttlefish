@@ -16,14 +16,16 @@
 
 #pragma once
 
-#include <memory>
+#include <fruit/fruit.h>
 
+#include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
-#include "host/commands/cvd/server_command/server_handler.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewTryAcloudCommand(
-    std::atomic<bool>& optout);
+fruit::Component<fruit::Required<
+    ConvertAcloudCreateCommand,
+    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
+TryAcloudCommandComponent();
 
-}  // namespace cuttlefish
+}

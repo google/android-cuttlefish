@@ -16,12 +16,17 @@
 
 #pragma once
 
-#include <memory>
+#include <atomic>
 
+#include <fruit/fruit.h>
+
+#include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/command_sequence.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewAcloudCommand(
-    CommandSequenceExecutor& executor);
+fruit::Component<
+    fruit::Required<CommandSequenceExecutor, ConvertAcloudCreateCommand>>
+AcloudCommandComponent();
+
 }
