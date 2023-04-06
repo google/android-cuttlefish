@@ -18,6 +18,8 @@
 
 #include <mutex>
 
+#include <fruit/fruit.h>
+
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -42,7 +44,9 @@ Both -opt-out and --opt-in are mutually exclusive.
 
 class AcloudTranslatorCommand : public CvdServerHandler {
  public:
-  AcloudTranslatorCommand(std::atomic<bool>& optout) : optout_(optout) {}
+  INJECT(AcloudTranslatorCommand(ANNOTATED(AcloudTranslatorOptOut,
+                                           std::atomic<bool>&) optout))
+      : optout_(optout) {}
   ~AcloudTranslatorCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -77,7 +81,7 @@ class AcloudTranslatorCommand : public CvdServerHandler {
         GflagsCompatFlag("opt-out", flag_optout),
         GflagsCompatFlag("opt-in", flag_optin),
     };
-    CF_EXPECT(ConsumeFlags(translator_flags, invocation.arguments),
+    CF_EXPECT(ParseFlags(translator_flags, invocation.arguments),
               "Failed to process translator flag.");
     if (help) {
       WriteAll(request.Out(), kTranslatorHelpMessage);
@@ -94,9 +98,11 @@ class AcloudTranslatorCommand : public CvdServerHandler {
   std::atomic<bool>& optout_;
 };
 
-std::unique_ptr<CvdServerHandler> NewAcloudTranslatorCommand(
-    std::atomic<bool>& optout) {
-  return std::unique_ptr<CvdServerHandler>(new AcloudTranslatorCommand(optout));
+fruit::Component<fruit::Required<
+    fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
+AcloudTranslatorCommandComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CvdServerHandler, AcloudTranslatorCommand>();
 }
 
 }  // namespace cuttlefish
