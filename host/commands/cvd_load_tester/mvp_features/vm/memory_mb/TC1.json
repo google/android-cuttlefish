@@ -8,7 +8,7 @@
         },
         {
             "vm": {
-                "memory_mb": 4069
+                "memory_mb": 4096
             }
         }
     ]
