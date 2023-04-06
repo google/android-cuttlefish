@@ -59,6 +59,7 @@ DEFINE_string(boot_build, "", "source for the boot or gki target");
 DEFINE_string(boot_artifact, "", "name of the boot image in boot_build");
 DEFINE_string(bootloader_build, "", "source for the bootloader target");
 DEFINE_string(otatools_build, "", "source for the host ota tools");
+DEFINE_string(host_package_build, "", "source for the host cvd tools");
 
 DEFINE_bool(download_img_zip, true, "Whether to fetch the -img-*.zip file.");
 DEFINE_bool(download_target_files_zip, false,
@@ -349,8 +350,10 @@ Result<void> ProcessHostPackage(BuildApi& build_api, const Build& default_build,
       CF_EXPECT(DownloadHostPackage(build_api, default_build, target_dir));
   CF_EXPECT(!host_package_files.empty(),
             "Could not download host package for " << default_build);
-  CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
-                             host_package_files, config, target_dir));
+  CF_EXPECT(AddFilesToConfig(
+      FLAGS_host_package_build != "" ? FileSource::HOST_PACKAGE_BUILD
+                                     : FileSource::DEFAULT_BUILD,
+      default_build, host_package_files, config, target_dir));
   return {};
 }
 
@@ -417,9 +420,15 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     auto default_build = CF_EXPECT(ArgumentToBuild(
         build_api, FLAGS_default_build, DEFAULT_BUILD_TARGET, retry_period));
 
-    auto process_pkg_ret =
-        std::async(std::launch::async, ProcessHostPackage, std::ref(build_api),
-                   std::cref(default_build), std::cref(target_dir), &config);
+    auto host_package_build =
+        FLAGS_host_package_build != ""
+            ? CF_EXPECT(ArgumentToBuild(build_api, FLAGS_host_package_build,
+                                        DEFAULT_BUILD_TARGET, retry_period))
+            : default_build;
+
+    auto process_pkg_ret = std::async(
+        std::launch::async, ProcessHostPackage, std::ref(build_api),
+        std::cref(host_package_build), std::cref(target_dir), &config);
 
     if (FLAGS_system_build != "" || FLAGS_kernel_build != "" ||
         FLAGS_otatools_build != "") {
