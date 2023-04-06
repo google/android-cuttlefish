@@ -42,6 +42,10 @@ std::vector<T> single_element_emplace(T&& element) {
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
+UwbConnectorComponent();
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>>
 BluetoothConnectorComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
@@ -77,6 +81,11 @@ fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 RootCanalComponent();
+
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+PicaComponent();
 
 fruit::Component<fruit::Required<GrpcSocketCreator>> EchoServerComponent();
 
