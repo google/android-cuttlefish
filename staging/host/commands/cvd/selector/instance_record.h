@@ -33,6 +33,7 @@ class LocalInstanceGroup;
  */
 class LocalInstance {
   friend class LocalInstanceGroup;
+  friend class InstanceDatabase;
 
  public:
   /* names:
