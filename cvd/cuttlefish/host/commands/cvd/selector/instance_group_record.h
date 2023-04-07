@@ -90,6 +90,7 @@ class LocalInstanceGroup {
   Set<std::unique_ptr<LocalInstance>> CopyInstances(
       const Set<std::unique_ptr<LocalInstance>>& src_instances);
   Json::Value Serialize(const std::unique_ptr<LocalInstance>& instance) const;
+
   std::string home_dir_;
   std::string host_artifacts_path_;
   std::string product_out_path_;
