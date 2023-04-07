@@ -14,11 +14,13 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <iostream>
 #include <unordered_set>
 
 #include <gtest/gtest.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/json.h"
 #include "host/commands/cvd/selector/instance_database.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/unittests/selector/instance_database_helper.h"
@@ -424,6 +426,49 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
 
   ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
   ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
+}
+
+TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
+  // starting set up
+  if (!SetUpOk() || !AddGroups({"miau"})) {
+    GTEST_SKIP() << Error().msg;
+  }
+  auto& db = GetDb();
+  std::vector<InstanceDatabase::InstanceInfo> miau_group_instance_id_name_pairs{
+      {1, "8"}, {10, "tv_instance"}};
+  auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
+  if (!miau_group.ok()) {
+    GTEST_SKIP() << "miau group was not found";
+  }
+  auto add_result = db.AddInstances("miau", miau_group_instance_id_name_pairs);
+  if (!add_result.ok()) {
+    GTEST_SKIP() << "Adding instances are not being tested in this test case.";
+  }
+
+  /*
+   * Dumping to json, clearing up the DB, loading from the json,
+   *
+   */
+  auto serialized_db = db.Serialize();
+  if (!db.RemoveInstanceGroup("miau")) {
+    // not testing RemoveInstanceGroup
+    GTEST_SKIP() << "miau had to be added.";
+  }
+  auto json_parsing = ParseJson(serialized_db.toStyledString());
+  ASSERT_TRUE(json_parsing.ok()) << serialized_db << std::endl
+                                 << " is not a valid json.";
+  auto load_result = db.LoadFromJson(serialized_db);
+  ASSERT_TRUE(load_result.ok()) << load_result.error().Trace();
+  {
+    // re-look up the group and the instances
+    auto miau_group = db.FindGroup({kHomeField, Workspace() + "/" + "miau"});
+    ASSERT_TRUE(miau_group.ok()) << miau_group.error().Trace();
+    auto result_8 = db.FindInstance({kInstanceNameField, "8"});
+    auto result_tv = db.FindInstance({kInstanceNameField, "tv_instance"});
+
+    ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
+    ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
+  }
 }
 
 }  // namespace selector
