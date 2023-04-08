@@ -524,12 +524,6 @@ Result<std::vector<Command>> QemuManager::StartCommands(
    */
   add_hvc_sink();
 
-  if (config.enable_host_uwb()) {
-    add_hvc("uwb_fifo_vm");
-  } else {
-    add_hvc_sink();
-  }
-
   auto disk_num = instance.virtual_disk_paths().size();
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
