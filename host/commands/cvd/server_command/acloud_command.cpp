@@ -64,8 +64,6 @@ class AcloudCommand : public CvdServerHandler {
     interrupt_lock.unlock();
     CF_EXPECT(executor_.Execute(converted.requests, request.Err()));
 
-    CF_EXPECT(converted.lock.Status(InUseState::kInUse));
-
     if (converter_.FetchCommandString() != "") {
       // has cvd fetch command, update the fetch cvd command file
       using android::base::WriteStringToFile;
