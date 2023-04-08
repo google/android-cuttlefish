@@ -1346,15 +1346,6 @@ bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
   return (*Dictionary())[kStartRootcanal].asBool();
 }
 
-static constexpr char kStartPica[] = "start_pica";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_pica(
-    bool start) {
-  (*Dictionary())[kStartPica] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_pica() const {
-  return (*Dictionary())[kStartPica].asBool();
-}
-
 static constexpr char kStartNetsim[] = "start_netsim";
 void CuttlefishConfig::MutableInstanceSpecific::set_start_netsim(bool start) {
   (*Dictionary())[kStartNetsim] = start;
