@@ -23,6 +23,8 @@
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/instance_lock.h"
@@ -62,9 +64,9 @@ class AcloudCommand : public CvdServerHandler {
     CF_EXPECT(IsSubOperationSupported(request));
     auto converted = CF_EXPECT(converter_.Convert(request));
     interrupt_lock.unlock();
-    CF_EXPECT(executor_.Execute(converted.requests, request.Err()));
-
-    CF_EXPECT(converted.lock.Status(InUseState::kInUse));
+    CF_EXPECT(executor_.Execute(converted.prep_requests, request.Err()));
+    auto start_response =
+        CF_EXPECT(executor_.ExecuteOne(converted.start_request, request.Err()));
 
     if (converter_.FetchCommandString() != "") {
       // has cvd fetch command, update the fetch cvd command file
@@ -74,6 +76,20 @@ class AcloudCommand : public CvdServerHandler {
                 true);
     }
 
+    auto handle_response_result = HandleStartResponse(start_response);
+    if (handle_response_result.ok()) {
+      // print
+      std::optional<SharedFD> fd_opt;
+      if (converter_.Verbose()) {
+        fd_opt = request.Err();
+      }
+      auto write_result = PrintBriefSummary(*handle_response_result, fd_opt);
+      if (!write_result.ok()) {
+        LOG(ERROR) << "Failed to write the start response report.";
+      }
+    } else {
+      LOG(ERROR) << "Failed to analyze the cvd start response.";
+    }
     cvd::Response response;
     response.mutable_command_response();
     return response;
@@ -86,12 +102,61 @@ class AcloudCommand : public CvdServerHandler {
   }
 
  private:
+  Result<cvd::InstanceGroupInfo> HandleStartResponse(
+      const cvd::Response& start_response);
+  Result<void> PrintBriefSummary(const cvd::InstanceGroupInfo& group_info,
+                                 std::optional<SharedFD> stream_fd) const;
+
   CommandSequenceExecutor& executor_;
   ConvertAcloudCreateCommand& converter_;
 
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
 };
+
+Result<cvd::InstanceGroupInfo> AcloudCommand::HandleStartResponse(
+    const cvd::Response& start_response) {
+  CF_EXPECT(start_response.has_command_response(),
+            "cvd start did ont return a command response.");
+  const auto& start_command_response = start_response.command_response();
+  CF_EXPECT(start_command_response.has_instance_group_info(),
+            "cvd start command response did not return instance_group_info.");
+  cvd::InstanceGroupInfo group_info =
+      start_command_response.instance_group_info();
+  return group_info;
+}
+
+Result<void> AcloudCommand::PrintBriefSummary(
+    const cvd::InstanceGroupInfo& group_info,
+    std::optional<SharedFD> stream_fd) const {
+  if (!stream_fd) {
+    return {};
+  }
+  SharedFD fd = *stream_fd;
+  std::stringstream ss;
+  const std::string& group_name = group_info.group_name();
+  CF_EXPECT_EQ(group_info.home_directories().size(), 1);
+  const std::string home_dir = (group_info.home_directories())[0];
+  std::vector<std::string> instance_names;
+  std::vector<unsigned> instance_ids;
+  instance_names.reserve(group_info.instances().size());
+  instance_ids.reserve(group_info.instances().size());
+  for (const auto& instance : group_info.instances()) {
+    instance_names.push_back(instance.name());
+    instance_ids.push_back(instance.instance_id());
+  }
+  ss << std::endl << "Created instance group: " << group_name << std::endl;
+  for (size_t i = 0; i != instance_ids.size(); i++) {
+    std::string device_name = group_name + "-" + instance_names[i];
+    ss << "  " << device_name << " (local-instance-" << instance_ids[i] << ")"
+       << std::endl;
+  }
+  ss << std::endl
+     << "acloud list or cvd fleet for more information." << std::endl;
+  auto n_write = WriteAll(*stream_fd, ss.str());
+  CF_EXPECT_EQ(n_write, ss.str().size());
+  return {};
+}
 
 fruit::Component<
     fruit::Required<CommandSequenceExecutor, ConvertAcloudCreateCommand>>
