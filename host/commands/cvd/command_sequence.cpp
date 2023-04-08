@@ -121,6 +121,13 @@ Result<std::vector<cvd::Response>> CommandSequenceExecutor::Execute(
   return {responses};
 }
 
+Result<cvd::Response> CommandSequenceExecutor::ExecuteOne(
+    const RequestWithStdio& request, SharedFD report) {
+  auto response_in_vector = CF_EXPECT(Execute({request}, report));
+  CF_EXPECT_EQ(response_in_vector.size(), 1);
+  return response_in_vector.front();
+}
+
 std::vector<std::string> CommandSequenceExecutor::CmdList() const {
   std::unordered_set<std::string> subcmds;
   for (const auto& handler : server_handlers_) {
