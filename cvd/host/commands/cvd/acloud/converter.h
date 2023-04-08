@@ -20,13 +20,11 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
 struct ConvertedAcloudCreateCommand {
-  InstanceLockFile lock;
   std::vector<RequestWithStdio> requests;
 };
 
@@ -43,8 +41,7 @@ class ConvertAcloudCreateCommand {
   virtual ~ConvertAcloudCreateCommand() = 0;
 };
 
-fruit::Component<fruit::Required<InstanceLockFileManager>,
-                 ConvertAcloudCreateCommand>
+fruit::Component<ConvertAcloudCreateCommand>
 AcloudCreateConvertCommandComponent();
 
 }  // namespace cuttlefish
