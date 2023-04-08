@@ -1,1 +1,0 @@
-allow hal_uwb_default uwb_device:chr_file { open read write ioctl};
