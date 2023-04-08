@@ -213,6 +213,12 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
    * in Python.
    */
   for (const auto& acloud_compat_home : acloud_compat_homes) {
+    if (acloud_compat_home == home_dir) {
+      LOG(ERROR) << "The \"HOME\" directory is acloud workspace, which will "
+                 << "be deleted by next cvd start or acloud command with the"
+                 << " same directory being \"HOME\"";
+      continue;
+    }
     request_forms.push_back({
         .working_dir = client_pwd,
         .cmd_args =

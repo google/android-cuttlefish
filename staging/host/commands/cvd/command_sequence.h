@@ -36,6 +36,7 @@ class CommandSequenceExecutor : public LateInjected {
   Result<void> Interrupt();
   Result<std::vector<cvd::Response>> Execute(
       const std::vector<RequestWithStdio>&, SharedFD report);
+  Result<cvd::Response> ExecuteOne(const RequestWithStdio&, SharedFD report);
 
   std::vector<std::string> CmdList() const;
 
