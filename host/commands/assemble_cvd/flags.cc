@@ -1399,8 +1399,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
                                  (FLAGS_rootcanal_instance_num <= 0));
 
-    instance.set_start_pica(is_first_instance);
-
     if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() && start_wmediumd) {
       // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to boot
       // 64 bit kernel using 32 bit u-boot / grub.
