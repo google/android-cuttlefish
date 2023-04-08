@@ -20,14 +20,13 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
 
 struct ConvertedAcloudCreateCommand {
-  InstanceLockFile lock;
-  std::vector<RequestWithStdio> requests;
+  std::vector<RequestWithStdio> prep_requests;
+  RequestWithStdio start_request;
 };
 
 class ConvertAcloudCreateCommand {
@@ -36,6 +35,7 @@ class ConvertAcloudCreateCommand {
       const RequestWithStdio& request) = 0;
   virtual const std::string& FetchCvdArgsFile() const = 0;
   virtual const std::string& FetchCommandString() const = 0;
+  virtual bool Verbose() const = 0;
   /*
    * Android prouction build system appears to mandate virtual
    * destructor.
@@ -43,8 +43,7 @@ class ConvertAcloudCreateCommand {
   virtual ~ConvertAcloudCreateCommand() = 0;
 };
 
-fruit::Component<fruit::Required<InstanceLockFileManager>,
-                 ConvertAcloudCreateCommand>
+fruit::Component<ConvertAcloudCreateCommand>
 AcloudCreateConvertCommandComponent();
 
 }  // namespace cuttlefish
