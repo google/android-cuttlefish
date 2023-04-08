@@ -60,10 +60,6 @@ std::string RootCanalBinary() {
   return HostBinaryPath("root-canal");
 }
 
-std::string PicaBinary() {
-  return HostBinaryPath("pica");
-}
-
 std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }
 
 std::string SocketVsockProxyBinary() {
