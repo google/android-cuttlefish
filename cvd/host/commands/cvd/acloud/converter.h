@@ -25,7 +25,8 @@
 namespace cuttlefish {
 
 struct ConvertedAcloudCreateCommand {
-  std::vector<RequestWithStdio> requests;
+  std::vector<RequestWithStdio> prep_requests;
+  RequestWithStdio start_request;
 };
 
 class ConvertAcloudCreateCommand {
@@ -34,6 +35,7 @@ class ConvertAcloudCreateCommand {
       const RequestWithStdio& request) = 0;
   virtual const std::string& FetchCvdArgsFile() const = 0;
   virtual const std::string& FetchCommandString() const = 0;
+  virtual bool Verbose() const = 0;
   /*
    * Android prouction build system appears to mandate virtual
    * destructor.

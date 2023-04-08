@@ -162,13 +162,13 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
                              return true;
                            }));
 
-    bool verbose = false;
+    verbose_ = false;
     flags.emplace_back(Flag()
                            .Alias({FlagAliasMode::kFlagExact, "-v"})
                            .Alias({FlagAliasMode::kFlagExact, "-vv"})
                            .Alias({FlagAliasMode::kFlagExact, "--verbose"})
-                           .Setter([&verbose](const FlagMatch&) {
-                             verbose = true;
+                           .Setter([this](const FlagMatch&) {
+                             verbose_ = true;
                              return true;
                            }));
 
@@ -544,7 +544,7 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
       }
     }
 
-    cvd::Request& start_request = request_protos.emplace_back();
+    cvd::Request start_request;
     auto& start_command = *start_request.mutable_command_request();
     start_command.add_args("cvd");
     start_command.add_args("start");
@@ -647,7 +647,7 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
     *start_command.mutable_working_directory() =
         request_command.working_directory();
     std::vector<SharedFD> fds;
-    if (verbose) {
+    if (verbose_) {
       fds = request.FileDescriptors();
     } else {
       auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
@@ -655,10 +655,12 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
       fds = {dev_null, dev_null, dev_null};
     }
 
-    ConvertedAcloudCreateCommand ret;
+    ConvertedAcloudCreateCommand ret{
+        .start_request = RequestWithStdio(request.Client(), start_request, fds,
+                                          request.Credentials())};
     for (auto& request_proto : request_protos) {
-      ret.requests.emplace_back(request.Client(), request_proto, fds,
-                                request.Credentials());
+      ret.prep_requests.emplace_back(request.Client(), request_proto, fds,
+                                     request.Credentials());
     }
     return ret;
   }
@@ -670,10 +672,12 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
   const std::string& FetchCommandString() const override {
     return fetch_command_str_;
   }
+  bool Verbose() const { return verbose_; }
 
  private:
   std::string fetch_cvd_args_file_;
   std::string fetch_command_str_;
+  bool verbose_;
 };
 
 fruit::Component<ConvertAcloudCreateCommand>
