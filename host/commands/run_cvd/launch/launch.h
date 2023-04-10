@@ -35,6 +35,10 @@ namespace cuttlefish {
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
+UwbConnectorComponent();
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>>
 BluetoothConnectorComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
