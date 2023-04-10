@@ -195,8 +195,10 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
                                   gpu_common_3d_string);
   } else if (gpu_mode == kGpuModeGfxstream ||
              gpu_mode == kGpuModeGfxstreamGuestAngle) {
+    const std::string capset_names = ",context-types=gfxstream";
     crosvm_cmd.Cmd().AddParameter("--gpu=backend=gfxstream,gles31=true",
-                                  gpu_common_3d_string, gpu_angle_string);
+                                  gpu_common_3d_string, gpu_angle_string,
+                                  capset_names);
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
