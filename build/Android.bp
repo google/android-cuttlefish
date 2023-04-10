@@ -104,6 +104,7 @@ cvd_host_tools = [
     "netsimd",
     "newfs_msdos",
     "openwrt_control_server",
+    "pica",
     "powerwash_cvd",
     "process_restarter",
     "restart_cvd",
