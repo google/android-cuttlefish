@@ -30,6 +30,7 @@ std::string MetricsBinary();
 std::string ModemSimulatorBinary();
 std::string NetsimdBinary();
 std::string OpenwrtControlServerBinary();
+std::string PicaBinary();
 std::string ProcessRestarterBinary();
 std::string RootCanalBinary();
 std::string SecureEnvBinary();
