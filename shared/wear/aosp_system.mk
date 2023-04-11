@@ -33,8 +33,6 @@ PRODUCT_PACKAGES += \
     Bluetooth \
     CalendarProvider \
     CertInstaller \
-    clatd \
-    clatd.conf \
     DownloadProvider \
     fsck.f2fs \
     FusedLocation \
