@@ -207,6 +207,25 @@ void CuttlefishConfig::MutableInstanceSpecific::
     set_new_vbmeta_vendor_dlkm_image(const std::string& image) {
   (*Dictionary())[kNewVbmetaVendorDlkmImage] = image;
 }
+static constexpr char kVbmetaSystemDlkmImage[] = "vbmeta_system_dlkm_image";
+std::string CuttlefishConfig::InstanceSpecific::vbmeta_system_dlkm_image()
+    const {
+  return (*Dictionary())[kVbmetaSystemDlkmImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_system_dlkm_image(
+    const std::string& image) {
+  (*Dictionary())[kVbmetaSystemDlkmImage] = image;
+}
+static constexpr char kNewVbmetaSystemDlkmImage[] =
+    "new_vbmeta_system_dlkm_image";
+std::string CuttlefishConfig::InstanceSpecific::new_vbmeta_system_dlkm_image()
+    const {
+  return (*Dictionary())[kNewVbmetaSystemDlkmImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_new_vbmeta_system_dlkm_image(const std::string& image) {
+  (*Dictionary())[kNewVbmetaSystemDlkmImage] = image;
+}
 static constexpr char kOtherosEspImage[] = "otheros_esp_image";
 std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
   return (*Dictionary())[kOtherosEspImage].asString();
@@ -1344,6 +1363,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_start_rootcanal(
 }
 bool CuttlefishConfig::InstanceSpecific::start_rootcanal() const {
   return (*Dictionary())[kStartRootcanal].asBool();
+}
+
+static constexpr char kStartPica[] = "start_pica";
+void CuttlefishConfig::MutableInstanceSpecific::set_start_pica(
+    bool start) {
+  (*Dictionary())[kStartPica] = start;
+}
+bool CuttlefishConfig::InstanceSpecific::start_pica() const {
+  return (*Dictionary())[kStartPica].asBool();
 }
 
 static constexpr char kStartNetsim[] = "start_netsim";
