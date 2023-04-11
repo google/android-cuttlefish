@@ -18,14 +18,12 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/host_tool_target_manager.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<InstanceManager, HostToolTargetManager,
-                                 CommandSequenceExecutor>>
+fruit::Component<fruit::Required<InstanceManager, HostToolTargetManager>>
 CvdStartCommandComponent();
 
 }  // namespace cuttlefish
