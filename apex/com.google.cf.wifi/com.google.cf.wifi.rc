@@ -1,8 +1,10 @@
 service rename_eth0 /apex/com.android.wifi.hal/bin/rename_netiface eth0 buried_eth0
+    user root
     oneshot
 
 # For legacy wifi without openwrt
 service setup_wifi /apex/com.android.wifi.hal/bin/setup_wifi
+    user root
     oneshot
 
 # For wifi with openwrt
@@ -20,6 +22,7 @@ service wpa_supplicant /apex/com.android.wifi.hal/bin/hw/wpa_supplicant_cf \
     interface aidl android.hardware.wifi.supplicant.ISupplicant/default
     socket wpa_wlan0 dgram 660 wifi wifi
     group system wifi inet
+    user root
     disabled
     oneshot
 
