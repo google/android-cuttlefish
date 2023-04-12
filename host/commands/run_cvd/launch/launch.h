@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
-
 #include <string>
 #include <vector>
+
+#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"

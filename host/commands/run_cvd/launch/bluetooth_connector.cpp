@@ -15,6 +15,17 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
+#include "host/libs/config/known_paths.h"
+
 // Copied from net/bluetooth/hci.h
 #define HCI_MAX_ACL_SIZE 1024
 #define HCI_MAX_FRAME_SIZE (HCI_MAX_ACL_SIZE + 4)
@@ -34,7 +45,7 @@ class BluetoothConnector : public CommandSource {
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
-    Command command(HostBinaryPath("tcp_connector"));
+    Command command(TcpConnectorBinary());
     command.AddParameter("-fifo_out=", fifos_[0]);
     command.AddParameter("-fifo_in=", fifos_[1]);
     command.AddParameter("-data_port=", config_.rootcanal_hci_port());

@@ -15,6 +15,15 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {

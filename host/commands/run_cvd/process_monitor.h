@@ -51,10 +51,7 @@ class ProcessMonitor {
 
     template <typename T>
     Properties AddCommands(T commands) && {
-      for (auto& command : commands) {
-        AddCommand(std::move(command));
-      }
-      return std::move(*this);
+      return std::move(AddCommands(std::move(commands)));
     }
 
    private:

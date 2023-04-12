@@ -16,20 +16,24 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <cassert>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <vulkan/vulkan.h>
-
-#include <cassert>
-#include <string>
-#include <vector>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"

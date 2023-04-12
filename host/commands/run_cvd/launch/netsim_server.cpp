@@ -13,8 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/utils/files.h"
 #include "host/commands/run_cvd/launch/launch.h"
+
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
@@ -76,7 +88,7 @@ class NetsimServer : public CommandSource {
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
-    Command cmd(HostBinaryPath("netsimd"));
+    Command cmd(NetsimdBinary());
     cmd.AddParameter("-s");
     AddDevicesParameter(cmd);
     // Release SharedFDs, they've been duped by Command

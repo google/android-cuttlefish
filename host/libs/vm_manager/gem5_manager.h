@@ -16,11 +16,13 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-#include "host/libs/vm_manager/vm_manager.h"
-
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 namespace vm_manager {

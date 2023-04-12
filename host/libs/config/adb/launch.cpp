@@ -15,7 +15,16 @@
  */
 #include "host/libs/config/adb/adb.h"
 
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/kernel_log_monitor/utils.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -70,7 +79,6 @@ class AdbConnector : public CommandSource {
 
   // CommandSource
   Result<std::vector<Command>> Commands() override {
-    Command console_forwarder_cmd(ConsoleForwarderBinary());
     Command adb_connector(AdbConnectorBinary());
     std::set<std::string> addresses;
 

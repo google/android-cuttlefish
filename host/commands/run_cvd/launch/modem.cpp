@@ -15,16 +15,22 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <android-base/logging.h>
 #include <string.h>
+
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
 #include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
+#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 

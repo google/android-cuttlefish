@@ -15,8 +15,9 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
 #include <vector>
+
+#include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"

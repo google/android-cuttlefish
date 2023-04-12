@@ -15,6 +15,10 @@
  */
 #include "host/libs/config/fastboot/fastboot.h"
 
+#include <memory>
+#include <vector>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
