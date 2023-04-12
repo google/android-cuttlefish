@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -45,7 +45,7 @@ class OpenWrt : public CommandSource {
       : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     constexpr auto crosvm_for_ap_socket = "ap_control.sock";
 
     CrosvmBuilder ap_cmd;
@@ -94,8 +94,9 @@ class OpenWrt : public CommandSource {
         break;
     }
 
-    std::vector<Command> commands;
-    commands.emplace_back(log_tee_.CreateLogTee(ap_cmd.Cmd(), "openwrt"));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(
+        std::move(log_tee_.CreateLogTee(ap_cmd.Cmd(), "openwrt")));
     commands.emplace_back(std::move(ap_cmd.Cmd()));
     return commands;
   }

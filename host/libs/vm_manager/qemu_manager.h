@@ -44,7 +44,7 @@ class QemuManager : public VmManager {
   Result<std::unordered_map<std::string, std::string>> ConfigureBootDevices(
       int num_disks, bool have_gpu) override;
 
-  Result<std::vector<Command>> StartCommands(
+  Result<std::vector<MonitorCommand>> StartCommands(
       const CuttlefishConfig& config) override;
 
  private:

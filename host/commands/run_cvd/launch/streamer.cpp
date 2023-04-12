@@ -15,7 +15,6 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -214,8 +213,8 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    std::vector<Command> commands;
+  Result<std::vector<MonitorCommand>> Commands() override {
+    std::vector<MonitorCommand> commands;
     if (instance_.start_webrtc_sig_server()) {
       Command sig_server(WebRtcSigServerBinary());
       sig_server.AddParameter("-assets_dir=", instance_.webrtc_assets_dir());
@@ -279,7 +278,6 @@ class WebRtcServer : public virtual CommandSource,
       commands.emplace_back(std::move(action));
     }
     commands.emplace_back(std::move(webrtc));
-
     return commands;
   }
 

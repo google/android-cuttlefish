@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -36,11 +36,13 @@ class EchoServer : public CommandSource {
       : grpc_socket_(grpc_socket) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(
-        Command(EchoServerBinary())
-            .AddParameter("--grpc_uds_path=",
-                          grpc_socket_.CreateGrpcSocket(Name())));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(EchoServerBinary());
+    command.AddParameter("--grpc_uds_path=",
+                         grpc_socket_.CreateGrpcSocket(Name()));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

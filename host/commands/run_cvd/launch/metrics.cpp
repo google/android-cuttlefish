@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -34,8 +34,11 @@ class MetricsService : public CommandSource {
   INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(Command(MetricsBinary()));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(MetricsBinary());
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

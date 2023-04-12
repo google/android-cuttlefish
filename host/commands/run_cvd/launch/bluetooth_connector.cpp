@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -44,13 +44,15 @@ class BluetoothConnector : public CommandSource {
       : config_(config), instance_(instance) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command command(TcpConnectorBinary());
     command.AddParameter("-fifo_out=", fifos_[0]);
     command.AddParameter("-fifo_in=", fifos_[1]);
     command.AddParameter("-data_port=", config_.rootcanal_hci_port());
     command.AddParameter("-buffer_size=", kBufferSize);
-    return single_element_emplace(std::move(command));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

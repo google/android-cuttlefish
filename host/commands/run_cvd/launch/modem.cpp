@@ -17,7 +17,6 @@
 
 #include <string.h>
 
-#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -71,7 +70,7 @@ class ModemSimulator : public CommandSource {
       : instance_(instance) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command cmd(ModemSimulatorBinary(), [this](Subprocess* proc) {
       auto stopped = StopModemSimulator(instance_.modem_simulator_host_id());
       if (stopped) {
@@ -96,7 +95,7 @@ class ModemSimulator : public CommandSource {
       first_socket = false;
     }
 
-    std::vector<Command> commands;
+    std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(cmd));
     return commands;
   }

@@ -132,7 +132,14 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
         auto options = SubprocessOptions().InGroup(true);
         it->proc.reset(new Subprocess(it->cmd->Start(options)));
       } else {
+        bool is_critical = it->is_critical;
         monitored.erase(it);
+        if (running.load() && is_critical) {
+          LOG(ERROR) << "Stopping all monitored processes due to unexpected "
+                        "exit of critical process";
+          Command stop_cmd(StopCvdBinary());
+          stop_cmd.Start();
+        }
       }
     }
   }
@@ -179,14 +186,13 @@ ProcessMonitor::Properties ProcessMonitor::Properties::RestartSubprocesses(
 }
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
-    Command cmd) & {
-  auto& entry = entries_.emplace_back();
-  entry.cmd.reset(new Command(std::move(cmd)));
+    MonitorCommand cmd) & {
+  entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
   return *this;
 }
 
 ProcessMonitor::Properties ProcessMonitor::Properties::AddCommand(
-    Command cmd) && {
+    MonitorCommand cmd) && {
   return std::move(AddCommand(std::move(cmd)));
 }
 

@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -39,7 +39,7 @@ class OpenwrtControlServer : public CommandSource {
       : instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command openwrt_control_server_cmd(OpenwrtControlServerBinary());
     openwrt_control_server_cmd.AddParameter(
         "--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(Name()));
@@ -52,7 +52,9 @@ class OpenwrtControlServer : public CommandSource {
         "--openwrt_log_path=",
         AbsolutePath(instance_.PerInstanceLogPath("crosvm_openwrt.log")));
 
-    return single_element_emplace(std::move(openwrt_control_server_cmd));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(openwrt_control_server_cmd));
+    return commands;
   }
 
   // SetupFeature

@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -39,7 +39,7 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
         kernel_log_pipe_provider_(kernel_log_pipe_provider) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command command(SecureEnvBinary());
     command.AddParameter("-confui_server_fd=", confui_server_fd_);
     command.AddParameter("-keymaster_fd_out=", fifos_[0]);
@@ -60,7 +60,9 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
     command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
     command.AddParameter("-kernel_events_fd=", kernel_log_pipe_);
 
-    return single_element_emplace(std::move(command));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

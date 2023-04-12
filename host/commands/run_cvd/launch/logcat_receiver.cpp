@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -40,9 +40,12 @@ class LogcatReceiver : public CommandSource, public DiagnosticInformation {
   }
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(
-        Command(LogcatReceiverBinary()).AddParameter("-log_pipe_fd=", pipe_));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(LogcatReceiverBinary());
+    command.AddParameter("-log_pipe_fd=", pipe_);
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

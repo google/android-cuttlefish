@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -35,9 +35,12 @@ class ConfigServer : public CommandSource {
       : instance_(instance) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(
-        Command(ConfigServerBinary()).AddParameter("-server_fd=", socket_));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(ConfigServerBinary());
+    command.AddParameter("-server_fd=", socket_);
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

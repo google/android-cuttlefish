@@ -15,9 +15,9 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -35,11 +35,13 @@ class TombstoneReceiver : public CommandSource {
       : instance_(instance) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(
-        Command(TombstoneReceiverBinary())
-            .AddParameter("-server_fd=", socket_)
-            .AddParameter("-tombstone_dir=", tombstone_dir_));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(TombstoneReceiverBinary());
+    command.AddParameter("-server_fd=", socket_);
+    command.AddParameter("-tombstone_dir=", tombstone_dir_);
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

@@ -15,7 +15,7 @@
  */
 #include "host/libs/config/fastboot/fastboot.h"
 
-#include <memory>
+#include <utility>
 #include <vector>
 
 #include "common/libs/utils/result.h"
@@ -36,8 +36,7 @@ class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
         fastboot_config_(fastboot_config),
         log_pipe_provider_(log_pipe_provider) {}
 
-  Result<std::vector<Command>> Commands() override {
-    std::vector<Command> commands;
+  Result<std::vector<MonitorCommand>> Commands() override {
     const std::string ethernet_host = instance_.ethernet_ipv6() + "%" +
                                       instance_.ethernet_bridge_name();
 
@@ -51,8 +50,9 @@ class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
     tunnel.AddParameter("--client_tcp_host=", ethernet_host);
     tunnel.AddParameter("--client_tcp_port=", "5554");
     tunnel.AddParameter("--label=", "fastboot");
-    commands.emplace_back(std::move(tunnel));
 
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(tunnel));
     return commands;
   }
 
