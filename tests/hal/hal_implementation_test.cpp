@@ -176,6 +176,7 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
     "android.hardware.automotive.remoteaccess",
     "android.hardware.automotive.vehicle",
     "android.hardware.automotive.ivn",
+    "android.hardware.macsec",
 };
 
 static const std::set<std::string> kTvOnlyAidl = {
