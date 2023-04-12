@@ -5,5 +5,6 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     interface aidl android.hardware.wifi.supplicant.ISupplicant/default
     socket wpa_wlan0 dgram 660 wifi wifi
     group system wifi inet
+    user root
     disabled
     oneshot
