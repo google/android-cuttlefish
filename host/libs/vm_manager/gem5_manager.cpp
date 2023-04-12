@@ -133,14 +133,37 @@ Gem5Manager::ConfigureGraphics(
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
 
-  std::unordered_map<std::string, std::string> bootconfig_args = {
-      {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
-      {"androidboot.hardware.gralloc", "minigbm"},
-      {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
-      {"androidboot.hardware.hwcomposer.mode", "noop"},
-      {"androidboot.hardware.egl", "angle"},
-      {"androidboot.hardware.vulkan", "pastel"},
-  };
+  std::unordered_map<std::string, std::string> bootconfig_args;
+
+  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
+    LOG(INFO) << "We are in SwiftShader mode";
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", "ranchu"},
+        {"androidboot.hardware.hwcomposer.mode", "noop"},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "gem5"},
+        {"androidboot.hardware.egl", "angle"},
+        {"androidboot.hardware.vulkan", "pastel"},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
+  } else if (instance.gpu_mode() == kGpuModeGfxstream) {
+    LOG(INFO) << "We are in Gfxstream mode";
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", "0"},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", "ranchu"},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "gem5"},
+        {"androidboot.hardware.egl", "emulation"},
+        {"androidboot.hardware.vulkan", "ranchu"},
+        {"androidboot.hardware.gltransport", "virtio-gpu-pipe"},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
+  } else if (instance.gpu_mode() == kGpuModeNone) {
+    return {};
+  } else {
+    return CF_ERR("Unknown GPU mode " << instance.gpu_mode());
+  }
 
   if (!instance.gpu_angle_feature_overrides_enabled().empty()) {
     bootconfig_args["androidboot.hardware.angle_feature_overrides_enabled"] =
