@@ -97,8 +97,10 @@ service vendor.dlkm_loader /vendor/bin/dlkm_loader
 
 service metrics_helper /vendor/bin/metrics_helper
     group system
+    user root
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server_type=vsock -server_vsock_port=6520 -client_type=tcp -client_tcp_host=0.0.0.0 -client_tcp_port=5555
+    user root
 
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
     class main
@@ -107,6 +109,7 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
 
 service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.vsock_touch_port} -keyboard_port=${ro.boot.vsock_keyboard_port}
     group root uhid
+    user root
     disabled
 
 on early-boot && property:ro.boot.vsock_touch_port=*
@@ -119,6 +122,7 @@ on early-boot && property:ro.boot.vsock_keyboard_port=*
 
 service bugreport /system/bin/dumpstate -d -p -z
     class main
+    user root
     disabled
     oneshot
     keycodes 30 48
