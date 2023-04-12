@@ -32,6 +32,11 @@
 namespace cuttlefish {
 namespace {
 
+const char* const kFailedGraphicsSubprocessDisclaimer =
+    "Note: the Cuttlefish launcher runs some tests to check for the "
+    "availability of various graphics libraries and features on your "
+    "machine and failures during these tests can be expected.";
+
 int PidfdOpen(pid_t pid) {
   // There is no glibc wrapper for pidfd_open.
 #ifndef SYS_pidfd_open
@@ -40,30 +45,34 @@ int PidfdOpen(pid_t pid) {
   return syscall(SYS_pidfd_open, pid, /*flags=*/0);
 }
 
-SubprocessResult WaitForChild(pid_t pid) {
+SubprocessResult WaitForChild(const std::string& message, pid_t pid) {
   siginfo_t info;
 
   int options = WEXITED | WNOWAIT;
   if (TEMP_FAILURE_RETRY(waitid(P_PID, pid, &info, options)) != 0) {
-    PLOG(ERROR) << "Failed to wait for subprocess: waitid error.";
+    PLOG(VERBOSE) << "Failed to wait for subprocess " << pid << " running "
+                  << message << " : waitid error. "
+                  << kFailedGraphicsSubprocessDisclaimer;
     return SubprocessResult::kFailure;
   }
   if (info.si_pid != pid) {
-    LOG(ERROR)
-        << "Failed to wait for subprocess: waitid returned different pid";
+    LOG(VERBOSE) << "Failed to wait for subprocess " << pid << " running "
+                 << message << ": waitid returned different pid. "
+                 << kFailedGraphicsSubprocessDisclaimer;
     return SubprocessResult::kFailure;
   }
   if (info.si_code != CLD_EXITED) {
-    LOG(ERROR)
-        << "Failed to wait for subprocess: subprocess terminated by signal "
-        << info.si_status << ".";
+    LOG(VERBOSE) << "Failed to wait for subprocess " << pid << " running "
+                 << message << ": subprocess terminated by signal "
+                 << info.si_status << ". "
+                 << kFailedGraphicsSubprocessDisclaimer;
     return SubprocessResult::kFailure;
   }
   return SubprocessResult::kSuccess;
 }
 
 SubprocessResult WaitForChildWithTimeoutFallback(
-    pid_t pid, std::chrono::milliseconds timeout) {
+    const std::string& message, pid_t pid, std::chrono::milliseconds timeout) {
   bool child_exited = false;
   bool child_timed_out = false;
   std::condition_variable cv;
@@ -74,13 +83,14 @@ SubprocessResult WaitForChildWithTimeoutFallback(
     if (!cv.wait_for(lock, timeout, [&] { return child_exited; })) {
       child_timed_out = true;
       if (kill(pid, SIGKILL) != 0) {
-        PLOG(ERROR) << "Failed to kill subprocess after " << timeout.count()
-                    << "ms timeout.";
+        PLOG(VERBOSE) << "Failed to kill subprocess " << pid << " running "
+                      << message << " after " << timeout.count()
+                      << "ms timeout. " << kFailedGraphicsSubprocessDisclaimer;
       }
     }
   });
 
-  SubprocessResult result = WaitForChild(pid);
+  SubprocessResult result = WaitForChild(message, pid);
   {
     std::unique_lock<std::mutex> lock(m);
     child_exited = true;
@@ -96,12 +106,12 @@ SubprocessResult WaitForChildWithTimeoutFallback(
 
 // When `pidfd_open` is not available, fallback to using a second
 // thread to kill the child process after the given timeout.
-SubprocessResult WaitForChildWithTimeout(pid_t pid,
+SubprocessResult WaitForChildWithTimeout(const std::string& message, pid_t pid,
                                          android::base::unique_fd pidfd,
                                          std::chrono::milliseconds timeout) {
   auto cleanup = android::base::make_scope_guard([&]() {
     kill(pid, SIGKILL);
-    WaitForChild(pid);
+    WaitForChild(message, pid);
   });
 
   struct pollfd poll_info = {
@@ -112,18 +122,20 @@ SubprocessResult WaitForChildWithTimeout(pid_t pid,
   pidfd.reset();
 
   if (ret < 0) {
-    LOG(ERROR) << "Failed to wait for subprocess " << pid
-               << ": poll failed with " << ret;
+    LOG(ERROR) << "Failed to wait for subprocess " << pid << " running "
+               << message << ": poll failed with " << ret << ". "
+               << kFailedGraphicsSubprocessDisclaimer;
     return SubprocessResult::kFailure;
   }
   if (ret == 0) {
-    LOG(ERROR) << "Subprocess did not complete within " << timeout.count()
-               << "ms. Killing...";
+    LOG(ERROR) << "Subprocess " << pid << " running " << message
+               << " did not complete within " << timeout.count()
+               << "ms. Killing. " << kFailedGraphicsSubprocessDisclaimer;
     return SubprocessResult::kFailure;
   }
 
   cleanup.Disable();
-  return WaitForChild(pid);
+  return WaitForChild(message, pid);
 }
 
 }  // namespace
@@ -146,9 +158,9 @@ SubprocessResult DoWithSubprocessCheck(const std::string& message,
 
   android::base::unique_fd pidfd(PidfdOpen(pid));
   if (pidfd.get() >= 0) {
-    result = WaitForChildWithTimeout(pid, std::move(pidfd), timeout);
+    result = WaitForChildWithTimeout(message, pid, std::move(pidfd), timeout);
   } else {
-    result = WaitForChildWithTimeoutFallback(pid, timeout);
+    result = WaitForChildWithTimeoutFallback(message, pid, timeout);
   }
 
   if (result == SubprocessResult::kSuccess) {
