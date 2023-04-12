@@ -21,8 +21,8 @@ vendor_dlkm /vendor_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=
 vendor_dlkm /vendor_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_vendor_dlkm
 odm_dlkm /odm_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb
 odm_dlkm /odm_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
-system_dlkm /system_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system_dlkm
-system_dlkm /system_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system_dlkm
+system_dlkm /system_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
+system_dlkm /system_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta
 # ZRAM, SD-Card and virtiofs shares
 /dev/block/zram0 none swap defaults zramsize=75%
 /dev/block/vdc1 /sdcard vfat defaults recoveryonly
