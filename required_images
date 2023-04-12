@@ -6,5 +6,4 @@ userdata.img
 vbmeta.img
 vbmeta_system.img
 vbmeta_vendor_dlkm.img
-vbmeta_system_dlkm.img
 vendor_boot.img
