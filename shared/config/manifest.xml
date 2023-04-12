@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="8">
+<manifest version="1.0" type="device" target-level="9">
 
     <!-- DO NOT ADD MORE - use vintf_fragments -->
 
