@@ -182,8 +182,6 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(!all_args.empty());
 
   auto env = EnvVectorToMap(envp);
-  const auto host_tool_dir =
-      android::base::Dirname(android::base::GetExecutableDirectory());
 
   if (android::base::Basename(all_args[0]) == "fetch_cvd") {
     CF_EXPECT(FetchCvdMain(argc, argv));
@@ -193,7 +191,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   CvdClient client;
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
-    return client.HandleAcloud(all_args, env, host_tool_dir);
+    return client.HandleAcloud(all_args, env);
   }
 
   if (IsServerModeExpected(all_args[0])) {
@@ -218,7 +216,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
    * be moved to the server side, and then it won't.
    *
    */
-  CF_EXPECT(client.ValidateServerVersion(host_tool_dir),
+  CF_EXPECT(client.ValidateServerVersion(),
             "Unable to ensure cvd_server is running.");
 
   std::vector<std::string> version_command{"version"};
@@ -234,7 +232,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     CF_EXPECT(version_parser != nullptr);
     const auto subcmd = version_parser->SubCmd().value_or("");
     if (subcmd == "version") {
-      auto version_msg = CF_EXPECT(client.HandleVersion(host_tool_dir));
+      auto version_msg = CF_EXPECT(client.HandleVersion());
       std::cout << version_msg;
       return {};
     }
