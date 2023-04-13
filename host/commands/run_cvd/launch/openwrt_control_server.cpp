@@ -15,11 +15,17 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include <fruit/fruit.h>
+
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -33,11 +39,7 @@ class OpenwrtControlServer : public CommandSource {
       : instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    if (!Enabled()) {
-      return {};
-    }
-
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command openwrt_control_server_cmd(OpenwrtControlServerBinary());
     openwrt_control_server_cmd.AddParameter(
         "--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(Name()));
@@ -50,7 +52,9 @@ class OpenwrtControlServer : public CommandSource {
         "--openwrt_log_path=",
         AbsolutePath(instance_.PerInstanceLogPath("crosvm_openwrt.log")));
 
-    return single_element_emplace(std::move(openwrt_control_server_cmd));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(openwrt_control_server_cmd));
+    return commands;
   }
 
   // SetupFeature
