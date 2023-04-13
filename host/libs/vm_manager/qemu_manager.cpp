@@ -614,6 +614,8 @@ Result<std::vector<Command>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-balloon-pci-non-transitional,id=balloon0");
 
+  // The ordering of tap devices is important. Make sure any change here
+  // is reflected in ethprime u-boot variable
   qemu_cmd.AddParameter("-netdev");
   qemu_cmd.AddParameter("tap,id=hostnet0,ifname=", instance.mobile_tap_name(),
                         ",script=no,downscript=no", vhost_net);
