@@ -28,12 +28,17 @@
 #include <algorithm>
 #include <atomic>
 #include <future>
+#include <memory>
 #include <thread>
 
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/subprocess.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -127,7 +132,14 @@ Result<void> MonitorLoop(const std::atomic_bool& running,
         auto options = SubprocessOptions().InGroup(true);
         it->proc.reset(new Subprocess(it->cmd->Start(options)));
       } else {
+        bool is_critical = it->is_critical;
         monitored.erase(it);
+        if (running.load() && is_critical) {
+          LOG(ERROR) << "Stopping all monitored processes due to unexpected "
+                        "exit of critical process";
+          Command stop_cmd(StopCvdBinary());
+          stop_cmd.Start();
+        }
       }
     }
   }
@@ -159,6 +171,7 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
   CF_EXPECT(stopped == monitored.size(), "Didn't stop all subprocesses");
   return {};
 }
+
 }  // namespace
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
@@ -169,22 +182,18 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
 
 ProcessMonitor::Properties ProcessMonitor::Properties::RestartSubprocesses(
     bool r) && {
-  restart_subprocesses_ = r;
-  return std::move(*this);
+  return std::move(RestartSubprocesses(r));
 }
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
-    Command cmd) & {
-  auto& entry = entries_.emplace_back();
-  entry.cmd.reset(new Command(std::move(cmd)));
+    MonitorCommand cmd) & {
+  entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
   return *this;
 }
 
 ProcessMonitor::Properties ProcessMonitor::Properties::AddCommand(
-    Command cmd) && {
-  auto& entry = entries_.emplace_back();
-  entry.cmd.reset(new Command(std::move(cmd)));
-  return std::move(*this);
+    MonitorCommand cmd) && {
+  return std::move(AddCommand(std::move(cmd)));
 }
 
 ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties)
@@ -259,4 +268,5 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   LOG(DEBUG) << "Done monitoring subprocesses";
   return {};
 }
+
 }  // namespace cuttlefish
