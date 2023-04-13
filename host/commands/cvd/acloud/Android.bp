@@ -24,8 +24,9 @@ cc_library_host_static {
         "config.cpp",
     ],
     static_libs: [
-        "libprotobuf-cpp-full",
         "libcuttlefish_launch_cvd_proto",
+        "libcvd_selector",
+        "libprotobuf-cpp-full",
     ],
     defaults: ["cvd_lib_defaults"],
 }
