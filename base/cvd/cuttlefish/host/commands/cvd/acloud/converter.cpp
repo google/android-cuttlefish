@@ -39,6 +39,7 @@
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"  // TempDir()
+#include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -103,6 +104,7 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
  public:
   INJECT(ConvertAcloudCreateCommandImpl()) {}
   ~ConvertAcloudCreateCommandImpl() override = default;
+
   Result<ConvertedAcloudCreateCommand> Convert(
       const RequestWithStdio& request) {
     auto arguments = ParseInvocation(request.Message()).arguments;
@@ -382,6 +384,16 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
               return true;
             }));
 
+    std::optional<std::string> pet_name;
+    Flag pet_name_gflag = GflagsCompatFlag("pet-name");
+    flags.emplace_back(
+        GflagsCompatFlag("pet-name")
+            .Getter([&pet_name]() { return (pet_name ? *pet_name : ""); })
+            .Setter([&pet_name](const FlagMatch& match) {
+              pet_name = match.value;
+              return true;
+            }));
+
     CF_EXPECT(ParseFlags(flags, arguments));
     CF_EXPECT(arguments.size() == 0,
               "Unrecognized arguments:'"
@@ -620,7 +632,23 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
     start_command.mutable_selector_opts()->add_args(
         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup +
         "=true");
-    static constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
+    if (pet_name) {
+      const auto [group_name, instance_name] =
+          CF_EXPECT(selector::BreakDeviceName(*pet_name),
+                    *pet_name << " must be a group name followed by - "
+                              << "followed by an instance name.");
+      std::string group_name_arg = "--";
+      group_name_arg.append(selector::SelectorFlags::kGroupName)
+          .append("=")
+          .append(group_name);
+      std::string instance_name_arg = "--";
+      instance_name_arg.append(selector::SelectorFlags::kInstanceName)
+          .append("=")
+          .append(instance_name);
+      start_command.mutable_selector_opts()->add_args(group_name_arg);
+      start_command.mutable_selector_opts()->add_args(instance_name_arg);
+    }
+
     auto& start_env = *start_command.mutable_env();
     if (local_image) {
       start_env[kAndroidHostOut] = host_artifacts_path->second;
