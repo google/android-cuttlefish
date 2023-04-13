@@ -7,3 +7,4 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     group system wifi inet
     disabled
     oneshot
+    user root
