@@ -360,15 +360,12 @@ Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
     std::vector<std::string>&& args, const std::string& group_name,
     const std::vector<selector::PerInstanceInfo>& per_instance_info) {
   std::vector<std::string> new_args{std::move(args)};
+  // consume webrtc_device_id
+  // it was verified by start_selector_parser
   std::string flag_value;
   std::vector<Flag> webrtc_device_id_flag{
       GflagsCompatFlag("webrtc_device_id", flag_value)};
-  std::vector<std::string> copied_args{new_args};
-  CF_EXPECT(ParseFlags(webrtc_device_id_flag, copied_args));
-
-  if (!flag_value.empty()) {
-    return new_args;
-  }
+  CF_EXPECT(ParseFlags(webrtc_device_id_flag, new_args));
 
   CF_EXPECT(!group_name.empty());
   std::vector<std::string> device_name_list;
@@ -380,7 +377,6 @@ Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
     device_name_list.emplace_back(device_name);
   }
   // take --webrtc_device_id flag away
-  new_args = std::move(copied_args);
   new_args.emplace_back("--webrtc_device_id=" +
                         android::base::Join(device_name_list, ","));
   return new_args;
