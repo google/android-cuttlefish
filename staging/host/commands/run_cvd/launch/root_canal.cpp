@@ -15,10 +15,16 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -33,14 +39,10 @@ class RootCanal : public CommandSource {
       : config_(config), instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    if (!Enabled()) {
-      return {};
-    }
-
+  Result<std::vector<MonitorCommand>> Commands() override {
     // Create the root-canal command with the process_restarter
     // as runner to restart root-canal when it crashes.
-    Command command(HostBinaryPath("process_restarter"));
+    Command command(ProcessRestarterBinary());
     command.AddParameter("-when_killed");
     command.AddParameter("-when_dumped");
     command.AddParameter("-when_exited_with_failure");
@@ -67,8 +69,9 @@ class RootCanal : public CommandSource {
       command.AddParameter(arg);
     }
 
-    std::vector<Command> commands;
-    commands.emplace_back(log_tee_.CreateLogTee(command, "rootcanal"));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(
+        std::move(log_tee_.CreateLogTee(command, "rootcanal")));
     commands.emplace_back(std::move(command));
     return commands;
   }

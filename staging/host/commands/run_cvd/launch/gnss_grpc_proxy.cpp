@@ -15,7 +15,16 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -28,7 +37,7 @@ class GnssGrpcProxyServer : public CommandSource {
       : instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command gnss_grpc_proxy_cmd(GnssGrpcProxyBinary());
     const unsigned gnss_grpc_proxy_server_port =
         instance_.gnss_grpc_proxy_server_port();
@@ -51,7 +60,9 @@ class GnssGrpcProxyServer : public CommandSource {
       gnss_grpc_proxy_cmd.AddParameter("--fixed_location_file_path=",
                                        instance_.fixed_location_file_path());
     }
-    return single_element_emplace(std::move(gnss_grpc_proxy_cmd));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(gnss_grpc_proxy_cmd));
+    return commands;
   }
 
   // SetupFeature

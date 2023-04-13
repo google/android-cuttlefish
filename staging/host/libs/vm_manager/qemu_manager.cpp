@@ -28,6 +28,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -36,8 +38,10 @@
 
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -206,7 +210,7 @@ QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
   }
 }
 
-Result<std::vector<Command>> QemuManager::StartCommands(
+Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
@@ -669,9 +673,9 @@ Result<std::vector<Command>> QemuManager::StartCommands(
 
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
 
-  std::vector<Command> ret;
-  ret.push_back(std::move(qemu_cmd));
-  return ret;
+  std::vector<MonitorCommand> commands;
+  commands.emplace_back(std::move(qemu_cmd), true);
+  return commands;
 }
 
 } // namespace vm_manager
