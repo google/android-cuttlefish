@@ -16,20 +16,24 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
-#include <android-base/file.h>
-#include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <vulkan/vulkan.h>
 
 #include <cassert>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
+
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <vulkan/vulkan.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -140,7 +144,7 @@ CrosvmManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
 
 constexpr auto crosvm_socket = "crosvm_control.sock";
 
-Result<std::vector<Command>> CrosvmManager::StartCommands(
+Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
@@ -433,11 +437,10 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", instance.bootloader());
 
-  std::vector<Command> ret;
-
   // log_tee must be added before crosvm_cmd to ensure all of crosvm's logs are
   // captured during shutdown. Processes are stopped in reverse order.
-  ret.push_back(std::move(crosvm_log_tee_cmd));
+  std::vector<MonitorCommand> commands;
+  commands.emplace_back(std::move(crosvm_log_tee_cmd));
 
   if (gpu_capture_enabled) {
     const std::string gpu_capture_basename =
@@ -485,18 +488,17 @@ Result<std::vector<Command>> CrosvmManager::StartCommands(
     gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
                                       gpu_capture_logs);
 
-    ret.push_back(std::move(gpu_capture_log_tee_cmd));
-    ret.push_back(std::move(gpu_capture_command));
+    commands.emplace_back(std::move(gpu_capture_log_tee_cmd));
+    commands.emplace_back(std::move(gpu_capture_command));
   } else {
     crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
                                    crosvm_logs);
     crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
                                    crosvm_logs);
-
-    ret.push_back(std::move(crosvm_cmd.Cmd()));
+    commands.emplace_back(std::move(crosvm_cmd.Cmd()), true);
   }
 
-  return ret;
+  return commands;
 }
 
 }  // namespace vm_manager

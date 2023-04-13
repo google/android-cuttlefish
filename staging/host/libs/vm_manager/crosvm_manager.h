@@ -16,11 +16,12 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
@@ -41,7 +42,7 @@ class CrosvmManager : public VmManager {
   Result<std::unordered_map<std::string, std::string>> ConfigureBootDevices(
       int num_disks, bool have_gpu) override;
 
-  Result<std::vector<cuttlefish::Command>> StartCommands(
+  Result<std::vector<MonitorCommand>> StartCommands(
       const CuttlefishConfig& config) override;
 
  private:
