@@ -128,6 +128,13 @@ class StartSelectorParser {
       const unsigned default_n_instances = 1) const;
   Result<bool> CalcMayBeDefaultGroup();
   Result<bool> CalcAcquireFileLock();
+
+  struct WebrtcCalculatedNames {
+    std::optional<std::string> group_name;
+    std::optional<std::vector<std::string>> per_instance_names;
+  };
+  Result<WebrtcCalculatedNames> CalcNamesUsingWebrtcDeviceId();
+
   /**
    * The following are considered, and left empty if can't be figured out.
    *
@@ -145,6 +152,8 @@ class StartSelectorParser {
   unsigned requested_num_instances_;
   bool may_be_default_group_;
   bool must_acquire_file_lock_;
+  std::optional<std::string> group_name_;
+  std::optional<std::vector<std::string>> per_instance_names_;
 
   // temporarily keeps the leftover of the input cmd_args
   const std::string client_user_home_;
