@@ -59,12 +59,12 @@ class StackTraceEntry {
 
   template <typename T>
   StackTraceEntry& operator<<(T&& message_ext) & {
-    message_ << message_ext;
+    message_ << std::forward<T>(message_ext);
     return *this;
   }
   template <typename T>
   StackTraceEntry operator<<(T&& message_ext) && {
-    message_ << message_ext;
+    message_ << std::forward<T>(message_ext);
     return std::move(*this);
   }
 
