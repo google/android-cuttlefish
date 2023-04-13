@@ -15,16 +15,21 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
-#include <android-base/logging.h>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
+#include <fruit/fruit.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/reporting.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -208,8 +213,8 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    std::vector<Command> commands;
+  Result<std::vector<MonitorCommand>> Commands() override {
+    std::vector<MonitorCommand> commands;
     if (instance_.start_webrtc_sig_server()) {
       Command sig_server(WebRtcSigServerBinary());
       sig_server.AddParameter("-assets_dir=", instance_.webrtc_assets_dir());
@@ -273,7 +278,6 @@ class WebRtcServer : public virtual CommandSource,
       commands.emplace_back(std::move(action));
     }
     commands.emplace_back(std::move(webrtc));
-
     return commands;
   }
 
