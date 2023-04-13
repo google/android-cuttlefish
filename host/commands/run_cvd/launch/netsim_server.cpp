@@ -13,8 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/utils/files.h"
 #include "host/commands/run_cvd/launch/launch.h"
+
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
@@ -75,8 +87,8 @@ class NetsimServer : public CommandSource {
       : config_(config), instance_(instance) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    Command cmd(HostBinaryPath("netsimd"));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command cmd(NetsimdBinary());
     cmd.AddParameter("-s");
     AddDevicesParameter(cmd);
     // Release SharedFDs, they've been duped by Command
@@ -87,7 +99,9 @@ class NetsimServer : public CommandSource {
     // Default commands file
     cmd.AddParameter("--rootcanal_default_commands_file=",
                      config_.rootcanal_default_commands_file());
-    return single_element_emplace(std::move(cmd));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(cmd));
+    return commands;
   }
 
   // Convert devices_ to json for netsimd -s <arg>. The devices_, created and

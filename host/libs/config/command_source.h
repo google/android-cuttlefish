@@ -15,8 +15,10 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include <utility>
 #include <vector>
+
+#include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -24,10 +26,18 @@
 
 namespace cuttlefish {
 
+struct MonitorCommand {
+  Command command;
+  bool is_critical;
+
+  MonitorCommand(Command command, bool is_critical = false)
+      : command(std::move(command)), is_critical(is_critical) {}
+};
+
 class CommandSource : public virtual SetupFeature {
  public:
   virtual ~CommandSource() = default;
-  virtual Result<std::vector<Command>> Commands() = 0;
+  virtual Result<std::vector<MonitorCommand>> Commands() = 0;
 };
 
 }  // namespace cuttlefish
