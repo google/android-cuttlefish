@@ -15,6 +15,15 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -25,8 +34,11 @@ class MetricsService : public CommandSource {
   INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    return single_element_emplace(Command(MetricsBinary()));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(MetricsBinary());
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature
