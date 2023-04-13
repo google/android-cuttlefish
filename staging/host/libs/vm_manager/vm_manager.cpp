@@ -16,12 +16,17 @@
 
 #include "host/libs/vm_manager/vm_manager.h"
 
+#include <iomanip>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include <iomanip>
-#include <memory>
-
+#include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -73,7 +78,7 @@ class VmmCommands : public CommandSource {
       : config_(config), vmm_(vmm) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     return vmm_.StartCommands(config_);
   }
 

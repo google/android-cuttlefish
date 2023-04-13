@@ -15,7 +15,16 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -27,7 +36,7 @@ class VehicleHalServer : public CommandSource {
       : instance_(instance) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command grpc_server(VehicleHalGrpcServerBinary());
 
     const unsigned vhal_server_cid = 2;
@@ -43,7 +52,9 @@ class VehicleHalServer : public CommandSource {
                              vhal_server_power_state_file);
     grpc_server.AddParameter("--power_state_socket=",
                              vhal_server_power_state_socket);
-    return single_element_emplace(std::move(grpc_server));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(grpc_server));
+    return commands;
   }
 
   // SetupFeature

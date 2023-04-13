@@ -15,10 +15,16 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -30,14 +36,13 @@ class EchoServer : public CommandSource {
       : grpc_socket_(grpc_socket) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    if (!Enabled()) {
-      return {};
-    }
-    return single_element_emplace(
-        Command(EchoServerBinary())
-            .AddParameter("--grpc_uds_path=",
-                          grpc_socket_.CreateGrpcSocket(Name())));
+  Result<std::vector<MonitorCommand>> Commands() override {
+    Command command(EchoServerBinary());
+    command.AddParameter("--grpc_uds_path=",
+                         grpc_socket_.CreateGrpcSocket(Name()));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // SetupFeature

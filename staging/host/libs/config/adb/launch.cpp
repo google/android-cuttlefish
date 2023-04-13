@@ -15,7 +15,16 @@
  */
 #include "host/libs/config/adb/adb.h"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/kernel_log_monitor/utils.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -69,8 +78,7 @@ class AdbConnector : public CommandSource {
   INJECT(AdbConnector(const AdbHelper& helper)) : helper_(helper) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    Command console_forwarder_cmd(ConsoleForwarderBinary());
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command adb_connector(AdbConnectorBinary());
     std::set<std::string> addresses;
 
@@ -90,9 +98,10 @@ class AdbConnector : public CommandSource {
     }
     address_arg.pop_back();
     adb_connector.AddParameter(address_arg);
-    std::vector<Command> commands;
+
+    std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(adb_connector));
-    return std::move(commands);
+    return commands;
   }
 
   // SetupFeature
@@ -118,8 +127,8 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
         log_pipe_provider_(log_pipe_provider) {}
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
-    std::vector<Command> commands;
+  Result<std::vector<MonitorCommand>> Commands() override {
+    std::vector<MonitorCommand> commands;
     if (helper_.VsockTunnelEnabled()) {
       Command adb_tunnel(SocketVsockProxyBinary());
       /**

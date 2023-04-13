@@ -15,13 +15,15 @@
  */
 #pragma once
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -72,7 +74,7 @@ class VmManager {
   // command_starter function, although it may start more than one. The
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
-  virtual Result<std::vector<cuttlefish::Command>> StartCommands(
+  virtual Result<std::vector<MonitorCommand>> StartCommands(
       const CuttlefishConfig& config) = 0;
 };
 

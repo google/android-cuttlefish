@@ -15,7 +15,16 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/reporting.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -35,14 +44,15 @@ class ConsoleForwarder : public CommandSource, public DiagnosticInformation {
   }
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command console_forwarder_cmd(ConsoleForwarderBinary());
-
     console_forwarder_cmd.AddParameter("--console_in_fd=",
                                        console_forwarder_in_wr_);
     console_forwarder_cmd.AddParameter("--console_out_fd=",
                                        console_forwarder_out_rd_);
-    return single_element_emplace(std::move(console_forwarder_cmd));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(console_forwarder_cmd));
+    return commands;
   }
 
   // SetupFeature
