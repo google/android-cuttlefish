@@ -24,6 +24,7 @@ cc_library {
         "-Wno-unused-parameter",
     ],
     srcs: [
+        "RefRadioSim.cpp",
         "RefRadioModem.cpp",
         "RefRadioIms.cpp",
         "RefImsMedia.cpp",
