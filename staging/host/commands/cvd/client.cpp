@@ -81,15 +81,14 @@ cvd::Version CvdClient::GetClientVersion() {
   return client_version;
 }
 
-Result<cvd::Version> CvdClient::GetServerVersion(
-    const std::string& host_tool_directory) {
+Result<cvd::Version> CvdClient::GetServerVersion() {
   cvd::Request request;
   request.mutable_version_request();
   auto response = SendRequest(request);
 
   // If cvd_server is not running, start and wait before checking its version.
   if (!response.ok()) {
-    CF_EXPECT(StartCvdServer(host_tool_directory));
+    CF_EXPECT(StartCvdServer());
     response = CF_EXPECT(SendRequest(request));
   }
   CF_EXPECT(CheckStatus(response->status(), "GetVersion"));
@@ -99,9 +98,8 @@ Result<cvd::Version> CvdClient::GetServerVersion(
   return response->version_response().version();
 }
 
-Result<void> CvdClient::ValidateServerVersion(
-    const std::string& host_tool_directory, int num_retries) {
-  auto server_version = CF_EXPECT(GetServerVersion(host_tool_directory));
+Result<void> CvdClient::ValidateServerVersion(const int num_retries) {
+  auto server_version = CF_EXPECT(GetServerVersion());
   if (server_version.major() != cvd::kVersionMajor) {
     return CF_ERR("Major version difference: cvd("
                   << cvd::kVersionMajor << "." << cvd::kVersionMinor
@@ -113,9 +111,9 @@ Result<void> CvdClient::ValidateServerVersion(
     std::cerr << "Minor version of cvd_server is older than latest. "
               << "Attempting to restart..." << std::endl;
     CF_EXPECT(StopCvdServer(/*clear=*/false));
-    CF_EXPECT(StartCvdServer(host_tool_directory));
+    CF_EXPECT(StartCvdServer());
     if (num_retries > 0) {
-      CF_EXPECT(ValidateServerVersion(host_tool_directory, num_retries - 1));
+      CF_EXPECT(ValidateServerVersion(num_retries - 1));
       return {};
     } else {
       return CF_ERR("Unable to start the cvd_server with version "
@@ -259,15 +257,12 @@ Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request,
   return response;
 }
 
-Result<void> CvdClient::StartCvdServer(const std::string& host_tool_directory) {
+Result<void> CvdClient::StartCvdServer() {
   SharedFD server_fd =
       SharedFD::SocketLocalServer(cvd::kServerSocketPath,
                                   /*is_abstract=*/true, SOCK_SEQPACKET, 0666);
   CF_EXPECT(server_fd->IsOpen(), server_fd->StrError());
 
-  // TODO(b/196114111): Investigate fully "daemonizing" the cvd_server.
-  CF_EXPECT(setenv("ANDROID_HOST_OUT", host_tool_directory.c_str(),
-                   /*overwrite=*/true) == 0);
   Command command(kServerExecPath);
   command.AddParameter("-INTERNAL_server_fd=", server_fd);
   SubprocessOptions options;
@@ -293,10 +288,8 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
 
 Result<void> CvdClient::HandleAcloud(
     const std::vector<std::string>& args,
-    const std::unordered_map<std::string, std::string>& env,
-    const std::string& host_tool_directory) {
-  auto server_running =
-      ValidateServerVersion(android::base::Dirname(host_tool_directory));
+    const std::unordered_map<std::string, std::string>& env) {
+  auto server_running = ValidateServerVersion();
 
   std::vector<std::string> args_copy{args};
 
@@ -318,12 +311,11 @@ Result<void> CvdClient::HandleAcloud(
   return {};
 }
 
-Result<std::string> CvdClient::HandleVersion(
-    const std::string& host_tool_directory) {
+Result<std::string> CvdClient::HandleVersion() {
   using google::protobuf::TextFormat;
   std::stringstream result;
   std::string output;
-  auto server_version = CF_EXPECT(GetServerVersion(host_tool_directory));
+  auto server_version = CF_EXPECT(GetServerVersion());
   CF_EXPECT(TextFormat::PrintToString(server_version, &output),
             "converting server_version to string failed");
   result << "Server version:" << std::endl << std::endl << output << std::endl;
