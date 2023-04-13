@@ -15,7 +15,16 @@
 
 #include "host/commands/run_cvd/launch/launch.h"
 
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include <fruit/fruit.h>
+
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/reporting.h"
+#include "host/libs/config/command_source.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
 
@@ -42,7 +51,7 @@ class KernelLogMonitor : public CommandSource,
   }
 
   // CommandSource
-  Result<std::vector<Command>> Commands() override {
+  Result<std::vector<MonitorCommand>> Commands() override {
     Command command(KernelLogMonitorBinary());
     command.AddParameter("-log_pipe_fd=", fifo_);
 
@@ -55,8 +64,9 @@ class KernelLogMonitor : public CommandSource,
         command.AppendToLastParameter(event_pipe_write_ends_[i]);
       }
     }
-
-    return single_element_emplace(std::move(command));
+    std::vector<MonitorCommand> commands;
+    commands.emplace_back(std::move(command));
+    return commands;
   }
 
   // KernelLogPipeProvider

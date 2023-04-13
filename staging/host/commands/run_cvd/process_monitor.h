@@ -18,19 +18,26 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/config/command_source.h"
 
 namespace cuttlefish {
 
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
   std::unique_ptr<Subprocess> proc;
+  bool is_critical;
+
+  MonitorEntry(Command command, bool is_critical)
+      : cmd(new Command(std::move(command))), is_critical(is_critical) {}
 };
 
-// Keeps track of launched subprocesses, restarts them if they unexpectedly exit
+// Launches and keeps track of subprocesses, decides response if they
+// unexpectedly exit
 class ProcessMonitor {
  public:
   class Properties {
@@ -38,8 +45,8 @@ class ProcessMonitor {
     Properties& RestartSubprocesses(bool) &;
     Properties RestartSubprocesses(bool) &&;
 
-    Properties& AddCommand(Command) &;
-    Properties AddCommand(Command) &&;
+    Properties& AddCommand(MonitorCommand) &;
+    Properties AddCommand(MonitorCommand) &&;
 
     template <typename T>
     Properties& AddCommands(T commands) & {
@@ -51,10 +58,7 @@ class ProcessMonitor {
 
     template <typename T>
     Properties AddCommands(T commands) && {
-      for (auto& command : commands) {
-        AddCommand(std::move(command));
-      }
-      return std::move(*this);
+      return std::move(AddCommands(std::move(commands)));
     }
 
    private:
