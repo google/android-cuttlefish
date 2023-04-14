@@ -22,9 +22,11 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include <android-base/logging.h>
 #include <android-base/result.h>
@@ -390,10 +392,11 @@ Result<void> TestGceDriverMain(int argc, char** argv) {
 
   static constexpr char BUILD_SCOPE[] =
       "https://www.googleapis.com/auth/androidbuild.internal";
-  auto build_creds = CF_EXPECT(ServiceAccountOauthCredentialSource::FromJson(
-      *curl, service_json, BUILD_SCOPE));
+  auto build_creds = std::make_unique<ServiceAccountOauthCredentialSource>(
+      CF_EXPECT(ServiceAccountOauthCredentialSource::FromJson(
+          *curl, service_json, BUILD_SCOPE)));
 
-  BuildApi build(*curl, &build_creds);
+  BuildApi build(std::move(curl), std::move(build_creds));
 
   ReadEvalPrintLoop executor(gce, build, STDIN_FILENO, STDOUT_FILENO,
                              internal_addresses);
