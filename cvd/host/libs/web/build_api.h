@@ -20,7 +20,9 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
@@ -81,8 +83,10 @@ std::ostream& operator<<(std::ostream&, const Build&);
 
 class BuildApi {
  public:
-  BuildApi(HttpClient&, CredentialSource*);
-  BuildApi(HttpClient&, CredentialSource*, std::string api_key);
+  BuildApi();
+  BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<CredentialSource>);
+  BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<HttpClient>,
+           std::unique_ptr<CredentialSource>, std::string api_key);
   ~BuildApi() = default;
 
   Result<std::string> LatestBuildId(const std::string& branch,
@@ -134,8 +138,9 @@ class BuildApi {
  private:
   Result<std::vector<std::string>> Headers();
 
-  HttpClient& http_client;
-  CredentialSource* credential_source;
+  std::unique_ptr<HttpClient> http_client;
+  std::unique_ptr<HttpClient> inner_http_client;
+  std::unique_ptr<CredentialSource> credential_source;
   std::string api_key_;
 };
 
