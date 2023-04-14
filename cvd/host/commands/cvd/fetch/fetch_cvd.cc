@@ -478,7 +478,8 @@ BuildApi GetBuildApi(const BuildApiFlags& flags) {
     credential_source = FixedCredentialSource::make(flags.credential_source);
   }
   return BuildApi(std::move(retrying_http_client), std::move(curl),
-                  std::move(credential_source), flags.api_key);
+                  std::move(credential_source), flags.api_key,
+                  flags.wait_retry_period);
 }
 
 }  // namespace
@@ -502,16 +503,14 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     BuildApi build_api = GetBuildApi(flags.build_api_flags);
-    auto default_build = CF_EXPECT(ArgumentToBuild(
-        build_api, flags.build_source_flags.default_build, DEFAULT_BUILD_TARGET,
-        flags.build_api_flags.wait_retry_period));
+    auto default_build = CF_EXPECT(build_api.ArgumentToBuild(
+        flags.build_source_flags.default_build, DEFAULT_BUILD_TARGET));
 
     auto host_package_build =
         flags.build_source_flags.host_package_build != ""
-            ? CF_EXPECT(ArgumentToBuild(
-                  build_api, flags.build_source_flags.host_package_build,
-                  DEFAULT_BUILD_TARGET,
-                  flags.build_api_flags.wait_retry_period))
+            ? CF_EXPECT(build_api.ArgumentToBuild(
+                  flags.build_source_flags.host_package_build,
+                  DEFAULT_BUILD_TARGET))
             : default_build;
 
     auto process_pkg_ret = std::async(
@@ -525,13 +524,11 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         flags.build_source_flags.otatools_build != "") {
       auto ota_build = default_build;
       if (flags.build_source_flags.otatools_build != "") {
-        ota_build = CF_EXPECT(ArgumentToBuild(
-            build_api, flags.build_source_flags.otatools_build,
-            DEFAULT_BUILD_TARGET, flags.build_api_flags.wait_retry_period));
+        ota_build = CF_EXPECT(build_api.ArgumentToBuild(
+            flags.build_source_flags.otatools_build, DEFAULT_BUILD_TARGET));
       } else if (flags.build_source_flags.system_build != "") {
-        ota_build = CF_EXPECT(ArgumentToBuild(
-            build_api, flags.build_source_flags.system_build,
-            DEFAULT_BUILD_TARGET, flags.build_api_flags.wait_retry_period));
+        ota_build = CF_EXPECT(build_api.ArgumentToBuild(
+            flags.build_source_flags.system_build, DEFAULT_BUILD_TARGET));
       }
       std::vector<std::string> ota_tools_files =
           CF_EXPECT(DownloadOtaTools(build_api, ota_build, target_dir));
@@ -569,9 +566,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     if (flags.build_source_flags.system_build != "") {
-      auto system_build = CF_EXPECT(ArgumentToBuild(
-          build_api, flags.build_source_flags.system_build,
-          DEFAULT_BUILD_TARGET, flags.build_api_flags.wait_retry_period));
+      auto system_build = CF_EXPECT(build_api.ArgumentToBuild(
+          flags.build_source_flags.system_build, DEFAULT_BUILD_TARGET));
       bool system_in_img_zip = true;
       if (flags.download_flags.download_img_zip) {
         auto image_files = DownloadImages(build_api, system_build, target_dir,
@@ -654,9 +650,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     if (flags.build_source_flags.kernel_build != "") {
-      auto kernel_build = CF_EXPECT(
-          ArgumentToBuild(build_api, flags.build_source_flags.kernel_build,
-                          "kernel", flags.build_api_flags.wait_retry_period));
+      auto kernel_build = CF_EXPECT(build_api.ArgumentToBuild(
+          flags.build_source_flags.kernel_build, "kernel"));
 
       std::string local_path = target_dir + "/kernel";
       if (!build_api.ArtifactToFile(kernel_build, "bzImage", local_path).ok()) {
@@ -684,9 +679,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     if (flags.build_source_flags.boot_build != "") {
-      auto boot_build = CF_EXPECT(ArgumentToBuild(
-          build_api, flags.build_source_flags.boot_build, "gki_x86_64-user",
-          flags.build_api_flags.wait_retry_period));
+      auto boot_build = CF_EXPECT(build_api.ArgumentToBuild(
+          flags.build_source_flags.boot_build, "gki_x86_64-user"));
       std::vector<std::string> boot_files = CF_EXPECT(DownloadBoot(
           build_api, boot_build, flags.download_flags.boot_artifact, target_dir,
           flags.keep_downloaded_archives));
@@ -703,9 +697,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     if (flags.build_source_flags.bootloader_build != "") {
-      auto bootloader_build = CF_EXPECT(ArgumentToBuild(
-          build_api, flags.build_source_flags.bootloader_build,
-          "u-boot_crosvm_x86_64", flags.build_api_flags.wait_retry_period));
+      auto bootloader_build = CF_EXPECT(build_api.ArgumentToBuild(
+          flags.build_source_flags.bootloader_build, "u-boot_crosvm_x86_64"));
 
       std::string local_path = target_dir + "/bootloader";
       if (!build_api.ArtifactToFile(bootloader_build, "u-boot.rom", local_path)
