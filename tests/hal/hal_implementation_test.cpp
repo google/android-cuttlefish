@@ -150,10 +150,9 @@ static const std::set<std::string> kAutomotiveOnlyAidl = {
     /**
      * These types are only used in Android Automotive, so don't expect them
      * on phones.
-     * TODO(b/266868868) This test should run on Automotive devices to enforce
-     * the same requirements
      */
     "android.automotive.watchdog",
+    "android.frameworks.automotive.display",
     "android.frameworks.automotive.powerpolicy.internal",
     "android.frameworks.automotive.telemetry",
     "android.hardware.automotive.audiocontrol",
@@ -238,7 +237,6 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
 
     {"android.automotive.computepipe.registry.", 2, 273549907},
     {"android.automotive.computepipe.runner.", 2, 273549907},
-    {"android.frameworks.automotive.display.", 2, 274161444},
     {"android.frameworks.automotive.powerpolicy.", 2, 274160980},
     {"android.hardware.automotive.evs.", 2, 274162534},
     {"android.hardware.automotive.ivn.", 1, 274139217},
