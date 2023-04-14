@@ -189,10 +189,11 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   cvd::Response response;
   response.mutable_command_response();
 
-  auto [meets_precondition, error_message] = VerifyPrecondition(request);
-  if (!meets_precondition) {
+  auto precondition_verified = VerifyPrecondition(request);
+  if (!precondition_verified.ok()) {
     response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-    response.mutable_status()->set_message(error_message);
+    response.mutable_status()->set_message(
+        precondition_verified.error().Message());
     return response;
   }
   auto [invocation_info, group_opt] = CF_EXPECT(ExtractInfo(request));
