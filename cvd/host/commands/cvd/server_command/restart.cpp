@@ -18,7 +18,10 @@
 
 #include <sys/types.h>
 
+#include <iostream>
+
 #include <android-base/file.h>
+#include <android-base/strings.h>
 #include <fruit/fruit.h>
 
 #include "cvd_server.pb.h"
@@ -26,6 +29,8 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "host/commands/cvd/flag.h"
+#include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/components.h"
 #include "host/commands/cvd/server_command/utils.h"
@@ -34,6 +39,20 @@
 
 namespace cuttlefish {
 namespace {
+
+constexpr char kRestartServerHelpMessage[] =
+    R"(Cuttlefish Virtual Device (CVD) CLI.
+usage: cvd restart-server <common args> <mode> <mode args>
+
+Common Args:
+  --help                 Print out this message
+  --verbose              Control verbose mode
+
+Modes:
+  match-client           Use the client executable.
+  latest                 Download the latest executable
+  reuse-server           Use the server executable.
+)";
 
 Result<SharedFD> LatestCvdAsFd(BuildApi& build_api) {
   static constexpr char kBuild[] = "aosp-master";
@@ -65,8 +84,15 @@ class CvdRestartHandler : public CvdServerHandler {
   INJECT(CvdRestartHandler(BuildApi& build_api, CvdServer& server,
                            InstanceManager& instance_manager))
       : build_api_(build_api),
+        supported_modes_({"match-client", "latest", "reuse-server"}),
         server_(server),
-        instance_manager_(instance_manager) {}
+        instance_manager_(instance_manager) {
+    flags_.EnrollFlag(CvdFlag<bool>("help", false));
+    flags_.EnrollFlag(CvdFlag<bool>("verbose", false));
+    // If the fla is false, the request will fail if there's on-going requests
+    // If true, calls Stop()
+    flags_.EnrollFlag(CvdFlag<bool>("force", true));
+  }
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
@@ -80,6 +106,30 @@ class CvdRestartHandler : public CvdServerHandler {
     cvd::Response response;
     response.mutable_shutdown_response();
 
+    if (request.Message().has_shutdown_request()) {
+      response.mutable_shutdown_response();
+    } else {
+      CF_EXPECT(
+          request.Message().has_command_request(),
+          "cvd restart request must be either command or shutdown request.");
+      response.mutable_command_response();
+    }
+    // all_args[0] = "cvd", all_args[1] = "restart_server"
+    cvd_common::Args all_args =
+        cvd_common::ConvertToArgs(request.Message().command_request().args());
+    CF_EXPECT_GE(all_args.size(), 2);
+    CF_EXPECT_EQ(all_args.at(0), "cvd");
+    CF_EXPECT_EQ(all_args.at(1), kRestartServer);
+    // erase the first item, "cvd"
+    all_args.erase(all_args.begin());
+
+    auto parsed = CF_EXPECT(Parse(all_args));
+    if (parsed.help) {
+      const std::string help_message(kRestartServerHelpMessage);
+      WriteAll(request.Out(), help_message);
+      return response;
+    }
+
     if (instance_manager_.HasInstanceGroups(uid)) {
       response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
       response.mutable_status()->set_message(
@@ -91,18 +141,17 @@ class CvdRestartHandler : public CvdServerHandler {
     WriteAll(request.Out(), "Stopping the cvd_server.\n");
     server_.Stop();
 
-    auto arguments = ParseInvocation(request.Message()).arguments;
+    const std::string subcmd = parsed.subcmd.value_or("reuse-server");
     SharedFD new_exe;
-    if (arguments.size() > 0 && arguments[0] == "match-client") {
-      CF_EXPECT(request.Extra(), "Missing executable file descriptor");
+    CF_EXPECT(Contains(supported_modes_, subcmd),
+              "unsupported subcommand :" << subcmd);
+    if (subcmd == "match-client") {
+      CF_EXPECT(request.Extra(), "match-client requires the file descriptor.");
       new_exe = *request.Extra();
-    } else if (arguments.size() > 0 && arguments[0] == "latest") {
+    } else if (subcmd == "latest") {
       new_exe = CF_EXPECT(LatestCvdAsFd(build_api_));
-    } else if (arguments.size() == 0) {
-      new_exe = SharedFD::Open(kServerExecPath, O_RDONLY);
-      CF_EXPECT(new_exe->IsOpen(), "Failed to open \""
-                                       << kServerExecPath
-                                       << "\": " << new_exe->StrError());
+    } else if (subcmd == "reuse-server") {
+      new_exe = CF_EXPECT(NewExecFromPath(request, kServerExecPath));
     } else {
       return CF_ERR("Unrecognized command line");
     }
@@ -115,7 +164,72 @@ class CvdRestartHandler : public CvdServerHandler {
   constexpr static char kRestartServer[] = "restart-server";
 
  private:
+  struct Parsed {
+    bool help;
+    bool verbose;
+    std::optional<std::string> subcmd;
+    std::optional<std::string> exec_path;
+  };
+  Result<Parsed> Parse(const cvd_common::Args& args) {
+    // it's ugly but let's reuse the frontline parser
+    auto parser_with_result =
+        CF_EXPECT(FrontlineParser::Parse({.internal_cmds = supported_modes_,
+                                          .all_args = args,
+                                          .cvd_flags = flags_}));
+    CF_EXPECT(parser_with_result != nullptr,
+              "FrontlineParser::Parse() returned nullptr");
+    // If there was a subcmd, the flags for the subcmd is in SubCmdArgs().
+    // If not, the flags for restart-server would be in CvdArgs()
+    std::optional<std::string> subcmd_opt = parser_with_result->SubCmd();
+    cvd_common::Args subcmd_args =
+        (subcmd_opt ? parser_with_result->SubCmdArgs()
+                    : parser_with_result->CvdArgs());
+    auto name_flag_map = CF_EXPECT(flags_.CalculateFlags(subcmd_args));
+    CF_EXPECT(Contains(name_flag_map, "help"));
+    CF_EXPECT(Contains(name_flag_map, "verbose"));
+
+    bool help =
+        CF_EXPECT(FlagCollection::GetValue<bool>(name_flag_map.at("help")));
+    bool verbose =
+        CF_EXPECT(FlagCollection::GetValue<bool>(name_flag_map.at("verbose")));
+    std::optional<std::string> exec_path;
+    if (Contains(name_flag_map, "exec-path")) {
+      exec_path = CF_EXPECT(
+          FlagCollection::GetValue<std::string>(name_flag_map.at("exec-path")));
+    }
+    return Parsed{.help = help,
+                  .verbose = verbose,
+                  .subcmd = subcmd_opt,
+                  .exec_path = exec_path};
+  }
+
+  Result<SharedFD> NewExecFromPath(const RequestWithStdio& request,
+                                   const std::string& exec_path) {
+    std::string emulated_absolute_path;
+    const std::string client_pwd =
+        request.Message().command_request().working_directory();
+    // ~ that means $HOME is not supported
+    CF_EXPECT(!android::base::StartsWith(exec_path, "~/"),
+              "Path starting with ~/ is not supported.");
+    CF_EXPECT_NE(
+        exec_path, "~",
+        "~ is not supported as a executable path, and likely is not a file.");
+    emulated_absolute_path =
+        CF_EXPECT(EmulateAbsolutePath({.current_working_dir = client_pwd,
+                                       .path_to_convert = exec_path,
+                                       .follow_symlink = false}),
+                  "Failed to change exec_path to an absolute path.");
+    auto new_exe = SharedFD::Open(emulated_absolute_path, O_RDONLY);
+    CF_EXPECT(new_exe->IsOpen(), "Failed to open \""
+                                     << exec_path << " that is "
+                                     << emulated_absolute_path
+                                     << "\": " << new_exe->StrError());
+    return new_exe;
+  }
+
   BuildApi& build_api_;
+  std::vector<std::string> supported_modes_;
+  FlagCollection flags_;
   CvdServer& server_;
   InstanceManager& instance_manager_;
 };
