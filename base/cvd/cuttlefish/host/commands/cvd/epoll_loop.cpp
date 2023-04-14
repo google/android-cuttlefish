@@ -28,7 +28,8 @@ namespace cuttlefish {
 EpollPool::EpollPool() {
   auto epoll = Epoll::Create();
   if (!epoll.ok()) {
-    LOG(ERROR) << epoll.error().FormatForEnv();
+    LOG(ERROR) << epoll.error().Message();
+    LOG(DEBUG) << epoll.error().Trace();
     abort();
   }
   epoll_ = std::move(*epoll);
@@ -65,6 +66,10 @@ Result<void> EpollPool::Remove(SharedFD fd) {
   CF_EXPECT(epoll_.Delete(fd), "No callback registered with epoll");
   callbacks_.erase(fd);
   return {};
+}
+
+fruit::Component<EpollPool> EpollLoopComponent() {
+  return fruit::createComponent();
 }
 
 }  // namespace cuttlefish
