@@ -72,8 +72,6 @@ DEFINE_string(credential_source, "", "Build API credential source");
 DEFINE_string(directory, CurrentDirectory(),
               "Target directory to fetch "
               "files into");
-DEFINE_bool(run_next_stage, false,
-            "Continue running the device through the next stage.");
 DEFINE_string(wait_retry_period, "20",
               "Retry period for pending builds given "
               "in seconds. Set to 0 to not wait.");
@@ -645,54 +643,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   }
   std::cout << std::flush;
 
-  if (!FLAGS_run_next_stage) {
-    return {};
-  }
-
-  // Ignore return code. We want to make sure there is no running instance,
-  // and stop_cvd will exit with an error code if there is already no running
-  // instance.
-  Command stop_cmd(target_dir + "/bin/stop_cvd");
-  stop_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                         Subprocess::StdIOChannel::kStdErr);
-  stop_cmd.Start().Wait();
-
-  // gflags::ParseCommandLineFlags will remove fetch_cvd's flags from this.
-  // This depends the remove_flags argument (3rd) is "true".
-
-  auto filelist_fd = SharedFD::MemfdCreate("files_list");
-  CF_EXPECT(filelist_fd->IsOpen(),
-            "MemfdCreate failed: " << filelist_fd->StrError());
-
-  for (const auto& file : config.get_cvd_files()) {
-    std::string file_entry = file.second.file_path + "\n";
-    auto chars_written =
-        filelist_fd->Write(file_entry.c_str(), file_entry.size());
-    if (chars_written != file_entry.size()) {
-      return CF_ERR("Unable to write entry to file list. Expected to write "
-                    << file_entry.size() << " but wrote " << chars_written
-                    << ". " << filelist_fd->StrError() << " ("
-                    << filelist_fd->GetErrno() << ")");
-    }
-  }
-  CF_EXPECT(filelist_fd->LSeek(0, SEEK_SET) == 0, filelist_fd->StrError());
-
-  CF_EXPECT(filelist_fd->UNMANAGED_Dup2(0) == 0,
-            "Unable to set file list to stdin. " << filelist_fd->StrError());
-
-  // TODO(b/139199114): Go into assemble_cvd when the interface is stable and
-  // implemented.
-
-  std::string next_stage = target_dir + "/bin/launch_cvd";
-  std::vector<const char*> next_stage_argv = {"launch_cvd"};
-  LOG(INFO) << "Running " << next_stage;
-  for (int i = 1; i < argc; i++) {
-    LOG(INFO) << argv[i];
-    next_stage_argv.push_back(argv[i]);
-  }
-  next_stage_argv.push_back(nullptr);
-  execv(next_stage.c_str(), const_cast<char* const*>(next_stage_argv.data()));
-  return CF_ERR("execv returned " << errno << ":" << strerror(errno));
+  return {};
 }
 
 }  // namespace cuttlefish
