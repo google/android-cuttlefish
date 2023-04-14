@@ -18,6 +18,8 @@
 #include <map>
 #include <mutex>
 
+#include <fruit/fruit.h>
+
 #include "common/libs/fs/epoll.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
@@ -30,7 +32,7 @@ using EpollCallback = std::function<Result<void>(EpollEvent)>;
 
 class EpollPool {
  public:
-  EpollPool();
+  INJECT(EpollPool());
 
   /**
    * The `callback` function will be invoked with an EpollEvent containing `fd`
@@ -51,5 +53,7 @@ class EpollPool {
   std::mutex callbacks_mutex_;
   std::map<SharedFD, EpollCallback> callbacks_;
 };
+
+fruit::Component<EpollPool> EpollLoopComponent();
 
 }  // namespace cuttlefish
