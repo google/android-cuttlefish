@@ -24,8 +24,10 @@
 #include <future>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -385,9 +387,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   {
     auto resolver =
         FLAGS_external_dns_resolver ? GetEntDnsResolve : NameResolver();
-    auto curl = HttpClient::CurlClient(resolver);
-    auto retrying_http_client = HttpClient::ServerErrorRetryClient(
-        *curl, 10, std::chrono::milliseconds(5000));
+    std::unique_ptr<HttpClient> curl = HttpClient::CurlClient(resolver);
+    std::unique_ptr<HttpClient> retrying_http_client =
+        HttpClient::ServerErrorRetryClient(*curl, 10,
+                                           std::chrono::milliseconds(5000));
     std::unique_ptr<CredentialSource> credential_source;
     if (auto crds = TryOpenServiceAccountFile(*curl, FLAGS_credential_source)) {
       credential_source = std::move(crds);
@@ -414,8 +417,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     } else {
       credential_source = FixedCredentialSource::make(FLAGS_credential_source);
     }
-    BuildApi build_api(*retrying_http_client, credential_source.get(),
-                       FLAGS_api_key);
+    BuildApi build_api(std::move(retrying_http_client), std::move(curl),
+                       std::move(credential_source), FLAGS_api_key);
 
     auto default_build = CF_EXPECT(ArgumentToBuild(
         build_api, FLAGS_default_build, DEFAULT_BUILD_TARGET, retry_period));
