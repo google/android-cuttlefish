@@ -21,11 +21,8 @@
 namespace cuttlefish {
 
 fruit::Component<BuildApi> BuildApiModule() {
-  return fruit::createComponent()
-      .registerProvider([]() { return HttpClient::CurlClient().release(); })
-      .registerProvider([](HttpClient& http_client) {
-        return new BuildApi(http_client, /* credential_source */ nullptr);
-      });
+  return fruit::createComponent().registerProvider(
+      []() { return new BuildApi(); });
 }
 
 }  // namespace cuttlefish
