@@ -25,35 +25,19 @@
 
 namespace cuttlefish {
 
-EpollPool::EpollPool(Epoll epoll) : epoll_(std::move(epoll)) {}
-
-EpollPool::EpollPool(EpollPool&& other) {
-  std::unique_lock own_lock(instance_mutex_, std::defer_lock);
-  std::unique_lock other_lock(other.instance_mutex_, std::defer_lock);
-  std::unique_lock own_cb_lock(callbacks_mutex_, std::defer_lock);
-  std::unique_lock other_cb_lock(other.callbacks_mutex_, std::defer_lock);
-  std::lock(own_lock, other_lock, own_cb_lock, other_cb_lock);
-  epoll_ = std::move(other.epoll_);
-  callbacks_ = std::move(other.callbacks_);
-}
-
-EpollPool& EpollPool::operator=(EpollPool&& other) {
-  std::unique_lock own_lock(instance_mutex_, std::defer_lock);
-  std::unique_lock other_lock(other.instance_mutex_, std::defer_lock);
-  std::unique_lock own_cb_lock(callbacks_mutex_, std::defer_lock);
-  std::unique_lock other_cb_lock(other.callbacks_mutex_, std::defer_lock);
-  std::lock(own_lock, other_lock, own_cb_lock, other_cb_lock);
-  epoll_ = std::move(other.epoll_);
-  callbacks_ = std::move(other.callbacks_);
-
-  return *this;
+EpollPool::EpollPool() {
+  auto epoll = Epoll::Create();
+  if (!epoll.ok()) {
+    LOG(ERROR) << epoll.error().Message();
+    LOG(DEBUG) << epoll.error().Trace();
+    abort();
+  }
+  epoll_ = std::move(*epoll);
 }
 
 Result<void> EpollPool::Register(SharedFD fd, uint32_t events,
                                  EpollCallback callback) {
-  std::shared_lock instance_lock(instance_mutex_, std::defer_lock);
-  std::unique_lock callbacks_lock(callbacks_mutex_, std::defer_lock);
-  std::lock(instance_lock, callbacks_lock);
+  std::lock_guard callbacks_lock(callbacks_mutex_);
   CF_EXPECT(!Contains(callbacks_, fd), "Already have a callback created");
   CF_EXPECT(epoll_.AddOrModify(fd, events | EPOLLONESHOT));
   callbacks_[fd] = std::move(callback);
@@ -67,7 +51,7 @@ Result<void> EpollPool::HandleEvent() {
   }
   EpollCallback callback;
   {
-    std::lock_guard lock(callbacks_mutex_);
+    std::lock_guard callbacks_lock(callbacks_mutex_);
     auto it = callbacks_.find(event->fd);
     CF_EXPECT(it != callbacks_.end(), "Could not find event callback");
     callback = std::move(it->second);
@@ -78,24 +62,14 @@ Result<void> EpollPool::HandleEvent() {
 }
 
 Result<void> EpollPool::Remove(SharedFD fd) {
-  std::shared_lock instance_lock(instance_mutex_, std::defer_lock);
-  std::unique_lock callbacks_lock(callbacks_mutex_, std::defer_lock);
-  std::lock(instance_lock, callbacks_lock);
+  std::lock_guard callbacks_lock(callbacks_mutex_);
   CF_EXPECT(epoll_.Delete(fd), "No callback registered with epoll");
   callbacks_.erase(fd);
   return {};
 }
 
 fruit::Component<EpollPool> EpollLoopComponent() {
-  return fruit::createComponent().registerProvider([]() -> EpollPool {
-    auto epoll = Epoll::Create();
-    if (epoll.ok()) {
-      return EpollPool(std::move(*epoll));
-    }
-    LOG(ERROR) << epoll.error().Message();
-    LOG(DEBUG) << epoll.error().Trace();
-    abort();
-  });
+  return fruit::createComponent();
 }
 
 }  // namespace cuttlefish
