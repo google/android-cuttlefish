@@ -95,10 +95,12 @@ Result<std::unordered_map<std::string, FlagCollection::FlagValuePair>>
 FlagCollection::FilterFlags(cvd_common::Args& args) const {
   std::unordered_map<std::string, FlagCollection::FlagValuePair> output;
   for (const auto& [name, flag_proxy] : name_flag_map_) {
-    output.emplace(
-        name,
-        FlagValuePair{.flag = flag_proxy,
-                      .value_opt = CF_EXPECT(flag_proxy.FilterFlag(args))});
+    auto value_opt = CF_EXPECT(flag_proxy.FilterFlag(args));
+    if (!value_opt) {
+      continue;
+    }
+    output.emplace(name,
+                   FlagValuePair{.flag = flag_proxy, .value = *value_opt});
   }
   return output;
 }
@@ -107,38 +109,35 @@ Result<std::unordered_map<std::string, FlagCollection::FlagValuePair>>
 FlagCollection::CalculateFlags(cvd_common::Args& args) const {
   auto output = CF_EXPECT(FilterFlags(args));
   for (const auto& [name, flag_proxy] : name_flag_map_) {
-    if (!Contains(output, name)) {
-      LOG(ERROR) << "Error in FilterFlags: " << name
-                 << " must exist but does not";
+    if (Contains(output, name)) {
+      // the flag was given with a value, there is no need for update it
       continue;
     }
-    auto value_opt = output.at(name).value_opt;
-    auto flag = output.at(name).flag;
-    if (!value_opt && CF_EXPECT(flag.HasDefaultValue())) {
-      output.erase(name);
-      switch (flag_proxy.GetType()) {
-        case CvdFlagProxy::FlagType::kBool:
-          output.emplace(
-              name,
-              FlagValuePair{.flag = flag,
-                            .value_opt = CF_EXPECT(flag.DefaultValue<bool>())});
-          break;
-        case CvdFlagProxy::FlagType::kInt32:
-          output.emplace(name,
-                         FlagValuePair{.flag = flag,
-                                       .value_opt = CF_EXPECT(
-                                           flag.DefaultValue<std::int32_t>())});
-          break;
-        case CvdFlagProxy::FlagType::kString:
-          output.emplace(name,
-                         FlagValuePair{.flag = flag,
-                                       .value_opt = CF_EXPECT(
-                                           flag.DefaultValue<std::string>())});
-          break;
-        default:
-          return CF_ERR("Unsupported FlagType in "
-                        << "--" << name);
-      }
+    if (!CF_EXPECT(flag_proxy.HasDefaultValue())) {
+      continue;
+    }
+    switch (flag_proxy.GetType()) {
+      case CvdFlagProxy::FlagType::kBool:
+        output.emplace(
+            name,
+            FlagValuePair{.flag = flag_proxy,
+                          .value = CF_EXPECT(flag_proxy.DefaultValue<bool>())});
+        break;
+      case CvdFlagProxy::FlagType::kInt32:
+        output.emplace(
+            name, FlagValuePair{.flag = flag_proxy,
+                                .value = CF_EXPECT(
+                                    flag_proxy.DefaultValue<std::int32_t>())});
+        break;
+      case CvdFlagProxy::FlagType::kString:
+        output.emplace(
+            name, FlagValuePair{.flag = flag_proxy,
+                                .value = CF_EXPECT(
+                                    flag_proxy.DefaultValue<std::string>())});
+        break;
+      default:
+        return CF_ERR("Unsupported FlagType in "
+                      << "--" << name);
     }
   }
   return output;
