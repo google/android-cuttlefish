@@ -223,6 +223,10 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 		log.Printf("failed to launch cvd with error: %v", err)
 		return
 	}
+	// TODO: Remove once `acloud CLI` gets deprecated.
+	if cvd.Name == "cvd-1" {
+		runAcloudSetup(m.paths.RuntimesRootDir)
+	}
 	result = OperationResult{Value: cvd}
 }
 
@@ -851,4 +855,19 @@ func downloadArtifactToFile(buildAPI BuildAPI, filename, artifactName, buildID, 
 	}()
 	downloadErr = buildAPI.DownloadArtifact(artifactName, buildID, target, f)
 	return downloadErr
+}
+
+// Acloud only works with the first instance: cvd-1
+func runAcloudSetup(runtimesRootDir string) {
+	const acloudUser = "vsoc-01"
+	// Creates symlink for runtime directory for `acloud pull`
+	target := runtimesRootDir + "/cvd-1/cuttlefish_runtime"
+	cmd := exec.Command("sudo", "-u", acloudUser, "ln", "-s", target, "/home/"+acloudUser)
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+	err := cmd.Run()
+	if err != nil {
+		log.Println("runAcloudSetup failed with error: " + b.String())
+	}
 }

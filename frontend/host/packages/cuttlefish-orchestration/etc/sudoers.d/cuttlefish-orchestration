@@ -1,2 +1,6 @@
 # Allow `_cutf-operator` to run cvd commands as `_cvd-executor` using sudo without password.
 _cutf-operator ALL=(_cvd-executor) NOPASSWD:ALL
+# Allow `_cutf-operator` to run cvd commands as `vsoc-01` using sudo without password.
+#   Required for supporting `acloud CLI` backwards compatibility
+#   TODO: Remove once acloud is deprecated.
+_cutf-operator ALL=(vsoc-01) NOPASSWD:ALL
