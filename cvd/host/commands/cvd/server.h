@@ -93,4 +93,7 @@ Result<CvdServerHandler*> RequestHandler(
 
 Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client);
 
+// Read all contents from the file
+Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd);
+
 }  // namespace cuttlefish
