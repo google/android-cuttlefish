@@ -469,4 +469,17 @@ Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client) {
   return 0;
 }
 
+Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd) {
+  const auto n_message_size = mem_fd->LSeek(0, SEEK_END);
+  CF_EXPECT_NE(n_message_size, -1, "LSeek on the memory file failed.");
+  std::vector<char> buffer(n_message_size);
+  CF_EXPECT_EQ(mem_fd->LSeek(0, SEEK_SET), 0, mem_fd->StrError());
+  auto n_read = ReadExact(mem_fd, buffer.data(), n_message_size);
+  CF_EXPECT(n_read == n_message_size,
+            "Expected to read " << n_message_size << " bytes but actually read "
+                                << n_read << " bytes.");
+  std::string message(buffer.begin(), buffer.end());
+  return message;
+}
+
 }  // namespace cuttlefish
