@@ -24,6 +24,7 @@
 #include <variant>
 #include <vector>
 
+#include "common/libs/utils/result.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
 
@@ -86,15 +87,12 @@ class BuildApi {
   BuildApi();
   BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<CredentialSource>);
   BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<HttpClient>,
-           std::unique_ptr<CredentialSource>, std::string api_key);
+           std::unique_ptr<CredentialSource>, std::string api_key,
+           const std::chrono::seconds retry_period);
   ~BuildApi() = default;
 
   Result<std::string> LatestBuildId(const std::string& branch,
                                     const std::string& target);
-
-  Result<std::string> BuildStatus(const DeviceBuild&);
-
-  Result<std::string> ProductName(const DeviceBuild&);
 
   Result<std::vector<Artifact>> Artifacts(const DeviceBuild& build,
                                           const std::string& artifact_filename);
@@ -135,17 +133,21 @@ class BuildApi {
     return {};
   }
 
+  Result<Build> ArgumentToBuild(const std::string& arg,
+                                const std::string& default_build_target);
+
  private:
   Result<std::vector<std::string>> Headers();
+
+  Result<std::string> BuildStatus(const DeviceBuild&);
+
+  Result<std::string> ProductName(const DeviceBuild&);
 
   std::unique_ptr<HttpClient> http_client;
   std::unique_ptr<HttpClient> inner_http_client;
   std::unique_ptr<CredentialSource> credential_source;
   std::string api_key_;
+  std::chrono::seconds retry_period_;
 };
-
-Result<Build> ArgumentToBuild(BuildApi& api, const std::string& arg,
-                              const std::string& default_build_target,
-                              const std::chrono::seconds& retry_period);
 
 }  // namespace cuttlefish

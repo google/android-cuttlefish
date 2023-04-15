@@ -85,16 +85,17 @@ BuildApi::BuildApi() : BuildApi(std::move(HttpClient::CurlClient()), nullptr) {}
 BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
                    std::unique_ptr<CredentialSource> credential_source)
     : BuildApi(std::move(http_client), nullptr, std::move(credential_source),
-               "") {}
+               "", std::chrono::seconds(0)) {}
 
 BuildApi::BuildApi(std::unique_ptr<HttpClient> http_client,
                    std::unique_ptr<HttpClient> inner_http_client,
                    std::unique_ptr<CredentialSource> credential_source,
-                   std::string api_key)
+                   std::string api_key, const std::chrono::seconds retry_period)
     : http_client(std::move(http_client)),
       inner_http_client(std::move(inner_http_client)),
       credential_source(std::move(credential_source)),
-      api_key_(std::move(api_key)) {}
+      api_key_(std::move(api_key)),
+      retry_period_(retry_period) {}
 
 Result<std::vector<std::string>> BuildApi::Headers() {
   std::vector<std::string> headers;
@@ -318,9 +319,8 @@ Result<void> BuildApi::ArtifactToFile(const DirectoryBuild& build,
                                              << build << "\"");
 }
 
-Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
-                              const std::string& default_build_target,
-                              const std::chrono::seconds& retry_period) {
+Result<Build> BuildApi::ArgumentToBuild(
+    const std::string& arg, const std::string& default_build_target) {
   if (arg.find(':') != std::string::npos) {
     std::vector<std::string> dirs = android::base::Split(arg, ":");
     std::string id = dirs.back();
@@ -339,7 +339,7 @@ Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
   std::string branch_or_id =
       slash_pos == std::string::npos ? arg : arg.substr(0, slash_pos);
   std::string branch_latest_build_id =
-      CF_EXPECT(build_api.LatestBuildId(branch_or_id, build_target));
+      CF_EXPECT(LatestBuildId(branch_or_id, build_target));
   std::string build_id = branch_or_id;
   if (branch_latest_build_id != "") {
     LOG(INFO) << "The latest good build on branch \"" << branch_or_id
@@ -348,19 +348,19 @@ Result<Build> ArgumentToBuild(BuildApi& build_api, const std::string& arg,
     build_id = branch_latest_build_id;
   }
   DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
-  std::string status = CF_EXPECT(build_api.BuildStatus(proposed_build));
+  std::string status = CF_EXPECT(BuildStatus(proposed_build));
   CF_EXPECT(status != "",
             proposed_build << " is not a valid branch or build id.");
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
-  while (retry_period != std::chrono::seconds::zero() &&
+  while (retry_period_ != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
     LOG(INFO) << "Status is \"" << status << "\". Waiting for "
-              << retry_period.count() << " seconds.";
-    std::this_thread::sleep_for(retry_period);
-    status = CF_EXPECT(build_api.BuildStatus(proposed_build));
+              << retry_period_.count() << " seconds.";
+    std::this_thread::sleep_for(retry_period_);
+    status = CF_EXPECT(BuildStatus(proposed_build));
   }
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
-  proposed_build.product = CF_EXPECT(build_api.ProductName(proposed_build));
+  proposed_build.product = CF_EXPECT(ProductName(proposed_build));
   return proposed_build;
 }
 
