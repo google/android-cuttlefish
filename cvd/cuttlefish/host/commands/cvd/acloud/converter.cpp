@@ -184,12 +184,17 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
             }));
 
     bool local_image;
+    std::optional<std::string> local_image_path;
     flags.emplace_back(
         Flag()
             .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--local-image"})
-            .Setter([&local_image](const FlagMatch& m) {
+            .Setter([&local_image,
+                     &local_image_path](const FlagMatch& m) {
               local_image = true;
-              return m.value == "";
+              if (m.value != "") {
+                local_image_path = m.value;
+              }
+              return true;
             }));
 
     std::optional<std::string> build_id;
@@ -651,6 +656,14 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
 
     auto& start_env = *start_command.mutable_env();
     if (local_image) {
+      if (local_image_path) {
+        std::string local_image_path_str = local_image_path.value();
+        // Python acloud source: local_image_local_instance.py;l=81
+        // this acloud flag is equal to launch_cvd flag system_image_dir
+        start_command.add_args("-system_image_dir");
+        start_command.add_args(local_image_path_str);
+      }
+
       start_env[kAndroidHostOut] = host_artifacts_path->second;
 
       auto product_out = request_command.env().find(kAndroidProductOut);
