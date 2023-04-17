@@ -18,8 +18,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <netinet/in.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <poll.h>
 #include <sys/file.h>
 #include <sys/mman.h>
@@ -30,8 +30,10 @@
 #include <cstddef>
 
 #include <algorithm>
+#include <sstream>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -911,6 +913,17 @@ bool FileInstance::IsATTY() {
   int rval = isatty(fd_);
   errno_ = errno;
   return rval;
+}
+
+Result<std::string> FileInstance::ProcFdLinkTarget() const {
+  std::stringstream output_composer;
+  output_composer << "/proc/" << getpid() << "/fd/" << fd_;
+  const std::string mem_fd_link = output_composer.str();
+  std::string mem_fd_target;
+  CF_EXPECT(
+      android::base::Readlink(mem_fd_link, &mem_fd_target),
+      "Getting link for the memory file \"" << mem_fd_link << "\" failed");
+  return mem_fd_target;
 }
 
 FileInstance::FileInstance(int fd, int in_errno)

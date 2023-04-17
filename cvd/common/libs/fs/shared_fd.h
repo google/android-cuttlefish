@@ -342,6 +342,10 @@ class FileInstance {
   int EventfdWrite(eventfd_t value);
   bool IsATTY();
 
+  // Returns the target of "/proc/getpid()/fd/" + std::to_string(fd_)
+  // if appropriate
+  Result<std::string> ProcFdLinkTarget() const;
+
  private:
   FileInstance(int fd, int in_errno);
   FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
@@ -361,7 +365,7 @@ struct PollSharedFd {
 /* Methods that need both a fully defined SharedFD and a fully defined
    FileInstance. */
 
-inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
+SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cuttlefish
 

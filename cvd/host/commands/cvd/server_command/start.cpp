@@ -678,7 +678,6 @@ Result<cvd::Response> CvdStartCommandHandler::Handle(
     LOG(ERROR) << "AcloudCompatActions() failed"
                << " but continue as they are minor errors.";
   }
-  LOG(ERROR) << "Daemon mode is " << (is_daemon ? "set" : "unset");
   return is_daemon ? HandleDaemon(group_creation_info, uid)
                    : HandleNoDaemon(group_creation_info, uid);
 }
