@@ -88,12 +88,6 @@ class CvdDisplayCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<void> VerifyPrecondition(const RequestWithStdio& request) const {
-    auto verification = cuttlefish::VerifyPrecondition(request);
-    CF_EXPECT(verification.is_ok == true, verification.error_message);
-    return {};
-  }
-
   Result<Command> HelpCommand(const RequestWithStdio& request, const uid_t uid,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
