@@ -57,7 +57,6 @@
 #include "host/commands/cvd/server_command/load_configs.h"
 #include "host/commands/cvd/server_command/operation_to_bins_map.h"
 #include "host/commands/cvd/server_command/reset.h"
-#include "host/commands/cvd/server_command/restart_device.h"
 #include "host/commands/cvd/server_command/start.h"
 #include "host/commands/cvd/server_command/subcmd.h"
 #include "host/commands/cvd/server_constants.h"
@@ -124,7 +123,6 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CvdHelpComponent)
       .install(CvdResetComponent)
       .install(CvdRestartComponent)
-      .install(CvdRestartDeviceComponent)
       .install(cvdShutdownComponent)
       .install(CvdStartCommandComponent)
       .install(cvdVersionComponent)
