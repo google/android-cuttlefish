@@ -25,6 +25,7 @@
 
 #include "cvd_server.pb.h"
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/types.h"
@@ -40,11 +41,7 @@ CommandInvocation ParseInvocation(const cvd::Request& request);
 
 cuttlefish::cvd::Response ResponseFromSiginfo(siginfo_t infop);
 
-struct PreconditionVerification {
-  bool is_ok;
-  std::string error_message;
-};
-PreconditionVerification VerifyPrecondition(const RequestWithStdio& request);
+Result<void> VerifyPrecondition(const RequestWithStdio& request);
 
 struct ConstructCommandParam {
   const std::string& bin_path;
