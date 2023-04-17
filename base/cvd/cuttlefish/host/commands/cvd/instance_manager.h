@@ -108,6 +108,8 @@ class InstanceManager {
                                        const Query& query) const;
   Result<LocalInstanceGroup> FindGroup(const uid_t uid,
                                        const Queries& queries) const;
+  Result<Json::Value> Serialize(const uid_t uid);
+  Result<void> LoadFromJson(const uid_t uid, const Json::Value&);
 
  private:
   Result<cvd::Status> CvdFleetImpl(const uid_t uid, const SharedFD& out,

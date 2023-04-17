@@ -74,6 +74,21 @@ selector::InstanceDatabase& InstanceManager::GetInstanceDB(const uid_t uid) {
   return instance_dbs_[uid];
 }
 
+Result<Json::Value> InstanceManager::Serialize(const uid_t uid) {
+  std::lock_guard lock(instance_db_mutex_);
+  const auto& db = GetInstanceDB(uid);
+  return db.Serialize();
+}
+
+Result<void> InstanceManager::LoadFromJson(const uid_t uid,
+                                           const Json::Value& db_json) {
+  std::lock_guard lock(instance_db_mutex_);
+  CF_EXPECT(!Contains(instance_dbs_, uid));
+  auto& db = GetInstanceDB(uid);
+  CF_EXPECT(db.LoadFromJson(db_json));
+  return {};
+}
+
 Result<InstanceManager::GroupCreationInfo> InstanceManager::Analyze(
     const std::string& sub_cmd, const CreationAnalyzerParam& param,
     const ucred& credential) {
