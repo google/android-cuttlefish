@@ -367,8 +367,17 @@ static Result<RequestWithStdio> ConvertDirPathToAbsolute(
   return new_request;
 }
 
+static Result<void> VerifyUser(const RequestWithStdio& request) {
+  CF_EXPECT(request.Credentials(),
+            "ucred is not available while it is necessary.");
+  const uid_t client_uid = request.Credentials()->uid;
+  CF_EXPECT_EQ(client_uid, getuid(), "Cvd server process is one per user.");
+  return {};
+}
+
 Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
                                                SharedFD client) {
+  CF_EXPECT(VerifyUser(orig_request));
   auto request = CF_EXPECT(ConvertDirPathToAbsolute(orig_request));
   fruit::Injector<> injector(RequestComponent, this);
 
