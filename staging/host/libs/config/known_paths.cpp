@@ -60,11 +60,14 @@ std::string OpenwrtControlServerBinary() {
   return HostBinaryPath("openwrt_control_server");
 }
 
+std::string PicaBinary() { return HostBinaryPath("pica"); }
+
 std::string ProcessRestarterBinary() {
   return HostBinaryPath("process_restarter");
 }
 
 std::string RootCanalBinary() { return HostBinaryPath("root-canal"); }
+
 
 std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
 
