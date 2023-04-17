@@ -34,4 +34,8 @@ public:
   std::string ExtractToMemory(const std::string& path);
 };
 
+std::vector<std::string> ExtractImages(const std::string& archive_file,
+                                       const std::string& target_directory,
+                                       const std::vector<std::string>& images);
+
 } // namespace cuttlefish
