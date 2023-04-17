@@ -89,6 +89,7 @@ class CvdEnvCommandHandler : public CvdServerHandler {
     CF_EXPECT(subprocess_waiter_.Interrupt());
     return {};
   }
+
   cvd_common::Args CmdList() const override {
     return cvd_common::Args(cvd_env_operations_.begin(),
                             cvd_env_operations_.end());
