@@ -95,12 +95,6 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<void> VerifyPrecondition(const RequestWithStdio& request) const {
-    auto verification = cuttlefish::VerifyPrecondition(request);
-    CF_EXPECT(verification.is_ok == true, verification.error_message);
-    return {};
-  }
-
   Result<Command> HelpCommand(const RequestWithStdio& request,
                               const std::string& crosvm_op,
                               const cvd_common::Args& subcmd_args,
