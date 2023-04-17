@@ -28,11 +28,36 @@
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
+namespace {
+
+Result<std::vector<std::string>> ExtractHelper(
+    std::vector<std::string>& files, const std::string& archive_filepath,
+    const std::string& target_directory, const bool keep_archive) {
+  CF_EXPECT(!files.empty(), "No files extracted from " << archive_filepath);
+
+  auto it = files.begin();
+  while (it != files.end()) {
+    if (*it == "" || android::base::EndsWith(*it, "/")) {
+      it = files.erase(it);
+    } else {
+      *it = target_directory + "/" + *it;
+      it++;
+    }
+  }
+
+  if (!keep_archive && unlink(archive_filepath.data()) != 0) {
+    LOG(ERROR) << "Could not delete " << archive_filepath;
+    files.push_back(archive_filepath);
+  }
+
+  return {files};
+}
+
+}  // namespace
 
 Archive::Archive(const std::string& file) : file_(file) {}
 
-Archive::~Archive() {
-}
+Archive::~Archive() {}
 
 std::vector<std::string> Archive::Contents() {
   Command bsdtar_cmd("/usr/bin/bsdtar");
@@ -93,37 +118,37 @@ std::string Archive::ExtractToMemory(const std::string& path) {
   return stdout_str;
 }
 
-std::vector<std::string> ExtractImages(const std::string& archive_file,
-                                       const std::string& target_directory,
-                                       const std::vector<std::string>& images,
-                                       const bool keep_archives) {
-  Archive archive(archive_file);
-  bool extracted = images.size() > 0
-                       ? archive.ExtractFiles(images, target_directory)
-                       : archive.ExtractAll(target_directory);
-  if (!extracted) {
-    LOG(ERROR) << "Unable to extract images.";
-    return {};
-  }
+Result<std::vector<std::string>> ExtractImages(
+    const std::string& archive_filepath, const std::string& target_directory,
+    const std::vector<std::string>& images, const bool keep_archive) {
+  Archive archive(archive_filepath);
+  CF_EXPECT(archive.ExtractFiles(images, target_directory),
+            "Could not extract images from \"" << archive_filepath << "\" to \""
+                                               << target_directory << "\"");
 
-  std::vector<std::string> files =
-      images.size() > 0 ? std::move(images) : archive.Contents();
-  auto it = files.begin();
-  while (it != files.end()) {
-    if (*it == "" || android::base::EndsWith(*it, "/")) {
-      it = files.erase(it);
-    } else {
-      *it = target_directory + "/" + *it;
-      it++;
-    }
-  }
+  std::vector<std::string> files = images;
+  return ExtractHelper(files, archive_filepath, target_directory, keep_archive);
+}
 
-  if (!keep_archives && unlink(archive_file.data()) != 0) {
-    LOG(ERROR) << "Could not delete " << archive_file;
-    files.push_back(archive_file);
-  }
+Result<std::string> ExtractImage(const std::string& archive_filepath,
+                                 const std::string& target_directory,
+                                 const std::string& image,
+                                 const bool keep_archive) {
+  std::vector<std::string> result = CF_EXPECT(
+      ExtractImages(archive_filepath, target_directory, {image}, keep_archive));
+  return {result.front()};
+}
 
-  return files;
+Result<std::vector<std::string>> ExtractArchiveContents(
+    const std::string& archive_filepath, const std::string& target_directory,
+    const bool keep_archive) {
+  Archive archive(archive_filepath);
+  CF_EXPECT(archive.ExtractAll(target_directory),
+            "Could not extract \"" << archive_filepath << "\" to \""
+                                   << target_directory << "\"");
+
+  std::vector<std::string> files = archive.Contents();
+  return ExtractHelper(files, archive_filepath, target_directory, keep_archive);
 }
 
 } // namespace cuttlefish
