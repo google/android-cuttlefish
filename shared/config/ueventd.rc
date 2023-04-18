@@ -35,8 +35,8 @@
 # confirmation UI
 /dev/hvc8 0666 system system
 
-# metrics_helper
-/dev/hvc9 0666 system system
+# uwb
+/dev/hvc9 0660 uwb uwb
 
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system
