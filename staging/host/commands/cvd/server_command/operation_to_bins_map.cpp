@@ -32,6 +32,10 @@ fruit::Component<OperationToBinsMap> OperationToBinsMapComponent() {
             std::vector<std::string>{"cvd_internal_start", "launch_cvd"};
         op_to_possible_bins_map["status"] =
             std::vector<std::string>{"cvd_internal_status", "cvd_status"};
+        op_to_possible_bins_map["restart"] =
+            std::vector<std::string>{"restart_cvd"};
+        op_to_possible_bins_map["powerwash"] =
+            std::vector<std::string>{"powerwash_cvd"};
         return op_to_possible_bins_map;
       });
 }

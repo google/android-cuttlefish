@@ -19,11 +19,14 @@
 #include <fruit/fruit.h>
 
 #include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/host_tool_target_manager.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-CvdRestartDeviceComponent();
+// restart, powerwash
+fruit::Component<
+    fruit::Required<HostToolTargetManager, InstanceManager, SubprocessWaiter>>
+CvdDevicePowerComponent();
 
 }  // namespace cuttlefish
