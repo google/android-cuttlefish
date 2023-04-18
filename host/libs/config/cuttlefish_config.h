@@ -554,6 +554,8 @@ class CuttlefishConfig {
     std::string vbmeta_system_image() const;
     std::string vbmeta_vendor_dlkm_image() const;
     std::string new_vbmeta_vendor_dlkm_image() const;
+    std::string vbmeta_system_dlkm_image() const;
+    std::string new_vbmeta_system_dlkm_image() const;
 
     // otheros artifacts
     std::string otheros_esp_image() const;
@@ -728,6 +730,10 @@ class CuttlefishConfig {
         const std::string& vbmeta_vendor_dlkm_image);
     void set_new_vbmeta_vendor_dlkm_image(
         const std::string& vbmeta_vendor_dlkm_image);
+    void set_vbmeta_system_dlkm_image(
+        const std::string& vbmeta_system_dlkm_image);
+    void set_new_vbmeta_system_dlkm_image(
+        const std::string& vbmeta_system_dlkm_image);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
