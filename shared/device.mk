@@ -662,6 +662,9 @@ endif
 # UWB HAL
 PRODUCT_PACKAGES += \
     android.hardware.uwb-service
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/guest/hals/uwb/uwb-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/uwb-service.rc
+
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
