@@ -57,6 +57,8 @@ Commands:
   fleet                  View the current fleet status.
   kill-server            Kill the cvd_server background process.
   server-kill            Same as kill-server
+  powerwash              Delivers powerwash command to the selected device
+  restart                Restart the device without reinitializing the disks
   restart-server         Restart the cvd_server background process.
   status                 Check and print the state of a running instance.
   host_bugreport         Capture a host bugreport, including configs, logs, and
