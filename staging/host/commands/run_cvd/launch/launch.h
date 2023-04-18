@@ -97,9 +97,9 @@ TombstoneReceiverComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 VehicleHalServerComponent();
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 LogTeeCreator, GrpcSocketCreator>>
 WmediumdServerComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
