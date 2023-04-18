@@ -68,7 +68,6 @@ cc_binary {
         "launch/secure_env.cpp",
         "launch/streamer.cpp",
         "launch/tombstone_receiver.cpp",
-        "launch/vehicle_hal_server.cpp",
         "launch/wmediumd_server.cpp",
         "launch/netsim_server.cpp",
         "main.cc",
