@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -859,6 +860,10 @@ func downloadArtifactToFile(buildAPI BuildAPI, filename, artifactName, buildID, 
 
 // Acloud only works with the first instance: cvd-1
 func runAcloudSetup(runtimesRootDir string) {
+	// Do not run this code in unit tests.
+	if flag.Lookup("test.v") != nil {
+		return
+	}
 	const acloudUser = "vsoc-01"
 	// Creates symlink for runtime directory for `acloud pull`
 	target := runtimesRootDir + "/cvd-1/cuttlefish_runtime"
