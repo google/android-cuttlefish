@@ -94,6 +94,7 @@ class CvdHelpHandler : public CvdServerHandler {
 
     auto [subcmd, subcmd_args] = ParseInvocation(request.Message());
     const auto supported_subcmd_list = executor_.CmdList();
+
     /*
      * cvd help, cvd help invalid_token, cvd help help
      */
@@ -104,10 +105,7 @@ class CvdHelpHandler : public CvdServerHandler {
       return response;
     }
 
-    cvd::Request modified_proto = request.Message();
-    auto& args = *modified_proto.mutable_command_request()->mutable_args();
-    args.erase(args.begin());
-    args.Add("--help");
+    cvd::Request modified_proto = HelpSubcommandToFlag(request);
 
     RequestWithStdio inner_cmd(request.Client(), modified_proto,
                                request.FileDescriptors(),
@@ -118,6 +116,7 @@ class CvdHelpHandler : public CvdServerHandler {
 
     return response;
   }
+
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interruptible_);
     interrupted_ = true;
@@ -128,10 +127,34 @@ class CvdHelpHandler : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {"help"}; }
 
  private:
+  cvd::Request HelpSubcommandToFlag(const RequestWithStdio& request);
+
   std::mutex interruptible_;
   bool interrupted_ = false;
   CommandSequenceExecutor& executor_;
 };
+
+cvd::Request CvdHelpHandler::HelpSubcommandToFlag(
+    const RequestWithStdio& request) {
+  cvd::Request modified_proto = request.Message();
+  auto all_args =
+      cvd_common::ConvertToArgs(modified_proto.command_request().args());
+  auto& args = *modified_proto.mutable_command_request()->mutable_args();
+  args.Clear();
+  // there must be one or more "help" in all_args
+  // delete the first "help"
+  bool found_help = false;
+  for (const auto& cmd_arg : all_args) {
+    if (cmd_arg != "help" || found_help) {
+      args.Add(cmd_arg.c_str());
+      continue;
+    }
+    // skip first help
+    found_help = true;
+  }
+  args.Add("--help");
+  return modified_proto;
+}
 
 fruit::Component<fruit::Required<CommandSequenceExecutor>> CvdHelpComponent() {
   return fruit::createComponent()
