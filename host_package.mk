@@ -1,5 +1,5 @@
 cvd_host_packages := $(HOST_OUT)/cvd-host_package
-ifeq ($(HOST_CROSS_OS)_$(HOST_CROSS_ARCH),linux_bionic_arm64)
+ifeq ($(HOST_CROSS_OS), linux_musl)
   cvd_host_packages += $(OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)/cvd-host_package
 endif
 

@@ -317,15 +317,12 @@ cvd_host_package_customization {
         },
     },
     target: {
-        linux_bionic: {
+        linux_musl: {
             multilib: {
                 common: {
                     deps: ["tzdata_host"],
                 },
             },
-        },
-        linux_bionic_x86_64: {
-            enabled: false,
         },
         darwin: {
             enabled: false,
