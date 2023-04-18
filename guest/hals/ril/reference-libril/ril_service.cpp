@@ -16,6 +16,7 @@
 
 #define LOG_TAG "RILC"
 
+#include "RefRadioSim.h"
 #include "RefImsMedia.h"
 #include "RefRadioIms.h"
 #include "RefRadioModem.h"
@@ -13444,6 +13445,7 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         publishRadioHal<cf::ril::RefImsMedia>(context, radioHidl, callbackMgr,
                                               std::string("default"));
         publishRadioHal<cf::ril::RefRadioModem>(context, radioHidl, callbackMgr, slot);
+        publishRadioHal<cf::ril::RefRadioSim>(context, radioHidl, callbackMgr, slot);
         RLOGD("registerService: OemHook is enabled = %s", kOemHookEnabled ? "true" : "false");
         if (kOemHookEnabled) {
             oemHookService[i] = new OemHookImpl;
