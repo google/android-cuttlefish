@@ -84,6 +84,12 @@ DEFINE_string(
     "to "
     "be vbmeta_vendor_dlkm.img in the directory specified by "
     "-system_image_dir.");
+DEFINE_string(
+    vbmeta_system_dlkm_image, CF_DEFAULTS_VBMETA_SYSTEM_DLKM_IMAGE,
+    "Location of cuttlefish vbmeta_system_dlkm image. If empty it is assumed "
+    "to "
+    "be vbmeta_system_dlkm.img in the directory specified by "
+    "-system_image_dir.");
 
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");
@@ -138,6 +144,7 @@ Result<void> ResolveInstanceFiles() {
   std::string default_vbmeta_image = "";
   std::string default_vbmeta_system_image = "";
   std::string default_vbmeta_vendor_dlkm_image = "";
+  std::string default_vbmeta_system_dlkm_image = "";
 
   std::string cur_system_image_dir;
   std::string comma_str = "";
@@ -169,6 +176,8 @@ Result<void> ResolveInstanceFiles() {
     default_vbmeta_system_image += comma_str + cur_system_image_dir + "/vbmeta_system.img";
     default_vbmeta_vendor_dlkm_image +=
         comma_str + cur_system_image_dir + "/vbmeta_vendor_dlkm.img";
+    default_vbmeta_system_dlkm_image +=
+        comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
   }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -195,6 +204,9 @@ Result<void> ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vbmeta_vendor_dlkm_image",
                                default_vbmeta_vendor_dlkm_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("vbmeta_system_dlkm_image",
+                               default_vbmeta_system_dlkm_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return {};
@@ -308,6 +320,22 @@ std::vector<ImagePartition> android_composite_disk_config(
     partitions.push_back(ImagePartition{
         .label = "vbmeta_vendor_dlkm_b",
         .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
+        .read_only = FLAGS_use_overlay,
+    });
+  }
+  auto vbmeta_system_dlkm_img = instance.new_vbmeta_system_dlkm_image();
+  if (!FileExists(vbmeta_system_dlkm_img)) {
+    vbmeta_system_dlkm_img = instance.vbmeta_system_dlkm_image();
+  }
+  if (FileExists(vbmeta_system_dlkm_img)) {
+    partitions.push_back(ImagePartition{
+        .label = "vbmeta_system_dlkm_a",
+        .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
+        .read_only = FLAGS_use_overlay,
+    });
+    partitions.push_back(ImagePartition{
+        .label = "vbmeta_system_dlkm_b",
+        .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
         .read_only = FLAGS_use_overlay,
     });
   }
@@ -1123,7 +1151,7 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
     // provide a partition which matches this or the read will fail
     for (const auto& vbmeta_image :
          {instance_.vbmeta_image(), instance_.vbmeta_system_image(),
-          instance_.vbmeta_vendor_dlkm_image()}) {
+          instance_.vbmeta_vendor_dlkm_image(), instance_.vbmeta_system_dlkm_image()}) {
       // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
       // not exist
       if (FileExists(vbmeta_image) && FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
@@ -1221,6 +1249,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_vbmeta_system_image, ",");
   auto vbmeta_vendor_dlkm_image =
       android::base::Split(FLAGS_vbmeta_vendor_dlkm_image, ",");
+  auto vbmeta_system_dlkm_image =
+      android::base::Split(FLAGS_vbmeta_system_dlkm_image, ",");
 
   std::vector<std::string> linux_kernel_path =
       android::base::Split(FLAGS_linux_kernel_path, ",");
@@ -1308,11 +1338,17 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     } else {
       instance.set_vbmeta_system_image(vbmeta_system_image[instance_index]);
     }
-    if (instance_index >= vbmeta_system_image.size()) {
+    if (instance_index >= vbmeta_vendor_dlkm_image.size()) {
       instance.set_vbmeta_vendor_dlkm_image(vbmeta_vendor_dlkm_image[0]);
     } else {
       instance.set_vbmeta_vendor_dlkm_image(
           vbmeta_vendor_dlkm_image[instance_index]);
+    }
+    if (instance_index >= vbmeta_system_dlkm_image.size()) {
+      instance.set_vbmeta_system_dlkm_image(vbmeta_system_dlkm_image[0]);
+    } else {
+      instance.set_vbmeta_system_dlkm_image(
+          vbmeta_system_dlkm_image[instance_index]);
     }
     if (instance_index >= super_image.size()) {
       cur_super_image = super_image[0];
