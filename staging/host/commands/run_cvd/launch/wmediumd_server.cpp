@@ -23,6 +23,7 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
+#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -35,8 +36,11 @@ class WmediumdServer : public CommandSource {
  public:
   INJECT(WmediumdServer(const CuttlefishConfig& config,
                         const CuttlefishConfig::InstanceSpecific& instance,
-                        LogTeeCreator& log_tee))
-      : config_(config), instance_(instance), log_tee_(log_tee) {}
+                        LogTeeCreator& log_tee, GrpcSocketCreator& grpc_socket))
+      : config_(config),
+        instance_(instance),
+        log_tee_(log_tee),
+        grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
@@ -44,6 +48,8 @@ class WmediumdServer : public CommandSource {
     cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
     cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
     cmd.AddParameter("-c", config_path_);
+
+    cmd.AddParameter("--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(Name()));
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(log_tee_.CreateLogTee(cmd, "wmediumd")));
@@ -82,14 +88,15 @@ class WmediumdServer : public CommandSource {
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   LogTeeCreator& log_tee_;
+  GrpcSocketCreator& grpc_socket_;
   std::string config_path_;
 };
 
 }  // namespace
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 LogTeeCreator, GrpcSocketCreator>>
 WmediumdServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WmediumdServer>()
