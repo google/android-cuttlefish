@@ -132,6 +132,20 @@ class CvdFlagProxy {
     kInt32,
     kString,
   };
+
+  static std::string ToString(const FlagType flag_type) {
+    switch (flag_type) {
+      case FlagType::kUnknown:
+        return "kUnknown";
+      case FlagType::kBool:
+        return "bool";
+      case FlagType::kInt32:
+        return "std::int32_t";
+      case FlagType::kString:
+        return "std::string";
+    }
+  }
+
   template <typename T>
   CvdFlagProxy(CvdFlag<T>&& flag) : flag_{std::move(flag)} {}
 
@@ -228,16 +242,42 @@ class FlagCollection {
   std::vector<CvdFlagProxy> Flags() const;
 
   struct FlagValuePair {
-    std::optional<ValueVariant> value_opt;
+    ValueVariant value;
     CvdFlagProxy flag;
   };
 
-  // do not consider default values
+  /* does not consider default values
+   * so, if not default value and the flag wasn't given, it won't be found
+   * in the returned map
+   */
   Result<std::unordered_map<std::string, FlagValuePair>> FilterFlags(
       cvd_common::Args& args) const;
-  // consider default values
+
+  /* considers default values
+   * so, if the flag wasn't given, the default value will be used to fill
+   * out the returned map. If a default value isn't available and the flag
+   * isn't given either, the entry won't be in the returned map
+   */
   Result<std::unordered_map<std::string, FlagValuePair>> CalculateFlags(
       cvd_common::Args& args) const;
+
+  template <typename T>
+  static Result<T> GetValue(const ValueVariant& value_variant) {
+    auto* value_ptr = std::get_if<T>(std::addressof(value_variant));
+    CF_EXPECT(value_ptr != nullptr,
+              "GetValue template function was instantiated with a wrong type.");
+    return *value_ptr;
+  }
+
+  template <typename T>
+  static Result<T> GetValue(const FlagValuePair& flag_and_value) {
+    std::string flag_type_string =
+        CvdFlagProxy::ToString(flag_and_value.flag.GetType());
+    auto* value_ptr = std::get_if<T>(std::addressof(flag_and_value.value));
+    CF_EXPECT(value_ptr != nullptr,
+              "The actual flag type is " << flag_type_string);
+    return *value_ptr;
+  }
 
  private:
   std::unordered_map<std::string, CvdFlagProxy> name_flag_map_;
