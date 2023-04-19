@@ -253,7 +253,7 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
 
     if (!FileExists(image_path) ||
         ReadFile(image_path) != ReadFile(tmp_boot_env_image_path)) {
-      if (!RenameFile(tmp_boot_env_image_path, image_path)) {
+      if (!RenameFile(tmp_boot_env_image_path, image_path).ok()) {
         LOG(ERROR) << "Unable to delete the old env image.";
         return false;
       }
