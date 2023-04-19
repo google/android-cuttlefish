@@ -178,7 +178,7 @@ class EspBuilder final {
       }
     }
 
-    if (!RenameFile(tmp_esp_image, image_path_)) {
+    if (!RenameFile(tmp_esp_image, image_path_).ok()) {
       LOG(ERROR) << "Renaming " << tmp_esp_image << " to "
                   << image_path_ << " failed";
       return false;

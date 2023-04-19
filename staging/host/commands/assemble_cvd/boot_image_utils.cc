@@ -60,7 +60,7 @@ std::string ExtractValue(const std::string& dictionary, const std::string& key) 
 bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& current_file) {
   if (!FileExists(current_file) ||
       ReadFile(current_file) != ReadFile(tmp_file)) {
-    if (!RenameFile(tmp_file, current_file)) {
+    if (!RenameFile(tmp_file, current_file).ok()) {
       LOG(ERROR) << "Unable to delete " << current_file;
       return false;
     }
