@@ -540,7 +540,7 @@ class KernelRamdiskRepacker : public SetupFeature {
       LOG(INFO) << "vendor_dlkm unchanged, skip super image rebuilding.";
       return true;
     }
-    if (!RenameFile(tmp_vendor_dlkm_img, new_vendor_dlkm_img)) {
+    if (!RenameFile(tmp_vendor_dlkm_img, new_vendor_dlkm_img).ok()) {
       return false;
     }
     const auto new_super_img = instance_.new_super_image();
