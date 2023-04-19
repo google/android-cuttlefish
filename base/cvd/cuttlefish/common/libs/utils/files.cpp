@@ -86,7 +86,8 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks) {
   return true;
 }
 
-Result<void> EnsureDirectoryExists(const std::string& directory_path) {
+Result<void> EnsureDirectoryExists(const std::string& directory_path,
+                                   const mode_t mode) {
   if (DirectoryExists(directory_path)) {
     return {};
   }
@@ -95,10 +96,8 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path) {
     EnsureDirectoryExists(parent_dir);
   }
   LOG(DEBUG) << "Setting up " << directory_path;
-  if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-          0 &&
-      errno != EEXIST) {
-    return CF_ERRNO("Failed to create dir: \"" << directory_path);
+  if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
+    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\"");
   }
   return {};
 }
@@ -277,15 +276,14 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
   return std::chrono::system_clock::time_point(seconds);
 }
 
-bool RenameFile(const std::string& old_name, const std::string& new_name) {
-  LOG(DEBUG) << "Renaming " << old_name << " to " << new_name;
-  if(rename(old_name.c_str(), new_name.c_str())) {
-    LOG(ERROR) << "File rename `" << old_name << "` to `" << new_name
-               << "` failed due to " << strerror(errno);
-    return false;
+Result<std::string> RenameFile(const std::string& current_filepath,
+                               const std::string& target_filepath) {
+  if (current_filepath != target_filepath) {
+    CF_EXPECT(rename(current_filepath.c_str(), target_filepath.c_str()) == 0,
+              "rename " << current_filepath << " to " << target_filepath
+                        << " failed: " << strerror(errno));
   }
-
-  return true;
+  return target_filepath;
 }
 
 bool RemoveFile(const std::string& file) {
