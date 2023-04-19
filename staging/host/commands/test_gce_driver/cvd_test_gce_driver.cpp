@@ -48,7 +48,6 @@
 #include "host/libs/web/build_api.h"
 #include "host/libs/web/credential_source.h"
 #include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/install_zip.h"
 
 #include "test_gce_driver.pb.h"
 
