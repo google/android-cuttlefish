@@ -43,7 +43,7 @@ type InstanceManager interface {
 
 	ListCVDs() (*apiv1.ListCVDsResponse, error)
 
-	GetLogsDir(name string) string
+	GetLogsDir(name string) (string, error)
 }
 
 type EmptyFieldError string
@@ -139,13 +139,14 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	return op, nil
 }
 
-type cvdFleetItem struct {
+type cvdInstance struct {
 	InstanceName string   `json:"instance_name"`
 	Status       string   `json:"status"`
 	Displays     []string `json:"displays"`
+	InstanceDir  string   `json:"instance_dir"`
 }
 
-func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
+func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 	if err := m.downloadCVDHandler.Download(); err != nil {
 		return nil, err
 	}
@@ -160,28 +161,46 @@ func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	items := make([][]cvdFleetItem, 0)
+	items := make([][]cvdInstance, 0)
 	if err := json.Unmarshal([]byte(stdOut), &items); err != nil {
 		return nil, err
 	}
+	if len(items) == 0 {
+		return []cvdInstance{}, nil
+	}
+	// Host orchestrator only works with one instances group.
+	return items[0], nil
+}
+
+func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
+	fleetItems, err := m.cvdFleet()
+	if err != nil {
+		return nil, err
+	}
 	cvds := make([]*apiv1.CVD, 0)
-	for _, s := range items {
-		for _, item := range s {
-			cvd := &apiv1.CVD{
-				Name: item.InstanceName,
-				// TODO(b/259725479): Update when `cvd fleet` prints out build information.
-				BuildSource: &apiv1.BuildSource{},
-				Status:      item.Status,
-				Displays:    item.Displays,
-			}
-			cvds = append(cvds, cvd)
+	for _, item := range fleetItems {
+		cvd := &apiv1.CVD{
+			Name: item.InstanceName,
+			// TODO(b/259725479): Update when `cvd fleet` prints out build information.
+			BuildSource: &apiv1.BuildSource{},
+			Status:      item.Status,
+			Displays:    item.Displays,
 		}
+		cvds = append(cvds, cvd)
 	}
 	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
 }
 
-func (m *CVDToolInstanceManager) GetLogsDir(name string) string {
-	return m.paths.RuntimesRootDir + "/" + name + "/cuttlefish_runtime/logs"
+func (m *CVDToolInstanceManager) GetLogsDir(name string) (string, error) {
+	instances, err := m.cvdFleet()
+	if err != nil {
+		return "", err
+	}
+	ok, ins := cvdInstances(instances).findByName(name)
+	if !ok {
+		return "", operator.NewNotFoundError(fmt.Sprintf("Instance %q not found", name), nil)
+	}
+	return ins.InstanceDir + "/logs", nil
 }
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
@@ -851,4 +870,15 @@ func downloadArtifactToFile(buildAPI BuildAPI, filename, artifactName, buildID, 
 	}()
 	downloadErr = buildAPI.DownloadArtifact(artifactName, buildID, target, f)
 	return downloadErr
+}
+
+type cvdInstances []cvdInstance
+
+func (s cvdInstances) findByName(name string) (bool, cvdInstance) {
+	for _, e := range s {
+		if e.InstanceName == name {
+			return true, e
+		}
+	}
+	return false, cvdInstance{}
 }

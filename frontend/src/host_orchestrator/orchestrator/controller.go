@@ -132,7 +132,17 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	pathPrefix := "/cvds/" + name + "/logs"
-	logsDir := h.im.GetLogsDir(name)
+	logsDir, err := h.im.GetLogsDir(name)
+	if err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		appErr, ok := err.(*operator.AppError)
+		if ok {
+			w.WriteHeader(appErr.StatusCode)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
 	handler := http.StripPrefix(pathPrefix, http.FileServer(http.Dir(logsDir)))
 	handler.ServeHTTP(w, r)
 }

@@ -553,17 +553,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 	}
 }
 
-func TestGetLogsDir(t *testing.T) {
-	paths := IMPaths{RuntimesRootDir: "/runtimes"}
-	im := NewCVDToolInstanceManager(&CVDToolInstanceManagerOpts{Paths: paths})
-
-	got := im.GetLogsDir("cvd-1")
-
-	if diff := cmp.Diff("/runtimes/cvd-1/cuttlefish_runtime/logs", got); diff != "" {
-		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
-	}
-}
-
 type FakeArtifactDownloader struct {
 	t       *testing.T
 	content string

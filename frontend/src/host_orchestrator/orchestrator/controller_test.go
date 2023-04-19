@@ -44,8 +44,8 @@ func (testIM) ListCVDs() (*apiv1.ListCVDsResponse, error) {
 	return &apiv1.ListCVDsResponse{}, nil
 }
 
-func (m *testIM) GetLogsDir(name string) string {
-	return m.LogsDir
+func (m *testIM) GetLogsDir(name string) (string, error) {
+	return m.LogsDir, nil
 }
 
 func TestCreateCVDIsHandled(t *testing.T) {
