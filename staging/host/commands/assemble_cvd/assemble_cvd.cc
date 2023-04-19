@@ -233,6 +233,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("NVChip");
       preserving.insert("gatekeeper_secure");
       preserving.insert("gatekeeper_insecure");
+      preserving.insert("keymint_secure_deletion_data");
       preserving.insert("modem_nvram.json");
       preserving.insert("recording");
       preserving.insert("persistent_composite_disk_config.txt");
