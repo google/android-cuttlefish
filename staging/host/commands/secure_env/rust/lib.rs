@@ -35,7 +35,6 @@ use std::os::unix::{ffi::OsStrExt, io::FromRawFd};
 pub mod attest;
 mod clock;
 pub mod rpc;
-mod sdd;
 mod soft;
 mod tpm;
 
@@ -71,18 +70,6 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     };
 
     let mut rng = BoringRng::default();
-    let mut host_sdd_mgr;
-    let sdd_mgr: Option<&mut dyn kmr_common::keyblob::SecureDeletionSecretManager> =
-        match sdd::HostSddManager::new(&mut rng) {
-            Ok(v) => {
-                host_sdd_mgr = v;
-                Some(&mut host_sdd_mgr)
-            }
-            Err(e) => {
-                error!("Failed to initialize secure deletion data manager: {:?}", e);
-                None
-            }
-        };
     let clock = clock::StdClock::default();
     let rsa = BoringRsa::default();
     let ec = BoringEc::default();
@@ -117,7 +104,8 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         sign_info: &sign_info,
         // HAL populates attestation IDs from properties.
         attest_ids: None,
-        sdd_mgr,
+        // No secure storage.
+        sdd_mgr: None,
         // `BOOTLOADER_ONLY` keys not supported.
         bootloader: &BootloaderDone,
         // `STORAGE_KEY` keys not supported.
