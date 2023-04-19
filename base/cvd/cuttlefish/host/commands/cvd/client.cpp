@@ -188,21 +188,25 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
 }
 
 Result<cvd::Response> CvdClient::HandleCommand(
-    const std::vector<std::string>& args,
+    const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args,
     const OverrideFd& new_control_fd) {
   std::optional<SharedFD> exe_fd;
-  if (args.size() > 2 && android::base::Basename(args[0]) == "cvd" &&
-      args[1] == "restart-server" && args[2] == "match-client") {
+  // actual commandline arguments are packed in selector_args
+  if (selector_args.size() > 2 &&
+      android::base::Basename(selector_args[0]) == "cvd" &&
+      selector_args[1] == "restart-server" &&
+      selector_args[2] == "match-client") {
     exe_fd = SharedFD::Open(kServerExecPath, O_RDONLY);
     CF_EXPECT((*exe_fd)->IsOpen(), "Failed to open \""
                                        << kServerExecPath << "\": \""
                                        << (*exe_fd)->StrError() << "\"");
   }
-  cvd::Request request = MakeRequest(
-      {.cmd_args = args, .env = env, .selector_args = selector_args},
-      cvd::WAIT_BEHAVIOR_COMPLETE);
+  cvd::Request request = MakeRequest({.cmd_args = cvd_process_args,
+                                      .env = env,
+                                      .selector_args = selector_args},
+                                     cvd::WAIT_BEHAVIOR_COMPLETE);
   auto response = CF_EXPECT(SendRequest(request, new_control_fd, exe_fd));
   CF_EXPECT(CheckStatus(response.status(), "HandleCommand"));
   CF_EXPECT(response.has_command_response(),
