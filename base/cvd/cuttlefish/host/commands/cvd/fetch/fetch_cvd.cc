@@ -98,7 +98,7 @@ struct DownloadFlags {
 };
 
 struct FetchFlags {
-  std::string target_directory = CurrentDirectory();
+  std::string target_directory = "";
   bool keep_downloaded_archives = false;
   bool helpxml = false;
   BuildApiFlags build_api_flags;
@@ -120,10 +120,14 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                  BuildApiFlags& build_api_flags,
                                  BuildSourceFlags& build_source_flags,
                                  DownloadFlags& download_flags,
-                                 int& retry_period) {
+                                 int& retry_period, std::string& directory) {
   std::vector<Flag> flags;
-  flags.emplace_back(GflagsCompatFlag("directory", fetch_flags.target_directory)
-                         .Help("Target directory to fetch files into."));
+  flags.emplace_back(
+      GflagsCompatFlag("directory", directory)
+          .Help("Target directory to fetch files into. (deprecated)"));
+  flags.emplace_back(
+      GflagsCompatFlag("target_directory", fetch_flags.target_directory)
+          .Help("Target directory to fetch files into."));
   flags.emplace_back(GflagsCompatFlag("keep_downloaded_archives",
                                       fetch_flags.keep_downloaded_archives)
                          .Help("Keep downloaded zip/tar."));
@@ -174,6 +178,7 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                        download_flags.download_target_files_zip)
           .Help("Whether to fetch the -target_files-*.zip file."));
 
+  flags.emplace_back(UnexpectedArgumentGuard());
   flags.emplace_back(HelpFlag(flags, USAGE_MESSAGE));
   flags.emplace_back(
       HelpXmlFlag(flags, std::cout, fetch_flags.helpxml, USAGE_MESSAGE));
@@ -186,12 +191,26 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   BuildSourceFlags build_source_flags;
   DownloadFlags download_flags;
   int retry_period = DEFAULT_RETRY_PERIOD;
+  std::string directory = "";
+
   std::vector<Flag> flags =
       GetFlagsVector(fetch_flags, build_api_flags, build_source_flags,
-                     download_flags, retry_period);
+                     download_flags, retry_period, directory);
   std::vector<std::string> args = ArgsToVec(argc - 1, argv + 1);
   CF_EXPECT(ParseFlags(flags, args), "Could not process command line flags.");
+
   build_api_flags.wait_retry_period = std::chrono::seconds(retry_period);
+  if (directory != "") {
+    LOG(ERROR) << "Please use --target_directory instead of --directory";
+    if (fetch_flags.target_directory == "") {
+      fetch_flags.target_directory = directory;
+    }
+  } else {
+    if (fetch_flags.target_directory == "") {
+      fetch_flags.target_directory = CurrentDirectory();
+    }
+  }
+
   fetch_flags.build_api_flags = build_api_flags;
   fetch_flags.build_source_flags = build_source_flags;
   fetch_flags.download_flags = download_flags;
