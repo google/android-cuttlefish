@@ -24,7 +24,6 @@ cc_library {
         "credential_source.cc",
         "http_client/http_client.cc",
         "http_client/sso_client.cc",
-        "install_zip.cc",
     ],
     static_libs: [
         "libcuttlefish_host_config",
