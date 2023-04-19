@@ -201,7 +201,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes/cvd-1 "+
-		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd start --daemon --report_anonymous_usage_stats=y"+
+		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
 		name string
