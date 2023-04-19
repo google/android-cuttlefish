@@ -67,6 +67,7 @@ const std::string USAGE_MESSAGE =
     "\"branch\" - latest build of \"branch\" for "
     "\"aosp_cf_x86_phone-userdebug\"\n"
     "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
+const mode_t RWX_ALL_MODE = S_IRWXU | S_IRWXG | S_IRWXO;
 
 struct BuildApiFlags {
   std::string api_key = "";
@@ -329,12 +330,8 @@ Result<std::vector<std::string>> DownloadOtaTools(
                                   << local_path);
 
   std::string otatools_dir = target_directory + OTA_TOOLS_DIR;
-  if (!DirectoryExists(otatools_dir)) {
-    CF_EXPECT(
-        mkdir(otatools_dir.c_str(), 0777) == 0,
-        "Could not create \"" << otatools_dir << "\": " << strerror(errno));
-  }
   Archive archive(local_path);
+  CF_EXPECT(EnsureDirectoryExists(otatools_dir, RWX_ALL_MODE));
   CF_EXPECT(archive.ExtractAll(otatools_dir), "Failed to extract \""
                                                   << local_path << "\" to \""
                                                   << otatools_dir << "\"");
@@ -388,9 +385,7 @@ Result<std::vector<std::string>> DownloadBoot(
   CF_EXPECT(!extracted_boot.empty(),
             "No " << boot_artifact << " in the img zip.");
   if (extracted_boot[0] != target_boot) {
-    CF_EXPECT(rename(extracted_boot[0].c_str(), target_boot.c_str()) == 0,
-              "rename(\"" << extracted_boot[0] << "\", \"" << target_boot
-                          << "\") failed: " << strerror(errno));
+    CF_EXPECT(RenameFile(extracted_boot[0], target_boot));
   }
 
   std::vector<std::string> extracted_vendor_boot =
@@ -571,10 +566,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 #endif
 
   std::string target_dir = AbsolutePath(flags.target_directory);
-  if (!DirectoryExists(target_dir)) {
-    CF_EXPECT(mkdir(target_dir.c_str(), 0777) == 0,
-              "mkdir(" << target_dir << ", 0777) failed: " << strerror(errno));
-  }
+  CF_EXPECT(EnsureDirectoryExists(target_dir, RWX_ALL_MODE));
   FetcherConfig config;
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
@@ -614,9 +606,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     if (builds.system.has_value() ||
         flags.download_flags.download_target_files_zip) {
       std::string default_target_dir = target_dir + "/default";
-      CF_EXPECT(mkdir(default_target_dir.c_str(),
-                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
-                "Could not create " << default_target_dir);
+      CF_EXPECT(EnsureDirectoryExists(default_target_dir), RWX_ALL_MODE);
       std::vector<std::string> target_files = CF_EXPECT(DownloadTargetFiles(
           build_api, builds.default_build, default_target_dir));
       CF_EXPECT(!target_files.empty(),
@@ -647,10 +637,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         }
       }
       std::string system_target_dir = target_dir + "/system";
-      CF_EXPECT(mkdir(system_target_dir.c_str(),
-                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
-                "Could not create \"" << system_target_dir
-                                      << "\": " << strerror(errno));
+      CF_EXPECT(EnsureDirectoryExists(system_target_dir, RWX_ALL_MODE));
       std::vector<std::string> target_files = CF_EXPECT(DownloadTargetFiles(
           build_api, builds.system.value(), system_target_dir));
       CF_EXPECT(!target_files.empty(), "Could not download target files for "
@@ -663,10 +650,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
             std::vector<std::string>{}) {
           std::string extracted_system = target_dir + "/IMAGES/system.img";
           std::string target_system = target_dir + "/system.img";
-          CF_EXPECT(
-              rename(extracted_system.c_str(), target_system.c_str()) == 0,
-              "rename(\"" << extracted_system << "\", \"" << target_system
-                          << "\") failed: " << strerror(errno));
+          CF_EXPECT(RenameFile(extracted_system, target_system));
         } else {
           return CF_ERR("Could not get system.img from the target zip");
         }
@@ -675,10 +659,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
             std::vector<std::string>{}) {
           std::string extracted_product = target_dir + "/IMAGES/product.img";
           std::string target_product = target_dir + "/product.img";
-          CF_EXPECT(
-              rename(extracted_product.c_str(), target_product.c_str()) == 0,
-              "rename(\"" << extracted_product << "\", \"" << target_product
-                          << "\") failed: " << strerror(errno));
+          CF_EXPECT(RenameFile(extracted_product, target_product));
         }
         if (ExtractImages(target_files[0], target_dir,
                           {"IMAGES/system_ext.img"}) !=
@@ -686,11 +667,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
           std::string extracted_system_ext =
               target_dir + "/IMAGES/system_ext.img";
           std::string target_system_ext = target_dir + "/system_ext.img";
-          CF_EXPECT(rename(extracted_system_ext.c_str(),
-                           target_system_ext.c_str()) == 0,
-                    "rename(\"" << extracted_system_ext << "\", \""
-                                << target_system_ext
-                                << "\") failed: " << strerror(errno));
+          CF_EXPECT(RenameFile(extracted_system_ext, target_system_ext));
         }
         if (ExtractImages(target_files[0], target_dir,
                           {"IMAGES/vbmeta_system.img"}) !=
@@ -698,11 +675,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
           std::string extracted_vbmeta_system =
               target_dir + "/IMAGES/vbmeta_system.img";
           std::string target_vbmeta_system = target_dir + "/vbmeta_system.img";
-          CF_EXPECT(rename(extracted_vbmeta_system.c_str(),
-                           target_vbmeta_system.c_str()) == 0,
-                    "rename(\"" << extracted_vbmeta_system << "\", \""
-                                << "\"" << target_vbmeta_system
-                                << "\") failed: \"" << strerror(errno) << "\"");
+          CF_EXPECT(RenameFile(extracted_vbmeta_system, target_vbmeta_system));
         }
         // This should technically call AddFilesToConfig with the produced
         // files, but it will conflict with the ones produced from the default
