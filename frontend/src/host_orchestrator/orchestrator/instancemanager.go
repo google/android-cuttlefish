@@ -624,6 +624,7 @@ const (
 	daemonArg = "--daemon"
 	// TODO(b/242599859): Add report_anonymous_usage_stats as a parameter to the Create CVD API.
 	reportAnonymousUsageStatsArg = "--report_anonymous_usage_stats=y"
+	groupNameArg                 = "--group_name=cvd"
 )
 
 type startCVDHandler struct {
@@ -650,8 +651,9 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		androidHostOut: p.MainArtifactsDir,
 		home:           p.RuntimeDir,
 		cvdBin:         h.CVDBin,
-		args:           []string{"start", daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg},
-		timeout:        h.Timeout,
+		args: []string{groupNameArg, "start",
+			daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg},
+		timeout: h.Timeout,
 	}
 	if p.KernelDir != "" {
 		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
