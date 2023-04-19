@@ -1149,7 +1149,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_display_configs(display_configs);
 
     instance.set_memory_mb(memory_mb_vec[instance_index]);
-    instance.set_ddr_mem_mb(memory_mb_vec[instance_index] * 2);
+    instance.set_ddr_mem_mb(memory_mb_vec[instance_index] * 1.2);
     instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]);
     instance.set_userdata_format(userdata_format_vec[instance_index]);
     instance.set_guest_enforce_security(guest_enforce_security_vec[instance_index]);
