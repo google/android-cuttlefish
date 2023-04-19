@@ -92,4 +92,30 @@ std::string Archive::ExtractToMemory(const std::string& path) {
   return stdout_str;
 }
 
+std::vector<std::string> ExtractImages(const std::string& archive_file,
+                                       const std::string& target_directory,
+                                       const std::vector<std::string>& images) {
+  Archive archive(archive_file);
+  bool extracted = images.size() > 0
+                       ? archive.ExtractFiles(images, target_directory)
+                       : archive.ExtractAll(target_directory);
+  if (!extracted) {
+    LOG(ERROR) << "Unable to extract images.";
+    return {};
+  }
+
+  std::vector<std::string> files =
+      images.size() > 0 ? std::move(images) : archive.Contents();
+  auto it = files.begin();
+  while (it != files.end()) {
+    if (*it == "" || android::base::EndsWith(*it, "/")) {
+      it = files.erase(it);
+    } else {
+      *it = target_directory + "/" + *it;
+      it++;
+    }
+  }
+  return files;
+}
+
 } // namespace cuttlefish
