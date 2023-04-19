@@ -122,9 +122,8 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                  DownloadFlags& download_flags,
                                  int& retry_period) {
   std::vector<Flag> flags;
-  flags.emplace_back(
-      GflagsCompatFlag("target_directory", fetch_flags.target_directory)
-          .Help("Target directory to fetch files into."));
+  flags.emplace_back(GflagsCompatFlag("directory", fetch_flags.target_directory)
+                         .Help("Target directory to fetch files into."));
   flags.emplace_back(GflagsCompatFlag("keep_downloaded_archives",
                                       fetch_flags.keep_downloaded_archives)
                          .Help("Keep downloaded zip/tar."));
