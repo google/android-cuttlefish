@@ -26,6 +26,7 @@ cc_library {
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
+        "inotify.cpp",
         "json.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
@@ -58,6 +59,19 @@ cc_library {
         ],
     },
     defaults: ["cuttlefish_host"],
+}
+
+cc_library_static {
+    name: "libcuttlefish_utils_product",
+    srcs: [
+        "inotify.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+    stl: "libc++_static",
+    defaults: ["cuttlefish_guest_product_only"],
 }
 
 cc_test_host {

@@ -15,6 +15,8 @@
  */
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/contains.h"
+#include "common/libs/utils/inotify.h"
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -22,7 +24,10 @@
 #include <libgen.h>
 #include <linux/fiemap.h>
 #include <linux/fs.h>
+#include <sched.h>
+#include <sys/inotify.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -51,6 +56,7 @@
 #include "android-base/strings.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -435,6 +441,128 @@ Result<void> WalkDirectory(
     }
   }
   return {};
+}
+
+class InotifyWatcher {
+ public:
+  InotifyWatcher(int inotify, const std::string& path, int watch_mode)
+      : inotify_(inotify) {
+    watch_ = inotify_add_watch(inotify_, path.c_str(), watch_mode);
+  }
+  virtual ~InotifyWatcher() { inotify_rm_watch(inotify_, watch_); }
+
+ private:
+  int inotify_;
+  int watch_;
+};
+
+static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
+                                        int inotify) {
+  CF_EXPECT_NE(path, "", "Path is empty");
+
+  if (FileExists(path, true)) {
+    return {};
+  }
+
+  const auto targetTime =
+      std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
+
+  const auto parentPath = cpp_dirname(path);
+  const auto filename = cpp_basename(path);
+
+  CF_EXPECT(WaitForFile(parentPath, timeoutSec),
+            "Error while waiting for parent directory creation");
+
+  auto watcher = InotifyWatcher(inotify, parentPath.c_str(), IN_CREATE);
+
+  if (FileExists(path, true)) {
+    return {};
+  }
+
+  while (true) {
+    const auto currentTime = std::chrono::system_clock::now();
+
+    if (currentTime >= targetTime) {
+      return CF_ERR("Timed out");
+    }
+
+    const auto timeRemain =
+        std::chrono::duration_cast<std::chrono::microseconds>(targetTime -
+                                                              currentTime)
+            .count();
+    const auto secondInUsec =
+        std::chrono::microseconds(std::chrono::seconds(1)).count();
+    struct timeval timeout;
+
+    timeout.tv_sec = timeRemain / secondInUsec;
+    timeout.tv_usec = timeRemain % secondInUsec;
+
+    fd_set readfds;
+
+    FD_ZERO(&readfds);
+    FD_SET(inotify, &readfds);
+
+    auto ret = select(inotify + 1, &readfds, NULL, NULL, &timeout);
+
+    if (ret == 0) {
+      return CF_ERR("select() timed out");
+    } else if (ret < 0) {
+      return CF_ERRNO("select() failed");
+    }
+
+    auto names = GetCreatedFileListFromInotifyFd(inotify);
+
+    CF_EXPECT(names.size() > 0,
+              "Failed to get names from inotify " << strerror(errno));
+
+    if (Contains(names, filename)) {
+      return {};
+    }
+  }
+
+  return CF_ERR("This shouldn't be executed");
+}
+
+auto WaitForFile(const std::string& path, int timeoutSec)
+    -> decltype(WaitForFileInternal(path, timeoutSec, 0)) {
+  auto inotify = inotify_init1(IN_CLOEXEC);
+
+  ScopeGuard close_inotify([inotify]() { close(inotify); });
+
+  CF_EXPECT(WaitForFileInternal(path, timeoutSec, inotify));
+
+  return {};
+}
+
+Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec) {
+  const auto targetTime =
+      std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
+
+  CF_EXPECT(WaitForFile(path, timeoutSec),
+            "Waiting for socket path creation failed");
+  CF_EXPECT(FileIsSocket(path), "Specified path is not a socket");
+
+  while (true) {
+    const auto currentTime = std::chrono::system_clock::now();
+
+    if (currentTime >= targetTime) {
+      return CF_ERR("Timed out");
+    }
+
+    const auto timeRemain = std::chrono::duration_cast<std::chrono::seconds>(
+                                targetTime - currentTime)
+                                .count();
+    auto testConnect =
+        SharedFD::SocketLocalClient(path, false, SOCK_STREAM, timeRemain);
+
+    if (testConnect->IsOpen()) {
+      return {};
+    }
+
+    sched_yield();
+  }
+
+  return CF_ERR("This shouldn't be executed");
 }
 
 }  // namespace cuttlefish
