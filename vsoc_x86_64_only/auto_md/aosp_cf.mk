@@ -38,7 +38,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     com.android.car.internal.debug.num_auto_populated_users=1 # 1 passenger only (so 2nd display shows user picker)
 # TODO(b/233370174): add audio multi-zone
-#   ro.aae.simulateMultiZoneAudio=true \
+#   ro.vendor.simulateMultiZoneAudio=true \
 
 
 # This will disable dynamic displays and enable hardcoded displays on hwservicemanager.
