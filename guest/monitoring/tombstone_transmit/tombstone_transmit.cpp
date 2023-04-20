@@ -28,6 +28,7 @@
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/inotify.h"
 #include "common/libs/utils/subprocess.h"
 
 static const char TOMBSTONE_DIR[] = "/data/tombstones/";
@@ -52,43 +53,6 @@ static int new_tombstone_create_notifier(void) {
   }
 
   return file_create_notification_handle;
-}
-
-#define INOTIFY_MAX_EVENT_SIZE (sizeof(struct inotify_event) + NAME_MAX + 1)
-static std::vector<std::string> get_next_tombstones_path_blocking(int fd) {
-  char event_readout[INOTIFY_MAX_EVENT_SIZE];
-  int bytes_parsed = 0;
-  std::vector<std::string> tombstone_paths;
-  // Each successful read can contain one or more of inotify_event events
-  // Note: read() on inotify returns 'whole' events, will never partially
-  // populate the buffer.
-  int event_read_out_length = read(fd, event_readout, INOTIFY_MAX_EVENT_SIZE);
-
-  if(event_read_out_length == -1) {
-    ALOGE("%s: Couldn't read out inotify event due to error: '%s' (%d)",
-      __FUNCTION__, strerror(errno), errno);
-    return std::vector<std::string>();
-  }
-
-  while (bytes_parsed < event_read_out_length) {
-    struct inotify_event* event =
-        reinterpret_cast<inotify_event*>(event_readout + bytes_parsed);
-    bytes_parsed += sizeof(struct inotify_event) + event->len;
-
-    // No file name was present
-    if (event->len == 0) {
-      ALOGE("%s: inotify event didn't contain filename", __FUNCTION__);
-      continue;
-    }
-    if (!(event->mask & IN_CREATE)) {
-      ALOGE("%s: inotify event didn't pertain to file creation", __FUNCTION__);
-      continue;
-    }
-    tombstone_paths.push_back(std::string(TOMBSTONE_DIR) +
-                              std::string(event->name));
-  }
-
-  return tombstone_paths;
 }
 
 DEFINE_uint32(port,
@@ -149,10 +113,11 @@ int main(int argc, char** argv) {
 #endif
 
   while (true) {
-    std::vector<std::string> ts_paths =
-        get_next_tombstones_path_blocking(file_create_notification_handle);
-    for (auto& ts_path : ts_paths) {
-      tombstone_send_to_host(ts_path);
+    std::vector<std::string> ts_names =
+        cuttlefish::GetCreatedFileListFromInotifyFd(
+            file_create_notification_handle);
+    for (auto& ts_name : ts_names) {
+      tombstone_send_to_host(std::string(TOMBSTONE_DIR) + ts_name);
     }
   }
 
