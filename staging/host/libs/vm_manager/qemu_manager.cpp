@@ -438,7 +438,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
         gpu_device = "virtio-gpu-gl-pci";
     } else if (instance.gpu_mode() == kGpuModeGfxstream ||
                instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
-        gpu_device = "virtio-gpu-rutabaga-pci";
+        gpu_device = "virtio-gpu-gl-pci,capset_names=gfxstream,hostmem=256M";
     }
 
     qemu_cmd.AddParameter(gpu_device, ",id=gpu0",
