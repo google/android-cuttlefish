@@ -228,42 +228,6 @@ Result<std::vector<std::string>> DownloadImages(
   return files;
 }
 
-Result<std::vector<std::string>> DownloadBoot(
-    BuildApi& build_api, const Build& build,
-    const std::string& specified_artifact, const std::string& target_dir,
-    const bool keep_archives) {
-  std::string target_boot = target_dir + "/boot.img";
-  const std::string& boot_artifact =
-      specified_artifact != "" ? specified_artifact : "boot.img";
-  if (specified_artifact != "") {
-    Result<std::string> artifact_result =
-        build_api.DownloadFile(build, target_dir, specified_artifact);
-    if (artifact_result.ok()) {
-      RenameFile(artifact_result.value(), target_boot);
-      return {{target_boot}};
-    }
-    LOG(INFO) << "Find " << boot_artifact << " in the img zip";
-  }
-
-  std::vector<std::string> files{target_boot};
-  std::string img_zip_name = GetBuildZipName(build, "img");
-  std::string img_zip =
-      CF_EXPECT(build_api.DownloadFile(build, target_dir, img_zip_name));
-  const bool keep_img_zip_archive_for_vendor_boot = true;
-  std::string extracted_boot =
-      CF_EXPECT(ExtractImage(img_zip, target_dir, boot_artifact,
-                             keep_img_zip_archive_for_vendor_boot));
-  if (extracted_boot != target_boot) {
-    CF_EXPECT(RenameFile(extracted_boot, target_boot));
-  }
-  Result<std::string> extracted_vendor_boot_result =
-      ExtractImage(img_zip, target_dir, "vendor_boot.img", keep_archives);
-  if (extracted_vendor_boot_result.ok()) {
-    files.push_back(extracted_vendor_boot_result.value());
-  }
-  return files;
-}
-
 Result<void> AddFilesToConfig(FileSource purpose, const Build& build,
                               const std::vector<std::string>& paths,
                               FetcherConfig* config,
@@ -559,9 +523,41 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     if (builds.boot.has_value()) {
-      std::vector<std::string> boot_files = CF_EXPECT(DownloadBoot(
-          build_api, builds.boot.value(), flags.download_flags.boot_artifact,
-          target_dir, flags.keep_downloaded_archives));
+      std::string boot_img_zip_name =
+          GetBuildZipName(builds.boot.value(), "img");
+      std::string boot_filepath;
+      if (flags.download_flags.boot_artifact != "") {
+        boot_filepath = CF_EXPECT(build_api.DownloadFileWithBackup(
+            builds.boot.value(), target_dir, flags.download_flags.boot_artifact,
+            boot_img_zip_name));
+      } else {
+        boot_filepath = CF_EXPECT(build_api.DownloadFile(
+            builds.boot.value(), target_dir, boot_img_zip_name));
+      }
+
+      std::vector<std::string> boot_files;
+      // downloaded a zip that needs to be extracted
+      if (android::base::EndsWith(boot_filepath, boot_img_zip_name)) {
+        std::string extract_target = flags.download_flags.boot_artifact != ""
+                                         ? flags.download_flags.boot_artifact
+                                         : "boot.img";
+        const bool keep_img_zip_archive_for_vendor_boot = true;
+        std::string extracted_boot =
+            CF_EXPECT(ExtractImage(boot_filepath, target_dir, extract_target,
+                                   keep_img_zip_archive_for_vendor_boot));
+        std::string target_boot = CF_EXPECT(
+            RenameFile(extracted_boot, target_dir + "/" + "boot.img"));
+        boot_files.push_back(target_boot);
+
+        Result<std::string> extracted_vendor_boot_result =
+            ExtractImage(boot_filepath, target_dir, "vendor_boot.img",
+                         flags.keep_downloaded_archives);
+        if (extracted_vendor_boot_result.ok()) {
+          boot_files.push_back(extracted_vendor_boot_result.value());
+        }
+      } else {
+        boot_files.push_back(boot_filepath);
+      }
       CF_EXPECT(AddFilesToConfig(FileSource::BOOT_BUILD, builds.boot.value(),
                                  boot_files, &config, target_dir, true));
     }
