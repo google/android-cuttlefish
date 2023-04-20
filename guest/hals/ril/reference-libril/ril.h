@@ -8544,7 +8544,7 @@ typedef enum {
 } RIL_KeepaliveStatusCode;
 
 typedef struct {
-    uint32_t sessionHandle;
+    int32_t sessionHandle;
     RIL_KeepaliveStatusCode code;
 } RIL_KeepaliveStatus;
 
