@@ -94,6 +94,7 @@ cc_binary {
         "libcuttlefish_vm_manager",
         "libcuttlefish_msg_queue",
         "libcuttlefish_metrics",
+        "libcuttlefish_utils",
         "libgflags",
     ],
     defaults: [
