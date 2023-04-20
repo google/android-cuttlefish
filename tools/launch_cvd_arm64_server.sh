@@ -35,20 +35,27 @@ mkdir -p $temp_dir
 
 # copy and compress the artifacts to the temp directory
 ssh $server -t "mkdir -p ~/.cvd_artifact; mkdir -p ~/cvd_home"
-cd $ANDROID_PRODUCT_OUT; tar -cvS $(cat required_images) | pigz -R > $temp_dir/img.tar.gz
+rsync -aSvch --recursive $ANDROID_PRODUCT_OUT --files-from=$ANDROID_PRODUCT_OUT/required_images $server:~/cvd_home --info=progress2
 
-# re-compress with rsyncable option
-# TODO(b/275312073): remove this if toxbox supports rsyncable
-# or b/273862156 for not building tar.gz file
-cd $ANDROID_HOST_OUT/../linux_bionic-arm64; pigz -d -c cvd-host_package.tar.gz | pigz -R > $temp_dir/cvd-host_package.tar.gz
-rsync -avh $temp_dir/* $server:.cvd_artifact --info=progress2
-
-# extract the artifacts to the cvd home directory
-ssh $server -t "cd .cvd_artifact; tar -zxvf img.tar.gz -C ~/cvd_home/; tar -zxvf cvd-host_package.tar.gz -C ~/cvd_home/"
+if [ -d $ANDROID_HOST_OUT/../linux_bionic-arm64/cvd-host_package ]; then
+  echo "Use contents in cvd-host_package dir"
+  rsync -avch $ANDROID_HOST_OUT/../linux_bionic-arm64/cvd-host_package/* $server:~/cvd_home --info=progress2
+elif [ -f $ANDROID_HOST_OUT/../linux_bionic-arm64/cvd-host_package.tar.gz ]; then
+  echo "Use contents in cvd-host_package.tar.gz"
+  # re-compress with rsyncable option
+  # TODO(b/275312073): remove this if toxbox supports rsyncable
+  cd $ANDROID_HOST_OUT/../linux_bionic-arm64; pigz -d -c cvd-host_package.tar.gz | pigz -R > $temp_dir/cvd-host_package.tar.gz
+  rsync -avh $temp_dir/* $server:.cvd_artifact --info=progress2
+  ssh $server -t "cd .cvd_artifact; tar -zxvf cvd-host_package.tar.gz -C ~/cvd_home/"
+else
+  echo "There is neither cvd-host_package dir nor cvd-host_package.tar.gz"
+  exit 1
+fi
 
 web_ui_port=$((8443+$base_instance_num-1))
 adb_port=$((6520+$base_instance_num-1))
 fastboot_port=$((7520+$base_instance_num-1))
+instance_id=$(uuidgen)
 # sets up SSH port forwarding to the remote server for various ports and launch cvd instance
 # port forward rule as base_instance_num=1 in local
 ssh $server -L 8443:127.0.0.1:$web_ui_port \
