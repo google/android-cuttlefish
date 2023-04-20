@@ -3379,12 +3379,7 @@ Return<void> RadioImpl_1_6::stopKeepalive(int32_t serial, int32_t sessionHandle)
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
 #endif
-    RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_STOP_KEEPALIVE);
-    if (pRI == NULL) {
-        return Void();
-    }
-
-    CALL_ONREQUEST(pRI->pCI->requestNumber, &sessionHandle, sizeof(uint32_t), pRI, mSlotId);
+    dispatchInts(serial, mSlotId, RIL_REQUEST_STOP_KEEPALIVE, 1, sessionHandle);
     return Void();
 }
 
