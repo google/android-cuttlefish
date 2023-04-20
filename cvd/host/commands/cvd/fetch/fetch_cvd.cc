@@ -216,18 +216,6 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   return {fetch_flags};
 }
 
-Result<std::vector<std::string>> DownloadImages(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory, const std::vector<std::string>& images,
-    const bool keep_archives) {
-  std::string img_zip_name = GetBuildZipName(build, "img");
-  std::string local_path =
-      CF_EXPECT(build_api.DownloadFile(build, target_directory, img_zip_name));
-  std::vector<std::string> files = CF_EXPECT(
-      ExtractImages(local_path, target_directory, images, keep_archives));
-  return files;
-}
-
 Result<void> AddFilesToConfig(FileSource purpose, const Build& build,
                               const std::vector<std::string>& paths,
                               FetcherConfig* config,
@@ -438,24 +426,6 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     if (builds.system.has_value()) {
-      bool system_in_img_zip = true;
-      if (flags.download_flags.download_img_zip) {
-        auto image_files = DownloadImages(
-            build_api, builds.system.value(), target_dir,
-            {"system.img", "product.img"}, flags.keep_downloaded_archives);
-        if (!image_files.ok() || image_files->empty()) {
-          LOG(INFO)
-              << "Could not find system image for " << builds.system.value()
-              << "in the img zip. Assuming a super image build, which will "
-              << "get the system image from the target zip.";
-          system_in_img_zip = false;
-        } else {
-          LOG(INFO) << "Adding img-zip files for system build";
-          CF_EXPECT(AddFilesToConfig(FileSource::SYSTEM_BUILD,
-                                     builds.system.value(), *image_files,
-                                     &config, target_dir, true));
-        }
-      }
       std::string system_target_dir = target_dir + "/system";
       CF_EXPECT(EnsureDirectoryExists(system_target_dir, RWX_ALL_MODE));
       std::string target_files_name =
@@ -465,39 +435,49 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       CF_EXPECT(AddFilesToConfig(FileSource::SYSTEM_BUILD,
                                  builds.system.value(), {target_files}, &config,
                                  target_dir));
-      if (!system_in_img_zip) {
-        std::string extracted_system = CF_EXPECT(
-            ExtractImage(target_files, target_dir, "IMAGES/system.img",
-                         flags.keep_downloaded_archives));
-        CF_EXPECT(RenameFile(extracted_system, target_dir + "/system.img"));
 
-        Result<std::string> extracted_product_result =
-            ExtractImage(target_files, target_dir, "IMAGES/product.img",
-                         flags.keep_downloaded_archives);
-        if (extracted_product_result.ok()) {
-          CF_EXPECT(RenameFile(extracted_product_result.value(),
-                               target_dir + "/product.img"));
+      if (flags.download_flags.download_img_zip) {
+        std::string system_img_zip_name =
+            GetBuildZipName(builds.system.value(), "img");
+        Result<std::string> system_img_zip_result = build_api.DownloadFile(
+            builds.system.value(), target_dir, system_img_zip_name);
+        Result<std::vector<std::string>> extract_result;
+        if (system_img_zip_result.ok()) {
+          extract_result = ExtractImages(
+              system_img_zip_result.value(), target_dir,
+              {"system.img", "product.img"}, flags.keep_downloaded_archives);
+          if (extract_result.ok()) {
+            CF_EXPECT(AddFilesToConfig(
+                FileSource::SYSTEM_BUILD, builds.system.value(),
+                extract_result.value(), &config, target_dir, true));
+          }
         }
+        if (!system_img_zip_result.ok() || !extract_result.ok()) {
+          std::string extracted_system = CF_EXPECT(
+              ExtractImage(target_files, target_dir, "IMAGES/system.img"));
+          CF_EXPECT(RenameFile(extracted_system, target_dir + "/system.img"));
 
-        Result<std::string> extracted_system_ext_result =
-            ExtractImage(target_files, target_dir, "IMAGES/system_ext.img",
-                         flags.keep_downloaded_archives);
-        if (extracted_system_ext_result.ok()) {
-          CF_EXPECT(RenameFile(extracted_system_ext_result.value(),
-                               target_dir + "/system_ext.img"));
-        }
+          Result<std::string> extracted_product_result =
+              ExtractImage(target_files, target_dir, "IMAGES/product.img");
+          if (extracted_product_result.ok()) {
+            CF_EXPECT(RenameFile(extracted_product_result.value(),
+                                 target_dir + "/product.img"));
+          }
 
-        Result<std::string> extracted_vbmeta_system =
-            ExtractImage(target_files, target_dir, "IMAGES/vbmeta_system.img",
-                         flags.keep_downloaded_archives);
-        if (extracted_vbmeta_system.ok()) {
-          CF_EXPECT(RenameFile(extracted_vbmeta_system.value(),
-                               target_dir + "/vbmeta_system.img"));
+          Result<std::string> extracted_system_ext_result =
+              ExtractImage(target_files, target_dir, "IMAGES/system_ext.img");
+          if (extracted_system_ext_result.ok()) {
+            CF_EXPECT(RenameFile(extracted_system_ext_result.value(),
+                                 target_dir + "/system_ext.img"));
+          }
+
+          Result<std::string> extracted_vbmeta_system = ExtractImage(
+              target_files, target_dir, "IMAGES/vbmeta_system.img");
+          if (extracted_vbmeta_system.ok()) {
+            CF_EXPECT(RenameFile(extracted_vbmeta_system.value(),
+                                 target_dir + "/vbmeta_system.img"));
+          }
         }
-        // This should technically call AddFilesToConfig with the produced
-        // files, but it will conflict with the ones produced from the default
-        // system image and pie doesn't care about the produced file list
-        // anyway.
       }
     }
 
@@ -541,14 +521,14 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         std::string extract_target = flags.download_flags.boot_artifact != ""
                                          ? flags.download_flags.boot_artifact
                                          : "boot.img";
-        const bool keep_img_zip_archive_for_vendor_boot = true;
         std::string extracted_boot =
-            CF_EXPECT(ExtractImage(boot_filepath, target_dir, extract_target,
-                                   keep_img_zip_archive_for_vendor_boot));
+            CF_EXPECT(ExtractImage(boot_filepath, target_dir, extract_target));
         std::string target_boot = CF_EXPECT(
             RenameFile(extracted_boot, target_dir + "/" + "boot.img"));
         boot_files.push_back(target_boot);
 
+        // keep_downloaded_archives flag used because this is the last extract
+        // on this archive
         Result<std::string> extracted_vendor_boot_result =
             ExtractImage(boot_filepath, target_dir, "vendor_boot.img",
                          flags.keep_downloaded_archives);
