@@ -22,6 +22,7 @@
 
 #include <fruit/fruit.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
@@ -92,6 +93,32 @@ class WmediumdServer : public CommandSource {
   std::string config_path_;
 };
 
+// SetupFeature class for waiting wmediumd server to be settled.
+// This class is used by the instance that does not launches wmediumd.
+// TODO(b/276832089) remove this when run_env implementation is completed.
+class ValidateWmediumdService : public SetupFeature {
+ public:
+  INJECT(ValidateWmediumdService(
+      const CuttlefishConfig& config,
+      const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+  std::string Name() const override { return "ValidateWmediumdService"; }
+  bool Enabled() const override { return !instance_.start_wmediumd(); }
+
+ private:
+  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
+  Result<void> ResultSetup() override {
+    CF_EXPECT(WaitForUnixSocket(config_.wmediumd_api_server_socket(), 30));
+    CF_EXPECT(WaitForUnixSocket(config_.vhost_user_mac80211_hwsim(), 30));
+
+    return {};
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
 }  // namespace
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
@@ -100,7 +127,8 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
 WmediumdServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WmediumdServer>()
-      .addMultibinding<SetupFeature, WmediumdServer>();
+      .addMultibinding<SetupFeature, WmediumdServer>()
+      .addMultibinding<SetupFeature, ValidateWmediumdService>();
 }
 
 }  // namespace cuttlefish
