@@ -216,50 +216,16 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   return {fetch_flags};
 }
 
-Result<std::string> DownloadImageZip(BuildApi& build_api, const Build& build,
-                                     const std::string& target_directory) {
-  std::string img_zip_name = GetBuildZipName(build, "img");
-  return build_api.DownloadFile(build, target_directory, img_zip_name);
-}
-
 Result<std::vector<std::string>> DownloadImages(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory, const std::vector<std::string>& images,
     const bool keep_archives) {
+  std::string img_zip_name = GetBuildZipName(build, "img");
   std::string local_path =
-      CF_EXPECT(DownloadImageZip(build_api, build, target_directory));
+      CF_EXPECT(build_api.DownloadFile(build, target_directory, img_zip_name));
   std::vector<std::string> files = CF_EXPECT(
       ExtractImages(local_path, target_directory, images, keep_archives));
   return files;
-}
-
-Result<std::string> DownloadTargetFiles(BuildApi& build_api, const Build& build,
-                                        const std::string& target_directory) {
-  std::string target_files_name = GetBuildZipName(build, "target_files");
-  return build_api.DownloadFile(build, target_directory, target_files_name);
-}
-
-Result<std::vector<std::string>> DownloadHostPackage(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory, const bool keep_archives) {
-  std::string local_path =
-      CF_EXPECT(build_api.DownloadFile(build, target_directory, HOST_TOOLS));
-  return ExtractArchiveContents(local_path, target_directory, keep_archives);
-}
-
-Result<std::vector<std::string>> DownloadOtaTools(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory, const bool keep_archives) {
-  std::string local_path =
-      CF_EXPECT(build_api.DownloadFile(build, target_directory, OTA_TOOLS));
-  std::string otatools_dir = target_directory + OTA_TOOLS_DIR;
-  CF_EXPECT(EnsureDirectoryExists(otatools_dir, RWX_ALL_MODE));
-  return ExtractArchiveContents(local_path, otatools_dir, keep_archives);
-}
-
-Result<std::string> DownloadMiscInfo(BuildApi& build_api, const Build& build,
-                                     const std::string& target_dir) {
-  return build_api.DownloadFile(build, target_dir, "misc_info.txt");
 }
 
 Result<std::vector<std::string>> DownloadBoot(
@@ -280,8 +246,9 @@ Result<std::vector<std::string>> DownloadBoot(
   }
 
   std::vector<std::string> files{target_boot};
+  std::string img_zip_name = GetBuildZipName(build, "img");
   std::string img_zip =
-      CF_EXPECT(DownloadImageZip(build_api, build, target_dir));
+      CF_EXPECT(build_api.DownloadFile(build, target_dir, img_zip_name));
   const bool keep_img_zip_archive_for_vendor_boot = true;
   std::string extracted_boot =
       CF_EXPECT(ExtractImage(img_zip, target_dir, boot_artifact,
@@ -349,18 +316,12 @@ std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
       new ServiceAccountOauthCredentialSource(std::move(*result)));
 }
 
-Result<void> ProcessHostPackage(BuildApi& build_api, const Build& build,
-                                const std::string& target_dir,
-                                FetcherConfig* config,
-                                const std::string& host_package_build,
-                                const bool keep_archives) {
-  std::vector<std::string> host_package_files = CF_EXPECT(
-      DownloadHostPackage(build_api, build, target_dir, keep_archives));
-  CF_EXPECT(AddFilesToConfig(host_package_build != ""
-                                 ? FileSource::HOST_PACKAGE_BUILD
-                                 : FileSource::DEFAULT_BUILD,
-                             build, host_package_files, config, target_dir));
-  return {};
+Result<std::vector<std::string>> ProcessHostPackage(
+    BuildApi& build_api, const Build& build, const std::string& target_dir,
+    const bool keep_archives) {
+  std::string host_tools_filepath =
+      CF_EXPECT(build_api.DownloadFile(build, target_dir, HOST_TOOLS));
+  return ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives);
 }
 
 BuildApi GetBuildApi(const BuildApiFlags& flags) {
@@ -469,21 +430,25 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 
     auto process_pkg_ret = std::async(
         std::launch::async, ProcessHostPackage, std::ref(build_api),
-        std::cref(builds.host_package.value()), std::cref(target_dir), &config,
-        std::cref(flags.build_source_flags.host_package_build),
+        std::cref(builds.host_package.value()), std::cref(target_dir),
         std::cref(flags.keep_downloaded_archives));
 
     if (builds.otatools.has_value()) {
-      std::vector<std::string> ota_tools_files = CF_EXPECT(
-          DownloadOtaTools(build_api, builds.otatools.value(), target_dir,
-                           flags.keep_downloaded_archives));
+      std::string local_path = CF_EXPECT(build_api.DownloadFile(
+          builds.otatools.value(), target_dir, OTA_TOOLS));
+      std::string otatools_dir = target_dir + OTA_TOOLS_DIR;
+      CF_EXPECT(EnsureDirectoryExists(otatools_dir, RWX_ALL_MODE));
+      std::vector<std::string> ota_tools_files =
+          CF_EXPECT(ExtractArchiveContents(local_path, otatools_dir,
+                                           flags.keep_downloaded_archives));
       CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                  builds.default_build, ota_tools_files, &config,
                                  target_dir));
     }
     if (flags.download_flags.download_img_zip) {
-      std::string local_path = CF_EXPECT(
-          DownloadImageZip(build_api, builds.default_build, target_dir));
+      std::string img_zip_name = GetBuildZipName(builds.default_build, "img");
+      std::string local_path = CF_EXPECT(build_api.DownloadFile(
+          builds.default_build, target_dir, img_zip_name));
       std::vector<std::string> image_files = CF_EXPECT(ExtractArchiveContents(
           local_path, target_dir, flags.keep_downloaded_archives));
       LOG(INFO) << "Adding img-zip files for default build";
@@ -498,8 +463,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         flags.download_flags.download_target_files_zip) {
       std::string default_target_dir = target_dir + "/default";
       CF_EXPECT(EnsureDirectoryExists(default_target_dir), RWX_ALL_MODE);
-      std::string target_files = CF_EXPECT(DownloadTargetFiles(
-          build_api, builds.default_build, default_target_dir));
+      std::string target_files_name =
+          GetBuildZipName(builds.default_build, "target_files");
+      std::string target_files = CF_EXPECT(build_api.DownloadFile(
+          builds.default_build, default_target_dir, target_files_name));
       LOG(INFO) << "Adding target files for default build";
       CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                  builds.default_build, {target_files}, &config,
@@ -527,8 +494,10 @@ Result<void> FetchCvdMain(int argc, char** argv) {
       }
       std::string system_target_dir = target_dir + "/system";
       CF_EXPECT(EnsureDirectoryExists(system_target_dir, RWX_ALL_MODE));
-      std::string target_files = CF_EXPECT(DownloadTargetFiles(
-          build_api, builds.system.value(), system_target_dir));
+      std::string target_files_name =
+          GetBuildZipName(builds.system.value(), "target_files");
+      std::string target_files = CF_EXPECT(build_api.DownloadFile(
+          builds.system.value(), system_target_dir, target_files_name));
       CF_EXPECT(AddFilesToConfig(FileSource::SYSTEM_BUILD,
                                  builds.system.value(), {target_files}, &config,
                                  target_dir));
@@ -599,12 +568,12 @@ Result<void> FetchCvdMain(int argc, char** argv) {
 
     // Some older builds might not have misc_info.txt, so permit errors on
     // fetching misc_info.txt
-    auto misc_info =
-        DownloadMiscInfo(build_api, builds.default_build, target_dir);
-    if (misc_info.ok()) {
-      CF_EXPECT(AddFilesToConfig(FileSource::DEFAULT_BUILD,
-                                 builds.default_build, {misc_info.value()},
-                                 &config, target_dir, true));
+    Result<std::string> misc_info_result = build_api.DownloadFile(
+        builds.default_build, target_dir, "misc_info.txt");
+    if (misc_info_result.ok()) {
+      CF_EXPECT(AddFilesToConfig(
+          FileSource::DEFAULT_BUILD, builds.default_build,
+          {misc_info_result.value()}, &config, target_dir, true));
     }
 
     if (builds.bootloader.has_value()) {
@@ -622,8 +591,13 @@ Result<void> FetchCvdMain(int argc, char** argv) {
     }
 
     // Wait for ProcessHostPackage to return.
-    CF_EXPECT(process_pkg_ret.get(),
-              "Could not download host package for " << builds.default_build);
+    std::vector<std::string> host_package_files =
+        CF_EXPECT(process_pkg_ret.get());
+    CF_EXPECT(AddFilesToConfig(flags.build_source_flags.host_package_build != ""
+                                   ? FileSource::HOST_PACKAGE_BUILD
+                                   : FileSource::DEFAULT_BUILD,
+                               builds.host_package.value(), host_package_files,
+                               &config, target_dir));
   }
   curl_global_cleanup();
 
