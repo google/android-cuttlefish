@@ -16,7 +16,6 @@
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include <chrono>
 #include <fstream>
@@ -260,12 +259,8 @@ Result<std::vector<std::string>> DownloadImages(
       CF_EXPECT(DownloadImageZip(build_api, build, target_directory));
 
   std::vector<std::string> files =
-      ExtractImages(local_path, target_directory, images);
+      ExtractImages(local_path, target_directory, images, keep_archives);
   CF_EXPECT(!files.empty(), "Could not extract " << local_path);
-  if (!keep_archives && unlink(local_path.c_str()) != 0) {
-    LOG(ERROR) << "Could not delete " << local_path;
-    files.push_back(local_path);
-  }
   return files;
 }
 
@@ -301,19 +296,7 @@ Result<std::vector<std::string>> DownloadHostPackage(
             "Unable to download " << build << ":" << HOST_TOOLS << " to "
                                   << local_path);
 
-  Archive archive(local_path);
-  CF_EXPECT(archive.ExtractAll(target_directory),
-            "Could not extract \"" << local_path << "\" to \""
-                                   << target_directory << "\"");
-  std::vector<std::string> files = archive.Contents();
-  for (auto& file : files) {
-    file = target_directory + "/" + file;
-  }
-  if (!keep_archives && unlink(local_path.c_str()) != 0) {
-    LOG(ERROR) << "Could not delete " << local_path;
-    files.push_back(local_path);
-  }
-  return files;
+  return ExtractImages(local_path, target_directory, {}, keep_archives);
 }
 
 Result<std::vector<std::string>> DownloadOtaTools(
@@ -380,7 +363,7 @@ Result<std::vector<std::string>> DownloadBoot(
   std::string img_zip =
       CF_EXPECT(DownloadImageZip(build_api, build, target_dir));
   std::vector<std::string> extracted_boot =
-      ExtractImages(img_zip, target_dir, {boot_artifact});
+      ExtractImages(img_zip, target_dir, {boot_artifact}, keep_archives);
   CF_EXPECT(!extracted_boot.empty(),
             "No " << boot_artifact << " in the img zip.");
   if (extracted_boot[0] != target_boot) {
@@ -388,15 +371,11 @@ Result<std::vector<std::string>> DownloadBoot(
   }
 
   std::vector<std::string> extracted_vendor_boot =
-      ExtractImages(img_zip, target_dir, {"vendor_boot.img"});
+      ExtractImages(img_zip, target_dir, {"vendor_boot.img"}, keep_archives);
   if (!extracted_vendor_boot.empty()) {
     files.push_back(extracted_vendor_boot[0]);
   } else {
     LOG(INFO) << "No vendor_boot.img in the img zip.";
-  }
-
-  if (!keep_archives && unlink(img_zip.c_str()) != 0) {
-    LOG(ERROR) << "Could not delete " << img_zip;
   }
   return files;
 }
@@ -645,7 +624,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                  builds.system.value(), target_files, &config,
                                  target_dir));
       if (!system_in_img_zip) {
-        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system.img"}) !=
+        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system.img"},
+                          flags.keep_downloaded_archives) !=
             std::vector<std::string>{}) {
           std::string extracted_system = target_dir + "/IMAGES/system.img";
           std::string target_system = target_dir + "/system.img";
@@ -653,24 +633,24 @@ Result<void> FetchCvdMain(int argc, char** argv) {
         } else {
           return CF_ERR("Could not get system.img from the target zip");
         }
-        if (ExtractImages(target_files[0], target_dir,
-                          {"IMAGES/product.img"}) !=
+        if (ExtractImages(target_files[0], target_dir, {"IMAGES/product.img"},
+                          flags.keep_downloaded_archives) !=
             std::vector<std::string>{}) {
           std::string extracted_product = target_dir + "/IMAGES/product.img";
           std::string target_product = target_dir + "/product.img";
           CF_EXPECT(RenameFile(extracted_product, target_product));
         }
-        if (ExtractImages(target_files[0], target_dir,
-                          {"IMAGES/system_ext.img"}) !=
-            std::vector<std::string>{}) {
+        if (ExtractImages(
+                target_files[0], target_dir, {"IMAGES/system_ext.img"},
+                flags.keep_downloaded_archives) != std::vector<std::string>{}) {
           std::string extracted_system_ext =
               target_dir + "/IMAGES/system_ext.img";
           std::string target_system_ext = target_dir + "/system_ext.img";
           CF_EXPECT(RenameFile(extracted_system_ext, target_system_ext));
         }
-        if (ExtractImages(target_files[0], target_dir,
-                          {"IMAGES/vbmeta_system.img"}) !=
-            std::vector<std::string>{}) {
+        if (ExtractImages(
+                target_files[0], target_dir, {"IMAGES/vbmeta_system.img"},
+                flags.keep_downloaded_archives) != std::vector<std::string>{}) {
           std::string extracted_vbmeta_system =
               target_dir + "/IMAGES/vbmeta_system.img";
           std::string target_vbmeta_system = target_dir + "/vbmeta_system.img";
