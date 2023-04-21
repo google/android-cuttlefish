@@ -576,6 +576,10 @@ static void set_Ip_Addr(const char *addr, const char* radioInterfaceName) {
     if (ioctl(sock, SIOCSIFADDR, &request) < 0) {
       RLOGE("%s: SIOCSIFADDR IPv4 failed.", __func__);
     }
+    sin->sin_addr.s_addr = htonl(0xFFFFFFFFu << (32 - (pfxlen ?: 32)));
+    if (ioctl(sock, SIOCSIFNETMASK, &request) < 0) {
+      RLOGE("%s: SIOCSIFNETMASK failed.", __func__);
+    }
   } else {
     if (ioctl(sock, SIOGIFINDEX, &request) < 0) {
       RLOGE("%s: SIOCGIFINDEX failed.", __func__);
