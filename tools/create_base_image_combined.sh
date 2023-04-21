@@ -112,7 +112,7 @@ else
 fi
 cd -
 
-dist_dir=$(echo ${KERNEL_REPO}/out/android*/dist)
+dist_dir=$(echo ${KERNEL_REPO}/out*/dist)
 
 # build rootfs/host images
 if [[ "$ARCH" == "arm" ]]; then
