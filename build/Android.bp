@@ -259,6 +259,30 @@ cvd_host_avb_testkey = [
     "cvd_avb_testkey",
 ]
 
+cvd_host_netsim_gui_assets = [
+    "netsim_ui_index.html",
+    "netsim_ui_js_cube-sprite.js",
+    "netsim_ui_js_customize-map-button.js",
+    "netsim_ui_js_device-dragzone.js",
+    "netsim_ui_js_device-dropzone.js",
+    "netsim_ui_js_device-info.js",
+    "netsim_ui_js_device-list.js",
+    "netsim_ui_js_device-map.js",
+    "netsim_ui_js_device-observer.js",
+    "netsim_ui_js_license-info.js",
+    "netsim_ui_js_navigation-bar.js",
+    "netsim_ui_js_netsim-app.js",
+    "netsim_ui_js_packet-info.js",
+    "netsim_ui_js_pyramid-sprite.js",
+    "netsim_ui_js_model.js",
+    "netsim_ui_tslib",
+    "netsim_ui_assets_grid-background.svg",
+    "netsim_ui_assets_hexagonal-background.png",
+    "netsim_ui_assets_netsim-logo-b.svg",
+    "netsim_ui_assets_netsim-logo.svg",
+    "netsim_ui_assets_polar-background.svg",
+]
+
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
@@ -271,7 +295,8 @@ cvd_host_package_customization {
                 cvd_host_acloud_data +
                 cvd_host_bootloader +
                 cvd_bluetooth_config_files +
-                cvd_openwrt_images,
+                cvd_openwrt_images +
+                cvd_host_netsim_gui_assets,
         },
     },
 
