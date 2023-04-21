@@ -433,4 +433,10 @@ std::string GetBuildZipName(const Build& build, const std::string& name) {
   return product + "-" + name + "-" + id + ".zip";
 }
 
+std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
+  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
+  auto target = std::visit([](auto&& arg) { return arg.target; }, build);
+  return {id, target};
+}
+
 }  // namespace cuttlefish
