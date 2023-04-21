@@ -23,6 +23,7 @@
 #include <set>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -31,6 +32,8 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
+#include "host/libs/web/credential_source.h"
 
 namespace cuttlefish {
 namespace {
@@ -43,6 +46,31 @@ bool StatusIsTerminal(const std::string& status) {
       "abandoned", "complete", "error", "ABANDONED", "COMPLETE", "ERROR",
   };
   return terminal_statuses.count(status) > 0;
+}
+
+bool ArtifactsContain(const std::vector<Artifact>& artifacts,
+                      const std::string& name) {
+  for (const auto& artifact : artifacts) {
+    if (artifact.Name() == name) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::string BuildNameRegexp(
+    const std::vector<std::string>& artifact_filenames) {
+  // surrounding with \Q and \E treats the text literally to avoid
+  // characters being treated as regex
+  auto it = artifact_filenames.begin();
+  std::string name_regex = "^\\Q" + *it + "\\E$";
+  std::string result = name_regex;
+  ++it;
+  for (const auto end = artifact_filenames.end(); it != end; ++it) {
+    name_regex = "^\\Q" + *it + "\\E$";
+    result += "|" + name_regex;
+  }
+  return result;
 }
 
 }  // namespace
@@ -180,7 +208,8 @@ Result<std::string> BuildApi::ProductName(const DeviceBuild& build) {
 }
 
 Result<std::vector<Artifact>> BuildApi::Artifacts(
-    const DeviceBuild& build, const std::string& artifact_filename) {
+    const DeviceBuild& build,
+    const std::vector<std::string>& artifact_filenames) {
   std::string page_token = "";
   std::vector<Artifact> artifacts;
   do {
@@ -188,11 +217,9 @@ Result<std::vector<Artifact>> BuildApi::Artifacts(
                       http_client->UrlEscape(build.id) + "/" +
                       http_client->UrlEscape(build.target) +
                       "/attempts/latest/artifacts?maxResults=100";
-    if (!artifact_filename.empty()) {
-      // surrounding with \Q and \E treats the text literally to avoid
-      // characters being treated as regex
-      std::string name_regex = "^\\Q" + artifact_filename + "\\E$";
-      url += "&nameRegexp=" + http_client->UrlEscape(name_regex);
+    if (!artifact_filenames.empty()) {
+      url += "&nameRegexp=" +
+             http_client->UrlEscape(BuildNameRegexp(artifact_filenames));
     }
     if (page_token != "") {
       url += "&pageToken=" + http_client->UrlEscape(page_token);
@@ -226,13 +253,11 @@ struct CloseDir {
   void operator()(DIR* dir) { closedir(dir); }
 };
 
-using UniqueDir = std::unique_ptr<DIR, CloseDir>;
-
-Result<std::vector<Artifact>> BuildApi::Artifacts(const DirectoryBuild& build,
-                                                  const std::string&) {
+Result<std::vector<Artifact>> BuildApi::Artifacts(
+    const DirectoryBuild& build, const std::vector<std::string>&) {
   std::vector<Artifact> artifacts;
   for (const auto& path : build.paths) {
-    auto dir = UniqueDir(opendir(path.c_str()));
+    auto dir = std::unique_ptr<DIR, CloseDir>(opendir(path.c_str()));
     CF_EXPECT(dir != nullptr, "Could not read files from \"" << path << "\"");
     for (auto entity = readdir(dir.get()); entity != nullptr;
          entity = readdir(dir.get())) {
@@ -362,6 +387,50 @@ Result<Build> BuildApi::ArgumentToBuild(
   LOG(INFO) << "Status for build " << proposed_build << " is " << status;
   proposed_build.product = CF_EXPECT(ProductName(proposed_build));
   return proposed_build;
+}
+
+Result<std::string> BuildApi::DownloadFile(const Build& build,
+                                           const std::string& target_directory,
+                                           const std::string& artifact_name) {
+  std::vector<Artifact> artifacts =
+      CF_EXPECT(Artifacts(build, {artifact_name}));
+  CF_EXPECT(ArtifactsContain(artifacts, artifact_name),
+            "Target " << build << " did not contain " << artifact_name);
+  return DownloadTargetFile(build, target_directory, artifact_name);
+}
+
+Result<std::string> BuildApi::DownloadFileWithBackup(
+    const Build& build, const std::string& target_directory,
+    const std::string& artifact_name, const std::string& backup_artifact_name) {
+  std::vector<Artifact> artifacts =
+      CF_EXPECT(Artifacts(build, {artifact_name, backup_artifact_name}));
+  std::string selected_artifact = artifact_name;
+  if (!ArtifactsContain(artifacts, artifact_name)) {
+    selected_artifact = backup_artifact_name;
+  }
+  return DownloadTargetFile(build, target_directory, selected_artifact);
+}
+
+Result<std::string> BuildApi::DownloadTargetFile(
+    const Build& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  std::string target_filepath = target_directory + "/" + artifact_name;
+  CF_EXPECT(ArtifactToFile(build, artifact_name, target_filepath),
+            "Unable to download " << build << ":" << artifact_name << " to "
+                                  << target_filepath);
+  return {target_filepath};
+}
+
+/** Returns the name of one of the artifact target zip files.
+ *
+ * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
+ * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
+ */
+std::string GetBuildZipName(const Build& build, const std::string& name) {
+  std::string product =
+      std::visit([](auto&& arg) { return arg.product; }, build);
+  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
+  return product + "-" + name + "-" + id + ".zip";
 }
 
 }  // namespace cuttlefish
