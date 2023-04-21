@@ -560,11 +560,13 @@ static void set_Ip_Addr(const char *addr, const char* radioInterfaceName) {
   strncpy(request.ifr_name, radioInterfaceName, sizeof(request.ifr_name));
   request.ifr_name[sizeof(request.ifr_name) - 1] = '\0';
 
+  int pfxlen = 0;
   char *myaddr = strdup(addr);
   char *pch = NULL;
   pch = strchr(myaddr, '/');
   if (pch) {
     *pch = '\0';
+    pfxlen = atoi(++pch);
   }
 
   if (family == AF_INET) {
@@ -581,7 +583,7 @@ static void set_Ip_Addr(const char *addr, const char* radioInterfaceName) {
 
     struct in6_ifreq req6 = {
        // struct in6_addr ifr6_addr;
-       .ifr6_prefixlen = 64,  // __u32
+       .ifr6_prefixlen = pfxlen ?: 128,  // __u32
        .ifr6_ifindex = request.ifr_ifindex,  // int
     };
     if (inet_pton(AF_INET6, myaddr, &req6.ifr6_addr) != 1) {
