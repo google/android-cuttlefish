@@ -189,25 +189,56 @@ void CvdServer::Join() {
   }
 }
 
-Result<void> CvdServer::Exec(SharedFD new_exe, SharedFD client_fd) {
+Result<void> CvdServer::Exec(const ExecParam& exec_param) {
   CF_EXPECT(server_fd_->IsOpen(), "Server not running");
   Stop();
   android::base::unique_fd server_dup{server_fd_->UNMANAGED_Dup()};
   CF_EXPECT(server_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-  android::base::unique_fd client_dup{client_fd->UNMANAGED_Dup()};
+  android::base::unique_fd client_dup{
+      exec_param.carryover_client_fd->UNMANAGED_Dup()};
   CF_EXPECT(client_dup.get() >= 0, "dup: \"" << server_fd_->StrError() << "\"");
-  std::vector<std::string> argv_str = {
+  android::base::unique_fd client_stderr_dup{
+      exec_param.client_stderr_fd->UNMANAGED_Dup()};
+  CF_EXPECT(client_stderr_dup.get() >= 0,
+            "dup: \"" << exec_param.client_stderr_fd->StrError() << "\"");
+  cvd_common::Args argv_str = {
       kServerExecPath,
       "-INTERNAL_server_fd=" + std::to_string(server_dup.get()),
       "-INTERNAL_carryover_client_fd=" + std::to_string(client_dup.get()),
+      "-INTERNAL_carryover_stderr_fd=" +
+          std::to_string(client_stderr_dup.get()),
   };
+
+  int in_memory_dup = -1;
+  ScopeGuard exit_action([&in_memory_dup]() {
+    if (in_memory_dup >= 0) {
+      if (close(in_memory_dup) != 0) {
+        LOG(ERROR) << "Failed to close file " << in_memory_dup;
+      }
+    }
+  });
+  if (exec_param.in_memory_data_fd) {
+    in_memory_dup = exec_param.in_memory_data_fd.value()->UNMANAGED_Dup();
+    CF_EXPECT(
+        in_memory_dup >= 0,
+        "dup: \"" << exec_param.in_memory_data_fd.value()->StrError() << "\"");
+    argv_str.push_back("-INTERNAL_memory_carryover_fd=" +
+                       std::to_string(in_memory_dup));
+  }
+
   std::vector<char*> argv_cstr;
   for (const auto& argv : argv_str) {
     argv_cstr.emplace_back(strdup(argv.c_str()));
   }
   argv_cstr.emplace_back(nullptr);
-  android::base::unique_fd new_exe_dup{new_exe->UNMANAGED_Dup()};
-  CF_EXPECT(new_exe_dup.get() >= 0, "dup: \"" << new_exe->StrError() << "\"");
+  android::base::unique_fd new_exe_dup{exec_param.new_exe->UNMANAGED_Dup()};
+  CF_EXPECT(new_exe_dup.get() >= 0,
+            "dup: \"" << exec_param.new_exe->StrError() << "\"");
+
+  if (exec_param.verbose) {
+    LOG(ERROR) << "Server Exec'ing: " << android::base::Join(argv_str, " ");
+  }
+
   fexecve(new_exe_dup.get(), argv_cstr.data(), environ);
   for (const auto& argv : argv_cstr) {
     free(argv);
@@ -241,18 +272,20 @@ Result<void> CvdServer::StartServer(SharedFD server_fd) {
   return {};
 }
 
-Result<void> CvdServer::AcceptCarryoverClient(SharedFD client) {
-  cvd::Response success_message;
-  success_message.mutable_status()->set_code(cvd::Status::OK);
-  success_message.mutable_command_response();
-  CF_EXPECT(SendResponse(client, success_message));
-
+Result<void> CvdServer::AcceptCarryoverClient(
+    SharedFD client,
+    // the passed ScopedLogger should be destroyed on return of this function.
+    std::unique_ptr<ServerLogger::ScopedLogger>) {
   auto self_cb = [this](EpollEvent ev) -> Result<void> {
     CF_EXPECT(HandleMessage(ev));
     return {};
   };
   CF_EXPECT(epoll_pool_.Register(client, EPOLLIN, self_cb));
 
+  cvd::Response success_message;
+  success_message.mutable_status()->set_code(cvd::Status::OK);
+  success_message.mutable_command_response();
+  CF_EXPECT(SendResponse(client, success_message));
   return {};
 }
 
@@ -430,25 +463,35 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
   return response;
 }
 
-static fruit::Component<> ServerComponent() {
+Result<void> CvdServer::InstanceDbFromJson(const std::string& json_string) {
+  const uid_t uid = getuid();
+  auto json = CF_EXPECT(ParseJson(json_string));
+  CF_EXPECT(instance_manager_.LoadFromJson(uid, json));
+  return {};
+}
+
+static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
   return fruit::createComponent()
       .addMultibinding<CvdServer, CvdServer>()
+      .bindInstance(*server_logger)
       .install(BuildApiModule)
       .install(EpollLoopComponent)
       .install(HostToolTargetManagerComponent)
       .install(OperationToBinsMapComponent);
 }
 
-Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client) {
+Result<int> CvdServerMain(ServerMainParam&& fds) {
   LOG(INFO) << "Starting server";
 
   CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
 
   signal(SIGPIPE, SIG_IGN);
 
+  SharedFD server_fd = std::move(fds.internal_server_fd);
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
-  fruit::Injector<> injector(ServerComponent);
+  std::unique_ptr<ServerLogger> server_logger = std::move(fds.server_logger);
+  fruit::Injector<> injector(ServerComponent, server_logger.get());
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
     CF_EXPECT(late_injected->LateInject(injector));
@@ -458,15 +501,44 @@ Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client) {
   CF_EXPECT(server_bindings.size() == 1,
             "Expected 1 server binding, got " << server_bindings.size());
   auto& server = *(server_bindings[0]);
-  server.StartServer(server_fd);
 
-  if (carryover_client->IsOpen()) {
-    CF_EXPECT(server.AcceptCarryoverClient(carryover_client));
+  std::optional<SharedFD> memory_carryover_fd =
+      std::move(fds.memory_carryover_fd);
+  if (memory_carryover_fd) {
+    const std::string json_string =
+        CF_EXPECT(ReadAllFromMemFd(*memory_carryover_fd));
+    CF_EXPECT(server.InstanceDbFromJson(json_string),
+              "Failed to load from: " << json_string);
   }
 
+  server.StartServer(server_fd);
+
+  SharedFD carryover_client = std::move(fds.carryover_client_fd);
+  // The carryover_client wouldn't be available after AcceptCarryoverClient()
+  if (carryover_client->IsOpen()) {
+    // release scoped_logger for this thread inside AcceptCarryoverClient()
+    CF_EXPECT(server.AcceptCarryoverClient(carryover_client,
+                                           std::move(fds.scoped_logger)));
+  } else {
+    // release scoped_logger now and delete the object
+    fds.scoped_logger.reset();
+  }
   server.Join();
 
   return 0;
+}
+
+Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd) {
+  const auto n_message_size = mem_fd->LSeek(0, SEEK_END);
+  CF_EXPECT_NE(n_message_size, -1, "LSeek on the memory file failed.");
+  std::vector<char> buffer(n_message_size);
+  CF_EXPECT_EQ(mem_fd->LSeek(0, SEEK_SET), 0, mem_fd->StrError());
+  auto n_read = ReadExact(mem_fd, buffer.data(), n_message_size);
+  CF_EXPECT(n_read == n_message_size,
+            "Expected to read " << n_message_size << " bytes but actually read "
+                                << n_read << " bytes.");
+  std::string message(buffer.begin(), buffer.end());
+  return message;
 }
 
 }  // namespace cuttlefish
