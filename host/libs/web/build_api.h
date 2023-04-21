@@ -20,6 +20,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -94,33 +95,57 @@ class BuildApi {
   Result<std::string> LatestBuildId(const std::string& branch,
                                     const std::string& target);
 
-  Result<std::vector<Artifact>> Artifacts(const DeviceBuild& build,
-                                          const std::string& artifact_filename);
-
+  // download the artifact from the build and apply the callback
   Result<void> ArtifactToCallback(const DeviceBuild& build,
                                   const std::string& artifact,
                                   HttpClient::DataCallback callback);
+
+  // determine the format of the build source argument and parse for the
+  // relevant build identifiers
+  Result<Build> ArgumentToBuild(const std::string& arg,
+                                const std::string& default_build_target);
+
+  Result<std::string> DownloadFile(const Build& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name);
+
+  Result<std::string> DownloadFileWithBackup(
+      const Build& build, const std::string& target_directory,
+      const std::string& artifact_name,
+      const std::string& backup_artifact_name);
+
+ private:
+  Result<std::vector<std::string>> Headers();
+
+  Result<std::string> BuildStatus(const DeviceBuild&);
+
+  Result<std::string> ProductName(const DeviceBuild&);
+
+  Result<std::vector<Artifact>> Artifacts(
+      const DeviceBuild& build,
+      const std::vector<std::string>& artifact_filenames);
+
+  Result<std::vector<Artifact>> Artifacts(
+      const DirectoryBuild& build,
+      const std::vector<std::string>& artifact_filenames);
+
+  Result<std::vector<Artifact>> Artifacts(
+      const Build& build, const std::vector<std::string>& artifact_filenames) {
+    auto res = std::visit(
+        [this, &artifact_filenames](auto&& arg) {
+          return Artifacts(arg, artifact_filenames);
+        },
+        build);
+    return CF_EXPECT(std::move(res));
+  }
 
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path);
 
-  Result<std::vector<Artifact>> Artifacts(const DirectoryBuild& build,
-                                          const std::string& artifact_filename);
-
   Result<void> ArtifactToFile(const DirectoryBuild& build,
                               const std::string& artifact,
                               const std::string& path);
-
-  Result<std::vector<Artifact>> Artifacts(
-      const Build& build, const std::string& artifact_filename) {
-    auto res = std::visit(
-        [this, &artifact_filename](auto&& arg) {
-          return Artifacts(arg, artifact_filename);
-        },
-        build);
-    return CF_EXPECT(std::move(res));
-  }
 
   Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
                               const std::string& path) {
@@ -133,15 +158,9 @@ class BuildApi {
     return {};
   }
 
-  Result<Build> ArgumentToBuild(const std::string& arg,
-                                const std::string& default_build_target);
-
- private:
-  Result<std::vector<std::string>> Headers();
-
-  Result<std::string> BuildStatus(const DeviceBuild&);
-
-  Result<std::string> ProductName(const DeviceBuild&);
+  Result<std::string> DownloadTargetFile(const Build& build,
+                                         const std::string& target_directory,
+                                         const std::string& artifact_name);
 
   std::unique_ptr<HttpClient> http_client;
   std::unique_ptr<HttpClient> inner_http_client;
@@ -149,5 +168,7 @@ class BuildApi {
   std::string api_key_;
   std::chrono::seconds retry_period_;
 };
+
+std::string GetBuildZipName(const Build& build, const std::string& name);
 
 }  // namespace cuttlefish
