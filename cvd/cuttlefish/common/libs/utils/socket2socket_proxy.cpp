@@ -22,10 +22,9 @@
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <thread>
-#include <utility>
-#include <vector>
 
 #include <android-base/logging.h>
 
