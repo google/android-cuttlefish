@@ -21,7 +21,6 @@
 
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/instance/cf_boot_configs.h"
-#include "host/commands/cvd/parser/instance/cf_disk_configs.h"
 #include "host/commands/cvd/parser/instance/cf_graphics_configs.h"
 #include "host/commands/cvd/parser/instance/cf_metrics_configs.h"
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
@@ -31,7 +30,6 @@ namespace cuttlefish {
 
 void InitInstancesConfigs(Json::Value& root) {
   InitVmConfigs(root);
-  InitDiskConfigs(root);
   InitBootConfigs(root);
   InitSecurityConfigs(root);
   InitGraphicsConfigs(root);
@@ -39,7 +37,6 @@ void InitInstancesConfigs(Json::Value& root) {
 
 std::vector<std::string> GenerateInstancesFlags(const Json::Value& root) {
   std::vector<std::string> result = GenerateVmFlags(root);
-  result = MergeResults(result, GenerateDiskFlags(root));
   if (!GENERATE_MVP_FLAGS_ONLY) {
     result = MergeResults(result, GenerateBootFlags(root));
   }
