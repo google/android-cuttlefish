@@ -43,8 +43,7 @@ FastbootConfigFlagComponent();
 fruit::Component<fruit::Required<FastbootConfig>, FastbootConfigFragment>
 FastbootConfigFragmentComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 const FastbootConfig,
-                                 KernelLogPipeProvider>>
+                                 const FastbootConfig>>
 LaunchFastbootComponent();
 
 }  // namespace cuttlefish
