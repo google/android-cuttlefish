@@ -549,7 +549,8 @@ static void set_Ip_Addr(const char *addr, const char* radioInterfaceName) {
         radioInterfaceName);
   struct ifreq request;
   int status = 0;
-  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+  int family = strchr(addr, ':') ? AF_INET6 : AF_INET;
+  int sock = socket(family, SOCK_DGRAM, 0);
   if (sock == -1) {
     RLOGE("Failed to open interface socket: %s (%d)", strerror(errno), errno);
     return;
@@ -566,11 +567,30 @@ static void set_Ip_Addr(const char *addr, const char* radioInterfaceName) {
     *pch = '\0';
   }
 
-  struct sockaddr_in *sin = (struct sockaddr_in *)&request.ifr_addr;
-  sin->sin_family = AF_INET;
-  sin->sin_addr.s_addr = inet_addr(myaddr);
-  if (ioctl(sock, SIOCSIFADDR, &request) < 0) {
-    RLOGE("%s: failed.", __func__);
+  if (family == AF_INET) {
+    struct sockaddr_in *sin = (struct sockaddr_in *)&request.ifr_addr;
+    sin->sin_family = AF_INET;
+    sin->sin_addr.s_addr = inet_addr(myaddr);
+    if (ioctl(sock, SIOCSIFADDR, &request) < 0) {
+      RLOGE("%s: SIOCSIFADDR IPv4 failed.", __func__);
+    }
+  } else {
+    if (ioctl(sock, SIOGIFINDEX, &request) < 0) {
+      RLOGE("%s: SIOCGIFINDEX failed.", __func__);
+    }
+
+    struct in6_ifreq req6 = {
+       // struct in6_addr ifr6_addr;
+       .ifr6_prefixlen = 64,  // __u32
+       .ifr6_ifindex = request.ifr_ifindex,  // int
+    };
+    if (inet_pton(AF_INET6, myaddr, &req6.ifr6_addr) != 1) {
+      RLOGE("%s: inet_pton(AF_INET6, '%s') failed.", __func__, myaddr);
+    }
+
+    if (ioctl(sock, SIOCSIFADDR, &req6) < 0) {
+      RLOGE("%s: SIOCSIFADDR IPv6 failed.", __func__);
+    }
   }
 
   close(sock);
