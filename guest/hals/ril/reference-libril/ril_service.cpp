@@ -11078,8 +11078,8 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11* dcResponse,
         ::android::hardware::radio::V1_5::LinkAddress la;
         la.address = hidl_string(tok);
         la.properties = 0;
-        la.deprecationTime = 0;
-        la.expirationTime = 0;
+        la.deprecationTime = INT64_MAX;  // LinkAddress.java LIFETIME_PERMANENT = Long.MAX_VALUE
+        la.expirationTime = INT64_MAX;  // --"--
         linkAddresses.push_back(la);
     }
 
@@ -11107,8 +11107,8 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11* dcResponse,
         ::android::hardware::radio::V1_5::LinkAddress la;
         la.address = hidl_string(tok);
         la.properties = 0;
-        la.deprecationTime = 0;
-        la.expirationTime = 0;
+        la.deprecationTime = INT64_MAX;  // LinkAddress.java LIFETIME_PERMANENT = Long.MAX_VALUE
+        la.expirationTime = INT64_MAX;  // --"--
         linkAddresses.push_back(la);
     }
 
