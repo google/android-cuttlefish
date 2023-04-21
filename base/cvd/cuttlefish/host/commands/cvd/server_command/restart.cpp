@@ -18,18 +18,19 @@
 
 #include <sys/types.h>
 
+#include <cstdio>
 #include <iostream>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
 #include <fruit/fruit.h>
-
-#include "cvd_server.pb.h"
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/cvd/flag.h"
+#include "cvd_server.pb.h"
+#include "host/commands/cvd/common_utils.h"
+#include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/instance_manager.h"
 #include "host/commands/cvd/server_command/components.h"
@@ -42,6 +43,7 @@ namespace {
 
 constexpr char kRestartServerHelpMessage[] =
     R"(Cuttlefish Virtual Device (CVD) CLI.
+
 usage: cvd restart-server <common args> <mode> <mode args>
 
 Common Args:
@@ -101,11 +103,7 @@ class CvdRestartHandler : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     CF_EXPECT(CanHandle(request));
-    CF_EXPECT(request.Credentials() != std::nullopt);
-    const uid_t uid = request.Credentials()->uid;
     cvd::Response response;
-    response.mutable_shutdown_response();
-
     if (request.Message().has_shutdown_request()) {
       response.mutable_shutdown_response();
     } else {
@@ -130,16 +128,24 @@ class CvdRestartHandler : public CvdServerHandler {
       return response;
     }
 
-    if (instance_manager_.HasInstanceGroups(uid)) {
-      response.mutable_status()->set_code(cvd::Status::FAILED_PRECONDITION);
-      response.mutable_status()->set_message(
-          "Cannot restart cvd_server while devices are being tracked. "
-          "Try `cvd kill-server`.");
-      return response;
-    }
-
+    // On CF_ERR, the locks will be released automatically
     WriteAll(request.Out(), "Stopping the cvd_server.\n");
     server_.Stop();
+
+    CF_EXPECT(request.Credentials() != std::nullopt);
+    const uid_t client_uid = request.Credentials()->uid;
+    auto json_string =
+        CF_EXPECT(SerializedInstanceDatabaseToString(client_uid));
+    std::optional<SharedFD> mem_fd;
+    if (instance_manager_.HasInstanceGroups(client_uid)) {
+      mem_fd = CF_EXPECT(CreateMemFileWithSerializedDb(json_string));
+      CF_EXPECT(mem_fd != std::nullopt && (*mem_fd)->IsOpen(),
+                "mem file not open?");
+    }
+
+    if (parsed.verbose && mem_fd) {
+      PrintFileLink(request.Err(), *mem_fd);
+    }
 
     const std::string subcmd = parsed.subcmd.value_or("reuse-server");
     SharedFD new_exe;
@@ -153,9 +159,14 @@ class CvdRestartHandler : public CvdServerHandler {
     } else if (subcmd == "reuse-server") {
       new_exe = CF_EXPECT(NewExecFromPath(request, kServerExecPath));
     } else {
-      return CF_ERR("Unrecognized command line");
+      return CF_ERR("unsupported subcommand");
     }
-    CF_EXPECT(server_.Exec(new_exe, request.Client()));
+
+    CF_EXPECT(server_.Exec({.new_exe = new_exe,
+                            .carryover_client_fd = request.Client(),
+                            .client_stderr_fd = request.Err(),
+                            .in_memory_data_fd = mem_fd,
+                            .verbose = parsed.verbose}));
     return CF_ERR("Should be unreachable");
   }
 
@@ -225,6 +236,35 @@ class CvdRestartHandler : public CvdServerHandler {
                                      << emulated_absolute_path
                                      << "\": " << new_exe->StrError());
     return new_exe;
+  }
+
+  Result<std::string> SerializedInstanceDatabaseToString(
+      const uid_t client_uid) {
+    auto db_json = CF_EXPECT(instance_manager_.Serialize(client_uid),
+                             "Failed to serialized instance database");
+    return db_json.toStyledString();
+  }
+
+  Result<SharedFD> CreateMemFileWithSerializedDb(
+      const std::string& json_string) {
+    const std::string mem_file_name = "cvd_server_" + std::to_string(getpid());
+    auto mem_fd = SharedFD::MemfdCreateWithData(mem_file_name, json_string);
+    CF_EXPECT(mem_fd->IsOpen(),
+              "MemfdCreateWithData failed: " << mem_fd->StrError());
+    return mem_fd;
+  }
+
+  void PrintFileLink(const SharedFD& fd_stream, const SharedFD& mem_fd) const {
+    auto link_target_result = mem_fd->ProcFdLinkTarget();
+    if (!link_target_result.ok()) {
+      WriteAll(fd_stream,
+               "Failed to resolve the link target for the memory file.\n");
+      return;
+    }
+    std::string message("The link target for the memory file is ");
+    message.append(*link_target_result).append("\n");
+    WriteAll(fd_stream, message);
+    return;
   }
 
   BuildApi& build_api_;

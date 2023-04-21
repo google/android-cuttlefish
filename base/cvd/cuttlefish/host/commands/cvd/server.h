@@ -42,17 +42,46 @@
 
 namespace cuttlefish {
 
+struct ServerMainParam {
+  SharedFD internal_server_fd;
+  SharedFD carryover_client_fd;
+  std::optional<SharedFD> memory_carryover_fd;
+  std::unique_ptr<ServerLogger> server_logger;
+  /* scoped logger that carries the stderr of the carried-over
+   * client. The client may have called "cvd restart-server."
+   *
+   * The scoped_logger should expire just after AcceptCarryoverClient()
+   */
+  std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
+};
+Result<int> CvdServerMain(ServerMainParam&& fds);
+
 class CvdServer {
+  // for server_logger_.
+  // server_logger_ shouldn't be exposed to anything but CvdServerMain()
+  friend Result<int> CvdServerMain(ServerMainParam&& fds);
+
  public:
   INJECT(CvdServer(BuildApi&, EpollPool&, InstanceManager&,
                    HostToolTargetManager&, ServerLogger&));
   ~CvdServer();
 
   Result<void> StartServer(SharedFD server);
-  Result<void> Exec(SharedFD new_exe, SharedFD client);
-  Result<void> AcceptCarryoverClient(SharedFD client);
+  struct ExecParam {
+    SharedFD new_exe;
+    SharedFD carryover_client_fd;  // the client that called cvd restart-server
+    std::optional<SharedFD>
+        in_memory_data_fd;  // fd to carry over in-memory data
+    SharedFD client_stderr_fd;
+    bool verbose;
+  };
+  Result<void> Exec(const ExecParam&);
+  Result<void> AcceptCarryoverClient(
+      SharedFD client,
+      std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger);
   void Stop();
   void Join();
+  Result<void> InstanceDbFromJson(const std::string& json_string);
 
  private:
   struct OngoingRequest {
@@ -91,6 +120,7 @@ Result<CvdServerHandler*> RequestHandler(
     const RequestWithStdio& request,
     const std::vector<CvdServerHandler*>& handlers);
 
-Result<int> CvdServerMain(SharedFD server_fd, SharedFD carryover_client);
+// Read all contents from the file
+Result<std::string> ReadAllFromMemFd(const SharedFD& mem_fd);
 
 }  // namespace cuttlefish
