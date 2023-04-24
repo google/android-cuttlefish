@@ -38,7 +38,6 @@ on fs
 
     # Mount everything that does not require fsck
     mount_all --early
-    restorecon_recursive /vendor
 
     # So GceBootReporter can print to kmsg
     chmod 622 /dev/kmsg
