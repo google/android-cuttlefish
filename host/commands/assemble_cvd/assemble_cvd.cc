@@ -29,6 +29,7 @@
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
+#include "host/commands/assemble_cvd/display.h"
 #include "host/commands/assemble_cvd/flag_feature.h"
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
@@ -335,6 +336,9 @@ fruit::Component<> FlagsComponent() {
       .install(AdbConfigComponent)
       .install(AdbConfigFlagComponent)
       .install(AdbConfigFragmentComponent)
+      .install(DisplaysConfigsComponent)
+      .install(DisplaysConfigsFlagComponent)
+      .install(DisplaysConfigsFragmentComponent)
       .install(FastbootConfigComponent)
       .install(FastbootConfigFlagComponent)
       .install(FastbootConfigFragmentComponent)
