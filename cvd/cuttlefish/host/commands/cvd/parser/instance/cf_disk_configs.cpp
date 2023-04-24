@@ -13,33 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd/parser/instance/cf_disk_configs.h"
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 
-#include <string>
-#include <vector>
-
-#include <json/json.h>
-
-#include "common/libs/utils/result.h"
+#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 #define DEFAULT_BLANK_DATA_IMAGE_SIZE "unset"
 
 namespace cuttlefish {
 
-Result<void> InitDiskConfigs(Json::Value& instances) {
-  for (auto& instance : instances) {
-    CF_EXPECT(InitConfig(instance, DEFAULT_BLANK_DATA_IMAGE_SIZE,
-                         {"disk", "blank_data_image_mb"}));
-  }
-  return {};
+void InitDiskConfigs(Json::Value& instances) {
+  InitStringConfig(instances, "disk", "blank_data_image_mb",
+                   DEFAULT_BLANK_DATA_IMAGE_SIZE);
 }
 
-Result<std::vector<std::string>> GenerateDiskFlags(
-    const Json::Value& instances) {
+std::vector<std::string> GenerateDiskFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(CF_EXPECT(GenerateGflag(
-      instances, "blank_data_image_mb", {"disk", "blank_data_image_mb"})));
+  result.emplace_back(GenerateGflag(instances, "blank_data_image_mb", "disk",
+                                    "blank_data_image_mb"));
   return result;
 }
 
