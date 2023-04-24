@@ -1,3 +1,4 @@
 service rename_eth0 /vendor/bin/rename_netiface eth0 buried_eth0
     user root
     oneshot
+    user root
