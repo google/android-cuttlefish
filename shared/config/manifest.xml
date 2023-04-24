@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="8">
+<manifest version="1.0" type="device" target-level="9">
     <hal format="hidl">
         <name>android.hardware.authsecret</name>
         <transport>hwbinder</transport>
