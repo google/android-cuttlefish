@@ -8,3 +8,4 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     user root
     disabled
     oneshot
+    user root
