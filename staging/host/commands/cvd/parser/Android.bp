@@ -21,6 +21,7 @@ cc_library_host_static {
     name: "libcvd_parser",
     srcs: [
         "instance/cf_vm_configs.cpp",
+        "instance/cf_disk_configs.cpp",
         "instance/cf_boot_configs.cpp",
         "instance/cf_security_configs.cpp",
         "instance/cf_graphics_configs.cpp",
