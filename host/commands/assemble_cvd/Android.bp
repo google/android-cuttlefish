@@ -27,6 +27,7 @@ cc_binary {
         "clean.cc",
         "disk_builder.cpp",
         "disk_flags.cc",
+        "display.cpp",
         "flags.cc",
         "flag_feature.cpp",
         "misc_info.cc",
@@ -54,7 +55,6 @@ cc_binary {
         "libext2_uuid",
         "libimage_aggregator",
         "libsparse",
-        "libcuttlefish_display_flags",
         "libcuttlefish_graphics_configuration",
         "libcuttlefish_graphics_detector",
         "libcuttlefish_host_config",
@@ -71,19 +71,4 @@ cc_binary {
         "mkuserimg_mke2fs",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
-}
-
-cc_library {
-    name: "libcuttlefish_display_flags",
-    srcs: [
-        "display_flags.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libjsoncpp",
-    ],
-    static_libs: [
-        "libcuttlefish_host_config",
-    ],
-    defaults: ["cuttlefish_host"],
 }
