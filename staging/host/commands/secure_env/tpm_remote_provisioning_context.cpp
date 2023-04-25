@@ -225,7 +225,7 @@ void TpmRemoteProvisioningContext::GetHwInfo(
     keymaster::GetHwInfoResponse* hwInfo) const {
   hwInfo->version = 3;
   hwInfo->rpcAuthorName = "Google";
-  hwInfo->supportedEekCurve = 2 /* CURVE_25519 */;
+  hwInfo->supportedEekCurve = 0 /* CURVE_NONE */;
   hwInfo->uniqueId = "remote keymint";
   hwInfo->supportedNumKeysInCsr = 20;
 }
