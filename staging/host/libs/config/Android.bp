@@ -21,6 +21,7 @@ cc_library_static {
     name: "libcuttlefish_host_config",
     srcs: [
         "bootconfig_args.cpp",
+        "display.cpp",
         "config_flag.cpp",
         "custom_actions.cpp",
         "cuttlefish_config.cpp",
