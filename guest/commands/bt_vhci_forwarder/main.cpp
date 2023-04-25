@@ -57,30 +57,27 @@ ssize_t send(int fd_, uint8_t type, const uint8_t* data, size_t length) {
   return ret;
 }
 
-ssize_t forward(int from, int to, std::optional<unsigned char> filter_out,
-                unsigned char* buf) {
-  ssize_t count = TEMP_FAILURE_RETRY(read(from, buf, kBufferSize));
+ssize_t forward(int from_fd, int to_fd, unsigned char* buf) {
+  ssize_t count = TEMP_FAILURE_RETRY(read(from_fd, buf, kBufferSize));
   if (count < 0) {
     PLOG(ERROR) << "read failed";
     return count;
-  } else if (count == 0) {
+  }
+  if (count == 0) {
     return count;
   }
-  if (filter_out && buf[0] == *filter_out) {
-    LOG(INFO) << "ignore 0x" << std::hex << std::setw(2) << std::setfill('0')
-              << (unsigned)buf[0] << " packet";
+  // TODO(b/182245475) Ignore HCI_VENDOR_PKT
+  // because root-canal cannot handle it.
+  if (buf[0] == HCI_VENDOR_PKT) {
+    LOG(INFO) << "Ignoring VENDOR packet";
     return 0;
   }
-  count = TEMP_FAILURE_RETRY(write(to, buf, count));
+  count = TEMP_FAILURE_RETRY(write(to_fd, buf, count));
   if (count < 0) {
     PLOG(ERROR) << "write failed, type: 0x" << std::hex << std::setw(2)
                << std::setfill('0') << (unsigned)buf[0];
   }
   return count;
-}
-
-ssize_t forward(int from, int to, unsigned char* buf) {
-  return forward(from, to, std::nullopt, buf);
 }
 
 int setTerminalRaw(int fd_) {
@@ -138,6 +135,9 @@ int main(int argc, char** argv) {
       },
       []() { LOG(INFO) << "HCI socket device disconnected"; });
 
+  // Flag to drop any data left in the virtio-console buffer
+  // before any command is received from vhci: corrupted data
+  // could be left there from android restarting.
   bool before_first_command = true;
 
   while (true) {
@@ -145,15 +145,6 @@ int main(int argc, char** argv) {
     if (ret < 0) {
       PLOG(ERROR) << "poll failed";
       continue;
-    }
-    if (fds[0].revents & (POLLIN | POLLERR)) {
-      // TODO(b/182245475) Ignore HCI_VENDOR_PKT
-      // because root-canal cannot handle it.
-      ssize_t c = forward(vhci_fd, virtio_fd, HCI_VENDOR_PKT, buf);
-      if (c < 0) {
-        PLOG(ERROR) << "vhci to virtio-console failed";
-      }
-      before_first_command = false;
     }
     if (fds[1].revents & POLLHUP) {
       LOG(ERROR) << "PollHUP";
@@ -166,14 +157,28 @@ int main(int argc, char** argv) {
         ssize_t bytes = TEMP_FAILURE_RETRY(read(virtio_fd, buf, kBufferSize));
         if (bytes < 0) {
           LOG(ERROR) << "virtio_fd ready, but read failed " << strerror(errno);
+          continue;
+        }
+        if (bytes == 1) {
+          LOG(INFO) << "Discarding 1 byte from virtio_fd: "
+                    << "0x" << std::hex << (unsigned)buf[0];
         } else {
-          LOG(INFO) << "Discarding " << bytes << " bytes from virtio_fd.";
+          LOG(INFO) << "Discarding " << bytes << " bytes from virtio_fd: "
+                    << "0x" << std::hex << (unsigned)buf[0] << " .. 0x"
+                    << std::hex << (unsigned)buf[bytes - 1];
         }
         continue;
       }
       // 'virtio-console to vhci' depends on H4Packetizer because vhci expects
       // full packet, but the data from virtio-console could be partial.
       h4.OnDataReady(virtio_fd);
+    }
+    if (fds[0].revents & (POLLIN | POLLERR)) {
+      if (forward(vhci_fd, virtio_fd, buf) > 0) {
+        LOG(INFO) << "Received first command from VHCI device; enabling reads "
+                     "from virtio";
+        before_first_command = false;
+      }
     }
   }
 }
