@@ -51,8 +51,9 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/commands/assemble_cvd/display_flags.h"
+#include "host/commands/assemble_cvd/display.h"
 #include "host/libs/config/config_flag.h"
+#include "host/libs/config/display.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
@@ -1109,29 +1110,25 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);
     instance.set_gdb_port(gdb_port_vec[instance_index]);
 
+    std::optional<std::vector<CuttlefishConfig::DisplayConfig>>
+        binding_displays_configs;
+    auto displays_configs_bindings =
+        injector.getMultibindings<DisplaysConfigs>();
+    CF_EXPECT_EQ(displays_configs_bindings.size(), 1,
+                 "Expected a single binding?");
+    if (auto configs = displays_configs_bindings[0]->GetConfigs();
+        !configs.empty()) {
+      binding_displays_configs = configs;
+    }
+
     std::vector<CuttlefishConfig::DisplayConfig> display_configs;
     // assume displays proto input has higher priority than original display inputs
     if (!FLAGS_displays_textproto.empty() || !FLAGS_displays_binproto.empty()) {
       if (instance_index < instances_display_configs.size()) {
         display_configs = instances_display_configs[instance_index];
       } // else display_configs is an empty vector
-    } else {
-      auto display0 = CF_EXPECT(ParseDisplayConfig(FLAGS_display0));
-      if (display0) {
-        display_configs.push_back(*display0);
-      }
-      auto display1 = CF_EXPECT(ParseDisplayConfig(FLAGS_display1));
-      if (display1) {
-        display_configs.push_back(*display1);
-      }
-      auto display2 = CF_EXPECT(ParseDisplayConfig(FLAGS_display2));
-      if (display2) {
-        display_configs.push_back(*display2);
-      }
-      auto display3 = CF_EXPECT(ParseDisplayConfig(FLAGS_display3));
-      if (display3) {
-        display_configs.push_back(*display3);
-      }
+    } else if (binding_displays_configs) {
+      display_configs = *binding_displays_configs;
     }
 
     if (x_res_vec[instance_index] > 0 && y_res_vec[instance_index] > 0) {
@@ -1143,7 +1140,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
             .refresh_rate_hz = refresh_rate_hz_vec[instance_index],
           });
       } else {
-        LOG(WARNING) << "Ignoring --x_res and --y_res when --displayN specified.";
+        LOG(WARNING)
+            << "Ignoring --x_res and --y_res when --display specified.";
       }
     }
     instance.set_display_configs(display_configs);
