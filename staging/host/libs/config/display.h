@@ -22,6 +22,7 @@
 
 namespace cuttlefish {
 
+constexpr const char kDisplayFlag[] = "display";
 constexpr const char kDisplayHelp[] =
     "Comma separated key=value pairs of display properties. Supported "
     "properties:\n"
@@ -30,10 +31,13 @@ constexpr const char kDisplayHelp[] =
     " 'dpi': optional, default 320, density of the display\n"
     " 'refresh_rate_hz': optional, default 60, display refresh rate in Hertz\n"
     ". Example usage: \n"
-    "--display0=width=1280,height=720\n"
-    "--display1=width=1440,height=900,dpi=480,refresh_rate_hz=30\n";
+    "--display=width=1280,height=720\n"
+    "--display=width=1440,height=900,dpi=480,refresh_rate_hz=30\n";
 
 Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
     const std::string& flag);
+
+Result<std::vector<CuttlefishConfig::DisplayConfig>>
+ParseDisplayConfigsFromArgs(std::vector<std::string>& args);
 
 }  // namespace cuttlefish
