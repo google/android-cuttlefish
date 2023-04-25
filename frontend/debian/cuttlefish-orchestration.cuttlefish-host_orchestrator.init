@@ -34,15 +34,9 @@
 if [ -f /etc/default/cuttlefish-host_orchestrator ]; then
     . /etc/default/cuttlefish-host_orchestrator
 fi
-orchestrator_http_port=${orchestrator_http_port:-1080}
-orchestrator_https_port=${orchestrator_https_port:-1443}
+
 orchestrator_tls_cert_dir=${orchestrator_tls_cert_dir:-"/etc/cuttlefish-common/host_orchestrator/cert"}
-orchestrator_instance_manager_enabled=${orchestrator_instance_manager_enabled:-false}
-orchestrator_android_build_url=${orchestrator_android_build_url:-"https://androidbuildinternal.googleapis.com"}
-orchestrator_cvdbin_android_build_id=${orchestrator_cvdbin_android_build_id:-"9802869"}
-orchestrator_cvdbin_android_build_target=${orchestrator_cvdbin_android_build_target:-"aosp_cf_x86_64_phone-userdebug"}
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
-orchestrator_webui_url=${orchestrator_webui_url:-""}
 
 RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/host_orchestrator"
@@ -70,6 +64,10 @@ gen_cert() {
   fi
 }
 
+set_config() {
+  if [ -v "$2" ]; then export $1="${!2}"; fi
+}
+
 start() {
   gen_cert
   mkdir -p "${RUN_DIR}"
@@ -79,16 +77,16 @@ start() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown _cutf-operator:cvdnetwork "${orchestrator_cvd_artifacts_dir}"
 
-  ORCHESTRATOR_HTTP_PORT="${orchestrator_http_port}" \
-  ORCHESTRATOR_HTTPS_PORT="${orchestrator_https_port}" \
-  ORCHESTRATOR_TLS_CERT_DIR="${orchestrator_tls_cert_dir}" \
-  ORCHESTRATOR_INSTANCE_MANAGER_ENABLED="${orchestrator_instance_manager_enabled}" \
-  ORCHESTRATOR_ANDROID_BUILD_URL="${orchestrator_android_build_url}" \
-  ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID="${orchestrator_cvdbin_android_build_id}" \
-  ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET="${orchestrator_cvdbin_android_build_target}" \
-  ORCHESTRATOR_CVD_ARTIFACTS_DIR="${orchestrator_cvd_artifacts_dir}" \
+  set_config ORCHESTRATOR_HTTP_PORT orchestrator_http_port
+  set_config ORCHESTRATOR_HTTPS_PORT orchestrator_https_port
+  set_config ORCHESTRATOR_TLS_CERT_DIR orchestrator_tls_cert_dir
+  set_config ORCHESTRATOR_ANDROID_BUILD_URL orchestrator_android_build_url
+  set_config ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID orchestrator_cvdbin_android_build_id
+  set_config ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET orchestrator_cvdbin_android_build_target
+  set_config ORCHESTRATOR_CVD_ARTIFACTS_DIR orchestrator_cvd_artifacts_dir
+  set_config ORCHESTRATOR_WEBUI_URL orchestrator_webui_url
+
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
-  ORCHESTRATOR_WEBUI_URL="${orchestrator_webui_url}" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \
