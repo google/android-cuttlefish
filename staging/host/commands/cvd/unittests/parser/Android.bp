@@ -44,6 +44,7 @@ cc_test_host {
         "configs_inheritance_test.cc",
         "instance/vm_configs_test.cc",
         "instance/boot_configs_test.cc",
+        "instance/disk_configs_test.cc",
         "instance/metrics_configs_test.cc",
         "instance/graphics_configs_test.cc",
     ],
