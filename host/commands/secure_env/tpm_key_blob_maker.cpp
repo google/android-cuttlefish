@@ -120,6 +120,7 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_RSA_PUBLIC_EXPONENT:
       case KM_TAG_BLOB_USAGE_REQUIREMENTS:
       case KM_TAG_DIGEST:
+      case KM_TAG_RSA_OAEP_MGF_DIGEST:
       case KM_TAG_PADDING:
       case KM_TAG_BLOCK_MODE:
       case KM_TAG_MIN_SECONDS_BETWEEN_OPS:
@@ -147,7 +148,6 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_INCLUDE_UNIQUE_ID:
       case KM_TAG_MAX_BOOT_LEVEL:
       case KM_TAG_ORIGINATION_EXPIRE_DATETIME:
-      case KM_TAG_RSA_OAEP_MGF_DIGEST:
       case KM_TAG_TRUSTED_CONFIRMATION_REQUIRED:
       case KM_TAG_TRUSTED_USER_PRESENCE_REQUIRED:
       case KM_TAG_UNIQUE_ID:
