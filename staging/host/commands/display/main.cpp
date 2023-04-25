@@ -22,28 +22,12 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <gflags/gflags.h>
 
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/display_flags.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/libs/config/cuttlefish_config.h"
-
-DEFINE_uint32(instance_num, 1, "Which instance to read the configs from");
-DEFINE_uint32(width, 0,
-              "When adding a display, the width of the display in pixels");
-DEFINE_uint32(height, 0,
-              "When adding a display, the height of the display in pixels");
-DEFINE_uint32(dpi, 0,
-              "When adding a display, the pixels per inch of the display");
-DEFINE_uint32(refresh_rate_hz, 0,
-              "When adding a display, the refresh rate of the display in "
-              "Hertz");
-
-DEFINE_string(display0, "", cuttlefish::kDisplayHelp);
-DEFINE_string(display1, "", cuttlefish::kDisplayHelp);
-DEFINE_string(display2, "", cuttlefish::kDisplayHelp);
-DEFINE_string(display3, "", cuttlefish::kDisplayHelp);
+#include "host/libs/config/display.h"
 
 namespace cuttlefish {
 namespace {
@@ -69,8 +53,8 @@ Adds and connects a display to the given virtual device.
 usage: cvd display add --width=720 --height=1280
 
        cvd display add \\
-        --display0=width=1280,height=800
-        --display1=width=1920,height=1080,refresh_rate_hz=60
+        --display=width=1280,height=800 \\
+        --display=width=1920,height=1080,refresh_rate_hz=60
 )";
 
 static const std::string kListUsage =
@@ -84,10 +68,11 @@ usage: cvd display list
 static const std::string kRemoveUsage =
     R"(Cuttlefish Virtual Device (CVD) Display CLI.
 
-Disconnects and removes a display from the given virtual device.
+Disconnects and removes displays from the given virtual device.
 
-usage: cvd display remove <display index>
-       cvd display remove <display index> <display index> ...
+usage: cvd display remove \\
+        --display=<display id> \\
+        --display=<display id> ...
 )";
 
 static const std::unordered_map<std::string, std::string> kSubCommandUsages = {
@@ -97,13 +82,14 @@ static const std::unordered_map<std::string, std::string> kSubCommandUsages = {
     {"remove", kRemoveUsage},
 };
 
-Result<int> RunCrosvmDisplayCommand(const std::vector<std::string>& args) {
+Result<int> RunCrosvmDisplayCommand(int instance_num,
+                                    const std::vector<std::string>& args) {
   auto config = cuttlefish::CuttlefishConfig::Get();
   if (!config) {
     return CF_ERR("Failed to get Cuttlefish config.");
   }
   // TODO(b/260649774): Consistent executable API for selecting an instance
-  auto instance = config->ForInstance(FLAGS_instance_num);
+  auto instance = config->ForInstance(instance_num);
 
   const std::string crosvm_binary_path = instance.crosvm_binary();
   const std::string crosvm_control_path =
@@ -132,7 +118,13 @@ Result<int> RunCrosvmDisplayCommand(const std::vector<std::string>& args) {
   return 0;
 }
 
-Result<int> DoHelp(const std::vector<std::string>& args) {
+Result<int> GetInstanceNum(std::vector<std::string>& args) {
+  int instance_num = 1;
+  CF_EXPECT(ParseFlags({GflagsCompatFlag("instance_num", instance_num)}, args));
+  return instance_num;
+}
+
+Result<int> DoHelp(std::vector<std::string>& args) {
   if (args.empty()) {
     std::cout << kUsage << std::endl;
     return 0;
@@ -150,67 +142,14 @@ Result<int> DoHelp(const std::vector<std::string>& args) {
   return 0;
 }
 
-Result<std::optional<CuttlefishConfig::DisplayConfig>>
-ParseLegacyDisplayFlags() {
-  if (FLAGS_width == 0 && FLAGS_height == 0 && FLAGS_dpi == 0 &&
-      FLAGS_refresh_rate_hz == 0) {
-    return std::nullopt;
-  }
+Result<int> DoAdd(std::vector<std::string>& args) {
+  const int instance_num = CF_EXPECT(GetInstanceNum(args));
 
-  CF_EXPECT_GT(FLAGS_width, 0,
-               "Must specify valid --width flag. Usage:\n"
-                   << kAddUsage);
-  CF_EXPECT_GT(FLAGS_height, 0,
-               "Must specify valid --height flag. Usage:\n"
-                   << kAddUsage);
-  CF_EXPECT_GT(FLAGS_dpi, 0,
-               "Must specify valid --dpi flag. Usage:\n"
-                   << kAddUsage);
-  CF_EXPECT_GT(FLAGS_refresh_rate_hz, 0,
-               "Must specify valid --refresh_rate_hz flag. Usage:\n"
-                   << kAddUsage);
-
-  const int display_width = FLAGS_width;
-  const int display_height = FLAGS_height;
-  const int display_dpi = FLAGS_dpi > 0 ? FLAGS_dpi : CF_DEFAULTS_DISPLAY_DPI;
-  const int display_rr = FLAGS_refresh_rate_hz > 0
-                             ? FLAGS_refresh_rate_hz
-                             : CF_DEFAULTS_DISPLAY_REFRESH_RATE;
-
-  return CuttlefishConfig::DisplayConfig{
-      .width = display_width,
-      .height = display_height,
-      .dpi = display_dpi,
-      .refresh_rate_hz = display_rr,
-  };
-}
-
-Result<int> DoAdd(const std::vector<std::string>&) {
-  std::vector<CuttlefishConfig::DisplayConfig> display_configs;
-
-  auto display = CF_EXPECT(ParseLegacyDisplayFlags());
-  if (display) {
-    display_configs.push_back(*display);
-  }
-  auto display0 = CF_EXPECT(ParseDisplayConfig(FLAGS_display0));
-  if (display0) {
-    display_configs.push_back(*display0);
-  }
-  auto display1 = CF_EXPECT(ParseDisplayConfig(FLAGS_display1));
-  if (display1) {
-    display_configs.push_back(*display1);
-  }
-  auto display2 = CF_EXPECT(ParseDisplayConfig(FLAGS_display2));
-  if (display2) {
-    display_configs.push_back(*display2);
-  }
-  auto display3 = CF_EXPECT(ParseDisplayConfig(FLAGS_display3));
-  if (display3) {
-    display_configs.push_back(*display3);
-  }
-
+  const auto display_configs = CF_EXPECT(ParseDisplayConfigsFromArgs(args));
   if (display_configs.empty()) {
-    return CF_ERR("No displays params provided. Usage:\n" << kAddUsage);
+    std::cerr << "Must provide at least 1 display to add. Usage:" << std::endl;
+    std::cerr << kAddUsage << std::endl;
+    return 1;
   }
 
   std::vector<std::string> add_displays_command_args;
@@ -234,44 +173,54 @@ Result<int> DoAdd(const std::vector<std::string>&) {
     add_displays_command_args.push_back(add_display_flag);
   }
 
-  return CF_EXPECT(RunCrosvmDisplayCommand(add_displays_command_args));
+  return CF_EXPECT(
+      RunCrosvmDisplayCommand(instance_num, add_displays_command_args));
 }
 
-Result<int> DoList(const std::vector<std::string>&) {
-  return CF_EXPECT(RunCrosvmDisplayCommand({"list-displays"}));
+Result<int> DoList(std::vector<std::string>& args) {
+  const int instance_num = CF_EXPECT(GetInstanceNum(args));
+  return CF_EXPECT(RunCrosvmDisplayCommand(instance_num, {"list-displays"}));
 }
 
-Result<int> DoRemove(const std::vector<std::string>& args) {
-  if (args.empty()) {
-    std::cerr << "Must specify the display id to remove. Usage:" << std::endl;
+Result<int> DoRemove(std::vector<std::string>& args) {
+  const int instance_num = CF_EXPECT(GetInstanceNum(args));
+
+  std::vector<std::string> displays;
+  const std::vector<Flag> remove_displays_flags = {
+      GflagsCompatFlag(kDisplayFlag)
+          .Help("Display id of a display to remove.")
+          .Setter([&](const FlagMatch& match) {
+            displays.push_back(match.value);
+            return true;
+          }),
+  };
+  if (!ParseFlags(remove_displays_flags, args)) {
+    std::cerr << "Failed to parse flags. Usage:" << std::endl;
+    std::cerr << kRemoveUsage << std::endl;
+    return 1;
+  }
+
+  if (displays.empty()) {
+    std::cerr << "Must specify at least one display id to remove. Usage:"
+              << std::endl;
     std::cerr << kRemoveUsage << std::endl;
     return 1;
   }
 
   std::vector<std::string> remove_displays_command_args;
   remove_displays_command_args.push_back("remove-displays");
-  for (const auto& arg : args) {
-    remove_displays_command_args.push_back("--display-id=" + arg);
+  for (const auto& display : displays) {
+    remove_displays_command_args.push_back("--display-id=" + display);
   }
 
-  return CF_EXPECT(RunCrosvmDisplayCommand(remove_displays_command_args));
+  return CF_EXPECT(
+      RunCrosvmDisplayCommand(instance_num, remove_displays_command_args));
 }
 
-using DisplaySubCommand = Result<int> (*)(const std::vector<std::string>&);
+using DisplaySubCommand = Result<int> (*)(std::vector<std::string>&);
 
 int DisplayMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  ::gflags::SetUsageMessage(kUsage);
-  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-
-  std::vector<std::string> args;
-  for (int i = 1; i < argc; i++) {
-    args.push_back(argv[i]);
-  }
-
-  if (args.empty()) {
-    args.push_back("help");
-  }
 
   const std::unordered_map<std::string, DisplaySubCommand> kSubCommands = {
       {"add", DoAdd},
@@ -280,7 +229,12 @@ int DisplayMain(int argc, char** argv) {
       {"remove", DoRemove},
   };
 
-  const auto command_str = args[0];
+  auto args = ArgsToVec(argc - 1, argv + 1);
+  if (args.empty()) {
+    args.push_back("help");
+  }
+
+  const std::string command_str = args[0];
   args.erase(args.begin());
 
   auto command_func_it = kSubCommands.find(command_str);
