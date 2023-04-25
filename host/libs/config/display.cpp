@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/display_flags.h"
+#include "host/libs/config/display.h"
 
 #include <unordered_map>
 #include <vector>
@@ -24,9 +24,18 @@
 #include <android-base/strings.h>
 
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/flag_parser.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 
 namespace cuttlefish {
+namespace {
+
+static constexpr char kDisplay0FlagName[] = "display0";
+static constexpr char kDisplay1FlagName[] = "display1";
+static constexpr char kDisplay2FlagName[] = "display2";
+static constexpr char kDisplay3FlagName[] = "display3";
+
+}  // namespace
 
 Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
     const std::string& flag) {
@@ -81,6 +90,62 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
       .dpi = display_dpi,
       .refresh_rate_hz = display_refresh_rate_hz,
   };
+}
+
+Result<std::vector<CuttlefishConfig::DisplayConfig>>
+ParseDisplayConfigsFromArgs(std::vector<std::string>& args) {
+  std::string display0_flag_value;
+  std::string display1_flag_value;
+  std::string display2_flag_value;
+  std::string display3_flag_value;
+  std::vector<std::string> repeated_display_flag_values;
+
+  const std::vector<Flag> display_flags = {
+      GflagsCompatFlag(kDisplay0FlagName, display0_flag_value)
+          .Help(kDisplayHelp),
+      GflagsCompatFlag(kDisplay1FlagName, display1_flag_value)
+          .Help(kDisplayHelp),
+      GflagsCompatFlag(kDisplay2FlagName, display2_flag_value)
+          .Help(kDisplayHelp),
+      GflagsCompatFlag(kDisplay3FlagName, display3_flag_value)
+          .Help(kDisplayHelp),
+      GflagsCompatFlag(kDisplayFlag)
+          .Help(kDisplayHelp)
+          .Setter([&](const FlagMatch& match) {
+            repeated_display_flag_values.push_back(match.value);
+            return true;
+          }),
+  };
+
+  CF_EXPECT(ParseFlags(display_flags, args), "Failed to parse display flags.");
+
+  std::vector<CuttlefishConfig::DisplayConfig> displays_configs;
+
+  auto display0 = CF_EXPECT(ParseDisplayConfig(display0_flag_value));
+  if (display0) {
+    displays_configs.push_back(*display0);
+  }
+  auto display1 = CF_EXPECT(ParseDisplayConfig(display1_flag_value));
+  if (display1) {
+    displays_configs.push_back(*display1);
+  }
+  auto display2 = CF_EXPECT(ParseDisplayConfig(display2_flag_value));
+  if (display2) {
+    displays_configs.push_back(*display2);
+  }
+  auto display3 = CF_EXPECT(ParseDisplayConfig(display3_flag_value));
+  if (display3) {
+    displays_configs.push_back(*display3);
+  }
+
+  for (const std::string& display_params : repeated_display_flag_values) {
+    auto display = CF_EXPECT(ParseDisplayConfig(display_params));
+    if (display) {
+      displays_configs.push_back(*display);
+    }
+  }
+
+  return displays_configs;
 }
 
 }  // namespace cuttlefish
