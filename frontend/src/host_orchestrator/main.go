@@ -68,11 +68,10 @@ func startHttpsServer(port string, certPath string, keyPath string) error {
 }
 
 func fromEnvOrDefault(key string, def string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		return def
+	if val, ok := os.LookupEnv(key); ok {
+		return val
 	}
-	return val
+	return def
 }
 
 // Whether a device file request should be intercepted and served from the signaling server instead
