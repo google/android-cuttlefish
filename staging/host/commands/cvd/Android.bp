@@ -107,6 +107,7 @@ cc_library_host_static {
         "reset_client_utils.cpp",
         "server.cc",
         "server_client.cpp",
+        "server_constants.cpp",
         "types.cpp",
     ],
     static_libs: [
