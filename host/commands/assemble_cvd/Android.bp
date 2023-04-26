@@ -30,6 +30,7 @@ cc_binary {
         "display.cpp",
         "flags.cc",
         "flag_feature.cpp",
+        "kernel_module_parser.cc",
         "misc_info.cc",
         "super_image_mixer.cc",
         "vendor_dlkm_utils.cc",
