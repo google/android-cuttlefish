@@ -22,17 +22,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
 
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := relaxed
 
-# TODO: FIXME: Start workaround for generic_system.mk ########################
-
-# TODO(b/271573990): It is currently required that dexpreopt be enabled for
-# userdebug builds, but dexpreopt is not yet supported for this architecture.
-# In the interim, this flag allows us to indicate that we cannot run dex2oat
-# to build the ART boot image. Once the requirement is relaxed or support
-# is enabled for this architecture, this flag can be removed.
-PRODUCT_USES_DEFAULT_ART_CONFIG := false
-
-# TODO: FIXME: Stop workaround for generic_system.mk #########################
-
 #
 # All components inherited here go to system_ext image (same as GSI system_ext)
 #
