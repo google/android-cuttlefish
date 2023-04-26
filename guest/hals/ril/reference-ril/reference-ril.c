@@ -379,7 +379,7 @@ static bool s_stkServiceRunning = false;
 static char *s_stkUnsolResponse = NULL;
 
 // Next available handle for keep alive session
-static uint32_t s_session_handle = 1;
+static int32_t s_session_handle = 1;
 
 typedef enum {
     STK_UNSOL_EVENT_UNKNOWN,
@@ -4348,9 +4348,15 @@ error:
     RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
 }
 
-static void requestStartKeepalive(RIL_Token t) {
+static void requestStartKeepalive(void* data, size_t datalen __unused, RIL_Token t) {
+    RIL_KeepaliveRequest* kaRequest = (RIL_KeepaliveRequest*)data;
+    if (kaRequest->cid > MAX_PDP) {
+        RLOGE("Invalid cid for keepalive!");
+        RIL_onRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
+        return;
+    }
     RIL_KeepaliveStatus resp;
-    resp.sessionHandle = s_session_handle++;
+    resp.sessionHandle = __sync_fetch_and_add(&s_session_handle, 1);
     resp.code = KEEPALIVE_ACTIVE;
     RIL_onRequestComplete(t, RIL_E_SUCCESS, &resp, sizeof(resp));
 }
@@ -5142,10 +5148,22 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
         case RIL_REQUEST_START_KEEPALIVE:
-            requestStartKeepalive(t);
+            requestStartKeepalive(data, datalen, t);
             break;
         case RIL_REQUEST_STOP_KEEPALIVE:
-            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            if (data == NULL || datalen != sizeof(int)) {
+                RIL_onRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
+                break;
+            }
+            int sessionHandle = *(int*)(data);
+            if ((int32_t)sessionHandle < s_session_handle) {
+                // check that the session handle is one we've assigned previously
+                // note that this doesn't handle duplicate stop requests properly
+                RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            } else {
+                RLOGE("Invalid session handle for keepalive!");
+                RIL_onRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
+            }
             break;
         case RIL_REQUEST_SET_UNSOLICITED_RESPONSE_FILTER:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
