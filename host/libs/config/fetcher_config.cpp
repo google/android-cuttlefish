@@ -27,6 +27,7 @@
 #include "json/json.h"
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -165,7 +166,7 @@ CvdFile JsonToCvdFile(const std::string& file_path, const Json::Value& json) {
   if (json.isMember(kCvdFileSource)) {
     cvd_file.source = SourceStringToEnum(json[kCvdFileSource].asString());
   } else {
-    cvd_file.source = UNKNOWN_PURPOSE;
+    cvd_file.source = FileSource::UNKNOWN_PURPOSE;
   }
   if (json.isMember(kCvdFileBuildId)) {
     cvd_file.build_id = json[kCvdFileBuildId].asString();
@@ -223,6 +224,29 @@ std::string FetcherConfig::FindCvdFileWithSuffix(const std::string& suffix) cons
   }
   LOG(DEBUG) << "Could not find file ending in " << suffix;
   return "";
+}
+
+Result<void> FetcherConfig::AddFilesToConfig(
+    FileSource purpose, const std::string& build_id,
+    const std::string& build_target, const std::vector<std::string>& paths,
+    const std::string& directory_prefix, bool override_entry) {
+  for (const std::string& path : paths) {
+    std::string_view local_path(path);
+    if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
+      LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
+                 << local_path;
+    }
+    while (android::base::StartsWith(local_path, "/")) {
+      android::base::ConsumePrefix(&local_path, "/");
+    }
+    // TODO(schuffelen): Do better for local builds here.
+    CvdFile file(purpose, build_id, build_target, std::string(local_path));
+    CF_EXPECT(add_cvd_file(file, override_entry),
+              "Duplicate file \""
+                  << file << "\", Existing file: \"" << get_cvd_files()[path]
+                  << "\". Failed to add path \"" << path << "\"");
+  }
+  return {};
 }
 
 } // namespace cuttlefish
