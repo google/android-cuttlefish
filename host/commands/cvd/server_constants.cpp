@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "host/commands/cvd/server_constants.h"
 
-#include <string>
+#include <unistd.h>
+
+#include <sstream>
 
 namespace cuttlefish {
-namespace cvd {
 
-// Major version uprevs are backwards incompatible.
-// Minor version uprevs are backwards compatible within major version.
-constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 2;
-
-}  // namespace cvd
-
-// Pathname of the abstract cvd_server socket.
-std::string ServerSocketPath();
+std::string ServerSocketPath() {
+  std::stringstream socket_path;
+  socket_path << "cvd_server"
+              << "_" << getuid();
+  return socket_path.str();
+}
 
 }  // namespace cuttlefish
