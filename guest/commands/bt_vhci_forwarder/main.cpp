@@ -174,7 +174,8 @@ int main(int argc, char** argv) {
       h4.OnDataReady(virtio_fd);
     }
     if (fds[0].revents & (POLLIN | POLLERR)) {
-      if (forward(vhci_fd, virtio_fd, buf) > 0) {
+      ssize_t transferred = forward(vhci_fd, virtio_fd, buf);
+      if (transferred > 0 && before_first_command) {
         LOG(INFO) << "Received first command from VHCI device; enabling reads "
                      "from virtio";
         before_first_command = false;
