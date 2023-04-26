@@ -44,7 +44,7 @@ Result<std::vector<std::string>> ExtractImages(
 Result<std::string> ExtractImage(const std::string& archive_filepath,
                                  const std::string& target_directory,
                                  const std::string& image,
-                                 const bool keep_archive);
+                                 const bool keep_archive = true);
 
 Result<std::vector<std::string>> ExtractArchiveContents(
     const std::string& archive_filepath, const std::string& target_directory,
