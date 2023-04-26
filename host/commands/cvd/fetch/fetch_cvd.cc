@@ -34,6 +34,7 @@
 #include <curl/curl.h>
 #include <gflags/gflags.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/environment.h"
@@ -267,9 +268,7 @@ BuildApi GetBuildApi(const BuildApiFlags& flags) {
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
   std::unique_ptr<CredentialSource> credential_source;
-  if (auto crds = TryOpenServiceAccountFile(*curl, flags.credential_source)) {
-    credential_source = std::move(crds);
-  } else if (flags.credential_source == "gce") {
+  if (flags.credential_source == "gce") {
     credential_source =
         GceMetadataCredentialSource::make(*retrying_http_client);
   } else if (flags.credential_source == "") {
@@ -289,9 +288,29 @@ BuildApi GetBuildApi(const BuildApiFlags& flags) {
     } else {
       LOG(INFO) << "\"" << file << "\" missing, running without credentials";
     }
-  } else {
+  } else if (!FileExists(flags.credential_source)) {
+    // If the parameter doesn't point to an existing file it must be the
+    // credentials.
     credential_source = FixedCredentialSource::make(flags.credential_source);
+  } else if (auto crds = TryOpenServiceAccountFile(*curl, flags.credential_source)) {
+    // It's a file, try reading it as a Service Account file first.
+    credential_source = std::move(crds);
+  } else {
+    // If the file exists but is not a Service Account file then it must contain
+    // the credentials.
+    auto file = SharedFD::Open(flags.credential_source, O_RDONLY);
+    if (!file->IsOpen()) {
+      LOG(ERROR) << "Failed to open credential file";
+    } else {
+      std::string credentials;
+      if (ReadAll(file, &credentials) >= 0) {
+        credential_source = FixedCredentialSource::make(credentials);
+      } else {
+        LOG(ERROR) << "Failed to read credentials file: " << file->StrError();
+      }
+    }
   }
+
   return BuildApi(std::move(retrying_http_client), std::move(curl),
                   std::move(credential_source), flags.api_key,
                   flags.wait_retry_period);
