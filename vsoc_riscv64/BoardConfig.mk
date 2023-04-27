@@ -26,6 +26,10 @@ TARGET_CPU_ABI := riscv64
 
 AUDIOSERVER_MULTILIB := first
 
+HOST_CROSS_OS := linux_bionic
+HOST_CROSS_ARCH := arm64
+HOST_CROSS_2ND_ARCH :=
+
 # Include 64-bit mediaserver to support 64-bit only devices
 TARGET_DYNAMIC_64_32_MEDIASERVER := true
 
