@@ -737,6 +737,13 @@ int FileInstance::Fcntl(int command, int value) {
   return rval;
 }
 
+int FileInstance::Fsync() {
+  errno = 0;
+  int rval = TEMP_FAILURE_RETRY(fsync(fd_));
+  errno_ = errno;
+  return rval;
+}
+
 Result<void> FileInstance::Flock(int operation) {
   errno = 0;
   int rval = TEMP_FAILURE_RETRY(flock(fd_, operation));
