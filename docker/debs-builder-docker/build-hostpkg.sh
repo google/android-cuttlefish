@@ -27,8 +27,8 @@ function build() {
     local pkg_dirs=( base frontend )
     for dir in "${pkg_dirs[@]}"; do
         pushd $cuttlefish_root/$dir > /dev/null 2>&1
-        yes | sudo mk-build-deps -i -r -B \
-            && sudo dpkg-buildpackage -uc -us \
+        yes | sudo -E mk-build-deps -i -r -B \
+            && sudo -E dpkg-buildpackage -uc -us \
             && sudo chown $(id -u) ../*.deb
         popd > /dev/null 2>&1
     done
