@@ -171,6 +171,4 @@ class BuildApi {
 
 std::string GetBuildZipName(const Build& build, const std::string& name);
 
-std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
-
 }  // namespace cuttlefish

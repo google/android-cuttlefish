@@ -103,8 +103,7 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   }
   LOG(DEBUG) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
-    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
-                                                     << strerror(errno));
+    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\"");
   }
   return {};
 }
