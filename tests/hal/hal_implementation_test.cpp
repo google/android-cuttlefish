@@ -206,6 +206,8 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     "android.hardware.uwb.fira_android",
     "android.hardware.keymaster",
     "android.hardware.automotive.vehicle.property",
+    // not on Cuttlefish since it's needed only on systems using HIDL audio HAL
+    "android.hardware.audio.sounddose",
 
     // android.hardware.media.bufferpool2 is a HAL-less interface.
     // It could be used for buffer recycling and caching by using the interface.
