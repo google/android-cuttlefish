@@ -25,6 +25,7 @@ cc_library_host_static {
         "acloud_command.cpp",
         "acloud_common.cpp",
         "acloud_translator.cpp",
+        "acloud_mixsuperimage.cpp",
         "cmd_list.cpp",
         "components.cpp",
         "crosvm.cpp",
