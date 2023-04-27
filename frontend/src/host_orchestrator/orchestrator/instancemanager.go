@@ -483,15 +483,6 @@ type downloadArtifactsMapEntry struct {
 	result *downloadArtifactsResult
 }
 
-type bundleType int
-
-const (
-	cvdBundleType bundleType = iota
-	kernelBundleType
-	bootloaderBundleType
-	systemImgBundleType
-)
-
 func (h *artifactsManager) DownloadCVDBundle(buildID, target string) (string, error) {
 	f := func() (string, error) {
 		outDir := fmt.Sprintf("%s/%s_%s__cvd", h.rootDir, buildID, target)
