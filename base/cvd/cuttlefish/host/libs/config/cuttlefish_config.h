@@ -283,8 +283,6 @@ class CuttlefishConfig {
     // Port number to connect to the touch server on the host. (Only
     // operational if QEMU is the vmm.)
     int touch_server_port() const;
-    // Port number to connect to the vehicle HAL server on the host
-    int vehicle_hal_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
@@ -490,7 +488,6 @@ class CuttlefishConfig {
     bool pause_in_bootloader() const;
     bool run_as_daemon() const;
     bool enable_audio() const;
-    bool enable_vehicle_hal_grpc_server() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
     bool record_screen() const;
@@ -598,7 +595,6 @@ class CuttlefishConfig {
     void set_keyboard_server_port(int config_server_port);
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
-    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
@@ -660,7 +656,6 @@ class CuttlefishConfig {
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
     void set_enable_audio(bool enable);
-    void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
     void set_record_screen(bool record_screen);
