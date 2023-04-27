@@ -86,6 +86,7 @@ std::ostream& operator<<(std::ostream&, const Build&);
 class BuildApi {
  public:
   BuildApi();
+  BuildApi(BuildApi&&) = default;
   BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<CredentialSource>);
   BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<HttpClient>,
            std::unique_ptr<CredentialSource>, std::string api_key,
