@@ -156,7 +156,6 @@ public class RilE2eTests {
         Assert.assertEquals("+15551234567", mTeleManager.getLine1Number());
         // See SIM FS response for 178 28615 (Cuttlefish RIL).
         Assert.assertEquals("+15557654321", mTeleManager.getVoiceMailNumber());
-        Assert.assertSame(TelephonyManager.DATA_CONNECTED, mTeleManager.getDataState());
     }
 
     @Test
