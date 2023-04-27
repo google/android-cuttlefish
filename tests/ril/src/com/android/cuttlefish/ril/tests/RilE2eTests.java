@@ -105,14 +105,12 @@ public class RilE2eTests {
     public void testRilConnects() throws Exception {
         while (true) {
             Network nw = mConnManager.getActiveNetwork();
-            if (nw == null) {
-                continue;
+            if (nw != null) {
+                NetworkCapabilities cap = mConnManager.getNetworkCapabilities(nw);
+                if (cap != null && cap.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                    break;
+                }
             }
-            NetworkCapabilities cap = mConnManager.getNetworkCapabilities(nw);
-            if (cap != null && cap.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                break;
-            }
-
             Log.i(TAG, "Waiting for MOBILE to become primary network for DATA.");
 
             Thread.sleep(1000);
