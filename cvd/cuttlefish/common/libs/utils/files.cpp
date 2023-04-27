@@ -412,6 +412,24 @@ int GetDiskUsage(const std::string& path) {
   return atoi(text_output.data()) * 1024;
 }
 
+/**
+ * Find an image file through the input path and pattern.
+ *
+ * If it finds the file, return the path string.
+ * If it can't find the file, return empty string.
+ */
+std::string FindImage(const std::string& search_path,
+                      const std::vector<std::string>& pattern) {
+  const std::string& search_path_extend = search_path + "/";
+  for (const auto& name : pattern) {
+    std::string image = search_path_extend + name;
+    if (FileExists(image)) {
+      return image;
+    }
+  }
+  return "";
+}
+
 std::string FindFile(const std::string& path, const std::string& target_name) {
   std::string ret;
   WalkDirectory(path,

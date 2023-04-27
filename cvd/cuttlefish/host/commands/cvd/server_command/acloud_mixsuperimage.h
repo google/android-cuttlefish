@@ -19,7 +19,6 @@
 #include <fruit/fruit.h>
 
 #include "host/commands/cvd/server_command/acloud_common.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
