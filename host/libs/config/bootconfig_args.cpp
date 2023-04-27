@@ -133,16 +133,6 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.touch_server_port());
   }
 
-  if (instance.enable_vehicle_hal_grpc_server() &&
-      instance.vehicle_hal_server_port() &&
-      FileExists(VehicleHalGrpcServerBinary())) {
-    constexpr int vehicle_hal_server_cid = 2;
-    bootconfig_args["androidboot.vendor.vehiclehal.server.cid"] =
-        std::to_string(vehicle_hal_server_cid);
-    bootconfig_args["androidboot.vendor.vehiclehal.server.port"] =
-        std::to_string(instance.vehicle_hal_server_port());
-  }
-
   if (instance.audiocontrol_server_port()) {
     bootconfig_args["androidboot.vendor.audiocontrol.server.cid"] =
         std::to_string(instance.vsock_guest_cid());
