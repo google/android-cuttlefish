@@ -24,6 +24,10 @@ TARGET_ARCH_VARIANT :=
 TARGET_CPU_VARIANT := generic
 TARGET_CPU_ABI := riscv64
 
+HOST_CROSS_OS := linux_bionic
+HOST_CROSS_ARCH := arm64
+HOST_CROSS_2ND_ARCH :=
+
 # Temporary hack while prebuilt modules are missing riscv64.
 ALLOW_MISSING_DEPENDENCIES := true
 
