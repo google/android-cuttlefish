@@ -260,7 +260,7 @@ Result<std::vector<std::string>> ProcessHostPackage(
   return ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives);
 }
 
-BuildApi GetBuildApi(const BuildApiFlags& flags) {
+Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
   std::unique_ptr<HttpClient> curl = HttpClient::CurlClient(resolver);
@@ -299,16 +299,11 @@ BuildApi GetBuildApi(const BuildApiFlags& flags) {
     // If the file exists but is not a Service Account file then it must contain
     // the credentials.
     auto file = SharedFD::Open(flags.credential_source, O_RDONLY);
-    if (!file->IsOpen()) {
-      LOG(ERROR) << "Failed to open credential file";
-    } else {
-      std::string credentials;
-      if (ReadAll(file, &credentials) >= 0) {
-        credential_source = FixedCredentialSource::make(credentials);
-      } else {
-        LOG(ERROR) << "Failed to read credentials file: " << file->StrError();
-      }
-    }
+    CF_EXPECT(file->IsOpen(), "Failed to open credential file: " << file->StrError());
+    std::string credentials;
+    auto size = ReadAll(file, &credentials);
+    CF_EXPECT(size >= 0, "Failed to read credentials file: " << file->StrError());
+    credential_source = FixedCredentialSource::make(credentials);
   }
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
@@ -413,7 +408,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   FetcherConfig config;
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
-    BuildApi build_api = GetBuildApi(flags.build_api_flags);
+    BuildApi build_api = CF_EXPECT(GetBuildApi(flags.build_api_flags));
     const Builds builds =
         CF_EXPECT(GetBuildsFromSources(build_api, flags.build_source_flags));
 
