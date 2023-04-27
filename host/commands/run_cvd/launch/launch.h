@@ -94,9 +94,6 @@ SecureEnvComponent();
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 TombstoneReceiverComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
-VehicleHalServerComponent();
-
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific,
                                  LogTeeCreator, GrpcSocketCreator>>
