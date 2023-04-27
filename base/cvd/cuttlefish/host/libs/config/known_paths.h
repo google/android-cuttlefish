@@ -38,7 +38,6 @@ std::string SocketVsockProxyBinary();
 std::string StopCvdBinary();
 std::string TcpConnectorBinary();
 std::string TombstoneReceiverBinary();
-std::string VehicleHalGrpcServerBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string WebRtcSigServerProxyBinary();
