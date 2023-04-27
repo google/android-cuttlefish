@@ -143,7 +143,6 @@ fruit::Component<> runCvdComponent(
       .install(NetsimServerComponent)
       .install(SecureEnvComponent)
       .install(TombstoneReceiverComponent)
-      .install(VehicleHalServerComponent)
       .install(WmediumdServerComponent)
       .install(launchModemComponent)
       .install(launchStreamerComponent)
