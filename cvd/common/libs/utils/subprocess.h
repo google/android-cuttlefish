@@ -30,12 +30,20 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
+
+/*
+ * Does what ArgsToVec(int argc, char**) from flag_parser.h does
+ * without argc.
+ */
+std::vector<std::string> ArgsToVec(char** argv);
+std::unordered_map<std::string, std::string> EnvpToMap(char** envp);
 
 enum class StopperResult {
   kStopFailure, /* Failed to stop the subprocess. */
