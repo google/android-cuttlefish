@@ -12,8 +12,6 @@ ro.boot.vsock_touch_port  u:object_r:vendor_vsock_touch_port:s0
 ro.boot.wifi_mac_prefix  u:object_r:vendor_wifi_mac_prefix:s0 exact string
 ro.vendor.wifi_impl u:object_r:vendor_wifi_impl:s0 exact string
 ro.vendor.boot_security_patch u:object_r:vendor_boot_security_patch_level_prop:s0
-vendor.bt.rootcanal_mac_address  u:object_r:vendor_bt_rootcanal_prop:s0
-vendor.bt.rootcanal_test_console  u:object_r:vendor_bt_rootcanal_prop:s0
 ro.vendor.hwcomposer.display_finder_mode  u:object_r:vendor_hwcomposer_prop:s0 exact string
 ro.vendor.hwcomposer.mode  u:object_r:vendor_hwcomposer_prop:s0 exact string
 ro.vendor.hwcomposer.pmem  u:object_r:vendor_hwcomposer_prop:s0 exact string
