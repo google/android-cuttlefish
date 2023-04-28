@@ -75,6 +75,7 @@ public class WifiE2eTests {
         mWifiManager.setWifiEnabled(false);
         while (mWifiManager.isWifiEnabled()) {
             Log.i(TAG, "Waiting for WIFI to be disabled...");
+            Thread.sleep(1000);
         }
     }
 
