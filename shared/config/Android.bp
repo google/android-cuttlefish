@@ -100,11 +100,6 @@ prebuilt_etc {
     installable: false,
 }
 
-filegroup {
-    name: "manifest_android.hardware.bluetooth@1.1-service.xml",
-    srcs: ["manifest_android.hardware.bluetooth@1.1-service.xml"]
-}
-
 genrule {
     name: "gen_fstab_cf_f2fs_hctr2",
     srcs: ["fstab.in"],
