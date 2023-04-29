@@ -325,6 +325,7 @@ std::ostream& operator<<(std::ostream& out, const Flag& flag) {
 
 std::vector<std::string> ArgsToVec(int argc, char** argv) {
   std::vector<std::string> args;
+  args.reserve(argc);
   for (int i = 0; i < argc; i++) {
     args.push_back(argv[i]);
   }
