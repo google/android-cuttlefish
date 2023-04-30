@@ -90,6 +90,33 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
 }
 }  // namespace
 
+std::vector<std::string> ArgsToVec(char** argv) {
+  std::vector<std::string> args;
+  for (int i = 0; argv && argv[i]; i++) {
+    args.push_back(argv[i]);
+  }
+  return args;
+}
+
+std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
+  std::unordered_map<std::string, std::string> env_map;
+  if (!envp) {
+    return env_map;
+  }
+  for (char** e = envp; *e != nullptr; e++) {
+    std::string env_var_val(*e);
+    auto tokens = android::base::Split(env_var_val, "=");
+    if (tokens.size() <= 1) {
+      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
+      continue;
+    }
+    const auto var = tokens.at(0);
+    tokens.erase(tokens.begin());
+    env_map[var] = android::base::Join(tokens, "=");
+  }
+  return env_map;
+}
+
 SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
   verbose_ = verbose;
   return *this;
@@ -175,8 +202,7 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
   *infop = {};
   auto retval = waitid(P_PID, pid_, infop, options);
   // We don't want to wait twice for the same process
-  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED ||
-                infop->si_code == CLD_DUMPED;
+  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
   if (exited && reaped) {
     pid_ = -1;
