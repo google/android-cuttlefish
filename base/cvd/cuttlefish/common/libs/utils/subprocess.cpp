@@ -16,15 +16,10 @@
 
 #include "common/libs/utils/subprocess.h"
 
-#ifdef __linux__
-#include <sys/prctl.h>
-#endif
-
-#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <string.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -32,6 +27,7 @@
 #include <cerrno>
 #include <cstring>
 #include <map>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -44,10 +40,6 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#ifdef CUTTLEFISH_LINUX_HOST
-#include <sandboxed_api/sandbox2/executor.h>
-#include <sandboxed_api/sandbox2/sandbox2.h>
-#endif
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
@@ -131,34 +123,17 @@ SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
 }
 SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
   verbose_ = verbose;
-  return std::move(*this);
+  return *this;
 }
 
-#ifdef __linux__
 SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
   exit_with_parent_ = v;
   return *this;
 }
 SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
   exit_with_parent_ = v;
-  return std::move(*this);
-}
-#ifdef CUTTLEFISH_LINUX_HOST
-SubprocessOptions& SubprocessOptions::SandboxPolicy(
-    std::unique_ptr<sandbox2::Policy> policy) & {
-  sandbox_policy_ = std::move(policy);
   return *this;
 }
-SubprocessOptions SubprocessOptions::SandboxPolicy(
-    std::unique_ptr<sandbox2::Policy> policy) && {
-  sandbox_policy_ = std::move(policy);
-  return std::move(*this);
-}
-std::unique_ptr<sandbox2::Policy> SubprocessOptions::MoveSandboxPolicy() {
-  return std::move(sandbox_policy_);
-}
-#endif
-#endif
 
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
   in_group_ = in_group;
@@ -166,20 +141,11 @@ SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
 }
 SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
   in_group_ = in_group;
-  return std::move(*this);
-}
-
-SubprocessOptions& SubprocessOptions::Strace(std::string s) & {
-  strace_ = std::move(s);
   return *this;
-}
-SubprocessOptions SubprocessOptions::Strace(std::string s) && {
-  strace_ = std::move(s);
-  return std::move(*this);
 }
 
 Subprocess::Subprocess(Subprocess&& subprocess)
-    : pid_(subprocess.pid_.load()),
+    : pid_(subprocess.pid_),
       started_(subprocess.started_),
       stopper_(subprocess.stopper_) {
   // Make sure the moved object no longer controls this subprocess
@@ -188,7 +154,7 @@ Subprocess::Subprocess(Subprocess&& subprocess)
 }
 
 Subprocess& Subprocess::operator=(Subprocess&& other) {
-  pid_ = other.pid_.load();
+  pid_ = other.pid_;
   started_ = other.started_;
   stopper_ = other.stopper_;
 
@@ -205,7 +171,7 @@ int Subprocess::Wait() {
     return -1;
   }
   int wstatus = 0;
-  auto pid = pid_.load();  // Wait will set pid_ to -1 after waiting
+  auto pid = pid_;  // Wait will set pid_ to -1 after waiting
   auto wait_ret = waitpid(pid, &wstatus, 0);
   if (wait_ret < 0) {
     auto error = errno;
@@ -214,17 +180,14 @@ int Subprocess::Wait() {
   }
   int retval = 0;
   if (WIFEXITED(wstatus)) {
-    pid_ = -1;
     retval = WEXITSTATUS(wstatus);
     if (retval) {
       LOG(DEBUG) << "Subprocess " << pid
                  << " exited with error code: " << retval;
     }
   } else if (WIFSIGNALED(wstatus)) {
-    pid_ = -1;
-    int sig_num = WTERMSIG(wstatus);
-    LOG(ERROR) << "Subprocess " << pid << " was interrupted by a signal '"
-               << strsignal(sig_num) << "' (" << sig_num << ")";
+    LOG(ERROR) << "Subprocess " << pid
+               << " was interrupted by a signal: " << WTERMSIG(wstatus);
     retval = -1;
   }
   return retval;
@@ -245,36 +208,6 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
     pid_ = -1;
   }
   return retval;
-}
-
-static Result<void> SendSignalImpl(const int signal, const pid_t pid,
-                                   bool to_group, const bool started) {
-  if (pid == -1) {
-    return CF_ERR(strerror(ESRCH));
-  }
-  CF_EXPECTF(started == true,
-             "The Subprocess object lost the ownership"
-             "of the process {}.",
-             pid);
-  int ret_code = 0;
-  if (to_group) {
-    ret_code = killpg(getpgid(pid), signal);
-  } else {
-    ret_code = kill(pid, signal);
-  }
-  CF_EXPECTF(ret_code == 0, "kill/killpg returns {} with errno: {}", ret_code,
-             strerror(errno));
-  return {};
-}
-
-Result<void> Subprocess::SendSignal(const int signal) {
-  CF_EXPECT(SendSignalImpl(signal, pid_, /* to_group */ false, started_));
-  return {};
-}
-
-Result<void> Subprocess::SendSignalToGroup(const int signal) {
-  CF_EXPECT(SendSignalImpl(signal, pid_, /* to_group */ true, started_));
-  return {};
 }
 
 StopperResult KillSubprocess(Subprocess* subprocess) {
@@ -360,13 +293,7 @@ Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
 }
 
 Command& Command::SetWorkingDirectory(const std::string& path) & {
-#ifdef __linux__
   auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
-#elif defined(__APPLE__)
-  auto fd = SharedFD::Open(path, O_RDONLY | O_DIRECTORY);
-#else
-#error "Unsupported operating system"
-#endif
   CHECK(fd->IsOpen()) << "Could not open \"" << path
                       << "\" dir fd: " << fd->StrError();
   return SetWorkingDirectory(fd);
@@ -383,62 +310,20 @@ Command Command::SetWorkingDirectory(SharedFD dirfd) && {
   return std::move(SetWorkingDirectory(std::move(dirfd)));
 }
 
-Command& Command::AddPrerequisite(
-    const std::function<Result<void>()>& prerequisite) & {
-  prerequisites_.push_back(prerequisite);
-  return *this;
-}
-
-Command Command::AddPrerequisite(
-    const std::function<Result<void>()>& prerequisite) && {
-  prerequisites_.push_back(prerequisite);
-  return std::move(*this);
-}
-
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
-
-  if (!options.Strace().empty()) {
-    auto strace_args = {
-        "/usr/bin/strace",
-        "--daemonize",
-        "--output-separately",  // Add .pid suffix
-        "--follow-forks",
-        "-o",  // Write to a separate file.
-        options.Strace().c_str(),
-    };
-    cmd.insert(cmd.begin(), strace_args);
-  }
 
   if (!validate_redirects(redirects_, inherited_fds_)) {
     return Subprocess(-1, {});
   }
 
-#ifdef CUTTLEFISH_LINUX_HOST
-  if (options.SandboxPolicy()) {
-    return StartSandboxed(std::move(options));
-  }
-#endif
-
   pid_t pid = fork();
   if (!pid) {
-#ifdef __linux__
     if (options.ExitWithParent()) {
       prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
     }
-#endif
 
     do_redirects(redirects_);
-
-    for (auto& prerequisite : prerequisites_) {
-      auto prerequisiteResult = prerequisite();
-
-      if (!prerequisiteResult.ok()) {
-        LOG(ERROR) << "Failed to check prerequisites: "
-                   << prerequisiteResult.error().FormatForEnv();
-      }
-    }
-
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
       if (setpgid(0, 0) != 0) {
@@ -460,15 +345,8 @@ Subprocess Command::Start(SubprocessOptions options) const {
     int rval;
     auto envp = ToCharPointers(env_);
     const char* executable = executable_ ? executable_->c_str() : cmd[0];
-#ifdef __linux__
     rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
                    const_cast<char* const*>(envp.data()));
-#elif defined(__APPLE__)
-    rval = execve(executable, const_cast<char* const*>(cmd.data()),
-                  const_cast<char* const*>(envp.data()));
-#else
-#error "Unsupported architecture"
-#endif
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << cmd[0] << " with path \"" << executable
                << "\" failed (" << strerror(errno) << ")";
@@ -490,48 +368,6 @@ Subprocess Command::Start(SubprocessOptions options) const {
   }
   return Subprocess(pid, subprocess_stopper_);
 }
-
-#ifdef CUTTLEFISH_LINUX_HOST
-Subprocess Command::StartSandboxed(SubprocessOptions options) const {
-  auto executable = executable_.value_or(command_[0]);
-  auto executor =
-      std::make_unique<sandbox2::Executor>(executable, command_, env_);
-  if (working_directory_->IsOpen()) {
-    auto cwd_res = working_directory_->ProcFdLinkTarget();
-    if (!cwd_res.ok()) {
-      LOG(ERROR) << cwd_res.error().FormatForEnv();
-      return Subprocess(-1, subprocess_stopper_);
-    }
-    executor->set_cwd(*cwd_res);
-  }
-  auto& ipc = *executor->ipc();
-  for (const auto& [channel, inner_fd] : redirects_) {
-    ipc.MapDupedFd(static_cast<int>(channel), inner_fd);
-  }
-  for (const auto& [unused_shared_fd, inner_fd] : inherited_fds_) {
-    ipc.MapDupedFd(inner_fd, inner_fd);
-  }
-  auto sandbox = std::make_unique<sandbox2::Sandbox2>(
-      std::move(executor), options.MoveSandboxPolicy());
-  bool success = sandbox->RunAsync();
-  if (options.Verbose()) {  // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
-    LOG(DEBUG) << "Started (pid: " << sandbox->pid() << "): " << executable;
-    for (int i = 1; i < command_.size(); i++) {
-      LOG(DEBUG) << command_[i];
-    }
-  } else {
-    LOG(VERBOSE) << "Started (pid: " << sandbox->pid() << "): " << executable;
-    for (int i = 1; i < command_.size(); i++) {
-      LOG(VERBOSE) << command_[i];
-    }
-  }
-  if (!success) {
-    auto result = sandbox->AwaitResult().ToString();
-    LOG(ERROR) << fmt::format("Failed to run '{}': '{}'", executable, result);
-  }
-  return Subprocess(sandbox->pid(), subprocess_stopper_, std::move(sandbox));
-}
-#endif
 
 std::string Command::AsBashScript(
     const std::string& redirected_stdio_path) const {
@@ -628,7 +464,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     });
   }
 
-  auto subprocess = cmd.Start(std::move(options));
+  auto subprocess = cmd.Start(options);
   if (!subprocess.Started()) {
     return -1;
   }
@@ -650,80 +486,29 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
   return code;
 }
 
-namespace {
-
-struct ExtraParam {
-  // option for Subprocess::Start()
-  SubprocessOptions subprocess_options;
-  // options for Subprocess::Wait(...)
-  int wait_options;
-  siginfo_t* infop;
-};
-Result<int> ExecuteImpl(const std::vector<std::string>& command,
-                        const std::optional<std::vector<std::string>>& envs,
-                        std::optional<ExtraParam> extra_param) {
+int execute(const std::vector<std::string>& command,
+            const std::vector<std::string>& env) {
   Command cmd(command[0]);
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(command[i]);
   }
-  if (envs) {
-    cmd.SetEnvironment(*envs);
+  cmd.SetEnvironment(env);
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
   }
-  auto subprocess =
-      (!extra_param ? cmd.Start()
-                    : cmd.Start(std::move(extra_param->subprocess_options)));
-  CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
-
-  if (extra_param) {
-    CF_EXPECT(extra_param->infop != nullptr,
-              "When ExtraParam is given, the infop buffer address "
-                  << "must not be nullptr.");
-    return subprocess.Wait(extra_param->infop, extra_param->wait_options);
-  } else {
-    return subprocess.Wait();
+  return subprocess.Wait();
+}
+int execute(const std::vector<std::string>& command) {
+  Command cmd(command[0]);
+  for (size_t i = 1; i < command.size(); ++i) {
+    cmd.AddParameter(command[i]);
   }
-}
-
-}  // namespace
-
-int Execute(const std::vector<std::string>& commands,
-            const std::vector<std::string>& envs) {
-  auto result = ExecuteImpl(commands, envs, /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
-int Execute(const std::vector<std::string>& commands) {
-  std::vector<std::string> envs;
-  auto result = ExecuteImpl(commands, /* envs */ std::nullopt,
-                            /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
-  siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, /* envs */ std::nullopt,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
-  return info;
-}
-
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          const std::vector<std::string>& envs,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
-  siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, envs,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
-  return info;
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
+  }
+  return subprocess.Wait();
 }
 
 }  // namespace cuttlefish
