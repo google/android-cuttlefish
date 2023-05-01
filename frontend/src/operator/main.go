@@ -102,7 +102,7 @@ func main() {
 	config := apiv1.InfraConfig{
 		Type: "config",
 		IceServers: []apiv1.IceServer{
-			apiv1.IceServer{URLs: []string{"stun:stun.l.google.com:19302"}},
+			{URLs: []string{"stun:stun.l.google.com:19302"}},
 		},
 	}
 

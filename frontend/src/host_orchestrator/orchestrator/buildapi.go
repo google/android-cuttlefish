@@ -33,14 +33,16 @@ type BuildAPI interface {
 type AndroidCIBuildAPI struct {
 	BaseURL string
 
-	client *http.Client
+	client      *http.Client
+	credentials string
 }
 
-func NewAndroidCIBuildAPI(client *http.Client, baseURL string) *AndroidCIBuildAPI {
+func NewAndroidCIBuildAPI(client *http.Client, baseURL, credentials string) *AndroidCIBuildAPI {
 	return &AndroidCIBuildAPI{
 		BaseURL: baseURL,
 
-		client: client,
+		client:      client,
+		credentials: credentials,
 	}
 }
 
@@ -57,7 +59,7 @@ func (s *AndroidCIBuildAPI) GetLatestGreenBuildID(branch, target string) (string
 		"branch=%s&target=%s&buildAttemptStatus=complete&buildType=submitted&maxResults=1&successful=true"
 	url := fmt.Sprintf(format, s.BaseURL, url.PathEscape(branch), url.PathEscape(target))
 	res := listBuildResponse{}
-	if err := doGETRequest(s.client, url, &res); err != nil {
+	if err := s.doGETToJSON(url, &res); err != nil {
 		return "", fmt.Errorf("Failed to get the latest green build id for `%s/%s`: %w", branch, target, err)
 	}
 	if len(res.Builds) != 1 {
@@ -71,20 +73,7 @@ func (s *AndroidCIBuildAPI) DownloadArtifact(name, buildID, target string, dst i
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("GET", signedURL, nil)
-	if err != nil {
-		return err
-	}
-	res, err := s.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return parseErrorResponse(res.Body)
-	}
-	_, err = io.Copy(dst, res.Body)
-	return err
+	return s.doGETToWriter(signedURL, dst)
 }
 
 func (s *AndroidCIBuildAPI) getSignedURL(name, buildID, target string) (string, error) {
@@ -92,30 +81,49 @@ func (s *AndroidCIBuildAPI) getSignedURL(name, buildID, target string) (string, 
 	res := struct {
 		SignedURL string `json:"signedUrl"`
 	}{}
-	if err := doGETRequest(s.client, url, &res); err != nil {
+	if err := s.doGETToJSON(url, &res); err != nil {
 		return "", fmt.Errorf("Failed to get the download artifact signed url for %q (%s/%s): %w", name, buildID, target, err)
 	}
 	return res.SignedURL, nil
 }
 
-func doGETRequest(client *http.Client, url string, body interface{}) error {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-	res, err := client.Do(req)
+func (s *AndroidCIBuildAPI) doGETToWriter(url string, dst io.Writer) error {
+	res, err := s.doGETCommon(url)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return parseErrorResponse(res.Body)
-	}
-	decoder := json.NewDecoder(res.Body)
-	if err := decoder.Decode(body); err != nil {
+	_, err = io.Copy(dst, res.Body)
+	return err
+}
+
+func (s *AndroidCIBuildAPI) doGETToJSON(url string, body interface{}) error {
+	res, err := s.doGETCommon(url)
+	if err != nil {
 		return err
 	}
-	return nil
+	defer res.Body.Close()
+	decoder := json.NewDecoder(res.Body)
+	return decoder.Decode(body)
+}
+
+func (s *AndroidCIBuildAPI) doGETCommon(url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if s.credentials != "" {
+		req.Header["Authorization"] = []string{fmt.Sprintf("Bearer %s", s.credentials)}
+	}
+	res, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		defer res.Body.Close()
+		return nil, parseErrorResponse(res.Body)
+	}
+	return res, nil
 }
 
 func parseErrorResponse(body io.ReadCloser) error {

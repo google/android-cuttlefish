@@ -133,7 +133,7 @@ func (p *DevicePool) DeviceIds() []string {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	ret := make([]string, 0, len(p.devices))
-	for key, _ := range p.devices {
+	for key := range p.devices {
 		ret = append(ret, key)
 	}
 	return ret

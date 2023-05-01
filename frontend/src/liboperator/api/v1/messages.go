@@ -86,6 +86,8 @@ type AndroidCIBuildSource struct {
 	BootloaderBuild *AndroidCIBuild `json:"bootloader_build,omitempty"`
 	// Uses this specific system image build target if set.
 	SystemImageBuild *AndroidCIBuild `json:"system_image_build,omitempty"`
+	// Credentials to use when connecting to the build API
+	Credentials string `json:"credentials,omitempty"`
 }
 
 // Represents a user build.
