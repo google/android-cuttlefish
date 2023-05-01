@@ -30,7 +30,6 @@ using namespace android;
 static const std::set<std::string> kAutomotiveOnlyHidl = {
     "android.frameworks.automotive.display@1.0",
     "android.hardware.automotive.can@1.0",
-    "android.hardware.automotive.evs@1.1",
     "android.hardware.broadcastradio@2.0",
 };
 
@@ -52,6 +51,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.audio.effect@6.0",
     "android.hardware.automotive.audiocontrol@1.0",
     "android.hardware.automotive.audiocontrol@2.0",
+    "android.hardware.automotive.evs@1.1",
     "android.hardware.automotive.sv@1.0",
     "android.hardware.automotive.vehicle@2.0",
     "android.hardware.biometrics.fingerprint@2.3", // converted to AIDL, see b/152416783
