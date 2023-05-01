@@ -321,7 +321,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				},
 				OperationManager: om,
 				HostValidator:    &AlwaysSucceedsValidator{},
-				BuildAPI:         &fakeBuildAPI{},
+				BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 				UUIDGen:          fakeUUIDGen,
 			}
 			im := NewCVDToolInstanceManager(&opts)
@@ -399,7 +399,7 @@ func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
 		OperationManager:         om,
 		HostValidator:            &AlwaysSucceedsValidator{},
 		UserArtifactsDirResolver: &fakeUADirRes{dir},
-		BuildAPI:                 &fakeBuildAPI{},
+		BuildAPIFactory:          func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	buildSource := &apiv1.BuildSource{UserBuildSource: &apiv1.UserBuildSource{ArtifactsDir: "baz"}}
@@ -454,7 +454,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 		OperationManager: om,
 		CVDExecTimeout:   testFakeBinaryDelayMs - (50 * time.Millisecond),
 		HostValidator:    &AlwaysSucceedsValidator{},
-		BuildAPI:         &fakeBuildAPI{},
+		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
@@ -490,6 +490,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 		Paths:            paths,
 		OperationManager: om,
 		HostValidator:    &AlwaysFailsValidator{},
+		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
@@ -577,7 +578,7 @@ func newCVDToolIm(execContext ExecContext,
 		Paths:            paths,
 		OperationManager: om,
 		HostValidator:    &AlwaysSucceedsValidator{},
-		BuildAPI:         &fakeBuildAPI{},
+		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
 	return NewCVDToolInstanceManager(&opts)
 }

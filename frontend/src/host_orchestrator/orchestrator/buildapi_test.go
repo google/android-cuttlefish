@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -59,7 +60,7 @@ func TestDownloadArtifact(t *testing.T) {
 		}
 		return res, nil
 	})
-	srv := NewAndroidCIBuildAPI(mockClient, url)
+	srv := NewAndroidCIBuildAPI(mockClient, url, "")
 
 	var b bytes.Buffer
 	srv.DownloadArtifact("foo", "1", "xyzzy", io.Writer(&b))
@@ -84,7 +85,7 @@ func TestDownloadArtifactWithErrorResponse(t *testing.T) {
 			Body:       newResponseBody(errJSON),
 		}, nil
 	})
-	srv := NewAndroidCIBuildAPI(mockClient, url)
+	srv := NewAndroidCIBuildAPI(mockClient, url, "")
 
 	var b bytes.Buffer
 	err := srv.DownloadArtifact("foo", "1", "xyzzy", io.Writer(&b))
@@ -116,4 +117,44 @@ func TestBuildDownloadArtifactSignedURL(t *testing.T) {
 			t.Errorf("url mismatch (-want +got):\n%s", diff)
 		}
 	})
+}
+
+func TestCredentialsAddedToRequest(t *testing.T) {
+	credentials := "random string"
+	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
+		res := &http.Response{
+			StatusCode: http.StatusOK,
+		}
+		if diff := cmp.Diff(r.Header["Authorization"], []string{fmt.Sprintf("Bearer %s", credentials)}); diff != "" {
+			t.Errorf("Authorization header missing or malformed: %v", r.Header["Authorization"])
+		}
+		return res, nil
+	})
+	downloadRequestURI := "/android-build/builds/X/Y/Z"
+	url := "https://someurl.fake"
+	srv := NewAndroidCIBuildAPI(mockClient, url, credentials)
+	_, err := srv.doGETCommon(downloadRequestURI)
+	if err != nil {
+		t.Errorf("GET failed: %v", err)
+	}
+}
+
+func TestEmptyCredentialsIgnored(t *testing.T) {
+	credentials := ""
+	mockClient := newMockClient(func(r *http.Request) (*http.Response, error) {
+		res := &http.Response{
+			StatusCode: http.StatusOK,
+		}
+		if _, ok := res.Header["Authorization"]; ok {
+			t.Errorf("Unexpected Authorization header in request: %v", res.Header["Authorization"])
+		}
+		return res, nil
+	})
+	downloadRequestURI := "/android-build/builds/X/Y/Z"
+	url := "https://someurl.fake"
+	srv := NewAndroidCIBuildAPI(mockClient, url, credentials)
+	_, err := srv.doGETCommon(downloadRequestURI)
+	if err != nil {
+		t.Errorf("GET failed: %v", err)
+	}
 }

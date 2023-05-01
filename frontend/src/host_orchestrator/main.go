@@ -141,8 +141,10 @@ func main() {
 		UserArtifactsDirResolver: uam,
 		CVDExecTimeout:           5 * time.Minute,
 		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.Command},
-		BuildAPI:                 orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL),
-		UUIDGen:                  func() string { return uuid.New().String() },
+		BuildAPIFactory: func(credentials string) orchestrator.BuildAPI {
+			return orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL, credentials)
+		},
+		UUIDGen: func() string { return uuid.New().String() },
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	debugStaticVars := debug.StaticVariables{

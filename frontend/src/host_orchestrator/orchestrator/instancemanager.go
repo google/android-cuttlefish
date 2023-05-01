@@ -64,7 +64,8 @@ type IMPaths struct {
 	RuntimesRootDir  string
 }
 
-type ArtifactsFetcherFactory func() ArtifactsFetcher
+type ArtifactsFetcherFactory func(string) ArtifactsFetcher
+type BuildAPIFactory func(string) BuildAPI
 
 // Instance manager implementation based on execution of `cvd` tool commands.
 type CVDToolInstanceManager struct {
@@ -78,7 +79,7 @@ type CVDToolInstanceManager struct {
 	buildArtifactsFetcher    ArtifactsFetcherFactory
 	startCVDHandler          *startCVDHandler
 	hostValidator            Validator
-	buildAPI                 BuildAPI
+	buildAPIFactory          BuildAPIFactory
 }
 
 type CVDToolInstanceManagerOpts struct {
@@ -89,7 +90,7 @@ type CVDToolInstanceManagerOpts struct {
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	CVDExecTimeout           time.Duration
 	HostValidator            Validator
-	BuildAPI                 BuildAPI
+	BuildAPIFactory          BuildAPIFactory
 	UUIDGen                  func() string
 }
 
@@ -103,19 +104,19 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 		downloadCVDHandler: &downloadCVDHandler{
 			Build:    opts.CVDBinAB,
 			Filename: opts.Paths.CVDBin,
-			BuildAPI: opts.BuildAPI,
+			BuildAPI: opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
 		},
 		artifactsMngr: NewArtifactsManager(
 			opts.Paths.ArtifactsRootDir,
 			opts.UUIDGen,
 		),
-		buildArtifactsFetcher: newArtifactsFetcherFactory(opts.ExecContext, opts.Paths.CVDBin, opts.BuildAPI),
+		buildArtifactsFetcher: newArtifactsFetcherFactory(opts.ExecContext, opts.Paths.CVDBin, opts.BuildAPIFactory),
 		startCVDHandler: &startCVDHandler{
 			ExecContext: opts.ExecContext,
 			CVDBin:      opts.Paths.CVDBin,
 			Timeout:     opts.CVDExecTimeout,
 		},
-		buildAPI: opts.BuildAPI,
+		buildAPIFactory: opts.BuildAPIFactory,
 	}
 }
 
@@ -262,6 +263,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	var kernelBuild *apiv1.AndroidCIBuild
 	var bootloaderBuild *apiv1.AndroidCIBuild
 	var systemImgBuild *apiv1.AndroidCIBuild
+	var credentials string
 	if req.CVD.BuildSource != nil && req.CVD.BuildSource.AndroidCIBuildSource != nil {
 		buildSource := req.CVD.BuildSource.AndroidCIBuildSource
 		if buildSource.MainBuild != nil {
@@ -279,8 +281,10 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 			systemImgBuild = &apiv1.AndroidCIBuild{}
 			*systemImgBuild = *buildSource.SystemImageBuild
 		}
+		credentials = buildSource.Credentials
 	}
-	if err := updateBuildsWithLatestGreenBuildID(m.buildAPI,
+	buildAPI := m.buildAPIFactory(credentials)
+	if err := updateBuildsWithLatestGreenBuildID(buildAPI,
 		[]*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild, systemImgBuild}); err != nil {
 		return nil, err
 	}
@@ -288,7 +292,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	var mainBuildErr, kernelBuildErr, bootloaderBuildErr error
 	var wg sync.WaitGroup
 	wg.Add(1)
-	fetcher := m.buildArtifactsFetcher()
+	fetcher := m.buildArtifactsFetcher(credentials)
 	go func() {
 		defer wg.Done()
 		var extraCVDOptions *ExtraCVDOptions = nil
@@ -450,14 +454,16 @@ type combinedArtifactFetcher struct {
 	execContext ExecContext
 	cvdBin      string
 	buildAPI    BuildAPI
+	credentials string
 }
 
-func newArtifactsFetcherFactory(execContext ExecContext, cvdBin string, buildAPI BuildAPI) ArtifactsFetcherFactory {
-	return func() ArtifactsFetcher {
+func newArtifactsFetcherFactory(execContext ExecContext, cvdBin string, buildAPIFactory BuildAPIFactory) ArtifactsFetcherFactory {
+	return func(credentials string) ArtifactsFetcher {
 		return &combinedArtifactFetcher{
 			execContext: execContext,
 			cvdBin:      cvdBin,
-			buildAPI:    buildAPI,
+			buildAPI:    buildAPIFactory(credentials),
+			credentials: credentials,
 		}
 	}
 }
@@ -473,6 +479,15 @@ func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extra
 	if extraOptions != nil {
 		cmdArgs = append(cmdArgs,
 			fmt.Sprintf("--system_build=%s/%s", extraOptions.SystemImgBuildID, extraOptions.SystemImgTarget))
+	}
+	if f.credentials != "" {
+		file, err := createCredentialsFile(f.credentials)
+		if err != nil {
+			return err
+		}
+		// DO NOT ENCAPSULATE THIS BLOCK: The file must not be closed until after the cvd command has run.
+		defer file.Close()
+		cmdArgs = append(cmdArgs, fmt.Sprintf("--credential_source=/proc/self/fd/%d", int(file.Fd())))
 	}
 	cvdCmd := cvdCommand{
 		execContext:    f.execContext,
@@ -504,6 +519,20 @@ func (f *combinedArtifactFetcher) FetchArtifacts(outDir, buildID, target string,
 		}
 	}
 	return merr
+}
+
+func createCredentialsFile(content string) (*os.File, error) {
+	p1, p2, err := os.Pipe()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create pipe for credentials: %w", err)
+	}
+	go func(f *os.File) {
+		defer f.Close()
+		_, err = f.Write([]byte(content))
+		log.Printf("Failed to write credentials to file: %v\n", err)
+		// Can't return this error without risking a deadlock when the pipe buffer fills up.
+	}(p2)
+	return p1, nil
 }
 
 const (
