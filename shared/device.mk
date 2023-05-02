@@ -89,7 +89,6 @@ endif
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
 PRODUCT_VENDOR_PROPERTIES += \
     tombstoned.max_tombstone_count=500 \
-    vendor.bt.rootcanal_test_console=off \
     ro.carrier=unknown \
     ro.com.android.dataroaming?=false \
     ro.hardware.virtual_device=1 \
@@ -101,12 +100,6 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.rebootescrow.device=/dev/block/pmem0 \
     ro.incremental.enable=1 \
     debug.c2.use_dmabufheaps=1
-
-LOCAL_BT_PROPERTIES ?= \
- vendor.ser.bt-uart?=/dev/hvc5 \
-
-PRODUCT_VENDOR_PROPERTIES += \
-	 ${LOCAL_BT_PROPERTIES} \
 
 # Below is a list of properties we probably should get rid of.
 PRODUCT_VENDOR_PROPERTIES += \
@@ -245,7 +238,6 @@ PRODUCT_COPY_FILES += \
     hardware/interfaces/audio/aidl/default/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
-    frameworks/av/services/audiopolicy/config/bluetooth_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration_7_0.xml \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
@@ -306,34 +298,6 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     android.hardware.authsecret-service.example
-
-#
-# Bluetooth HAL and Compatibility Bluetooth library (for older revs).
-#
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES +=\
-    frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
-    frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml
-
-PRODUCT_PACKAGES += \
-    android.hardware.bluetooth-service.default \
-    bt_vhci_forwarder
-
-# Bluetooth initialization configuration is copied to the init folder here instead of being added
-# as an init_rc attribute of the bt_vhci_forward binary.  The bt_vhci_forward binary is used by
-# multiple targets with different initialization configurations.
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/guest/commands/bt_vhci_forwarder/bt_vhci_forwarder.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/bt_vhci_forwarder.rc
-
-else
-PRODUCT_PACKAGES += com.google.cf.bt
-endif
-
-#
-# Bluetooth Audio AIDL HAL
-#
-PRODUCT_PACKAGES += \
-    android.hardware.bluetooth.audio-impl \
 
 #
 # Audio HAL
