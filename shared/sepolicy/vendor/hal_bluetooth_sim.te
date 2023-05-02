@@ -1,9 +1,0 @@
-type hal_bluetooth_sim, domain;
-type hal_bluetooth_sim_exec, exec_type, vendor_file_type, file_type;
-vendor_internal_prop(vendor_bt_rootcanal_prop)
-
-hal_server_domain(hal_bluetooth_sim, hal_bluetooth)
-
-init_daemon_domain(hal_bluetooth_sim)
-
-get_prop(hal_bluetooth_sim, vendor_bt_rootcanal_prop)
