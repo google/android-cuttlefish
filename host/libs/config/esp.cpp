@@ -30,7 +30,7 @@ bool NewfsMsdos(const std::string& data_image, int data_image_mb,
   image_size_bytes -= offset_size_bytes;
   off_t image_size_sectors = image_size_bytes / 512;
   auto newfs_msdos_path = HostBinaryPath("newfs_msdos");
-  return execute({newfs_msdos_path,
+  return Execute({newfs_msdos_path,
                   "-F",
                   "32",
                   "-m",
@@ -85,7 +85,7 @@ bool MsdosMakeDirectories(const std::string& image_path,
   std::vector<std::string> command {mmd, "-i", image_path};
   command.insert(command.end(), directories.begin(), directories.end());
 
-  const auto success = execute(command);
+  const auto success = Execute(command);
   if (success != 0) {
     return false;
   }
@@ -95,7 +95,8 @@ bool MsdosMakeDirectories(const std::string& image_path,
 bool CopyToMsdos(const std::string& image, const std::string& path,
                  const std::string& destination) {
   const auto mcopy = HostBinaryPath("mcopy");
-  const auto success = execute({mcopy, "-o", "-i", image, "-s", path, destination});
+  const auto success =
+      Execute({mcopy, "-o", "-i", image, "-s", path, destination});
   if (success != 0) {
     return false;
   }
@@ -110,7 +111,7 @@ bool GrubMakeImage(const std::string& prefix, const std::string& format,
                                       "--output", output};
   std::move(modules.begin(), modules.end(), std::back_inserter(command));
 
-  const auto success = execute(command);
+  const auto success = Execute(command);
   return success == 0;
 }
 
