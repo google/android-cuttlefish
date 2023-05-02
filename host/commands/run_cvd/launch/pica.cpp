@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -32,6 +34,17 @@ class Pica : public CommandSource {
                    LogTeeCreator& log_tee))
       : config_(config), instance_(instance), log_tee_(log_tee) {}
 
+  Result<void> ResultSetup() override {
+    if (!Enabled()) {
+      return {};
+    }
+
+    pcap_dir_ = instance_.PerInstanceLogPath("/pica/");
+    CF_EXPECT(EnsureDirectoryExists(pcap_dir_),
+              "Pica pcap directory cannot be created.");
+    return {};
+  }
+
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
     if (!Enabled()) {
@@ -42,6 +55,8 @@ class Pica : public CommandSource {
     // UCI server port
     command.AddParameter("--uci-port=", config_.pica_uci_port());
 
+    // pcap dir
+    command.AddParameter("--pcapng-dir=", std::move(pcap_dir_));
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(log_tee_.CreateLogTee(command, "pica")));
@@ -59,6 +74,7 @@ class Pica : public CommandSource {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
+  std::string pcap_dir_;
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   LogTeeCreator& log_tee_;
