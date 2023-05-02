@@ -37,7 +37,7 @@
 
 namespace cuttlefish {
 
-Result<MonitorCommand> UwbConnector(const CuttlefishConfig&,
+Result<std::optional<MonitorCommand>> UwbConnector(const CuttlefishConfig&,
                                     const CuttlefishConfig::InstanceSpecific&);
 
 std::optional<MonitorCommand> AutomotiveProxyService(const CuttlefishConfig&);

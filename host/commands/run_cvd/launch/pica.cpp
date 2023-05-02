@@ -30,7 +30,7 @@ Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     LogTeeCreator& log_tee) {
-  if (!(config.enable_host_uwb_connector() && instance.start_pica())) {
+  if (!instance.start_pica()) {
     return {};
   }
   auto pcap_dir = instance.PerInstanceLogPath("/pica/");
@@ -39,7 +39,7 @@ Result<std::vector<MonitorCommand>> Pica(
 
   auto pica = Command(PicaBinary())
                   .AddParameter("--uci-port=", config.pica_uci_port())
-                  .AddParameter("--pcap-dir=", pcap_dir);
+                  .AddParameter("--pcapng-dir=", pcap_dir);
 
   std::vector<MonitorCommand> commands;
   commands.emplace_back(log_tee.CreateLogTee(pica, "pica"));
