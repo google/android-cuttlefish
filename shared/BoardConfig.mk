@@ -342,8 +342,6 @@ BOARD_MOVE_GSI_AVB_KEYS_TO_VENDOR_BOOT := true
 
 BOARD_GENERIC_RAMDISK_KERNEL_MODULES_LOAD := dm-user.ko
 
-BOARD_HAVE_BLUETOOTH := true
-
 # Enable the new fingerprint format on cuttlefish
 BOARD_USE_VBMETA_DIGTEST_IN_FINGERPRINT := true
 
