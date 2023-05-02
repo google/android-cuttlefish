@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-#include <signal.h>
-#include <stdlib.h>
-#include <sys/prctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
+
 #include <cstdlib>
 #include <optional>
+#include <string>
+#include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/config/logging.h"
+#include "common/libs/utils/subprocess.h"
 
 DEFINE_bool(when_dumped, false, "restart when the process crashed");
 DEFINE_bool(when_killed, false, "restart when the process was killed");
@@ -58,27 +56,19 @@ static bool ShouldRestartProcess(siginfo_t const& info) {
   return false;
 }
 
-Result<int> RunProcessRestarter(const char* exec_cmd, char** exec_args) {
+Result<int> RunProcessRestarter(const std::vector<std::string>& exec_args) {
   LOG(VERBOSE) << "process_restarter starting";
-  siginfo_t infop;
-
+  siginfo_t info;
   do {
+    const std::string& exec_cmd = exec_args.front();
     LOG(VERBOSE) << "Starting monitored process " << exec_cmd;
-    pid_t pid = fork();
-    CF_EXPECT(pid != -1, "fork failed (" << strerror(errno) << ")");
-    if (pid == 0) {                     // child process
-      prctl(PR_SET_PDEATHSIG, SIGHUP);  // Die when parent dies
-      execvp(exec_cmd, exec_args);
-      // if exec returns, it failed
-      return CF_ERRNO("exec failed (" << strerror(errno) << ")");
-    } else {  // parent process
-      int return_val = TEMP_FAILURE_RETRY(waitid(P_PID, pid, &infop, WEXITED));
-      CF_EXPECT(return_val != -1,
-                "waitid call failed (" << strerror(errno) << ")");
-      LOG(VERBOSE) << exec_cmd << " exited with exit code: " << infop.si_status;
-    }
-  } while (ShouldRestartProcess(infop));
-  return {infop.si_status};
+    // The Execute() API and all APIs effectively called by it show the proper
+    // error message using LOG(ERROR).
+    info = CF_EXPECT(
+        Execute(exec_args, SubprocessOptions().ExitWithParent(true), WEXITED),
+        "Executing " << android::base::Join(exec_args, " ") << " failed.");
+  } while (ShouldRestartProcess(info));
+  return info.si_status;
 }
 
 }  // namespace
@@ -101,7 +91,8 @@ int main(int argc, char** argv) {
   // so that the remainder is the command to execute.
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto result = cuttlefish::RunProcessRestarter(argv[1], argv + 1);
+  auto result =
+      cuttlefish::RunProcessRestarter(cuttlefish::ArgsToVec(argv + 1));
   if (!result.ok()) {
     LOG(ERROR) << result.error().Message();
     LOG(DEBUG) << result.error().Trace();
