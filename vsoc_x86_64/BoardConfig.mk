@@ -38,6 +38,7 @@ TARGET_NATIVE_BRIDGE_2ND_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/bluetooth/BoardConfig.mk
 -include device/google/cuttlefish/shared/camera/BoardConfig.mk
 -include device/google/cuttlefish/shared/graphics/BoardConfig.mk
 -include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
