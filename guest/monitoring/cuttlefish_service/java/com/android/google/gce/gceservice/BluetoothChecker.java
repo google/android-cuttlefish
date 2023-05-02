@@ -17,6 +17,7 @@ package com.android.google.gce.gceservice;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.util.Log;
 
@@ -32,10 +33,11 @@ public class BluetoothChecker extends JobBase {
 
     public BluetoothChecker(Context context) {
         super(LOG_TAG);
-        Resources res = context.getResources();
-        if (!res.getBoolean(R.bool.config_bt_required)) {
-            Log.i(LOG_TAG, "Bluetooth not required, assuming enabled.");
-            mEnabled.set(true);
+        PackageManager pm = context.getPackageManager();
+        boolean hasBluetooth = pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+        if (!hasBluetooth) {
+            Log.i(LOG_TAG, "Bluetooth checker disabled");
+            mEnabled.set(false);
         }
     }
 

@@ -20,9 +20,6 @@ android_app {
     name: "CuttlefishService",
     vendor: true,
     srcs: ["java/**/*.java"],
-    resource_dirs: [
-        "res",
-    ],
     static_libs: ["guava"],
     sdk_version: "28",
     privileged: true,

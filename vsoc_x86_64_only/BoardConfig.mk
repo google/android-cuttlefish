@@ -31,6 +31,7 @@ TARGET_NATIVE_BRIDGE_ABI := arm64-v8a
 AUDIOSERVER_MULTILIB := first
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
+-include device/google/cuttlefish/shared/bluetooth/BoardConfig.mk
 -include device/google/cuttlefish/shared/camera/BoardConfig.mk
 -include device/google/cuttlefish/shared/graphics/BoardConfig.mk
 -include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk

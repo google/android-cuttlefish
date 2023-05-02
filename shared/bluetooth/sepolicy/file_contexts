@@ -1,0 +1,4 @@
+/dev/hvc5  u:object_r:bt_device:s0
+/dev/vhci  u:object_r:bt_device:s0
+
+/vendor/bin/bt_vhci_forwarder  u:object_r:bt_vhci_forwarder_exec:s0
