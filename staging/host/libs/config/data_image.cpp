@@ -49,7 +49,7 @@ bool ForceFsckImage(const std::string& data_image,
   } else if (instance.userdata_format() == "ext4") {
     fsck_path = "/sbin/e2fsck";
   }
-  int fsck_status = execute({fsck_path, "-y", "-f", data_image});
+  int fsck_status = Execute({fsck_path, "-y", "-f", data_image});
   if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
     LOG(ERROR) << "`" << fsck_path << " -y -f " << data_image << "` failed with code "
                << fsck_status;
@@ -86,7 +86,7 @@ bool ResizeImage(const std::string& data_image, int data_image_mb,
     } else if (instance.userdata_format() == "ext4") {
       resize_path = "/sbin/resize2fs";
     }
-    int resize_status = execute({resize_path, data_image});
+    int resize_status = Execute({resize_path, data_image});
     if (resize_status != 0) {
       LOG(ERROR) << "`" << resize_path << " " << data_image << "` failed with code "
                  << resize_status;
@@ -118,13 +118,14 @@ bool CreateBlankImage(
   }
 
   if (image_fmt == "ext4") {
-    if (execute({"/sbin/mkfs.ext4", image}) != 0) {
+    if (Execute({"/sbin/mkfs.ext4", image}) != 0) {
       return false;
     }
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = HostBinaryPath("make_f2fs");
-    if (execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
-     "compression,extra_attr,project_quota,casefold", "-g", "android"}) != 0) {
+    if (Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
+                 "compression,extra_attr,project_quota,casefold", "-g",
+                 "android"}) != 0) {
       return false;
     }
   } else if (image_fmt == "sdcard") {

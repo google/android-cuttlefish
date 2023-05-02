@@ -81,20 +81,21 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
   const std::string ramdisk_stage_dir = build_dir + "/" + TMP_RD_DIR;
   UnpackRamdisk(original_ramdisk_path, ramdisk_stage_dir);
 
-  success = execute({"rm", "-rf", ramdisk_stage_dir + "/lib/modules"});
+  success = Execute({"rm", "-rf", ramdisk_stage_dir + "/lib/modules"});
   CHECK(success == 0) << "Could not rmdir \"lib/modules\" in TMP_RD_DIR. "
                       << "Exited with status " << success;
 
   const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
-  success = execute({"/bin/bash", "-c",
+  success = Execute({"/bin/bash", "-c",
                      HostBinaryPath("mkbootfs") + " " + ramdisk_stage_dir +
                          " > " + stripped_ramdisk_path + CPIO_EXT});
   CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
                       << success;
 
-  success = execute({"/bin/bash", "-c", HostBinaryPath("lz4") +
-                     " -c -l -12 --favor-decSpeed " + stripped_ramdisk_path + CPIO_EXT + " > " +
-                     stripped_ramdisk_path});
+  success = Execute({"/bin/bash", "-c",
+                     HostBinaryPath("lz4") + " -c -l -12 --favor-decSpeed " +
+                         stripped_ramdisk_path + CPIO_EXT + " > " +
+                         stripped_ramdisk_path});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
 
   // Concatenates the stripped ramdisk and input ramdisk and places the result at new_ramdisk_path
@@ -108,13 +109,13 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
 
 void PackRamdisk(const std::string& ramdisk_stage_dir,
                  const std::string& output_ramdisk) {
-  int success = execute({"/bin/bash", "-c",
+  int success = Execute({"/bin/bash", "-c",
                          HostBinaryPath("mkbootfs") + " " + ramdisk_stage_dir +
                              " > " + output_ramdisk + CPIO_EXT});
   CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
                       << success;
 
-  success = execute({"/bin/bash", "-c",
+  success = Execute({"/bin/bash", "-c",
                      HostBinaryPath("lz4") + " -c -l -12 --favor-decSpeed " +
                          output_ramdisk + CPIO_EXT + " > " + output_ramdisk});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
@@ -123,14 +124,14 @@ void PackRamdisk(const std::string& ramdisk_stage_dir,
 void UnpackRamdisk(const std::string& original_ramdisk_path,
                    const std::string& ramdisk_stage_dir) {
   int success =
-      execute({"/bin/bash", "-c",
+      Execute({"/bin/bash", "-c",
                HostBinaryPath("lz4") + " -c -d -l " + original_ramdisk_path +
                    " > " + original_ramdisk_path + CPIO_EXT});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
   const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
   CHECK(ret.ok()) << ret.error().Message();
 
-  success = execute(
+  success = Execute(
       {"/bin/bash", "-c",
        "(cd " + ramdisk_stage_dir + " && while " + HostBinaryPath("toybox") +
            " cpio -idu; do :; done) < " + original_ramdisk_path + CPIO_EXT});
