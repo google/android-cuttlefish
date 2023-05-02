@@ -227,16 +227,14 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   return {fetch_flags};
 }
 
-std::unique_ptr<CredentialSource> TryOpenServiceAccountFile(
-    HttpClient& http_client, const std::string& path) {
-  LOG(VERBOSE) << "Attempting to open service account file \"" << path << "\"";
-  Json::CharReaderBuilder builder;
-  std::ifstream ifs(path);
+std::unique_ptr<CredentialSource> TryParseServiceAccount(
+    HttpClient& http_client, const std::string& file_content) {
+  Json::Reader reader;
   Json::Value content;
-  std::string errorMessage;
-  if (!Json::parseFromStream(builder, ifs, &content, &errorMessage)) {
-    LOG(VERBOSE) << "Could not read config file \"" << path
-                 << "\": " << errorMessage;
+  if (!reader.parse(file_content, content)) {
+    // Don't log the actual content of the file since it could be the actual
+    // access token.
+    LOG(VERBOSE) << "Could not parse credential file as Service Account";
     return {};
   }
   static constexpr char BUILD_SCOPE[] =
@@ -292,18 +290,19 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     // If the parameter doesn't point to an existing file it must be the
     // credentials.
     credential_source = FixedCredentialSource::make(flags.credential_source);
-  } else if (auto crds = TryOpenServiceAccountFile(*curl, flags.credential_source)) {
-    // It's a file, try reading it as a Service Account file first.
-    credential_source = std::move(crds);
   } else {
-    // If the file exists but is not a Service Account file then it must contain
-    // the credentials.
+    // Read the file only once in case it's a pipe.
+    LOG(VERBOSE) << "Attempting to open credentials file \"" << flags.credential_source << "\"";
     auto file = SharedFD::Open(flags.credential_source, O_RDONLY);
-    CF_EXPECT(file->IsOpen(), "Failed to open credential file: " << file->StrError());
-    std::string credentials;
-    auto size = ReadAll(file, &credentials);
+    CF_EXPECT(file->IsOpen(), "Failed to open credential_source file: " << file->StrError());
+    std::string file_content;
+    auto size = ReadAll(file, &file_content);
     CF_EXPECT(size >= 0, "Failed to read credentials file: " << file->StrError());
-    credential_source = FixedCredentialSource::make(credentials);
+    if (auto crds = TryParseServiceAccount(*curl, file_content)) {
+      credential_source = std::move(crds);
+    } else {
+      credential_source = FixedCredentialSource::make(file_content);
+    }
   }
 
   return BuildApi(std::move(retrying_http_client), std::move(curl),
