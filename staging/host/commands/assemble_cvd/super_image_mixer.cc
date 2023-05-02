@@ -226,12 +226,12 @@ bool BuildSuperImage(const std::string& combined_target_zip,
     LOG(ERROR) << "Could not find otatools";
     return false;
   }
-  return execute({
-    build_super_image_binary,
-    "--path=" + otatools_path,
-    combined_target_zip,
-    output_path,
-  }) == 0;
+  return Execute({
+             build_super_image_binary,
+             "--path=" + otatools_path,
+             combined_target_zip,
+             output_path,
+         }) == 0;
 }
 
 Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
