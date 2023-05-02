@@ -184,11 +184,11 @@ Result<bool> BuildSuperImage(
   _RewriteMiscInfo(new_misc_info_path, misc_info_path, lpmake_binary,
                    get_image);
 
-  return execute({
-    build_super_image_binary,
-    new_misc_info_path,
-    output_path,
-  }) == 0;
+  return Execute({
+             build_super_image_binary,
+             new_misc_info_path,
+             output_path,
+         }) == 0;
 }
 
 Result<bool> MixSuperImage(const std::string& paths) {
