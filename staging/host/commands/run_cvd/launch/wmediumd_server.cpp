@@ -110,7 +110,9 @@ class ValidateWmediumdService : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    CF_EXPECT(WaitForUnixSocket(config_.wmediumd_api_server_socket(), 30));
+    if (!config_.wmediumd_api_server_socket().empty()) {
+      CF_EXPECT(WaitForUnixSocket(config_.wmediumd_api_server_socket(), 30));
+    }
     CF_EXPECT(WaitForUnixSocket(config_.vhost_user_mac80211_hwsim(), 30));
 
     return {};
