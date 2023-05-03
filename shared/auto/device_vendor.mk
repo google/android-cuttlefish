@@ -80,6 +80,9 @@ PRODUCT_PACKAGES += android.hardware.automotive.remoteaccess@V1-default-service
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio-service.default
 
+# IVN HAL
+PRODUCT_PACKAGES += android.hardware.automotive.ivn@V1-default-service
+
 # AudioControl HAL
 ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
     LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE := android.hardware.automotive.audiocontrol-service.example
