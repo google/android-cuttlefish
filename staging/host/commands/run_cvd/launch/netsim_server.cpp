@@ -88,21 +88,44 @@ class NetsimServer : public CommandSource {
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
-    Command cmd(NetsimdBinary());
-    cmd.AddParameter("-s");
-    AddDevicesParameter(cmd);
+    Command netsimd(NetsimdBinary());
+    netsimd.AddParameter("-s");
+    AddDevicesParameter(netsimd);
     // Release SharedFDs, they've been duped by Command
     devices_.clear();
     // Port configuration.
-    cmd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
+    netsimd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
     // Bluetooth controller properties file
-    cmd.AddParameter("--rootcanal_controller_properties_file=",
-                     config_.rootcanal_config_file());
+    netsimd.AddParameter("--rootcanal_controller_properties_file=",
+                         config_.rootcanal_config_file());
     // Default commands file
-    cmd.AddParameter("--rootcanal_default_commands_file=",
-                     config_.rootcanal_default_commands_file());
+    netsimd.AddParameter("--rootcanal_default_commands_file=",
+                         config_.rootcanal_default_commands_file());
+
+    // Add command for forwarding the HCI port to a vsock server.
+    Command hci_vsock_proxy(SocketVsockProxyBinary());
+    hci_vsock_proxy.AddParameter("--server_type=vsock");
+    hci_vsock_proxy.AddParameter("--server_vsock_port=",
+                                 config_.rootcanal_hci_port());
+    hci_vsock_proxy.AddParameter("--client_type=tcp");
+    hci_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
+    hci_vsock_proxy.AddParameter("--client_tcp_port=",
+                                 config_.rootcanal_hci_port());
+
+    // Add command for forwarding the test port to a vsock server.
+    Command test_vsock_proxy(SocketVsockProxyBinary());
+    test_vsock_proxy.AddParameter("--server_type=vsock");
+    test_vsock_proxy.AddParameter("--server_vsock_port=",
+                                  config_.rootcanal_test_port());
+    test_vsock_proxy.AddParameter("--client_type=tcp");
+    test_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
+    test_vsock_proxy.AddParameter("--client_tcp_port=",
+                                  config_.rootcanal_test_port());
+
     std::vector<MonitorCommand> commands;
-    commands.emplace_back(std::move(cmd));
+    commands.emplace_back(std::move(netsimd));
+    commands.emplace_back(std::move(hci_vsock_proxy));
+    commands.emplace_back(std::move(test_vsock_proxy));
     return commands;
   }
 
