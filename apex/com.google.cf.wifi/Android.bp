@@ -42,7 +42,7 @@ apex {
     soc_specific: true,
     binaries: [
         "rename_netiface",
-        "wpa_supplicant_cf",
+        "//external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant:wpa_supplicant",
         "setup_wifi",
         "//device/generic/goldfish:mac80211_create_radios",
         "hostapd_cf",
