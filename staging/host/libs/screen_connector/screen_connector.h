@@ -70,6 +70,7 @@ class ScreenConnector : public ScreenConnectorInfo,
     std::unordered_set<std::string_view> valid_gpu_modes{
         cuttlefish::kGpuModeDrmVirgl, cuttlefish::kGpuModeGfxstream,
         cuttlefish::kGpuModeGfxstreamGuestAngle,
+        cuttlefish::kGpuModeGfxstreamGuestAngleHostSwiftShader,
         cuttlefish::kGpuModeGuestSwiftshader};
     if (!Contains(valid_gpu_modes, instance.gpu_mode())) {
       LOG(FATAL) << "Invalid gpu mode: " << instance.gpu_mode();
