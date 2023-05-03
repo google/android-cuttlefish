@@ -275,6 +275,7 @@ class FileInstance {
   int UNMANAGED_Dup2(int newfd);
   int Fchdir();
   int Fcntl(int command, int value);
+  int Fsync();
 
   Result<void> Flock(int operation);
 
