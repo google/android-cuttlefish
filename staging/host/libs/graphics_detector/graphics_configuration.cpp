@@ -68,6 +68,7 @@ AngleFeatures GetNeededAngleFeaturesBasedOnQuirks(
       }
       break;
     }
+    case RenderingMode::kGfxstreamGuestAngleHostSwiftshader:
     case RenderingMode::kGuestSwiftShader:
     case RenderingMode::kVirglRenderer:
     case RenderingMode::kNone:
@@ -87,6 +88,9 @@ Result<RenderingMode> GetRenderingMode(const std::string& mode) {
   }
   if (mode == std::string(kGpuModeGfxstreamGuestAngle)) {
     return RenderingMode::kGfxstreamGuestAngle;
+  }
+  if (mode == std::string(kGpuModeGfxstreamGuestAngleHostSwiftShader)) {
+    return RenderingMode::kGfxstreamGuestAngleHostSwiftshader;
   }
   if (mode == std::string(kGpuModeGuestSwiftshader)) {
     return RenderingMode::kGuestSwiftShader;
