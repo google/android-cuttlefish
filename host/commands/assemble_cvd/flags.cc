@@ -1205,6 +1205,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     if (gpu_mode != kGpuModeAuto && gpu_mode != kGpuModeDrmVirgl &&
         gpu_mode != kGpuModeGfxstream &&
         gpu_mode != kGpuModeGfxstreamGuestAngle &&
+        gpu_mode != kGpuModeGfxstreamGuestAngleHostSwiftShader &&
         gpu_mode != kGpuModeGuestSwiftshader && gpu_mode != kGpuModeNone) {
       LOG(FATAL) << "Invalid gpu_mode: " << gpu_mode;
     }
