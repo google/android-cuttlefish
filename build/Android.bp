@@ -128,6 +128,7 @@ cvd_host_tools = [
     "wmediumd",
     "wmediumd_control",
     "wmediumd_gen_config",
+    "vulkan.pastel",
 ]
 
 cvd_openwrt_images = [
@@ -283,6 +284,39 @@ cvd_host_netsim_gui_assets = [
     "netsim_ui_assets_polar-background.svg",
 ]
 
+genrule {
+    name: "vk_swiftshader_icd.json",
+    srcs: [
+        "//external/swiftshader:swiftshader_icd_json_template",
+    ],
+    out: [
+        "vk_swiftshader_icd.json",
+    ],
+    // From Vulkan Loader documentation:
+    //
+    //   If "library_path" specifies a relative pathname, it is relative
+    //   to the path of the JSON manifest file.
+    //
+    // Our host package looks like:
+    //
+    //   <host package>/lib64/vulkan.pastel
+    //   <host package>/usr/share/vulkan/icd.d/vk_swiftshader_icd.json
+    //
+    // so need "../../../../lib64/vulkan.pastel".
+    cmd: "sed -e 's|$${ICD_LIBRARY_PATH}|../../../../lib64/vulkan.pastel.so|g' $(in) > $(out)",
+}
+
+prebuilt_usr_share_host {
+    name: "vk_swiftshader_icd_json_prebuilt",
+    filename: "vk_swiftshader_icd.json",
+    relative_install_path: "vulkan/icd.d",
+    src: ":vk_swiftshader_icd.json",
+}
+
+cvd_host_swiftshader_files = [
+    "vk_swiftshader_icd_json_prebuilt",
+]
+
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
@@ -294,6 +328,7 @@ cvd_host_package_customization {
                 cvd_host_model_simulator_files +
                 cvd_host_acloud_data +
                 cvd_host_bootloader +
+                cvd_host_swiftshader_files +
                 cvd_bluetooth_config_files +
                 cvd_openwrt_images +
                 cvd_host_netsim_gui_assets,
