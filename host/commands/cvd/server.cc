@@ -201,12 +201,20 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
       exec_param.client_stderr_fd->UNMANAGED_Dup()};
   CF_EXPECT(client_stderr_dup.get() >= 0,
             "dup: \"" << exec_param.client_stderr_fd->StrError() << "\"");
+  std::string acloud_translator_opt_out_arg(
+      "-INTERNAL_acloud_translator_optout=");
+  if (optout_) {
+    acloud_translator_opt_out_arg.append("true");
+  } else {
+    acloud_translator_opt_out_arg.append("false");
+  }
   cvd_common::Args argv_str = {
       kServerExecPath,
       "-INTERNAL_server_fd=" + std::to_string(server_dup.get()),
       "-INTERNAL_carryover_client_fd=" + std::to_string(client_dup.get()),
       "-INTERNAL_carryover_stderr_fd=" +
           std::to_string(client_stderr_dup.get()),
+      acloud_translator_opt_out_arg,
   };
 
   int in_memory_dup = -1;
@@ -480,17 +488,17 @@ static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
       .install(OperationToBinsMapComponent);
 }
 
-Result<int> CvdServerMain(ServerMainParam&& fds) {
+Result<int> CvdServerMain(ServerMainParam&& param) {
   LOG(INFO) << "Starting server";
 
   CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
 
   signal(SIGPIPE, SIG_IGN);
 
-  SharedFD server_fd = std::move(fds.internal_server_fd);
+  SharedFD server_fd = std::move(param.internal_server_fd);
   CF_EXPECT(server_fd->IsOpen(), "Did not receive a valid cvd_server fd");
 
-  std::unique_ptr<ServerLogger> server_logger = std::move(fds.server_logger);
+  std::unique_ptr<ServerLogger> server_logger = std::move(param.server_logger);
   fruit::Injector<> injector(ServerComponent, server_logger.get());
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
@@ -503,25 +511,27 @@ Result<int> CvdServerMain(ServerMainParam&& fds) {
   auto& server = *(server_bindings[0]);
 
   std::optional<SharedFD> memory_carryover_fd =
-      std::move(fds.memory_carryover_fd);
+      std::move(param.memory_carryover_fd);
   if (memory_carryover_fd) {
     const std::string json_string =
         CF_EXPECT(ReadAllFromMemFd(*memory_carryover_fd));
     CF_EXPECT(server.InstanceDbFromJson(json_string),
               "Failed to load from: " << json_string);
   }
-
+  if (param.acloud_translator_optout) {
+    server.optout_ = param.acloud_translator_optout.value();
+  }
   server.StartServer(server_fd);
 
-  SharedFD carryover_client = std::move(fds.carryover_client_fd);
+  SharedFD carryover_client = std::move(param.carryover_client_fd);
   // The carryover_client wouldn't be available after AcceptCarryoverClient()
   if (carryover_client->IsOpen()) {
     // release scoped_logger for this thread inside AcceptCarryoverClient()
     CF_EXPECT(server.AcceptCarryoverClient(carryover_client,
-                                           std::move(fds.scoped_logger)));
+                                           std::move(param.scoped_logger)));
   } else {
     // release scoped_logger now and delete the object
-    fds.scoped_logger.reset();
+    param.scoped_logger.reset();
   }
   server.Join();
 
