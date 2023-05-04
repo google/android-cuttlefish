@@ -88,6 +88,8 @@ const char* const kGpuModeAuto = "auto";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
 const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
+const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
+    "gfxstream_guest_angle_host_swiftshader";
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeNone = "none";
 
@@ -685,6 +687,10 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #else
   return DefaultHostArtifactsPath("bin/" + binary_name);
 #endif
+}
+
+std::string HostUsrSharePath(const std::string& binary_name) {
+  return DefaultHostArtifactsPath("usr/share/" + binary_name);
 }
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
