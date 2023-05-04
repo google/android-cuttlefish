@@ -22,6 +22,7 @@ cc_library_host_static {
     srcs: [
         "converter.cpp",
         "config.cpp",
+        "create_converter_parser.cpp",
     ],
     static_libs: [
         "libcuttlefish_launch_cvd_proto",
