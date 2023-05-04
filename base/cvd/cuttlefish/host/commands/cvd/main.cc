@@ -65,31 +65,34 @@ struct RunServerParam {
    *
    */
   SharedFD carryover_stderr_fd;
+  std::optional<bool> acloud_translator_optout;
 };
-Result<void> RunServer(const RunServerParam& fds) {
-  if (!fds.internal_server_fd->IsOpen()) {
+Result<void> RunServer(const RunServerParam& params) {
+  if (!params.internal_server_fd->IsOpen()) {
     return CF_ERR(
         "Expected to be in server mode, but didn't get a server "
         "fd: "
-        << fds.internal_server_fd->StrError());
+        << params.internal_server_fd->StrError());
   }
   std::unique_ptr<ServerLogger> server_logger =
       std::make_unique<ServerLogger>();
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
 
   std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
-  if (fds.carryover_stderr_fd->IsOpen()) {
+  if (params.carryover_stderr_fd->IsOpen()) {
     scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
-        std::move(server_logger->LogThreadToFd(fds.carryover_stderr_fd)));
+        std::move(server_logger->LogThreadToFd(params.carryover_stderr_fd)));
   }
-  if (fds.memory_carryover_fd && !(*fds.memory_carryover_fd)->IsOpen()) {
+  if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
   }
-  CF_EXPECT(CvdServerMain({.internal_server_fd = fds.internal_server_fd,
-                           .carryover_client_fd = fds.carryover_client_fd,
-                           .memory_carryover_fd = fds.memory_carryover_fd,
-                           .server_logger = std::move(server_logger),
-                           .scoped_logger = std::move(scoped_logger)}));
+  CF_EXPECT(CvdServerMain(
+      {.internal_server_fd = params.internal_server_fd,
+       .carryover_client_fd = params.carryover_client_fd,
+       .memory_carryover_fd = params.memory_carryover_fd,
+       .acloud_translator_optout = params.acloud_translator_optout,
+       .server_logger = std::move(server_logger),
+       .scoped_logger = std::move(scoped_logger)}));
   return {};
 }
 
@@ -98,6 +101,7 @@ struct ParseResult {
   SharedFD carryover_client_fd;
   std::optional<SharedFD> memory_carryover_fd;
   SharedFD carryover_stderr_fd;
+  std::optional<bool> acloud_translator_optout;
 };
 
 Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
@@ -114,6 +118,20 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   flags.emplace_back(
       SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
   CF_EXPECT(ParseFlags(flags, all_args));
+
+  // now the three flags above are all consumed from all_args
+  std::optional<bool> acloud_translator_optout_opt;
+  const auto all_args_size_before = all_args.size();
+  bool acloud_translator_optout_value = false;
+  flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
+                                      acloud_translator_optout_value));
+  CF_EXPECT(ParseFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
+                                         acloud_translator_optout_value)},
+                       all_args));
+  if (all_args.size() != all_args_size_before) {
+    acloud_translator_optout_opt = acloud_translator_optout_value;
+  }
+
   std::optional<SharedFD> memory_carryover_fd_opt;
   if (memory_carryover_fd->IsOpen()) {
     memory_carryover_fd_opt = std::move(memory_carryover_fd);
@@ -123,6 +141,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
       .carryover_client_fd = carryover_client_fd,
       .memory_carryover_fd = memory_carryover_fd_opt,
       .carryover_stderr_fd = carryover_stderr_fd,
+      .acloud_translator_optout = acloud_translator_optout_opt,
   };
   return {result};
 }
@@ -245,12 +264,14 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   }
 
   if (IsServerModeExpected(all_args[0])) {
-    auto parsed_fds = CF_EXPECT(ParseIfServer(all_args));
+    auto parsed = CF_EXPECT(ParseIfServer(all_args));
 
-    return RunServer({.internal_server_fd = parsed_fds.internal_server_fd,
-                      .carryover_client_fd = parsed_fds.carryover_client_fd,
-                      .memory_carryover_fd = parsed_fds.memory_carryover_fd,
-                      .carryover_stderr_fd = parsed_fds.carryover_stderr_fd});
+    return RunServer(
+        {.internal_server_fd = parsed.internal_server_fd,
+         .carryover_client_fd = parsed.carryover_client_fd,
+         .memory_carryover_fd = parsed.memory_carryover_fd,
+         .carryover_stderr_fd = parsed.carryover_stderr_fd,
+         .acloud_translator_optout = parsed.acloud_translator_optout});
   }
 
   CF_EXPECT_EQ(android::base::Basename(all_args[0]), "cvd");
