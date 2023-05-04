@@ -98,9 +98,6 @@ class NetsimServer : public CommandSource {
     // Bluetooth controller properties file
     netsimd.AddParameter("--rootcanal_controller_properties_file=",
                          config_.rootcanal_config_file());
-    // Default commands file
-    netsimd.AddParameter("--rootcanal_default_commands_file=",
-                         config_.rootcanal_default_commands_file());
 
     // Add command for forwarding the HCI port to a vsock server.
     Command hci_vsock_proxy(SocketVsockProxyBinary());
