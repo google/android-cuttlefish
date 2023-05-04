@@ -788,6 +788,7 @@ std::string RandomSerialNumber(const std::string& prefix);
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string HostBinaryPath(const std::string& file);
+std::string HostUsrSharePath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
@@ -801,6 +802,7 @@ extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxstream;
 extern const char* const kGpuModeGfxstreamGuestAngle;
+extern const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeNone;
 
