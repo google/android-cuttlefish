@@ -30,4 +30,11 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                  KernelRamdiskRepacker>
 KernelRamdiskRepackerComponent();
 
+class GeneratePersistentBootconfig : public SetupFeature {};
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 GeneratePersistentBootconfig>
+GeneratePersistentBootconfigComponent();
+
 }  // namespace cuttlefish
