@@ -16,7 +16,12 @@
 #pragma once
 
 #include <optional>
+#include <ostream>
+#include <sstream>
+#include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/result.h>  // IWYU pragma: export
