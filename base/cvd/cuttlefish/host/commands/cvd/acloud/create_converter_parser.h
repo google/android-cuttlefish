@@ -26,34 +26,12 @@ namespace cuttlefish {
 namespace acloud_impl {
 
 struct ConverterParsed {
-  struct LocalInstance {
-    bool is_set;
-    std::optional<int> id;
-  } local_instance;
+  bool local_instance_set;
+  std::optional<int> local_instance;
   std::optional<std::string> flavor;
-  std::optional<std::string> local_kernel_image;
-  std::optional<std::string> image_download_dir;
-  std::optional<std::string> local_system_image;
-  bool verbose;
-  std::optional<std::string> branch;
-  struct LocalImage {
-    bool given;
-    std::optional<std::string> path;
-  } local_image;
-  std::optional<std::string> build_id;
-  std::optional<std::string> build_target;
-  std::optional<std::string> config_file;
-  struct Bootloader {
-    std::optional<std::string> build_id;
-    std::optional<std::string> build_target;
-    std::optional<std::string> branch;
-  } bootloader;
 };
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments);
-
-// Parse and generates a `cvdr` command given an `acloud` command.
-Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments);
 
 }  // namespace acloud_impl
 }  // namespace cuttlefish
