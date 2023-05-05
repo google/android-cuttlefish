@@ -51,6 +51,7 @@
 #define CF_DEFAULTS_VERBOSITY "INFO"
 #define CF_DEFAULTS_RUN_FILE_DISCOVERY true
 #define CF_DEFAULTS_MEMORY_MB CF_DEFAULTS_DYNAMIC_INT
+#define CF_DEFAULTS_SHARE_SCHED_CORE true
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
 
@@ -189,6 +190,9 @@
 // GflagsCompatFlag
 #define CF_DEFAULTS_RUN_ADB_CONNECTOR true
 #define CF_DEFAULTS_ADB_MODE "vsock_half_tunnel"
+
+// Vehicle default parameters
+#define CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER true
 
 // Location default parameters
 #define CF_DEFAULTS_START_GNSS_PROXY true
