@@ -30,6 +30,7 @@
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/commands/run_cvd/validate.h"
 #include "host/libs/config/feature.h"
 
 DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
@@ -113,8 +114,9 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
 class ProcessLeader : public SetupFeature {
  public:
   INJECT(ProcessLeader(const CuttlefishConfig& config,
-                       const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                       const CuttlefishConfig::InstanceSpecific& instance,
+                       ValidateTapDevices& validate_tap))
+      : config_(config), instance_(instance), validate_tap_(validate_tap) {}
 
   SharedFD ForegroundLauncherPipe() { return foreground_launcher_pipe_; }
 
@@ -123,7 +125,10 @@ class ProcessLeader : public SetupFeature {
   bool Enabled() const override { return true; }
 
  private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
+  std::unordered_set<SetupFeature*> Dependencies() const override {
+    // Report errors from this validation before we lose stderr from `--daemon`
+    return {&validate_tap_};
+  }
   bool Setup() override {
     /* These two paths result in pretty different process state, but both
      * achieve the same goal of making the current process the leader of a
@@ -149,6 +154,7 @@ class ProcessLeader : public SetupFeature {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  ValidateTapDevices& validate_tap_;
   SharedFD foreground_launcher_pipe_;
 };
 
@@ -305,7 +311,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 }  // namespace
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                     const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 ValidateTapDevices>>
 bootStateMachineComponent() {
   return fruit::createComponent()
       .addMultibinding<KernelLogPipeConsumer, CvdBootStateMachine>()
