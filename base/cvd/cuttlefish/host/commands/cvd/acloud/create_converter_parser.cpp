@@ -16,228 +16,52 @@
 
 #include "host/commands/cvd/acloud/create_converter_parser.h"
 
-#include <array>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
-#include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
+#include "host/commands/cvd/acloud/converter_parser_common.h"
 
 namespace cuttlefish {
-namespace {
-
-constexpr char kFlagConfig[] = "config";
-constexpr char kFlagBranch[] = "branch";
-constexpr char kFlagBuildId[] = "build_id";
-constexpr char kFlagBuildTarget[] = "build_target";
-constexpr char kFlagConfigFile[] = "config_file";
-constexpr char kFlagLocalKernelImage[] = "local-kernel-image";
-constexpr char kFlagLocalSystemImage[] = "local-system-image";
-constexpr char kFlagBootloaderBuildId[] = "bootloader_build_id";
-constexpr char kFlagBootloaderBuildTarget[] = "bootloader_build_target";
-constexpr char kFlagBootloaderBranch[] = "bootloader_branch";
-constexpr char kFlagImageDownloadDir[] = "image-download-dir";
-constexpr char kFlagLocalImage[] = "local-image";
-constexpr char kFlagLocalInstance[] = "local-instance";
-
-constexpr char kAcloudCmdCreate[] = "create";
-
-struct VerboseParser {
-  std::optional<bool> token;
-
-  Flag Parser() {
-    return Flag()
-        .Alias({FlagAliasMode::kFlagExact, "-v"})
-        .Alias({FlagAliasMode::kFlagExact, "-vv"})
-        .Alias({FlagAliasMode::kFlagExact, "--verbose"})
-        .Setter([this](const FlagMatch&) -> Result<void> {
-          token = true;
-          return {};
-        });
-  }
-};
-
-struct StringParser {
-  StringParser(const char* orig) : StringParser(orig, "", false) {}
-  StringParser(const char* orig, bool allow_empty)
-      : StringParser(orig, "", allow_empty) {}
-  StringParser(const char* orig, const char* alias)
-      : StringParser(orig, alias, false) {}
-  StringParser(const char* orig, const char* alias, bool allow_empty)
-      : orig(orig), alias(alias), allow_empty(allow_empty), token({}) {}
-  std::string orig;
-  std::string alias;
-  bool allow_empty;
-  std::optional<std::string> token;
-
-  Flag Parser() {
-    Flag parser;
-    FlagAliasMode mode = allow_empty ? FlagAliasMode::kFlagConsumesArbitrary
-                                     : FlagAliasMode::kFlagConsumesFollowing;
-    parser.Alias({mode, "--" + orig});
-    if (!alias.empty()) {
-      parser.Alias({mode, "--" + alias});
-    }
-    parser.Setter([this](const FlagMatch& m) -> Result<void> {
-      // Multiple matches could happen when kFlagConsumesArbitrary is used, the
-      // empty string match would be always the last one.
-      if (!token.has_value()) {
-        token = m.value;
-      } else if (!m.value.empty()) {
-        return CF_ERRF("\"{}\" already set, was \"{}\", now set to \"{}\"",
-                       orig, token.value(), m.value);
-      }
-      return {};
-    });
-    return parser;
-  }
-};
-
-template <typename K, typename V>
-std::optional<V> GetOptVal(const std::unordered_map<K, V>& m, const K& key) {
-  auto it = m.find(key);
-  return it == m.end() ? std::optional<V>() : it->second;
-}
-
-struct Tokens {
-  std::unordered_map<std::string, std::string> strings;
-  std::unordered_map<std::string, bool> booleans;
-
-  std::optional<std::string> StringVal(std::string name) {
-    return GetOptVal(strings, name);
-  }
-
-  std::optional<bool> BoolVal(std::string name) {
-    return GetOptVal(booleans, name);
-  }
-};
-
-Result<Tokens> ParseForCvdCreate(cvd_common::Args& arguments) {
-  std::vector<StringParser> string_parsers = {
-      StringParser(kFlagBranch),
-      StringParser(kFlagLocalSystemImage),
-      StringParser(kFlagImageDownloadDir),
-      StringParser(kFlagConfig, "flavor"),
-      StringParser(kFlagBuildId, "build-id"),
-      StringParser(kFlagBuildTarget, "build-target"),
-      StringParser(kFlagConfigFile, "config-file"),
-      StringParser(kFlagLocalKernelImage, "local-boot-image"),
-      StringParser(kFlagBootloaderBuildId, "bootloader-build-id"),
-      StringParser(kFlagBootloaderBuildTarget, "bootloader-build-target"),
-      StringParser(kFlagBootloaderBranch, "bootloader-branch"),
-      StringParser(kFlagLocalImage, true),
-      StringParser(kFlagLocalInstance, true),
-  };
-  VerboseParser verbose_parser = VerboseParser{};
-
-  std::vector<Flag> parsers;
-
-  for (auto& p : string_parsers) {
-    parsers.emplace_back(p.Parser());
-  }
-  parsers.emplace_back(verbose_parser.Parser());
-
-  CF_EXPECT(ConsumeFlags(parsers, arguments));
-
-  auto result = Tokens{};
-  for (auto& p : string_parsers) {
-    if (p.token.has_value()) {
-      result.strings[p.orig] = p.token.value();
-    }
-  }
-  if (verbose_parser.token.has_value()) {
-    result.booleans["v"] = true;
-  }
-  return result;
-}
-
-Result<Tokens> ParseForCvdRemoteCreate(cvd_common::Args& arguments) {
-  std::vector<StringParser> string_parsers = {
-      StringParser(kFlagBranch),
-      StringParser(kFlagBuildId, "build-id"),
-      StringParser(kFlagBuildTarget, "build-target"),
-  };
-
-  std::vector<Flag> parsers;
-
-  for (auto& p : string_parsers) {
-    parsers.emplace_back(p.Parser());
-  }
-
-  CF_EXPECT(ConsumeFlags(parsers, arguments));
-
-  auto result = Tokens{};
-  for (auto& p : string_parsers) {
-    if (p.token.has_value()) {
-      result.strings[p.orig] = p.token.value();
-    }
-  }
-  return result;
-}
-
-}  // namespace
 namespace acloud_impl {
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
-  auto tokens = CF_EXPECT(ParseForCvdCreate(arguments));
-  std::optional<std::string> local_instance =
-      tokens.StringVal(kFlagLocalInstance);
-  std::optional<int> local_instance_id;
-  if (local_instance.has_value() && !local_instance.value().empty()) {
-    int value = -1;
-    CF_EXPECTF(android::base::ParseInt(local_instance.value(), &value),
-               "Invalid integer value for flag \"{}\": \"{}\"",
-               kFlagLocalInstance, local_instance.value());
-    local_instance_id = value;
-  }
-  std::optional<std::string> local_image = tokens.StringVal(kFlagLocalImage);
-  std::optional<std::string> local_image_path;
-  if (local_image.has_value() && !local_image.value().empty()) {
-    local_image_path = local_image.value();
-  }
-  return ConverterParsed{
-      .local_instance = {.is_set = local_instance.has_value(),
-                         .id = local_instance_id},
-      .flavor = tokens.StringVal(kFlagConfig),
-      .local_kernel_image = tokens.StringVal(kFlagLocalKernelImage),
-      .image_download_dir = tokens.StringVal(kFlagImageDownloadDir),
-      .local_system_image = tokens.StringVal(kFlagLocalSystemImage),
-      .verbose = tokens.BoolVal("v").has_value(),
-      .branch = tokens.StringVal(kFlagBranch),
-      .local_image =
-          {
-              .given = local_image.has_value(),
-              .path = local_image_path,
-          },
-      .build_id = tokens.StringVal(kFlagBuildId),
-      .build_target = tokens.StringVal(kFlagBuildTarget),
-      .config_file = tokens.StringVal(kFlagConfigFile),
-      .bootloader =
-          {
-              .build_id = tokens.StringVal(kFlagBootloaderBuildId),
-              .build_target = tokens.StringVal(kFlagBootloaderBuildTarget),
-              .branch = tokens.StringVal(kFlagBootloaderBranch),
-          },
-  };
-}
+  std::vector<Flag> flags;
 
-Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments) {
-  CF_EXPECT(arguments.size() > 0);
-  CF_EXPECT(arguments[0] == kAcloudCmdCreate);
-  std::string main_cmd = arguments[0];
-  arguments.erase(arguments.begin());
-  auto tokens = CF_EXPECT(ParseForCvdRemoteCreate(arguments));
-  CF_EXPECTF(arguments.empty(), "Unrecognized arguments: '{}'",
-             fmt::join(arguments, "', '"));
-  std::vector<std::string> result{"create"};
-  for (const auto& t : tokens.strings) {
-    result.emplace_back("--" + t.first);
-    result.emplace_back(t.second);
-  }
-  return result;
+  bool local_instance_set;
+  std::optional<int> local_instance;
+  auto local_instance_flag = Flag();
+  local_instance_flag.Alias(
+      {FlagAliasMode::kFlagConsumesArbitrary, "--local-instance"});
+  local_instance_flag.Setter(
+      [&local_instance_set, &local_instance](const FlagMatch& m) {
+        local_instance_set = true;
+        if (m.value != "" && local_instance) {
+          LOG(ERROR) << "Instance number already set, was \"" << *local_instance
+                     << "\", now set to \"" << m.value << "\"";
+          return false;
+        } else if (m.value != "" && !local_instance) {
+          int value = -1;
+          if (!android::base::ParseInt(m.value, &value)) {
+            return false;
+          }
+          local_instance = value;
+        }
+        return true;
+      });
+  flags.emplace_back(local_instance_flag);
+
+  std::optional<std::string> flavor;
+  flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"config", "flavor"}, flavor)));
+
+  CF_EXPECT(ParseFlags(flags, arguments));
+  return ConverterParsed{
+      .local_instance_set = local_instance_set,
+      .local_instance = local_instance,
+      .flavor = flavor,
+  };
 }
 
 }  // namespace acloud_impl
