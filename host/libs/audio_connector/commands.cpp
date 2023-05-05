@@ -16,6 +16,8 @@
 #include "host/libs/audio_connector/commands.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <vector>
 
 #include <android-base/logging.h>
 
