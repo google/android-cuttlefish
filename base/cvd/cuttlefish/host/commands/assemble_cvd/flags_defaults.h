@@ -155,8 +155,6 @@
 // Bluetooth default parameters
 #define CF_DEFAULTS_BLUETOOTH_CONTROLLER_PROPERTIES_FILE \
   "etc/rootcanal/data/controller_properties.json"
-#define CF_DEFAULTS_BLUETOOTH_DEFAULT_COMMANDS_FILE \
-  "etc/rootcanal/data/default_commands"
 #define CF_DEFAULTS_ENABLE_HOST_BLUETOOTH true
 #define CF_DEFAULTS_ENABLE_ROOTCANAL_INSTANCE_NUM 0
 #define CF_DEFAULTS_ROOTCANAL_ARGS CF_DEFAULTS_DYNAMIC_STRING
