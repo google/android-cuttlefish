@@ -59,8 +59,6 @@ class RootCanal : public CommandSource {
     // Bluetooth configuration.
     rootcanal.AddParameter("--controller_properties_file=",
                            config_.rootcanal_config_file());
-    rootcanal.AddParameter("--default_commands_file=",
-                           config_.rootcanal_default_commands_file());
 
     // Add parameters from passthrough option --rootcanal-args
     for (auto const& arg : config_.rootcanal_args()) {
