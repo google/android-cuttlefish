@@ -123,7 +123,10 @@ class ModemSimulator : public CommandSource {
       ports = ports.substr(pos + 1);
 
       auto modem_sim_socket = SharedFD::VsockServer(port, SOCK_STREAM);
-      CF_EXPECT(modem_sim_socket->IsOpen(), modem_sim_socket->StrError());
+      CF_EXPECT(
+          modem_sim_socket->IsOpen(),
+          modem_sim_socket->StrError()
+              << " (try `cvd reset`, or `pkill run_cvd` and `pkill crosvm`)");
       sockets_.emplace_back(std::move(modem_sim_socket));
     }
     return {};
