@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "host/commands/run_cvd/validate.h"
+
 #include <sys/utsname.h>
 
 #include <iostream>
@@ -32,9 +34,10 @@ namespace {
 
 using vm_manager::ValidateHostConfiguration;
 
-class ValidateTapDevices : public SetupFeature {
+class ValidateTapDevicesImpl : public ValidateTapDevices {
  public:
-  INJECT(ValidateTapDevices(const CuttlefishConfig::InstanceSpecific& instance))
+  INJECT(ValidateTapDevicesImpl(
+      const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
 
   std::string Name() const override { return "ValidateTapDevices"; }
@@ -43,6 +46,15 @@ class ValidateTapDevices : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
+    CF_EXPECT(TestTapDevices(),
+              "There appears to be another cuttlefish device"
+              " already running, using the requested host "
+              "resources. Try `cvd reset` or `pkill run_cvd` "
+              "and `pkill crosvm`");
+    return {};
+  }
+
+  Result<void> TestTapDevices() {
     auto taps = TapInterfacesInUse();
     auto wifi = instance_.wifi_tap_name();
     CF_EXPECT(taps.count(wifi) == 0, "Device \"" << wifi << "\" in use");
@@ -53,7 +65,6 @@ class ValidateTapDevices : public SetupFeature {
     return {};
   }
 
- private:
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
@@ -115,12 +126,14 @@ class ValidateHostKernelFeature : public SetupFeature {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 ValidateTapDevices>
 validationComponent() {
   return fruit::createComponent()
       .addMultibinding<SetupFeature, ValidateHostConfigurationFeature>()
       .addMultibinding<SetupFeature, ValidateHostKernelFeature>()
-      .addMultibinding<SetupFeature, ValidateTapDevices>();
+      .bind<ValidateTapDevices, ValidateTapDevicesImpl>()
+      .addMultibinding<SetupFeature, ValidateTapDevicesImpl>();
 }
 
 }  // namespace cuttlefish
