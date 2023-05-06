@@ -232,10 +232,6 @@ class CuttlefishConfig {
   void set_rootcanal_config_file(const std::string& rootcanal_config_file);
   std::string rootcanal_config_file() const;
 
-  void set_rootcanal_default_commands_file(
-      const std::string& rootcanal_default_commands_file);
-  std::string rootcanal_default_commands_file() const;
-
   // The path of an AP image in composite disk
   std::string ap_image_dev_path() const;
   void set_ap_image_dev_path(const std::string& dev_path);
