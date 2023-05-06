@@ -482,17 +482,6 @@ void CuttlefishConfig::set_rootcanal_config_file(
       DefaultHostArtifactsPath(rootcanal_config_file);
 }
 
-static constexpr char kRootcanalDefaultCommandsFile[] =
-    "rootcanal_default_commands_file";
-std::string CuttlefishConfig::rootcanal_default_commands_file() const {
-  return (*dictionary_)[kRootcanalDefaultCommandsFile].asString();
-}
-void CuttlefishConfig::set_rootcanal_default_commands_file(
-    const std::string& rootcanal_default_commands_file) {
-  (*dictionary_)[kRootcanalDefaultCommandsFile] =
-      DefaultHostArtifactsPath(rootcanal_default_commands_file);
-}
-
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();
