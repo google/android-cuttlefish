@@ -140,7 +140,6 @@ cvd_openwrt_images = [
 
 cvd_bluetooth_config_files = [
     "controller_properties.json",
-    "default_commands",
 ]
 
 cvd_host_tests = [
