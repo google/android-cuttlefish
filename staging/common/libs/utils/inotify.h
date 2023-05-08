@@ -15,6 +15,9 @@
  */
 #pragma once
 
+#include <string>
+#include <vector>
+
 namespace cuttlefish {
 
 std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd);

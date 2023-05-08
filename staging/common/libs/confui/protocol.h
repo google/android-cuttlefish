@@ -16,9 +16,9 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
+#include <memory>
 #include <string>
-#include <tuple>
+#include <vector>
 
 #include <teeui/common_message_types.h>  // /system/teeui/libteeui/.../include
 

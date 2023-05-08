@@ -16,6 +16,10 @@
 
 #include "common/libs/security/confui_sign.h"
 
+#include <cstdint>
+#include <optional>
+#include <vector>
+
 #include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
