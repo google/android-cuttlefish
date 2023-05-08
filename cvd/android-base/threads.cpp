@@ -31,7 +31,7 @@ namespace android {
 namespace base {
 
 uint64_t GetThreadId() {
-#if defined(__BIONIC__)
+#if defined(__BIONIC__) || defined(__EMSCRIPTEN__)
   return gettid();
 #elif defined(__APPLE__)
   uint64_t tid;
