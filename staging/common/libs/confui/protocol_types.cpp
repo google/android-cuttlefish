@@ -15,9 +15,11 @@
 
 #include "common/libs/confui/protocol_types.h"
 
+#include <cstdint>
 #include <map>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 #include "common/libs/confui/packet.h"
 #include "common/libs/confui/utils.h"
