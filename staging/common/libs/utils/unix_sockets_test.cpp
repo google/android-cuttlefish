@@ -16,6 +16,9 @@
 
 #include "common/libs/utils/unix_sockets.h"
 
+#include <string>
+#include <utility>
+
 #include <android-base/logging.h>
 #include <android-base/result.h>
 #include <gtest/gtest.h>
