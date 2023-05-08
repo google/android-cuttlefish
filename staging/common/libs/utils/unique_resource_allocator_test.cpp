@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <unordered_set>
+#include <vector>
 
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/unique_resource_allocator.h"
