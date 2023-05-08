@@ -770,6 +770,7 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
 
 Result<std::string> SelectGpuMode(
     const std::string& gpu_mode_arg, const std::string& vm_manager,
+    const GuestConfig& guest_config,
     const GraphicsAvailability& graphics_availability) {
   if (gpu_mode_arg != kGpuModeAuto && gpu_mode_arg != kGpuModeDrmVirgl &&
       gpu_mode_arg != kGpuModeGfxstream &&
@@ -781,6 +782,12 @@ Result<std::string> SelectGpuMode(
   }
 
   if (gpu_mode_arg == kGpuModeAuto) {
+    if (vm_manager == QemuManager::name() &&
+        !IsHostCompatible(guest_config.target_arch)) {
+      LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
+      return kGpuModeDrmVirgl;
+    }
+
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
       LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
                 << "rendering support.";
@@ -816,13 +823,14 @@ Result<std::string> SelectGpuMode(
 
 Result<std::string> InitializeGpuMode(
     const std::string& gpu_mode_arg, const std::string& vm_manager,
+    const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific* instance) {
   const GraphicsAvailability graphics_availability =
       GetGraphicsAvailabilityWithSubprocessCheck();
   LOG(DEBUG) << graphics_availability;
 
-  const std::string gpu_mode =
-      CF_EXPECT(SelectGpuMode(gpu_mode_arg, vm_manager, graphics_availability));
+  const std::string gpu_mode = CF_EXPECT(SelectGpuMode(
+      gpu_mode_arg, vm_manager, guest_config, graphics_availability));
   instance->set_gpu_mode(gpu_mode);
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
@@ -1266,9 +1274,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_config_server_port(calc_vsock_port(6800));
 
     // gpu related settings
-    const std::string gpu_mode =
-        CF_EXPECT(InitializeGpuMode(gpu_mode_vec[instance_index],
-                                    vm_manager_vec[instance_index], &instance));
+    const std::string gpu_mode = CF_EXPECT(InitializeGpuMode(
+        gpu_mode_vec[instance_index], vm_manager_vec[instance_index],
+        guest_configs[instance_index], &instance));
 
     instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
