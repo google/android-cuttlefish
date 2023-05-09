@@ -53,7 +53,6 @@
 #include <android-base/logging.h>
 #include <android-base/macros.h>
 
-#include "android-base/strings.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/scope_guard.h"
