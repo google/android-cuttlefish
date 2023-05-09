@@ -649,8 +649,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     CF_EXPECT(device_id.find("{num}") != std::string::npos,
               "If one webrtc_device_ids is given for multiple instances, "
                   << " {num} should be included in webrtc_device_id.");
-    device_ids = std::move(
-        std::vector<std::string>(instance_nums.size(), tokens.front()));
+    device_ids = std::vector<std::string>(instance_nums.size(), tokens.front());
   }
 
   if (tokens.size() == instance_nums.size()) {
