@@ -21,7 +21,8 @@ namespace cuttlefish {
 
 bool SplitRamdiskModules(const std::string& ramdisk_path,
                          const std::string& ramdisk_stage_dir,
-                         const std::string& vendor_dlkm_build_dir);
+                         const std::string& vendor_dlkm_build_dir,
+                         const std::string& system_dlkm_build_dir);
 
 bool WriteFsConfig(const char* output_path, const std::string& fs_root,
                    const std::string& mount_point);
@@ -29,13 +30,23 @@ bool WriteFsConfig(const char* output_path, const std::string& fs_root,
 bool GenerateFileContexts(const char* output_path,
                           const std::string& mount_point);
 
-bool RepackSuperWithVendorDLKM(const std::string& superimg_path,
-                               const std::string& vendor_dlkm_path);
+bool RepackSuperWithPartition(const std::string& superimg_path,
+                              const std::string& image_path,
+                              const std::string& partition_name);
 
 bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
                      const std::string& output_image);
+bool BuildSystemDLKM(const std::string& src_dir, const bool is_erofs,
+                     const std::string& output_image);
 
-bool RebuildVbmetaVendor(const std::string& vendor_dlkm_img,
-                         const std::string& vbmeta_path);
+bool BuildVbmetaImage(const std::string& vendor_dlkm_img,
+                      const std::string& vbmeta_path);
+bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
+                    const std::string& partition_name,
+                    const std::string& output_image);
+
+// Move file `src` to `dst` if the contents of these files differ.
+// Return true if and only if the move happened.
+bool MoveIfChanged(const std::string& src, const std::string& dst);
 
 }  // namespace cuttlefish
