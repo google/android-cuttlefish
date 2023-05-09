@@ -50,7 +50,6 @@ class InstanceSelector {
 
   Result<LocalInstance::Copy> FindDefaultInstance(
       const InstanceDatabase& instance_database);
-  bool HasCuttlefishInstance() const;
 
   const uid_t client_uid_;
   const Queries queries_;
