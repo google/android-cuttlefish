@@ -16,6 +16,10 @@
 #include "common/libs/confui/packet.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace cuttlefish {
 namespace confui {
