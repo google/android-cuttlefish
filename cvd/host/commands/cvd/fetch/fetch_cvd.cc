@@ -105,8 +105,8 @@ struct FetchFlags {
   bool keep_downloaded_archives = false;
   bool helpxml = false;
   BuildApiFlags build_api_flags;
-  BuildSourceFlags build_source_flags;
-  DownloadFlags download_flags;
+  std::vector<std::tuple<BuildSourceFlags, DownloadFlags, int>>
+      build_target_flags;
 };
 
 struct Builds {
@@ -222,8 +222,9 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   }
 
   fetch_flags.build_api_flags = build_api_flags;
-  fetch_flags.build_source_flags = build_source_flags;
-  fetch_flags.download_flags = download_flags;
+  int i = 1;
+  fetch_flags.build_target_flags.emplace_back(build_source_flags,
+                                              download_flags, i);
   return {fetch_flags};
 }
 
@@ -617,23 +618,32 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
   const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
-  const TargetDirectories target_directories =
-      CF_EXPECT(CreateDirectories(fetch_root_directory));
-  FetcherConfig config;
+  const bool add_subdirectory = flags.build_target_flags.size() > 1;
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     BuildApi build_api = CF_EXPECT(GetBuildApi(flags.build_api_flags));
-    const Builds builds =
-        CF_EXPECT(GetBuildsFromSources(build_api, flags.build_source_flags));
-    const bool is_host_package_build =
-        flags.build_source_flags.host_package_build != "";
-    CF_EXPECT(Fetch(build_api, builds, target_directories, flags.download_flags,
-                    flags.keep_downloaded_archives, is_host_package_build,
-                    config));
+
+    for (const auto& [build_source_flags, download_flags, index] :
+         flags.build_target_flags) {
+      std::string build_directory = fetch_root_directory;
+      if (add_subdirectory) {
+        build_directory += "/build_" + std::to_string(index);
+      }
+      const TargetDirectories target_directories =
+          CF_EXPECT(CreateDirectories(build_directory));
+      FetcherConfig config;
+      const Builds builds =
+          CF_EXPECT(GetBuildsFromSources(build_api, build_source_flags));
+      const bool is_host_package_build =
+          build_source_flags.host_package_build != "";
+      CF_EXPECT(Fetch(build_api, builds, target_directories, download_flags,
+                      flags.keep_downloaded_archives, is_host_package_build,
+                      config));
+      CF_EXPECT(SaveConfig(config, target_directories.root));
+    }
   }
   curl_global_cleanup();
-  CF_EXPECT(SaveConfig(config, target_directories.root));
   return {};
 }
 
