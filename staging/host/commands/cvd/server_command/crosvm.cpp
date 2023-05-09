@@ -18,11 +18,13 @@
 
 #include <android-base/strings.h>
 
+#include <future>
 #include <iostream>
 #include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "common/libs/fs/shared_buf.h"
@@ -33,17 +35,17 @@
 #include "host/commands/cvd/selector/instance_record.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 class CvdCrosVmCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdCrosVmCommandHandler(InstanceManager& instance_manager,
-                                 SubprocessWaiter& subprocess_waiter))
+  INJECT(CvdCrosVmCommandHandler(InstanceManager& instance_manager))
       : instance_manager_{instance_manager},
-        subprocess_waiter_(subprocess_waiter),
         crosvm_operations_{"suspend", "resume", "snapshot"} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
@@ -71,22 +73,21 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     auto help_parse_result = help_flag.CalculateFlag(subcmd_args_copy);
     bool is_help = help_parse_result.ok() && (*help_parse_result);
 
-    Command command =
+    auto commands =
         is_help ? CF_EXPECT(HelpCommand(request, crosvm_op, subcmd_args, envs))
                 : CF_EXPECT(NonHelpCommand(request, uid, crosvm_op, subcmd_args,
                                            envs));
-    SubprocessOptions options;
-    CF_EXPECT(subprocess_waiter_.Setup(command.Start(options)));
+    subprocess_waiters_ = std::vector<SubprocessWaiter>(commands.size());
     interrupt_lock.unlock();
-
-    auto infop = CF_EXPECT(subprocess_waiter_.Wait());
-    return ResponseFromSiginfo(infop);
+    return CF_EXPECT(ConstructResponse(std::move(commands)));
   }
 
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interruptible_);
     interrupted_ = true;
-    CF_EXPECT(subprocess_waiter_.Interrupt());
+    for (auto& subprocess_waiter : subprocess_waiters_) {
+      CF_EXPECT(subprocess_waiter.Interrupt());
+    }
     return {};
   }
   cvd_common::Args CmdList() const override {
@@ -95,28 +96,112 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   }
 
  private:
-  Result<Command> HelpCommand(const RequestWithStdio& request,
-                              const std::string& crosvm_op,
-                              const cvd_common::Args& subcmd_args,
-                              cvd_common::Envs envs) {
+  Result<cvd::Response> ConstructResponse(std::vector<Command> commands) {
+    std::vector<std::future<Result<siginfo_t>>> infop_futures;
+    infop_futures.reserve(commands.size());
+    auto worker = [this](const int idx, Command command) -> Result<siginfo_t> {
+      SubprocessOptions options;
+      auto& subprocess_waiter = subprocess_waiters_[idx];
+      CF_EXPECT(subprocess_waiter.Setup(command.Start(options)));
+      return CF_EXPECT(subprocess_waiter.Wait());
+    };
+    size_t idx = 0;
+    for (auto& command : commands) {
+      std::future<Result<siginfo_t>> infop_future =
+          std::async(std::launch::async, worker, idx, std::move(command));
+      infop_futures.push_back(std::move(infop_future));
+      idx++;
+    }
+    commands.clear();
+
+    bool ok = true;
+    std::stringstream error_msg;
+    for (auto& infop_future : infop_futures) {
+      auto infop = std::move(infop_future.get());
+      CF_EXPECT(infop.ok(), infop.error().Trace());
+      if (infop->si_code == CLD_EXITED && infop->si_status == 0) {
+        continue;
+      }
+      // error
+      ok = false;
+      std::string status_code_str = std::to_string(infop->si_status);
+      if (infop->si_code == CLD_EXITED) {
+        error_msg << "Exited with code " << status_code_str << std::endl;
+      } else if (infop->si_code == CLD_KILLED) {
+        error_msg << "Exited with signal " << status_code_str << std::endl;
+      } else {
+        error_msg << "Quit with code " << status_code_str << std::endl;
+      }
+    }
+
+    cvd::Response response;
+    response.mutable_command_response();  // set oneof field
+    auto& status = *response.mutable_status();
+    if (ok) {
+      status.set_code(cvd::Status::OK);
+      return response;
+    }
+    status.set_code(cvd::Status::INTERNAL);
+    status.set_message(error_msg.str());
+    return response;
+  }
+
+  Result<std::vector<Command>> HelpCommand(const RequestWithStdio& request,
+                                           const std::string& crosvm_op,
+                                           const cvd_common::Args& subcmd_args,
+                                           cvd_common::Envs envs) {
     CF_EXPECT(Contains(envs, kAndroidHostOut));
     cvd_common::Args crosvm_args{crosvm_op};
     crosvm_args.insert(crosvm_args.end(), subcmd_args.begin(),
                        subcmd_args.end());
-    return CF_EXPECT(
+    Command help_command = CF_EXPECT(
         ConstructCvdHelpCommand("crosvm", envs, crosvm_args, request));
+    std::vector<Command> help_command_in_vector;
+    help_command_in_vector.push_back(std::move(help_command));
+    return help_command_in_vector;
   }
 
-  Result<Command> NonHelpCommand(const RequestWithStdio& request,
-                                 const uid_t uid, const std::string& crosvm_op,
-                                 const cvd_common::Args& subcmd_args,
-                                 const cvd_common::Envs& envs) {
+  Result<std::vector<Command>> NonHelpCommand(
+      const RequestWithStdio& request, const uid_t uid,
+      const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
+      const cvd_common::Envs& envs) {
     const auto& selector_opts =
         request.Message().command_request().selector_opts();
     const auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
 
-    auto instance =
-        CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
+    if (CF_EXPECT(HasInstanceSpecificOption(selector_args, envs))) {
+      auto instance =
+          CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
+      return CF_EXPECT(NonHelpInstanceCommand(request, instance, crosvm_op,
+                                              subcmd_args, envs));
+    }
+    auto instance_group =
+        CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
+    return CF_EXPECT(NonHelpGroupCommand(request, instance_group, crosvm_op,
+                                         subcmd_args, envs));
+  }
+
+  Result<std::vector<Command>> NonHelpGroupCommand(
+      const RequestWithStdio& request,
+      const InstanceManager::LocalInstanceGroup& instance_group,
+      const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
+      const cvd_common::Envs& envs) {
+    std::vector<Command> commands;
+    auto& instances = instance_group.Instances();
+    for (const auto& instance : instances) {
+      auto instance_commands = CF_EXPECT(NonHelpInstanceCommand(
+          request, instance->GetCopy(), crosvm_op, subcmd_args, envs));
+      CF_EXPECT_EQ(instance_commands.size(), 1);
+      commands.push_back(std::move(instance_commands.front()));
+    }
+    return commands;
+  }
+
+  Result<std::vector<Command>> NonHelpInstanceCommand(
+      const RequestWithStdio& request,
+      const InstanceManager::LocalInstance::Copy& instance,
+      const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
+      const cvd_common::Envs& envs) {
     const auto& instance_group = instance.ParentGroup();
     const auto instance_id = instance.InstanceId();
     auto home = instance_group.HomeDir();
@@ -132,7 +217,7 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     crosvm_args.insert(crosvm_args.end(), subcmd_args.begin(),
                        subcmd_args.end());
     crosvm_args.push_back(socket_file_path);
-    return CF_EXPECT(
+    Command non_help_command = CF_EXPECT(
         ConstructCvdGenericNonHelpCommand({.bin_file = "crosvm",
                                            .envs = envs,
                                            .cmd_args = std::move(crosvm_args),
@@ -140,17 +225,31 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
                                            .home = home,
                                            .verbose = true},
                                           request));
+    std::vector<Command> non_help_command_in_vector;
+    non_help_command_in_vector.push_back(std::move(non_help_command));
+    return non_help_command_in_vector;
+  }
+
+  Result<bool> HasInstanceSpecificOption(cvd_common::Args selector_args,
+                                         const cvd_common::Envs& envs) const {
+    auto instance_name_flag = CF_EXPECT(selector::SelectorFlags::Get().GetFlag(
+        selector::SelectorFlags::kInstanceName));
+    std::optional<std::string> instance_name_opt =
+        CF_EXPECT(instance_name_flag.FilterFlag<std::string>(selector_args));
+    if (instance_name_opt) {
+      return true;
+    }
+    return Contains(envs, kCuttlefishInstanceEnvVarName);
   }
 
   InstanceManager& instance_manager_;
-  SubprocessWaiter& subprocess_waiter_;
+  std::vector<SubprocessWaiter> subprocess_waiters_;
   std::mutex interruptible_;
   bool interrupted_ = false;
   std::vector<std::string> crosvm_operations_;
 };
 
-fruit::Component<fruit::Required<InstanceManager, SubprocessWaiter>>
-CvdCrosVmComponent() {
+fruit::Component<fruit::Required<InstanceManager>> CvdCrosVmComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, CvdCrosVmCommandHandler>();
 }
