@@ -15,11 +15,14 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
 #include <fcntl.h>
 
 #include <fcntl.h>
+#include <algorithm>
+#include <iterator>
 #include <map>
 #include <queue>
 #include <set>
@@ -27,9 +30,13 @@
 #include <string>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "fmt/core.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/kernel_module_parser.h"
 #include "host/commands/assemble_cvd/ramdisk_modules.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -66,7 +73,6 @@ bool WriteLinesToFile(const Container& lines, const char* path) {
   }
   return true;
 }
-
 
 // Generate a filesystem_config.txt for all files in |fs_root|
 bool WriteFsConfig(const char* output_path, const std::string& fs_root,
@@ -122,18 +128,59 @@ std::map<std::string, std::vector<std::string>> FilterDependencies(
     const std::map<std::string, std::vector<std::string>>& deps,
     const std::set<std::string>& allow_list) {
   std::map<std::string, std::vector<std::string>> new_deps;
-  for (const auto& mod_name : allow_list) {
-    new_deps[mod_name].clear();
-  }
   for (const auto& [mod_name, children] : deps) {
     if (!allow_list.count(mod_name)) {
       continue;
     }
+    new_deps[mod_name].clear();
     for (const auto& child : children) {
       if (!allow_list.count(child)) {
         continue;
       }
       new_deps[mod_name].emplace_back(child);
+    }
+  }
+  return new_deps;
+}
+
+std::map<std::string, std::vector<std::string>> FilterOutDependencies(
+    const std::map<std::string, std::vector<std::string>>& deps,
+    const std::set<std::string>& block_list) {
+  std::map<std::string, std::vector<std::string>> new_deps;
+  for (const auto& [mod_name, children] : deps) {
+    if (block_list.count(mod_name)) {
+      continue;
+    }
+    new_deps[mod_name].clear();
+    for (const auto& child : children) {
+      if (block_list.count(child)) {
+        continue;
+      }
+      new_deps[mod_name].emplace_back(child);
+    }
+  }
+  return new_deps;
+}
+
+// Update dependency map by prepending '/system/lib/modules' to modules which
+// have been relocated to system_dlkm partition
+std::map<std::string, std::vector<std::string>> UpdateGKIModulePaths(
+    const std::map<std::string, std::vector<std::string>>& deps,
+    const std::set<std::string>& gki_modules) {
+  std::map<std::string, std::vector<std::string>> new_deps;
+  auto&& GetNewModName = [gki_modules](auto&& mod_name) {
+    if (gki_modules.count(mod_name)) {
+      return "/system/lib/modules/" + mod_name;
+    } else {
+      return mod_name;
+    }
+  };
+  for (const auto& [old_mod_name, children] : deps) {
+    const auto mod_name = GetNewModName(old_mod_name);
+    new_deps[mod_name].clear();
+
+    for (const auto& child : children) {
+      new_deps[mod_name].emplace_back(GetNewModName(child));
     }
   }
   return new_deps;
@@ -167,19 +214,17 @@ std::map<std::string, std::vector<std::string>> LoadModuleDeps(
   const auto dep_lines = android::base::Split(dep_str, "\n");
   for (const auto& line : dep_lines) {
     const auto mod_name = line.substr(0, line.find(":"));
-    const auto deps =
-        android::base::Tokenize(line.substr(mod_name.size() + 1), " ");
-    if (!deps.empty()) {
-      dependency_map[mod_name] = deps;
-    }
+    auto deps = android::base::Tokenize(line.substr(mod_name.size() + 1), " ");
+    dependency_map[mod_name] = std::move(deps);
   }
 
   return dependency_map;
 }
 
 // Recursively compute all modules which |start_nodes| depend on
+template <typename StringContainer>
 std::set<std::string> ComputeTransitiveClosure(
-    const std::vector<std::string>& start_nodes,
+    const StringContainer& start_nodes,
     const std::map<std::string, std::vector<std::string>>& dependencies) {
   std::deque<std::string> queue(start_nodes.begin(), start_nodes.end());
   std::set<std::string> visited;
@@ -201,8 +246,11 @@ std::set<std::string> ComputeTransitiveClosure(
   return visited;
 }
 
+// Generate a file_context.bin file which can be used by selinux tools to assign
+// selinux labels to files
 bool GenerateFileContexts(const char* output_path,
-                          const std::string& mount_point) {
+                          const std::string& mount_point,
+                          std::string_view file_label) {
   const auto file_contexts_txt = std::string(output_path) + ".txt";
   android::base::unique_fd fd(open(file_contexts_txt.c_str(),
                                    O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
@@ -211,15 +259,10 @@ bool GenerateFileContexts(const char* output_path,
     PLOG(ERROR) << "Failed to open " << output_path;
     return false;
   }
-  if (!android::base::WriteStringToFd(mount_point +
-                                          "(/.*)?       "
-                                          "  u:object_r:vendor_file:s0\n",
-                                      fd)) {
-    return false;
-  }
+
   if (!android::base::WriteStringToFd(
-          mount_point + "/etc(/.*)?       "
-                        "  u:object_r:vendor_configs_file:s0\n",
+          fmt::format("{}(/.*)?         u:object_r:{}:s0\n", mount_point,
+                      file_label),
           fd)) {
     return false;
   }
@@ -272,26 +315,36 @@ bool AddVbmetaFooter(const std::string& output_image,
 // file_contexts previously generated
 // 5. call avbtool to add hashtree footer, so that init/bootloader can verify
 // AVB chain
-bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
-                     const std::string& output_image) {
+bool BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
+                    const std::string& partition_name,
+                    const std::string& output_image) {
   if (is_erofs) {
     LOG(ERROR)
-        << "Building vendor_dlkm in EROFS format is currently not supported!";
+        << "Building DLKM image in EROFS format is currently not supported!";
     return false;
   }
+  const auto mount_point = "/" + partition_name;
   const auto fs_config = output_image + ".fs_config";
-  if (!WriteFsConfig(fs_config.c_str(), src_dir, "/vendor_dlkm")) {
+  if (!WriteFsConfig(fs_config.c_str(), src_dir, mount_point)) {
     return false;
   }
   const auto file_contexts_bin = output_image + ".file_contexts";
-  if (!GenerateFileContexts(file_contexts_bin.c_str(), "/vendor_dlkm")) {
-    return false;
+  if (partition_name == "system_dlkm") {
+    if (!GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
+                              "system_dlkm_file")) {
+      return false;
+    }
+  } else {
+    if (!GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
+                              "vendor_file")) {
+      return false;
+    }
   }
 
   // We are using directory size as an estimate of final image size. To avoid
   // any rounding errors, add 16M of head room.
   const auto fs_size = RoundUp(GetDiskUsage(src_dir) + 16 * 1024 * 1024, 4096);
-  LOG(INFO) << "vendor_dlkm src dir " << src_dir << " has size "
+  LOG(INFO) << mount_point << " src dir " << src_dir << " has size "
             << fs_size / 1024 << " KB";
   const auto mkfs = HostBinaryPath("mkuserimg_mke2fs");
   Command mkfs_cmd(mkfs);
@@ -311,7 +364,7 @@ bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
   mkfs_cmd.AddParameter(src_dir);
   mkfs_cmd.AddParameter(output_image);
   mkfs_cmd.AddParameter("ext4");
-  mkfs_cmd.AddParameter("/vendor_dlkm");
+  mkfs_cmd.AddParameter(mount_point);
   mkfs_cmd.AddParameter(std::to_string(fs_size));
   mkfs_cmd.AddParameter(file_contexts_bin);
 
@@ -320,23 +373,36 @@ bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
     LOG(ERROR) << "Failed to build vendor_dlkm ext4 image";
     return false;
   }
-  return AddVbmetaFooter(output_image, "vendor_dlkm");
+  return AddVbmetaFooter(output_image, partition_name);
 }
 
-bool RepackSuperWithVendorDLKM(const std::string& superimg_path,
-                               const std::string& vendor_dlkm_path) {
+bool BuildVendorDLKM(const std::string& src_dir, const bool is_erofs,
+                     const std::string& output_image) {
+  return BuildDlkmImage(src_dir, is_erofs, "vendor_dlkm", output_image);
+}
+
+bool BuildSystemDLKM(const std::string& src_dir, const bool is_erofs,
+                     const std::string& output_image) {
+  return BuildDlkmImage(src_dir, is_erofs, "system_dlkm", output_image);
+}
+
+bool RepackSuperWithPartition(const std::string& superimg_path,
+                              const std::string& image_path,
+                              const std::string& partition_name) {
   Command lpadd(HostBinaryPath("lpadd"));
   lpadd.AddParameter("--replace");
   lpadd.AddParameter(superimg_path);
-  lpadd.AddParameter("vendor_dlkm_a");
+  lpadd.AddParameter(partition_name + "_a");
   lpadd.AddParameter("google_vendor_dynamic_partitions_a");
-  lpadd.AddParameter(vendor_dlkm_path);
+  lpadd.AddParameter(image_path);
   const auto exit_code = lpadd.Start().Wait();
   return exit_code == 0;
 }
 
-bool RebuildVbmetaVendor(const std::string& vendor_dlkm_img,
-                         const std::string& vbmeta_path) {
+bool BuildVbmetaImage(const std::string& image_path,
+                      const std::string& vbmeta_path) {
+  CHECK(!image_path.empty());
+  CHECK(FileExists(image_path));
   auto avbtool_path = HostBinaryPath("avbtool");
   Command vbmeta_cmd(avbtool_path);
   vbmeta_cmd.AddParameter("make_vbmeta_image");
@@ -348,7 +414,7 @@ bool RebuildVbmetaVendor(const std::string& vendor_dlkm_img,
   vbmeta_cmd.AddParameter(DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
 
   vbmeta_cmd.AddParameter("--include_descriptors_from_image");
-  vbmeta_cmd.AddParameter(vendor_dlkm_img);
+  vbmeta_cmd.AddParameter(image_path);
   vbmeta_cmd.AddParameter("--padding_size");
   vbmeta_cmd.AddParameter("4096");
 
@@ -378,10 +444,13 @@ bool RebuildVbmetaVendor(const std::string& vendor_dlkm_img,
 
 bool SplitRamdiskModules(const std::string& ramdisk_path,
                          const std::string& ramdisk_stage_dir,
-                         const std::string& vendor_dlkm_build_dir) {
-  const auto target_modules_dir = vendor_dlkm_build_dir + "/lib/modules";
-  const auto ret = EnsureDirectoryExists(target_modules_dir);
+                         const std::string& vendor_dlkm_build_dir,
+                         const std::string& system_dlkm_build_dir) {
+  const auto vendor_modules_dir = vendor_dlkm_build_dir + "/lib/modules";
+  const auto system_modules_dir = system_dlkm_build_dir + "/lib/modules";
+  auto ret = EnsureDirectoryExists(vendor_modules_dir);
   CHECK(ret.ok()) << ret.error().Message();
+  ret = EnsureDirectoryExists(system_modules_dir);
   UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
   const auto module_load_file =
       android::base::Trim(FindFile(ramdisk_stage_dir.c_str(), "modules.load"));
@@ -398,30 +467,98 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   const auto ramdisk_modules =
       ComputeTransitiveClosure(GetRamdiskModules(module_list), deps);
   std::set<std::string> vendor_dlkm_modules;
+  std::set<std::string> system_dlkm_modules;
 
   // Move non-ramdisk modules to vendor_dlkm
   for (const auto& module_path : module_list) {
-    if (!ramdisk_modules.count(module_path)) {
+    if (ramdisk_modules.count(module_path)) {
+      continue;
+    }
+
+    const auto module_location =
+        fmt::format("{}/{}", module_base_dir, module_path);
+    if (IsKernelModuleSigned(module_location)) {
+      const auto system_dlkm_module_location =
+          fmt::format("{}/{}", system_modules_dir, module_path);
+      EnsureDirectoryExists(cpp_dirname(system_dlkm_module_location));
+      RenameFile(module_location, system_dlkm_module_location);
+      system_dlkm_modules.emplace(module_path);
+    } else {
       const auto vendor_dlkm_module_location =
-          target_modules_dir + "/" + module_path;
+          fmt::format("{}/{}", vendor_modules_dir, module_path);
       EnsureDirectoryExists(cpp_dirname(vendor_dlkm_module_location));
-      RenameFile(module_base_dir + "/" + module_path,
-                 vendor_dlkm_module_location);
+      RenameFile(module_location, vendor_dlkm_module_location);
       vendor_dlkm_modules.emplace(module_path);
     }
   }
-  LOG(INFO) << "There are " << ramdisk_modules.size() << " ramdisk modules and "
-            << vendor_dlkm_modules.size() << " vendor_dlkm modules";
+  for (const auto& gki_module : system_dlkm_modules) {
+    for (const auto& dep : deps.at(gki_module)) {
+      if (vendor_dlkm_modules.count(dep)) {
+        LOG(ERROR) << "GKI module " << gki_module
+                   << " depends on vendor_dlkm module " << dep;
+        return false;
+      }
+    }
+  }
+  LOG(INFO) << "There are " << ramdisk_modules.size() << " ramdisk modules, "
+            << vendor_dlkm_modules.size() << " vendor_dlkm modules, "
+            << system_dlkm_modules.size() << " system_dlkm modules.";
 
   // Write updated modules.dep and modules.load files
   CHECK(WriteDepsToFile(FilterDependencies(deps, ramdisk_modules),
                         module_base_dir + "/modules.dep"));
-  CHECK(WriteDepsToFile(FilterDependencies(deps, vendor_dlkm_modules),
-                        target_modules_dir + "/modules.dep"));
   CHECK(WriteLinesToFile(ramdisk_modules, module_load_file.c_str()));
+
+  CHECK(WriteDepsToFile(
+      UpdateGKIModulePaths(FilterOutDependencies(deps, ramdisk_modules),
+                           system_dlkm_modules),
+      vendor_modules_dir + "/modules.dep"));
   CHECK(WriteLinesToFile(vendor_dlkm_modules,
-                         (target_modules_dir + "/modules.load").c_str()));
+                         (vendor_modules_dir + "/modules.load").c_str()));
+
+  CHECK(WriteDepsToFile(FilterDependencies(deps, system_dlkm_modules),
+                        system_modules_dir + "/modules.dep"));
+  CHECK(WriteLinesToFile(system_dlkm_modules,
+                         (system_modules_dir + "/modules.load").c_str()));
   PackRamdisk(ramdisk_stage_dir, ramdisk_path);
+  return true;
+}
+
+bool FileEquals(const std::string& file1, const std::string& file2) {
+  if (FileSize(file1) != FileSize(file2)) {
+    return false;
+  }
+  std::array<uint8_t, 1024 * 16> buf1{};
+  std::array<uint8_t, 1024 * 16> buf2{};
+  auto fd1 = SharedFD::Open(file1, O_RDONLY);
+  auto fd2 = SharedFD::Open(file2, O_RDONLY);
+  auto bytes_remain = FileSize(file1);
+  while (bytes_remain > 0) {
+    const auto bytes_to_read = std::min<size_t>(bytes_remain, buf1.size());
+    if (fd1->Read(buf1.data(), bytes_to_read) != bytes_to_read) {
+      LOG(ERROR) << "Failed to read from " << file1;
+      return false;
+    }
+    if (!fd2->Read(buf2.data(), bytes_to_read)) {
+      LOG(ERROR) << "Failed to read from " << file2;
+      return false;
+    }
+    if (memcmp(buf1.data(), buf2.data(), bytes_to_read)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool MoveIfChanged(const std::string& src, const std::string& dst) {
+  if (FileEquals(src, dst)) {
+    return false;
+  }
+  const auto ret = RenameFile(src, dst);
+  if (!ret.ok()) {
+    LOG(ERROR) << ret.error().Message();
+    return false;
+  }
   return true;
 }
 

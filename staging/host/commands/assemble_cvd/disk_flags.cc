@@ -513,34 +513,53 @@ class KernelRamdiskRepacker : public SetupFeature {
   }
 
  protected:
-  bool RepackVendorDLKM(const std::string& superimg_build_dir,
-                        const std::string& vendor_dlkm_build_dir,
-                        const std::string& ramdisk_path) {
-    const auto new_vendor_dlkm_img =
-        superimg_build_dir + "/vendor_dlkm_repacked.img";
-    const auto tmp_vendor_dlkm_img = new_vendor_dlkm_img + ".tmp";
-    if (!EnsureDirectoryExists(vendor_dlkm_build_dir).ok()) {
-      LOG(ERROR) << "Failed to create directory " << vendor_dlkm_build_dir;
+  static bool RebuildDlkmAndVbmeta(const std::string& build_dir,
+                                   const std::string& partition_name,
+                                   const std::string& output_image,
+                                   const std::string& vbmeta_image) {
+    // TODO(b/149866755) For now, we assume that vendor_dlkm is ext4. Add
+    // logic to handle EROFS once the feature stablizes.
+    const auto tmp_output_image = output_image + ".tmp";
+    if (!BuildDlkmImage(build_dir, false, partition_name, tmp_output_image)) {
+      LOG(ERROR) << "Failed to build `" << partition_name << "` image from "
+                 << build_dir;
       return false;
     }
+    if (!MoveIfChanged(tmp_output_image, output_image)) {
+      return false;
+    }
+    if (!BuildVbmetaImage(output_image, vbmeta_image)) {
+      LOG(ERROR) << "Failed to rebuild vbmeta vendor.";
+      return false;
+    }
+    return true;
+  }
+  bool RepackSuperAndVbmeta(const std::string& superimg_build_dir,
+                        const std::string& vendor_dlkm_build_dir,
+                        const std::string& system_dlkm_build_dir,
+                        const std::string& ramdisk_path) {
     const auto ramdisk_stage_dir = instance_.instance_dir() + "/ramdisk_staged";
     if (!SplitRamdiskModules(ramdisk_path, ramdisk_stage_dir,
-                             vendor_dlkm_build_dir)) {
+                             vendor_dlkm_build_dir, system_dlkm_build_dir)) {
       LOG(ERROR) << "Failed to move ramdisk modules to vendor_dlkm";
       return false;
     }
-    // TODO(b/149866755) For now, we assume that vendor_dlkm is ext4. Add
-    // logic to handle EROFS once the feature stablizes.
-    if (!BuildVendorDLKM(vendor_dlkm_build_dir, false, tmp_vendor_dlkm_img)) {
+    const auto new_vendor_dlkm_img =
+        superimg_build_dir + "/vendor_dlkm_repacked.img";
+    if (!RebuildDlkmAndVbmeta(vendor_dlkm_build_dir, "vendor_dlkm",
+                              new_vendor_dlkm_img,
+                              instance_.new_vbmeta_vendor_dlkm_image())) {
       LOG(ERROR) << "Failed to build vendor_dlkm image from "
                  << vendor_dlkm_build_dir;
       return false;
     }
-    if (ReadFile(tmp_vendor_dlkm_img) == ReadFile(new_vendor_dlkm_img)) {
-      LOG(INFO) << "vendor_dlkm unchanged, skip super image rebuilding.";
-      return true;
-    }
-    if (!RenameFile(tmp_vendor_dlkm_img, new_vendor_dlkm_img).ok()) {
+    const auto new_system_dlkm_img =
+        superimg_build_dir + "/system_dlkm_repacked.img";
+    if (!RebuildDlkmAndVbmeta(system_dlkm_build_dir, "system_dlkm",
+                              new_system_dlkm_img,
+                              instance_.new_vbmeta_system_dlkm_image())) {
+      LOG(ERROR) << "Failed to build system_dlkm image from "
+                 << system_dlkm_build_dir;
       return false;
     }
     const auto new_super_img = instance_.new_super_image();
@@ -549,13 +568,14 @@ class KernelRamdiskRepacker : public SetupFeature {
                   << " to " << new_super_img;
       return false;
     }
-    if (!RepackSuperWithVendorDLKM(new_super_img, new_vendor_dlkm_img)) {
+    if (!RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
+                                  "vendor_dlkm")) {
       LOG(ERROR) << "Failed to repack super image with new vendor dlkm image.";
       return false;
     }
-    if (!RebuildVbmetaVendor(new_vendor_dlkm_img,
-                             instance_.new_vbmeta_vendor_dlkm_image())) {
-      LOG(ERROR) << "Failed to rebuild vbmeta vendor.";
+    if (!RepackSuperWithPartition(new_super_img, new_system_dlkm_img,
+                                  "system_dlkm")) {
+      LOG(ERROR) << "Failed to repack super image with new system dlkm image.";
       return false;
     }
     SetCommandLineOptionWithMode("super_image", new_super_img.c_str(),
@@ -563,6 +583,10 @@ class KernelRamdiskRepacker : public SetupFeature {
     SetCommandLineOptionWithMode(
         "vbmeta_vendor_dlkm_image",
         instance_.new_vbmeta_vendor_dlkm_image().c_str(),
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode(
+        "vbmeta_system_dlkm_image",
+        instance_.new_vbmeta_system_dlkm_image().c_str(),
         google::FlagSettingMode::SET_FLAGS_DEFAULT);
     return true;
   }
@@ -615,8 +639,9 @@ class KernelRamdiskRepacker : public SetupFeature {
           return false;
         }
         const auto vendor_dlkm_build_dir = superimg_build_dir + "/vendor_dlkm";
-        if (!RepackVendorDLKM(superimg_build_dir, vendor_dlkm_build_dir,
-                              ramdisk_repacked)) {
+        const auto system_dlkm_build_dir = superimg_build_dir + "/system_dlkm";
+        if (!RepackSuperAndVbmeta(superimg_build_dir, vendor_dlkm_build_dir,
+                              system_dlkm_build_dir, ramdisk_repacked)) {
           return false;
         }
         bool success = RepackVendorBootImage(
@@ -1487,6 +1512,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     }
     instance.set_new_vbmeta_vendor_dlkm_image(
         const_instance.PerInstancePath("vbmeta_vendor_dlkm_repacked.img"));
+    instance.set_new_vbmeta_system_dlkm_image(
+        const_instance.PerInstancePath("vbmeta_system_dlkm_repacked.img"));
 
     if (FileHasContent(cur_misc_image)) {
       instance.set_new_misc_image(cur_misc_image);
