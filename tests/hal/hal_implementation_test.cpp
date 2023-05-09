@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <aidl/metadata.h>
 #include <android-base/logging.h>
 #include <android-base/properties.h>
@@ -23,6 +24,14 @@
 #include <hidl-util/FQName.h>
 #include <hidl/metadata.h>
 #include <vintf/VintfObject.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <map>
+#include <mutex>
+#include <set>
+#include <string>
+#include <vector>
 
 using namespace android;
 
