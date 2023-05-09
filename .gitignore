@@ -18,3 +18,5 @@ cuttlefish-*_*.*.*.tar.xz
 /*/debian/*.debhelper
 /*/debian/debhelper-build-stamp
 
+frontend/src/operator/webui/src/environments/version.ts
+

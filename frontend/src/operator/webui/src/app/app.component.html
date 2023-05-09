@@ -8,6 +8,11 @@
     <mat-sidenav #snav class="device-pane" mode="side" opened>
       <app-device-pane></app-device-pane>
     </mat-sidenav>
-    <mat-sidenav-content><app-view-pane></app-view-pane></mat-sidenav-content>
+    <mat-sidenav-content>
+      <app-view-pane></app-view-pane>
+      <div class="version-info">
+        {{version}}
+      </div>
+    </mat-sidenav-content>
   </mat-sidenav-container>
 </div>
