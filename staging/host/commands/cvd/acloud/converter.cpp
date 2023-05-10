@@ -513,7 +513,7 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
         fetch_command_str_ += " --kernel_build=";
         auto target = kernel_build_target.value_or("kernel_virt_x86_64");
         auto build = kernel_build_id.value_or(
-            branch.value_or("aosp_kernel-common-android-mainline"));
+            kernel_branch.value_or("aosp_kernel-common-android-mainline"));
         fetch_command.add_args(build + "/" + target);
         fetch_command_str_ += (build + "/" + target);
       }
@@ -645,6 +645,17 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
           start_command.add_args(local_boot_image);
         }
       }
+    } else if (kernel_branch || kernel_build_id || kernel_build_target) {
+      // fetch remote kernel image files
+      std::string kernel_image = host_dir + "/kernel";
+
+      // even if initramfs doesn't exist, launch_cvd will still handle it
+      // correctly. We push the initramfs handler to launch_cvd stage.
+      std::string initramfs_image = host_dir + "/initramfs.img";
+      start_command.add_args("-kernel_path");
+      start_command.add_args(kernel_image);
+      start_command.add_args("-initramfs_path");
+      start_command.add_args(initramfs_image);
     }
 
     if (launch_args) {
