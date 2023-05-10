@@ -29,10 +29,6 @@ $(call inherit-product, device/google/cuttlefish/shared/wear/aosp_system.mk)
 # is enabled for this architecture, this flag can be removed.
 PRODUCT_USES_DEFAULT_ART_CONFIG := false
 
-# TODO(b/275113769): The riscv64 architecture doesn't support APEX flattening yet.
-# This condition can be removed after support is enabled.
-OVERRIDE_TARGET_FLATTEN_APEX := false
-
 # TODO: FIXME: Stop workaround for aosp_system.mk #########################
 
 # Cuttlefish uses A/B with system_b preopt, so we must install these
