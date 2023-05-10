@@ -36,10 +36,6 @@
 using namespace android;
 
 // clang-format off
-static const std::set<std::string> kAutomotiveOnlyHidl = {
-    "android.hardware.automotive.evs@1.1",
-};
-
 static const std::set<std::string> kKnownMissingHidl = {
     "android.frameworks.automotive.display@1.0", // converted to AIDL, see b/170401743
     "android.frameworks.cameraservice.device@2.1",
@@ -62,6 +58,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.automotive.audiocontrol@1.0",
     "android.hardware.automotive.audiocontrol@2.0",
     "android.hardware.automotive.can@1.0",  // converted to AIDL, see b/170405615
+    "android.hardware.automotive.evs@1.1",
     "android.hardware.automotive.sv@1.0",
     "android.hardware.automotive.vehicle@2.0",
     "android.hardware.biometrics.fingerprint@2.3", // converted to AIDL, see b/152416783
@@ -372,40 +369,6 @@ static DeviceType getDeviceType() {
   return DeviceType::PHONE;
 }
 
-static std::set<std::string> getMissingHidl() {
-  static std::once_flag unionFlag;
-  static std::set<std::string> missingHidl = kKnownMissingHidl;
-
-  std::call_once(unionFlag, [&]() {
-    const DeviceType type = getDeviceType();
-    switch (type) {
-      case DeviceType::AUTOMOTIVE:
-        LOG(INFO) << "Determined this is an Automotive device";
-        break;
-      case DeviceType::TV:
-        missingHidl.insert(kAutomotiveOnlyHidl.begin(),
-                           kAutomotiveOnlyHidl.end());
-        LOG(INFO) << "Determined this is a TV device";
-        break;
-      case DeviceType::WATCH:
-        missingHidl.insert(kAutomotiveOnlyHidl.begin(),
-                           kAutomotiveOnlyHidl.end());
-        LOG(INFO) << "Determined this is a Wear device";
-        break;
-      case DeviceType::PHONE:
-        missingHidl.insert(kAutomotiveOnlyHidl.begin(),
-                           kAutomotiveOnlyHidl.end());
-        LOG(INFO) << "Determined this is a Phone device";
-        break;
-      case DeviceType::UNKNOWN:
-        CHECK(false) << "getDeviceType return UNKNOWN type.";
-        break;
-    }
-  });
-
-  return missingHidl;
-}
-
 static bool isMissingAidl(const std::string& packageName) {
   static std::once_flag unionFlag;
   static std::set<std::string> missingAidl = kAlwaysMissingAidl;
@@ -479,7 +442,7 @@ TEST(Hal, HidlInterfacesImplemented) {
   // we'll be removing items from this which we know are missing
   // in order to be left with those elements which we thought we
   // knew were missing but are actually present
-  std::set<std::string> thoughtMissing = getMissingHidl();
+  std::set<std::string> thoughtMissing = kKnownMissingHidl;
 
   for (const FQName& f : allHidlManifestInterfaces()) {
     if (thoughtMissing.erase(f.getPackageAndVersion().string()) > 0) {
