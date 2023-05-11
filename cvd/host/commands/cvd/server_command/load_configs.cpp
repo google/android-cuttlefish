@@ -294,6 +294,20 @@ class LoadConfigsCommand : public CvdServerHandler {
       mkdir_cmd.add_args("mkdir");
       mkdir_cmd.add_args("-p");
       mkdir_cmd.add_args(device.host_artifacts_dir);
+
+      if (device.use_fetch_artifact) {
+        // TODO(moelsherif):Separate fetch from launch command
+        auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
+        *fetch_cmd.mutable_env() = client_env;
+        fetch_cmd.set_working_directory(device.host_artifacts_dir);
+        fetch_cmd.add_args("cvd");
+        fetch_cmd.add_args("fetch");
+        fetch_cmd.add_args("--directory=" + device.host_artifacts_dir);
+        fetch_cmd.add_args("-default_build=" + device.default_build);
+        // TODO: other flags like system_build, kernel_build and credential
+        // optionally later fetch_cmd.add_args("-credential_source=" +
+        // cvd_flags.fetch_cvd_flags.credential);
+      }
     }
     // Create the launch home directory
     std::string launch_home_dir = GenerateHomeDirectoryName(time);
