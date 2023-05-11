@@ -100,9 +100,12 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     std::vector<std::future<Result<siginfo_t>>> infop_futures;
     infop_futures.reserve(commands.size());
     auto worker = [this](const int idx, Command command) -> Result<siginfo_t> {
+      std::unique_lock interrupt_lock(interruptible_);
+      CF_EXPECT(!interrupted_, "Interrupted");
       SubprocessOptions options;
       auto& subprocess_waiter = subprocess_waiters_[idx];
       CF_EXPECT(subprocess_waiter.Setup(command.Start(options)));
+      interrupt_lock.unlock();
       return CF_EXPECT(subprocess_waiter.Wait());
     };
     size_t idx = 0;
@@ -118,7 +121,11 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     std::stringstream error_msg;
     for (auto& infop_future : infop_futures) {
       auto infop = std::move(infop_future.get());
-      CF_EXPECT(infop.ok(), infop.error().Trace());
+      if (!infop.ok()) {
+        LOG(ERROR) << infop.error().Trace();
+        ok = false;
+        continue;
+      }
       if (infop->si_code == CLD_EXITED && infop->si_status == 0) {
         continue;
       }
@@ -139,10 +146,11 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     auto& status = *response.mutable_status();
     if (ok) {
       status.set_code(cvd::Status::OK);
-      return response;
     }
-    status.set_code(cvd::Status::INTERNAL);
-    status.set_message(error_msg.str());
+    {
+      status.set_code(cvd::Status::INTERNAL);
+      status.set_message(error_msg.str());
+    }
     return response;
   }
 
