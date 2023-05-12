@@ -3,5 +3,5 @@
 /dev/block/by-name/init_boot /init_boot emmc defaults recoveryonly,slotselect,first_stage_mount,avb=init_boot
 /dev/block/by-name/vendor_boot /vendor_boot emmc defaults recoveryonly,slotselect
 # These partitions are not A/B for minidroid
-system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,avb=vbmeta_system,avb_keys=/avb
+system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,avb=vbmeta_system
 vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,avb=vbmeta
