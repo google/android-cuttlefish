@@ -28,7 +28,6 @@ cc_library_host_static {
         "acloud_mixsuperimage.cpp",
         "cmd_list.cpp",
         "components.cpp",
-        "crosvm.cpp",
         "display.cpp",
         "env.cpp",
         "fetch.cpp",
@@ -52,6 +51,7 @@ cc_library_host_static {
         "subprocess_waiter.cpp",
         "try_acloud.cpp",
         "version.cpp",
+        "vm_control.cpp",
     ],
     static_libs: [
         "libcvd_acloud",

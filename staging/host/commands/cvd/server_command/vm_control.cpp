@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/server_command/crosvm.h"
+#include "host/commands/cvd/server_command/vm_control.h"
 
 #include <android-base/strings.h>
 
@@ -95,17 +95,17 @@ QEMU:
   No QEMU-specific vm arguments yet
 )";
 
-class CvdCrosVmCommandHandler : public CvdServerHandler {
+class CvdVmControlCommandHandler : public CvdServerHandler {
  public:
-  INJECT(CvdCrosVmCommandHandler(InstanceManager& instance_manager))
+  INJECT(CvdVmControlCommandHandler(InstanceManager& instance_manager))
       : instance_manager_{instance_manager},
-        crosvm_operations_{{"suspend", kSuspendResume},
-                           {"resume", kSuspendResume},
-                           {"snapshot", kSnapshot}} {}
+        vm_operations_{{"suspend", kSuspendResume},
+                       {"resume", kSuspendResume},
+                       {"snapshot", kSnapshot}} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
-    return Contains(crosvm_operations_, invocation.command);
+    return Contains(vm_operations_, invocation.command);
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
@@ -117,7 +117,7 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     cvd_common::Envs envs =
         cvd_common::ConvertToEnvs(request.Message().command_request().env());
 
-    auto [crosvm_op, subcmd_args] = ParseInvocation(request.Message());
+    auto [vm_op, subcmd_args] = ParseInvocation(request.Message());
     /*
      * crosvm suspend/resume/snapshot support --help only. Not --helpxml, etc.
      *
@@ -129,13 +129,13 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     bool is_help = help_parse_result.ok() && (*help_parse_result);
 
     if (is_help) {
-      auto help_response = CF_EXPECT(HandleHelp(request.Err(), crosvm_op));
+      auto help_response = CF_EXPECT(HandleHelp(request.Err(), vm_op));
       interrupt_lock.unlock();
       return help_response;
     }
 
     auto commands =
-        CF_EXPECT(NonHelpCommand(request, uid, crosvm_op, subcmd_args, envs));
+        CF_EXPECT(NonHelpCommand(request, uid, vm_op, subcmd_args, envs));
     subprocess_waiters_ = std::vector<SubprocessWaiter>(commands.size());
 
     interrupt_lock.unlock();
@@ -153,8 +153,8 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override {
     cvd_common::Args cmd_list;
-    cmd_list.reserve(crosvm_operations_.size());
-    for (const auto& [op, _] : crosvm_operations_) {
+    cmd_list.reserve(vm_operations_.size());
+    for (const auto& [op, _] : vm_operations_) {
       cmd_list.push_back(op);
     }
     return cmd_list;
@@ -220,10 +220,9 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   }
 
   Result<cvd::Response> HandleHelp(const SharedFD& client_stderr,
-                                   const std::string& crosvm_op) {
-    CF_EXPECT(Contains(crosvm_operations_, crosvm_op));
-    std::string help_message =
-        ConcatToString(crosvm_operations_.at(crosvm_op), "\n");
+                                   const std::string& vm_op) {
+    CF_EXPECT(Contains(vm_operations_, vm_op));
+    std::string help_message = ConcatToString(vm_operations_.at(vm_op), "\n");
     CF_EXPECT(WriteAll(client_stderr, help_message) == help_message.size(),
               "Failed to write the help message");
     cvd::Response response;
@@ -317,12 +316,12 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   std::vector<SubprocessWaiter> subprocess_waiters_;
   std::mutex interruptible_;
   bool interrupted_ = false;
-  std::unordered_map<std::string, const char*> crosvm_operations_;
+  std::unordered_map<std::string, const char*> vm_operations_;
 };
 
-fruit::Component<fruit::Required<InstanceManager>> CvdCrosVmComponent() {
+fruit::Component<fruit::Required<InstanceManager>> CvdVmControlComponent() {
   return fruit::createComponent()
-      .addMultibinding<CvdServerHandler, CvdCrosVmCommandHandler>();
+      .addMultibinding<CvdServerHandler, CvdVmControlCommandHandler>();
 }
 
 }  // namespace cuttlefish

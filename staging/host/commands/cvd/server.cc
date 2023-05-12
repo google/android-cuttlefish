@@ -49,7 +49,6 @@
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server_command/acloud.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
-#include "host/commands/cvd/server_command/crosvm.h"
 #include "host/commands/cvd/server_command/display.h"
 #include "host/commands/cvd/server_command/env.h"
 #include "host/commands/cvd/server_command/generic.h"
@@ -60,6 +59,7 @@
 #include "host/commands/cvd/server_command/reset.h"
 #include "host/commands/cvd/server_command/start.h"
 #include "host/commands/cvd/server_command/subcmd.h"
+#include "host/commands/cvd/server_command/vm_control.h"
 #include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
@@ -115,7 +115,6 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(CvdAcloudComponent)
       .install(CvdCmdlistComponent)
       .install(CommandSequenceExecutorComponent)
-      .install(CvdCrosVmComponent)
       .install(cvdCommandComponent)
       .install(CvdDevicePowerComponent)
       .install(CvdDisplayComponent)
@@ -128,6 +127,7 @@ fruit::Component<> CvdServer::RequestComponent(CvdServer* server) {
       .install(cvdShutdownComponent)
       .install(CvdStartCommandComponent)
       .install(cvdVersionComponent)
+      .install(CvdVmControlComponent)
       .install(DemoMultiVdComponent)
       .install(LoadConfigsComponent);
 }
