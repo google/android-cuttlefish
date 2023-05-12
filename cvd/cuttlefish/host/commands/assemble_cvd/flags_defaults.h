@@ -51,6 +51,7 @@
 #define CF_DEFAULTS_VERBOSITY "INFO"
 #define CF_DEFAULTS_RUN_FILE_DISCOVERY true
 #define CF_DEFAULTS_MEMORY_MB CF_DEFAULTS_DYNAMIC_INT
+#define CF_DEFAULTS_SHARE_SCHED_CORE true
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
 
@@ -154,8 +155,6 @@
 // Bluetooth default parameters
 #define CF_DEFAULTS_BLUETOOTH_CONTROLLER_PROPERTIES_FILE \
   "etc/rootcanal/data/controller_properties.json"
-#define CF_DEFAULTS_BLUETOOTH_DEFAULT_COMMANDS_FILE \
-  "etc/rootcanal/data/default_commands"
 #define CF_DEFAULTS_ENABLE_HOST_BLUETOOTH true
 #define CF_DEFAULTS_ENABLE_ROOTCANAL_INSTANCE_NUM 0
 #define CF_DEFAULTS_ROOTCANAL_ARGS CF_DEFAULTS_DYNAMIC_STRING
@@ -189,9 +188,6 @@
 // GflagsCompatFlag
 #define CF_DEFAULTS_RUN_ADB_CONNECTOR true
 #define CF_DEFAULTS_ADB_MODE "vsock_half_tunnel"
-
-// Vehicle default parameters
-#define CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER true
 
 // Location default parameters
 #define CF_DEFAULTS_START_GNSS_PROXY true
