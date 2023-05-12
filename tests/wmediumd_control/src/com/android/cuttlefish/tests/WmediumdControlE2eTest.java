@@ -18,37 +18,36 @@ package com.android.cuttlefish.tests;
 
 import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
-import com.google.common.base.Splitter;
+import com.android.wmediumd.Wmediumd.ListStationsResponse;
+import com.android.wmediumd.Wmediumd.SetCiviclocRequest;
+import com.android.wmediumd.Wmediumd.SetLciRequest;
+import com.android.wmediumd.Wmediumd.SetPositionRequest;
+import com.android.wmediumd.Wmediumd.SetSnrRequest;
+import com.android.wmediumd.Wmediumd.StationInfo;
 
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.List;
+import com.google.protobuf.TextFormat;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class WmediumdControlE2eTest extends CuttlefishHostTest {
 
-    private static final String WMEDIUMD_BINARY_BASENAME = "wmediumd_control";
+    private static final String CVD_ENV_BINARY_BASENAME = "cvd_internal_env";
 
-    private static final String WMEDIUMD_SERVER_BASENAME = "internal/wmediumd_api_server";
-
-    private static final Splitter NEWLINE_SPLITTER = Splitter.on('\n');
-
-    private static final Splitter TAB_SPLITTER = Splitter.on('\t');
-
-    private static final Splitter SPACE_SPLITTER = Splitter.on(' ');
+    private static final String MESSAGE_OK = "Rpc succeeded with OK status\n";
 
     private ITestDevice testDevice;
 
@@ -67,83 +66,101 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
         return 0;
     }
 
-    private String getStationMacAddress(List<StationInfo> stationInfoList) {
-        List<String> stationMacAddressList = stationInfoList.stream().map(x -> x.macAddress).filter(addr -> addr.substring(0, 6).equals("02:15:")).collect(Collectors.toList());
+    private String getStationMacAddress(ListStationsResponse response) {
+        List<String> stationMacAddressList =
+                response.getStationsList().stream()
+                        .map(station -> station.getMacAddress())
+                        .filter(addr -> addr.startsWith("02:15:"))
+                        .collect(Collectors.toList());
         Assert.assertTrue(stationMacAddressList.size() > 0);
         return stationMacAddressList.get(0);
     }
 
-    private String getApMacAddress(List<StationInfo> stationInfoList) {
-        List<String> apMacAddressList = stationInfoList.stream().map(x -> x.macAddress).filter(addr -> addr.substring(0, 6).equals("42:00:")).collect(Collectors.toList());
+    private String getApMacAddress(ListStationsResponse response) {
+        List<String> apMacAddressList =
+                response.getStationsList().stream()
+                        .map(station -> station.getMacAddress())
+                        .filter(addr -> addr.startsWith("42:00:"))
+                        .collect(Collectors.toList());
         Assert.assertTrue(apMacAddressList.size() > 0);
         return apMacAddressList.get(0);
     }
 
-    private CommandResult runWmediumdCommand(long timeout, String... command) throws FileNotFoundException {
-        String wmediumdBinary;
-        String wmediumdServer;
+    private StationInfo getStationInfo(ListStationsResponse response, String macAddress) {
+        List<StationInfo> stationInfoList =
+                response.getStationsList().stream()
+                        .filter(station -> station.getMacAddress().equals(macAddress))
+                        .collect(Collectors.toList());
+        Assert.assertEquals(1, stationInfoList.size());
+        return stationInfoList.get(0);
+    }
 
+    private CommandResult runWmediumdCommand(long timeout, String... command)
+            throws FileNotFoundException {
         Assert.assertNotNull(runner);
 
-        wmediumdBinary = runner.getHostBinaryPath(WMEDIUMD_BINARY_BASENAME);
-        wmediumdServer = runner.getHostRuntimePath(WMEDIUMD_SERVER_BASENAME);
-
-        ArrayList<String> fullCommand = new ArrayList<String>(Arrays.asList(command));
-        fullCommand.add(0, wmediumdBinary);
-        fullCommand.add(1, String.format("--wmediumd_api_server=%s", wmediumdServer));
+        ArrayList<String> fullCommand = new ArrayList<String>();
+        fullCommand.add(runner.getHostBinaryPath(CVD_ENV_BINARY_BASENAME));
+        fullCommand.add("cvd-1");
+        fullCommand.add("call");
+        fullCommand.add("WmediumdService");
+        fullCommand.addAll(Arrays.asList(command));
 
         return runner.run(timeout, fullCommand.toArray(new String[0]));
     }
 
-    /** One line for "Total Stations" and one line for the "tsv header". */
-    private static final int NUMBER_OF_NONEMPTY_INFO_LINES = 2;
-
-    public List<StationInfo> listStations() throws Exception {
-        CommandResult result = runWmediumdCommand(10000, "list_stations");
+    public ListStationsResponse listStations() throws Exception {
+        CommandResult result = runWmediumdCommand(10000, "ListStations", "");
         CLog.i("stdout:%s", result.getStdout());
         CLog.i("stderr:%s", result.getStderr());
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+        Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
 
-        List<String> lines = NEWLINE_SPLITTER.omitEmptyStrings().splitToList(result.getStdout());
-        List<String> parsedTotalStationsLine = SPACE_SPLITTER.splitToList(lines.get(0));
-        String lastLine = parsedTotalStationsLine.get(parsedTotalStationsLine.size() - 1);
-        Assert.assertEquals(lines.size() - NUMBER_OF_NONEMPTY_INFO_LINES, Integer.parseInt(lastLine));
-
-        List<StationInfo> stationInfoList = new ArrayList<>();
-        for (int idx = NUMBER_OF_NONEMPTY_INFO_LINES; idx < lines.size(); ++idx) {
-            stationInfoList.add(StationInfo.getStationInfo(TAB_SPLITTER.splitToList(lines.get(idx))));
-        }
-        return stationInfoList;
-    }
-
-    public StationInfo getStation(String macAddress) throws Exception {
-        List<StationInfo> stationInfoList = listStations();
-        for (StationInfo station : stationInfoList) {
-            if (station.macAddress.equals(macAddress)) {
-                return station;
-            }
-        }
-        return null;
+        return TextFormat.parse(result.getStdout(), ListStationsResponse.class);
     }
 
     private void setSnr(String macAddress1, String macAddress2, int snr) throws Exception {
-        CommandResult result = runWmediumdCommand(10000, "set_snr", macAddress1, macAddress2, Integer.toString(snr));
+        SetSnrRequest request =
+                SetSnrRequest.newBuilder()
+                        .setMacAddress1(macAddress1)
+                        .setMacAddress2(macAddress2)
+                        .setSnr(snr)
+                        .build();
+        CommandResult result = runWmediumdCommand(10000, "SetSnr", request.toString());
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+        Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
 
-    private void setPosition(String macAddress, double xPosition, double yPosition) throws Exception {
-        CommandResult result = runWmediumdCommand(10000, "--", "set_position", macAddress, Double.toString(xPosition), Double.toString(yPosition));
+    private void setPosition(String macAddress, double xPosition, double yPosition)
+            throws Exception {
+        SetPositionRequest request =
+                SetPositionRequest.newBuilder()
+                        .setMacAddress(macAddress)
+                        .setXPos(xPosition)
+                        .setYPos(yPosition)
+                        .build();
+        CommandResult result = runWmediumdCommand(10000, "SetPosition", request.toString());
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+        Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
 
     private void setLci(String macAddress, String lci) throws Exception {
-        CommandResult result = runWmediumdCommand(10000, "set_lci", macAddress, lci);
+        SetLciRequest request =
+                SetLciRequest.newBuilder().setMacAddress(macAddress).setLci(lci).build();
+        CommandResult result = runWmediumdCommand(10000, "SetLci", request.toString());
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+        Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
 
     private void setCivicloc(String macAddress, String civicloc) throws Exception {
-        CommandResult result = runWmediumdCommand(10000, "set_civicloc", macAddress, civicloc);
+        SetCiviclocRequest request =
+                SetCiviclocRequest.newBuilder()
+                        .setMacAddress(macAddress)
+                        .setCivicloc(civicloc)
+                        .build();
+        CommandResult result = runWmediumdCommand(10000, "SetCivicloc", request.toString());
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
+        Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
 
     @Before
@@ -162,7 +179,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
     public void testWmediumdControlSetSnr() throws Exception {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        List<StationInfo> stationInfoList = listStations();
+        ListStationsResponse stationInfoList = listStations();
         String stationMacAddress = getStationMacAddress(stationInfoList);
         String apMacAddress = getApMacAddress(stationInfoList);
         int rssiDefault = getRSSI();
@@ -185,7 +202,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
     public void testWmediumdControlSetPosition() throws Exception {
         if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        List<StationInfo> stationInfoList = listStations();
+        ListStationsResponse stationInfoList = listStations();
         String stationMacAddress = getStationMacAddress(stationInfoList);
         String apMacAddress = getApMacAddress(stationInfoList);
         int rssiDefault = getRSSI();
@@ -213,37 +230,25 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
 
     @Test(timeout = 60 * 1000)
     public void testWmediumdControlSetLci() throws Exception {
-        if (!testDevice.connectToWifiNetwork("VirtWifi", ""))
-            return;
+        if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        List<StationInfo> stationInfoList = listStations();
-        String apMacAddress = getApMacAddress(stationInfoList);
-
+        String apMacAddress = getApMacAddress(listStations());
         String testLci = "abcdef";
 
         setLci(apMacAddress, testLci);
-
-        StationInfo apStation = getStation(apMacAddress);
-
-        String trimmedLci = apStation.lci.substring(1, apStation.lci.length() - 1);
-        Assert.assertEquals(testLci, trimmedLci);
+        StationInfo station = getStationInfo(listStations(), apMacAddress);
+        Assert.assertEquals(testLci, station.getLci());
     }
 
     @Test(timeout = 60 * 1000)
     public void testWmediumdControlSetCivicloc() throws Exception {
-        if (!testDevice.connectToWifiNetwork("VirtWifi", ""))
-            return;
+        if (!testDevice.connectToWifiNetwork("VirtWifi", "")) return;
 
-        List<StationInfo> stationInfoList = listStations();
-        String apMacAddress = getApMacAddress(stationInfoList);
-
+        String apMacAddress = getApMacAddress(listStations());
         String testCivicloc = "zxcvb";
 
         setCivicloc(apMacAddress, testCivicloc);
-
-        StationInfo apStation = getStation(apMacAddress);
-
-        String trimmedCivicloc = apStation.civicloc.substring(1, apStation.civicloc.length() - 1);
-        Assert.assertEquals(testCivicloc, trimmedCivicloc);
+        StationInfo station = getStationInfo(listStations(), apMacAddress);
+        Assert.assertEquals(testCivicloc, station.getCivicloc());
     }
 }
