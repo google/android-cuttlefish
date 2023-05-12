@@ -40,6 +40,23 @@ namespace cuttlefish {
 
 namespace {
 
+std::string GenerateSystemImageFlag(
+    const std::vector<FetchCvdDeviceConfigs>& configs) {
+  std::string result = "";
+
+  for (const auto& config : configs) {
+    // concatenate host_artifacts_dir parameter with a comma separator instead
+    // of a space
+    result += config.host_artifacts_dir + ",";
+  }
+
+  // remove the last comma character from the final string, if it exists
+  if (!result.empty()) {
+    result.pop_back();
+  }
+
+  return "--system_image_dir=" + result;
+}
 
 std::string GenerateParentDirectory() {
   const uid_t uid = getuid();
@@ -320,9 +337,19 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     // Handle the launch command
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-    launch_cmd.set_working_directory(
-        request.Message().command_request().working_directory());
-    *launch_cmd.mutable_env() = request.Message().command_request().env();
+
+    auto first_instance_dir =
+        cvd_flags.fetch_cvd_flags.instances[0].host_artifacts_dir;
+    *launch_cmd.mutable_env() = client_env;
+    launch_cmd.set_working_directory(first_instance_dir);
+    (*launch_cmd.mutable_env())["HOME"] = launch_home_dir;
+
+    (*launch_cmd.mutable_env())[kAndroidHostOut] = first_instance_dir;
+    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] = first_instance_dir;
+
+    if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
+      (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
+    }
 
     /* cvd load will always create instances in deamon mode (to be independent
      of terminal) and will enable reporting automatically (to run automatically
@@ -334,6 +361,9 @@ class LoadConfigsCommand : public CvdServerHandler {
     for (auto& parsed_flag : cvd_flags.launch_cvd_flags) {
       launch_cmd.add_args(parsed_flag);
     }
+    // Add system flag for multi-build scenario
+    launch_cmd.add_args(
+        GenerateSystemImageFlag(cvd_flags.fetch_cvd_flags.instances));
 
     launch_cmd.mutable_selector_opts()->add_args(
         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
