@@ -30,6 +30,7 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::unordered_map<std::string, std::string> openwrt_args;
   int instance_num = cuttlefish::GetInstance();
+  openwrt_args["instance_name"] = instance.instance_name();
 
   int c_class_base = (instance_num - 1) / 64;
   int d_class_base = (instance_num - 1) % 64 * 4;
