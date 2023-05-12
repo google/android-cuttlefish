@@ -22,34 +22,19 @@ java_test_host {
         "src/**/*.java",
     ],
     data_native_bins: [
-        "wmediumd_control",
+        "cvd",
+        "cvd_internal_env",
     ],
     test_suites: [
         "device-tests",
     ],
     libs: [
-        "auto_value_annotations",
         "junit",
         "tradefed",
     ],
     static_libs: [
         "cuttlefish_host_test_utils",
         "platform-test-annotations",
+        "WmediumdServerProto_java",
     ],
-    jni_libs: [
-        "libext2_blkid",
-        "libfruit",
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libcurl",
-        "libcrypto",
-        "libext2_uuid",
-        "liblog",
-        "libssl",
-        "libz",
-        "libjsoncpp",
-        "libprotobuf-cpp-full",
-    ],
-    plugins: ["auto_value_plugin", "auto_annotation_plugin"],
 }
