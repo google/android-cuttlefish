@@ -134,8 +134,17 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
       return help_response;
     }
 
+    /*
+     * TODO(kwstephenkim): Support QEMU
+     *
+     * We should add a field that indicates the vm type in the instance
+     * database. Then, we should check the field here to set/unset is_crosvm.
+     */
+    const bool is_crosvm = true;
+    CF_EXPECT(is_crosvm == true, "QEMU is not yet supported");
+
     auto commands =
-        CF_EXPECT(NonHelpCommand(request, uid, vm_op, subcmd_args, envs));
+        CF_EXPECT(CrosvmCommand(request, uid, vm_op, subcmd_args, envs));
     subprocess_waiters_ = std::vector<SubprocessWaiter>(commands.size());
 
     interrupt_lock.unlock();
@@ -231,7 +240,7 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
     return response;
   }
 
-  Result<std::vector<Command>> NonHelpCommand(
+  Result<std::vector<Command>> CrosvmCommand(
       const RequestWithStdio& request, const uid_t uid,
       const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
       const cvd_common::Envs& envs) {
@@ -242,16 +251,16 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
     if (CF_EXPECT(HasInstanceSpecificOption(selector_args, envs))) {
       auto instance =
           CF_EXPECT(instance_manager_.SelectInstance(selector_args, envs, uid));
-      return CF_EXPECT(NonHelpInstanceCommand(request, instance, crosvm_op,
-                                              subcmd_args, envs));
+      return CF_EXPECT(CrosvmInstanceCommand(request, instance, crosvm_op,
+                                             subcmd_args, envs));
     }
     auto instance_group =
         CF_EXPECT(instance_manager_.SelectGroup(selector_args, envs, uid));
-    return CF_EXPECT(NonHelpGroupCommand(request, instance_group, crosvm_op,
-                                         subcmd_args, envs));
+    return CF_EXPECT(CrosvmGroupCommand(request, instance_group, crosvm_op,
+                                        subcmd_args, envs));
   }
 
-  Result<std::vector<Command>> NonHelpGroupCommand(
+  Result<std::vector<Command>> CrosvmGroupCommand(
       const RequestWithStdio& request,
       const InstanceManager::LocalInstanceGroup& instance_group,
       const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
@@ -259,7 +268,7 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
     std::vector<Command> commands;
     auto& instances = instance_group.Instances();
     for (const auto& instance : instances) {
-      auto instance_commands = CF_EXPECT(NonHelpInstanceCommand(
+      auto instance_commands = CF_EXPECT(CrosvmInstanceCommand(
           request, instance->GetCopy(), crosvm_op, subcmd_args, envs));
       CF_EXPECT_EQ(instance_commands.size(), 1);
       commands.push_back(std::move(instance_commands.front()));
@@ -267,7 +276,7 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
     return commands;
   }
 
-  Result<std::vector<Command>> NonHelpInstanceCommand(
+  Result<std::vector<Command>> CrosvmInstanceCommand(
       const RequestWithStdio& request,
       const InstanceManager::LocalInstance::Copy& instance,
       const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
