@@ -42,18 +42,23 @@ class CameraChannelHandler;
 
 class ClientVideoTrackInterface;
 class ClientVideoTrackImpl;
+class PeerConnectionBuilder;
 
 class ClientHandler : public webrtc::PeerConnectionObserver,
                       public std::enable_shared_from_this<ClientHandler> {
  public:
+  // Checks if the message contains an "ice_servers" array field and parses it
+  // into a vector of webrtc ICE servers. Returns an empty vector if the field
+  // isn't present.
+  static std::vector<webrtc::PeerConnectionInterface::IceServer>
+  ParseIceServersMessage(const Json::Value& message);
+
   static std::shared_ptr<ClientHandler> Create(
       int client_id, std::shared_ptr<ConnectionObserver> observer,
+      PeerConnectionBuilder& connection_builder,
       std::function<void(const Json::Value&)> send_client_cb,
       std::function<void(bool)> on_connection_changed_cb);
   ~ClientHandler() override;
-
-  bool SetPeerConnection(
-      rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection);
 
   bool AddDisplay(rtc::scoped_refptr<webrtc::VideoTrackInterface> track,
                   const std::string& label);
@@ -113,6 +118,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
       kFailed,
   };
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
+                PeerConnectionBuilder& connection_builder,
                 std::function<void(const Json::Value&)> send_client_cb,
                 std::function<void(bool)> on_connection_changed_cb);
 
@@ -121,12 +127,14 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
 
   void LogAndReplyError(const std::string& error_msg) const;
   void AddPendingIceCandidates();
+  bool BuildPeerConnection(const Json::Value& message);
 
   int client_id_;
   State state_ = State::kNew;
   std::shared_ptr<ConnectionObserver> observer_;
   std::function<void(const Json::Value&)> send_to_client_;
   std::function<void(bool)> on_connection_changed_cb_;
+  PeerConnectionBuilder& connection_builder_;
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   std::vector<rtc::scoped_refptr<webrtc::DataChannelInterface>> data_channels_;
   std::unique_ptr<InputChannelHandler> input_handler_;
@@ -138,6 +146,12 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   bool remote_description_added_ = false;
   std::vector<std::unique_ptr<webrtc::IceCandidateInterface>>
       pending_ice_candidates_;
+  std::vector<
+      std::pair<rtc::scoped_refptr<webrtc::VideoTrackInterface>, std::string>>
+      displays_;
+  std::vector<
+      std::pair<rtc::scoped_refptr<webrtc::AudioTrackInterface>, std::string>>
+      audio_streams_;
 };
 
 class ClientVideoTrackInterface {
@@ -146,6 +160,15 @@ class ClientVideoTrackInterface {
   virtual void AddOrUpdateSink(
       rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
       const rtc::VideoSinkWants& wants) = 0;
+};
+
+class PeerConnectionBuilder {
+ public:
+  virtual ~PeerConnectionBuilder() = default;
+  virtual rtc::scoped_refptr<webrtc::PeerConnectionInterface> Build(
+      webrtc::PeerConnectionObserver* observer,
+      const std::vector<webrtc::PeerConnectionInterface::IceServer>&
+          per_connection_servers) = 0;
 };
 
 }  // namespace webrtc_streaming
