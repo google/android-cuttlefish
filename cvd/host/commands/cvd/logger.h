@@ -16,6 +16,7 @@
 #pragma once
 
 #include <shared_mutex>
+#include <string>
 #include <thread>
 #include <unordered_map>
 
@@ -44,7 +45,7 @@ class ServerLogger {
     ~ScopedLogger();
 
    private:
-    ScopedLogger(ServerLogger&, SharedFD target);
+    ScopedLogger(ServerLogger&, SharedFD target, const std::string& verbosity);
 
     /** Callback for `LOG(severity)` messages */
     void LogMessage(android::base::LogId log_buffer_id,
@@ -53,6 +54,7 @@ class ServerLogger {
 
     ServerLogger& server_logger_;
     SharedFD target_;
+    std::string verbosity_;
   };
   INJECT(ServerLogger());
   ~ServerLogger();
@@ -61,7 +63,8 @@ class ServerLogger {
    * Configure `LOG(severity)` messages to write to the given file descriptor
    * for the lifetime of the returned object.
    */
-  ScopedLogger LogThreadToFd(SharedFD);
+  Result<ScopedLogger> LogThreadToFd(SharedFD, const std::string& verbosity);
+  Result<ScopedLogger> LogThreadToFd(SharedFD);
 
  private:
   std::shared_mutex thread_loggers_lock_;
