@@ -42,11 +42,66 @@
 
 namespace cuttlefish {
 
+static constexpr char kSuspendResume[] =
+    R"(Cuttlefish Virtual Device (CVD) CLI.
+
+Suspend/resume the cuttlefish device
+
+usage: cvd [selector flags] suspend/resume [--help]
+
+Common:
+  Selector Flags:
+    --group_name=<name>       The name of the instance group
+    --instance_name=<names>   The comma-separated list of the instance names
+
+  Args:
+    --help                    print this message
+
+Crosvm:
+  No crosvm-specific arguments at the moment
+
+QEMU:
+  No QEMU-specific arguments at the moment
+
+)";
+
+static constexpr char kSnapshot[] =
+    R"(Cuttlefish Virtual Device (CVD) CLI.
+
+Take a snapshot of a cuttlefish device or
+Create/restore a cuttlefish device from a snapshot
+
+usage: cvd [selector flags] snapshot take/restore <snapshot path> [vm args]
+       cvd snapshot take/restore --help
+
+Common:
+
+  Selector Flags:
+    --group_name=<name>       The name of the instance group
+    --instance_name=<names>   The comma-separated list of the instance names
+
+  Commands:
+    take                      Take the snapshot to the <snapshot path>
+    restore                   Restore the device from <snapshot path>
+
+  Args:
+    --help                    print this message
+
+Crosvm:
+  <snapshot path>:
+    Path to the snapshot file
+
+QEMU:
+  No QEMU-specific vm arguments yet
+)";
+
 class CvdCrosVmCommandHandler : public CvdServerHandler {
  public:
   INJECT(CvdCrosVmCommandHandler(InstanceManager& instance_manager))
       : instance_manager_{instance_manager},
-        crosvm_operations_{"suspend", "resume", "snapshot"} {}
+        crosvm_operations_{{"suspend", kSuspendResume},
+                           {"resume", kSuspendResume},
+                           {"snapshot", kSnapshot}} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
@@ -73,11 +128,16 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     auto help_parse_result = help_flag.CalculateFlag(subcmd_args_copy);
     bool is_help = help_parse_result.ok() && (*help_parse_result);
 
+    if (is_help) {
+      auto help_response = CF_EXPECT(HandleHelp(request.Err(), crosvm_op));
+      interrupt_lock.unlock();
+      return help_response;
+    }
+
     auto commands =
-        is_help ? CF_EXPECT(HelpCommand(request, crosvm_op, subcmd_args, envs))
-                : CF_EXPECT(NonHelpCommand(request, uid, crosvm_op, subcmd_args,
-                                           envs));
+        CF_EXPECT(NonHelpCommand(request, uid, crosvm_op, subcmd_args, envs));
     subprocess_waiters_ = std::vector<SubprocessWaiter>(commands.size());
+
     interrupt_lock.unlock();
     return CF_EXPECT(ConstructResponse(std::move(commands)));
   }
@@ -90,9 +150,14 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     }
     return {};
   }
+
   cvd_common::Args CmdList() const override {
-    return cvd_common::Args(crosvm_operations_.begin(),
-                            crosvm_operations_.end());
+    cvd_common::Args cmd_list;
+    cmd_list.reserve(crosvm_operations_.size());
+    for (const auto& [op, _] : crosvm_operations_) {
+      cmd_list.push_back(op);
+    }
+    return cmd_list;
   }
 
  private:
@@ -154,19 +219,17 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
     return response;
   }
 
-  Result<std::vector<Command>> HelpCommand(const RequestWithStdio& request,
-                                           const std::string& crosvm_op,
-                                           const cvd_common::Args& subcmd_args,
-                                           cvd_common::Envs envs) {
-    CF_EXPECT(Contains(envs, kAndroidHostOut));
-    cvd_common::Args crosvm_args{crosvm_op};
-    crosvm_args.insert(crosvm_args.end(), subcmd_args.begin(),
-                       subcmd_args.end());
-    Command help_command = CF_EXPECT(
-        ConstructCvdHelpCommand("crosvm", envs, crosvm_args, request));
-    std::vector<Command> help_command_in_vector;
-    help_command_in_vector.push_back(std::move(help_command));
-    return help_command_in_vector;
+  Result<cvd::Response> HandleHelp(const SharedFD& client_stderr,
+                                   const std::string& crosvm_op) {
+    CF_EXPECT(Contains(crosvm_operations_, crosvm_op));
+    std::string help_message =
+        ConcatToString(crosvm_operations_.at(crosvm_op), "\n");
+    CF_EXPECT(WriteAll(client_stderr, help_message) == help_message.size(),
+              "Failed to write the help message");
+    cvd::Response response;
+    response.mutable_command_response();
+    response.mutable_status()->set_code(cvd::Status::OK);
+    return response;
   }
 
   Result<std::vector<Command>> NonHelpCommand(
@@ -254,7 +317,7 @@ class CvdCrosVmCommandHandler : public CvdServerHandler {
   std::vector<SubprocessWaiter> subprocess_waiters_;
   std::mutex interruptible_;
   bool interrupted_ = false;
-  std::vector<std::string> crosvm_operations_;
+  std::unordered_map<std::string, const char*> crosvm_operations_;
 };
 
 fruit::Component<fruit::Required<InstanceManager>> CvdCrosVmComponent() {
