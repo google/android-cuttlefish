@@ -40,6 +40,37 @@ namespace cuttlefish {
 
 namespace {
 
+
+std::string GenerateParentDirectory() {
+  const uid_t uid = getuid();
+  // Prefix for the parent directory.
+  constexpr char kParentDirPrefix[] = "/tmp/cvd/";
+  std::stringstream ss;
+
+  // Constructs the full directory path.
+  ss << kParentDirPrefix << uid << "/";
+
+  return ss.str();
+}
+
+std::string GenerateHostArtifactsDirectoryName(int64_t time,
+                                        int instance_index) {
+  // Concatenates the string using GenerateParentDirectory and std::to_string.
+  std::string host_artifacts_dir = GenerateParentDirectory() +
+                         std::to_string(time) + "_" +
+                         std::to_string(instance_index) + "/";
+
+  return host_artifacts_dir;
+}
+
+std::string GenerateHomeDirectoryName(int64_t time) {
+  // Concatenates the string using GenerateParentDirectory and std::to_string.
+  std::string home_dir =
+      GenerateParentDirectory() + std::to_string(time) + "_home/";
+
+  return home_dir;
+}
+
 using DemoCommandSequence = std::vector<RequestWithStdio>;
 
 }  // namespace
@@ -77,7 +108,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
-  // TODO: expand this enum in the future to support more types ( double , float
+  // TODO(moelsherif): expand this enum in the future to support more types ( double , float
   // , etc) if neeeded
   enum ArgValueType { UINTEGER, BOOLEAN, TEXT };
 
@@ -239,8 +270,55 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto cvd_flags =
         CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
 
+    // return if the length of fetch_cvd_flags.instances is 0
+    int num_devices = cvd_flags.fetch_cvd_flags.instances.size();
+    CF_EXPECT_GT(num_devices, 0, "No instances to load");
+
     std::vector<cvd::Request> req_protos;
 
+    const auto& client_env = request.Message().command_request().env();
+
+    auto time = std::chrono::system_clock::now().time_since_epoch().count();
+    // set the home directory for each device
+    for (int instance_index = 0; instance_index < num_devices; instance_index++) {
+      cvd_flags.fetch_cvd_flags.instances[instance_index].host_artifacts_dir =
+          GenerateHostArtifactsDirectoryName(time, instance_index);
+      LOG(INFO) << "Home directory for device " << instance_index << " is "
+                << cvd_flags.fetch_cvd_flags.instances[instance_index].host_artifacts_dir;
+    }
+
+    for (const auto& device : cvd_flags.fetch_cvd_flags.instances) {
+      auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
+      *mkdir_cmd.mutable_env() = client_env;
+      mkdir_cmd.add_args("cvd");
+      mkdir_cmd.add_args("mkdir");
+      mkdir_cmd.add_args("-p");
+      mkdir_cmd.add_args(device.host_artifacts_dir);
+
+      if (device.use_fetch_artifact) {
+        // TODO(moelsherif):Separate fetch from launch command
+        auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
+        *fetch_cmd.mutable_env() = client_env;
+        fetch_cmd.set_working_directory(device.host_artifacts_dir);
+        fetch_cmd.add_args("cvd");
+        fetch_cmd.add_args("fetch");
+        fetch_cmd.add_args("--directory=" + device.host_artifacts_dir);
+        fetch_cmd.add_args("-default_build=" + device.default_build);
+        // TODO: other flags like system_build, kernel_build and credential
+        // optionally later fetch_cmd.add_args("-credential_source=" +
+        // cvd_flags.fetch_cvd_flags.credential);
+      }
+    }
+    // Create the launch home directory
+    std::string launch_home_dir = GenerateHomeDirectoryName(time);
+    auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
+    *mkdir_cmd.mutable_env() = client_env;
+    mkdir_cmd.add_args("cvd");
+    mkdir_cmd.add_args("mkdir");
+    mkdir_cmd.add_args("-p");
+    mkdir_cmd.add_args(launch_home_dir);
+
+    // Handle the launch command
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
     launch_cmd.set_working_directory(
         request.Message().command_request().working_directory());
