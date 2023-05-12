@@ -24,7 +24,6 @@
 #include "host/commands/cvd/server_command/acloud.h"
 #include "host/commands/cvd/server_command/acloud_command.h"
 #include "host/commands/cvd/server_command/acloud_translator.h"
-#include "host/commands/cvd/server_command/acloud_mixsuperimage.h"
 #include "host/commands/cvd/server_command/try_acloud.h"
 
 namespace cuttlefish {
@@ -37,8 +36,7 @@ CvdAcloudComponent() {
       .install(AcloudCreateConvertCommandComponent)
       .install(AcloudCommandComponent)
       .install(TryAcloudCommandComponent)
-      .install(AcloudTranslatorCommandComponent)
-      .install(AcloudMixSuperImageCommandComponent);
+      .install(AcloudTranslatorCommandComponent);
 }
 
 }  // namespace cuttlefish

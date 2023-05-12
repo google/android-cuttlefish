@@ -418,11 +418,7 @@ bool SharedFD::SocketPair(int domain, int type, int protocol,
 }
 
 SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
-  return Open(path.c_str(), flags, mode);
-}
-
-SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
+  int fd = TEMP_FAILURE_RETRY(open(path.c_str(), flags, mode));
   if (fd == -1) {
     return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
   } else {
@@ -445,7 +441,7 @@ int SharedFD::Fchdir(SharedFD shared_fd) {
 }
 
 SharedFD SharedFD::Fifo(const std::string& path, mode_t mode) {
-  struct stat st {};
+  struct stat st;
   if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
     if (TEMP_FAILURE_RETRY(remove(path.c_str())) != 0) {
       return ErrorFD(errno);
@@ -737,13 +733,6 @@ int FileInstance::UNMANAGED_Dup2(int newfd) {
 int FileInstance::Fcntl(int command, int value) {
   errno = 0;
   int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
-  errno_ = errno;
-  return rval;
-}
-
-int FileInstance::Fsync() {
-  errno = 0;
-  int rval = TEMP_FAILURE_RETRY(fsync(fd_));
   errno_ = errno;
   return rval;
 }
