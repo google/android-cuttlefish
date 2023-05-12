@@ -22,6 +22,6 @@
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<InstanceManager>> CvdCrosVmComponent();
+fruit::Component<fruit::Required<InstanceManager>> CvdVmControlComponent();
 
 }  // namespace cuttlefish
