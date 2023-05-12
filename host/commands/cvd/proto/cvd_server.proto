@@ -39,6 +39,7 @@ message Request {
     // Requests the CvdServer to execute a command on behalf of the client.
     CommandRequest command_request = 3;
   }
+  string verbosity = 4;
 }
 
 message Response {
