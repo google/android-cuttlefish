@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "client.h"
+#include "host/commands/cvd/client.h"
 
-#include <stdlib.h>
+#include <unistd.h>
 
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 
@@ -29,26 +30,10 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/server_constants.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
 namespace {
-
-Result<SharedFD> ConnectToServer() {
-  auto connection =
-      SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                  /*is_abstract=*/true, SOCK_SEQPACKET);
-  if (!connection->IsOpen()) {
-    auto connection =
-        SharedFD::SocketLocalClient(cvd::kServerSocketPath,
-                                    /*is_abstract=*/true, SOCK_STREAM);
-  }
-  if (!connection->IsOpen()) {
-    return CF_ERR("Failed to connect to server" << connection->StrError());
-  }
-  return connection;
-}
 
 [[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
   auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
@@ -71,6 +56,21 @@ Result<SharedFD> ConnectToServer() {
 }
 
 }  // end of namespace
+
+Result<SharedFD> CvdClient::ConnectToServer() {
+  auto connection =
+      SharedFD::SocketLocalClient(server_socket_path_,
+                                  /*is_abstract=*/true, SOCK_SEQPACKET);
+  if (!connection->IsOpen()) {
+    auto connection =
+        SharedFD::SocketLocalClient(server_socket_path_,
+                                    /*is_abstract=*/true, SOCK_STREAM);
+  }
+  if (!connection->IsOpen()) {
+    return CF_ERR("Failed to connect to server" << connection->StrError());
+  }
+  return connection;
+}
 
 cvd::Version CvdClient::GetClientVersion() {
   cvd::Version client_version;
@@ -263,7 +263,7 @@ Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request,
 
 Result<void> CvdClient::StartCvdServer() {
   SharedFD server_fd =
-      SharedFD::SocketLocalServer(cvd::kServerSocketPath,
+      SharedFD::SocketLocalServer(server_socket_path_,
                                   /*is_abstract=*/true, SOCK_SEQPACKET, 0666);
   CF_EXPECT(server_fd->IsOpen(), server_fd->StrError());
 
@@ -274,7 +274,7 @@ Result<void> CvdClient::StartCvdServer() {
   command.Start(options);
 
   // Connect to the server_fd, which waits for startup.
-  CF_EXPECT(SetServer(SharedFD::SocketLocalClient(cvd::kServerSocketPath,
+  CF_EXPECT(SetServer(SharedFD::SocketLocalClient(server_socket_path_,
                                                   /*is_abstract=*/true,
                                                   SOCK_SEQPACKET)));
   return {};
@@ -369,5 +369,8 @@ Result<cvd_common::Args> CvdClient::ValidSubcmdsList(
   auto valid_subcmds = android::base::Tokenize(valid_subcmd_string, ",");
   return valid_subcmds;
 }
+
+CvdClient::CvdClient(const std::string& server_socket_path)
+    : server_socket_path_(server_socket_path) {}
 
 }  // end of namespace cuttlefish
