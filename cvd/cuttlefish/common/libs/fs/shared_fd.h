@@ -34,6 +34,8 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include <errno.h>
@@ -129,6 +131,7 @@ class SharedFD {
   static SharedFD Dup(int unmanaged_fd);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
+  static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const std::string& pathname, mode_t mode);
   static int Fchdir(SharedFD);
@@ -275,6 +278,7 @@ class FileInstance {
   int UNMANAGED_Dup2(int newfd);
   int Fchdir();
   int Fcntl(int command, int value);
+  int Fsync();
 
   Result<void> Flock(int operation);
 
