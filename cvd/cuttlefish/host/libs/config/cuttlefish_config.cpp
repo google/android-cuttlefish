@@ -88,8 +88,6 @@ const char* const kGpuModeAuto = "auto";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
 const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
-const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
-    "gfxstream_guest_angle_host_swiftshader";
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeNone = "none";
 
@@ -482,6 +480,17 @@ void CuttlefishConfig::set_rootcanal_config_file(
       DefaultHostArtifactsPath(rootcanal_config_file);
 }
 
+static constexpr char kRootcanalDefaultCommandsFile[] =
+    "rootcanal_default_commands_file";
+std::string CuttlefishConfig::rootcanal_default_commands_file() const {
+  return (*dictionary_)[kRootcanalDefaultCommandsFile].asString();
+}
+void CuttlefishConfig::set_rootcanal_default_commands_file(
+    const std::string& rootcanal_default_commands_file) {
+  (*dictionary_)[kRootcanalDefaultCommandsFile] =
+      DefaultHostArtifactsPath(rootcanal_default_commands_file);
+}
+
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();
@@ -676,10 +685,6 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #else
   return DefaultHostArtifactsPath("bin/" + binary_name);
 #endif
-}
-
-std::string HostUsrSharePath(const std::string& binary_name) {
-  return DefaultHostArtifactsPath("usr/share/" + binary_name);
 }
 
 std::string DefaultGuestImagePath(const std::string& file_name) {

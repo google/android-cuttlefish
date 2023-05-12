@@ -36,7 +36,6 @@
 #include "common/libs/utils/users.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/config.h"
-#include "host/commands/cvd/acloud/create_converter_parser.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/instance_lock.h"  // TempDir()
@@ -56,7 +55,24 @@ const std::vector<std::string> _KERNEL_IMAGE_NAMES = {"kernel", "bzImage",
 const std::vector<std::string> _INITRAMFS_IMAGE_NAME = {"initramfs.img"};
 const std::vector<std::string> _BOOT_IMAGE_NAME = {"boot.img"};
 const std::vector<std::string> _VENDOR_BOOT_IMAGE_NAME = {"vendor_boot.img"};
-const std::string _MIXED_SUPER_IMAGE_NAME = "mixed_super.img";
+
+/**
+ * Find a image file through the input path and pattern.
+ *
+ * If it finds the file, return the path string.
+ * If it can't find the file, return empty string.
+ */
+std::string FindImage(const std::string& search_path,
+                      const std::vector<std::string>& pattern) {
+  const std::string& search_path_extend = search_path + "/";
+  for (const auto& name : pattern) {
+    const std::string image = search_path_extend + name;
+    if (FileExists(image)) {
+      return image;
+    }
+  }
+  return "";
+}
 
 /**
  * Split a string into arguments based on shell tokenization rules.
@@ -96,17 +112,37 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
     CF_EXPECT(arguments[0] == "create");
     arguments.erase(arguments.begin());
 
-    /*
-     * TODO(chadreynolds@): Move all the flag parsing eventually to the
-     * converter_parser.{h,cpp}.
-     *
-     * Note that the transfer should be done from the top through the bottom.
-     * ParseFlags() parses each flag in order.
-     */
-    auto parsed_flags =
-        CF_EXPECT(acloud_impl::ParseAcloudCreateFlags(arguments));
+    const auto& request_command = request.Message().command_request();
 
     std::vector<Flag> flags;
+    bool local_instance_set;
+    std::optional<int> local_instance;
+    auto local_instance_flag = Flag();
+    local_instance_flag.Alias(
+        {FlagAliasMode::kFlagConsumesArbitrary, "--local-instance"});
+    local_instance_flag.Setter([&local_instance_set,
+                                &local_instance](const FlagMatch& m) {
+      local_instance_set = true;
+      if (m.value != "" && local_instance) {
+        LOG(ERROR) << "Instance number already set, was \"" << *local_instance
+                   << "\", now set to \"" << m.value << "\"";
+        return false;
+      } else if (m.value != "" && !local_instance) {
+        local_instance = std::stoi(m.value);
+      }
+      return true;
+    });
+    flags.emplace_back(local_instance_flag);
+
+    std::optional<std::string> flavor;
+    flags.emplace_back(
+        Flag()
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--config"})
+            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--flavor"})
+            .Setter([&flavor](const FlagMatch& m) {
+              flavor = m.value;
+              return true;
+            }));
 
     std::optional<std::string> local_kernel_image;
     flags.emplace_back(Flag()
@@ -127,15 +163,6 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
                              image_download_dir = m.value;
                              return true;
                            }));
-
-    std::optional<std::string> local_system_image;
-    flags.emplace_back(
-        Flag()
-            .Alias({FlagAliasMode::kFlagConsumesFollowing, "--local-system-image"})
-            .Setter([&local_system_image](const FlagMatch& m) {
-              local_system_image = m.value;
-              return true;
-            }));
 
     verbose_ = false;
     flags.emplace_back(Flag()
@@ -377,14 +404,13 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
               "Unrecognized arguments:'"
                   << android::base::Join(arguments, "', '") << "'");
 
-    CF_EXPECT(parsed_flags.local_instance_set == true,
+    CF_EXPECT(local_instance_set == true,
               "Only '--local-instance' is supported");
     auto host_dir = TempDir() + "/acloud_image_artifacts/";
     if (image_download_dir) {
       host_dir = image_download_dir.value() + "/acloud_image_artifacts/";
     }
 
-    const auto& request_command = request.Message().command_request();
     auto host_artifacts_path = request_command.env().find(kAndroidHostOut);
     CF_EXPECT(host_artifacts_path != request_command.env().end(),
               "Missing " << kAndroidHostOut);
@@ -513,7 +539,7 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
         fetch_command_str_ += " --kernel_build=";
         auto target = kernel_build_target.value_or("kernel_virt_x86_64");
         auto build = kernel_build_id.value_or(
-            kernel_branch.value_or("aosp_kernel-common-android-mainline"));
+            branch.value_or("aosp_kernel-common-android-mainline"));
         fetch_command.add_args(build + "/" + target);
         fetch_command_str_ += (build + "/" + target);
       }
@@ -535,51 +561,6 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
       }
     }
 
-    std::string super_image_path = "";
-    if (local_system_image) {
-      // in new cvd server design, at this point,
-      // we don't know which HOME is assigned by cvd start.
-      // create a temporary directory to store generated
-      // mix super image
-      TemporaryDir my_dir;
-      std::string required_paths;
-      my_dir.DoNotRemove();
-      super_image_path = std::string(my_dir.path) + "/" + _MIXED_SUPER_IMAGE_NAME;
-
-      //combine super_image path and local_system_image path
-      required_paths = super_image_path;
-      required_paths += ("," + local_system_image.value());
-
-      cvd::Request& mixsuperimage_request = request_protos.emplace_back();
-      auto& mixsuperimage_command = *mixsuperimage_request.mutable_command_request();
-      mixsuperimage_command.add_args("cvd");
-      mixsuperimage_command.add_args("acloud");
-      mixsuperimage_command.add_args("mix-super-image");
-      mixsuperimage_command.add_args("--super_image");
-
-      auto& mixsuperimage_env = *mixsuperimage_command.mutable_env();
-      if (local_image) {
-        if (local_image_path) {
-          // added image_dir to required_paths for MixSuperImage use
-          required_paths += ("," + local_image_path.value());
-        } else {
-          required_paths += ",";
-        }
-
-        mixsuperimage_env[kAndroidHostOut] = host_artifacts_path->second;
-
-        auto product_out = request_command.env().find(kAndroidProductOut);
-        CF_EXPECT(product_out != request_command.env().end(),
-                  "Missing " << kAndroidProductOut);
-        mixsuperimage_env[kAndroidProductOut] = product_out->second;
-      } else {
-        mixsuperimage_env[kAndroidHostOut] = host_dir;
-        mixsuperimage_env[kAndroidProductOut] = host_dir;
-      }
-
-      mixsuperimage_command.add_args(required_paths);
-    }
-
     cvd::Request start_request;
     auto& start_command = *start_request.mutable_command_request();
     start_command.add_args("cvd");
@@ -589,14 +570,9 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
     start_command.add_args("report_anonymous_usage_stats");
     start_command.add_args("--report_anonymous_usage_stats");
     start_command.add_args("y");
-    if (parsed_flags.flavor) {
+    if (flavor) {
       start_command.add_args("-config");
-      start_command.add_args(parsed_flags.flavor.value());
-    }
-
-    if (local_system_image) {
-      start_command.add_args("-super_image");
-      start_command.add_args(super_image_path);
+      start_command.add_args(flavor.value());
     }
 
     if (local_kernel_image) {
@@ -645,17 +621,6 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
           start_command.add_args(local_boot_image);
         }
       }
-    } else if (kernel_branch || kernel_build_id || kernel_build_target) {
-      // fetch remote kernel image files
-      std::string kernel_image = host_dir + "/kernel";
-
-      // even if initramfs doesn't exist, launch_cvd will still handle it
-      // correctly. We push the initramfs handler to launch_cvd stage.
-      std::string initramfs_image = host_dir + "/initramfs.img";
-      start_command.add_args("-kernel_path");
-      start_command.add_args(kernel_image);
-      start_command.add_args("-initramfs_path");
-      start_command.add_args(initramfs_image);
     }
 
     if (launch_args) {
@@ -714,9 +679,9 @@ class ConvertAcloudCreateCommandImpl : public ConvertAcloudCreateCommand {
       // this variable will confuse cvd start, though
       start_env.erase(kCuttlefishInstanceEnvVarName);
     }
-    if (parsed_flags.local_instance) {
+    if (local_instance) {
       start_env[kCuttlefishInstanceEnvVarName] =
-          std::to_string(*parsed_flags.local_instance);
+          std::to_string(*local_instance);
     }
     // we don't know which HOME is assigned by cvd start.
     // cvd server does not rely on the working directory for cvd start
