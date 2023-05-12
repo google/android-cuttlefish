@@ -177,16 +177,16 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     if (!FileExists(acloud_compat_home)) {
       continue;
     }
-    if (!DirectoryExists(acloud_compat_home, /*follow_symlinks=*/false)) {
-      // cvd created a symbolic link
-      result_deleted = RemoveFile(acloud_compat_home);
-    } else {
-      // acloud created a directory
-      // rm -fr isn't supporetd by TreeHugger, so if we fork-and-exec to
-      // literally run "rm -fr", the presubmit testing may fail if ever this
-      // code is tested in the future.
-      if (!Contains(group_creation_info.envs, kLaunchedByAcloud) ||
+    if (!Contains(group_creation_info.envs, kLaunchedByAcloud) ||
         group_creation_info.envs.at(kLaunchedByAcloud) != "true") {
+      if (!DirectoryExists(acloud_compat_home, /*follow_symlinks=*/false)) {
+        // cvd created a symbolic link
+        result_deleted = RemoveFile(acloud_compat_home);
+      } else {
+        // acloud created a directory
+        // rm -fr isn't supporetd by TreeHugger, so if we fork-and-exec to
+        // literally run "rm -fr", the presubmit testing may fail if ever this
+        // code is tested in the future.
         result_deleted = RecursivelyRemoveDirectory(acloud_compat_home);
       }
     }
