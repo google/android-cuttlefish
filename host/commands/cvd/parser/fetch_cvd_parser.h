@@ -24,6 +24,7 @@ struct FetchCvdDeviceConfigs {
   std::string default_build;
   std::string system_build;
   std::string kernel_build;
+  std::string host_artifacts_dir;
 };
 
 struct FetchCvdConfigs {
