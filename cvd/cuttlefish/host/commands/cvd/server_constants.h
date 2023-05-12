@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <string>
-
 namespace cuttlefish {
 namespace cvd {
 
@@ -26,9 +22,8 @@ namespace cvd {
 constexpr int kVersionMajor = 1;
 constexpr int kVersionMinor = 2;
 
-}  // namespace cvd
-
 // Pathname of the abstract cvd_server socket.
-std::string ServerSocketPath();
+constexpr char kServerSocketPath[] = "cvd_server";
 
+}  // namespace cvd
 }  // namespace cuttlefish

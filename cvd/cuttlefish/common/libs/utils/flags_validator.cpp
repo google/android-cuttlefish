@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-
 #include "common/libs/utils/flags_validator.h"
 
 namespace cuttlefish {
