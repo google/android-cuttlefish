@@ -46,7 +46,8 @@ class AcloudCommand : public CvdServerHandler {
     auto invocation = ParseInvocation(request.Message());
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
-          invocation.arguments[0] == "translator") {
+          (invocation.arguments[0] == "translator" ||
+           invocation.arguments[0] == "mix-super-image")) {
         return false;
       }
     }
