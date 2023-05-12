@@ -27,7 +27,6 @@
 #include <cerrno>
 #include <cstring>
 #include <map>
-#include <memory>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -89,6 +88,33 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   return ret;
 }
 }  // namespace
+
+std::vector<std::string> ArgsToVec(char** argv) {
+  std::vector<std::string> args;
+  for (int i = 0; argv && argv[i]; i++) {
+    args.push_back(argv[i]);
+  }
+  return args;
+}
+
+std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
+  std::unordered_map<std::string, std::string> env_map;
+  if (!envp) {
+    return env_map;
+  }
+  for (char** e = envp; *e != nullptr; e++) {
+    std::string env_var_val(*e);
+    auto tokens = android::base::Split(env_var_val, "=");
+    if (tokens.size() <= 1) {
+      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
+      continue;
+    }
+    const auto var = tokens.at(0);
+    tokens.erase(tokens.begin());
+    env_map[var] = android::base::Join(tokens, "=");
+  }
+  return env_map;
+}
 
 SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
   verbose_ = verbose;
@@ -175,8 +201,7 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
   *infop = {};
   auto retval = waitid(P_PID, pid_, infop, options);
   // We don't want to wait twice for the same process
-  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED ||
-                infop->si_code == CLD_DUMPED;
+  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
   if (exited && reaped) {
     pid_ = -1;
@@ -460,29 +485,79 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
   return code;
 }
 
-int execute(const std::vector<std::string>& command,
-            const std::vector<std::string>& env) {
+namespace {
+
+struct ExtraParam {
+  // option for Subprocess::Start()
+  SubprocessOptions subprocess_options;
+  // options for Subprocess::Wait(...)
+  int wait_options;
+  siginfo_t* infop;
+};
+Result<int> ExecuteImpl(const std::vector<std::string>& command,
+                        const std::optional<std::vector<std::string>>& envs,
+                        const std::optional<ExtraParam>& extra_param) {
   Command cmd(command[0]);
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(command[i]);
   }
-  cmd.SetEnvironment(env);
-  auto subprocess = cmd.Start();
-  if (!subprocess.Started()) {
-    return -1;
+  if (envs) {
+    cmd.SetEnvironment(*envs);
   }
-  return subprocess.Wait();
+  auto subprocess =
+      (!extra_param ? cmd.Start() : cmd.Start(extra_param->subprocess_options));
+  CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
+
+  if (extra_param) {
+    CF_EXPECT(extra_param->infop != nullptr,
+              "When ExtraParam is given, the infop buffer address "
+                  << "must not be nullptr.");
+    return subprocess.Wait(extra_param->infop, extra_param->wait_options);
+  } else {
+    return subprocess.Wait();
+  }
 }
-int execute(const std::vector<std::string>& command) {
-  Command cmd(command[0]);
-  for (size_t i = 1; i < command.size(); ++i) {
-    cmd.AddParameter(command[i]);
-  }
-  auto subprocess = cmd.Start();
-  if (!subprocess.Started()) {
-    return -1;
-  }
-  return subprocess.Wait();
+
+}  // namespace
+
+int Execute(const std::vector<std::string>& commands,
+            const std::vector<std::string>& envs) {
+  auto result = ExecuteImpl(commands, envs, /* extra_param */ std::nullopt);
+  return (!result.ok() ? -1 : *result);
+}
+
+int Execute(const std::vector<std::string>& commands) {
+  std::vector<std::string> envs;
+  auto result = ExecuteImpl(commands, /* envs */ std::nullopt,
+                            /* extra_param */ std::nullopt);
+  return (!result.ok() ? -1 : *result);
+}
+
+Result<siginfo_t> Execute(const std::vector<std::string>& commands,
+                          SubprocessOptions subprocess_options,
+                          int wait_options) {
+  siginfo_t info;
+  auto ret_code =
+      CF_EXPECT(ExecuteImpl(commands, /* envs */ std::nullopt,
+                            ExtraParam{.subprocess_options = subprocess_options,
+                                       .infop = &info,
+                                       .wait_options = wait_options}));
+  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
+  return info;
+}
+
+Result<siginfo_t> Execute(const std::vector<std::string>& commands,
+                          const std::vector<std::string>& envs,
+                          SubprocessOptions subprocess_options,
+                          int wait_options) {
+  siginfo_t info;
+  auto ret_code =
+      CF_EXPECT(ExecuteImpl(commands, envs,
+                            ExtraParam{.subprocess_options = subprocess_options,
+                                       .infop = &info,
+                                       .wait_options = wait_options}));
+  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
+  return info;
 }
 
 }  // namespace cuttlefish

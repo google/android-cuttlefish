@@ -20,12 +20,15 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <iostream>
+#include <string>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -325,6 +328,7 @@ std::ostream& operator<<(std::ostream& out, const Flag& flag) {
 
 std::vector<std::string> ArgsToVec(int argc, char** argv) {
   std::vector<std::string> args;
+  args.reserve(argc);
   for (int i = 0; i < argc; i++) {
     args.push_back(argv[i]);
   }
