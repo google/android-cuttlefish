@@ -53,6 +53,7 @@
 #include <android-base/logging.h>
 #include <android-base/macros.h>
 
+#include "android-base/strings.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/scope_guard.h"
@@ -102,8 +103,7 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   }
   LOG(DEBUG) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
-    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
-                                                     << strerror(errno));
+    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\"");
   }
   return {};
 }
@@ -409,24 +409,6 @@ int GetDiskUsage(const std::string& path) {
   CHECK_GT(bytes_read, 0) << "Failed to read from pipe " << strerror(errno);
   std::move(subprocess).Wait();
   return atoi(text_output.data()) * 1024;
-}
-
-/**
- * Find an image file through the input path and pattern.
- *
- * If it finds the file, return the path string.
- * If it can't find the file, return empty string.
- */
-std::string FindImage(const std::string& search_path,
-                      const std::vector<std::string>& pattern) {
-  const std::string& search_path_extend = search_path + "/";
-  for (const auto& name : pattern) {
-    std::string image = search_path_extend + name;
-    if (FileExists(image)) {
-      return image;
-    }
-  }
-  return "";
 }
 
 std::string FindFile(const std::string& path, const std::string& target_name) {
