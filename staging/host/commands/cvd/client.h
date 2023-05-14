@@ -65,6 +65,7 @@ class CvdClient {
   }
   Result<std::string> HandleVersion();
   Result<cvd_common::Args> ValidSubcmdsList(const cvd_common::Envs& envs);
+  Result<void> SetServerHandlerLogSeverity(const std::string& verbosity);
 
  private:
   std::optional<UnixMessageSocket> server_;
@@ -82,6 +83,7 @@ class CvdClient {
   static cvd::Version GetClientVersion();
 
   std::string server_socket_path_;
+  std::string verbosity_;
 };
 
 }  // end of namespace cuttlefish
