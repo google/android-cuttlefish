@@ -80,8 +80,8 @@ Result<void> RunServer(const RunServerParam& params) {
 
   std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
   if (params.carryover_stderr_fd->IsOpen()) {
-    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
-        std::move(server_logger->LogThreadToFd(params.carryover_stderr_fd)));
+    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(std::move(
+        CF_EXPECT(server_logger->LogThreadToFd(params.carryover_stderr_fd))));
   }
   if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
@@ -150,6 +150,9 @@ Result<FlagCollection> CvdFlags() {
   FlagCollection cvd_flags;
   cvd_flags.EnrollFlag(CvdFlag<bool>("clean", false));
   cvd_flags.EnrollFlag(CvdFlag<bool>("help", false));
+  auto default_verbosity =
+      CF_EXPECT(VerbosityToString(android::base::GetMinimumLogSeverity()));
+  cvd_flags.EnrollFlag(CvdFlag<std::string>("verbosity", default_verbosity));
   return cvd_flags;
 }
 
@@ -158,6 +161,14 @@ Result<bool> FilterDriverHelpOptions(const FlagCollection& cvd_flags,
   auto help_flag = CF_EXPECT(cvd_flags.GetFlag("help"));
   bool is_help = CF_EXPECT(help_flag.CalculateFlag<bool>(cvd_args));
   return is_help;
+}
+
+Result<std::string> FilterDriverVerbosityOptions(
+    const FlagCollection& cvd_flags, cvd_common::Args& cvd_args) {
+  auto verbosity_flag = CF_EXPECT(cvd_flags.GetFlag("verbosity"));
+  const std::string verbosity =
+      CF_EXPECT(verbosity_flag.CalculateFlag<std::string>(cvd_args));
+  return verbosity;
 }
 
 cvd_common::Args AllArgs(const std::string& prog_path,
@@ -243,6 +254,37 @@ Result<void> KillOldServer() {
   return {};
 }
 
+struct VerbosityOutput {
+  std::string verbosity;
+  cvd_common::Args new_all_args;
+};
+Result<VerbosityOutput> MinimumVerbosity(const cvd_common::Args& all_args,
+                                         const cvd_common::Envs&) {
+  std::vector<std::string> client_internal_commands{"*"};
+  FlagCollection cvd_flags = CF_EXPECT(CvdFlags());
+  FrontlineParser::ParserParam client_param{
+      .server_supported_subcmds = std::vector<std::string>{},
+      .internal_cmds = client_internal_commands,
+      .all_args = all_args,
+      .cvd_flags = cvd_flags};
+  auto verbosity_parser = CF_EXPECT(FrontlineParser::Parse(client_param));
+  CF_EXPECT(verbosity_parser != nullptr);
+  auto cvd_args = verbosity_parser->CvdArgs();
+  auto verbosity = CF_EXPECT(FilterDriverVerbosityOptions(cvd_flags, cvd_args));
+  auto new_args =
+      AllArgs(verbosity_parser->ProgPath(), cvd_args,
+              verbosity_parser->SubCmd(), verbosity_parser->SubCmdArgs());
+  return VerbosityOutput{
+      .verbosity = verbosity,
+      .new_all_args = std::move(new_args),
+  };
+}
+
+Result<void> SetClientProcessVerbosity(const std::string& verbosity) {
+  android::base::SetMinimumLogSeverity(CF_EXPECT(EncodeVerbosity(verbosity)));
+  return {};
+}
+
 Result<void> CvdMain(int argc, char** argv, char** envp) {
   android::base::InitLogging(argv, android::base::StderrLogger);
   CF_EXPECT(KillOldServer());
@@ -251,17 +293,6 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(!all_args.empty());
 
   auto env = EnvpToMap(envp);
-
-  if (android::base::Basename(all_args[0]) == "fetch_cvd") {
-    CF_EXPECT(FetchCvdMain(argc, argv));
-    return {};
-  }
-
-  CvdClient client;
-  // TODO(b/206893146): Make this decision inside the server.
-  if (android::base::Basename(all_args[0]) == "acloud") {
-    return client.HandleAcloud(all_args, env);
-  }
 
   if (IsServerModeExpected(all_args[0])) {
     auto parsed = CF_EXPECT(ParseIfServer(all_args));
@@ -273,6 +304,21 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
          .carryover_stderr_fd = parsed.carryover_stderr_fd,
          .acloud_translator_optout = parsed.acloud_translator_optout});
   }
+
+  if (android::base::Basename(all_args[0]) == "fetch_cvd") {
+    CF_EXPECT(FetchCvdMain(argc, argv));
+    return {};
+  }
+
+  CvdClient client;
+  // TODO(b/206893146): Make this decision inside the server.
+  if (android::base::Basename(all_args[0]) == "acloud") {
+    return client.HandleAcloud(all_args, env);
+  }
+  auto [verbosity_level, new_args] = CF_EXPECT(MinimumVerbosity(all_args, env));
+  all_args = std::move(new_args);
+  CF_EXPECT(SetClientProcessVerbosity(verbosity_level));
+  CF_EXPECT(client.SetServerHandlerLogSeverity(verbosity_level));
 
   CF_EXPECT_EQ(android::base::Basename(all_args[0]), "cvd");
 
