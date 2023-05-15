@@ -187,11 +187,11 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
       GflagsCompatFlag("download_target_files_zip",
                        download_flags.download_target_files_zip)
           .Help("Whether to fetch the -target_files-*.zip file."));
-
-  flags.emplace_back(UnexpectedArgumentGuard());
   flags.emplace_back(HelpFlag(flags, USAGE_MESSAGE));
   flags.emplace_back(
       HelpXmlFlag(flags, std::cout, fetch_flags.helpxml, USAGE_MESSAGE));
+
+  flags.emplace_back(UnexpectedArgumentGuard());
   return flags;
 }
 
