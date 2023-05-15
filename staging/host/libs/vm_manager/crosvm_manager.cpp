@@ -206,12 +206,16 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   } else if (gpu_mode == kGpuModeDrmVirgl) {
     crosvm_cmd.Cmd().AddParameter("--gpu=backend=virglrenderer",
                                   gpu_common_3d_string);
-  } else if (gpu_mode == kGpuModeGfxstream ||
-             gpu_mode == kGpuModeGfxstreamGuestAngle ||
+  } else if (gpu_mode == kGpuModeGfxstream) {
+    crosvm_cmd.Cmd().AddParameter(
+        "--gpu=context-types=gfxstream-gles:gfxstream-vulkan:gfxstream-"
+        "composer",
+        gpu_common_3d_string);
+  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
              gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
-    const std::string capset_names = ",context-types=gfxstream";
-    crosvm_cmd.Cmd().AddParameter("--gpu=backend=gfxstream,vulkan=true",
-                                  gpu_common_3d_string, capset_names);
+    crosvm_cmd.Cmd().AddParameter(
+        "--gpu=context-types=gfxstream-vulkan:gfxstream-composer",
+        gpu_common_3d_string);
 
     if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
       // See https://github.com/KhronosGroup/Vulkan-Loader.
