@@ -134,8 +134,8 @@ QemuManager::ConfigureGraphics(
   // HALs.
 
   std::unordered_map<std::string, std::string> bootconfig_args;
-
-  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
+  auto gpu_mode = instance.gpu_mode();
+  if (gpu_mode == kGpuModeGuestSwiftshader) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_2)},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -145,7 +145,7 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.1
         {"androidboot.opengles.version", "196609"},
     };
-  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+  } else if (gpu_mode == kGpuModeDrmVirgl) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -156,9 +156,12 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.0
         {"androidboot.opengles.version", "196608"},
     };
-  } else if (instance.gpu_mode() == kGpuModeGfxstream ||
-             instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
-    const bool uses_angle = instance.gpu_mode() == kGpuModeGfxstreamGuestAngle;
+  } else if (gpu_mode == kGpuModeGfxstream ||
+             gpu_mode == kGpuModeGfxstreamGuestAngle ||
+             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+    const bool uses_angle =
+        gpu_mode == kGpuModeGfxstreamGuestAngle ||
+        gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader;
     const std::string gles_impl = uses_angle ? "angle" : "emulation";
     const std::string gltransport =
         (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
@@ -408,14 +411,16 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
-  if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+  auto gpu_mode = instance.gpu_mode();
+  if (gpu_mode == kGpuModeDrmVirgl) {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("egl-headless");
 
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
-  } else if (instance.gpu_mode() == kGpuModeGfxstream ||
-             instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+  } else if (gpu_mode == kGpuModeGfxstream ||
+             gpu_mode == kGpuModeGfxstreamGuestAngle ||
+             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -431,14 +436,29 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-device");
 
     std::string gpu_device;
-    if (instance.gpu_mode() == kGpuModeGuestSwiftshader ||
-        qemu_version.first < 6) {
-        gpu_device = "virtio-gpu-pci";
-    } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-        gpu_device = "virtio-gpu-gl-pci";
-    } else if (instance.gpu_mode() == kGpuModeGfxstream ||
-               instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
-        gpu_device = "virtio-gpu-gl-pci,capset_names=gfxstream,hostmem=256M";
+    if (gpu_mode == kGpuModeGuestSwiftshader || qemu_version.first < 6) {
+      gpu_device = "virtio-gpu-pci";
+    } else if (gpu_mode == kGpuModeDrmVirgl) {
+      gpu_device = "virtio-gpu-gl-pci";
+    } else if (gpu_mode == kGpuModeGfxstream) {
+      gpu_device =
+          "virtio-gpu-rutabaga-pci,capset_names=gfxstream-gles:gfxstream-"
+          "vulkan:gfxstream-composer,hostmem=256M";
+    } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
+               gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+      gpu_device =
+          "virtio-gpu-rutabaga-pci,capset_names=gfxstream-vulkan:gfxstream-"
+          "composer,hostmem=256M";
+
+      if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+        // See https://github.com/KhronosGroup/Vulkan-Loader.
+        const std::string swiftshader_icd_json =
+            HostUsrSharePath("vulkan/icd.d/vk_swiftshader_icd.json");
+        qemu_cmd.AddEnvironmentVariable("VK_DRIVER_FILES",
+                                        swiftshader_icd_json);
+        qemu_cmd.AddEnvironmentVariable("VK_ICD_FILENAMES",
+                                        swiftshader_icd_json);
+      }
     }
 
     qemu_cmd.AddParameter(gpu_device, ",id=gpu0",
