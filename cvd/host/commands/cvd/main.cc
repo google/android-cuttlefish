@@ -170,7 +170,7 @@ Result<VersionCommandReport> HandleVersionCommand(
  * thus we should kill the server process first.
  */
 Result<void> KillOldServer() {
-  CvdClient client_to_old_server("cvd_server");
+  CvdClient client_to_old_server(android::base::INFO, "cvd_server");
   auto result = client_to_old_server.StopCvdServer(/*clear=*/true);
   if (!result.ok()) {
     LOG(ERROR) << "Old server listening on \"cvd_server\" socket "
@@ -195,7 +195,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return {};
   }
 
-  CvdClient client;
+  CvdClient client(android::base::INFO);
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
     return client.HandleAcloud(all_args, env);
