@@ -131,8 +131,9 @@ DEFINE_vec(use_random_serial, cuttlefish::BoolToString(CF_DEFAULTS_USE_RANDOM_SE
 DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
-              "What gpu configuration to use, one of {auto, drm_virgl, "
-              "gfxstream, guest_swiftshader}");
+           "What gpu configuration to use, one of {auto, drm_virgl, "
+           "gfxstream, gfxstream_guest_angle, "
+           "gfxstream_guest_angle_host_swiftshader, guest_swiftshader}");
 DEFINE_vec(hwcomposer, CF_DEFAULTS_HWCOMPOSER,
               "What hardware composer to use, one of {auto, drm, ranchu} ");
 DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
