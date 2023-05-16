@@ -409,8 +409,11 @@ DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "prerequisite for powerwash_cvd or multiple instances.");
 
 DEFINE_vec(modem_simulator_count,
-              std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_COUNT),
-              "Modem simulator count corresponding to maximum sim number");
+           std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_COUNT),
+           "Modem simulator count corresponding to maximum sim number");
+
+DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
+            "Track changes to host executables");
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -884,7 +887,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   tmp_config_obj.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
 
-  tmp_config_obj.set_host_tools_version(HostToolsCrc());
+  if (FLAGS_track_host_tools_crc) {
+    tmp_config_obj.set_host_tools_version(HostToolsCrc());
+  }
 
   tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
 
