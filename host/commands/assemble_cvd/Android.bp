@@ -27,6 +27,7 @@ cc_binary {
         "clean.cc",
         "disk/gem5_image_unpacker.cpp",
         "disk/generate_persistent_bootconfig.cpp",
+        "disk/generate_persistent_vbmeta.cpp",
         "disk/kernel_ramdisk_repacker.cpp",
         "disk_builder.cpp",
         "disk_flags.cc",
