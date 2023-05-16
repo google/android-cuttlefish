@@ -150,8 +150,13 @@ Result<VersionCommandReport> HandleVersionCommand(
   auto version_parser = std::move(*version_parser_result);
   CF_EXPECT(version_parser != nullptr);
   const auto subcmd = version_parser->SubCmd().value_or("");
+  auto cvd_args = version_parser->CvdArgs();
   CF_EXPECT(subcmd == "version" || subcmd.empty(),
             "subcmd is expected to be \"version\" or empty but is " << subcmd);
+  const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
+  android::base::SetMinimumLogSeverity(verbosity);
+  client.SetServerLogSeverity(verbosity);
+
   if (subcmd == "version") {
     auto version_msg = CF_EXPECT(client.HandleVersion());
     std::cout << version_msg;
