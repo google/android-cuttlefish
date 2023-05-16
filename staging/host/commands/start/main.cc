@@ -325,10 +325,6 @@ bool OverrideBoolArg(std::vector<std::string>& args) {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  if (FLAGS_share_sched_core) {
-    ShareSchedCore();
-  }
-
   FlagForwarder forwarder({kAssemblerBin, kRunnerBin});
 
   // Used to find bool flag and convert "flag"/"noflag" to "--flag=value"
@@ -341,6 +337,10 @@ int main(int argc, char** argv) {
   }
 
   gflags::ParseCommandLineNonHelpFlags(&argc, &argv, false);
+
+  if (FLAGS_share_sched_core) {
+    ShareSchedCore();
+  }
 
   forwarder.UpdateFlagDefaults();
 
