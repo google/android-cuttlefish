@@ -18,6 +18,7 @@
 
 #include <fruit/fruit.h>
 
+#include "host/commands/assemble_cvd/boot_config.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 
@@ -39,5 +40,13 @@ GeneratePersistentBootconfigComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig, KernelRamdiskRepacker>>
 Gem5ImageUnpackerComponent();
+
+class GeneratePersistentVbmeta : public SetupFeature {};
+
+fruit::Component<
+    fruit::Required<const CuttlefishConfig::InstanceSpecific,
+                    InitBootloaderEnvPartition, GeneratePersistentBootconfig>,
+    GeneratePersistentVbmeta>
+GeneratePersistentVbmetaComponent();
 
 }  // namespace cuttlefish
