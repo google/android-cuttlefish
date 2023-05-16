@@ -356,6 +356,9 @@ ifneq ($(BOARD_AVB_VBMETA_VENDOR_DLKM),)
 AB_OTA_PARTITIONS += vbmeta_vendor_dlkm
 endif
 endif
+ifneq ($(BOARD_AVB_VBMETA_SYSTEM_DLKM),)
+AB_OTA_PARTITIONS += vbmeta_system_dlkm
+endif
 
 ifneq ($(PRODUCT_BUILD_BOOT_IMAGE), false)
 AB_OTA_PARTITIONS += boot
