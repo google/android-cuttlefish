@@ -209,6 +209,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
          .carryover_client_fd = parsed.carryover_client_fd,
          .memory_carryover_fd = parsed.memory_carryover_fd,
          .carryover_stderr_fd = parsed.carryover_stderr_fd,
+         .verbosity_level = parsed.verbosity_level,
          .acloud_translator_optout = parsed.acloud_translator_optout});
   }
 

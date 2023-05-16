@@ -42,6 +42,7 @@ struct RunServerParam {
    *
    */
   SharedFD carryover_stderr_fd;
+  std::string verbosity_level;
   std::optional<bool> acloud_translator_optout;
 };
 Result<void> RunServer(const RunServerParam& params);
@@ -52,6 +53,7 @@ struct ParseResult {
   std::optional<SharedFD> memory_carryover_fd;
   SharedFD carryover_stderr_fd;
   std::optional<bool> acloud_translator_optout;
+  std::string verbosity_level;
 };
 Result<ParseResult> ParseIfServer(cvd_common::Args& all_args);
 

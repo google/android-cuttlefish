@@ -42,8 +42,17 @@ Result<void> RunServer(const RunServerParam& params) {
 
   std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
   if (params.carryover_stderr_fd->IsOpen()) {
-    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(std::move(
-        CF_EXPECT(server_logger->LogThreadToFd(params.carryover_stderr_fd))));
+    const auto& verbosity_level = params.verbosity_level;
+    if (!EncodeVerbosity(verbosity_level).ok()) {
+      LOG(ERROR) << "Failed to set verbosity level \"" << verbosity_level
+                 << "\"";
+      scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(std::move(
+          CF_EXPECT(server_logger->LogThreadToFd(params.carryover_stderr_fd))));
+    } else {
+      scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
+          std::move(CF_EXPECT(server_logger->LogThreadToFd(
+              params.carryover_stderr_fd, verbosity_level))));
+    }
   }
   if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
@@ -71,6 +80,10 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   SharedFD memory_carryover_fd;
   flags.emplace_back(
       SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
+  // the server's default verbosity must be VERBOSE, the least LogSeverity
+  // the LogSeverity control will be done later on by the server by masking
+  std::string verbosity = "VERBOSE";
+  flags.emplace_back(GflagsCompatFlag("verbosity", verbosity));
   CF_EXPECT(ParseFlags(flags, all_args));
 
   // now the three flags above are all consumed from all_args
@@ -96,6 +109,7 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
       .memory_carryover_fd = memory_carryover_fd_opt,
       .carryover_stderr_fd = carryover_stderr_fd,
       .acloud_translator_optout = acloud_translator_optout_opt,
+      .verbosity_level = verbosity,
   };
   return {result};
 }
