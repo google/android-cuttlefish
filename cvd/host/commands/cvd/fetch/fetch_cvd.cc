@@ -116,7 +116,7 @@ struct Builds {
   std::optional<Build> boot;
   std::optional<Build> bootloader;
   std::optional<Build> otatools;
-  std::optional<Build> host_package;
+  Build host_package;
 };
 
 struct TargetDirectories {
@@ -327,6 +327,8 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
   std::optional<Build> default_build = CF_EXPECT(GetBuildHelper(
       build_api, build_sources.default_build, DEFAULT_BUILD_TARGET));
   CF_EXPECT(default_build.has_value());
+  std::optional<Build> host_package = CF_EXPECT(GetBuildHelper(
+      build_api, build_sources.host_package_build, DEFAULT_BUILD_TARGET));
   Builds result = Builds{
       .default_build = default_build.value(),
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
@@ -339,8 +341,7 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, DEFAULT_BUILD_TARGET)),
-      .host_package = CF_EXPECT(GetBuildHelper(
-          build_api, build_sources.host_package_build, DEFAULT_BUILD_TARGET)),
+      .host_package = host_package.value_or(result.default_build),
   };
   if (!result.otatools.has_value()) {
     if (result.system.has_value()) {
@@ -348,9 +349,6 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
     } else if (result.kernel.has_value()) {
       result.otatools = result.default_build;
     }
-  }
-  if (!result.host_package.has_value()) {
-    result.host_package = result.default_build;
   }
   return {result};
 }
@@ -396,8 +394,8 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
                    const bool is_host_package_build, FetcherConfig& config) {
   auto process_pkg_ret = std::async(
       std::launch::async, ProcessHostPackage, std::ref(build_api),
-      std::cref(builds.host_package.value()),
-      std::cref(target_directories.root), std::cref(keep_downloaded_archives));
+      std::cref(builds.host_package), std::cref(target_directories.root),
+      std::cref(keep_downloaded_archives));
 
   const auto [default_build_id, default_build_target] =
       GetBuildIdAndTarget(builds.default_build);
@@ -597,7 +595,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
   std::string host_target = default_build_target;
   if (is_host_package_build) {
     host_filesource = FileSource::HOST_PACKAGE_BUILD;
-    const auto [id, target] = GetBuildIdAndTarget(builds.host_package.value());
+    const auto [id, target] = GetBuildIdAndTarget(builds.host_package);
     host_id = id;
     host_target = target;
   }
