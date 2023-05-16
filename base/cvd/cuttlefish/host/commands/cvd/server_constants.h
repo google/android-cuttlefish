@@ -24,7 +24,7 @@ namespace cvd {
 // Major version uprevs are backwards incompatible.
 // Minor version uprevs are backwards compatible within major version.
 constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 3;
+constexpr int kVersionMinor = 2;
 
 }  // namespace cvd
 

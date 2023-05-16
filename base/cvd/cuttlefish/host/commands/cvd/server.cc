@@ -333,12 +333,8 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
     epoll_pool_.Remove(event.fd);
     return {};
   }
-  std::string verbosity = request->Message().verbosity();
-  auto logger =
-      verbosity.empty()
-          ? CF_EXPECT(server_logger_.LogThreadToFd(request->Err()))
-          : CF_EXPECT(server_logger_.LogThreadToFd(request->Err(), verbosity));
 
+  auto logger = server_logger_.LogThreadToFd(request->Err());
   auto response = HandleRequest(*request, event.fd);
   if (!response.ok()) {
     cvd::Response failure_message;
@@ -455,12 +451,9 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
     ongoing_requests_.erase(shared);
   });
 
-  std::string verbosity = request.Message().verbosity();
-  auto interrupt_cb = [this, shared, verbosity,
+  auto interrupt_cb = [this, shared,
                        err = request.Err()](EpollEvent) -> Result<void> {
-    auto logger = verbosity.empty()
-                      ? server_logger_.LogThreadToFd(err)
-                      : server_logger_.LogThreadToFd(err, verbosity);
+    auto logger = server_logger_.LogThreadToFd(err);
     std::lock_guard lock(shared->mutex);
     CF_EXPECT(shared->handler != nullptr);
     CF_EXPECT(shared->handler->Interrupt());
@@ -496,7 +489,6 @@ static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
 }
 
 Result<int> CvdServerMain(ServerMainParam&& param) {
-  android::base::SetMinimumLogSeverity(android::base::VERBOSE);
   LOG(INFO) << "Starting server";
 
   CF_EXPECT(daemon(0, 0) != -1, strerror(errno));
