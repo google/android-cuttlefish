@@ -25,6 +25,7 @@
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
@@ -41,6 +42,7 @@ Result<FlagCollection> CvdFlags() {
   FlagCollection cvd_flags;
   cvd_flags.EnrollFlag(CvdFlag<bool>("clean", false));
   cvd_flags.EnrollFlag(CvdFlag<bool>("help", false));
+  cvd_flags.EnrollFlag(CvdFlag<std::string>("verbosity"));
   return cvd_flags;
 }
 
@@ -49,6 +51,17 @@ Result<bool> FilterDriverHelpOptions(const FlagCollection& cvd_flags,
   auto help_flag = CF_EXPECT(cvd_flags.GetFlag("help"));
   bool is_help = CF_EXPECT(help_flag.CalculateFlag<bool>(cvd_args));
   return is_help;
+}
+
+Result<android::base::LogSeverity> FilterVerbosityOption(
+    const FlagCollection& cvd_flags, cvd_common::Args& cvd_args) {
+  auto verbosity_flag = CF_EXPECT(cvd_flags.GetFlag("verbosity"));
+  std::optional<std::string> min_verbosity =
+      CF_EXPECT(verbosity_flag.FilterFlag<std::string>(cvd_args));
+  if (!min_verbosity) {
+    return android::base::GetMinimumLogSeverity();
+  }
+  return CF_EXPECT(EncodeVerbosity(*min_verbosity));
 }
 
 cvd_common::Args AllArgs(const std::string& prog_path,
@@ -90,6 +103,9 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   CF_EXPECT(client_parser != nullptr);
   auto cvd_args = client_parser->CvdArgs();
   auto is_help = CF_EXPECT(FilterDriverHelpOptions(cvd_flags, cvd_args));
+  const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
+  android::base::SetMinimumLogSeverity(verbosity);
+
   output.new_all_args =
       AllArgs(client_parser->ProgPath(), cvd_args, client_parser->SubCmd(),
               client_parser->SubCmdArgs());
