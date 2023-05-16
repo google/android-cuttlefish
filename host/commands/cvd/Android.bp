@@ -105,6 +105,7 @@ cc_library_host_static {
         "lock_file.cpp",
         "logger.cpp",
         "reset_client_utils.cpp",
+        "run_server.cpp",
         "server.cc",
         "server_client.cpp",
         "server_constants.cpp",
