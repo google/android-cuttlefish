@@ -37,4 +37,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                  GeneratePersistentBootconfig>
 GeneratePersistentBootconfigComponent();
 
+fruit::Component<fruit::Required<const CuttlefishConfig, KernelRamdiskRepacker>>
+Gem5ImageUnpackerComponent();
+
 }  // namespace cuttlefish
