@@ -20,6 +20,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -89,6 +91,9 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
 		deviceInfo(w, r, pool)
 	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
+		openwrt(w, r, pool)
+	}).Methods("GET", "POST")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
 	}).Methods("POST")
@@ -168,6 +173,38 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 		}
 	}
 }
+
+func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	openwrtDevId, ok := dev.info.(map[string]interface{})["openwrt_device_id"]
+	if !ok {
+		http.Error(w, "Device obtaining Openwrt not found", http.StatusNotFound)
+		return
+	}
+
+	path := vars["path"]
+	if devId == openwrtDevId {
+		openwrtAddr, ok := dev.info.(map[string]interface{})["openwrt_addr"]
+		if !ok {
+			http.Error(w, "Openwrt address not found", http.StatusNotFound)
+			return
+		}
+		url, _ := url.Parse("http://" + openwrtAddr.(string))
+		proxy := httputil.NewSingleHostReverseProxy(url)
+		r.URL.Path = "/devices/" + devId + "/openwrt" + path
+		proxy.ServeHTTP(w, r)
+	} else {
+		http.Redirect(w, r, "/devices/" + openwrtDevId.(string) + "/openwrt" + path, http.StatusFound)
+	}
+}
+
 
 // General client endpoints
 
