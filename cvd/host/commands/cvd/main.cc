@@ -129,6 +129,37 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   return output;
 }
 
+enum class VersionCommandReport : std::uint32_t {
+  kNonVersion,
+  kVersion,
+};
+Result<VersionCommandReport> HandleVersionCommand(
+    CvdClient& client, const cvd_common::Args& all_args) {
+  std::vector<std::string> version_command{"version"};
+  FlagCollection cvd_flags = CF_EXPECT(CvdFlags());
+  FrontlineParser::ParserParam version_param{
+      .server_supported_subcmds = std::vector<std::string>{},
+      .internal_cmds = version_command,
+      .all_args = all_args,
+      .cvd_flags = cvd_flags};
+  auto version_parser_result = FrontlineParser::Parse(version_param);
+  if (!version_parser_result.ok()) {
+    return VersionCommandReport::kNonVersion;
+  }
+
+  auto version_parser = std::move(*version_parser_result);
+  CF_EXPECT(version_parser != nullptr);
+  const auto subcmd = version_parser->SubCmd().value_or("");
+  CF_EXPECT(subcmd == "version" || subcmd.empty(),
+            "subcmd is expected to be \"version\" or empty but is " << subcmd);
+  if (subcmd == "version") {
+    auto version_msg = CF_EXPECT(client.HandleVersion());
+    std::cout << version_msg;
+    return VersionCommandReport::kVersion;
+  }
+  return VersionCommandReport::kNonVersion;
+}
+
 /**
  * Terminates a cvd server listening on "cvd_server"
  *
@@ -200,25 +231,10 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(client.ValidateServerVersion(),
             "Unable to ensure cvd_server is running.");
 
-  std::vector<std::string> version_command{"version"};
-  FlagCollection cvd_flags = CF_EXPECT(CvdFlags());
-  FrontlineParser::ParserParam version_param{
-      .server_supported_subcmds = std::vector<std::string>{},
-      .internal_cmds = version_command,
-      .all_args = new_all_args,
-      .cvd_flags = cvd_flags};
-  auto version_parser_result = FrontlineParser::Parse(version_param);
-  if (version_parser_result.ok()) {
-    auto version_parser = std::move(*version_parser_result);
-    CF_EXPECT(version_parser != nullptr);
-    const auto subcmd = version_parser->SubCmd().value_or("");
-    if (subcmd == "version") {
-      auto version_msg = CF_EXPECT(client.HandleVersion());
-      std::cout << version_msg;
-      return {};
-    }
-    CF_EXPECT(subcmd.empty(),
-              "subcmd is expected to be \"\" but is " << subcmd);
+  auto version_command_handle_report =
+      CF_EXPECT(HandleVersionCommand(client, new_all_args));
+  if (version_command_handle_report == VersionCommandReport::kVersion) {
+    return {};
   }
 
   const cvd_common::Args new_cmd_args{"cvd", "process"};
