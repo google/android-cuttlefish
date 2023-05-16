@@ -72,6 +72,8 @@ DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "prerequisite for powerwash_cvd or multiple instances.");
 DEFINE_bool(share_sched_core, CF_DEFAULTS_SHARE_SCHED_CORE,
             "Enable sharing cores between Cuttlefish processes.");
+DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
+            "Track changes to host executables");
 
 namespace {
 
@@ -352,8 +354,10 @@ int main(int argc, char** argv) {
   auto use_metrics = FLAGS_report_anonymous_usage_stats;
   FLAGS_report_anonymous_usage_stats = ValidateMetricsConfirmation(use_metrics);
 
-  // TODO(b/159068082) Make decisions based on this value in assemble_cvd
-  LOG(INFO) << "Host changed from last run: " << HostToolsUpdated();
+  if (FLAGS_track_host_tools_crc) {
+    // TODO(b/159068082) Make decisions based on this value in assemble_cvd
+    LOG(INFO) << "Host changed from last run: " << HostToolsUpdated();
+  }
 
   cuttlefish::SharedFD assembler_stdout, assembler_stdout_capture;
   cuttlefish::SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
