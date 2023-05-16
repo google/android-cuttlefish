@@ -25,6 +25,7 @@ cc_binary {
         "boot_config.cc",
         "boot_image_utils.cc",
         "clean.cc",
+        "disk/generate_persistent_bootconfig.cpp",
         "disk/kernel_ramdisk_repacker.cpp",
         "disk_builder.cpp",
         "disk_flags.cc",
