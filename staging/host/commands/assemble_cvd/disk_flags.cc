@@ -44,10 +44,6 @@
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
-
-// Taken from external/avb/avbtool.py; this define is not in the headers
-#define MAX_AVB_METADATA_SIZE 69632ul
-
 DECLARE_string(system_image_dir);
 
 DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
@@ -577,95 +573,6 @@ class Gem5ImageUnpacker : public SetupFeature {
   KernelRamdiskRepacker& bir_;
 };
 
-class GeneratePersistentBootconfig : public SetupFeature {
- public:
-  INJECT(GeneratePersistentBootconfig(
-      const CuttlefishConfig& config,
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override {
-    return "GeneratePersistentBootconfig";
-  }
-  bool Enabled() const override {
-    return (!instance_.protected_vm());
-  }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    //  Cuttlefish for the time being won't be able to support OTA from a
-    //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
-    //  device is stopped (via stop_cvd). This is rarely an issue since OTA
-    //  testing run on cuttlefish is done within one launch cycle of the device.
-    //  If this ever becomes an issue, this code will have to be rewritten.
-    if(!instance_.bootconfig_supported()) {
-      return {};
-    }
-    const auto bootconfig_path = instance_.persistent_bootconfig_path();
-    if (!FileExists(bootconfig_path)) {
-      CF_EXPECT(CreateBlankImage(bootconfig_path, 1 /* mb */, "none"),
-                "Failed to create image at " << bootconfig_path);
-    }
-
-    auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
-    CF_EXPECT(bootconfig_fd->IsOpen(),
-              "Unable to open bootconfig file: " << bootconfig_fd->StrError());
-
-    const auto bootconfig_args =
-        CF_EXPECT(BootconfigArgsFromConfig(config_, instance_));
-    const auto bootconfig =
-        CF_EXPECT(BootconfigArgsString(bootconfig_args, "\n")) + "\n";
-
-    LOG(DEBUG) << "bootconfig size is " << bootconfig.size();
-    ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
-    CF_EXPECT(WriteAll(bootconfig_fd, bootconfig) == bootconfig.size(),
-              "Failed to write bootconfig to \"" << bootconfig_path << "\"");
-    LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
-               << ReadFile(bootconfig_path);
-
-    CF_EXPECT(bootconfig_fd->Truncate(bootconfig.size()) == 0,
-              "`truncate --size=" << bootconfig.size() << " bytes "
-                                  << bootconfig_path
-                                  << "` failed:" << bootconfig_fd->StrError());
-
-    if (config_.vm_manager() == Gem5Manager::name()) {
-      const off_t bootconfig_size_bytes_gem5 =
-          AlignToPowerOf2(bytesWritten, PARTITION_SIZE_SHIFT);
-      CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5) == 0);
-      bootconfig_fd->Close();
-    } else {
-      bootconfig_fd->Close();
-      const off_t bootconfig_size_bytes = AlignToPowerOf2(
-          MAX_AVB_METADATA_SIZE + bootconfig.size(), PARTITION_SIZE_SHIFT);
-
-      auto avbtool_path = HostBinaryPath("avbtool");
-      Command bootconfig_hash_footer_cmd(avbtool_path);
-      bootconfig_hash_footer_cmd.AddParameter("add_hash_footer");
-      bootconfig_hash_footer_cmd.AddParameter("--image");
-      bootconfig_hash_footer_cmd.AddParameter(bootconfig_path);
-      bootconfig_hash_footer_cmd.AddParameter("--partition_size");
-      bootconfig_hash_footer_cmd.AddParameter(bootconfig_size_bytes);
-      bootconfig_hash_footer_cmd.AddParameter("--partition_name");
-      bootconfig_hash_footer_cmd.AddParameter("bootconfig");
-      bootconfig_hash_footer_cmd.AddParameter("--key");
-      bootconfig_hash_footer_cmd.AddParameter(
-          DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem"));
-      bootconfig_hash_footer_cmd.AddParameter("--algorithm");
-      bootconfig_hash_footer_cmd.AddParameter("SHA256_RSA4096");
-      int success = bootconfig_hash_footer_cmd.Start().Wait();
-      CF_EXPECT(
-          success == 0,
-          "Unable to run append hash footer. Exited with status " << success);
-    }
-    return {};
-  }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
 class GeneratePersistentVbmeta : public SetupFeature {
  public:
   INJECT(GeneratePersistentVbmeta(
@@ -1063,7 +970,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<SetupFeature, InitializePstore>()
       .addMultibinding<SetupFeature, InitializeSdCard>()
       .addMultibinding<SetupFeature, InitializeFactoryResetProtected>()
-      .addMultibinding<SetupFeature, GeneratePersistentBootconfig>()
+      .install(GeneratePersistentBootconfigComponent)
       .addMultibinding<SetupFeature, GeneratePersistentVbmeta>()
       .addMultibinding<SetupFeature, InitializeInstanceCompositeDisk>()
       .install(InitializeDataImageComponent)
