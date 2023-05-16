@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include <iostream>
-#include <iterator>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,127 +22,20 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/shared_fd_flag.h"
-#include "common/libs/utils/tee_logging.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/handle_reset.h"
-#include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/reset_client_utils.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/run_server.h"
 #include "host/commands/cvd/server_constants.h"
-#include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
 namespace {
-
-bool IsServerModeExpected(const std::string& exec_file) {
-  return exec_file == kServerExecPath;
-}
-
-struct RunServerParam {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  /**
-   * Cvd server usually prints out in the client's stream. However,
-   * after Exec(), the client stdout and stderr becomes unreachable by
-   * LOG(ERROR), etc.
-   *
-   * Thus, in that case, the client fd is passed to print Exec() log
-   * on it.
-   *
-   */
-  SharedFD carryover_stderr_fd;
-  std::optional<bool> acloud_translator_optout;
-};
-Result<void> RunServer(const RunServerParam& params) {
-  if (!params.internal_server_fd->IsOpen()) {
-    return CF_ERR(
-        "Expected to be in server mode, but didn't get a server "
-        "fd: "
-        << params.internal_server_fd->StrError());
-  }
-  std::unique_ptr<ServerLogger> server_logger =
-      std::make_unique<ServerLogger>();
-  CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
-
-  std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
-  if (params.carryover_stderr_fd->IsOpen()) {
-    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
-        std::move(server_logger->LogThreadToFd(params.carryover_stderr_fd)));
-  }
-  if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
-    LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
-  }
-  CF_EXPECT(CvdServerMain(
-      {.internal_server_fd = params.internal_server_fd,
-       .carryover_client_fd = params.carryover_client_fd,
-       .memory_carryover_fd = params.memory_carryover_fd,
-       .acloud_translator_optout = params.acloud_translator_optout,
-       .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(scoped_logger)}));
-  return {};
-}
-
-struct ParseResult {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  SharedFD carryover_stderr_fd;
-  std::optional<bool> acloud_translator_optout;
-};
-
-Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
-  std::vector<Flag> flags;
-  SharedFD internal_server_fd;
-  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
-  SharedFD carryover_client_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
-  SharedFD carryover_stderr_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_stderr_fd", carryover_stderr_fd));
-  SharedFD memory_carryover_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
-  CF_EXPECT(ParseFlags(flags, all_args));
-
-  // now the three flags above are all consumed from all_args
-  std::optional<bool> acloud_translator_optout_opt;
-  const auto all_args_size_before = all_args.size();
-  bool acloud_translator_optout_value = false;
-  flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
-                                      acloud_translator_optout_value));
-  CF_EXPECT(ParseFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
-                                         acloud_translator_optout_value)},
-                       all_args));
-  if (all_args.size() != all_args_size_before) {
-    acloud_translator_optout_opt = acloud_translator_optout_value;
-  }
-
-  std::optional<SharedFD> memory_carryover_fd_opt;
-  if (memory_carryover_fd->IsOpen()) {
-    memory_carryover_fd_opt = std::move(memory_carryover_fd);
-  }
-  ParseResult result = {
-      .internal_server_fd = internal_server_fd,
-      .carryover_client_fd = carryover_client_fd,
-      .memory_carryover_fd = memory_carryover_fd_opt,
-      .carryover_stderr_fd = carryover_stderr_fd,
-      .acloud_translator_optout = acloud_translator_optout_opt,
-  };
-  return {result};
-}
 
 Result<FlagCollection> CvdFlags() {
   FlagCollection cvd_flags;
