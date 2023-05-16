@@ -387,7 +387,7 @@ func main() {
 		createInstance(launch_instance, PZ+
 			` --image-project="`+build_project+`" --image="`+dest_image+
 			`" --machine-type=n1-standard-4 --scopes storage-ro --accelerator="type=`+
-			gpu_type+`,count=1" --maintenance-policy=TERMINATE`)
+			gpu_type+`,count=1" --maintenance-policy=TERMINATE --boot-disk-size=200GiB`)
 	}
 
 	fmt.Printf("Test and if this looks good, consider releasing it via:\n"+
