@@ -29,7 +29,7 @@ PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD := false
 PRODUCT_PACKAGES += \
     CellBroadcastAppPlatform \
     CellBroadcastServiceModulePlatform \
-    com.android.tethering.inprocess \
+    com.android.tethering \
     InProcessNetworkStack \
 
 PRODUCT_MINIMIZE_JAVA_DEBUG_INFO := true
