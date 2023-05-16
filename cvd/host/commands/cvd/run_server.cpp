@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server.h"
@@ -41,8 +42,8 @@ Result<void> RunServer(const RunServerParam& params) {
 
   std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
   if (params.carryover_stderr_fd->IsOpen()) {
-    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
-        std::move(server_logger->LogThreadToFd(params.carryover_stderr_fd)));
+    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(std::move(
+        CF_EXPECT(server_logger->LogThreadToFd(params.carryover_stderr_fd))));
   }
   if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
