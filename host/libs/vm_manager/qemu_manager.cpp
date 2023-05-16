@@ -418,7 +418,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
-  } else if (gpu_mode == kGpuModeGfxstream ||
+  } else if (gpu_mode == kGpuModeGuestSwiftshader ||
+             gpu_mode == kGpuModeGfxstream ||
              gpu_mode == kGpuModeGfxstreamGuestAngle ||
              gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
     qemu_cmd.AddParameter("-vnc");
