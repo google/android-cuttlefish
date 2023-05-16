@@ -223,16 +223,12 @@ Result<void> CvdClient::SetServer(const SharedFD& server) {
   return {};
 }
 
-Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request_orig,
+Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request,
                                              const OverrideFd& new_control_fds,
                                              std::optional<SharedFD> extra_fd) {
   if (!server_) {
     CF_EXPECT(SetServer(CF_EXPECT(ConnectToServer())));
   }
-  cvd::Request request(request_orig);
-  auto* verbosity = request.mutable_verbosity();
-  *verbosity = verbosity_;
-
   // Serialize and send the request.
   std::string serialized;
   CF_EXPECT(request.SerializeToString(&serialized),
@@ -376,12 +372,5 @@ Result<cvd_common::Args> CvdClient::ValidSubcmdsList(
 
 CvdClient::CvdClient(const std::string& server_socket_path)
     : server_socket_path_(server_socket_path) {}
-
-Result<void> CvdClient::SetServerHandlerLogSeverity(
-    const std::string& verbosity) {
-  CF_EXPECT(EncodeVerbosity(verbosity));
-  verbosity_ = verbosity;
-  return {};
-}
 
 }  // end of namespace cuttlefish

@@ -24,7 +24,6 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/tee_logging.h"
-#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
@@ -50,25 +49,13 @@ ServerLogger::~ServerLogger() {
   android::base::SetLogger(android::base::StderrLogger);
 }
 
-Result<ServerLogger::ScopedLogger> ServerLogger::LogThreadToFd(
-    SharedFD target, const std::string& verbosity) {
-  CF_EXPECT(EncodeVerbosity(verbosity));
-  return ScopedLogger(*this, std::move(target), verbosity);
-}
-
-Result<ServerLogger::ScopedLogger> ServerLogger::LogThreadToFd(
-    SharedFD target) {
-  auto verbosity =
-      CF_EXPECT(VerbosityToString(android::base::GetMinimumLogSeverity()));
-  return CF_EXPECT(LogThreadToFd(std::move(target), verbosity));
+ServerLogger::ScopedLogger ServerLogger::LogThreadToFd(SharedFD target) {
+  return ScopedLogger(*this, std::move(target));
 }
 
 ServerLogger::ScopedLogger::ScopedLogger(ServerLogger& server_logger,
-                                         SharedFD target,
-                                         const std::string& verbosity)
-    : server_logger_(server_logger),
-      target_(std::move(target)),
-      verbosity_(verbosity) {
+                                         SharedFD target)
+    : server_logger_(server_logger), target_(std::move(target)) {
   auto thread_id = std::this_thread::get_id();
   std::unique_lock lock(server_logger_.thread_loggers_lock_);
   server_logger_.thread_loggers_[thread_id] = this;
@@ -76,9 +63,7 @@ ServerLogger::ScopedLogger::ScopedLogger(ServerLogger& server_logger,
 
 ServerLogger::ScopedLogger::ScopedLogger(
     ServerLogger::ScopedLogger&& other) noexcept
-    : server_logger_(other.server_logger_),
-      target_(std::move(other.target_)),
-      verbosity_(std::move(other.verbosity_)) {
+    : server_logger_(other.server_logger_), target_(std::move(other.target_)) {
   auto thread_id = std::this_thread::get_id();
   std::unique_lock lock(server_logger_.thread_loggers_lock_);
   server_logger_.thread_loggers_[thread_id] = this;
@@ -100,21 +85,6 @@ void ServerLogger::ScopedLogger::LogMessage(
     android::base::LogId /* log_buffer_id */,
     android::base::LogSeverity severity, const char* tag, const char* file,
     unsigned int line, const char* message) {
-  std::string debug = "LogMessage is called ";
-  auto severity_result = VerbosityToString(severity);
-  debug.append(*severity_result);
-  debug.append(" with ").append(message).append("\n");
-  WriteAll(target_, debug);
-
-  auto minimum_verbosity_result = EncodeVerbosity(verbosity_);
-  if (!minimum_verbosity_result.ok()) {
-    LOG(ERROR) << "Invalid verbosity \"" << verbosity_ << "\"";
-    return;
-  }
-  if (severity < *minimum_verbosity_result) {
-    return;
-  }
-
   time_t t = time(nullptr);
   struct tm now;
   localtime_r(&t, &now);
