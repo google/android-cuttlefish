@@ -72,7 +72,8 @@ ArgumentsSeparator::ArgumentsSeparator(
       input_args_(input_args),
       known_boolean_flags_(flag_registration.known_boolean_flags),
       known_value_flags_(flag_registration.known_value_flags),
-      valid_subcmds_(flag_registration.valid_subcommands) {}
+      valid_subcmds_(flag_registration.valid_subcommands),
+      match_any_subcmd_(Contains(valid_subcmds_, "*")) {}
 
 Result<void> ArgumentsSeparator::Parse() {
   auto output = CF_EXPECT(ParseInternal());
@@ -140,7 +141,7 @@ Result<ArgumentsSeparator::Output> ArgumentsSeparator::ParseInternal() {
       case ArgType::kPositional: {
         output.sub_cmd = current.Token();
         CF_EXPECT(output.sub_cmd != std::nullopt);
-        CF_EXPECT(Contains(valid_subcmds_, output.sub_cmd),
+        CF_EXPECT(match_any_subcmd_ || Contains(valid_subcmds_, output.sub_cmd),
                   "Subcommand " << *(output.sub_cmd) << " is not valid");
         cvd_flags_mode = false;
       } break;

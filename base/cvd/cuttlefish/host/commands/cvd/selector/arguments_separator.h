@@ -112,6 +112,7 @@ class ArgumentsSeparator {
   std::unordered_set<std::string> known_boolean_flags_;
   std::unordered_set<std::string> known_value_flags_;
   std::unordered_set<std::string> valid_subcmds_;
+  bool match_any_subcmd_;
 
   // outputs
   std::string prog_path_;
