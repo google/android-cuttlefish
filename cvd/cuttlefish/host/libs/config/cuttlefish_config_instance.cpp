@@ -332,6 +332,23 @@ void CuttlefishConfig::MutableInstanceSpecific::set_kernel_path(
 }
 // end of system image files
 
+static constexpr char kDefaultTargetZip[] = "default_target_zip";
+std::string CuttlefishConfig::InstanceSpecific::default_target_zip() const {
+  return (*Dictionary())[kDefaultTargetZip].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_default_target_zip(
+    const std::string& default_target_zip) {
+  (*Dictionary())[kDefaultTargetZip] = default_target_zip;
+}
+static constexpr char kSystemTargetZip[] = "system_target_zip";
+std::string CuttlefishConfig::InstanceSpecific::system_target_zip() const {
+  return (*Dictionary())[kSystemTargetZip].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_system_target_zip(
+    const std::string& system_target_zip) {
+  (*Dictionary())[kSystemTargetZip] = system_target_zip;
+}
+
 static constexpr char kSerialNumber[] = "serial_number";
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
   return (*Dictionary())[kSerialNumber].asString();
@@ -679,6 +696,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
 }
 bool CuttlefishConfig::InstanceSpecific::enable_audio() const {
   return (*Dictionary())[kEnableAudio].asBool();
+}
+
+static constexpr char kEnableVehicleHalServer[] = "enable_vehicle_hal_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*Dictionary())[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_vehicle_hal_grpc_server() const {
+  return (*Dictionary())[kEnableVehicleHalServer].asBool();
 }
 
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
@@ -1279,6 +1304,14 @@ int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
+}
+
+static constexpr char kVehicleHalServerPort[] = "vehicle_hal_server_port";
+int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
+  return (*Dictionary())[kVehicleHalServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
+  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
 }
 
 static constexpr char kAudioControlServerPort[] = "audiocontrol_server_port";
