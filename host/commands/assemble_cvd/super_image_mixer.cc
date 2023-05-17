@@ -36,7 +36,28 @@
 
 namespace cuttlefish {
 
-bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config) {
+Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
+                                       const std::string& default_target_zip,
+                                       const std::string& system_target_zip) {
+  bool has_default_target_zip = false;
+  bool has_system_target_zip = false;
+  if (default_target_zip != "" &&
+      default_target_zip != "unset") {
+    has_default_target_zip = true;
+  }
+  if (system_target_zip != "" &&
+      system_target_zip != "unset") {
+    has_system_target_zip = true;
+  }
+  CF_EXPECT(has_default_target_zip == has_system_target_zip,
+            "default_target_zip and system_target_zip "
+            "flags must be specified together");
+  // at this time, both should be the same, either true or false
+  // therefore, I only check one variable
+  if (has_default_target_zip) {
+    return true;
+  }
+
   bool has_default_build = false;
   bool has_system_build = false;
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
@@ -237,16 +258,23 @@ bool BuildSuperImage(const std::string& combined_target_zip,
 Result<void> RebuildSuperImage(const FetcherConfig& fetcher_config,
                                const CuttlefishConfig& config,
                                const std::string& output_path) {
-  std::string default_target_zip =
-      TargetFilesZip(fetcher_config, FileSource::DEFAULT_BUILD);
-  CF_EXPECT(default_target_zip != "",
-            "Unable to find default target zip file.");
-
-  std::string system_target_zip =
-      TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
-  CF_EXPECT(system_target_zip != "", "Unable to find system target zip file.");
-
   auto instance = config.ForDefaultInstance();
+  // In SuperImageNeedsRebuilding, it already checked both
+  // has_default_target_zip and has_system_target_zip are the same.
+  // Here, we only check if there is an input path
+  std::string default_target_zip = instance.default_target_zip();
+  std::string system_target_zip = instance.system_target_zip();
+  if (default_target_zip == "" || default_target_zip == "unset") {
+    default_target_zip =
+        TargetFilesZip(fetcher_config, FileSource::DEFAULT_BUILD);
+    CF_EXPECT(default_target_zip != "",
+              "Unable to find default target zip file.");
+
+    system_target_zip =
+        TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
+    CF_EXPECT(system_target_zip != "", "Unable to find system target zip file.");
+  }
+
   // TODO(schuffelen): Use cuttlefish_assembly
   std::string combined_target_path = instance.PerInstanceInternalPath("target_combined");
   // TODO(schuffelen): Use otatools/bin/merge_target_files
@@ -272,7 +300,9 @@ class SuperImageRebuilderImpl : public SuperImageRebuilder {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    if (SuperImageNeedsRebuilding(fetcher_config_)) {
+    if (CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config_,
+                                            instance_.default_target_zip(),
+                                            instance_.system_target_zip()))) {
       CF_EXPECT(RebuildSuperImage(fetcher_config_, config_,
                                   instance_.new_super_image()));
     }
