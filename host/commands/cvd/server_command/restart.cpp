@@ -102,6 +102,12 @@ class CvdRestartHandler : public CvdServerHandler {
   }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    /*
+     * TODO(weihsu@): change the code accordingly per verbosity level control.
+     *
+     * Now, the server can start with a verbosity level. Change the code
+     * accordingly.
+     */
     CF_EXPECT(CanHandle(request));
     cvd::Response response;
     if (request.Message().has_shutdown_request()) {
