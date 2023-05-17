@@ -332,6 +332,23 @@ void CuttlefishConfig::MutableInstanceSpecific::set_kernel_path(
 }
 // end of system image files
 
+static constexpr char kDefaultTargetZip[] = "default_target_zip";
+std::string CuttlefishConfig::InstanceSpecific::default_target_zip() const {
+  return (*Dictionary())[kDefaultTargetZip].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_default_target_zip(
+    const std::string& default_target_zip) {
+  (*Dictionary())[kDefaultTargetZip] = default_target_zip;
+}
+static constexpr char kSystemTargetZip[] = "system_target_zip";
+std::string CuttlefishConfig::InstanceSpecific::system_target_zip() const {
+  return (*Dictionary())[kSystemTargetZip].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_system_target_zip(
+    const std::string& system_target_zip) {
+  (*Dictionary())[kSystemTargetZip] = system_target_zip;
+}
+
 static constexpr char kSerialNumber[] = "serial_number";
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
   return (*Dictionary())[kSerialNumber].asString();
