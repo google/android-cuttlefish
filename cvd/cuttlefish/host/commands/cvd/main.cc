@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include <iostream>
-#include <iterator>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,132 +22,27 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/shared_fd_flag.h"
-#include "common/libs/utils/tee_logging.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/client.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/frontline_parser.h"
 #include "host/commands/cvd/handle_reset.h"
-#include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/reset_client_utils.h"
-#include "host/commands/cvd/server.h"
+#include "host/commands/cvd/run_server.h"
 #include "host/commands/cvd/server_constants.h"
-#include "host/commands/cvd/types.h"
 #include "host/libs/config/host_tools_version.h"
 
 namespace cuttlefish {
 namespace {
 
-bool IsServerModeExpected(const std::string& exec_file) {
-  return exec_file == kServerExecPath;
-}
-
-struct RunServerParam {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  /**
-   * Cvd server usually prints out in the client's stream. However,
-   * after Exec(), the client stdout and stderr becomes unreachable by
-   * LOG(ERROR), etc.
-   *
-   * Thus, in that case, the client fd is passed to print Exec() log
-   * on it.
-   *
-   */
-  SharedFD carryover_stderr_fd;
-  std::optional<bool> acloud_translator_optout;
-};
-Result<void> RunServer(const RunServerParam& params) {
-  if (!params.internal_server_fd->IsOpen()) {
-    return CF_ERR(
-        "Expected to be in server mode, but didn't get a server "
-        "fd: "
-        << params.internal_server_fd->StrError());
-  }
-  std::unique_ptr<ServerLogger> server_logger =
-      std::make_unique<ServerLogger>();
-  CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
-
-  std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
-  if (params.carryover_stderr_fd->IsOpen()) {
-    scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
-        std::move(server_logger->LogThreadToFd(params.carryover_stderr_fd)));
-  }
-  if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
-    LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
-  }
-  CF_EXPECT(CvdServerMain(
-      {.internal_server_fd = params.internal_server_fd,
-       .carryover_client_fd = params.carryover_client_fd,
-       .memory_carryover_fd = params.memory_carryover_fd,
-       .acloud_translator_optout = params.acloud_translator_optout,
-       .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(scoped_logger)}));
-  return {};
-}
-
-struct ParseResult {
-  SharedFD internal_server_fd;
-  SharedFD carryover_client_fd;
-  std::optional<SharedFD> memory_carryover_fd;
-  SharedFD carryover_stderr_fd;
-  std::optional<bool> acloud_translator_optout;
-};
-
-Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
-  std::vector<Flag> flags;
-  SharedFD internal_server_fd;
-  flags.emplace_back(SharedFDFlag("INTERNAL_server_fd", internal_server_fd));
-  SharedFD carryover_client_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_client_fd", carryover_client_fd));
-  SharedFD carryover_stderr_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_carryover_stderr_fd", carryover_stderr_fd));
-  SharedFD memory_carryover_fd;
-  flags.emplace_back(
-      SharedFDFlag("INTERNAL_memory_carryover_fd", memory_carryover_fd));
-  CF_EXPECT(ParseFlags(flags, all_args));
-
-  // now the three flags above are all consumed from all_args
-  std::optional<bool> acloud_translator_optout_opt;
-  const auto all_args_size_before = all_args.size();
-  bool acloud_translator_optout_value = false;
-  flags.emplace_back(GflagsCompatFlag("INTERNAL_acloud_translator_optout",
-                                      acloud_translator_optout_value));
-  CF_EXPECT(ParseFlags({GflagsCompatFlag("INTERNAL_acloud_translator_optout",
-                                         acloud_translator_optout_value)},
-                       all_args));
-  if (all_args.size() != all_args_size_before) {
-    acloud_translator_optout_opt = acloud_translator_optout_value;
-  }
-
-  std::optional<SharedFD> memory_carryover_fd_opt;
-  if (memory_carryover_fd->IsOpen()) {
-    memory_carryover_fd_opt = std::move(memory_carryover_fd);
-  }
-  ParseResult result = {
-      .internal_server_fd = internal_server_fd,
-      .carryover_client_fd = carryover_client_fd,
-      .memory_carryover_fd = memory_carryover_fd_opt,
-      .carryover_stderr_fd = carryover_stderr_fd,
-      .acloud_translator_optout = acloud_translator_optout_opt,
-  };
-  return {result};
-}
-
 Result<FlagCollection> CvdFlags() {
   FlagCollection cvd_flags;
   cvd_flags.EnrollFlag(CvdFlag<bool>("clean", false));
   cvd_flags.EnrollFlag(CvdFlag<bool>("help", false));
+  cvd_flags.EnrollFlag(CvdFlag<std::string>("verbosity"));
   return cvd_flags;
 }
 
@@ -158,6 +51,17 @@ Result<bool> FilterDriverHelpOptions(const FlagCollection& cvd_flags,
   auto help_flag = CF_EXPECT(cvd_flags.GetFlag("help"));
   bool is_help = CF_EXPECT(help_flag.CalculateFlag<bool>(cvd_args));
   return is_help;
+}
+
+Result<android::base::LogSeverity> FilterVerbosityOption(
+    const FlagCollection& cvd_flags, cvd_common::Args& cvd_args) {
+  auto verbosity_flag = CF_EXPECT(cvd_flags.GetFlag("verbosity"));
+  std::optional<std::string> min_verbosity =
+      CF_EXPECT(verbosity_flag.FilterFlag<std::string>(cvd_args));
+  if (!min_verbosity) {
+    return android::base::GetMinimumLogSeverity();
+  }
+  return CF_EXPECT(EncodeVerbosity(*min_verbosity));
 }
 
 cvd_common::Args AllArgs(const std::string& prog_path,
@@ -199,6 +103,9 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   CF_EXPECT(client_parser != nullptr);
   auto cvd_args = client_parser->CvdArgs();
   auto is_help = CF_EXPECT(FilterDriverHelpOptions(cvd_flags, cvd_args));
+  const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
+  android::base::SetMinimumLogSeverity(verbosity);
+
   output.new_all_args =
       AllArgs(client_parser->ProgPath(), cvd_args, client_parser->SubCmd(),
               client_parser->SubCmdArgs());
@@ -222,6 +129,42 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   return output;
 }
 
+enum class VersionCommandReport : std::uint32_t {
+  kNonVersion,
+  kVersion,
+};
+Result<VersionCommandReport> HandleVersionCommand(
+    CvdClient& client, const cvd_common::Args& all_args) {
+  std::vector<std::string> version_command{"version"};
+  FlagCollection cvd_flags = CF_EXPECT(CvdFlags());
+  FrontlineParser::ParserParam version_param{
+      .server_supported_subcmds = std::vector<std::string>{},
+      .internal_cmds = version_command,
+      .all_args = all_args,
+      .cvd_flags = cvd_flags};
+  auto version_parser_result = FrontlineParser::Parse(version_param);
+  if (!version_parser_result.ok()) {
+    return VersionCommandReport::kNonVersion;
+  }
+
+  auto version_parser = std::move(*version_parser_result);
+  CF_EXPECT(version_parser != nullptr);
+  const auto subcmd = version_parser->SubCmd().value_or("");
+  auto cvd_args = version_parser->CvdArgs();
+  CF_EXPECT(subcmd == "version" || subcmd.empty(),
+            "subcmd is expected to be \"version\" or empty but is " << subcmd);
+  const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
+  android::base::SetMinimumLogSeverity(verbosity);
+  client.SetServerLogSeverity(verbosity);
+
+  if (subcmd == "version") {
+    auto version_msg = CF_EXPECT(client.HandleVersion());
+    std::cout << version_msg;
+    return VersionCommandReport::kVersion;
+  }
+  return VersionCommandReport::kNonVersion;
+}
+
 /**
  * Terminates a cvd server listening on "cvd_server"
  *
@@ -232,7 +175,7 @@ Result<ClientCommandCheckResult> HandleClientCommands(
  * thus we should kill the server process first.
  */
 Result<void> KillOldServer() {
-  CvdClient client_to_old_server("cvd_server");
+  CvdClient client_to_old_server(android::base::INFO, "cvd_server");
   auto result = client_to_old_server.StopCvdServer(/*clear=*/true);
   if (!result.ok()) {
     LOG(ERROR) << "Old server listening on \"cvd_server\" socket "
@@ -257,7 +200,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return {};
   }
 
-  CvdClient client;
+  CvdClient client(android::base::INFO);
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
     return client.HandleAcloud(all_args, env);
@@ -271,6 +214,7 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
          .carryover_client_fd = parsed.carryover_client_fd,
          .memory_carryover_fd = parsed.memory_carryover_fd,
          .carryover_stderr_fd = parsed.carryover_stderr_fd,
+         .verbosity_level = parsed.verbosity_level,
          .acloud_translator_optout = parsed.acloud_translator_optout});
   }
 
@@ -293,25 +237,10 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(client.ValidateServerVersion(),
             "Unable to ensure cvd_server is running.");
 
-  std::vector<std::string> version_command{"version"};
-  FlagCollection cvd_flags = CF_EXPECT(CvdFlags());
-  FrontlineParser::ParserParam version_param{
-      .server_supported_subcmds = std::vector<std::string>{},
-      .internal_cmds = version_command,
-      .all_args = new_all_args,
-      .cvd_flags = cvd_flags};
-  auto version_parser_result = FrontlineParser::Parse(version_param);
-  if (version_parser_result.ok()) {
-    auto version_parser = std::move(*version_parser_result);
-    CF_EXPECT(version_parser != nullptr);
-    const auto subcmd = version_parser->SubCmd().value_or("");
-    if (subcmd == "version") {
-      auto version_msg = CF_EXPECT(client.HandleVersion());
-      std::cout << version_msg;
-      return {};
-    }
-    CF_EXPECT(subcmd.empty(),
-              "subcmd is expected to be \"\" but is " << subcmd);
+  auto version_command_handle_report =
+      CF_EXPECT(HandleVersionCommand(client, new_all_args));
+  if (version_command_handle_report == VersionCommandReport::kVersion) {
+    return {};
   }
 
   const cvd_common::Args new_cmd_args{"cvd", "process"};
