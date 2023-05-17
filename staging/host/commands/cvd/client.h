@@ -43,7 +43,8 @@ struct OverrideFd {
 
 class CvdClient {
  public:
-  CvdClient(const std::string& server_socket_path = ServerSocketPath());
+  CvdClient(const android::base::LogSeverity verbosity,
+            const std::string& server_socket_path = ServerSocketPath());
   Result<void> ValidateServerVersion(const int num_retries = 1);
   Result<void> StopCvdServer(bool clear);
   Result<void> HandleAcloud(
@@ -65,6 +66,7 @@ class CvdClient {
   }
   Result<std::string> HandleVersion();
   Result<cvd_common::Args> ValidSubcmdsList(const cvd_common::Envs& envs);
+  Result<void> SetServerLogSeverity(const android::base::LogSeverity);
 
  private:
   std::optional<UnixMessageSocket> server_;
@@ -82,6 +84,7 @@ class CvdClient {
   static cvd::Version GetClientVersion();
 
   std::string server_socket_path_;
+  std::string verbosity_;
 };
 
 }  // end of namespace cuttlefish
