@@ -19,7 +19,7 @@
 <manifest version="1.0" type="device">
     <hal format="hidl">
         <name>android.hardware.graphics.composer</name>
-        <transport>hwbinder</transport>
+        <transport>passthrough</transport>
         <version>2.4</version>
         <interface>
             <name>IComposer</name>
