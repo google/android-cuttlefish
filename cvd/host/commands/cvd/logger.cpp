@@ -23,6 +23,7 @@
 #include <android-base/threads.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/server_client.h"
@@ -96,6 +97,16 @@ ServerLogger::ScopedLogger::~ScopedLogger() {
   }
 }
 
+void ServerLogger::SetSeverity(const LogSeverity severity) {
+  std::lock_guard lock(thread_loggers_lock_);
+  const auto tid = std::this_thread::get_id();
+  if (!Contains(thread_loggers_, tid)) {
+    LOG(ERROR) << "Thread logger is not registered for thread #" << tid;
+    return;
+  }
+  thread_loggers_[tid]->SetSeverity(severity);
+}
+
 void ServerLogger::ScopedLogger::LogMessage(
     android::base::LogId /* log_buffer_id */,
     android::base::LogSeverity severity, const char* tag, const char* file,
@@ -118,6 +129,15 @@ void ServerLogger::ScopedLogger::LogMessage(
       StderrOutputGenerator(now, getpid(), android::base::GetThreadId(),
                             severity, tag, file, line, message);
   WriteAll(target_, output_string);
+}
+
+void ServerLogger::ScopedLogger::SetSeverity(const LogSeverity severity) {
+  auto log_level_result = VerbosityToString(severity);
+  if (!log_level_result.ok()) {
+    LOG(ERROR) << log_level_result.error().Trace();
+    return;
+  }
+  verbosity_ = *log_level_result;
 }
 
 }  // namespace cuttlefish
