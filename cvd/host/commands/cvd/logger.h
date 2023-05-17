@@ -29,6 +29,8 @@ namespace cuttlefish {
 
 /** Per-thread logging state manager class. */
 class ServerLogger {
+  friend class CvdServer;
+
  public:
   /**
    * Thread-specific logger instance.
@@ -40,6 +42,7 @@ class ServerLogger {
   class ScopedLogger {
    public:
     friend ServerLogger;
+    using LogSeverity = android::base::LogSeverity;
 
     ScopedLogger(ScopedLogger&&) noexcept;
     ~ScopedLogger();
@@ -51,6 +54,7 @@ class ServerLogger {
     void LogMessage(android::base::LogId log_buffer_id,
                     android::base::LogSeverity severity, const char* tag,
                     const char* file, unsigned int line, const char* message);
+    void SetSeverity(const LogSeverity);
 
     ServerLogger& server_logger_;
     SharedFD target_;
@@ -67,6 +71,9 @@ class ServerLogger {
   Result<ScopedLogger> LogThreadToFd(SharedFD);
 
  private:
+  using LogSeverity = android::base::LogSeverity;
+  void SetSeverity(const LogSeverity);
+
   std::shared_mutex thread_loggers_lock_;
   std::unordered_map<std::thread::id, ScopedLogger*> thread_loggers_;
 };
