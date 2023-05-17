@@ -47,6 +47,7 @@
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/logger.h"
+#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/acloud.h"
 #include "host/commands/cvd/server_command/cmd_list.h"
 #include "host/commands/cvd/server_command/display.h"
@@ -358,6 +359,28 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   return {};
 }
 
+static Result<std::string> Verbosity(const RequestWithStdio& request,
+                                     const std::string& default_val) {
+  if (request.Message().contents_case() !=
+      cvd::Request::ContentsCase::kCommandRequest) {
+    return default_val;
+  }
+  const auto& selector_opts =
+      request.Message().command_request().selector_opts();
+  auto selector_args = cvd_common::ConvertToArgs(selector_opts.args());
+  auto verbosity_flag =
+      selector::SelectorFlags::New().FlagsAsCollection().GetFlag(
+          selector::SelectorFlags::kVerbosity);
+  auto verbosity_opt =
+      CF_EXPECT(verbosity_flag->FilterFlag<std::string>(selector_args));
+  auto ret_val = verbosity_opt.value_or(default_val);
+  if (!EncodeVerbosity(ret_val).ok()) {
+    // this could happen with old version'ed clients
+    return "";
+  }
+  return ret_val;
+}
+
 // convert HOME, ANDROID_HOST_OUT, ANDROID_SOONG_HOST_OUT
 // and ANDROID_PRODUCT_OUT into absolute paths if any.
 static Result<RequestWithStdio> ConvertDirPathToAbsolute(
@@ -425,6 +448,15 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
                                                SharedFD client) {
   CF_EXPECT(VerifyUser(orig_request));
   auto request = CF_EXPECT(ConvertDirPathToAbsolute(orig_request));
+  std::string verbosity =
+      CF_EXPECT(Verbosity(request, request.Message().verbosity()));
+  if (!verbosity.empty()) {
+    auto log_severity = CF_EXPECT(EncodeVerbosity(verbosity));
+    server_logger_.SetSeverity(log_severity);
+  } else {
+    LOG(ERROR) << "Valid and new verbosity level was not given";
+  }
+
   fruit::Injector<> injector(RequestComponent, this);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
@@ -454,7 +486,6 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
     ongoing_requests_.erase(shared);
   });
 
-  std::string verbosity = request.Message().verbosity();
   auto interrupt_cb = [this, shared, verbosity,
                        err = request.Err()](EpollEvent) -> Result<void> {
     auto logger = verbosity.empty()
