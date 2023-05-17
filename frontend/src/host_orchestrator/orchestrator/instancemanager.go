@@ -350,6 +350,10 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	cvd := &apiv1.CVD{}
 	*cvd = *req.CVD
 	cvd.Name = cvdName
+	// TODO: Remove once `acloud CLI` gets deprecated.
+	if cvdName == "cvd-1" {
+		go runAcloudSetup(m.paths.ArtifactsRootDir, mainBuildDir)
+	}
 	return cvd, nil
 }
 
@@ -372,6 +376,10 @@ func (m *CVDToolInstanceManager) launchFromUserBuild(
 	}
 	if err := m.startCVDHandler.Start(startParams); err != nil {
 		return nil, err
+	}
+	// TODO: Remove once `acloud CLI` gets deprecated.
+	if cvdName == "cvd-1" {
+		go runAcloudSetup(m.paths.ArtifactsRootDir, artifactsDir)
 	}
 	return &apiv1.CVD{
 		Name:        cvdName,
@@ -798,4 +806,15 @@ func (s cvdInstances) findByName(name string) (bool, cvdInstance) {
 		}
 	}
 	return false, cvdInstance{}
+}
+
+func runAcloudSetup(artifactsRootDir, artifactsDir string) {
+	cmd := exec.Command("sudo", "-u", cvdUser, "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link")
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+	err := cmd.Run()
+	if err != nil {
+		log.Println("runAcloudSetup failed with error: " + b.String())
+	}
 }
