@@ -88,6 +88,13 @@ DEFINE_string(
     "be vbmeta_system_dlkm.img in the directory specified by "
     "-system_image_dir.");
 
+DEFINE_string(
+    default_target_zip, CF_DEFAULTS_DEFAULT_TARGET_ZIP,
+    "Location of default target zip file.");
+DEFINE_string(
+    system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
+    "Location of system target zip file.");
+
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");
 DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
@@ -828,6 +835,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   auto vbmeta_system_dlkm_image =
       android::base::Split(FLAGS_vbmeta_system_dlkm_image, ",");
 
+  std::vector<std::string> default_target_zip_vec =
+      android::base::Split(FLAGS_default_target_zip, ",");
+  std::vector<std::string> system_target_zip_vec =
+      android::base::Split(FLAGS_system_target_zip, ",");
+
   std::vector<std::string> linux_kernel_path =
       android::base::Split(FLAGS_linux_kernel_path, ",");
   std::vector<std::string> linux_initramfs_path =
@@ -1044,9 +1056,22 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       }
     }
 
+    if (instance_index >= default_target_zip_vec.size()) {
+      instance.set_default_target_zip(default_target_zip_vec[0]);
+    } else {
+      instance.set_default_target_zip(default_target_zip_vec[instance_index]);
+    }
+    if (instance_index >= system_target_zip_vec.size()) {
+      instance.set_system_target_zip(system_target_zip_vec[0]);
+    } else {
+      instance.set_system_target_zip(system_target_zip_vec[instance_index]);
+    }
+
     // We will need to rebuild vendor_dlkm if custom ramdisk is specified, as a
     // result super image would need to be rebuilt as well.
-    if (SuperImageNeedsRebuilding(fetcher_config) ||
+    if (CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config,
+                  const_instance.default_target_zip(),
+                  const_instance.system_target_zip())) ||
         cur_initramfs_path.size()) {
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
