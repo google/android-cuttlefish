@@ -173,5 +173,13 @@ const SelectorFlags SelectorFlags::New() {
   return selector_flags;
 }
 
+CvdFlag<std::string> SelectorFlags::VerbosityFlag(const std::string& name) {
+  CvdFlag<std::string> verbosity_level(name);
+  std::stringstream help;
+  help << "--" << name << "=Severity for LOG(Severity) in the server.";
+  verbosity_level.SetHelpMessage(help.str());
+  return verbosity_level;
+}
+
 }  // namespace selector
 }  // namespace cuttlefish
