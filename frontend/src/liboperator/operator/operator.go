@@ -184,27 +184,22 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	}
 
 	devInfo := dev.info.(map[string]interface{})
-	openwrtDevId, ok := devInfo["openwrt_device_id"]
+	openwrtDevId, ok := devInfo["openwrt_device_id"].(string)
 	if !ok {
 		http.Error(w, "Device obtaining Openwrt not found", http.StatusNotFound)
 		return
 	}
 
 	path := vars["path"]
-	if devId != openwrtDevId {
-		http.Redirect(w, r, "/devices/" + openwrtDevId.(string) + "/openwrt" + path, http.StatusFound)
-		return
-	}
-
-	openwrtAddr, ok := devInfo["openwrt_addr"]
+	openwrtAddr, ok := devInfo["openwrt_addr"].(string)
 	if !ok {
 		http.Error(w, "Openwrt address not found", http.StatusNotFound)
 		return
 	}
 
-	url, _ := url.Parse("http://" + openwrtAddr.(string))
+	url, _ := url.Parse("http://" + openwrtAddr)
 	proxy := httputil.NewSingleHostReverseProxy(url)
-	r.URL.Path = "/devices/" + devId + "/openwrt" + path
+	r.URL.Path = "/devices/" + openwrtDevId + "/openwrt" + path
 	proxy.ServeHTTP(w, r)
 }
 
