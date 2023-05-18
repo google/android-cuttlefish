@@ -18,8 +18,6 @@
 
 #include <atomic>
 
-#include <fruit/fruit.h>
-
 #include "host/commands/cvd/server_client.h"
 
 namespace cuttlefish {
@@ -27,23 +25,15 @@ namespace cuttlefish {
 struct ConvertedAcloudCreateCommand {
   std::vector<RequestWithStdio> prep_requests;
   RequestWithStdio start_request;
+  std::string fetch_command_str;
+  std::string fetch_cvd_args_file;
+  bool verbose;
 };
 
-class ConvertAcloudCreateCommand {
- public:
-  virtual Result<ConvertedAcloudCreateCommand> Convert(
-      const RequestWithStdio& request) = 0;
-  virtual const std::string& FetchCvdArgsFile() const = 0;
-  virtual const std::string& FetchCommandString() const = 0;
-  virtual bool Verbose() const = 0;
-  /*
-   * Android prouction build system appears to mandate virtual
-   * destructor.
-   */
-  virtual ~ConvertAcloudCreateCommand() = 0;
-};
+namespace acloud_impl {
 
-fruit::Component<ConvertAcloudCreateCommand>
-AcloudCreateConvertCommandComponent();
+Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
+    const RequestWithStdio& request);
 
+}  // namespace acloud_impl
 }  // namespace cuttlefish
