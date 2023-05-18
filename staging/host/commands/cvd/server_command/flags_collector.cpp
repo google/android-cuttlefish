@@ -20,7 +20,6 @@
 #include <libxml/parser.h>
 
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/scope_guard.h"
 
 namespace cuttlefish {
 namespace {
@@ -122,16 +121,13 @@ XmlDocPtr BuildXmlDocFromString(const std::string& xml_str) {
 
 std::optional<std::vector<FlagInfoPtr>> LoadFromXml(XmlDocPtr&& doc) {
   std::vector<FlagInfoPtr> flags;
-  ScopeGuard exit_action([]() { xmlCleanupParser(); });
-  {
-    XmlDocPtr moved_doc = std::move(doc);
-    xmlNode* root = xmlDocGetRootElement(moved_doc.get());
-    if (!root) {
-      LOG(ERROR) << "Failed to get the root element from XML doc.";
-      return std::nullopt;
-    }
-    flags = ParseXml(moved_doc.get(), root);
+  XmlDocPtr moved_doc = std::move(doc);
+  xmlNode* root = xmlDocGetRootElement(moved_doc.get());
+  if (!root) {
+    LOG(ERROR) << "Failed to get the root element from XML doc.";
+    return std::nullopt;
   }
+  flags = ParseXml(moved_doc.get(), root);
   return flags;
 }
 
