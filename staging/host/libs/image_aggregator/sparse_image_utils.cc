@@ -61,13 +61,17 @@ bool ConvertToRawImage(const std::string& image_path) {
   }
 
   // Replace the original sparse image with the raw image.
+  if (unlink(image_path.c_str()) != 0) {
+    PLOG(FATAL) << "Unable to delete original sparse image";
+  }
+
   Command mv_cmd("/bin/mv");
   mv_cmd.AddParameter("-f");
   mv_cmd.AddParameter(tmp_raw_image_path);
   mv_cmd.AddParameter(image_path);
   success = mv_cmd.Start().Wait();
   if (success != 0) {
-    LOG(FATAL) << "Unable to replace original sparse image " << success;
+    LOG(FATAL) << "Unable to rename raw image " << success;
     return false;
   }
 
