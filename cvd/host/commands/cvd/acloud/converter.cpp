@@ -79,12 +79,26 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
   return android::base::Split(stdout_str, "\n");
 }
 
+Result<void> RunBinTrue(SubprocessWaiter& waiter,
+                        std::unique_lock<std::mutex>& interrupt_lock,
+                        bool& lock_released) {
+  lock_released = false;
+  Command command("/usr/bin/true");
+  auto subprocess = command.Start();
+  CF_EXPECT(waiter.Setup(std::move(subprocess)));
+  interrupt_lock.unlock();
+  lock_released = true;
+  CF_EXPECT(waiter.Wait());
+  return {};
+}
+
 }  // namespace
 
 namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request) {
+    const RequestWithStdio& request, SubprocessWaiter& waiter,
+    std::unique_lock<std::mutex>& interrupt_lock) {
   auto arguments = ParseInvocation(request.Message()).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
@@ -391,6 +405,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
+  bool lock_released = false;
 
   if (local_image) {
     CF_EXPECT(!(system_branch || system_build_target || system_build_id),
@@ -428,6 +443,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // download different releases.
     // Eventually, we should match python acloud behavior to translate
     // default ID (aosp-master) to real ID to solve this issue.
+
+    // placeholder to be replaced with git remote and repo info
+    CF_EXPECT(RunBinTrue(waiter, interrupt_lock, lock_released));
 
     cvd::Request& fetch_request = request_protos.emplace_back();
     auto& fetch_command = *fetch_request.mutable_command_request();
@@ -727,6 +745,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = verbose,
+      .interrupt_lock_released = lock_released,
   };
   for (auto& request_proto : request_protos) {
     ret.prep_requests.emplace_back(request.Client(), request_proto, fds,

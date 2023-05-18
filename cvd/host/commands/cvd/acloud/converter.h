@@ -16,9 +16,12 @@
 
 #pragma once
 
-#include <atomic>
+#include <mutex>
+#include <string>
+#include <vector>
 
 #include "host/commands/cvd/server_client.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
@@ -28,12 +31,24 @@ struct ConvertedAcloudCreateCommand {
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
   bool verbose;
+  bool interrupt_lock_released;
 };
 
 namespace acloud_impl {
 
+/*
+ * Converts the acloud create commands.
+ *
+ * Given that the lock is already acquired, it may start a subprocess
+ * using waiter. If it runs multiple subprocesses in turn using the same
+ * waiter, it acquire the lock before Start() and release the lock before
+ * Wait(). The interrupt_lock_released in the return value says whether
+ * the lock is released or not.
+ *
+ */
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
-    const RequestWithStdio& request);
+    const RequestWithStdio& request, SubprocessWaiter& waiter,
+    std::unique_lock<std::mutex>& interrupt_lock);
 
 }  // namespace acloud_impl
 }  // namespace cuttlefish
