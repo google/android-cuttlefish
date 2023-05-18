@@ -30,7 +30,6 @@ cc_library {
         "json.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
-        "scope_guard.cpp",
         "shared_fd_flag.cpp",
         "socket2socket_proxy.cpp",
         "subprocess.cpp",
