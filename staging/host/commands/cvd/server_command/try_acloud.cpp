@@ -22,7 +22,9 @@
 
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
+#include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/server_command/server_handler.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
 
@@ -30,10 +32,9 @@ namespace cuttlefish {
 
 class TryAcloudCommand : public CvdServerHandler {
  public:
-  INJECT(TryAcloudCommand(ConvertAcloudCreateCommand& converter,
-                          ANNOTATED(AcloudTranslatorOptOut,
+  INJECT(TryAcloudCommand(ANNOTATED(AcloudTranslatorOptOut,
                                     const std::atomic<bool>&) optout))
-      : converter_(converter), optout_(optout) {}
+      : optout_(optout) {}
   ~TryAcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
@@ -44,9 +45,15 @@ class TryAcloudCommand : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {"try-acloud"}; }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    std::unique_lock interrupt_lock(interrupt_mutex_);
+    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(IsSubOperationSupported(request));
-    CF_EXPECT(converter_.Convert(request));
+    auto converted = CF_EXPECT(
+        acloud_impl::ConvertAcloudCreate(request, waiter_, interrupt_lock));
+    if (converted.interrupt_lock_released) {
+      interrupt_lock.lock();
+    }
     // currently, optout/optin feature only works in local instance
     // remote instance still uses legacy python acloud
     CF_EXPECT(!optout_);
@@ -54,15 +61,21 @@ class TryAcloudCommand : public CvdServerHandler {
     response.mutable_command_response();
     return response;
   }
-  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
+  Result<void> Interrupt() override {
+    std::lock_guard interrupt_lock(interrupt_mutex_);
+    interrupted_ = true;
+    waiter_.Interrupt();
+    return {};
+  }
 
  private:
-  ConvertAcloudCreateCommand& converter_;
+  std::mutex interrupt_mutex_;
+  bool interrupted_ = false;
+  SubprocessWaiter waiter_;
   const std::atomic<bool>& optout_;
 };
 
 fruit::Component<fruit::Required<
-    ConvertAcloudCreateCommand,
     fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
 TryAcloudCommandComponent() {
   return fruit::createComponent()
