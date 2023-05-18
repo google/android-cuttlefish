@@ -101,6 +101,7 @@ sudo chroot /mnt/image /usr/bin/apt install -t bullseye-backports -y linux-image
 # update QEMU version to most recent backport
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bullseye-backports
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t bullseye-backports
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -t bullseye-backports
 
 # Install GPU driver dependencies
 sudo cp install_nvidia.sh /mnt/image/
