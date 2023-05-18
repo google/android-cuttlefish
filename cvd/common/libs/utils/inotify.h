@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
-#include <string>
-#include <vector>
+#include <fruit/fruit.h>
 
 namespace cuttlefish {
 
-std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd);
+fruit::Component<> CvdResetComponent();
 
 }  // namespace cuttlefish
