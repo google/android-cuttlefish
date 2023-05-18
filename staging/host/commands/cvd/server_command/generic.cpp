@@ -23,13 +23,13 @@
 #include <variant>
 
 #include <android-base/file.h>
+#include <android-base/scopeguard.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/subprocess.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
@@ -227,7 +227,7 @@ Result<cvd::Response> CvdGenericCommandHandler::Handle(
   // captured structured bindings are a C++20 extension
   // so we need [group_ptr] instead of [&group_opt]
   auto* group_ptr = (group_opt ? std::addressof(*group_opt) : nullptr);
-  ScopeGuard exit_action([this, is_stop, group_ptr]() {
+  android::base::ScopeGuard exit_action([this, is_stop, group_ptr]() {
     if (!is_stop) {
       return;
     }
