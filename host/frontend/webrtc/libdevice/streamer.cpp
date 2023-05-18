@@ -55,6 +55,8 @@ constexpr auto kIsTouchField = "is_touch";
 constexpr auto kDisplaysField = "displays";
 constexpr auto kAudioStreamsField = "audio_streams";
 constexpr auto kHardwareField = "hardware";
+constexpr auto kOpenwrtDeviceIdField = "openwrt_device_id";
+constexpr auto kOpenwrtAddrField = "openwrt_addr";
 constexpr auto kControlPanelButtonCommand = "command";
 constexpr auto kControlPanelButtonTitle = "title";
 constexpr auto kControlPanelButtonIconName = "icon_name";
@@ -404,6 +406,8 @@ void Streamer::Impl::OnOpen() {
       hardware[k] = v;
     }
     device_info[kHardwareField] = hardware;
+    device_info[kOpenwrtDeviceIdField] = config_.openwrt_device_id;
+    device_info[kOpenwrtAddrField] = config_.openwrt_addr;
     Json::Value custom_control_panel_buttons(Json::arrayValue);
     for (const auto& button : custom_control_panel_buttons_) {
       Json::Value button_entry;
