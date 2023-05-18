@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <android-base/parseint.h>
+
 #include "host/libs/config/openwrt_args.h"
 
 namespace cuttlefish {
@@ -29,7 +31,10 @@ std::string getIpAddress(int c_class, int d_class) {
 std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::unordered_map<std::string, std::string> openwrt_args;
-  int instance_num = cuttlefish::GetInstance();
+  int instance_num;
+  if (!android::base::ParseInt(instance.id(), &instance_num, 1, 128)) {
+    return openwrt_args;
+  }
   openwrt_args["instance_name"] = instance.instance_name();
 
   int c_class_base = (instance_num - 1) / 64;
