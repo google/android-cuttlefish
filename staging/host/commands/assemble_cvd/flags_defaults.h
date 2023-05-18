@@ -141,8 +141,9 @@
 
 // Connectivity default parameters
 #define CF_DEFAULTS_RIL_DNS "8.8.8.8"
+// Default network handler
 #define CF_DEFAULTS_NETSIM false
-#define CF_DEFAULTS_NETSIM_BT false
+#define CF_DEFAULTS_NETSIM_BT true
 
 // Wifi default parameters
 #define CF_DEFAULTS_AP_KERNEL_IMAGE CF_DEFAULTS_DYNAMIC_STRING
