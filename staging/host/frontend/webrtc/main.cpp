@@ -38,6 +38,7 @@
 #include "host/libs/audio_connector/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
+#include "host/libs/config/openwrt_args.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_server.h"
 #include "host/libs/screen_connector/screen_connector.h"
@@ -72,6 +73,8 @@ using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
 using cuttlefish::webrtc_streaming::VideoSink;
 using cuttlefish::webrtc_streaming::ServerConfig;
+
+constexpr auto kOpewnrtWanIpAddressName = "wan_ipaddr";
 
 class CfOperatorObserver
     : public cuttlefish::webrtc_streaming::OperatorObserver {
@@ -208,6 +211,9 @@ int main(int argc, char** argv) {
   streamer_config.client_files_port = client_server->port();
   streamer_config.tcp_port_range = instance.webrtc_tcp_port_range();
   streamer_config.udp_port_range = instance.webrtc_udp_port_range();
+  streamer_config.openwrt_device_id = cvd_config->instance_names()[0];
+  streamer_config.openwrt_addr = OpenwrtArgsFromConfig(
+      cvd_config->Instances()[0])[kOpewnrtWanIpAddressName];
   streamer_config.operator_server.addr = cvd_config->sig_server_address();
   streamer_config.operator_server.port = cvd_config->sig_server_port();
   streamer_config.operator_server.path = cvd_config->sig_server_path();
