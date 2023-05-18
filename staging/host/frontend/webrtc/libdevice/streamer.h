@@ -49,6 +49,10 @@ struct StreamerConfig {
   // [0,0] means all ports
   std::pair<uint16_t, uint16_t> udp_port_range = {15550, 15599};
   std::pair<uint16_t, uint16_t> tcp_port_range = {15550, 15599};
+  // The id of device obtaining openwrt instance.
+  std::string openwrt_device_id;
+  // Openwrt IP address for accessing Luci interface.
+  std::string openwrt_addr;
 };
 
 class OperatorObserver {
