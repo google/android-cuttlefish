@@ -135,14 +135,14 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
       << "netsim_bt flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
   const char* test_string = R""""(
 {
-   "netsim_bt": true,
+   "netsim_bt": false,
      "instances" :
      [
         {
@@ -162,7 +162,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
       << "netsim_bt flag is missing or wrongly formatted";
 }
 
