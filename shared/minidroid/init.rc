@@ -184,7 +184,9 @@ service ueventd /system/bin/ueventd
     critical
     seclabel u:r:ueventd:s0
     shutdown critical
-    capabilities CHOWN DAC_OVERRIDE DAC_READ_SEARCH FOWNER FSETID MKNOD NET_ADMIN SETGID SETUID SYS_MODULE SYS_RAWIO
+    user root
+    group root
+    capabilities CHOWN DAC_OVERRIDE DAC_READ_SEARCH FOWNER FSETID MKNOD NET_ADMIN SETGID SETUID SYS_MODULE SYS_RAWIO SYS_ADMIN
 
 service console /system/bin/sh
     class core
