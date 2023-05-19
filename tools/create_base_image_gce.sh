@@ -29,8 +29,12 @@ done
 
 sudo apt-get update
 
-# Stuff we need to get build support
+sudo apt install -y debconf-utils
 
+# Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
+echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
+
+# Stuff we need to get build support
 sudo apt install -y debhelper ubuntu-dev-tools equivs "${extra_packages[@]}"
 
 # Resize
