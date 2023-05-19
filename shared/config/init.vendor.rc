@@ -7,6 +7,8 @@ on early-init
     start metrics_helper
     # start module load in the background
     start vendor.dlkm_loader
+    # specially load zram as it is a "leaf" GKI module
+    exec u:r:modprobe:s0 -- /system/bin/modprobe -a -d /system/lib/modules zram.ko
 
 on init
     # ZRAM setup
