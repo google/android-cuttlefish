@@ -52,10 +52,10 @@
 
 #include <android-base/logging.h>
 #include <android-base/macros.h>
+#include <android-base/unique_fd.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -543,11 +543,9 @@ static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
 
 auto WaitForFile(const std::string& path, int timeoutSec)
     -> decltype(WaitForFileInternal(path, timeoutSec, 0)) {
-  auto inotify = inotify_init1(IN_CLOEXEC);
+  android::base::unique_fd inotify(inotify_init1(IN_CLOEXEC));
 
-  ScopeGuard close_inotify([inotify]() { close(inotify); });
-
-  CF_EXPECT(WaitForFileInternal(path, timeoutSec, inotify));
+  CF_EXPECT(WaitForFileInternal(path, timeoutSec, inotify.get()));
 
   return {};
 }
