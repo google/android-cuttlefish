@@ -129,7 +129,7 @@ cc_defaults {
         "libcvd_fetch",
     ],
     target: {
-        linux_bionic: {
+        linux_musl: {
             static_executable: true,
         },
     },
