@@ -18,14 +18,11 @@
 
 #include <fruit/fruit.h>
 
-#include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
 
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<
-    ConvertAcloudCreateCommand,
     fruit::Annotated<AcloudTranslatorOptOut, std::atomic<bool>>>>
 TryAcloudCommandComponent();
-
 }
