@@ -28,6 +28,7 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 
@@ -39,7 +40,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/shared_fd_flag.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/build_api.h"
@@ -65,6 +65,8 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/inject.h"
 #include "host/libs/config/known_paths.h"
+
+using android::base::ScopeGuard;
 
 namespace cuttlefish {
 
@@ -316,7 +318,7 @@ Result<void> CvdServer::AcceptClient(EpollEvent event) {
   };
   CF_EXPECT(epoll_pool_.Register(event.fd, EPOLLIN, self_cb));
 
-  stop_on_failure.Cancel();
+  stop_on_failure.Disable();
   return {};
 }
 
@@ -355,7 +357,7 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   };
   CF_EXPECT(epoll_pool_.Register(event.fd, EPOLLIN, self_cb));
 
-  abandon_client.Cancel();
+  abandon_client.Disable();
   return {};
 }
 
