@@ -1,5 +1,5 @@
 bin_path := $(HOST_OUT_EXECUTABLES)
-ifeq ($(HOST_CROSS_OS)_$(HOST_CROSS_ARCH),linux_bionic_arm64)
+ifeq ($(HOST_CROSS_OS), linux_musl)
   bin_path := $(OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)/bin
 endif
 
