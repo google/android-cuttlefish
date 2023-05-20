@@ -16,7 +16,6 @@
 #include "host/commands/assemble_cvd/flags.h"
 
 #include <android-base/logging.h>
-#include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
@@ -608,18 +607,6 @@ Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
     result.push_back(display_configs);
   }
   return result;
-}
-
-Result<bool> ParseBool(const std::string& flag_str,
-                        const std::string& flag_name) {
-  auto result = android::base::ParseBool(flag_str);
-  CF_EXPECT(result != android::base::ParseBoolResult::kError,
-            "Failed to parse value \"" << flag_str
-            << "\" for " << flag_name);
-  if (result == android::base::ParseBoolResult::kTrue) {
-    return true;
-  }
-  return false;
 }
 
 Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
