@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/result.h"
+
 /* Support for parsing individual flags out of a larger list of flags. This
  * supports externally determining the order that flags are evaluated in, and
  * incrementally integrating with existing flag parsing implementations.
@@ -129,6 +131,8 @@ std::vector<std::string> ArgsToVec(int argc, char** argv);
 
 std::string BoolToString(bool val);
 
+Result<bool> ParseBool(const std::string& value, const std::string& name);
+
 /* Handles a list of flags. Flags are matched in the order given in case two
  * flags match the same argument. Matched flags are removed, leaving only
  * unmatched arguments. */
@@ -163,5 +167,8 @@ Flag GflagsCompatFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
 Flag GflagsCompatFlag(const std::string& name, std::int32_t& value);
 Flag GflagsCompatFlag(const std::string& name, bool& value);
+Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
+Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
+                      const bool default_value);
 
 }  // namespace cuttlefish
