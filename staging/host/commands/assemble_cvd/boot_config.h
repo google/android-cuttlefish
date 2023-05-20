@@ -15,8 +15,6 @@
  */
 #pragma once
 
-#include <string>
-
 #include <fruit/fruit.h>
 
 #include "host/libs/config/cuttlefish_config.h"

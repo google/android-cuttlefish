@@ -630,31 +630,6 @@ class InitializeSdCard : public SetupFeature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializeFactoryResetProtected : public SetupFeature {
- public:
-  INJECT(InitializeFactoryResetProtected(
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
-
-  // SetupFeature
-  std::string Name() const override { return "InitializeSdCard"; }
-  bool Enabled() const override { return !instance_.protected_vm(); }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    auto frp = instance_.factory_reset_protected_path();
-    if (FileExists(frp)) {
-      return {};
-    }
-    CF_EXPECT(CreateBlankImage(frp, 1 /* mb */, "none"),
-              "Failed to create \"" << frp << "\"");
-    return {};
-  }
-
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
 class InitializeInstanceCompositeDisk : public SetupFeature {
  public:
   INJECT(InitializeInstanceCompositeDisk(
@@ -801,7 +776,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .addMultibinding<SetupFeature, InitializeHwcomposerPmemImage>()
       .addMultibinding<SetupFeature, InitializePstore>()
       .addMultibinding<SetupFeature, InitializeSdCard>()
-      .addMultibinding<SetupFeature, InitializeFactoryResetProtected>()
+      .install(InitializeFactoryResetProtectedComponent)
       .install(GeneratePersistentBootconfigComponent)
       .install(GeneratePersistentVbmetaComponent)
       .addMultibinding<SetupFeature, InitializeInstanceCompositeDisk>()
