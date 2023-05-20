@@ -22,6 +22,7 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -31,9 +32,28 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/parsebool.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
+namespace {
+
+std::string BoolJoin(const std::vector<bool>& values, const char separator) {
+  if (values.empty()) {
+    return "";
+  }
+
+  std::ostringstream ss;
+  ss << std::boolalpha << *values.begin();
+  for (auto it = std::next(values.begin()); it != values.end(); ++it) {
+    ss << separator << *it;
+  }
+  return ss.str();
+}
+
+}  // namespace
 
 std::ostream& operator<<(std::ostream& out, const FlagAlias& alias) {
   switch (alias.mode) {
@@ -130,6 +150,16 @@ static bool LikelyFlag(const std::string& next_arg) {
 
 std::string BoolToString(bool val) {
   return val ? "true" : "false";
+}
+
+Result<bool> ParseBool(const std::string& value, const std::string& name) {
+  auto result = android::base::ParseBool(value);
+  CF_EXPECT(result != android::base::ParseBoolResult::kError,
+            "Failed to parse value \"" << value << "\" for " << name);
+  if (result == android::base::ParseBoolResult::kTrue) {
+    return true;
+  }
+  return false;
 }
 
 Flag::FlagProcessResult Flag::Process(
@@ -523,10 +553,56 @@ Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
   return GflagsCompatBoolFlagBase(name)
-      .Getter([&value]() { return value ? "true" : "false"; })
+      .Getter([&value]() { return BoolToString(value); })
       .Setter([name, &value](const FlagMatch& match) {
         return GflagsCompatBoolFlagSetter(name, value, match);
       });
 };
+
+Flag GflagsCompatFlag(const std::string& name,
+                      std::vector<std::string>& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return android::base::Join(value, ','); })
+      .Setter([&name, &value](const FlagMatch& match) {
+        if (match.value.empty()) {
+          LOG(ERROR) << "No values given for flag \"" << name << "\"";
+          return false;
+        }
+        std::vector<std::string> str_vals =
+            android::base::Split(match.value, ",");
+        value = std::move(str_vals);
+        return true;
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
+                      const bool default_value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return BoolJoin(value, ','); })
+      .Setter([&name, &value, default_value](const FlagMatch& match) {
+        if (match.value.empty()) {
+          LOG(ERROR) << "No values given for flag \"" << name << "\"";
+          return false;
+        }
+        std::vector<std::string> str_vals =
+            android::base::Split(match.value, ",");
+        value.clear();
+        value.reserve(str_vals.size());
+        for (const auto& str_val : str_vals) {
+          if (str_val.empty()) {
+            value.push_back(default_value);
+          } else {
+            Result<bool> result = ParseBool(str_val, name);
+            if (!result.ok()) {
+              value.clear();
+              LOG(ERROR) << result.error().Trace();
+              return false;
+            }
+            value.push_back(result.value());
+          }
+        }
+        return true;
+      });
+}
 
 }  // namespace cuttlefish
