@@ -25,6 +25,7 @@ cc_binary {
         "boot_config.cc",
         "boot_image_utils.cc",
         "clean.cc",
+        "disk/factory_reset_protected.cc",
         "disk/gem5_image_unpacker.cpp",
         "disk/generate_persistent_bootconfig.cpp",
         "disk/generate_persistent_vbmeta.cpp",
