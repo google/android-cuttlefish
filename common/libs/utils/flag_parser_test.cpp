@@ -228,6 +228,59 @@ TEST(FlagParser, StringIntFlag) {
   ASSERT_EQ(string_value, "d");
 }
 
+TEST(FlagParser, StringVectorFlag) {
+  std::vector<std::string> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_FALSE(flag.Parse({"--myflag="}));
+  ASSERT_TRUE(value.empty());
+
+  ASSERT_TRUE(flag.Parse({"--myflag=foo"}));
+  ASSERT_EQ(value, std::vector<std::string>({"foo"}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=foo,bar"}));
+  ASSERT_EQ(value, std::vector<std::string>({"foo", "bar"}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=,bar"}));
+  ASSERT_EQ(value, std::vector<std::string>({"", "bar"}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=foo,"}));
+  ASSERT_EQ(value, std::vector<std::string>({"foo", ""}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=,"}));
+  ASSERT_EQ(value, std::vector<std::string>({"", ""}));
+}
+
+TEST(FlagParser, BoolVectorFlag) {
+  std::vector<bool> value;
+  bool default_value = true;
+  auto flag = GflagsCompatFlag("myflag", value, default_value);
+
+  ASSERT_FALSE(flag.Parse({"--myflag="}));
+  ASSERT_TRUE(value.empty());
+
+  ASSERT_FALSE(flag.Parse({"--myflag=foo"}));
+  ASSERT_TRUE(value.empty());
+
+  ASSERT_FALSE(flag.Parse({"--myflag=true,bar"}));
+  ASSERT_TRUE(value.empty());
+
+  ASSERT_TRUE(flag.Parse({"--myflag=true"}));
+  ASSERT_EQ(value, std::vector<bool>({true}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=true,false"}));
+  ASSERT_EQ(value, std::vector<bool>({true, false}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=,false"}));
+  ASSERT_EQ(value, std::vector<bool>({true, false}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=true,"}));
+  ASSERT_EQ(value, std::vector<bool>({true, true}));
+
+  ASSERT_TRUE(flag.Parse({"--myflag=,"}));
+  ASSERT_EQ(value, std::vector<bool>({true, true}));
+}
+
 TEST(FlagParser, InvalidStringFlag) {
   std::string value;
   auto flag = GflagsCompatFlag("myflag", value);
