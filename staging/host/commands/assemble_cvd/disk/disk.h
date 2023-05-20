@@ -49,4 +49,10 @@ fruit::Component<
     GeneratePersistentVbmeta>
 GeneratePersistentVbmetaComponent();
 
+class InitializeFactoryResetProtected : public SetupFeature {};
+
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 InitializeFactoryResetProtected>
+InitializeFactoryResetProtectedComponent();
+
 }  // namespace cuttlefish
