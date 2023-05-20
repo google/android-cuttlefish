@@ -437,56 +437,6 @@ DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
       .ResumeIfPossible(FLAGS_resume);
 }
 
-std::vector<ImagePartition> persistent_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  // Note that if the position of uboot_env changes, the environment for
-  // u-boot must be updated as well (see boot_config.cc and
-  // cuttlefish.fragment in external/u-boot).
-  partitions.push_back(ImagePartition{
-      .label = "uboot_env",
-      .image_file_path = AbsolutePath(instance.uboot_env_image_path()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta",
-      .image_file_path = AbsolutePath(instance.vbmeta_path()),
-  });
-  if (!instance.protected_vm()) {
-    partitions.push_back(ImagePartition{
-        .label = "frp",
-        .image_file_path =
-            AbsolutePath(instance.factory_reset_protected_path()),
-    });
-  }
-  if (instance.bootconfig_supported()) {
-    partitions.push_back(ImagePartition{
-        .label = "bootconfig",
-        .image_file_path = AbsolutePath(instance.persistent_bootconfig_path()),
-    });
-  }
-  return partitions;
-}
-
-std::vector<ImagePartition> persistent_ap_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  // Note that if the position of uboot_env changes, the environment for
-  // u-boot must be updated as well (see boot_config.cc and
-  // cuttlefish.fragment in external/u-boot).
-  partitions.push_back(ImagePartition{
-      .label = "uboot_env",
-      .image_file_path = AbsolutePath(instance.ap_uboot_env_image_path()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta",
-      .image_file_path = AbsolutePath(instance.ap_vbmeta_path()),
-  });
-
-  return partitions;
-}
-
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
   struct statvfs vfs {};
   if (statvfs(path.c_str(), &vfs) != 0) {
@@ -630,69 +580,6 @@ class InitializeSdCard : public SetupFeature {
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
-class InitializeInstanceCompositeDisk : public SetupFeature {
- public:
-  INJECT(InitializeInstanceCompositeDisk(
-      const CuttlefishConfig& config,
-      const CuttlefishConfig::InstanceSpecific& instance,
-      InitializeFactoryResetProtected& frp,
-      GeneratePersistentVbmeta& vbmeta))
-      : config_(config),
-        instance_(instance),
-        frp_(frp),
-        vbmeta_(vbmeta) {}
-
-  std::string Name() const override {
-    return "InitializeInstanceCompositeDisk";
-  }
-  bool Enabled() const override { return true; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {
-        static_cast<SetupFeature*>(&frp_),
-        static_cast<SetupFeature*>(&vbmeta_),
-    };
-  }
-  Result<void> ResultSetup() override {
-    const auto ipath = [this](const std::string& path) -> std::string {
-      return instance_.PerInstancePath(path.c_str());
-    };
-    auto persistent_disk_builder =
-        DiskBuilder()
-            .Partitions(persistent_composite_disk_config(instance_))
-            .VmManager(config_.vm_manager())
-            .CrosvmPath(instance_.crosvm_binary())
-            .ConfigPath(ipath("persistent_composite_disk_config.txt"))
-            .HeaderPath(ipath("persistent_composite_gpt_header.img"))
-            .FooterPath(ipath("persistent_composite_gpt_footer.img"))
-            .CompositeDiskPath(instance_.persistent_composite_disk_path())
-            .ResumeIfPossible(FLAGS_resume);
-    CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
-
-    if (instance_.ap_boot_flow() == APBootFlow::Grub) {
-      auto persistent_ap_disk_builder =
-        DiskBuilder()
-            .Partitions(persistent_ap_composite_disk_config(instance_))
-            .VmManager(config_.vm_manager())
-            .CrosvmPath(instance_.crosvm_binary())
-            .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))
-            .HeaderPath(ipath("ap_persistent_composite_gpt_header.img"))
-            .FooterPath(ipath("ap_persistent_composite_gpt_footer.img"))
-            .CompositeDiskPath(instance_.persistent_ap_composite_disk_path())
-            .ResumeIfPossible(FLAGS_resume);
-      CF_EXPECT(persistent_ap_disk_builder.BuildCompositeDiskIfNecessary());
-    }
-
-    return {};
-  }
-
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-  InitializeFactoryResetProtected& frp_;
-  GeneratePersistentVbmeta& vbmeta_;
-};
-
 class VbmetaEnforceMinimumSize : public SetupFeature {
  public:
   INJECT(VbmetaEnforceMinimumSize(
@@ -779,7 +666,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(InitializeFactoryResetProtectedComponent)
       .install(GeneratePersistentBootconfigComponent)
       .install(GeneratePersistentVbmetaComponent)
-      .addMultibinding<SetupFeature, InitializeInstanceCompositeDisk>()
+      .install(InitializeInstanceCompositeDiskComponent)
       .install(InitializeDataImageComponent)
       .install(InitBootloaderEnvPartitionComponent);
 }
