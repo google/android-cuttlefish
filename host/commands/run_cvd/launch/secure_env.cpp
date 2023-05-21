@@ -91,7 +91,7 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
     }
 
     auto confui_socket_path =
-        instance_.PerInstanceInternalPath("confui_sign.sock");
+        instance_.PerInstanceInternalUdsPath("confui_sign.sock");
     confui_server_fd_ = SharedFD::SocketLocalServer(confui_socket_path, false,
                                                     SOCK_STREAM, 0600);
     CF_EXPECT(confui_server_fd_->IsOpen(),
