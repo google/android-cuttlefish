@@ -571,6 +571,25 @@ std::string CuttlefishConfig::AssemblyPath(
   return AbsolutePath(assembly_dir() + "/" + file_name);
 }
 
+std::string CuttlefishConfig::instances_uds_dir() const {
+  // Try to use /tmp/cf_avd_{uid}/ for UDS directory.
+  // If it fails, use HOME directory(legacy) instead.
+
+  auto defaultPath = AbsolutePath("/tmp/cf_avd_" + std::to_string(getuid()));
+
+  if (!DirectoryExists(defaultPath) ||
+      CanAccess(defaultPath, R_OK | W_OK | X_OK)) {
+    return defaultPath;
+  }
+
+  return instances_dir();
+}
+
+std::string CuttlefishConfig::InstancesUdsPath(
+    const std::string& file_name) const {
+  return AbsolutePath(instances_uds_dir() + "/" + file_name);
+}
+
 CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(int num) {
   return MutableInstanceSpecific(this, std::to_string(num));
 }
@@ -601,6 +620,7 @@ std::vector<std::string> CuttlefishConfig::instance_dirs() const {
   std::vector<std::string> result;
   for (const auto& instance : Instances()) {
     result.push_back(instance.instance_dir());
+    result.push_back(instance.instance_uds_dir());
   }
   return result;
 }
