@@ -103,6 +103,9 @@ class CuttlefishConfig {
   std::string assembly_dir() const;
   std::string AssemblyPath(const std::string&) const;
 
+  std::string instances_uds_dir() const;
+  std::string InstancesUdsPath(const std::string&) const;
+
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
@@ -274,6 +277,12 @@ class CuttlefishConfig {
     int tombstone_receiver_port() const;
     // Port number to connect to the config server on the host
     int config_server_port() const;
+    // Port number to connect to the keyboard server on the host. (Only
+    // operational if QEMU is the vmm.)
+    int keyboard_server_port() const;
+    // Port number to connect to the touch server on the host. (Only
+    // operational if QEMU is the vmm.)
+    int touch_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
@@ -311,14 +320,24 @@ class CuttlefishConfig {
 
     // Returns the path to a file with the given name in the instance
     // directory..
-    std::string PerInstancePath(const char* file_name) const;
-    std::string PerInstanceInternalPath(const char* file_name) const;
+    std::string PerInstancePath(const std::string& file_name) const;
+    std::string PerInstanceInternalPath(const std::string& file_name) const;
     std::string PerInstanceLogPath(const std::string& file_name) const;
-    std::string PerInstanceGrpcSocketPath(const std::string& socket_name) const;
 
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
+
+    // Return the Unix domain socket path with given name. Because the
+    // length limitation of Unix domain socket name, it needs to be in
+    // the another directory than normal Instance path.
+    std::string PerInstanceUdsPath(const std::string& file_name) const;
+    std::string PerInstanceInternalUdsPath(const std::string& file_name) const;
+    std::string PerInstanceGrpcSocketPath(const std::string& socket_name) const;
+
+    std::string instance_uds_dir() const;
+
+    std::string instance_internal_uds_dir() const;
 
     std::string touch_socket_path(int screen_idx) const;
     std::string rotary_socket_path() const;
