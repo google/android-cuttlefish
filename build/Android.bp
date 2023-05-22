@@ -358,6 +358,9 @@ cvd_host_package_customization {
                 },
             },
         },
+        linux_bionic_x86_64: {
+            enabled: false,
+        },
         darwin: {
             enabled: false,
         },
