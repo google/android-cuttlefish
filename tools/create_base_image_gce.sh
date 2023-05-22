@@ -90,7 +90,9 @@ sudo mount --bind /dev/ /mnt/image/dev
 sudo mount --bind /dev/pts /mnt/image/dev/pts
 sudo mount --bind /run /mnt/image/run
 # resolv.conf is needed on Debian but not Ubuntu
-sudo cp /etc/resolv.conf /mnt/image/etc/
+if [ ! -f /mnt/image/etc/resolv.conf ]; then
+  sudo cp /etc/resolv.conf /mnt/image/etc/
+fi
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt install -y "${tmp_debs[@]}"
 # install tools dependencies
