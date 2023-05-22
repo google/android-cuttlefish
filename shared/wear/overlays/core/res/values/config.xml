@@ -49,7 +49,7 @@
   <bool name="config_supportAutoRotation">true</bool>
   <bool name="config_hasRecents">false</bool>
   <integer name="config_minimumScreenOffTimeout">5000</integer>
-  <integer name="config_maximumScreenDimDuration">300</integer>
+  <integer name="config_maximumScreenDimDuration">0</integer>
   <fraction name="config_maximumScreenDimRatio">20%</fraction>
   <integer name="config_notificationServiceArchiveSize">1</integer>
   <bool name="config_networkSamplingWakesDevice">false</bool>
