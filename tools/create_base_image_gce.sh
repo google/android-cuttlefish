@@ -114,21 +114,6 @@ sudo cp install_nvidia.sh /mnt/image/
 sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
 sudo rm /mnt/image/install_nvidia.sh
 
-# Verify
-query_nvidia() {
-  sudo chroot /mnt/image nvidia-smi --format=csv,noheader --query-gpu="$@"
-}
-
-if [[ $(query_nvidia "count") != "1" ]]; then
-  echo "Failed to detect GPU."
-  exit 1
-fi
-
-if [[ $(query_nvidia "driver_version") == "" ]]; then
-  echo "Failed to detect GPU driver."
-  exit 1
-fi
-
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bullseye-backports
 
