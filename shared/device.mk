@@ -365,8 +365,9 @@ PRODUCT_PACKAGES += \
 #
 # Contexthub HAL
 #
-PRODUCT_PACKAGES += \
+LOCAL_CONTEXTHUB_PRODUCT_PACKAGE ?= \
     android.hardware.contexthub-service.example
+PRODUCT_PACKAGES += $(LOCAL_CONTEXTHUB_PRODUCT_PACKAGE)
 
 #
 # Drm HAL
