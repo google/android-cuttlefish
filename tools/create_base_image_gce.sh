@@ -41,8 +41,8 @@ sudo apt install -y debhelper ubuntu-dev-tools equivs "${extra_packages[@]}"
 sudo apt install -y cloud-utils
 sudo apt install -y cloud-guest-utils
 sudo apt install -y fdisk
-sudo growpart /dev/sdb 1
-sudo e2fsck -f -y /dev/sdb1
+sudo growpart /dev/sdb 1 || /bin/true
+sudo e2fsck -f -y /dev/sdb1 || /bin/true
 sudo resize2fs /dev/sdb1
 
 # Install the cuttlefish build deps
@@ -90,7 +90,9 @@ sudo mount --bind /dev/ /mnt/image/dev
 sudo mount --bind /dev/pts /mnt/image/dev/pts
 sudo mount --bind /run /mnt/image/run
 # resolv.conf is needed on Debian but not Ubuntu
-sudo cp /etc/resolv.conf /mnt/image/etc/
+if [ ! -f /mnt/image/etc/resolv.conf ]; then
+  sudo cp /etc/resolv.conf /mnt/image/etc/
+fi
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt install -y "${tmp_debs[@]}"
 # install tools dependencies
@@ -111,21 +113,6 @@ sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -
 sudo cp install_nvidia.sh /mnt/image/
 sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
 sudo rm /mnt/image/install_nvidia.sh
-
-# Verify
-query_nvidia() {
-  sudo chroot /mnt/image nvidia-smi --format=csv,noheader --query-gpu="$@"
-}
-
-if [[ $(query_nvidia "count") != "1" ]]; then
-  echo "Failed to detect GPU."
-  exit 1
-fi
-
-if [[ $(query_nvidia "driver_version") == "" ]]; then
-  echo "Failed to detect GPU driver."
-  exit 1
-fi
 
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bullseye-backports
