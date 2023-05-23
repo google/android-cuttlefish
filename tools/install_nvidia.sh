@@ -38,7 +38,7 @@ apt-get install -y -t bullseye-backports $(echo linux-headers-${kmodver})
 # Dependencies for nvidia-installer
 apt-get install -y dkms libglvnd-dev libc6-dev pkg-config
 
-nvidia_version=515.65.01
+nvidia_version=525.85.12
 
 wget -q https://us.download.nvidia.com/tesla/${nvidia_version}/NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
 chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
