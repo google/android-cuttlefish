@@ -71,13 +71,9 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     };
 
     let mut rng = BoringRng::default();
-    let mut host_sdd_mgr;
-    let sdd_mgr: Option<&mut dyn kmr_common::keyblob::SecureDeletionSecretManager> =
+    let sdd_mgr: Option<Box<dyn kmr_common::keyblob::SecureDeletionSecretManager>> =
         match sdd::HostSddManager::new(&mut rng) {
-            Ok(v) => {
-                host_sdd_mgr = v;
-                Some(&mut host_sdd_mgr)
-            }
+            Ok(v) => Some(Box::new(v)),
             Err(e) => {
                 error!("Failed to initialize secure deletion data manager: {:?}", e);
                 None
@@ -86,44 +82,50 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     let clock = clock::StdClock::default();
     let rsa = BoringRsa::default();
     let ec = BoringEc::default();
-    let tpm_hkdf = tpm::KeyDerivation::new(trm);
-    let soft_hkdf = BoringHmac;
-    let hkdf: &dyn kmr_common::crypto::Hkdf =
-        if security_level == SecurityLevel::TrustedEnvironment { &tpm_hkdf } else { &soft_hkdf };
+    let hkdf: Box<dyn kmr_common::crypto::Hkdf> =
+        if security_level == SecurityLevel::TrustedEnvironment {
+            Box::new(tpm::KeyDerivation::new(trm))
+        } else {
+            Box::new(BoringHmac)
+        };
     let imp = crypto::Implementation {
-        rng: &mut rng,
-        clock: Some(&clock),
-        compare: &BoringEq,
-        aes: &BoringAes,
-        des: &BoringDes,
-        hmac: &BoringHmac,
-        rsa: &rsa,
-        ec: &ec,
-        ckdf: &BoringAesCmac,
+        rng: Box::new(rng),
+        clock: Some(Box::new(clock)),
+        compare: Box::new(BoringEq),
+        aes: Box::new(BoringAes),
+        des: Box::new(BoringDes),
+        hmac: Box::new(BoringHmac),
+        rsa: Box::new(rsa),
+        ec: Box::new(ec),
+        ckdf: Box::new(BoringAesCmac),
         hkdf,
     };
-    let sign_info = attest::CertSignInfo::new();
 
-    let tpm_keys = tpm::Keys::new(trm);
-    let soft_keys = soft::Keys;
-    let keys: &dyn kmr_ta::device::RetrieveKeyMaterial =
-        if security_level == SecurityLevel::TrustedEnvironment { &tpm_keys } else { &soft_keys };
-    let tpm_rpc = tpm::RpcArtifacts::new(tpm::TpmHmac::new(trm));
-    let soft_rpc = soft::RpcArtifacts::new(soft::Derive::default());
-    let rpc: &dyn kmr_ta::device::RetrieveRpcArtifacts =
-        if security_level == SecurityLevel::TrustedEnvironment { &tpm_rpc } else { &soft_rpc };
+    let sign_info = attest::CertSignInfo::new();
+    let keys: Box<dyn kmr_ta::device::RetrieveKeyMaterial> =
+        if security_level == SecurityLevel::TrustedEnvironment {
+            Box::new(tpm::Keys::new(trm))
+        } else {
+            Box::new(soft::Keys)
+        };
+    let rpc: Box<dyn kmr_ta::device::RetrieveRpcArtifacts> =
+        if security_level == SecurityLevel::TrustedEnvironment {
+            Box::new(tpm::RpcArtifacts::new(tpm::TpmHmac::new(trm)))
+        } else {
+            Box::new(soft::RpcArtifacts::new(soft::Derive::default()))
+        };
     let dev = Implementation {
         keys,
-        sign_info: &sign_info,
+        sign_info: Box::new(sign_info),
         // HAL populates attestation IDs from properties.
         attest_ids: None,
         sdd_mgr,
         // `BOOTLOADER_ONLY` keys not supported.
-        bootloader: &BootloaderDone,
+        bootloader: Box::new(BootloaderDone),
         // `STORAGE_KEY` keys not supported.
         sk_wrapper: None,
         // `TRUSTED_USER_PRESENCE_REQUIRED` keys not supported
-        tup: &TrustedPresenceUnsupported,
+        tup: Box::new(TrustedPresenceUnsupported),
         // No support for converting previous implementation's keyblobs.
         legacy_key: None,
         rpc,
