@@ -1,3 +1,9 @@
+cuttlefish-common (0.9.27) UNRELEASED; urgency=medium
+
+  * Increase nofile soft limit to support passthrough GPU modes
+
+ -- Jason Macnak <natsu@google.com>  Tue, 23 May 2023 08:58:58 -0700
+
 cuttlefish-common (0.9.26) UNRELEASED; urgency=medium
 
   * Change operator's web UI to tile UI
@@ -54,7 +60,7 @@ cuttlefish-common (0.9.19) stable; urgency=medium
 
   [ Tristan Muntsinger ]
   * Add e2fsprogs package to control file (#93)
-  
+
  -- Ram Muthiah <rammuthiah@google.com>  Mon, 30 Aug 2021 13:43:05 -0700
 
 cuttlefish-common (0.9.18) stable; urgency=medium
