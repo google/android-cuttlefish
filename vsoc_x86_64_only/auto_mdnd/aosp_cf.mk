@@ -21,6 +21,10 @@
 
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto_md/aosp_cf.mk)
 
+# HSUM is currently incompatible with telephony.
+# TODO(b/283853205): Properly disable telephony using per-partition makefile.
+TARGET_NO_TELEPHONY := true
+
 PRODUCT_NAME := aosp_cf_x86_64_auto_mdnd
 PRODUCT_MODEL := Cuttlefish x86_64 auto 64-bit only multi-displays, no-driver
 
