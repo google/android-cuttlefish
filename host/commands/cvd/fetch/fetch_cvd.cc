@@ -117,6 +117,7 @@ struct DownloadFlags {
 
 struct FetchFlags {
   std::string target_directory = "";
+  std::vector<std::string> target_subdirectory;
   bool keep_downloaded_archives = false;
   bool helpxml = false;
   BuildApiFlags build_api_flags;
@@ -155,6 +156,12 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(GflagsCompatFlag("keep_downloaded_archives",
                                       fetch_flags.keep_downloaded_archives)
                          .Help("Keep downloaded zip/tar."));
+  flags.emplace_back(
+      GflagsCompatFlag("target_subdirectory", fetch_flags.target_subdirectory)
+          .Help("Target subdirectory to fetch files into.  Specifically aimed "
+                "at organizing builds when there are multiple fetches. "
+                "**Note**: directory separator automatically prepended, only "
+                "give the subdirectory name."));
 
   flags.emplace_back(GflagsCompatFlag("api_key", build_api_flags.api_key)
                          .Help("API key ofr the Android Build API"));
@@ -209,15 +216,17 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   return flags;
 }
 
-Result<int> GetNumberOfBuilds(const VectorFlags& flags) {
+Result<int> GetNumberOfBuilds(
+    const VectorFlags& flags,
+    const std::vector<std::string>& subdirectory_flag) {
   std::optional<int> number_of_builds;
   for (const auto& flag_size :
        {flags.default_build.size(), flags.system_build.size(),
         flags.kernel_build.size(), flags.boot_build.size(),
         flags.bootloader_build.size(), flags.otatools_build.size(),
         flags.host_package_build.size(), flags.boot_artifact.size(),
-        flags.download_img_zip.size(),
-        flags.download_target_files_zip.size()}) {
+        flags.download_img_zip.size(), flags.download_target_files_zip.size(),
+        subdirectory_flag.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given
       continue;
@@ -303,7 +312,8 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   }
 
   fetch_flags.build_api_flags = build_api_flags;
-  const int num_builds = CF_EXPECT(GetNumberOfBuilds(vector_flags));
+  const int num_builds = CF_EXPECT(
+      GetNumberOfBuilds(vector_flags, fetch_flags.target_subdirectory));
   fetch_flags.build_target_flags =
       CF_EXPECT(MapToBuildTargetFlags(vector_flags, num_builds));
   return {fetch_flags};
@@ -699,7 +709,8 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
   const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
-  const bool add_subdirectory = flags.build_target_flags.size() > 1;
+  const bool add_subdirectory =
+      flags.build_target_flags.size() > 1 || !flags.target_subdirectory.empty();
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
@@ -709,7 +720,9 @@ Result<void> FetchCvdMain(int argc, char** argv) {
          flags.build_target_flags) {
       std::string build_directory = fetch_root_directory;
       if (add_subdirectory) {
-        build_directory += "/build_" + std::to_string(index);
+        build_directory += "/" + AccessOrDefault<std::string>(
+                                     flags.target_subdirectory, index,
+                                     "build_" + std::to_string(index));
       }
       const TargetDirectories target_directories =
           CF_EXPECT(CreateDirectories(build_directory));
