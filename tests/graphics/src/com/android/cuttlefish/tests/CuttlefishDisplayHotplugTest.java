@@ -473,6 +473,21 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
                 AddDisplayParams.create(1280, 720)));
     }
 
+    @Test
+    public void testDisplayHotplugSeries() throws Exception {
+        doOneConnectAndDisconnectCycle(
+            List.of(AddDisplayParams.create(640, 480)));
+
+        doOneConnectAndDisconnectCycle(
+            List.of(AddDisplayParams.create(1280, 720)));
+
+        doOneConnectAndDisconnectCycle(
+            List.of(AddDisplayParams.create(1920, 1080)));
+
+        doOneConnectAndDisconnectCycle(
+            List.of(AddDisplayParams.create(3840, 2160)));
+    }
+
     @AutoValue
     public static abstract class MemoryInfo {
         static MemoryInfo create(int usedRam) {
