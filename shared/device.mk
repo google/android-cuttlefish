@@ -509,12 +509,6 @@ ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),)
     LOCAL_KEYMINT_PRODUCT_PACKAGE := android.hardware.security.keymint-service.rust
 endif
 
-ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),android.hardware.security.keymint-service.rust)
-    # KeyMint HAL has been overridden to force use of the Rust reference implementation.
-    # Set the build config for secure_env to match.
-    $(call soong_config_set,secure_env,keymint_impl,rust)
-endif
-
 PRODUCT_PACKAGES += \
     $(LOCAL_KEYMINT_PRODUCT_PACKAGE) \
 
