@@ -30,7 +30,7 @@ genfscon sysfs $1/rtc/rtc$2/alarmtimer.0.auto/wakeup u:object_r:sysfs_wakeup:s0 
 dnl')dnl
 dnl
 # crosvm (x86)
-cf_pci_block_device(/devices/pci0000:00, 0xc, 11)
+cf_pci_block_device(/devices/pci0000:00, 0xd, 12)
 cf_pci_gpu_device(/devices/pci0000:00, 0x2)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
@@ -82,7 +82,7 @@ genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim0/net u:object_r:sysfs_net:s
 genfscon sysfs /devices/virtual/mac80211_hwsim/hwsim1/net u:object_r:sysfs_net:s0
 
 # crosvm (arm64)
-cf_pci_block_device(/devices/platform/10000.pci/pci0000:00, 0xd, 12)
+cf_pci_block_device(/devices/platform/10000.pci/pci0000:00, 0xe, 13)
 cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00, 0x2)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
@@ -90,7 +90,7 @@ genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
 ## arm64 2000.rtc on crosvm does not currently expose a wakeup node
 
 # qemu (x86)
-cf_pci_block_device(/devices/pci0000:00, 0xd, 11)
+cf_pci_block_device(/devices/pci0000:00, 0xe, 12)
 #cf_pci_gpu_device(/devices/pci0000:00, 0x2) - duplicated with crosvm(x86)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
@@ -98,7 +98,7 @@ genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
 cf_rtc_wakeup_alarmtimer(/devices/pnp0/00:04, 0, 19)
 
 # qemu (arm64)
-cf_pci_block_device(/devices/platform/4010000000.pcie/pci0000:00, 0xc, 11)
+cf_pci_block_device(/devices/platform/4010000000.pcie/pci0000:00, 0xd, 12)
 cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00, 0x1)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
@@ -106,13 +106,13 @@ genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
 cf_rtc_wakeup_alarmtimer(/devices/platform/9010000.pl031, 0, 0)
 
 # qemu (arm)
-cf_pci_block_device(/devices/platform/3f000000.pcie/pci0000:00, 0xc, 11)
+cf_pci_block_device(/devices/platform/3f000000.pcie/pci0000:00, 0xd, 12)
 cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00, 0x1)
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # qemu (riscv64)
-cf_pci_block_device(/devices/platform/soc/30000000.pci/pci0000:00, 0xd, 12)
+cf_pci_block_device(/devices/platform/soc/30000000.pci/pci0000:00, 0xe, 13)
 cf_pci_gpu_device(/devices/platform/soc/30000000.pci/pci0000:00, 0x1)
 
 # common on all platforms / vm managers

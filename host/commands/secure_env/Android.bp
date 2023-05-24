@@ -77,6 +77,7 @@ common_libsecure_srcs = [
         "insecure_fallback_storage.cpp",
         "json_serializable.cpp",
         "keymaster_responder.cpp",
+        "oemlock_responder.cpp",
         "primary_key_builder.cpp",
         "tpm_attestation_record.cpp",
         "tpm_auth.cpp",

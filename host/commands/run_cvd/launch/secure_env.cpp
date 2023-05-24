@@ -46,6 +46,8 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
     command.AddParameter("-keymaster_fd_in=", fifos_[1]);
     command.AddParameter("-gatekeeper_fd_out=", fifos_[2]);
     command.AddParameter("-gatekeeper_fd_in=", fifos_[3]);
+    command.AddParameter("-oemlock_fd_out=", fifos_[4]);
+    command.AddParameter("-oemlock_fd_in=", fifos_[5]);
 
     const auto& secure_hals = config_.secure_hals();
     bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
@@ -58,6 +60,11 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
     bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
     auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
     command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
+
+    bool secure_oemlock = secure_hals.count(SecureHal::Oemlock) > 0;
+    auto oemlock_impl = secure_oemlock ? "tpm" : "software";
+    command.AddParameter("-oemlock_impl=", oemlock_impl);
+
     command.AddParameter("-kernel_events_fd=", kernel_log_pipe_);
 
     std::vector<MonitorCommand> commands;
@@ -79,6 +86,8 @@ class SecureEnvironment : public CommandSource, public KernelLogPipeConsumer {
         instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
         instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
         instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("oemlock_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("oemlock_fifo_vm.out"),
     };
     std::vector<SharedFD> fifos;
     for (const auto& path : fifo_paths) {

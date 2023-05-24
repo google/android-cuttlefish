@@ -149,6 +149,8 @@ static SecureHal StringToSecureHal(std::string mode) {
     return SecureHal::Keymint;
   } else if (mode == "gatekeeper") {
     return SecureHal::Gatekeeper;
+  } else if (mode == "oemlock") {
+    return SecureHal::Oemlock;
   } else {
     return SecureHal::Unknown;
   }
