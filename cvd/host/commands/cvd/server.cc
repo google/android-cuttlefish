@@ -434,8 +434,8 @@ static Result<RequestWithStdio> ConvertDirPathToAbsolute(
   RequestWithStdio new_request(
       request.Client(),
       MakeRequest({.cmd_args = std::move(cmd_args),
-                   .selector_args = std::move(selector_args),
                    .env = std::move(envs),
+                   .selector_args = std::move(selector_args),
                    .working_dir = current_dir},
                   request.Message().command_request().wait_behavior()),
       request.FileDescriptors(), request.Credentials());
