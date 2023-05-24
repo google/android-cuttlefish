@@ -23,7 +23,7 @@ use std::panic;
 use std::sync::{Arc, Mutex};
 
 /// Device file used to communicate with the KeyMint TA.
-static DEVICE_FILE_NAME: &str = "/dev/hvc3";
+static DEVICE_FILE_NAME: &str = "/dev/hvc11";
 
 /// Name of KeyMint binder device instance.
 static SERVICE_INSTANCE: &str = "default";
