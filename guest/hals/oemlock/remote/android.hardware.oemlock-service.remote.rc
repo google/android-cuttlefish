@@ -1,0 +1,4 @@
+service vendor.oemlock_default /vendor/bin/hw/android.hardware.oemlock-service.remote /dev/hvc10
+    class hal
+    user hsm
+    group hsm

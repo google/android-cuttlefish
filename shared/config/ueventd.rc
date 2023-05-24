@@ -38,5 +38,8 @@
 # uwb
 /dev/hvc9 0660 uwb uwb
 
+# oemlock
+/dev/hvc10 0660 hsm hsm
+
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system
