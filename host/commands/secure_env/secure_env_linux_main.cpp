@@ -54,6 +54,8 @@
 DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
 DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
+DEFINE_int32(keymint_fd_in, -1, "A pipe for keymint communication");
+DEFINE_int32(keymint_fd_out, -1, "A pipe for keymint communication");
 DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(gatekeeper_fd_out, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(oemlock_fd_in, -1, "A pipe for oemlock communication");
@@ -248,11 +250,11 @@ int SecureEnvMain(int argc, char** argv) {
       return -1;
     }
 
-    int keymaster_in = FLAGS_keymaster_fd_in;
-    int keymaster_out = FLAGS_keymaster_fd_out;
+    int keymint_in = FLAGS_keymint_fd_in;
+    int keymint_out = FLAGS_keymint_fd_out;
     TpmResourceManager* rm = resource_manager;
-    threads.emplace_back([rm, keymaster_in, keymaster_out, security_level]() {
-      kmr_ta_main(keymaster_in, keymaster_out, security_level, rm);
+    threads.emplace_back([rm, keymint_in, keymint_out, security_level]() {
+      kmr_ta_main(keymint_in, keymint_out, security_level, rm);
     });
 
   } else {
