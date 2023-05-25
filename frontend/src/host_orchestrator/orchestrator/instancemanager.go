@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -60,9 +61,17 @@ type AndroidBuild struct {
 
 type IMPaths struct {
 	RootDir          string
-	CVDBin           string
+	CVDToolsDir      string
 	ArtifactsRootDir string
 	RuntimesRootDir  string
+}
+
+func (p *IMPaths) CVDBin() string {
+	return filepath.Join(p.CVDToolsDir, "cvd")
+}
+
+func (p *IMPaths) FetchCVDBin() string {
+	return filepath.Join(p.CVDToolsDir, "fetch_cvd")
 }
 
 type ArtifactsFetcherFactory func(string) ArtifactsFetcher
@@ -85,7 +94,7 @@ type CVDToolInstanceManager struct {
 
 type CVDToolInstanceManagerOpts struct {
 	ExecContext              ExecContext
-	CVDBinAB                 AndroidBuild
+	CVDToolsVersion          AndroidBuild
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	UserArtifactsDirResolver UserArtifactsDirResolver
@@ -102,19 +111,19 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 		om:                       opts.OperationManager,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 		hostValidator:            opts.HostValidator,
-		downloadCVDHandler: &downloadCVDHandler{
-			Build:    opts.CVDBinAB,
-			Filename: opts.Paths.CVDBin,
-			BuildAPI: opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
-		},
+		downloadCVDHandler: newDownloadCVDHandler(
+			opts.CVDToolsVersion,
+			&opts.Paths,
+			opts.BuildAPIFactory(""), // cvd can be downloaded without credentials
+		),
 		artifactsMngr: NewArtifactsManager(
 			opts.Paths.ArtifactsRootDir,
 			opts.UUIDGen,
 		),
-		buildArtifactsFetcher: newArtifactsFetcherFactory(opts.ExecContext, opts.Paths.CVDBin, opts.BuildAPIFactory),
+		buildArtifactsFetcher: newArtifactsFetcherFactory(opts.ExecContext, opts.Paths.FetchCVDBin(), opts.BuildAPIFactory),
 		startCVDHandler: &startCVDHandler{
 			ExecContext: opts.ExecContext,
-			CVDBin:      opts.Paths.CVDBin,
+			CVDBin:      opts.Paths.CVDBin(),
 			Timeout:     opts.CVDExecTimeout,
 		},
 		buildAPIFactory: opts.BuildAPIFactory,
@@ -156,7 +165,7 @@ func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 	var stdOut string
 	cvdCmd := cvdCommand{
 		execContext: m.execContext,
-		cvdBin:      m.paths.CVDBin,
+		cvdBin:      m.paths.CVDBin(),
 		args:        []string{"fleet"},
 		stdOut:      &stdOut,
 	}
@@ -417,98 +426,115 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 
 // Makes sure `cvd` gets downloaded once.
 type downloadCVDHandler struct {
-	Build    AndroidBuild
-	Filename string
-	BuildAPI BuildAPI
+	Build            AndroidBuild
+	cvdFilename      string
+	fetchCVDFilename string
+	BuildAPI         BuildAPI
 
 	mutex sync.Mutex
+}
+
+func newDownloadCVDHandler(build AndroidBuild, paths *IMPaths, buildAPI BuildAPI) *downloadCVDHandler {
+	return &downloadCVDHandler{
+		Build:            build,
+		cvdFilename:      paths.CVDBin(),
+		fetchCVDFilename: paths.FetchCVDBin(),
+		BuildAPI:         buildAPI,
+	}
 }
 
 func (h *downloadCVDHandler) Download() error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	if err := h.download(); err != nil {
+	if err := h.download(h.cvdFilename); err != nil {
 		return fmt.Errorf("failed downloading cvd file: %w", err)
 	}
-	return os.Chmod(h.Filename, 0750)
+	if err := h.download(h.fetchCVDFilename); err != nil {
+		return fmt.Errorf("failed downloading fetch_cvd file: %w", err)
+	}
+	return nil
 }
 
-func (h *downloadCVDHandler) download() error {
-	exist, err := fileExist(h.Filename)
+func (h *downloadCVDHandler) download(filename string) error {
+	exist, err := fileExist(filename)
 	if err != nil {
-		return fmt.Errorf("failed to test if the `cvd` file %q does exist: %w", h.Filename, err)
+		return fmt.Errorf("failed to test if the `%s` file %q does exist: %w", filepath.Base(filename), filename, err)
 	}
 	if exist {
 		return nil
 	}
-	f, err := os.Create(h.Filename)
+	f, err := os.Create(filename)
 	if err != nil {
-		return fmt.Errorf("failed to create the `cvd` file %q: %w", h.Filename, err)
+		return fmt.Errorf("failed to create the `%s` file %q: %w", filepath.Base(filename), filename, err)
 	}
 	var downloadErr error
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Printf("failed closing `cvd` file %q file, error: %v", h.Filename, err)
+			log.Printf("failed closing `%s` file %q file, error: %v", filepath.Base(filename), filename, err)
 		}
 		if downloadErr != nil {
-			if err := os.Remove(h.Filename); err != nil {
-				log.Printf("failed removing  `cvd` file %q: %v", h.Filename, err)
+			if err := os.Remove(filename); err != nil {
+				log.Printf("failed removing  `%s` file %q: %v", filepath.Base(filename), filename, err)
 			}
 		}
 
 	}()
-	downloadErr = h.BuildAPI.DownloadArtifact("cvd", h.Build.ID, h.Build.Target, f)
-	return downloadErr
+	if err := h.BuildAPI.DownloadArtifact(filepath.Base(filename), h.Build.ID, h.Build.Target, f); err != nil {
+		return err
+	}
+	return os.Chmod(filename, 0750)
 }
 
 // Fetches artifacts using the build api or the fetch_cvd tool as necessary.
 type combinedArtifactFetcher struct {
 	execContext ExecContext
-	cvdBin      string
+	fetchCVDBin string
 	buildAPI    BuildAPI
 	credentials string
 }
 
-func newArtifactsFetcherFactory(execContext ExecContext, cvdBin string, buildAPIFactory BuildAPIFactory) ArtifactsFetcherFactory {
+func newArtifactsFetcherFactory(execContext ExecContext, fetchCVDBin string, buildAPIFactory BuildAPIFactory) ArtifactsFetcherFactory {
 	return func(credentials string) ArtifactsFetcher {
 		return &combinedArtifactFetcher{
 			execContext: execContext,
-			cvdBin:      cvdBin,
+			fetchCVDBin: fetchCVDBin,
 			buildAPI:    buildAPIFactory(credentials),
 			credentials: credentials,
 		}
 	}
 }
 
-// The artifacts directory gets created during the execution of `cvd fetch` granting owners permission to the
+// The artifacts directory gets created during the execution of `fetch_cvd` granting owners permission to the
 // user executing `cvd` which is relevant when extracting cvd-host_package.tar.gz.
 func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error {
-	cmdArgs := []string{
-		"fetch",
+	args := []string{
 		fmt.Sprintf("--directory=%s", outDir),
 		fmt.Sprintf("--default_build=%s/%s", buildID, target),
 	}
 	if extraOptions != nil {
-		cmdArgs = append(cmdArgs,
+		args = append(args,
 			fmt.Sprintf("--system_build=%s/%s", extraOptions.SystemImgBuildID, extraOptions.SystemImgTarget))
 	}
+	var file *os.File
+	var err error
+	fetchCmd := buildCvdCommand(context.TODO(), f.execContext, "", "", f.fetchCVDBin, args...)
 	if f.credentials != "" {
-		file, err := createCredentialsFile(f.credentials)
-		if err != nil {
+		if file, err = createCredentialsFile(f.credentials); err != nil {
 			return err
 		}
-		// DO NOT ENCAPSULATE THIS BLOCK: The file must not be closed until after the cvd command has run.
 		defer file.Close()
-		cmdArgs = append(cmdArgs, fmt.Sprintf("--credential_source=/proc/self/fd/%d", int(file.Fd())))
+		// This is necessary for the subprocess to inherit the file.
+		fetchCmd.ExtraFiles = append(fetchCmd.ExtraFiles, file)
+		// The actual fd number is not retained, but instead get the lowest available numbers.
+		fd := 3 + len(fetchCmd.ExtraFiles) - 1
+		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
 	}
-	cvdCmd := cvdCommand{
-		execContext:    f.execContext,
-		androidHostOut: "",
-		home:           "",
-		cvdBin:         f.cvdBin,
-		args:           cmdArgs,
+	out, err := fetchCmd.CombinedOutput()
+	if err != nil {
+		logFailedCommandOutput(fetchCmd, out)
+		return err
 	}
-	return cvdCmd.Run()
+	return nil
 }
 
 func (f *combinedArtifactFetcher) FetchArtifacts(outDir, buildID, target string, artifactNames ...string) error {

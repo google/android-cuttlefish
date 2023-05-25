@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -103,8 +104,8 @@ func main() {
 	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", DefaultHttpsPort)
 	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
 	webUIUrlStr := fromEnvOrDefault("ORCHESTRATOR_WEBUI_URL", DefaultWebUIUrl)
-	certPath := tlsCertDir + "/cert.pem"
-	keyPath := tlsCertDir + "/key.pem"
+	certPath := filepath.Join(tlsCertDir, "cert.pem")
+	keyPath := filepath.Join(tlsCertDir, "key.pem")
 
 	pool := operator.NewDevicePool()
 	polledSet := operator.NewPolledSet()
@@ -120,19 +121,19 @@ func main() {
 	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
 	imPaths := orchestrator.IMPaths{
 		RootDir:          imRootDir,
-		CVDBin:           imRootDir + "/cvd",
-		ArtifactsRootDir: imRootDir + "/artifacts",
-		RuntimesRootDir:  imRootDir + "/runtimes",
+		CVDToolsDir:      imRootDir,
+		ArtifactsRootDir: filepath.Join(imRootDir, "artifacts"),
+		RuntimesRootDir:  filepath.Join(imRootDir, "runtimes"),
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir:     imRootDir + "/user_artifacs",
+		RootDir:     filepath.Join(imRootDir, "user_artifacs"),
 		NameFactory: func() string { return uuid.New().String() },
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	opts := orchestrator.CVDToolInstanceManagerOpts{
 		ExecContext: exec.CommandContext,
-		CVDBinAB: orchestrator.AndroidBuild{
+		CVDToolsVersion: orchestrator.AndroidBuild{
 			ID:     cvdBinAndroidBuildID,
 			Target: cvdBinAndroidBuildTarget,
 		},
@@ -148,8 +149,8 @@ func main() {
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	debugStaticVars := debug.StaticVariables{
-		InitialCVDBinAndroidBuildID:     opts.CVDBinAB.ID,
-		InitialCVDBinAndroidBuildTarget: opts.CVDBinAB.Target,
+		InitialCVDBinAndroidBuildID:     opts.CVDToolsVersion.ID,
+		InitialCVDBinAndroidBuildTarget: opts.CVDToolsVersion.Target,
 	}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	deviceServerLoop := operator.SetupDeviceEndpoint(pool, config, socketPath)

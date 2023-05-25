@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -112,14 +113,17 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	defer removeDir(t, dir)
 	fetchCVDExecCounter := 0
 	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
-		if contains(args, "fetch") {
-			fetchCVDExecCounter += 1
+		for _, arg := range args {
+			if filepath.Base(arg) == "fetch_cvd" {
+				fetchCVDExecCounter += 1
+				break
+			}
 		}
 		return exec.Command("true")
 	}
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
@@ -135,10 +139,10 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	om.Wait(op2.Name, 1*time.Second)
 
 	if fetchCVDExecCounter == 0 {
-		t.Error("`cvd fetch` was never executed")
+		t.Error("`fetch_cvd` was never executed")
 	}
 	if fetchCVDExecCounter > 1 {
-		t.Errorf("`cvd fetch` was downloaded more than once, it was <<%d>> times", fetchCVDExecCounter)
+		t.Errorf("`fetch_cvd` was downloaded more than once, it was <<%d>> times", fetchCVDExecCounter)
 	}
 }
 
@@ -148,7 +152,7 @@ func TestCreateCVDInstanceRuntimeDirAlreadyExist(t *testing.T) {
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
@@ -175,7 +179,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
@@ -313,10 +317,10 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 			}
 			om := NewMapOM()
 			opts := CVDToolInstanceManagerOpts{
-				ExecContext: execContext,
-				CVDBinAB:    AndroidBuild{ID: "1", Target: "xyzzy"},
+				ExecContext:     execContext,
+				CVDToolsVersion: AndroidBuild{ID: "1", Target: "xyzzy"},
 				Paths: IMPaths{
-					CVDBin:           dir + "/cvd",
+					CVDToolsDir:      dir,
 					ArtifactsRootDir: dir + "/artifacts",
 					RuntimesRootDir:  dir + "/runtimes",
 				},
@@ -350,7 +354,7 @@ func TestCreateCVDSucceeds(t *testing.T) {
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
@@ -388,14 +392,14 @@ func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	opts := CVDToolInstanceManagerOpts{
 		ExecContext:              execContext,
-		CVDBinAB:                 cvdBinAB,
+		CVDToolsVersion:          cvdBinAB,
 		Paths:                    paths,
 		OperationManager:         om,
 		HostValidator:            &AlwaysSucceedsValidator{},
@@ -421,7 +425,7 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	execContext := execCtxSubcmdFails
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
@@ -443,14 +447,14 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	execContext := execCtxSubcmdDelays
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	opts := CVDToolInstanceManagerOpts{
 		ExecContext:      execContext,
-		CVDBinAB:         cvdBinAB,
+		CVDToolsVersion:  cvdBinAB,
 		Paths:            paths,
 		OperationManager: om,
 		CVDExecTimeout:   testFakeBinaryDelayMs - (50 * time.Millisecond),
@@ -480,14 +484,14 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
 	om := NewMapOM()
 	opts := CVDToolInstanceManagerOpts{
 		ExecContext:      execContext,
-		CVDBinAB:         cvdBinAB,
+		CVDToolsVersion:  cvdBinAB,
 		Paths:            paths,
 		OperationManager: om,
 		HostValidator:    &AlwaysFailsValidator{},
@@ -533,7 +537,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 	}
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
-		CVDBin:           dir + "/cvd",
+		CVDToolsDir:      dir,
 		ArtifactsRootDir: dir + "/artifacts",
 		RuntimesRootDir:  dir + "/runtimes",
 	}
@@ -575,7 +579,7 @@ func newCVDToolIm(execContext ExecContext,
 	om OperationManager) *CVDToolInstanceManager {
 	opts := CVDToolInstanceManagerOpts{
 		ExecContext:      execContext,
-		CVDBinAB:         cvdBinAB,
+		CVDToolsVersion:  cvdBinAB,
 		Paths:            paths,
 		OperationManager: om,
 		HostValidator:    &AlwaysSucceedsValidator{},
