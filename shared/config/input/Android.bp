@@ -45,3 +45,9 @@ prebuilt_etc {
     src: "Crosvm_Virtio_Multitouch_Touchscreen_3.idc",
     defaults: ["crosvm_idc_defaults"],
 }
+
+prebuilt_etc {
+    name: "Crosvm_Virtio_Rotary_0.idc",
+    src: "Crosvm_Virtio_Rotary_0.idc",
+    defaults: ["crosvm_idc_defaults"],
+}
