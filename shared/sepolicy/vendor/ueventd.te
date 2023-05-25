@@ -4,3 +4,4 @@ allow ueventd keymaster_device:chr_file { rw_file_perms create setattr };
 allow ueventd gatekeeper_device:chr_file { rw_file_perms create setattr };
 allow ueventd confirmationui_device:chr_file { rw_file_perms create setattr };
 allow ueventd metrics_helper_device:chr_file { rw_file_perms create setattr };
+allow ueventd oemlock_device:chr_file { rw_file_perms create setattr };
