@@ -131,7 +131,7 @@ func main() {
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	opts := orchestrator.CVDToolInstanceManagerOpts{
-		ExecContext: exec.Command,
+		ExecContext: exec.CommandContext,
 		CVDBinAB: orchestrator.AndroidBuild{
 			ID:     cvdBinAndroidBuildID,
 			Target: cvdBinAndroidBuildTarget,
@@ -140,7 +140,7 @@ func main() {
 		OperationManager:         om,
 		UserArtifactsDirResolver: uam,
 		CVDExecTimeout:           5 * time.Minute,
-		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.Command},
+		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.CommandContext},
 		BuildAPIFactory: func(credentials string) orchestrator.BuildAPI {
 			return orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL, credentials)
 		},

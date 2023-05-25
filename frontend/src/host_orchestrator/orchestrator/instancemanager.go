@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +33,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-type ExecContext = func(name string, arg ...string) *exec.Cmd
+type ExecContext = func(ctx context.Context, name string, arg ...string) *exec.Cmd
 
 type Validator interface {
 	Validate() error
@@ -667,45 +668,31 @@ func (c *cvdCommand) Run() error {
 	if err := c.startCVDServer(); err != nil {
 		return err
 	}
-	done := make(chan error)
-	var b bytes.Buffer
-	cmd := buildCvdCommand(c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	go func() { done <- cmd.Wait() }()
-	var timeoutCh <-chan time.Time
+	ctx := context.Background()
 	if c.timeout != 0 {
-		timeoutCh = time.After(c.timeout)
+		var cancelFn context.CancelFunc
+		ctx, cancelFn = context.WithTimeout(ctx, c.timeout)
+		// Need to call this once the work is done to release resources.
+		defer cancelFn()
 	}
-	select {
-	case err := <-done:
-		if err != nil {
-			msg := "`cvd` execution failed with combined stdout and stderr:\n" +
-				"############################################\n" +
-				"## BEGIN \n" +
-				"############################################\n" +
-				"\n%s\n\n" +
-				"############################################\n" +
-				"## END \n" +
-				"############################################\n"
-			log.Printf(msg, b.String())
-			return &cvdCommandExecErr{c.args, b.String(), err}
-		}
-		if c.stdOut != nil {
-			*c.stdOut = b.String()
-		}
-	case <-timeoutCh:
-		return &cvdCommandTimeoutErr{c.args}
+	cmd := buildCvdCommand(ctx, c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
+	out, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		// The command is killed by a signal in these cases, but the real failure is the timeout.
+		err = &cvdCommandTimeoutErr{c.args}
+	}
+	if err != nil {
+		logFailedCommandOutput(cmd, out)
+		return &cvdCommandExecErr{cmd.Args, string(out), err}
+	}
+	if c.stdOut != nil {
+		*c.stdOut = string(out)
 	}
 	return nil
 }
 
 func (c *cvdCommand) startCVDServer() error {
-	cmd := buildCvdCommand(c.execContext, "", "", c.cvdBin)
+	cmd := buildCvdCommand(context.TODO(), c.execContext, "", "", c.cvdBin)
 	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
 	// file descriptor to the null device (os.DevNull).
 	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
@@ -717,14 +704,26 @@ func (c *cvdCommand) startCVDServer() error {
 	return cmd.Run()
 }
 
-func buildCvdCommand(execContext ExecContext, androidHostOut string, home string, cvdBin string, args ...string) *exec.Cmd {
+func buildCvdCommand(ctx context.Context, execContext ExecContext, androidHostOut string, home string, cvdBin string, args ...string) *exec.Cmd {
 	newArgs := []string{"-u", cvdUser, envVarHome + "=" + home}
 	if androidHostOut != "" {
 		newArgs = append(newArgs, envVarAndroidHostOut+"="+androidHostOut)
 	}
 	newArgs = append(newArgs, cvdBin)
 	newArgs = append(newArgs, args...)
-	return execContext("sudo", newArgs...)
+	return execContext(ctx, "sudo", newArgs...)
+}
+
+func logFailedCommandOutput(cmd *exec.Cmd, out []byte) {
+	msg := "`%s` execution failed with combined stdout and stderr:\n" +
+		"############################################\n" +
+		"## BEGIN \n" +
+		"############################################\n" +
+		"\n%s\n\n" +
+		"############################################\n" +
+		"## END \n" +
+		"############################################\n"
+	log.Printf(msg, strings.Join(cmd.Args, " "), string(out))
 }
 
 // Validates whether the current host is valid to run CVDs.
