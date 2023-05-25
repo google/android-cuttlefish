@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -110,7 +111,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	fetchCVDExecCounter := 0
-	execContext := func(name string, args ...string) *exec.Cmd {
+	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		if contains(args, "fetch") {
 			fetchCVDExecCounter += 1
 		}
@@ -303,7 +304,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var usedCmdName string
 			var usedCmdArgs []string
-			execContext := func(name string, args ...string) *exec.Cmd {
+			execContext := func(cxt context.Context, name string, args ...string) *exec.Cmd {
 				if contains(args, "start") {
 					usedCmdName = name
 					usedCmdArgs = args
@@ -523,7 +524,7 @@ func TestListCVDsSucceeds(t *testing.T) {
           }
   ]
 ]`
-	execContext := func(name string, args ...string) *exec.Cmd {
+	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command("true")
 		if path.Base(args[len(args)-1]) == "fleet" {
 			cmd = exec.Command("echo", strings.TrimSpace(output))
@@ -602,11 +603,11 @@ func removeDir(t *testing.T, name string) {
 	}
 }
 
-func execCtxAlwaysSucceeds(name string, args ...string) *exec.Cmd {
+func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *exec.Cmd {
 	return exec.Command("true")
 }
 
-func execCtxSubcmdFails(name string, args ...string) *exec.Cmd {
+func execCtxSubcmdFails(ctx context.Context, name string, args ...string) *exec.Cmd {
 	cmd := "false"
 	// Do not fail when executing cvd only as it is not a cvd subcommand.
 	if path.Base(args[len(args)-1]) == "cvd" {
@@ -617,7 +618,7 @@ func execCtxSubcmdFails(name string, args ...string) *exec.Cmd {
 
 const testFakeBinaryDelayMs = 100 * time.Millisecond
 
-func execCtxSubcmdDelays(name string, args ...string) *exec.Cmd {
+func execCtxSubcmdDelays(ctx context.Context, name string, args ...string) *exec.Cmd {
 	cmd := fmt.Sprintf("sleep %f", float64(testFakeBinaryDelayMs)/1000_000_000)
 	// Do not wait when executing cvd only as it is not a cvd subcommand.
 	if path.Base(args[len(args)-1]) == "cvd" {
