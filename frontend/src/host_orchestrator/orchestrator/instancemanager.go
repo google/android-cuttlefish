@@ -397,6 +397,9 @@ func untarCVDHostPackage(dir string) error {
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {
+	if r.CVD == nil {
+		return EmptyFieldError("CVD")
+	}
 	if r.CVD.BuildSource == nil {
 		return EmptyFieldError("BuildSource")
 	}
