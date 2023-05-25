@@ -539,9 +539,10 @@ func createCredentialsFile(content string) (*os.File, error) {
 	}
 	go func(f *os.File) {
 		defer f.Close()
-		_, err = f.Write([]byte(content))
-		log.Printf("Failed to write credentials to file: %v\n", err)
-		// Can't return this error without risking a deadlock when the pipe buffer fills up.
+		if _, err := f.Write([]byte(content)); err != nil {
+			log.Printf("Failed to write credentials to file: %v\n", err)
+			// Can't return this error without risking a deadlock when the pipe buffer fills up.
+		}
 	}(p2)
 	return p1, nil
 }
