@@ -53,7 +53,7 @@ class OpenWrt : public CommandSource {
                                  kOpenwrtVmResetExitCode);
     ap_cmd.Cmd().AddParameter("run");
     ap_cmd.AddControlSocket(
-        instance_.PerInstanceInternalPath(crosvm_for_ap_socket),
+        instance_.PerInstanceInternalUdsPath(crosvm_for_ap_socket),
         instance_.crosvm_binary());
 
     if (!config_.vhost_user_mac80211_hwsim().empty()) {
