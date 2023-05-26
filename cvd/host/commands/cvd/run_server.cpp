@@ -20,6 +20,7 @@
 
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/shared_fd_flag.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/logger.h"
 #include "host/commands/cvd/server.h"
 
@@ -40,20 +41,23 @@ Result<void> RunServer(const RunServerParam& params) {
       std::make_unique<ServerLogger>();
   CF_EXPECT(server_logger != nullptr, "ServerLogger memory allocation failed.");
 
-  std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger;
-  if (params.carryover_stderr_fd->IsOpen()) {
-    const auto& verbosity_level = params.verbosity_level;
-    if (!EncodeVerbosity(verbosity_level).ok()) {
-      LOG(ERROR) << "Failed to set verbosity level \"" << verbosity_level
-                 << "\"";
-      scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(std::move(
-          CF_EXPECT(server_logger->LogThreadToFd(params.carryover_stderr_fd))));
-    } else {
-      scoped_logger = std::make_unique<ServerLogger::ScopedLogger>(
-          std::move(CF_EXPECT(server_logger->LogThreadToFd(
-              params.carryover_stderr_fd, verbosity_level))));
-    }
+  const auto& verbosity_level = params.verbosity_level;
+  SharedFD stderr_fd =
+      (params.carryover_stderr_fd->IsOpen() ? params.carryover_stderr_fd
+                                            : SharedFD::Dup(2));
+  std::unique_ptr<ServerLogger::ScopedLogger> run_server_logger;
+  if (verbosity_level) {
+    ServerLogger::ScopedLogger tmp_logger =
+        server_logger->LogThreadToFd(std::move(stderr_fd), *verbosity_level);
+    run_server_logger =
+        std::make_unique<ServerLogger::ScopedLogger>(std::move(tmp_logger));
+  } else {
+    ServerLogger::ScopedLogger tmp_logger =
+        server_logger->LogThreadToFd(std::move(stderr_fd));
+    run_server_logger =
+        std::make_unique<ServerLogger::ScopedLogger>(std::move(tmp_logger));
   }
+
   if (params.memory_carryover_fd && !(*params.memory_carryover_fd)->IsOpen()) {
     LOG(ERROR) << "Memory carryover file is supposed to be open but is not.";
   }
@@ -63,7 +67,7 @@ Result<void> RunServer(const RunServerParam& params) {
        .memory_carryover_fd = params.memory_carryover_fd,
        .acloud_translator_optout = params.acloud_translator_optout,
        .server_logger = std::move(server_logger),
-       .scoped_logger = std::move(scoped_logger)}));
+       .scoped_logger = std::move(run_server_logger)}));
   return {};
 }
 
@@ -103,13 +107,19 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   if (memory_carryover_fd->IsOpen()) {
     memory_carryover_fd_opt = std::move(memory_carryover_fd);
   }
+
+  std::optional<android::base::LogSeverity> verbosity_level;
+  if (!verbosity.empty()) {
+    verbosity_level = CF_EXPECT(EncodeVerbosity(verbosity));
+  }
+
   ParseResult result = {
       .internal_server_fd = internal_server_fd,
       .carryover_client_fd = carryover_client_fd,
       .memory_carryover_fd = memory_carryover_fd_opt,
       .carryover_stderr_fd = carryover_stderr_fd,
       .acloud_translator_optout = acloud_translator_optout_opt,
-      .verbosity_level = verbosity,
+      .verbosity_level = verbosity_level,
   };
   return {result};
 }
