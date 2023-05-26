@@ -64,6 +64,7 @@ std::set<std::string> DirsForInstance(
   return {
       config.assembly_dir(),
       instance.instance_dir(),
+      instance.instance_uds_dir(),
   };
 }
 
