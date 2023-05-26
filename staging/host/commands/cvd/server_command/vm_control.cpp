@@ -29,7 +29,6 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
@@ -283,10 +282,10 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
       const std::string& crosvm_op, const cvd_common::Args& subcmd_args,
       const cvd_common::Envs& envs) {
     const auto& instance_group = instance.ParentGroup();
-    const auto& internal_name = instance.InternalDeviceName();
+    const auto instance_id = instance.InstanceId();
     auto home = instance_group.HomeDir();
     const auto socket_file_path =
-        ConcatToString("/tmp/cuttlefish/instances/", internal_name,
+        ConcatToString(home, "/cuttlefish_runtime.", instance_id,
                        "/internal/"
                        "crosvm_control.sock");
 
