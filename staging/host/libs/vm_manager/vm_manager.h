@@ -42,7 +42,7 @@ class VmManager {
   // need to consume host resources, except for the PCI ID. Use this trick to
   // keep the number of PCI IDs assigned constant for all flags/vm manager
   // combinations
-  static const int kDefaultNumHvcs = 10;
+  static const int kDefaultNumHvcs = 11;
 
   // This is the number of virtual disks (block devices) that should be
   // configured by the VmManager. Related to the description above regarding
