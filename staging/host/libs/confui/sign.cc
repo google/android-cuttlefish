@@ -37,7 +37,7 @@ std::string GetSecureEnvSocketPath() {
   auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Config must not be null";
   auto instance = config->ForDefaultInstance();
-  return instance.PerInstanceInternalPath("confui_sign.sock");
+  return instance.PerInstanceInternalUdsPath("confui_sign.sock");
 }
 
 /**
