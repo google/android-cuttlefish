@@ -48,7 +48,7 @@ namespace {
 std::string GetControlSocketPath(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::string& socket_name) {
-  return instance.PerInstanceInternalUdsPath(socket_name.c_str());
+  return instance.PerInstanceInternalPath(socket_name.c_str());
 }
 
 }  // namespace
