@@ -77,10 +77,10 @@ void WriteEFIEnvironment(
   // TODO(b/256602611): get rid of loadddr hardcode. make sure loadddr
   // env setup in the bootloader.
   WritePausedEntrypoint(env,
-    "load virtio 0:${devplist} 0x80200000 efi/boot/bootaa64.efi "
-    "&& bootefi 0x80200000 ${fdtcontroladdr}; "
-    "load virtio 0:${devplist} 0x02400000 efi/boot/bootia32.efi && "
-    "bootefi 0x02400000 ${fdtcontroladdr}", instance
+    "load virtio 0:${devplist} ${loadaddr} efi/boot/bootaa64.efi "
+    "&& bootefi ${loadaddr} ${fdtcontroladdr}; "
+    "load virtio 0:${devplist} ${loadaddr} efi/boot/bootia32.efi && "
+    "bootefi ${loadaddr} ${fdtcontroladdr}", instance
   );
 }
 
