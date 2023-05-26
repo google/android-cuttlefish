@@ -285,8 +285,11 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
     const auto& instance_group = instance.ParentGroup();
     const auto& internal_name = instance.InternalDeviceName();
     auto home = instance_group.HomeDir();
+    const auto socket_parent_path = DirectoryExists("/run/cuttlefish")
+                                        ? "/run/cuttlefish/instances"
+                                        : "/tmp/cuttlefish/instances";
     const auto socket_file_path =
-        ConcatToString("/tmp/cuttlefish/instances/", internal_name,
+        ConcatToString(socket_parent_path, "/", internal_name,
                        "/internal/"
                        "crosvm_control.sock");
 

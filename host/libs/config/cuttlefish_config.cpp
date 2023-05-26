@@ -572,7 +572,14 @@ std::string CuttlefishConfig::AssemblyPath(
 }
 
 std::string CuttlefishConfig::instances_uds_dir() const {
-  return AbsolutePath("/tmp/cuttlefish/instances");
+  if (DirectoryExists("/run/cuttlefish")) {
+    return AbsolutePath("/run/cuttlefish/instances");
+  } else {
+    // '/run/cuttlefish' directory can be non-exist when the packages for
+    // Cuttlefish is not installed. In that case, use the path '/tmp/cuttlefish'
+    // instead because creating directory under '/run/' requires root privilege.
+    return AbsolutePath("/tmp/cuttlefish/instances");
+  }
 }
 
 std::string CuttlefishConfig::InstancesUdsPath(
