@@ -74,8 +74,6 @@ void WriteAndroidEnvironment(
 
 void WriteEFIEnvironment(
     std::ostream& env, const CuttlefishConfig::InstanceSpecific& instance) {
-  // TODO(b/256602611): get rid of loadddr hardcode. make sure loadddr
-  // env setup in the bootloader.
   WritePausedEntrypoint(env,
     "load virtio 0:${devplist} ${loadaddr} efi/boot/bootaa64.efi "
     "&& bootefi ${loadaddr} ${fdtcontroladdr}; "
