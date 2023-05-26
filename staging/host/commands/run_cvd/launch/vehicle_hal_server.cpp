@@ -44,7 +44,7 @@ class VehicleHalServer : public CommandSource {
     const std::string vhal_server_power_state_file =
         AbsolutePath(instance_.PerInstancePath("power_state"));
     const std::string vhal_server_power_state_socket =
-        AbsolutePath(instance_.PerInstancePath("power_state_socket"));
+        AbsolutePath(instance_.PerInstanceUdsPath("power_state_socket"));
 
     grpc_server.AddParameter("--server_cid=", vhal_server_cid);
     grpc_server.AddParameter("--server_port=", vhal_server_port);
