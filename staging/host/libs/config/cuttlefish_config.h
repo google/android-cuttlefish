@@ -71,6 +71,7 @@ enum class SecureHal {
   Unknown,
   Keymint,
   Gatekeeper,
+  Oemlock,
 };
 
 // Holds the configuration of the cuttlefish instances.
