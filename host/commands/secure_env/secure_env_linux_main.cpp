@@ -26,6 +26,7 @@
 #include <tss2/tss2_rc.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/security/channel_sharedfd.h"
 #include "common/libs/security/confui_sign.h"
 #include "common/libs/security/gatekeeper_channel_sharedfd.h"
 #include "common/libs/security/keymaster_channel_sharedfd.h"
@@ -38,9 +39,12 @@
 #include "host/commands/secure_env/in_process_tpm.h"
 #include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
+#include "host/commands/secure_env/oemlock_responder.h"
+#include "host/commands/secure_env/oemlock.h"
 #include "host/commands/secure_env/proxy_keymaster_context.h"
 #include "host/commands/secure_env/rust/kmr_ta.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
+#include "host/commands/secure_env/soft_oemlock.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_keymaster_context.h"
 #include "host/commands/secure_env/tpm_keymaster_enforcement.h"
@@ -52,6 +56,8 @@ DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
 DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(gatekeeper_fd_out, -1, "A pipe for gatekeeper communication");
+DEFINE_int32(oemlock_fd_in, -1, "A pipe for oemlock communication");
+DEFINE_int32(oemlock_fd_out, -1, "A pipe for oemlock communication");
 DEFINE_int32(kernel_events_fd, -1,
              "A pipe for monitoring events based on "
              "messages written to the kernel log. This "
@@ -67,6 +73,9 @@ DEFINE_string(keymint_impl, "tpm",
 
 DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
+
+DEFINE_string(oemlock_impl, "software",
+              "The oemlock implementation. \"tpm\" or \"software\"");
 
 namespace cuttlefish {
 namespace {
@@ -140,8 +149,22 @@ ChooseGatekeeperComponent() {
   }
 }
 
+fruit::Component<oemlock::OemLock> ChooseOemlockComponent() {
+  if (FLAGS_oemlock_impl == "software") {
+    return fruit::createComponent()
+        .bind<oemlock::OemLock, oemlock::SoftOemLock>();
+  } else if (FLAGS_oemlock_impl == "tpm") {
+    LOG(FATAL) << "Oemlock doesn't support TPM implementation";
+    abort();
+  } else {
+    LOG(FATAL) << "Invalid oemlock implementation: "
+               << FLAGS_oemlock_impl;
+    abort();
+  }
+}
+
 fruit::Component<TpmResourceManager, gatekeeper::GateKeeper,
-                 keymaster::KeymasterEnforcement>
+                 oemlock::OemLock, keymaster::KeymasterEnforcement>
 SecureEnvComponent() {
   return fruit::createComponent()
       .registerProvider([]() -> Tpm* {  // fruit will take ownership
@@ -188,7 +211,8 @@ SecureEnvComponent() {
                                  insecure_storage);
       })
       .registerProvider([]() { return new gatekeeper::SoftGateKeeper(); })
-      .install(ChooseGatekeeperComponent);
+      .install(ChooseGatekeeperComponent)
+      .install(ChooseOemlockComponent);
 }
 
 }  // namespace
@@ -199,10 +223,11 @@ int SecureEnvMain(int argc, char** argv) {
   keymaster::SoftKeymasterLogger km_logger;
 
   fruit::Injector<TpmResourceManager, gatekeeper::GateKeeper,
-                  keymaster::KeymasterEnforcement>
+                  oemlock::OemLock, keymaster::KeymasterEnforcement>
       injector(SecureEnvComponent);
   TpmResourceManager* resource_manager = injector.get<TpmResourceManager*>();
   gatekeeper::GateKeeper* gatekeeper = injector.get<gatekeeper::GateKeeper*>();
+  oemlock::OemLock* oemlock = injector.get<oemlock::OemLock*>();
   keymaster::KeymasterEnforcement* keymaster_enforcement =
       injector.get<keymaster::KeymasterEnforcement*>();
   std::unique_ptr<keymaster::KeymasterContext> keymaster_context;
@@ -276,6 +301,17 @@ int SecureEnvMain(int argc, char** argv) {
       GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 
       while (gatekeeper_responder.ProcessMessage()) {
+      }
+    }
+  });
+
+  auto oemlock_in = DupFdFlag(FLAGS_oemlock_fd_in);
+  auto oemlock_out = DupFdFlag(FLAGS_oemlock_fd_out);
+  threads.emplace_back([oemlock_in, oemlock_out, &oemlock]() {
+    while (true) {
+      secure_env::SharedFdChannel channel(oemlock_in, oemlock_out);
+      oemlock::OemLockResponder responder(channel, *oemlock);
+      while (responder.ProcessMessage().ok()) {
       }
     }
   });
