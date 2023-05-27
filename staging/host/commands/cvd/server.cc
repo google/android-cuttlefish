@@ -44,6 +44,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/build_api.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/demo_multi_vd.h"
 #include "host/commands/cvd/epoll_loop.h"
 #include "host/commands/cvd/logger.h"
@@ -528,7 +529,7 @@ static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
 }
 
 Result<int> CvdServerMain(ServerMainParam&& param) {
-  android::base::SetMinimumLogSeverity(android::base::VERBOSE);
+  SetMinimumVerbosity(android::base::VERBOSE);
 
   LOG(INFO) << "Starting server";
 
