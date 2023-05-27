@@ -59,7 +59,7 @@ Result<android::base::LogSeverity> FilterVerbosityOption(
   std::optional<std::string> min_verbosity =
       CF_EXPECT(verbosity_flag.FilterFlag<std::string>(cvd_args));
   if (!min_verbosity) {
-    return android::base::GetMinimumLogSeverity();
+    return GetMinimumVerbosity();
   }
   return CF_EXPECT(EncodeVerbosity(*min_verbosity));
 }
@@ -104,7 +104,7 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   auto cvd_args = client_parser->CvdArgs();
   auto is_help = CF_EXPECT(FilterDriverHelpOptions(cvd_flags, cvd_args));
   const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
-  android::base::SetMinimumLogSeverity(verbosity);
+  SetMinimumVerbosity(verbosity);
 
   output.new_all_args =
       AllArgs(client_parser->ProgPath(), cvd_args, client_parser->SubCmd(),
@@ -154,7 +154,7 @@ Result<VersionCommandReport> HandleVersionCommand(
   CF_EXPECT(subcmd == "version" || subcmd.empty(),
             "subcmd is expected to be \"version\" or empty but is " << subcmd);
   const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
-  android::base::SetMinimumLogSeverity(verbosity);
+  SetMinimumVerbosity(verbosity);
   client.SetServerLogSeverity(verbosity);
 
   if (subcmd == "version") {
