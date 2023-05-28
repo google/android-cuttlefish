@@ -48,7 +48,8 @@ class ServerLogger {
     ~ScopedLogger();
 
    private:
-    ScopedLogger(ServerLogger&, SharedFD target, const std::string& verbosity);
+    ScopedLogger(ServerLogger&, SharedFD target,
+                 const android::base::LogSeverity verbosity);
 
     /** Callback for `LOG(severity)` messages */
     void LogMessage(android::base::LogId log_buffer_id,
@@ -58,7 +59,7 @@ class ServerLogger {
 
     ServerLogger& server_logger_;
     SharedFD target_;
-    std::string verbosity_;
+    android::base::LogSeverity verbosity_;
   };
   INJECT(ServerLogger());
   ~ServerLogger();
@@ -67,8 +68,8 @@ class ServerLogger {
    * Configure `LOG(severity)` messages to write to the given file descriptor
    * for the lifetime of the returned object.
    */
-  Result<ScopedLogger> LogThreadToFd(SharedFD, const std::string& verbosity);
-  Result<ScopedLogger> LogThreadToFd(SharedFD);
+  ScopedLogger LogThreadToFd(SharedFD, const android::base::LogSeverity);
+  ScopedLogger LogThreadToFd(SharedFD);
 
  private:
   using LogSeverity = android::base::LogSeverity;
