@@ -284,10 +284,7 @@ Result<void> CvdServer::StartServer(SharedFD server_fd) {
   return {};
 }
 
-Result<void> CvdServer::AcceptCarryoverClient(
-    SharedFD client,
-    // the passed ScopedLogger should be destroyed on return of this function.
-    std::unique_ptr<ServerLogger::ScopedLogger>) {
+Result<void> CvdServer::AcceptCarryoverClient(SharedFD client) {
   auto self_cb = [this](EpollEvent ev) -> Result<void> {
     CF_EXPECT(HandleMessage(ev));
     return {};
@@ -338,10 +335,11 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
     return {};
   }
   const auto verbosity = request->Message().verbosity();
+  const auto encoded_verbosity = EncodeVerbosity(verbosity);
   auto logger =
-      verbosity.empty()
-          ? CF_EXPECT(server_logger_.LogThreadToFd(request->Err()))
-          : CF_EXPECT(server_logger_.LogThreadToFd(request->Err(), verbosity));
+      encoded_verbosity.ok()
+          ? server_logger_.LogThreadToFd(request->Err(), *encoded_verbosity)
+          : server_logger_.LogThreadToFd(request->Err());
   auto response = HandleRequest(*request, event.fd);
   if (!response.ok()) {
     cvd::Response failure_message;
@@ -362,11 +360,12 @@ Result<void> CvdServer::HandleMessage(EpollEvent event) {
   return {};
 }
 
-static Result<std::string> Verbosity(const RequestWithStdio& request,
-                                     const std::string& default_val) {
+static Result<android::base::LogSeverity> Verbosity(
+    const RequestWithStdio& request, const std::string& default_val) {
   if (request.Message().contents_case() !=
       cvd::Request::ContentsCase::kCommandRequest) {
-    return default_val;
+    return default_val.empty() ? kCvdDefaultVerbosity
+                               : CF_EXPECT(EncodeVerbosity(default_val));
   }
   const auto& selector_opts =
       request.Message().command_request().selector_opts();
@@ -377,11 +376,15 @@ static Result<std::string> Verbosity(const RequestWithStdio& request,
   auto verbosity_opt =
       CF_EXPECT(verbosity_flag->FilterFlag<std::string>(selector_args));
   auto ret_val = verbosity_opt.value_or(default_val);
-  if (!EncodeVerbosity(ret_val).ok()) {
-    // this could happen with old version'ed clients
-    return "";
+  if (ret_val.empty()) {
+    const auto severity_in_string =
+        CF_EXPECT(VerbosityToString(kCvdDefaultVerbosity));
+    LOG(DEBUG) << "Verbosity level is not given, so using the default value: "
+               << severity_in_string << " is used";
+    return kCvdDefaultVerbosity;
   }
-  return ret_val;
+  return CF_EXPECT(EncodeVerbosity(ret_val),
+                   "Invalid verbosity level : \"" << ret_val << "\"");
 }
 
 // convert HOME, ANDROID_HOST_OUT, ANDROID_SOONG_HOST_OUT
@@ -451,14 +454,9 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
                                                SharedFD client) {
   CF_EXPECT(VerifyUser(orig_request));
   auto request = CF_EXPECT(ConvertDirPathToAbsolute(orig_request));
-  std::string verbosity =
+  const auto verbosity =
       CF_EXPECT(Verbosity(request, request.Message().verbosity()));
-  if (!verbosity.empty()) {
-    auto log_severity = CF_EXPECT(EncodeVerbosity(verbosity));
-    server_logger_.SetSeverity(log_severity);
-  } else {
-    LOG(ERROR) << "Valid and new verbosity level was not given";
-  }
+  server_logger_.SetSeverity(verbosity);
 
   fruit::Injector<> injector(RequestComponent, this);
 
@@ -491,9 +489,7 @@ Result<cvd::Response> CvdServer::HandleRequest(RequestWithStdio orig_request,
 
   auto interrupt_cb = [this, shared, verbosity,
                        err = request.Err()](EpollEvent) -> Result<void> {
-    auto logger = verbosity.empty()
-                      ? server_logger_.LogThreadToFd(err)
-                      : server_logger_.LogThreadToFd(err, verbosity);
+    auto logger = server_logger_.LogThreadToFd(err, verbosity);
     std::lock_guard lock(shared->mutex);
     CF_EXPECT(shared->handler != nullptr);
     CF_EXPECT(shared->handler->Interrupt());
@@ -569,11 +565,7 @@ Result<int> CvdServerMain(ServerMainParam&& param) {
   // The carryover_client wouldn't be available after AcceptCarryoverClient()
   if (carryover_client->IsOpen()) {
     // release scoped_logger for this thread inside AcceptCarryoverClient()
-    CF_EXPECT(server.AcceptCarryoverClient(carryover_client,
-                                           std::move(param.scoped_logger)));
-  } else {
-    // release scoped_logger now and delete the object
-    param.scoped_logger.reset();
+    CF_EXPECT(server.AcceptCarryoverClient(carryover_client));
   }
   server.Join();
 
