@@ -107,6 +107,8 @@ struct InputPathForm {
  */
 Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info);
 
+constexpr android::base::LogSeverity kCvdDefaultVerbosity = android::base::INFO;
+
 Result<android::base::LogSeverity> EncodeVerbosity(
     const std::string& verbosity);
 
