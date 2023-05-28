@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <stack>
 
@@ -246,6 +247,25 @@ Result<std::string> VerbosityToString(
   CF_EXPECT(Contains(verbosity_decode_tab, verbosity),
             "Verbosity \"" << verbosity << "\" is unrecognized.");
   return verbosity_decode_tab.at(verbosity);
+}
+
+static std::mutex verbosity_mutex;
+
+android::base::LogSeverity SetMinimumVerbosity(
+    const android::base::LogSeverity severity) {
+  std::lock_guard lock(verbosity_mutex);
+  return android::base::SetMinimumLogSeverity(severity);
+}
+
+Result<android::base::LogSeverity> SetMinimumVerbosity(
+    const std::string& severity) {
+  std::lock_guard lock(verbosity_mutex);
+  return SetMinimumVerbosity(CF_EXPECT(EncodeVerbosity(severity)));
+}
+
+android::base::LogSeverity GetMinimumVerbosity() {
+  std::lock_guard lock(verbosity_mutex);
+  return android::base::GetMinimumLogSeverity();
 }
 
 }  // namespace cuttlefish

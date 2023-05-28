@@ -113,4 +113,10 @@ Result<android::base::LogSeverity> EncodeVerbosity(
 Result<std::string> VerbosityToString(
     const android::base::LogSeverity verbosity);
 
+android::base::LogSeverity SetMinimumVerbosity(
+    const android::base::LogSeverity);
+Result<android::base::LogSeverity> SetMinimumVerbosity(const std::string&);
+
+android::base::LogSeverity GetMinimumVerbosity();
+
 }  // namespace cuttlefish

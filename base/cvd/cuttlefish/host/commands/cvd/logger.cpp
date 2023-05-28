@@ -59,8 +59,7 @@ Result<ServerLogger::ScopedLogger> ServerLogger::LogThreadToFd(
 
 Result<ServerLogger::ScopedLogger> ServerLogger::LogThreadToFd(
     SharedFD target) {
-  auto verbosity =
-      CF_EXPECT(VerbosityToString(android::base::GetMinimumLogSeverity()));
+  auto verbosity = CF_EXPECT(VerbosityToString(GetMinimumVerbosity()));
   return CF_EXPECT(LogThreadToFd(std::move(target), verbosity));
 }
 
@@ -112,7 +111,7 @@ void ServerLogger::ScopedLogger::LogMessage(
     android::base::LogSeverity severity, const char* tag, const char* file,
     unsigned int line, const char* message) {
   auto minimum_verbosity_result = EncodeVerbosity(verbosity_);
-  auto min_severity = android::base::GetMinimumLogSeverity();
+  auto min_severity = GetMinimumVerbosity();
   if (!minimum_verbosity_result.ok()) {
     LOG(ERROR) << "Invalid verbosity \"" << verbosity_ << "\"";
   } else {
