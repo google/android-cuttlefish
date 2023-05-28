@@ -53,15 +53,35 @@ Result<bool> FilterDriverHelpOptions(const FlagCollection& cvd_flags,
   return is_help;
 }
 
-Result<android::base::LogSeverity> FilterVerbosityOption(
-    const FlagCollection& cvd_flags, cvd_common::Args& cvd_args) {
-  auto verbosity_flag = CF_EXPECT(cvd_flags.GetFlag("verbosity"));
-  std::optional<std::string> min_verbosity =
-      CF_EXPECT(verbosity_flag.FilterFlag<std::string>(cvd_args));
-  if (!min_verbosity) {
+/**
+ * Returns --verbosity value if ever exist in the entire commandline args
+ *
+ * Note that this will also pick up from the subtool arguments:
+ *  e.g. cvd start --verbosity=DEBUG
+ *
+ * This may be incorrect as the verbosity should be ideally applied to the
+ * launch_cvd/cvd_internal_start only.
+ *
+ * However, parsing the --verbosity flag only from the driver is quite
+ * complicated as we do not know the full list of the subcommands,
+ * the subcommands flags, and even the selector/driver flags.
+ *
+ * Thus, we live with the corner case for now.
+ */
+android::base::LogSeverity CvdVerbosityOption(const int argc, char** argv) {
+  cvd_common::Args all_args = ArgsToVec(argc, argv);
+  std::string verbosity_flag_value;
+  std::vector<Flag> verbosity_flag{
+      GflagsCompatFlag("verbosity", verbosity_flag_value)};
+  if (!ParseFlags(verbosity_flag, all_args)) {
+    LOG(ERROR) << "Verbosity flag parsing failed, so use the default value.";
     return GetMinimumVerbosity();
   }
-  return CF_EXPECT(EncodeVerbosity(*min_verbosity));
+  if (verbosity_flag_value.empty()) {
+    return GetMinimumVerbosity();
+  }
+  auto encoded_verbosity = EncodeVerbosity(verbosity_flag_value);
+  return (encoded_verbosity.ok() ? *encoded_verbosity : GetMinimumVerbosity());
 }
 
 cvd_common::Args AllArgs(const std::string& prog_path,
@@ -103,8 +123,6 @@ Result<ClientCommandCheckResult> HandleClientCommands(
   CF_EXPECT(client_parser != nullptr);
   auto cvd_args = client_parser->CvdArgs();
   auto is_help = CF_EXPECT(FilterDriverHelpOptions(cvd_flags, cvd_args));
-  const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
-  SetMinimumVerbosity(verbosity);
 
   output.new_all_args =
       AllArgs(client_parser->ProgPath(), cvd_args, client_parser->SubCmd(),
@@ -153,9 +171,6 @@ Result<VersionCommandReport> HandleVersionCommand(
   auto cvd_args = version_parser->CvdArgs();
   CF_EXPECT(subcmd == "version" || subcmd.empty(),
             "subcmd is expected to be \"version\" or empty but is " << subcmd);
-  const auto verbosity = CF_EXPECT(FilterVerbosityOption(cvd_flags, cvd_args));
-  SetMinimumVerbosity(verbosity);
-  client.SetServerLogSeverity(verbosity);
 
   if (subcmd == "version") {
     auto version_msg = CF_EXPECT(client.HandleVersion());
@@ -186,8 +201,8 @@ Result<void> KillOldServer() {
   return {};
 }
 
-Result<void> CvdMain(int argc, char** argv, char** envp) {
-  android::base::InitLogging(argv, android::base::StderrLogger);
+Result<void> CvdMain(int argc, char** argv, char** envp,
+                     const android::base::LogSeverity verbosity) {
   CF_EXPECT(KillOldServer());
 
   cvd_common::Args all_args = ArgsToVec(argc, argv);
@@ -200,7 +215,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
     return {};
   }
 
-  CvdClient client(kCvdDefaultVerbosity);
+  CvdClient client(verbosity);
+
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
     return client.HandleAcloud(all_args, env);
@@ -256,7 +272,13 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv, char** envp) {
-  auto result = cuttlefish::CvdMain(argc, argv, envp);
+  android::base::LogSeverity verbosity =
+      cuttlefish::CvdVerbosityOption(argc, argv);
+  android::base::InitLogging(argv, android::base::StderrLogger);
+  // set verbosity for this process
+  cuttlefish::SetMinimumVerbosity(verbosity);
+
+  auto result = cuttlefish::CvdMain(argc, argv, envp, verbosity);
   if (result.ok()) {
     return 0;
   } else {
