@@ -51,21 +51,18 @@ ServerLogger::~ServerLogger() {
   android::base::SetLogger(android::base::StderrLogger);
 }
 
-Result<ServerLogger::ScopedLogger> ServerLogger::LogThreadToFd(
-    SharedFD target, const std::string& verbosity) {
-  CF_EXPECT(EncodeVerbosity(verbosity));
+ServerLogger::ScopedLogger ServerLogger::LogThreadToFd(
+    SharedFD target, const android::base::LogSeverity verbosity) {
   return ScopedLogger(*this, std::move(target), verbosity);
 }
 
-Result<ServerLogger::ScopedLogger> ServerLogger::LogThreadToFd(
-    SharedFD target) {
-  auto verbosity = CF_EXPECT(VerbosityToString(GetMinimumVerbosity()));
-  return CF_EXPECT(LogThreadToFd(std::move(target), verbosity));
+ServerLogger::ScopedLogger ServerLogger::LogThreadToFd(SharedFD target) {
+  return ScopedLogger(*this, std::move(target), kCvdDefaultVerbosity);
 }
 
-ServerLogger::ScopedLogger::ScopedLogger(ServerLogger& server_logger,
-                                         SharedFD target,
-                                         const std::string& verbosity)
+ServerLogger::ScopedLogger::ScopedLogger(
+    ServerLogger& server_logger, SharedFD target,
+    const android::base::LogSeverity verbosity)
     : server_logger_(server_logger),
       target_(std::move(target)),
       verbosity_(verbosity) {
@@ -110,14 +107,7 @@ void ServerLogger::ScopedLogger::LogMessage(
     android::base::LogId /* log_buffer_id */,
     android::base::LogSeverity severity, const char* tag, const char* file,
     unsigned int line, const char* message) {
-  auto minimum_verbosity_result = EncodeVerbosity(verbosity_);
-  auto min_severity = GetMinimumVerbosity();
-  if (!minimum_verbosity_result.ok()) {
-    LOG(ERROR) << "Invalid verbosity \"" << verbosity_ << "\"";
-  } else {
-    min_severity = *minimum_verbosity_result;
-  }
-  if (severity < min_severity) {
+  if (severity < verbosity_) {
     return;
   }
 
@@ -131,12 +121,7 @@ void ServerLogger::ScopedLogger::LogMessage(
 }
 
 void ServerLogger::ScopedLogger::SetSeverity(const LogSeverity severity) {
-  auto log_level_result = VerbosityToString(severity);
-  if (!log_level_result.ok()) {
-    LOG(ERROR) << log_level_result.error().Trace();
-    return;
-  }
-  verbosity_ = *log_level_result;
+  verbosity_ = severity;
 }
 
 }  // namespace cuttlefish
