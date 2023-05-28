@@ -77,9 +77,7 @@ class CvdServer {
     bool verbose;
   };
   Result<void> Exec(const ExecParam&);
-  Result<void> AcceptCarryoverClient(
-      SharedFD client,
-      std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger);
+  Result<void> AcceptCarryoverClient(SharedFD client);
   void Stop();
   void Join();
   Result<void> InstanceDbFromJson(const std::string& json_string);

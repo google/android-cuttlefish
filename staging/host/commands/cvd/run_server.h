@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
+
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/types.h"
@@ -42,7 +44,7 @@ struct RunServerParam {
    *
    */
   SharedFD carryover_stderr_fd;
-  std::string verbosity_level;
+  std::optional<android::base::LogSeverity> verbosity_level;
   std::optional<bool> acloud_translator_optout;
 };
 Result<void> RunServer(const RunServerParam& params);
@@ -53,7 +55,7 @@ struct ParseResult {
   std::optional<SharedFD> memory_carryover_fd;
   SharedFD carryover_stderr_fd;
   std::optional<bool> acloud_translator_optout;
-  std::string verbosity_level;
+  std::optional<android::base::LogSeverity> verbosity_level;
 };
 Result<ParseResult> ParseIfServer(cvd_common::Args& all_args);
 
