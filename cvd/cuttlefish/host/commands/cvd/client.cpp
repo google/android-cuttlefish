@@ -231,7 +231,7 @@ Result<cvd::Response> CvdClient::SendRequest(const cvd::Request& request_orig,
   }
   cvd::Request request(request_orig);
   auto* verbosity = request.mutable_verbosity();
-  *verbosity = verbosity_;
+  *verbosity = CF_EXPECT(VerbosityToString(verbosity_));
 
   // Serialize and send the request.
   std::string serialized;
@@ -376,19 +376,6 @@ Result<cvd_common::Args> CvdClient::ValidSubcmdsList(
 
 CvdClient::CvdClient(const android::base::LogSeverity verbosity,
                      const std::string& server_socket_path)
-    : server_socket_path_(server_socket_path), verbosity_("INFO") {
-  auto result = VerbosityToString(verbosity);
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
-    return;
-  }
-  verbosity_ = *result;
-}
-
-Result<void> CvdClient::SetServerLogSeverity(
-    const android::base::LogSeverity log_severity) {
-  verbosity_ = CF_EXPECT(VerbosityToString(log_severity));
-  return {};
-}
+    : server_socket_path_(server_socket_path), verbosity_(verbosity) {}
 
 }  // end of namespace cuttlefish
