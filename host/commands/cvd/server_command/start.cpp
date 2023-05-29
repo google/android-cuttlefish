@@ -215,7 +215,7 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   const std::string& android_host_out = group_creation_info.host_artifacts_path;
   request_forms.push_back(
       {.working_dir = client_pwd,
-       .cmd_args = cvd_common::Args{"ln", "-f", "-s", android_host_out,
+       .cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", android_host_out,
                                     home_dir + "/host_bins"},
        .env = common_envs,
        .selector_args = cvd_common::Args{}});
@@ -244,8 +244,8 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
     }
     request_forms.push_back({
         .working_dir = client_pwd,
-        .cmd_args =
-            cvd_common::Args{"ln", "-f", "-s", home_dir, acloud_compat_home},
+        .cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", home_dir,
+                                     acloud_compat_home},
         .env = common_envs,
         .selector_args = cvd_common::Args{},
     });
