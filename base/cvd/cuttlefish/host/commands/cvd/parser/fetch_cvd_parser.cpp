@@ -23,9 +23,6 @@
 #include <fstream>
 #include <string>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {

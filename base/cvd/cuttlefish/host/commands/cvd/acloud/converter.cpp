@@ -33,13 +33,11 @@
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/users.h"
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/acloud/config.h"
 #include "host/commands/cvd/acloud/create_converter_parser.h"
-#include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/instance_lock.h"  // TempDir()
+#include "host/commands/cvd/lock_file.h"
 #include "host/commands/cvd/selector/instance_database_utils.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
@@ -163,7 +161,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
             return true;
           }));
 
-  bool local_image;
+  bool local_image = false;
   std::optional<std::string> local_image_path;
   flags.emplace_back(
       Flag()
@@ -364,6 +362,16 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
             kernel_build_id = m.value;
             return true;
           }));
+  bool use_16k = false;
+  flags.emplace_back(Flag()
+                         .Alias({FlagAliasMode::kFlagExact, "--16k"})
+                         .Alias({FlagAliasMode::kFlagExact, "--16K"})
+                         .Alias({FlagAliasMode::kFlagExact, "--use-16k"})
+                         .Alias({FlagAliasMode::kFlagExact, "--use-16K"})
+                         .Setter([&use_16k](const FlagMatch&) {
+                           use_16k = true;
+                           return true;
+                         }));
 
   std::optional<std::string> pet_name;
   Flag pet_name_gflag = GflagsCompatFlag("pet-name");
@@ -610,7 +618,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   if (local_kernel_image) {
     // kernel image has 1st priority than boot image
-    struct stat statbuf;
+    struct stat statbuf {};
     std::string local_boot_image;
     std::string vendor_boot_image;
     std::string kernel_image;
@@ -695,6 +703,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         .append(instance_name);
     start_command.mutable_selector_opts()->add_args(group_name_arg);
     start_command.mutable_selector_opts()->add_args(instance_name_arg);
+  }
+  if (use_16k) {
+    start_command.add_args("--use_16k");
   }
 
   auto& start_env = *start_command.mutable_env();
