@@ -24,14 +24,13 @@
 #include <android-base/parseint.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -159,7 +158,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     // assign the leaf value based on the type of input value
     Json::Value leaf;
     if (GetArgValueType(leafValue) == UINTEGER) {
-      std::uint32_t leaf_val;
+      std::uint32_t leaf_val{};
       if (!android::base::ParseUint(leafValue ,&leaf_val)){
         LOG(ERROR) << "Failed to parse unsigned integer " << leafValue;
         return Json::Value::null;
@@ -176,7 +175,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       std::string index = levels.top();
 
       if (GetArgValueType(index) == UINTEGER) {
-        std::uint32_t index_val;
+        std::uint32_t index_val{};
         if (!android::base::ParseUint(index, &index_val)){
           LOG(ERROR) << "Failed to parse unsigned integer " << index;
           return Json::Value::null;
