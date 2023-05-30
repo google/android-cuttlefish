@@ -15,6 +15,7 @@
  */
 
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "common/libs/fs/shared_fd.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 #include <string.h>
@@ -105,6 +106,16 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
   final_rd << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
 }
 
+bool IsCpioArchive(const std::string& path) {
+  static constexpr std::string_view CPIO_MAGIC = "070701";
+  auto fd = SharedFD::Open(path, O_RDONLY);
+  std::array<char, CPIO_MAGIC.size()> buf{};
+  if (fd->Read(buf.data(), buf.size()) != CPIO_MAGIC.size()) {
+    return false;
+  }
+  return memcmp(buf.data(), CPIO_MAGIC.data(), CPIO_MAGIC.size()) == 0;
+}
+
 }  // namespace
 
 void PackRamdisk(const std::string& ramdisk_stage_dir,
@@ -123,11 +134,19 @@ void PackRamdisk(const std::string& ramdisk_stage_dir,
 
 void UnpackRamdisk(const std::string& original_ramdisk_path,
                    const std::string& ramdisk_stage_dir) {
-  int success =
-      Execute({"/bin/bash", "-c",
-               HostBinaryPath("lz4") + " -c -d -l " + original_ramdisk_path +
-                   " > " + original_ramdisk_path + CPIO_EXT});
-  CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
+  int success = 0;
+  if (IsCpioArchive(original_ramdisk_path)) {
+    CHECK(Copy(original_ramdisk_path, original_ramdisk_path + CPIO_EXT))
+        << "failed to copy " << original_ramdisk_path << " to "
+        << original_ramdisk_path + CPIO_EXT;
+  } else {
+    success =
+        Execute({"/bin/bash", "-c",
+                 HostBinaryPath("lz4") + " -c -d -l " + original_ramdisk_path +
+                     " > " + original_ramdisk_path + CPIO_EXT});
+    CHECK(success == 0) << "Unable to run lz4 on file " << original_ramdisk_path
+                        << " . Exited with status " << success;
+  }
   const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
   CHECK(ret.ok()) << ret.error().Message();
 

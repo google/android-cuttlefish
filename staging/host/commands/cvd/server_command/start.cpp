@@ -33,7 +33,6 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -42,7 +41,6 @@
 #include "cvd_server.pb.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/server_handler.h"
 #include "host/commands/cvd/server_command/start_impl.h"
@@ -167,11 +165,11 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
       TempDir() + "/acloud_cvd_temp/local-instance-";
   std::vector<std::string> acloud_compat_homes;
   acloud_compat_homes.reserve(group_creation_info.instances.size());
-  for (const auto instance : group_creation_info.instances) {
+  for (const auto& instance : group_creation_info.instances) {
     acloud_compat_homes.push_back(
         ConcatToString(acloud_compat_home_prefix, instance.instance_id_));
   }
-  for (const auto acloud_compat_home : acloud_compat_homes) {
+  for (const auto& acloud_compat_home : acloud_compat_homes) {
     bool result_deleted = true;
     std::stringstream acloud_compat_home_stream;
     if (!FileExists(acloud_compat_home)) {
@@ -208,17 +206,17 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
   const std::string client_pwd =
       request.Message().command_request().working_directory();
   request_forms.push_back(
-      {.working_dir = client_pwd,
-       .cmd_args = cvd_common::Args{"mkdir", "-p", home_dir},
+      {.cmd_args = cvd_common::Args{"mkdir", "-p", home_dir},
        .env = common_envs,
-       .selector_args = cvd_common::Args{}});
+       .selector_args = cvd_common::Args{},
+       .working_dir = client_pwd});
   const std::string& android_host_out = group_creation_info.host_artifacts_path;
   request_forms.push_back(
-      {.working_dir = client_pwd,
-       .cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", android_host_out,
+      {.cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", android_host_out,
                                     home_dir + "/host_bins"},
        .env = common_envs,
-       .selector_args = cvd_common::Args{}});
+       .selector_args = cvd_common::Args{},
+       .working_dir = client_pwd});
   /* TODO(weihsu@): cvd acloud delete/list must handle multi-tenancy gracefully
    *
    * acloud delete just calls, for all instances in a group,
@@ -243,11 +241,11 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
       continue;
     }
     request_forms.push_back({
-        .working_dir = client_pwd,
         .cmd_args = cvd_common::Args{"ln", "-T", "-f", "-s", home_dir,
                                      acloud_compat_home},
         .env = common_envs,
         .selector_args = cvd_common::Args{},
+        .working_dir = client_pwd,
     });
   }
   std::vector<cvd::Request> request_protos;
