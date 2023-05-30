@@ -28,6 +28,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
@@ -125,6 +126,7 @@ DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
 DECLARE_bool(use_overlay);
+DECLARE_bool(use_16k);
 
 namespace cuttlefish {
 
@@ -134,6 +136,12 @@ using vm_manager::Gem5Manager;
 Result<void> ResolveInstanceFiles() {
   CF_EXPECT(!FLAGS_system_image_dir.empty(),
             "--system_image_dir must be specified.");
+  if (FLAGS_use_16k) {
+    CF_EXPECT(FLAGS_kernel_path.empty(),
+              "--use_16k is not compatible with --kernel_path");
+    CF_EXPECT(FLAGS_initramfs_path.empty(),
+              "--use_16k is not compatible with --initramfs_path");
+  }
 
   std::vector<std::string> system_image_dir =
       android::base::Split(FLAGS_system_image_dir, ",");
@@ -149,6 +157,8 @@ Result<void> ResolveInstanceFiles() {
   std::string default_vbmeta_system_image = "";
   std::string default_vbmeta_vendor_dlkm_image = "";
   std::string default_vbmeta_system_dlkm_image = "";
+  std::string default_16k_kernel_image = "";
+  std::string default_16k_ramdisk_image = "";
 
   std::string cur_system_image_dir;
   std::string comma_str = "";
@@ -182,6 +192,27 @@ Result<void> ResolveInstanceFiles() {
         comma_str + cur_system_image_dir + "/vbmeta_vendor_dlkm.img";
     default_vbmeta_system_dlkm_image +=
         comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
+    if (FLAGS_use_16k) {
+      const auto kernel_16k = cur_system_image_dir + "/kernel_16k";
+      const auto ramdisk_16k = cur_system_image_dir + "/ramdisk_16k.img";
+      default_16k_kernel_image += comma_str + kernel_16k;
+      default_16k_ramdisk_image += comma_str + ramdisk_16k;
+      CF_EXPECT(FileExists(kernel_16k),
+                kernel_16k + " missing for launching 16k cuttlefish");
+      CF_EXPECT(FileExists(ramdisk_16k),
+                ramdisk_16k + " missing for launching 16k cuttlefish");
+    }
+  }
+  if (FLAGS_use_16k) {
+    LOG(INFO) << "Using 16k kernel: " << default_16k_kernel_image;
+    LOG(INFO) << "Using 16k ramdisk: " << default_16k_ramdisk_image;
+
+    SetCommandLineOptionWithMode("kernel_path",
+                                 default_16k_kernel_image.c_str(),
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("initramfs_path",
+                                 default_16k_ramdisk_image.c_str(),
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);

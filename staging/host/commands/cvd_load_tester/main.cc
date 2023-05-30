@@ -49,7 +49,7 @@ int CvdLoadParserMain(int argc, char** argv) {
   LOG(INFO) << "credential = " << cvd_flags->fetch_cvd_flags.credential;
 
   int i = 0;
-  for (auto& parsed_fetch_instance_flag :
+  for (const auto& parsed_fetch_instance_flag :
        cvd_flags->fetch_cvd_flags.instances) {
     LOG(INFO) << i << " -- " << parsed_fetch_instance_flag.default_build << ","
               << parsed_fetch_instance_flag.system_build << ","
