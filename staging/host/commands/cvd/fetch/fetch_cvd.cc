@@ -41,7 +41,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/web/build_api.h"
 #include "host/libs/web/credential_source.h"
@@ -384,12 +383,15 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     credential_source = FixedCredentialSource::make(flags.credential_source);
   } else {
     // Read the file only once in case it's a pipe.
-    LOG(VERBOSE) << "Attempting to open credentials file \"" << flags.credential_source << "\"";
+    LOG(VERBOSE) << "Attempting to open credentials file \""
+                 << flags.credential_source << "\"";
     auto file = SharedFD::Open(flags.credential_source, O_RDONLY);
-    CF_EXPECT(file->IsOpen(), "Failed to open credential_source file: " << file->StrError());
+    CF_EXPECT(file->IsOpen(),
+              "Failed to open credential_source file: " << file->StrError());
     std::string file_content;
     auto size = ReadAll(file, &file_content);
-    CF_EXPECT(size >= 0, "Failed to read credentials file: " << file->StrError());
+    CF_EXPECT(size >= 0,
+              "Failed to read credentials file: " << file->StrError());
     if (auto crds = TryParseServiceAccount(*curl, file_content)) {
       credential_source = std::move(crds);
     } else {
