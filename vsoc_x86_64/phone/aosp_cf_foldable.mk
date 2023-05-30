@@ -26,6 +26,7 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/foldable/display_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings.xml \
 
 # Include RRO settings that specify the fold states and screen information.
-DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/foldable/overlay
+PRODUCT_PACKAGES += \
+    aosp_cuttlefish_foldable_overlay_frameworks_base
 # Include the android-info.txt that specifies the foldable --config by default.
 TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/foldable/android-info.txt

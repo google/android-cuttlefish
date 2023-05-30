@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.frameworks.base.cuttlefish.foldable.overlay">
+
+    <application android:hasCode="false" />
+
+    <overlay
+      android:targetPackage="com.android.frameworks.base.cuttlefish.foldable.overlay"
+      android:isStatic="true"
+      android:priority="0"
+      />
+</manifest>
