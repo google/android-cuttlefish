@@ -154,8 +154,8 @@ std::vector<std::string> BootconfigArgsFromConfig(
                                      instance.modem_simulator_ports()));
   }
 
-  bootconfig_args.push_back(concat("androidboot.fstab_suffix=cf.",
-                                   config.userdata_format()));
+  std::string fstab_suffix = fmt::format("cf.{}.{}", config.userdata_format(), "cts");
+  bootconfig_args.push_back(concat("androidboot.fstab_suffix=", fstab_suffix));
 
   bootconfig_args.push_back(
       concat("androidboot.wifi_mac_prefix=", instance.wifi_mac_prefix()));
