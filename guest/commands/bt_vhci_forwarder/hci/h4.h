@@ -1,36 +1,32 @@
 //
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+#pragma once
 
-cc_binary {
-    name: "bt_vhci_forwarder",
-    srcs: [
-        "hci/h4_packetizer.cc",
-        "hci/h4_parser.cc",
-        "main.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libcutils",
-        "liblog",
-    ],
-    static_libs: [
-        "libgflags",
-    ],
-    defaults: ["cuttlefish_guest_only"]
-}
+#include <cstdint>  // for uint8_t
+
+namespace rootcanal {
+
+enum class PacketType : uint8_t {
+  UNKNOWN = 0,
+  COMMAND = 1,
+  ACL = 2,
+  SCO = 3,
+  EVENT = 4,
+  ISO = 5,
+};
+
+}  // namespace rootcanal
