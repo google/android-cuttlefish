@@ -26,7 +26,7 @@
 
 #include "android-base/logging.h"
 
-#include "model/hci/h4_packetizer.h"
+#include "hci/h4_packetizer.h"
 
 // Copied from net/bluetooth/hci.h
 #define HCI_ACLDATA_PKT 0x02
