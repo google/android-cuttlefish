@@ -15,7 +15,7 @@
 # seriallogging
 /dev/hvc2 0660 system logd
 
-# keymaster
+# keymaster / C++
 /dev/hvc3 0666 system system
 
 # gatekeeper
@@ -40,6 +40,9 @@
 
 # oemlock
 /dev/hvc10 0660 hsm hsm
+
+# keymint / Rust
+/dev/hvc11 0666 system system
 
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system

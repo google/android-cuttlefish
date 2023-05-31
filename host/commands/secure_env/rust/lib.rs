@@ -47,7 +47,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
     log::set_logger(&AndroidCppLogger).unwrap();
     log::set_max_level(log::LevelFilter::Debug); // Filtering happens elsewhere
     info!(
-        "KeyMint TA running with fd_in={}, fd_out={}, security_level={:?}",
+        "KeyMint Rust TA running with fd_in={}, fd_out={}, security_level={:?}",
         fd_in, fd_out, security_level,
     );
 
