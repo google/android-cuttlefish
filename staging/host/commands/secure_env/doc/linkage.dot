@@ -9,12 +9,14 @@ digraph {
   subgraph fifos {
     rank = same;
 
-    host_keymint_in [color = "blue", label = "internal/keymaster_fifo_vm.in", shape = "rectangle"]
-    host_keymint_out [color = "blue", label = "internal/keymaster_fifo_vm.out", shape = "rectangle"]
+    host_keymaster_in [color = "blue", label = "internal/keymaster_fifo_vm.in", shape = "rectangle"]
+    host_keymaster_out [color = "blue", label = "internal/keymaster_fifo_vm.out", shape = "rectangle"]
     host_gatekeeper_in [color = "green", label = "internal/gatekeeper_fifo_vm.in", shape = "rectangle"]
     host_gatekeeper_out [color = "green", label = "internal/gatekeeper_fifo_vm.out", shape = "rectangle"]
     host_confirmationui_in [color = "red", label = "internal/confui_fifo_vm.in", shape = "rectangle"]
     host_confirmationui_out [color = "red", label = "internal/confui_fifo_vm.out", shape = "rectangle"]
+    host_keymint_in [color = "blue", label = "internal/keymint_fifo_vm.in", shape = "rectangle"]
+    host_keymint_out [color = "blue", label = "internal/keymint_fifo_vm.out", shape = "rectangle"]
   }
 
   subgraph cluster_android {
@@ -22,13 +24,19 @@ digraph {
     u_boot [label = "u-boot"]
     confirmationui [color = "red", label = "ConfirmationUI HAL"]
     gatekeeper [color = "green", label = "Gatekeeper HAL"]
-    keymint [color = "blue", label = "Keymint HAL"]
+    subgraph cluster_keymint {
+      graph[style=dotted]
+      label = "One of:"
+      keymaster [color = "blue", label = "KeyMint (C++) HAL"]
+      keymint [color = "blue", label = "KeyMint (Rust) HAL"]
+    }
 
     subgraph consoles {
-      	rank = same;
+        rank = same;
         confirmationui_console [color = "red", label = "/dev/hvc8", shape = "rectangle"]
         gatekeeper_console [color = "green", label = "/dev/hvc4", shape = "rectangle"]
-        keymint_console [color = "blue", label = "/dev/hvc3", shape = "rectangle"]
+        keymaster_console [color = "blue", label = "/dev/hvc3", shape = "rectangle"]
+        keymint_console [color = "blue", label = "/dev/hvc11", shape = "rectangle"]
     }
   }
 
@@ -44,9 +52,13 @@ digraph {
   secure_env -> host_gatekeeper_in -> vmm [color = "green"]
   vmm -> gatekeeper_console -> gatekeeper [color = "green", dir = "both"]
 
+  secure_env -> host_keymaster_out -> vmm [color = "blue", dir = "back"]
+  secure_env -> host_keymaster_in -> vmm [color = "blue"]
+  vmm -> keymaster_console -> keymaster [color = "blue", dir = "both"]
+  keymaster_console -> u_boot [color = "blue", dir = "both"]
+
   secure_env -> host_keymint_out -> vmm [color = "blue", dir = "back"]
   secure_env -> host_keymint_in -> vmm [color = "blue"]
   vmm -> keymint_console -> keymint [color = "blue", dir = "both"]
-  keymint_console -> u_boot [color = "blue", dir = "both"]
 
 }
