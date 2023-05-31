@@ -54,6 +54,8 @@
 DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
 DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
+DEFINE_int32(keymint_fd_in, -1, "A pipe for keymint communication");
+DEFINE_int32(keymint_fd_out, -1, "A pipe for keymint communication");
 DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(gatekeeper_fd_out, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(oemlock_fd_in, -1, "A pipe for oemlock communication");
@@ -68,8 +70,7 @@ DEFINE_string(tpm_impl, "in_memory",
               "The TPM implementation. \"in_memory\" or \"host_device\"");
 
 DEFINE_string(keymint_impl, "tpm",
-              "The KeyMint implementation. \"tpm\", \"software\", \"rust-tpm\" "
-              "or \"rust-software\"");
+              "The KeyMint implementation. \"tpm\" or \"software\"");
 
 DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
@@ -235,61 +236,67 @@ int SecureEnvMain(int argc, char** argv) {
 
   std::vector<std::thread> threads;
 
-  if (android::base::StartsWith(FLAGS_keymint_impl, "rust-")) {
-    // Use the Rust reference implementation of KeyMint.
-    LOG(DEBUG) << "starting Rust KeyMint implementation";
-    int security_level;
-    if (FLAGS_keymint_impl == "rust-software") {
-      security_level = KM_SECURITY_LEVEL_SOFTWARE;
-    } else if (FLAGS_keymint_impl == "rust-tpm") {
-      security_level = KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
-    } else {
-      LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
-      return -1;
-    }
-
-    int keymaster_in = FLAGS_keymaster_fd_in;
-    int keymaster_out = FLAGS_keymaster_fd_out;
-    TpmResourceManager* rm = resource_manager;
-    threads.emplace_back([rm, keymaster_in, keymaster_out, security_level]() {
-      kmr_ta_main(keymaster_in, keymaster_out, security_level, rm);
-    });
-
+  int security_level;
+  if (FLAGS_keymint_impl == "software") {
+    security_level = KM_SECURITY_LEVEL_SOFTWARE;
+  } else if (FLAGS_keymint_impl == "tpm") {
+    security_level = KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT;
   } else {
-    // Use the C++ reference implementation of KeyMint.
-    LOG(DEBUG) << "starting C++ KeyMint implementation";
-    if (FLAGS_keymint_impl == "software") {
-      // TODO: See if this is the right KM version.
-      keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
-          keymaster::KmVersion::KEYMINT_3, KM_SECURITY_LEVEL_SOFTWARE));
-    } else if (FLAGS_keymint_impl == "tpm") {
-      keymaster_context.reset(
-          new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
-    } else {
-      LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
-      return -1;
-    }
-    // keymaster::AndroidKeymaster puts the context pointer into a UniquePtr,
-    // taking ownership.
-    keymaster.reset(new keymaster::AndroidKeymaster(
-        new ProxyKeymasterContext(*keymaster_context), kOperationTableSize,
-        keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_3,
-                                  0 /* km_date */)));
-
-    auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
-    auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
-    keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
-    threads.emplace_back([keymaster_in, keymaster_out, borrowed_km]() {
-      while (true) {
-        SharedFdKeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
-
-        KeymasterResponder keymaster_responder(keymaster_channel, *borrowed_km);
-
-        while (keymaster_responder.ProcessMessage()) {
-        }
-      }
-    });
+    LOG(FATAL) << "Unknown keymint implementation " << FLAGS_keymint_impl;
+    return -1;
   }
+
+  // The guest image may have either the C++ implementation of
+  // KeyMint/Keymaster, xor the Rust implementation of KeyMint.  Those different
+  // implementations each need to have a matching TA implementation in
+  // secure_env, but they use distincts ports (/dev/hvc3 for C++, /dev/hvc11 for
+  // Rust) so start threads for *both* TA implementations -- only one of them
+  // will receive any traffic from the guest.
+
+  // Start the Rust reference implementation of KeyMint.
+  LOG(INFO) << "starting Rust KeyMint TA implementation in a thread";
+
+  int keymint_in = FLAGS_keymint_fd_in;
+  int keymint_out = FLAGS_keymint_fd_out;
+  TpmResourceManager* rm = resource_manager;
+  threads.emplace_back([rm, keymint_in, keymint_out, security_level]() {
+    kmr_ta_main(keymint_in, keymint_out, security_level, rm);
+  });
+
+  // Start the C++ reference implementation of KeyMint.
+  LOG(INFO) << "starting C++ KeyMint implementation in a thread with FDs in="
+            << FLAGS_keymaster_fd_in << ", out=" << FLAGS_keymaster_fd_out;
+  if (security_level == KM_SECURITY_LEVEL_SOFTWARE) {
+    keymaster_context.reset(new keymaster::PureSoftKeymasterContext(
+        keymaster::KmVersion::KEYMINT_3, KM_SECURITY_LEVEL_SOFTWARE));
+  } else if (security_level == KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT) {
+    keymaster_context.reset(
+        new TpmKeymasterContext(*resource_manager, *keymaster_enforcement));
+  } else {
+    LOG(FATAL) << "Unknown keymaster security level " << security_level
+               << " for " << FLAGS_keymint_impl;
+    return -1;
+  }
+  // keymaster::AndroidKeymaster puts the context pointer into a UniquePtr,
+  // taking ownership.
+  keymaster.reset(new keymaster::AndroidKeymaster(
+      new ProxyKeymasterContext(*keymaster_context), kOperationTableSize,
+      keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_3,
+                                0 /* km_date */)));
+
+  auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
+  auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
+  keymaster::AndroidKeymaster* borrowed_km = keymaster.get();
+  threads.emplace_back([keymaster_in, keymaster_out, borrowed_km]() {
+    while (true) {
+      SharedFdKeymasterChannel keymaster_channel(keymaster_in, keymaster_out);
+
+      KeymasterResponder keymaster_responder(keymaster_channel, *borrowed_km);
+
+      while (keymaster_responder.ProcessMessage()) {
+      }
+    }
+  });
 
   auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
   auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
