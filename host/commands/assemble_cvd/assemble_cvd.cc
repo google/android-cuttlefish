@@ -254,6 +254,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("persistent_composite.img");
       preserving.insert("uboot_env.img");
       preserving.insert("factory_reset_protected.img");
+      preserving.insert("misc.img");
+      preserving.insert("metadata.img");
       std::stringstream ss;
       for (int i = 0; i < modem_simulator_count; i++) {
         ss.clear();
