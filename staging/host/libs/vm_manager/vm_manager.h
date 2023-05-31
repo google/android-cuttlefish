@@ -41,8 +41,20 @@ class VmManager {
   // so even if they are disabled and the guest isn't using them, they don't
   // need to consume host resources, except for the PCI ID. Use this trick to
   // keep the number of PCI IDs assigned constant for all flags/vm manager
-  // combinations
-  static const int kDefaultNumHvcs = 11;
+  // combinations.
+  // - /dev/hvc0 = kernel console
+  // - /dev/hvc1 = serial console
+  // - /dev/hvc2 = serial logging
+  // - /dev/hvc3 = keymaster
+  // - /dev/hvc4 = gatekeeper
+  // - /dev/hvc5 = bt
+  // - /dev/hvc6 = gnss
+  // - /dev/hvc7 = location
+  // - /dev/hvc8 = confirmationui
+  // - /dev/hvc9 = uwb
+  // - /dev/hvc10 = oemlock
+  // - /dev/hvc11 = keymint
+  static const int kDefaultNumHvcs = 12;
 
   // This is the number of virtual disks (block devices) that should be
   // configured by the VmManager. Related to the description above regarding
