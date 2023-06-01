@@ -102,6 +102,7 @@ static std::map<std::string, Json::ValueType> kDiskKeyMap = {
     {"default_build", Json::ValueType::stringValue},
     {"system_build", Json::ValueType::stringValue},
     {"kernel_build", Json::ValueType::stringValue},
+    {"blank_data_image_mb", Json::ValueType::uintValue},
 };
 
 // Validate the security json parameters
