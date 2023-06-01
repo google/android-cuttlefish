@@ -267,18 +267,28 @@ TEST(FlagParser, BoolVectorFlag) {
 
   ASSERT_TRUE(flag.Parse({"--myflag=true"}));
   ASSERT_EQ(value, std::vector<bool>({true}));
+  ASSERT_TRUE(flagXml(flag));
+  ASSERT_EQ((*flagXml(flag))["default"], "true");
 
   ASSERT_TRUE(flag.Parse({"--myflag=true,false"}));
   ASSERT_EQ(value, std::vector<bool>({true, false}));
+  ASSERT_TRUE(flagXml(flag));
+  ASSERT_EQ((*flagXml(flag))["default"], "true,false");
 
   ASSERT_TRUE(flag.Parse({"--myflag=,false"}));
   ASSERT_EQ(value, std::vector<bool>({true, false}));
+  ASSERT_TRUE(flagXml(flag));
+  ASSERT_EQ((*flagXml(flag))["default"], "true,false");
 
   ASSERT_TRUE(flag.Parse({"--myflag=true,"}));
   ASSERT_EQ(value, std::vector<bool>({true, true}));
+  ASSERT_TRUE(flagXml(flag));
+  ASSERT_EQ((*flagXml(flag))["default"], "true,true");
 
   ASSERT_TRUE(flag.Parse({"--myflag=,"}));
   ASSERT_EQ(value, std::vector<bool>({true, true}));
+  ASSERT_TRUE(flagXml(flag));
+  ASSERT_EQ((*flagXml(flag))["default"], "true,true");
 }
 
 TEST(FlagParser, InvalidStringFlag) {
