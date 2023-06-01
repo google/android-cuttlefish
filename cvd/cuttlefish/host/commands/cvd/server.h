@@ -46,6 +46,7 @@ struct ServerMainParam {
   SharedFD internal_server_fd;
   SharedFD carryover_client_fd;
   std::optional<SharedFD> memory_carryover_fd;
+  std::optional<bool> acloud_translator_optout;
   std::unique_ptr<ServerLogger> server_logger;
   /* scoped logger that carries the stderr of the carried-over
    * client. The client may have called "cvd restart-server."
@@ -76,9 +77,7 @@ class CvdServer {
     bool verbose;
   };
   Result<void> Exec(const ExecParam&);
-  Result<void> AcceptCarryoverClient(
-      SharedFD client,
-      std::unique_ptr<ServerLogger::ScopedLogger> scoped_logger);
+  Result<void> AcceptCarryoverClient(SharedFD client);
   void Stop();
   void Join();
   Result<void> InstanceDbFromJson(const std::string& json_string);
