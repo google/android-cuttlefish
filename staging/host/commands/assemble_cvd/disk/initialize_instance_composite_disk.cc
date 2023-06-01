@@ -118,6 +118,12 @@ class InitializeInstanceCompositeDiskImpl
             .CompositeDiskPath(instance_.persistent_composite_disk_path())
             .ResumeIfPossible(FLAGS_resume);
     CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
+    persistent_disk_builder.OverlayPath(
+        instance_.PerInstancePath("persistent_composite_overlay.img"));
+    if (IsVmManagerQemu()) {
+      CF_EXPECT(persistent_disk_builder.BuildOverlayIfNecessary());
+    }
+
     using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
     if (instance_.ap_boot_flow() == APBootFlow::Grub) {
       auto persistent_ap_disk_builder =
@@ -131,10 +137,17 @@ class InitializeInstanceCompositeDiskImpl
               .CompositeDiskPath(instance_.persistent_ap_composite_disk_path())
               .ResumeIfPossible(FLAGS_resume);
       CF_EXPECT(persistent_ap_disk_builder.BuildCompositeDiskIfNecessary());
+      persistent_ap_disk_builder.OverlayPath(
+          instance_.PerInstancePath("ap_persistent_composite_overlay.img"));
+      if (IsVmManagerQemu()) {
+        CF_EXPECT(persistent_ap_disk_builder.BuildOverlayIfNecessary());
+      }
     }
 
     return {};
   }
+
+  bool IsVmManagerQemu() const { return config_.vm_manager() == "qemu_cli"; }
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;

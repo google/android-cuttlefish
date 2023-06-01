@@ -37,6 +37,7 @@
 #include <vulkan/vulkan.h>
 
 #include "common/libs/fs/shared_select.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
@@ -590,8 +591,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   auto readonly = instance.protected_vm() ? ",readonly" : "";
   for (size_t i = 0; i < disk_num; i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
-    auto format = i == 0 ? "" : ",format=raw";
     auto disk = instance.virtual_disk_paths()[i];
+    const std::string format =
+        (disk == instance.sdcard_path() ? ",format=raw" : "");
     qemu_cmd.AddParameter("-drive");
     qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
                           ",aio=threads", format, readonly);
