@@ -66,7 +66,6 @@
 /vendor/bin/cuttlefish_sensor_injection   u:object_r:cuttlefish_sensor_injection_exec:s0
 /vendor/bin/mac80211_create_radios u:object_r:mac80211_create_radios_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
-/vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/suspend_blocker  u:object_r:suspend_blocker_exec:s0
 /vendor/bin/metrics_helper   u:object_r:metrics_helper_exec:s0
