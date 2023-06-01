@@ -361,8 +361,9 @@ class CuttlefishConfig {
     std::string sdcard_path() const;
 
     std::string persistent_composite_disk_path() const;
-
+    std::string persistent_composite_overlay_path() const;
     std::string persistent_ap_composite_disk_path() const;
+    std::string persistent_ap_composite_overlay_path() const;
 
     std::string os_composite_disk_path() const;
 
