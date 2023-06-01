@@ -325,8 +325,9 @@ class DeviceControlApp {
           .catch(e => console.error('Unable to get audio stream: ', e));
     }
 
-    // Set up keyboard capture
+    // Set up keyboard and wheel capture
     this.#startKeyboardCapture();
+    this.#startWheelCapture();
 
     this.#updateDeviceHardwareDetails(
         this.#deviceConnection.description.hardware);
@@ -829,6 +830,20 @@ class DeviceControlApp {
 
   #onKeyEvent(e) {
     this.#deviceConnection.sendKeyEvent(e.code, e.type);
+  }
+
+  #startWheelCapture() {
+    const deviceArea = document.querySelector('#device-displays');
+    deviceArea.addEventListener('wheel', evt => this.#onWheelEvent(evt),
+                                { passive: false });
+  }
+
+  #onWheelEvent(e) {
+    e.preventDefault();
+    // Vertical wheel pixel events only
+    if (e.deltaMode == WheelEvent.DOM_DELTA_PIXEL && e.deltaY != 0.0) {
+      this.#deviceConnection.sendWheelEvent(e.deltaY);
+    }
   }
 
   #addMouseTracking(displayDeviceVideo) {
