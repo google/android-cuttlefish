@@ -86,7 +86,6 @@ std::ostream& operator<<(std::ostream&, const Build&);
 class BuildApi {
  public:
   BuildApi();
-  BuildApi(BuildApi&&) = default;
   BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<CredentialSource>);
   BuildApi(std::unique_ptr<HttpClient>, std::unique_ptr<HttpClient>,
            std::unique_ptr<CredentialSource>, std::string api_key,
@@ -171,7 +170,5 @@ class BuildApi {
 };
 
 std::string GetBuildZipName(const Build& build, const std::string& name);
-
-std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
 
 }  // namespace cuttlefish

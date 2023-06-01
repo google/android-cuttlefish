@@ -20,9 +20,6 @@
 
 #include <regex>
 #include <sstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>
