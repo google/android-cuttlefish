@@ -50,6 +50,10 @@ bool FileIsSocket(const std::string& path);
 // account for all files under this folder(recursively).
 int GetDiskUsage(const std::string& path);
 
+// acloud related API
+std::string FindImage(const std::string& search_path,
+                      const std::vector<std::string>& pattern);
+
 // The returned value may contain .. or . if these are present in the path
 // argument.
 // path must not contain ~
