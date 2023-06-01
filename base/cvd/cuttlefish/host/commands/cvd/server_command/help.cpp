@@ -39,7 +39,9 @@ Selector Options:
                          instance group. The 'names' is comma-separated.
 
 Driver Options:
-  --help                 Print this message
+  -help                  Print this message
+  -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
+                         severity. (Required: cvd >= v1.3)
   -disable_default_group If the flag is true, the group's runtime files are
                          not populated under the user's HOME. Instead the
                          files are created under an automatically-generated
