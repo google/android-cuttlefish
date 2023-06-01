@@ -45,6 +45,7 @@
 
 DEFINE_string(touch_fds, "",
               "A list of fds to listen on for touch connections.");
+DEFINE_int32(rotary_fd, -1, "An fd to listen on for rotary connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(switches_fd, -1, "An fd to listen on for switch connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
@@ -131,9 +132,11 @@ int main(int argc, char** argv) {
         cuttlefish::SharedFD::Dup(touch_fd);
     close(touch_fd);
   }
+  input_sockets.rotary_server = cuttlefish::SharedFD::Dup(FLAGS_rotary_fd);
   input_sockets.keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
   input_sockets.switches_server = cuttlefish::SharedFD::Dup(FLAGS_switches_fd);
   auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
+  close(FLAGS_rotary_fd);
   close(FLAGS_keyboard_fd);
   close(FLAGS_switches_fd);
   close(FLAGS_command_fd);
@@ -146,6 +149,8 @@ int main(int argc, char** argv) {
     input_sockets.touch_clients[touch_entry.first] =
         cuttlefish::SharedFD::Accept(*touch_entry.second);
   }
+  input_sockets.rotary_client =
+      cuttlefish::SharedFD::Accept(*input_sockets.rotary_server);
   input_sockets.keyboard_client =
       cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
   input_sockets.switches_client =
@@ -162,6 +167,12 @@ int main(int argc, char** argv) {
       }
     });
   }
+  std::thread rotary_accepter([&input_sockets]() {
+    for (;;) {
+      input_sockets.rotary_client =
+          cuttlefish::SharedFD::Accept(*input_sockets.rotary_server);
+    }
+  });
   std::thread keyboard_accepter([&input_sockets]() {
     for (;;) {
       input_sockets.keyboard_client =
