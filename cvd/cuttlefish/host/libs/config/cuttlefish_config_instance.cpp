@@ -207,25 +207,6 @@ void CuttlefishConfig::MutableInstanceSpecific::
     set_new_vbmeta_vendor_dlkm_image(const std::string& image) {
   (*Dictionary())[kNewVbmetaVendorDlkmImage] = image;
 }
-static constexpr char kVbmetaSystemDlkmImage[] = "vbmeta_system_dlkm_image";
-std::string CuttlefishConfig::InstanceSpecific::vbmeta_system_dlkm_image()
-    const {
-  return (*Dictionary())[kVbmetaSystemDlkmImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_vbmeta_system_dlkm_image(
-    const std::string& image) {
-  (*Dictionary())[kVbmetaSystemDlkmImage] = image;
-}
-static constexpr char kNewVbmetaSystemDlkmImage[] =
-    "new_vbmeta_system_dlkm_image";
-std::string CuttlefishConfig::InstanceSpecific::new_vbmeta_system_dlkm_image()
-    const {
-  return (*Dictionary())[kNewVbmetaSystemDlkmImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_new_vbmeta_system_dlkm_image(const std::string& image) {
-  (*Dictionary())[kNewVbmetaSystemDlkmImage] = image;
-}
 static constexpr char kOtherosEspImage[] = "otheros_esp_image";
 std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
   return (*Dictionary())[kOtherosEspImage].asString();
@@ -331,23 +312,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_kernel_path(
   (*Dictionary())[kKernelPath] = kernel_path;
 }
 // end of system image files
-
-static constexpr char kDefaultTargetZip[] = "default_target_zip";
-std::string CuttlefishConfig::InstanceSpecific::default_target_zip() const {
-  return (*Dictionary())[kDefaultTargetZip].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_default_target_zip(
-    const std::string& default_target_zip) {
-  (*Dictionary())[kDefaultTargetZip] = default_target_zip;
-}
-static constexpr char kSystemTargetZip[] = "system_target_zip";
-std::string CuttlefishConfig::InstanceSpecific::system_target_zip() const {
-  return (*Dictionary())[kSystemTargetZip].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_system_target_zip(
-    const std::string& system_target_zip) {
-  (*Dictionary())[kSystemTargetZip] = system_target_zip;
-}
 
 static constexpr char kSerialNumber[] = "serial_number";
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
