@@ -175,7 +175,8 @@ func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 	}
 	items := make([][]cvdInstance, 0)
 	if err := json.Unmarshal([]byte(stdOut), &items); err != nil {
-		return nil, err
+		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cmdOutputLogMessage(stdOut))
+		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
 	if len(items) == 0 {
 		return []cvdInstance{}, nil
@@ -740,16 +741,20 @@ func buildCvdCommand(ctx context.Context, execContext ExecContext, androidHostOu
 	return execContext(ctx, "sudo", newArgs...)
 }
 
-func logFailedCommandOutput(cmd *exec.Cmd, out []byte) {
-	msg := "`%s` execution failed with combined stdout and stderr:\n" +
-		"############################################\n" +
+func cmdOutputLogMessage(output string) string {
+	const format = "############################################\n" +
 		"## BEGIN \n" +
 		"############################################\n" +
 		"\n%s\n\n" +
 		"############################################\n" +
 		"## END \n" +
 		"############################################\n"
-	log.Printf(msg, strings.Join(cmd.Args, " "), string(out))
+	return fmt.Sprintf(format, string(output))
+}
+
+func logFailedCommandOutput(cmd *exec.Cmd, out []byte) {
+	msg := "`%s` execution failed with combined stdout and stderr:\n%s"
+	log.Printf(msg, strings.Join(cmd.Args, " "), cmdOutputLogMessage(string(out)))
 }
 
 // Validates whether the current host is valid to run CVDs.
