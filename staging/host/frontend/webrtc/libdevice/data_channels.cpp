@@ -153,6 +153,16 @@ class InputChannelHandler : public DataChannelHandler {
       auto down = evt["event_type"].asString() == std::string("keydown");
       auto code = DomKeyCodeToLinux(evt["keycode"].asString());
       observer()->OnKeyboardEvent(code, down);
+    } else if (event_type == "wheel") {
+       auto result =
+          ValidateJsonObject(evt, "wheel",
+                             {{"pixels", Json::ValueType::intValue}});
+       if (!result.ok()) {
+         LOG(ERROR) << result.error().Trace();
+         return;
+       }
+       auto pixels = evt["pixels"].asInt();
+       observer()->OnWheelEvent(pixels);
     } else {
       LOG(ERROR) << "Unrecognized event type: " << event_type;
       return;
