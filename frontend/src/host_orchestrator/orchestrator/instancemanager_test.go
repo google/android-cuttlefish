@@ -146,33 +146,6 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	}
 }
 
-func TestCreateCVDInstanceRuntimeDirAlreadyExist(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	execContext := execCtxAlwaysSucceeds
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
-	}
-	om := NewMapOM()
-	im1 := newCVDToolIm(execContext, cvdBinAB, paths, om)
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
-	op, _ := im1.CreateCVD(r)
-	om.Wait(op.Name, 1*time.Second)
-	// The second instance manager is created with the same im paths as the previous instance
-	// manager, this will lead to create an instance runtime dir that already exist.
-	im2 := newCVDToolIm(execContext, cvdBinAB, paths, om)
-
-	op, _ = im2.CreateCVD(r)
-
-	res, _ := om.Wait(op.Name, 1*time.Second)
-	if res.Error == nil {
-		t.Error("expected error due instance runtime dir already existing")
-	}
-}
-
 func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
@@ -205,7 +178,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes/cvd-1 "+
+	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes "+
 		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
@@ -309,7 +282,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 			var usedCmdName string
 			var usedCmdArgs []string
 			execContext := func(cxt context.Context, name string, args ...string) *exec.Cmd {
-				if contains(args, "start") {
+				if containsStr(args, "start") {
 					usedCmdName = name
 					usedCmdArgs = args
 				}
@@ -348,75 +321,65 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	}
 }
 
-func TestCreateCVDSucceeds(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
-	execContext := execCtxAlwaysSucceeds
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
-	}
-	om := NewMapOM()
-	im := newCVDToolIm(execContext, cvdBinAB, paths, om)
-	buildSource := androidCISource("1", "foo")
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
-
-	op, err := im.CreateCVD(r)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err := om.Wait(op.Name, 1*time.Second)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
-	if diff := cmp.Diff(want, res.Value); diff != "" {
-		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
-	}
-}
-
 type fakeUADirRes struct {
 	Dir string
 }
 
 func (r *fakeUADirRes) GetDirPath(string) string { return r.Dir }
 
-func TestCreateCVDWithUserBuildSucceeds(t *testing.T) {
+func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
 	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
 	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
-	execContext := execCtxAlwaysSucceeds
-	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
-	paths := IMPaths{
-		CVDToolsDir:      dir,
-		ArtifactsRootDir: dir + "/artifacts",
-		RuntimesRootDir:  dir + "/runtimes",
+	expected := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes "+
+		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
+		" --base_instance_num=1 --system_image_dir=%[1]s", dir)
+	var usedCmdName string
+	var usedCmdArgs []string
+	execContext := func(cxt context.Context, name string, args ...string) *exec.Cmd {
+		if containsStr(args, "start") {
+			usedCmdName = name
+			usedCmdArgs = args
+		}
+		return exec.Command("true")
 	}
 	om := NewMapOM()
 	opts := CVDToolInstanceManagerOpts{
-		ExecContext:              execContext,
-		CVDToolsVersion:          cvdBinAB,
-		Paths:                    paths,
+		ExecContext:     execContext,
+		CVDToolsVersion: AndroidBuild{ID: "1", Target: "xyzzy"},
+		Paths: IMPaths{
+			CVDToolsDir:      dir,
+			ArtifactsRootDir: dir + "/artifacts",
+			RuntimesRootDir:  dir + "/runtimes",
+		},
 		OperationManager:         om,
 		HostValidator:            &AlwaysSucceedsValidator{},
 		UserArtifactsDirResolver: &fakeUADirRes{dir},
 		BuildAPIFactory:          func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
 	im := NewCVDToolInstanceManager(&opts)
-	buildSource := &apiv1.BuildSource{UserBuildSource: &apiv1.UserBuildSource{ArtifactsDir: "baz"}}
-	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: buildSource}}
-
-	op, _ := im.CreateCVD(r)
-
-	res, _ := om.Wait(op.Name, 1*time.Second)
-	want := &apiv1.CVD{Name: "cvd-1", BuildSource: buildSource}
-	if diff := cmp.Diff(want, res.Value); diff != "" {
-		t.Errorf("cvd mismatch (-want +got):\n%s", diff)
+	req := apiv1.CreateCVDRequest{
+		CVD: &apiv1.CVD{
+			BuildSource: &apiv1.BuildSource{
+				UserBuildSource: &apiv1.UserBuildSource{ArtifactsDir: "baz"},
+			},
+		},
 	}
+
+	op, err := im.CreateCVD(req)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	om.Wait(op.Name, 1*time.Second)
+	got := usedCmdName + " " + strings.Join(usedCmdArgs, " ")
+	if diff := cmp.Diff(expected, got); diff != "" {
+		t.Errorf("command line mismatch (-want +got):\n%s", diff)
+	}
+	// Cleanup
+	os.RemoveAll(dir)
+	os.MkdirAll(dir, 0774)
 }
 
 func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
@@ -561,6 +524,31 @@ func TestListCVDsSucceeds(t *testing.T) {
 	}
 }
 
+func TestSliceItoa(t *testing.T) {
+	tests := []struct {
+		in  []uint32
+		out []string
+	}{
+		{
+			in:  []uint32{},
+			out: []string{},
+		},
+		{
+			in:  []uint32{79, 83, 89, 97},
+			out: []string{"79", "83", "89", "97"},
+		},
+	}
+	for _, tc := range tests {
+
+		res := SliceItoa(tc.in)
+
+		if diff := cmp.Diff(tc.out, res); diff != "" {
+			t.Errorf("result mismatch (-want +got):\n%s", diff)
+		}
+	}
+
+}
+
 type FakeArtifactDownloader struct {
 	t       *testing.T
 	content string
@@ -633,7 +621,7 @@ func execCtxSubcmdDelays(ctx context.Context, name string, args ...string) *exec
 	return exec.Command(cmd)
 }
 
-func contains(values []string, t string) bool {
+func containsStr(values []string, t string) bool {
 	for _, v := range values {
 		if v == t {
 			return true

@@ -57,6 +57,7 @@ type InfraConfig struct {
 	Type       string      `json:"message_type"`
 	IceServers []IceServer `json:"ice_servers"`
 }
+
 type IceServer struct {
 	URLs []string `json:"urls"`
 }
@@ -64,6 +65,12 @@ type IceServer struct {
 type CreateCVDRequest struct {
 	// REQUIRED.
 	CVD *CVD `json:"cvd"`
+	// Use to create multiple homogeneous instances.
+	AdditionalInstancesNum uint32 `json:"additional_instances_num,omitempty"`
+}
+
+type CreateCVDResponse struct {
+	CVDs []*CVD `json:"cvds"`
 }
 
 // Represents a build from ci.android.com.
