@@ -1015,9 +1015,20 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
 }
 
+std::string
+CuttlefishConfig::InstanceSpecific::persistent_composite_overlay_path() const {
+  return AbsolutePath(PerInstancePath("persistent_composite_overlay.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::persistent_ap_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("ap_persistent_composite.img"));
+}
+
+std::string
+CuttlefishConfig::InstanceSpecific::persistent_ap_composite_overlay_path()
+    const {
+  return AbsolutePath(PerInstancePath("ap_persistent_composite_overlay.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path()
