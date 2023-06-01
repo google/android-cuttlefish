@@ -52,11 +52,10 @@
 
 #include <android-base/logging.h>
 #include <android-base/macros.h>
+#include <android-base/unique_fd.h>
 
-#include "android-base/strings.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -99,11 +98,12 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   }
   const auto parent_dir = cpp_dirname(directory_path);
   if (parent_dir.size() > 1) {
-    EnsureDirectoryExists(parent_dir);
+    EnsureDirectoryExists(parent_dir, mode);
   }
   LOG(DEBUG) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
-    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\"");
+    return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
+                                                     << strerror(errno));
   }
   return {};
 }
@@ -411,6 +411,24 @@ int GetDiskUsage(const std::string& path) {
   return atoi(text_output.data()) * 1024;
 }
 
+/**
+ * Find an image file through the input path and pattern.
+ *
+ * If it finds the file, return the path string.
+ * If it can't find the file, return empty string.
+ */
+std::string FindImage(const std::string& search_path,
+                      const std::vector<std::string>& pattern) {
+  const std::string& search_path_extend = search_path + "/";
+  for (const auto& name : pattern) {
+    std::string image = search_path_extend + name;
+    if (FileExists(image)) {
+      return image;
+    }
+  }
+  return "";
+}
+
 std::string FindFile(const std::string& path, const std::string& target_name) {
   std::string ret;
   WalkDirectory(path,
@@ -525,11 +543,9 @@ static Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
 
 auto WaitForFile(const std::string& path, int timeoutSec)
     -> decltype(WaitForFileInternal(path, timeoutSec, 0)) {
-  auto inotify = inotify_init1(IN_CLOEXEC);
+  android::base::unique_fd inotify(inotify_init1(IN_CLOEXEC));
 
-  ScopeGuard close_inotify([inotify]() { close(inotify); });
-
-  CF_EXPECT(WaitForFileInternal(path, timeoutSec, inotify));
+  CF_EXPECT(WaitForFileInternal(path, timeoutSec, inotify.get()));
 
   return {};
 }

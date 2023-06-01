@@ -27,6 +27,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "cvd_server.pb.h"
+#include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/instance_lock.h"
 #include "host/commands/cvd/server_command/acloud_common.h"
 #include "host/commands/cvd/server_command/server_handler.h"
@@ -37,16 +38,16 @@ namespace cuttlefish {
 
 class AcloudCommand : public CvdServerHandler {
  public:
-  INJECT(AcloudCommand(CommandSequenceExecutor& executor,
-                       ConvertAcloudCreateCommand& converter))
-      : executor_(executor), converter_(converter) {}
+  INJECT(AcloudCommand(CommandSequenceExecutor& executor))
+      : executor_(executor) {}
   ~AcloudCommand() = default;
 
   Result<bool> CanHandle(const RequestWithStdio& request) const override {
     auto invocation = ParseInvocation(request.Message());
     if (invocation.arguments.size() >= 2) {
       if (invocation.command == "acloud" &&
-          invocation.arguments[0] == "translator") {
+          (invocation.arguments[0] == "translator" ||
+           invocation.arguments[0] == "mix-super-image")) {
         return false;
       }
     }
@@ -57,22 +58,24 @@ class AcloudCommand : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
-    if (interrupted_) {
-      return CF_ERR("Interrupted");
-    }
+    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(IsSubOperationSupported(request));
-    auto converted = CF_EXPECT(converter_.Convert(request));
-    interrupt_lock.unlock();
+    // ConvertAcloudCreate may lock and unlock the lock
+    auto converted = CF_EXPECT(
+        acloud_impl::ConvertAcloudCreate(request, waiter_, interrupt_lock));
+    if (!converted.interrupt_lock_released) {
+      interrupt_lock.unlock();
+    }
     CF_EXPECT(executor_.Execute(converted.prep_requests, request.Err()));
     auto start_response =
         CF_EXPECT(executor_.ExecuteOne(converted.start_request, request.Err()));
 
-    if (converter_.FetchCommandString() != "") {
+    if (!converted.fetch_command_str.empty()) {
       // has cvd fetch command, update the fetch cvd command file
       using android::base::WriteStringToFile;
-      CF_EXPECT(WriteStringToFile(converter_.FetchCommandString(),
-                                  converter_.FetchCvdArgsFile()),
+      CF_EXPECT(WriteStringToFile(converted.fetch_command_str,
+                                  converted.fetch_cvd_args_file),
                 true);
     }
 
@@ -80,7 +83,7 @@ class AcloudCommand : public CvdServerHandler {
     if (handle_response_result.ok()) {
       // print
       std::optional<SharedFD> fd_opt;
-      if (converter_.Verbose()) {
+      if (converted.verbose) {
         fd_opt = request.Err();
       }
       auto write_result = PrintBriefSummary(*handle_response_result, fd_opt);
@@ -97,6 +100,7 @@ class AcloudCommand : public CvdServerHandler {
   Result<void> Interrupt() override {
     std::scoped_lock interrupt_lock(interrupt_mutex_);
     interrupted_ = true;
+    CF_EXPECT(waiter_.Interrupt());
     CF_EXPECT(executor_.Interrupt());
     return {};
   }
@@ -108,10 +112,9 @@ class AcloudCommand : public CvdServerHandler {
                                  std::optional<SharedFD> stream_fd) const;
 
   CommandSequenceExecutor& executor_;
-  ConvertAcloudCreateCommand& converter_;
-
   std::mutex interrupt_mutex_;
   bool interrupted_ = false;
+  SubprocessWaiter waiter_;
 };
 
 Result<cvd::InstanceGroupInfo> AcloudCommand::HandleStartResponse(
@@ -158,8 +161,7 @@ Result<void> AcloudCommand::PrintBriefSummary(
   return {};
 }
 
-fruit::Component<
-    fruit::Required<CommandSequenceExecutor, ConvertAcloudCreateCommand>>
+fruit::Component<fruit::Required<CommandSequenceExecutor>>
 AcloudCommandComponent() {
   return fruit::createComponent()
       .addMultibinding<CvdServerHandler, AcloudCommand>();

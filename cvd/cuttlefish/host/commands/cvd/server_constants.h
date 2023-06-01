@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
+#pragma once
+
+#include <string>
+
 namespace cuttlefish {
 namespace cvd {
 
 // Major version uprevs are backwards incompatible.
 // Minor version uprevs are backwards compatible within major version.
 constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 2;
-
-// Pathname of the abstract cvd_server socket.
-constexpr char kServerSocketPath[] = "cvd_server";
+constexpr int kVersionMinor = 3;
 
 }  // namespace cvd
+
+// Pathname of the abstract cvd_server socket.
+std::string ServerSocketPath();
+
 }  // namespace cuttlefish

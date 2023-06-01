@@ -24,14 +24,13 @@
 #include <android-base/parseint.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
+#include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
-#include "host/commands/cvd/server.h"
 #include "host/commands/cvd/server_client.h"
 #include "host/commands/cvd/server_command/utils.h"
 #include "host/commands/cvd/types.h"
@@ -39,6 +38,54 @@
 namespace cuttlefish {
 
 namespace {
+
+std::string GenerateSystemImageFlag(
+    const std::vector<FetchCvdDeviceConfigs>& configs) {
+  std::string result = "";
+
+  for (const auto& config : configs) {
+    // concatenate host_artifacts_dir parameter with a comma separator instead
+    // of a space
+    result += config.host_artifacts_dir + ",";
+  }
+
+  // remove the last comma character from the final string, if it exists
+  if (!result.empty()) {
+    result.pop_back();
+  }
+
+  return "--system_image_dir=" + result;
+}
+
+std::string GenerateParentDirectory() {
+  const uid_t uid = getuid();
+  // Prefix for the parent directory.
+  constexpr char kParentDirPrefix[] = "/tmp/cvd/";
+  std::stringstream ss;
+
+  // Constructs the full directory path.
+  ss << kParentDirPrefix << uid << "/";
+
+  return ss.str();
+}
+
+std::string GenerateHostArtifactsDirectoryName(int64_t time,
+                                        int instance_index) {
+  // Concatenates the string using GenerateParentDirectory and std::to_string.
+  std::string host_artifacts_dir = GenerateParentDirectory() +
+                         std::to_string(time) + "_" +
+                         std::to_string(instance_index) + "/";
+
+  return host_artifacts_dir;
+}
+
+std::string GenerateHomeDirectoryName(int64_t time) {
+  // Concatenates the string using GenerateParentDirectory and std::to_string.
+  std::string home_dir =
+      GenerateParentDirectory() + std::to_string(time) + "_home/";
+
+  return home_dir;
+}
 
 using DemoCommandSequence = std::vector<RequestWithStdio>;
 
@@ -77,7 +124,7 @@ class LoadConfigsCommand : public CvdServerHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
-  // TODO: expand this enum in the future to support more types ( double , float
+  // TODO(moelsherif): expand this enum in the future to support more types ( double , float
   // , etc) if neeeded
   enum ArgValueType { UINTEGER, BOOLEAN, TEXT };
 
@@ -111,7 +158,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     // assign the leaf value based on the type of input value
     Json::Value leaf;
     if (GetArgValueType(leafValue) == UINTEGER) {
-      std::uint32_t leaf_val;
+      std::uint32_t leaf_val{};
       if (!android::base::ParseUint(leafValue ,&leaf_val)){
         LOG(ERROR) << "Failed to parse unsigned integer " << leafValue;
         return Json::Value::null;
@@ -128,7 +175,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       std::string index = levels.top();
 
       if (GetArgValueType(index) == UINTEGER) {
-        std::uint32_t index_val;
+        std::uint32_t index_val{};
         if (!android::base::ParseUint(index, &index_val)){
           LOG(ERROR) << "Failed to parse unsigned integer " << index;
           return Json::Value::null;
@@ -239,12 +286,69 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto cvd_flags =
         CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
 
+    // return if the length of fetch_cvd_flags.instances is 0
+    int num_devices = cvd_flags.fetch_cvd_flags.instances.size();
+    CF_EXPECT_GT(num_devices, 0, "No instances to load");
+
     std::vector<cvd::Request> req_protos;
 
+    const auto& client_env = request.Message().command_request().env();
+
+    auto time = std::chrono::system_clock::now().time_since_epoch().count();
+    // set the home directory for each device
+    for (int instance_index = 0; instance_index < num_devices; instance_index++) {
+      cvd_flags.fetch_cvd_flags.instances[instance_index].host_artifacts_dir =
+          GenerateHostArtifactsDirectoryName(time, instance_index);
+      LOG(INFO) << "Home directory for device " << instance_index << " is "
+                << cvd_flags.fetch_cvd_flags.instances[instance_index].host_artifacts_dir;
+    }
+
+    for (const auto& device : cvd_flags.fetch_cvd_flags.instances) {
+      auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
+      *mkdir_cmd.mutable_env() = client_env;
+      mkdir_cmd.add_args("cvd");
+      mkdir_cmd.add_args("mkdir");
+      mkdir_cmd.add_args("-p");
+      mkdir_cmd.add_args(device.host_artifacts_dir);
+
+      if (device.use_fetch_artifact) {
+        // TODO(moelsherif):Separate fetch from launch command
+        auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
+        *fetch_cmd.mutable_env() = client_env;
+        fetch_cmd.set_working_directory(device.host_artifacts_dir);
+        fetch_cmd.add_args("cvd");
+        fetch_cmd.add_args("fetch");
+        fetch_cmd.add_args("--directory=" + device.host_artifacts_dir);
+        fetch_cmd.add_args("-default_build=" + device.default_build);
+        // TODO: other flags like system_build, kernel_build and credential
+        // optionally later fetch_cmd.add_args("-credential_source=" +
+        // cvd_flags.fetch_cvd_flags.credential);
+      }
+    }
+    // Create the launch home directory
+    std::string launch_home_dir = GenerateHomeDirectoryName(time);
+    auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
+    *mkdir_cmd.mutable_env() = client_env;
+    mkdir_cmd.add_args("cvd");
+    mkdir_cmd.add_args("mkdir");
+    mkdir_cmd.add_args("-p");
+    mkdir_cmd.add_args(launch_home_dir);
+
+    // Handle the launch command
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
-    launch_cmd.set_working_directory(
-        request.Message().command_request().working_directory());
-    *launch_cmd.mutable_env() = request.Message().command_request().env();
+
+    auto first_instance_dir =
+        cvd_flags.fetch_cvd_flags.instances[0].host_artifacts_dir;
+    *launch_cmd.mutable_env() = client_env;
+    launch_cmd.set_working_directory(first_instance_dir);
+    (*launch_cmd.mutable_env())["HOME"] = launch_home_dir;
+
+    (*launch_cmd.mutable_env())[kAndroidHostOut] = first_instance_dir;
+    (*launch_cmd.mutable_env())[kAndroidSoongHostOut] = first_instance_dir;
+
+    if (Contains(*launch_cmd.mutable_env(), kAndroidProductOut)) {
+      (*launch_cmd.mutable_env()).erase(kAndroidProductOut);
+    }
 
     /* cvd load will always create instances in deamon mode (to be independent
      of terminal) and will enable reporting automatically (to run automatically
@@ -256,6 +360,9 @@ class LoadConfigsCommand : public CvdServerHandler {
     for (auto& parsed_flag : cvd_flags.launch_cvd_flags) {
       launch_cmd.add_args(parsed_flag);
     }
+    // Add system flag for multi-build scenario
+    launch_cmd.add_args(
+        GenerateSystemImageFlag(cvd_flags.fetch_cvd_flags.instances));
 
     launch_cmd.mutable_selector_opts()->add_args(
         std::string("--") + selector::SelectorFlags::kDisableDefaultGroup);
