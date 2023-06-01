@@ -75,8 +75,6 @@ std::ostream& operator<<(std::ostream& stream,
 
   stream << "\n";
   stream << "EGL available: " << availability.has_egl << "\n";
-  stream << "OpenGL ES 2 available: " << availability.has_gles2 << "\n";
-  stream << "OpenGL ES 3 available: " << availability.has_gles3 << "\n";
   stream << "Vulkan lib available: " << availability.has_vulkan << "\n";
 
   stream << "\n";

@@ -22,8 +22,6 @@ namespace cuttlefish {
 
 struct GraphicsAvailability {
   bool has_egl = false;
-  bool has_gles2 = false;
-  bool has_gles3 = false;
   bool has_vulkan = false;
 
   std::string egl_client_extensions;
