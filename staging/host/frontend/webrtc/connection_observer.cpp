@@ -235,6 +235,19 @@ class ConnectionObserverImpl
                          buffer->size());
   }
 
+  void OnWheelEvent(int pixels) {
+    auto buffer = GetEventBuffer();
+    if (!buffer) {
+      LOG(ERROR) << "Failed to allocate event buffer";
+      return;
+    }
+    buffer->AddEvent(EV_REL, REL_WHEEL, pixels);
+    buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
+    cuttlefish::WriteAll(input_sockets_.rotary_client,
+                         reinterpret_cast<const char *>(buffer->data()),
+                         buffer->size());
+  }
+
   void OnSwitchEvent(uint16_t code, bool state) {
     auto buffer = GetEventBuffer();
     if (!buffer) {
