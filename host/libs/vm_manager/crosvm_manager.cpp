@@ -281,15 +281,15 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
     for (int i = 0; i < display_configs.size(); ++i) {
       auto display_config = display_configs[i];
-
       crosvm_cmd.Cmd().AddParameter(
           touch_type_parameter, instance.touch_socket_path(i), ":",
           display_config.width, ":", display_config.height);
+
     }
+    crosvm_cmd.Cmd().AddParameter("--rotary=",
+                                  instance.rotary_socket_path());
     crosvm_cmd.Cmd().AddParameter("--keyboard=",
                                   instance.keyboard_socket_path());
-  }
-  if (instance.enable_webrtc()) {
     crosvm_cmd.Cmd().AddParameter("--switches=",
                                   instance.switches_socket_path());
   }
