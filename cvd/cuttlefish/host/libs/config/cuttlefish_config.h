@@ -71,7 +71,6 @@ enum class SecureHal {
   Unknown,
   Keymint,
   Gatekeeper,
-  Oemlock,
 };
 
 // Holds the configuration of the cuttlefish instances.
@@ -232,6 +231,10 @@ class CuttlefishConfig {
 
   void set_rootcanal_config_file(const std::string& rootcanal_config_file);
   std::string rootcanal_config_file() const;
+
+  void set_rootcanal_default_commands_file(
+      const std::string& rootcanal_default_commands_file);
+  std::string rootcanal_default_commands_file() const;
 
   // The path of an AP image in composite disk
   std::string ap_image_dev_path() const;
@@ -548,10 +551,6 @@ class CuttlefishConfig {
     std::string vbmeta_system_image() const;
     std::string vbmeta_vendor_dlkm_image() const;
     std::string new_vbmeta_vendor_dlkm_image() const;
-    std::string vbmeta_system_dlkm_image() const;
-    std::string new_vbmeta_system_dlkm_image() const;
-    std::string default_target_zip() const;
-    std::string system_target_zip() const;
 
     // otheros artifacts
     std::string otheros_esp_image() const;
@@ -724,12 +723,6 @@ class CuttlefishConfig {
         const std::string& vbmeta_vendor_dlkm_image);
     void set_new_vbmeta_vendor_dlkm_image(
         const std::string& vbmeta_vendor_dlkm_image);
-    void set_vbmeta_system_dlkm_image(
-        const std::string& vbmeta_system_dlkm_image);
-    void set_new_vbmeta_system_dlkm_image(
-        const std::string& vbmeta_system_dlkm_image);
-    void set_default_target_zip(const std::string& default_target_zip);
-    void set_system_target_zip(const std::string& system_target_zip);
     void set_otheros_esp_image(const std::string& otheros_esp_image);
     void set_linux_kernel_path(const std::string& linux_kernel_path);
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
@@ -789,7 +782,6 @@ std::string RandomSerialNumber(const std::string& prefix);
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string HostBinaryPath(const std::string& file);
-std::string HostUsrSharePath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
@@ -803,7 +795,6 @@ extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxstream;
 extern const char* const kGpuModeGfxstreamGuestAngle;
-extern const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeNone;
 
