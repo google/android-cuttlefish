@@ -32,7 +32,9 @@ class InitializeFactoryResetProtectedImpl
       : instance_(instance) {}
 
   // SetupFeature
-  std::string Name() const override { return "InitializeSdCard"; }
+  std::string Name() const override {
+    return "InitializeFactoryResetProtected";
+  }
   bool Enabled() const override { return !instance_.protected_vm(); }
 
  private:
