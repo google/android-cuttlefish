@@ -20,10 +20,13 @@
 
 #include <fruit/fruit.h>
 
+#include "host/commands/cvd/acloud/converter.h"
 #include "host/commands/cvd/command_sequence.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<CommandSequenceExecutor>>
+fruit::Component<
+    fruit::Required<CommandSequenceExecutor, ConvertAcloudCreateCommand>>
 AcloudCommandComponent();
+
 }
