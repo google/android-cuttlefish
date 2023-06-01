@@ -34,26 +34,11 @@
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-namespace {
-
-std::string BoolJoin(const std::vector<bool>& values, const char separator) {
-  if (values.empty()) {
-    return "";
-  }
-
-  std::ostringstream ss;
-  ss << std::boolalpha << *values.begin();
-  for (auto it = std::next(values.begin()); it != values.end(); ++it) {
-    ss << separator << *it;
-  }
-  return ss.str();
-}
-
-}  // namespace
 
 std::ostream& operator<<(std::ostream& out, const FlagAlias& alias) {
   switch (alias.mode) {
@@ -578,7 +563,7 @@ Flag GflagsCompatFlag(const std::string& name,
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       const bool default_value) {
   return GflagsCompatFlag(name)
-      .Getter([&value]() { return BoolJoin(value, ','); })
+      .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
       .Setter([&name, &value, default_value](const FlagMatch& match) {
         if (match.value.empty()) {
           LOG(ERROR) << "No values given for flag \"" << name << "\"";
