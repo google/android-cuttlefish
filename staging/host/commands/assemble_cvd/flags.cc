@@ -1332,6 +1332,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       if (vm_manager_vec[0] == QemuManager::name()) {
         instance.set_keyboard_server_port(calc_vsock_port(7000));
         instance.set_touch_server_port(calc_vsock_port(7100));
+        // intentionally do not set up rotary vsocks for QEMU.
+        // vsoc_input_service is deprecated and should be removed
       }
     }
     // end of gpu related settings
