@@ -519,6 +519,10 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
     std::string config = ReadFile(ikconfig_path);
 
     GuestConfig guest_config;
+    guest_config.android_version_number =
+        CF_EXPECT(ReadAndroidVersionFromBootImage(cur_boot_image),
+                  "Failed to read guest's android version");
+
     if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
       guest_config.target_arch = Arch::Arm;
     } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
@@ -536,14 +540,14 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
         config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
     // Once all Cuttlefish kernel versions are at least 5.15, this code can be
     // removed. CONFIG_CRYPTO_HCTR2=y will always be set.
+    // Note there's also a platform dep for hctr2 introduced in Android 14.
+    // Hence the version check.
     guest_config.hctr2_supported =
-        config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos;
+        (config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos) &&
+        (guest_config.android_version_number != "11.0.0") &&
+        (guest_config.android_version_number != "13.0.0");
 
     unlink(ikconfig_path.c_str());
-    guest_config.android_version_number =
-        CF_EXPECT(ReadAndroidVersionFromBootImage(cur_boot_image),
-                  "Failed to read guest's android version");
-    ;
     guest_configs.push_back(guest_config);
   }
   return guest_configs;
