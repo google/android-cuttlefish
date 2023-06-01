@@ -1397,6 +1397,10 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
       ("touch_" + std::to_string(screen_idx) + ".sock").c_str());
 }
 
+std::string CuttlefishConfig::InstanceSpecific::rotary_socket_path() const {
+  return PerInstanceInternalPath("rotary.sock");
+}
+
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
 }
