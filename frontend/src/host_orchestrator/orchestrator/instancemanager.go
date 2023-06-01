@@ -362,7 +362,7 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	cvd.Name = cvdName
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if cvdName == "cvd-1" {
-		go runAcloudSetup(m.paths.ArtifactsRootDir, mainBuildDir, runtimeDir)
+		go runAcloudSetup(m.execContext, m.paths.ArtifactsRootDir, mainBuildDir, runtimeDir)
 	}
 	return cvd, nil
 }
@@ -389,7 +389,7 @@ func (m *CVDToolInstanceManager) launchFromUserBuild(
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if cvdName == "cvd-1" {
-		go runAcloudSetup(m.paths.ArtifactsRootDir, artifactsDir, runtimeDir)
+		go runAcloudSetup(m.execContext, m.paths.ArtifactsRootDir, artifactsDir, runtimeDir)
 	}
 	return &apiv1.CVD{
 		Name:        cvdName,
@@ -837,7 +837,7 @@ func (s cvdInstances) findByName(name string) (bool, cvdInstance) {
 	return false, cvdInstance{}
 }
 
-func runAcloudSetup(artifactsRootDir, artifactsDir, runtimeDir string) {
+func runAcloudSetup(execContext ExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
 	run := func(cmd *exec.Cmd) {
 		var b bytes.Buffer
 		cmd.Stdout = &b
@@ -848,8 +848,8 @@ func runAcloudSetup(artifactsRootDir, artifactsDir, runtimeDir string) {
 		}
 	}
 	// Creates symbolic link `acloud_link` which points to the passed device artifacts directory.
-	go run(exec.Command("sudo", "-u", cvdUser, "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
+	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
 	// Make metrics.log and modem_simulator.log available to acloud user.
-	go run(exec.Command("sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/metrics.log"))
-	go run(exec.Command("sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/modem_simulator.log"))
+	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/metrics.log"))
+	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/modem_simulator.log"))
 }
