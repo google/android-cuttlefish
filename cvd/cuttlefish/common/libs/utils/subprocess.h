@@ -30,12 +30,20 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
+
+/*
+ * Does what ArgsToVec(int argc, char**) from flag_parser.h does
+ * without argc.
+ */
+std::vector<std::string> ArgsToVec(char** argv);
+std::unordered_map<std::string, std::string> EnvpToMap(char** envp);
 
 enum class StopperResult {
   kStopFailure, /* Failed to stop the subprocess. */
@@ -313,12 +321,31 @@ int RunWithManagedStdio(Command&& command, const std::string* stdin,
                         std::string* stdout, std::string* stderr,
                         SubprocessOptions options = SubprocessOptions());
 
-// Convenience wrapper around Command and Subprocess class, allows to easily
-// execute a command and wait for it to complete. The version without the env
-// parameter starts the command with the same environment as the parent. Returns
-// zero if the command completed successfully, non zero otherwise.
-int execute(const std::vector<std::string>& command,
-            const std::vector<std::string>& env);
-int execute(const std::vector<std::string>& command);
+/**
+ * Returns pid on success, negative values on error
+ *
+ * If failed in fork() or exec(), returns -1.
+ * Or, returns pid.
+ *
+ * TODO: Changes return type to Result<int>
+ *
+ *   For now, too many callsites expects int, and needs quite a lot of changes
+ *   if we change the return type.
+ */
+int Execute(const std::vector<std::string>& commands);
+int Execute(const std::vector<std::string>& commands,
+            const std::vector<std::string>& envs);
+
+/**
+ * Similar as the two above but returns CF_ERR instead of -1, and siginfo_t
+ * instead of pid.
+ */
+Result<siginfo_t> Execute(const std::vector<std::string>& commands,
+                          SubprocessOptions subprocess_options,
+                          int wait_options);
+Result<siginfo_t> Execute(const std::vector<std::string>& commands,
+                          const std::vector<std::string>& envs,
+                          SubprocessOptions subprocess_options,
+                          int wait_options);
 
 }  // namespace cuttlefish
