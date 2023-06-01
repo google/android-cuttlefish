@@ -1360,7 +1360,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     persistent_disk &= !protected_vm_vec[instance_index];
     persistent_disk &= vm_manager_vec[0] != Gem5Manager::name();
     if (persistent_disk) {
-      auto path = const_instance.PerInstancePath("persistent_composite.img");
+      const bool is_vm_qemu_cli = (tmp_config_obj.vm_manager() == "qemu_cli");
+      const std::string persistent_composite_img_base =
+          is_vm_qemu_cli ? "persistent_composite_overlay.img"
+                         : "persistent_composite.img";
+      auto path =
+          const_instance.PerInstancePath(persistent_composite_img_base.data());
       virtual_disk_paths.push_back(path);
     }
 
