@@ -308,16 +308,13 @@ class InitializeMiscImageImpl : public InitializeMiscImage {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override {
-    bool misc_exists = FileHasContent(instance_.misc_image());
-
-    if (misc_exists) {
-      LOG(DEBUG) << "misc partition image: use existing at \""
-                 << instance_.misc_image() << "\"";
+    if (FileHasContent(instance_.new_misc_image())) {
+      LOG(DEBUG) << "misc partition image already exists";
       return true;
     }
 
     LOG(DEBUG) << "misc partition image: creating empty at \""
-               << instance_.misc_image() << "\"";
+               << instance_.new_misc_image() << "\"";
     if (!CreateBlankImage(instance_.new_misc_image(), 1 /* mb */, "none")) {
       LOG(ERROR) << "Failed to create misc image";
       return false;
