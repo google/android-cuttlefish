@@ -50,6 +50,8 @@ class ConnectionObserver {
 
   virtual void OnKeyboardEvent(uint16_t keycode, bool down) = 0;
 
+  virtual void OnWheelEvent(int pixels) = 0;
+
   virtual void OnAdbChannelOpen(
       std::function<bool(const uint8_t*, size_t)> adb_message_sender) = 0;
   virtual void OnAdbMessage(const uint8_t* msg, size_t size) = 0;

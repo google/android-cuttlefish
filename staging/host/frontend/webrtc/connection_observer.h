@@ -37,6 +37,8 @@ struct InputSockets {
   // introduce unwanted latency.
   std::map<std::string, SharedFD> touch_servers;
   std::map<std::string, SharedFD> touch_clients;
+  SharedFD rotary_server;
+  SharedFD rotary_client;
   SharedFD keyboard_server;
   SharedFD keyboard_client;
   SharedFD switches_server;

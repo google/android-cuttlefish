@@ -280,6 +280,14 @@ class DeviceConnection {
     this.#sendJsonInput({type: 'keyboard', keycode: code, event_type: type});
   }
 
+  sendWheelEvent(pixels) {
+    this.#sendJsonInput({
+      type: 'wheel',
+      // convert double to int, forcing a base 10 conversion. pixels can be fractional.
+      pixels: parseInt(pixels, 10),
+    });
+  }
+
   disconnect() {
     this.#pc.close();
   }
