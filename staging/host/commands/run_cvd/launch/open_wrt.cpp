@@ -78,7 +78,13 @@ class OpenWrt : public CommandSource {
     auto openwrt_args = OpenwrtArgsFromConfig(instance_);
     switch (instance_.ap_boot_flow()) {
       case APBootFlow::Grub:
-        ap_cmd.AddReadWriteDisk(instance_.persistent_ap_composite_disk_path());
+        if (config_.vm_manager() == "qemu_cli") {
+          ap_cmd.AddReadWriteDisk(
+              instance_.persistent_ap_composite_overlay_path());
+        } else {
+          ap_cmd.AddReadWriteDisk(
+              instance_.persistent_ap_composite_disk_path());
+        }
         ap_cmd.Cmd().AddParameter("--bios=", instance_.bootloader());
         break;
       case APBootFlow::LegacyDirect:

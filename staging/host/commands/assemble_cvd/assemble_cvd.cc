@@ -235,6 +235,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("persistent_composite_gpt_header.img");
       preserving.insert("persistent_composite_gpt_footer.img");
       preserving.insert("persistent_composite.img");
+      preserving.insert("persistent_composite_overlay.img");
       preserving.insert("uboot_env.img");
       preserving.insert("factory_reset_protected.img");
       std::stringstream ss;
