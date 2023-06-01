@@ -31,5 +31,6 @@ apex {
         "Crosvm_Virtio_Multitouch_Touchscreen_1.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_2.idc",
         "Crosvm_Virtio_Multitouch_Touchscreen_3.idc",
+        "Crosvm_Virtio_Rotary_0.idc",
     ],
 }

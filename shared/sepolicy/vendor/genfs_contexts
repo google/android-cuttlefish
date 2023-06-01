@@ -71,6 +71,7 @@ genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:1d/wakeup u:ob
 genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:1e/wakeup u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:1f/wakeup u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:20/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/device:21/wakeup u:object_r:sysfs_wakeup:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]*'
 genfscon sysfs /devices/platform/rtc_cmos/rtc/rtc0/wakeup3 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc_cmos/rtc/rtc0/wakeup4 u:object_r:sysfs_wakeup:s0
