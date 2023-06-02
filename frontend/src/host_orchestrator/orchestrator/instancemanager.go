@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -162,20 +163,20 @@ func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 	if err := m.downloadCVDHandler.Download(); err != nil {
 		return nil, err
 	}
-	var stdOut string
+	stdout := &bytes.Buffer{}
 	cvdCmd := cvdCommand{
 		execContext: m.execContext,
 		cvdBin:      m.paths.CVDBin(),
 		args:        []string{"fleet"},
-		stdOut:      &stdOut,
+		stdout:      stdout,
 	}
 	err := cvdCmd.Run()
 	if err != nil {
 		return nil, err
 	}
 	items := make([][]cvdInstance, 0)
-	if err := json.Unmarshal([]byte(stdOut), &items); err != nil {
-		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cmdOutputLogMessage(stdOut))
+	if err := json.Unmarshal(stdout.Bytes(), &items); err != nil {
+		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cmdOutputLogMessage(stdout.String()))
 		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
 	if len(items) == 0 {
@@ -532,7 +533,7 @@ func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extra
 	}
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
-		logFailedCommandOutput(fetchCmd, out)
+		logCombinedStdoutStderr(fetchCmd, string(out))
 		return err
 	}
 	return nil
@@ -663,21 +664,21 @@ type cvdCommand struct {
 	home           string
 	cvdBin         string
 	args           []string
-	stdOut         *string
+	stdout         io.Writer
 	// if zero, there's no timeout logic.
 	timeout time.Duration
 }
 
 type cvdCommandExecErr struct {
-	args         []string
-	stdoutStderr string
-	err          error
+	args   []string
+	stderr string
+	err    error
 }
 
 func (e *cvdCommandExecErr) Error() string {
-	return fmt.Sprintf("cvd execution with args %q failed with combined stdout and stderr:\n%s",
+	return fmt.Sprintf("cvd execution with args %q failed with stderr:\n%s",
 		strings.Join(e.args, " "),
-		e.stdoutStderr)
+		e.stderr)
 }
 
 func (e *cvdCommandExecErr) Unwrap() error { return e.err }
@@ -703,17 +704,17 @@ func (c *cvdCommand) Run() error {
 		defer cancelFn()
 	}
 	cmd := buildCvdCommand(ctx, c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
-	out, err := cmd.CombinedOutput()
+	stderr := &bytes.Buffer{}
+	cmd.Stdout = c.stdout
+	cmd.Stderr = stderr
+	err := cmd.Run()
+	logStderr(cmd, stderr.String())
 	if ctx.Err() == context.DeadlineExceeded {
 		// The command is killed by a signal in these cases, but the real failure is the timeout.
-		err = &cvdCommandTimeoutErr{c.args}
+		return &cvdCommandTimeoutErr{c.args}
 	}
 	if err != nil {
-		logFailedCommandOutput(cmd, out)
-		return &cvdCommandExecErr{cmd.Args, string(out), err}
-	}
-	if c.stdOut != nil {
-		*c.stdOut = string(out)
+		return &cvdCommandExecErr{c.args, stderr.String(), err}
 	}
 	return nil
 }
@@ -752,9 +753,14 @@ func cmdOutputLogMessage(output string) string {
 	return fmt.Sprintf(format, string(output))
 }
 
-func logFailedCommandOutput(cmd *exec.Cmd, out []byte) {
-	msg := "`%s` execution failed with combined stdout and stderr:\n%s"
-	log.Printf(msg, strings.Join(cmd.Args, " "), cmdOutputLogMessage(string(out)))
+func logStderr(cmd *exec.Cmd, val string) {
+	msg := "`%s`, stderr:\n%s"
+	log.Printf(msg, strings.Join(cmd.Args, " "), cmdOutputLogMessage(val))
+}
+
+func logCombinedStdoutStderr(cmd *exec.Cmd, val string) {
+	msg := "`%s`, combined stdout and stderr :\n%s"
+	log.Printf(msg, strings.Join(cmd.Args, " "), cmdOutputLogMessage(val))
 }
 
 // Validates whether the current host is valid to run CVDs.

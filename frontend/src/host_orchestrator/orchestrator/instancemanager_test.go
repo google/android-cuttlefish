@@ -531,7 +531,9 @@ func TestListCVDsSucceeds(t *testing.T) {
 	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command("true")
 		if path.Base(args[len(args)-1]) == "fleet" {
-			cmd = exec.Command("echo", strings.TrimSpace(output))
+			// Prints to stderr as well to make sure only stdout is used.
+			cmd = exec.Command("tee", "/dev/stderr")
+			cmd.Stdin = strings.NewReader(strings.TrimSpace(output))
 		}
 		return cmd
 	}
