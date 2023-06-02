@@ -107,6 +107,7 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
     class main
     user logd
     group root logd
+    seclabel u:r:logpersist:s0
 
 service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.vsock_touch_port} -keyboard_port=${ro.boot.vsock_keyboard_port}
     group root uhid
