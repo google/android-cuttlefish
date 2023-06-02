@@ -1284,23 +1284,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_qemu_vnc_server_port(
   (*Dictionary())[kQemuVncServerPort] = qemu_vnc_server_port;
 }
 
-static constexpr char kTouchServerPort[] = "touch_server_port";
-int CuttlefishConfig::InstanceSpecific::touch_server_port() const {
-  return (*Dictionary())[kTouchServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_touch_server_port(int touch_server_port) {
-  (*Dictionary())[kTouchServerPort] = touch_server_port;
-}
-
-static constexpr char kKeyboardServerPort[] = "keyboard_server_port";
-int CuttlefishConfig::InstanceSpecific::keyboard_server_port() const {
-  return (*Dictionary())[kKeyboardServerPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_keyboard_server_port(int keyboard_server_port) {
-  (*Dictionary())[kKeyboardServerPort] = keyboard_server_port;
-}
-
 static constexpr char kTombstoneReceiverPort[] = "tombstone_receiver_port";
 int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
   return (*Dictionary())[kTombstoneReceiverPort].asInt();
