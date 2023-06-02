@@ -108,19 +108,6 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
     user logd
     group root logd
 
-service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.vsock_touch_port} -keyboard_port=${ro.boot.vsock_keyboard_port}
-    group root uhid
-    user root
-    disabled
-
-on early-boot && property:ro.boot.vsock_touch_port=*
-   enable vsoc_input_service
-   start vsoc_input_service
-
-on early-boot && property:ro.boot.vsock_keyboard_port=*
-   enable vsoc_input_service
-   start vsoc_input_service
-
 service bugreport /system/bin/dumpstate -d -p -z
     class main
     user root
