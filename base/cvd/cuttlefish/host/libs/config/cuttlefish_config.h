@@ -274,12 +274,6 @@ class CuttlefishConfig {
     int tombstone_receiver_port() const;
     // Port number to connect to the config server on the host
     int config_server_port() const;
-    // Port number to connect to the keyboard server on the host. (Only
-    // operational if QEMU is the vmm.)
-    int keyboard_server_port() const;
-    // Port number to connect to the touch server on the host. (Only
-    // operational if QEMU is the vmm.)
-    int touch_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
