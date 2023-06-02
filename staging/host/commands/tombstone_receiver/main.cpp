@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
+#include <fmt/format.h>
 
 #include <chrono>
 #include <fstream>
-#include <iomanip>
-#include <sstream>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
@@ -32,12 +30,9 @@ namespace cuttlefish {
 static uint num_tombstones_in_last_second = 0;
 static std::string last_tombstone_name = "";
 
-static std::string next_tombstone_path(const std::string& tombstone_dir) {
-  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::stringstream ss;
-  ss << tombstone_dir << "/tombstone_"
-     << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d-%H%M%S");
-  auto retval = ss.str();
+static std::string next_tombstone_path(const std::string& dir) {
+  auto in_time = std::chrono::system_clock::now();
+  auto retval = fmt::format("{}/tombstone_{:%Y-%m-%d-%H%M%S}", dir, in_time);
 
   // Gives tombstones unique names
   if(retval == last_tombstone_name) {
