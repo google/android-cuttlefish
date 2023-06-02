@@ -126,7 +126,6 @@ cvd_host_tools = [
     "webrtc_operator",
     "operator_proxy",
     "wmediumd",
-    "wmediumd_control",
     "wmediumd_gen_config",
     "vulkan.pastel",
 ]
