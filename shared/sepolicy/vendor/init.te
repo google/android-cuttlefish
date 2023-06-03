@@ -26,6 +26,9 @@ dontaudit init tmpfs:lnk_file create;
 # permit mount of virtiofs on /mnt/vendor/shared
 allow init mnt_vendor_file:dir mounton;
 
+# permit init to run logcat to send copy of logs over a serial port
+domain_trans(init, logcat_exec, logpersist)
+
 allow init keymaster_device:chr_file rw_file_perms;
 allow init gatekeeper_device:chr_file rw_file_perms;
 allow init confirmationui_device:chr_file rw_file_perms;
