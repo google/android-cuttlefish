@@ -123,16 +123,6 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.config_server_port());
   }
 
-  if (instance.keyboard_server_port()) {
-    bootconfig_args["androidboot.vsock_keyboard_port"] =
-        std::to_string(instance.keyboard_server_port());
-  }
-
-  if (instance.touch_server_port()) {
-    bootconfig_args["androidboot.vsock_touch_port"] =
-        std::to_string(instance.touch_server_port());
-  }
-
   if (instance.enable_vehicle_hal_grpc_server() &&
       instance.vehicle_hal_server_port() &&
       FileExists(VehicleHalGrpcServerBinary())) {
