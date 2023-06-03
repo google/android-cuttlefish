@@ -1,4 +1,6 @@
 # Output to virtual serial console. Needed because seriallogging daemon
 # runs logcat and directs its output to hvcX the /dev filesystem.
 allow logpersist device:dir r_dir_perms;
+allow logpersist logdr_socket:sock_file write;
+allow logpersist logd:unix_stream_socket connectto;
 allow logpersist serial_device:chr_file ra_file_perms;
