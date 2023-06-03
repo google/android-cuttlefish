@@ -125,12 +125,9 @@ class StreamerSockets : public virtual SetupFeature {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
   Result<void> ResultSetup() override {
-    auto use_vsockets = config_.vm_manager() == vm_manager::QemuManager::name();
     for (int i = 0; i < instance_.display_configs().size(); ++i) {
       SharedFD touch_socket =
-          use_vsockets ? SharedFD::VsockServer(instance_.touch_server_port(),
-                                               SOCK_STREAM)
-                       : CreateUnixInputServer(instance_.touch_socket_path(i));
+          CreateUnixInputServer(instance_.touch_socket_path(i));
       CF_EXPECT(touch_socket->IsOpen(), touch_socket->StrError());
       touch_servers_.emplace_back(std::move(touch_socket));
 
@@ -139,10 +136,7 @@ class StreamerSockets : public virtual SetupFeature {
         CreateUnixInputServer(instance_.rotary_socket_path());
 
     CF_EXPECT(rotary_server_->IsOpen(), rotary_server_->StrError());
-    keyboard_server_ =
-        use_vsockets ? SharedFD::VsockServer(instance_.keyboard_server_port(),
-                                             SOCK_STREAM)
-                     : CreateUnixInputServer(instance_.keyboard_socket_path());
+    keyboard_server_ = CreateUnixInputServer(instance_.keyboard_socket_path());
     CF_EXPECT(keyboard_server_->IsOpen(), keyboard_server_->StrError());
 
     frames_server_ = CreateUnixInputServer(instance_.frames_socket_path());
