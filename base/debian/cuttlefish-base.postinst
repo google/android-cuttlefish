@@ -4,7 +4,7 @@ set -e
 
 case "$1" in
     (configure)
-    if [ -f /var/empty ]; then
+    if [ -e /var/empty ] && ![ -d /var/empty ]; then
         rm -rf /var/empty
     fi
     mkdir -p /var/empty
