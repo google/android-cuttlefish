@@ -368,7 +368,6 @@ class CuttlefishConfig {
     std::string launcher_monitor_socket_path() const;
 
     std::string sdcard_path() const;
-    std::string sdcard_overlay_path() const;
 
     std::string persistent_composite_disk_path() const;
     std::string persistent_composite_overlay_path() const;
@@ -443,6 +442,8 @@ class CuttlefishConfig {
       LegacyDirect
     };
     APBootFlow ap_boot_flow() const;
+
+    bool crosvm_use_balloon() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -642,6 +643,7 @@ class CuttlefishConfig {
     void set_start_pica(bool start);
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
+    void set_crosvm_use_balloon(const bool use_balloon);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
