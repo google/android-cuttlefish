@@ -69,6 +69,13 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--no-balloon");
     }
 
+    /* TODO(kwstephenkim): delete this code when Minidroid completely disables
+     * the AP VM itself
+     */
+    if (!instance_.crosvm_use_rng()) {
+      ap_cmd.Cmd().AddParameter("--no-rng");
+    }
+
     if (instance_.enable_sandbox()) {
       ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
                                 instance_.seccomp_policy_dir());
