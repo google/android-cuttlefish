@@ -444,6 +444,7 @@ class CuttlefishConfig {
     APBootFlow ap_boot_flow() const;
 
     bool crosvm_use_balloon() const;
+    bool crosvm_use_rng() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -644,6 +645,7 @@ class CuttlefishConfig {
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
+    void set_crosvm_use_rng(const bool use_rng);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
