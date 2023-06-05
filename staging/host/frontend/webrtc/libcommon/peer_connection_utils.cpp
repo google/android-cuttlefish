@@ -36,9 +36,9 @@ namespace webrtc_streaming {
 Result<std::unique_ptr<rtc::Thread>> CreateAndStartThread(
     const std::string& name) {
   auto thread = rtc::Thread::CreateWithSocketServer();
-  CF_EXPECT(thread.get(), "Failed to create " << name << " thread");
+  CF_EXPECTF(thread.get(), "Failed to create \"{}\" thread", name);
   thread->SetName(name, nullptr);
-  CF_EXPECT(thread->Start(), "Failed to start " << name << " thread");
+  CF_EXPECTF(thread->Start(), "Failed to start \"{}\" thread", name);
   return thread;
 }
 
