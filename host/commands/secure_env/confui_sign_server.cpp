@@ -37,7 +37,7 @@ ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
   auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Config must not be null";
   auto instance = config->ForDefaultInstance();
-  server_socket_path_ = instance.PerInstanceInternalPath("confui_sign.sock");
+  server_socket_path_ = instance.PerInstanceInternalUdsPath("confui_sign.sock");
 }
 
 [[noreturn]] void ConfUiSignServer::MainLoop() {
