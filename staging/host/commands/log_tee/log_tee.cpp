@@ -16,6 +16,8 @@
 #include <signal.h>
 #include <sys/signalfd.h>
 
+#include <regex>
+
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
@@ -26,6 +28,27 @@
 
 DEFINE_string(process_name, "", "The process to credit log messages to");
 DEFINE_int32(log_fd_in, -1, "The file descriptor to read logs from.");
+
+// Crosvm formats logs starting with a local ISO 8601 timestamp and then a
+// log level (based on external/crosvm/base/src/syslog.rs).
+const std::regex kCrosvmLogPattern(
+    "^\\["
+    "\\d{4}" /* year */
+    "-"
+    "\\d{2}" /* month */
+    "-"
+    "\\d{2}" /* day */
+    "T"
+    "\\d{2}" /* hour */
+    ":"
+    "\\d{2}" /* minute*/
+    ":"
+    "\\d{2}" /* second */
+    "\\."
+    "\\d{9}"                          /* millisecond */
+    "(Z|[+-]\\d{2}(:\\d{2}|\\d{2})?)" /* timezone */
+    "\\s"
+    "(ERROR|WARN|INFO|DEBUG|TRACE)");
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -109,10 +132,6 @@ int main(int argc, char** argv) {
       // These checks attempt to determine the log severity coming from crosvm.
       // There is no guarantee of success all the time since log line boundaries
       // could be out sync with the reads, but that's ok.
-      //
-      // TODO(b/270424669): These checks are wrong, the format is
-      // "[<timestamp> ERROR". Maybe just stop bothering and send
-      // everything to LOG(DEBUG).
       if (android::base::StartsWith(trimmed, "[INFO")) {
         LOG(DEBUG) << trimmed;
       } else if (android::base::StartsWith(trimmed, "[ERROR")) {
@@ -122,7 +141,27 @@ int main(int argc, char** argv) {
       } else if (android::base::StartsWith(trimmed, "[VERBOSE")) {
         LOG(VERBOSE) << trimmed;
       } else {
-        LOG(DEBUG) << trimmed;
+        std::smatch match_result;
+        if (std::regex_search(trimmed, match_result, kCrosvmLogPattern)) {
+          if (match_result.size() == 4) {
+            const auto& level = match_result[3];
+            if (level == "ERROR") {
+              LOG(ERROR) << trimmed;
+            } else if (level == "WARN") {
+              LOG(WARNING) << trimmed;
+            } else if (level == "INFO") {
+              LOG(INFO) << trimmed;
+            } else if (level == "DEBUG") {
+              LOG(DEBUG) << trimmed;
+            } else if (level == "TRACE") {
+              LOG(VERBOSE) << trimmed;
+            } else {
+              LOG(DEBUG) << trimmed;
+            }
+          }
+        } else {
+          LOG(DEBUG) << trimmed;
+        }
       }
 
       // Go back to polling immediately to see if there is more data, don't
