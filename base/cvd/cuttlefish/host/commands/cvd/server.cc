@@ -231,9 +231,8 @@ Result<void> CvdServer::Exec(const ExecParam& exec_param) {
   });
   if (exec_param.in_memory_data_fd) {
     in_memory_dup = exec_param.in_memory_data_fd.value()->UNMANAGED_Dup();
-    CF_EXPECT(
-        in_memory_dup >= 0,
-        "dup: \"" << exec_param.in_memory_data_fd.value()->StrError() << "\"");
+    CF_EXPECTF(in_memory_dup >= 0, "dup: \"{}\"",
+               exec_param.in_memory_data_fd.value()->StrError());
     argv_str.push_back("-INTERNAL_memory_carryover_fd=" +
                        std::to_string(in_memory_dup));
   }

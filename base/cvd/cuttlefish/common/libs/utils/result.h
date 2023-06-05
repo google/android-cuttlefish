@@ -25,6 +25,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/result.h>  // IWYU pragma: export
+#include <fmt/format.h>           // IWYU pragma: export
 
 namespace cuttlefish {
 
@@ -175,6 +176,7 @@ using Result = android::base::expected<T, StackTraceError>;
  */
 #define CF_ERR(MSG) (CF_STACK_TRACE_ENTRY("") << MSG)
 #define CF_ERRNO(MSG) (CF_STACK_TRACE_ENTRY("") << MSG)
+#define CF_ERRF(...) (CF_STACK_TRACE_ENTRY("") << fmt::format(__VA_ARGS__))
 
 template <typename T>
 T OutcomeDereference(std::optional<T>&& value) {
@@ -286,6 +288,8 @@ auto ErrorFromType(Result<T>&& value) {
  */
 #define CF_EXPECT(...) \
   CF_EXPECT_OVERLOAD(__VA_ARGS__, CF_EXPECT2, CF_EXPECT1)(__VA_ARGS__)
+
+#define CF_EXPECTF(RESULT, ...) CF_EXPECT(RESULT, fmt::format(__VA_ARGS__))
 
 #define CF_COMPARE_EXPECT4(COMPARE_OP, LHS_RESULT, RHS_RESULT, MSG)         \
   ({                                                                        \
