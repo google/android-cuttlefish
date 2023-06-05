@@ -29,6 +29,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/cvd/flag.h"
 #include "host/commands/cvd/selector/instance_group_record.h"
@@ -283,11 +284,22 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
       const cvd_common::Envs& envs) {
     const auto& instance_group = instance.ParentGroup();
     const auto instance_id = instance.InstanceId();
+    const auto& internal_name = instance.InternalDeviceName();
     auto home = instance_group.HomeDir();
-    const auto socket_file_path =
+
+    // Use /tmp/cf_avd as crosvm_control.sock UDS path, if it does not exist,
+    // fallback to HOME directory(legacy).
+    const auto defaultPath =
+        ConcatToString("/tmp/cf_avd_", getuid(), "/", internal_name,
+                       "/internal/"
+                       "crosvm_control.sock");
+    const auto fallbackPath =
         ConcatToString(home, "/cuttlefish_runtime.", instance_id,
                        "/internal/"
                        "crosvm_control.sock");
+
+    const auto socket_file_path =
+        FileExists(defaultPath) ? defaultPath : fallbackPath;
 
     auto android_host_out = instance_group.HostArtifactsPath();
     auto crosvm_bin_path = ConcatToString(android_host_out, "/bin/crosvm");
