@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -186,23 +187,26 @@ func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 	return items[0], nil
 }
 
-func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
-	fleetItems, err := m.cvdFleet()
-	if err != nil {
-		return nil, err
-	}
-	cvds := make([]*apiv1.CVD, 0)
-	for _, item := range fleetItems {
-		cvd := &apiv1.CVD{
+func fleetToCVDs(val []cvdInstance) []*apiv1.CVD {
+	result := make([]*apiv1.CVD, len(val))
+	for i, item := range val {
+		result[i] = &apiv1.CVD{
 			Name: item.InstanceName,
 			// TODO(b/259725479): Update when `cvd fleet` prints out build information.
 			BuildSource: &apiv1.BuildSource{},
 			Status:      item.Status,
 			Displays:    item.Displays,
 		}
-		cvds = append(cvds, cvd)
 	}
-	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
+	return result
+}
+
+func (m *CVDToolInstanceManager) ListCVDs() (*apiv1.ListCVDsResponse, error) {
+	fleet, err := m.cvdFleet()
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.ListCVDsResponse{CVDs: fleetToCVDs(fleet)}, nil
 }
 
 func (m *CVDToolInstanceManager) GetLogsDir(name string) (string, error) {
@@ -227,13 +231,14 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 			log.Printf("failed to complete operation with error: %v", err)
 		}
 	}()
-	var cvd *apiv1.CVD
+	instancesCount := 1 + req.AdditionalInstancesNum
+	var instanceNumbers []uint32
 	var err error
 	switch {
 	case req.CVD.BuildSource.AndroidCIBuildSource != nil:
-		cvd, err = m.launchFromAndroidCI(req, op)
+		instanceNumbers, err = m.launchFromAndroidCI(req.CVD.BuildSource.AndroidCIBuildSource, instancesCount, op)
 	case req.CVD.BuildSource.UserBuildSource != nil:
-		cvd, err = m.launchFromUserBuild(req, op)
+		instanceNumbers, err = m.launchFromUserBuild(req.CVD.BuildSource.UserBuildSource, instancesCount, op)
 	default:
 		result = OperationResult{
 			Error: operator.NewBadRequestError(
@@ -256,7 +261,26 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 		log.Printf("failed to launch cvd with error: %v", err)
 		return
 	}
-	result = OperationResult{Value: cvd}
+	fleet, err := m.cvdFleet()
+	if err != nil {
+		result = OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
+		return
+	}
+	relevant := []cvdInstance{}
+	for _, item := range fleet {
+		n, err := nameToNumber(item.InstanceName)
+		if err != nil {
+			result = OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
+			return
+		}
+		if contains(instanceNumbers, uint32(n)) {
+			relevant = append(relevant, item)
+		}
+	}
+	res := &apiv1.CreateCVDResponse{
+		CVDs: fleetToCVDs(relevant),
+	}
+	result = OperationResult{Value: res}
 }
 
 const (
@@ -270,31 +294,27 @@ func defaultMainBuild() *apiv1.AndroidCIBuild {
 }
 
 func (m *CVDToolInstanceManager) launchFromAndroidCI(
-	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
+	buildSource *apiv1.AndroidCIBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
 	var mainBuild *apiv1.AndroidCIBuild = defaultMainBuild()
 	var kernelBuild *apiv1.AndroidCIBuild
 	var bootloaderBuild *apiv1.AndroidCIBuild
 	var systemImgBuild *apiv1.AndroidCIBuild
-	var credentials string
-	if req.CVD.BuildSource != nil && req.CVD.BuildSource.AndroidCIBuildSource != nil {
-		buildSource := req.CVD.BuildSource.AndroidCIBuildSource
-		if buildSource.MainBuild != nil {
-			*mainBuild = *req.CVD.BuildSource.AndroidCIBuildSource.MainBuild
-		}
-		if buildSource.KernelBuild != nil {
-			kernelBuild = &apiv1.AndroidCIBuild{}
-			*kernelBuild = *buildSource.KernelBuild
-		}
-		if buildSource.BootloaderBuild != nil {
-			bootloaderBuild = &apiv1.AndroidCIBuild{}
-			*bootloaderBuild = *buildSource.BootloaderBuild
-		}
-		if buildSource.SystemImageBuild != nil {
-			systemImgBuild = &apiv1.AndroidCIBuild{}
-			*systemImgBuild = *buildSource.SystemImageBuild
-		}
-		credentials = buildSource.Credentials
+	if buildSource.MainBuild != nil {
+		*mainBuild = *buildSource.MainBuild
 	}
+	if buildSource.KernelBuild != nil {
+		kernelBuild = &apiv1.AndroidCIBuild{}
+		*kernelBuild = *buildSource.KernelBuild
+	}
+	if buildSource.BootloaderBuild != nil {
+		bootloaderBuild = &apiv1.AndroidCIBuild{}
+		*bootloaderBuild = *buildSource.BootloaderBuild
+	}
+	if buildSource.SystemImageBuild != nil {
+		systemImgBuild = &apiv1.AndroidCIBuild{}
+		*systemImgBuild = *buildSource.SystemImageBuild
+	}
+	credentials := buildSource.Credentials
 	buildAPI := m.buildAPIFactory(credentials)
 	if err := updateBuildsWithLatestGreenBuildID(buildAPI,
 		[]*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild, systemImgBuild}); err != nil {
@@ -343,60 +363,51 @@ func (m *CVDToolInstanceManager) launchFromAndroidCI(
 	if merr != nil {
 		return nil, merr
 	}
-	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
-	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
-	runtimeDir := m.paths.RuntimesRootDir + "/" + cvdName
-	if err := createNewDir(runtimeDir); err != nil {
-		return nil, err
-	}
 	startParams := startCVDParams{
-		InstanceNumber:   instanceNumber,
+		InstanceNumbers:  m.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: mainBuildDir,
-		RuntimeDir:       runtimeDir,
+		RuntimeDir:       m.paths.RuntimesRootDir,
 		KernelDir:        kernelBuildDir,
 		BootloaderDir:    bootloaderBuildDir,
 	}
 	if err := m.startCVDHandler.Start(startParams); err != nil {
 		return nil, err
 	}
-	cvd := &apiv1.CVD{}
-	*cvd = *req.CVD
-	cvd.Name = cvdName
 	// TODO: Remove once `acloud CLI` gets deprecated.
-	if cvdName == "cvd-1" {
-		go runAcloudSetup(m.execContext, m.paths.ArtifactsRootDir, mainBuildDir, runtimeDir)
+	if contains(startParams.InstanceNumbers, 1) {
+		go runAcloudSetup(m.execContext, m.paths.ArtifactsRootDir, mainBuildDir, m.paths.RuntimesRootDir)
 	}
-	return cvd, nil
+	return startParams.InstanceNumbers, nil
 }
 
 func (m *CVDToolInstanceManager) launchFromUserBuild(
-	req apiv1.CreateCVDRequest, op apiv1.Operation) (*apiv1.CVD, error) {
-	artifactsDir := m.userArtifactsDirResolver.GetDirPath(req.CVD.BuildSource.UserBuildSource.ArtifactsDir)
+	buildSource *apiv1.UserBuildSource, instancesCount uint32, op apiv1.Operation) ([]uint32, error) {
+	artifactsDir := m.userArtifactsDirResolver.GetDirPath(buildSource.ArtifactsDir)
 	if err := untarCVDHostPackage(artifactsDir); err != nil {
 		return nil, err
 	}
-	instanceNumber := atomic.AddUint32(&m.instanceCounter, 1)
-	cvdName := fmt.Sprintf("cvd-%d", instanceNumber)
-	runtimeDir := m.paths.RuntimesRootDir + "/" + cvdName
-	if err := createNewDir(runtimeDir); err != nil {
-		return nil, err
-	}
 	startParams := startCVDParams{
-		InstanceNumber:   instanceNumber,
+		InstanceNumbers:  m.newInstanceNumbers(instancesCount),
 		MainArtifactsDir: artifactsDir,
-		RuntimeDir:       runtimeDir,
+		RuntimeDir:       m.paths.RuntimesRootDir,
 	}
 	if err := m.startCVDHandler.Start(startParams); err != nil {
 		return nil, err
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
-	if cvdName == "cvd-1" {
-		go runAcloudSetup(m.execContext, m.paths.ArtifactsRootDir, artifactsDir, runtimeDir)
+	if contains(startParams.InstanceNumbers, 1) {
+		go runAcloudSetup(m.execContext, m.paths.ArtifactsRootDir, artifactsDir, m.paths.RuntimesRootDir)
 	}
-	return &apiv1.CVD{
-		Name:        cvdName,
-		BuildSource: req.CVD.BuildSource,
-	}, nil
+	return startParams.InstanceNumbers, nil
+}
+
+func (m *CVDToolInstanceManager) newInstanceNumbers(n uint32) []uint32 {
+	result := []uint32{}
+	for i := 0; i < int(n); i++ {
+		num := atomic.AddUint32(&m.instanceCounter, 1)
+		result = append(result, num)
+	}
+	return result
 }
 
 const CVDHostPackageName = "cvd-host_package.tar.gz"
@@ -590,7 +601,7 @@ type startCVDHandler struct {
 }
 
 type startCVDParams struct {
-	InstanceNumber   uint32
+	InstanceNumbers  []uint32
 	MainArtifactsDir string
 	RuntimeDir       string
 	// OPTIONAL. If set, kernel relevant artifacts will be pulled from this dir.
@@ -600,7 +611,13 @@ type startCVDParams struct {
 }
 
 func (h *startCVDHandler) Start(p startCVDParams) error {
-	instanceNumArg := fmt.Sprintf("--base_instance_num=%d", p.InstanceNumber)
+	instanceNumsArg := ""
+	if len(p.InstanceNumbers) == 1 {
+		// Use legacy `--base_instance_num` when multi-vd is not requested.
+		instanceNumsArg = fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0])
+	} else {
+		instanceNumsArg = fmt.Sprintf("--num_instances=%s", strings.Join(SliceItoa(p.InstanceNumbers), ","))
+	}
 	imgDirArg := fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir)
 	cvdCmd := cvdCommand{
 		execContext:    h.ExecContext,
@@ -608,8 +625,11 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 		home:           p.RuntimeDir,
 		cvdBin:         h.CVDBin,
 		args: []string{groupNameArg, "start",
-			daemonArg, reportAnonymousUsageStatsArg, instanceNumArg, imgDirArg},
+			daemonArg, reportAnonymousUsageStatsArg, instanceNumsArg, imgDirArg},
 		timeout: h.Timeout,
+	}
+	if len(p.InstanceNumbers) > 1 {
+		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--num_instances=%d", len(p.InstanceNumbers)))
 	}
 	if p.KernelDir != "" {
 		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
@@ -863,4 +883,34 @@ func runAcloudSetup(execContext ExecContext, artifactsRootDir, artifactsDir, run
 	// Make metrics.log and modem_simulator.log available to acloud user.
 	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/metrics.log"))
 	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/modem_simulator.log"))
+}
+
+func SliceItoa(s []uint32) []string {
+	result := make([]string, len(s))
+	for i, v := range s {
+		result[i] = strconv.Itoa(int(v))
+	}
+	return result
+}
+
+func nameToNumber(s string) (int, error) {
+	// instance names follow format "cvd-[NUMBER]".
+	parts := strings.Split(s, "-")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("failed parsing instance name %q", s)
+	}
+	n, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, fmt.Errorf("failed parsing instance name %q: %w", s, err)
+	}
+	return n, nil
+}
+
+func contains(s []uint32, e uint32) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

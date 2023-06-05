@@ -44,7 +44,7 @@ const (
 	DefaultWebUIUrl       = ""
 
 	defaultAndroidBuildURL          = "https://androidbuildinternal.googleapis.com"
-	defaultCVDBinAndroidBuildID     = "9802869"
+	defaultCVDBinAndroidBuildID     = "10234205"
 	defaultCVDBinAndroidBuildTarget = "aosp_cf_x86_64_phone-userdebug"
 	defaultCVDArtifactsDir          = "/var/lib/cuttlefish-common"
 )
