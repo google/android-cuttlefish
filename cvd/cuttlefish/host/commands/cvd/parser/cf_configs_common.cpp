@@ -40,7 +40,7 @@ Result<void> ValidateIntConfig(
     if (instances[i].isMember(group) &&
         (instances[i][group].isMember(json_flag))) {
       int flag = instances[i][group][json_flag].asInt();
-      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+      CF_EXPECTF(validate_config(flag), "Invalid flag value \"{}\"", flag);
     }
   }
   return {};
@@ -57,7 +57,7 @@ Result<void> ValidateIntConfigSubGroup(
         (instances[i][group].isMember(subgroup)) &&
         (instances[i][group][subgroup].isMember(json_flag))) {
       int flag = instances[i][group][subgroup][json_flag].asInt();
-      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+      CF_EXPECTF(validate_config(flag), "Invalid flag value \"{}\"", flag);
     }
   }
   return {};
@@ -74,7 +74,7 @@ Result<void> ValidateStringConfig(
         (instances[i][group].isMember(json_flag))) {
       // Validate input parameter
       std::string flag = instances[i][group][json_flag].asString();
-      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+      CF_EXPECTF(validate_config(flag), "Invalid flag value \"{}\"", flag);
     }
   }
   return {};
@@ -91,7 +91,7 @@ Result<void> ValidateStringConfigSubGroup(
         (!instances[i][group].isMember(subgroup)) ||
         (!instances[i][group][subgroup].isMember(json_flag))) {
       std::string flag = instances[i][group][subgroup][json_flag].asString();
-      CF_EXPECT(validate_config(flag), "Invalid flag value \"" << flag << "\"");
+      CF_EXPECTF(validate_config(flag), "Invalid flag value \"{}\"", flag);
     }
   }
   return {};
