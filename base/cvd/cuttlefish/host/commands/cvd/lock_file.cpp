@@ -47,7 +47,7 @@ Result<InUseState> LockFile::Status() const {
     case static_cast<char>(InUseState::kNotInUse):
       return InUseState::kNotInUse;
     default:
-      return CF_ERR("Unexpected state value \"" << state_char << "\"");
+      return CF_ERRF("Unexpected state value \"{}\"", state_char);
   }
 }
 
@@ -83,7 +83,7 @@ Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
   if (result) {
     LOG(DEBUG) << "failed: chmod 755 " << parent_dir;
   }
-  CF_EXPECT(fd->IsOpen(), "open(\"" << file_path << "\"): " << fd->StrError());
+  CF_EXPECTF(fd->IsOpen(), "open(\"{}\"): {}", file_path, fd->StrError());
   return fd;
 }
 
