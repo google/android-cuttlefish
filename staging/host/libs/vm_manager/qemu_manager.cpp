@@ -51,8 +51,8 @@ namespace vm_manager {
 namespace {
 
 std::string GetMonitorPath(const CuttlefishConfig& config) {
-  return config.ForDefaultInstance()
-      .PerInstanceInternalPath("qemu_monitor.sock");
+  return config.ForDefaultInstance().PerInstanceInternalUdsPath(
+      "qemu_monitor.sock");
 }
 
 void LogAndSetEnv(const char* key, const std::string& value) {
