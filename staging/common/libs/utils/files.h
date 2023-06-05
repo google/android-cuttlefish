@@ -31,7 +31,11 @@ Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
                                    const mode_t mode = S_IRWXU | S_IRWXG |
-                                                       S_IROTH | S_IXOTH);
+                                                       S_IROTH | S_IXOTH,
+                                   const std::string& group_name = "");
+Result<void> ChangeGroup(const std::string& path,
+                         const std::string& group_name);
+bool CanAccess(const std::string& path, const int mode);
 bool IsDirectoryEmpty(const std::string& path);
 bool RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);

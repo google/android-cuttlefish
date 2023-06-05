@@ -37,6 +37,24 @@
 
 namespace cuttlefish {
 namespace {
+std::vector<gid_t> GetSuplementaryGroups() {
+  int num_groups = getgroups(0, nullptr);
+  if (num_groups < 0) {
+    LOG(ERROR) << "Unable to get number of suplementary groups: "
+               << std::strerror(errno);
+    return {};
+  }
+  std::vector<gid_t> groups(num_groups + 1);
+  int retval = getgroups(groups.size(), groups.data());
+  if (retval < 0) {
+    LOG(ERROR) << "Error obtaining list of suplementary groups (list size: "
+               << groups.size() << "): " << std::strerror(errno);
+    return {};
+  }
+  return groups;
+}
+}  // namespace
+
 gid_t GroupIdFromName(const std::string& group_name) {
   struct group grp{};
   struct group* grp_p{};
@@ -63,24 +81,6 @@ gid_t GroupIdFromName(const std::string& group_name) {
     return -1;
   }
 }
-
-std::vector<gid_t> GetSuplementaryGroups() {
-  int num_groups = getgroups(0, nullptr);
-  if (num_groups < 0) {
-    LOG(ERROR) << "Unable to get number of suplementary groups: "
-               << std::strerror(errno);
-    return {};
-  }
-  std::vector<gid_t> groups(num_groups + 1);
-  int retval = getgroups(groups.size(), groups.data());
-  if (retval < 0) {
-    LOG(ERROR) << "Error obtaining list of suplementary groups (list size: "
-               << groups.size() << "): " << std::strerror(errno);
-    return {};
-  }
-  return groups;
-}
-}  // namespace
 
 bool InGroup(const std::string& group) {
   auto gid = GroupIdFromName(group);
