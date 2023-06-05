@@ -632,11 +632,11 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
       // not exist
       if (FileExists(vbmeta_image) && FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
         auto fd = SharedFD::Open(vbmeta_image, O_RDWR);
-        CF_EXPECT(fd->IsOpen(), "Could not open \"" << vbmeta_image << "\": "
-                                                    << fd->StrError());
-        CF_EXPECT(fd->Truncate(VBMETA_MAX_SIZE) == 0,
-                  "`truncate --size=" << VBMETA_MAX_SIZE << " " << vbmeta_image
-                                      << "` failed: " << fd->StrError());
+        CF_EXPECTF(fd->IsOpen(), "Could not open \"{}\": {}", vbmeta_image,
+                   fd->StrError());
+        CF_EXPECTF(fd->Truncate(VBMETA_MAX_SIZE) == 0,
+                   "`truncate --size={} {}` failed: {}", VBMETA_MAX_SIZE,
+                   vbmeta_image, fd->StrError());
       }
     }
     return {};
