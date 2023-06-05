@@ -186,6 +186,9 @@ static const std::set<std::string> kRadioOnlyAidl = {
     "android.hardware.radio.messaging", "android.hardware.radio.modem",
     "android.hardware.radio.network",   "android.hardware.radio.sap",
     "android.hardware.radio.sim",       "android.hardware.radio.voice",
+    "android.hardware.radio.ims",       "android.hardware.radio.ims.media",
+    "android.hardware.radio.satellite",
+
 };
 
 /*
