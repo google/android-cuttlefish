@@ -96,8 +96,7 @@ bool InGroup(const std::string& group) {
   return Contains(groups, gid);
 }
 
-Result<std::string> SystemWideUserHome() {
-  auto uid = getuid();
+Result<std::string> SystemWideUserHome(const uid_t uid) {
   // getpwuid() is not thread-safe, so we need a lock across all calls
   static std::mutex getpwuid_mutex;
   std::string home_dir;
@@ -117,6 +116,10 @@ Result<std::string> SystemWideUserHome() {
     return CF_ERRNO("Failed to convert " << home_dir << " to its Realpath");
   }
   return home_realpath;
+}
+
+Result<std::string> SystemWideUserHome() {
+  return SystemWideUserHome(getuid());
 }
 
 } // namespace cuttlefish
