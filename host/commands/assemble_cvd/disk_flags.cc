@@ -587,8 +587,9 @@ class InitializePstore : public SetupFeature {
 
 class InitializeSdCard : public SetupFeature {
  public:
-  INJECT(InitializeSdCard(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
+  INJECT(InitializeSdCard(const CuttlefishConfig& config,
+                          const CuttlefishConfig::InstanceSpecific& instance))
+      : config_{config}, instance_(instance) {}
 
   // SetupFeature
   std::string Name() const override { return "InitializeSdCard"; }
@@ -605,9 +606,17 @@ class InitializeSdCard : public SetupFeature {
     CF_EXPECT(CreateBlankImage(instance_.sdcard_path(),
                                instance_.blank_sdcard_image_mb(), "sdcard"),
               "Failed to create \"" << instance_.sdcard_path() << "\"");
+    if (IsVmManagerQemu()) {
+      const std::string crosvm_path = instance_.crosvm_binary();
+      CreateQcowOverlay(crosvm_path, instance_.sdcard_path(),
+                        instance_.sdcard_overlay_path());
+    }
     return {};
   }
 
+  bool IsVmManagerQemu() const { return config_.vm_manager() == "qemu_cli"; }
+
+  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
