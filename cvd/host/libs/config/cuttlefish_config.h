@@ -138,6 +138,9 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
+  void set_enable_wifi(const bool enable_wifi);
+  bool enable_wifi() const;
+
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
     Bluetooth = 0b00000001,
