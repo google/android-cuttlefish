@@ -179,6 +179,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--protected-vm");
   }
 
+  if (!instance.crosvm_use_balloon()) {
+    crosvm_cmd.Cmd().AddParameter("--no-balloon");
+  }
+
   if (instance.gdb_port() > 0) {
     CF_EXPECT(instance.cpus() == 1, "CPUs must be 1 for crosvm gdb mode");
     crosvm_cmd.Cmd().AddParameter("--gdb=", instance.gdb_port());
