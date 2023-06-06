@@ -119,8 +119,11 @@ Result<void> InputSocket::WriteEvents(
     std::unique_ptr<InputEventsBuffer> buffer) {
   std::lock_guard<std::mutex> lock(client_mtx_);
   CF_EXPECT(client_->IsOpen(), "No input client connected");
-  WriteAll(client_, reinterpret_cast<const char*>(buffer->data()),
-           buffer->size());
+  auto res = WriteAll(client_, reinterpret_cast<const char*>(buffer->data()),
+                      buffer->size());
+  CF_EXPECT(res == buffer->size(), "Failed to write entire event buffer: wrote "
+                                       << res << " of " << buffer->size()
+                                       << "bytes");
   return {};
 }
 
