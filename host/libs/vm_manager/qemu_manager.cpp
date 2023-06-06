@@ -589,16 +589,17 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
             "Provided too many disks (" << disk_num << "), maximum "
                                         << VmManager::kMaxDisks << "supported");
   auto readonly = instance.protected_vm() ? ",readonly" : "";
-  size_t i = 0;
-  for (const auto& disk : instance.virtual_disk_paths()) {
+  for (size_t i = 0; i < disk_num; i++) {
+    auto bootindex = i == 0 ? ",bootindex=1" : "";
+    auto disk = instance.virtual_disk_paths()[i];
+    const std::string format =
+        (disk == instance.sdcard_path() ? ",format=raw" : "");
     qemu_cmd.AddParameter("-drive");
     qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
-                          ",aio=threads", readonly);
+                          ",aio=threads", format, readonly);
     qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
-        ",id=virtio-disk", i, (i == 0 ? ",bootindex=1" : ""));
-    ++i;
+    qemu_cmd.AddParameter("virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
+                          ",id=virtio-disk", i, bootindex);
   }
 
   if (is_x86 && FileExists(instance.pstore_path())) {

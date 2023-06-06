@@ -1019,10 +1019,6 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::sdcard_overlay_path() const {
-  return AbsolutePath(PerInstancePath("sdcard_overlay.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
