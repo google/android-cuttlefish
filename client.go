@@ -96,7 +96,7 @@ type Service interface {
 
 	ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer) (*wclient.Connection, error)
 
-	CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error)
+	CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error)
 
 	ListCVDs(host string) ([]*hoapi.CVD, error)
 
@@ -310,17 +310,17 @@ func asWebRTCICEServers(in []apiv1.IceServer) []webrtc.ICEServer {
 	return out
 }
 
-func (c *serviceImpl) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CVD, error) {
+func (c *serviceImpl) CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error) {
 	var op hoapi.Operation
 	if err := c.doRequest("POST", "/hosts/"+host+"/cvds", req, &op); err != nil {
 		return nil, err
 	}
 	path := "/hosts/" + host + "/operations/" + op.Name + "/:wait"
-	cvd := &hoapi.CVD{}
-	if err := c.doRequest("POST", path, nil, cvd); err != nil {
+	res := &hoapi.CreateCVDResponse{}
+	if err := c.doRequest("POST", path, nil, res); err != nil {
 		return nil, err
 	}
-	return cvd, nil
+	return res, nil
 }
 
 func (c *serviceImpl) ListCVDs(host string) ([]*hoapi.CVD, error) {
