@@ -422,6 +422,9 @@ DEFINE_vec(crosvm_use_rng, "true",
            "Controls the crosvm --no-rng flag"
            "The flag is given if crosvm_use_rng is false");
 
+DEFINE_bool(enable_wifi, true,
+            "Enables the guest WIFI. Disable this only for Minidroid.");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -939,6 +942,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   // crosvm should create fifos for Bluetooth
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth || is_bt_netsim);
+  tmp_config_obj.set_enable_wifi(FLAGS_enable_wifi);
 
   // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
   tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
@@ -1432,7 +1436,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // vhost_user_mac80211_hwsim is not specified.
     const bool start_wmediumd = tmp_config_obj.virtio_mac80211_hwsim() &&
                                 FLAGS_vhost_user_mac80211_hwsim.empty() &&
-                                is_first_instance;
+                                is_first_instance && FLAGS_enable_wifi;
     if (start_wmediumd) {
       // TODO(b/199020470) move this to the directory for shared resources
       auto vhost_user_socket_path =

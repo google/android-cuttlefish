@@ -305,7 +305,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   SharedFD wifi_tap;
   // GPU capture can only support named files and not file descriptors due to
   // having to pass arguments to crosvm via a wrapper script.
-  if (!gpu_capture_enabled) {
+  if (!gpu_capture_enabled && config.enable_wifi()) {
     // The ordering of tap devices is important. Make sure any change here
     // is reflected in ethprime u-boot variable
     crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac());
