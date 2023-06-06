@@ -21,6 +21,8 @@ import com.android.tradefed.device.cloud.GceAvdInfo;
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
 import com.android.tradefed.device.cloud.RemoteFileUtil;
 import com.android.tradefed.device.cloud.RemoteSshUtil;
+import com.android.tradefed.device.connection.AdbSshConnection;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.IRunUtil;
 import com.android.tradefed.util.RunUtil;
@@ -50,9 +52,18 @@ public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
     private final String basePath;
 
     public CuttlefishControlRemoteRunner(RemoteAndroidVirtualDevice testDevice)
-            throws FileNotFoundException {
+            throws DeviceNotAvailableException, FileNotFoundException {
         this.testDeviceOptions = testDevice.getOptions();
-        this.testDeviceAvdInfo = testDevice.getAvdInfo();
+
+        if (testDevice.getConnection() instanceof AdbSshConnection) {
+            this.testDeviceAvdInfo = ((AdbSshConnection) testDevice.getConnection()).getAvdInfo();
+        } else {
+            this.testDeviceAvdInfo = testDevice.getAvdInfo();
+        }
+        if (this.testDeviceAvdInfo == null) {
+            throw new DeviceNotAvailableException(
+                    "Failed to find testDeviceAvdInfo", testDevice.getSerialNumber());
+        }
 
         List<String> basePathCandidates =
                 Arrays.asList(
