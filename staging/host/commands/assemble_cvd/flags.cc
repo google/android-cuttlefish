@@ -1370,7 +1370,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     bool sdcard = true;
     sdcard &= use_sdcard_vec[instance_index];
     sdcard &= !protected_vm_vec[instance_index];
-    if (sdcard) {
+    if (sdcard && tmp_config_obj.vm_manager() == "qemu_cli") {
+      virtual_disk_paths.push_back(const_instance.sdcard_overlay_path());
+    } else {
       virtual_disk_paths.push_back(const_instance.sdcard_path());
     }
 
