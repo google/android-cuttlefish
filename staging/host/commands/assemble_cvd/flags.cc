@@ -413,6 +413,11 @@ DEFINE_vec(modem_simulator_count,
 DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
             "Track changes to host executables");
 
+// The default value should be set to the default of crosvm --balloon
+DEFINE_vec(crosvm_use_balloon, "true",
+           "Controls the crosvm --no-balloon flag"
+           "The flag is given if crosvm_use_balloon is false");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -1055,6 +1060,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instances_display_configs = CF_EXPECT(ParseDisplaysProto());
   }
 
+  std::vector<bool> use_balloon_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_balloon));
+
   std::string default_enable_sandbox = "";
   std::string comma_str = "";
 
@@ -1106,6 +1114,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
 
+    instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
