@@ -61,6 +61,14 @@ class OpenWrt : public CommandSource {
                                 config_.vhost_user_mac80211_hwsim());
     }
     SharedFD wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
+
+    /* TODO(kwstephenkim): delete this code when Minidroid completely disables
+     * the AP VM itself
+     */
+    if (!instance_.crosvm_use_balloon()) {
+      ap_cmd.Cmd().AddParameter("--no-balloon");
+    }
+
     if (instance_.enable_sandbox()) {
       ap_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
                                 instance_.seccomp_policy_dir());
