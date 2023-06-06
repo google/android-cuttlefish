@@ -366,6 +366,7 @@ class CuttlefishConfig {
     std::string launcher_monitor_socket_path() const;
 
     std::string sdcard_path() const;
+    std::string sdcard_overlay_path() const;
 
     std::string persistent_composite_disk_path() const;
     std::string persistent_composite_overlay_path() const;
