@@ -1,4 +1,5 @@
 {
+	"crosvm_use_balloon": false,
 	"enable_audio": false,
 	"enable_host_bluetooth": false,
 	"enable_modem_simulator": false,
