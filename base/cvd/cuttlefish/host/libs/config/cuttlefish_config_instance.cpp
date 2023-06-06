@@ -1398,6 +1398,15 @@ APBootFlow CuttlefishConfig::InstanceSpecific::ap_boot_flow() const {
   return static_cast<APBootFlow>((*Dictionary())[kApBootFlow].asInt());
 }
 
+static constexpr char kCrosvmUseBalloon[] = "crosvm_use_balloon";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_balloon(
+    const bool use_balloon) {
+  (*Dictionary())[kCrosvmUseBalloon] = use_balloon;
+}
+bool CuttlefishConfig::InstanceSpecific::crosvm_use_balloon() const {
+  return (*Dictionary())[kCrosvmUseBalloon].asBool();
+}
+
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
     int screen_idx) const {
   return PerInstanceInternalUdsPath(
