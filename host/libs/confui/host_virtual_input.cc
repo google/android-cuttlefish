@@ -22,26 +22,70 @@ namespace cuttlefish {
 namespace confui {
 
 HostVirtualInput::HostVirtualInput(HostServer& host_server,
-                                   HostModeCtrl& host_mode_ctrl)
-    : host_server_(host_server), host_mode_ctrl_(host_mode_ctrl) {}
-
-void HostVirtualInput::TouchEvent(const int x, const int y,
-                                  const bool is_down) {
-  std::string mode("Android Mode");
-  if (IsConfUiActive()) {
-    mode = std::string("Confirmation UI Mode");
-  }
-  if (is_down) {
-    ConfUiLog(INFO) << "TouchEvent occurs in " << mode << " at [" << x << ", "
-                    << y << "]";
-  }
-  host_server_.TouchEvent(x, y, is_down);
-}
+                                   HostModeCtrl& host_mode_ctrl,
+                                   InputConnector& android_mode_input)
+    : host_server_(host_server), host_mode_ctrl_(host_mode_ctrl), android_mode_input_(android_mode_input) {}
 
 void HostVirtualInput::UserAbortEvent() { host_server_.UserAbortEvent(); }
 
 bool HostVirtualInput::IsConfUiActive() {
   return host_mode_ctrl_.IsConfirmatioUiMode();
+}
+
+Result<void> HostVirtualInput::SendTouchEvent(const std::string& display, int x,
+                                              int y, bool down) {
+  if (!IsConfUiActive()) {
+    return android_mode_input_.SendTouchEvent(display, x, y, down);
+  }
+
+  if (down) {
+    ConfUiLog(INFO) << "TouchEvent occurs in Confirmation UI Mode at [" << x
+                    << ", " << y << "]";
+    host_server_.TouchEvent(x, y, down);
+  }
+  return {};
+}
+
+Result<void> HostVirtualInput::SendMultiTouchEvent(
+    const std::string& display_label, const std::vector<MultitouchSlot>& slots,
+    bool down) {
+  if (!IsConfUiActive()) {
+    return android_mode_input_.SendMultiTouchEvent(display_label, slots, down);
+  }
+  for (auto& slot: slots) {
+    if (down) {
+      auto this_x = slot.x;
+      auto this_y = slot.y;
+      ConfUiLog(INFO) << "TouchEvent occurs in Confirmation UI Mode at ["
+                      << this_x << ", " << this_y << "]";
+      host_server_.TouchEvent(this_x, this_y, down);
+    }
+  }
+  return {};
+}
+
+Result<void> HostVirtualInput::SendKeyboardEvent(uint16_t code, bool down) {
+  if (!IsConfUiActive()) {
+    return android_mode_input_.SendKeyboardEvent(code, down);
+  }
+  ConfUiLog(VERBOSE) << "keyboard event ignored in confirmation UI mode";
+  return {};
+}
+
+Result<void> HostVirtualInput::SendRotaryEvent(int pixels) {
+  if (!IsConfUiActive()) {
+    return android_mode_input_.SendRotaryEvent(pixels);
+  }
+  ConfUiLog(VERBOSE) << "rotary event ignored in confirmation UI mode";
+  return {};
+}
+
+Result<void> HostVirtualInput::SendSwitchesEvent(uint16_t code, bool state) {
+  if (!IsConfUiActive()) {
+    return android_mode_input_.SendSwitchesEvent(code, state);
+  }
+  ConfUiLog(VERBOSE) << "switches event ignored in confirmation UI mode";
+  return {};
 }
 
 }  // namespace confui
