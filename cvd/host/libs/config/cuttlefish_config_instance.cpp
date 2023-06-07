@@ -1027,6 +1027,10 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::sdcard_overlay_path() const {
+  return AbsolutePath(PerInstancePath("sdcard_overlay.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
@@ -1408,24 +1412,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_ap_boot_flow(APBootFlow flow
 }
 APBootFlow CuttlefishConfig::InstanceSpecific::ap_boot_flow() const {
   return static_cast<APBootFlow>((*Dictionary())[kApBootFlow].asInt());
-}
-
-static constexpr char kCrosvmUseBalloon[] = "crosvm_use_balloon";
-void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_balloon(
-    const bool use_balloon) {
-  (*Dictionary())[kCrosvmUseBalloon] = use_balloon;
-}
-bool CuttlefishConfig::InstanceSpecific::crosvm_use_balloon() const {
-  return (*Dictionary())[kCrosvmUseBalloon].asBool();
-}
-
-static constexpr char kCrosvmUseRng[] = "crosvm_use_rng";
-void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_rng(
-    const bool use_rng) {
-  (*Dictionary())[kCrosvmUseRng] = use_rng;
-}
-bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
-  return (*Dictionary())[kCrosvmUseRng].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
