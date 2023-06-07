@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <linux/input.h>
-
 #include <memory>
 
 #include <android-base/logging.h>
@@ -30,6 +28,7 @@
 #include "host/frontend/webrtc/client_server.h"
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
+#include "host/libs/input_connector/socket_input_connector.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
 #include "host/frontend/webrtc/libdevice/local_recorder.h"
@@ -123,68 +122,28 @@ int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  cuttlefish::InputSockets input_sockets;
+  auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
+  close(FLAGS_command_fd);
 
-  auto counter = 0;
+  cuttlefish::InputSocketsConnectorBuilder inputs_builder(
+      FLAGS_write_virtio_input ? cuttlefish::InputEventType::Virtio
+                               : cuttlefish::InputEventType::Evdev);
+  auto display_counter = 0;
   for (const auto& touch_fd_str : android::base::Split(FLAGS_touch_fds, ",")) {
     auto touch_fd = std::stoi(touch_fd_str);
-    input_sockets.touch_servers["display_" + std::to_string(counter++)] =
-        cuttlefish::SharedFD::Dup(touch_fd);
+    auto display_label = "display_" + std::to_string(display_counter++);
+    inputs_builder.WithTouchscreen(display_label,
+                                   cuttlefish::SharedFD::Dup(touch_fd));
     close(touch_fd);
   }
-  input_sockets.rotary_server = cuttlefish::SharedFD::Dup(FLAGS_rotary_fd);
-  input_sockets.keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
-  input_sockets.switches_server = cuttlefish::SharedFD::Dup(FLAGS_switches_fd);
-  auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
+  inputs_builder.WithRotary(cuttlefish::SharedFD::Dup(FLAGS_rotary_fd));
   close(FLAGS_rotary_fd);
+  inputs_builder.WithKeyboard(cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd));
   close(FLAGS_keyboard_fd);
+  inputs_builder.WithSwitches(cuttlefish::SharedFD::Dup(FLAGS_switches_fd));
   close(FLAGS_switches_fd);
-  close(FLAGS_command_fd);
-  // Accepting on these sockets here means the device won't register with the
-  // operator as soon as it could, but rather wait until crosvm's input display
-  // devices have been initialized. That's OK though, because without those
-  // devices there is no meaningful interaction the user can have with the
-  // device.
-  for (const auto& touch_entry : input_sockets.touch_servers) {
-    input_sockets.touch_clients[touch_entry.first] =
-        cuttlefish::SharedFD::Accept(*touch_entry.second);
-  }
-  input_sockets.rotary_client =
-      cuttlefish::SharedFD::Accept(*input_sockets.rotary_server);
-  input_sockets.keyboard_client =
-      cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
-  input_sockets.switches_client =
-      cuttlefish::SharedFD::Accept(*input_sockets.switches_server);
 
-  std::vector<std::thread> touch_accepters;
-  touch_accepters.reserve(input_sockets.touch_servers.size());
-  for (const auto& touch : input_sockets.touch_servers) {
-    auto label = touch.first;
-    touch_accepters.emplace_back([label, &input_sockets]() {
-      for (;;) {
-        input_sockets.touch_clients[label] =
-            cuttlefish::SharedFD::Accept(*input_sockets.touch_servers[label]);
-      }
-    });
-  }
-  std::thread rotary_accepter([&input_sockets]() {
-    for (;;) {
-      input_sockets.rotary_client =
-          cuttlefish::SharedFD::Accept(*input_sockets.rotary_server);
-    }
-  });
-  std::thread keyboard_accepter([&input_sockets]() {
-    for (;;) {
-      input_sockets.keyboard_client =
-          cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
-    }
-  });
-  std::thread switches_accepter([&input_sockets]() {
-    for (;;) {
-      input_sockets.switches_client =
-          cuttlefish::SharedFD::Accept(*input_sockets.switches_server);
-    }
-  });
+  auto input_connector = std::move(inputs_builder).Build();
 
   auto kernel_log_events_client =
       cuttlefish::SharedFD::Dup(FLAGS_kernel_log_events_fd);
@@ -240,7 +199,7 @@ int main(int argc, char** argv) {
 
   KernelLogEventsHandler kernel_logs_event_handler(kernel_log_events_client);
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      input_sockets, &kernel_logs_event_handler, confui_virtual_input);
+      std::move(input_connector), &kernel_logs_event_handler, confui_virtual_input);
 
   // The recorder is created first, so displays added in callbacks to the
   // Streamer can also be added to the LocalRecorder.
