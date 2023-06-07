@@ -53,6 +53,7 @@ cc_binary_host {
         "libcuttlefish_confui",
         "libcuttlefish_confui_host",
         "libcuttlefish_host_config",
+        "libcuttlefish_input_connector",
         "libcuttlefish_security",
         "libcuttlefish_screen_connector",
         "libcuttlefish_utils",
