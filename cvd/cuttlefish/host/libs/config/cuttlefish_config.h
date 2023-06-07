@@ -138,6 +138,9 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
+  void set_enable_wifi(const bool enable_wifi);
+  bool enable_wifi() const;
+
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
     Bluetooth = 0b00000001,
@@ -277,6 +280,8 @@ class CuttlefishConfig {
     int tombstone_receiver_port() const;
     // Port number to connect to the config server on the host
     int config_server_port() const;
+    // Port number to connect to the vehicle HAL server on the host
+    int vehicle_hal_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
@@ -442,6 +447,7 @@ class CuttlefishConfig {
     APBootFlow ap_boot_flow() const;
 
     bool crosvm_use_balloon() const;
+    bool crosvm_use_rng() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -496,6 +502,7 @@ class CuttlefishConfig {
     bool pause_in_bootloader() const;
     bool run_as_daemon() const;
     bool enable_audio() const;
+    bool enable_vehicle_hal_grpc_server() const;
     bool enable_gnss_grpc_proxy() const;
     bool enable_bootanimation() const;
     bool record_screen() const;
@@ -607,6 +614,7 @@ class CuttlefishConfig {
     void set_keyboard_server_port(int config_server_port);
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
+    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
@@ -640,6 +648,7 @@ class CuttlefishConfig {
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
+    void set_crosvm_use_rng(const bool use_rng);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
@@ -669,6 +678,7 @@ class CuttlefishConfig {
     void set_pause_in_bootloader(bool pause_in_bootloader);
     void set_run_as_daemon(bool run_as_daemon);
     void set_enable_audio(bool enable);
+    void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
     void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
     void set_enable_bootanimation(const bool enable_bootanimation);
     void set_record_screen(bool record_screen);

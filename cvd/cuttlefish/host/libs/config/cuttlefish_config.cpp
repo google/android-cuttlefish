@@ -300,6 +300,14 @@ bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
 }
 
+static constexpr char kenableWifi[] = "enable_wifi";
+void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
+  (*dictionary_)[kenableWifi] = enable_wifi;
+}
+bool CuttlefishConfig::enable_wifi() const {
+  return (*dictionary_)[kenableWifi].asBool();
+}
+
 static constexpr char kNetsimRadios[] = "netsim_radios";
 
 void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
