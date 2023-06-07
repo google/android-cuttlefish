@@ -21,6 +21,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <thread>
 #include <vector>
@@ -84,6 +85,7 @@ class InputSocket {
  private:
   SharedFD server_;
   SharedFD client_;
+  std::mutex client_mtx_;
   std::thread monitor_;
 
   void MonitorLoop();
@@ -106,6 +108,7 @@ void InputSocket::MonitorLoop() {
       } else if (res > 0) {
         LOG(VERBOSE) << "Received " << res << " bytes on input socket";
       } else {
+        std::lock_guard<std::mutex> lock(client_mtx_);
         client_->Close();
       }
     } while (client_->IsOpen());
@@ -114,9 +117,13 @@ void InputSocket::MonitorLoop() {
 
 Result<void> InputSocket::WriteEvents(
     std::unique_ptr<InputEventsBuffer> buffer) {
+  std::lock_guard<std::mutex> lock(client_mtx_);
   CF_EXPECT(client_->IsOpen(), "No input client connected");
-  WriteAll(client_, reinterpret_cast<const char*>(buffer->data()),
-           buffer->size());
+  auto res = WriteAll(client_, reinterpret_cast<const char*>(buffer->data()),
+                      buffer->size());
+  CF_EXPECT(res == buffer->size(), "Failed to write entire event buffer: wrote "
+                                       << res << " of " << buffer->size()
+                                       << "bytes");
   return {};
 }
 
