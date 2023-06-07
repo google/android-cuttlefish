@@ -707,6 +707,14 @@ bool CuttlefishConfig::InstanceSpecific::enable_audio() const {
   return (*Dictionary())[kEnableAudio].asBool();
 }
 
+static constexpr char kEnableVehicleHalServer[] = "enable_vehicle_hal_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*Dictionary())[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_vehicle_hal_grpc_server() const {
+  return (*Dictionary())[kEnableVehicleHalServer].asBool();
+}
+
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*Dictionary())[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
@@ -1301,6 +1309,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int 
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
 }
 
+static constexpr char kVehicleHalServerPort[] = "vehicle_hal_server_port";
+int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
+  return (*Dictionary())[kVehicleHalServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
+  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
+}
+
 static constexpr char kAudioControlServerPort[] = "audiocontrol_server_port";
 int CuttlefishConfig::InstanceSpecific::audiocontrol_server_port() const {
   return (*Dictionary())[kAudioControlServerPort].asInt();
@@ -1401,6 +1417,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_balloon(
 }
 bool CuttlefishConfig::InstanceSpecific::crosvm_use_balloon() const {
   return (*Dictionary())[kCrosvmUseBalloon].asBool();
+}
+
+static constexpr char kCrosvmUseRng[] = "crosvm_use_rng";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_rng(
+    const bool use_rng) {
+  (*Dictionary())[kCrosvmUseRng] = use_rng;
+}
+bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
+  return (*Dictionary())[kCrosvmUseRng].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
