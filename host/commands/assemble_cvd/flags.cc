@@ -418,6 +418,13 @@ DEFINE_vec(crosvm_use_balloon, "true",
            "Controls the crosvm --no-balloon flag"
            "The flag is given if crosvm_use_balloon is false");
 
+DEFINE_vec(crosvm_use_rng, "true",
+           "Controls the crosvm --no-rng flag"
+           "The flag is given if crosvm_use_rng is false");
+
+DEFINE_bool(enable_wifi, true,
+            "Enables the guest WIFI. Disable this only for Minidroid.");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -935,6 +942,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   // crosvm should create fifos for Bluetooth
   tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth || is_bt_netsim);
+  tmp_config_obj.set_enable_wifi(FLAGS_enable_wifi);
 
   // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
   tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
@@ -1062,6 +1070,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<bool> use_balloon_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_balloon));
+  std::vector<bool> use_rng_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
 
   std::string default_enable_sandbox = "";
   std::string comma_str = "";
@@ -1115,6 +1125,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
 
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
+    instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
     instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
@@ -1425,7 +1436,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // vhost_user_mac80211_hwsim is not specified.
     const bool start_wmediumd = tmp_config_obj.virtio_mac80211_hwsim() &&
                                 FLAGS_vhost_user_mac80211_hwsim.empty() &&
-                                is_first_instance;
+                                is_first_instance && FLAGS_enable_wifi;
     if (start_wmediumd) {
       // TODO(b/199020470) move this to the directory for shared resources
       auto vhost_user_socket_path =
