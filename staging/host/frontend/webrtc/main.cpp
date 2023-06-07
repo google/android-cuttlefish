@@ -107,7 +107,7 @@ fruit::Component<
     cuttlefish::ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
     cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
 CreateConfirmationUIComponent(
-    int* frames_fd, cuttlefish::confui::PipeConnectionPair* pipe_io_pair) {
+    int* frames_fd, cuttlefish::confui::PipeConnectionPair* pipe_io_pair, cuttlefish::InputConnector* input_connector) {
   using cuttlefish::ScreenConnectorFrameRenderer;
   using ScreenConnector = cuttlefish::DisplayHandler::ScreenConnector;
   return fruit::createComponent()
@@ -115,7 +115,8 @@ CreateConfirmationUIComponent(
           fruit::Annotated<cuttlefish::WaylandScreenConnector::FramesFd, int>>(
           *frames_fd)
       .bindInstance(*pipe_io_pair)
-      .bind<ScreenConnectorFrameRenderer, ScreenConnector>();
+      .bind<ScreenConnectorFrameRenderer, ScreenConnector>()
+      .bindInstance(*input_connector);
 }
 
 int main(int argc, char** argv) {
@@ -164,7 +165,7 @@ int main(int argc, char** argv) {
       cuttlefish::confui::HostServer, cuttlefish::confui::HostVirtualInput>
       conf_ui_components_injector(CreateConfirmationUIComponent,
                                   std::addressof(frames_fd),
-                                  &conf_ui_comm_fd_pair);
+                                  &conf_ui_comm_fd_pair, input_connector.get());
   auto& screen_connector =
       conf_ui_components_injector.get<DisplayHandler::ScreenConnector&>();
 
@@ -199,7 +200,7 @@ int main(int argc, char** argv) {
 
   KernelLogEventsHandler kernel_logs_event_handler(kernel_log_events_client);
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      std::move(input_connector), &kernel_logs_event_handler, confui_virtual_input);
+      confui_virtual_input, &kernel_logs_event_handler);
 
   // The recorder is created first, so displays added in callbacks to the
   // Streamer can also be added to the LocalRecorder.

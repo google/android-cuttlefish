@@ -33,9 +33,8 @@ class CfConnectionObserverFactory
     : public webrtc_streaming::ConnectionObserverFactory {
  public:
   CfConnectionObserverFactory(
-      std::unique_ptr<InputConnector> input_connector,
-      KernelLogEventsHandler* kernel_log_events_handler,
-      cuttlefish::confui::HostVirtualInput& confui_input);
+      InputConnector& input_connector,
+      KernelLogEventsHandler* kernel_log_events_handler);
   ~CfConnectionObserverFactory() override = default;
 
   std::shared_ptr<webrtc_streaming::ConnectionObserver> CreateObserver()
@@ -49,12 +48,11 @@ class CfConnectionObserverFactory
   void SetCameraHandler(CameraController* controller);
 
  private:
-  std::unique_ptr<InputConnector> input_connector_;
+  InputConnector& input_connector_;
   KernelLogEventsHandler* kernel_log_events_handler_;
   std::map<std::string, SharedFD>
       commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
-  cuttlefish::confui::HostVirtualInput& confui_input_;
   cuttlefish::CameraController* camera_controller_ = nullptr;
 };
 

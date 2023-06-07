@@ -51,18 +51,16 @@ namespace cuttlefish {
 class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
  public:
   ConnectionObserverImpl(
-      InputConnector* input_connector,
+      InputConnector& input_connector,
       KernelLogEventsHandler *kernel_log_events_handler,
       std::map<std::string, SharedFD> commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
-      CameraController *camera_controller,
-      confui::HostVirtualInput &confui_input)
+      CameraController *camera_controller)
       : input_connector_(input_connector),
         kernel_log_events_handler_(kernel_log_events_handler),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler),
-        camera_controller_(camera_controller),
-        confui_input_(confui_input) {}
+        camera_controller_(camera_controller) {}
   virtual ~ConnectionObserverImpl() {
     auto display_handler = weak_display_handler_.lock();
     if (kernel_log_subscription_id_ != -1) {
@@ -94,53 +92,32 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnTouchEvent(const std::string &display_label, int x, int y,
                     bool down) override {
-    if (confui_input_.IsConfUiActive()) {
-      if (down) {
-        confui_input_.TouchEvent(x, y, down);
-      }
-      return;
-    }
-    input_connector_->SendTouchEvent(display_label, x, y, down);
+    input_connector_.SendTouchEvent(display_label, x, y, down);
   }
 
   void OnMultiTouchEvent(const std::string &display_label, Json::Value id,
                          Json::Value slot, Json::Value x, Json::Value y,
                          bool down, int size) {
     std::vector<MultitouchSlot> slots(size);
-    if (confui_input_.IsConfUiActive()) {
-      for (int i = 0; i < size; i++) {
-        if (down) {
-          auto this_x = x[i].asInt();
-          auto this_y = y[i].asInt();
-          confui_input_.TouchEvent(this_x, this_y, down);
-        }
-      }
-    } else {
-      for (int i = 0; i < size; i++) {
-        slots[i].slot = slot[i].asInt();
-        slots[i].id = id[i].asInt();
-        slots[i].x = x[i].asInt();
-        slots[i].y = y[i].asInt();
-      }
-      input_connector_->SendMultiTouchEvent(display_label, slots, down);
+    for (int i = 0; i < size; i++) {
+      slots[i].slot = slot[i].asInt();
+      slots[i].id = id[i].asInt();
+      slots[i].x = x[i].asInt();
+      slots[i].y = y[i].asInt();
     }
+    input_connector_.SendMultiTouchEvent(display_label, slots, down);
   }
 
   void OnKeyboardEvent(uint16_t code, bool down) override {
-    if (confui_input_.IsConfUiActive()) {
-      ConfUiLog(VERBOSE) << "keyboard event ignored in confirmation UI mode";
-      return;
-    }
-
-    input_connector_->SendKeyboardEvent(code, down);
+    input_connector_.SendKeyboardEvent(code, down);
   }
 
   void OnWheelEvent(int pixels) {
-    input_connector_->SendRotaryEvent(pixels);
+    input_connector_.SendRotaryEvent(pixels);
   }
 
   void OnSwitchEvent(uint16_t code, bool state) {
-    input_connector_->SendSwitchesEvent(code, state);
+    input_connector_.SendSwitchesEvent(code, state);
   }
 
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
@@ -286,7 +263,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   }
 
  private:
-  InputConnector* input_connector_;
+  InputConnector& input_connector_;
   KernelLogEventsHandler *kernel_log_events_handler_;
   int kernel_log_subscription_id_ = -1;
   std::shared_ptr<webrtc_streaming::AdbHandler> adb_handler_;
@@ -297,24 +274,20 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   std::map<std::string, SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   CameraController *camera_controller_;
-  confui::HostVirtualInput &confui_input_;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
-    std::unique_ptr<InputConnector> input_connector,
-    KernelLogEventsHandler *kernel_log_events_handler,
-    confui::HostVirtualInput &confui_input)
-    : input_connector_(std::move(input_connector)),
-      kernel_log_events_handler_(kernel_log_events_handler),
-      confui_input_{confui_input} {}
+    InputConnector& input_connector,
+    KernelLogEventsHandler *kernel_log_events_handler)
+    : input_connector_(input_connector),
+      kernel_log_events_handler_(kernel_log_events_handler) {}
 
 std::shared_ptr<webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverImpl(input_connector_.get(), kernel_log_events_handler_,
+      new ConnectionObserverImpl(input_connector_, kernel_log_events_handler_,
                                  commands_to_custom_action_servers_,
-                                 weak_display_handler_, camera_controller_,
-                                 confui_input_));
+                                 weak_display_handler_, camera_controller_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(
