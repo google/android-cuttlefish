@@ -34,9 +34,10 @@ namespace {
 class OpenwrtControlServer : public CommandSource {
  public:
   INJECT(
-      OpenwrtControlServer(const CuttlefishConfig::InstanceSpecific& instance,
+      OpenwrtControlServer(const CuttlefishConfig& config,
+                           const CuttlefishConfig::InstanceSpecific& instance,
                            GrpcSocketCreator& grpc_socket))
-      : instance_(instance), grpc_socket_(grpc_socket) {}
+      : config_{config}, instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
@@ -59,19 +60,21 @@ class OpenwrtControlServer : public CommandSource {
 
   // SetupFeature
   std::string Name() const override { return "OpenwrtControlServer"; }
-  bool Enabled() const override { return true; }
+  bool Enabled() const override { return config_.enable_wifi(); }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   bool Setup() override { return true; }
 
+  const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   GrpcSocketCreator& grpc_socket_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific,
                                  GrpcSocketCreator>>
 OpenwrtControlServerComponent() {
   return fruit::createComponent()
