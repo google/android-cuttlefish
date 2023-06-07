@@ -20,6 +20,11 @@ allow dlkm_loader proc_cmdline:file r_file_perms;
 # removed.
 allow dlkm_loader self:key write;
 
+# Needed because CONFIG_DMABUF_HEAPS_DEFERRED_FREE calls sched_set_normal()
+# in its module_init() function, which is attributed to dlkm_loader.
+allow dlkm_loader kernel:process setsched;
+allow dlkm_loader self:capability sys_nice;
+
 # Allow writing to kernel log
 allow dlkm_loader kmsg_device:chr_file rw_file_perms;
 
