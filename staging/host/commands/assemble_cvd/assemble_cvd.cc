@@ -233,6 +233,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("os_composite_gpt_footer.img");
       preserving.insert("os_composite.img");
       preserving.insert("sdcard.img");
+      preserving.insert("sdcard_overlay.img");
       preserving.insert("boot_repacked.img");
       preserving.insert("vendor_dlkm_repacked.img");
       preserving.insert("vendor_boot_repacked.img");
