@@ -109,6 +109,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_data_image(
     const std::string& data_image) {
   (*Dictionary())[kDataImage] = data_image;
 }
+static constexpr char kNewDataImage[] = "new_data_image";
+std::string CuttlefishConfig::InstanceSpecific::new_data_image() const {
+  return (*Dictionary())[kNewDataImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_data_image(
+    const std::string& new_data_image) {
+  (*Dictionary())[kNewDataImage] = new_data_image;
+}
 static constexpr char kSuperImage[] = "super_image";
 std::string CuttlefishConfig::InstanceSpecific::super_image() const {
   return (*Dictionary())[kSuperImage].asString();
@@ -1430,15 +1438,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_rng(
 }
 bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
   return (*Dictionary())[kCrosvmUseRng].asBool();
-}
-
-static constexpr char kCrosvmUsePmem[] = "use_pmem";
-void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
-    const bool use_pmem) {
-  (*Dictionary())[kCrosvmUsePmem] = use_pmem;
-}
-bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
-  return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(

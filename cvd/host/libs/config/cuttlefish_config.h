@@ -449,7 +449,6 @@ class CuttlefishConfig {
 
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
-    bool use_pmem() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -555,6 +554,7 @@ class CuttlefishConfig {
     std::string new_boot_image() const;
     std::string init_boot_image() const;
     std::string data_image() const;
+    std::string new_data_image() const;
     std::string super_image() const;
     std::string new_super_image() const;
     std::string misc_image() const;
@@ -651,7 +651,6 @@ class CuttlefishConfig {
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
-    void set_use_pmem(const bool use_pmem);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
@@ -734,6 +733,7 @@ class CuttlefishConfig {
     void set_new_boot_image(const std::string& new_boot_image);
     void set_init_boot_image(const std::string& init_boot_image);
     void set_data_image(const std::string& data_image);
+    void set_new_data_image(const std::string& new_data_image);
     void set_super_image(const std::string& super_image);
     void set_new_super_image(const std::string& super_image);
     void set_misc_image(const std::string& misc_image);
