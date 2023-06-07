@@ -60,13 +60,23 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--vhost-user-mac80211-hwsim=",
                                 config_.vhost_user_mac80211_hwsim());
     }
-    SharedFD wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
+    SharedFD wifi_tap;
+    if (config_.enable_wifi()) {
+      wifi_tap = ap_cmd.AddTap(instance_.wifi_tap_name());
+    }
 
     /* TODO(kwstephenkim): delete this code when Minidroid completely disables
      * the AP VM itself
      */
     if (!instance_.crosvm_use_balloon()) {
       ap_cmd.Cmd().AddParameter("--no-balloon");
+    }
+
+    /* TODO(kwstephenkim): delete this code when Minidroid completely disables
+     * the AP VM itself
+     */
+    if (!instance_.crosvm_use_rng()) {
+      ap_cmd.Cmd().AddParameter("--no-rng");
     }
 
     if (instance_.enable_sandbox()) {
