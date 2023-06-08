@@ -257,15 +257,15 @@ class InitializeDataImageImpl : public InitializeDataImage {
         LOG(DEBUG) << instance_.data_image() << " exists. Not creating it.";
         return {};
       case DataImageAction::kCreateImage: {
-        RemoveFile(instance_.data_image());
+        RemoveFile(instance_.new_data_image());
         CF_EXPECT(instance_.blank_data_image_mb() != 0,
                   "Expected `-blank_data_image_mb` to be set for "
                   "image creation.");
-        CF_EXPECT(CreateBlankImage(instance_.data_image(),
+        CF_EXPECT(CreateBlankImage(instance_.new_data_image(),
                                    instance_.blank_data_image_mb(),
                                    instance_.userdata_format()),
                   "Failed to create a blank image at \""
-                      << instance_.data_image() << "\" with size "
+                      << instance_.new_data_image() << "\" with size "
                       << instance_.blank_data_image_mb() << " and format \""
                       << instance_.userdata_format() << "\"");
         return {};
@@ -274,9 +274,12 @@ class InitializeDataImageImpl : public InitializeDataImage {
         CF_EXPECT(instance_.blank_data_image_mb() != 0,
                   "Expected `-blank_data_image_mb` to be set for "
                   "image resizing.");
-        CF_EXPECT(ResizeImage(instance_.data_image(),
+        CF_EXPECTF(Copy(instance_.data_image(), instance_.new_data_image()),
+                   "Failed to `cp {} {}`", instance_.data_image(),
+                   instance_.new_data_image());
+        CF_EXPECT(ResizeImage(instance_.new_data_image(),
                               instance_.blank_data_image_mb(), instance_),
-                  "Failed to resize \"" << instance_.data_image() << "\" to "
+                  "Failed to resize \"" << instance_.new_data_image() << "\" to "
                                         << instance_.blank_data_image_mb()
                                         << " MB");
         return {};
