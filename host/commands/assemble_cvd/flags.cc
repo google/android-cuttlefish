@@ -48,6 +48,7 @@
 #include "host/commands/assemble_cvd/display.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/libs/config/config_flag.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
 #include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
@@ -424,6 +425,9 @@ DEFINE_vec(crosvm_use_rng, "true",
 
 DEFINE_bool(enable_wifi, true,
             "Enables the guest WIFI. Disable this only for Minidroid.");
+
+DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
+           "The mechanism to connect to the public internet.");
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
@@ -1073,6 +1077,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> use_rng_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
 
+  std::vector<std::string> device_external_network_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
+
   std::string default_enable_sandbox = "";
   std::string comma_str = "";
 
@@ -1492,6 +1499,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     } else {
       instance.set_modem_simulator_ports("");
     }
+
+    auto external_network_mode = CF_EXPECT(
+        ParseExternalNetworkMode(device_external_network_vec[instance_index]));
+    CF_EXPECT(external_network_mode == ExternalNetworkMode::kTap ||
+                  vm_manager_vec[instance_index] == QemuManager::name(),
+              "TODO(b/286284441): slirp only works on QEMU");
+    instance.set_external_network_mode(external_network_mode);
+
     instance_index++;
   }  // end of num_instances loop
 
