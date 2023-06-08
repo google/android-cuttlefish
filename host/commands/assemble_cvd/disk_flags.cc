@@ -383,9 +383,13 @@ std::vector<ImagePartition> android_composite_disk_config(
       .image_file_path = AbsolutePath(super_image),
       .read_only = FLAGS_use_overlay,
   });
+  auto data_image = instance.new_data_image();
+  if (!FileExists(data_image)) {
+    data_image = instance.data_image();
+  }
   partitions.push_back(ImagePartition{
       .label = "userdata",
-      .image_file_path = AbsolutePath(instance.data_image()),
+      .image_file_path = AbsolutePath(data_image),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -948,6 +952,13 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
           const_instance.PerInstancePath("boot_repacked.img");
       // change the new flag value to corresponding instance
       instance.set_new_boot_image(new_boot_image_path.c_str());
+    }
+
+    instance.set_new_data_image(const_instance.PerInstancePath("userdata.img"));
+    if (instance_index >= data_image.size()) {
+      instance.set_data_image(data_image[0]);
+    } else {
+      instance.set_data_image(data_image[instance_index]);
     }
 
     if (cur_kernel_path.size() || cur_initramfs_path.size()) {
