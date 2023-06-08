@@ -237,7 +237,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
-    if (!instance.mte() && FileExists(instance.hwcomposer_pmem_path())) {
+    const bool pmem_disabled = instance.mte() || !instance.use_pmem();
+    if (!pmem_disabled && FileExists(instance.hwcomposer_pmem_path())) {
       crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
                                     instance.hwcomposer_pmem_path());
     }
@@ -316,12 +317,13 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     }
   }
 
-  if (!instance.mte() && FileExists(instance.access_kregistry_path())) {
+  const bool pmem_disabled = instance.mte() || !instance.use_pmem();
+  if (!pmem_disabled && FileExists(instance.access_kregistry_path())) {
     crosvm_cmd.Cmd().AddParameter("--rw-pmem-device=",
                                   instance.access_kregistry_path());
   }
 
-  if (!instance.mte() && FileExists(instance.pstore_path())) {
+  if (!pmem_disabled && FileExists(instance.pstore_path())) {
     crosvm_cmd.Cmd().AddParameter("--pstore=path=", instance.pstore_path(),
                                   ",size=", FileSize(instance.pstore_path()));
   }
