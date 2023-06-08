@@ -55,7 +55,10 @@ Result<void> OemLockResponder::ProcessMessage() {
       return CF_ERR("Unrecognized message id " << reinterpret_cast<uint32_t>(request->command));
   }
 
-  CF_EXPECT(channel_.SendResponse(request->command, &allowed, sizeof(bool)),
+  auto message = CF_EXPECT(secure_env::CreateMessage(request->command, sizeof(bool)),
+                           "Failed to allocate message for oemlock response");
+  memcpy(message->payload, &allowed, sizeof(bool));
+  CF_EXPECT(channel_.SendResponse(*message),
             "Could not answer to " << reinterpret_cast<uint32_t>(request->command) << " request");
 
   return {};
