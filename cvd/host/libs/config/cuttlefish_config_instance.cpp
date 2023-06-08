@@ -16,7 +16,10 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 
+#include <string_view>
+
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
@@ -34,6 +37,29 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
+
+std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
+  switch (net) {
+    case ExternalNetworkMode::kUnknown:
+      return out << "unknown";
+    case ExternalNetworkMode::kTap:
+      return out << "tap";
+    case ExternalNetworkMode::kSlirp:
+      return out << "slirp";
+  }
+}
+Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
+  if (android::base::EqualsIgnoreCase(str, "tap")) {
+    return ExternalNetworkMode::kTap;
+  } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
+    return ExternalNetworkMode::kSlirp;
+  } else {
+    return CF_ERRF(
+        "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
+        "and \"slirp\"",
+        str);
+  }
+}
 
 static constexpr char kInstanceDir[] = "instance_dir";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
@@ -108,14 +134,6 @@ std::string CuttlefishConfig::InstanceSpecific::data_image() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_data_image(
     const std::string& data_image) {
   (*Dictionary())[kDataImage] = data_image;
-}
-static constexpr char kNewDataImage[] = "new_data_image";
-std::string CuttlefishConfig::InstanceSpecific::new_data_image() const {
-  return (*Dictionary())[kNewDataImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_new_data_image(
-    const std::string& new_data_image) {
-  (*Dictionary())[kNewDataImage] = new_data_image;
 }
 static constexpr char kSuperImage[] = "super_image";
 std::string CuttlefishConfig::InstanceSpecific::super_image() const {
@@ -420,6 +438,17 @@ void CuttlefishConfig::MutableInstanceSpecific::set_filename_encryption_mode(
   auto fmt = filename_encryption_mode;
   std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
   (*Dictionary())[kFilenameEncryptionMode] = fmt;
+}
+
+static constexpr char kExternalNetworkMode[] = "external_network_mode";
+ExternalNetworkMode CuttlefishConfig::InstanceSpecific::external_network_mode()
+    const {
+  auto str = (*Dictionary())[kExternalNetworkMode].asString();
+  return ParseExternalNetworkMode(str).value_or(ExternalNetworkMode::kUnknown);
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
+    ExternalNetworkMode mode) {
+  (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
@@ -1438,15 +1467,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_use_rng(
 }
 bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
   return (*Dictionary())[kCrosvmUseRng].asBool();
-}
-
-static constexpr char kCrosvmUsePmem[] = "use_pmem";
-void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
-    const bool use_pmem) {
-  (*Dictionary())[kCrosvmUsePmem] = use_pmem;
-}
-bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
-  return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
