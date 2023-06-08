@@ -138,6 +138,9 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
+  void set_enable_wifi(const bool enable_wifi);
+  bool enable_wifi() const;
+
   // Flags for the set of radios that are connected to netsim
   enum NetsimRadio {
     Bluetooth = 0b00000001,
@@ -442,6 +445,7 @@ class CuttlefishConfig {
     APBootFlow ap_boot_flow() const;
 
     bool crosvm_use_balloon() const;
+    bool crosvm_use_rng() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -640,6 +644,7 @@ class CuttlefishConfig {
     void set_start_netsim(bool start);
     void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
+    void set_crosvm_use_rng(const bool use_rng);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
