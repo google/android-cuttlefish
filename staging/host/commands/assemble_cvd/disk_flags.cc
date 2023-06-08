@@ -646,6 +646,8 @@ class VbmetaEnforceMinimumSize : public SetupFeature {
         CF_EXPECTF(fd->Truncate(VBMETA_MAX_SIZE) == 0,
                    "`truncate --size={} {}` failed: {}", VBMETA_MAX_SIZE,
                    vbmeta_image, fd->StrError());
+        CF_EXPECTF(fd->Fsync() == 0, "fsync on `{}` failed: {}", vbmeta_image,
+                   fd->StrError());
       }
     }
     return {};
