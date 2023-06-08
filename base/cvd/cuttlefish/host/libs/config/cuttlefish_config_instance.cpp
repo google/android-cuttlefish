@@ -1416,6 +1416,15 @@ bool CuttlefishConfig::InstanceSpecific::crosvm_use_rng() const {
   return (*Dictionary())[kCrosvmUseRng].asBool();
 }
 
+static constexpr char kCrosvmUsePmem[] = "use_pmem";
+void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
+    const bool use_pmem) {
+  (*Dictionary())[kCrosvmUsePmem] = use_pmem;
+}
+bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
+  return (*Dictionary())[kCrosvmUsePmem].asBool();
+}
+
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
     int screen_idx) const {
   return PerInstanceInternalUdsPath(
