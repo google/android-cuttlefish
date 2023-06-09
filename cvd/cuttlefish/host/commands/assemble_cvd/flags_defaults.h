@@ -58,6 +58,7 @@
 #define CF_DEFAULTS_TRACK_HOST_TOOLS_CRC false
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
+#define CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK "tap"
 
 // crosvm default parameters
 #define CF_DEFAULTS_CROSVM_BINARY HostBinaryPath("crosvm")
@@ -195,6 +196,9 @@
 // GflagsCompatFlag
 #define CF_DEFAULTS_RUN_ADB_CONNECTOR true
 #define CF_DEFAULTS_ADB_MODE "vsock_half_tunnel"
+
+// Vehicle default parameters
+#define CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER true
 
 // Location default parameters
 #define CF_DEFAULTS_START_GNSS_PROXY true

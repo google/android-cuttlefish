@@ -16,7 +16,10 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 
+#include <string_view>
+
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
@@ -34,6 +37,29 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
+
+std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
+  switch (net) {
+    case ExternalNetworkMode::kUnknown:
+      return out << "unknown";
+    case ExternalNetworkMode::kTap:
+      return out << "tap";
+    case ExternalNetworkMode::kSlirp:
+      return out << "slirp";
+  }
+}
+Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
+  if (android::base::EqualsIgnoreCase(str, "tap")) {
+    return ExternalNetworkMode::kTap;
+  } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
+    return ExternalNetworkMode::kSlirp;
+  } else {
+    return CF_ERRF(
+        "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
+        "and \"slirp\"",
+        str);
+  }
+}
 
 static constexpr char kInstanceDir[] = "instance_dir";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
@@ -422,6 +448,17 @@ void CuttlefishConfig::MutableInstanceSpecific::set_filename_encryption_mode(
   (*Dictionary())[kFilenameEncryptionMode] = fmt;
 }
 
+static constexpr char kExternalNetworkMode[] = "external_network_mode";
+ExternalNetworkMode CuttlefishConfig::InstanceSpecific::external_network_mode()
+    const {
+  auto str = (*Dictionary())[kExternalNetworkMode].asString();
+  return ParseExternalNetworkMode(str).value_or(ExternalNetworkMode::kUnknown);
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
+    ExternalNetworkMode mode) {
+  (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
+}
+
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
   return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
@@ -713,6 +750,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
 }
 bool CuttlefishConfig::InstanceSpecific::enable_audio() const {
   return (*Dictionary())[kEnableAudio].asBool();
+}
+
+static constexpr char kEnableVehicleHalServer[] = "enable_vehicle_hal_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*Dictionary())[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_vehicle_hal_grpc_server() const {
+  return (*Dictionary())[kEnableVehicleHalServer].asBool();
 }
 
 static constexpr char kEnableGnssGrpcProxy[] = "enable_gnss_grpc_proxy";
@@ -1311,6 +1356,14 @@ int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
+}
+
+static constexpr char kVehicleHalServerPort[] = "vehicle_hal_server_port";
+int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
+  return (*Dictionary())[kVehicleHalServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
+  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
 }
 
 static constexpr char kAudioControlServerPort[] = "audiocontrol_server_port";
