@@ -16,10 +16,11 @@
 
 #pragma once
 
+#include "common/libs/security/gatekeeper_channel.h"
+
 #include "gatekeeper/gatekeeper_messages.h"
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/gatekeeper_channel.h"
+#include "common/libs/security/channel_sharedfd.h"
 
 namespace cuttlefish {
 /*
@@ -34,11 +35,10 @@ class SharedFdGatekeeperChannel : public GatekeeperChannel {
                    const gatekeeper::GateKeeperMessage& message) override;
   bool SendResponse(uint32_t command,
                     const gatekeeper::GateKeeperMessage& message) override;
-  ManagedGatekeeperMessage ReceiveMessage() override;
+  secure_env::ManagedMessage ReceiveMessage() override;
 
  private:
-  SharedFD input_;
-  SharedFD output_;
+  secure_env::SharedFdChannel channel_;
   bool SendMessage(uint32_t command, bool response,
                    const gatekeeper::GateKeeperMessage& message);
 };
