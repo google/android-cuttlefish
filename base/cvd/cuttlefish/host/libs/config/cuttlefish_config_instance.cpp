@@ -109,6 +109,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_data_image(
     const std::string& data_image) {
   (*Dictionary())[kDataImage] = data_image;
 }
+static constexpr char kNewDataImage[] = "new_data_image";
+std::string CuttlefishConfig::InstanceSpecific::new_data_image() const {
+  return (*Dictionary())[kNewDataImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_data_image(
+    const std::string& new_data_image) {
+  (*Dictionary())[kNewDataImage] = new_data_image;
+}
 static constexpr char kSuperImage[] = "super_image";
 std::string CuttlefishConfig::InstanceSpecific::super_image() const {
   return (*Dictionary())[kSuperImage].asString();
