@@ -23,10 +23,12 @@ cc_binary {
         "health.cpp",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libbase",
+        "libcuttlefish_device_config",
+        "libcuttlefish_device_config_proto",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libext2_blkid",
         "libfruit",
         "libjsoncpp",
     ],
