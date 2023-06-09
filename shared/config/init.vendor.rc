@@ -81,6 +81,8 @@ on boot
 
 on property:sys.boot_completed=1
     trigger sys-boot-completed-set
+    mkdir /mnt/vendor/custom 0755 root root
+    mount ext2 /dev/block/by-name/custom /mnt/vendor/custom loop rw sync
 
 # We want one opportunity per boot to enable zram, so we
 # use a trigger we fire from the above stanza. If
