@@ -189,16 +189,13 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
   std::unordered_set<SetupFeature*> Dependencies() const override {
     return {static_cast<SetupFeature*>(&log_pipe_provider_)};
   }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     tcp_server_ =
         SharedFD::SocketLocalServer(instance_.adb_host_port(), SOCK_STREAM);
-    if (!tcp_server_->IsOpen()) {
-      LOG(ERROR) << "Unable to create socket_vsock_proxy server socket: "
-                 << tcp_server_->StrError();
-      return false;
-    }
+    CF_EXPECT(tcp_server_->IsOpen(),
+              "Unable to create socket_vsock_proxy server socket: ");
     kernel_log_pipe_ = log_pipe_provider_.KernelLogPipe();
-    return true;
+    return {};
   }
 
   const AdbHelper& helper_;
