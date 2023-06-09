@@ -10,7 +10,7 @@ export class SafeDeviceUrlPipe implements PipeTransform {
   transform(deviceId: string) {
     /* eslint-disable */
     // DO NOT FORMAT THIS LINE
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`/devices/${deviceId}/files/client.html`);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`devices/${deviceId}/files/client.html`);
     /* eslint-enable */
   }
 }
