@@ -36,6 +36,7 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
+#include "common/libs/device_config/device_config.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
@@ -662,27 +663,68 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-balloon-pci-non-transitional,id=balloon0");
 
-  // The ordering of tap devices is important. Make sure any change here
+  switch (instance.external_network_mode()) {
+    case ExternalNetworkMode::kTap:
+      qemu_cmd.AddParameter("-netdev");
+      qemu_cmd.AddParameter(
+          "tap,id=hostnet0,ifname=", instance.mobile_tap_name(),
+          ",script=no,downscript=no", vhost_net);
+
+      qemu_cmd.AddParameter("-netdev");
+      qemu_cmd.AddParameter(
+          "tap,id=hostnet1,ifname=", instance.ethernet_tap_name(),
+          ",script=no,downscript=no", vhost_net);
+
+      if (!config.virtio_mac80211_hwsim()) {
+        qemu_cmd.AddParameter("-netdev");
+        qemu_cmd.AddParameter(
+            "tap,id=hostnet2,ifname=", instance.wifi_tap_name(),
+            ",script=no,downscript=no", vhost_net);
+      }
+      break;
+    case cuttlefish::ExternalNetworkMode::kSlirp: {
+      // TODO(schuffelen): Deduplicate with modem_simulator/cf_device_config.cpp
+      // The configuration here needs to match the ip address reported by the
+      // modem simulator, which the guest uses to statically assign an IP
+      // address to its virtio-net ethernet device.
+      std::string net = "10.0.2.15/24";
+      std::string host = "10.0.2.2";
+      auto device_config_helper = DeviceConfigHelper::Get();
+      if (device_config_helper) {
+        const auto& cfg = device_config_helper->GetDeviceConfig().ril_config();
+        net = fmt::format("{}/{}", cfg.ipaddr(), cfg.prefixlen());
+        host = cfg.gateway();
+      }
+      qemu_cmd.AddParameter("-netdev");
+      // TODO(schuffelen): `dns` needs to match the first `nameserver` in
+      // `/etc/resolv.conf`. Implement something that generalizes beyond gLinux.
+      qemu_cmd.AddParameter("user,id=hostnet0,net=", net, ",host=", host,
+                            ",dns=127.0.0.1");
+
+      qemu_cmd.AddParameter("-netdev");
+      qemu_cmd.AddParameter("user,id=hostnet1,net=10.0.1.1/24,dns=8.8.4.4");
+
+      if (!config.virtio_mac80211_hwsim()) {
+        qemu_cmd.AddParameter("-netdev");
+        qemu_cmd.AddParameter("user,id=hostnet2,net=10.0.2.1/24,dns=1.1.1.1");
+      }
+      break;
+    }
+    default:
+      return CF_ERRF("Unexpected net mode {}",
+                     instance.external_network_mode());
+  }
+
+  // The ordering of virtio-net devices is important. Make sure any change here
   // is reflected in ethprime u-boot variable
-  qemu_cmd.AddParameter("-netdev");
-  qemu_cmd.AddParameter("tap,id=hostnet0,ifname=", instance.mobile_tap_name(),
-                        ",script=no,downscript=no", vhost_net);
-
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet0,id=net0,mac=",
-                        instance.mobile_mac());
-
-  qemu_cmd.AddParameter("-netdev");
-  qemu_cmd.AddParameter("tap,id=hostnet1,ifname=", instance.ethernet_tap_name(),
-                        ",script=no,downscript=no", vhost_net);
-
+  qemu_cmd.AddParameter(
+      "virtio-net-pci-non-transitional,netdev=hostnet0,id=net0,mac=",
+      instance.mobile_mac());
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet1,id=net1,mac=",
                         instance.ethernet_mac());
   if (!config.virtio_mac80211_hwsim()) {
-    qemu_cmd.AddParameter("-netdev");
-    qemu_cmd.AddParameter("tap,id=hostnet2,ifname=", instance.wifi_tap_name(),
-                          ",script=no,downscript=no", vhost_net);
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet2,id=net2,mac=",
                           instance.wifi_mac());
