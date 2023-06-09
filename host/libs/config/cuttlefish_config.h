@@ -552,6 +552,7 @@ class CuttlefishConfig {
     std::string new_boot_image() const;
     std::string init_boot_image() const;
     std::string data_image() const;
+    std::string new_data_image() const;
     std::string super_image() const;
     std::string new_super_image() const;
     std::string misc_image() const;
@@ -729,6 +730,7 @@ class CuttlefishConfig {
     void set_new_boot_image(const std::string& new_boot_image);
     void set_init_boot_image(const std::string& init_boot_image);
     void set_data_image(const std::string& data_image);
+    void set_new_data_image(const std::string& new_data_image);
     void set_super_image(const std::string& super_image);
     void set_new_super_image(const std::string& super_image);
     void set_misc_image(const std::string& misc_image);
