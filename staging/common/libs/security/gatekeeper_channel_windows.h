@@ -39,7 +39,7 @@ class GatekeeperWindowsChannel : public GatekeeperChannel {
                    const gatekeeper::GateKeeperMessage& message) override;
   bool SendResponse(uint32_t command,
                     const gatekeeper::GateKeeperMessage& message) override;
-  ManagedGatekeeperMessage ReceiveMessage() override;
+  secure_env::ManagedMessage ReceiveMessage() override;
 
  protected:
   GatekeeperWindowsChannel() = default;
