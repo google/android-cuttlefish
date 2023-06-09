@@ -113,11 +113,8 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 	defer removeDir(t, dir)
 	fetchCVDExecCounter := 0
 	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
-		for _, arg := range args {
-			if filepath.Base(arg) == "fetch_cvd" {
-				fetchCVDExecCounter += 1
-				break
-			}
+		if filepath.Base(name) == "fetch_cvd" {
+			fetchCVDExecCounter += 1
 		}
 		return exec.Command("true")
 	}
@@ -142,7 +139,7 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 		t.Error("`fetch_cvd` was never executed")
 	}
 	if fetchCVDExecCounter > 1 {
-		t.Errorf("`fetch_cvd` was downloaded more than once, it was <<%d>> times", fetchCVDExecCounter)
+		t.Errorf("`fetch_cvd` was executed more than once, it was <<%d>> times", fetchCVDExecCounter)
 	}
 }
 

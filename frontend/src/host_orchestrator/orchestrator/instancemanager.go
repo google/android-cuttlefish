@@ -517,8 +517,8 @@ func newArtifactsFetcherFactory(execContext ExecContext, fetchCVDBin string, bui
 	}
 }
 
-// The artifacts directory gets created during the execution of `fetch_cvd` granting owners permission to the
-// user executing `cvd` which is relevant when extracting cvd-host_package.tar.gz.
+// The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
+// which translated to granting the necessary permissions to the cvd executor user.
 func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extraOptions *ExtraCVDOptions) error {
 	args := []string{
 		fmt.Sprintf("--directory=%s", outDir),
@@ -530,7 +530,7 @@ func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extra
 	}
 	var file *os.File
 	var err error
-	fetchCmd := buildCvdCommand(context.TODO(), f.execContext, "", "", f.fetchCVDBin, args...)
+	fetchCmd := f.execContext(context.TODO(), f.fetchCVDBin, args...)
 	if f.credentials != "" {
 		if file, err = createCredentialsFile(f.credentials); err != nil {
 			return err
@@ -538,13 +538,20 @@ func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extra
 		defer file.Close()
 		// This is necessary for the subprocess to inherit the file.
 		fetchCmd.ExtraFiles = append(fetchCmd.ExtraFiles, file)
-		// The actual fd number is not retained, but instead get the lowest available numbers.
+		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(fetchCmd.ExtraFiles) - 1
 		fetchCmd.Args = append(fetchCmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
 	}
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
 		logCombinedStdoutStderr(fetchCmd, string(out))
+		return err
+	}
+	// TODO(b/286466643): Remove this hack once cuttlefish is capable of booting from read-only artifacts again.
+	chmodCmd := f.execContext(context.TODO(), "chmod", "-R", "g+rw", outDir)
+	chmodOut, err := chmodCmd.CombinedOutput()
+	if err != nil {
+		logCombinedStdoutStderr(chmodCmd, string(chmodOut))
 		return err
 	}
 	return nil
