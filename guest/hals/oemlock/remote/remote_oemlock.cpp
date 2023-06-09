@@ -65,7 +65,10 @@ OemLock::OemLock(secure_env::Channel& channel) : channel_(channel) {}
 }
 
 Result<void> OemLock::requestValue(secure_env::OemLockField field, bool *out) {
-    CF_EXPECT(channel_.SendRequest(static_cast<uint32_t>(field), nullptr, 0),
+    auto message = CF_EXPECT(secure_env::CreateMessage(static_cast<uint32_t>(field), 0),
+                             "Cannot allocate message for oemlock request: " <<
+                             static_cast<uint32_t>(field));
+    CF_EXPECT(channel_.SendRequest(*message),
               "Can't send get value request for field: " << static_cast<uint32_t>(field));
     auto response = CF_EXPECT(channel_.ReceiveMessage(),
                               "Haven't received an answer for getting the field: " <<
@@ -75,7 +78,11 @@ Result<void> OemLock::requestValue(secure_env::OemLockField field, bool *out) {
 }
 
 Result<void> OemLock::setValue(secure_env::OemLockField field, bool value) {
-    CF_EXPECT(channel_.SendRequest(static_cast<uint32_t>(field), &value, sizeof(bool)),
+    auto message = CF_EXPECT(secure_env::CreateMessage(static_cast<uint32_t>(field), sizeof(bool)),
+                             "Cannot allocate message for oemlock request: " <<
+                             static_cast<uint32_t>(field));
+    memcpy(message->payload, &value, sizeof(bool));
+    CF_EXPECT(channel_.SendRequest(*message),
               "Can't send set value request for field: " << static_cast<uint32_t>(field));
     auto response = CF_EXPECT(channel_.ReceiveMessage(),
                               "Haven't received an answer for setting the field: " <<
