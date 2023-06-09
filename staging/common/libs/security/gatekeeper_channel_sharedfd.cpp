@@ -16,19 +16,14 @@
 
 #include "common/libs/security/gatekeeper_channel_sharedfd.h"
 
-#include <cstdlib>
-
 #include <android-base/logging.h>
 #include "keymaster/android_keymaster_utils.h"
 
-#include "common/libs/fs/shared_buf.h"
-
 namespace cuttlefish {
-using gatekeeper::GatekeeperRawMessage;
 
 SharedFdGatekeeperChannel::SharedFdGatekeeperChannel(SharedFD input,
                                                      SharedFD output)
-    : input_(input), output_(output) {}
+    : channel_(secure_env::SharedFdChannel(std::move(input), std::move(output))) {}
 
 bool SharedFdGatekeeperChannel::SendRequest(
     uint32_t command, const gatekeeper::GateKeeperMessage& message) {
@@ -40,42 +35,31 @@ bool SharedFdGatekeeperChannel::SendResponse(
   return SendMessage(command, true, message);
 }
 
-bool SharedFdGatekeeperChannel::SendMessage(
-    uint32_t command, bool is_response,
-    const gatekeeper::GateKeeperMessage& message) {
+bool SharedFdGatekeeperChannel::SendMessage(uint32_t command, bool is_response,
+                                            const gatekeeper::GateKeeperMessage& message) {
   LOG(DEBUG) << "Sending message with id: " << command;
   auto payload_size = message.GetSerializedSize();
-  auto to_send = CreateGatekeeperMessage(command, is_response, payload_size);
-  message.Serialize(to_send->payload, to_send->payload + payload_size);
-  auto write_size = payload_size + sizeof(GatekeeperRawMessage);
-  auto to_send_bytes = reinterpret_cast<const char*>(to_send.get());
-  auto written = WriteAll(output_, to_send_bytes, write_size);
-  if (written == -1) {
-    LOG(ERROR) << "Could not write Gatekeeper Message: " << output_->StrError();
+  auto to_send_result = secure_env::CreateMessage(command, payload_size);
+  if (!to_send_result.ok()) {
+    LOG(ERROR) << "Could not allocate Gatekeeper Message: " << to_send_result.error().Message();
+    return false;
   }
-  return written == write_size;
+  auto to_send = std::move(to_send_result.value());
+  message.Serialize(to_send->payload, to_send->payload + payload_size);
+
+  auto result = is_response ? channel_.SendResponse(*to_send) : channel_.SendRequest(*to_send);
+  if (!result.ok()) {
+    LOG(ERROR) << "Could not write Gatekeeper Message: " << result.error().Message();
+  }
+  return result.ok();
 }
 
-ManagedGatekeeperMessage SharedFdGatekeeperChannel::ReceiveMessage() {
-  struct GatekeeperRawMessage message_header;
-  auto read = ReadExactBinary(input_, &message_header);
-  if (read != sizeof(GatekeeperRawMessage)) {
-    LOG(ERROR) << "Expected " << sizeof(GatekeeperRawMessage) << ", received "
-               << read;
-    LOG(ERROR) << "Could not read Gatekeeper Message: " << input_->StrError();
+secure_env::ManagedMessage SharedFdGatekeeperChannel::ReceiveMessage() {
+  auto result = channel_.ReceiveMessage();
+  if (!result.ok()) {
     return {};
   }
-  LOG(DEBUG) << "Received message with id: " << message_header.cmd;
-  auto message =
-      CreateGatekeeperMessage(message_header.cmd, message_header.is_response,
-                              message_header.payload_size);
-  auto message_bytes = reinterpret_cast<char*>(message->payload);
-  read = ReadExact(input_, message_bytes, message->payload_size);
-  if (read != message->payload_size) {
-    LOG(ERROR) << "Could not read Gatekeeper Message: " << input_->StrError();
-    return {};
-  }
-  return message;
+  return std::move(result.value());
 }
 
 }  // namespace cuttlefish

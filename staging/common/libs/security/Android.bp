@@ -22,7 +22,6 @@ cc_library {
     defaults: ["hidl_defaults", "cuttlefish_host"],
     srcs: [
         "channel.cpp",
-        "gatekeeper_channel.cpp",
         "keymaster_channel.cpp",
     ],
     header_libs: [
