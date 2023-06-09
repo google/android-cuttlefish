@@ -16,7 +16,10 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 
+#include <string_view>
+
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <json/json.h>
 
 #include "common/libs/utils/files.h"
@@ -34,6 +37,29 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
+
+std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
+  switch (net) {
+    case ExternalNetworkMode::kUnknown:
+      return out << "unknown";
+    case ExternalNetworkMode::kTap:
+      return out << "tap";
+    case ExternalNetworkMode::kSlirp:
+      return out << "slirp";
+  }
+}
+Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
+  if (android::base::EqualsIgnoreCase(str, "tap")) {
+    return ExternalNetworkMode::kTap;
+  } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
+    return ExternalNetworkMode::kSlirp;
+  } else {
+    return CF_ERRF(
+        "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
+        "and \"slirp\"",
+        str);
+  }
+}
 
 static constexpr char kInstanceDir[] = "instance_dir";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
@@ -420,6 +446,17 @@ void CuttlefishConfig::MutableInstanceSpecific::set_filename_encryption_mode(
   auto fmt = filename_encryption_mode;
   std::transform(fmt.begin(), fmt.end(), fmt.begin(), ::tolower);
   (*Dictionary())[kFilenameEncryptionMode] = fmt;
+}
+
+static constexpr char kExternalNetworkMode[] = "external_network_mode";
+ExternalNetworkMode CuttlefishConfig::InstanceSpecific::external_network_mode()
+    const {
+  auto str = (*Dictionary())[kExternalNetworkMode].asString();
+  return ParseExternalNetworkMode(str).value_or(ExternalNetworkMode::kUnknown);
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
+    ExternalNetworkMode mode) {
+  (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
