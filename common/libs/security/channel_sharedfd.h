@@ -25,15 +25,15 @@ namespace secure_env {
 class SharedFdChannel : public Channel {
  public:
   SharedFdChannel(SharedFD input, SharedFD output);
-  Result<void> SendRequest(uint32_t command, void* message, size_t message_size) override;
-  Result<void> SendResponse(uint32_t command, void* message, size_t message_size) override;
+  Result<void> SendRequest(RawMessage& message) override;
+  Result<void> SendResponse(RawMessage& message) override;
   Result<ManagedMessage> ReceiveMessage() override;
 
  private:
   SharedFD input_;
   SharedFD output_;
 
-  Result<void> SendMessage(uint32_t command, bool response, void* message, size_t message_size);
+  Result<void> SendMessage(RawMessage& message, bool response);
 };
 
 }  // namespace secure_env
