@@ -18,55 +18,15 @@
 
 #include "gatekeeper/gatekeeper_messages.h"
 
-#include <memory>
-
-namespace gatekeeper {
-
-/**
- * GatekeeperRawMessage - Header and raw byte payload for a serialized
- * gatekeeper message.
- *
- * @cmd: the command, one of gatekeeper::ENROLL and gatekeeper::VERIFY.
- * @payload: start of the serialized command specific payload
- */
-struct GatekeeperRawMessage {
-  uint32_t cmd : 31;
-  bool is_response : 1;
-  uint32_t payload_size;
-  uint8_t payload[0];
-};
-
-}  // namespace gatekeeper
+#include "common/libs/security/channel.h"
 
 namespace cuttlefish {
-
-using gatekeeper::GatekeeperRawMessage;
-
-/**
- * A destroyer for GatekeeperRawMessage instances created with
- * CreateGatekeeperMessage. Wipes memory from the GatekeeperRawMessage
- * instances.
- */
-class GatekeeperCommandDestroyer {
- public:
-  void operator()(GatekeeperRawMessage* ptr);
-};
-
-/** An owning pointer for a GatekeeperRawMessage instance. */
-using ManagedGatekeeperMessage =
-    std::unique_ptr<GatekeeperRawMessage, GatekeeperCommandDestroyer>;
-
-/**
- * Allocates memory for a GatekeeperRawMessage carrying a message of size
- * `payload_size`.
- */
-ManagedGatekeeperMessage CreateGatekeeperMessage(uint32_t command,
-                                                 bool is_response,
-                                                 size_t payload_size);
 
 /*
  * Interface for communication channels that synchronously communicate
  * Gatekeeper IPC/RPC calls.
+ *
+ * TODO(b/286027243): Remove this class and use Channel instead
  */
 class GatekeeperChannel {
  public:
@@ -74,7 +34,7 @@ class GatekeeperChannel {
                            const gatekeeper::GateKeeperMessage& message) = 0;
   virtual bool SendResponse(uint32_t command,
                             const gatekeeper::GateKeeperMessage& message) = 0;
-  virtual ManagedGatekeeperMessage ReceiveMessage() = 0;
+  virtual secure_env::ManagedMessage ReceiveMessage() = 0;
   virtual ~GatekeeperChannel() {}
 };
 
