@@ -98,6 +98,7 @@
 /vendor/bin/hw/android\.hardware\.keymaster@4\.1-service.remote  u:object_r:hal_keymaster_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper-service.remote  u:object_r:hal_gatekeeper_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.confirmationui-service.cuttlefish  u:object_r:hal_confirmationui_cuttlefish_exec:s0
+/vendor/bin/hw/android\.hardware\.oemlock-service.example u:object_r:hal_oemlock_default_exec:s0
 /vendor/bin/hw/android\.hardware\.oemlock-service.remote  u:object_r:hal_oemlock_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.weaver-service.example u:object_r:hal_weaver_default_exec:s0
 /vendor/bin/hw/android\.hardware\.authsecret@1\.0-service  u:object_r:hal_authsecret_default_exec:s0
