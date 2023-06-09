@@ -31,9 +31,11 @@ cc_library_static {
         "vulkan_headers",
     ],
     shared_libs: [
+        "libbase",
+        "libcuttlefish_device_config",
+        "libcuttlefish_device_config_proto",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
         "libfruit",
         "libjsoncpp",
     ],
