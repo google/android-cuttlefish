@@ -58,13 +58,28 @@ class AcloudCommand : public CvdServerHandler {
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
     std::unique_lock interrupt_lock(interrupt_mutex_);
+    bool lock_released = false;
     CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     CF_EXPECT(IsSubOperationSupported(request));
     // ConvertAcloudCreate may lock and unlock the lock
+    auto cb_unlock = [&lock_released, &interrupt_lock](void) -> Result<void> {
+      if (!lock_released) {
+        interrupt_lock.unlock();
+        lock_released = true;
+      }
+      return {};
+    };
+    auto cb_lock = [&lock_released, &interrupt_lock](void) -> Result<void> {
+      if (lock_released) {
+        interrupt_lock.lock();
+        lock_released = true;
+      }
+      return {};
+    };
     auto converted = CF_EXPECT(
-        acloud_impl::ConvertAcloudCreate(request, waiter_, interrupt_lock));
-    if (!converted.interrupt_lock_released) {
+        acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock));
+    if (!lock_released) {
       interrupt_lock.unlock();
     }
     CF_EXPECT(executor_.Execute(converted.prep_requests, request.Err()));
