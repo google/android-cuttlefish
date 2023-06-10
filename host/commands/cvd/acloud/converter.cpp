@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <fstream>
 #include <optional>
+#include <regex>
 #include <vector>
 
 #include <android-base/file.h>
@@ -56,6 +57,77 @@ const std::vector<std::string> _BOOT_IMAGE_NAME = {"boot.img"};
 const std::vector<std::string> _VENDOR_BOOT_IMAGE_NAME = {"vendor_boot.img"};
 const std::string _MIXED_SUPER_IMAGE_NAME = "mixed_super.img";
 
+struct BranchBuildTargetInfo {
+  std::string branch_str;
+  std::string build_target_str;
+};
+
+static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
+    const std::string default_branch_str, SubprocessWaiter& waiter,
+    std::function<Result<void>(void)> callback_unlock,
+    std::function<Result<void>(void)> callback_lock) {
+  // get the default build branch and target from repo info and git remote
+  BranchBuildTargetInfo result_info;
+  result_info.branch_str = default_branch_str;
+  Command repo_cmd("repo");
+  repo_cmd.AddParameter("info");
+  repo_cmd.AddParameter("platform/tools/acloud");
+
+  auto cuttlefish_source = StringFromEnv("ANDROID_BUILD_TOP", "") + "/tools/acloud";
+  auto fd_top = SharedFD::Open(cuttlefish_source, O_RDONLY | O_PATH | O_DIRECTORY);
+  if (!fd_top->IsOpen()) {
+    LOG(ERROR) << "Couldn't open \"" << cuttlefish_source
+               << "\": " << fd_top->StrError();
+  } else {
+    repo_cmd.SetWorkingDirectory(fd_top);
+  }
+  RunWithManagedIoParam param_repo {
+    .cmd_ = std::move(repo_cmd),
+    .redirect_stdout_ = true,
+    .redirect_stderr_ = false,
+    .stdin_ = nullptr,
+    .callback_ = callback_unlock
+  };
+  RunOutput output_repo = CF_EXPECT(waiter.RunWithManagedStdioInterruptable(param_repo));
+
+  Command git_cmd("git");
+  git_cmd.AddParameter("remote");
+  if (fd_top->IsOpen()) {
+    git_cmd.SetWorkingDirectory(fd_top);
+  }
+  RunWithManagedIoParam param_git {
+    .cmd_ = std::move(git_cmd),
+    .redirect_stdout_ = true,
+    .redirect_stderr_ = false,
+    .stdin_ = nullptr,
+    .callback_ = callback_unlock
+  };
+  callback_lock();
+  RunOutput output_git = CF_EXPECT(waiter.RunWithManagedStdioInterruptable(param_git));
+
+  output_git.stdout_.erase(std::remove(
+      output_git.stdout_.begin(), output_git.stdout_.end(), '\n'), output_git.stdout_.cend());
+
+  static const std::regex repo_rgx("^Manifest branch: (.+)");
+  std::smatch repo_matched;
+  CHECK(std::regex_search(output_repo.stdout_, repo_matched, repo_rgx))
+      << "Manifest branch line is not found from: " << output_repo.stdout_;
+  // master or ...
+  std::string repo_matched_str = repo_matched[1].str();
+  if (output_git.stdout_ == "aosp") {
+    result_info.branch_str = "aosp-";
+    result_info.build_target_str = "aosp_";
+  }
+  result_info.branch_str += repo_matched_str;
+
+  // AVD_TYPES_MAPPING default is cf
+  // _DEFAULT_BUILD_BITNESS default is x86_64
+  // flavor default is phone
+  // _DEFAULT_BUILD_TYPE default is userdebug
+  result_info.build_target_str += "cf_x86_64_phone-userdebug";
+  return result_info;
+}
+
 /**
  * Split a string into arguments based on shell tokenization rules.
  *
@@ -77,26 +149,14 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
   return android::base::Split(stdout_str, "\n");
 }
 
-Result<void> RunBinTrue(SubprocessWaiter& waiter,
-                        std::unique_lock<std::mutex>& interrupt_lock,
-                        bool& lock_released) {
-  lock_released = false;
-  Command command("/usr/bin/true");
-  auto subprocess = command.Start();
-  CF_EXPECT(waiter.Setup(std::move(subprocess)));
-  interrupt_lock.unlock();
-  lock_released = true;
-  CF_EXPECT(waiter.Wait());
-  return {};
-}
-
 }  // namespace
 
 namespace acloud_impl {
 
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     const RequestWithStdio& request, SubprocessWaiter& waiter,
-    std::unique_lock<std::mutex>& interrupt_lock) {
+    std::function<Result<void>(void)> callback_unlock,
+    std::function<Result<void>(void)> callback_lock) {
   auto arguments = ParseInvocation(request.Message()).arguments;
   CF_EXPECT(arguments.size() > 0);
   CF_EXPECT(arguments[0] == "create");
@@ -413,7 +473,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
-  bool lock_released = false;
 
   if (local_image) {
     CF_EXPECT(!(system_branch || system_build_target || system_build_id),
@@ -438,22 +497,24 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       auto& mkdir_env = *mkdir_command.mutable_env();
       mkdir_env[kAndroidHostOut] = host_artifacts_path->second;
     }
+    // used for default branch and target when there is no input
+    std::optional<BranchBuildTargetInfo> given_branch_target_info;
     if (branch || build_id || build_target) {
       auto target = build_target ? *build_target : "";
       auto build = build_id.value_or(branch.value_or("aosp-master"));
       host_dir += (build + target);
     } else {
-      host_dir += "aosp-master";
+      given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget(
+          "git_", waiter, callback_unlock,callback_lock));
+      host_dir += (given_branch_target_info->branch_str +
+                   given_branch_target_info->build_target_str);
     }
-    // TODO(weihsu): if we fetch default ID such as aosp-master,
-    // cvd fetch will fetch the latest release. There is a potential
-    // issue that two different fetch with same default ID may
-    // download different releases.
-    // Eventually, we should match python acloud behavior to translate
-    // default ID (aosp-master) to real ID to solve this issue.
-
-    // placeholder to be replaced with git remote and repo info
-    CF_EXPECT(RunBinTrue(waiter, interrupt_lock, lock_released));
+    // TODO(weihsu): The default branch and target value are the
+    // same as python acloud now. The only TODO item is default ID.
+    // Python acloud use Android build api to query build info,
+    // including the latest valid build ID. CVD acloud should follow
+    // the same method by using Android build api to get build ID,
+    // but it is not easy in C++.
 
     cvd::Request& fetch_request = request_protos.emplace_back();
     auto& fetch_command = *fetch_request.mutable_command_request();
@@ -461,9 +522,14 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     fetch_command.add_args("fetch");
     fetch_command.add_args("--directory");
     fetch_command.add_args(host_dir);
-    if (branch || build_id || build_target) {
-      fetch_command.add_args("--default_build");
-      fetch_command_str += "--default_build=";
+    fetch_command.add_args("--default_build");
+    fetch_command_str += "--default_build=";
+    if (given_branch_target_info) {
+      fetch_command.add_args(given_branch_target_info->branch_str + "/" +
+                             given_branch_target_info->build_target_str);
+      fetch_command_str += (given_branch_target_info->branch_str + "/" +
+                            given_branch_target_info->build_target_str);
+    } else {
       auto target = build_target ? "/" + *build_target : "";
       auto build = build_id.value_or(branch.value_or("aosp-master"));
       fetch_command.add_args(build + target);
@@ -756,7 +822,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
       .verbose = verbose,
-      .interrupt_lock_released = lock_released,
   };
   for (auto& request_proto : request_protos) {
     ret.prep_requests.emplace_back(request.Client(), request_proto, fds,
