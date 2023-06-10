@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "common/libs/fs/shared_buf.h"
 #include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
@@ -69,6 +70,83 @@ Result<void> SubprocessWaiter::Interrupt() {
     }
   }
   return {};
+}
+
+Result<RunOutput> SubprocessWaiter::RunWithManagedStdioInterruptable(
+    RunWithManagedIoParam& param) {
+  RunOutput output;
+  std::thread stdin_thread, stdout_thread, stderr_thread;
+  std::vector<std::thread*> threads_({&stdin_thread, &stdout_thread, &stderr_thread});
+  Command cmd = std::move(param.cmd_);
+  bool io_error = false;
+  if (param.stdin_) {
+    SharedFD pipe_read, pipe_write;
+    CF_EXPECT(SharedFD::Pipe(&pipe_read, &pipe_write),
+              "Could not create a pipe to write the stdin of \""
+              << cmd.GetShortName() << "\"");
+
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
+    stdin_thread = std::thread([pipe_write, &param, &io_error]() {
+      int written = WriteAll(pipe_write, *param.stdin_);
+      if (written < 0) {
+        io_error = true;
+        LOG(ERROR) << "Error in writing stdin to process";
+      }
+    });
+  }
+  if (param.redirect_stdout_) {
+    SharedFD pipe_read, pipe_write;
+    CF_EXPECT(SharedFD::Pipe(&pipe_read, &pipe_write),
+              "Could not create a pipe to read the stdout of \""
+              << cmd.GetShortName() << "\"");
+
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
+    stdout_thread = std::thread([pipe_read, &output, &io_error]() {
+      int read = ReadAll(pipe_read, &output.stdout_);
+      if (read < 0) {
+        io_error = true;
+        LOG(ERROR) << "Error in reading stdout from process";
+      }
+    });
+  }
+  if (param.redirect_stderr_ == true) {
+    SharedFD pipe_read, pipe_write;
+    CF_EXPECT(SharedFD::Pipe(&pipe_read, &pipe_write),
+              "Could not create a pipe to read the stderr of \""
+                << cmd.GetShortName() << "\"");
+
+    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
+    stderr_thread = std::thread([pipe_read, &output, &io_error]() {
+      int read = ReadAll(pipe_read, &output.stderr_);
+      if (read < 0) {
+        io_error = true;
+        LOG(ERROR) << "Error in reading stderr from process";
+      }
+    });
+  }
+
+  // lower half
+  auto subprocess = cmd.Start(param.options_);
+  CF_EXPECT(subprocess.Started());
+
+  auto cmd_short_name = cmd.GetShortName();
+  CF_EXPECT(this->Setup(std::move(subprocess)));
+  {
+    // Force the destructor to run by moving it into a smaller scope.
+    // This is necessary to close the write end of the pipe.
+    Command forceDelete = std::move(cmd);
+  }
+
+  param.callback_();
+  CF_EXPECT(this->Wait());
+  for (auto& thread : threads_) {
+    if (thread->joinable()) {
+      thread->join();
+    }
+  }
+  CF_EXPECT(!io_error,
+            "IO error communicating with " << cmd_short_name);
+  return output;
 }
 
 }  // namespace cuttlefish
