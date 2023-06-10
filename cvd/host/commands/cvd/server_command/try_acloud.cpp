@@ -64,6 +64,9 @@ class TryAcloudCommand : public CvdServerHandler {
       }
       return {};
     };
+    // ConvertAcloudCreate converts acloud to cvd commands.
+    // The input parameters waiter_, cb_unlock, cb_lock are.used to
+    // support interrupt which have locking and unlocking functions
     auto converted = CF_EXPECT(
         acloud_impl::ConvertAcloudCreate(request, waiter_, cb_unlock, cb_lock));
     if (lock_released) {
