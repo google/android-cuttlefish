@@ -174,6 +174,10 @@ class ServerLoopImpl : public ServerLoop,
             LOG(FATAL) << "run_cvd in a bad state";
             break;
           }
+          case LauncherAction::kExtended: {
+            LOG(FATAL) << "kExtended is not yet implemented";
+            break;
+          }
           default:
             LOG(ERROR) << "Unrecognized launcher action: "
                        << static_cast<char>(action);
