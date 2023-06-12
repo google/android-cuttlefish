@@ -88,18 +88,41 @@ bool LauncherActionMessage::IsSupportedType(const ExtendedActionType type) {
   return Contains(supported_action_types, type);
 }
 
-Result<void> LauncherActionMessage::WriteToFd(const SharedFD& fd) {
-  ssize_t bytes_sent = WriteAllBinary(fd, &action_);
-  CF_EXPECTF(bytes_sent > 0,
-             "Error sending launcher monitor the command: ", fd->StrError());
-  CF_EXPECTF(bytes_sent == sizeof(action_),
-             "LauncherActionMessage::WriteToFd() ",
+static Result<void> WriteBuffer(const SharedFD& fd, const std::string& buf,
+                                const std::string& description) {
+  CF_EXPECT(fd->IsOpen(), "The file descriptor to write is not open.");
+  ssize_t bytes_sent = WriteAll(fd, buf);
+  CF_EXPECTF(bytes_sent > 0, "Error sending ", description,
+             " to launcher monitor: ", fd->StrError());
+  CF_EXPECTF(bytes_sent == buf.size(), "LauncherActionMessage::WriteToFd() ",
              "did not send correct number of bytes");
+  return {};
+}
+
+// use this when sizeof(T) is the number of bytes we want to send
+template <typename T>
+static Result<void> WriteSizeOfT(const SharedFD& fd, const T& t,
+                                 const std::string& description) {
+  CF_EXPECT(fd->IsOpen(), "The file descriptor to write is not open.");
+  const char* start_addr = reinterpret_cast<const char*>(&t);
+  std::vector<char> tmp{start_addr, start_addr + sizeof(T)};
+  std::string buf{tmp.begin(), tmp.end()};
+  CF_EXPECT(WriteBuffer(fd, buf, description));
+  return {};
+}
+
+Result<void> LauncherActionMessage::WriteToFd(const SharedFD& fd) {
+  CF_EXPECT(WriteSizeOfT(fd, action_, "LauncherAction"));
   if (IsShortAction(action_)) {
     return {};
   }
-  return CF_ERR(fmt::format("Action \"{}\" is not yet supported",
-                            static_cast<const char>(action_)));
+  CF_EXPECT(WriteSizeOfT(fd, type_, "ExtendedActionType"));
+  const std::uint32_t length = serialized_data_.size();
+  CF_EXPECT(WriteSizeOfT(fd, length, "Length of serialized data"));
+  if (!serialized_data_.empty()) {
+    CF_EXPECT(WriteBuffer(fd, serialized_data_, "serialized data"));
+  }
+  return {};
 }
 
 }  // namespace run_cvd_msg_impl
