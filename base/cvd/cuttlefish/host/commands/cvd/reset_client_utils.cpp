@@ -22,6 +22,7 @@
 #include <cctype>
 #include <iomanip>   // std::setw
 #include <iostream>  // std::endl
+#include <regex>
 #include <sstream>
 #include <unordered_set>
 
@@ -328,14 +329,46 @@ Result<void> RunCvdProcessManager::SendSignals(
   return {};
 }
 
+static Result<void> DeleteAllLockFiles(const std::string& lock_dir) {
+  CF_EXPECT(DirectoryExists(lock_dir), lock_dir + " does not exist");
+  const auto all_files =
+      CF_EXPECT(DirectoryContents(lock_dir),
+                "Failed pull out the contents of " + lock_dir);
+  for (const auto& base_name : all_files) {
+    const std::string file_in_lock_dir =
+        ConcatToString(lock_dir, "/", base_name);
+    std::regex lock_file_name_pattern("local[-]instance[-][0-9]+[.]lock");
+    if (std::regex_match(base_name, lock_file_name_pattern)) {
+      LOG(VERBOSE) << "Deleting " << file_in_lock_dir;
+      if (!RemoveFile(file_in_lock_dir)) {
+        // TODO(weihsu): demote the verbosity level to DEBUG
+        // print ERROR only if the file belongs to the user
+        LOG(ERROR) << "Failed to delete " << file_in_lock_dir;
+      }
+    }
+  }
+  return {};
+}
+
 void RunCvdProcessManager::DeleteLockFiles(
     const bool cvd_server_children_only) {
+  const std::string lock_dir = "/tmp/acloud_cvd_temp";
+  std::string lock_file_prefix = lock_dir;
+  lock_file_prefix.append("/local-instance-");
+
+  if (!cvd_server_children_only) {
+    auto delete_all_result = DeleteAllLockFiles(lock_dir);
+    if (!delete_all_result.ok()) {
+      LOG(ERROR) << delete_all_result.error().Message();
+    }
+    return;
+  }
+
   for (const auto& group_info : cf_groups_) {
-    if (cvd_server_children_only && !group_info.is_cvd_server_started_) {
+    if (!group_info.is_cvd_server_started_) {
       continue;
     }
     const auto& instances = group_info.instances_;
-    std::string lock_file_prefix = "/tmp/acloud_cvd_temp/local-instance-";
     for (const auto& [id, _] : instances) {
       std::stringstream lock_file_path_stream;
       lock_file_path_stream << lock_file_prefix << id << ".lock";
