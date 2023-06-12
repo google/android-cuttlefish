@@ -58,6 +58,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/scope_guard.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/users.h"
 
 namespace cuttlefish {
 
@@ -93,19 +94,45 @@ bool DirectoryExists(const std::string& path, bool follow_symlinks) {
 }
 
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
-                                   const mode_t mode) {
+                                   const mode_t mode,
+                                   const std::string& group_name) {
   if (DirectoryExists(directory_path)) {
     return {};
   }
   const auto parent_dir = cpp_dirname(directory_path);
   if (parent_dir.size() > 1) {
-    EnsureDirectoryExists(parent_dir);
+    EnsureDirectoryExists(parent_dir, mode, group_name);
   }
   LOG(DEBUG) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
     return CF_ERRNO("Failed to create directory: \"" << directory_path << "\"");
   }
+
+  if (group_name != "") {
+    ChangeGroup(directory_path, group_name);
+  }
+
   return {};
+}
+
+Result<void> ChangeGroup(const std::string& path,
+                         const std::string& group_name) {
+  auto groupId = GroupIdFromName(group_name);
+
+  if (groupId == -1) {
+    return CF_ERR("Failed to get group id: ") << group_name;
+  }
+
+  if (chown(path.c_str(), -1, groupId) != 0) {
+    return CF_ERRNO("Feailed to set group for path: "
+                    << path << ", " << group_name << ", " << strerror(errno));
+  }
+
+  return {};
+}
+
+bool CanAccess(const std::string& path, const int mode) {
+  return access(path.c_str(), mode) == 0;
 }
 
 bool IsDirectoryEmpty(const std::string& path) {

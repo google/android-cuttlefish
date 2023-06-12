@@ -107,7 +107,7 @@ Result<int> RunCrosvmDisplayCommand(const std::vector<std::string>& args) {
 
   const std::string crosvm_binary_path = instance.crosvm_binary();
   const std::string crosvm_control_path =
-      instance.PerInstanceInternalPath("crosvm_control.sock");
+      instance.PerInstanceInternalUdsPath("crosvm_control.sock");
 
   cuttlefish::Command command(crosvm_binary_path);
   command.AddParameter("gpu");
