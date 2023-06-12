@@ -38,6 +38,18 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
 Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
                                  const LauncherAction request);
 
+/**
+ * Sends launcher actions with data
+ *
+ * If the request is something that does not use serialized_data at all,
+ * the type should be ExtendedActionType::kUnused. serialized_data should
+ * be std:move'd if avoiding redundant copy is desired.
+ */
+Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
+                                         const LauncherAction request,
+                                         const ExtendedActionType type,
+                                         std::string serialized_data);
+
 Result<void> WaitForRead(const SharedFD& monitor_socket,
                          const int timeout_seconds);
 
