@@ -26,6 +26,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/launcher_message.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -76,11 +77,9 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
 
 Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
                                  const LauncherAction request) {
-  ssize_t bytes_sent = WriteAllBinary(monitor_socket, &request);
-  CF_EXPECT(bytes_sent > 0, "Error sending launcher monitor the command: "
-                                << monitor_socket->StrError());
-  CF_EXPECT(bytes_sent == sizeof(request),
-            "Launcher did not send correct number of bytes");
+  using run_cvd_msg_impl::LauncherActionMessage;
+  auto message = CF_EXPECT(LauncherActionMessage::Create(request));
+  CF_EXPECT(message.WriteToFd(monitor_socket));
   return {};
 }
 
