@@ -77,8 +77,18 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
 
 Result<void> WriteLauncherAction(const SharedFD& monitor_socket,
                                  const LauncherAction request) {
+  CF_EXPECT(WriteLauncherActionWithData(monitor_socket, request,
+                                        ExtendedActionType::kUnused, ""));
+  return {};
+}
+
+Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
+                                         const LauncherAction request,
+                                         const ExtendedActionType type,
+                                         std::string serialized_data) {
   using run_cvd_msg_impl::LauncherActionMessage;
-  auto message = CF_EXPECT(LauncherActionMessage::Create(request));
+  auto message = CF_EXPECT(
+      LauncherActionMessage::Create(request, type, std::move(serialized_data)));
   CF_EXPECT(message.WriteToFd(monitor_socket));
   return {};
 }
