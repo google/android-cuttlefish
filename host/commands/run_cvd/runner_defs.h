@@ -15,6 +15,11 @@
  */
 #pragma once
 
+#include <cstdint>
+#include <string>
+
+#include "common/libs/fs/shared_fd.h"
+
 namespace cuttlefish {
 
 enum RunnerExitCodes : int {
@@ -49,6 +54,7 @@ enum RunnerExitCodes : int {
 
 // Actions supported by the launcher server
 enum class LauncherAction : char {
+  kExtended = 'A',  ///< expect additional information to follow
   kPowerwash = 'P',
   kRestart = 'R',
   kStatus = 'I',
@@ -61,4 +67,11 @@ enum class LauncherResponse : char {
   kError = 'E',
   kUnknownAction = 'U',
 };
+
+enum class ExtendedActionType : std::uint32_t {
+  kUnused = 4,
+  kSuspend = 5,
+  // TODO(kwstephenkim): extend the list of operations to cover snapshot
+};
+
 }  // namespace cuttlefish
