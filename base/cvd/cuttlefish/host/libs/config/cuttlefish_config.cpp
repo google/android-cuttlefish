@@ -88,8 +88,6 @@ const char* const kGpuModeAuto = "auto";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
 const char* const kGpuModeGfxstream = "gfxstream";
 const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
-const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
-    "gfxstream_guest_angle_host_swiftshader";
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeNone = "none";
 
@@ -151,8 +149,6 @@ static SecureHal StringToSecureHal(std::string mode) {
     return SecureHal::Keymint;
   } else if (mode == "gatekeeper") {
     return SecureHal::Gatekeeper;
-  } else if (mode == "oemlock") {
-    return SecureHal::Oemlock;
   } else {
     return SecureHal::Unknown;
   }
@@ -298,14 +294,6 @@ void CuttlefishConfig::set_enable_host_bluetooth_connector(bool enable_host_blue
 }
 bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
-}
-
-static constexpr char kenableWifi[] = "enable_wifi";
-void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
-  (*dictionary_)[kenableWifi] = enable_wifi;
-}
-bool CuttlefishConfig::enable_wifi() const {
-  return (*dictionary_)[kenableWifi].asBool();
 }
 
 static constexpr char kNetsimRadios[] = "netsim_radios";
@@ -490,6 +478,17 @@ void CuttlefishConfig::set_rootcanal_config_file(
     const std::string& rootcanal_config_file) {
   (*dictionary_)[kRootcanalConfigFile] =
       DefaultHostArtifactsPath(rootcanal_config_file);
+}
+
+static constexpr char kRootcanalDefaultCommandsFile[] =
+    "rootcanal_default_commands_file";
+std::string CuttlefishConfig::rootcanal_default_commands_file() const {
+  return (*dictionary_)[kRootcanalDefaultCommandsFile].asString();
+}
+void CuttlefishConfig::set_rootcanal_default_commands_file(
+    const std::string& rootcanal_default_commands_file) {
+  (*dictionary_)[kRootcanalDefaultCommandsFile] =
+      DefaultHostArtifactsPath(rootcanal_default_commands_file);
 }
 
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
@@ -706,10 +705,6 @@ std::string HostBinaryPath(const std::string& binary_name) {
 #else
   return DefaultHostArtifactsPath("bin/" + binary_name);
 #endif
-}
-
-std::string HostUsrSharePath(const std::string& binary_name) {
-  return DefaultHostArtifactsPath("usr/share/" + binary_name);
 }
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
