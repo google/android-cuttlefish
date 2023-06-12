@@ -92,98 +92,13 @@ class ServerLoopImpl : public ServerLoop,
       auto client = SharedFD::Accept(*server_);
       LauncherAction action;
       while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
-        switch (action) {
-          case LauncherAction::kStop: {
-            auto stop = process_monitor.StopMonitoredProcesses();
-            if (stop.ok()) {
-              auto response = LauncherResponse::kSuccess;
-              client->Write(&response, sizeof(response));
-              std::exit(0);
-            } else {
-              LOG(ERROR) << "Failed to stop subprocesses:\n"
-                         << stop.error().Message();
-              LOG(DEBUG) << "Failed to stop subprocesses:\n"
-                         << stop.error().Trace();
-              auto response = LauncherResponse::kError;
-              client->Write(&response, sizeof(response));
-            }
-            break;
-          }
-          case LauncherAction::kStatus: {
-            // TODO(schuffelen): Return more information on a side channel
-            auto response = LauncherResponse::kSuccess;
-            client->Write(&response, sizeof(response));
-            break;
-          }
-          case LauncherAction::kPowerwash: {
-            LOG(INFO) << "Received a Powerwash request from the monitor socket";
-            const auto& disks = instance_.virtual_disk_paths();
-            auto overlay = instance_.PerInstancePath("overlay.img");
-            if (std::find(disks.begin(), disks.end(), overlay) == disks.end()) {
-              LOG(ERROR) << "Powerwash unsupported with --use_overlay=false";
-              auto response = LauncherResponse::kError;
-              client->Write(&response, sizeof(response));
-              break;
-            }
-
-            auto stop = process_monitor.StopMonitoredProcesses();
-            if (!stop.ok()) {
-              LOG(ERROR) << "Stopping processes failed:\n"
-                         << stop.error().Message();
-              LOG(DEBUG) << "Stopping processes failed:\n"
-                         << stop.error().Trace();
-              auto response = LauncherResponse::kError;
-              client->Write(&response, sizeof(response));
-              break;
-            }
-            if (!PowerwashFiles()) {
-              LOG(ERROR) << "Powerwashing files failed.";
-              auto response = LauncherResponse::kError;
-              client->Write(&response, sizeof(response));
-              break;
-            }
-            auto response = LauncherResponse::kSuccess;
-            client->Write(&response, sizeof(response));
-
-            RestartRunCvd(client->UNMANAGED_Dup());
-            // RestartRunCvd should not return, so something went wrong.
-            response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-            LOG(FATAL) << "run_cvd in a bad state";
-            break;
-          }
-          case LauncherAction::kRestart: {
-            auto stop = process_monitor.StopMonitoredProcesses();
-            if (!stop.ok()) {
-              LOG(ERROR) << "Stopping processes failed:\n"
-                         << stop.error().Message();
-              LOG(DEBUG) << "Stopping processes failed:\n"
-                         << stop.error().Trace();
-              auto response = LauncherResponse::kError;
-              client->Write(&response, sizeof(response));
-              break;
-            }
-            DeleteFifos();
-
-            auto response = LauncherResponse::kSuccess;
-            client->Write(&response, sizeof(response));
-            RestartRunCvd(client->UNMANAGED_Dup());
-            // RestartRunCvd should not return, so something went wrong.
-            response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-            LOG(FATAL) << "run_cvd in a bad state";
-            break;
-          }
-          case LauncherAction::kExtended: {
-            LOG(FATAL) << "kExtended is not yet implemented";
-            break;
-          }
-          default:
-            LOG(ERROR) << "Unrecognized launcher action: "
-                       << static_cast<char>(action);
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
+        if (action != LauncherAction::kExtended) {
+          HandleActionWithNoData(action, client, process_monitor);
+          continue;
         }
+        // This behavior follows LOG(FATAL) lines in the kRestart handling code
+        LOG(FATAL) << "kExtended is not yet implemented";
+        continue;
       }
     }
   }
@@ -204,6 +119,98 @@ class ServerLoopImpl : public ServerLoop,
       return false;
     }
     return true;
+  }
+
+  void HandleActionWithNoData(const LauncherAction action,
+                              const SharedFD& client,
+                              ProcessMonitor& process_monitor) {
+    switch (action) {
+      case LauncherAction::kStop: {
+        auto stop = process_monitor.StopMonitoredProcesses();
+        if (stop.ok()) {
+          auto response = LauncherResponse::kSuccess;
+          client->Write(&response, sizeof(response));
+          std::exit(0);
+        } else {
+          LOG(ERROR) << "Failed to stop subprocesses:\n"
+                     << stop.error().Message();
+          LOG(DEBUG) << "Failed to stop subprocesses:\n"
+                     << stop.error().Trace();
+          auto response = LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+        }
+        break;
+      }
+      case LauncherAction::kStatus: {
+        // TODO(schuffelen): Return more information on a side channel
+        auto response = LauncherResponse::kSuccess;
+        client->Write(&response, sizeof(response));
+        break;
+      }
+      case LauncherAction::kPowerwash: {
+        LOG(INFO) << "Received a Powerwash request from the monitor socket";
+        const auto& disks = instance_.virtual_disk_paths();
+        auto overlay = instance_.PerInstancePath("overlay.img");
+        if (std::find(disks.begin(), disks.end(), overlay) == disks.end()) {
+          LOG(ERROR) << "Powerwash unsupported with --use_overlay=false";
+          auto response = LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+          break;
+        }
+
+        auto stop = process_monitor.StopMonitoredProcesses();
+        if (!stop.ok()) {
+          LOG(ERROR) << "Stopping processes failed:\n"
+                     << stop.error().Message();
+          LOG(DEBUG) << "Stopping processes failed:\n" << stop.error().Trace();
+          auto response = LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+          break;
+        }
+        if (!PowerwashFiles()) {
+          LOG(ERROR) << "Powerwashing files failed.";
+          auto response = LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+          break;
+        }
+        auto response = LauncherResponse::kSuccess;
+        client->Write(&response, sizeof(response));
+
+        RestartRunCvd(client->UNMANAGED_Dup());
+        // RestartRunCvd should not return, so something went wrong.
+        response = LauncherResponse::kError;
+        client->Write(&response, sizeof(response));
+        LOG(FATAL) << "run_cvd in a bad state";
+        break;
+      }
+      case LauncherAction::kRestart: {
+        auto stop = process_monitor.StopMonitoredProcesses();
+        if (!stop.ok()) {
+          LOG(ERROR) << "Stopping processes failed:\n"
+                     << stop.error().Message();
+          LOG(DEBUG) << "Stopping processes failed:\n" << stop.error().Trace();
+          auto response = LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+          break;
+        }
+        DeleteFifos();
+
+        auto response = LauncherResponse::kSuccess;
+        client->Write(&response, sizeof(response));
+        RestartRunCvd(client->UNMANAGED_Dup());
+        // RestartRunCvd should not return, so something went wrong.
+        response = LauncherResponse::kError;
+        client->Write(&response, sizeof(response));
+        LOG(FATAL) << "run_cvd in a bad state";
+        break;
+      }
+      default:
+        LOG(ERROR) << "Unrecognized launcher action: "
+                   << static_cast<char>(action);
+        auto response = LauncherResponse::kError;
+        client->Write(&response, sizeof(response));
+        break;
+    }
   }
 
   void DeleteFifos() {
