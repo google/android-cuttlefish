@@ -1393,9 +1393,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     if (start_wmediumd) {
       // TODO(b/199020470) move this to the directory for shared resources
       auto vhost_user_socket_path =
-          const_instance.PerInstanceInternalPath("vhost_user_mac80211");
+          const_instance.PerInstanceInternalUdsPath("vhost_user_mac80211");
       auto wmediumd_api_socket_path =
-          const_instance.PerInstanceInternalPath("wmediumd_api_server");
+          const_instance.PerInstanceInternalUdsPath("wmediumd_api_server");
 
       tmp_config_obj.set_vhost_user_mac80211_hwsim(vhost_user_socket_path);
       tmp_config_obj.set_wmediumd_api_server_socket(wmediumd_api_socket_path);

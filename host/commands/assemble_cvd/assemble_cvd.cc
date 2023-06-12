@@ -153,6 +153,19 @@ Result<void> CreateLegacySymlinks(
     return CF_ERRNO("symlink(\"" << instance.instance_dir() << "\", \""
                                  << legacy_instance_path << "\") failed");
   }
+
+  const auto mac80211_uds_name = "vhost_user_mac80211";
+
+  const auto mac80211_uds_path =
+      instance.PerInstanceInternalUdsPath(mac80211_uds_name);
+  const auto legacy_mac80211_uds_path =
+      instance.PerInstanceInternalPath(mac80211_uds_name);
+
+  if (symlink(mac80211_uds_path.c_str(), legacy_mac80211_uds_path.c_str())) {
+    return CF_ERRNO("symlink(\"" << mac80211_uds_path << "\", \""
+                                 << legacy_mac80211_uds_path << "\") failed");
+  }
+
   return {};
 }
 
@@ -253,9 +266,17 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                               config.instance_dirs()),
               "Failed to clean prior files");
 
+    auto defaultGroup = "cvdnetwork";
+    const mode_t defaultMode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+
     CF_EXPECT(EnsureDirectoryExists(config.root_dir()));
     CF_EXPECT(EnsureDirectoryExists(config.assembly_dir()));
     CF_EXPECT(EnsureDirectoryExists(config.instances_dir()));
+    CF_EXPECT(EnsureDirectoryExists(config.instances_uds_dir(), defaultMode,
+                                    defaultGroup));
+
+    LOG(INFO) << "Path for instance UDS: " << config.instances_uds_dir();
+
     if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
                   << config.AssemblyPath("assemble_cvd.log")
@@ -266,13 +287,19 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(EnsureDirectoryExists(instance.instance_dir()));
       auto internal_dir = instance.instance_dir() + "/" + kInternalDirName;
       CF_EXPECT(EnsureDirectoryExists(internal_dir));
-      auto grpc_socket_dir = instance.instance_dir() + "/" + kGrpcSocketDirName;
-      CF_EXPECT(EnsureDirectoryExists(grpc_socket_dir));
       auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
       CF_EXPECT(EnsureDirectoryExists(shared_dir));
       auto recording_dir = instance.instance_dir() + "/recording";
       CF_EXPECT(EnsureDirectoryExists(recording_dir));
       CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
+
+      CF_EXPECT(EnsureDirectoryExists(instance.instance_uds_dir(), defaultMode,
+                                      defaultGroup));
+      CF_EXPECT(EnsureDirectoryExists(instance.instance_internal_uds_dir(),
+                                      defaultMode, defaultGroup));
+      CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceGrpcSocketPath(""),
+                                      defaultMode, defaultGroup));
+
       // TODO(schuffelen): Move this code somewhere better
       CF_EXPECT(CreateLegacySymlinks(instance));
     }
