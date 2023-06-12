@@ -20,6 +20,7 @@ package {
 cc_library_static {
     name: "libcuttlefish_command_util",
     srcs: [
+        "launcher_message.cc",
         "util.cc",
     ],
     shared_libs: [
