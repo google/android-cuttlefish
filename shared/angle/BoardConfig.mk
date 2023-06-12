@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-BOARD_VENDOR_SEPOLICY_DIRS += device/google/cuttlefish/shared/ANGLE/sepolicy
+BOARD_VENDOR_SEPOLICY_DIRS += device/google/cuttlefish/shared/angle/sepolicy
