@@ -1,0 +1,92 @@
+digraph {
+  rankdir = "LR"
+
+  subgraph cluster_cvd_client {
+    label = "cvd (client)"
+    CvdClient
+  }
+  subgraph cluster_cvd_server {
+    label = "cvd (server)"
+    CvdServer
+    CvdServerHandler [style = "dashed"]
+    CommandSequenceExecutor
+
+    subgraph first_order_handlers {
+      rank = same;
+
+      AcloudMixSuperImageCommand
+      CvdFetchCommandHandler
+      CvdFleetCommandHandler
+      CvdHelpHandler
+      CvdGenericCommandHandler
+      CvdResetCommandHandler
+      CvdShutdownHandler
+      CvdStartCommandHandler
+      CvdVersionHandler
+      TryAcloudCommand
+    }
+    subgraph second_order_handlers {
+      rank = same;
+
+      AcloudCommand
+      AcloudTranslatorCommand
+      CvdServerHandlerProxy
+      CvdVmControlCommandHandler
+      LoadConfigsCommand
+      SerialLaunchCommand
+      SerialPreset
+    }
+  }
+  subgraph device_executables {
+    rank = same;
+
+    launch_cvd
+    restart_cvd
+    powerwash_cvd
+    all_cvd [label = "*_cvd"]
+    cvd_status
+    stop_cvd
+    cvd_host_bugreport
+    acloud [label = "acloud (python)"]
+  }
+
+  CvdClient -> CvdServer [label = "AF_UNIX"]
+  CvdClient -> acloud [label = "fork/exec"]
+  CvdServer -> CvdServerHandler
+
+  CvdServerHandler -> TryAcloudCommand
+  CvdServerHandler -> AcloudTranslatorCommand
+  CvdServerHandler -> AcloudCommand
+  CvdServerHandler -> AcloudMixSuperImageCommand
+  CvdServerHandler -> CvdVmControlCommandHandler
+  CvdServerHandler -> CvdFetchCommandHandler
+  CvdServerHandler -> CvdFleetCommandHandler
+  CvdServerHandler -> CvdGenericCommandHandler [minlen = 2]
+  CvdServerHandler -> CvdServerHandlerProxy
+  CvdServerHandler -> CvdHelpHandler
+  CvdServerHandler -> LoadConfigsCommand
+  CvdServerHandler -> CvdResetCommandHandler
+  CvdServerHandler -> SerialLaunchCommand
+  CvdServerHandler -> SerialPreset
+  CvdServerHandler -> CvdShutdownHandler
+  CvdServerHandler -> CvdStartCommandHandler
+  CvdServerHandler -> CvdVersionHandler
+
+  CommandSequenceExecutor -> AcloudTranslatorCommand [dir = "back"]
+  CommandSequenceExecutor -> AcloudCommand [dir = "back"]
+  CommandSequenceExecutor -> CvdServerHandlerProxy [dir = "back"]
+  CommandSequenceExecutor -> LoadConfigsCommand [dir = "back"]
+  CommandSequenceExecutor -> SerialPreset [dir = "back"]
+  CommandSequenceExecutor -> SerialLaunchCommand [dir = "back"]
+  CommandSequenceExecutor -> CvdVmControlCommandHandler [dir = "back"]
+
+  CommandSequenceExecutor -> CvdServerHandler
+
+  CvdStartCommandHandler -> launch_cvd [label = "fork/exec"]
+  CvdGenericCommandHandler -> restart_cvd [label = "fork/exec"]
+  CvdGenericCommandHandler -> powerwash_cvd [label = "fork/exec"]
+  CvdHelpHandler -> all_cvd [label = "fork/exec"]
+  CvdFleetCommandHandler -> cvd_status [label = "fork/exec"]
+  CvdGenericCommandHandler -> stop_cvd [label = "fork/exec"]
+  CvdGenericCommandHandler -> cvd_host_bugreport [label = "fork/exec"]
+}

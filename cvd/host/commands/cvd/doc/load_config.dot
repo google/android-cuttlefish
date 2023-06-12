@@ -1,0 +1,22 @@
+digraph {
+  rankdir = "LR"
+
+  subgraph cluster_cvd_client {
+    label = "cvd (client)"
+    CvdClient
+  }
+  subgraph cluster_cvd_server {
+    label = "cvd (server)"
+
+    CvdServer
+    CvdServerHandler [style = "dashed"]
+
+    Request [shape = "record", label = "<proxy> CvdServerHandlerProxy | CommandSequenceExecutor | CvdLoadConfigsCommand | CommandSequenceExecutor | <start> CvdStartCommandHandler"]
+  }
+  launch_cvd
+
+  CvdClient -> CvdServer [label = "AF_UNIX"]
+  CvdServer -> CvdServerHandler
+  CvdServerHandler -> Request:proxy
+  Request:start -> launch_cvd [label = "fork/exec"]
+}
