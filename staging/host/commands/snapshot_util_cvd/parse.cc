@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include "host/commands/suspend_cvd/parse.h"
+#include "host/commands/snapshot_util_cvd/parse.h"
 
 #include <iostream>
+#include <unordered_map>
 
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -25,11 +27,19 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char snapshot_cmd_help[] =
+    "Command to control regarding the snapshot operations: "
+    "suspend/resume/take";
+
 constexpr char instance_num_help[] = "Which instance to suspend.";
 
 constexpr char wait_for_launcher_help[] =
     "How many seconds to wait for the launcher to respond to the status "
     "command. A value of zero means wait indefinitely.";
+
+Flag SnapshotCmdFlag(std::string& value_buf) {
+  return GflagsCompatFlag("snapshot_cmd", value_buf).Help(snapshot_cmd_help);
+}
 
 Flag GetInt32Flag(const std::string& name, int& value_buf,
                   const std::string& help_msg) {
@@ -53,6 +63,16 @@ Result<Parsed> Parse(int argc, char** argv) {
   return parsed;
 }
 
+Result<SnapshotCmd> ConvertToSnapshotCmd(const std::string& input) {
+  std::unordered_map<std::string, SnapshotCmd> mapping{
+      {"suspend", SnapshotCmd::kSuspend},   {"resume", SnapshotCmd::kResume},
+      {"take", SnapshotCmd::kSnapshotTake}, {"unset", SnapshotCmd::kUnknown},
+      {"unknown", SnapshotCmd::kUnknown},
+  };
+  CF_EXPECT(Contains(mapping, input));
+  return mapping.at(input);
+}
+
 Result<Parsed> Parse(std::vector<std::string>& args) {
   Parsed parsed{
       .instance_num = GetInstance(),
@@ -60,12 +80,15 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   };
   std::vector<Flag> flags;
   bool help_xml = false;
+  std::string snapshot_op("unknown");
+  flags.push_back(SnapshotCmdFlag(snapshot_op));
   flags.push_back(InstanceNumFlag(parsed.instance_num));
   flags.push_back(WaitForLauncherFlag(parsed.wait_for_launcher));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());
   CF_EXPECT(ParseFlags(flags, args), "Flag parsing failed");
+  parsed.cmd = CF_EXPECT(ConvertToSnapshotCmd(snapshot_op));
   return parsed;
 }
 
