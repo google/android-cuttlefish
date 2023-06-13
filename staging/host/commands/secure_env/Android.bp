@@ -77,7 +77,6 @@ common_libsecure_srcs = [
         "insecure_fallback_storage.cpp",
         "json_serializable.cpp",
         "keymaster_responder.cpp",
-        "oemlock_responder.cpp",
         "primary_key_builder.cpp",
         "storage/storage.cpp",
         "tpm_attestation_record.cpp",
@@ -105,6 +104,8 @@ cc_library_host_static {
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",
         "device_tpm.cpp",
+        "oemlock/oemlock.cpp",
+        "oemlock/oemlock_responder.cpp",
         "storage/insecure_json_storage.cpp",
     ],
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
