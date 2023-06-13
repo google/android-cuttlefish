@@ -29,7 +29,6 @@ namespace cuttlefish {
 struct Parsed {
   int instance_num;
   int wait_for_launcher;
-  int boot_timeout;
   std::optional<android::base::LogSeverity> verbosity_level;
 };
 Result<Parsed> Parse(int argc, char** argv);
