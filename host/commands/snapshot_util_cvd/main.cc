@@ -41,6 +41,40 @@ Result<std::string> SerializeSuspendRequest() {
   return serialized;
 }
 
+Result<std::string> SerializeResumeRequest() {
+  run_cvd::ExtendedLauncherAction action_proto;
+  action_proto.mutable_resume();
+  std::string serialized;
+  CF_EXPECT(action_proto.SerializeToString(&serialized),
+            "Failed to serialize Resume Request protobuf.");
+  return serialized;
+}
+
+struct RequestInfo {
+  std::string serialized_data;
+  ExtendedActionType extended_action_type;
+};
+Result<RequestInfo> SerializeRequest(const SnapshotCmd subcmd) {
+  switch (subcmd) {
+    case SnapshotCmd::kSuspend: {
+      return RequestInfo{
+          .serialized_data = CF_EXPECT(SerializeSuspendRequest()),
+          .extended_action_type = ExtendedActionType::kSuspend,
+      };
+      break;
+    }
+    case SnapshotCmd::kResume: {
+      return RequestInfo{
+          .serialized_data = CF_EXPECT(SerializeResumeRequest()),
+          .extended_action_type = ExtendedActionType::kResume,
+      };
+      break;
+    }
+    default:
+      return CF_ERR("Operation not supported.");
+  }
+}
+
 Result<void> SuspendCvdMain(std::vector<std::string> args) {
   CF_EXPECT(!args.empty(), "No arguments was given");
   const auto prog_path = args.front();
@@ -53,17 +87,18 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
       *config, parsed.instance_num, parsed.wait_for_launcher));
 
   LOG(INFO) << "Requesting suspend";
-  auto serialized_data = CF_EXPECT(SerializeSuspendRequest());
-  CF_EXPECT(WriteLauncherActionWithData(
-      monitor_socket, LauncherAction::kExtended, ExtendedActionType::kSuspend,
-      std::move(serialized_data)));
+  auto [serialized_data, extended_type] =
+      CF_EXPECT(SerializeRequest(parsed.cmd));
+  CF_EXPECT(
+      WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
+                                  extended_type, std::move(serialized_data)));
 
   LauncherResponse suspend_response =
       CF_EXPECT(ReadLauncherResponse(monitor_socket));
-  std::string response_error = fmt::format(
-      "Received \"{}\" response from launcher monitor for suspend request",
-      static_cast<char>(suspend_response));
-  CF_EXPECT(suspend_response == LauncherResponse::kSuccess, response_error);
+  CF_EXPECTF(suspend_response == LauncherResponse::kSuccess,
+             "Received \"{}\" response from launcher monitor for \""
+             "{}\" request.",
+             static_cast<char>(suspend_response), static_cast<int>(parsed.cmd));
   LOG(INFO) << "Suspend was successful.";
   return {};
 }
