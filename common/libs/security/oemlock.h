@@ -23,7 +23,9 @@ namespace secure_env {
 
 enum class OemLockField : uint32_t {
   ALLOWED_BY_CARRIER = 0,
-  ALLOWED_BY_DEVICE = 1,
+  ALLOWED_BY_DEVICE,
+  ALLOWED,
+  LOCKED,
 };
 
 }  // namespace secure_env
