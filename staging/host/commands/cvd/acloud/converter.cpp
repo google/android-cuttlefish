@@ -136,17 +136,21 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
  * function effectively removes one level of quoting from its inputs while
  * making the split.
  */
-Result<std::vector<std::string>> BashTokenize(const std::string& str) {
+Result<std::vector<std::string>> BashTokenize(
+    const std::string& str, SubprocessWaiter& waiter,
+    std::function<Result<void>(void)> callback_unlock) {
   Command command("bash");
   command.AddParameter("-c");
   command.AddParameter("printf '%s\n' ", str);
-  std::string stdout_str;
-  std::string stderr_str;
-  auto ret = RunWithManagedStdio(std::move(command), nullptr, &stdout_str,
-                                 &stderr_str);
-  CF_EXPECT(ret == 0,
-            "printf fail \"" << stdout_str << "\", \"" << stderr_str << "\"");
-  return android::base::Split(stdout_str, "\n");
+  RunWithManagedIoParam param_bash {
+    .cmd_ = std::move(command),
+    .redirect_stdout_ = true,
+    .redirect_stderr_ = true,
+    .stdin_ = nullptr,
+    .callback_ = callback_unlock
+  };
+  RunOutput output_bash = CF_EXPECT(waiter.RunWithManagedStdioInterruptable(param_bash));
+  return android::base::Split(output_bash.stdout_, "\n");
 }
 
 }  // namespace
@@ -505,7 +509,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       host_dir += (build + target);
     } else {
       given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget(
-          "git_", waiter, callback_unlock,callback_lock));
+          "git_", waiter, callback_unlock, callback_lock));
       host_dir += (given_branch_target_info->branch_str +
                    given_branch_target_info->build_target_str);
     }
@@ -742,12 +746,16 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   if (launch_args) {
-    for (const auto& arg : CF_EXPECT(BashTokenize(*launch_args))) {
+    callback_lock();
+    for (const auto& arg : CF_EXPECT(BashTokenize(
+             *launch_args, waiter, callback_unlock))) {
       start_command.add_args(arg);
     }
   }
   if (acloud_config.launch_args != "") {
-    for (const auto& arg : CF_EXPECT(BashTokenize(acloud_config.launch_args))) {
+    callback_lock();
+    for (const auto& arg : CF_EXPECT(BashTokenize(
+             acloud_config.launch_args, waiter, callback_unlock))) {
       start_command.add_args(arg);
     }
   }
