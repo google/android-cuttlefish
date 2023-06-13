@@ -62,9 +62,7 @@ class FastbootProxy : public CommandSource {
     return {};
   }
 
-  bool Setup() override {
-    return true;
-  }
+  Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig::InstanceSpecific& instance_;
   const FastbootConfig& fastboot_config_;
