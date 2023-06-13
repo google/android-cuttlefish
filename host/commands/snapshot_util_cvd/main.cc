@@ -24,7 +24,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/suspend_cvd/parse.h"
+#include "host/commands/snapshot_util_cvd/parse.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "run_cvd.pb.h"

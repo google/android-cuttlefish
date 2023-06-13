@@ -18,10 +18,10 @@ package {
 }
 
 cc_binary_host {
-    name: "suspend_cvd",
+    name: "snapshot_util_cvd",
     srcs: [
+        "main.cc",
         "parse.cc",
-        "suspend_cvd.cc",
     ],
     shared_libs: [
         "libbase",

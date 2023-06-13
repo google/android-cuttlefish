@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/suspend_cvd/parse.h"
+#include "host/commands/snapshot_util_cvd/parse.h"
 
 #include <iostream>
 
