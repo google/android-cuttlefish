@@ -51,7 +51,7 @@ class EchoServer : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
+  Result<void> ResultSetup() override { return {}; }
 
   GrpcSocketCreator& grpc_socket_;
 };
