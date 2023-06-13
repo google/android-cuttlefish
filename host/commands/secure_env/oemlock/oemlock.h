@@ -17,6 +17,10 @@
 
 #pragma once
 
+#include "common/libs/utils/result.h"
+
+#include "host/commands/secure_env/storage/storage.h"
+
 namespace cuttlefish {
 namespace oemlock {
 
@@ -28,10 +32,19 @@ namespace oemlock {
 */
 class OemLock {
  public:
-  virtual bool IsOemUnlockAllowedByCarrier() const = 0;
-  virtual bool IsOemUnlockAllowedByDevice() const = 0;
-  virtual void SetOemUnlockAllowedByCarrier(bool allowed) = 0;
-  virtual void SetOemUnlockAllowedByDevice(bool allowed) = 0;
+  OemLock(secure_env::Storage& storage);
+
+  Result<bool> IsOemUnlockAllowedByCarrier() const;
+  Result<bool> IsOemUnlockAllowedByDevice() const;
+  Result<bool> IsOemUnlockAllowed() const;
+  Result<bool> IsOemLocked() const;
+  Result<void> SetOemUnlockAllowedByCarrier(bool allowed);
+  Result<void> SetOemUnlockAllowedByDevice(bool allowed);
+  // TODO(b/286558252): add ConfirmationUI token to the signature
+  Result<void> SetOemLocked(bool locked);
+
+ private:
+  secure_env::Storage& storage_;
 };
 
 } // namespace oemlock

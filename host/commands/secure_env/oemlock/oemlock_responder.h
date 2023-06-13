@@ -17,7 +17,7 @@
 
 #include "common/libs/security/channel.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/secure_env/oemlock.h"
+#include "host/commands/secure_env/oemlock/oemlock.h"
 
 namespace cuttlefish {
 namespace oemlock {
