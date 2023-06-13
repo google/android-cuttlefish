@@ -166,12 +166,7 @@ func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 		return nil, err
 	}
 	stdout := &bytes.Buffer{}
-	cvdCmd := cvdCommand{
-		execContext: m.execContext,
-		cvdBin:      m.paths.CVDBin(),
-		args:        []string{"fleet"},
-		stdout:      stdout,
-	}
+	cvdCmd := newCVDCommand(m.execContext, m.paths.CVDBin(), []string{"fleet"}, cvdCommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
 	if err != nil {
 		return nil, err
@@ -619,32 +614,29 @@ type startCVDParams struct {
 }
 
 func (h *startCVDHandler) Start(p startCVDParams) error {
-	instanceNumsArg := ""
+	args := []string{groupNameArg, "start", daemonArg, reportAnonymousUsageStatsArg}
 	if len(p.InstanceNumbers) == 1 {
 		// Use legacy `--base_instance_num` when multi-vd is not requested.
-		instanceNumsArg = fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0])
+		args = append(args, fmt.Sprintf("--base_instance_num=%d", p.InstanceNumbers[0]))
 	} else {
-		instanceNumsArg = fmt.Sprintf("--num_instances=%s", strings.Join(SliceItoa(p.InstanceNumbers), ","))
+		args = append(args, fmt.Sprintf("--num_instances=%s", strings.Join(SliceItoa(p.InstanceNumbers), ",")))
 	}
-	imgDirArg := fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir)
-	cvdCmd := cvdCommand{
-		execContext:    h.ExecContext,
-		androidHostOut: p.MainArtifactsDir,
-		home:           p.RuntimeDir,
-		cvdBin:         h.CVDBin,
-		args: []string{groupNameArg, "start",
-			daemonArg, reportAnonymousUsageStatsArg, instanceNumsArg, imgDirArg},
-		timeout: h.Timeout,
-	}
+	args = append(args, fmt.Sprintf("--system_image_dir=%s", p.MainArtifactsDir))
 	if len(p.InstanceNumbers) > 1 {
-		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--num_instances=%d", len(p.InstanceNumbers)))
+		args = append(args, fmt.Sprintf("--num_instances=%d", len(p.InstanceNumbers)))
 	}
 	if p.KernelDir != "" {
-		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
+		args = append(args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
 	}
 	if p.BootloaderDir != "" {
-		cvdCmd.args = append(cvdCmd.args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
+		args = append(args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
 	}
+	opts := cvdCommandOpts{
+		AndroidHostOut: p.MainArtifactsDir,
+		Home:           p.RuntimeDir,
+		Timeout:        h.Timeout,
+	}
+	cvdCmd := newCVDCommand(h.ExecContext, h.CVDBin, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
 		return fmt.Errorf("launch cvd stage failed: %w", err)
@@ -686,15 +678,27 @@ const (
 	envVarHome           = "HOME"
 )
 
+type cvdCommandOpts struct {
+	AndroidHostOut string
+	Home           string
+	Stdout         io.Writer
+	Timeout        time.Duration
+}
+
 type cvdCommand struct {
-	execContext    ExecContext
-	androidHostOut string
-	home           string
-	cvdBin         string
-	args           []string
-	stdout         io.Writer
-	// if zero, there's no timeout logic.
-	timeout time.Duration
+	execContext ExecContext
+	cvdBin      string
+	args        []string
+	opts        cvdCommandOpts
+}
+
+func newCVDCommand(execContext ExecContext, cvdBin string, args []string, opts cvdCommandOpts) *cvdCommand {
+	return &cvdCommand{
+		execContext: execContext,
+		cvdBin:      cvdBin,
+		args:        args,
+		opts:        opts,
+	}
 }
 
 type cvdCommandExecErr struct {
@@ -726,19 +730,19 @@ func (c *cvdCommand) Run() error {
 	}
 	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
 	// so the cancel logic could be customized to continue sending the SIGINT signal.
-	cmd := buildCvdCommand(context.TODO(), c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
+	cmd := buildCvdCommand(context.TODO(), c.execContext, c.opts.AndroidHostOut, c.opts.Home, c.cvdBin, c.args...)
 	stderr := &bytes.Buffer{}
-	cmd.Stdout = c.stdout
+	cmd.Stdout = c.opts.Stdout
 	cmd.Stderr = stderr
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 	var timedOut atomic.Value
 	timedOut.Store(false)
-	if c.timeout != 0 {
+	if c.opts.Timeout != 0 {
 		go func() {
 			select {
-			case <-time.After(c.timeout):
+			case <-time.After(c.opts.Timeout):
 				// NOTE: Do not use SIGKILL to terminate cvd commands. cvd commands are run using
 				// `sudo` and contrary to SIGINT, SIGKILL is not relayed to child processes.
 				if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
