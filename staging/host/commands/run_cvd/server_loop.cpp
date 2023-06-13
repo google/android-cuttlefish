@@ -29,6 +29,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/command_util/util.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
@@ -90,10 +91,18 @@ class ServerLoopImpl : public ServerLoop,
     while (true) {
       // TODO: use select to handle simultaneous connections.
       auto client = SharedFD::Accept(*server_);
-      LauncherAction action;
-      while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
-        if (action != LauncherAction::kExtended) {
-          HandleActionWithNoData(action, client, process_monitor);
+      while (client->IsOpen()) {
+        auto launcher_action_with_info_result =
+            ReadLauncherActionFromFd(client);
+        if (!launcher_action_with_info_result.ok()) {
+          LOG(ERROR) << "Reading launcher command from monitor failed.";
+          LOG(DEBUG) << launcher_action_with_info_result.error().Trace();
+          break;
+        }
+        auto launcher_action = std::move(*launcher_action_with_info_result);
+        if (launcher_action.action != LauncherAction::kExtended) {
+          HandleActionWithNoData(launcher_action.action, client,
+                                 process_monitor);
           continue;
         }
         // This behavior follows LOG(FATAL) lines in the kRestart handling code

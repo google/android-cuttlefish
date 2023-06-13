@@ -62,13 +62,14 @@ cc_binary {
         "libnl",
     ],
     static_libs: [
-        "libcuttlefish_host_config",
+        "libcuttlefish_command_util",
+	"libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
         "libcuttlefish_host_config_fastboot",
-        "libcuttlefish_vm_manager",
-        "libcuttlefish_msg_queue",
         "libcuttlefish_metrics",
+        "libcuttlefish_msg_queue",
         "libcuttlefish_utils",
+        "libcuttlefish_vm_manager",
         "libgflags",
     ],
     defaults: [
