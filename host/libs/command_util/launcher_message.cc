@@ -117,12 +117,49 @@ Result<void> LauncherActionMessage::WriteToFd(const SharedFD& fd) {
     return {};
   }
   CF_EXPECT(WriteSizeOfT(fd, type_, "ExtendedActionType"));
-  const std::uint32_t length = serialized_data_.size();
+  const SerializedDataSizeType length = serialized_data_.size();
   CF_EXPECT(WriteSizeOfT(fd, length, "Length of serialized data"));
   if (!serialized_data_.empty()) {
     CF_EXPECT(WriteBuffer(fd, serialized_data_, "serialized data"));
   }
   return {};
+}
+
+Result<LauncherActionMessage> LauncherActionMessage::ReadFromFd(
+    const SharedFD& fd) {
+  CF_EXPECT(fd->IsOpen(), "The file descriptor for ReadFromFd is not open.");
+  LauncherAction action;
+  ssize_t n_bytes = 0;
+  CF_EXPECTF((n_bytes = fd->Read(&action, sizeof(action))) > 0,
+             "The returned n_bytes is not ", std::to_string(sizeof(action)),
+             " but ", std::to_string(n_bytes));
+  if (IsShortAction(action)) {
+    return CF_EXPECT(LauncherActionMessage::Create(action));
+  }
+  ExtendedActionType type;
+  CF_EXPECTF((n_bytes = fd->Read(&type, sizeof(type))) > 0,
+             "The returned n_bytes is not ", std::to_string(sizeof(type)),
+             " but ", std::to_string(n_bytes));
+  SerializedDataSizeType length = 0;
+  CF_EXPECTF((n_bytes = fd->Read(&length, sizeof(length))) > 0,
+             "The returned n_bytes is not ", std::to_string(sizeof(length)),
+             " but ", std::to_string(n_bytes));
+  if (length == 0) {
+    return CF_EXPECT(LauncherActionMessage::Create(action, type, ""));
+  }
+  std::string serialized_data(length, 0);
+  CF_EXPECTF((n_bytes = ReadExact(fd, &serialized_data)) > 0,
+             "The returned n_bytes is not ", std::to_string(sizeof(length)),
+             " but ", std::to_string(n_bytes));
+  auto message =
+      CF_EXPECT(LauncherActionMessage::Create(action, type, serialized_data));
+  return message;
+}
+
+LauncherAction LauncherActionMessage::Action() const { return action_; }
+ExtendedActionType LauncherActionMessage::Type() const { return type_; }
+const std::string& LauncherActionMessage::SerializedData() const {
+  return serialized_data_;
 }
 
 }  // namespace run_cvd_msg_impl
