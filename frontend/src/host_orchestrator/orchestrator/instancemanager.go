@@ -29,6 +29,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -723,24 +724,35 @@ func (c *cvdCommand) Run() error {
 	if err := c.startCVDServer(); err != nil {
 		return err
 	}
-	ctx := context.Background()
-	if c.timeout != 0 {
-		var cancelFn context.CancelFunc
-		ctx, cancelFn = context.WithTimeout(ctx, c.timeout)
-		// Need to call this once the work is done to release resources.
-		defer cancelFn()
-	}
-	cmd := buildCvdCommand(ctx, c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
+	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
+	// so the cancel logic could be customized to continue sending the SIGINT signal.
+	cmd := buildCvdCommand(context.TODO(), c.execContext, c.androidHostOut, c.home, c.cvdBin, c.args...)
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = c.stdout
 	cmd.Stderr = stderr
-	err := cmd.Run()
-	logStderr(cmd, stderr.String())
-	if ctx.Err() == context.DeadlineExceeded {
-		// The command is killed by a signal in these cases, but the real failure is the timeout.
-		return &cvdCommandTimeoutErr{c.args}
+	if err := cmd.Start(); err != nil {
+		return err
 	}
-	if err != nil {
+	var timedOut atomic.Value
+	timedOut.Store(false)
+	if c.timeout != 0 {
+		go func() {
+			select {
+			case <-time.After(c.timeout):
+				// NOTE: Do not use SIGKILL to terminate cvd commands. cvd commands are run using
+				// `sudo` and contrary to SIGINT, SIGKILL is not relayed to child processes.
+				if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
+					log.Printf("error sending SIGINT signal %+v", err)
+				}
+				timedOut.Store(true)
+			}
+		}()
+	}
+	if err := cmd.Wait(); err != nil {
+		logStderr(cmd, stderr.String())
+		if timedOut.Load().(bool) {
+			return &cvdCommandTimeoutErr{c.args}
+		}
 		return &cvdCommandExecErr{c.args, stderr.String(), err}
 	}
 	return nil
