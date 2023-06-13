@@ -36,7 +36,7 @@ class Feature {
 
   static Result<void> TopologicalVisit(
       const std::unordered_set<Subclass*>& features,
-      const std::function<bool(Subclass*)>& callback);
+      const std::function<Result<void>(Subclass*)>& callback);
 
  private:
   virtual std::unordered_set<Subclass*> Dependencies() const = 0;
@@ -66,7 +66,7 @@ class FlagFeature : public Feature<FlagFeature> {
   // Must be executed in dependency order following Dependencies(). Expected to
   // mutate the `flags` argument to remove handled flags, and possibly introduce
   // new flag values (e.g. from a file).
-  virtual bool Process(std::vector<std::string>& flags) = 0;
+  virtual Result<void> Process(std::vector<std::string>& flags) = 0;
 
   // TODO(schuffelen): Migrate the xml help to human-readable help output after
   // the gflags migration is done.
@@ -78,7 +78,7 @@ class FlagFeature : public Feature<FlagFeature> {
 template <typename Subclass>
 Result<void> Feature<Subclass>::TopologicalVisit(
     const std::unordered_set<Subclass*>& features,
-    const std::function<bool(Subclass*)>& callback) {
+    const std::function<Result<void>(Subclass*)>& callback) {
   enum class Status { UNVISITED, VISITING, VISITED };
   std::unordered_map<Subclass*, Status> features_status;
   for (const auto& feature : features) {
