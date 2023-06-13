@@ -35,6 +35,7 @@
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/inject.h"
+#include "run_cvd.pb.h"
 
 namespace cuttlefish {
 
@@ -105,12 +106,13 @@ class ServerLoopImpl : public ServerLoop,
                                  process_monitor);
           continue;
         }
-        auto result = HandleSuspend(launcher_action, client);
+        auto result = HandleExtended(launcher_action, client);
         if (!result.ok()) {
           LOG(ERROR) << "Failed to handle suspend request.";
           LOG(DEBUG) << result.error().Trace();
         }
-        // suspend is one-time request, so it's okay to close the connection
+        // extended operations for now are 1 time request-response exchanges.
+        // thus, we will close the client FD.
         client->Close();
       }
     }
@@ -131,13 +133,45 @@ class ServerLoopImpl : public ServerLoop,
     return {};
   }
 
-  Result<void> HandleSuspend(const LauncherActionInfo& action_info,
-                             const SharedFD& client) {
+  Result<void> HandleExtended(const LauncherActionInfo& action_info,
+                              const SharedFD& client) {
     CF_EXPECT(action_info.action == LauncherAction::kExtended);
-    CF_EXPECT(action_info.type == ExtendedActionType::kSuspend,
-              "Only kSuspend is implemented at the moment.");
-    CF_EXPECT_EQ(action_info.serialized_data, "suspend");
+    switch (action_info.type) {
+      case ExtendedActionType::kSuspend: {
+        CF_EXPECT(HandleSuspend(action_info.serialized_data, client));
+        return {};
+      }
+      case ExtendedActionType::kResume: {
+        CF_EXPECT(HandleResume(action_info.serialized_data, client));
+        return {};
+      }
+      default:
+        return CF_ERR("Unsupported ExtendedActionType");
+    }
+  }
+
+  Result<void> HandleSuspend(const std::string& serialized_data,
+                             const SharedFD& client) {
+    run_cvd::ExtendedLauncherAction extended_action;
+    CF_EXPECT(extended_action.ParseFromString(serialized_data),
+              "Failed to load ExtendedLauncherAction proto.");
+    CF_EXPECT_EQ(extended_action.actions_case(),
+                 run_cvd::ExtendedLauncherAction::ActionsCase::kSuspend);
     LOG(INFO) << "Suspend is requested but not yet implemented.";
+    auto response = LauncherResponse::kSuccess;
+    CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
+                 "Failed to wrote the suspend response.");
+    return {};
+  }
+
+  Result<void> HandleResume(const std::string& serialized_data,
+                            const SharedFD& client) {
+    run_cvd::ExtendedLauncherAction extended_action;
+    CF_EXPECT(extended_action.ParseFromString(serialized_data),
+              "Failed to load ExtendedLauncherAction proto.");
+    CF_EXPECT_EQ(extended_action.actions_case(),
+                 run_cvd::ExtendedLauncherAction::ActionsCase::kResume);
+    LOG(INFO) << "Resume is requested but not yet implemented.";
     auto response = LauncherResponse::kSuccess;
     CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
                  "Failed to wrote the suspend response.");
