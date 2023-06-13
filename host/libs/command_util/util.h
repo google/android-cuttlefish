@@ -50,6 +50,14 @@ Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
                                          const ExtendedActionType type,
                                          std::string serialized_data);
 
+struct LauncherActionInfo {
+  LauncherAction action;
+  ExtendedActionType type;
+  std::string serialized_data;
+};
+Result<LauncherActionInfo> ReadLauncherActionFromFd(
+    const SharedFD& monitor_socket);
+
 Result<void> WaitForRead(const SharedFD& monitor_socket,
                          const int timeout_seconds);
 
