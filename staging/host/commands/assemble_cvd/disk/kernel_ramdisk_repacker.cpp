@@ -127,21 +127,17 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
         google::FlagSettingMode::SET_FLAGS_DEFAULT);
     return true;
   }
-  bool Setup() override {
-    if (!FileHasContent(instance_.boot_image())) {
-      LOG(ERROR) << "File not found: " << instance_.boot_image();
-      return false;
-    }
+  Result<void> ResultSetup() override {
+    CF_EXPECTF(FileHasContent(instance_.boot_image()), "File not found: {}",
+               instance_.boot_image());
     // The init_boot partition is be optional for testing boot.img
     // with the ramdisk inside.
     if (!FileHasContent(instance_.init_boot_image())) {
       LOG(WARNING) << "File not found: " << instance_.init_boot_image();
     }
 
-    if (!FileHasContent(instance_.vendor_boot_image())) {
-      LOG(ERROR) << "File not found: " << instance_.vendor_boot_image();
-      return false;
-    }
+    CF_EXPECTF(FileHasContent(instance_.vendor_boot_image()),
+               "File not found: {}", instance_.vendor_boot_image());
 
     // Repacking a boot.img doesn't work with Gem5 because the user must always
     // specify a vmlinux instead of an arm64 Image, and that file can be too
@@ -151,13 +147,9 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
     if (instance_.kernel_path().size() &&
         config_.vm_manager() != Gem5Manager::name()) {
       const std::string new_boot_image_path = instance_.new_boot_image();
-      bool success =
-          RepackBootImage(instance_.kernel_path(), instance_.boot_image(),
-                          new_boot_image_path, instance_.instance_dir());
-      if (!success) {
-        LOG(ERROR) << "Failed to regenerate the boot image with the new kernel";
-        return false;
-      }
+      CF_EXPECT(RepackBootImage(instance_.kernel_path(), instance_.boot_image(),
+                                new_boot_image_path, instance_.instance_dir()),
+                "Failed to regenerate the boot image with the new kernel");
       SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
                                    google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
@@ -170,17 +162,14 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
         const auto superimg_build_dir = instance_.instance_dir() + "/superimg";
         const auto ramdisk_repacked =
             instance_.instance_dir() + "/ramdisk_repacked";
-        if (!Copy(instance_.initramfs_path(), ramdisk_repacked)) {
-          LOG(ERROR) << "Failed to copy " << instance_.initramfs_path()
-                     << " to " << ramdisk_repacked;
-          return false;
-        }
+        CF_EXPECTF(Copy(instance_.initramfs_path(), ramdisk_repacked),
+                   "Failed to copy {} to {}", instance_.initramfs_path(),
+                   ramdisk_repacked);
         const auto vendor_dlkm_build_dir = superimg_build_dir + "/vendor_dlkm";
         const auto system_dlkm_build_dir = superimg_build_dir + "/system_dlkm";
-        if (!RepackSuperAndVbmeta(superimg_build_dir, vendor_dlkm_build_dir,
-                                  system_dlkm_build_dir, ramdisk_repacked)) {
-          return false;
-        }
+        CF_EXPECT(
+            RepackSuperAndVbmeta(superimg_build_dir, vendor_dlkm_build_dir,
+                                 system_dlkm_build_dir, ramdisk_repacked));
         bool success = RepackVendorBootImage(
             ramdisk_repacked, instance_.vendor_boot_image(),
             new_vendor_boot_image_path, config_.assembly_dir(),
@@ -192,21 +181,18 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
           // This control flow implies a kernel with all configs built in.
           // If it's just the kernel, repack the vendor boot image without a
           // ramdisk.
-          bool success = RepackVendorBootImageWithEmptyRamdisk(
-              instance_.vendor_boot_image(), new_vendor_boot_image_path,
-              config_.assembly_dir(), instance_.bootconfig_supported());
-          if (!success) {
-            LOG(ERROR) << "Failed to regenerate the vendor boot image without "
-                          "a ramdisk";
-            return false;
-          }
+          CF_EXPECT(
+              RepackVendorBootImageWithEmptyRamdisk(
+                  instance_.vendor_boot_image(), new_vendor_boot_image_path,
+                  config_.assembly_dir(), instance_.bootconfig_supported()),
+              "Failed to regenerate the vendor boot image without a ramdisk");
         }
         SetCommandLineOptionWithMode(
             "vendor_boot_image", new_vendor_boot_image_path.c_str(),
             google::FlagSettingMode::SET_FLAGS_DEFAULT);
       }
     }
-    return true;
+    return {};
   }
 
  private:

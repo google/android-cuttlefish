@@ -131,18 +131,15 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     if (instance_.ap_boot_flow() == CuttlefishConfig::InstanceSpecific::APBootFlow::Grub) {
-      if (!PrepareBootEnvImage(instance_.ap_uboot_env_image_path(),
-          CuttlefishConfig::InstanceSpecific::BootFlow::Linux)) {
-        return false;
-      }
+      CF_EXPECT(PrepareBootEnvImage(
+          instance_.ap_uboot_env_image_path(),
+          CuttlefishConfig::InstanceSpecific::BootFlow::Linux));
     }
-    if (!PrepareBootEnvImage(instance_.uboot_env_image_path(), instance_.boot_flow())) {
-      return false;
-    }
-
-    return true;
+    CF_EXPECT(PrepareBootEnvImage(instance_.uboot_env_image_path(),
+                                  instance_.boot_flow()));
+    return {};
   }
 
   std::unordered_map<std::string, std::string> ReplaceKernelBootArgs(
