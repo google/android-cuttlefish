@@ -197,24 +197,11 @@ class InitializeDataImageImpl : public InitializeDataImage {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
-    auto action = ChooseAction();
-    if (!action.ok()) {
-      LOG(ERROR) << "Failed to select a userdata processing action: "
-                 << action.error().Message();
-      LOG(DEBUG) << "Failed to select a userdata processing action: "
-                 << action.error().Trace();
-      return false;
-    }
-    auto result = EvaluateAction(*action);
-    if (!result.ok()) {
-      LOG(ERROR) << "Failed to evaluate userdata action: "
-                 << result.error().Message();
-      LOG(DEBUG) << "Failed to evaluate userdata action: "
-                 << result.error().Trace();
-      return false;
-    }
-    return true;
+  Result<void> ResultSetup() override {
+    auto action = CF_EXPECT(ChooseAction(),
+                            "Failed to select a userdata processing action");
+    CF_EXPECT(EvaluateAction(action), "Failed to evaluate userdata action");
+    return {};
   }
 
  private:
@@ -310,19 +297,17 @@ class InitializeMiscImageImpl : public InitializeMiscImage {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     if (FileHasContent(instance_.new_misc_image())) {
       LOG(DEBUG) << "misc partition image already exists";
-      return true;
+      return {};
     }
 
     LOG(DEBUG) << "misc partition image: creating empty at \""
                << instance_.new_misc_image() << "\"";
-    if (!CreateBlankImage(instance_.new_misc_image(), 1 /* mb */, "none")) {
-      LOG(ERROR) << "Failed to create misc image";
-      return false;
-    }
-    return true;
+    CF_EXPECT(CreateBlankImage(instance_.new_misc_image(), 1 /* mb */, "none"),
+              "Failed to create misc image");
+    return {};
   }
 
  private:
@@ -353,23 +338,18 @@ class InitializeEspImageImpl : public InitializeEspImage {
   }
 
  protected:
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     if (EspRequiredForAPBootFlow()) {
       LOG(DEBUG) << "creating esp_image: " << instance_.ap_esp_image_path();
-      if (!BuildAPImage()) {
-        return false;
-      }
+      CF_EXPECT(BuildAPImage());
     }
     const auto is_not_gem5 = config_.vm_manager() != vm_manager::Gem5Manager::name();
     const auto esp_required_for_boot_flow = EspRequiredForBootFlow();
     if (is_not_gem5 && esp_required_for_boot_flow) {
       LOG(DEBUG) << "creating esp_image: " << instance_.otheros_esp_image_path();
-      if (!BuildOSImage()) {
-        return false;
-      }
+      CF_EXPECT(BuildOSImage());
     }
-
-    return true;
+    return {};
   }
 
  private:
