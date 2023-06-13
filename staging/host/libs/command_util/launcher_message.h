@@ -30,6 +30,7 @@ namespace run_cvd_msg_impl {
 
 class LauncherActionMessage {
  public:
+  using SerializedDataSizeType = std::uint32_t;
   /**
    * supported for backward compatibility, so only the following are accepted:
    *  kPowerwash, kRestart, kStatus, kStop
@@ -40,6 +41,11 @@ class LauncherActionMessage {
                                               const ExtendedActionType type,
                                               std::string serialized_data);
   Result<void> WriteToFd(const SharedFD& fd);
+  static Result<LauncherActionMessage> ReadFromFd(const SharedFD& fd);
+
+  LauncherAction Action() const;
+  ExtendedActionType Type() const;
+  const std::string& SerializedData() const;
 
  private:
   LauncherActionMessage(const LauncherAction action,
