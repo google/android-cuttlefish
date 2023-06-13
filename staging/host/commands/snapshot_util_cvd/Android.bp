@@ -17,11 +17,11 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "suspend_cvd",
+cc_binary_host {
+    name: "snapshot_util_cvd",
     srcs: [
+        "main.cc",
         "parse.cc",
-        "suspend_cvd.cc",
     ],
     shared_libs: [
         "libbase",
@@ -32,7 +32,9 @@ cc_binary {
     static_libs: [
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
+	"libcuttlefish_run_cvd_proto",
         "libgflags",
+	"libprotobuf-cpp-full",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }

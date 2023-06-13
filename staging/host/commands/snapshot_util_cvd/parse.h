@@ -26,7 +26,15 @@
 
 namespace cuttlefish {
 
+enum class SnapshotCmd : int {
+  kUnknown = 0,
+  kSuspend = 1,
+  kResume = 2,
+  kSnapshotTake = 3,
+};
+
 struct Parsed {
+  SnapshotCmd cmd;
   int instance_num;
   int wait_for_launcher;
   std::optional<android::base::LogSeverity> verbosity_level;
