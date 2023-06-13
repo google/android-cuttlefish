@@ -52,21 +52,15 @@ class GeneratePersistentVbmetaImpl : public GeneratePersistentVbmeta {
     };
   }
 
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     if (!instance_.protected_vm()) {
-      if (!PrepareVBMetaImage(instance_.vbmeta_path(),
-                              instance_.bootconfig_supported())) {
-        return false;
-      }
+      CF_EXPECT(PrepareVBMetaImage(instance_.vbmeta_path(),
+                                   instance_.bootconfig_supported()));
     }
-
     if (instance_.ap_boot_flow() == APBootFlow::Grub) {
-      if (!PrepareVBMetaImage(instance_.ap_vbmeta_path(), false)) {
-        return false;
-      }
+      CF_EXPECT(PrepareVBMetaImage(instance_.ap_vbmeta_path(), false));
     }
-
-    return true;
+    return {};
   }
 
   bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
