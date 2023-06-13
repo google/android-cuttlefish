@@ -84,6 +84,7 @@ bool LauncherActionMessage::IsSupportedType(const ExtendedActionType type) {
   std::set<ExtendedActionType> supported_action_types{
       ExtendedActionType::kUnused,
       ExtendedActionType::kSuspend,
+      ExtendedActionType::kResume,
   };
   return Contains(supported_action_types, type);
 }

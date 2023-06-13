@@ -18,21 +18,12 @@ syntax = "proto3";
 
 package cuttlefish.run_cvd;
 
-message Action {
+message ExtendedLauncherAction {
   oneof actions {
-    Powerwash powerwash = 1;
-    Restart restart = 2;
-    Status status = 3;
-    Stop stop = 4;
     Suspend suspend = 5;
+    Resume resume = 6;
   }
+  string verbosity = 20;
 }
-
-message Powerwash {}
-message Restart {}
-/**
- * TODO(*): Add fields to status action
- */
-message Status {}
-message Stop {}
 message Suspend {}
+message Resume {}
