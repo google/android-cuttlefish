@@ -45,9 +45,10 @@ bool SetupFeature::Setup() {
   }
   // Collect these in a vector first to trigger any obvious dependency issues.
   std::vector<SetupFeature*> ordered_features;
-  auto add_feature = [&ordered_features](SetupFeature* feature) -> bool {
+  auto add_feature =
+      [&ordered_features](SetupFeature* feature) -> Result<void> {
     ordered_features.push_back(feature);
-    return true;
+    return {};
   };
   CF_EXPECT(Feature<SetupFeature>::TopologicalVisit(enabled, add_feature),
             "Dependency issue detected, not performing any setup.");
@@ -65,8 +66,9 @@ Result<void> FlagFeature::ProcessFlags(
   std::unordered_set<FlagFeature*> features_set(features.begin(),
                                                 features.end());
   CF_EXPECT(features_set.count(nullptr) == 0, "Received null feature");
-  auto handle = [&flags](FlagFeature* feature) -> bool {
-    return feature->Process(flags);
+  auto handle = [&flags](FlagFeature* feature) -> Result<void> {
+    CF_EXPECT(feature->Process(flags));
+    return {};
   };
   CF_EXPECT(
       Feature<FlagFeature>::TopologicalVisit(features_set, handle),
