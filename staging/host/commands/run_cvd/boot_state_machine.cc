@@ -129,27 +129,22 @@ class ProcessLeader : public SetupFeature {
     // Report errors from this validation before we lose stderr from `--daemon`
     return {&validate_tap_};
   }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     /* These two paths result in pretty different process state, but both
      * achieve the same goal of making the current process the leader of a
      * process group, and are therefore grouped together. */
     if (instance_.run_as_daemon()) {
       foreground_launcher_pipe_ = DaemonizeLauncher(config_);
-      if (!foreground_launcher_pipe_->IsOpen()) {
-        return false;
-      }
+      CF_EXPECT(foreground_launcher_pipe_->IsOpen());
     } else {
       // Make sure the launcher runs in its own process group even when running
       // in the foreground
       if (getsid(0) != getpid()) {
-        int retval = setpgid(0, 0);
-        if (retval) {
-          PLOG(ERROR) << "Failed to create new process group: ";
-          return false;
-        }
+        CF_EXPECTF(setpgid(0, 0) == 0, "Failed to create new process group: {}",
+                   strerror(errno));
       }
     }
-    return true;
+    return {};
   }
 
   const CuttlefishConfig& config_;
@@ -189,29 +184,24 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         static_cast<SetupFeature*>(&kernel_log_pipe_provider_),
     };
   }
-  bool Setup() override {
+  Result<void> ResultSetup() override {
     interrupt_fd_ = SharedFD::Event();
-    if (!interrupt_fd_->IsOpen()) {
-      LOG(ERROR) << "Failed to open eventfd: " << interrupt_fd_->StrError();
-      return false;
-    }
+    CF_EXPECTF(interrupt_fd_->IsOpen(), "Failed to open eventfd: {}",
+               interrupt_fd_->StrError());
     fg_launcher_pipe_ = process_leader_.ForegroundLauncherPipe();
     if (FLAGS_reboot_notification_fd >= 0) {
       reboot_notification_ = SharedFD::Dup(FLAGS_reboot_notification_fd);
-      if (!reboot_notification_->IsOpen()) {
-        LOG(ERROR) << "Could not dup fd given for reboot_notification_fd";
-        return false;
-      }
+      CF_EXPECTF(reboot_notification_->IsOpen(),
+                 "Could not dup fd given for reboot_notification_fd: {}",
+                 reboot_notification_->StrError());
       close(FLAGS_reboot_notification_fd);
     }
     SharedFD boot_events_pipe = kernel_log_pipe_provider_.KernelLogPipe();
-    if (!boot_events_pipe->IsOpen()) {
-      LOG(ERROR) << "Could not get boot events pipe";
-      return false;
-    }
+    CF_EXPECTF(boot_events_pipe->IsOpen(), "Could not get boot events pipe: {}",
+               boot_events_pipe->StrError());
     boot_event_handler_ = std::thread(
         [this, boot_events_pipe]() { ThreadLoop(boot_events_pipe); });
-    return true;
+    return {};
   }
 
   void ThreadLoop(SharedFD boot_events_pipe) {
