@@ -109,7 +109,7 @@ cvd_host_tools = [
     "process_restarter",
     "restart_cvd",
     "root-canal",
-    "suspend_cvd",
+    "snapshot_util_cvd",
     "run_cvd",
     "secure_env",
     "sefcontext_compile",
