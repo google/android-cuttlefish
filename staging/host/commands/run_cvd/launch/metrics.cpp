@@ -49,7 +49,7 @@ class MetricsService : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
+  Result<void> ResultSetup() override { return {}; }
 
  private:
   const CuttlefishConfig& config_;
