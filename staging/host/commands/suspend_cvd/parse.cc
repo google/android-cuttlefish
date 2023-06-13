@@ -31,10 +31,6 @@ constexpr char wait_for_launcher_help[] =
     "How many seconds to wait for the launcher to respond to the status "
     "command. A value of zero means wait indefinitely.";
 
-constexpr char boot_timeout_help[] =
-    "How many seconds to wait for the device to "
-    "reboot.";
-
 Flag GetInt32Flag(const std::string& name, int& value_buf,
                   const std::string& help_msg) {
   return GflagsCompatFlag(name, value_buf).Help(help_msg);
@@ -49,10 +45,6 @@ Flag WaitForLauncherFlag(int& wait_for_launcher) {
                       wait_for_launcher_help);
 }
 
-Flag BootTimeoutFlag(int& boot_timeout) {
-  return GetInt32Flag("boot_timeout", boot_timeout, boot_timeout_help);
-}
-
 }  // namespace
 
 Result<Parsed> Parse(int argc, char** argv) {
@@ -65,13 +57,11 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   Parsed parsed{
       .instance_num = GetInstance(),
       .wait_for_launcher = 30,
-      .boot_timeout = 500,
   };
   std::vector<Flag> flags;
   bool help_xml = false;
   flags.push_back(InstanceNumFlag(parsed.instance_num));
   flags.push_back(WaitForLauncherFlag(parsed.wait_for_launcher));
-  flags.push_back(BootTimeoutFlag(parsed.boot_timeout));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
   flags.push_back(UnexpectedArgumentGuard());

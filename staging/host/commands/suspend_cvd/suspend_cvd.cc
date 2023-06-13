@@ -19,10 +19,14 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <fmt/core.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/suspend_cvd/parse.h"
+#include "host/libs/command_util/util.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {
@@ -32,12 +36,24 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
   const auto prog_path = args.front();
   args.erase(args.begin());
   auto parsed = CF_EXPECT(Parse(args));
-  std::cout << prog_path << " will suspend: cvd-" << parsed.instance_num
-            << std::endl
-            << "  wait_for_launcher: " << parsed.wait_for_launcher << std::endl
-            << "  boot_timeout     : " << parsed.boot_timeout << std::endl
-            << std::endl;
-  std::cout << "Actual Implementation is not yet ready." << std::endl;
+
+  const CuttlefishConfig* config =
+      CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
+  SharedFD monitor_socket = CF_EXPECT(GetLauncherMonitor(
+      *config, parsed.instance_num, parsed.wait_for_launcher));
+
+  LOG(INFO) << "Requesting suspend";
+  CF_EXPECT(WriteLauncherActionWithData(
+      monitor_socket, LauncherAction::kExtended, ExtendedActionType::kSuspend,
+      std::string("suspend")));
+
+  LauncherResponse suspend_response =
+      CF_EXPECT(ReadLauncherResponse(monitor_socket));
+  std::string response_error = fmt::format(
+      "Received \"{}\" response from launcher monitor for suspend request",
+      static_cast<char>(suspend_response));
+  CF_EXPECT(suspend_response == LauncherResponse::kSuccess, response_error);
+  LOG(INFO) << "Suspend was successful.";
   return {};
 }
 
@@ -49,8 +65,7 @@ int main(int argc, char** argv) {
   std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
   auto result = cuttlefish::SuspendCvdMain(std::move(all_args));
   if (!result.ok()) {
-    LOG(ERROR) << result.error().Message();
-    LOG(DEBUG) << result.error().Trace();
+    LOG(ERROR) << result.error().Trace();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

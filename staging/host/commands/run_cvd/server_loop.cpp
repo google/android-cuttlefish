@@ -105,9 +105,13 @@ class ServerLoopImpl : public ServerLoop,
                                  process_monitor);
           continue;
         }
-        // This behavior follows LOG(FATAL) lines in the kRestart handling code
-        LOG(FATAL) << "kExtended is not yet implemented";
-        continue;
+        auto result = HandleSuspend(launcher_action, client);
+        if (!result.ok()) {
+          LOG(ERROR) << "Failed to handle suspend request.";
+          LOG(DEBUG) << result.error().Trace();
+        }
+        // suspend is one-time request, so it's okay to close the connection
+        client->Close();
       }
     }
   }
@@ -124,6 +128,19 @@ class ServerLoopImpl : public ServerLoop,
                                           SOCK_STREAM, 0666);
     CF_EXPECTF(server_->IsOpen(), "Error when opening launcher server: {}",
                server_->StrError());
+    return {};
+  }
+
+  Result<void> HandleSuspend(const LauncherActionInfo& action_info,
+                             const SharedFD& client) {
+    CF_EXPECT(action_info.action == LauncherAction::kExtended);
+    CF_EXPECT(action_info.type == ExtendedActionType::kSuspend,
+              "Only kSuspend is implemented at the moment.");
+    CF_EXPECT_EQ(action_info.serialized_data, "suspend");
+    LOG(INFO) << "Suspend is requested but not yet implemented.";
+    auto response = LauncherResponse::kSuccess;
+    CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
+                 "Failed to wrote the suspend response.");
     return {};
   }
 
