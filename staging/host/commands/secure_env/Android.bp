@@ -79,6 +79,7 @@ common_libsecure_srcs = [
         "keymaster_responder.cpp",
         "oemlock_responder.cpp",
         "primary_key_builder.cpp",
+        "storage/storage.cpp",
         "tpm_attestation_record.cpp",
         "tpm_auth.cpp",
         "tpm_commands.cpp",
@@ -95,11 +96,16 @@ common_libsecure_srcs = [
         "tpm_serialize.cpp",
 ]
 
+// Things blocking us to use oemlock on windows:
+// 1. Missing transport implementation
+// 2. Missing file utils
+// 3. Base64 isn't supported (need for software oemlock implementation)
 cc_library_host_static {
     name: "libsecure_env_linux",
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",
         "device_tpm.cpp",
+        "storage/insecure_json_storage.cpp",
     ],
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
 }
