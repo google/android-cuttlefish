@@ -64,7 +64,7 @@ class OpenwrtControlServer : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
+  Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;

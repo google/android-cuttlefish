@@ -72,7 +72,6 @@ class Pica : public CommandSource {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() override { return true; }
 
   std::string pcap_dir_;
   const CuttlefishConfig& config_;
