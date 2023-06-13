@@ -17,7 +17,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
+cc_binary_host {
     name: "suspend_cvd",
     srcs: [
         "parse.cc",
@@ -32,7 +32,9 @@ cc_binary {
     static_libs: [
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
+	"libcuttlefish_run_cvd_proto",
         "libgflags",
+	"libprotobuf-cpp-full",
     ],
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }

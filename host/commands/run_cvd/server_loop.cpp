@@ -35,6 +35,7 @@
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/inject.h"
+#include "run_cvd.pb.h"
 
 namespace cuttlefish {
 
@@ -139,7 +140,11 @@ class ServerLoopImpl : public ServerLoop,
     CF_EXPECT(action_info.action == LauncherAction::kExtended);
     CF_EXPECT(action_info.type == ExtendedActionType::kSuspend,
               "Only kSuspend is implemented at the moment.");
-    CF_EXPECT_EQ(action_info.serialized_data, "suspend");
+    run_cvd::ExtendedLauncherAction extended_action;
+    CF_EXPECT(extended_action.ParseFromString(action_info.serialized_data),
+              "Failed to load ExtendedLauncherAction proto.");
+    CF_EXPECT_EQ(extended_action.actions_case(),
+                 run_cvd::ExtendedLauncherAction::ActionsCase::kSuspend);
     LOG(INFO) << "Suspend is requested but not yet implemented.";
     auto response = LauncherResponse::kSuccess;
     CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),

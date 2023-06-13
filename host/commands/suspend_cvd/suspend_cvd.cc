@@ -27,9 +27,19 @@
 #include "host/commands/suspend_cvd/parse.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "run_cvd.pb.h"
 
 namespace cuttlefish {
 namespace {
+
+Result<std::string> SerializeSuspendRequest() {
+  run_cvd::ExtendedLauncherAction action_proto;
+  action_proto.mutable_suspend();
+  std::string serialized;
+  CF_EXPECT(action_proto.SerializeToString(&serialized),
+            "Failed to serialize Suspend Request protobuf.");
+  return serialized;
+}
 
 Result<void> SuspendCvdMain(std::vector<std::string> args) {
   CF_EXPECT(!args.empty(), "No arguments was given");
@@ -43,9 +53,10 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
       *config, parsed.instance_num, parsed.wait_for_launcher));
 
   LOG(INFO) << "Requesting suspend";
+  auto serialized_data = CF_EXPECT(SerializeSuspendRequest());
   CF_EXPECT(WriteLauncherActionWithData(
       monitor_socket, LauncherAction::kExtended, ExtendedActionType::kSuspend,
-      std::string("suspend")));
+      std::move(serialized_data)));
 
   LauncherResponse suspend_response =
       CF_EXPECT(ReadLauncherResponse(monitor_socket));
