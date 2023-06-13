@@ -109,16 +109,13 @@ class ServerLoopImpl : public ServerLoop,
  private:
   bool Enabled() const override { return true; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  bool Setup() {
+  Result<void> ResultSetup() override {
     auto launcher_monitor_path = instance_.launcher_monitor_socket_path();
     server_ = SharedFD::SocketLocalServer(launcher_monitor_path.c_str(), false,
                                           SOCK_STREAM, 0666);
-    if (!server_->IsOpen()) {
-      LOG(ERROR) << "Error when opening launcher server: "
-                 << server_->StrError();
-      return false;
-    }
-    return true;
+    CF_EXPECTF(server_->IsOpen(), "Error when opening launcher server: {}",
+               server_->StrError());
+    return {};
   }
 
   void HandleActionWithNoData(const LauncherAction action,
