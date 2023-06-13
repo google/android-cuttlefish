@@ -101,7 +101,7 @@ type CVDToolInstanceManagerOpts struct {
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	UserArtifactsDirResolver UserArtifactsDirResolver
-	CVDExecTimeout           time.Duration
+	CVDStartTimeout          time.Duration
 	HostValidator            Validator
 	BuildAPIFactory          BuildAPIFactory
 	UUIDGen                  func() string
@@ -127,7 +127,7 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 		startCVDHandler: &startCVDHandler{
 			ExecContext: opts.ExecContext,
 			CVDBin:      opts.Paths.CVDBin(),
-			Timeout:     opts.CVDExecTimeout,
+			Timeout:     opts.CVDStartTimeout,
 		},
 		buildAPIFactory: opts.BuildAPIFactory,
 	}

@@ -140,7 +140,7 @@ func main() {
 		Paths:                    imPaths,
 		OperationManager:         om,
 		UserArtifactsDirResolver: uam,
-		CVDExecTimeout:           5 * time.Minute,
+		CVDStartTimeout:          5 * time.Minute,
 		HostValidator:            &orchestrator.HostValidator{ExecContext: exec.CommandContext},
 		BuildAPIFactory: func(credentials string) orchestrator.BuildAPI {
 			return orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL, credentials)
