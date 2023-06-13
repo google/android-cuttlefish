@@ -16,6 +16,7 @@
 
 #include "host/libs/config/config_flag.h"
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
@@ -26,6 +27,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -49,16 +51,14 @@ class SystemImageDirFlagImpl : public SystemImageDirFlag {
 
   std::string Name() const override { return "SystemImageDirFlagImpl"; }
   std::unordered_set<FlagFeature*> Dependencies() const override { return {}; }
-  bool Process(std::vector<std::string>& args) override {
+  Result<void> Process(std::vector<std::string>& args) override {
     path_ = DefaultGuestImagePath("");
-    if (!flag_.Parse(args)) {
-      return false;
-    }
+    CF_EXPECT(flag_.Parse(args));
     // To support other files that use this from gflags.
     FLAGS_system_image_dir = path_;
     gflags::SetCommandLineOptionWithMode("system_image_dir", path_.c_str(),
                                          SET_FLAGS_DEFAULT);
-    return true;
+    return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream&) const override {
     // TODO(schuffelen): Write something here when this is removed from gflags
@@ -80,37 +80,30 @@ class ConfigReader : public FlagFeature {
   const std::set<std::string>& AvailableConfigs() const {
     return allowed_config_presets_;
   }
-  std::optional<Json::Value> ReadConfig(const std::string& name) const {
+  Result<Json::Value> ReadConfig(const std::string& name) const {
     auto path =
         DefaultHostArtifactsPath("etc/cvd_config/cvd_config_" + name + ".json");
-    Json::Value config;
-    Json::CharReaderBuilder builder;
-    std::ifstream ifs(path);
-    std::string errorMessage;
-    if (!Json::parseFromStream(builder, ifs, &config, &errorMessage)) {
-      LOG(ERROR) << "Could not read config file " << path << ": "
-                 << errorMessage;
-      return {};
-    }
-    return config;
+    std::string config_contents;
+    CF_EXPECTF(android::base::ReadFileToString(path, &config_contents),
+               "Could not read config file \"{}\"", path);
+    return CF_EXPECTF(ParseJson(config_contents),
+                      "Could not parse config file \"{}\"", path);
   }
 
   // FlagFeature
   std::string Name() const override { return "ConfigReader"; }
   std::unordered_set<FlagFeature*> Dependencies() const override { return {}; }
-  bool Process(std::vector<std::string>&) override {
-    auto directory_contents_result =
-        DirectoryContents(DefaultHostArtifactsPath("etc/cvd_config"));
-    CHECK(directory_contents_result.ok())
-        << directory_contents_result.error().Message();
-    for (const std::string& file : *directory_contents_result) {
+  Result<void> Process(std::vector<std::string>&) override {
+    auto config_path = DefaultHostArtifactsPath("etc/cvd_config");
+    auto dir_contents = CF_EXPECT(DirectoryContents(config_path));
+    for (const std::string& file : dir_contents) {
       std::string_view local_file(file);
       if (android::base::ConsumePrefix(&local_file, "cvd_config_") &&
           android::base::ConsumeSuffix(&local_file, ".json")) {
         allowed_config_presets_.emplace(local_file);
       }
     }
-    return true;
+    return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream&) const override { return true; }
 
@@ -141,28 +134,21 @@ class ConfigFlagImpl : public ConfigFlag {
         static_cast<FlagFeature*>(&system_image_dir_flag_),
     };
   }
-  bool Process(std::vector<std::string>& args) override {
-    if (!flag_.Parse(args)) {
-      LOG(ERROR) << "Failed to parse `--config` flag";
-      return false;
-    }
+  Result<void> Process(std::vector<std::string>& args) override {
+    CF_EXPECT(flag_.Parse(args), "Failed to parse `--config` flag");
 
     if (auto info_cfg = FindAndroidInfoConfig(); is_default_ && info_cfg) {
       config_ = *info_cfg;
     }
     LOG(INFO) << "Launching CVD using --config='" << config_ << "'.";
-    auto config_values = config_reader_.ReadConfig(config_);
-    if (!config_values) {
-      LOG(ERROR) << "Failed to read config for " << config_;
-      return false;
-    }
-    for (const std::string& flag : config_values->getMemberNames()) {
+    auto config_values = CF_EXPECT(config_reader_.ReadConfig(config_));
+    for (const std::string& flag : config_values.getMemberNames()) {
       std::string value;
       if (flag == "custom_actions") {
         Json::StreamWriterBuilder factory;
-        value = Json::writeString(factory, (*config_values)[flag]);
+        value = Json::writeString(factory, config_values[flag]);
       } else {
-        value = (*config_values)[flag].asString();
+        value = config_values[flag].asString();
       }
       args.insert(args.begin(), "--" + flag + "=" + value);
       // To avoid the flag forwarder from thinking this song is different from a
@@ -170,7 +156,7 @@ class ConfigFlagImpl : public ConfigFlag {
       gflags::SetCommandLineOptionWithMode(flag.c_str(), value.c_str(),
                                            SET_FLAGS_DEFAULT);
     }
-    return true;
+    return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
     return flag_.WriteGflagsCompatXml(out);
@@ -223,7 +209,7 @@ class ConfigFlagPlaceholderImpl : public ConfigFlag {
 
   std::string Name() const override { return "ConfigFlagPlaceholderImpl"; }
   std::unordered_set<FlagFeature*> Dependencies() const override { return {}; }
-  bool Process(std::vector<std::string>&) override { return true; }
+  Result<void> Process(std::vector<std::string>&) override { return {}; }
   bool WriteGflagsCompatHelpXml(std::ostream&) const override { return true; }
 };
 

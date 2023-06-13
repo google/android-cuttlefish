@@ -33,15 +33,13 @@ class FastbootConfigFlagImpl : public FastbootConfigFlag {
     return {static_cast<FlagFeature*>(&config_flag_)};
   }
 
-  bool Process(std::vector<std::string>& args) override {
+  Result<void> Process(std::vector<std::string>& args) override {
     bool proxy_fastboot = true;
     Flag proxy_fastboot_flag = GflagsCompatFlag(kName, proxy_fastboot);
-    if (!ParseFlags({proxy_fastboot_flag}, args)) {
-      LOG(ERROR) << "Failed to parse proxy_fastboot config flags";
-      return false;
-    }
+    CF_EXPECT(ParseFlags({proxy_fastboot_flag}, args),
+              "Failed to parse proxy_fastboot config flags");
     config_.SetProxyFastboot(proxy_fastboot);
-    return true;
+    return {};
   }
 
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
