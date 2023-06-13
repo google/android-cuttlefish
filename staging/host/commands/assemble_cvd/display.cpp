@@ -62,17 +62,9 @@ class DisplaysConfigsFlagImpl : public DisplaysConfigsFlag {
     return {static_cast<FlagFeature*>(&config_flag_dependency_)};
   }
 
-  bool Process(std::vector<std::string>& args) override {
-    auto res = ParseDisplayConfigsFromArgs(args);
-    if (!res.ok()) {
-      LOG(ERROR) << "Failed to process display flags: "
-                 << res.error().Message();
-      LOG(DEBUG) << "Failed to process display flags: "
-                 << res.error().Message();
-      return false;
-    }
-    display_configs_.SetConfigs(res.value());
-    return true;
+  Result<void> Process(std::vector<std::string>& args) override {
+    display_configs_.SetConfigs(CF_EXPECT(ParseDisplayConfigsFromArgs(args)));
+    return {};
   }
 
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {

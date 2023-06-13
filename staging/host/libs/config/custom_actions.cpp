@@ -15,6 +15,7 @@
  */
 #include "host/libs/config/custom_actions.h"
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -27,6 +28,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/json.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -332,34 +334,24 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
     return {static_cast<FlagFeature*>(&config_)};
   }
 
-  bool Process(std::vector<std::string>& args) override {
-    if (!ParseFlags(Flags(), args)) {
-      return false;
-    }
+  Result<void> Process(std::vector<std::string>& args) override {
+    CF_EXPECT(ParseFlags(Flags(), args));
     if (custom_action_config_.empty()) {
       // no custom action flag input
       custom_action_config_.push_back(DefaultCustomActionConfig());
     }
     for (const auto& config : custom_action_config_) {
       if (config != "") {
-        Json::CharReaderBuilder builder;
-        std::ifstream ifs(config);
-        std::string errorMessage;
-        Json::Value custom_action_array(Json::arrayValue);
-        if (!Json::parseFromStream(builder, ifs, &custom_action_array,
-                                   &errorMessage)) {
-          LOG(ERROR) << "Could not read custom actions config file " << config
-                     << ": " << errorMessage;
-          return false;
-        }
-        if (!AddJsonCustomActionConfigs(custom_action_array)) {
-          return false;
-        }
+        std::string config_contents;
+        CF_EXPECT(android::base::ReadFileToString(config, &config_contents));
+        auto custom_action_array = CF_EXPECT(ParseJson(config_contents));
+        CF_EXPECTF(AddJsonCustomActionConfigs(custom_action_array),
+                   "Failed to parse config at \"{}\"", config);
       } else {
         AddEmptyJsonCustomActionConfigs();
       }
     }
-    return true;
+    return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
     return WriteGflagsCompatXml(Flags(), out);
