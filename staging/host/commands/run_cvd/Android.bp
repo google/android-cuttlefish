@@ -60,6 +60,7 @@ cc_binary {
         "libfruit",
         "libjsoncpp",
         "libnl",
+	"libprotobuf-cpp-full",
     ],
     static_libs: [
         "libcuttlefish_command_util",
@@ -68,7 +69,8 @@ cc_binary {
         "libcuttlefish_host_config_fastboot",
         "libcuttlefish_metrics",
         "libcuttlefish_msg_queue",
-        "libcuttlefish_utils",
+        "libcuttlefish_run_cvd_proto",
+	"libcuttlefish_utils",
         "libcuttlefish_vm_manager",
         "libgflags",
     ],
