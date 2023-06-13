@@ -93,6 +93,17 @@ Result<void> WriteLauncherActionWithData(const SharedFD& monitor_socket,
   return {};
 }
 
+Result<LauncherActionInfo> ReadLauncherActionFromFd(
+    const SharedFD& monitor_socket) {
+  using run_cvd_msg_impl::LauncherActionMessage;
+  auto message = CF_EXPECT(LauncherActionMessage::ReadFromFd(monitor_socket));
+  return LauncherActionInfo{
+      .action = message.Action(),
+      .type = message.Type(),
+      .serialized_data = message.SerializedData(),
+  };
+}
+
 Result<void> WaitForRead(const SharedFD& monitor_socket,
                          const int timeout_seconds) {
   // Perform a select with a timeout to guard against launcher hanging
