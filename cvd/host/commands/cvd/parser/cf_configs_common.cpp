@@ -210,6 +210,23 @@ void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
   }
 }
 
+void InitNullConfig(Json::Value& value, const std::string& json_flag) {
+  if (!value.isMember(json_flag)) {
+    value[json_flag] = Json::Value::nullSingleton();
+  }
+}
+
+void InitNullGroupConfig(Json::Value& instances, const std::string& group,
+                         const std::string& json_flag) {
+  int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    if (!instances[i].isMember(group) ||
+        (!instances[i][group].isMember(json_flag))) {
+      instances[i][group][json_flag] = Json::Value::nullSingleton();
+    }
+  }
+}
+
 // TODO(b/255384531) for using variadic functions
 
 std::string GenerateGflag(const Json::Value& instances,
