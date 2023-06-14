@@ -17,6 +17,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -72,11 +73,17 @@ class ServerLoopImpl : public ServerLoop,
   static bool CreateQcowOverlay(const std::string& crosvm_path,
                                 const std::string& backing_file,
                                 const std::string& output_overlay_path);
+  Result<void> SuspendGuest();
+
+  static std::unordered_map<std::string, std::string>
+  InitializeVmToControlSockPath(const CuttlefishConfig::InstanceSpecific&);
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   std::vector<CommandSource*> command_sources_;
   SharedFD server_;
+  // mapping from the name of vm_manager to control_sock path
+  std::unordered_map<std::string, std::string> vm_name_to_control_sock_;
 };
 
 }  // namespace run_cvd_impl

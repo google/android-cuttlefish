@@ -63,7 +63,9 @@ bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
 ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance)
-    : config_(config), instance_(instance) {}
+    : config_(config),
+      instance_(instance),
+      vm_name_to_control_sock_{InitializeVmToControlSockPath(instance)} {}
 
 Result<void> ServerLoopImpl::LateInject(fruit::Injector<>& injector) {
   command_sources_ = injector.getMultibindings<CommandSource>();

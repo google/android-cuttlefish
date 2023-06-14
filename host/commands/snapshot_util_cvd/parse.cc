@@ -38,7 +38,7 @@ constexpr char wait_for_launcher_help[] =
     "command. A value of zero means wait indefinitely.";
 
 Flag SnapshotCmdFlag(std::string& value_buf) {
-  return GflagsCompatFlag("snapshot_cmd", value_buf).Help(snapshot_cmd_help);
+  return GflagsCompatFlag("subcmd", value_buf).Help(snapshot_cmd_help);
 }
 
 Flag GetInt32Flag(const std::string& name, int& value_buf,

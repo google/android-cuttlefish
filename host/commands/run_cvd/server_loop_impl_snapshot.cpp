@@ -16,14 +16,34 @@
 
 #include "host/commands/run_cvd/server_loop_impl.h"
 
+#include <sstream>
+
+#include <android-base/file.h>
+
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/command_util/util.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 #include "run_cvd.pb.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
+
+std::unordered_map<std::string, std::string>
+ServerLoopImpl::InitializeVmToControlSockPath(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  return std::unordered_map<std::string, std::string>{
+      // TODO(kwstephenkim): add the following two lines to support QEMU
+      // {QemuManager::name(),
+      // instance.PerInstanceInternalUdsPath("qemu_monitor.sock")},
+      {vm_manager::CrosvmManager::name(),
+       instance.PerInstanceInternalUdsPath("crosvm_control.sock")},
+  };
+}
 
 Result<void> ServerLoopImpl::HandleExtended(
     const LauncherActionInfo& action_info, const SharedFD& client) {
@@ -42,6 +62,40 @@ Result<void> ServerLoopImpl::HandleExtended(
   }
 }
 
+static std::string SubtoolPath(const std::string& subtool_name) {
+  auto my_own_dir = android::base::GetExecutableDirectory();
+  std::stringstream subtool_path_stream;
+  subtool_path_stream << my_own_dir << "/" << subtool_name;
+  auto subtool_path = subtool_path_stream.str();
+  if (my_own_dir.empty() || !FileExists(subtool_path)) {
+    return HostBinaryPath(subtool_name);
+  }
+  return subtool_path;
+}
+
+static Result<void> SuspendCrosvm(const std::string& vm_sock_path) {
+  const auto crosvm_bin_path = SubtoolPath("crosvm");
+  std::vector<std::string> command_args{crosvm_bin_path, "suspend",
+                                        vm_sock_path};
+  auto infop = CF_EXPECT(Execute(command_args, SubprocessOptions(), WEXITED));
+  CF_EXPECT_EQ(infop.si_code, CLD_EXITED);
+  CF_EXPECTF(infop.si_status == 0, "crosvm suspend returns non zero code {}",
+             infop.si_status);
+  return {};
+}
+
+Result<void> ServerLoopImpl::SuspendGuest() {
+  const auto vm_name = config_.vm_manager();
+  CF_EXPECTF(Contains(vm_name_to_control_sock_, vm_name),
+             "vm_namager \"{}\" is not supported for suspend yet.", vm_name);
+  const auto& vm_sock_path = vm_name_to_control_sock_.at(vm_name);
+  if (vm_name == vm_manager::CrosvmManager::name()) {
+    return SuspendCrosvm(vm_sock_path);
+  } else {
+    return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
+  }
+}
+
 Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
                                            const SharedFD& client) {
   run_cvd::ExtendedLauncherAction extended_action;
@@ -49,7 +103,10 @@ Result<void> ServerLoopImpl::HandleSuspend(const std::string& serialized_data,
             "Failed to load ExtendedLauncherAction proto.");
   CF_EXPECT_EQ(extended_action.actions_case(),
                run_cvd::ExtendedLauncherAction::ActionsCase::kSuspend);
-  LOG(INFO) << "Suspend is requested but not yet implemented.";
+  LOG(INFO) << "Suspending the guest..";
+  CF_EXPECT(SuspendGuest());
+  LOG(INFO) << "The guest is suspended.";
+  LOG(INFO) << "Suspend host is not yet implemented.";
   auto response = LauncherResponse::kSuccess;
   CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
                "Failed to wrote the suspend response.");
