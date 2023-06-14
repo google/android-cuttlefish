@@ -24,8 +24,10 @@ namespace cuttlefish {
 Result<void> ValidateTypo(const Json::Value& root,
                           const std::map<std::string, Json::ValueType>& map) {
   for (const std::string& flag : root.getMemberNames()) {
-    CF_EXPECT(map.count(flag) != 0 , "Invalid flag name (typo) , Param --> " << flag<< " not recognized");
-    CF_EXPECT(root[flag].isConvertibleTo(map.at(flag)), "Invalid flag typ"<< flag);
+    CF_EXPECT(map.count(flag) != 0,
+              "Invalid input flag name:- " << flag << " not recognized");
+    CF_EXPECT(root[flag].isConvertibleTo(map.at(flag)),
+              "Invalid flag type" << flag);
   }
   return {};
 }
