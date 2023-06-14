@@ -15,6 +15,10 @@
  */
 
 #pragma once
+
+#include <string>
+#include <vector>
+
 #include <json/json.h>
 
 namespace cuttlefish {

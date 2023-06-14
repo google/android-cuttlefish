@@ -15,7 +15,14 @@
  */
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
+#include <functional>
+#include <map>
+#include <string>
+#include <vector>
+
 #include <android-base/logging.h>
+#include <json/json.h>
+
 namespace cuttlefish {
 
 /**
