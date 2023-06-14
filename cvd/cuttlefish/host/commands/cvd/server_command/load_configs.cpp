@@ -16,6 +16,7 @@
 #include "host/commands/cvd/server_command/load_configs.h"
 
 #include <chrono>
+#include <iostream>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -23,6 +24,7 @@
 #include <fruit/fruit.h>
 #include <android-base/parseint.h>
 
+#include <common/libs/utils/flag_parser.h>
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
@@ -213,37 +215,27 @@ class LoadConfigsCommand : public CvdServerHandler {
     return jsonValue;
   }
 
-  bool HasValidDotSeparatedPrefix(const std::string& str) {
+  Result<void> ValidateArgFormat(const std::string& str) {
     auto equalsPos = str.find('=');
-    if (equalsPos == std::string::npos) {
-      return false;
-    }
+    CF_EXPECT(equalsPos != std::string::npos,
+              "equal value is not provided in the argument");
     std::string prefix = str.substr(0, equalsPos);
-    // return false if prefix is empty, has no dots, start with dots, end with dot
-    // or has cosequence of dots
-    if (prefix.empty() || prefix.find('.') == std::string::npos ||
-        prefix.find('.') == 0 || prefix.find("..") != std::string::npos ||
-        prefix.back() == '.') {
-      return false;
-    }
-    return true;
+    CF_EXPECT(!prefix.empty(), "argument value should not be empty");
+    CF_EXPECT(prefix.find('.') != std::string::npos,
+              "argument value must be dot separated");
+    CF_EXPECT(prefix[0] != '.', "argument value should not start with a dot");
+    CF_EXPECT(prefix.find("..") == std::string::npos,
+              "argument value should not contain two consecutive dots");
+    CF_EXPECT(prefix.back() != '.', "argument value should not end with a dot");
+    return {};
   }
 
-  bool hasEqualsWithValidDotSeparatedPrefix(const std::string& str) {
-    auto equalsPos = str.find('=');
-    return equalsPos != std::string::npos && equalsPos < str.length() - 1 &&
-           HasValidDotSeparatedPrefix(str);
-  }
-
-  bool ValidateArgsFormat(const std::vector<std::string>& strings) {
+  Result<void> ValidateArgsFormat(const std::vector<std::string>& strings) {
     for (const auto& str : strings) {
-      if (!hasEqualsWithValidDotSeparatedPrefix(str)) {
-        LOG(ERROR) << "Invalid  argument format. " << str
-                   << " Please use arg=value";
-        return false;
-      }
+      CF_EXPECT(ValidateArgFormat(str),
+                "Invalid  argument format. " << str << " Please use arg=value");
     }
-    return true;
+    return {};
   }
 
   Result<DemoCommandSequence> CreateCommandSequence(
@@ -252,35 +244,44 @@ class LoadConfigsCommand : public CvdServerHandler {
 
     std::vector<Flag> flags;
     flags.emplace_back(GflagsCompatFlag("help", help));
-    std::string config_path;
-    flags.emplace_back(GflagsCompatFlag("config_path", config_path));
-
+    std::vector<std::string> overrides;
+    FlagAlias alias = {FlagAliasMode::kFlagPrefix, "--override="};
+    flags.emplace_back(
+        Flag().Alias(alias).Setter([&overrides](const FlagMatch& m) {
+          overrides.push_back(m.value);
+          return true;
+        }));
     auto args = ParseInvocation(request.Message()).arguments;
     CF_EXPECT(ParseFlags(flags, args));
+    CF_EXPECT(args.size() > 0,
+              "No arguments provided to cvd load command, please provide at "
+              "least one argument (help or path to json file)");
 
-    Json::Value json_configs;
     if (help) {
       std::stringstream help_msg_stream;
-      help_msg_stream << "Usage: cvd " << kLoadSubCmd << std::endl;
+      help_msg_stream << "Usage: cvd " << kLoadSubCmd;
       const auto help_msg = help_msg_stream.str();
       CF_EXPECT(WriteAll(request.Out(), help_msg) == help_msg.size());
       return {};
-    } else {
-      json_configs =
-          CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
+    }
 
-      if (args.size() > 0) {
-        for (auto& single_arg : args) {
-          LOG(INFO) << "Filtered args " << single_arg;
-        }
-        // Validate all arguments follow specific pattern
-        if (!ValidateArgsFormat(args)) {
-          return {};
-        }
-        // Convert all arguments to json tree
-        auto args_tree = ParseArgsToJson(args);
-        MergeTwoJsonObjs(json_configs, args_tree);
-      }
+    // Extract the config_path from the arguments
+    std::string config_path = args.front();
+    Json::Value json_configs =
+        CF_EXPECT(ParseJsonFile(config_path), "parsing input file failed");
+
+    // remove the config_path from the arguments
+    args.erase(args.begin());
+
+    // Handle the rest of the arguments (Overrides)
+    if (overrides.size() > 0) {
+      // Validate all arguments follow specific pattern
+      CF_EXPECT(ValidateArgsFormat(overrides),
+                "override parameters are not in the correct format");
+
+      // Convert all arguments to json tree
+      auto args_tree = ParseArgsToJson(overrides);
+      MergeTwoJsonObjs(json_configs, args_tree);
     }
 
     auto cvd_flags =
