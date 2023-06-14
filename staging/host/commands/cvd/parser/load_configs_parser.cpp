@@ -23,6 +23,7 @@
 #include <fstream>
 #include <string>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "host/commands/cvd/parser/cf_flags_validator.h"
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
@@ -31,10 +32,13 @@
 namespace cuttlefish {
 
 Result<Json::Value> ParseJsonFile(const std::string& file_path) {
+  CF_EXPECT(FileExists(file_path), "provided File to cvd load does not exist");
+
   std::string file_content;
   using android::base::ReadFileToString;
   CF_EXPECT(ReadFileToString(file_path.c_str(), &file_content,
-                             /* follow_symlinks */ true));
+                             /* follow_symlinks */ true),
+            "Failed to read file");
   auto root = CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file");
   return root;
 }
