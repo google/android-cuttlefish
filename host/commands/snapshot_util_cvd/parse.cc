@@ -92,4 +92,25 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   return parsed;
 }
 
+std::ostream& operator<<(std::ostream& out, const SnapshotCmd& cmd) {
+  switch (cmd) {
+    case SnapshotCmd::kUnknown:
+      out << "unknown";
+      break;
+    case SnapshotCmd::kSuspend:
+      out << "suspend";
+      break;
+    case SnapshotCmd::kResume:
+      out << "resume";
+      break;
+    case SnapshotCmd::kSnapshotTake:
+      out << "snapshot take";
+      break;
+    default:
+      out << "unknown";
+      break;
+  }
+  return out;
+}
+
 }  // namespace cuttlefish

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -32,6 +33,8 @@ enum class SnapshotCmd : int {
   kResume = 2,
   kSnapshotTake = 3,
 };
+
+std::ostream& operator<<(std::ostream& out, const SnapshotCmd& cmd);
 
 struct Parsed {
   SnapshotCmd cmd;

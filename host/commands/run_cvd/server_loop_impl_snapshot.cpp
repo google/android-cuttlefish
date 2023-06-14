@@ -50,10 +50,12 @@ Result<void> ServerLoopImpl::HandleExtended(
   CF_EXPECT(action_info.action == LauncherAction::kExtended);
   switch (action_info.type) {
     case ExtendedActionType::kSuspend: {
+      LOG(DEBUG) << "Run_cvd received suspend request.";
       CF_EXPECT(HandleSuspend(action_info.serialized_data, client));
       return {};
     }
     case ExtendedActionType::kResume: {
+      LOG(DEBUG) << "Run_cvd received resume request.";
       CF_EXPECT(HandleResume(action_info.serialized_data, client));
       return {};
     }
@@ -84,6 +86,17 @@ static Result<void> SuspendCrosvm(const std::string& vm_sock_path) {
   return {};
 }
 
+static Result<void> ResumeCrosvm(const std::string& vm_sock_path) {
+  const auto crosvm_bin_path = SubtoolPath("crosvm");
+  std::vector<std::string> command_args{crosvm_bin_path, "resume",
+                                        vm_sock_path};
+  auto infop = CF_EXPECT(Execute(command_args, SubprocessOptions(), WEXITED));
+  CF_EXPECT_EQ(infop.si_code, CLD_EXITED);
+  CF_EXPECTF(infop.si_status == 0, "crosvm suspend returns non zero code {}",
+             infop.si_status);
+  return {};
+}
+
 Result<void> ServerLoopImpl::SuspendGuest() {
   const auto vm_name = config_.vm_manager();
   CF_EXPECTF(Contains(vm_name_to_control_sock_, vm_name),
@@ -91,6 +104,18 @@ Result<void> ServerLoopImpl::SuspendGuest() {
   const auto& vm_sock_path = vm_name_to_control_sock_.at(vm_name);
   if (vm_name == vm_manager::CrosvmManager::name()) {
     return SuspendCrosvm(vm_sock_path);
+  } else {
+    return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
+  }
+}
+
+Result<void> ServerLoopImpl::ResumeGuest() {
+  const auto vm_name = config_.vm_manager();
+  CF_EXPECTF(Contains(vm_name_to_control_sock_, vm_name),
+             "vm_namager \"{}\" is not supported for suspend yet.", vm_name);
+  const auto& vm_sock_path = vm_name_to_control_sock_.at(vm_name);
+  if (vm_name == vm_manager::CrosvmManager::name()) {
+    return ResumeCrosvm(vm_sock_path);
   } else {
     return CF_ERR("The vm_manager " + vm_name + " is not supported yet");
   }
@@ -120,7 +145,10 @@ Result<void> ServerLoopImpl::HandleResume(const std::string& serialized_data,
             "Failed to load ExtendedLauncherAction proto.");
   CF_EXPECT_EQ(extended_action.actions_case(),
                run_cvd::ExtendedLauncherAction::ActionsCase::kResume);
-  LOG(INFO) << "Resume is requested but not yet implemented.";
+  LOG(INFO) << "Resuming the guest..";
+  CF_EXPECT(ResumeGuest());
+  LOG(INFO) << "The guest resumed.";
+  LOG(INFO) << "Resuming host is not yet implemented.";
   auto response = LauncherResponse::kSuccess;
   CF_EXPECT_EQ(client->Write(&response, sizeof(response)), sizeof(response),
                "Failed to wrote the suspend response.");

@@ -74,6 +74,7 @@ class ServerLoopImpl : public ServerLoop,
                                 const std::string& backing_file,
                                 const std::string& output_overlay_path);
   Result<void> SuspendGuest();
+  Result<void> ResumeGuest();
 
   static std::unordered_map<std::string, std::string>
   InitializeVmToControlSockPath(const CuttlefishConfig::InstanceSpecific&);
