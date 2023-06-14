@@ -44,6 +44,8 @@ namespace acloud_impl {
  * waiter, it acquire the lock before Start() and release the lock before
  * Wait(). The interrupt_lock_released in the return value says whether
  * the lock is released or not.
+ * The input parameters waiter, callback_unlock and callback_lock
+ * provide locking system to support interrupt.
  *
  */
 Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
