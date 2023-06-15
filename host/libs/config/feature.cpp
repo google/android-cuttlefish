@@ -24,16 +24,6 @@ namespace cuttlefish {
 
 SetupFeature::~SetupFeature() {}
 
-Result<void> SetupFeature::ResultSetup() {
-  CF_EXPECT(Setup());
-  return {};
-}
-
-bool SetupFeature::Setup() {
-  LOG(ERROR) << "Missing ResultSetup implementation";
-  return false;
-}
-
 /* static */ Result<void> SetupFeature::RunSetup(
     const std::vector<SetupFeature*>& features) {
   std::unordered_set<SetupFeature*> enabled;
