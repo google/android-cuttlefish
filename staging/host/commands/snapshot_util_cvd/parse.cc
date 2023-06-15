@@ -38,7 +38,7 @@ constexpr char wait_for_launcher_help[] =
     "command. A value of zero means wait indefinitely.";
 
 Flag SnapshotCmdFlag(std::string& value_buf) {
-  return GflagsCompatFlag("snapshot_cmd", value_buf).Help(snapshot_cmd_help);
+  return GflagsCompatFlag("subcmd", value_buf).Help(snapshot_cmd_help);
 }
 
 Flag GetInt32Flag(const std::string& name, int& value_buf,
@@ -90,6 +90,27 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
   CF_EXPECT(ParseFlags(flags, args), "Flag parsing failed");
   parsed.cmd = CF_EXPECT(ConvertToSnapshotCmd(snapshot_op));
   return parsed;
+}
+
+std::ostream& operator<<(std::ostream& out, const SnapshotCmd& cmd) {
+  switch (cmd) {
+    case SnapshotCmd::kUnknown:
+      out << "unknown";
+      break;
+    case SnapshotCmd::kSuspend:
+      out << "suspend";
+      break;
+    case SnapshotCmd::kResume:
+      out << "resume";
+      break;
+    case SnapshotCmd::kSnapshotTake:
+      out << "snapshot take";
+      break;
+    default:
+      out << "unknown";
+      break;
+  }
+  return out;
 }
 
 }  // namespace cuttlefish

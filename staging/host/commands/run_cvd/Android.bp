@@ -47,6 +47,8 @@ cc_binary {
         "reporting.cpp",
         "process_monitor.cc",
         "server_loop.cpp",
+        "server_loop_impl.cpp",
+        "server_loop_impl_snapshot.cpp",
         "validate.cpp",
     ],
     shared_libs: [
