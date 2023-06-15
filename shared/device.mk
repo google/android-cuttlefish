@@ -364,7 +364,7 @@ PRODUCT_PACKAGES += \
 # BiometricsFingerprint HAL (AIDL)
 #
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint-service.example
+    com.android.hardware.biometrics.fingerprint.virtual
 
 #
 # Contexthub HAL
