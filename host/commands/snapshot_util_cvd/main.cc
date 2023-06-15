@@ -93,13 +93,12 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
       WriteLauncherActionWithData(monitor_socket, LauncherAction::kExtended,
                                   extended_type, std::move(serialized_data)));
 
-  LauncherResponse suspend_response =
-      CF_EXPECT(ReadLauncherResponse(monitor_socket));
-  CF_EXPECTF(suspend_response == LauncherResponse::kSuccess,
+  LauncherResponse response = CF_EXPECT(ReadLauncherResponse(monitor_socket));
+  CF_EXPECTF(response == LauncherResponse::kSuccess,
              "Received \"{}\" response from launcher monitor for \""
              "{}\" request.",
-             static_cast<char>(suspend_response), static_cast<int>(parsed.cmd));
-  LOG(INFO) << "Suspend was successful.";
+             static_cast<char>(response), static_cast<int>(parsed.cmd));
+  LOG(INFO) << parsed.cmd << " was successful.";
   return {};
 }
 
