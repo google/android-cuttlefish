@@ -28,18 +28,18 @@
 <!-- CvdServer -->
 <g id="node2" class="node">
 <title>CvdServer</title>
-<ellipse fill="none" stroke="black" cx="317.33" cy="-401" rx="48.19" ry="18"/>
-<text text-anchor="middle" x="317.33" y="-397.3" font-family="Times,serif" font-size="14.00">CvdServer</text>
+<ellipse fill="none" stroke="black" cx="317.33" cy="-400" rx="48.19" ry="18"/>
+<text text-anchor="middle" x="317.33" y="-396.3" font-family="Times,serif" font-size="14.00">CvdServer</text>
 </g>
 <!-- CvdClient&#45;&gt;CvdServer -->
 <g id="edge1" class="edge">
 <title>CvdClient&#45;&gt;CvdServer</title>
-<path fill="none" stroke="black" d="M70.7,-56.95C87.73,-99.92 134.84,-210.99 195.59,-290 222.21,-324.63 260.28,-357.61 286.52,-378.49"/>
-<polygon fill="black" stroke="black" points="284.57,-381.41 294.6,-384.83 288.89,-375.9 284.57,-381.41"/>
-<text text-anchor="middle" x="156.59" y="-274.8" font-family="Times,serif" font-size="14.00">AF_UNIX</text>
+<path fill="none" stroke="black" d="M70.75,-56.79C87.91,-99.37 135.27,-209.44 195.59,-288 222.46,-322.99 260.8,-356.49 287.03,-377.58"/>
+<polygon fill="black" stroke="black" points="285.08,-380.5 295.09,-383.98 289.43,-375.02 285.08,-380.5"/>
+<text text-anchor="middle" x="156.59" y="-272.8" font-family="Times,serif" font-size="14.00">AF_UNIX</text>
 </g>
 <!-- acloud -->
-<g id="node30" class="node">
+<g id="node29" class="node">
 <title>acloud</title>
 <ellipse fill="none" stroke="black" cx="1443.45" cy="-18" rx="66.89" ry="18"/>
 <text text-anchor="middle" x="1443.45" y="-14.3" font-family="Times,serif" font-size="14.00">acloud (python)</text>
@@ -60,128 +60,128 @@
 <!-- CvdServer&#45;&gt;CvdServerHandler -->
 <g id="edge3" class="edge">
 <title>CvdServer&#45;&gt;CvdServerHandler</title>
-<path fill="none" stroke="black" d="M358.12,-391.29C392.14,-382.99 441.71,-370.9 481.06,-361.3"/>
-<polygon fill="black" stroke="black" points="481.95,-364.68 490.84,-358.91 480.29,-357.88 481.95,-364.68"/>
+<path fill="none" stroke="black" d="M358.37,-390.41C392.32,-382.28 441.59,-370.48 480.8,-361.08"/>
+<polygon fill="black" stroke="black" points="481.63,-364.48 490.54,-358.75 480,-357.68 481.63,-364.48"/>
 </g>
 <!-- AcloudMixSuperImageCommand -->
 <g id="node5" class="node">
 <title>AcloudMixSuperImageCommand</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-209" rx="131.88" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-205.3" font-family="Times,serif" font-size="14.00">AcloudMixSuperImageCommand</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-208" rx="131.88" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-204.3" font-family="Times,serif" font-size="14.00">AcloudMixSuperImageCommand</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;AcloudMixSuperImageCommand -->
 <g id="edge7" class="edge">
 <title>CvdServerHandler&#45;&gt;AcloudMixSuperImageCommand</title>
-<path fill="none" stroke="black" d="M600.82,-333.64C632.46,-326.94 673.03,-319.03 709.46,-314 771.94,-305.38 942.81,-330.06 992.33,-291 1012.53,-275.07 991.15,-253.13 1010.33,-236 1015.45,-231.43 1021.13,-227.55 1027.18,-224.28"/>
-<polygon fill="black" stroke="black" points="1028.8,-227.38 1036.28,-219.89 1025.75,-221.08 1028.8,-227.38"/>
+<path fill="none" stroke="black" d="M600.82,-333.64C632.46,-326.94 673.03,-319.03 709.46,-314 771.94,-305.38 942.92,-330.19 992.33,-291 1012.82,-274.76 990.88,-252.46 1010.33,-235 1015.44,-230.42 1021.11,-226.53 1027.15,-223.24"/>
+<polygon fill="black" stroke="black" points="1028.77,-226.35 1036.24,-218.84 1025.72,-220.05 1028.77,-226.35"/>
 </g>
 <!-- CvdFetchCommandHandler -->
 <g id="node6" class="node">
 <title>CvdFetchCommandHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-263" rx="110.48" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-259.3" font-family="Times,serif" font-size="14.00">CvdFetchCommandHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-262" rx="110.48" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-258.3" font-family="Times,serif" font-size="14.00">CvdFetchCommandHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdFetchCommandHandler -->
 <g id="edge9" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdFetchCommandHandler</title>
-<path fill="none" stroke="black" d="M616.24,-339.22C645.12,-336.52 678.88,-333.48 709.46,-331 772.27,-325.9 936.05,-339.34 992.33,-311 1003.31,-305.47 999.75,-296.24 1010.33,-290 1020,-284.3 1030.68,-279.79 1041.66,-276.23"/>
-<polygon fill="black" stroke="black" points="1042.78,-279.54 1051.36,-273.33 1040.77,-272.84 1042.78,-279.54"/>
+<path fill="none" stroke="black" d="M616.24,-339.22C645.12,-336.52 678.88,-333.48 709.46,-331 772.27,-325.9 936.37,-339.98 992.33,-311 1003.55,-305.19 999.53,-295.54 1010.33,-289 1019.86,-283.24 1030.41,-278.69 1041.26,-275.1"/>
+<polygon fill="black" stroke="black" points="1042.31,-278.43 1050.87,-272.18 1040.28,-271.74 1042.31,-278.43"/>
 </g>
 <!-- CvdFleetCommandHandler -->
 <g id="node7" class="node">
 <title>CvdFleetCommandHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-587" rx="108.58" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-583.3" font-family="Times,serif" font-size="14.00">CvdFleetCommandHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-586" rx="108.58" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-582.3" font-family="Times,serif" font-size="14.00">CvdFleetCommandHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdFleetCommandHandler -->
 <g id="edge10" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdFleetCommandHandler</title>
-<path fill="none" stroke="black" d="M598.68,-358.84C606.72,-362.08 614.6,-366.07 621.46,-371 632.29,-378.78 628.77,-387.02 639.46,-395 666.05,-414.86 677.25,-412.99 709.46,-421 766.86,-435.28 927.35,-418.79 973.33,-456 1011.47,-486.87 973.33,-527.79 1010.33,-560 1017.68,-566.39 1026.13,-571.41 1035.12,-575.34"/>
-<polygon fill="black" stroke="black" points="1034.09,-578.69 1044.68,-579.05 1036.62,-572.17 1034.09,-578.69"/>
+<path fill="none" stroke="black" d="M600.34,-358.6C607.81,-361.64 615.09,-365.39 621.46,-370 632.55,-378.03 628.57,-386.7 639.46,-395 665.85,-415.12 677.25,-412.99 709.46,-421 766.86,-435.28 927.3,-418.86 973.33,-456 1011.19,-486.54 973.59,-527.12 1010.33,-559 1017.69,-565.38 1026.14,-570.39 1035.14,-574.32"/>
+<polygon fill="black" stroke="black" points="1034.11,-577.67 1044.7,-578.02 1036.64,-571.14 1034.11,-577.67"/>
 </g>
 <!-- CvdHelpHandler -->
 <g id="node8" class="node">
 <title>CvdHelpHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-425" rx="70.69" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-421.3" font-family="Times,serif" font-size="14.00">CvdHelpHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-424" rx="70.69" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-420.3" font-family="Times,serif" font-size="14.00">CvdHelpHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdHelpHandler -->
 <g id="edge13" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdHelpHandler</title>
-<path fill="none" stroke="black" d="M613.68,-354.05C719.98,-366.7 920.89,-390.85 992.33,-401 1018.77,-404.76 1047.78,-409.33 1073.11,-413.47"/>
-<polygon fill="black" stroke="black" points="1072.56,-416.93 1082.99,-415.09 1073.69,-410.02 1072.56,-416.93"/>
+<path fill="none" stroke="black" d="M613.68,-354.1C719.97,-366.83 920.86,-391.08 992.33,-401 1018.3,-404.6 1046.76,-408.91 1071.77,-412.82"/>
+<polygon fill="black" stroke="black" points="1071.48,-416.31 1081.9,-414.4 1072.57,-409.4 1071.48,-416.31"/>
 </g>
 <!-- CvdGenericCommandHandler -->
 <g id="node9" class="node">
 <title>CvdGenericCommandHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-371" rx="118.88" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-367.3" font-family="Times,serif" font-size="14.00">CvdGenericCommandHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-370" rx="118.88" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-366.3" font-family="Times,serif" font-size="14.00">CvdGenericCommandHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdGenericCommandHandler -->
 <g id="edge11" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdGenericCommandHandler</title>
-<path fill="none" stroke="black" d="M619.66,-350.04C626.36,-350.37 633.03,-350.7 639.46,-351 767.76,-356.98 914.57,-362.7 1016.11,-366.48"/>
-<polygon fill="black" stroke="black" points="1016.28,-369.99 1026.4,-366.86 1016.54,-362.99 1016.28,-369.99"/>
+<path fill="none" stroke="black" d="M619.66,-350.05C626.36,-350.39 633.03,-350.71 639.46,-351 767.55,-356.84 914.09,-362.24 1015.6,-365.78"/>
+<polygon fill="black" stroke="black" points="1015.79,-369.29 1025.9,-366.14 1016.03,-362.29 1015.79,-369.29"/>
 </g>
 <!-- CvdResetCommandHandler -->
 <g id="node10" class="node">
 <title>CvdResetCommandHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-479" rx="110.48" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-475.3" font-family="Times,serif" font-size="14.00">CvdResetCommandHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-478" rx="110.48" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-474.3" font-family="Times,serif" font-size="14.00">CvdResetCommandHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdResetCommandHandler -->
 <g id="edge15" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdResetCommandHandler</title>
-<path fill="none" stroke="black" d="M595.23,-359.68C627.54,-368.22 670.76,-378.9 709.46,-386 771.76,-397.43 939.49,-386.08 992.33,-421 1005.63,-429.78 997.41,-442.69 1010.33,-452 1018.68,-458.01 1028.07,-462.75 1037.88,-466.48"/>
-<polygon fill="black" stroke="black" points="1036.8,-469.81 1047.4,-469.75 1039.08,-463.19 1036.8,-469.81"/>
+<path fill="none" stroke="black" d="M595.23,-359.68C627.54,-368.22 670.76,-378.9 709.46,-386 771.76,-397.43 939.24,-386.46 992.33,-421 1005.37,-429.48 997.65,-442.01 1010.33,-451 1018.73,-456.95 1028.14,-461.65 1037.97,-465.36"/>
+<polygon fill="black" stroke="black" points="1036.9,-468.69 1047.5,-468.61 1039.17,-462.07 1036.9,-468.69"/>
 </g>
 <!-- CvdShutdownHandler -->
 <g id="node11" class="node">
 <title>CvdShutdownHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-533" rx="89.08" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-529.3" font-family="Times,serif" font-size="14.00">CvdShutdownHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-532" rx="89.08" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-528.3" font-family="Times,serif" font-size="14.00">CvdShutdownHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdShutdownHandler -->
 <g id="edge18" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdShutdownHandler</title>
-<path fill="none" stroke="black" d="M582.76,-361.66C615.47,-374.83 664.81,-393.06 709.46,-403 771.37,-416.78 944.53,-399.32 992.33,-441 1014.93,-460.7 988.44,-485.52 1010.33,-506 1020.29,-515.31 1032.57,-521.77 1045.59,-526.2"/>
-<polygon fill="black" stroke="black" points="1044.59,-529.56 1055.17,-529.08 1046.6,-522.85 1044.59,-529.56"/>
+<path fill="none" stroke="black" d="M582.76,-361.66C615.47,-374.83 664.81,-393.06 709.46,-403 771.37,-416.78 944.45,-399.41 992.33,-441 1014.64,-460.37 988.71,-484.86 1010.33,-505 1020.31,-514.29 1032.6,-520.74 1045.62,-525.17"/>
+<polygon fill="black" stroke="black" points="1044.63,-528.52 1055.21,-528.04 1046.64,-521.82 1044.63,-528.52"/>
 </g>
 <!-- CvdStartCommandHandler -->
 <g id="node12" class="node">
 <title>CvdStartCommandHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-317" rx="107.78" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-313.3" font-family="Times,serif" font-size="14.00">CvdStartCommandHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-316" rx="107.78" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-312.3" font-family="Times,serif" font-size="14.00">CvdStartCommandHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdStartCommandHandler -->
 <g id="edge19" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdStartCommandHandler</title>
-<path fill="none" stroke="black" d="M621.69,-344.84C710.6,-343.16 862.28,-339.29 992.33,-331 1007.64,-330.02 1023.82,-328.75 1039.64,-327.38"/>
-<polygon fill="black" stroke="black" points="1040.32,-330.83 1049.97,-326.46 1039.7,-323.86 1040.32,-330.83"/>
+<path fill="none" stroke="black" d="M621.7,-344.99C710.62,-343.46 862.3,-339.72 992.33,-331 1008.33,-329.93 1025.27,-328.5 1041.76,-326.95"/>
+<polygon fill="black" stroke="black" points="1042.34,-330.41 1051.96,-325.97 1041.68,-323.44 1042.34,-330.41"/>
 </g>
 <!-- CvdVersionHandler -->
 <g id="node13" class="node">
 <title>CvdVersionHandler</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-101" rx="80.69" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-97.3" font-family="Times,serif" font-size="14.00">CvdVersionHandler</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-100" rx="80.69" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-96.3" font-family="Times,serif" font-size="14.00">CvdVersionHandler</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;CvdVersionHandler -->
 <g id="edge20" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdVersionHandler</title>
-<path fill="none" stroke="black" d="M572.33,-329.11C590.62,-318.1 615.79,-304.14 639.46,-295 738.45,-256.79 957.51,-268.96 973.33,-256 1019.15,-218.48 966.86,-168.21 1010.33,-128 1021.94,-117.27 1036.63,-110.34 1051.95,-105.94"/>
-<polygon fill="black" stroke="black" points="1053.23,-109.23 1062.08,-103.41 1051.53,-102.44 1053.23,-109.23"/>
+<path fill="none" stroke="black" d="M572.33,-329.11C590.62,-318.1 615.79,-304.14 639.46,-295 738.47,-256.78 957.57,-268.94 973.33,-256 1019.44,-218.16 966.59,-167.54 1010.33,-127 1021.93,-116.26 1036.61,-109.32 1051.93,-104.92"/>
+<polygon fill="black" stroke="black" points="1053.21,-108.21 1062.06,-102.38 1051.51,-101.42 1053.21,-108.21"/>
 </g>
 <!-- TryAcloudCommand -->
 <g id="node14" class="node">
 <title>TryAcloudCommand</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-155" rx="87.18" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-151.3" font-family="Times,serif" font-size="14.00">TryAcloudCommand</text>
+<ellipse fill="none" stroke="black" cx="1142.27" cy="-154" rx="87.18" ry="18"/>
+<text text-anchor="middle" x="1142.27" y="-150.3" font-family="Times,serif" font-size="14.00">TryAcloudCommand</text>
 </g>
 <!-- CvdServerHandler&#45;&gt;TryAcloudCommand -->
 <g id="edge4" class="edge">
 <title>CvdServerHandler&#45;&gt;TryAcloudCommand</title>
-<path fill="none" stroke="black" d="M584.58,-330.56C601.29,-324.27 621.16,-317.25 639.46,-312 670.04,-303.22 678,-301.8 709.46,-297 771.86,-287.48 945.36,-313.17 992.33,-271 1022.37,-244.04 981.85,-210.59 1010.33,-182 1020.29,-172.01 1032.89,-165.24 1046.32,-160.73"/>
-<polygon fill="black" stroke="black" points="1047.62,-164 1056.23,-157.82 1045.65,-157.28 1047.62,-164"/>
+<path fill="none" stroke="black" d="M584.58,-330.56C601.29,-324.27 621.16,-317.25 639.46,-312 670.04,-303.22 678,-301.8 709.46,-297 771.86,-287.48 945.4,-313.22 992.33,-271 1022.66,-243.72 981.58,-209.93 1010.33,-181 1020.28,-171 1032.87,-164.22 1046.31,-159.71"/>
+<polygon fill="black" stroke="black" points="1047.6,-162.98 1056.21,-156.8 1045.63,-156.26 1047.6,-162.98"/>
 </g>
 <!-- AcloudCommand -->
 <g id="node15" class="node">
@@ -216,8 +216,8 @@
 <!-- CvdServerHandler&#45;&gt;CvdServerHandlerProxy -->
 <g id="edge12" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdServerHandlerProxy</title>
-<path fill="none" stroke="black" d="M559.57,-328.27C576.68,-307.09 607.52,-271.46 639.46,-247 660.3,-231.04 670.18,-234.37 691.46,-219 700.38,-212.56 699.7,-207.08 709.46,-202 721.63,-195.66 735.17,-190.81 748.79,-187.1"/>
-<polygon fill="black" stroke="black" points="749.87,-190.43 758.71,-184.59 748.16,-183.65 749.87,-190.43"/>
+<path fill="none" stroke="black" d="M558.87,-328.27C583.9,-296.03 642.07,-228.69 709.46,-202 723.62,-196.39 739.13,-191.88 754.35,-188.28"/>
+<polygon fill="black" stroke="black" points="755.32,-191.65 764.31,-186.04 753.78,-184.82 755.32,-191.65"/>
 </g>
 <!-- CvdVmControlCommandHandler -->
 <g id="node18" class="node">
@@ -228,8 +228,8 @@
 <!-- CvdServerHandler&#45;&gt;CvdVmControlCommandHandler -->
 <g id="edge8" class="edge">
 <title>CvdServerHandler&#45;&gt;CvdVmControlCommandHandler</title>
-<path fill="none" stroke="black" d="M557.06,-328.21C573.61,-302.75 606.15,-255 639.46,-219 660.21,-196.56 671.04,-196.74 691.46,-174 700.85,-163.54 697.74,-155.75 709.46,-148 716.42,-143.4 724,-139.56 731.9,-136.35"/>
-<polygon fill="black" stroke="black" points="733.13,-139.63 741.3,-132.88 730.7,-133.06 733.13,-139.63"/>
+<path fill="none" stroke="black" d="M555.97,-328.08C571.91,-300.86 604.54,-248.13 639.46,-209 659.81,-186.2 668.48,-184.15 691.46,-164 699.5,-156.94 699.89,-152.8 709.46,-148 718.5,-143.46 728.25,-139.69 738.22,-136.55"/>
+<polygon fill="black" stroke="black" points="739.22,-139.91 747.82,-133.73 737.24,-133.19 739.22,-139.91"/>
 </g>
 <!-- LoadConfigsCommand -->
 <g id="node19" class="node">
@@ -240,8 +240,8 @@
 <!-- CvdServerHandler&#45;&gt;LoadConfigsCommand -->
 <g id="edge14" class="edge">
 <title>CvdServerHandler&#45;&gt;LoadConfigsCommand</title>
-<path fill="none" stroke="black" d="M559.93,-328.32C576.71,-308.71 606.56,-277.77 639.46,-262 658.87,-252.7 705.27,-244.78 748.6,-239.03"/>
-<polygon fill="black" stroke="black" points="749.19,-242.49 758.66,-237.73 748.29,-235.54 749.19,-242.49"/>
+<path fill="none" stroke="black" d="M559.87,-328.08C576.59,-308.2 606.39,-276.87 639.46,-261 658.74,-251.75 704.72,-244.09 747.84,-238.59"/>
+<polygon fill="black" stroke="black" points="748.36,-242.05 757.85,-237.34 747.5,-235.1 748.36,-242.05"/>
 </g>
 <!-- SerialLaunchCommand -->
 <g id="node20" class="node">
@@ -264,166 +264,153 @@
 <!-- CvdServerHandler&#45;&gt;SerialPreset -->
 <g id="edge17" class="edge">
 <title>CvdServerHandler&#45;&gt;SerialPreset</title>
-<path fill="none" stroke="black" d="M551.21,-327.81C566.71,-279.58 616.15,-148.38 709.46,-94 730.42,-81.78 756.09,-75.04 779.14,-71.34"/>
-<polygon fill="black" stroke="black" points="779.78,-74.79 789.17,-69.89 778.77,-67.86 779.78,-74.79"/>
+<path fill="none" stroke="black" d="M550.9,-327.82C565.81,-279.02 614.17,-145.36 709.46,-94 730.82,-82.49 756.56,-75.88 779.55,-72.08"/>
+<polygon fill="black" stroke="black" points="780.19,-75.52 789.56,-70.57 779.15,-68.6 780.19,-75.52"/>
 </g>
 <!-- CommandSequenceExecutor -->
 <g id="node4" class="node">
 <title>CommandSequenceExecutor</title>
-<ellipse fill="none" stroke="black" cx="317.33" cy="-263" rx="113.98" ry="18"/>
-<text text-anchor="middle" x="317.33" y="-259.3" font-family="Times,serif" font-size="14.00">CommandSequenceExecutor</text>
+<ellipse fill="none" stroke="black" cx="317.33" cy="-261" rx="113.98" ry="18"/>
+<text text-anchor="middle" x="317.33" y="-257.3" font-family="Times,serif" font-size="14.00">CommandSequenceExecutor</text>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;CvdServerHandler -->
 <g id="edge28" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;CvdServerHandler</title>
-<path fill="none" stroke="black" d="M363.14,-279.5C400.55,-293.27 453.86,-312.9 492.87,-327.26"/>
-<polygon fill="black" stroke="black" points="491.87,-330.62 502.46,-330.79 494.28,-324.05 491.87,-330.62"/>
+<path fill="none" stroke="black" d="M362.33,-277.59C400.01,-291.8 454.26,-312.25 493.62,-327.09"/>
+<polygon fill="black" stroke="black" points="492.69,-330.48 503.28,-330.74 495.16,-323.93 492.69,-330.48"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;AcloudCommand -->
 <g id="edge22" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;AcloudCommand</title>
-<path fill="none" stroke="black" d="M348.5,-287.39C373.06,-308.41 407.42,-340.55 431.07,-374 453.46,-405.65 440.56,-425.68 468.07,-453 552.45,-536.79 692.17,-570.32 774.33,-583.28"/>
-<polygon fill="black" stroke="black" points="350.47,-284.48 340.57,-280.71 345.96,-289.83 350.47,-284.48"/>
+<path fill="none" stroke="black" d="M348.48,-285.66C373.03,-306.9 407.39,-339.35 431.07,-373 453.39,-404.7 440.61,-424.63 468.07,-452 552.5,-536.13 692.53,-570.01 774.67,-583.15"/>
+<polygon fill="black" stroke="black" points="350.44,-282.74 340.56,-278.91 345.9,-288.06 350.44,-282.74"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;AcloudTranslatorCommand -->
 <g id="edge21" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;AcloudTranslatorCommand</title>
-<path fill="none" stroke="black" d="M345.08,-287.97C368.37,-310.03 402.76,-343.38 431.07,-374 448.42,-392.76 447.21,-403.24 468.07,-418 554.67,-479.25 593.31,-461.78 691.46,-502 699.56,-505.32 701.12,-507.32 709.46,-510 726.81,-515.57 745.83,-520.27 763.86,-524.1"/>
-<polygon fill="black" stroke="black" points="347.3,-285.25 337.63,-280.94 342.5,-290.34 347.3,-285.25"/>
+<path fill="none" stroke="black" d="M344.64,-285.83C367.92,-308.12 402.54,-341.99 431.07,-373 448.37,-391.8 447.24,-402.2 468.07,-417 554.68,-478.51 593.24,-461.52 691.46,-502 699.55,-505.34 701.12,-507.32 709.46,-510 726.81,-515.57 745.83,-520.27 763.86,-524.1"/>
+<polygon fill="black" stroke="black" points="346.85,-283.11 337.2,-278.74 342.02,-288.18 346.85,-283.11"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;CvdServerHandlerProxy -->
 <g id="edge23" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;CvdServerHandlerProxy</title>
-<path fill="none" stroke="black" d="M405.89,-248.24C507.78,-231.07 674.1,-203.03 768.68,-187.09"/>
-<polygon fill="black" stroke="black" points="405.21,-244.81 395.93,-249.92 406.37,-251.71 405.21,-244.81"/>
+<path fill="none" stroke="black" d="M406.72,-246.44C508.48,-229.68 673.69,-202.46 768.11,-186.91"/>
+<polygon fill="black" stroke="black" points="406.07,-243 396.77,-248.08 407.21,-249.91 406.07,-243"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;CvdVmControlCommandHandler -->
 <g id="edge27" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;CvdVmControlCommandHandler</title>
-<path fill="none" stroke="black" d="M369.61,-242.6C398.31,-231.58 434.89,-218.19 468.07,-208 573.75,-175.56 601.66,-172.5 709.46,-148 727.68,-143.86 747.39,-139.65 765.85,-135.83"/>
-<polygon fill="black" stroke="black" points="368.26,-239.37 360.19,-246.24 370.78,-245.9 368.26,-239.37"/>
+<path fill="none" stroke="black" d="M370.24,-240.74C398.85,-229.96 435.15,-216.93 468.07,-207 573.81,-175.11 601.72,-172.27 709.46,-148 727.8,-143.87 747.64,-139.65 766.2,-135.81"/>
+<polygon fill="black" stroke="black" points="368.96,-237.48 360.85,-244.3 371.44,-244.03 368.96,-237.48"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;LoadConfigsCommand -->
 <g id="edge24" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;LoadConfigsCommand</title>
-<path fill="none" stroke="black" d="M432.76,-255.55C528.76,-249.3 663.89,-240.49 751.81,-234.77"/>
-<polygon fill="black" stroke="black" points="432.48,-252.06 422.72,-256.2 432.93,-259.04 432.48,-252.06"/>
+<path fill="none" stroke="black" d="M433.68,-253.93C529.43,-248.06 663.65,-239.83 751.29,-234.46"/>
+<polygon fill="black" stroke="black" points="433.43,-250.44 423.67,-254.54 433.86,-257.43 433.43,-250.44"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;SerialLaunchCommand -->
 <g id="edge26" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;SerialLaunchCommand</title>
-<path fill="none" stroke="black" d="M347.06,-287.38C400.46,-331.01 520.45,-421.2 639.46,-457 675,-467.69 715.37,-473.98 750.56,-477.69"/>
-<polygon fill="black" stroke="black" points="349.01,-284.45 339.07,-280.79 344.56,-289.86 349.01,-284.45"/>
+<path fill="none" stroke="black" d="M346.6,-285.36C399.7,-329.39 519.83,-421.01 639.46,-457 675,-467.69 715.37,-473.98 750.56,-477.69"/>
+<polygon fill="black" stroke="black" points="348.58,-282.45 338.66,-278.71 344.08,-287.82 348.58,-282.45"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;SerialPreset -->
 <g id="edge25" class="edge">
 <title>CommandSequenceExecutor&#45;&gt;SerialPreset</title>
-<path fill="none" stroke="black" d="M348.46,-238.76C377.57,-216.37 423.66,-183.56 468.07,-163 578.17,-112.02 719.6,-85.04 792.39,-73.68"/>
-<polygon fill="black" stroke="black" points="346.1,-236.16 340.36,-245.06 350.4,-241.69 346.1,-236.16"/>
+<path fill="none" stroke="black" d="M349.05,-236.9C378.25,-214.99 424.1,-183.11 468.07,-163 578.4,-112.54 719.74,-85.34 792.45,-73.81"/>
+<polygon fill="black" stroke="black" points="346.77,-234.24 340.91,-243.07 351,-239.82 346.77,-234.24"/>
 </g>
 <!-- cvd_status -->
-<g id="node27" class="node">
+<g id="node26" class="node">
 <title>cvd_status</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-587" rx="48.19" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-583.3" font-family="Times,serif" font-size="14.00">cvd_status</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-586" rx="48.19" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-582.3" font-family="Times,serif" font-size="14.00">cvd_status</text>
 </g>
 <!-- CvdFleetCommandHandler&#45;&gt;cvd_status -->
-<g id="edge34" class="edge">
+<g id="edge33" class="edge">
 <title>CvdFleetCommandHandler&#45;&gt;cvd_status</title>
-<path fill="none" stroke="black" d="M1250.86,-587C1296.03,-587 1346.77,-587 1384.67,-587"/>
-<polygon fill="black" stroke="black" points="1385.01,-590.5 1395.01,-587 1385.01,-583.5 1385.01,-590.5"/>
-<text text-anchor="middle" x="1318.21" y="-590.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1250.86,-586C1296.03,-586 1346.77,-586 1384.67,-586"/>
+<polygon fill="black" stroke="black" points="1385.01,-589.5 1395.01,-586 1385.01,-582.5 1385.01,-589.5"/>
+<text text-anchor="middle" x="1318.21" y="-589.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 <!-- all_cvd -->
-<g id="node26" class="node">
+<g id="node25" class="node">
 <title>all_cvd</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-533" rx="32.49" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-529.3" font-family="Times,serif" font-size="14.00">*_cvd</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-505" rx="32.49" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-501.3" font-family="Times,serif" font-size="14.00">*_cvd</text>
 </g>
 <!-- CvdHelpHandler&#45;&gt;all_cvd -->
-<g id="edge33" class="edge">
+<g id="edge32" class="edge">
 <title>CvdHelpHandler&#45;&gt;all_cvd</title>
-<path fill="none" stroke="black" d="M1211.89,-428.47C1235.53,-432.14 1261.31,-439.08 1282.21,-452 1288.41,-455.83 1286.74,-460.18 1292.21,-465 1319.26,-488.84 1329.4,-491.06 1362.21,-506 1375.67,-512.13 1390.94,-517.61 1404.52,-522"/>
-<polygon fill="black" stroke="black" points="1403.47,-525.34 1414.06,-525.01 1405.57,-518.66 1403.47,-525.34"/>
-<text text-anchor="middle" x="1318.21" y="-500.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1202.14,-433.64C1227.02,-438.18 1256.2,-444.12 1282.21,-451 1318.49,-460.6 1326.65,-466.02 1362.21,-478 1376.45,-482.8 1392.1,-488.07 1405.78,-492.67"/>
+<polygon fill="black" stroke="black" points="1404.74,-496.01 1415.34,-495.88 1406.98,-489.38 1404.74,-496.01"/>
+<text text-anchor="middle" x="1318.21" y="-474.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 <!-- restart_cvd -->
 <g id="node23" class="node">
 <title>restart_cvd</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-317" rx="50.09" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-313.3" font-family="Times,serif" font-size="14.00">restart_cvd</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-451" rx="50.09" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-447.3" font-family="Times,serif" font-size="14.00">restart_cvd</text>
 </g>
 <!-- CvdGenericCommandHandler&#45;&gt;restart_cvd -->
 <g id="edge30" class="edge">
 <title>CvdGenericCommandHandler&#45;&gt;restart_cvd</title>
-<path fill="none" stroke="black" d="M1219.54,-357.23C1272.28,-347.71 1341.18,-335.28 1388.34,-326.77"/>
-<polygon fill="black" stroke="black" points="1389.13,-330.18 1398.35,-324.96 1387.89,-323.29 1389.13,-330.18"/>
-<text text-anchor="middle" x="1318.21" y="-347.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
-</g>
-<!-- powerbtn_cvd -->
-<g id="node24" class="node">
-<title>powerbtn_cvd</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-263" rx="61.19" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-259.3" font-family="Times,serif" font-size="14.00">powerbtn_cvd</text>
-</g>
-<!-- CvdGenericCommandHandler&#45;&gt;powerbtn_cvd -->
-<g id="edge31" class="edge">
-<title>CvdGenericCommandHandler&#45;&gt;powerbtn_cvd</title>
-<path fill="none" stroke="black" d="M1248.44,-362.77C1260.73,-358.41 1272.38,-352.35 1282.21,-344 1291.97,-335.72 1283.22,-326.11 1292.21,-317 1315.63,-293.26 1330.85,-301.32 1362.21,-290 1371.85,-286.52 1382.2,-282.93 1392.15,-279.55"/>
-<polygon fill="black" stroke="black" points="1393.57,-282.77 1401.92,-276.26 1391.33,-276.13 1393.57,-282.77"/>
-<text text-anchor="middle" x="1318.21" y="-320.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1236.75,-380.94C1252.41,-384.79 1268.14,-389.98 1282.21,-397 1287.56,-399.67 1287,-403.07 1292.21,-406 1322.07,-422.78 1358.86,-433.93 1388.56,-440.94"/>
+<polygon fill="black" stroke="black" points="1387.81,-444.36 1398.34,-443.16 1389.36,-437.53 1387.81,-444.36"/>
+<text text-anchor="middle" x="1318.21" y="-431.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 <!-- powerwash_cvd -->
-<g id="node25" class="node">
+<g id="node24" class="node">
 <title>powerwash_cvd</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-479" rx="67.69" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-475.3" font-family="Times,serif" font-size="14.00">powerwash_cvd</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-397" rx="67.69" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-393.3" font-family="Times,serif" font-size="14.00">powerwash_cvd</text>
 </g>
 <!-- CvdGenericCommandHandler&#45;&gt;powerwash_cvd -->
-<g id="edge32" class="edge">
+<g id="edge31" class="edge">
 <title>CvdGenericCommandHandler&#45;&gt;powerwash_cvd</title>
-<path fill="none" stroke="black" d="M1248.34,-379.35C1260.65,-383.69 1272.33,-389.71 1282.21,-398 1291.7,-405.95 1283.52,-415.19 1292.21,-424 1315.75,-447.85 1330.76,-440.43 1362.21,-452 1371.22,-455.31 1380.86,-458.7 1390.21,-461.89"/>
-<polygon fill="black" stroke="black" points="1389.23,-465.25 1399.82,-465.15 1391.47,-458.62 1389.23,-465.25"/>
-<text text-anchor="middle" x="1318.21" y="-449.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1244.98,-379.18C1285.55,-382.84 1331.37,-386.98 1368.65,-390.34"/>
+<polygon fill="black" stroke="black" points="1368.66,-393.85 1378.93,-391.27 1369.29,-386.88 1368.66,-393.85"/>
+<text text-anchor="middle" x="1318.21" y="-390.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 <!-- stop_cvd -->
-<g id="node28" class="node">
+<g id="node27" class="node">
 <title>stop_cvd</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-425" rx="42.49" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-421.3" font-family="Times,serif" font-size="14.00">stop_cvd</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-343" rx="42.49" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-339.3" font-family="Times,serif" font-size="14.00">stop_cvd</text>
 </g>
 <!-- CvdGenericCommandHandler&#45;&gt;stop_cvd -->
-<g id="edge35" class="edge">
+<g id="edge34" class="edge">
 <title>CvdGenericCommandHandler&#45;&gt;stop_cvd</title>
-<path fill="none" stroke="black" d="M1219.54,-384.77C1274.54,-394.69 1347.11,-407.79 1394.27,-416.3"/>
-<polygon fill="black" stroke="black" points="1393.76,-419.77 1404.22,-418.1 1395,-412.88 1393.76,-419.77"/>
-<text text-anchor="middle" x="1318.21" y="-408.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1244.98,-360.82C1294.38,-356.36 1351.57,-351.2 1391.65,-347.59"/>
+<polygon fill="black" stroke="black" points="1392.06,-351.06 1401.71,-346.68 1391.43,-344.09 1392.06,-351.06"/>
+<text text-anchor="middle" x="1318.21" y="-359.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 <!-- cvd_host_bugreport -->
-<g id="node29" class="node">
+<g id="node28" class="node">
 <title>cvd_host_bugreport</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-371" rx="81.49" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-367.3" font-family="Times,serif" font-size="14.00">cvd_host_bugreport</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-289" rx="81.49" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-285.3" font-family="Times,serif" font-size="14.00">cvd_host_bugreport</text>
 </g>
 <!-- CvdGenericCommandHandler&#45;&gt;cvd_host_bugreport -->
-<g id="edge36" class="edge">
+<g id="edge35" class="edge">
 <title>CvdGenericCommandHandler&#45;&gt;cvd_host_bugreport</title>
-<path fill="none" stroke="black" d="M1261.52,-371C1291.48,-371 1323.21,-371 1351.58,-371"/>
-<polygon fill="black" stroke="black" points="1351.87,-374.5 1361.87,-371 1351.87,-367.5 1351.87,-374.5"/>
-<text text-anchor="middle" x="1318.21" y="-374.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1238.53,-359.31C1253.67,-355.42 1268.76,-350.15 1282.21,-343 1287.76,-340.05 1286.8,-336.21 1292.21,-333 1315.64,-319.11 1343.74,-309.35 1369.27,-302.62"/>
+<polygon fill="black" stroke="black" points="1370.45,-305.94 1379.29,-300.1 1368.74,-299.15 1370.45,-305.94"/>
+<text text-anchor="middle" x="1318.21" y="-336.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 <!-- launch_cvd -->
 <g id="node22" class="node">
 <title>launch_cvd</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-209" rx="51.19" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-205.3" font-family="Times,serif" font-size="14.00">launch_cvd</text>
+<ellipse fill="none" stroke="black" cx="1443.45" cy="-235" rx="51.19" ry="18"/>
+<text text-anchor="middle" x="1443.45" y="-231.3" font-family="Times,serif" font-size="14.00">launch_cvd</text>
 </g>
 <!-- CvdStartCommandHandler&#45;&gt;launch_cvd -->
 <g id="edge29" class="edge">
 <title>CvdStartCommandHandler&#45;&gt;launch_cvd</title>
-<path fill="none" stroke="black" d="M1246.3,-311.95C1259.78,-307.26 1272.32,-300.26 1282.21,-290 1302.19,-269.27 1271.43,-245.92 1292.21,-226 1316.92,-202.32 1355.43,-198.35 1387.28,-200.16"/>
-<polygon fill="black" stroke="black" points="1387.12,-203.65 1397.36,-200.93 1387.66,-196.67 1387.12,-203.65"/>
-<text text-anchor="middle" x="1318.21" y="-229.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
+<path fill="none" stroke="black" d="M1244.62,-310.19C1258.5,-305.63 1271.6,-298.88 1282.21,-289 1294.68,-277.4 1279.29,-263.1 1292.21,-252 1317.61,-230.18 1355.01,-225.88 1386.14,-227.07"/>
+<polygon fill="black" stroke="black" points="1386.24,-230.58 1396.43,-227.66 1386.65,-223.59 1386.24,-230.58"/>
+<text text-anchor="middle" x="1318.21" y="-255.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
 </g>
 </g>
 </svg>
