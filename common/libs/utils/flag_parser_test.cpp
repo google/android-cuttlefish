@@ -24,8 +24,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result_matchers.h"
-
 namespace cuttlefish {
 
 TEST(FlagParser, DuplicateAlias) {
@@ -216,16 +214,16 @@ TEST(FlagParser, StringIntFlag) {
   auto int_flag = GflagsCompatFlag("int", int_value);
   auto string_flag = GflagsCompatFlag("string", string_value);
   std::vector<Flag> flags = {int_flag, string_flag};
-  EXPECT_THAT(ParseFlags(flags, {"-int=5", "-string=a"}), IsOk());
+  ASSERT_TRUE(ParseFlags(flags, {"-int=5", "-string=a"}));
   ASSERT_EQ(int_value, 5);
   ASSERT_EQ(string_value, "a");
-  EXPECT_THAT(ParseFlags(flags, {"--int=6", "--string=b"}), IsOk());
+  ASSERT_TRUE(ParseFlags(flags, {"--int=6", "--string=b"}));
   ASSERT_EQ(int_value, 6);
   ASSERT_EQ(string_value, "b");
-  EXPECT_THAT(ParseFlags(flags, {"-int", "7", "-string", "c"}), IsOk());
+  ASSERT_TRUE(ParseFlags(flags, {"-int", "7", "-string", "c"}));
   ASSERT_EQ(int_value, 7);
   ASSERT_EQ(string_value, "c");
-  EXPECT_THAT(ParseFlags(flags, {"--int", "8", "--string", "d"}), IsOk());
+  ASSERT_TRUE(ParseFlags(flags, {"--int", "8", "--string", "d"}));
   ASSERT_EQ(int_value, 8);
   ASSERT_EQ(string_value, "d");
 }
