@@ -305,7 +305,19 @@ class LoadConfigsCommand : public CvdServerHandler {
         fetch_cmd.add_args("fetch");
         fetch_cmd.add_args("--target_directory=" +
                            instance.artifacts_directory);
-        fetch_cmd.add_args("--default_build=" + instance.default_build);
+        if (cvd_flags.fetch_cvd_flags.credential_source) {
+          fetch_cmd.add_args("--credential_source=" +
+                             *cvd_flags.fetch_cvd_flags.credential_source);
+        }
+        if (instance.default_build) {
+          fetch_cmd.add_args("--default_build=" + *instance.default_build);
+        }
+        if (instance.system_build) {
+          fetch_cmd.add_args("--system_build=" + *instance.system_build);
+        }
+        if (instance.kernel_build) {
+          fetch_cmd.add_args("--kernel_build=" + *instance.kernel_build);
+        }
       }
     }
 
