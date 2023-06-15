@@ -137,12 +137,18 @@ int main(int argc, char** argv) {
                                    cuttlefish::SharedFD::Dup(touch_fd));
     close(touch_fd);
   }
-  inputs_builder.WithRotary(cuttlefish::SharedFD::Dup(FLAGS_rotary_fd));
-  close(FLAGS_rotary_fd);
-  inputs_builder.WithKeyboard(cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd));
-  close(FLAGS_keyboard_fd);
-  inputs_builder.WithSwitches(cuttlefish::SharedFD::Dup(FLAGS_switches_fd));
-  close(FLAGS_switches_fd);
+  if (FLAGS_rotary_fd >= 0) {
+    inputs_builder.WithRotary(cuttlefish::SharedFD::Dup(FLAGS_rotary_fd));
+    close(FLAGS_rotary_fd);
+  }
+  if (FLAGS_keyboard_fd >= 0) {
+    inputs_builder.WithKeyboard(cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd));
+    close(FLAGS_keyboard_fd);
+  }
+  if (FLAGS_switches_fd >= 0) {
+    inputs_builder.WithSwitches(cuttlefish::SharedFD::Dup(FLAGS_switches_fd));
+    close(FLAGS_switches_fd);
+  }
 
   auto input_connector = std::move(inputs_builder).Build();
 
