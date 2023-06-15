@@ -350,24 +350,20 @@ std::vector<std::string> ArgsToVec(int argc, char** argv) {
   return args;
 }
 
-bool ParseFlags(const std::vector<Flag>& flags,
-                std::vector<std::string>& args) {
+Result<void> ParseFlags(const std::vector<Flag>& flags,
+                        std::vector<std::string>& args) {
   for (const auto& flag : flags) {
-    if (!flag.Parse(args)) {
-      return false;
-    }
+    CF_EXPECT(flag.Parse(args));
   }
-  return true;
+  return {};
 }
 
-bool ParseFlags(const std::vector<Flag>& flags,
-                std::vector<std::string>&& args) {
+Result<void> ParseFlags(const std::vector<Flag>& flags,
+                        std::vector<std::string>&& args) {
   for (const auto& flag : flags) {
-    if (!flag.Parse(args)) {
-      return false;
-    }
+    CF_EXPECT(flag.Parse(args));
   }
-  return true;
+  return {};
 }
 
 bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
