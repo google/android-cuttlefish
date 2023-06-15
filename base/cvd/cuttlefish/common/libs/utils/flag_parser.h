@@ -136,8 +136,10 @@ Result<bool> ParseBool(const std::string& value, const std::string& name);
 /* Handles a list of flags. Flags are matched in the order given in case two
  * flags match the same argument. Matched flags are removed, leaving only
  * unmatched arguments. */
-bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>& args);
-bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>&&);
+Result<void> ParseFlags(const std::vector<Flag>& flags,
+                        std::vector<std::string>& args);
+Result<void> ParseFlags(const std::vector<Flag>& flags,
+                        std::vector<std::string>&&);
 
 bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
