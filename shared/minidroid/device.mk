@@ -115,7 +115,7 @@ PRODUCT_COPY_FILES += \
     packages/modules/Virtualization/microdroid/ueventd.rc:vendor/etc/ueventd.rc \
 
 DEVICE_MANIFEST_FILE := \
-    packages/modules/Virtualization/microdroid/microdroid_vendor_manifest.xml
+    device/google/cuttlefish/shared/minidroid/minidroid_vendor_manifest.xml
 PRODUCT_PACKAGES += vendor_compatibility_matrix.xml
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/minidroid/android-info.txt
