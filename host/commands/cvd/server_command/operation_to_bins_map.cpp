@@ -36,6 +36,10 @@ fruit::Component<OperationToBinsMap> OperationToBinsMapComponent() {
             std::vector<std::string>{"restart_cvd"};
         op_to_possible_bins_map["powerwash"] =
             std::vector<std::string>{"powerwash_cvd"};
+        op_to_possible_bins_map["suspend"] =
+            std::vector<std::string>{"snapshot_util_cvd"};
+        op_to_possible_bins_map["resume"] =
+            std::vector<std::string>{"snapshot_util_cvd"};
         return op_to_possible_bins_map;
       });
 }

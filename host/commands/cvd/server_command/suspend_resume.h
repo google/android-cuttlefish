@@ -16,33 +16,16 @@
 
 #pragma once
 
-#include <iostream>
-#include <optional>
-#include <string>
-#include <vector>
+#include <fruit/fruit.h>
 
-#include <android-base/logging.h>
-
-#include "common/libs/utils/result.h"
+#include "host/commands/cvd/instance_manager.h"
+#include "host/commands/cvd/server_command/host_tool_target_manager.h"
+#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-enum class SnapshotCmd : int {
-  kUnknown = 0,
-  kSuspend = 1,
-  kResume = 2,
-  kSnapshotTake = 3,
-};
-
-std::ostream& operator<<(std::ostream& out, const SnapshotCmd& cmd);
-
-struct Parsed {
-  SnapshotCmd cmd;
-  int instance_num;
-  int wait_for_launcher;
-  std::optional<android::base::LogSeverity> verbosity_level;
-};
-Result<Parsed> Parse(int argc, char** argv);
-Result<Parsed> Parse(std::vector<std::string>& args);
+fruit::Component<
+    fruit::Required<InstanceManager, SubprocessWaiter, HostToolTargetManager>>
+CvdSuspendResumeComponent();
 
 }  // namespace cuttlefish
