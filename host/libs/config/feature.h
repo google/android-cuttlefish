@@ -51,8 +51,7 @@ class SetupFeature : public virtual Feature<SetupFeature> {
   virtual bool Enabled() const = 0;
 
  private:
-  virtual Result<void> ResultSetup();
-  virtual bool Setup();
+  virtual Result<void> ResultSetup() = 0;
 };
 
 class FlagFeature : public Feature<FlagFeature> {
