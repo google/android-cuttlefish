@@ -43,29 +43,6 @@
 
 namespace cuttlefish {
 
-static constexpr char kSuspendResume[] =
-    R"(Cuttlefish Virtual Device (CVD) CLI.
-
-Suspend/resume the cuttlefish device
-
-usage: cvd [selector flags] suspend/resume [--help]
-
-Common:
-  Selector Flags:
-    --group_name=<name>       The name of the instance group
-    --instance_name=<names>   The comma-separated list of the instance names
-
-  Args:
-    --help                    print this message
-
-Crosvm:
-  No crosvm-specific arguments at the moment
-
-QEMU:
-  No QEMU-specific arguments at the moment
-
-)";
-
 static constexpr char kSnapshot[] =
     R"(Cuttlefish Virtual Device (CVD) CLI.
 
@@ -100,9 +77,7 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
  public:
   INJECT(CvdVmControlCommandHandler(InstanceManager& instance_manager))
       : instance_manager_{instance_manager},
-        vm_operations_{{"suspend", kSuspendResume},
-                       {"resume", kSuspendResume},
-                       {"snapshot", kSnapshot}} {}
+        vm_operations_{{"snapshot", kSnapshot}} {}
 
   Result<bool> CanHandle(const RequestWithStdio& request) const {
     auto invocation = ParseInvocation(request.Message());
@@ -131,7 +106,6 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
 
     if (is_help) {
       auto help_response = CF_EXPECT(HandleHelp(request.Err(), vm_op));
-      interrupt_lock.unlock();
       return help_response;
     }
 
