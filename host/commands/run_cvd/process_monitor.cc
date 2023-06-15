@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <future>
 #include <memory>
 #include <string>
@@ -83,23 +84,6 @@ Result<void> StartSubprocesses(std::vector<MonitorEntry>& entries) {
     auto options = SubprocessOptions().InGroup(true);
     monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
     CF_EXPECT(monitored.proc->Started(), "Failed to start subprocess");
-  }
-  return {};
-}
-
-Result<void> ReadMonitorSocketLoopForStop(std::atomic_bool& running,
-                                          SharedFD& monitor_socket) {
-  LOG(DEBUG) << "Waiting for a `stop` message from the parent";
-  while (running.load()) {
-    using process_monitor_impl::ParentToChildMessage;
-    auto message = CF_EXPECT(ParentToChildMessage::Read(monitor_socket));
-    if (message.Stop()) {
-      running.store(false);
-      // Wake up the wait() loop by giving it an exited child process
-      if (fork() == 0) {
-        std::exit(0);
-      }
-    }
   }
   return {};
 }
@@ -171,6 +155,23 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
 }
 
 }  // namespace
+
+Result<void> ProcessMonitor::ReadMonitorSocketLoopForStop(
+    std::atomic_bool& running) {
+  LOG(DEBUG) << "Waiting for a `stop` message from the parent";
+  while (running.load()) {
+    using process_monitor_impl::ParentToChildMessage;
+    auto message = CF_EXPECT(ParentToChildMessage::Read(monitor_socket_));
+    if (message.Stop()) {
+      running.store(false);
+      // Wake up the wait() loop by giving it an exited child process
+      if (fork() == 0) {
+        std::exit(0);
+      }
+    }
+  }
+  return {};
+}
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
     bool r) & {
@@ -254,9 +255,13 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   StartSubprocesses(properties_.entries_);
 
   std::atomic_bool running(true);
-  auto parent_comms =
-      std::async(std::launch::async, ReadMonitorSocketLoopForStop,
-                 std::ref(running), std::ref(monitor_socket_));
+  auto read_monitor_socket_loop =
+      [this](std::atomic_bool& running) -> Result<void> {
+    CF_EXPECT(this->ReadMonitorSocketLoopForStop(running));
+    return {};
+  };
+  auto parent_comms = std::async(std::launch::async, read_monitor_socket_loop,
+                                 std::ref(running));
 
   MonitorLoop(running, properties_.restart_subprocesses_, properties_.entries_);
   CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
