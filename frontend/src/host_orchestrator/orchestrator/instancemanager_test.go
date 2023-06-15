@@ -417,7 +417,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 		CVDToolsVersion:  cvdBinAB,
 		Paths:            paths,
 		OperationManager: om,
-		CVDExecTimeout:   testFakeBinaryDelayMs - (50 * time.Millisecond),
+		CVDStartTimeout:  testFakeBinaryDelayMs - (50 * time.Millisecond),
 		HostValidator:    &AlwaysSucceedsValidator{},
 		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
