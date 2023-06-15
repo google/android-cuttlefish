@@ -27,8 +27,10 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
 #include <future>
 #include <memory>
+#include <string>
 #include <thread>
 
 #include <android-base/logging.h>
@@ -37,16 +39,13 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/run_cvd/process_monitor_channel.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
 namespace {
-
-struct ParentToChildMessage {
-  bool stop;
-};
 
 void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   LOG(INFO) << "Detected unexpected exit of monitored subprocess " << name;
@@ -92,10 +91,9 @@ Result<void> ReadMonitorSocketLoopForStop(std::atomic_bool& running,
                                           SharedFD& monitor_socket) {
   LOG(DEBUG) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
-    ParentToChildMessage message;
-    CF_EXPECT(ReadExactBinary(monitor_socket, &message) == sizeof(message),
-              "Could not read message from parent");
-    if (message.stop) {
+    using process_monitor_impl::ParentToChildMessage;
+    auto message = CF_EXPECT(ParentToChildMessage::Read(monitor_socket));
+    if (message.Stop()) {
       running.store(false);
       // Wake up the wait() loop by giving it an exited child process
       if (fork() == 0) {
@@ -202,11 +200,10 @@ ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties)
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
   CF_EXPECT(monitor_socket_->IsOpen(), "The monitor socket is already closed");
-  ParentToChildMessage message;
-  message.stop = true;
-  CF_EXPECT(WriteAllBinary(monitor_socket_, &message) == sizeof(message),
-            "Failed to communicate with monitor socket: "
-                << monitor_socket_->StrError());
+  using process_monitor_impl::ParentToChildMessage;
+  using process_monitor_impl::ParentToChildMessageType;
+  ParentToChildMessage message(ParentToChildMessageType::kStop);
+  CF_EXPECT(message.Write(monitor_socket_));
 
   pid_t last_monitor = monitor_;
   monitor_ = -1;
