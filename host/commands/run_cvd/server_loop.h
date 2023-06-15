@@ -18,8 +18,6 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
