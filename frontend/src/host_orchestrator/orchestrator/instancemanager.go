@@ -143,8 +143,8 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	if err := createDir(m.paths.ArtifactsRootDir); err != nil {
 		return apiv1.Operation{}, err
 	}
-	if err := createDir(m.paths.RuntimesRootDir); err != nil {
-		return apiv1.Operation{}, err
+	if err := createRuntimesRootDir(m.paths.RuntimesRootDir); err != nil {
+		return apiv1.Operation{}, fmt.Errorf("failed creating cuttlefish runtime directory: %w", err)
 	}
 	if err := m.downloadCVDHandler.Download(); err != nil {
 		return apiv1.Operation{}, err
@@ -152,6 +152,14 @@ func (m *CVDToolInstanceManager) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Op
 	op := m.om.New()
 	go m.launchCVD(req, op)
 	return op, nil
+}
+
+// Makes runtime artifacts owned by `cvdnetwork` group.
+func createRuntimesRootDir(name string) error {
+	if err := createDir(name); err != nil {
+		return err
+	}
+	return os.Chmod(name, 0774|os.ModeSetgid)
 }
 
 type cvdInstance struct {
@@ -899,9 +907,6 @@ func runAcloudSetup(execContext ExecContext, artifactsRootDir, artifactsDir, run
 	}
 	// Creates symbolic link `acloud_link` which points to the passed device artifacts directory.
 	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
-	// Make metrics.log and modem_simulator.log available to acloud user.
-	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/metrics.log"))
-	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "chmod", "644", runtimeDir+"/cuttlefish_runtime/logs/modem_simulator.log"))
 }
 
 func SliceItoa(s []uint32) []string {

@@ -161,14 +161,13 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 
 	om.Wait(op.Name, 1*time.Second)
 
-	expected := "drwxrwxr--"
 	stats, _ := os.Stat(paths.ArtifactsRootDir)
-	if stats.Mode().String() != expected {
-		t.Errorf("expected <<%q>, got %q", expected, stats.Mode().String())
+	if diff := cmp.Diff("drwxrwxr--", stats.Mode().String()); diff != "" {
+		t.Errorf("mode mismatch (-want +got):\n%s", diff)
 	}
 	stats, _ = os.Stat(paths.RuntimesRootDir)
-	if stats.Mode().String() != expected {
-		t.Errorf("expected <<%q>, got %q", expected, stats.Mode().String())
+	if diff := cmp.Diff("dgrwxrwxr--", stats.Mode().String()); diff != "" {
+		t.Errorf("mode mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -382,7 +381,7 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := execCtxSubcmdFails
+	execContext := execCtxCvdSubcmdFails
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDToolsDir:      dir,
@@ -404,7 +403,7 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 func TestCreateCVDFailsDueTimeout(t *testing.T) {
 	dir := tempDir(t)
 	defer removeDir(t, dir)
-	execContext := execCtxSubcmdDelays
+	execContext := execCtxCvdSubcmdDelays
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
 		CVDToolsDir:      dir,
@@ -598,24 +597,32 @@ func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *ex
 	return exec.Command("true")
 }
 
-func execCtxSubcmdFails(ctx context.Context, name string, args ...string) *exec.Cmd {
-	cmd := "false"
-	// Do not fail when executing cvd only as it is not a cvd subcommand.
-	if path.Base(args[len(args)-1]) == "cvd" {
-		cmd = "true"
+func isCvdSubCommand(name string, args ...string) bool {
+	// All cvd executions are run through `sudo`.
+	if name != "sudo" {
+		return false
 	}
-	return exec.Command(cmd)
+	// cvd alone not a cvd subcommand
+	if path.Base(args[len(args)-1]) == "cvd" {
+		return false
+	}
+	return true
+}
+
+func execCtxCvdSubcmdFails(ctx context.Context, name string, args ...string) *exec.Cmd {
+	if isCvdSubCommand(name, args...) {
+		return exec.Command("false")
+	}
+	return exec.Command("true")
 }
 
 const testFakeBinaryDelayMs = 100 * time.Millisecond
 
-func execCtxSubcmdDelays(ctx context.Context, name string, args ...string) *exec.Cmd {
-	cmd := fmt.Sprintf("sleep %f", float64(testFakeBinaryDelayMs)/1000_000_000)
-	// Do not wait when executing cvd only as it is not a cvd subcommand.
-	if path.Base(args[len(args)-1]) == "cvd" {
-		cmd = "true"
+func execCtxCvdSubcmdDelays(ctx context.Context, name string, args ...string) *exec.Cmd {
+	if isCvdSubCommand(name, args...) {
+		return exec.Command(fmt.Sprintf("sleep %f", float64(testFakeBinaryDelayMs)/1000_000_000))
 	}
-	return exec.Command(cmd)
+	return exec.Command("true")
 }
 
 func containsStr(values []string, t string) bool {
