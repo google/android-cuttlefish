@@ -676,6 +676,8 @@ func fileExist(name string) (bool, error) {
 	}
 }
 
+const CVDCommandDefaultTimeout = 30 * time.Second
+
 const (
 	cvdUser              = "_cvd-executor"
 	envVarAndroidHostOut = "ANDROID_HOST_OUT"
@@ -743,19 +745,21 @@ func (c *cvdCommand) Run() error {
 	}
 	var timedOut atomic.Value
 	timedOut.Store(false)
+	timeout := CVDCommandDefaultTimeout
 	if c.opts.Timeout != 0 {
-		go func() {
-			select {
-			case <-time.After(c.opts.Timeout):
-				// NOTE: Do not use SIGKILL to terminate cvd commands. cvd commands are run using
-				// `sudo` and contrary to SIGINT, SIGKILL is not relayed to child processes.
-				if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
-					log.Printf("error sending SIGINT signal %+v", err)
-				}
-				timedOut.Store(true)
-			}
-		}()
+		timeout = c.opts.Timeout
 	}
+	go func() {
+		select {
+		case <-time.After(timeout):
+			// NOTE: Do not use SIGKILL to terminate cvd commands. cvd commands are run using
+			// `sudo` and contrary to SIGINT, SIGKILL is not relayed to child processes.
+			if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
+				log.Printf("error sending SIGINT signal %+v", err)
+			}
+			timedOut.Store(true)
+		}
+	}()
 	if err := cmd.Wait(); err != nil {
 		logStderr(cmd, stderr.String())
 		if timedOut.Load().(bool) {
