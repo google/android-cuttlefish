@@ -85,11 +85,16 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
 #endif
 
 int memfd_create_wrapper(const char* name, unsigned int flags) {
+#ifdef __linux__
 #ifdef CUTTLEFISH_HOST
   // TODO(schuffelen): Use memfd_create with a newer host libc.
   return syscall(__NR_memfd_create, name, flags);
 #else
   return memfd_create(name, flags);
+#endif
+#else
+  (void)flags;
+  return shm_open(name, O_RDWR);
 #endif
 }
 
@@ -380,10 +385,12 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   return false;
 }
 
+#ifdef __linux__
 SharedFD SharedFD::Event(int initval, int flags) {
   int fd = eventfd(initval, flags);
   return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
+#endif
 
 SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
   int fd = memfd_create_wrapper(name.c_str(), flags);
@@ -545,12 +552,21 @@ SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& int
   }
 
   if (!interface.empty()) {
+#ifdef __linux__
     ifreq ifr{};
     snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface.c_str());
 
     if (rval->SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1) {
       return SharedFD::ErrorFD(rval->GetErrno());
     }
+#elif defined(__APPLE__)
+    int idx = if_nametoindex(interface.c_str());
+    if (rval->SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) == -1) {
+      return SharedFD::ErrorFD(rval->GetErrno());
+    }
+#else
+#error "Unsupported operating system"
+#endif
   }
 
   if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
@@ -633,6 +649,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
   return rval;
 }
 
+#ifdef __linux__
 SharedFD SharedFD::VsockServer(unsigned int port, int type, unsigned int cid) {
   auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
@@ -677,6 +694,7 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   }
   return vsock;
 }
+#endif
 
 SharedFD WeakFD::lock() const {
   auto locked_file_instance = value_.lock();
@@ -765,12 +783,14 @@ int FileInstance::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
   return rval;
 }
 
+#ifdef __linux__
 unsigned int FileInstance::VsockServerPort() {
   struct sockaddr_vm vm_socket;
   socklen_t length = sizeof(vm_socket);
   GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
   return vm_socket.svm_port;
 }
+#endif
 
 int FileInstance::Ioctl(int request, void* val) {
   errno = 0;
@@ -824,12 +844,14 @@ ssize_t FileInstance::Read(void* buf, size_t count) {
   return rval;
 }
 
+#ifdef __linux__
 int FileInstance::EventfdRead(eventfd_t* value) {
   errno = 0;
   auto rval = eventfd_read(fd_, value);
   errno_ = errno;
   return rval;
 }
+#endif
 
 ssize_t FileInstance::Send(const void* buf, size_t len, int flags) {
   errno = 0;
@@ -912,12 +934,14 @@ ssize_t FileInstance::Write(const void* buf, size_t count) {
   return rval;
 }
 
+#ifdef __linux__
 int FileInstance::EventfdWrite(eventfd_t value) {
   errno = 0;
   int rval = eventfd_write(fd_, value);
   errno_ = errno;
   return rval;
 }
+#endif
 
 bool FileInstance::IsATTY() {
   errno = 0;
@@ -926,6 +950,7 @@ bool FileInstance::IsATTY() {
   return rval;
 }
 
+#ifdef __linux__
 Result<std::string> FileInstance::ProcFdLinkTarget() const {
   std::stringstream output_composer;
   output_composer << "/proc/" << getpid() << "/fd/" << fd_;
@@ -936,6 +961,7 @@ Result<std::string> FileInstance::ProcFdLinkTarget() const {
       "Getting link for the memory file \"" << mem_fd_link << "\" failed");
   return mem_fd_target;
 }
+#endif
 
 FileInstance::FileInstance(int fd, int in_errno)
     : fd_(fd), errno_(in_errno), is_regular_file_(IsRegularFile(fd_)) {
