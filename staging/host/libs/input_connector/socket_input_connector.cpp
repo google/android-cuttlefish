@@ -77,13 +77,12 @@ std::unique_ptr<InputEventsBuffer> CreateBuffer(InputEventType event_type,
 
 class InputSocket {
  public:
-  InputSocket(std::string label, SharedFD server)
-      : label_(std::move(label)), server_(server), monitor_(std::thread([this]() { MonitorLoop(); })) {}
+  InputSocket(SharedFD server)
+      : server_(server), monitor_(std::thread([this]() { MonitorLoop(); })) {}
 
   Result<void> WriteEvents(std::unique_ptr<InputEventsBuffer> buffer);
 
  private:
-  std::string label_;
   SharedFD server_;
   SharedFD client_;
   std::mutex client_mtx_;
@@ -93,19 +92,12 @@ class InputSocket {
 };
 
 void InputSocket::MonitorLoop() {
-  constexpr int KMaxRetries = 3;
-  int retries = 0;
   for (;;) {
     client_ = SharedFD::Accept(*server_);
     if (!client_->IsOpen()) {
-      LOG(ERROR) << "Failed to accept on "<< label_ <<" socket: " << client_->StrError();
-      if (++retries > KMaxRetries) {
-        LOG(ERROR) << "Reached max number of retries on " << label_ << " input socket";
-        break;
-      }
+      LOG(ERROR) << "Failed to accept on input socket: " << client_->StrError();
       continue;
     }
-    retries = 0;
     do {
       // Keep reading from the fd to detect when it closes.
       char buf[128];
@@ -268,28 +260,28 @@ InputSocketsConnectorBuilder::InputSocketsConnectorBuilder(InputEventType type)
 
 InputSocketsConnectorBuilder::~InputSocketsConnectorBuilder() = default;
 
-void InputSocketsConnectorBuilder::WithTouchscreen(std::string display,
+void InputSocketsConnectorBuilder::WithTouchscreen(const std::string& display,
                                                    SharedFD server) {
   CHECK(connector_->touchscreens_.find(display) ==
         connector_->touchscreens_.end())
       << "Multiple displays with same label: " << display;
   connector_->touchscreens_.emplace(
-      display, Touchscreen{.socket = std::make_unique<InputSocket>(std::move(display), server)});
+      display, Touchscreen{.socket = std::make_unique<InputSocket>(server)});
 }
 
 void InputSocketsConnectorBuilder::WithKeyboard(SharedFD server) {
   CHECK(!connector_->keyboard_) << "Keyboard already specified";
-  connector_->keyboard_.reset(new InputSocket("keyboard", server));
+  connector_->keyboard_.reset(new InputSocket(server));
 }
 
 void InputSocketsConnectorBuilder::WithSwitches(SharedFD server) {
   CHECK(!connector_->switches_) << "Switches already specified";
-  connector_->switches_.reset(new InputSocket("switches", server));
+  connector_->switches_.reset(new InputSocket(server));
 }
 
 void InputSocketsConnectorBuilder::WithRotary(SharedFD server) {
   CHECK(!connector_->rotary_) << "Rotary already specified";
-  connector_->rotary_.reset(new InputSocket("rotary", server));
+  connector_->rotary_.reset(new InputSocket(server));
 }
 
 std::unique_ptr<InputConnector> InputSocketsConnectorBuilder::Build() && {
