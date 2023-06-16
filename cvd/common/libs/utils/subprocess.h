@@ -21,7 +21,6 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <functional>
@@ -88,16 +87,13 @@ class Subprocess {
   pid_t pid() const { return pid_; }
   StopperResult Stop() { return stopper_(this); }
 
-  Result<void> SendSignal(const int signal);
-  Result<void> SendSignalToGroup(const int signal);
-
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
   // frees the pid, which allows the kernel to reuse it so we may end up waiting
   // for the wrong process)
   Subprocess(const Subprocess&) = delete;
   Subprocess& operator=(const Subprocess&) = delete;
-  std::atomic<pid_t> pid_ = -1;
+  pid_t pid_ = -1;
   bool started_ = false;
   SubprocessStopper stopper_;
 };
@@ -283,6 +279,9 @@ class Command {
   Command& SetWorkingDirectory(SharedFD dirfd) &;
   Command SetWorkingDirectory(SharedFD dirfd) &&;
 
+  Command& AddPrerequisite(const std::function<Result<void>()>& prerequisite) &;
+  Command AddPrerequisite(const std::function<Result<void>()>& prerequisite) &&;
+
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
   Subprocess Start(SubprocessOptions options = SubprocessOptions()) const;
@@ -302,6 +301,7 @@ class Command {
  private:
   std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
+  std::vector<std::function<Result<void>()>> prerequisites_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   std::vector<std::string> env_{};

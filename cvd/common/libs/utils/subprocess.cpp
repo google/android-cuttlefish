@@ -16,7 +16,6 @@
 
 #include "common/libs/utils/subprocess.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -145,7 +144,7 @@ SubprocessOptions SubprocessOptions::InGroup(bool in_group) && {
 }
 
 Subprocess::Subprocess(Subprocess&& subprocess)
-    : pid_(subprocess.pid_.load()),
+    : pid_(subprocess.pid_),
       started_(subprocess.started_),
       stopper_(subprocess.stopper_) {
   // Make sure the moved object no longer controls this subprocess
@@ -154,7 +153,7 @@ Subprocess::Subprocess(Subprocess&& subprocess)
 }
 
 Subprocess& Subprocess::operator=(Subprocess&& other) {
-  pid_ = other.pid_.load();
+  pid_ = other.pid_;
   started_ = other.started_;
   stopper_ = other.stopper_;
 
@@ -171,7 +170,7 @@ int Subprocess::Wait() {
     return -1;
   }
   int wstatus = 0;
-  auto pid = pid_.load();  // Wait will set pid_ to -1 after waiting
+  auto pid = pid_;  // Wait will set pid_ to -1 after waiting
   auto wait_ret = waitpid(pid, &wstatus, 0);
   if (wait_ret < 0) {
     auto error = errno;
@@ -180,14 +179,12 @@ int Subprocess::Wait() {
   }
   int retval = 0;
   if (WIFEXITED(wstatus)) {
-    pid_ = -1;
     retval = WEXITSTATUS(wstatus);
     if (retval) {
       LOG(DEBUG) << "Subprocess " << pid
                  << " exited with error code: " << retval;
     }
   } else if (WIFSIGNALED(wstatus)) {
-    pid_ = -1;
     LOG(ERROR) << "Subprocess " << pid
                << " was interrupted by a signal: " << WTERMSIG(wstatus);
     retval = -1;
@@ -210,36 +207,6 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
     pid_ = -1;
   }
   return retval;
-}
-
-static Result<void> SendSignalImpl(const int signal, const pid_t pid,
-                                   bool to_group, const bool started) {
-  if (pid == -1) {
-    return CF_ERR(strerror(ESRCH));
-  }
-  CF_EXPECTF(started == true,
-             "The Subprocess object lost the ownership"
-             "of the process {}.",
-             pid);
-  int ret_code = 0;
-  if (to_group) {
-    ret_code = killpg(getpgid(pid), signal);
-  } else {
-    ret_code = kill(pid, signal);
-  }
-  CF_EXPECTF(ret_code == 0, "kill/killpg returns {} with errno: {}", ret_code,
-             strerror(errno));
-  return {};
-}
-
-Result<void> Subprocess::SendSignal(const int signal) {
-  CF_EXPECT(SendSignalImpl(signal, pid_, /* to_group */ false, started_));
-  return {};
-}
-
-Result<void> Subprocess::SendSignalToGroup(const int signal) {
-  CF_EXPECT(SendSignalImpl(signal, pid_, /* to_group */ true, started_));
-  return {};
 }
 
 StopperResult KillSubprocess(Subprocess* subprocess) {
@@ -342,6 +309,18 @@ Command Command::SetWorkingDirectory(SharedFD dirfd) && {
   return std::move(SetWorkingDirectory(std::move(dirfd)));
 }
 
+Command& Command::AddPrerequisite(
+    const std::function<Result<void>()>& prerequisite) & {
+  prerequisites_.push_back(prerequisite);
+  return *this;
+}
+
+Command Command::AddPrerequisite(
+    const std::function<Result<void>()>& prerequisite) && {
+  prerequisites_.push_back(prerequisite);
+  return std::move(*this);
+}
+
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
 
@@ -356,6 +335,16 @@ Subprocess Command::Start(SubprocessOptions options) const {
     }
 
     do_redirects(redirects_);
+
+    for (auto& prerequisite : prerequisites_) {
+      auto prerequisiteResult = prerequisite();
+
+      if (!prerequisiteResult.ok()) {
+        LOG(ERROR) << "Failed to check prerequisites: "
+                   << prerequisiteResult.error().Message();
+      }
+    }
+
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
       if (setpgid(0, 0) != 0) {
