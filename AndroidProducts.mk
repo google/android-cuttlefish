@@ -51,6 +51,7 @@ PRODUCT_MAKEFILES := \
 COMMON_LUNCH_CHOICES := \
 	aosp_cf_arm64_auto-userdebug \
 	aosp_cf_arm64_phone-userdebug \
+	aosp_cf_riscv64_phone-userdebug \
 	aosp_cf_x86_64_only_phone_hsum-userdebug \
 	aosp_cf_x86_64_pc-userdebug \
 	aosp_cf_x86_64_phone-userdebug \
