@@ -219,14 +219,14 @@ func (m *CVDToolInstanceManager) GetLogsDir(name string) (string, error) {
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
-// TODO(b/236398043): Return more granular and informative errors.
 func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.Operation) {
-	var result OperationResult
-	defer func() {
-		if err := m.om.Complete(op.Name, &result); err != nil {
-			log.Printf("failed to complete operation with error: %v", err)
-		}
-	}()
+	result := m.launchCVDResult(req, op)
+	if err := m.om.Complete(op.Name, result); err != nil {
+		log.Printf("error completing launch cvd operation %q: %v\n", op.Name, err)
+	}
+}
+
+func (m *CVDToolInstanceManager) launchCVDResult(req apiv1.CreateCVDRequest, op apiv1.Operation) *OperationResult {
 	instancesCount := 1 + req.AdditionalInstancesNum
 	var instanceNumbers []uint32
 	var err error
@@ -236,11 +236,10 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	case req.CVD.BuildSource.UserBuildSource != nil:
 		instanceNumbers, err = m.launchFromUserBuild(req.CVD.BuildSource.UserBuildSource, instancesCount, op)
 	default:
-		result = OperationResult{
+		return &OperationResult{
 			Error: operator.NewBadRequestError(
 				"Invalid CreateCVDRequest, missing BuildSource information.", nil),
 		}
-		return
 	}
 	if err != nil {
 		var details string
@@ -253,21 +252,18 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 		} else if errors.As(err, &timeoutErr) {
 			details = timeoutErr.Error()
 		}
-		result = OperationResult{Error: operator.NewInternalErrorD(ErrMsgLaunchCVDFailed, details, err)}
 		log.Printf("failed to launch cvd with error: %v", err)
-		return
+		return &OperationResult{Error: operator.NewInternalErrorD(ErrMsgLaunchCVDFailed, details, err)}
 	}
 	fleet, err := m.cvdFleet()
 	if err != nil {
-		result = OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
-		return
+		return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 	}
 	relevant := []cvdInstance{}
 	for _, item := range fleet {
 		n, err := nameToNumber(item.InstanceName)
 		if err != nil {
-			result = OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
-			return
+			return &OperationResult{Error: operator.NewInternalError(ErrMsgLaunchCVDFailed, err)}
 		}
 		if contains(instanceNumbers, uint32(n)) {
 			relevant = append(relevant, item)
@@ -276,7 +272,7 @@ func (m *CVDToolInstanceManager) launchCVD(req apiv1.CreateCVDRequest, op apiv1.
 	res := &apiv1.CreateCVDResponse{
 		CVDs: fleetToCVDs(relevant),
 	}
-	result = OperationResult{Value: res}
+	return &OperationResult{Value: res}
 }
 
 const (
