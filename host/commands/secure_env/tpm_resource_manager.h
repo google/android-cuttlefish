@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <set>
 
 #include <tss2/tss2_esys.h>
@@ -33,7 +34,7 @@ namespace cuttlefish {
  * caching to avoid re-loading often-used resources.
  */
 class TpmResourceManager {
-public:
+ public:
   class ObjectSlot {
   public:
     friend class TpmResourceManager;
@@ -55,7 +56,14 @@ public:
 
   ESYS_CONTEXT* Esys();
   std::shared_ptr<ObjectSlot> ReserveSlot();
-private:
+
+  // Return a lock guard to serialize access to the TPM.
+  std::lock_guard<std::mutex> Guard() {
+    return std::lock_guard<std::mutex>(mu_);
+  }
+
+ private:
+  std::mutex mu_;
   ESYS_CONTEXT* esys_;
   const std::uint32_t maximum_object_slots_;
   std::atomic<std::uint32_t> used_slots_;
