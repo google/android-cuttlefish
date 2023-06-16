@@ -154,6 +154,8 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     const uint8_t* data,
     size_t data_size) {
   auto fn = data_size > TPM2_MAX_DIGEST_BUFFER ? SegmentedHmac : OneshotHmac;
+
+  auto with_tpm = resource_manager.Guard();
   return fn(resource_manager, key_handle, auth, data, data_size);
 }
 
