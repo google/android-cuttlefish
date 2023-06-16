@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -281,6 +282,29 @@ func TestGetStatuszIsHandled(t *testing.T) {
 		t.Fatal(err)
 	}
 	controller := Controller{}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+type fakeRuntimeArtifactsManager struct{}
+
+func (m *fakeRuntimeArtifactsManager) Tar() (string, error) {
+	f, _ := ioutil.TempFile("", "cuttlefishTest")
+	defer f.Close()
+	return f.Name(), nil
+}
+
+func TestPullRuntimeArtifactsIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/runtimeartifacts/:pull", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{RuntimeArtifactsManager: &fakeRuntimeArtifactsManager{}}
 
 	makeRequest(rr, req, &controller)
 

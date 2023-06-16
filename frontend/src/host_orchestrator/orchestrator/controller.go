@@ -20,9 +20,11 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -31,11 +33,12 @@ import (
 )
 
 type Controller struct {
-	InstanceManager       InstanceManager
-	OperationManager      OperationManager
-	WaitOperationDuration time.Duration
-	UserArtifactsManager  UserArtifactsManager
-	DebugVariablesManager *debug.VariablesManager
+	InstanceManager         InstanceManager
+	OperationManager        OperationManager
+	WaitOperationDuration   time.Duration
+	UserArtifactsManager    UserArtifactsManager
+	DebugVariablesManager   *debug.VariablesManager
+	RuntimeArtifactsManager cvd.RuntimeArtifactsManager
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
@@ -59,6 +62,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{am: c.RuntimeArtifactsManager}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -281,6 +285,25 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		File:           f,
 	}
 	return nil, h.m.UpdateArtifact(dir, chunk)
+}
+
+type pullRuntimeArtifactsHandler struct {
+	am cvd.RuntimeArtifactsManager
+}
+
+func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	filename, err := h.am.Tar()
+	if err != nil {
+		log.Printf("error getting runtime artifacts tar file: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer func() {
+		if err := os.Remove(filename); err != nil {
+			log.Printf("error removing file %q: %v\n", filename, err)
+		}
+	}()
+	http.ServeFile(w, r, filename)
 }
 
 type getDebugVariablesHandler struct {
