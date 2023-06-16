@@ -58,7 +58,9 @@ PRODUCT_PACKAGES += \
      android.hardware.tv.hdmi.earc-service
 
 # Setup HDMI CEC as Playback Device
-PRODUCT_PROPERTY_OVERRIDES += ro.hdmi.device_type=4
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.hdmi.device_type=4 \
+    ro.hdmi.cec_device_types=playback_device
 
 # Tuner lazy HAL
 PRODUCT_PACKAGES += android.hardware.tv.tuner-service.example-lazy
