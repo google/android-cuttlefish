@@ -39,7 +39,7 @@ class InputSocketsConnectorBuilder {
   InputSocketsConnectorBuilder(InputSocketsConnectorBuilder&&) = delete;
   InputSocketsConnectorBuilder& operator=(const InputSocketsConnectorBuilder&) = delete;
 
-  void WithTouchscreen(std::string display, SharedFD server);
+  void WithTouchscreen(const std::string& display, SharedFD server);
   void WithKeyboard(SharedFD server);
   void WithSwitches(SharedFD server);
   void WithRotary(SharedFD server);
