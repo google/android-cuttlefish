@@ -194,7 +194,7 @@ Gem5Manager::ConfigureBootDevices(int /*num_disks*/, bool /*have_gpu*/) {
 }
 
 Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig& config, std::vector<VmmDependencyCommand*>&) {
   auto instance = config.ForDefaultInstance();
 
   auto stop = [](Subprocess* proc) {
