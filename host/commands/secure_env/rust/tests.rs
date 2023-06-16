@@ -10,6 +10,9 @@ fn test_signing_cert_parse() {
 #[test]
 fn test_rkp_soft_trait() {
     let hmac = kmr_crypto_boring::hmac::BoringHmac;
-    let soft_rpc = soft::RpcArtifacts::new(soft::Derive::default());
+    let soft_rpc = soft::RpcArtifacts::new(
+        soft::Derive::default(),
+        kmr_ta::device::CsrSigningAlgorithm::EdDSA,
+    );
     kmr_tests::test_retrieve_rpc_artifacts(soft_rpc, &hmac, &hmac);
 }
