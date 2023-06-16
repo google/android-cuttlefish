@@ -23,19 +23,19 @@
 
 namespace cuttlefish {
 
-struct FetchCvdDeviceConfigs {
-  bool use_fetch_artifact;
+struct FetchCvdInstanceConfig {
+  bool should_fetch;
   std::string default_build;
   std::string system_build;
   std::string kernel_build;
-  std::string host_artifacts_dir;
+  std::string artifacts_directory;
 };
 
-struct FetchCvdConfigs {
-  std::string credential;
-  std::vector<FetchCvdDeviceConfigs> instances;
+struct FetchCvdConfig {
+  std::string credential_source;
+  std::vector<FetchCvdInstanceConfig> instances;
 };
 
-FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root);
+FetchCvdConfig ParseFetchCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
