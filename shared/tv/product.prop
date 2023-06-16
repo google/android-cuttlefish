@@ -1,0 +1,31 @@
+# Set the Bluetooth Class of Device
+# Service Field: 0x22 -> 34
+#    Bit 17: Networking
+#    Bit 21: Audio
+# MAJOR_CLASS: 0x04 -> 4 (Audio / Video)
+# MINOR_CLASS: 0x24 -> 36 (Set-top box)
+bluetooth.device.class_of_device=34,4,36
+
+# Set supported Bluetooth profiles to enabled
+bluetooth.profile.asha.central.enabled=true
+bluetooth.profile.a2dp.source.enabled=true
+bluetooth.profile.avrcp.target.enabled=true
+bluetooth.profile.gatt.enabled=true
+bluetooth.profile.hfp.ag.enabled=true
+bluetooth.profile.hid.device.enabled=true
+bluetooth.profile.hid.host.enabled=true
+bluetooth.profile.map.server.enabled=true
+bluetooth.profile.mcp.server.enabled=true
+bluetooth.profile.opp.enabled=true
+bluetooth.profile.pan.nap.enabled=true
+bluetooth.profile.pan.panu.enabled=true
+bluetooth.profile.pbap.server.enabled=true
+
+# Disable LeAudio related profile as there is no support for it
+bluetooth.profile.bap.broadcast.assist.enabled=false
+bluetooth.profile.bap.unicast.client.enabled=false
+bluetooth.profile.bas.client.enabled=false
+bluetooth.profile.ccp.server.enabled=false
+bluetooth.profile.csip.set_coordinator.enabled=false
+bluetooth.profile.hap.client.enabled=false
+bluetooth.profile.vcp.controller.enabled=false
