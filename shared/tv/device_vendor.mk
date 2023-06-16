@@ -40,6 +40,11 @@ PRODUCT_COPY_FILES += \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_1_1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_1_1.xml \
     hardware/interfaces/tv/tuner/config/sample_tuner_vts_config_aidl_V1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/tuner_vts_config_aidl_V1.xml
 
+# Bluetooth hardware properties.
+ifeq ($(TARGET_PRODUCT_PROP),)
+TARGET_PRODUCT_PROP := $(LOCAL_PATH)/product.prop
+endif
+
 # HDMI AIDL HAL
 PRODUCT_PACKAGES += \
      android.hardware.tv.hdmi.connection-service
