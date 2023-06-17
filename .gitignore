@@ -5,7 +5,6 @@
 *.changes
 *.deb
 *.dsc
-*.log
 *.pyc
 
 cuttlefish-*_*.*.*.tar.xz
@@ -17,6 +16,7 @@ cuttlefish-*_*.*.*.tar.xz
 /*/debian/files
 /*/debian/*.debhelper
 /*/debian/debhelper-build-stamp
+/*/debian/*.log
 
 frontend/src/operator/webui/src/environments/version.ts
 
