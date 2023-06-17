@@ -16,6 +16,8 @@
 
 #include <common/libs/utils/flag_parser.h>
 
+#include <android-base/strings.h>
+
 #include <gtest/gtest.h>
 #include <libxml/tree.h>
 #include <map>
@@ -325,6 +327,17 @@ TEST(FlagParser, UnexpectedArgumentGuard) {
   ASSERT_FALSE(flag.Parse({"positional", "positional2"}));
   ASSERT_FALSE(flag.Parse({"-flag"}));
   ASSERT_FALSE(flag.Parse({"-"}));
+}
+
+TEST(FlagParser, EndOfOptionMark) {
+  std::vector<std::string> args{"-flag", "--", "-invalid_flag"};
+  bool flag = false;
+  std::vector<Flag> flags{GflagsCompatFlag("flag", flag), InvalidFlagGuard()};
+
+  ASSERT_FALSE(ParseFlags(flags, args));
+  ASSERT_TRUE(ParseFlags(flags, args,
+                         /* recognize_end_of_option_mark */ true));
+  ASSERT_TRUE(flag);
 }
 
 class FlagConsumesArbitraryTest : public ::testing::Test {
