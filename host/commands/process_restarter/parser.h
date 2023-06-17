@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
+
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 
@@ -33,6 +35,7 @@ class Parser {
   bool WhenKilled() const;
   bool WhenExitedWithFailure() const;
   std::int32_t WhenExitedWithCode() const;
+  Result<android::base::LogSeverity> Verbosity() const;
 
  private:
   Parser();
@@ -41,11 +44,13 @@ class Parser {
   Flag WhenKilledFlag();
   Flag WhenExitedWithFailureFlag();
   Flag WhenExitedWithCodeFlag();
+  Flag VerbosityFlag();
 
   bool when_dumped_;
   bool when_killed_;
   bool when_exited_with_failure_;
   std::int32_t when_exited_with_code_;
+  std::string verbosity_;
 };
 
 }  // namespace cuttlefish

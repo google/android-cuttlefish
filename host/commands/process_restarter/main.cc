@@ -52,6 +52,7 @@ static bool ShouldRestartProcess(siginfo_t const& info, const Parser& parsed) {
 Result<int> RunProcessRestarter(std::vector<std::string> args) {
   LOG(VERBOSE) << "process_restarter starting";
   auto parsed = CF_EXPECT(Parser::ConsumeAndParse(args));
+  android::base::SetMinimumLogSeverity(CF_EXPECT(parsed.Verbosity()));
 
   // move-assign the remaining args to exec_args
   const std::vector<std::string> exec_args = std::move(args);
