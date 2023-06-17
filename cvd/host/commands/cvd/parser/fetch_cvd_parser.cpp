@@ -68,8 +68,8 @@ FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
       FetchCvdConfig{.credential_source = OptString(root["credential_source"])};
   const int num_instances = root["instances"].size();
   for (unsigned int i = 0; i < num_instances; i++) {
-    auto instance_config = ParseFetchInstanceConfigs(root["instances"][i]);
-    result.instances.emplace_back(instance_config);
+    result.instances.emplace_back(
+        ParseFetchInstanceConfigs(root["instances"][i]));
   }
 
   return result;
