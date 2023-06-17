@@ -32,7 +32,11 @@ namespace {
 
 // json main parameters definitions
 static std::map<std::string, Json::ValueType> kConfigsKeyMap = {
+    {"api_key", Json::ValueType::stringValue},
     {"credential", Json::ValueType::stringValue},
+    {"wait_retry_period", Json::ValueType::uintValue},
+    {"external_dns_resolver", Json::ValueType::booleanValue},
+    {"keep_downloaded_archives", Json::ValueType::booleanValue},
     {"netsim_bt", Json::ValueType::booleanValue},
     {"instances", Json::ValueType::arrayValue}};
 
