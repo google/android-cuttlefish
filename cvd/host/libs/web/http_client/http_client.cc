@@ -243,7 +243,6 @@ class CurlClient : public HttpClient {
     char error_buf[CURL_ERROR_SIZE];
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    curl_easy_setopt(curl_, CURLOPT_FOLLOWLOCATION, true);
     CURLcode res = curl_easy_perform(curl_);
     CF_EXPECT(res == CURLE_OK,
               "curl_easy_perform() failed. "
