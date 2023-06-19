@@ -35,7 +35,7 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
   if (!android::base::ParseInt(instance.id(), &instance_num, 1, 128)) {
     return openwrt_args;
   }
-  openwrt_args["instance_name"] = instance.instance_name();
+  openwrt_args["webrtc_device_id"] = instance.webrtc_device_id();
 
   int c_class_base = (instance_num - 1) / 64;
   int d_class_base = (instance_num - 1) % 64 * 4;
