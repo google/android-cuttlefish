@@ -18,13 +18,10 @@
 #include <stdio.h>
 
 #include <fstream>
-#include <functional>
 #include <mutex>
-#include <regex>
 #include <sstream>
 #include <string>
 #include <thread>
-#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -33,47 +30,9 @@
 
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/web/http_client/http_client_util.h"
 
 namespace cuttlefish {
 namespace {
-
-std::string TrimWhitespace(const char* data, const size_t size) {
-  std::string converted(data, size);
-  return android::base::Trim(converted);
-}
-
-int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
-                             void*) {
-  switch (type) {
-    case CURLINFO_TEXT:
-      LOG(VERBOSE) << "CURLINFO_TEXT ";
-      LOG(INFO) << TrimWhitespace(data, size);
-      break;
-    case CURLINFO_HEADER_IN:
-      LOG(VERBOSE) << "CURLINFO_HEADER_IN ";
-      LOG(DEBUG) << TrimWhitespace(data, size);
-      break;
-    case CURLINFO_HEADER_OUT:
-      LOG(VERBOSE) << "CURLINFO_HEADER_OUT ";
-      LOG(DEBUG) << ScrubSecrets(TrimWhitespace(data, size));
-      break;
-    case CURLINFO_DATA_IN:
-      break;
-    case CURLINFO_DATA_OUT:
-      break;
-    case CURLINFO_SSL_DATA_IN:
-      break;
-    case CURLINFO_SSL_DATA_OUT:
-      break;
-    case CURLINFO_END:
-      break;
-    default:
-      LOG(ERROR) << "Unexpected cURL output type: " << type;
-      break;
-  }
-  return 0;
-}
 
 enum class HttpMethod {
   kGet,
@@ -115,9 +74,7 @@ Result<ManagedCurlSlist> SlistFromStrings(
 
 class CurlClient : public HttpClient {
  public:
-  CurlClient(NameResolver resolver, const bool use_logging_debug_function)
-      : resolver_(std::move(resolver)),
-        use_logging_debug_function_(use_logging_debug_function) {
+  CurlClient(NameResolver resolver) : resolver_(std::move(resolver)) {
     curl_ = curl_easy_init();
     if (!curl_) {
       LOG(ERROR) << "failed to initialize curl";
@@ -229,7 +186,7 @@ class CurlClient : public HttpClient {
     auto result = ParseJson(response.data);
     if (!result.ok()) {
       Json::Value error_json;
-      LOG(ERROR) << "Could not parse json: " << result.error().FormatForEnv();
+      LOG(ERROR) << "Could not parse json: " << result.error().Message();
       error_json["error"] = "Failed to parse json: " + result.error().Message();
       error_json["response"] = response.data;
       return HttpResponse<Json::Value>{error_json, response.http_code};
@@ -286,10 +243,7 @@ class CurlClient : public HttpClient {
     char error_buf[CURL_ERROR_SIZE];
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    // CURLOPT_VERBOSE must be set for CURLOPT_DEBUGFUNCTION be utilized
-    if (use_logging_debug_function_) {
-      curl_easy_setopt(curl_, CURLOPT_DEBUGFUNCTION, LoggingCurlDebugFunction);
-    }
+    curl_easy_setopt(curl_, CURLOPT_FOLLOWLOCATION, true);
     CURLcode res = curl_easy_perform(curl_);
     CF_EXPECT(res == CURLE_OK,
               "curl_easy_perform() failed. "
@@ -304,7 +258,6 @@ class CurlClient : public HttpClient {
   CURL* curl_;
   NameResolver resolver_;
   std::mutex mutex_;
-  bool use_logging_debug_function_;
 };
 
 class ServerErrorRetryClient : public HttpClient {
@@ -439,9 +392,8 @@ Result<std::vector<std::string>> GetEntDnsResolve(const std::string& host) {
 }
 
 /* static */ std::unique_ptr<HttpClient> HttpClient::CurlClient(
-    NameResolver resolver, bool use_logging_debug_function) {
-  return std::unique_ptr<HttpClient>(
-      new class CurlClient(std::move(resolver), use_logging_debug_function));
+    NameResolver resolver) {
+  return std::unique_ptr<HttpClient>(new class CurlClient(std::move(resolver)));
 }
 
 /* static */ std::unique_ptr<HttpClient> HttpClient::ServerErrorRetryClient(
