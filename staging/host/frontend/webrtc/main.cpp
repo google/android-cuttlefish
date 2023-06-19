@@ -188,7 +188,8 @@ int main(int argc, char** argv) {
   streamer_config.client_files_port = client_server->port();
   streamer_config.tcp_port_range = instance.webrtc_tcp_port_range();
   streamer_config.udp_port_range = instance.webrtc_udp_port_range();
-  streamer_config.openwrt_device_id = cvd_config->instance_names()[0];
+  streamer_config.openwrt_device_id =
+      cvd_config->Instances()[0].webrtc_device_id();
   streamer_config.openwrt_addr = OpenwrtArgsFromConfig(
       cvd_config->Instances()[0])[kOpewnrtWanIpAddressName];
   streamer_config.operator_server.addr = cvd_config->sig_server_address();
