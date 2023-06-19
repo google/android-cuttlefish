@@ -47,8 +47,6 @@ class OpenwrtControlServer : public CommandSource {
     openwrt_control_server_cmd.AddParameter(
         "--bridged_wifi_tap=",
         std::to_string(instance_.use_bridged_wifi_tap()));
-    openwrt_control_server_cmd.AddParameter("--instance_name=",
-                                            instance_.instance_name());
     openwrt_control_server_cmd.AddParameter("--launcher_log_path=",
                                             instance_.launcher_log_path());
     openwrt_control_server_cmd.AddParameter(
