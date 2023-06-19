@@ -50,7 +50,7 @@ using openwrtcontrolserver::OpenwrtIpaddrReply;
 DEFINE_string(grpc_uds_path, "", "grpc_uds_path");
 DEFINE_bool(bridged_wifi_tap, false,
             "True for using cvd-wtap-XX, false for using cvd-wifiap-XX");
-DEFINE_string(webrtc_device_id, "", "The device ID in WebRTC like cvd-1");
+DEFINE_string(instance_name, "", "The name of instance like cvd-1");
 DEFINE_string(launcher_log_path, "", "File path for launcher.log");
 DEFINE_string(openwrt_log_path, "", "File path for crosvm_openwrt.log");
 
@@ -121,7 +121,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
 
   Result<std::string> LuciRpcAddress(const std::string& subpath) {
     auto ipaddr = CF_EXPECT(FindIpaddrLauncherLog());
-    return "http://" + ipaddr + "/devices/" + FLAGS_webrtc_device_id +
+    return "http://" + ipaddr + "/devices/" + FLAGS_instance_name +
            "/openwrt/cgi-bin/luci/rpc/" + subpath;
   }
 
