@@ -23,6 +23,7 @@ $(call inherit-product, packages/services/Car/car_product/build/car.mk)
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/secure_element/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
@@ -30,7 +31,6 @@ $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.
 $(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
-
 
 # Extend cuttlefish common sepolicy with auto-specific functionality
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/vendor

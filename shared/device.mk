@@ -194,7 +194,6 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/permissions/cuttlefish_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/cuttlefish_excluded_hardware.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.ethernet.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.ethernet.xml \
-    frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
@@ -377,14 +376,6 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_VENDOR_PROPERTIES += ro.oem_unlock_supported=1
 endif
-
-#
-# GPS
-#
-LOCAL_GNSS_PRODUCT_PACKAGE ?= \
-    android.hardware.gnss-service.example
-
-PRODUCT_PACKAGES += $(LOCAL_GNSS_PRODUCT_PACKAGE)
 
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)

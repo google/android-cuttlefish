@@ -46,6 +46,7 @@ SYSTEM_DLKM_SRC ?= $(KERNEL_MODULES_PATH)
 -include device/google/cuttlefish/shared/BoardConfig.mk
 -include device/google/cuttlefish/shared/bluetooth/BoardConfig.mk
 -include device/google/cuttlefish/shared/camera/BoardConfig.mk
+-include device/google/cuttlefish/shared/gnss/BoardConfig.mk
 -include device/google/cuttlefish/shared/graphics/BoardConfig.mk
 -include device/google/cuttlefish/shared/identity/BoardConfig.mk
 -include device/google/cuttlefish/shared/reboot_escrow/BoardConfig.mk

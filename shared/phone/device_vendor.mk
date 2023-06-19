@@ -32,6 +32,7 @@ $(call inherit-product, device/google/cuttlefish/shared/biometrics_face/device_v
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/consumerir/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/identity/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/reboot_escrow/device_vendor.mk)

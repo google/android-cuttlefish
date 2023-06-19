@@ -25,6 +25,7 @@ PRODUCT_COPY_FILES += \
 $(call inherit-product, frameworks/native/build/tablet-7in-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/reboot_escrow/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/secure_element/device_vendor.mk)
