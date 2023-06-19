@@ -61,6 +61,7 @@ $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.m
 $(call inherit-product, device/google/cuttlefish/shared/identity/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/reboot_escrow/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/secure_element/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk)
 # TODO: FIXME: Enable swiftshader for graphics, and remove angle below.
 #$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
 

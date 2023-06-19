@@ -35,7 +35,7 @@ TARGET_KERNEL_PATH := $(KERNEL_MODULES_PATH)/kernel-$(TARGET_KERNEL_USE)
 -include device/google/cuttlefish/shared/graphics/BoardConfig.mk
 -include device/google/cuttlefish/shared/identity/BoardConfig.mk
 -include device/google/cuttlefish/shared/reboot_escrow/BoardConfig.mk
+-include device/google/cuttlefish/shared/sensors/BoardConfig.mk
 -include device/google/cuttlefish/shared/swiftshader/BoardConfig.mk
 -include device/google/cuttlefish/shared/telephony/BoardConfig.mk
 -include device/google/cuttlefish/shared/virgl/BoardConfig.mk
-
