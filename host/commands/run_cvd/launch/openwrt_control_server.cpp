@@ -33,25 +33,27 @@ namespace {
 
 class OpenwrtControlServer : public CommandSource {
  public:
-  INJECT(
-      OpenwrtControlServer(const CuttlefishConfig& config,
-                           const CuttlefishConfig::InstanceSpecific& instance,
-                           GrpcSocketCreator& grpc_socket))
-      : config_{config}, instance_(instance), grpc_socket_(grpc_socket) {}
+  INJECT(OpenwrtControlServer(const CuttlefishConfig& config,
+                              GrpcSocketCreator& grpc_socket))
+      : config_(config), grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
+    auto first_instance = config_.Instances()[0];
+
     Command openwrt_control_server_cmd(OpenwrtControlServerBinary());
     openwrt_control_server_cmd.AddParameter(
         "--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(Name()));
     openwrt_control_server_cmd.AddParameter(
         "--bridged_wifi_tap=",
-        std::to_string(instance_.use_bridged_wifi_tap()));
+        std::to_string(first_instance.use_bridged_wifi_tap()));
+    openwrt_control_server_cmd.AddParameter("--webrtc_device_id=",
+                                            first_instance.webrtc_device_id());
     openwrt_control_server_cmd.AddParameter("--launcher_log_path=",
-                                            instance_.launcher_log_path());
+                                            first_instance.launcher_log_path());
     openwrt_control_server_cmd.AddParameter(
         "--openwrt_log_path=",
-        AbsolutePath(instance_.PerInstanceLogPath("crosvm_openwrt.log")));
+        AbsolutePath(first_instance.PerInstanceLogPath("crosvm_openwrt.log")));
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(openwrt_control_server_cmd));
@@ -67,15 +69,12 @@ class OpenwrtControlServer : public CommandSource {
   Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
   GrpcSocketCreator& grpc_socket_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific,
-                                 GrpcSocketCreator>>
+fruit::Component<fruit::Required<const CuttlefishConfig, GrpcSocketCreator>>
 OpenwrtControlServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, OpenwrtControlServer>()
