@@ -27,3 +27,16 @@ func RemoveDir(t *testing.T, name string) {
 		t.Fatal(err)
 	}
 }
+
+// Same as https://pkg.go.dev/os#WriteFile, os#WriteFile cannot be used as it was introduced in go 1.16.
+func WriteFile(name string, data []byte, perm os.FileMode) error {
+	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(data)
+	if err1 := f.Close(); err1 != nil && err == nil {
+		err = err1
+	}
+	return err
+}

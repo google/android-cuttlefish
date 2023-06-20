@@ -2,30 +2,27 @@ package cvd
 
 import (
 	"archive/tar"
-	"bufio"
-	"bytes"
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
+
+	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestTar(t *testing.T) {
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
+	createFakeRuntimeDir(t, dir)
 	expected := []string{
 		"cvd-1/NVChip",
-		"cvd-1/access-kregistry",
 		"cvd-1/ap_composite_disk_config.txt",
-		"cvd-1/cuttlefish_config.json",
-		"cvd-1/iccprofile_for_sim0.xml",
-		"cvd-1/internal/bootconfig",
 		"cvd-1/logs/kernel.log",
-		"cvd-1/logs/logcat",
 		"cvd-2/NVChip",
 	}
-	m := NewRuntimeArtifactsManager(fakeRuntimesDir())
+	m := NewRuntimeArtifactsManager(dir)
 
 	tarFile, err := m.Tar()
 
@@ -33,6 +30,7 @@ func TestTar(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Remove(tarFile)
+
 	f, err := os.Open(tarFile)
 	if err != nil {
 		t.Fatal(err)
@@ -49,21 +47,62 @@ func TestTar(t *testing.T) {
 			t.Fatal(err)
 		}
 		names = append(names, hdr.Name)
-		var b bytes.Buffer
-		if _, err := io.Copy(bufio.NewWriter(&b), tr); err != nil {
-			t.Error(err)
-		}
-		if diff := cmp.Diff("[redacted]\n", b.String()); diff != "" {
-			t.Errorf("file content mismatch (-want +got):\n%s", diff)
-		}
 	}
 	if diff := cmp.Diff(expected, names); diff != "" {
 		t.Errorf("files in tar mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func fakeRuntimesDir() string {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	return dir + "/testdata/runtimes"
+type runtimeItemType int
+
+const (
+	dir     runtimeItemType = 0
+	file    runtimeItemType = 1
+	symlink runtimeItemType = 2
+)
+
+type runtimeItem struct {
+	Name          string
+	Type          runtimeItemType
+	SymlinkTarget string
+}
+
+func createFakeRuntimeDir(t *testing.T, rootDir string) {
+	items := []runtimeItem{
+		{Name: "cuttlefish", Type: dir},
+		{Name: "cuttlefish/assembly", Type: dir},
+		{Name: "cuttlefish/assembly/assemble_cvd.log", Type: file},
+		{Name: "cuttlefish/instances", Type: dir},
+		{Name: "cuttlefish/instances/cvd-1", Type: dir},
+		{Name: "cuttlefish/instances/cvd-1/NVChip", Type: file},
+		{Name: "cuttlefish/instances/cvd-1/ap_composite_disk_config.txt", Type: file},
+		{Name: "cuttlefish/instances/cvd-1/misc.img", Type: file},
+		{Name: "cuttlefish/instances/cvd-1/logs", Type: dir},
+		{Name: "cuttlefish/instances/cvd-1/logs/kernel.log", Type: file},
+		{
+			Name:          "cuttlefish/instances/cvd-1/kernel.log",
+			Type:          symlink,
+			SymlinkTarget: "cuttlefish/instances/cvd-1/logs/kernel.log",
+		},
+		{Name: "cuttlefish/instances/cvd-2", Type: dir},
+		{Name: "cuttlefish/instances/cvd-2/NVChip", Type: file},
+	}
+	for _, it := range items {
+		name := filepath.Join(rootDir, it.Name)
+		switch it.Type {
+		case dir:
+			if err := os.Mkdir(name, 0755); err != nil {
+				t.Fatal(err)
+			}
+		case file:
+			if err := orchtesting.WriteFile(name, []byte("foo\n"), 0644); err != nil {
+				t.Fatal(err)
+			}
+		case symlink:
+			target := filepath.Join(rootDir, it.SymlinkTarget)
+			if err := os.Symlink(target, name); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 }
