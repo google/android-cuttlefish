@@ -28,6 +28,7 @@ import (
 	"testing"
 	"time"
 
+	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
@@ -109,8 +110,8 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 }
 
 func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	fetchCVDExecCounter := 0
 	execContext := func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		if filepath.Base(name) == "fetch_cvd" {
@@ -144,8 +145,8 @@ func TestCreateCVDSameTargetArtifactsIsDownloadedOnce(t *testing.T) {
 }
 
 func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -172,8 +173,8 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 }
 
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes "+
 		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
@@ -324,8 +325,8 @@ type fakeUADirRes struct {
 func (r *fakeUADirRes) GetDirPath(string) string { return r.Dir }
 
 func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
 	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
 	expected := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes "+
@@ -379,8 +380,8 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 }
 
 func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxCvdSubcmdFails
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -401,8 +402,8 @@ func TestCreateCVDFailsDueCVDSubCommandExecution(t *testing.T) {
 }
 
 func TestCreateCVDFailsDueTimeout(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxCvdSubcmdDelays
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -438,8 +439,8 @@ func (AlwaysFailsValidator) Validate() error {
 }
 
 func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
 	cvdBinAB := AndroidBuild{ID: "1", Target: "xyzzy"}
 	paths := IMPaths{
@@ -468,8 +469,8 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 }
 
 func TestListCVDsSucceeds(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	output := `[
   [
           {
@@ -572,25 +573,6 @@ func newCVDToolIm(execContext ExecContext,
 		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 	}
 	return NewCVDToolInstanceManager(&opts)
-}
-
-// Creates a temporary directory for the test to use returning its path.
-// Each subsequent call creates a unique directory; if the directory creation
-// fails, `tempDir` terminates the test by calling Fatal.
-func tempDir(t *testing.T) string {
-	name, err := ioutil.TempDir("", "cuttlefishTestDir")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return name
-}
-
-// Removes the directory at the passed path.
-// If deletion fails, `removeDir` terminates the test by calling Fatal.
-func removeDir(t *testing.T, name string) {
-	if err := os.RemoveAll(name); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func execCtxAlwaysSucceeds(ctx context.Context, name string, args ...string) *exec.Cmd {

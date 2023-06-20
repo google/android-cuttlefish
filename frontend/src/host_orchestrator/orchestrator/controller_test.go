@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
+	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/gorilla/mux"
@@ -65,8 +66,8 @@ func TestCreateCVDIsHandled(t *testing.T) {
 }
 
 func TestGetCVDLogsIsHandled(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/cvds/cvd-1/logs", strings.NewReader("{}"))
 	if err != nil {
