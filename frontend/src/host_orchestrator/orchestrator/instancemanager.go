@@ -631,6 +631,10 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 	}
 	if p.KernelDir != "" {
 		args = append(args, fmt.Sprintf("--kernel_path=%s/bzImage", p.KernelDir))
+		initramfs := filepath.Join(p.KernelDir, "initramfs.img")
+		if exist, _ := fileExist(initramfs); exist {
+			args = append(args, "--initramfs_path="+initramfs)
+		}
 	}
 	if p.BootloaderDir != "" {
 		args = append(args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
