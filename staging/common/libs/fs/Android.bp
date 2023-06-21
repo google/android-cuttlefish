@@ -20,7 +20,6 @@ package {
 cc_library {
     name: "libcuttlefish_fs",
     srcs: [
-        "epoll.cpp",
         "shared_buf.cc",
         "shared_fd.cpp",
         "shared_fd_stream.cpp",
@@ -38,6 +37,14 @@ cc_library {
         ],
     },
     target: {
+        darwin: {
+            enabled: true,
+        },
+        linux: {
+            srcs: [
+                "epoll.cpp",
+            ],
+        },
         vendor: {
             // Liblog does not have a vendor-static variant.
             shared_libs: ["liblog"],
