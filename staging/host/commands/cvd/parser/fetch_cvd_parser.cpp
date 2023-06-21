@@ -16,16 +16,15 @@
 
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
 
-#include <android-base/file.h>
-#include <gflags/gflags.h>
-
-#include <stdio.h>
-#include <fstream>
 #include <string>
+#include <vector>
+
+#include <json/json.h>
 
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
+namespace {
 
 #define EMPTY_CREDENTIAL ""
 #define EMPTY_DEFAULT_BUILD ""
@@ -73,6 +72,8 @@ FetchCvdConfigs GenerateFetchCvdFlags(const Json::Value& root) {
 
   return result;
 }
+
+}  // namespace
 
 FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root) {
   InitFetchCvdConfigs(root);
