@@ -19,16 +19,17 @@
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
+#ifdef __linux__
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/timerfd.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 
@@ -46,7 +47,9 @@
 
 #include <android-base/cmsg.h>
 
+#ifdef __linux__
 #include "vm_sockets.h"
+#endif
 
 #include "common/libs/utils/result.h"
 
@@ -137,7 +140,9 @@ class SharedFD {
   static int Fchdir(SharedFD);
   static SharedFD Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
+#ifdef __linux__
   static SharedFD Event(int initval = 0, int flags = 0);
+#endif
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
   static SharedFD Mkstemp(std::string* path);
@@ -157,10 +162,13 @@ class SharedFD {
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
+
+#ifdef __linux__
   static SharedFD VsockServer(unsigned int port, int type,
                               unsigned int cid = VMADDR_CID_ANY);
   static SharedFD VsockServer(int type);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
+#endif
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
 
@@ -285,7 +293,9 @@ class FileInstance {
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
 
+#ifdef __linux__
   unsigned int VsockServerPort();
+#endif
 
   int Ioctl(int request, void* val = nullptr);
   bool IsOpen() const { return fd_ != -1; }
@@ -312,7 +322,9 @@ class FileInstance {
   ssize_t Recv(void* buf, size_t len, int flags);
   ssize_t RecvMsg(struct msghdr* msg, int flags);
   ssize_t Read(void* buf, size_t count);
+#ifdef __linux__
   int EventfdRead(eventfd_t* value);
+#endif
   ssize_t Send(const void* buf, size_t len, int flags);
   ssize_t SendMsg(const struct msghdr* msg, int flags);
 
@@ -343,7 +355,9 @@ class FileInstance {
    *
    */
   ssize_t Write(const void* buf, size_t count);
+#ifdef __linux__
   int EventfdWrite(eventfd_t value);
+#endif
   bool IsATTY();
 
   // Returns the target of "/proc/getpid()/fd/" + std::to_string(fd_)
