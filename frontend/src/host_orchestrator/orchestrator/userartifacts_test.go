@@ -23,14 +23,15 @@ import (
 	"sync"
 	"testing"
 
+	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestNewDir(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	opts := UserArtifactsManagerOpts{
 		RootDir:     dir,
 		NameFactory: func() string { return "foo" },
@@ -45,8 +46,8 @@ func TestNewDir(t *testing.T) {
 }
 
 func TestNewDirAndDirNameAlreadyExists(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	testUUID := "foo"
 	opts := UserArtifactsManagerOpts{
 		RootDir:     dir,
@@ -63,8 +64,8 @@ func TestNewDirAndDirNameAlreadyExists(t *testing.T) {
 }
 
 func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	opts := UserArtifactsManagerOpts{
 		RootDir:     dir,
 		NameFactory: func() string { return "foo" },
@@ -80,8 +81,8 @@ func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
 }
 
 func TestListTokens(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	namesCounter := 0
 	opts := UserArtifactsManagerOpts{
 		RootDir: dir,
@@ -108,8 +109,8 @@ func TestListTokens(t *testing.T) {
 }
 
 func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	opts := UserArtifactsManagerOpts{
 		RootDir:     dir,
 		NameFactory: func() string { return "foo" },
@@ -131,8 +132,8 @@ func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
 
 func TestCreateArtifactsSucceeds(t *testing.T) {
 	wg := sync.WaitGroup{}
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 	opts := UserArtifactsManagerOpts{
 		RootDir:     dir,
 		NameFactory: func() string { return "foo" },
@@ -179,8 +180,8 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 }
 
 func TestUntar(t *testing.T) {
-	dir := tempDir(t)
-	defer removeDir(t, dir)
+	dir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, dir)
 
 	Untar(dir, getTestTarFilename())
 
