@@ -27,8 +27,11 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
+#include <functional>
 #include <future>
 #include <memory>
+#include <string>
 #include <thread>
 
 #include <android-base/logging.h>
@@ -37,16 +40,13 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/run_cvd/process_monitor_channel.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
 namespace {
-
-struct ParentToChildMessage {
-  bool stop;
-};
 
 void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   LOG(INFO) << "Detected unexpected exit of monitored subprocess " << name;
@@ -84,24 +84,6 @@ Result<void> StartSubprocesses(std::vector<MonitorEntry>& entries) {
     auto options = SubprocessOptions().InGroup(true);
     monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
     CF_EXPECT(monitored.proc->Started(), "Failed to start subprocess");
-  }
-  return {};
-}
-
-Result<void> ReadMonitorSocketLoopForStop(std::atomic_bool& running,
-                                          SharedFD& monitor_socket) {
-  LOG(DEBUG) << "Waiting for a `stop` message from the parent";
-  while (running.load()) {
-    ParentToChildMessage message;
-    CF_EXPECT(ReadExactBinary(monitor_socket, &message) == sizeof(message),
-              "Could not read message from parent");
-    if (message.stop) {
-      running.store(false);
-      // Wake up the wait() loop by giving it an exited child process
-      if (fork() == 0) {
-        std::exit(0);
-      }
-    }
   }
   return {};
 }
@@ -174,6 +156,23 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
 
 }  // namespace
 
+Result<void> ProcessMonitor::ReadMonitorSocketLoopForStop(
+    std::atomic_bool& running) {
+  LOG(DEBUG) << "Waiting for a `stop` message from the parent";
+  while (running.load()) {
+    using process_monitor_impl::ParentToChildMessage;
+    auto message = CF_EXPECT(ParentToChildMessage::Read(monitor_socket_));
+    if (message.Stop()) {
+      running.store(false);
+      // Wake up the wait() loop by giving it an exited child process
+      if (fork() == 0) {
+        std::exit(0);
+      }
+    }
+  }
+  return {};
+}
+
 ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
     bool r) & {
   restart_subprocesses_ = r;
@@ -202,11 +201,10 @@ ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties)
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
   CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
   CF_EXPECT(monitor_socket_->IsOpen(), "The monitor socket is already closed");
-  ParentToChildMessage message;
-  message.stop = true;
-  CF_EXPECT(WriteAllBinary(monitor_socket_, &message) == sizeof(message),
-            "Failed to communicate with monitor socket: "
-                << monitor_socket_->StrError());
+  using process_monitor_impl::ParentToChildMessage;
+  using process_monitor_impl::ParentToChildMessageType;
+  ParentToChildMessage message(ParentToChildMessageType::kStop);
+  CF_EXPECT(message.Write(monitor_socket_));
 
   pid_t last_monitor = monitor_;
   monitor_ = -1;
@@ -257,9 +255,13 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   StartSubprocesses(properties_.entries_);
 
   std::atomic_bool running(true);
-  auto parent_comms =
-      std::async(std::launch::async, ReadMonitorSocketLoopForStop,
-                 std::ref(running), std::ref(monitor_socket_));
+  auto read_monitor_socket_loop =
+      [this](std::atomic_bool& running) -> Result<void> {
+    CF_EXPECT(this->ReadMonitorSocketLoopForStop(running));
+    return {};
+  };
+  auto parent_comms = std::async(std::launch::async, read_monitor_socket_loop,
+                                 std::ref(running));
 
   MonitorLoop(running, properties_.restart_subprocesses_, properties_.entries_);
   CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
