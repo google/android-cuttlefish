@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <functional>
@@ -87,13 +88,16 @@ class Subprocess {
   pid_t pid() const { return pid_; }
   StopperResult Stop() { return stopper_(this); }
 
+  Result<void> SendSignal(const int signal);
+  Result<void> SendSignalToGroup(const int signal);
+
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
   // frees the pid, which allows the kernel to reuse it so we may end up waiting
   // for the wrong process)
   Subprocess(const Subprocess&) = delete;
   Subprocess& operator=(const Subprocess&) = delete;
-  pid_t pid_ = -1;
+  std::atomic<pid_t> pid_ = -1;
   bool started_ = false;
   SubprocessStopper stopper_;
 };
