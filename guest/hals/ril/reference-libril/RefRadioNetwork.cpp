@@ -89,4 +89,10 @@ ScopedAStatus RefRadioNetwork::isNullCipherAndIntegrityEnabled(int32_t serial) {
     respond()->isNullCipherAndIntegrityEnabledResponse(responseInfo(serial), true);
     return ok();
 }
+
+ScopedAStatus RefRadioNetwork::setSatellitePlmn(int32_t serial,
+                                                const std::vector<std::string>& plmnList) {
+    respond()->setSatellitePlmnResponse(responseInfo(serial));
+    return ok();
+}
 }  // namespace cf::ril
