@@ -28,28 +28,11 @@ namespace cuttlefish {
 
 typedef struct _CvdFlags {
   std::vector<std::string> launch_cvd_flags;
-  std::vector<std::string> selector_flags;
-  std::vector<std::string> fetch_cvd_flags;
+  FetchCvdConfigs fetch_cvd_flags;
 } CvdFlags;
-
-struct LoadDirectories {
-  std::string target_directory;
-  std::vector<std::string> target_subdirectories;
-  std::string launch_home_directory;
-  std::string first_instance_directory;
-  std::string system_image_directory_flag;
-};
 
 Result<Json::Value> ParseJsonFile(const std::string& file_path);
 
-Result<Json::Value> GetOverridedJsonConfig(
-    const std::string& config_path,
-    const std::vector<std::string>& override_flags);
-
-Result<LoadDirectories> GenerateLoadDirectories(
-    const std::string& parent_directory, const int num_instances);
-
-Result<CvdFlags> ParseCvdConfigs(Json::Value& root,
-                                 const LoadDirectories& load_directories);
+Result<CvdFlags> ParseCvdConfigs(Json::Value& root);
 
 };  // namespace cuttlefish
