@@ -29,7 +29,7 @@ constexpr int kOemLockedBit = 2;
 // Default state is allowed_by_carrier = true
 //                  allowed_by_device = false
 //                  locked = true
-constexpr uint8_t kDefaultState = 0 | (1 << kAllowedByCarrierBit) | (1 << kOemLockedBit);
+constexpr uint8_t kDefaultState = 0 | (1 << kAllowedByCarrierBit);
 
 Result<void> InitializeDefaultState(secure_env::Storage& storage) {
   if (storage.Exists()) { return {}; };
