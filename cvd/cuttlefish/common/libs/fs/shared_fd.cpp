@@ -525,8 +525,7 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   return rval;
 }
 
-SharedFD SharedFD::SocketClient(const std::string& host, int port, int type,
-                                std::chrono::seconds timeout) {
+SharedFD SharedFD::SocketClient(const std::string& host, int port, int type) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
@@ -535,16 +534,14 @@ SharedFD SharedFD::SocketClient(const std::string& host, int port, int type,
   if (!rval->IsOpen()) {
     return rval;
   }
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval->ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                               sizeof addr, &timeout_timeval) < 0) {
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
 }
 
 SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& interface,
-                                 int port, int type, std::chrono::seconds timeout) {
+                                 int port, int type) {
   sockaddr_in6 addr{};
   addr.sin6_family = AF_INET6;
   addr.sin6_port = htons(port);
@@ -572,9 +569,7 @@ SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& int
 #endif
   }
 
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval->ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                               sizeof addr, &timeout_timeval) < 0) {
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
