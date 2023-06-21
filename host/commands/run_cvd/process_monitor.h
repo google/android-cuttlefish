@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -76,6 +77,7 @@ class ProcessMonitor {
 
  private:
   Result<void> MonitorRoutine();
+  Result<void> ReadMonitorSocketLoopForStop(std::atomic_bool&);
 
   Properties properties_;
   pid_t monitor_;
