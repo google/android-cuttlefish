@@ -43,13 +43,11 @@ namespace cuttlefish {
 namespace {
 
 std::string GenerateSystemImageFlag(
-    const std::vector<FetchCvdDeviceConfigs>& configs) {
+    const std::vector<FetchCvdInstanceConfig>& configs) {
   std::string result = "";
 
   for (const auto& config : configs) {
-    // concatenate host_artifacts_dir parameter with a comma separator instead
-    // of a space
-    result += config.host_artifacts_dir + ",";
+    result += config.artifacts_directory + ",";
   }
 
   // remove the last comma character from the final string, if it exists
@@ -280,40 +278,41 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto cvd_flags =
         CF_EXPECT(ParseCvdConfigs(json_configs), "parsing json configs failed");
 
-    // return if the length of fetch_cvd_flags.instances is 0
-    int num_devices = cvd_flags.fetch_cvd_flags.instances.size();
-    CF_EXPECT_GT(num_devices, 0, "No instances to load");
+    int num_instances = cvd_flags.fetch_cvd_flags.instances.size();
+    CF_EXPECT_GT(num_instances, 0, "No instances to load");
 
     std::vector<cvd::Request> req_protos;
 
     const auto& client_env = request.Message().command_request().env();
 
     auto time = std::chrono::system_clock::now().time_since_epoch().count();
-    // set the home directory for each device
-    for (int instance_index = 0; instance_index < num_devices; instance_index++) {
-      cvd_flags.fetch_cvd_flags.instances[instance_index].host_artifacts_dir =
+    // set the home directory for each instance
+    for (int instance_index = 0; instance_index < num_instances;
+         instance_index++) {
+      cvd_flags.fetch_cvd_flags.instances[instance_index].artifacts_directory =
           GenerateHostArtifactsDirectoryName(time, instance_index);
-      LOG(INFO) << "Home directory for device " << instance_index << " is "
-                << cvd_flags.fetch_cvd_flags.instances[instance_index].host_artifacts_dir;
+      LOG(INFO) << "Home directory for instance " << instance_index << " is "
+                << cvd_flags.fetch_cvd_flags.instances[instance_index]
+                       .artifacts_directory;
     }
 
-    for (const auto& device : cvd_flags.fetch_cvd_flags.instances) {
+    for (const auto& instance : cvd_flags.fetch_cvd_flags.instances) {
       auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
       *mkdir_cmd.mutable_env() = client_env;
       mkdir_cmd.add_args("cvd");
       mkdir_cmd.add_args("mkdir");
       mkdir_cmd.add_args("-p");
-      mkdir_cmd.add_args(device.host_artifacts_dir);
+      mkdir_cmd.add_args(instance.artifacts_directory);
 
-      if (device.use_fetch_artifact) {
+      if (instance.should_fetch) {
         // TODO(moelsherif):Separate fetch from launch command
         auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
         *fetch_cmd.mutable_env() = client_env;
-        fetch_cmd.set_working_directory(device.host_artifacts_dir);
+        fetch_cmd.set_working_directory(instance.artifacts_directory);
         fetch_cmd.add_args("cvd");
         fetch_cmd.add_args("fetch");
-        fetch_cmd.add_args("--directory=" + device.host_artifacts_dir);
-        fetch_cmd.add_args("-default_build=" + device.default_build);
+        fetch_cmd.add_args("--directory=" + instance.artifacts_directory);
+        fetch_cmd.add_args("-default_build=" + instance.default_build);
         // TODO: other flags like system_build, kernel_build and credential
         // optionally later fetch_cmd.add_args("-credential_source=" +
         // cvd_flags.fetch_cvd_flags.credential);
@@ -332,7 +331,7 @@ class LoadConfigsCommand : public CvdServerHandler {
     auto& launch_cmd = *req_protos.emplace_back().mutable_command_request();
 
     auto first_instance_dir =
-        cvd_flags.fetch_cvd_flags.instances[0].host_artifacts_dir;
+        cvd_flags.fetch_cvd_flags.instances[0].artifacts_directory;
     *launch_cmd.mutable_env() = client_env;
     launch_cmd.set_working_directory(first_instance_dir);
     (*launch_cmd.mutable_env())["HOME"] = launch_home_dir;
