@@ -182,7 +182,7 @@ body {
   background-color: transparent;
 }
 .modal-button, .modal-button-highlight {
-  background:    var(--modal-button-bg)
+  background:    var(--modal-button-bg);
   border-radius: 10px;
   box-shadow:    1px 1px var(--modal-button-shadow);
   padding:       10px 20px;
@@ -281,6 +281,8 @@ body {
   background-color: var(--custom-button-bg);
   height: fit-content;
   border-radius: 10px;
+  top: 10px;
+  position: sticky;
 }
 
 .control-panel-column button {
