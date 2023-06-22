@@ -222,10 +222,8 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   std::vector<SeverityTarget> log_severities;
   for (const auto& file : files) {
     auto log_file_fd =
-        SharedFD::Open(
-          file,
-          O_CREAT | O_WRONLY | O_APPEND,
-          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+        SharedFD::Open(file, O_CREAT | O_WRONLY | O_APPEND,
+                       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
     if (!log_file_fd->IsOpen()) {
       LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
     }
