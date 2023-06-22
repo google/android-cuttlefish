@@ -109,10 +109,8 @@ class SubprocessOptions {
 
   SubprocessOptions& Verbose(bool verbose) &;
   SubprocessOptions Verbose(bool verbose) &&;
-#ifdef __linux__
   SubprocessOptions& ExitWithParent(bool exit_with_parent) &;
   SubprocessOptions ExitWithParent(bool exit_with_parent) &&;
-#endif
   // The subprocess runs as head of its own process group.
   SubprocessOptions& InGroup(bool in_group) &;
   SubprocessOptions InGroup(bool in_group) &&;
@@ -285,9 +283,6 @@ class Command {
   Command& SetWorkingDirectory(SharedFD dirfd) &;
   Command SetWorkingDirectory(SharedFD dirfd) &&;
 
-  Command& AddPrerequisite(const std::function<Result<void>()>& prerequisite) &;
-  Command AddPrerequisite(const std::function<Result<void>()>& prerequisite) &&;
-
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
   Subprocess Start(SubprocessOptions options = SubprocessOptions()) const;
@@ -307,7 +302,6 @@ class Command {
  private:
   std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
-  std::vector<std::function<Result<void>()>> prerequisites_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   std::vector<std::string> env_{};
@@ -332,11 +326,10 @@ int RunWithManagedStdio(Command&& command, const std::string* stdin,
                         SubprocessOptions options = SubprocessOptions());
 
 /**
- * Returns the exit status on success, negative values on error
+ * Returns pid on success, negative values on error
  *
  * If failed in fork() or exec(), returns -1.
- * If the child exited from an unhandled signal, returns -1.
- * Otherwise, returns the exit status.
+ * Or, returns pid.
  *
  * TODO: Changes return type to Result<int>
  *
@@ -349,7 +342,7 @@ int Execute(const std::vector<std::string>& commands,
 
 /**
  * Similar as the two above but returns CF_ERR instead of -1, and siginfo_t
- * instead of the exit status.
+ * instead of pid.
  */
 Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           SubprocessOptions subprocess_options,
