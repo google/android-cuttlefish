@@ -806,11 +806,8 @@ Result<std::string> SelectGpuMode(
         LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
         return kGpuModeDrmVirgl;
       } else {
-        // TODO (284204884) accelerated gfx detection on launch_cvd startup
-        // broken atm. Until it can be fixed - default to guest swiftshader.
-        LOG(INFO) << "GPU auto mode: prereq detection for accel gfx is "
-                     "broken. Switching to --gpu_mode=guest_swiftshader.";
-        return kGpuModeGuestSwiftshader;
+        LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
+        return kGpuModeGfxstream;
       }
     } else {
       LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
