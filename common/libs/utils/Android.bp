@@ -26,18 +26,15 @@ cc_library {
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
-        "inotify.cpp",
         "json.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
         "shared_fd_flag.cpp",
-        "socket2socket_proxy.cpp",
         "subprocess.cpp",
         "tcp_socket.cpp",
         "tee_logging.cpp",
         "unix_sockets.cpp",
         "users.cpp",
-        "vsock_connection.cpp",
     ],
     shared: {
         shared_libs: [
@@ -56,6 +53,18 @@ cc_library {
         shared_libs: [
           "libcrypto", // libcrypto_static is not accessible from all targets
         ],
+    },
+    target: {
+        darwin: {
+            enabled: true,
+        },
+        linux: {
+            srcs: [
+                "inotify.cpp",
+                "socket2socket_proxy.cpp", // TODO(b/285989475): Find eventfd alternative
+                "vsock_connection.cpp",
+            ]
+        }
     },
     defaults: ["cuttlefish_host"],
 }
