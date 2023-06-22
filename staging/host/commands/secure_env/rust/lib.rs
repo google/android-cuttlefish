@@ -22,7 +22,9 @@ use kmr_crypto_boring::{
     aes::BoringAes, aes_cmac::BoringAesCmac, des::BoringDes, ec::BoringEc, eq::BoringEq,
     hmac::BoringHmac, rng::BoringRng, rsa::BoringRsa,
 };
-use kmr_ta::device::{BootloaderDone, Implementation, TrustedPresenceUnsupported};
+use kmr_ta::device::{
+    BootloaderDone, CsrSigningAlgorithm, Implementation, TrustedPresenceUnsupported,
+};
 use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
@@ -63,6 +65,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         unique_id: "Cuttlefish KeyMint TA",
     };
 
+    let rpc_sign_algo = CsrSigningAlgorithm::EdDSA;
     let rpc_info_v3 = RpcInfoV3 {
         author_name: "Google",
         unique_id: "Cuttlefish KeyMint TA",
@@ -110,9 +113,9 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         };
     let rpc: Box<dyn kmr_ta::device::RetrieveRpcArtifacts> =
         if security_level == SecurityLevel::TrustedEnvironment {
-            Box::new(tpm::RpcArtifacts::new(tpm::TpmHmac::new(trm)))
+            Box::new(tpm::RpcArtifacts::new(tpm::TpmHmac::new(trm), rpc_sign_algo))
         } else {
-            Box::new(soft::RpcArtifacts::new(soft::Derive::default()))
+            Box::new(soft::RpcArtifacts::new(soft::Derive::default(), rpc_sign_algo))
         };
     let dev = Implementation {
         keys,
