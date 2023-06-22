@@ -230,7 +230,8 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				},
 			},
 			exp: fmt.Sprintf(goldenPrefixFmt, "1_foo__cvd") +
-				" --kernel_path=" + dir + "/artifacts/137_bar__kernel/bzImage",
+				" --kernel_path=" + dir + "/artifacts/137_bar__kernel/bzImage" +
+				" --initramfs_path=" + dir + "/artifacts/137_bar__kernel/initramfs.img",
 		},
 		{
 			name: "android ci build specific bootloader build",

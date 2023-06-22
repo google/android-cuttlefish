@@ -30,6 +30,15 @@ type BuildAPI interface {
 	DownloadArtifact(name, buildID, target string, dst io.Writer) error
 }
 
+type BuildAPIError struct {
+	Message string
+	Code    int
+}
+
+func (e *BuildAPIError) Error() string {
+	return fmt.Sprintf("%s. Code: %d", e.Message, e.Code)
+}
+
 type AndroidCIBuildAPI struct {
 	BaseURL string
 
@@ -137,7 +146,7 @@ func parseErrorResponse(body io.ReadCloser) error {
 	if err := decoder.Decode(&errRes); err != nil {
 		return err
 	}
-	return fmt.Errorf(errRes.Error.Message)
+	return &BuildAPIError{Message: errRes.Error.Message, Code: errRes.Error.Code}
 }
 
 func BuildDownloadArtifactSignedURL(baseURL, name, buildID, target string) string {

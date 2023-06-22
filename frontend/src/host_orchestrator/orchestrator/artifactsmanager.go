@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"fmt"
+	"net/http"
 	"sync"
 )
 
@@ -86,6 +87,12 @@ func (h *ArtifactsManager) GetKernelBundle(buildID, target string, fetcher Artif
 		}
 		if err := fetcher.FetchArtifacts(outDir, buildID, target, "bzImage"); err != nil {
 			return "", err
+		}
+		if err := fetcher.FetchArtifacts(outDir, buildID, target, "initramfs.img"); err != nil {
+			// Certain kernel builds do not have corresponding ramdisks.
+			if apiErr, ok := err.(*BuildAPIError); ok && apiErr.Code != http.StatusNotFound {
+				return "", err
+			}
 		}
 		return outDir, nil
 	}
