@@ -115,16 +115,6 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
       LOG(ERROR) << "Failed to repack super image with new system dlkm image.";
       return false;
     }
-    SetCommandLineOptionWithMode("super_image", new_super_img.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
-    SetCommandLineOptionWithMode(
-        "vbmeta_vendor_dlkm_image",
-        instance_.new_vbmeta_vendor_dlkm_image().c_str(),
-        google::FlagSettingMode::SET_FLAGS_DEFAULT);
-    SetCommandLineOptionWithMode(
-        "vbmeta_system_dlkm_image",
-        instance_.new_vbmeta_system_dlkm_image().c_str(),
-        google::FlagSettingMode::SET_FLAGS_DEFAULT);
     return true;
   }
   Result<void> ResultSetup() override {
@@ -150,8 +140,6 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
       CF_EXPECT(RepackBootImage(instance_.kernel_path(), instance_.boot_image(),
                                 new_boot_image_path, instance_.instance_dir()),
                 "Failed to regenerate the boot image with the new kernel");
-      SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
-                                   google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
 
     if (instance_.kernel_path().size() || instance_.initramfs_path().size()) {
@@ -187,9 +175,6 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
                   config_.assembly_dir(), instance_.bootconfig_supported()),
               "Failed to regenerate the vendor boot image without a ramdisk");
         }
-        SetCommandLineOptionWithMode(
-            "vendor_boot_image", new_vendor_boot_image_path.c_str(),
-            google::FlagSettingMode::SET_FLAGS_DEFAULT);
       }
     }
     return {};
