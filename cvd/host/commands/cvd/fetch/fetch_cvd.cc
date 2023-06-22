@@ -325,7 +325,7 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
   if (!reader.parse(file_content, content)) {
     // Don't log the actual content of the file since it could be the actual
     // access token.
-    LOG(VERBOSE) << "Could not parse credential file as Service Account";
+    LOG(DEBUG) << "Could not parse credential file as Service Account";
     return {};
   }
   static constexpr char BUILD_SCOPE[] =
@@ -333,8 +333,8 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
   auto result = ServiceAccountOauthCredentialSource::FromJson(
       http_client, content, BUILD_SCOPE);
   if (!result.ok()) {
-    LOG(VERBOSE) << "Failed to load service account json file: \n"
-                 << result.error().Trace();
+    LOG(DEBUG) << "Failed to load service account json file: \n"
+               << result.error().Trace();
     return {};
   }
   return std::unique_ptr<CredentialSource>(
@@ -371,8 +371,8 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
         credential_source.reset(
             new RefreshCredentialSource(std::move(*attempt_load)));
       } else {
-        LOG(VERBOSE) << "Failed to load acloud credentials: "
-                     << attempt_load.error().Trace();
+        LOG(DEBUG) << "Failed to load acloud credentials: "
+                   << attempt_load.error().Trace();
       }
     } else {
       LOG(INFO) << "\"" << file << "\" missing, running without credentials";
@@ -383,8 +383,8 @@ Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
     credential_source = FixedCredentialSource::make(flags.credential_source);
   } else {
     // Read the file only once in case it's a pipe.
-    LOG(VERBOSE) << "Attempting to open credentials file \""
-                 << flags.credential_source << "\"";
+    LOG(DEBUG) << "Attempting to open credentials file \""
+               << flags.credential_source << "\"";
     auto file = SharedFD::Open(flags.credential_source, O_RDONLY);
     CF_EXPECT(file->IsOpen(),
               "Failed to open credential_source file: " << file->StrError());
@@ -475,9 +475,8 @@ Result<void> SaveConfig(FetcherConfig& config,
   config.SaveToFile(fetcher_path);
 
   for (const auto& file : config.get_cvd_files()) {
-    std::cout << target_directory << "/" << file.second.file_path << "\n";
+    LOG(VERBOSE) << target_directory << "/" << file.second.file_path << "\n";
   }
-  std::cout << std::flush;
   return {};
 }
 
@@ -493,17 +492,16 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
 
   const auto [default_build_id, default_build_target] =
       GetBuildIdAndTarget(builds.default_build);
-
-  // Some older builds might not have misc_info.txt, so permit errors on
-  // fetching misc_info.txt
-  Result<std::string> misc_info_result = build_api.DownloadFile(
-      builds.default_build, target_directories.root, "misc_info.txt");
-  if (misc_info_result.ok()) {
+  if (builds.otatools) {
+    std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
+        *builds.otatools, target_directories.root, OTA_TOOLS));
+    std::vector<std::string> ota_tools_files = CF_EXPECT(
+        ExtractArchiveContents(otatools_filepath, target_directories.otatools,
+                               keep_downloaded_archives));
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        {misc_info_result.value()}, target_directories.root, OVERRIDE_ENTRIES));
+        ota_tools_files, target_directories.root));
   }
-
   if (flags.download_img_zip) {
     std::string img_zip_name = GetBuildZipName(builds.default_build, "img");
     std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
@@ -513,7 +511,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
         keep_downloaded_archives));
     LOG(INFO) << "Adding img-zip files for default build";
     for (auto& file : image_files) {
-      LOG(INFO) << file;
+      LOG(VERBOSE) << file;
     }
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
@@ -651,6 +649,16 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
         target_directories.root, OVERRIDE_ENTRIES));
   }
 
+  // Some older builds might not have misc_info.txt, so permit errors on
+  // fetching misc_info.txt
+  Result<std::string> misc_info_result = build_api.DownloadFile(
+      builds.default_build, target_directories.root, "misc_info.txt");
+  if (misc_info_result.ok()) {
+    CF_EXPECT(config.AddFilesToConfig(
+        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+        {misc_info_result.value()}, target_directories.root, OVERRIDE_ENTRIES));
+  }
+
   if (builds.bootloader) {
     std::string bootloader_filepath = target_directories.root + "/bootloader";
     // If the bootloader is from an arm/aarch64 build, the artifact will be of
@@ -667,26 +675,17 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
         {bootloader_filepath}, target_directories.root, OVERRIDE_ENTRIES));
   }
 
-  if (builds.otatools) {
-    std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-        *builds.otatools, target_directories.root, OTA_TOOLS));
-    std::vector<std::string> ota_tools_files = CF_EXPECT(
-        ExtractArchiveContents(otatools_filepath, target_directories.otatools,
-                               keep_downloaded_archives));
-    const auto [otatools_build_id, otatools_build_target] =
-        GetBuildIdAndTarget(*builds.otatools);
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, otatools_build_id, otatools_build_target,
-        ota_tools_files, target_directories.root));
-  }
-
   // Wait for ProcessHostPackage to return.
   std::vector<std::string> host_package_files =
       CF_EXPECT(process_pkg_ret.get());
-  const auto [host_id, host_target] = GetBuildIdAndTarget(builds.host_package);
   FileSource host_filesource = FileSource::DEFAULT_BUILD;
+  std::string host_id = default_build_id;
+  std::string host_target = default_build_target;
   if (is_host_package_build) {
     host_filesource = FileSource::HOST_PACKAGE_BUILD;
+    const auto [id, target] = GetBuildIdAndTarget(builds.host_package);
+    host_id = id;
+    host_target = target;
   }
   CF_EXPECT(config.AddFilesToConfig(host_filesource, host_id, host_target,
                                     host_package_files,
