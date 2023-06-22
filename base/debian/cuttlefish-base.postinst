@@ -4,6 +4,15 @@ set -e
 
 case "$1" in
     (configure)
+    # unlink if it's a symlink
+    if [ -L /var/empty ]; then
+        unlink /var/empty
+    fi
+    # delete if it's a file
+    if [ -f /var/empty ]; then
+        rm -rf /var/empty
+    fi
+    # guarantees it's a directory
     mkdir -p /var/empty
     if ! getent group cvdnetwork > /dev/null 2>&1
     then
