@@ -49,12 +49,14 @@ cc_binary_host {
     shared_libs: [
         "libbase",
         "libcuttlefish_utils",
+        "libcuttlefish_web",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
     ],
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
+        "libjsoncpp",
         "libopenwrt_control_server",
         "libgrpc++_reflection",
     ],
