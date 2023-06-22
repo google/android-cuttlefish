@@ -20,17 +20,19 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <vector>
 
-#include <fruit/fruit.h>
 #include <android-base/parseint.h>
+#include <fruit/fruit.h>
+#include <json/json.h>
 
-#include <common/libs/utils/flag_parser.h>
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/command_sequence.h"
 #include "host/commands/cvd/common_utils.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
+#include "host/commands/cvd/parser/fetch_cvd_parser.h"
 #include "host/commands/cvd/parser/load_configs_parser.h"
 #include "host/commands/cvd/selector/selector_constants.h"
 #include "host/commands/cvd/server_client.h"
@@ -38,7 +40,6 @@
 #include "host/commands/cvd/types.h"
 
 namespace cuttlefish {
-
 namespace {
 
 std::string GenerateSystemImageFlag(
@@ -73,20 +74,12 @@ std::string GenerateParentDirectory() {
 
 std::string GenerateHostArtifactsDirectoryName(int64_t time,
                                         int instance_index) {
-  // Concatenates the string using GenerateParentDirectory and std::to_string.
-  std::string host_artifacts_dir = GenerateParentDirectory() +
-                         std::to_string(time) + "_" +
-                         std::to_string(instance_index) + "/";
-
-  return host_artifacts_dir;
+  return GenerateParentDirectory() + std::to_string(time) + "_" +
+         std::to_string(instance_index) + "/";
 }
 
 std::string GenerateHomeDirectoryName(int64_t time) {
-  // Concatenates the string using GenerateParentDirectory and std::to_string.
-  std::string home_dir =
-      GenerateParentDirectory() + std::to_string(time) + "_home/";
-
-  return home_dir;
+  return GenerateParentDirectory() + std::to_string(time) + "_home/";
 }
 
 using DemoCommandSequence = std::vector<RequestWithStdio>;
