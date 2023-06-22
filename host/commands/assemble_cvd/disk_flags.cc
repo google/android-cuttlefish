@@ -143,6 +143,17 @@ Result<void> ResolveInstanceFiles() {
               "--use_16k is not compatible with --initramfs_path");
   }
 
+  // It is conflict (invalid) to pass both kernel_path/initramfs_path
+  // and image file paths.
+  bool flags_kernel_initramfs_has_input = (FLAGS_kernel_path != "")
+                                          || (FLAGS_initramfs_path != "");
+  bool flags_image_has_input =
+      (FLAGS_super_image != "") || (FLAGS_vendor_boot_image != "") ||
+      (FLAGS_vbmeta_vendor_dlkm_image != "") ||
+      (FLAGS_vbmeta_system_dlkm_image != "") || (FLAGS_boot_image != "");
+  CF_EXPECT(!(flags_kernel_initramfs_has_input && flags_image_has_input),
+             "Cannot pass both kernel_path/initramfs_path and image file paths");
+
   std::vector<std::string> system_image_dir =
       android::base::Split(FLAGS_system_image_dir, ",");
   std::string default_boot_image = "";
