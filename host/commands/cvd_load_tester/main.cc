@@ -46,7 +46,8 @@ int CvdLoadParserMain(int argc, char** argv) {
     LOG(INFO) << parsed_launch_flag;
   }
 
-  LOG(INFO) << "credential = " << cvd_flags->fetch_cvd_flags.credential;
+  LOG(INFO) << "credential_source = "
+            << cvd_flags->fetch_cvd_flags.credential_source;
 
   int i = 0;
   for (const auto& parsed_fetch_instance_flag :
@@ -54,7 +55,7 @@ int CvdLoadParserMain(int argc, char** argv) {
     LOG(INFO) << i << " -- " << parsed_fetch_instance_flag.default_build << ","
               << parsed_fetch_instance_flag.system_build << ","
               << parsed_fetch_instance_flag.kernel_build << ","
-              << parsed_fetch_instance_flag.use_fetch_artifact;
+              << parsed_fetch_instance_flag.should_fetch;
     i++;
   }
 
