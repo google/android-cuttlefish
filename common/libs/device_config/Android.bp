@@ -27,6 +27,11 @@ cc_library {
         "device_config.proto",
     ],
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_library_shared {
@@ -54,6 +59,9 @@ cc_library_shared {
             static_libs: [
                 "libcuttlefish_host_config",
             ],
+        },
+        darwin: {
+            enabled: true,
         },
         android: {
             srcs: [
