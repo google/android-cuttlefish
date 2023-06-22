@@ -39,31 +39,31 @@ void InitFetchInstanceConfigs(Json::Value& instances) {
 }
 
 void InitFetchCvdConfigs(Json::Value& root) {
-  if (!root.isMember("credential")) {
-    root["credential"] = EMPTY_CREDENTIAL;
+  if (!root.isMember("credential_source")) {
+    root["credential_source"] = EMPTY_CREDENTIAL;
   }
   InitFetchInstanceConfigs(root["instances"]);
 }
 
-FetchCvdDeviceConfigs ParseFetchInstanceConfigs(const Json::Value& instance) {
-  FetchCvdDeviceConfigs result;
+FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
+  FetchCvdInstanceConfig result;
   result.default_build = instance["disk"]["default_build"].asString();
   result.system_build = instance["disk"]["system_build"].asString();
   result.kernel_build = instance["disk"]["kernel_build"].asString();
   if (result.default_build != EMPTY_DEFAULT_BUILD ||
       result.system_build != EMPTY_SYSTEM_BUILD ||
       result.kernel_build != EMPTY_KERNEL_BUILD) {
-    result.use_fetch_artifact = true;
+    result.should_fetch = true;
   } else {
-    result.use_fetch_artifact = false;
+    result.should_fetch = false;
   }
 
   return result;
 }
 
-FetchCvdConfigs GenerateFetchCvdFlags(const Json::Value& root) {
-  FetchCvdConfigs result;
-  result.credential = root["credential"].asString();
+FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
+  FetchCvdConfig result;
+  result.credential_source = root["credential_source"].asString();
   int num_instances = root["instances"].size();
   for (unsigned int i = 0; i < num_instances; i++) {
     auto instance_config = ParseFetchInstanceConfigs(root["instances"][i]);
@@ -75,7 +75,7 @@ FetchCvdConfigs GenerateFetchCvdFlags(const Json::Value& root) {
 
 }  // namespace
 
-FetchCvdConfigs ParseFetchCvdConfigs(Json::Value& root) {
+FetchCvdConfig ParseFetchCvdConfigs(Json::Value& root) {
   InitFetchCvdConfigs(root);
   return GenerateFetchCvdFlags(root);
 }
