@@ -28,7 +28,7 @@ namespace cuttlefish {
 
 typedef struct _CvdFlags {
   std::vector<std::string> launch_cvd_flags;
-  FetchCvdConfigs fetch_cvd_flags;
+  FetchCvdConfig fetch_cvd_flags;
 } CvdFlags;
 
 Result<Json::Value> ParseJsonFile(const std::string& file_path);
