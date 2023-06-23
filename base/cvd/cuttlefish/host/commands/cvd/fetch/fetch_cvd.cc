@@ -230,10 +230,10 @@ Result<int> GetNumberOfBuilds(
       // a size zero flag vector means the flag was not given
       continue;
     }
-    if (number_of_builds.has_value()) {
-      CF_EXPECT(flag_size == number_of_builds.value(),
-                "Mismatched flag lengths: " << number_of_builds.value() << ","
-                                            << flag_size);
+    if (number_of_builds) {
+      CF_EXPECT(
+          flag_size == *number_of_builds,
+          "Mismatched flag lengths: " << *number_of_builds << "," << flag_size);
     }
     number_of_builds = flag_size;
   }
@@ -424,7 +424,7 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
   std::optional<Build> host_package = CF_EXPECT(GetBuildHelper(
       build_api, build_sources.host_package_build, DEFAULT_BUILD_TARGET));
   Builds result = Builds{
-      .default_build = default_build.value(),
+      .default_build = *default_build,
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
                                          DEFAULT_BUILD_TARGET)),
       .kernel = CF_EXPECT(
@@ -437,10 +437,10 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
           build_api, build_sources.otatools_build, DEFAULT_BUILD_TARGET)),
       .host_package = host_package.value_or(result.default_build),
   };
-  if (!result.otatools.has_value()) {
-    if (result.system.has_value()) {
-      result.otatools = result.system.value();
-    } else if (result.kernel.has_value()) {
+  if (!result.otatools) {
+    if (result.system) {
+      result.otatools = result.system;
+    } else if (result.kernel) {
       result.otatools = result.default_build;
     }
   }
@@ -493,9 +493,9 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
 
   const auto [default_build_id, default_build_target] =
       GetBuildIdAndTarget(builds.default_build);
-  if (builds.otatools.has_value()) {
+  if (builds.otatools) {
     std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-        builds.otatools.value(), target_directories.root, OTA_TOOLS));
+        *builds.otatools, target_directories.root, OTA_TOOLS));
     std::vector<std::string> ota_tools_files = CF_EXPECT(
         ExtractArchiveContents(otatools_filepath, target_directories.otatools,
                                keep_downloaded_archives));
@@ -518,7 +518,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
                                       default_build_id, default_build_target,
                                       image_files, target_directories.root));
   }
-  if (builds.system.has_value() || flags.download_target_files_zip) {
+  if (builds.system || flags.download_target_files_zip) {
     std::string target_files_name =
         GetBuildZipName(builds.default_build, "target_files");
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
@@ -530,23 +530,21 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
                                       {target_files}, target_directories.root));
   }
 
-  if (builds.system.has_value()) {
+  if (builds.system) {
     std::string target_files_name =
-        GetBuildZipName(builds.system.value(), "target_files");
+        GetBuildZipName(*builds.system, "target_files");
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
-        builds.system.value(), target_directories.system_target_files,
+        *builds.system, target_directories.system_target_files,
         target_files_name));
-    const auto [system_id, system_target] =
-        GetBuildIdAndTarget(builds.system.value());
+    const auto [system_id, system_target] = GetBuildIdAndTarget(*builds.system);
     CF_EXPECT(config.AddFilesToConfig(FileSource::SYSTEM_BUILD, system_id,
                                       system_target, {target_files},
                                       target_directories.root));
 
     if (flags.download_img_zip) {
-      std::string system_img_zip_name =
-          GetBuildZipName(builds.system.value(), "img");
+      std::string system_img_zip_name = GetBuildZipName(*builds.system, "img");
       Result<std::string> system_img_zip_result = build_api.DownloadFile(
-          builds.system.value(), target_directories.root, system_img_zip_name);
+          *builds.system, target_directories.root, system_img_zip_name);
       Result<std::vector<std::string>> extract_result;
       if (system_img_zip_result.ok()) {
         extract_result = ExtractImages(
@@ -589,24 +587,22 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
     }
   }
 
-  if (builds.kernel.has_value()) {
+  if (builds.kernel) {
     std::string kernel_filepath = target_directories.root + "/kernel";
     // If the kernel is from an arm/aarch64 build, the artifact will be called
     // Image.
     std::string downloaded_kernel_filepath =
-        CF_EXPECT(build_api.DownloadFileWithBackup(builds.kernel.value(),
-                                                   target_directories.root,
-                                                   "bzImage", "Image"));
+        CF_EXPECT(build_api.DownloadFileWithBackup(
+            *builds.kernel, target_directories.root, "bzImage", "Image"));
     RenameFile(downloaded_kernel_filepath, kernel_filepath);
-    const auto [kernel_id, kernel_target] =
-        GetBuildIdAndTarget(builds.kernel.value());
+    const auto [kernel_id, kernel_target] = GetBuildIdAndTarget(*builds.kernel);
     CF_EXPECT(config.AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_id,
                                       kernel_target, {kernel_filepath},
                                       target_directories.root));
 
     // Certain kernel builds do not have corresponding ramdisks.
     Result<std::string> initramfs_img_result = build_api.DownloadFile(
-        builds.kernel.value(), target_directories.root, "initramfs.img");
+        *builds.kernel, target_directories.root, "initramfs.img");
     if (initramfs_img_result.ok()) {
       CF_EXPECT(config.AddFilesToConfig(
           FileSource::KERNEL_BUILD, kernel_id, kernel_target,
@@ -614,16 +610,16 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
     }
   }
 
-  if (builds.boot.has_value()) {
-    std::string boot_img_zip_name = GetBuildZipName(builds.boot.value(), "img");
+  if (builds.boot) {
+    std::string boot_img_zip_name = GetBuildZipName(*builds.boot, "img");
     std::string boot_filepath;
     if (flags.boot_artifact != "") {
       boot_filepath = CF_EXPECT(build_api.DownloadFileWithBackup(
-          builds.boot.value(), target_directories.root, flags.boot_artifact,
+          *builds.boot, target_directories.root, flags.boot_artifact,
           boot_img_zip_name));
     } else {
       boot_filepath = CF_EXPECT(build_api.DownloadFile(
-          builds.boot.value(), target_directories.root, boot_img_zip_name));
+          *builds.boot, target_directories.root, boot_img_zip_name));
     }
 
     std::vector<std::string> boot_files;
@@ -648,8 +644,7 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
     } else {
       boot_files.push_back(boot_filepath);
     }
-    const auto [boot_id, boot_target] =
-        GetBuildIdAndTarget(builds.boot.value());
+    const auto [boot_id, boot_target] = GetBuildIdAndTarget(*builds.boot);
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOT_BUILD, boot_id, boot_target, boot_files,
         target_directories.root, OVERRIDE_ENTRIES));
@@ -665,17 +660,17 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
         {misc_info_result.value()}, target_directories.root, OVERRIDE_ENTRIES));
   }
 
-  if (builds.bootloader.has_value()) {
+  if (builds.bootloader) {
     std::string bootloader_filepath = target_directories.root + "/bootloader";
     // If the bootloader is from an arm/aarch64 build, the artifact will be of
     // filetype bin.
     std::string downloaded_bootloader_filepath =
-        CF_EXPECT(build_api.DownloadFileWithBackup(builds.bootloader.value(),
+        CF_EXPECT(build_api.DownloadFileWithBackup(*builds.bootloader,
                                                    target_directories.root,
                                                    "u-boot.rom", "u-boot.bin"));
     RenameFile(downloaded_bootloader_filepath, bootloader_filepath);
     const auto [bootloader_id, bootloader_target] =
-        GetBuildIdAndTarget(builds.bootloader.value());
+        GetBuildIdAndTarget(*builds.bootloader);
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOTLOADER_BUILD, bootloader_id, bootloader_target,
         {bootloader_filepath}, target_directories.root, OVERRIDE_ENTRIES));
