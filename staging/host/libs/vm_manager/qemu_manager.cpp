@@ -216,7 +216,7 @@ QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
 }
 
 Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig& config, std::vector<VmmDependencyCommand*>&) {
   auto instance = config.ForDefaultInstance();
 
   auto stop = [](Subprocess* proc) {
