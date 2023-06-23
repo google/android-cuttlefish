@@ -16,9 +16,11 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include <json/json.h>
 
@@ -54,7 +56,8 @@ class HttpClient {
   typedef std::function<bool(char*, size_t)> DataCallback;
 
   static std::unique_ptr<HttpClient> CurlClient(
-      NameResolver resolver = NameResolver());
+      NameResolver resolver = NameResolver(),
+      const bool use_logging_debug_function = false);
   static std::unique_ptr<HttpClient> ServerErrorRetryClient(
       HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
 

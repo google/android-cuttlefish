@@ -44,6 +44,7 @@
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/web/build_api.h"
 #include "host/libs/web/credential_source.h"
+#include "host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 namespace {
@@ -353,7 +354,9 @@ Result<std::vector<std::string>> ProcessHostPackage(
 Result<BuildApi> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
-  std::unique_ptr<HttpClient> curl = HttpClient::CurlClient(resolver);
+  const bool use_logging_debug_function = true;
+  std::unique_ptr<HttpClient> curl =
+      HttpClient::CurlClient(resolver, use_logging_debug_function);
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
