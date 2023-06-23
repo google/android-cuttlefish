@@ -15,22 +15,25 @@
  */
 
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/inotify.h"
+
+#ifdef __linux__
+#include <linux/fiemap.h>
+#include <linux/fs.h>
+#include <sys/inotify.h>
+#include <sys/sendfile.h>
+#endif
 
 #include <dirent.h>
 #include <fcntl.h>
 #include <ftw.h>
 #include <libgen.h>
-#include <linux/fiemap.h>
-#include <linux/fs.h>
 #include <sched.h>
-#include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
-#include <sys/sendfile.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
 #include <array>
@@ -55,9 +58,16 @@
 #include <android-base/unique_fd.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/contains.h"
+#include "common/libs/utils/inotify.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
+
+#ifdef __APPLE__
+#define off64_t off_t
+#define ftruncate64 ftruncate
+#endif
 
 namespace cuttlefish {
 
@@ -194,12 +204,21 @@ namespace {
 
 bool SendFile(int out_fd, int in_fd, off64_t* offset, size_t count) {
   while (count > 0) {
+#ifdef __linux__
     const auto bytes_written =
         TEMP_FAILURE_RETRY(sendfile(out_fd, in_fd, offset, count));
     if (bytes_written <= 0) {
       return false;
     }
-
+#elif defined(__APPLE__)
+    off_t bytes_written = count;
+    auto success = TEMP_FAILURE_RETRY(
+        sendfile(in_fd, out_fd, *offset, &bytes_written, nullptr, 0));
+    *offset += bytes_written;
+    if (success < 0 || bytes_written == 0) {
+      return false;
+    }
+#endif
     count -= bytes_written;
   }
   return true;
@@ -305,7 +324,13 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
   if (stat(path.c_str(), &st) == -1) {
     return std::chrono::system_clock::time_point();
   }
+#ifdef __linux__
   std::chrono::seconds seconds(st.st_mtim.tv_sec);
+#elif defined(__APPLE__)
+  std::chrono::seconds seconds(st.st_mtimespec.tv_sec);
+#else
+#error "Unsupported operating system"
+#endif
   return std::chrono::system_clock::time_point(seconds);
 }
 
@@ -488,6 +513,7 @@ Result<void> WalkDirectory(
   return {};
 }
 
+#ifdef __linux__
 class InotifyWatcher {
  public:
   InotifyWatcher(int inotify, const std::string& path, int watch_mode)
@@ -607,5 +633,6 @@ Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec) {
 
   return CF_ERR("This shouldn't be executed");
 }
+#endif
 
 }  // namespace cuttlefish
