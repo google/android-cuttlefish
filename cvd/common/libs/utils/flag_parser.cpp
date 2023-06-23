@@ -39,6 +39,7 @@
 #include <fmt/format.h>
 
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/tee_logging.h"
 
 namespace cuttlefish {
 
@@ -426,6 +427,22 @@ bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
     }
   }
   return true;
+}
+
+Flag VerbosityFlag(android::base::LogSeverity& value) {
+  return GflagsCompatFlag("verbosity")
+      .Getter([&value]() { return FromSeverity(value); })
+      .Setter([&value](const FlagMatch& match) {
+        Result<android::base::LogSeverity> result = ToSeverity(match.value);
+        if (!result.ok()) {
+          LOG(ERROR) << "Unable to convert \"" << match.value
+                     << "\" to a LogSeverity";
+          return false;
+        }
+        value = result.value();
+        return true;
+      })
+      .Help("Used to set the verbosity level for logging.");
 }
 
 Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text) {
