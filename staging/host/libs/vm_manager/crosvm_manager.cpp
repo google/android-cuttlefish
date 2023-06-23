@@ -151,10 +151,19 @@ CrosvmManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
 constexpr auto crosvm_socket = "crosvm_control.sock";
 
 Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig& config,
+    std::vector<VmmDependencyCommand*>& dependencyCommands) {
   auto instance = config.ForDefaultInstance();
 
   CrosvmBuilder crosvm_cmd;
+
+  crosvm_cmd.Cmd().AddPrerequisite([&dependencyCommands]() -> Result<void> {
+    for (auto dependencyCommand : dependencyCommands) {
+      CF_EXPECT(dependencyCommand->WaitForAvailability());
+    }
+
+    return {};
+  });
 
   crosvm_cmd.ApplyProcessRestarter(instance.crosvm_binary(),
                                    kCrosvmVmResetExitCode);
