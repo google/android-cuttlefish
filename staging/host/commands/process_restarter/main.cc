@@ -23,51 +23,50 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <gflags/gflags.h>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-
-DEFINE_bool(when_dumped, false, "restart when the process crashed");
-DEFINE_bool(when_killed, false, "restart when the process was killed");
-DEFINE_bool(when_exited_with_failure, false,
-            "restart when the process exited with a code !=0");
-DEFINE_int32(when_exited_with_code, -1,
-             "restart when the process exited with a specific code");
+#include "host/commands/process_restarter/parser.h"
 
 namespace cuttlefish {
 namespace {
 
-static bool ShouldRestartProcess(siginfo_t const& info) {
-  if (info.si_code == CLD_DUMPED && FLAGS_when_dumped) {
+static bool ShouldRestartProcess(siginfo_t const& info, const Parser& parsed) {
+  if (info.si_code == CLD_DUMPED && parsed.WhenDumped()) {
     return true;
   }
-  if (info.si_code == CLD_KILLED && FLAGS_when_killed) {
+  if (info.si_code == CLD_KILLED && parsed.WhenKilled()) {
     return true;
   }
-  if (info.si_code == CLD_EXITED && FLAGS_when_exited_with_failure &&
+  if (info.si_code == CLD_EXITED && parsed.WhenExitedWithFailure() &&
       info.si_status != 0) {
     return true;
   }
   if (info.si_code == CLD_EXITED &&
-      info.si_status == FLAGS_when_exited_with_code) {
+      info.si_status == parsed.WhenExitedWithCode()) {
     return true;
   }
   return false;
 }
 
-Result<int> RunProcessRestarter(const std::vector<std::string>& exec_args) {
+Result<int> RunProcessRestarter(std::vector<std::string> args) {
   LOG(VERBOSE) << "process_restarter starting";
+  auto parsed = CF_EXPECT(Parser::ConsumeAndParse(args));
+  android::base::SetMinimumLogSeverity(CF_EXPECT(parsed.Verbosity()));
+
+  // move-assign the remaining args to exec_args
+  const std::vector<std::string> exec_args = std::move(args);
+  const std::string& exec_cmd = exec_args.front();
+
   siginfo_t info;
   do {
-    const std::string& exec_cmd = exec_args.front();
     LOG(VERBOSE) << "Starting monitored process " << exec_cmd;
     // The Execute() API and all APIs effectively called by it show the proper
     // error message using LOG(ERROR).
     info = CF_EXPECT(
         Execute(exec_args, SubprocessOptions().ExitWithParent(true), WEXITED),
         "Executing " << android::base::Join(exec_args, " ") << " failed.");
-  } while (ShouldRestartProcess(info));
+  } while (ShouldRestartProcess(info, parsed));
   return info.si_status;
 }
 
@@ -79,20 +78,8 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   ::android::base::SetMinimumLogSeverity(android::base::VERBOSE);
 
-  gflags::SetUsageMessage(R"#(
-    This program launches and automatically restarts the input command
-    following the selected restart conditions.
-    Example usage:
-
-      ./process_restarter -when_dumped -- my_program --arg1 --arg2
-  )#");
-
-  // Parse command line flags with remove_flags=true
-  // so that the remainder is the command to execute.
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-
-  auto result =
-      cuttlefish::RunProcessRestarter(cuttlefish::ArgsToVec(argv + 1));
+  auto result = cuttlefish::RunProcessRestarter(
+      std::move(cuttlefish::ArgsToVec(argc - 1, argv + 1)));
   if (!result.ok()) {
     LOG(ERROR) << result.error().Message();
     LOG(DEBUG) << result.error().Trace();
