@@ -40,4 +40,9 @@ class CommandSource : public virtual SetupFeature {
   virtual Result<std::vector<MonitorCommand>> Commands() = 0;
 };
 
+class StatusCheckCommandSource : public virtual CommandSource {
+ public:
+  virtual Result<void> WaitForAvailability() const = 0;
+};
+
 }  // namespace cuttlefish
