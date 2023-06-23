@@ -30,6 +30,11 @@ cc_library {
         ],
     },
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_library_static {
@@ -54,4 +59,9 @@ cc_library_static {
         "libsparse",
     ],
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
