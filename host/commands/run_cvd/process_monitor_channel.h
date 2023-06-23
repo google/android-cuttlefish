@@ -31,6 +31,11 @@ enum class ParentToChildMessageType : std::uint8_t {
   kError = 4,
 };
 
+enum class ChildToParentResponseType : std::uint8_t {
+  kSuccess = 0,
+  kFailure = 1,
+};
+
 class ParentToChildMessage {
  public:
   ParentToChildMessage(const ParentToChildMessageType type);
@@ -41,6 +46,17 @@ class ParentToChildMessage {
 
  private:
   ParentToChildMessageType type_;
+};
+
+class ChildToParentResponse {
+ public:
+  ChildToParentResponse(const ChildToParentResponseType type);
+  Result<void> Write(const SharedFD& fd);
+  static Result<ChildToParentResponse> Read(const SharedFD& fd);
+  bool Success() const { return type_ == ChildToParentResponseType::kSuccess; }
+
+ private:
+  ChildToParentResponseType type_;
 };
 
 }  // namespace process_monitor_impl
