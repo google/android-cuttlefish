@@ -20,11 +20,10 @@ package {
 cc_binary_host {
     name: "process_restarter",
     defaults: ["cuttlefish_host",],
-    srcs: ["main.cc",],
+    srcs: ["main.cc", "parser.cc"],
     shared_libs: [
         "libbase",
         "libcuttlefish_utils",
-        "libgflags",
         "libjsoncpp",
     ],
     static_libs: [
