@@ -45,7 +45,8 @@ class Gem5Manager : public VmManager {
       int num_disks, bool have_gpu) override;
 
   Result<std::vector<MonitorCommand>> StartCommands(
-      const CuttlefishConfig& config) override;
+      const CuttlefishConfig& config,
+      std::vector<VmmDependencyCommand*>& dependencyCommands) override;
 
  private:
   Arch arch_;
