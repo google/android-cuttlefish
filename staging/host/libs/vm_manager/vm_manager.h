@@ -29,6 +29,10 @@
 namespace cuttlefish {
 namespace vm_manager {
 
+// Class for tagging that the CommandSource is a dependency command for the
+// VmManager.
+class VmmDependencyCommand : public virtual StatusCheckCommandSource {};
+
 // Superclass of every guest VM manager.
 class VmManager {
  public:
@@ -87,7 +91,8 @@ class VmManager {
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
   virtual Result<std::vector<MonitorCommand>> StartCommands(
-      const CuttlefishConfig& config) = 0;
+      const CuttlefishConfig& config,
+      std::vector<VmmDependencyCommand*>& dependencyCommands) = 0;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,

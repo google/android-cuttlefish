@@ -342,6 +342,18 @@ Command Command::SetWorkingDirectory(SharedFD dirfd) && {
   return std::move(SetWorkingDirectory(std::move(dirfd)));
 }
 
+Command& Command::AddPrerequisite(
+    const std::function<Result<void>()>& prerequisite) & {
+  prerequisites_.push_back(prerequisite);
+  return *this;
+}
+
+Command Command::AddPrerequisite(
+    const std::function<Result<void>()>& prerequisite) && {
+  prerequisites_.push_back(prerequisite);
+  return std::move(*this);
+}
+
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
 
@@ -356,6 +368,16 @@ Subprocess Command::Start(SubprocessOptions options) const {
     }
 
     do_redirects(redirects_);
+
+    for (auto& prerequisite : prerequisites_) {
+      auto prerequisiteResult = prerequisite();
+
+      if (!prerequisiteResult.ok()) {
+        LOG(ERROR) << "Failed to check prerequisites: "
+                   << prerequisiteResult.error().Message();
+      }
+    }
+
     if (options.InGroup()) {
       // This call should never fail (see SETPGID(2))
       if (setpgid(0, 0) != 0) {

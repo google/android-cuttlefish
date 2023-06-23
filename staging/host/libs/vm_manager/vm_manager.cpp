@@ -29,6 +29,7 @@
 #include "common/libs/utils/result.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/inject.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -72,19 +73,26 @@ ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
   return {{{"androidboot.boot_devices", boot_devices_prop_val}}};
 }
 
-class VmmCommands : public CommandSource {
+class VmmCommands : public CommandSource, public LateInjected {
  public:
   INJECT(VmmCommands(const CuttlefishConfig& config, VmManager& vmm))
       : config_(config), vmm_(vmm) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
-    return vmm_.StartCommands(config_);
+    return vmm_.StartCommands(config_, dependencyCommands_);
   }
 
   // SetupFeature
   std::string Name() const override { return "VirtualMachineManager"; }
   bool Enabled() const override { return true; }
+
+  // LateInjected
+  Result<void> LateInject(fruit::Injector<>& injector) override {
+    dependencyCommands_ = injector.getMultibindings<VmmDependencyCommand>();
+
+    return {};
+  }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
@@ -92,6 +100,7 @@ class VmmCommands : public CommandSource {
 
   const CuttlefishConfig& config_;
   VmManager& vmm_;
+  std::vector<VmmDependencyCommand*> dependencyCommands_;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
@@ -107,6 +116,7 @@ VmManagerComponent() {
         return vmm.release();  // fruit takes ownership of raw pointers
       })
       .addMultibinding<CommandSource, VmmCommands>()
+      .addMultibinding<LateInjected, VmmCommands>()
       .addMultibinding<SetupFeature, VmmCommands>();
 }
 
