@@ -283,6 +283,9 @@ class Command {
   Command& SetWorkingDirectory(SharedFD dirfd) &;
   Command SetWorkingDirectory(SharedFD dirfd) &&;
 
+  Command& AddPrerequisite(const std::function<Result<void>()>& prerequisite) &;
+  Command AddPrerequisite(const std::function<Result<void>()>& prerequisite) &&;
+
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
   Subprocess Start(SubprocessOptions options = SubprocessOptions()) const;
@@ -302,6 +305,7 @@ class Command {
  private:
   std::optional<std::string> executable_;  // When unset, use command_[0]
   std::vector<std::string> command_;
+  std::vector<std::function<Result<void>()>> prerequisites_;
   std::map<SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   std::vector<std::string> env_{};
