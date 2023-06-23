@@ -13,12 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "host/libs/web/http_client/http_client_util.h"
 
+#include <regex>
 #include <string>
 
 namespace cuttlefish {
 
-std::string ScrubSecrets(const std::string& data);
+std::string ScrubSecrets(const std::string& data) {
+  std::string result = data;
+  // eg [<head>]Authorization: Bearer token_text[<tail>] ->
+  //    [<head>]Authorization: Bearer token_...[<tail>]
+  result = std::regex_replace(
+      result, std::regex("(Authorization:[ ]+\\S+[ ]+)(\\S{6})\\S*"),
+      "$1$2...");
+  // eg [<head>]client_secret=token_text[<tail>] ->
+  //    [<head>]client_secret=token_...[<tail>]
+  result = std::regex_replace(
+      result, std::regex("(client_secret=)(\\S{6})[^\\&\\s]*"), "$1$2...");
+  return result;
+}
 
 }  // namespace cuttlefish
