@@ -51,5 +51,32 @@ Result<ParentToChildMessage> ParentToChildMessage::Read(const SharedFD& fd) {
   return ParentToChildMessage{type};
 }
 
+ChildToParentResponse::ChildToParentResponse(
+    const ChildToParentResponseType type)
+    : type_(type) {}
+
+Result<void> ChildToParentResponse::Write(const SharedFD& fd) {
+  CF_EXPECTF(fd->IsOpen(), "File descriptor to write ChildToParentResponse",
+             " is closed.");
+  const auto n_bytes = WriteAllBinary(fd, &type_);
+  std::string err_msg("Failed to communicate with monitor socket");
+  CF_EXPECTF(n_bytes == sizeof(type_),
+             "{} : {}. Expected to write {} bytes but wrote {} bytes.", err_msg,
+             fd->StrError(), sizeof(type_), n_bytes);
+  return {};
+}
+
+Result<ChildToParentResponse> ChildToParentResponse::Read(const SharedFD& fd) {
+  ChildToParentResponseType type = ChildToParentResponseType::kFailure;
+  CF_EXPECTF(fd->IsOpen(), "File descriptor to read ChildToParentResponse",
+             "from is closed.");
+  std::string err_msg("Could not read response from parent");
+  const auto n_bytes = ReadExactBinary(fd, &type);
+  CF_EXPECTF(n_bytes == sizeof(type),
+             "{} : {}. Expected To read {} bytes but actually read {} bytes",
+             err_msg, fd->StrError(), sizeof(type), n_bytes);
+  return ChildToParentResponse{type};
+}
+
 }  // namespace process_monitor_impl
 }  // namespace cuttlefish
