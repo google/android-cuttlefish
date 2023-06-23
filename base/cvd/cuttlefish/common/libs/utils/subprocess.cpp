@@ -16,11 +16,14 @@
 
 #include "common/libs/utils/subprocess.h"
 
+#ifdef __linux__
+#include <sys/prctl.h>
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -126,6 +129,7 @@ SubprocessOptions SubprocessOptions::Verbose(bool verbose) && {
   return *this;
 }
 
+#ifdef __linux__
 SubprocessOptions& SubprocessOptions::ExitWithParent(bool v) & {
   exit_with_parent_ = v;
   return *this;
@@ -134,6 +138,7 @@ SubprocessOptions SubprocessOptions::ExitWithParent(bool v) && {
   exit_with_parent_ = v;
   return *this;
 }
+#endif
 
 SubprocessOptions& SubprocessOptions::InGroup(bool in_group) & {
   in_group_ = in_group;
@@ -325,7 +330,13 @@ Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
 }
 
 Command& Command::SetWorkingDirectory(const std::string& path) & {
+#ifdef __linux__
   auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
+#elif defined(__APPLE__)
+  auto fd = SharedFD::Open(path, O_RDONLY | O_DIRECTORY);
+#else
+#error "Unsupported operating system"
+#endif
   CHECK(fd->IsOpen()) << "Could not open \"" << path
                       << "\" dir fd: " << fd->StrError();
   return SetWorkingDirectory(fd);
@@ -363,9 +374,11 @@ Subprocess Command::Start(SubprocessOptions options) const {
 
   pid_t pid = fork();
   if (!pid) {
+#ifdef __linux__
     if (options.ExitWithParent()) {
       prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
     }
+#endif
 
     do_redirects(redirects_);
 
@@ -399,8 +412,15 @@ Subprocess Command::Start(SubprocessOptions options) const {
     int rval;
     auto envp = ToCharPointers(env_);
     const char* executable = executable_ ? executable_->c_str() : cmd[0];
+#ifdef __linux__
     rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
                    const_cast<char* const*>(envp.data()));
+#elif defined(__APPLE__)
+    rval = execve(executable, const_cast<char* const*>(cmd.data()),
+                  const_cast<char* const*>(envp.data()));
+#else
+#error "Unsupported architecture"
+#endif
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << cmd[0] << " with path \"" << executable
                << "\" failed (" << strerror(errno) << ")";
