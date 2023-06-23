@@ -17,10 +17,10 @@ func TestTar(t *testing.T) {
 	defer orchtesting.RemoveDir(t, dir)
 	createFakeRuntimeDir(t, dir)
 	expected := []string{
-		"cvd-1/NVChip",
-		"cvd-1/ap_composite_disk_config.txt",
+		"cvd-1/assemble_cvd.log",
+		"cvd-1/disk_config.txt",
 		"cvd-1/logs/kernel.log",
-		"cvd-2/NVChip",
+		"cvd-128/assemble_cvd.log",
 	}
 	m := NewRuntimeArtifactsManager(dir)
 
@@ -73,8 +73,10 @@ func createFakeRuntimeDir(t *testing.T, rootDir string) {
 		{Name: "cuttlefish/assembly", Type: dir},
 		{Name: "cuttlefish/assembly/assemble_cvd.log", Type: file},
 		{Name: "cuttlefish/instances", Type: dir},
+		{Name: "cuttlefish/instances/config.json", Type: file},
 		{Name: "cuttlefish/instances/cvd-1", Type: dir},
-		{Name: "cuttlefish/instances/cvd-1/NVChip", Type: file},
+		{Name: "cuttlefish/instances/cvd-1/assemble_cvd.log", Type: file},
+		{Name: "cuttlefish/instances/cvd-1/disk_config.txt", Type: file},
 		{Name: "cuttlefish/instances/cvd-1/ap_composite_disk_config.txt", Type: file},
 		{Name: "cuttlefish/instances/cvd-1/misc.img", Type: file},
 		{Name: "cuttlefish/instances/cvd-1/logs", Type: dir},
@@ -84,8 +86,8 @@ func createFakeRuntimeDir(t *testing.T, rootDir string) {
 			Type:          symlink,
 			SymlinkTarget: "cuttlefish/instances/cvd-1/logs/kernel.log",
 		},
-		{Name: "cuttlefish/instances/cvd-2", Type: dir},
-		{Name: "cuttlefish/instances/cvd-2/NVChip", Type: file},
+		{Name: "cuttlefish/instances/cvd-128", Type: dir},
+		{Name: "cuttlefish/instances/cvd-128/assemble_cvd.log", Type: file},
 	}
 	for _, it := range items {
 		name := filepath.Join(rootDir, it.Name)
