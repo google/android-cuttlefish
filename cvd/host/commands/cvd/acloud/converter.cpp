@@ -177,15 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  std::optional<std::string> branch;
-  flags.emplace_back(
-      Flag()
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--branch"})
-          .Setter([&branch](const FlagMatch& m) {
-            branch = m.value;
-            return true;
-          }));
-
   bool local_image = false;
   std::optional<std::string> local_image_path;
   flags.emplace_back(
@@ -465,9 +456,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     }
     // used for default branch and target when there is no input
     std::optional<BranchBuildTargetInfo> given_branch_target_info;
-    if (branch || build_id || build_target) {
+    if (parsed_flags.branch || build_id || build_target) {
       auto target = build_target ? *build_target : "";
-      auto build = build_id.value_or(branch.value_or("aosp-master"));
+      auto build =
+          build_id.value_or(parsed_flags.branch.value_or("aosp-master"));
       host_dir += (build + target);
     } else {
       given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget(
@@ -497,7 +489,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                             given_branch_target_info->build_target_str);
     } else {
       auto target = build_target ? "/" + *build_target : "";
-      auto build = build_id.value_or(branch.value_or("aosp-master"));
+      auto build =
+          build_id.value_or(parsed_flags.branch.value_or("aosp-master"));
       fetch_command.add_args(build + target);
       fetch_command_str += (build + target);
     }
