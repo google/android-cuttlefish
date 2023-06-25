@@ -177,16 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  std::optional<std::string> config_file;
-  flags.emplace_back(
-      Flag()
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--config-file"})
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--config_file"})
-          .Setter([&config_file](const FlagMatch& m) {
-            config_file = m.value;
-            return true;
-          }));
-
   std::optional<std::string> bootloader_build_id;
   flags.emplace_back(Flag()
                          .Alias({FlagAliasMode::kFlagConsumesFollowing,
@@ -386,12 +376,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<cvd::Request> request_protos;
   const uid_t uid = request.Credentials()->uid;
-  // default user config path
-  std::string user_config_path = CF_EXPECT(GetDefaultConfigFile(uid));
+  const std::string user_config_path =
+      parsed_flags.config_file.value_or(CF_EXPECT(GetDefaultConfigFile(uid)));
 
-  if (config_file) {
-    user_config_path = config_file.value();
-  }
   AcloudConfig acloud_config =
       CF_EXPECT(LoadAcloudConfig(user_config_path, uid));
 

@@ -116,6 +116,10 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   flags.emplace_back(CF_EXPECT(
       AcloudCompatFlag({"build-target", "build_target"}, build_target)));
 
+  std::optional<std::string> config_file;
+  flags.emplace_back(
+      CF_EXPECT(AcloudCompatFlag({"config-file", "config_file"}, config_file)));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance = {.is_set = local_instance_set, .id = local_instance},
@@ -128,6 +132,7 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .local_image = {.given = local_image_given, .path = local_image_path},
       .build_id = build_id,
       .build_target = build_target,
+      .config_file = config_file,
   };
 }
 
