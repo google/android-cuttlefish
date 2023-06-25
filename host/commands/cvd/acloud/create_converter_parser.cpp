@@ -88,6 +88,9 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   bool verbose = false;
   flags.emplace_back(VerboseFlag(verbose));
 
+  std::optional<std::string> branch;
+  flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"branch"}, branch)));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance_set = local_instance_set,
@@ -97,6 +100,7 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .image_download_dir = image_download_dir,
       .local_system_image = local_system_image,
       .verbose = verbose,
+      .branch = branch,
   };
 }
 
