@@ -120,6 +120,17 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   flags.emplace_back(
       CF_EXPECT(AcloudCompatFlag({"config-file", "config_file"}, config_file)));
 
+  std::optional<std::string> bootloader_build_id;
+  flags.emplace_back(CF_EXPECT(AcloudCompatFlag(
+      {"bootloader-build-id", "bootloader_build_id"}, bootloader_build_id)));
+  std::optional<std::string> bootloader_build_target;
+  flags.emplace_back(CF_EXPECT(
+      AcloudCompatFlag({"bootloader-build-target", "bootloader_build_target"},
+                       bootloader_build_target)));
+  std::optional<std::string> bootloader_branch;
+  flags.emplace_back(CF_EXPECT(AcloudCompatFlag(
+      {"bootloader-branch", "bootloader_branch"}, bootloader_build_target)));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance = {.is_set = local_instance_set, .id = local_instance},
@@ -133,6 +144,12 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .build_id = build_id,
       .build_target = build_target,
       .config_file = config_file,
+      .bootloader =
+          {
+              .build_id = bootloader_build_id,
+              .build_target = bootloader_build_target,
+              .branch = bootloader_branch,
+          },
   };
 }
 
