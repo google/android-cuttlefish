@@ -56,11 +56,16 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   std::optional<std::string> flavor;
   flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"config", "flavor"}, flavor)));
 
+  std::optional<std::string> local_kernel_image;
+  flags.emplace_back(CF_EXPECT(AcloudCompatFlag(
+      {"local-kernel-image", "local-boot-image"}, local_kernel_image)));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance_set = local_instance_set,
       .local_instance = local_instance,
       .flavor = flavor,
+      .local_kernel_image = local_kernel_image,
   };
 }
 
