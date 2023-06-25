@@ -63,12 +63,12 @@ static Flag VerboseFlag(bool& verbose) {
   return verbose_flag;
 }
 
-static Flag LocalImageFlag(bool& local_image,
+static Flag LocalImageFlag(bool& local_image_given,
                            std::optional<std::string>& local_image_path) {
   return Flag()
       .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--local-image"})
-      .Setter([&local_image, &local_image_path](const FlagMatch& m) {
-        local_image = true;
+      .Setter([&local_image_given, &local_image_path](const FlagMatch& m) {
+        local_image_given = true;
         if (m.value != "") {
           local_image_path = m.value;
         }
@@ -104,9 +104,9 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   std::optional<std::string> branch;
   flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"branch"}, branch)));
 
-  bool local_image = false;
+  bool local_image_given = false;
   std::optional<std::string> local_image_path;
-  flags.emplace_back(LocalImageFlag(local_image, local_image_path));
+  flags.emplace_back(LocalImageFlag(local_image_given, local_image_path));
 
   std::optional<std::string> build_id;
   flags.emplace_back(
@@ -118,16 +118,14 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
 
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
-      .local_instance_set = local_instance_set,
-      .local_instance = local_instance,
+      .local_instance = {.is_set = local_instance_set, .id = local_instance},
       .flavor = flavor,
       .local_kernel_image = local_kernel_image,
       .image_download_dir = image_download_dir,
       .local_system_image = local_system_image,
       .verbose = verbose,
       .branch = branch,
-      .local_image = local_image,
-      .local_image_path = local_image_path,
+      .local_image = {.given = local_image_given, .path = local_image_path},
       .build_id = build_id,
       .build_target = build_target,
   };
