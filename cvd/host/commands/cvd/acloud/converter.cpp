@@ -177,16 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  bool verbose = false;
-  flags.emplace_back(Flag()
-                         .Alias({FlagAliasMode::kFlagExact, "-v"})
-                         .Alias({FlagAliasMode::kFlagExact, "-vv"})
-                         .Alias({FlagAliasMode::kFlagExact, "--verbose"})
-                         .Setter([&verbose](const FlagMatch&) {
-                           verbose = true;
-                           return true;
-                         }));
-
   std::optional<std::string> branch;
   flags.emplace_back(
       Flag()
@@ -788,7 +778,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   *start_command.mutable_working_directory() =
       request_command.working_directory();
   std::vector<SharedFD> fds;
-  if (verbose) {
+  if (parsed_flags.verbose) {
     fds = request.FileDescriptors();
   } else {
     auto dev_null = SharedFD::Open("/dev/null", O_RDWR);
@@ -801,7 +791,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                         request.Credentials()),
       .fetch_command_str = fetch_command_str,
       .fetch_cvd_args_file = fetch_cvd_args_file,
-      .verbose = verbose,
+      .verbose = parsed_flags.verbose,
   };
   for (auto& request_proto : request_protos) {
     ret.prep_requests.emplace_back(request.Client(), request_proto, fds,
