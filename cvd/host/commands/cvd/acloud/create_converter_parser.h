@@ -33,6 +33,7 @@ struct ConverterParsed {
   std::optional<std::string> image_download_dir;
   std::optional<std::string> local_system_image;
   bool verbose;
+  std::optional<std::string> branch;
 };
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments);
