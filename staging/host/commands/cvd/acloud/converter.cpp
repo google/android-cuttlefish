@@ -177,15 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  std::optional<std::string> image_download_dir;
-  flags.emplace_back(Flag()
-                         .Alias({FlagAliasMode::kFlagConsumesFollowing,
-                                 "--image-download-dir"})
-                         .Setter([&image_download_dir](const FlagMatch& m) {
-                           image_download_dir = m.value;
-                           return true;
-                         }));
-
   std::optional<std::string> local_system_image;
   flags.emplace_back(Flag()
                          .Alias({FlagAliasMode::kFlagConsumesFollowing,
@@ -444,8 +435,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   CF_EXPECT(parsed_flags.local_instance_set == true,
             "Only '--local-instance' is supported");
   auto host_dir = TempDir() + "/acloud_image_artifacts/";
-  if (image_download_dir) {
-    host_dir = image_download_dir.value() + "/acloud_image_artifacts/";
+  if (parsed_flags.image_download_dir) {
+    host_dir =
+        parsed_flags.image_download_dir.value() + "/acloud_image_artifacts/";
   }
 
   const auto& request_command = request.Message().command_request();
