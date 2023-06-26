@@ -31,6 +31,7 @@ class Parser {
  public:
   static Result<Parser> ConsumeAndParse(std::vector<std::string>&);
 
+  bool IgnoreSigtstp() const;
   bool WhenDumped() const;
   bool WhenKilled() const;
   bool WhenExitedWithFailure() const;
@@ -40,12 +41,14 @@ class Parser {
  private:
   Parser();
 
+  Flag IgnoreSigtstpFlag();
   Flag WhenDumpedFlag();
   Flag WhenKilledFlag();
   Flag WhenExitedWithFailureFlag();
   Flag WhenExitedWithCodeFlag();
   Flag VerbosityFlag();
 
+  bool ignore_sigtstp_;
   bool when_dumped_;
   bool when_killed_;
   bool when_exited_with_failure_;
