@@ -63,6 +63,19 @@ static Flag VerboseFlag(bool& verbose) {
   return verbose_flag;
 }
 
+static Flag LocalImageFlag(bool& local_image,
+                           std::optional<std::string>& local_image_path) {
+  return Flag()
+      .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--local-image"})
+      .Setter([&local_image, &local_image_path](const FlagMatch& m) {
+        local_image = true;
+        if (m.value != "") {
+          local_image_path = m.value;
+        }
+        return true;
+      });
+}
+
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   std::vector<Flag> flags;
 
@@ -91,6 +104,10 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   std::optional<std::string> branch;
   flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"branch"}, branch)));
 
+  bool local_image = false;
+  std::optional<std::string> local_image_path;
+  flags.emplace_back(LocalImageFlag(local_image, local_image_path));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance_set = local_instance_set,
@@ -101,6 +118,8 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .local_system_image = local_system_image,
       .verbose = verbose,
       .branch = branch,
+      .local_image = local_image,
+      .local_image_path = local_image_path,
   };
 }
 
