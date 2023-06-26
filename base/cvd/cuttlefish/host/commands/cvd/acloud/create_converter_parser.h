@@ -29,6 +29,7 @@ struct ConverterParsed {
   bool local_instance_set;
   std::optional<int> local_instance;
   std::optional<std::string> flavor;
+  std::optional<std::string> local_kernel_image;
 };
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments);
