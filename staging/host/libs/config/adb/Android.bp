@@ -36,6 +36,11 @@ cc_library_static {
         "libz",
     ],
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_test_host {
