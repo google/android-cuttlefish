@@ -64,6 +64,10 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   flags.emplace_back(
       CF_EXPECT(AcloudCompatFlag({"image-download-dir"}, image_download_dir)));
 
+  std::optional<std::string> local_system_image;
+  flags.emplace_back(
+      CF_EXPECT(AcloudCompatFlag({"local-system-image"}, local_system_image)));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance_set = local_instance_set,
@@ -71,6 +75,7 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .flavor = flavor,
       .local_kernel_image = local_kernel_image,
       .image_download_dir = image_download_dir,
+      .local_system_image = local_system_image,
   };
 }
 
