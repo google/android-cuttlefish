@@ -36,6 +36,8 @@ struct ConverterParsed {
   std::optional<std::string> branch;
   bool local_image;
   std::optional<std::string> local_image_path;
+  std::optional<std::string> build_id;
+  std::optional<std::string> build_target;
 };
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments);
