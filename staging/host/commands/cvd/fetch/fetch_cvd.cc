@@ -493,16 +493,17 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
 
   const auto [default_build_id, default_build_target] =
       GetBuildIdAndTarget(builds.default_build);
-  if (builds.otatools) {
-    std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-        *builds.otatools, target_directories.root, OTA_TOOLS));
-    std::vector<std::string> ota_tools_files = CF_EXPECT(
-        ExtractArchiveContents(otatools_filepath, target_directories.otatools,
-                               keep_downloaded_archives));
+
+  // Some older builds might not have misc_info.txt, so permit errors on
+  // fetching misc_info.txt
+  Result<std::string> misc_info_result = build_api.DownloadFile(
+      builds.default_build, target_directories.root, "misc_info.txt");
+  if (misc_info_result.ok()) {
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        ota_tools_files, target_directories.root));
+        {misc_info_result.value()}, target_directories.root, OVERRIDE_ENTRIES));
   }
+
   if (flags.download_img_zip) {
     std::string img_zip_name = GetBuildZipName(builds.default_build, "img");
     std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
@@ -650,16 +651,6 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
         target_directories.root, OVERRIDE_ENTRIES));
   }
 
-  // Some older builds might not have misc_info.txt, so permit errors on
-  // fetching misc_info.txt
-  Result<std::string> misc_info_result = build_api.DownloadFile(
-      builds.default_build, target_directories.root, "misc_info.txt");
-  if (misc_info_result.ok()) {
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        {misc_info_result.value()}, target_directories.root, OVERRIDE_ENTRIES));
-  }
-
   if (builds.bootloader) {
     std::string bootloader_filepath = target_directories.root + "/bootloader";
     // If the bootloader is from an arm/aarch64 build, the artifact will be of
@@ -674,6 +665,17 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::BOOTLOADER_BUILD, bootloader_id, bootloader_target,
         {bootloader_filepath}, target_directories.root, OVERRIDE_ENTRIES));
+  }
+
+  if (builds.otatools) {
+    std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
+        *builds.otatools, target_directories.root, OTA_TOOLS));
+    std::vector<std::string> ota_tools_files = CF_EXPECT(
+        ExtractArchiveContents(otatools_filepath, target_directories.otatools,
+                               keep_downloaded_archives));
+    CF_EXPECT(config.AddFilesToConfig(
+        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+        ota_tools_files, target_directories.root));
   }
 
   // Wait for ProcessHostPackage to return.
