@@ -23,6 +23,9 @@
 
 namespace cuttlefish {
 
+static constexpr char kIgnoreSigtstpHelp[] =
+    "Ignore the sigtstp. This is useful when the managed processes are crosvm"
+    "Crosvm has its own logic to be suspended.";
 static constexpr char kWhenDumpedHelp[] = "restart when the process crashed";
 static constexpr char kWhenKilledHelp[] = "restart when the process was killed";
 static constexpr char kWhenExitedWithFailureHelp[] =
@@ -45,6 +48,7 @@ Parser::Parser() : when_exited_with_code_(-1), verbosity_("VERBOSE") {}
 Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   Parser parser;
   std::vector<Flag> flags;
+  flags.push_back(parser.IgnoreSigtstpFlag());
   flags.push_back(parser.WhenDumpedFlag());
   flags.push_back(parser.WhenKilledFlag());
   flags.push_back(parser.WhenExitedWithFailureFlag());
@@ -59,6 +63,7 @@ Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   return parser;
 }
 
+bool Parser::IgnoreSigtstp() const { return ignore_sigtstp_; }
 bool Parser::WhenDumped() const { return when_dumped_; }
 bool Parser::WhenKilled() const { return when_killed_; }
 bool Parser::WhenExitedWithFailure() const { return when_exited_with_failure_; }
@@ -80,6 +85,11 @@ Result<android::base::LogSeverity> Parser::Verbosity() const {
   CF_EXPECT(Contains(verbosity_encode_tab, verbosity_),
             "Verbosity \"" << verbosity_ << "\" is unrecognized.");
   return verbosity_encode_tab.at(verbosity_);
+}
+
+Flag Parser::IgnoreSigtstpFlag() {
+  return GflagsCompatFlag("ignore_sigtstp", ignore_sigtstp_)
+      .Help(kIgnoreSigtstpHelp);
 }
 
 Flag Parser::WhenDumpedFlag() {
