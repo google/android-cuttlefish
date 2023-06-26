@@ -177,17 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  std::optional<std::string> local_kernel_image;
-  flags.emplace_back(
-      Flag()
-          .Alias(
-              {FlagAliasMode::kFlagConsumesFollowing, "--local-kernel-image"})
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--local-boot-image"})
-          .Setter([&local_kernel_image](const FlagMatch& m) {
-            local_kernel_image = m.value;
-            return true;
-          }));
-
   std::optional<std::string> image_download_dir;
   flags.emplace_back(Flag()
                          .Alias({FlagAliasMode::kFlagConsumesFollowing,
@@ -686,20 +675,20 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     start_command.add_args(super_image_path);
   }
 
-  if (local_kernel_image) {
+  if (parsed_flags.local_kernel_image) {
     // kernel image has 1st priority than boot image
     struct stat statbuf {};
     std::string local_boot_image;
     std::string vendor_boot_image;
     std::string kernel_image;
     std::string initramfs_image;
-    if (stat(local_kernel_image.value().c_str(), &statbuf) == 0) {
+    if (stat(parsed_flags.local_kernel_image.value().c_str(), &statbuf) == 0) {
       if (statbuf.st_mode & S_IFDIR) {
         // it's a directory, deal with kernel image case first
-        kernel_image =
-            FindImage(local_kernel_image.value(), _KERNEL_IMAGE_NAMES);
-        initramfs_image =
-            FindImage(local_kernel_image.value(), _INITRAMFS_IMAGE_NAME);
+        kernel_image = FindImage(parsed_flags.local_kernel_image.value(),
+                                 _KERNEL_IMAGE_NAMES);
+        initramfs_image = FindImage(parsed_flags.local_kernel_image.value(),
+                                    _INITRAMFS_IMAGE_NAME);
         // This is the original python acloud behavior, it
         // expects both kernel and initramfs files, however,
         // there are some very old kernels that are built without
@@ -713,10 +702,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         } else {
           // boot.img case
           // adding boot.img and vendor_boot.img to the path
-          local_boot_image =
-              FindImage(local_kernel_image.value(), _BOOT_IMAGE_NAME);
-          vendor_boot_image =
-              FindImage(local_kernel_image.value(), _VENDOR_BOOT_IMAGE_NAME);
+          local_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
+                                       _BOOT_IMAGE_NAME);
+          vendor_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
+                                        _VENDOR_BOOT_IMAGE_NAME);
           start_command.add_args("-boot_image");
           start_command.add_args(local_boot_image);
           // vendor boot image may not exist
@@ -727,7 +716,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         }
       } else if (statbuf.st_mode & S_IFREG) {
         // it's a file which directly points to boot.img
-        local_boot_image = local_kernel_image.value();
+        local_boot_image = parsed_flags.local_kernel_image.value();
         start_command.add_args("-boot_image");
         start_command.add_args(local_boot_image);
       }
