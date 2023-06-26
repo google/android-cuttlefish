@@ -177,15 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  std::optional<std::string> local_system_image;
-  flags.emplace_back(Flag()
-                         .Alias({FlagAliasMode::kFlagConsumesFollowing,
-                                 "--local-system-image"})
-                         .Setter([&local_system_image](const FlagMatch& m) {
-                           local_system_image = m.value;
-                           return true;
-                         }));
-
   bool verbose = false;
   flags.emplace_back(Flag()
                          .Alias({FlagAliasMode::kFlagExact, "-v"})
@@ -603,7 +594,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   std::string super_image_path;
-  if (local_system_image) {
+  if (parsed_flags.local_system_image) {
     // in new cvd server design, at this point,
     // we don't know which HOME is assigned by cvd start.
     // create a temporary directory to store generated
@@ -615,7 +606,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
     // combine super_image path and local_system_image path
     required_paths = super_image_path;
-    required_paths += ("," + local_system_image.value());
+    required_paths += ("," + parsed_flags.local_system_image.value());
 
     cvd::Request& mixsuperimage_request = request_protos.emplace_back();
     auto& mixsuperimage_command =
@@ -662,7 +653,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     start_command.add_args(parsed_flags.flavor.value());
   }
 
-  if (local_system_image) {
+  if (parsed_flags.local_system_image) {
     start_command.add_args("-super_image");
     start_command.add_args(super_image_path);
   }
