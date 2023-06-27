@@ -126,6 +126,8 @@ void InjectHingeAngle(int angle) {
 }
 
 int main(int argc, char** argv) {
+  ::android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
+
   CHECK(argc == 3)
       << "Expected command line args 'rotate <angle>' or 'hinge_angle <value>'";
 
