@@ -26,16 +26,20 @@ namespace cuttlefish {
 namespace acloud_impl {
 
 struct ConverterParsed {
-  bool local_instance_set;
-  std::optional<int> local_instance;
+  struct LocalInstance {
+    bool is_set;
+    std::optional<int> id;
+  } local_instance;
   std::optional<std::string> flavor;
   std::optional<std::string> local_kernel_image;
   std::optional<std::string> image_download_dir;
   std::optional<std::string> local_system_image;
   bool verbose;
   std::optional<std::string> branch;
-  bool local_image;
-  std::optional<std::string> local_image_path;
+  struct LocalImage {
+    bool given;
+    std::optional<std::string> path;
+  } local_image;
   std::optional<std::string> build_id;
   std::optional<std::string> build_target;
 };
