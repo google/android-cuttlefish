@@ -177,19 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  bool local_image = false;
-  std::optional<std::string> local_image_path;
-  flags.emplace_back(
-      Flag()
-          .Alias({FlagAliasMode::kFlagConsumesArbitrary, "--local-image"})
-          .Setter([&local_image, &local_image_path](const FlagMatch& m) {
-            local_image = true;
-            if (m.value != "") {
-              local_image_path = m.value;
-            }
-            return true;
-          }));
-
   std::optional<std::string> build_id;
   flags.emplace_back(
       Flag()
@@ -431,7 +418,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
 
-  if (local_image) {
+  if (parsed_flags.local_image) {
     CF_EXPECT(!(system_branch || system_build_target || system_build_id),
               "--local-image incompatible with --system-* flags");
     CF_EXPECT(
@@ -600,10 +587,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     mixsuperimage_command.add_args("--super_image");
 
     auto& mixsuperimage_env = *mixsuperimage_command.mutable_env();
-    if (local_image) {
-      if (local_image_path) {
+    if (parsed_flags.local_image) {
+      if (parsed_flags.local_image_path) {
         // added image_dir to required_paths for MixSuperImage use
-        required_paths += ("," + local_image_path.value());
+        required_paths += ("," + parsed_flags.local_image_path.value());
       } else {
         required_paths += ",";
       }
@@ -738,9 +725,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   auto& start_env = *start_command.mutable_env();
-  if (local_image) {
-    if (local_image_path) {
-      std::string local_image_path_str = local_image_path.value();
+  if (parsed_flags.local_image) {
+    if (parsed_flags.local_image_path) {
+      std::string local_image_path_str = parsed_flags.local_image_path.value();
       // Python acloud source: local_image_local_instance.py;l=81
       // this acloud flag is equal to launch_cvd flag system_image_dir
       start_command.add_args("-system_image_dir");
