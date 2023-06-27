@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -39,23 +40,28 @@ func (m *runtimeArtifactsManager) Tar() (string, error) {
 }
 
 func writeTar(w io.Writer, rootDir string) error {
+	insDir := rootDir + "/cuttlefish/instances/"
+	allowedNamesRe := strings.Join([]string{
+		"cuttlefish_config.json",
+		"disk_config.txt",
+	}, "|")
+	r, err := regexp.Compile(insDir + "cvd-[0-9]+/(.*log|logs/.*|" + allowedNamesRe + ")$")
+	if err != nil {
+		return err
+	}
 	tw := tar.NewWriter(w)
-	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("failure accessing path %q: %w", path, err)
 		}
 		if info.Mode()&os.ModeType != 0 {
 			return nil
 		}
-		if strings.HasSuffix(info.Name(), ".img") {
-			return nil
-		}
-		if !strings.HasPrefix(path, rootDir+"/cuttlefish/instances/cvd-") {
-			return nil
-		}
-		nameInTar := strings.TrimPrefix(path, rootDir+"/cuttlefish/instances/")
-		if err := appendFile(tw, path, nameInTar, info); err != nil {
-			return fmt.Errorf("failed appending file %q to tar: %w", nameInTar, err)
+		if r.Match([]byte(path)) {
+			nameInTar := strings.TrimPrefix(path, insDir)
+			if err := appendFile(tw, path, nameInTar, info); err != nil {
+				return fmt.Errorf("failed appending file %q to tar: %w", nameInTar, err)
+			}
 		}
 		return nil
 	})
