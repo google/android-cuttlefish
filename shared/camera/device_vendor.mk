@@ -32,6 +32,7 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 # TODO(b/257379485): 3A is incrementally enabling cuttlefish build for native
 # code coverage support, temporary require separate namespace for folders that
 # can be built successfully.
+PRODUCT_SOONG_NAMESPACES += vendor/google/camera/common/g3_shared
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/g3ABase
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gABC/native_coverage
 PRODUCT_SOONG_NAMESPACES += vendor/google/camera/google_3a/libs_v4/gAF
