@@ -297,27 +297,30 @@ class LoadConfigsCommand : public CvdServerHandler {
     }
 
     for (const auto& instance : cvd_flags.fetch_cvd_flags.instances) {
-      auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
-      *mkdir_cmd.mutable_env() = client_env;
-      mkdir_cmd.add_args("cvd");
-      mkdir_cmd.add_args("mkdir");
-      mkdir_cmd.add_args("-p");
-      mkdir_cmd.add_args(instance.artifacts_directory);
-
       if (instance.should_fetch) {
-        // TODO(moelsherif):Separate fetch from launch command
         auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
         *fetch_cmd.mutable_env() = client_env;
         fetch_cmd.set_working_directory(instance.artifacts_directory);
         fetch_cmd.add_args("cvd");
         fetch_cmd.add_args("fetch");
-        fetch_cmd.add_args("--directory=" + instance.artifacts_directory);
-        fetch_cmd.add_args("-default_build=" + instance.default_build);
-        // TODO: other flags like system_build, kernel_build and credential
-        // optionally later fetch_cmd.add_args("-credential_source=" +
-        // cvd_flags.fetch_cvd_flags.credential);
+        fetch_cmd.add_args("--target_directory=" +
+                           instance.artifacts_directory);
+        if (cvd_flags.fetch_cvd_flags.credential_source) {
+          fetch_cmd.add_args("--credential_source=" +
+                             *cvd_flags.fetch_cvd_flags.credential_source);
+        }
+        if (instance.default_build) {
+          fetch_cmd.add_args("--default_build=" + *instance.default_build);
+        }
+        if (instance.system_build) {
+          fetch_cmd.add_args("--system_build=" + *instance.system_build);
+        }
+        if (instance.kernel_build) {
+          fetch_cmd.add_args("--kernel_build=" + *instance.kernel_build);
+        }
       }
     }
+
     // Create the launch home directory
     std::string launch_home_dir = GenerateHomeDirectoryName(time);
     auto& mkdir_cmd = *req_protos.emplace_back().mutable_command_request();
