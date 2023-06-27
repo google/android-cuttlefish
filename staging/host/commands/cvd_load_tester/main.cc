@@ -47,14 +47,15 @@ int CvdLoadParserMain(int argc, char** argv) {
   }
 
   LOG(INFO) << "credential_source = "
-            << cvd_flags->fetch_cvd_flags.credential_source;
+            << cvd_flags->fetch_cvd_flags.credential_source.value_or("");
 
   int i = 0;
   for (const auto& parsed_fetch_instance_flag :
        cvd_flags->fetch_cvd_flags.instances) {
-    LOG(INFO) << i << " -- " << parsed_fetch_instance_flag.default_build << ","
-              << parsed_fetch_instance_flag.system_build << ","
-              << parsed_fetch_instance_flag.kernel_build << ","
+    LOG(INFO) << i << " -- "
+              << parsed_fetch_instance_flag.default_build.value_or("") << ","
+              << parsed_fetch_instance_flag.system_build.value_or("") << ","
+              << parsed_fetch_instance_flag.kernel_build.value_or("") << ","
               << parsed_fetch_instance_flag.should_fetch;
     i++;
   }
