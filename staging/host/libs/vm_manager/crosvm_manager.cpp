@@ -16,6 +16,7 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -320,6 +321,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   SharedFD wifi_tap;
   // GPU capture can only support named files and not file descriptors due to
   // having to pass arguments to crosvm via a wrapper script.
+#ifdef __linux__
   if (!gpu_capture_enabled && config.enable_wifi()) {
     // The ordering of tap devices is important. Make sure any change here
     // is reflected in ethprime u-boot variable
@@ -330,6 +332,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       wifi_tap = crosvm_cmd.AddTap(instance.wifi_tap_name());
     }
   }
+#endif
 
   const bool pmem_disabled = instance.mte() || !instance.use_pmem();
   if (!pmem_disabled && FileExists(instance.access_kregistry_path())) {
