@@ -27,7 +27,6 @@ cc_library {
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libext2_blkid",
     ],
     target: {
         host: {

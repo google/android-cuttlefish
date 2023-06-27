@@ -28,7 +28,6 @@ cc_binary {
         "libcuttlefish_device_config_proto",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libext2_blkid",
         "libfruit",
         "libjsoncpp",
         "libnl",

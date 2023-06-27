@@ -20,7 +20,6 @@ package {
 cc_defaults {
     name: "cvd_import_locations_defaults",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "liblog",
@@ -34,7 +33,6 @@ cc_defaults {
 cc_binary {
     name: "cvd_import_locations",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
@@ -62,7 +60,6 @@ cc_binary {
 cc_test_host {
     name: "cvd_import_locations_test",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
