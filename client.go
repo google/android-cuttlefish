@@ -100,6 +100,9 @@ type Service interface {
 
 	ListCVDs(host string) ([]*hoapi.CVD, error)
 
+	// Downloads runtime artifacts tar file from passed `host` into `dst` filename.
+	DownloadRuntimeArtifacts(host string, dst io.Writer) error
+
 	CreateUpload(host string) (string, error)
 
 	UploadFiles(host, uploadDir string, filenames []string) error
@@ -329,6 +332,25 @@ func (c *serviceImpl) ListCVDs(host string) ([]*hoapi.CVD, error) {
 		return nil, err
 	}
 	return res.CVDs, nil
+}
+
+func (c *serviceImpl) DownloadRuntimeArtifacts(host string, dst io.Writer) error {
+	req, err := http.NewRequest("POST", c.RootEndpoint+"/hosts/"+host+"/runtimeartifacts/:pull", nil)
+	if err != nil {
+		return err
+	}
+	res, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
+	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return &ApiCallError{ErrorMsg: res.Status}
+	}
+	return nil
 }
 
 func (c *serviceImpl) CreateUpload(host string) (string, error) {
