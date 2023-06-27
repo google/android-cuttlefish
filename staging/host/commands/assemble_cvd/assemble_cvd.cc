@@ -254,6 +254,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       preserving.insert("factory_reset_protected.img");
       preserving.insert("misc.img");
       preserving.insert("metadata.img");
+      preserving.insert("oemlock_secure");
       preserving.insert("oemlock_insecure");
       std::stringstream ss;
       for (int i = 0; i < modem_simulator_count; i++) {

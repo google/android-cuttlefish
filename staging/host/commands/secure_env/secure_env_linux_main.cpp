@@ -34,10 +34,8 @@
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/secure_env/confui_sign_server.h"
 #include "host/commands/secure_env/device_tpm.h"
-#include "host/commands/secure_env/fragile_tpm_storage.h"
 #include "host/commands/secure_env/gatekeeper_responder.h"
 #include "host/commands/secure_env/in_process_tpm.h"
-#include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
 #include "host/commands/secure_env/oemlock/oemlock_responder.h"
 #include "host/commands/secure_env/oemlock/oemlock.h"
@@ -46,6 +44,7 @@
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/storage/insecure_json_storage.h"
 #include "host/commands/secure_env/storage/storage.h"
+#include "host/commands/secure_env/storage/tpm_storage.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_keymaster_context.h"
 #include "host/commands/secure_env/tpm_keymaster_enforcement.h"
@@ -76,7 +75,7 @@ DEFINE_string(keymint_impl, "tpm",
 DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
 
-DEFINE_string(oemlock_impl, "software",
+DEFINE_string(oemlock_impl, "tpm",
               "The oemlock implementation. \"tpm\" or \"software\"");
 
 namespace cuttlefish {
@@ -151,14 +150,14 @@ ChooseGatekeeperComponent() {
   }
 }
 
-fruit::Component<secure_env::Storage, oemlock::OemLock> ChooseOemlockComponent() {
+fruit::Component<fruit::Required<TpmResourceManager>, oemlock::OemLock>
+ChooseOemlockComponent() {
   return fruit::createComponent()
-      .registerProvider([]() -> secure_env::Storage* {
+      .registerProvider([](TpmResourceManager& resource_manager) -> secure_env::Storage* {
         if (FLAGS_oemlock_impl == "software") {
           return new secure_env::InsecureJsonStorage("oemlock_insecure");
         } else if (FLAGS_oemlock_impl == "tpm") {
-          LOG(FATAL) << "Oemlock doesn't support TPM implementation";
-          abort();
+          return new secure_env::TpmStorage(resource_manager, "oemlock_secure");
         } else {
           LOG(FATAL) << "Invalid oemlock implementation: "
                      << FLAGS_oemlock_impl;
@@ -171,7 +170,7 @@ fruit::Component<secure_env::Storage, oemlock::OemLock> ChooseOemlockComponent()
 }
 
 fruit::Component<TpmResourceManager, gatekeeper::GateKeeper,
-                 secure_env::Storage, oemlock::OemLock, keymaster::KeymasterEnforcement>
+                 oemlock::OemLock, keymaster::KeymasterEnforcement>
 SecureEnvComponent() {
   return fruit::createComponent()
       .registerProvider([]() -> Tpm* {  // fruit will take ownership
@@ -205,15 +204,14 @@ SecureEnvComponent() {
                 esys.get());  // fruit will take ownership
           })
       .registerProvider([](TpmResourceManager& resource_manager) {
-        return new FragileTpmStorage(resource_manager, "gatekeeper_secure");
+        return new secure_env::TpmStorage(resource_manager, "gatekeeper_secure");
       })
-      .registerProvider([](TpmResourceManager& resource_manager) {
-        return new InsecureFallbackStorage(resource_manager,
-                                           "gatekeeper_insecure");
+      .registerProvider([]() {
+        return new secure_env::InsecureJsonStorage("gatekeeper_insecure");
       })
       .registerProvider([](TpmResourceManager& resource_manager,
-                           FragileTpmStorage& secure_storage,
-                           InsecureFallbackStorage& insecure_storage) {
+                           secure_env::TpmStorage& secure_storage,
+                           secure_env::InsecureJsonStorage& insecure_storage) {
         return new TpmGatekeeper(resource_manager, secure_storage,
                                  insecure_storage);
       })
@@ -230,7 +228,7 @@ int SecureEnvMain(int argc, char** argv) {
   keymaster::SoftKeymasterLogger km_logger;
 
   fruit::Injector<TpmResourceManager, gatekeeper::GateKeeper,
-                  secure_env::Storage, oemlock::OemLock, keymaster::KeymasterEnforcement>
+                  oemlock::OemLock, keymaster::KeymasterEnforcement>
       injector(SecureEnvComponent);
   TpmResourceManager* resource_manager = injector.get<TpmResourceManager*>();
   gatekeeper::GateKeeper* gatekeeper = injector.get<gatekeeper::GateKeeper*>();
