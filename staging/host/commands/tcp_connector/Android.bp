@@ -24,7 +24,6 @@ cc_binary {
         "main.cpp",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libjsoncpp",

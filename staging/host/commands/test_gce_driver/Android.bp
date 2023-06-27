@@ -30,7 +30,6 @@ cc_binary {
         "libcuttlefish_host_config",
         "libcuttlefish_test_gce_proto_cpp",
         "libgflags",
-        "libext2_blkid",
     ],
     target: {
         host: {

@@ -20,7 +20,6 @@ package {
 cc_defaults {
     name: "cvd_load_defaults",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "liblog",
@@ -32,7 +31,6 @@ cc_defaults {
 cc_test_host {
     name: "cvd_load_test",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
