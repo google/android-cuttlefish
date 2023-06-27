@@ -20,7 +20,6 @@ package {
 cc_binary {
     name: "test_cvd_load_parser",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",

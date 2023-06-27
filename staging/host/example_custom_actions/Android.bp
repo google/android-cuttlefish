@@ -24,7 +24,6 @@ cc_binary_host {
         "cuttlefish_buildhost_only",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "liblog",
         "libutils",

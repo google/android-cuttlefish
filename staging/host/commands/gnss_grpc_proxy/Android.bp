@@ -20,7 +20,6 @@ package {
 cc_library_static {
     name: "libcvd_gnss_grpc_proxy",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
@@ -55,7 +54,6 @@ cc_library_static {
 cc_binary_host {
     name: "gnss_grpc_proxy",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",

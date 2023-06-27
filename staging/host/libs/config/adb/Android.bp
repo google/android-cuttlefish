@@ -56,7 +56,6 @@ cc_test_host {
         "libcuttlefish_utils",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libgflags",
         "libfruit",
         "libjsoncpp",
