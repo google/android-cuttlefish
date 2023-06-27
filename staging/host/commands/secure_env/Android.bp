@@ -20,7 +20,6 @@ package {
 cc_defaults {
     name: "secure_env_defaults",
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "libcppbor_external",
         "libcppcose_rkp",

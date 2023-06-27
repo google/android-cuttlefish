@@ -38,7 +38,6 @@ cc_binary_host {
         "webrtc_signaling_headers",
     ],
     shared_libs: [
-        "libext2_blkid",
         "libbase",
         "liblog",
         "libcrypto",
