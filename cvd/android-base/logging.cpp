@@ -277,16 +277,10 @@ void KernelLogger(android::base::LogId, android::base::LogSeverity severity, con
 
 void StderrLogger(LogId, LogSeverity severity, const char* tag, const char* file, unsigned int line,
                   const char* message) {
-  struct tm now;
-  time_t t = time(nullptr);
-
-#if defined(_WIN32)
-  localtime_s(&now, &t);
-#else
-  localtime_r(&t, &now);
-#endif
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
   auto output_string =
-      StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag, file, line, message);
+      StderrOutputGenerator(ts, getpid(), GetThreadId(), severity, tag, file, line, message);
 
   fputs(output_string.c_str(), stderr);
 }
