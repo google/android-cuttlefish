@@ -16,7 +16,6 @@
 #include "tpm_gatekeeper.h"
 
 #include <algorithm>
-#include <optional>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -37,8 +36,8 @@ namespace cuttlefish {
 
 TpmGatekeeper::TpmGatekeeper(
     TpmResourceManager& resource_manager,
-    GatekeeperStorage& secure_storage,
-    GatekeeperStorage& insecure_storage)
+    secure_env::Storage& secure_storage,
+    secure_env::Storage& insecure_storage)
     : resource_manager_(resource_manager)
     , secure_storage_(secure_storage)
     , insecure_storage_(insecure_storage) {
@@ -132,65 +131,41 @@ gatekeeper::failure_record_t DefaultRecord(
   };
 }
 
-static std::unique_ptr<TPM2B_MAX_NV_BUFFER> RecordToNvBuffer(
+static Result<secure_env::ManagedStorageData> RecordToStorageData(
     const gatekeeper::failure_record_t& record) {
-  auto ret = std::make_unique<TPM2B_MAX_NV_BUFFER>();
-  static_assert(sizeof(ret->buffer) >= sizeof(record));
-  ret->size = sizeof(record);
-  std::memcpy(ret->buffer, &record, sizeof(record));
-  return ret;
+  return CF_EXPECT(secure_env::CreateStorageData(&record, sizeof(record)));
 }
 
-static std::optional<gatekeeper::failure_record_t> NvBufferToRecord(
-    const TPM2B_MAX_NV_BUFFER& buffer) {
+static Result<gatekeeper::failure_record_t> StorageDataToRecord(
+    const secure_env::StorageData& data) {
   gatekeeper::failure_record_t ret;
-  if (buffer.size != sizeof(ret)) {
-    LOG(ERROR) << "NV Buffer had an incorrect size.";
-    return {};
-  }
-  memcpy(&ret, buffer.buffer, sizeof(ret));
+  CF_EXPECT(data.size == sizeof(ret), "StorageData buffer had an incorrect size.");
+  memcpy(&ret, data.payload, data.size);
   return ret;
 }
 
-static bool GetFailureRecordImpl(
-    GatekeeperStorage& storage,
+static Result<void> GetFailureRecordImpl(
+    secure_env::Storage& storage,
     uint32_t uid,
     gatekeeper::secure_id_t secure_user_id,
     gatekeeper::failure_record_t *record) {
-  Json::Value key{std::to_string(uid)}; // jsoncpp integer comparisons are janky
-  if (!storage.HasKey(key)) {
-    if (!storage.Allocate(key, sizeof(gatekeeper::failure_record_t))) {
-      LOG(ERROR) << "Allocation failed for user " << uid;
-      return false;
-    }
-    auto buf = RecordToNvBuffer(DefaultRecord(secure_user_id));
-    if (!storage.Write(key, *buf)) {
-      LOG(ERROR) << "Failed to write record for " << uid;
-      return false;
-    }
+  std::string key = std::to_string(uid);
+  if (!CF_EXPECT(storage.HasKey(key))) {
+    auto data = CF_EXPECT(RecordToStorageData(DefaultRecord(secure_user_id)));
+    CF_EXPECT(storage.Write(key, *data));
   }
-  auto record_read = storage.Read(key);
-  if (!record_read) {
-    LOG(ERROR) << "Failed to read record for " << uid;
-    return false;
-  }
-  auto record_decoded = NvBufferToRecord(*record_read);
-  if (!record_decoded) {
-    LOG(ERROR) << "Failed to deserialize record for " << uid;
-    return false;
-  }
-  if (record_decoded->secure_user_id == secure_user_id) {
-    *record = *record_decoded;
-    return true;
+  auto record_read = CF_EXPECT(storage.Read(key));
+  auto record_decoded = CF_EXPECT(StorageDataToRecord(*record_read));
+  if (record_decoded.secure_user_id == secure_user_id) {
+    *record = record_decoded;
+    return {};
   }
   LOG(DEBUG) << "User id mismatch for " << uid;
-  auto buf = RecordToNvBuffer(DefaultRecord(secure_user_id));
-  if (!storage.Write(key, *buf)) {
-    LOG(ERROR) << "Failed to write record for " << uid;
-    return false;
-  }
-  *record = DefaultRecord(secure_user_id);
-  return true;
+  auto record_to_write = DefaultRecord(secure_user_id);
+  auto data = CF_EXPECT(RecordToStorageData(record_to_write));
+  CF_EXPECT(storage.Write(key, *data));
+  *record = record_to_write;
+  return {};
 }
 
 bool TpmGatekeeper::GetFailureRecord(
@@ -198,40 +173,43 @@ bool TpmGatekeeper::GetFailureRecord(
     gatekeeper::secure_id_t secure_user_id,
     gatekeeper::failure_record_t *record,
     bool secure) {
-  GatekeeperStorage& storage = secure ? secure_storage_ : insecure_storage_;
-  return GetFailureRecordImpl(storage, uid, secure_user_id, record);
+  secure_env::Storage& storage = secure ? secure_storage_ : insecure_storage_;
+  auto result = GetFailureRecordImpl(storage, uid, secure_user_id, record);
+  if (!result.ok()) {
+    LOG(ERROR) << "Failed to get failure record: " << result.error().Message();
+  }
+  return result.ok();
 }
 
-static bool WriteFailureRecordImpl(
-    GatekeeperStorage& storage,
+static Result<void> WriteFailureRecordImpl(
+    secure_env::Storage& storage,
     uint32_t uid,
     gatekeeper::failure_record_t* record) {
-  Json::Value key{std::to_string(uid)}; // jsoncpp integer comparisons are janky
-  if (!storage.HasKey(key)) {
-    if (!storage.Allocate(key, sizeof(gatekeeper::failure_record_t))) {
-      LOG(ERROR) << "Allocation failed for user " << uid;
-      return false;
-    }
-  }
-  auto buf = RecordToNvBuffer(*record);
-  if (!storage.Write(key, *buf)) {
-    LOG(ERROR) << "Failed to write record for " << uid;
-    return false;
-  }
-  return true;
+  std::string key = std::to_string(uid);
+  auto data = CF_EXPECT(RecordToStorageData(*record));
+  CF_EXPECT(storage.Write(key, *data));
+  return {};
 }
 
 bool TpmGatekeeper::ClearFailureRecord(
     uint32_t uid, gatekeeper::secure_id_t secure_user_id, bool secure) {
-  GatekeeperStorage& storage = secure ? secure_storage_ : insecure_storage_;
+  secure_env::Storage& storage = secure ? secure_storage_ : insecure_storage_;
   gatekeeper::failure_record_t record = DefaultRecord(secure_user_id);
-  return WriteFailureRecordImpl(storage, uid, &record);
+  auto result = WriteFailureRecordImpl(storage, uid, &record);
+  if (!result.ok()) {
+    LOG(ERROR) << "Failed to clear failure record: " << result.error().Message();
+  }
+  return result.ok();
 }
 
 bool TpmGatekeeper::WriteFailureRecord(
     uint32_t uid, gatekeeper::failure_record_t *record, bool secure) {
-  GatekeeperStorage& storage = secure ? secure_storage_ : insecure_storage_;
-  return WriteFailureRecordImpl(storage, uid, record);
+  secure_env::Storage& storage = secure ? secure_storage_ : insecure_storage_;
+  auto result = WriteFailureRecordImpl(storage, uid, record);
+  if (!result.ok()) {
+    LOG(ERROR) << "Failed to write failure record: " << result.error().Message();
+  }
+  return result.ok();
 }
 
 bool TpmGatekeeper::IsHardwareBacked() const {
