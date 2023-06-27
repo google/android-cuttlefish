@@ -42,6 +42,12 @@ struct ConverterParsed {
   } local_image;
   std::optional<std::string> build_id;
   std::optional<std::string> build_target;
+  std::optional<std::string> config_file;
+  struct Bootloader {
+    std::optional<std::string> build_id;
+    std::optional<std::string> build_target;
+    std::optional<std::string> branch;
+  } bootloader;
 };
 
 Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments);
