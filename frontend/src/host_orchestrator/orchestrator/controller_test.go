@@ -50,6 +50,12 @@ func (m *testIM) GetLogsDir(name string) (string, error) {
 	return m.LogsDir, nil
 }
 
+func (m *testIM) HostBugReport() (string, error) {
+	f, _ := ioutil.TempFile("", "cuttlefishTest")
+	defer f.Close()
+	return f.Name(), nil
+}
+
 func TestCreateCVDIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/cvds", strings.NewReader("{}"))
@@ -291,21 +297,13 @@ func TestGetStatuszIsHandled(t *testing.T) {
 	}
 }
 
-type fakeRuntimeArtifactsManager struct{}
-
-func (m *fakeRuntimeArtifactsManager) Tar() (string, error) {
-	f, _ := ioutil.TempFile("", "cuttlefishTest")
-	defer f.Close()
-	return f.Name(), nil
-}
-
 func TestPullRuntimeArtifactsIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/runtimeartifacts/:pull", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{RuntimeArtifactsManager: &fakeRuntimeArtifactsManager{}}
+	controller := Controller{InstanceManager: &testIM{}}
 
 	makeRequest(rr, req, &controller)
 

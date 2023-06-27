@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -120,12 +119,11 @@ func main() {
 	cvdBinAndroidBuildID := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_ID", defaultCVDBinAndroidBuildID)
 	cvdBinAndroidBuildTarget := fromEnvOrDefault("ORCHESTRATOR_CVDBIN_ANDROID_BUILD_TARGET", defaultCVDBinAndroidBuildTarget)
 	imRootDir := fromEnvOrDefault("ORCHESTRATOR_CVD_ARTIFACTS_DIR", defaultCVDArtifactsDir)
-	runtimesRootDir := filepath.Join(imRootDir, "runtimes")
 	imPaths := orchestrator.IMPaths{
 		RootDir:          imRootDir,
 		CVDToolsDir:      imRootDir,
 		ArtifactsRootDir: filepath.Join(imRootDir, "artifacts"),
-		RuntimesRootDir:  runtimesRootDir,
+		RuntimesRootDir:  filepath.Join(imRootDir, "runtimes"),
 	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
@@ -162,12 +160,11 @@ func main() {
 	}()
 	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
 	imController := orchestrator.Controller{
-		InstanceManager:         im,
-		OperationManager:        om,
-		WaitOperationDuration:   2 * time.Minute,
-		UserArtifactsManager:    uam,
-		DebugVariablesManager:   debugVarsManager,
-		RuntimeArtifactsManager: cvd.NewRuntimeArtifactsManager(runtimesRootDir),
+		InstanceManager:       im,
+		OperationManager:      om,
+		WaitOperationDuration: 2 * time.Minute,
+		UserArtifactsManager:  uam,
+		DebugVariablesManager: debugVarsManager,
 	}
 	imController.AddRoutes(r)
 	// The host orchestrator currently has no use for this, since clients won't connect

@@ -24,7 +24,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -33,12 +32,11 @@ import (
 )
 
 type Controller struct {
-	InstanceManager         InstanceManager
-	OperationManager        OperationManager
-	WaitOperationDuration   time.Duration
-	UserArtifactsManager    UserArtifactsManager
-	DebugVariablesManager   *debug.VariablesManager
-	RuntimeArtifactsManager cvd.RuntimeArtifactsManager
+	InstanceManager       InstanceManager
+	OperationManager      OperationManager
+	WaitOperationDuration time.Duration
+	UserArtifactsManager  UserArtifactsManager
+	DebugVariablesManager *debug.VariablesManager
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
@@ -62,7 +60,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
-	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{am: c.RuntimeArtifactsManager}).Methods("POST")
+	router.Handle("/runtimeartifacts/:pull", &pullRuntimeArtifactsHandler{im: c.InstanceManager}).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -288,14 +286,13 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 }
 
 type pullRuntimeArtifactsHandler struct {
-	am cvd.RuntimeArtifactsManager
+	im InstanceManager
 }
 
 func (h *pullRuntimeArtifactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	filename, err := h.am.Tar()
+	filename, err := h.im.HostBugReport()
 	if err != nil {
-		log.Printf("error getting runtime artifacts tar file: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		replyJSONErr(w, err)
 		return
 	}
 	defer func() {
