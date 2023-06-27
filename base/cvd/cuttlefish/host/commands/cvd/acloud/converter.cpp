@@ -177,26 +177,6 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
 
   std::vector<Flag> flags;
 
-  std::optional<std::string> build_id;
-  flags.emplace_back(
-      Flag()
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build-id"})
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build_id"})
-          .Setter([&build_id](const FlagMatch& m) {
-            build_id = m.value;
-            return true;
-          }));
-
-  std::optional<std::string> build_target;
-  flags.emplace_back(
-      Flag()
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build-target"})
-          .Alias({FlagAliasMode::kFlagConsumesFollowing, "--build_target"})
-          .Setter([&build_target](const FlagMatch& m) {
-            build_target = m.value;
-            return true;
-          }));
-
   std::optional<std::string> config_file;
   flags.emplace_back(
       Flag()
@@ -443,10 +423,11 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     }
     // used for default branch and target when there is no input
     std::optional<BranchBuildTargetInfo> given_branch_target_info;
-    if (parsed_flags.branch || build_id || build_target) {
-      auto target = build_target ? *build_target : "";
-      auto build =
-          build_id.value_or(parsed_flags.branch.value_or("aosp-master"));
+    if (parsed_flags.branch || parsed_flags.build_id ||
+        parsed_flags.build_target) {
+      auto target = parsed_flags.build_target ? *parsed_flags.build_target : "";
+      auto build = parsed_flags.build_id.value_or(
+          parsed_flags.branch.value_or("aosp-master"));
       host_dir += (build + target);
     } else {
       given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget(
@@ -475,16 +456,18 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       fetch_command_str += (given_branch_target_info->branch_str + "/" +
                             given_branch_target_info->build_target_str);
     } else {
-      auto target = build_target ? "/" + *build_target : "";
-      auto build =
-          build_id.value_or(parsed_flags.branch.value_or("aosp-master"));
+      auto target =
+          parsed_flags.build_target ? "/" + *parsed_flags.build_target : "";
+      auto build = parsed_flags.build_id.value_or(
+          parsed_flags.branch.value_or("aosp-master"));
       fetch_command.add_args(build + target);
       fetch_command_str += (build + target);
     }
     if (system_branch || system_build_id || system_build_target) {
       fetch_command.add_args("--system_build");
       fetch_command_str += " --system_build=";
-      auto target = system_build_target.value_or(build_target.value_or(""));
+      auto target =
+          system_build_target.value_or(parsed_flags.build_target.value_or(""));
       if (target != "") {
         target = "/" + target;
       }
