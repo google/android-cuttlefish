@@ -46,4 +46,9 @@ cc_library_static {
         "cuttlefish_host",
         "cuttlefish_libicuuc"
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
