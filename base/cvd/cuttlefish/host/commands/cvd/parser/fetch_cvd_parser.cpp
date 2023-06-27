@@ -17,6 +17,7 @@
 #include "host/commands/cvd/parser/fetch_cvd_parser.h"
 
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -38,26 +39,34 @@ void InitFetchCvdConfigs(Json::Value& root) {
   InitFetchInstanceConfigs(root["instances"]);
 }
 
-bool ShouldFetch(const std::vector<Json::Value>& values) {
+std::optional<std::string> OptString(const Json::Value& value) {
+  if (value.isNull()) {
+    return std::nullopt;
+  }
+  return value.asString();
+}
+
+bool ShouldFetch(const std::vector<std::optional<std::string>>& values) {
   return std::any_of(std::begin(values), std::end(values),
-                     [](const Json::Value& value) { return !value.isNull(); });
+                     [](const std::optional<std::string>& value) {
+                       return value.has_value();
+                     });
 }
 
 FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
-  Json::Value default_build = instance["disk"]["default_build"];
-  Json::Value system_build = instance["disk"]["system_build"];
-  Json::Value kernel_build = instance["disk"]["kernel_build"];
-  return FetchCvdInstanceConfig{
-      .default_build = default_build.asString(),
-      .system_build = system_build.asString(),
-      .kernel_build = kernel_build.asString(),
-      .should_fetch = ShouldFetch({default_build, system_build, kernel_build})};
+  auto result = FetchCvdInstanceConfig{
+      .default_build = OptString(instance["disk"]["default_build"]),
+      .system_build = OptString(instance["disk"]["system_build"]),
+      .kernel_build = OptString(instance["disk"]["kernel_build"])};
+  result.should_fetch = ShouldFetch(
+      {result.default_build, result.system_build, result.kernel_build});
+  return result;
 }
 
 FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
   FetchCvdConfig result;
-  result.credential_source = root["credential_source"].asString();
-  int num_instances = root["instances"].size();
+  result.credential_source = OptString(root["credential_source"]);
+  const int num_instances = root["instances"].size();
   for (unsigned int i = 0; i < num_instances; i++) {
     auto instance_config = ParseFetchInstanceConfigs(root["instances"][i]);
     result.instances.emplace_back(instance_config);

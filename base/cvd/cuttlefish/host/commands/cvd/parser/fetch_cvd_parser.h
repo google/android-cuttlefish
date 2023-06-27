@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -24,15 +25,15 @@
 namespace cuttlefish {
 
 struct FetchCvdInstanceConfig {
-  bool should_fetch;
-  std::string default_build;
-  std::string system_build;
-  std::string kernel_build;
+  bool should_fetch = false;
+  std::optional<std::string> default_build;
+  std::optional<std::string> system_build;
+  std::optional<std::string> kernel_build;
   std::string artifacts_directory;
 };
 
 struct FetchCvdConfig {
-  std::string credential_source;
+  std::optional<std::string> credential_source;
   std::vector<FetchCvdInstanceConfig> instances;
 };
 
