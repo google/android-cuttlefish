@@ -99,6 +99,7 @@ void CrosvmBuilder::AddSerial(const std::string& output,
                         ",type=file,path=", output, ",input=", input);
 }
 
+#ifdef __linux__
 SharedFD CrosvmBuilder::AddTap(const std::string& tap_name) {
   auto tap_fd = OpenTapInterface(tap_name);
   if (tap_fd->IsOpen()) {
@@ -120,6 +121,7 @@ SharedFD CrosvmBuilder::AddTap(const std::string& tap_name, const std::string& m
   }
   return tap_fd;
 }
+#endif
 
 int CrosvmBuilder::HvcNum() { return hvc_num_; }
 
