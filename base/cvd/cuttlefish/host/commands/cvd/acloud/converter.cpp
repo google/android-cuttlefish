@@ -371,8 +371,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
                                        << android::base::Join(arguments, "', '")
                                        << "'");
 
-  CF_EXPECT(parsed_flags.local_instance_set == true,
-            "Only '--local-instance' is supported");
+  CF_EXPECT_EQ(parsed_flags.local_instance.is_set, true,
+               "Only '--local-instance' is supported");
   auto host_dir = TempDir() + "/acloud_image_artifacts/";
   if (parsed_flags.image_download_dir) {
     host_dir =
@@ -398,7 +398,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   std::string fetch_command_str;
   std::string fetch_cvd_args_file;
 
-  if (parsed_flags.local_image) {
+  if (parsed_flags.local_image.given) {
     CF_EXPECT(!(system_branch || system_build_target || system_build_id),
               "--local-image incompatible with --system-* flags");
     CF_EXPECT(
@@ -570,14 +570,10 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     mixsuperimage_command.add_args("--super_image");
 
     auto& mixsuperimage_env = *mixsuperimage_command.mutable_env();
-    if (parsed_flags.local_image) {
-      if (parsed_flags.local_image_path) {
-        // added image_dir to required_paths for MixSuperImage use
-        required_paths += ("," + parsed_flags.local_image_path.value());
-      } else {
-        required_paths += ",";
-      }
-
+    if (parsed_flags.local_image.given) {
+      // added image_dir to required_paths for MixSuperImage use if there is
+      required_paths.append(",").append(
+          parsed_flags.local_image.path.value_or(""));
       mixsuperimage_env[kAndroidHostOut] = host_artifacts_path->second;
 
       auto product_out = request_command.env().find(kAndroidProductOut);
@@ -708,9 +704,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
   }
 
   auto& start_env = *start_command.mutable_env();
-  if (parsed_flags.local_image) {
-    if (parsed_flags.local_image_path) {
-      std::string local_image_path_str = parsed_flags.local_image_path.value();
+  if (parsed_flags.local_image.given) {
+    if (parsed_flags.local_image.path) {
+      std::string local_image_path_str = parsed_flags.local_image.path.value();
       // Python acloud source: local_image_local_instance.py;l=81
       // this acloud flag is equal to launch_cvd flag system_image_dir
       start_command.add_args("-system_image_dir");
@@ -732,9 +728,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     // this variable will confuse cvd start, though
     start_env.erase(kCuttlefishInstanceEnvVarName);
   }
-  if (parsed_flags.local_instance) {
+  if (parsed_flags.local_instance.id) {
     start_env[kCuttlefishInstanceEnvVarName] =
-        std::to_string(*parsed_flags.local_instance);
+        std::to_string(*parsed_flags.local_instance.id);
   }
   // we don't know which HOME is assigned by cvd start.
   // cvd server does not rely on the working directory for cvd start
