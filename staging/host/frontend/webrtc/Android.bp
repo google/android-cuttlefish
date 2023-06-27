@@ -80,7 +80,6 @@ cc_binary_host {
         "liblocation",
     ],
     shared_libs: [
-        "libext2_blkid",
         "android.hardware.keymaster@4.0",
         "libbase",
         "libcrypto",
