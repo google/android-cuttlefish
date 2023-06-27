@@ -673,22 +673,20 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
     std::vector<std::string> ota_tools_files = CF_EXPECT(
         ExtractArchiveContents(otatools_filepath, target_directories.otatools,
                                keep_downloaded_archives));
+    const auto [otatools_build_id, otatools_build_target] =
+        GetBuildIdAndTarget(*builds.otatools);
     CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+        FileSource::DEFAULT_BUILD, otatools_build_id, otatools_build_target,
         ota_tools_files, target_directories.root));
   }
 
   // Wait for ProcessHostPackage to return.
   std::vector<std::string> host_package_files =
       CF_EXPECT(process_pkg_ret.get());
+  const auto [host_id, host_target] = GetBuildIdAndTarget(builds.host_package);
   FileSource host_filesource = FileSource::DEFAULT_BUILD;
-  std::string host_id = default_build_id;
-  std::string host_target = default_build_target;
   if (is_host_package_build) {
     host_filesource = FileSource::HOST_PACKAGE_BUILD;
-    const auto [id, target] = GetBuildIdAndTarget(builds.host_package);
-    host_id = id;
-    host_target = target;
   }
   CF_EXPECT(config.AddFilesToConfig(host_filesource, host_id, host_target,
                                     host_package_files,
