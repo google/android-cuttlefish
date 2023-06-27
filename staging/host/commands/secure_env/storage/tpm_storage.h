@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2020-2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
 
 #pragma once
 
+#include "host/commands/secure_env/storage/storage.h"
+
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -23,10 +26,11 @@
 #include <tss2/tss2_tpm2_types.h>
 #include <json/json.h>
 
-#include "host/commands/secure_env/gatekeeper_storage.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
+namespace secure_env {
 
 /**
  * Manager for data stored inside the TPM with an index outside of the TPM. The
@@ -41,24 +45,26 @@ namespace cuttlefish {
  * This class is not thread-safe, and should be synchronized externally if it
  * is going to be used from multiple threads.
  */
-class FragileTpmStorage : public GatekeeperStorage {
-public:
-  FragileTpmStorage(TpmResourceManager&, const std::string& index_file);
-  ~FragileTpmStorage() = default;
+class TpmStorage : public secure_env::Storage {
+ public:
+  TpmStorage(TpmResourceManager& resource_manager, const std::string& index_file);
 
-  bool Allocate(const Json::Value& key, uint16_t size) override;
-  bool HasKey(const Json::Value& key) const override;
+  Result<bool> HasKey(const std::string& key) const override;
+  Result<ManagedStorageData> Read(const std::string& key) const override;
+  Result<void> Write(const std::string& key, const StorageData& data) override;
+  bool Exists() const override;
 
-  std::unique_ptr<TPM2B_MAX_NV_BUFFER> Read(const Json::Value& key) const
-      override;
-  bool Write(const Json::Value& key, const TPM2B_MAX_NV_BUFFER& data) override;
-private:
-  TPM2_HANDLE GetHandle(const Json::Value& key) const;
+ private:
+  Result<std::optional<TPM2_HANDLE>> GetHandle(const std::string& key) const;
   TPM2_HANDLE GenerateRandomHandle();
+  Result<void> Allocate(const std::string& key, uint16_t size);
 
   TpmResourceManager& resource_manager_;
   std::string index_file_;
   Json::Value index_;
+
+  std::string path_;
 };
 
+}  // namespace secure_env
 }  // namespace cuttlefish

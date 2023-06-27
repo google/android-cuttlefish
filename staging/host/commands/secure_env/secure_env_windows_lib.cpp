@@ -24,9 +24,7 @@
 #include <keymaster/contexts/pure_soft_keymaster_context.h>
 #include "common/libs/security/gatekeeper_channel_windows.h"
 #include "common/libs/security/keymaster_channel_windows.h"
-#include "host/commands/secure_env/fragile_tpm_storage.h"
 #include "host/commands/secure_env/gatekeeper_responder.h"
-#include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"

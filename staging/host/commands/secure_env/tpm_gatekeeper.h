@@ -19,6 +19,7 @@
 #include "tss2/tss2_esys.h"
 
 #include "host/commands/secure_env/gatekeeper_storage.h"
+#include "host/commands/secure_env/storage/storage.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
@@ -31,8 +32,8 @@ class TpmGatekeeper : public gatekeeper::GateKeeper {
 public:
   TpmGatekeeper(
       TpmResourceManager& resource_manager,
-      GatekeeperStorage& secure_storage,
-      GatekeeperStorage& insecure_storage);
+      secure_env::Storage& secure_storage,
+      secure_env::Storage& insecure_storage);
 
   bool GetAuthTokenKey(
       const uint8_t** auth_token_key, uint32_t* length) const override;
@@ -80,8 +81,8 @@ public:
   bool IsHardwareBacked() const override;
 private:
   TpmResourceManager& resource_manager_;
-  GatekeeperStorage& secure_storage_;
-  GatekeeperStorage& insecure_storage_;
+  secure_env::Storage& secure_storage_;
+  secure_env::Storage& insecure_storage_;
 };
 
 }  // namespace cuttlefish
