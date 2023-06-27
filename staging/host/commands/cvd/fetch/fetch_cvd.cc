@@ -48,7 +48,6 @@
 namespace cuttlefish {
 namespace {
 
-const std::string DEFAULT_BRANCH = "aosp-master";
 const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_64_phone-userdebug";
 const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
 const std::string KERNEL = "kernel";
@@ -125,7 +124,7 @@ struct FetchFlags {
 };
 
 struct Builds {
-  Build default_build;
+  std::optional<Build> default_build;
   std::optional<Build> system;
   std::optional<Build> kernel;
   std::optional<Build> boot;
@@ -259,9 +258,8 @@ MapToBuildTargetFlags(const VectorFlags& flags, const int num_builds) {
       num_builds);
   for (int i = 0; i < result.size(); ++i) {
     auto build_source = BuildSourceFlags{
-        .default_build = AccessOrDefault<std::string>(
-            flags.default_build, i,
-            DEFAULT_BRANCH + "/" + DEFAULT_BUILD_TARGET),
+        .default_build =
+            AccessOrDefault<std::string>(flags.default_build, i, ""),
         .system_build = AccessOrDefault<std::string>(flags.system_build, i, ""),
         .kernel_build = AccessOrDefault<std::string>(flags.kernel_build, i, ""),
         .boot_build = AccessOrDefault<std::string>(flags.boot_build, i, ""),
@@ -418,13 +416,17 @@ Result<std::optional<Build>> GetBuildHelper(BuildApi& build_api,
 
 Result<Builds> GetBuildsFromSources(BuildApi& build_api,
                                     const BuildSourceFlags& build_sources) {
-  std::optional<Build> default_build = CF_EXPECT(GetBuildHelper(
+  auto default_build = CF_EXPECT(GetBuildHelper(
       build_api, build_sources.default_build, DEFAULT_BUILD_TARGET));
-  CF_EXPECT(default_build.has_value());
-  std::optional<Build> host_package = CF_EXPECT(GetBuildHelper(
+  auto host_package_build = CF_EXPECT(GetBuildHelper(
       build_api, build_sources.host_package_build, DEFAULT_BUILD_TARGET));
+  CF_EXPECT(host_package_build.has_value() || default_build.has_value(),
+            "Either the host_package_build or default_build requires a value. "
+            "(previous default_build default was "
+            "aosp-master/aosp_cf_x86_64_phone-userdebug)");
+
   Builds result = Builds{
-      .default_build = *default_build,
+      .default_build = default_build,
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
                                          DEFAULT_BUILD_TARGET)),
       .kernel = CF_EXPECT(
@@ -435,7 +437,7 @@ Result<Builds> GetBuildsFromSources(BuildApi& build_api,
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, DEFAULT_BUILD_TARGET)),
-      .host_package = host_package.value_or(result.default_build),
+      .host_package = host_package_build.value_or(*default_build),
   };
   if (!result.otatools) {
     if (result.system) {
@@ -490,44 +492,48 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
       std::cref(builds.host_package), std::cref(target_directories.root),
       std::cref(keep_downloaded_archives));
 
-  const auto [default_build_id, default_build_target] =
-      GetBuildIdAndTarget(builds.default_build);
+  if (builds.default_build) {
+    const auto [default_build_id, default_build_target] =
+        GetBuildIdAndTarget(*builds.default_build);
 
-  // Some older builds might not have misc_info.txt, so permit errors on
-  // fetching misc_info.txt
-  Result<std::string> misc_info_result = build_api.DownloadFile(
-      builds.default_build, target_directories.root, "misc_info.txt");
-  if (misc_info_result.ok()) {
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        {misc_info_result.value()}, target_directories.root, OVERRIDE_ENTRIES));
-  }
-
-  if (flags.download_img_zip) {
-    std::string img_zip_name = GetBuildZipName(builds.default_build, "img");
-    std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
-        builds.default_build, target_directories.root, img_zip_name));
-    std::vector<std::string> image_files = CF_EXPECT(ExtractArchiveContents(
-        default_img_zip_filepath, target_directories.root,
-        keep_downloaded_archives));
-    LOG(INFO) << "Adding img-zip files for default build";
-    for (auto& file : image_files) {
-      LOG(VERBOSE) << file;
+    // Some older builds might not have misc_info.txt, so permit errors on
+    // fetching misc_info.txt
+    Result<std::string> misc_info_result = build_api.DownloadFile(
+        *builds.default_build, target_directories.root, "misc_info.txt");
+    if (misc_info_result.ok()) {
+      CF_EXPECT(config.AddFilesToConfig(
+          FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+          {misc_info_result.value()}, target_directories.root,
+          OVERRIDE_ENTRIES));
     }
-    CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
-                                      default_build_id, default_build_target,
-                                      image_files, target_directories.root));
-  }
-  if (builds.system || flags.download_target_files_zip) {
-    std::string target_files_name =
-        GetBuildZipName(builds.default_build, "target_files");
-    std::string target_files = CF_EXPECT(build_api.DownloadFile(
-        builds.default_build, target_directories.default_target_files,
-        target_files_name));
-    LOG(INFO) << "Adding target files for default build";
-    CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
-                                      default_build_id, default_build_target,
-                                      {target_files}, target_directories.root));
+
+    if (flags.download_img_zip) {
+      std::string img_zip_name = GetBuildZipName(*builds.default_build, "img");
+      std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
+          *builds.default_build, target_directories.root, img_zip_name));
+      std::vector<std::string> image_files = CF_EXPECT(ExtractArchiveContents(
+          default_img_zip_filepath, target_directories.root,
+          keep_downloaded_archives));
+      LOG(INFO) << "Adding img-zip files for default build";
+      for (auto& file : image_files) {
+        LOG(VERBOSE) << file;
+      }
+      CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
+                                        default_build_id, default_build_target,
+                                        image_files, target_directories.root));
+    }
+
+    if (builds.system || flags.download_target_files_zip) {
+      std::string target_files_name =
+          GetBuildZipName(*builds.default_build, "target_files");
+      std::string target_files = CF_EXPECT(build_api.DownloadFile(
+          *builds.default_build, target_directories.default_target_files,
+          target_files_name));
+      LOG(INFO) << "Adding target files for default build";
+      CF_EXPECT(config.AddFilesToConfig(
+          FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+          {target_files}, target_directories.root));
+    }
   }
 
   if (builds.system) {
