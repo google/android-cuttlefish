@@ -50,12 +50,12 @@ namespace cuttlefish {
 namespace {
 
 // Image names to search
-const std::vector<std::string> _KERNEL_IMAGE_NAMES = {"kernel", "bzImage",
-                                                      "Image"};
-const std::vector<std::string> _INITRAMFS_IMAGE_NAME = {"initramfs.img"};
-const std::vector<std::string> _BOOT_IMAGE_NAME = {"boot.img"};
-const std::vector<std::string> _VENDOR_BOOT_IMAGE_NAME = {"vendor_boot.img"};
-const std::string _MIXED_SUPER_IMAGE_NAME = "mixed_super.img";
+const std::vector<std::string> kKernelImageNames = {"kernel", "bzImage",
+                                                    "Image"};
+const std::vector<std::string> kInitRamFsImageName = {"initramfs.img"};
+const std::vector<std::string> kBootImageName = {"boot.img"};
+const std::vector<std::string> kVendorBootImageName = {"vendor_boot.img"};
+const std::string kMixedSuperImageName = "mixed_super.img";
 
 struct BranchBuildTargetInfo {
   std::string branch_str;
@@ -611,7 +611,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
     TemporaryDir my_dir;
     std::string required_paths;
     my_dir.DoNotRemove();
-    super_image_path = std::string(my_dir.path) + "/" + _MIXED_SUPER_IMAGE_NAME;
+    super_image_path = std::string(my_dir.path) + "/" + kMixedSuperImageName;
 
     // combine super_image path and local_system_image path
     required_paths = super_image_path;
@@ -678,9 +678,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       if (statbuf.st_mode & S_IFDIR) {
         // it's a directory, deal with kernel image case first
         kernel_image = FindImage(parsed_flags.local_kernel_image.value(),
-                                 _KERNEL_IMAGE_NAMES);
+                                 kKernelImageNames);
         initramfs_image = FindImage(parsed_flags.local_kernel_image.value(),
-                                    _INITRAMFS_IMAGE_NAME);
+                                    kInitRamFsImageName);
         // This is the original python acloud behavior, it
         // expects both kernel and initramfs files, however,
         // there are some very old kernels that are built without
@@ -695,9 +695,9 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
           // boot.img case
           // adding boot.img and vendor_boot.img to the path
           local_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
-                                       _BOOT_IMAGE_NAME);
+                                       kBootImageName);
           vendor_boot_image = FindImage(parsed_flags.local_kernel_image.value(),
-                                        _VENDOR_BOOT_IMAGE_NAME);
+                                        kVendorBootImageName);
           start_command.add_args("-boot_image");
           start_command.add_args(local_boot_image);
           // vendor boot image may not exist
