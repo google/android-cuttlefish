@@ -27,11 +27,8 @@
 namespace cuttlefish {
 namespace acloud_impl {
 
-Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
-  std::vector<Flag> flags;
-
-  bool local_instance_set;
-  std::optional<int> local_instance;
+static Flag LocalInstanceFlag(bool& local_instance_set,
+                              std::optional<int>& local_instance) {
   auto local_instance_flag = Flag();
   local_instance_flag.Alias(
       {FlagAliasMode::kFlagConsumesArbitrary, "--local-instance"});
@@ -51,7 +48,27 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
         }
         return true;
       });
-  flags.emplace_back(local_instance_flag);
+  return local_instance_flag;
+}
+
+static Flag VerboseFlag(bool& verbose) {
+  auto verbose_flag = Flag()
+                          .Alias({FlagAliasMode::kFlagExact, "-v"})
+                          .Alias({FlagAliasMode::kFlagExact, "-vv"})
+                          .Alias({FlagAliasMode::kFlagExact, "--verbose"})
+                          .Setter([&verbose](const FlagMatch&) {
+                            verbose = true;
+                            return true;
+                          });
+  return verbose_flag;
+}
+
+Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
+  std::vector<Flag> flags;
+
+  bool local_instance_set = false;
+  std::optional<int> local_instance;
+  flags.emplace_back(LocalInstanceFlag(local_instance_set, local_instance));
 
   std::optional<std::string> flavor;
   flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"config", "flavor"}, flavor)));
@@ -68,6 +85,12 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
   flags.emplace_back(
       CF_EXPECT(AcloudCompatFlag({"local-system-image"}, local_system_image)));
 
+  bool verbose = false;
+  flags.emplace_back(VerboseFlag(verbose));
+
+  std::optional<std::string> branch;
+  flags.emplace_back(CF_EXPECT(AcloudCompatFlag({"branch"}, branch)));
+
   CF_EXPECT(ParseFlags(flags, arguments));
   return ConverterParsed{
       .local_instance_set = local_instance_set,
@@ -76,6 +99,8 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
       .local_kernel_image = local_kernel_image,
       .image_download_dir = image_download_dir,
       .local_system_image = local_system_image,
+      .verbose = verbose,
+      .branch = branch,
   };
 }
 
