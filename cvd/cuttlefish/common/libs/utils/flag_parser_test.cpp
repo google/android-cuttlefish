@@ -16,15 +16,16 @@
 
 #include <common/libs/utils/flag_parser.h>
 
-#include <android-base/strings.h>
-
-#include <gtest/gtest.h>
-#include <libxml/tree.h>
 #include <map>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gtest/gtest.h>
+#include <libxml/tree.h>
 
 namespace cuttlefish {
 
@@ -309,6 +310,46 @@ TEST(FlagParser, InvalidIntFlag) {
   ASSERT_FALSE(flag.Parse({"--myflag=def"}));
   ASSERT_FALSE(flag.Parse({"-myflag", "abc"}));
   ASSERT_FALSE(flag.Parse({"--myflag", "def"}));
+}
+
+TEST(FlagParser, VerbosityFlag) {
+  android::base::LogSeverity value = android::base::VERBOSE;
+  auto flag = VerbosityFlag(value);
+  ASSERT_TRUE(flag.Parse({"-verbosity=DEBUG"}));
+  ASSERT_EQ(value, android::base::DEBUG);
+  ASSERT_TRUE(flag.Parse({"--verbosity=INFO"}));
+  ASSERT_EQ(value, android::base::INFO);
+  ASSERT_TRUE(flag.Parse({"--verbosity=WARNING"}));
+  ASSERT_EQ(value, android::base::WARNING);
+  ASSERT_TRUE(flag.Parse({"--verbosity=ERROR"}));
+  ASSERT_EQ(value, android::base::ERROR);
+  ASSERT_TRUE(flag.Parse({"--verbosity=FATAL_WITHOUT_ABORT"}));
+  ASSERT_EQ(value, android::base::FATAL_WITHOUT_ABORT);
+  ASSERT_TRUE(flag.Parse({"--verbosity=FATAL"}));
+  ASSERT_EQ(value, android::base::FATAL);
+  ASSERT_TRUE(flag.Parse({"--verbosity=VERBOSE"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+}
+
+TEST(FlagParser, InvalidVerbosityFlag) {
+  android::base::LogSeverity value = android::base::VERBOSE;
+  auto flag = VerbosityFlag(value);
+  ASSERT_FALSE(flag.Parse({"-verbosity"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"--verbosity"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"-verbosity="}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"--verbosity="}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"-verbosity=not_a_severity"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"--verbosity=not_a_severity"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"-verbosity", "not_a_severity"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_FALSE(flag.Parse({"--verbosity", "not_a_severity"}));
+  ASSERT_EQ(value, android::base::VERBOSE);
 }
 
 TEST(FlagParser, InvalidFlagGuard) {
