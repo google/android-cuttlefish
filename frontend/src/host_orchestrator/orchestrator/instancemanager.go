@@ -43,12 +43,17 @@ type Validator interface {
 	Validate() error
 }
 
+// TODO(b/289117411): Refactors `cvd executions` out of instance management.
 type InstanceManager interface {
 	CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error)
 
 	ListCVDs() (*apiv1.ListCVDsResponse, error)
 
 	GetLogsDir(name string) (string, error)
+
+	// Returns host_bugreport.zip's path.
+	// host_bugreport.zip file is the output of `cvd host_bugreport`.
+	HostBugReport() (string, error)
 }
 
 type EmptyFieldError string
@@ -93,6 +98,7 @@ type CVDToolInstanceManager struct {
 	startCVDHandler          *startCVDHandler
 	hostValidator            Validator
 	buildAPIFactory          BuildAPIFactory
+	uuidGen                  func() string
 }
 
 type CVDToolInstanceManagerOpts struct {
@@ -130,6 +136,7 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 			Timeout:     opts.CVDStartTimeout,
 		},
 		buildAPIFactory: opts.BuildAPIFactory,
+		uuidGen:         opts.UUIDGen,
 	}
 }
 
@@ -223,6 +230,25 @@ func (m *CVDToolInstanceManager) GetLogsDir(name string) (string, error) {
 		return "", operator.NewNotFoundError(fmt.Sprintf("Instance %q not found", name), nil)
 	}
 	return ins.InstanceDir + "/logs", nil
+}
+
+func (m *CVDToolInstanceManager) HostBugReport() (string, error) {
+	fleet, err := m.cvdFleet()
+	if err != nil {
+		return "", err
+	}
+	if len(fleet) == 0 {
+		return "", operator.NewNotFoundError("no artifacts found", nil)
+	}
+	output := "/tmp/bugreport" + m.uuidGen()
+	opts := cvdCommandOpts{
+		Home: m.paths.RuntimesRootDir,
+	}
+	cvdCmd := newCVDCommand(m.execContext, m.paths.CVDBin(), []string{"host_bugreport", "--output=" + output}, opts)
+	if err := cvdCmd.Run(); err != nil {
+		return "", err
+	}
+	return output, nil
 }
 
 const ErrMsgLaunchCVDFailed = "failed to launch cvd"
