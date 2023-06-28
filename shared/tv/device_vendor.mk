@@ -27,6 +27,10 @@ $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+# Inform the camera HAL that we only want an external camera loaded.
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.camera.config=external
+
 # Extend cuttlefish common sepolicy with tv-specific functionality
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/tv/sepolicy/vendor
 
