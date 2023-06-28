@@ -74,6 +74,29 @@ std::string GenerateHomeDirectoryName(int64_t time) {
 
 using DemoCommandSequence = std::vector<RequestWithStdio>;
 
+void AddFetchCommandArgs(cvd::CommandRequest& command,
+                         const FetchCvdConfig& config,
+                         const FetchCvdInstanceConfig& instance_config) {
+  command.set_working_directory(config.target_directory);
+  command.add_args("cvd");
+  command.add_args("fetch");
+  command.add_args("--target_directory=" + config.target_directory);
+  command.add_args("--target_subdirectory=" +
+                   instance_config.target_subdirectory);
+  if (config.credential_source) {
+    command.add_args("--credential_source=" + *config.credential_source);
+  }
+  if (instance_config.default_build) {
+    command.add_args("--default_build=" + *instance_config.default_build);
+  }
+  if (instance_config.system_build) {
+    command.add_args("--system_build=" + *instance_config.system_build);
+  }
+  if (instance_config.kernel_build) {
+    command.add_args("--kernel_build=" + *instance_config.kernel_build);
+  }
+}
+
 }  // namespace
 
 class LoadConfigsCommand : public CvdServerHandler {
@@ -293,26 +316,7 @@ class LoadConfigsCommand : public CvdServerHandler {
       if (instance.should_fetch) {
         auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
         *fetch_cmd.mutable_env() = client_env;
-        fetch_cmd.set_working_directory(instance.target_subdirectory);
-        fetch_cmd.add_args("cvd");
-        fetch_cmd.add_args("fetch");
-        fetch_cmd.add_args("--target_directory=" +
-                           cvd_flags.fetch_cvd_flags.target_directory);
-        fetch_cmd.add_args("--target_subdirectory=" +
-                           instance.target_subdirectory);
-        if (cvd_flags.fetch_cvd_flags.credential_source) {
-          fetch_cmd.add_args("--credential_source=" +
-                             *cvd_flags.fetch_cvd_flags.credential_source);
-        }
-        if (instance.default_build) {
-          fetch_cmd.add_args("--default_build=" + *instance.default_build);
-        }
-        if (instance.system_build) {
-          fetch_cmd.add_args("--system_build=" + *instance.system_build);
-        }
-        if (instance.kernel_build) {
-          fetch_cmd.add_args("--kernel_build=" + *instance.kernel_build);
-        }
+        AddFetchCommandArgs(fetch_cmd, cvd_flags.fetch_cvd_flags, instance);
       }
     }
 
