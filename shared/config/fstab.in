@@ -11,10 +11,11 @@ system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slots
 # Add all dynamic partitions except system, after this comment
 odm /odm erofs ro wait,logical,first_stage_mount,slotselect,avb
 odm /odm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
-product /product erofs ro wait,logical,first_stage_mount,slotselect,avb
-product /product ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
-system_ext /system_ext erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
-system_ext /system_ext ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
+# Do not fail on product and system_ext mount for any mixture with other products' system image
+product /product erofs ro wait,logical,first_stage_mount,slotselect,avb,nofail
+product /product ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb,nofail
+system_ext /system_ext erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system,nofail
+system_ext /system_ext ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system,nofail
 vendor /vendor erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
 vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta
 vendor_dlkm /vendor_dlkm erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_vendor_dlkm
