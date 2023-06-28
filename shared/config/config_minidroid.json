@@ -2,7 +2,7 @@
 	"crosvm_use_balloon": false,
 	"crosvm_use_rng": false,
 	"enable_audio": false,
-	"enable_wifi": false,
+	"enable_wifi": true,
 	"enable_host_bluetooth": false,
 	"netsim_bt": false,
 	"enable_modem_simulator": false,
