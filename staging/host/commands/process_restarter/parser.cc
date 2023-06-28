@@ -17,9 +17,11 @@
 #include "host/commands/process_restarter/parser.h"
 
 #include <iostream>
-#include <unordered_map>
+#include <string>
+#include <vector>
 
-#include "common/libs/utils/contains.h"
+#include "common/libs/utils/flag_parser.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -40,10 +42,10 @@ static constexpr char kHelp[] = R"(
       ./process_restarter -when_dumped -- my_program --arg1 --arg2)";
 
 /*
- * TODO(chadreynolds): if the flag is not given, do not restart
+ * TODO(288166029): if the flag is not given, do not restart
  * with the exit code of -1 or 255.
  */
-Parser::Parser() : when_exited_with_code_(-1), verbosity_("VERBOSE") {}
+Parser::Parser() : when_exited_with_code_(-1) {}
 
 Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   Parser parser;
@@ -53,7 +55,6 @@ Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   flags.push_back(parser.WhenKilledFlag());
   flags.push_back(parser.WhenExitedWithFailureFlag());
   flags.push_back(parser.WhenExitedWithCodeFlag());
-  flags.push_back(parser.VerbosityFlag());
   flags.push_back(HelpFlag(flags, kHelp));
   bool matched_help_xml = false;
   flags.push_back(HelpXmlFlag(flags, std::cout, matched_help_xml, ""));
@@ -69,22 +70,6 @@ bool Parser::WhenKilled() const { return when_killed_; }
 bool Parser::WhenExitedWithFailure() const { return when_exited_with_failure_; }
 std::int32_t Parser::WhenExitedWithCode() const {
   return when_exited_with_code_;
-}
-
-Result<android::base::LogSeverity> Parser::Verbosity() const {
-  std::unordered_map<std::string, android::base::LogSeverity>
-      verbosity_encode_tab{
-          {"VERBOSE", android::base::VERBOSE},
-          {"DEBUG", android::base::DEBUG},
-          {"INFO", android::base::INFO},
-          {"WARNING", android::base::WARNING},
-          {"ERROR", android::base::ERROR},
-          {"FATAL_WITHOUT_ABORT", android::base::FATAL_WITHOUT_ABORT},
-          {"FATAL", android::base::FATAL},
-      };
-  CF_EXPECT(Contains(verbosity_encode_tab, verbosity_),
-            "Verbosity \"" << verbosity_ << "\" is unrecognized.");
-  return verbosity_encode_tab.at(verbosity_);
 }
 
 Flag Parser::IgnoreSigtstpFlag() {
@@ -108,11 +93,6 @@ Flag Parser::WhenExitedWithFailureFlag() {
 Flag Parser::WhenExitedWithCodeFlag() {
   return GflagsCompatFlag("when_exited_with_code", when_exited_with_code_)
       .Help(kWhenExitedWithCodeHelp);
-}
-
-Flag Parser::VerbosityFlag() {
-  return GflagsCompatFlag("verbosity", verbosity_)
-      .Help("Set the verbosity level.");
 }
 
 }  // namespace cuttlefish
