@@ -26,13 +26,15 @@ namespace cuttlefish {
 
 struct FetchCvdInstanceConfig {
   bool should_fetch = false;
+  // this subdirectory is relative to FetchCvdConfig::target_directory
+  std::string target_subdirectory;
   std::optional<std::string> default_build;
   std::optional<std::string> system_build;
   std::optional<std::string> kernel_build;
-  std::string artifacts_directory;
 };
 
 struct FetchCvdConfig {
+  std::string target_directory;
   std::optional<std::string> credential_source;
   std::vector<FetchCvdInstanceConfig> instances;
 };
