@@ -21,12 +21,12 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/process_restarter/parser.h"
+#include "host/libs/config/logging.h"
 
 namespace cuttlefish {
 namespace {
@@ -52,7 +52,6 @@ static bool ShouldRestartProcess(siginfo_t const& info, const Parser& parsed) {
 Result<int> RunProcessRestarter(std::vector<std::string> args) {
   LOG(VERBOSE) << "process_restarter starting";
   auto parsed = CF_EXPECT(Parser::ConsumeAndParse(args));
-  android::base::SetMinimumLogSeverity(CF_EXPECT(parsed.Verbosity()));
 
   // move-assign the remaining args to exec_args
   const std::vector<std::string> exec_args = std::move(args);
@@ -74,10 +73,7 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  // these stderr logs are directed to log tee and logged at the proper level
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  ::android::base::SetMinimumLogSeverity(android::base::VERBOSE);
-
+  cuttlefish::DefaultSubprocessLogging(argv);
   auto result = cuttlefish::RunProcessRestarter(
       std::move(cuttlefish::ArgsToVec(argc - 1, argv + 1)));
   if (!result.ok()) {
