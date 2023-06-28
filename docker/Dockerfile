@@ -1,6 +1,6 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster-slim AS cuttlefish-softgpu
+FROM debian:bullseye-slim AS cuttlefish-softgpu
 
 ENV container docker
 ENV LC_ALL C
@@ -38,7 +38,7 @@ CMD ["/lib/systemd/systemd"]
 RUN apt-get update \
     && apt-get install --no-install-recommends -y apt-utils sudo vim gawk coreutils \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
-       net-tools rsyslog equivs equivs devscripts dpkg-dev dialog # qemu-system-x86
+       net-tools rsyslog equivs equivs devscripts dpkg-dev dialog rsync # qemu-system-x86
 
 SHELL ["/bin/bash", "-c"]
 
