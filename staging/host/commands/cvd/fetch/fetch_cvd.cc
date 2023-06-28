@@ -117,6 +117,7 @@ struct FetchFlags {
   std::string target_directory = "";
   std::vector<std::string> target_subdirectory;
   bool keep_downloaded_archives = false;
+  android::base::LogSeverity verbosity = android::base::INFO;
   bool helpxml = false;
   BuildApiFlags build_api_flags;
   std::vector<std::tuple<BuildSourceFlags, DownloadFlags, int>>
@@ -154,6 +155,8 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(GflagsCompatFlag("keep_downloaded_archives",
                                       fetch_flags.keep_downloaded_archives)
                          .Help("Keep downloaded zip/tar."));
+  flags.emplace_back(VerbosityFlag(fetch_flags.verbosity));
+
   flags.emplace_back(
       GflagsCompatFlag("target_subdirectory", fetch_flags.target_subdirectory)
           .Help("Target subdirectory to fetch files into.  Specifically aimed "
@@ -702,8 +705,9 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
 }  // namespace
 
 Result<void> FetchCvdMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  android::base::InitLogging(argv, android::base::StderrLogger);
   const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
+  android::base::SetMinimumLogSeverity(flags.verbosity);
 
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
