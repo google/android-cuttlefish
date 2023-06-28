@@ -30,6 +30,11 @@ cc_library {
         "liblog",
     ],
     defaults: ["cuttlefish_host"],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
 }
 
 cc_binary {
