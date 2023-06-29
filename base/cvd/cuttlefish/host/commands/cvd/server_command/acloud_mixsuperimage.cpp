@@ -154,85 +154,6 @@ Result<void> _RewriteMiscInfo(
   return {};
 }
 
-/*
- * Use build_super_image to create a super image.
- */
-Result<bool> BuildSuperImage(
-    const std::string& output_path, const std::string& misc_info_path,
-    const std::function<Result<std::string>(const std::string&)>& get_image) {
-  std::string build_super_image_binary;
-  std::string lpmake_binary;
-  std::string otatools_path;
-  if (FileExists(DefaultHostArtifactsPath("otatools/bin/build_super_image"))) {
-    build_super_image_binary =
-        DefaultHostArtifactsPath("otatools/bin/build_super_image");
-    lpmake_binary =
-        DefaultHostArtifactsPath("otatools/bin/lpmake");
-    otatools_path = DefaultHostArtifactsPath("otatools");
-  } else if (FileExists(HostBinaryPath("build_super_image"))) {
-    build_super_image_binary =
-        HostBinaryPath("build_super_image");
-    lpmake_binary =
-        HostBinaryPath("lpmake");
-    otatools_path = DefaultHostArtifactsPath("");
-  } else {
-    return CF_ERR("Could not find otatools");
-  }
-
-  TemporaryFile new_misc_info;
-  std::string new_misc_info_path = new_misc_info.path;
-  _RewriteMiscInfo(new_misc_info_path, misc_info_path, lpmake_binary,
-                   get_image);
-
-  return Execute({
-             build_super_image_binary,
-             new_misc_info_path,
-             output_path,
-         }) == 0;
-}
-
-Result<bool> MixSuperImage(const std::string& paths) {
-  std::string super_image = "";
-  std::string local_system_image = "";
-  std::string system_image_path = "";
-  std::string image_dir = "";
-  std::string misc_info = "";
-
-  int index = 0;
-  std::vector<std::string> paths_vec = android::base::Split(paths, ",");
-  for (const auto & each_path :paths_vec) {
-    if (index == 0) {
-      super_image = each_path;
-    } else if (index == 1) {
-      local_system_image = each_path;
-    } else if (index == 2) {
-      image_dir = each_path;
-    }
-    index++;
-  }
-  // no specific image directory, use $ANDROID_PRODUCT_OUT
-  if (image_dir == "") {
-    image_dir = DefaultGuestImagePath("/");
-  }
-  if (!android::base::EndsWith(image_dir, "/")) {
-    image_dir += "/";
-  }
-  misc_info = CF_EXPECT(FindMiscInfo(image_dir));
-  image_dir = CF_EXPECT(FindImageDir(image_dir));
-  system_image_path = FindImage(local_system_image, {_SYSTEM_IMAGE_NAME_PATTERN});
-  CF_EXPECT(system_image_path != "",
-            "Cannot find system.img in " << local_system_image);
-
-  return BuildSuperImage(
-            super_image, misc_info,
-            [&image_dir,
-             &system_image_path](const std::string& partition) -> Result<std::string> {
-              return GetImageForPartition(
-                partition, image_dir,
-                {{"system", system_image_path}});
-            });
-}
-
 class AcloudMixSuperImageCommand : public CvdServerHandler {
  public:
   INJECT(AcloudMixSuperImageCommand()) {}
@@ -252,6 +173,8 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
   cvd_common::Args CmdList() const override { return {}; }
 
   Result<cvd::Response> Handle(const RequestWithStdio& request) override {
+    std::unique_lock interrupt_lock(interrupt_mutex_);
+    CF_EXPECT(!interrupted_, "Interrupted");
     CF_EXPECT(CanHandle(request));
     auto invocation = ParseInvocation(request.Message());
     if (invocation.arguments.empty() || invocation.arguments.size() < 2) {
@@ -274,11 +197,112 @@ class AcloudMixSuperImageCommand : public CvdServerHandler {
       return response;
     }
 
-    CF_EXPECT(MixSuperImage(flag_paths),
+    auto cb_unlock = [&interrupt_lock](void) -> Result<void> {
+      interrupt_lock.unlock();
+      return {};
+    };
+    CF_EXPECT(MixSuperImage(flag_paths , cb_unlock),
               "Build mixed super image failed");
     return response;
   }
-  Result<void> Interrupt() override { return CF_ERR("Can't be interrupted."); }
+  Result<void> Interrupt() override {
+    std::scoped_lock interrupt_lock(interrupt_mutex_);
+    interrupted_ = true;
+    CF_EXPECT(waiter_.Interrupt());
+    return {};
+  }
+
+ private:
+  /*
+   * Use build_super_image to create a super image.
+   */
+  Result<void> BuildSuperImage(
+      const std::string& output_path, const std::string& misc_info_path,
+      const std::function<Result<void>(void)>& callback_unlock,
+      const std::function<Result<std::string>(const std::string&)>& get_image) {
+    std::string build_super_image_binary;
+    std::string lpmake_binary;
+    std::string otatools_path;
+    if (FileExists(DefaultHostArtifactsPath("otatools/bin/build_super_image"))) {
+      build_super_image_binary =
+          DefaultHostArtifactsPath("otatools/bin/build_super_image");
+      lpmake_binary =
+          DefaultHostArtifactsPath("otatools/bin/lpmake");
+      otatools_path = DefaultHostArtifactsPath("otatools");
+    } else if (FileExists(HostBinaryPath("build_super_image"))) {
+      build_super_image_binary =
+          HostBinaryPath("build_super_image");
+      lpmake_binary =
+          HostBinaryPath("lpmake");
+      otatools_path = DefaultHostArtifactsPath("");
+    } else {
+      return CF_ERR("Could not find otatools");
+    }
+
+    TemporaryFile new_misc_info;
+    std::string new_misc_info_path = new_misc_info.path;
+    _RewriteMiscInfo(new_misc_info_path, misc_info_path, lpmake_binary,
+                     get_image);
+
+    Command command(build_super_image_binary);
+    command.AddParameter(new_misc_info_path);
+    command.AddParameter(output_path);
+    SubprocessOptions options;
+    auto subprocess = command.Start(options);
+    CF_EXPECT(subprocess.Started());
+    CF_EXPECT(waiter_.Setup(std::move(subprocess)));
+    callback_unlock();
+    CF_EXPECT(waiter_.Wait());
+    return {};
+  }
+
+  Result<void> MixSuperImage(
+      const std::string& paths,
+      const std::function<Result<void>(void)>& callback_unlock) {
+    std::string super_image = "";
+    std::string local_system_image = "";
+    std::string system_image_path = "";
+    std::string image_dir = "";
+    std::string misc_info = "";
+
+    int index = 0;
+    std::vector<std::string> paths_vec = android::base::Split(paths, ",");
+    for (const auto & each_path :paths_vec) {
+      if (index == 0) {
+        super_image = each_path;
+      } else if (index == 1) {
+        local_system_image = each_path;
+      } else if (index == 2) {
+        image_dir = each_path;
+      }
+      index++;
+    }
+    // no specific image directory, use $ANDROID_PRODUCT_OUT
+    if (image_dir == "") {
+      image_dir = DefaultGuestImagePath("/");
+    }
+    if (!android::base::EndsWith(image_dir, "/")) {
+      image_dir += "/";
+    }
+    misc_info = CF_EXPECT(FindMiscInfo(image_dir));
+    image_dir = CF_EXPECT(FindImageDir(image_dir));
+    system_image_path = FindImage(local_system_image, {_SYSTEM_IMAGE_NAME_PATTERN});
+    CF_EXPECT(system_image_path != "",
+              "Cannot find system.img in " << local_system_image);
+
+    return BuildSuperImage(
+        super_image, misc_info, callback_unlock,
+        [&image_dir,
+         &system_image_path](const std::string& partition) -> Result<std::string> {
+          return GetImageForPartition(
+              partition, image_dir,
+              {{"system", system_image_path}});
+        });
+  }
+
+  std::mutex interrupt_mutex_;
+  bool interrupted_ = false;
+  SubprocessWaiter waiter_;
 };
 
 fruit::Component<fruit::Required<>>
