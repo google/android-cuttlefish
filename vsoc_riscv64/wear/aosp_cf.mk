@@ -77,8 +77,12 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/wearable_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/wearable_core_hardware.xml \
 
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
-# TODO: FIXME: Enable swiftshader for graphics.
+# TODO: FIXME: Enable swiftshader for graphics, and remove angle below.
 #$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
+
+# Use angle until swiftshader is unabled so that `gfxstream_guest_angle_host_swiftshader`
+# works.
+$(call inherit-product, build/make/target/product/angle_supported.mk)
 $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
