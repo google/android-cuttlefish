@@ -48,5 +48,10 @@ cc_library {
         "libbase",
         "libjsoncpp",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
     defaults: ["cuttlefish_host"],
 }
