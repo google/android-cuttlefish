@@ -32,5 +32,10 @@ cc_library_static {
         "libbase",
         "libcuttlefish_host_config",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
     defaults: ["cuttlefish_host"],
 }

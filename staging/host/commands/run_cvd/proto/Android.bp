@@ -24,6 +24,11 @@ cc_library_static {
     srcs: [
         "run_cvd.proto",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
     defaults: [
         "cuttlefish_host",
         "cuttlefish_libicuuc",
