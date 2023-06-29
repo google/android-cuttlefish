@@ -35,7 +35,11 @@ void InitFetchInstanceConfigs(Json::Value& instances) {
 }
 
 void InitFetchCvdConfigs(Json::Value& root) {
+  InitNullConfig(root, "api_key");
   InitNullConfig(root, "credential_source");
+  InitNullConfig(root, "wait_retry_period");
+  InitNullConfig(root, "external_dns_resolver");
+  InitNullConfig(root, "keep_downloaded_archives");
   InitFetchInstanceConfigs(root["instances"]);
 }
 
@@ -64,14 +68,18 @@ FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
 }
 
 FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
-  auto result =
-      FetchCvdConfig{.credential_source = OptString(root["credential_source"])};
+  auto result = FetchCvdConfig{
+      .api_key = OptString(root["api_key"]),
+      .credential_source = OptString(root["credential_source"]),
+      .wait_retry_period = OptString(root["wait_retry_period"]),
+      .external_dns_resolver = OptString(root["external_dns_resolver"]),
+      .keep_downloaded_archives = OptString(root["keep_downloaded_archives"])};
+
   const int num_instances = root["instances"].size();
   for (unsigned int i = 0; i < num_instances; i++) {
     result.instances.emplace_back(
         ParseFetchInstanceConfigs(root["instances"][i]));
   }
-
   return result;
 }
 
