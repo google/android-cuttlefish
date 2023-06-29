@@ -18,6 +18,7 @@
 #include <chrono>
 #include <iostream>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -43,13 +44,35 @@
 namespace cuttlefish {
 namespace {
 
-std::string GenerateSystemImageFlag(const FetchCvdConfig& config) {
-  std::vector<std::string> paths;
-  for (const auto& instance : config.instances) {
-    paths.emplace_back(config.target_directory + "/" +
-                       instance.target_subdirectory);
+std::string JoinBySelector(
+    const std::vector<FetchCvdInstanceConfig>& collection,
+    const std::function<std::string(const FetchCvdInstanceConfig&)>& selector) {
+  std::vector<std::string> selected;
+  selected.reserve(collection.size());
+  for (const auto& instance : collection) {
+    selected.emplace_back(selector(instance));
   }
-  return "--system_image_dir=" + android::base::Join(paths, ',');
+  return android::base::Join(selected, ',');
+}
+
+std::optional<std::string> JoinBySelectorOptional(
+    const std::vector<FetchCvdInstanceConfig>& collection,
+    const std::function<std::string(const FetchCvdInstanceConfig&)>& selector) {
+  std::string result = JoinBySelector(collection, selector);
+  // no values, empty or only ',' separators
+  if (result.size() == collection.size() - 1) {
+    return std::nullopt;
+  }
+  return result;
+}
+
+std::string GenerateSystemImageFlag(const FetchCvdConfig& config) {
+  auto get_full_path = [&target_directory = config.target_directory](
+                           const FetchCvdInstanceConfig& instance_config) {
+    return target_directory + "/" + instance_config.target_subdirectory;
+  };
+  return "--system_image_dir=" +
+         JoinBySelector(config.instances, get_full_path);
 }
 
 std::string GenerateParentDirectory() {
@@ -74,26 +97,42 @@ std::string GenerateHomeDirectoryName(int64_t time) {
 
 using DemoCommandSequence = std::vector<RequestWithStdio>;
 
-void AddFetchCommandArgs(cvd::CommandRequest& command,
-                         const FetchCvdConfig& config,
-                         const FetchCvdInstanceConfig& instance_config) {
-  command.set_working_directory(config.target_directory);
+void AddFetchCommandArgs(
+    cvd::CommandRequest& command, const FetchCvdConfig& config,
+    const std::vector<FetchCvdInstanceConfig>& fetch_instances) {
   command.add_args("cvd");
   command.add_args("fetch");
   command.add_args("--target_directory=" + config.target_directory);
-  command.add_args("--target_subdirectory=" +
-                   instance_config.target_subdirectory);
   if (config.credential_source) {
     command.add_args("--credential_source=" + *config.credential_source);
   }
-  if (instance_config.default_build) {
-    command.add_args("--default_build=" + *instance_config.default_build);
+
+  command.add_args(
+      "--target_subdirectory=" +
+      JoinBySelector(fetch_instances,
+                     [](const FetchCvdInstanceConfig& instance_config) {
+                       return instance_config.target_subdirectory;
+                     }));
+  std::optional<std::string> default_build_params = JoinBySelectorOptional(
+      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+        return instance_config.default_build.value_or("");
+      });
+  if (default_build_params) {
+    command.add_args("--default_build=" + *default_build_params);
   }
-  if (instance_config.system_build) {
-    command.add_args("--system_build=" + *instance_config.system_build);
+  std::optional<std::string> system_build_params = JoinBySelectorOptional(
+      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+        return instance_config.system_build.value_or("");
+      });
+  if (system_build_params) {
+    command.add_args("--system_build=" + *system_build_params);
   }
-  if (instance_config.kernel_build) {
-    command.add_args("--kernel_build=" + *instance_config.kernel_build);
+  std::optional<std::string> kernel_build_params = JoinBySelectorOptional(
+      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+        return instance_config.kernel_build.value_or("");
+      });
+  if (kernel_build_params) {
+    command.add_args("--kernel_build=" + *kernel_build_params);
   }
 }
 
@@ -312,12 +351,17 @@ class LoadConfigsCommand : public CvdServerHandler {
           std::to_string(instance_index);
     }
 
+    std::vector<FetchCvdInstanceConfig> fetch_instances;
     for (const auto& instance : cvd_flags.fetch_cvd_flags.instances) {
       if (instance.should_fetch) {
-        auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
-        *fetch_cmd.mutable_env() = client_env;
-        AddFetchCommandArgs(fetch_cmd, cvd_flags.fetch_cvd_flags, instance);
+        fetch_instances.emplace_back(instance);
       }
+    }
+    if (fetch_instances.size() > 0) {
+      auto& fetch_cmd = *req_protos.emplace_back().mutable_command_request();
+      *fetch_cmd.mutable_env() = client_env;
+      AddFetchCommandArgs(fetch_cmd, cvd_flags.fetch_cvd_flags,
+                          fetch_instances);
     }
 
     // Create the launch home directory
