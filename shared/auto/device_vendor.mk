@@ -17,8 +17,7 @@
 PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
 SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
-$(call inherit-product, packages/services/Car/car_product/build/car.mk)
+$(call inherit-product, packages/services/Car/car_product/build/car_vendor.mk)
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
@@ -44,7 +43,7 @@ ifneq ($(LOCAL_SENSOR_FILE_OVERRIDES),true)
 endif
 
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/car_core_hardware.xml:system/etc/permissions/car_core_hardware.xml \
+    frameworks/native/data/etc/car_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/car_core_hardware.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
     frameworks/native/data/etc/android.hardware.broadcastradio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.broadcastradio.xml \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
@@ -92,9 +91,6 @@ PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
 
 # CAN bus HAL
 PRODUCT_PACKAGES += android.hardware.automotive.can-service
-PRODUCT_PACKAGES_DEBUG += canhalctrl \
-    canhaldump \
-    canhalsend
 
 # Occupant Awareness HAL
 PRODUCT_PACKAGES += android.hardware.automotive.occupant_awareness@1.0-service
@@ -116,20 +112,16 @@ ENABLE_CARTELEMETRY_SERVICE ?= true
 
 ifeq ($(ENABLE_MOCK_EVSHAL), true)
 CUSTOMIZE_EVS_SERVICE_PARAMETER := true
-PRODUCT_PACKAGES += \
-    android.hardware.automotive.evs-aidl-default-service \
-    cardisplayproxyd
-
+USE_AIDL_DISPLAY_SERVICE := true
+PRODUCT_PACKAGES += android.hardware.automotive.evs-aidl-default-service
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/evs/init.evs.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.evs.rc
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
 endif
 
 ifeq ($(ENABLE_SAMPLE_EVS_APP), true)
-PRODUCT_PACKAGES += evs_app
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/evs/evs_app_config.json:$(TARGET_COPY_OUT_VENDOR)/etc/automotive/evs/config_override.json
-include packages/services/Car/cpp/evs/apps/sepolicy/evsapp.mk
 endif
 
 BOARD_IS_AUTOMOTIVE := true
