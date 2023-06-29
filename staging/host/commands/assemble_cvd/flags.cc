@@ -779,6 +779,7 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
   return value_vec;
 }
 
+#ifndef __APPLE__
 Result<std::string> SelectGpuMode(
     const std::string& gpu_mode_arg, const std::string& vm_manager,
     const GuestConfig& guest_config,
@@ -831,18 +832,26 @@ Result<std::string> SelectGpuMode(
 
   return gpu_mode_arg;
 }
+#endif
 
 Result<std::string> InitializeGpuMode(
     const std::string& gpu_mode_arg, const std::string& vm_manager,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific* instance) {
+#ifdef __APPLE__
+  (void)vm_manager;
+  (void)guest_config;
+  CF_EXPECT(gpu_mode_arg == kGpuModeAuto ||
+            gpu_mode_arg == kGpuModeGuestSwiftshader);
+  std::string gpu_mode = kGpuModeGuestSwiftshader;
+  instance->set_gpu_mode(kGpuModeGuestSwiftshader);
+#else
   const GraphicsAvailability graphics_availability =
       GetGraphicsAvailabilityWithSubprocessCheck();
   LOG(DEBUG) << graphics_availability;
 
   const std::string gpu_mode = CF_EXPECT(SelectGpuMode(
       gpu_mode_arg, vm_manager, guest_config, graphics_availability));
-  instance->set_gpu_mode(gpu_mode);
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
       CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
@@ -850,7 +859,8 @@ Result<std::string> InitializeGpuMode(
       angle_features.angle_feature_overrides_enabled);
   instance->set_gpu_angle_feature_overrides_disabled(
       angle_features.angle_feature_overrides_disabled);
-
+#endif
+  instance->set_gpu_mode(gpu_mode);
   return gpu_mode;
 }
 
