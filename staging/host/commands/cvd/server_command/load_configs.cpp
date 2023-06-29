@@ -103,8 +103,22 @@ void AddFetchCommandArgs(
   command.add_args("cvd");
   command.add_args("fetch");
   command.add_args("--target_directory=" + config.target_directory);
+  if (config.api_key) {
+    command.add_args("--api_key=" + *config.api_key);
+  }
   if (config.credential_source) {
     command.add_args("--credential_source=" + *config.credential_source);
+  }
+  if (config.wait_retry_period) {
+    command.add_args("--wait_retry_period=" + *config.wait_retry_period);
+  }
+  if (config.external_dns_resolver) {
+    command.add_args("--external_dns_resolver=" +
+                     *config.external_dns_resolver);
+  }
+  if (config.keep_downloaded_archives) {
+    command.add_args("--keep_downloaded_archives=" +
+                     *config.keep_downloaded_archives);
   }
 
   command.add_args(
