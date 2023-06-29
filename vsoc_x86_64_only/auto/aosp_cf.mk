@@ -24,8 +24,7 @@ $(call inherit-product, packages/services/Car/car_product/build/car_generic_syst
 #        but this breaks phone_car. So undo it here.
 PRODUCT_ENFORCE_RRO_TARGETS := frameworks-res
 
-# FIXME: Disable mainline path checks
-PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true
 
 # HSUM is currently incompatible with telephony.
 # TODO(b/283853205): Properly disable telephony using per-partition makefile.

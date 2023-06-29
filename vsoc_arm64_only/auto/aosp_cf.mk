@@ -24,8 +24,7 @@ $(call inherit-product, packages/services/Car/car_product/build/car_generic_syst
 #        but this breaks phone_car. So undo it here.
 PRODUCT_ENFORCE_RRO_TARGETS := frameworks-res
 
-# FIXME: Disable mainline path checks
-PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true
 
 #
 # All components inherited here go to system_ext image
