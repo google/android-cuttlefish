@@ -75,3 +75,9 @@ PRODUCT_PACKAGES += LeanbackIME TvSampleLeanbackLauncher
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/tv/overlay
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/tv/android-info.txt
+
+# Override the Cuttlefish overlays with their .google variants.
+PRODUCT_PACKAGES += \
+     CuttlefishTetheringOverlayGoogle \
+     CuttlefishWifiOverlayGoogle \
+     TvWifiOverlayGoogle
