@@ -23,6 +23,7 @@ cc_library {
         "build_api.cc",
         "credential_source.cc",
         "http_client/http_client.cc",
+        "http_client/http_client_util.cc",
         "http_client/sso_client.cc",
     ],
     static_libs: [
@@ -62,6 +63,7 @@ cc_library {
 cc_test_host {
     name: "libcuttlefish_web_test",
     srcs: [
+        "http_client/unittest/http_client_util_test.cc",
         "http_client/unittest/main_test.cc",
         "http_client/unittest/sso_client_test.cc",
     ],
