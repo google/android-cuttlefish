@@ -17,6 +17,7 @@
 #pragma once
 
 #include <inttypes.h>
+#include <time.h>
 
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
@@ -149,11 +150,7 @@ static std::string StderrOutputGenerator(const struct timespec& ts, int pid, uin
                                          LogSeverity severity, const char* tag, const char* file,
                                          unsigned int line, const char* message) {
   struct tm now;
-#if defined(_WIN32)
-  localtime_s(&now, &ts.tv_sec);
-#else
   localtime_r(&ts.tv_sec, &now);
-#endif
   char timestamp[sizeof("mm-DD HH:MM:SS.mmm\0")];
   size_t n = strftime(timestamp, sizeof(timestamp), "%m-%d %H:%M:%S", &now);
   snprintf(timestamp + n, sizeof(timestamp) - n, ".%03ld", ts.tv_nsec / (1000 * 1000));
