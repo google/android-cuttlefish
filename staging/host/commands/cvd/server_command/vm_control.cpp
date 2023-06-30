@@ -195,8 +195,7 @@ class CvdVmControlCommandHandler : public CvdServerHandler {
     auto& status = *response.mutable_status();
     if (ok) {
       status.set_code(cvd::Status::OK);
-    }
-    {
+    } else {
       status.set_code(cvd::Status::INTERNAL);
       status.set_message(error_msg.str());
     }
