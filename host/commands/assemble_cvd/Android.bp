@@ -54,7 +54,6 @@ cc_binary {
         "libext2_blkid",
         "libfruit",
         "libjsoncpp",
-        "libnl",
         "libprotobuf-cpp-full",
         "libz",
         "libziparchive",
@@ -64,8 +63,6 @@ cc_binary {
         "libext2_uuid",
         "libimage_aggregator",
         "libsparse",
-        "libcuttlefish_graphics_configuration",
-        "libcuttlefish_graphics_detector",
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
         "libcuttlefish_host_config_fastboot",
@@ -74,10 +71,26 @@ cc_binary {
         "libgflags",
     ],
     required: [
+        "avbtool",
         "mkenvimage_slim",
         "lz4",
-        "avbtool",
-        "mkuserimg_mke2fs",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+        linux: {
+            shared_libs: [
+                "libnl",
+            ],
+            static_libs: [
+                "libcuttlefish_graphics_configuration",
+                "libcuttlefish_graphics_detector",
+            ],
+            required: [
+                "mkuserimg_mke2fs",
+            ],
+        },
+    },
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }
