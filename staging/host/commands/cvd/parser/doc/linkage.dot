@@ -5,8 +5,6 @@ root--instances
 root--common
 common--vhost_user_mac80211_hwsim
 common--wmediumd_config
-common--bluetooth_controller_properties_file
-common--bluetooth_default_commands_file
 common--enable_host_bluetooth
 common--netsim
 common--netsim_bt
