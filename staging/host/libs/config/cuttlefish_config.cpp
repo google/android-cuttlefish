@@ -482,16 +482,6 @@ void CuttlefishConfig::set_rootcanal_test_port(int rootcanal_test_port) {
   (*dictionary_)[kRootcanalTestPort] = rootcanal_test_port;
 }
 
-static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
-std::string CuttlefishConfig::rootcanal_config_file() const {
-  return (*dictionary_)[kRootcanalConfigFile].asString();
-}
-void CuttlefishConfig::set_rootcanal_config_file(
-    const std::string& rootcanal_config_file) {
-  (*dictionary_)[kRootcanalConfigFile] =
-      DefaultHostArtifactsPath(rootcanal_config_file);
-}
-
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
     const std::string& path) {
   auto ret = new CuttlefishConfig();
