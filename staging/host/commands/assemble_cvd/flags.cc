@@ -155,7 +155,7 @@ DEFINE_vec(
 DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
             "Enable the root-canal which is Bluetooth emulator in the host.");
 DEFINE_int32(
-    rootcanal_instance_num, CF_DEFAULTS_ENABLE_ROOTCANAL_INSTANCE_NUM,
+    rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
     "launched from cuttlefish instance "
     "with rootcanal_instance_num. Else, launch a new rootcanal instance");
@@ -173,11 +173,6 @@ DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
 
 DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
             "[Experimental] Connect Bluetooth radio to netsim.");
-
-DEFINE_string(bluetooth_controller_properties_file,
-              CF_DEFAULTS_BLUETOOTH_CONTROLLER_PROPERTIES_FILE,
-              "The configuartion file path for root-canal which is a Bluetooth "
-              "emulator.");
 
 /**
  * crosvm sandbox feature requires /var/empty and seccomp directory
@@ -948,9 +943,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_wmediumd_config(FLAGS_wmediumd_config);
 
   // netsim flags allow all radios or selecting a specific radio
-  tmp_config_obj.set_rootcanal_config_file(
-      FLAGS_bluetooth_controller_properties_file);
-
   bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt;
   bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
 
