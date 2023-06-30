@@ -56,10 +56,6 @@ class RootCanal : public CommandSource {
     rootcanal.AddParameter("--link_ble_port=",
                            config_.rootcanal_link_ble_port());
 
-    // Bluetooth configuration.
-    rootcanal.AddParameter("--controller_properties_file=",
-                           config_.rootcanal_config_file());
-
     // Add parameters from passthrough option --rootcanal-args
     for (auto const& arg : config_.rootcanal_args()) {
       rootcanal.AddParameter(arg);
