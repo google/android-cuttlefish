@@ -19,6 +19,6 @@
 
 namespace cuttlefish {
 
-int NumberOfOccurrences(const std::string& str, const std::string& substr);
+std::string ScrubSecrets(const std::string& data);
 
 }  // namespace cuttlefish
