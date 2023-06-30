@@ -238,7 +238,6 @@ PRODUCT_COPY_FILES += \
 
 endif
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.consumerir.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.consumerir.xml \
     device/google/cuttlefish/shared/config/init.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cutf_cvm.rc \
     device/google/cuttlefish/shared/config/init.product.rc:$(TARGET_COPY_OUT_PRODUCT)/etc/init/init.rc \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc \
@@ -289,12 +288,6 @@ PRODUCT_PACKAGES += \
 #
 # TODO(b/262418065) Add a real weaver implementation
 
-#
-# IR aidl HAL
-#
-PRODUCT_PACKAGES += \
-	android.hardware.ir-service.example \
-	consumerir.default
 
 #
 # Authsecret AIDL HAL
