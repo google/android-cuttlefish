@@ -55,6 +55,7 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 BOARD_HAVE_BLUETOOTH := false
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/consumerir/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 # TODO: FIXME: Enable swiftshader for graphics, and remove angle below.
 #$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
