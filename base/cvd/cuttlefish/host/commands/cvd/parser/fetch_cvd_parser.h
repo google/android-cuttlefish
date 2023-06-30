@@ -35,7 +35,11 @@ struct FetchCvdInstanceConfig {
 
 struct FetchCvdConfig {
   std::string target_directory;
+  std::optional<std::string> api_key;
   std::optional<std::string> credential_source;
+  std::optional<std::string> wait_retry_period;
+  std::optional<std::string> external_dns_resolver;
+  std::optional<std::string> keep_downloaded_archives;
   std::vector<FetchCvdInstanceConfig> instances;
 };
 
