@@ -1,6 +1,6 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster-slim AS cuttlefish-softgpu
+FROM debian:stable-20211011 AS cuttlefish-softgpu
 
 ENV container docker
 ENV LC_ALL C
@@ -47,7 +47,7 @@ RUN if test $(uname -m) == aarch64; then \
 	    dpkg --add-architecture amd64 \
 	    && apt-get update \
 	    && apt-get install --no-install-recommends -y libc6:amd64 \
-	    && apt-get install --no-install-recommends -y qemu qemu-user qemu-user-static binfmt-support; \
+	    && apt-get install --no-install-recommends -y qemu-system-arm qemu-user qemu-user-static binfmt-support; \
     fi
 
 # host packages and google-chrome (google-chrome*.deb)
