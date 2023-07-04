@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export PATH="$PATH:/tmp/go/bin"
+
+protoc -I=$1 --go_out $1 --go-grpc_out $1 $1/*.proto
