@@ -38,7 +38,8 @@ CMD ["/lib/systemd/systemd"]
 RUN apt-get update \
     && apt-get install --no-install-recommends -y apt-utils sudo vim gawk coreutils \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
-       net-tools rsyslog equivs equivs devscripts dpkg-dev dialog # qemu-system-x86
+       net-tools rsyslog equivs equivs devscripts dpkg-dev dialog \
+       protobuf-compiler # qemu-system-x86
 
 SHELL ["/bin/bash", "-c"]
 
