@@ -22,9 +22,11 @@ LIBOPERATOR_SOURCE_DIR := src/liboperator
 ORCHESTRATOR_SOURCE_DIR := src/host_orchestrator
 OPERATOR_SOURCE_DIR := src/operator
 PROTOBUF_SOURCE_DIR := $(LIBOPERATOR_SOURCE_DIR)/protobuf
+INSTALL_PROTOC := ./install-protoc.sh
 BUILD_WEBUI := ./build-webui.sh
 
 override_dh_auto_build:
+	$(INSTALL_PROTOC)
 	$(GOUTIL) . install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31
 	$(GOUTIL) . install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3
 	$(PROTOCUTIL) $(PROTOBUF_SOURCE_DIR)
