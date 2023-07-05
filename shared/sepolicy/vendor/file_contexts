@@ -72,7 +72,7 @@
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health-service\.cuttlefish u:object_r:hal_health_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health\.storage-service\.cuttlefish u:object_r:hal_health_storage_default_exec:s0
-/vendor/bin/hw/android\.hardware\.lights-service\.example u:object_r:hal_light_default_exec:s0
+/vendor/bin/hw/android\.hardware\.lights-service\.cuttlefish u:object_r:hal_light_default_exec:s0
 /vendor/bin/hw/android\.hardware\.neuralnetworks-shim-service-sample   u:object_r:hal_neuralnetworks_sample_exec:s0
 /vendor/bin/hw/android\.hardware\.neuralnetworks-service-sample-.*   u:object_r:hal_neuralnetworks_sample_exec:s0
 /vendor/bin/hw/android\.hardware\.nfc-service\.cuttlefish  u:object_r:hal_nfc_default_exec:s0
