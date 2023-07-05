@@ -21,10 +21,17 @@
 
 #include <android-base/logging.h>
 
+#include "inotify.h"
+
 namespace cuttlefish {
 
-#define INOTIFY_MAX_EVENT_SIZE (sizeof(struct inotify_event) + NAME_MAX + 1)
 std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd) {
+  return GetFileListFromInotifyFd(fd, IN_CREATE);
+}
+
+#define INOTIFY_MAX_EVENT_SIZE (sizeof(struct inotify_event) + NAME_MAX + 1)
+
+std::vector<std::string> GetFileListFromInotifyFd(int fd, uint32_t mask) {
   char event_readout[INOTIFY_MAX_EVENT_SIZE];
   int bytes_parsed = 0;
   std::vector<std::string> result;
@@ -50,9 +57,9 @@ std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd) {
       LOG(ERROR) << __FUNCTION__ << ": inotify event didn't contain filename";
       continue;
     }
-    if (!(event->mask & IN_CREATE)) {
+    if (!(event->mask & mask)) {
       LOG(ERROR) << __FUNCTION__
-                 << ": inotify event didn't pertain to file creation";
+                 << ": inotify event didn't pertain to the event";
       continue;
     }
     result.push_back(std::string(event->name));
