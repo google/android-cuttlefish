@@ -16,7 +16,7 @@
 
 namespace cuttlefish {
 
-Result<std::string> HandleCmds(const std::string grpc_socket_path,
+Result<std::string> HandleCmds(const std::string& grpc_socket_path,
                                const std::string& cmd,
                                const std::vector<std::string>& args,
                                const std::vector<std::string>& options);
