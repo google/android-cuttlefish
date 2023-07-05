@@ -416,10 +416,6 @@ PRODUCT_PACKAGES += $(LOCAL_HEALTH_PRODUCT_PACKAGE)
 PRODUCT_PACKAGES += \
     android.hardware.health.storage-service.cuttlefish
 
-# Identity Credential
-PRODUCT_PACKAGES += \
-    android.hardware.identity-service.remote
-
 PRODUCT_PACKAGES += \
     android.hardware.input.processor-service.example
 
