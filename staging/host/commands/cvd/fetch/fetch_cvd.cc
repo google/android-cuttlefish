@@ -41,6 +41,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
+#include "common/libs/utils/tee_logging.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/web/build_api.h"
 #include "host/libs/web/credential_source.h"
@@ -71,6 +72,7 @@ const mode_t RWX_ALL_MODE = S_IRWXU | S_IRWXG | S_IRWXO;
 const bool OVERRIDE_ENTRIES = true;
 const bool DOWNLOAD_IMG_ZIP_DEFAULT = true;
 const bool DOWNLOAD_TARGET_FILES_ZIP_DEFAULT = false;
+const std::string LOG_FILENAME = "fetch.log";
 
 struct BuildApiFlags {
   std::string api_key = "";
@@ -710,6 +712,10 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
 Result<void> FetchCvdMain(int argc, char** argv) {
   android::base::InitLogging(argv, android::base::StderrLogger);
   const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
+  const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
+  CF_EXPECT(EnsureDirectoryExists(fetch_root_directory, RWX_ALL_MODE));
+  android::base::SetLogger(
+      LogToStderrAndFiles({fetch_root_directory + "/" + LOG_FILENAME}));
   android::base::SetMinimumLogSeverity(flags.verbosity);
 
 #ifdef __BIONIC__
@@ -717,7 +723,6 @@ Result<void> FetchCvdMain(int argc, char** argv) {
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
-  const std::string fetch_root_directory = AbsolutePath(flags.target_directory);
   const bool add_subdirectory =
       flags.build_target_flags.size() > 1 || !flags.target_subdirectory.empty();
 
@@ -733,6 +738,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                                      flags.target_subdirectory, index,
                                      "build_" + std::to_string(index));
       }
+      LOG(INFO) << "Starting fetch to \"" << build_directory << "\"";
       const TargetDirectories target_directories =
           CF_EXPECT(CreateDirectories(build_directory));
       FetcherConfig config;
@@ -744,6 +750,7 @@ Result<void> FetchCvdMain(int argc, char** argv) {
                       flags.keep_downloaded_archives, is_host_package_build,
                       config));
       CF_EXPECT(SaveConfig(config, target_directories.root));
+      LOG(INFO) << "Completed fetch to \"" << build_directory << "\"";
     }
   }
   curl_global_cleanup();
