@@ -86,7 +86,7 @@ Result<void> SuspendCvdMain(std::vector<std::string> args) {
   SharedFD monitor_socket = CF_EXPECT(GetLauncherMonitor(
       *config, parsed.instance_num, parsed.wait_for_launcher));
 
-  LOG(INFO) << "Requesting suspend";
+  LOG(INFO) << "Requesting " << parsed.cmd;
   auto [serialized_data, extended_type] =
       CF_EXPECT(SerializeRequest(parsed.cmd));
   CF_EXPECT(
