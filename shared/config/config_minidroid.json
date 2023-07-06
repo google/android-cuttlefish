@@ -4,6 +4,7 @@
 	"enable_audio": false,
 	"enable_wifi": false,
 	"enable_host_bluetooth": false,
+	"netsim_bt": false,
 	"enable_modem_simulator": false,
 	"enable_vehicle_hal_grpc_server": false,
 	"gpu_mode" : "none",
