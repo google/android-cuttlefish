@@ -94,7 +94,8 @@ Result<void> ServerLoopImpl::Run() {
     while (client->IsOpen()) {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
       if (!launcher_action_with_info_result.ok()) {
-        LOG(ERROR) << "Reading launcher command from monitor failed.";
+        LOG(ERROR) << "Reading launcher command from monitor failed: "
+                   << launcher_action_with_info_result.error().Message();
         LOG(DEBUG) << launcher_action_with_info_result.error().Trace();
         break;
       }
