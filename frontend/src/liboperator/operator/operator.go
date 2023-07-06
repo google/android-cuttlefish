@@ -15,6 +15,7 @@
 package operator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -26,8 +27,10 @@ import (
 	"strconv"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
-
 	"github.com/gorilla/mux"
+
+	pb "github.com/google/android-cuttlefish/frontend/src/liboperator/proto"
+	"google.golang.org/grpc"
 )
 
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
@@ -90,6 +93,15 @@ func CreateHttpHandlers(
 	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
 		deviceInfo(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/env/ls", func(w http.ResponseWriter, r *http.Request) {
+		controlEnvLs(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/env/ls/{serviceName}", func(w http.ResponseWriter, r *http.Request) {
+		controlEnvLs(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/env/ls/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
+		controlEnvLs(w, r, pool)
 	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
 		openwrt(w, r, pool)
@@ -172,6 +184,55 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 			ReplyError(c, fmt.Sprintln("Client disconnected: ", clientId))
 		}
 	}
+}
+
+func controlEnvLs(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	request := pb.ControlEnvProxyRequest{
+		Cmd: "ls",
+		Args: []string{},
+		Options: []string{},
+	}
+	serviceName := vars["serviceName"]
+	if serviceName != "" {
+		request.Args = append(request.Args, serviceName)
+		methodName := vars["methodName"]
+		if methodName != "" {
+			request.Args = append(request.Args, methodName)
+			request.Options = append(request.Options, "-l")
+		}
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+		return
+	}
+
+    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+    }
+    defer conn.Close()
+
+    client := pb.NewControlEnvProxyServiceClient(conn)
+	feature, err := client.ControlEnvProxy(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(feature.GrpcReply))
 }
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
