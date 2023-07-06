@@ -19,6 +19,26 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/cvd_send_sms/sms_sender.h"
 
+const std::string kUsage = R"(
+NAME
+    cvd_send_sms - send SMSs to cvds.
+
+SYNOPSIS
+    cvd_send_sms <message>
+
+EXAMPLES
+
+   $ cvd_send_sms "hello world"
+
+   $ cvd_send_sms --sender_number="+16501239999" "hello world"
+
+   $ cvd_send_sms --sender_number="16501239999" "hello world"
+
+   $ cvd_send_sms --instance-number=2 "hello world"
+
+   $ cvd_send_sms --instance-number=2 --modem_id=1 "hello world"
+)";
+
 DEFINE_string(sender_number, "+16501234567",
               "sender phone number in E.164 format");
 DEFINE_uint32(instance_number, 1,
@@ -29,15 +49,9 @@ DEFINE_uint32(modem_id, 0,
 namespace cuttlefish {
 namespace {
 
-// Usage examples:
-//   * cvd_send_sms "hello world"
-//   * cvd_send_sms --sender_number="+16501239999" "hello world"
-//   * cvd_send_sms --sender_number="16501239999" "hello world"
-//   * cvd_send_sms --instance-number=2 "hello world"
-//   * cvd_send_sms --instance-number=2 --modem_id=1 "hello world"
-
 int SendSmsMain(int argc, char** argv) {
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  ::gflags::SetUsageMessage(kUsage);
+  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
   if (argc == 1) {
     LOG(ERROR) << "Missing message content. First positional argument is used "
                   "as the message content, `cvd_send_sms --instance-number=2 "
