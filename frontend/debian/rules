@@ -21,7 +21,7 @@ PROTOCUTIL := src/protocutil
 LIBOPERATOR_SOURCE_DIR := src/liboperator
 ORCHESTRATOR_SOURCE_DIR := src/host_orchestrator
 OPERATOR_SOURCE_DIR := src/operator
-PROTOBUF_SOURCE_DIR := $(LIBOPERATOR_SOURCE_DIR)/protobuf
+PROTOBUF_SOURCE_DIR := $(LIBOPERATOR_SOURCE_DIR)/operator
 BUILD_WEBUI := ./build-webui.sh
 
 override_dh_auto_build:

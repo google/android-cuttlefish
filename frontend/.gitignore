@@ -1,4 +1,4 @@
 /src/host_orchestrator/host_orchestrator
 /src/cvdserver_bootstrapper/cvdserver_bootstrapper
 /src/operator/operator
-/src/liboperator/protobuf/proto_out
+/src/liboperator/operator/intermediate/proto/*.pb.go

@@ -1,13 +1,8 @@
-module github.com/google/android-cuttlefish/frontend/src/liboperator
+module github.com/google/android-cuttlefish/frontend/src/liboperator/proto
 
 go 1.21
 
-replace github.com/google/android-cuttlefish/frontend/src/liboperator/proto v0.0.0-unpublished => ./operator/intermediate/proto
-
 require (
-	github.com/google/android-cuttlefish/frontend/src/liboperator/proto v0.0.0-unpublished
-	github.com/google/uuid v1.3.0
-	github.com/gorilla/mux v1.8.0
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.31.0
 )
