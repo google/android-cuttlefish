@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #pragma once
-
-#include "host/libs/config/cuttlefish_config.h"
-
 #define CF_DEFAULTS_DYNAMIC_STRING ""
 #define CF_DEFAULTS_DYNAMIC_INT 0
 
@@ -55,10 +52,8 @@
 #define CF_DEFAULTS_RUN_FILE_DISCOVERY true
 #define CF_DEFAULTS_MEMORY_MB CF_DEFAULTS_DYNAMIC_INT
 #define CF_DEFAULTS_SHARE_SCHED_CORE false
-#define CF_DEFAULTS_TRACK_HOST_TOOLS_CRC false
 // TODO: defined twice, please remove redundant definitions
 #define CF_DEFAULTS_USE_OVERLAY true
-#define CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK "tap"
 
 // crosvm default parameters
 #define CF_DEFAULTS_CROSVM_BINARY HostBinaryPath("crosvm")
@@ -87,7 +82,7 @@
 #define CF_DEFAULTS_USE_RANDOM_SERIAL false
 #define CF_DEFAULTS_SERIAL_NUMBER \
   cuttlefish::ForCurrentInstance("CUTTLEFISHCVD")
-#define CF_DEFAULTS_SECURE_HALS "keymint,gatekeeper,oemlock"
+#define CF_DEFAULTS_SECURE_HALS "keymint,gatekeeper"
 #define CF_DEFAULTS_PROTECTED_VM false
 #define CF_DEFAULTS_MTE false
 
@@ -119,10 +114,7 @@
 #define CF_DEFAULTS_VBMETA_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VBMETA_SYSTEM_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VBMETA_VENDOR_DLKM_IMAGE CF_DEFAULTS_DYNAMIC_STRING
-#define CF_DEFAULTS_VBMETA_SYSTEM_DLKM_IMAGE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_VENDOR_BOOT_IMAGE CF_DEFAULTS_DYNAMIC_STRING
-#define CF_DEFAULTS_DEFAULT_TARGET_ZIP CF_DEFAULTS_DYNAMIC_STRING
-#define CF_DEFAULTS_SYSTEM_TARGET_ZIP CF_DEFAULTS_DYNAMIC_STRING
 
 // Policy default parameters
 #define CF_DEFAULTS_DATA_POLICY "use_existing"
@@ -145,9 +137,8 @@
 
 // Connectivity default parameters
 #define CF_DEFAULTS_RIL_DNS "8.8.8.8"
-// Default network handler
 #define CF_DEFAULTS_NETSIM false
-#define CF_DEFAULTS_NETSIM_BT true
+#define CF_DEFAULTS_NETSIM_BT false
 
 // Wifi default parameters
 #define CF_DEFAULTS_AP_KERNEL_IMAGE CF_DEFAULTS_DYNAMIC_STRING
@@ -161,8 +152,12 @@
 #define CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM 0
 
 // Bluetooth default parameters
+#define CF_DEFAULTS_BLUETOOTH_CONTROLLER_PROPERTIES_FILE \
+  "etc/rootcanal/data/controller_properties.json"
+#define CF_DEFAULTS_BLUETOOTH_DEFAULT_COMMANDS_FILE \
+  "etc/rootcanal/data/default_commands"
 #define CF_DEFAULTS_ENABLE_HOST_BLUETOOTH true
-#define CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM 0
+#define CF_DEFAULTS_ENABLE_ROOTCANAL_INSTANCE_NUM 0
 #define CF_DEFAULTS_ROOTCANAL_ARGS CF_DEFAULTS_DYNAMIC_STRING
 
 // Modem Simulator default parameters
