@@ -31,6 +31,6 @@ enum class SubprocessResult {
 // process if the subprocess check succeeded.
 SubprocessResult DoWithSubprocessCheck(
     const std::string& message, const std::function<void()>& function,
-    std::chrono::milliseconds timeout = std::chrono::milliseconds(5000));
+    std::chrono::milliseconds timeout = std::chrono::seconds(15));
 
 }  // namespace cuttlefish
