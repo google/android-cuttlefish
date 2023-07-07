@@ -36,16 +36,11 @@ void CrosvmBuilder::AddControlSocket(const std::string& control_socket) {
   // Store this value so it persists after std::move(this->Cmd())
   auto crosvm = command_.Executable();
   command_.SetStopper([crosvm, control_socket](Subprocess* proc) {
-    Command stop_cmd(crosvm);
-    stop_cmd.AddParameter("stop");
-    stop_cmd.AddParameter(control_socket);
-    if (stop_cmd.Start().Wait() == 0) {
-      return StopperResult::kStopSuccess;
-    }
     LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
-    return KillSubprocess(proc) == StopperResult::kStopSuccess
-               ? StopperResult::kStopCrash
-               : StopperResult::kStopFailure;
+    auto result = KillSubprocess(proc);
+    unlink(control_socket.c_str());
+    return result == StopperResult::kStopSuccess ? StopperResult::kStopCrash
+                                                 : StopperResult::kStopFailure;
   });
   command_.AddParameter("--socket=", control_socket);
 }
