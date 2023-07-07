@@ -21,5 +21,6 @@
 namespace cuttlefish {
 
 std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd);
+std::vector<std::string> GetFileListFromInotifyFd(int fd, uint32_t mask);
 
 }  // namespace cuttlefish
