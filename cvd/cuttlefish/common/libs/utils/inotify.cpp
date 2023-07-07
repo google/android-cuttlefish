@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-#include <limits.h>
 #include <sys/inotify.h>
-#include <string.h>
 #include <unistd.h>
-
 #include <string>
 #include <vector>
 
