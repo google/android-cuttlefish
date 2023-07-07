@@ -88,6 +88,11 @@ bool AdbDisconnect(const std::string& address) {
   return AdbSendMessage(MakeDisconnectMessage(address));
 }
 
+bool IsHexInteger(const std::string& str) {
+  return !str.empty() && std::all_of(str.begin(), str.end(),
+                                     [](char c) { return std::isxdigit(c); });
+}
+
 bool IsInteger(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(),
                                      [](char c) { return std::isdigit(c); });
@@ -96,7 +101,8 @@ bool IsInteger(const std::string& str) {
 // assumes the OKAY/FAIL status has already been read
 std::string RecvAdbResponse(const SharedFD& sock) {
   auto length_as_hex_str = RecvAll(sock, kAdbMessageLengthLength);
-  if (!IsInteger(length_as_hex_str)) {
+  if (!IsHexInteger(length_as_hex_str)) {
+    LOG(ERROR) << "invalid adb response prefix: " << length_as_hex_str;
     return {};
   }
   auto length = std::stoi(length_as_hex_str, nullptr, 16);
