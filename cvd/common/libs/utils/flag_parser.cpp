@@ -136,10 +136,6 @@ static bool LikelyFlag(const std::string& next_arg) {
   return android::base::StartsWith(next_arg, "-");
 }
 
-std::string BoolToString(bool val) {
-  return val ? "true" : "false";
-}
-
 Result<bool> ParseBool(const std::string& value, const std::string& name) {
   auto result = android::base::ParseBool(value);
   CF_EXPECT(result != android::base::ParseBoolResult::kError,
@@ -376,28 +372,30 @@ static Separated SeparateByEndOfOptionMark(std::vector<std::string> args) {
   };
 }
 
-static Result<void> ParseFlagsImpl(const std::vector<Flag>& flags,
-                                   std::vector<std::string>& args) {
+static bool ParseFlagsImpl(const std::vector<Flag>& flags,
+                           std::vector<std::string>& args) {
   for (const auto& flag : flags) {
-    CF_EXPECT(flag.Parse(args));
+    if (!flag.Parse(args)) {
+      return false;
+    }
   }
-  return {};
+  return true;
 }
 
-static Result<void> ParseFlagsImpl(const std::vector<Flag>& flags,
-                                   std::vector<std::string>&& args) {
+static bool ParseFlagsImpl(const std::vector<Flag>& flags,
+                           std::vector<std::string>&& args) {
   for (const auto& flag : flags) {
-    CF_EXPECT(flag.Parse(args));
+    if (!flag.Parse(args)) {
+      return false;
+    }
   }
-  return {};
+  return true;
 }
 
-Result<void> ParseFlags(const std::vector<Flag>& flags,
-                        std::vector<std::string>& args,
-                        const bool recognize_end_of_option_mark) {
+bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>& args,
+                const bool recognize_end_of_option_mark) {
   if (!recognize_end_of_option_mark) {
-    CF_EXPECT(ParseFlagsImpl(flags, args));
-    return {};
+    return ParseFlagsImpl(flags, args);
   }
   auto separated = SeparateByEndOfOptionMark(std::move(args));
   args.clear();
@@ -406,20 +404,16 @@ Result<void> ParseFlags(const std::vector<Flag>& flags,
   args.insert(args.end(),
               std::make_move_iterator(separated.args_after_mark.begin()),
               std::make_move_iterator(separated.args_after_mark.end()));
-  CF_EXPECT(std::move(result));
-  return {};
+  return result;
 }
 
-Result<void> ParseFlags(const std::vector<Flag>& flags,
-                        std::vector<std::string>&& args,
-                        const bool recognize_end_of_option_mark) {
+bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>&& args,
+                const bool recognize_end_of_option_mark) {
   if (!recognize_end_of_option_mark) {
-    CF_EXPECT(ParseFlagsImpl(flags, std::move(args)));
-    return {};
+    return ParseFlagsImpl(flags, std::move(args));
   }
   auto separated = SeparateByEndOfOptionMark(std::move(args));
-  CF_EXPECT(ParseFlagsImpl(flags, std::move(separated.args_before_mark)));
-  return {};
+  return ParseFlagsImpl(flags, std::move(separated.args_before_mark));
 }
 
 bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
@@ -606,7 +600,7 @@ Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
   return GflagsCompatBoolFlagBase(name)
-      .Getter([&value]() { return BoolToString(value); })
+      .Getter([&value]() { return fmt::format("{}", value); })
       .Setter([name, &value](const FlagMatch& match) {
         return GflagsCompatBoolFlagSetter(name, value, match);
       });
