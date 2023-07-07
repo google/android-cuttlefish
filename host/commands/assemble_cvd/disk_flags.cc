@@ -58,9 +58,6 @@ DEFINE_string(data_image, CF_DEFAULTS_DATA_IMAGE,
               "Location of the data partition image.");
 DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
               "Location of the super partition image.");
-DEFINE_string(misc_image, CF_DEFAULTS_MISC_IMAGE,
-              "Location of the misc partition image. If the image does not "
-              "exist, a blank new misc partition image is created.");
 DEFINE_string(misc_info_txt, "", "Location of the misc_info.txt file.");
 DEFINE_string(metadata_image, CF_DEFAULTS_METADATA_IMAGE,
               "Location of the metadata partition image "
@@ -161,7 +158,6 @@ Result<void> ResolveInstanceFiles() {
   std::string default_data_image = "";
   std::string default_metadata_image = "";
   std::string default_super_image = "";
-  std::string default_misc_image = "";
   std::string default_misc_info_txt = "";
   std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
@@ -193,7 +189,6 @@ Result<void> ResolveInstanceFiles() {
     default_data_image += comma_str + cur_system_image_dir + "/userdata.img";
     default_metadata_image += comma_str + cur_system_image_dir + "/metadata.img";
     default_super_image += comma_str + cur_system_image_dir + "/super.img";
-    default_misc_image += comma_str + cur_system_image_dir + "/misc.img";
     default_misc_info_txt +=
         comma_str + cur_system_image_dir + "/misc_info.txt";
     default_vendor_boot_image += comma_str + cur_system_image_dir + "/vendor_boot.img";
@@ -235,8 +230,6 @@ Result<void> ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("metadata_image", default_metadata_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("misc_info_txt", default_misc_info_txt.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -297,7 +290,7 @@ std::vector<ImagePartition> android_composite_disk_config(
 
   partitions.push_back(ImagePartition{
       .label = "misc",
-      .image_file_path = AbsolutePath(instance.new_misc_image()),
+      .image_file_path = AbsolutePath(instance.misc_image()),
       .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
@@ -737,8 +730,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_data_image, ",");
   std::vector<std::string> super_image =
       android::base::Split(FLAGS_super_image, ",");
-  std::vector<std::string> misc_image =
-      android::base::Split(FLAGS_misc_image, ",");
   std::vector<std::string> misc_info =
       android::base::Split(FLAGS_misc_info_txt, ",");
   std::vector<std::string> metadata_image =
@@ -794,7 +785,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::string cur_vendor_boot_image;
   std::string cur_super_image;
   std::string cur_metadata_image;
-  std::string cur_misc_image;
   int cur_blank_metadata_image_mb{};
   int value{};
   int instance_index = 0;
@@ -802,13 +792,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   for (const auto& num : instance_nums) {
     auto instance = config.ForInstance(num);
-    if (instance_index >= misc_image.size()) {
-      // legacy variable. Vectorize by copy [0] to all instances
-      cur_misc_image = misc_image[0];
-    } else {
-      cur_misc_image = misc_image[instance_index];
-    }
-    instance.set_misc_image(cur_misc_image);
     if (instance_index >= misc_info.size()) {
       instance.set_misc_info_txt(misc_info[0]);
     } else {
@@ -1017,13 +1000,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     instance.set_new_vbmeta_system_dlkm_image(
         const_instance.PerInstancePath("vbmeta_system_dlkm_repacked.img"));
 
-    if (FileHasContent(cur_misc_image)) {
-      instance.set_new_misc_image(cur_misc_image);
-    } else {
-      const std::string new_misc_image_path =
-          const_instance.PerInstancePath("misc.img");
-      instance.set_new_misc_image(new_misc_image_path);
-    }
     instance_index++;
   }
   return {};
