@@ -18,7 +18,7 @@
 # All components inherited here go to system image
 #
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_system.mk)
+$(call inherit-product, packages/services/Car/car_product/build/car_generic_system.mk)
 
 # FIXME: generic_system.mk sets 'PRODUCT_ENFORCE_RRO_TARGETS := *'
 #        but this breaks phone_car. So undo it here.
@@ -30,13 +30,12 @@ PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
 #
 # All components inherited here go to system_ext image
 #
-$(call inherit-product, $(SRC_TARGET_DIR)/product/base_system_ext.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_system_ext.mk)
+$(call inherit-product, packages/services/Car/car_product/build/car_system_ext.mk)
 
 #
 # All components inherited here go to product image
 #
-$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
+$(call inherit-product, packages/services/Car/car_product/build/car_product.mk)
 
 #
 # All components inherited here go to vendor image
