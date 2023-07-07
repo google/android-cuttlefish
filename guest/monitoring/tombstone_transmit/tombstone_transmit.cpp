@@ -33,26 +33,26 @@
 
 static const char TOMBSTONE_DIR[] = "/data/tombstones/";
 
-// returns a fd which when read from, provides inotify events when tombstones
-// are created
-static int new_tombstone_create_notifier(void) {
-  int file_create_notification_handle = inotify_init();
-  if (file_create_notification_handle == -1) {
+// returns a fd which when read from, provides inotify events when tombstone
+// creations are completed.
+static int new_tombstone_creation_complete_notifier(void) {
+  int file_close_notification_handle = inotify_init1(IN_CLOEXEC);
+  if (file_close_notification_handle == -1) {
     ALOGE("%s: inotify_init failure error: '%s' (%d)", __FUNCTION__,
       strerror(errno), errno);
     return -1;
   }
 
-  int watch_descriptor = inotify_add_watch(file_create_notification_handle,
-    TOMBSTONE_DIR, IN_CREATE);
+  int watch_descriptor = inotify_add_watch(file_close_notification_handle,
+                                           TOMBSTONE_DIR, IN_CLOSE_WRITE);
   if (watch_descriptor == -1) {
     ALOGE("%s: Could not add watch for '%s', error: '%s' (%d)", __FUNCTION__,
       TOMBSTONE_DIR, strerror(errno), errno);
-    close(file_create_notification_handle);
+    close(file_close_notification_handle);
     return -1;
   }
 
-  return file_create_notification_handle;
+  return file_close_notification_handle;
 }
 
 DEFINE_uint32(port,
@@ -103,8 +103,11 @@ int main(int argc, char** argv) {
     while(1) {sleep(1);};
   }
 
-  int file_create_notification_handle = new_tombstone_create_notifier();
-  if (file_create_notification_handle == -1) {return -1;}
+  int tombstone_create_notification_handle =
+      new_tombstone_creation_complete_notifier();
+  if (tombstone_create_notification_handle == -1) {
+    return -1;
+  }
 
   LOG(INFO) << "tombstone watcher successfully initialized";
 
@@ -113,9 +116,8 @@ int main(int argc, char** argv) {
 #endif
 
   while (true) {
-    std::vector<std::string> ts_names =
-        cuttlefish::GetCreatedFileListFromInotifyFd(
-            file_create_notification_handle);
+    std::vector<std::string> ts_names = cuttlefish::GetFileListFromInotifyFd(
+        tombstone_create_notification_handle, IN_CLOSE_WRITE);
     for (auto& ts_name : ts_names) {
       tombstone_send_to_host(std::string(TOMBSTONE_DIR) + ts_name);
     }
