@@ -167,22 +167,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_misc_info_txt(
     const std::string& misc_info) {
   (*Dictionary())[kMiscInfoTxt] = misc_info;
 }
-static constexpr char kMetadataImage[] = "metadata_image";
-std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
-  return (*Dictionary())[kMetadataImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_metadata_image(
-    const std::string& metadata_image) {
-  (*Dictionary())[kMetadataImage] = metadata_image;
-}
-static constexpr char kNewMetadataImage[] = "new_metadata_image";
-std::string CuttlefishConfig::InstanceSpecific::new_metadata_image() const {
-  return (*Dictionary())[kNewMetadataImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_new_metadata_image(
-    const std::string& new_metadata_image) {
-  (*Dictionary())[kNewMetadataImage] = new_metadata_image;
-}
 static constexpr char kVendorBootImage[] = "vendor_boot_image";
 std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image() const {
   return (*Dictionary())[kVendorBootImage].asString();
@@ -1050,6 +1034,10 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath("launcher.log"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
+  return AbsolutePath(PerInstancePath("metadata.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
