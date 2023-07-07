@@ -159,6 +159,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
 
+  crosvm_cmd.Cmd().AddParameter("--core-scheduling=false");
+
   if (instance.vhost_net()) {
     crosvm_cmd.Cmd().AddParameter("--vhost-net");
   }
