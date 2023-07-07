@@ -14,6 +14,7 @@ import /system/etc/init/logd.rc
 # continue despite that. Remove the import once we can rely on .rc files from
 # /system/etc/init getting loaded automatically.
 import /system/etc/init/logcatd.rc
+import /vendor/etc/init/seriallogging.rc
 
 # Cgroups are mounted right before early-init using list from /etc/cgroups.json
 on early-init
@@ -129,6 +130,8 @@ on post-fs
     restorecon /data/misc
 
     mkdir /data/misc/authfs 0700 root root
+
+    start seriallogging
 
 on late-fs && property:ro.debuggable=1
     # Ensure that tracefs has the correct permissions.

@@ -143,3 +143,5 @@ BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
 
 TARGET_SKIP_OTA_PACKAGE := true
 TARGET_SKIP_OTATOOLS_PACKAGE := true
+
+BOARD_VENDOR_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor/seriallogging
