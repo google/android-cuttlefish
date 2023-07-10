@@ -165,8 +165,10 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         state_(kBootStarted) {}
 
   ~CvdBootStateMachine() {
-    if (interrupt_fd_->IsOpen()) {
-      CHECK(interrupt_fd_->EventfdWrite(1) >= 0);
+    if (interrupt_fd_write_->IsOpen()) {
+      char c = 1;
+      CHECK_EQ(interrupt_fd_write_->Write(&c, 1), 1)
+          << interrupt_fd_write_->StrError();
     }
     if (boot_event_handler_.joinable()) {
       boot_event_handler_.join();
@@ -185,9 +187,9 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     };
   }
   Result<void> ResultSetup() override {
-    interrupt_fd_ = SharedFD::Event();
-    CF_EXPECTF(interrupt_fd_->IsOpen(), "Failed to open eventfd: {}",
-               interrupt_fd_->StrError());
+    CF_EXPECT(SharedFD::Pipe(&interrupt_fd_read_, &interrupt_fd_write_));
+    CF_EXPECT(interrupt_fd_read_->IsOpen(), interrupt_fd_read_->StrError());
+    CF_EXPECT(interrupt_fd_write_->IsOpen(), interrupt_fd_write_->StrError());
     fg_launcher_pipe_ = process_leader_.ForegroundLauncherPipe();
     if (FLAGS_reboot_notification_fd >= 0) {
       reboot_notification_ = SharedFD::Dup(FLAGS_reboot_notification_fd);
@@ -212,7 +214,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               .events = POLLIN | POLLHUP,
           },
           {
-              .fd = interrupt_fd_,
+              .fd = interrupt_fd_read_,
               .events = POLLIN | POLLHUP,
           }};
       int result = SharedFD::Poll(poll_shared_fd, -1);
@@ -291,7 +293,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
   std::thread boot_event_handler_;
   SharedFD fg_launcher_pipe_;
   SharedFD reboot_notification_;
-  SharedFD interrupt_fd_;
+  SharedFD interrupt_fd_read_;
+  SharedFD interrupt_fd_write_;
   int state_;
   static const int kBootStarted = 0;
   static const int kGuestBootCompleted = 1 << 0;
