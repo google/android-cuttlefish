@@ -194,7 +194,9 @@ Result<int> DoRemove(std::vector<std::string>& args) {
             return true;
           }),
   };
-  if (!ParseFlags(remove_displays_flags, args)) {
+  auto parse_res = ParseFlags(remove_displays_flags, args);
+  if (!parse_res.ok()) {
+    std::cerr << parse_res.error().Message() << std::endl;
     std::cerr << "Failed to parse flags. Usage:" << std::endl;
     std::cerr << kRemoveUsage << std::endl;
     return 1;
