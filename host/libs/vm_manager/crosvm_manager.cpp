@@ -77,17 +77,6 @@ bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd) {
   return success;
 }
 
-bool Stop() {
-  auto config = CuttlefishConfig::Get();
-  Command command(config->crosvm_binary());
-  command.AddParameter("stop");
-  command.AddParameter(GetControlSocketPath(*config));
-
-  auto process = command.Start();
-
-  return process.Wait() == 0;
-}
-
 }  // namespace
 
 bool CrosvmManager::IsSupported() {
@@ -150,13 +139,12 @@ std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
 std::vector<Command> CrosvmManager::StartCommands(
     const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
-    auto stopped = Stop();
-    if (stopped) {
-      return true;
-    }
+  Command crosvm_cmd(config.crosvm_binary(), [&config](Subprocess* proc) {
     LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
-    return KillSubprocess(proc);
+    auto result = KillSubprocess(proc);
+    auto control_socket = GetControlSocketPath(config);
+    unlink(control_socket.c_str());
+    return result;
   });
 
   int hvc_num = 0;
