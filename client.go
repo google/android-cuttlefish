@@ -199,7 +199,7 @@ func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observ
 }
 
 func (c *serviceImpl) createPolledConnection(host, device string) (*apiv1.NewConnReply, error) {
-	path := fmt.Sprintf("/hosts/%s/connections", host)
+	path := fmt.Sprintf("/hosts/%s/polled_connections", host)
 	req := apiv1.NewConnMsg{DeviceId: device}
 	var res apiv1.NewConnReply
 	if err := c.doRequest("POST", path, &req, &res); err != nil {
@@ -237,7 +237,7 @@ func (c *serviceImpl) webRTCPoll(sinkCh chan map[string]any, host, connID string
 	pollInterval := initialPollInterval
 	errCount := 0
 	for {
-		path := fmt.Sprintf("/hosts/%s/connections/%s/messages?start=%d", host, connID, start)
+		path := fmt.Sprintf("/hosts/%s/polled_connections/%s/messages?start=%d", host, connID, start)
 		var messages []map[string]any
 		if err := c.doRequest("GET", path, nil, &messages); err != nil {
 			fmt.Fprintf(c.ErrOut, "Error polling messages: %v\n", err)
@@ -286,7 +286,7 @@ func (c *serviceImpl) webRTCForward(srcCh chan any, host, connID string, stopPol
 			break
 		}
 		forwardMsg := apiv1.ForwardMsg{Payload: msg}
-		path := fmt.Sprintf("/hosts/%s/connections/%s/:forward", host, connID)
+		path := fmt.Sprintf("/hosts/%s/polled_connections/%s/:forward", host, connID)
 		i := 0
 		for ; i < maxConsecutiveErrors; i++ {
 			if err := c.doRequest("POST", path, &forwardMsg, nil); err != nil {
