@@ -129,8 +129,6 @@ std::ostream& operator<<(std::ostream&, const Flag&);
 
 std::vector<std::string> ArgsToVec(int argc, char** argv);
 
-std::string BoolToString(bool val);
-
 Result<bool> ParseBool(const std::string& value, const std::string& name);
 
 /* Handles a list of flags. Flags are matched in the order given in case two
