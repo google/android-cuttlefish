@@ -32,6 +32,7 @@ void CrosvmBuilder::ApplyProcessRestarter(const std::string& crosvm_binary,
                                           int exit_code) {
   command_.SetExecutableAndName(ProcessRestarterBinary());
   command_.AddParameter("-when_exited_with_code=", exit_code);
+  command_.AddParameter("-ignore_sigtstp");
   command_.AddParameter("--");
   command_.AddParameter(crosvm_binary);
   // Flag allows exit codes other than 0 or 1, must be before command argument
