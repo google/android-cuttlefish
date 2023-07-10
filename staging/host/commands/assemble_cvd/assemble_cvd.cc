@@ -420,10 +420,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       GflagsCompatFlag("helpxml", helpxml),
   };
   for (const auto& help_flag : help_flags) {
-    if (!help_flag.Parse(args)) {
-      LOG(ERROR) << "Failed to process help flag.";
-      return 1;
-    }
+    CF_EXPECT(help_flag.Parse(args), "Failed to process help flag");
   }
 
   fruit::Injector<> injector(FlagsComponent);
@@ -444,7 +441,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
     if (!FlagFeature::WriteGflagsHelpXml(flag_features, std::cout)) {
       LOG(ERROR) << "Failure in writing gflags helpxml output";
     }
-    std::exit(1);  // For parity with gflags
+    return 1;  // For parity with gflags
   }
   // TODO(schuffelen): Put in "unknown flag" guards after gflags is removed.
   // gflags either consumes all arguments that start with - or leaves all of
