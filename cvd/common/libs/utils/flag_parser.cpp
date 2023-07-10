@@ -372,30 +372,28 @@ static Separated SeparateByEndOfOptionMark(std::vector<std::string> args) {
   };
 }
 
-static bool ParseFlagsImpl(const std::vector<Flag>& flags,
-                           std::vector<std::string>& args) {
+static Result<void> ParseFlagsImpl(const std::vector<Flag>& flags,
+                                   std::vector<std::string>& args) {
   for (const auto& flag : flags) {
-    if (!flag.Parse(args)) {
-      return false;
-    }
+    CF_EXPECT(flag.Parse(args));
   }
-  return true;
+  return {};
 }
 
-static bool ParseFlagsImpl(const std::vector<Flag>& flags,
-                           std::vector<std::string>&& args) {
+static Result<void> ParseFlagsImpl(const std::vector<Flag>& flags,
+                                   std::vector<std::string>&& args) {
   for (const auto& flag : flags) {
-    if (!flag.Parse(args)) {
-      return false;
-    }
+    CF_EXPECT(flag.Parse(args));
   }
-  return true;
+  return {};
 }
 
-bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>& args,
-                const bool recognize_end_of_option_mark) {
+Result<void> ParseFlags(const std::vector<Flag>& flags,
+                        std::vector<std::string>& args,
+                        const bool recognize_end_of_option_mark) {
   if (!recognize_end_of_option_mark) {
-    return ParseFlagsImpl(flags, args);
+    CF_EXPECT(ParseFlagsImpl(flags, args));
+    return {};
   }
   auto separated = SeparateByEndOfOptionMark(std::move(args));
   args.clear();
@@ -404,16 +402,20 @@ bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>& args,
   args.insert(args.end(),
               std::make_move_iterator(separated.args_after_mark.begin()),
               std::make_move_iterator(separated.args_after_mark.end()));
-  return result;
+  CF_EXPECT(std::move(result));
+  return {};
 }
 
-bool ParseFlags(const std::vector<Flag>& flags, std::vector<std::string>&& args,
-                const bool recognize_end_of_option_mark) {
+Result<void> ParseFlags(const std::vector<Flag>& flags,
+                        std::vector<std::string>&& args,
+                        const bool recognize_end_of_option_mark) {
   if (!recognize_end_of_option_mark) {
-    return ParseFlagsImpl(flags, std::move(args));
+    CF_EXPECT(ParseFlagsImpl(flags, std::move(args)));
+    return {};
   }
   auto separated = SeparateByEndOfOptionMark(std::move(args));
-  return ParseFlagsImpl(flags, std::move(separated.args_before_mark));
+  CF_EXPECT(ParseFlagsImpl(flags, std::move(separated.args_before_mark)));
+  return {};
 }
 
 bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
