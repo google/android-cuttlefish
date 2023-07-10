@@ -194,8 +194,8 @@ FlagVaules GetFlagValues(int argc, char** argv) {
   flags.emplace_back(UnexpectedArgumentGuard());
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
-  auto parse_result = ParseFlags(flags, args);
-  CHECK(parse_result || helpxml) << "Could not process command line flags.";
+  auto parse_res = ParseFlags(flags, args);
+  CHECK(parse_res.ok() || helpxml) << "Could not process command line flags.";
 
   return {wait_for_launcher, clear_instance_dirs, helpxml};
 }
