@@ -30,6 +30,7 @@
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <google/protobuf/text_format.h>
@@ -118,14 +119,14 @@ DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "Note: overwriting an existing bootconfig argument "
               "requires ':=' instead of '='.");
 DEFINE_vec(guest_enforce_security,
-              cuttlefish::BoolToString(CF_DEFAULTS_GUEST_ENFORCE_SECURITY),
-            "Whether to run in enforcing mode (non permissive).");
+           fmt::format("{}", CF_DEFAULTS_GUEST_ENFORCE_SECURITY),
+           "Whether to run in enforcing mode (non permissive).");
 DEFINE_vec(memory_mb, std::to_string(CF_DEFAULTS_MEMORY_MB),
              "Total amount of memory available for guest, MB.");
 DEFINE_vec(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
-DEFINE_vec(use_random_serial, cuttlefish::BoolToString(CF_DEFAULTS_USE_RANDOM_SERIAL),
-            "Whether to use random serial for the device.");
+DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
+           "Whether to use random serial for the device.");
 DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
@@ -138,7 +139,7 @@ DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
               "Path to the GPU capture binary to use when capturing GPU traces"
               "(ngfx, renderdoc, etc)");
 DEFINE_vec(enable_gpu_udmabuf,
-           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_GPU_UDMABUF),
+           fmt::format("{}", CF_DEFAULTS_ENABLE_GPU_UDMABUF),
            "Use the udmabuf driver for zero-copy virtio-gpu");
 
 DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
@@ -180,7 +181,7 @@ DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
  * Also see SetDefaultFlagsForCrosvm()
  */
 DEFINE_vec(
-    enable_sandbox, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_SANDBOX),
+    enable_sandbox, fmt::format("{}", CF_DEFAULTS_ENABLE_SANDBOX),
     "Enable crosvm sandbox assuming /var/empty and seccomp directories exist. "
     "--noenable-sandbox will disable crosvm sandbox. "
     "When no option is given, sandbox is disabled if Cuttlefish is running "
@@ -193,8 +194,8 @@ DEFINE_string(
     seccomp_policy_dir, CF_DEFAULTS_SECCOMP_POLICY_DIR,
     "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
-DEFINE_vec(start_webrtc, cuttlefish::BoolToString(CF_DEFAULTS_START_WEBRTC),
-            "Whether to start the webrtc process.");
+DEFINE_vec(start_webrtc, fmt::format("{}", CF_DEFAULTS_START_WEBRTC),
+           "Whether to start the webrtc process.");
 
 DEFINE_vec(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
               "[Experimental] Path to WebRTC webpage assets.");
@@ -260,7 +261,7 @@ DEFINE_vec(daemon, CF_DEFAULTS_DAEMON?"true":"false",
 DEFINE_vec(setupwizard_mode, CF_DEFAULTS_SETUPWIZARD_MODE,
               "One of DISABLED,OPTIONAL,REQUIRED");
 DEFINE_vec(enable_bootanimation,
-           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_BOOTANIMATION),
+           fmt::format("{}", CF_DEFAULTS_ENABLE_BOOTANIMATION),
            "Whether to enable the boot animation.");
 
 DEFINE_string(qemu_binary_dir, CF_DEFAULTS_QEMU_BINARY_DIR,
@@ -277,12 +278,12 @@ DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
               "The debug flags gem5 uses to print debugs to file");
 
 DEFINE_vec(restart_subprocesses,
-              cuttlefish::BoolToString(CF_DEFAULTS_RESTART_SUBPROCESSES),
-              "Restart any crashed host process");
+           fmt::format("{}", CF_DEFAULTS_RESTART_SUBPROCESSES),
+           "Restart any crashed host process");
 DEFINE_vec(enable_vehicle_hal_grpc_server,
-            cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER),
-            "Enables the vehicle HAL "
-            "emulation gRPC server on the host");
+           fmt::format("{}", CF_DEFAULTS_ENABLE_VEHICLE_HAL_GRPC_SERVER),
+           "Enables the vehicle HAL "
+           "emulation gRPC server on the host");
 DEFINE_vec(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
 DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
               "Force booting into the given slot. If empty, "
@@ -300,13 +301,13 @@ DEFINE_string(report_anonymous_usage_stats,
               "statistics for metrics collection and analysis.");
 DEFINE_vec(ril_dns, CF_DEFAULTS_RIL_DNS,
               "DNS address of mobile network (RIL)");
-DEFINE_vec(kgdb, cuttlefish::BoolToString(CF_DEFAULTS_KGDB),
-            "Configure the virtual device for debugging the kernel "
-            "with kgdb/kdb. The kernel must have been built with "
-            "kgdb support, and serial console must be enabled.");
+DEFINE_vec(kgdb, fmt::format("{}", CF_DEFAULTS_KGDB),
+           "Configure the virtual device for debugging the kernel "
+           "with kgdb/kdb. The kernel must have been built with "
+           "kgdb support, and serial console must be enabled.");
 
-DEFINE_vec(start_gnss_proxy, cuttlefish::BoolToString(CF_DEFAULTS_START_GNSS_PROXY),
-            "Whether to start the gnss proxy.");
+DEFINE_vec(start_gnss_proxy, fmt::format("{}", CF_DEFAULTS_START_GNSS_PROXY),
+           "Whether to start the gnss proxy.");
 
 DEFINE_vec(gnss_file_path, CF_DEFAULTS_GNSS_FILE_PATH,
               "Local gnss raw measurement file path for the gnss proxy");
@@ -323,15 +324,14 @@ DEFINE_vec(modem_simulator_sim_type,
               std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE),
               "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
-DEFINE_vec(console, cuttlefish::BoolToString(CF_DEFAULTS_CONSOLE),
-              "Enable the serial console");
+DEFINE_vec(console, fmt::format("{}", CF_DEFAULTS_CONSOLE),
+           "Enable the serial console");
 
-DEFINE_vec(enable_kernel_log,
-           cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_KERNEL_LOG),
-            "Enable kernel console/dmesg logging");
+DEFINE_vec(enable_kernel_log, fmt::format("{}", CF_DEFAULTS_ENABLE_KERNEL_LOG),
+           "Enable kernel console/dmesg logging");
 
-DEFINE_vec(vhost_net, cuttlefish::BoolToString(CF_DEFAULTS_VHOST_NET),
-            "Enable vhost acceleration of networking");
+DEFINE_vec(vhost_net, fmt::format("{}", CF_DEFAULTS_VHOST_NET),
+           "Enable vhost acceleration of networking");
 
 DEFINE_string(
     vhost_user_mac80211_hwsim, CF_DEFAULTS_VHOST_USER_MAC80211_HWSIM,
@@ -347,11 +347,11 @@ DEFINE_string(ap_rootfs_image, CF_DEFAULTS_AP_ROOTFS_IMAGE,
 DEFINE_string(ap_kernel_image, CF_DEFAULTS_AP_KERNEL_IMAGE,
               "kernel image for AP instance");
 
-DEFINE_vec(record_screen, cuttlefish::BoolToString(CF_DEFAULTS_RECORD_SCREEN),
+DEFINE_vec(record_screen, fmt::format("{}", CF_DEFAULTS_RECORD_SCREEN),
            "Enable screen recording. "
            "Requires --start_webrtc");
 
-DEFINE_vec(smt, cuttlefish::BoolToString(CF_DEFAULTS_SMT),
+DEFINE_vec(smt, fmt::format("{}", CF_DEFAULTS_SMT),
            "Enable simultaneous multithreading (SMT/HT)");
 
 DEFINE_vec(
@@ -384,13 +384,13 @@ DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
 DEFINE_vec(use_sdcard, CF_DEFAULTS_USE_SDCARD?"true":"false",
             "Create blank SD-Card image and expose to guest");
 
-DEFINE_vec(protected_vm, cuttlefish::BoolToString(CF_DEFAULTS_PROTECTED_VM),
-            "Boot in Protected VM mode");
+DEFINE_vec(protected_vm, fmt::format("{}", CF_DEFAULTS_PROTECTED_VM),
+           "Boot in Protected VM mode");
 
-DEFINE_vec(mte, cuttlefish::BoolToString(CF_DEFAULTS_MTE), "Enable MTE");
+DEFINE_vec(mte, fmt::format("{}", CF_DEFAULTS_MTE), "Enable MTE");
 
-DEFINE_vec(enable_audio, cuttlefish::BoolToString(CF_DEFAULTS_ENABLE_AUDIO),
-            "Whether to play or capture audio");
+DEFINE_vec(enable_audio, fmt::format("{}", CF_DEFAULTS_ENABLE_AUDIO),
+           "Whether to play or capture audio");
 
 DEFINE_vec(camera_server_port, std::to_string(CF_DEFAULTS_CAMERA_SERVER_PORT),
               "camera vsock port");
@@ -1351,7 +1351,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
     } else {
-      default_enable_sandbox += BoolToString(enable_sandbox_vec[instance_index]);
+      default_enable_sandbox +=
+          fmt::format("{}", enable_sandbox_vec[instance_index]);
     }
     comma_str = ",";
 
@@ -1567,7 +1568,8 @@ Result<void> SetDefaultFlagsForQemu(Arch target_arch, std::map<std::string, std:
       // possible to run without any streamer by setting --start_webrtc=false.
       default_start_webrtc += "true";
     } else {
-      default_start_webrtc += BoolToString(start_webrtc_vec[instance_index]);
+      default_start_webrtc +=
+          fmt::format("{}", start_webrtc_vec[instance_index]);
     }
   }
   // This is the 1st place to set "start_webrtc" flag value
@@ -1639,14 +1641,15 @@ Result<void> SetDefaultFlagsForCrosvm(
       default_start_webrtc += ",";
     }
     default_bootloader += cur_bootloader;
-    default_enable_sandbox_str += BoolToString(default_enable_sandbox);
+    default_enable_sandbox_str += fmt::format("{}", default_enable_sandbox);
     if (!start_webrtc_vec[instance_index]) {
       // This makes WebRTC the default streamer unless the user requests
       // another via a --star_<streamer> flag, while at the same time it's
       // possible to run without any streamer by setting --start_webrtc=false.
       default_start_webrtc += "true";
     } else {
-      default_start_webrtc += BoolToString(start_webrtc_vec[instance_index]);
+      default_start_webrtc +=
+          fmt::format("{}", start_webrtc_vec[instance_index]);
     }
   }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
