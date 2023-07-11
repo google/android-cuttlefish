@@ -448,6 +448,9 @@ void RepackGem5BootImage(const std::string& initrd_path,
   final_rd.close();
 }
 
+// TODO(290586882) switch this function to rely on avb footers instead of
+// the os version field in the boot image header.
+// https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 Result<std::string> ReadAndroidVersionFromBootImage(
     const std::string& boot_image_path) {
   // temp dir path length is chosen to be larger than sun_path_length (108)
@@ -471,7 +474,12 @@ Result<std::string> ReadAndroidVersionFromBootImage(
 
   RecursivelyRemoveDirectory(unpack_dir);
   std::string os_version = ExtractValue(boot_params, "os version: ");
-  CF_EXPECT(os_version != "", "Could not extract os version from \"" + boot_image_path + "\"");
+  // if the OS version is "None", it wasn't set when the boot image was made.
+  if (os_version == "None") {
+    LOG(INFO) << "Could not extract os version from " << boot_image_path
+              << ". Defaulting to 0.0.0.";
+    return "0.0.0";
+  }
   std::regex re("[1-9][0-9]*.[0-9]+.[0-9]+");
   CF_EXPECT(std::regex_match(os_version, re), "Version string is not a valid version \"" + os_version + "\"");
   return os_version;
