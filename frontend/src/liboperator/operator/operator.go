@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -94,15 +95,9 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
 		deviceInfo(w, r, pool)
 	}).Methods("GET")
-	router.HandleFunc("/devices/{deviceId}/env/ls", func(w http.ResponseWriter, r *http.Request) {
-		controlEnvLs(w, r, pool)
-	}).Methods("GET")
-	router.HandleFunc("/devices/{deviceId}/env/ls/{serviceName}", func(w http.ResponseWriter, r *http.Request) {
-		controlEnvLs(w, r, pool)
-	}).Methods("GET")
-	router.HandleFunc("/devices/{deviceId}/env/ls/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
-		controlEnvLs(w, r, pool)
-	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/env/call/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
+		grpcCallUnaryMethod(w, r, pool)
+	}).Methods("POST")
 	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
 		openwrt(w, r, pool)
 	}).Methods("GET", "POST")
@@ -186,7 +181,7 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 	}
 }
 
-func controlEnvLs(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	vars := mux.Vars(r)
 	devId := vars["deviceId"]
 	dev := pool.GetDevice(devId)
@@ -195,19 +190,16 @@ func controlEnvLs(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		return
 	}
 
-	request := pb.ControlEnvProxyRequest{
-		Cmd: "ls",
-		Args: []string{},
-		Options: []string{},
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	serviceName := vars["serviceName"]
-	if serviceName != "" {
-		request.Args = append(request.Args, serviceName)
-		methodName := vars["methodName"]
-		if methodName != "" {
-			request.Args = append(request.Args, methodName)
-			request.Options = append(request.Options, "-l")
-		}
+
+	request := pb.CallUnaryMethodRequest{
+		ServiceName: vars["serviceName"],
+		MethodName: vars["methodName"],
+		TextFormattedProto: string(body),
 	}
 
 	devInfo := dev.info.(map[string]interface{})
@@ -219,20 +211,20 @@ func controlEnvLs(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
     conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
     if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
     }
     defer conn.Close()
 
     client := pb.NewControlEnvProxyServiceClient(conn)
-	feature, err := client.ControlEnvProxy(context.Background(), &request)
+	reply, err := client.CallUnaryMethod(context.Background(), &request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(feature.GrpcReply))
+	w.Write([]byte(reply.TextFormattedProto))
 }
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
