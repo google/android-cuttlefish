@@ -16,7 +16,6 @@
 
 /dev/block/by-name/frp  u:object_r:frp_block_device:s0
 
-/dev/block/pmem0  u:object_r:rebootescrow_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/hvc0  u:object_r:serial_device:s0
 /dev/hvc1  u:object_r:serial_device:s0
@@ -102,7 +101,6 @@
 /vendor/bin/hw/android\.hardware\.weaver-service.example u:object_r:hal_weaver_default_exec:s0
 /vendor/bin/hw/android\.hardware\.authsecret@1\.0-service  u:object_r:hal_authsecret_default_exec:s0
 /vendor/bin/hw/android\.hardware\.authsecret-service.example u:object_r:hal_authsecret_default_exec:s0
-/vendor/bin/hw/android\.hardware\.rebootescrow-service\.default  u:object_r:hal_rebootescrow_default_exec:s0
 /vendor/bin/dlkm_loader  u:object_r:dlkm_loader_exec:s0
 /vendor/bin/init\.wifi    u:object_r:init_wifi_sh_exec:s0
 
