@@ -14,3 +14,7 @@ allow hal_evs_default ion_device:chr_file r_file_perms;
 # Allow the driver to use automotive display proxy service
 binder_call(hal_evs_default, automotive_display_service_server);
 allow hal_evs_default fwk_automotive_display_hwservice:hwservice_manager find;
+
+# TODO(b/289381868): Remove below line when a vendor process can initialize
+#                    EGL without violating selinux rules.
+dontaudit hal_evs_default system_prop:file read;
