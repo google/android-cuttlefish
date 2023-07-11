@@ -211,7 +211,7 @@ Flag::FlagProcessResult Flag::Process(
   return FlagProcessResult::kFlagSkip;
 }
 
-bool Flag::Parse(std::vector<std::string>& arguments) const {
+Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
   for (int i = 0; i < arguments.size();) {
     std::string arg = arguments[i];
     std::optional<std::string> next_arg;
@@ -220,7 +220,7 @@ bool Flag::Parse(std::vector<std::string>& arguments) const {
     }
     auto result = Process(arg, next_arg);
     if (result == FlagProcessResult::kFlagError) {
-      return false;
+      return CF_ERR("Flag parsing error");
     } else if (result == FlagProcessResult::kFlagConsumed) {
       arguments.erase(arguments.begin() + i);
     } else if (result == FlagProcessResult::kFlagConsumedWithFollowing) {
@@ -231,14 +231,14 @@ bool Flag::Parse(std::vector<std::string>& arguments) const {
       i++;
       continue;
     } else {
-      LOG(ERROR) << "Unknown FlagProcessResult: " << (int)result;
-      return false;
+      return CF_ERRF("Unknown FlagProcessResult: {}", (int)result);
     }
   }
-  return true;
+  return {};
 }
-bool Flag::Parse(std::vector<std::string>&& arguments) const {
-  return Parse(static_cast<std::vector<std::string>&>(arguments));
+Result<void> Flag::Parse(std::vector<std::string>&& arguments) const {
+  CF_EXPECT(Parse(static_cast<std::vector<std::string>&>(arguments)));
+  return {};
 }
 
 bool Flag::HasAlias(const FlagAlias& test) const {
