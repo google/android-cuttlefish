@@ -73,6 +73,7 @@ $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/consumerir/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/identity/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/secure_element/device_vendor.mk)
 # TODO: FIXME: Enable swiftshader for graphics.
 #$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
 
