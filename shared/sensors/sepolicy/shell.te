@@ -1,0 +1,1 @@
+allow shell cuttlefish_sensor_injection_exec:file rx_file_perms;

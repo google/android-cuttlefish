@@ -71,10 +71,12 @@ BOARD_HAVE_BLUETOOTH := false
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/consumerir/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/identity/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/reboot_escrow/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/secure_element/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk)
 # TODO: FIXME: Enable swiftshader for graphics.
 #$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
 
@@ -82,7 +84,6 @@ $(call inherit-product, device/google/cuttlefish/shared/secure_element/device_ve
 # works.
 $(call inherit-product, build/make/target/product/angle_supported.mk)
 $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
-
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
