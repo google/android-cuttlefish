@@ -1,0 +1,5 @@
+# gnss hal can also read/write from hvc6 and hvc7
+# hvc6 for gnss raw measurement
+# hvc7 for fixed location
+/dev/hvc6  u:object_r:gnss_device:s0
+/dev/hvc7  u:object_r:gnss_device:s0
