@@ -55,6 +55,7 @@ class ValidateTapDevicesImpl : public ValidateTapDevices {
   }
 
   Result<void> TestTapDevices() {
+#ifdef __linux__
     auto taps = TapInterfacesInUse();
     auto wifi = instance_.wifi_tap_name();
     CF_EXPECTF(taps.count(wifi) == 0, "Device \"{}\" in use", wifi);
@@ -62,6 +63,9 @@ class ValidateTapDevicesImpl : public ValidateTapDevices {
     CF_EXPECTF(taps.count(mobile) == 0, "Device \"{}\" in use", mobile);
     auto eth = instance_.ethernet_tap_name();
     CF_EXPECTF(taps.count(eth) == 0, "Device \"{}\" in use", eth);
+#else
+    (void)instance_;
+#endif
     return {};
   }
 
