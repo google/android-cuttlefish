@@ -16,7 +16,10 @@
 
 #include "host/commands/run_cvd/process_monitor.h"
 
+#ifdef __linux__
 #include <sys/prctl.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -246,10 +249,12 @@ Result<void> ProcessMonitor::StartAndMonitorProcesses() {
 }
 
 Result<void> ProcessMonitor::MonitorRoutine() {
+#ifdef __linux__
   // Make this process a subreaper to reliably catch subprocess exits.
   // See https://man7.org/linux/man-pages/man2/prctl.2.html
   prctl(PR_SET_CHILD_SUBREAPER, 1);
   prctl(PR_SET_PDEATHSIG, SIGHUP);  // Die when parent dies
+#endif
 
   LOG(DEBUG) << "Monitoring subprocesses";
   StartSubprocesses(properties_.entries_);
