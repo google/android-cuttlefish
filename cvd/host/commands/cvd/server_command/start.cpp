@@ -380,6 +380,7 @@ Result<std::vector<std::string>> CvdStartCommandHandler::UpdateWebrtcDeviceId(
   // take --webrtc_device_id flag away
   new_args.emplace_back("--webrtc_device_id=" +
                         android::base::Join(device_name_list, ","));
+  new_args.emplace_back("--group_id=" + group_name);
   return new_args;
 }
 
