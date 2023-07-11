@@ -124,11 +124,32 @@ Flag Flag::Getter(std::function<std::string()> fn) && {
 }
 
 Flag& Flag::Setter(std::function<bool(const FlagMatch&)> fn) & {
-  setter_ = std::move(fn);
+  setter_ = [fn = std::move(fn)](const FlagMatch& match) -> Result<void> {
+    if (fn(match)) {
+      return {};
+    } else {
+      return CF_ERR("Flag setter failed");
+    }
+  };
   return *this;
 }
 Flag Flag::Setter(std::function<bool(const FlagMatch&)> fn) && {
-  setter_ = std::move(fn);
+  setter_ = [fn = std::move(fn)](const FlagMatch& match) -> Result<void> {
+    if (fn(match)) {
+      return {};
+    } else {
+      return CF_ERR("Flag setter failed");
+    }
+  };
+  return *this;
+}
+
+Flag& Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) & {
+  setter_ = std::move(setter);
+  return *this;
+}
+Flag Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) && {
+  setter_ = std::move(setter);
   return *this;
 }
 
@@ -146,11 +167,10 @@ Result<bool> ParseBool(const std::string& value, const std::string& name) {
   return false;
 }
 
-Flag::FlagProcessResult Flag::Process(
+Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   if (!setter_ && aliases_.size() > 0) {
-    LOG(ERROR) << "No setter for flag with alias " << aliases_[0].name;
-    return FlagProcessResult::kFlagError;
+    return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
   }
   for (auto& alias : aliases_) {
     switch (alias.mode) {
@@ -159,53 +179,36 @@ Flag::FlagProcessResult Flag::Process(
           continue;
         }
         if (!next_arg || LikelyFlag(*next_arg)) {
-          if (!(*setter_)({arg, ""})) {
-            LOG(ERROR) << "Processing \"" << arg << "\" failed";
-            return FlagProcessResult::kFlagError;
-          }
+          CF_EXPECTF((*setter_)({arg, ""}), "Processing \"{}\" failed", arg);
           return FlagProcessResult::kFlagConsumed;
         }
-        if (!(*setter_)({arg, *next_arg})) {
-          LOG(ERROR) << "Processing \"" << arg << "\" \"" << *next_arg
-                     << "\" failed";
-          return FlagProcessResult::kFlagError;
-        }
+        CF_EXPECTF((*setter_)({arg, *next_arg}),
+                   "Processing \"{}\" \"{}\" failed", arg, *next_arg);
         return FlagProcessResult::kFlagConsumedOnlyFollowing;
       case FlagAliasMode::kFlagConsumesFollowing:
         if (arg != alias.name) {
           continue;
         }
-        if (!next_arg) {
-          LOG(ERROR) << "Expected an argument after \"" << arg << "\"";
-          return FlagProcessResult::kFlagError;
-        }
-        if (!(*setter_)({arg, *next_arg})) {
-          LOG(ERROR) << "Processing \"" << arg << "\" \"" << *next_arg
-                     << "\" failed";
-          return FlagProcessResult::kFlagError;
-        }
+        CF_EXPECTF(next_arg.has_value(), "Expected an argument after \"{}\"",
+                   arg);
+        CF_EXPECTF((*setter_)({arg, *next_arg}),
+                   "Processing \"{}\" \"{}\" failed", arg, *next_arg);
         return FlagProcessResult::kFlagConsumedWithFollowing;
       case FlagAliasMode::kFlagExact:
         if (arg != alias.name) {
           continue;
         }
-        if (!(*setter_)({arg, arg})) {
-          LOG(ERROR) << "Processing \"" << arg << "\" failed";
-          return FlagProcessResult::kFlagError;
-        }
+        CF_EXPECTF((*setter_)({arg, arg}), "Processing \"{}\" failed", arg);
         return FlagProcessResult::kFlagConsumed;
       case FlagAliasMode::kFlagPrefix:
         if (!android::base::StartsWith(arg, alias.name)) {
           continue;
         }
-        if (!(*setter_)({alias.name, arg.substr(alias.name.size())})) {
-          LOG(ERROR) << "Processing \"" << arg << "\" failed";
-          return FlagProcessResult::kFlagError;
-        }
+        CF_EXPECTF((*setter_)({alias.name, arg.substr(alias.name.size())}),
+                   "Processing \"{}\" failed", arg);
         return FlagProcessResult::kFlagConsumed;
       default:
-        LOG(ERROR) << "Unknown flag alias mode: " << (int)alias.mode;
-        return FlagProcessResult::kFlagError;
+        return CF_ERRF("Unknown flag alias mode: {}", (int)alias.mode);
     }
   }
   return FlagProcessResult::kFlagSkip;
@@ -218,20 +221,19 @@ Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
     if (i < arguments.size() - 1) {
       next_arg = arguments[i + 1];
     }
-    auto result = Process(arg, next_arg);
-    if (result == FlagProcessResult::kFlagError) {
-      return CF_ERR("Flag parsing error");
-    } else if (result == FlagProcessResult::kFlagConsumed) {
-      arguments.erase(arguments.begin() + i);
-    } else if (result == FlagProcessResult::kFlagConsumedWithFollowing) {
-      arguments.erase(arguments.begin() + i, arguments.begin() + i + 2);
-    } else if (result == FlagProcessResult::kFlagConsumedOnlyFollowing) {
-      arguments.erase(arguments.begin() + i + 1, arguments.begin() + i + 2);
-    } else if (result == FlagProcessResult::kFlagSkip) {
-      i++;
-      continue;
-    } else {
-      return CF_ERRF("Unknown FlagProcessResult: {}", (int)result);
+    switch (CF_EXPECT(Process(arg, next_arg))) {
+      case FlagProcessResult::kFlagConsumed:
+        arguments.erase(arguments.begin() + i);
+        break;
+      case FlagProcessResult::kFlagConsumedWithFollowing:
+        arguments.erase(arguments.begin() + i, arguments.begin() + i + 2);
+        break;
+      case FlagProcessResult::kFlagConsumedOnlyFollowing:
+        arguments.erase(arguments.begin() + i + 1, arguments.begin() + i + 2);
+        break;
+      case FlagProcessResult::kFlagSkip:
+        i++;
+        break;
     }
   }
   return {};
