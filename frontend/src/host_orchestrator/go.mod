@@ -2,8 +2,6 @@ module github.com/google/android-cuttlefish/frontend/src/host_orchestrator
 
 go 1.21
 
-replace github.com/google/android-cuttlefish/frontend/src/liboperator/proto v0.0.0-unpublished => ../liboperator/operator/intermediate/proto
-
 replace github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-unpublished => ../liboperator
 
 require (
@@ -16,7 +14,6 @@ require (
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/android-cuttlefish/frontend/src/liboperator/proto v0.0.0-unpublished // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect

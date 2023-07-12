@@ -2,11 +2,7 @@ module github.com/google/android-cuttlefish/frontend/src/liboperator
 
 go 1.21
 
-replace github.com/google/android-cuttlefish/frontend/src/liboperator/proto v0.0.0-unpublished => ./operator/intermediate/proto
-
 require (
-	github.com/google/android-cuttlefish/frontend/src/liboperator/proto v0.0.0-unpublished
-	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.31.0
@@ -17,6 +13,5 @@ require (
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
-	google.golang.org/genproto v0.0.0-20230525234025-438c736192d0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230629202037-9506855d4529 // indirect
 )

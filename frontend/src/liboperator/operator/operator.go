@@ -30,7 +30,7 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
 
-	pb "github.com/google/android-cuttlefish/frontend/src/liboperator/proto"
+	pb "github.com/google/android-cuttlefish/frontend/src/liboperator/operator/intermediate/proto"
 	"google.golang.org/grpc"
 )
 
