@@ -76,18 +76,11 @@ class ConsoleForwarder {
     auto pty = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK);
     CHECK(pty >= 0) << "Failed to open a PTY: " << strerror(errno);
 
-    grantpt(pty);
-    unlockpt(pty);
+    CHECK_EQ(grantpt(pty), 0) << strerror(errno);
+    CHECK_EQ(unlockpt(pty), 0) << strerror(errno);
 
-    // Disable all echo modes on the PTY
-    struct termios termios;
-    CHECK(tcgetattr(pty, &termios) >= 0)
-        << "Failed to get terminal control: " << strerror(errno);
-
-    termios.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
-    termios.c_oflag &= ~(ONLCR);
-    CHECK(tcsetattr(pty, TCSANOW, &termios) >= 0)
-        << "Failed to set terminal control: " << strerror(errno);
+    int packet_mode_enabled = 1;
+    CHECK_EQ(ioctl(pty, TIOCPKT, &packet_mode_enabled), 0) << strerror(errno);
 
     auto pty_dev_name = ptsname(pty);
     CHECK(pty_dev_name != nullptr)
@@ -166,7 +159,10 @@ class ConsoleForwarder {
       read_set.Set(console_out_);
       read_set.Set(client_fd);
 
-      Select(&read_set, nullptr, nullptr, nullptr);
+      SharedFDSet error_set;
+      error_set.Set(client_fd);
+
+      Select(&read_set, nullptr, &error_set, nullptr);
       if (read_set.IsSet(console_out_)) {
         std::shared_ptr<std::vector<char>> buf_ptr = std::make_shared<std::vector<char>>(4096);
         auto bytes_read = console_out_->Read(buf_ptr->data(), buf_ptr->size());
@@ -180,7 +176,7 @@ class ConsoleForwarder {
         }
         EnqueueWrite(buf_ptr, kernel_log_);
       }
-      if (read_set.IsSet(client_fd)) {
+      if (read_set.IsSet(client_fd) || error_set.IsSet(client_fd)) {
         std::shared_ptr<std::vector<char>> buf_ptr = std::make_shared<std::vector<char>>(4096);
         auto bytes_read = client_fd->Read(buf_ptr->data(), buf_ptr->size());
         if (bytes_read <= 0) {
@@ -190,8 +186,11 @@ class ConsoleForwarder {
           LOG(ERROR) << "Error reading from client fd: "
                      << client_fd->StrError();
           client_fd->Close();
+        } else if (bytes_read == 1) {  // Control message
+          LOG(DEBUG) << "pty control message: " << (int)(*buf_ptr)[0];
         } else {
           buf_ptr->resize(bytes_read);
+          buf_ptr->erase(buf_ptr->begin());
           EnqueueWrite(buf_ptr, console_in_);
         }
       }
