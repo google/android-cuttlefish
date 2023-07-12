@@ -24,6 +24,19 @@
 
 namespace cuttlefish {
 
+class EsysLock {
+ public:
+  ESYS_CONTEXT* operator*() const { return esys_; }
+
+ private:
+  EsysLock(ESYS_CONTEXT*, std::unique_lock<std::mutex>);
+
+  ESYS_CONTEXT* esys_;
+  std::unique_lock<std::mutex> guard_;
+
+  friend class TpmResourceManager;
+};
+
 /**
  * Object slot manager for TPM memory. The TPM can only hold a fixed number of
  * objects at once. Some TPM operations are defined to consume slots either
@@ -54,13 +67,11 @@ class TpmResourceManager {
   TpmResourceManager(ESYS_CONTEXT* esys);
   ~TpmResourceManager();
 
-  ESYS_CONTEXT* Esys();
+  // Returns a wrapped ESYS_CONTEXT* that can be used with Esys calls that also
+  // holds a lock. Callers should not hold onto the inner ESYS_CONTEXT* past the
+  // lifetime of the lock.
+  EsysLock Esys();
   std::shared_ptr<ObjectSlot> ReserveSlot();
-
-  // Return a lock guard to serialize access to the TPM.
-  std::lock_guard<std::mutex> Guard() {
-    return std::lock_guard<std::mutex>(mu_);
-  }
 
  private:
   std::mutex mu_;
