@@ -117,7 +117,11 @@ uint64_t TpmKeymasterEnforcement::get_current_time_ms() const {
   return GetTickCount64();
 #else
   struct timespec tp;
+#ifdef __linux__
   int err = clock_gettime(CLOCK_BOOTTIME, &tp);
+#else
+  int err = clock_gettime(CLOCK_MONOTONIC, &tp);
+#endif
   if (err) {
     return 0;
   }
