@@ -1,2 +1,1 @@
 allow shell serial_device:chr_file { getattr ioctl read write };
-allow shell cuttlefish_sensor_injection_exec:file rx_file_perms;

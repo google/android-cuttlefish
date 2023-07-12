@@ -1,0 +1,1 @@
+allow dumpstate hal_sensors_default:binder call;
