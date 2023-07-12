@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef __linux__
 #include <sys/prctl.h>
+#endif
 
 #include <fstream>
 #include <iostream>
@@ -77,6 +79,7 @@ DEFINE_bool(track_host_tools_crc, CF_DEFAULTS_TRACK_HOST_TOOLS_CRC,
 
 namespace {
 
+#ifdef __linux__
 void ShareSchedCore() {
   // Address ~32% performance penalty introduced with CONFIG_SCHED_CORE=y.
   // Allowing co-scheduling reduces the performance penalty to ~16% on
@@ -99,6 +102,7 @@ void ShareSchedCore() {
     LOG(VERBOSE) << "Applied PR_SCHED_CORE co-scheduling policy";
   }
 }
+#endif
 
 std::string SubtoolPath(const std::string& subtool_base) {
   auto my_own_dir = android::base::GetExecutableDirectory();
@@ -341,7 +345,11 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineNonHelpFlags(&argc, &argv, false);
 
   if (FLAGS_share_sched_core) {
+#ifdef __linux__
     ShareSchedCore();
+#else
+    LOG(ERROR) << "--shared_sched_core is unsupported on this platform";
+#endif
   }
 
   forwarder.UpdateFlagDefaults();
