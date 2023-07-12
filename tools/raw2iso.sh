@@ -102,7 +102,7 @@ trap workdir_remove EXIT
 cat >"${workdir}"/grub.cfg <<EOF
 set timeout=0
 menuentry "Linux" {
-  linux /vmlinuz ${grub_cmdline} root=${grub_rootfs} init=/bin/sh
+  linux /vmlinuz ${grub_cmdline} root=${grub_rootfs}
   initrd /initrd.img
 }
 EOF
@@ -129,6 +129,24 @@ tar -C /media -Spxf \${SCRIPT_DIR}/rootfs.tar.lz4
 umount /media
 EOF
 chmod a+x "${workdir}"/install.sh
+
+cat >"${workdir}"/installer.service <<EOF
+[Unit]
+Description=Installer script starter
+After=getty.target
+Conflicts=serial-getty@ttyAMA0.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash
+StandardInput=tty-force
+StandardOutput=inherit
+StandardError=inherit
+
+[Install]
+WantedBy=graphical.target
+EOF
 
 # Back up the GPT so we can restore it when installing
 /sbin/sgdisk --backup="${workdir}"/gpt.img "${input}" >/dev/null
@@ -200,6 +218,8 @@ sudo cp "${workdir}"/rootfs.tar.lz4 "${workdir}"/install.sh "${mount}"/root
 echo -n "${rootfs_uuid}" | sudo tee "${mount}"/root/rootfs_uuid >/dev/null
 sudo cp "${workdir}"/eltorito.img "${mount}"/boot/grub
 sudo cp "${workdir}"/grub.cfg "${mount}"/boot/grub/${grub_arch}/grub.cfg
+sudo cp "${workdir}"/installer.service "${mount}"/usr/lib/systemd/system/installer.service
+sudo ln -f -r -s "${mount}"/usr/lib/systemd/system/installer.service "${mount}"/usr/lib/systemd/system/getty.target.wants/installer.service
 sudo chown root:root \
   "${mount}"/root/esp.img "${mount}"/root/gpt.img \
   "${mount}"/boot/grub/eltorito.img \
