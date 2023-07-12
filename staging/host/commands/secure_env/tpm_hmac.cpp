@@ -16,6 +16,7 @@
 #include "tpm_hmac.h"
 
 #include <android-base/logging.h>
+#include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
 
 #include "host/commands/secure_env/primary_key_builder.h"
@@ -40,15 +41,9 @@ static UniqueEsysPtr<TPM2B_DIGEST> OneshotHmac(
   buffer.size = data_size;
   memcpy(buffer.buffer, data, data_size);
   TPM2B_DIGEST* out_hmac = nullptr;
-  auto rc = Esys_HMAC(
-      resource_manager.Esys(),
-      key_handle,
-      auth.auth1(),
-      auth.auth2(),
-      auth.auth3(),
-      &buffer,
-      TPM2_ALG_NULL,
-      &out_hmac);
+  auto rc =
+      Esys_HMAC(*resource_manager.Esys(), key_handle, auth.auth1(),
+                auth.auth2(), auth.auth3(), &buffer, TPM2_ALG_NULL, &out_hmac);
   if (rc != TPM2_RC_SUCCESS) {
     LOG(ERROR) << "TPM2_HMAC failed: " << Tss2_RC_Decode(rc) << "(" << rc << ")";
     return {};
@@ -77,23 +72,18 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
     LOG(ERROR) << "No slots available";
     return {};
   }
-  auto rc = Esys_HMAC_Start(
-      resource_manager.Esys(),
-      key_handle,
-      key_auth.auth1(),
-      key_auth.auth2(),
-      key_auth.auth3(),
-      &sequence_auth,
-      TPM2_ALG_NULL,
-      &sequence_handle);
+  auto locked_esys = resource_manager.Esys();
+  auto rc = Esys_HMAC_Start(*locked_esys, key_handle, key_auth.auth1(),
+                            key_auth.auth2(), key_auth.auth3(), &sequence_auth,
+                            TPM2_ALG_NULL, &sequence_handle);
   if (rc != TPM2_RC_SUCCESS) {
     LOG(ERROR) << "TPM2_HMAC_Start failed: " << Tss2_RC_Decode(rc)
                << "(" << rc << ")";
     return {};
   }
   slot->set(sequence_handle);
-  rc = Esys_TR_SetAuth(
-      resource_manager.Esys(), sequence_handle, &sequence_auth);
+  rc = Esys_TR_SetAuth(*resource_manager.Esys(), sequence_handle,
+                       &sequence_auth);
   if (rc != TPM2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_TR_SetAuth failed: " << Tss2_RC_Decode(rc)
                << "(" << rc << ")";
@@ -105,13 +95,8 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
     buffer.size = TPM2_MAX_DIGEST_BUFFER;
     memcpy(buffer.buffer, &data[hashed], TPM2_MAX_DIGEST_BUFFER);
     hashed += TPM2_MAX_DIGEST_BUFFER;
-    rc = Esys_SequenceUpdate(
-        resource_manager.Esys(),
-        sequence_handle,
-        ESYS_TR_PASSWORD,
-        ESYS_TR_NONE,
-        ESYS_TR_NONE,
-        &buffer);
+    rc = Esys_SequenceUpdate(*locked_esys, sequence_handle, ESYS_TR_PASSWORD,
+                             ESYS_TR_NONE, ESYS_TR_NONE, &buffer);
     if (rc != TPM2_RC_SUCCESS) {
       LOG(ERROR) << "Esys_SequenceUpdate failed: " << Tss2_RC_Decode(rc)
                 << "(" << rc << ")";
@@ -122,16 +107,9 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
   memcpy(buffer.buffer, &data[hashed], buffer.size);
   TPM2B_DIGEST* out_hmac = nullptr;
   TPMT_TK_HASHCHECK* validation = nullptr;
-  rc = Esys_SequenceComplete(
-      resource_manager.Esys(),
-      sequence_handle,
-      ESYS_TR_PASSWORD,
-      ESYS_TR_NONE,
-      ESYS_TR_NONE,
-      &buffer,
-      TPM2_RH_OWNER,
-      &out_hmac,
-      &validation);
+  rc = Esys_SequenceComplete(*locked_esys, sequence_handle, ESYS_TR_PASSWORD,
+                             ESYS_TR_NONE, ESYS_TR_NONE, &buffer, TPM2_RH_OWNER,
+                             &out_hmac, &validation);
   if (rc != TPM2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_SequenceComplete failed: " << Tss2_RC_Decode(rc)
                << "(" << rc << ")";
@@ -155,7 +133,6 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     size_t data_size) {
   auto fn = data_size > TPM2_MAX_DIGEST_BUFFER ? SegmentedHmac : OneshotHmac;
 
-  auto with_tpm = resource_manager.Guard();
   return fn(resource_manager, key_handle, auth, data, data_size);
 }
 
