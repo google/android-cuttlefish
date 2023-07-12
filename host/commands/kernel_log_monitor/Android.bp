@@ -34,6 +34,11 @@ cc_binary {
         "libcuttlefish_host_config",
         "libgflags",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
     defaults: ["cuttlefish_host"],
 }
 
