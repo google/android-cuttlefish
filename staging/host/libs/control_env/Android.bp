@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,29 +17,23 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary_host {
-    name: "cvd_internal_env",
+cc_library_static {
+    name: "libcuttlefish_control_env",
     srcs: [
-        "main.cc",
+        "grpc_service_handler.cc",
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_device_config",
         "libcuttlefish_utils",
         "libgrpc++",
-        "libjsoncpp",
-        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "grpc_cli_libs",
         "libc++fs",
-        "libcuttlefish_control_env",
-        "libcuttlefish_host_config",
-        "libgflags",
     ],
     cflags: [
         "-Wno-unused-parameter",
     ],
     cpp_std: "c++17",
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_buildhost_only"],
 }
