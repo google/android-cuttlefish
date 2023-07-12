@@ -33,7 +33,6 @@ cc_binary {
         "libcuttlefish_utils",
         "libfruit",
         "libjsoncpp",
-        "libnl",
         "libxml2",
         "libz",
     ],
@@ -46,5 +45,15 @@ cc_binary {
         "assemble_cvd",
         "run_cvd",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+        linux: {
+            shared_libs: [
+                "libnl",
+            ],
+        },
+    },
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }
