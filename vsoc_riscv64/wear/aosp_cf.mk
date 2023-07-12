@@ -84,6 +84,7 @@ $(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.m
 # works.
 $(call inherit-product, build/make/target/product/angle_supported.mk)
 $(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 

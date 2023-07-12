@@ -23,12 +23,6 @@
 /dev/hvc3  u:object_r:keymaster_device:s0
 /dev/hvc4  u:object_r:gatekeeper_device:s0
 
-# gnss hal can also read/write from hvc6 and hvc7
-# hvc6 for gnss raw measurement
-# hvc7 for fixed location
-/dev/hvc6  u:object_r:gnss_device:s0
-/dev/hvc7  u:object_r:gnss_device:s0
-
 # hvc8 for confirmation UI
 /dev/hvc8  u:object_r:confirmationui_device:s0
 
@@ -62,7 +56,6 @@
 #############################
 # Vendor files
 #
-/vendor/bin/cuttlefish_sensor_injection   u:object_r:cuttlefish_sensor_injection_exec:s0
 /vendor/bin/mac80211_create_radios u:object_r:mac80211_create_radios_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
@@ -86,8 +79,6 @@
 /vendor/bin/hw/android\.hardware\.vibrator@1\.x-service\.example u:object_r:hal_vibrator_default_exec:s0
 /vendor/bin/hw/android\.hardware\.net\.nlinterceptor-service\.default  u:object_r:hal_nlinterceptor_default_exec:s0
 /vendor/bin/setup_wifi  u:object_r:setup_wifi_exec:s0
-/vendor/bin/hw/android\.hardware\.sensors-service\.example  u:object_r:hal_sensors_default_exec:s0
-/vendor/bin/hw/android\.hardware\.sensors@2\.1-service\.mock  u:object_r:hal_sensors_default_exec:s0
 /vendor/bin/hw/android\.hardware\.input\.classifier@1\.0-service.default  u:object_r:hal_input_classifier_default_exec:s0
 /vendor/bin/hw/android\.hardware\.input\.processor-service\.example  u:object_r:hal_input_processor_default_exec:s0
 /vendor/bin/hw/android\.hardware\.thermal@2\.0-service\.mock  u:object_r:hal_thermal_default_exec:s0
