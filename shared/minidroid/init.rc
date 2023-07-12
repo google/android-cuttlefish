@@ -166,6 +166,7 @@ on boot
     setprop sys.boot_completed 1
     setprop dev.bootcomplete 1
     write /dev/kmsg "VIRTUAL_DEVICE_BOOT_COMPLETED"
+    write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
 service tombstone_transmit /system/bin/tombstone_transmit.microdroid -cid 2 -port 2000 -remove_tombstones_after_transmitting
     user system
