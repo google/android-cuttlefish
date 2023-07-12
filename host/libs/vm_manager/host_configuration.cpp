@@ -29,8 +29,8 @@ namespace cuttlefish {
 namespace vm_manager {
 namespace {
 
-bool UserInGroup(const std::string& group,
-                 std::vector<std::string>* config_commands) {
+__attribute__((unused)) bool UserInGroup(
+    const std::string& group, std::vector<std::string>* config_commands) {
   if (!InGroup(group)) {
     LOG(ERROR) << "User must be a member of " << group;
     config_commands->push_back("# Add your user to the " + group + " group:");
@@ -42,7 +42,7 @@ bool UserInGroup(const std::string& group,
 
 constexpr std::pair<int,int> invalid_linux_version = std::pair<int,int>();
 
-std::pair<int,int> GetLinuxVersion() {
+__attribute__((unused)) std::pair<int, int> GetLinuxVersion() {
   struct utsname info;
   if (!uname(&info)) {
     char* digit = strtok(info.release, "+.-");
@@ -57,9 +57,9 @@ std::pair<int,int> GetLinuxVersion() {
   return invalid_linux_version;
 }
 
-bool LinuxVersionAtLeast(std::vector<std::string>* config_commands,
-                         const std::pair<int,int>& version,
-                         int major, int minor) {
+__attribute__((unused)) bool LinuxVersionAtLeast(
+    std::vector<std::string>* config_commands,
+    const std::pair<int, int>& version, int major, int minor) {
   if (version.first > major ||
       (version.first == major && version.second >= minor)) {
     return true;
@@ -76,6 +76,10 @@ bool LinuxVersionAtLeast(std::vector<std::string>* config_commands,
 } // namespace
 
 bool ValidateHostConfiguration(std::vector<std::string>* config_commands) {
+#ifdef __APPLE__
+  (void)config_commands;
+  return true;
+#else
   // if we can't detect the kernel version, just fail
   auto version = GetLinuxVersion();
   if (version == invalid_linux_version) {
@@ -100,6 +104,7 @@ bool ValidateHostConfiguration(std::vector<std::string>* config_commands) {
     auto linux_ver_4_8 = LinuxVersionAtLeast(config_commands, version, 4, 8);
     return in_cvdnetwork && in_kvm && linux_ver_4_8;
   }
+#endif
 }
 
 } // namespace vm_manager
