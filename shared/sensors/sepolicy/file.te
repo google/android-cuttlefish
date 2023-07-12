@@ -1,0 +1,2 @@
+# File types
+type sensors_hal_socket, file_type;
