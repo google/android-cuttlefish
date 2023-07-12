@@ -168,7 +168,7 @@ keymaster_error_t TpmKeymasterEnforcement::GetHmacSharingParameters(
     HmacSharingParameters* params) {
   if (!have_saved_params_) {
     saved_params_.seed = {};
-    TpmRandomSource random_source{resource_manager_.Esys()};
+    TpmRandomSource random_source{resource_manager_};
     auto rc = random_source.GenerateRandom(saved_params_.nonce,
                                            sizeof(saved_params_.nonce));
     if (rc != KM_ERROR_OK) {
