@@ -5,6 +5,9 @@ on: [pull_request, push]
 jobs:
   build-orchestrator:
     runs-on: ubuntu-latest
+    container:
+      # don't forget to also update debs-builder-docker/Dockerfile.debbld when updating this base image
+      image: debian@sha256:6a8bad8d20e1ca5ecbb7a314e51df6fca73fcce19af2778550671bdd1cbe7b43 # aka stable-20211011
     steps:
     - name: setup apt
       run: apt update -y && apt upgrade -y
