@@ -30,7 +30,7 @@ const (
 
 type RequestOfferMsg struct {
 	Type       string             `json:"type"`
-	ICEServers []webrtc.ICEServer `json:"ice_servers,omitempty`
+	ICEServers []webrtc.ICEServer `json:"ice_servers,omitempty"`
 }
 
 func NewRequestOfferMsg(servers []webrtc.ICEServer) *RequestOfferMsg {
