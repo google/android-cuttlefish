@@ -156,3 +156,42 @@ func TestListDevices(t *testing.T) {
 		t.Error("Empty pool listed devices")
 	}
 }
+
+func TestListDevicesByGroup(t *testing.T) {
+	// TODO:
+}
+
+func TestListGroups(t *testing.T) {
+	p := NewDevicePool()
+	d1 := NewDevice(nil, 0, `{"groupId": "group1"}`)
+	d2 := NewDevice(nil, 0, `{"groupId": "group2"}`)
+	d3 := NewDevice(nil, 0, `{"groupId": "group2"}`)
+	if len(p.GroupIds()) != 0 {
+		t.Error("Empty pool listed groups")
+	}
+
+	p.Register(d1, "d1")
+	p.Register(d2, "d2")
+	p.Register(d3, "d3")
+
+	if len(p.devices) != 3 {
+		t.Error("Error listing after 3 device registrations - expected 3 but ", len(p.devices))
+	}
+
+	if len(p.groups) != 2 {
+		t.Error("Error listing after 3 device registrations - expected 2 but ", len(p.groups))
+	}
+
+	p.Unregister("d1")
+
+	if len(p.groups) != 1 {
+		t.Error("Error listing after 3 device registrations, 1 unregistration - expected 1 but ", len(p.groups))
+	}
+
+	p.Unregister(("d2"))
+	if len(p.groups) != 1 {
+		t.Error("Error listing after 3 device registrations, 2 unregistrations - expected 1 but ", len(p.groups))
+	}
+
+	// TODO: write tests
+}

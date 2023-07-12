@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"sync"
 )
 
@@ -33,6 +34,10 @@ type Device struct {
 	clients    map[int]Client
 	// Historical client count, it doesn't decrease when clients unregister. It's used to generate client ids.
 	clientCount int
+}
+
+type Group struct {
+	deviceIds []string
 }
 
 func NewDevice(conn *JSONUnix, port int, info interface{}) *Device {
@@ -93,12 +98,37 @@ func (d *Device) ToClient(id int, msg interface{}) error {
 type DevicePool struct {
 	devicesMtx sync.Mutex
 	devices    map[string]*Device
+	groups     map[string]*Group
 }
 
 func NewDevicePool() *DevicePool {
 	return &DevicePool{
 		devices: make(map[string]*Device),
+		groups:  make(map[string]*Group),
 	}
+}
+
+func GetGroupId(info interface{}) (string, bool) {
+	deviceInfo, ok := info.(map[string]interface{})
+	if !ok {
+		return "", false
+	}
+
+	groupId, ok := deviceInfo["group_id"].(string)
+	if !ok {
+		return "", false
+	}
+
+	return groupId, true
+}
+
+func GetGroup(p *DevicePool, groupId string) *Group {
+	_, ok := p.groups[groupId]
+	if !ok {
+		p.groups[groupId] = &Group{}
+	}
+
+	return p.groups[groupId]
 }
 
 // Register a new device, returns false if a device with that id already exists
@@ -110,6 +140,18 @@ func (p *DevicePool) Register(d *Device, id string) bool {
 		return false
 	}
 	p.devices[id] = d
+
+	groupId, ok := GetGroupId(d.info)
+	if !ok {
+		return true
+	}
+
+	fmt.Fprintf(os.Stdout, "hello\n")
+	fmt.Fprintf(os.Stdout, "Registered device %s (group: %s)\n", id, groupId)
+
+	group := GetGroup(p, groupId)
+	group.deviceIds = append(group.deviceIds, id)
+
 	return true
 }
 
@@ -117,6 +159,22 @@ func (p *DevicePool) Unregister(id string) {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	if d, ok := p.devices[id]; ok {
+		groupId, ok := GetGroupId(d.info)
+		if ok {
+			group := GetGroup(p, groupId)
+			// filter device itself
+			for i, deviceId := range group.deviceIds {
+				if id == deviceId {
+					group.deviceIds = append(group.deviceIds[:i], group.deviceIds[(i+1):]...)
+					break
+				}
+			}
+
+			if len(group.deviceIds) == 0 {
+				delete(p.groups, groupId)
+			}
+		}
+
 		d.DisconnectClients()
 		delete(p.devices, id)
 	}
@@ -126,6 +184,16 @@ func (p *DevicePool) GetDevice(id string) *Device {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	return p.devices[id]
+}
+
+func (p *DevicePool) GroupIds() []string {
+	p.devicesMtx.Lock()
+	defer p.devicesMtx.Unlock()
+	ret := make([]string, 0, len(p.groups))
+	for key := range p.groups {
+		ret = append(ret, key)
+	}
+	return ret
 }
 
 // List the registered devices' ids

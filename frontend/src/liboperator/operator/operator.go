@@ -66,7 +66,9 @@ func SetupDeviceEndpoint(pool *DevicePool, config apiv1.InfraConfig, path string
 
 // Creates a router with handlers for the following endpoints:
 // GET  /infra_config
+// GET	/groups
 // GET  /devices
+// GET  /devices?groupId={groupId}
 // GET  /devices/{deviceId}
 // GET  /devices/{deviceId}/files/{path}
 // GET  /polled_connections
@@ -82,6 +84,9 @@ func CreateHttpHandlers(
 	maybeIntercept func(string) *string) *mux.Router {
 	router := mux.NewRouter()
 	// The path parameter needs to include the leading '/'
+	router.HandleFunc("/groups", func(w http.ResponseWriter, r *http.Request) {
+		listGroups(w, r, pool)
+	}).Methods("GET")
 	router.HandleFunc("/devices/{deviceId}/files{path:/.+}", func(w http.ResponseWriter, r *http.Request) {
 		deviceFiles(w, r, pool, maybeIntercept)
 	}).Methods("GET")
@@ -205,9 +210,30 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 
 
 // General client endpoints
+func listGroups(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	if err := ReplyJSONOK(w, pool.GroupIds()); err != nil {
+		log.Println(err)
+	}
+}
 
 func listDevices(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
-	if err := ReplyJSONOK(w, pool.DeviceIds()); err != nil {
+	groupId := r.URL.Query().Get("groupId")
+
+	if len(groupId) == 0 {
+		if err := ReplyJSONOK(w, pool.DeviceIds()); err != nil {
+			log.Println(err)
+		}
+		return
+	}
+
+	var ret []string
+
+	group, ok := pool.groups[groupId]
+	if ok {
+		ret = group.deviceIds
+	}
+
+	if err := ReplyJSONOK(w, ret); err != nil {
 		log.Println(err)
 	}
 }
