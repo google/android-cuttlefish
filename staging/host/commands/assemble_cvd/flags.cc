@@ -246,6 +246,8 @@ DEFINE_bool(verify_sig_server_certificate,
             "trusted signing authority (Disallow self signed certificates). "
             "This is ignored if an insecure server is configured.");
 
+DEFINE_string(group_id, "", "The group name of instance");
+
 DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
     "The for the device to register with the signaling server. Every "
@@ -1431,6 +1433,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     CF_EXPECT(Contains(num_to_webrtc_device_id_flag_map, num),
               "Error in looking up num to webrtc_device_id_flag_map");
     instance.set_webrtc_device_id(num_to_webrtc_device_id_flag_map[num]);
+
+    instance.set_group_id(FLAGS_group_id);
 
     if (!is_first_instance || !start_webrtc_vec[instance_index]) {
       // Only the first instance starts the signaling server or proxy
