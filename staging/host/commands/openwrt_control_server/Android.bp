@@ -73,6 +73,7 @@ filegroup {
     name: "OpenwrtControlServerProto",
     srcs: [
         "openwrt_control.proto",
+        ":libprotobuf-internal-protos",
     ],
 }
 
