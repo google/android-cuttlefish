@@ -67,10 +67,7 @@ class GnssGrpcProxyServer : public CommandSource {
 
   // SetupFeature
   std::string Name() const override { return "GnssGrpcProxyServer"; }
-  bool Enabled() const override {
-    return instance_.enable_gnss_grpc_proxy() &&
-           FileExists(GnssGrpcProxyBinary());
-  }
+  bool Enabled() const override { return instance_.enable_gnss_grpc_proxy(); }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
