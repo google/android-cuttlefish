@@ -50,7 +50,7 @@ impl Default for Derive {
     fn default() -> Self {
         // Use random data as an emulation of a hardware-backed key.
         let mut hbk = vec![0; 32];
-        let mut rng = BoringRng::default();
+        let mut rng = BoringRng;
         rng.fill_bytes(&mut hbk);
         Self { hbk }
     }

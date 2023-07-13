@@ -73,7 +73,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         supported_num_of_keys_in_csr: MINIMUM_SUPPORTED_KEYS_IN_CSR,
     };
 
-    let mut rng = BoringRng::default();
+    let mut rng = BoringRng;
     let sdd_mgr: Option<Box<dyn kmr_common::keyblob::SecureDeletionSecretManager>> =
         match sdd::HostSddManager::new(&mut rng) {
             Ok(v) => Some(Box::new(v)),
@@ -82,7 +82,7 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
                 None
             }
         };
-    let clock = clock::StdClock::default();
+    let clock = clock::StdClock;
     let rsa = BoringRsa::default();
     let ec = BoringEc::default();
     let hkdf: Box<dyn kmr_common::crypto::Hkdf> =
