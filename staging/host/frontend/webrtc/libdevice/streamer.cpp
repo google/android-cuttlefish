@@ -65,6 +65,7 @@ constexpr auto kControlPanelButtonDeviceStates = "device_states";
 constexpr auto kControlPanelButtonLidSwitchOpen = "lid_switch_open";
 constexpr auto kControlPanelButtonHingeAngleValue = "hinge_angle_value";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
+constexpr auto kGroupIdField = "group_id";
 
 constexpr int kRegistrationRetries = 3;
 constexpr int kRetryFirstIntervalMs = 1000;
@@ -393,6 +394,8 @@ void Streamer::Impl::OnOpen() {
       display[kIsTouchField] = true;
       displays.append(display);
     }
+
+    device_info[kGroupIdField] = config_.group_id;
     device_info[kDisplaysField] = displays;
     Json::Value audio_streams(Json::ValueType::arrayValue);
     for (auto& entry : audio_sources_) {
