@@ -69,3 +69,7 @@ func Reshape[K any](original any) (*K, error) {
 	}
 	return &ret, nil
 }
+
+type ICEConfig struct {
+	ICEServers []webrtc.ICEServer `json:"ice_servers,omitempty"`
+}
