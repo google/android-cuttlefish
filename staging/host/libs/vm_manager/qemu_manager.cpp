@@ -204,7 +204,11 @@ QemuManager::ConfigureBootDevices(int num_disks, bool have_gpu) {
     case Arch::Arm:
       return {{{"androidboot.boot_devices", "3f000000.pcie"}}};
     case Arch::Arm64:
+#ifdef __APPLE__
+      return {{{"androidboot.boot_devices", "3f000000.pcie"}}};
+#else
       return {{{"androidboot.boot_devices", "4010000000.pcie"}}};
+#endif
     case Arch::RiscV64:
       return {{{"androidboot.boot_devices", "soc/30000000.pci"}}};
     case Arch::X86:
@@ -356,7 +360,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-machine");
   std::string machine = is_x86 ? "pc,nvdimm=on" : "virt";
   if (IsHostCompatible(arch_)) {
+#ifdef __linux__
     machine += ",accel=kvm";
+#elif defined(__APPLE__)
+    machine += ",accel=hvf";
+#else
+#error "Unknown OS"
+#endif
     if (is_arm) {
       machine += ",gic-version=3";
     }
@@ -599,7 +609,11 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                           ",aio=threads", readonly);
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter(
+#ifdef __APPLE__
+        "virtio-blk-pci-non-transitional,drive=drive-virtio-disk", i,
+#else
         "virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
+#endif
         ",id=virtio-disk", i, (i == 0 ? ",bootindex=1" : ""));
     ++i;
   }
@@ -749,9 +763,11 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-msg");
   qemu_cmd.AddParameter("timestamp=on");
 
+#ifdef __linux__
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("vhost-vsock-pci-non-transitional,guest-cid=",
                         instance.vsock_guest_cid());
+#endif
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("AC97");
