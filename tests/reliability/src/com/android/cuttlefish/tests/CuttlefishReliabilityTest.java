@@ -15,27 +15,31 @@
  */
 package com.android.cuttlefish.tests;
 
+import static org.junit.Assert.fail;
+
 import com.android.tradefed.config.GlobalConfiguration;
 import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceManager;
-import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.FreeDeviceState;
 import com.android.tradefed.device.IDeviceManager;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.ITestDevice.RecoveryMode;
-import com.android.tradefed.device.cloud.GceAvdInfo;
-import com.android.tradefed.device.cloud.GceAvdInfo.GceStatus;
-import com.android.tradefed.device.cloud.GceManager;
-import com.android.tradefed.device.cloud.GceSshTunnelMonitor;
-import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
 import com.android.tradefed.device.RemoteAvdIDevice;
+import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
+import com.android.tradefed.device.connection.AdbSshConnection;
+import com.android.tradefed.device.connection.DefaultConnection;
+import com.android.tradefed.device.connection.DefaultConnection.ConnectionBuilder;
+import com.android.tradefed.log.ITestLogger;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.result.error.DeviceErrorIdentifier;
-import com.android.tradefed.result.error.ErrorIdentifier;
-import com.android.tradefed.result.proto.TestRecordProto.FailureStatus;
-import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestLogData;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.RunUtil;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +49,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import static org.junit.Assert.fail;
 
 /**
  * This test runs a reliability test for a Cuttlefish bringup by checking if the cuttlefish
@@ -79,6 +78,8 @@ public class CuttlefishReliabilityTest extends BaseHostJUnit4Test {
             description = "cuttlefish-max-error-ratio."
     )
     private double mMaxErrorRate = 0.02;
+
+    @Rule public TestLogData mLogs = new TestLogData();
 
     @Test
     public void testCuttlefishBootReliability() throws Exception {
@@ -125,90 +126,41 @@ public class CuttlefishReliabilityTest extends BaseHostJUnit4Test {
         }
     }
 
-    public void tryBringupCuttlefish() throws Exception {
-        GceAvdInfo gceAvd;
-        GceSshTunnelMonitor gceSshMonitor = null;
-        RemoteAndroidVirtualDevice device = null;
-        GceManager gceHandler = new GceManager(
-                        getDevice().getDeviceDescriptor(),
-                        getDevice().getOptions(),
-                        getBuild());
-        boolean cvdExceptionOccurred = false;
+    public class ForwardLogger implements ITestLogger {
+        @Override
+        public void testLog(String dataName, LogDataType dataType, InputStreamSource dataStream) {
+            mLogs.addTestLog(dataName, dataType, dataStream);
+        }
+    }
 
+    public void tryBringupCuttlefish() throws Exception {
         String initialSerial = String.format("gce-device-tmp-%s", UUID.randomUUID().toString());
         CLog.v("initialSerial: " + initialSerial);
-
+        // TODO: Modify to a temporary null-device to avoid creating placeholders
+        RemoteAvdIDevice idevice = new RemoteAvdIDevice(initialSerial);
+        IDeviceManager manager = GlobalConfiguration.getDeviceManagerInstance();
+        ((DeviceManager) manager).addAvailableDevice(idevice);
+        RemoteAndroidVirtualDevice device =
+                (RemoteAndroidVirtualDevice)
+                        manager.forceAllocateDevice(idevice.getSerialNumber());
+        OptionCopier.copyOptions(getDevice().getOptions(), device.getOptions());
         try {
-            // Attempts to lease a cuttlefish.
+            ConnectionBuilder builder = new ConnectionBuilder(
+                new RunUtil(), device, getBuild(), new ForwardLogger());
+            DefaultConnection con = DefaultConnection.createConnection(builder);
+            if (!(con instanceof AdbSshConnection)) {
+                throw new RuntimeException(
+                        String.format(
+                            "Something went wrong, excepted AdbSshConnection got %s", con));
+            }
+            AdbSshConnection connection = (AdbSshConnection) con;
             try {
-                gceAvd = gceHandler.startGce();
-            } catch (TargetSetupError e) {
-                CLog.e("Failed to lease device: %s", e.getMessage());
-                throw new DeviceNotAvailableException(
-                        "Exception during AVD GCE startup",
-                        e,
-                        initialSerial,
-                        e.getErrorId());
+                connection.initializeConnection();
+            } finally {
+                connection.tearDownConnection();
             }
-
-            // Checks if the GCE AVD failed to boot on the first attempt.
-            // If so, throws a DeviceNotAvailableException with details of the error.
-            if (GceStatus.BOOT_FAIL.equals(gceAvd.getStatus())) {
-                cvdExceptionOccurred = true;
-                throw new DeviceNotAvailableException(
-                        initialSerial + " first time boot error: " + gceAvd.getErrors());
-            }
-            RemoteAvdIDevice idevice = new RemoteAvdIDevice(initialSerial);
-            IDeviceManager manager = GlobalConfiguration.getDeviceManagerInstance();
-            ((DeviceManager) manager).addAvailableDevice(idevice);
-            device =
-                    (RemoteAndroidVirtualDevice)
-                            manager.forceAllocateDevice(idevice.getSerialNumber());
-            device.setAvdInfo(gceAvd);
-
-            // Manage the ssh bridge to the avd device.
-            gceSshMonitor = new GceSshTunnelMonitor(
-                            device, getBuild(), gceAvd.hostAndPort(), getDevice().getOptions());
-            gceSshMonitor.start();
-            device.setGceSshMonitor(gceSshMonitor);
-
-            try {
-                // check if device is online after GCE bringup, i.e. if adb is broken
-                CLog.v("Waiting for device %s online", device.getSerialNumber());
-                device.setRecoveryMode(RecoveryMode.ONLINE);
-                device.waitForDeviceOnline();
-                CLog.i(
-                        "Device is still online, version: %s",
-                        device.getProperty("ro.system.build.version.incremental"));
-            } catch (DeviceNotAvailableException dnae) {
-                String message = "AVD GCE not online after startup";
-                cvdExceptionOccurred = true;
-                throw new DeviceNotAvailableException(initialSerial + ": " + message);
-            }
-
-            // TODO: Invoke powerwash after the device boots up.
         } finally {
-            // Checks if an exception occurred during the cuttlefish boot process and attempts to
-            // collect logs if it did.
-            if (cvdExceptionOccurred) {
-                // TODO: Collect logs
-            }
-            // tear down cuttlefish
-            if (gceHandler != null) {
-                // Stop the bridge
-                if (gceSshMonitor != null) {
-                    gceSshMonitor.shutdown();
-                    try {
-                        gceSshMonitor.joinMonitor();
-                    } catch (InterruptedException e1) {
-                        CLog.i("Interrupted while waiting for GCE SSH monitor to shutdown.");
-                    }
-                }
-                gceHandler.shutdownGce();
-                gceHandler.cleanUp();
-            }
-            // This test is running in delegated-tf mode, there's no need for extra clean-up steps.
+            manager.freeDevice(device, FreeDeviceState.AVAILABLE);
         }
-        return;
     }
 }
