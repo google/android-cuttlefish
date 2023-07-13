@@ -19,7 +19,7 @@
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/hvc0  u:object_r:serial_device:s0
 /dev/hvc1  u:object_r:serial_device:s0
-/dev/hvc2  u:object_r:serial_device:s0
+# /dev/hvc2 handled in seriallogging/file_contexts
 /dev/hvc3  u:object_r:keymaster_device:s0
 /dev/hvc4  u:object_r:gatekeeper_device:s0
 
