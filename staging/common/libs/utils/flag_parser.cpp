@@ -432,15 +432,9 @@ bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
 Flag VerbosityFlag(android::base::LogSeverity& value) {
   return GflagsCompatFlag("verbosity")
       .Getter([&value]() { return FromSeverity(value); })
-      .Setter([&value](const FlagMatch& match) {
-        Result<android::base::LogSeverity> result = ToSeverity(match.value);
-        if (!result.ok()) {
-          LOG(ERROR) << "Unable to convert \"" << match.value
-                     << "\" to a LogSeverity";
-          return false;
-        }
-        value = result.value();
-        return true;
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(ToSeverity(match.value));
+        return {};
       })
       .Help("Used to set the verbosity level for logging.");
 }
@@ -461,31 +455,29 @@ Flag HelpFlag(const std::vector<Flag>& flags, const std::string& text) {
       .Setter(setter);
 }
 
-static bool GflagsCompatBoolFlagSetter(const std::string& name, bool& value,
-                                       const FlagMatch& match) {
+static Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
+                                               bool& value,
+                                               const FlagMatch& match) {
   const auto& key = match.key;
   if (key == "-" + name || key == "--" + name) {
     value = true;
-    return true;
+    return {};
   } else if (key == "-no" + name || key == "--no" + name) {
     value = false;
-    return true;
+    return {};
   } else if (key == "-" + name + "=" || key == "--" + name + "=") {
     if (match.value == "true") {
       value = true;
-      return true;
+      return {};
     } else if (match.value == "false") {
       value = false;
-      return true;
+      return {};
     } else {
-      LOG(ERROR) << "Unexpected boolean value \"" << match.value << "\""
-                 << " for \"" << name << "\"";
-      return false;
+      return CF_ERRF("Unexpected boolean value \"{}\" for \{}\"", match.value,
+                     name);
     }
   }
-  LOG(ERROR) << "Unexpected key \"" << match.key << "\""
-             << " for \"" << name << "\"";
-  return false;
+  return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
 }
 
 static Flag GflagsCompatBoolFlagBase(const std::string& name) {
@@ -501,14 +493,12 @@ static Flag GflagsCompatBoolFlagBase(const std::string& name) {
 Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
                  const std::string& text) {
   const std::string name = "helpxml";
-  auto setter = [name, &out, &value, &text, &flags](const FlagMatch& match) {
+  auto setter = [name, &out, &value, &text,
+                 &flags](const FlagMatch& match) -> Result<void> {
     bool print_xml = false;
-    auto parse_success = GflagsCompatBoolFlagSetter(name, print_xml, match);
-    if (!parse_success) {
-      return false;
-    }
+    CF_EXPECT(GflagsCompatBoolFlagSetter(name, print_xml, match));
     if (!print_xml) {
-      return true;
+      return {};
     }
     if (!text.empty()) {
       out << text << std::endl;
@@ -517,7 +507,7 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
     out << "<?xml version=\"1.0\"?>" << std::endl << "<AllFlags>" << std::endl;
     WriteGflagsCompatXml(flags, out);
     out << "</AllFlags>" << std::flush;
-    return false;
+    return CF_ERR("Requested early exit");
   };
   return GflagsCompatBoolFlagBase(name).Setter(setter);
 }
