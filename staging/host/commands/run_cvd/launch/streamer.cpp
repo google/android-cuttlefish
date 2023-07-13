@@ -255,6 +255,9 @@ class WebRtcServer : public virtual CommandSource,
     };
 
     Command webrtc(WebRtcBinary(), stopper);
+
+    webrtc.AddParameter("-group_id=", instance_.group_id());
+
     webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
     if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
