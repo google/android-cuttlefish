@@ -105,12 +105,6 @@ service metrics_helper /vendor/bin/metrics_helper
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server_type=vsock -server_vsock_port=6520 -client_type=tcp -client_tcp_host=0.0.0.0 -client_tcp_port=5555
     user root
 
-service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
-    class main
-    user logd
-    group root logd
-    seclabel u:r:logpersist:s0
-
 service bugreport /system/bin/dumpstate -d -p -z
     class main
     user root
