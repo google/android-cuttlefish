@@ -85,6 +85,10 @@ type ServiceOptions struct {
 	ChunkUploadBackOffOpts BackOffOpts
 }
 
+type ConnectWebRTCOpts struct {
+	LocalICEConfig *wclient.ICEConfig
+}
+
 type Service interface {
 	CreateHost(req *apiv1.CreateHostRequest) (*apiv1.HostInstance, error)
 
@@ -94,7 +98,7 @@ type Service interface {
 
 	GetInfraConfig(host string) (*apiv1.InfraConfig, error)
 
-	ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer) (*wclient.Connection, error)
+	ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 
 	CreateCVD(host string, req *hoapi.CreateCVDRequest) (*hoapi.CreateCVDResponse, error)
 
@@ -181,16 +185,21 @@ func (c *serviceImpl) GetInfraConfig(host string) (*apiv1.InfraConfig, error) {
 	return &res, nil
 }
 
-func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer) (*wclient.Connection, error) {
+func (c *serviceImpl) ConnectWebRTC(host, device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error) {
 	polledConn, err := c.createPolledConnection(host, device)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create polled connection: %w", err)
+	}
+	iceServers := []webrtc.ICEServer{}
+	if opts.LocalICEConfig != nil {
+		iceServers = append(iceServers, opts.LocalICEConfig.ICEServers...)
 	}
 	infraConfig, err := c.GetInfraConfig(host)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to obtain infra config: %w", err)
 	}
-	signaling := c.initHandling(host, polledConn.ConnId, infraConfig.IceServers)
+	iceServers = append(iceServers, asWebRTCICEServers(infraConfig.IceServers)...)
+	signaling := c.initHandling(host, polledConn.ConnId, iceServers)
 	conn, err := wclient.NewConnectionWithLogger(&signaling, observer, logger)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to device over webrtc: %w", err)
@@ -208,7 +217,7 @@ func (c *serviceImpl) createPolledConnection(host, device string) (*apiv1.NewCon
 	return &res, nil
 }
 
-func (c *serviceImpl) initHandling(host, connID string, iceServers []apiv1.IceServer) wclient.Signaling {
+func (c *serviceImpl) initHandling(host, connID string, iceServers []webrtc.ICEServer) wclient.Signaling {
 	sendCh := make(chan any)
 	recvCh := make(chan map[string]any)
 
@@ -220,9 +229,10 @@ func (c *serviceImpl) initHandling(host, connID string, iceServers []apiv1.IceSe
 	go c.webRTCForward(sendCh, host, connID, stopPollCh)
 
 	return wclient.Signaling{
-		SendCh:     sendCh,
-		RecvCh:     recvCh,
-		ICEServers: asWebRTCICEServers(iceServers),
+		SendCh:           sendCh,
+		RecvCh:           recvCh,
+		ICEServers:       iceServers,
+		ClientICEServers: iceServers,
 	}
 }
 
