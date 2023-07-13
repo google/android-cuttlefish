@@ -1360,6 +1360,15 @@ std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
   return (*Dictionary())[kWebrtcDeviceId].asString();
 }
 
+static constexpr char kGroupId[] = "group_id";
+void CuttlefishConfig::MutableInstanceSpecific::set_group_id(
+    const std::string& id) {
+  (*Dictionary())[kGroupId] = id;
+}
+std::string CuttlefishConfig::InstanceSpecific::group_id() const {
+  return (*Dictionary())[kGroupId].asString();
+}
+
 static constexpr char kStartSigServer[] = "webrtc_start_sig_server";
 void CuttlefishConfig::MutableInstanceSpecific::set_start_webrtc_signaling_server(bool start) {
   (*Dictionary())[kStartSigServer] = start;

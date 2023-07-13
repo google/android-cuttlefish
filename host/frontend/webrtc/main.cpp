@@ -63,6 +63,7 @@ DEFINE_bool(write_virtio_input, true,
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
 DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
 DEFINE_string(client_dir, "webrtc", "Location of the client files");
+DEFINE_string(group_id, "", "The group id of device");
 
 using cuttlefish::AudioHandler;
 using cuttlefish::CfConnectionObserverFactory;
@@ -185,6 +186,7 @@ int main(int argc, char** argv) {
   StreamerConfig streamer_config;
 
   streamer_config.device_id = instance.webrtc_device_id();
+  streamer_config.group_id = FLAGS_group_id;
   streamer_config.client_files_port = client_server->port();
   streamer_config.tcp_port_range = instance.webrtc_tcp_port_range();
   streamer_config.udp_port_range = instance.webrtc_udp_port_range();
