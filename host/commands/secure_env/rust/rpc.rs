@@ -140,10 +140,10 @@ impl<T: DeriveBytes> Artifacts<T> {
             }
             // TODO: generate the *same* key after reboot, by use of the TPM.
             CsrSigningAlgorithm::ES256 => {
-                ec.generate_nist_key(&mut BoringRng::default(), ec::NistCurve::P256, &[])
+                ec.generate_nist_key(&mut BoringRng, ec::NistCurve::P256, &[])
             }
             CsrSigningAlgorithm::ES384 => {
-                ec.generate_nist_key(&mut BoringRng::default(), ec::NistCurve::P384, &[])
+                ec.generate_nist_key(&mut BoringRng, ec::NistCurve::P384, &[])
             }
         }?;
         let (pub_cose_key, private_key) = match key_material {
