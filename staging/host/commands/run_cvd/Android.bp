@@ -71,6 +71,11 @@ cc_binary {
         "libcuttlefish_vm_manager",
         "libgflags",
     ],
+    required: [
+        "console_forwarder",
+        "kernel_log_monitor",
+        "logcat_receiver",
+    ],
     target: {
         darwin: {
             enabled: true,
