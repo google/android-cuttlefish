@@ -27,11 +27,8 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_device_config",
-        "libcuttlefish_device_config_proto",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libfruit",
         "libjsoncpp",
         "libxml2",
         "libz",
@@ -48,11 +45,6 @@ cc_binary {
     target: {
         darwin: {
             enabled: true,
-        },
-        linux: {
-            shared_libs: [
-                "libnl",
-            ],
         },
     },
     defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
