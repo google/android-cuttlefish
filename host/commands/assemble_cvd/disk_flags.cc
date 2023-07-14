@@ -775,7 +775,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::string cur_boot_image;
   std::string cur_vendor_boot_image;
   std::string cur_super_image;
-  int cur_blank_metadata_image_mb{};
   int value{};
   int instance_index = 0;
   auto instance_nums =
@@ -906,7 +905,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
           << blank_metadata_image_mb[instance_index];
     }
     instance.set_blank_metadata_image_mb(value);
-    cur_blank_metadata_image_mb = value;
 
     if (instance_index >= blank_sdcard_image_mb.size()) {
       CHECK(android::base::ParseInt(blank_sdcard_image_mb[0],
