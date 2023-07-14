@@ -14,4 +14,6 @@
 # limitations under the License.
 #
 
-BOARD_VENDOR_SEPOLICY_DIRS += device/google/cuttlefish/shared/graphics/sepolicy
+BOARD_VENDOR_SEPOLICY_DIRS += \
+	device/google/cuttlefish/shared/graphics/sepolicy \
+	external/minigbm/cros_gralloc/sepolicy
