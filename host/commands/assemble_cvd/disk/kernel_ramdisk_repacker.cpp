@@ -24,6 +24,7 @@
 #include "common/libs/utils/files.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/vendor_dlkm_utils.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/vm_manager/gem5_manager.h"
@@ -36,8 +37,9 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
  public:
   INJECT(KernelRamdiskRepackerImpl(
       const CuttlefishConfig& config,
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+      const CuttlefishConfig::InstanceSpecific& instance,
+      const Avb& avb))
+      : config_(config), instance_(instance), avb_(avb) {}
 
   // SetupFeature
   std::string Name() const override { return "KernelRamdiskRepacker"; }
@@ -134,11 +136,9 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
     // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
     // able to extract the ramdisk.img in a later stage and so this step must
     // not fail (..and the repacked kernel wouldn't be used anyway).
-    if (instance_.kernel_path().size() &&
-        config_.vm_manager() != Gem5Manager::name()) {
-      const std::string new_boot_image_path = instance_.new_boot_image();
-      CF_EXPECT(RepackBootImage(instance_.kernel_path(), instance_.boot_image(),
-                                new_boot_image_path, instance_.instance_dir()),
+    if (instance_.kernel_path().size() && config_.vm_manager() != Gem5Manager::name()) {
+      CF_EXPECT(RepackBootImage(avb_, instance_.kernel_path(), instance_.boot_image(),
+                                instance_.new_boot_image(), instance_.instance_dir()),
                 "Failed to regenerate the boot image with the new kernel");
     }
 
@@ -183,10 +183,12 @@ class KernelRamdiskRepackerImpl : public KernelRamdiskRepacker {
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  const Avb& avb_;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 const Avb>,
                  KernelRamdiskRepacker>
 KernelRamdiskRepackerComponent() {
   return fruit::createComponent()
