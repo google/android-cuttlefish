@@ -585,16 +585,10 @@ template <typename T>
 static Flag GflagsCompatNumericFlagGeneric(const std::string& name, T& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return std::to_string(value); })
-      .Setter([&value](const FlagMatch& match) {
-        auto parsed = ParseInteger<T>(match.value);
-        if (parsed) {
-          value = *parsed;
-          return true;
-        } else {
-          LOG(ERROR) << "Failed to parse \"" << match.value
-                     << "\" as an integer";
-          return false;
-        }
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECTF(ParseInteger<T>(match.value),
+                           "Failed to parse \"{}\" as an integer", match.value);
+        return {};
       });
 }
 
@@ -614,45 +608,37 @@ Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::string>& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return android::base::Join(value, ','); })
-      .Setter([&name, &value](const FlagMatch& match) {
-        if (match.value.empty()) {
-          LOG(ERROR) << "No values given for flag \"" << name << "\"";
-          return false;
-        }
+      .Setter([&name, &value](const FlagMatch& match) -> Result<void> {
+        CF_EXPECTF(!match.value.empty(), "No values given for flag \"{}\"",
+                   name);
         std::vector<std::string> str_vals =
             android::base::Split(match.value, ",");
         value = std::move(str_vals);
-        return true;
+        return {};
       });
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool default_value) {
+                      const bool def_val) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
-      .Setter([&name, &value, default_value](const FlagMatch& match) {
-        if (match.value.empty()) {
-          LOG(ERROR) << "No values given for flag \"" << name << "\"";
-          return false;
-        }
+      .Setter([&name, &value, def_val](const FlagMatch& match) -> Result<void> {
+        CF_EXPECTF(!match.value.empty(), "No values given for flag \"{}\"",
+                   name);
         std::vector<std::string> str_vals =
             android::base::Split(match.value, ",");
         value.clear();
-        value.reserve(str_vals.size());
+        std::vector<bool> output_vals;
+        output_vals.reserve(str_vals.size());
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {
-            value.push_back(default_value);
+            output_vals.push_back(def_val);
           } else {
-            Result<bool> result = ParseBool(str_val, name);
-            if (!result.ok()) {
-              value.clear();
-              LOG(ERROR) << result.error().Trace();
-              return false;
-            }
-            value.push_back(result.value());
+            output_vals.push_back(CF_EXPECT(ParseBool(str_val, name)));
           }
         }
-        return true;
+        value = output_vals;
+        return {};
       });
 }
 
