@@ -1,0 +1,5 @@
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
+    class main
+    user logd
+    group root logd
+    seclabel u:r:logpersist:s0
