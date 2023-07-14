@@ -16,6 +16,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import {ViewPaneComponent} from './view-pane/view-pane.component';
 import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
 import {KtdGridModule} from '@katoid/angular-grid-layout';
+import {RouterModule} from '@angular/router';
 
 @NgModule({
   declarations: [
@@ -37,6 +38,7 @@ import {KtdGridModule} from '@katoid/angular-grid-layout';
     FormsModule,
     HttpClientModule,
     KtdGridModule,
+    RouterModule.forRoot([{path: '**', component: AppComponent}]),
   ],
   providers: [],
   bootstrap: [AppComponent],
