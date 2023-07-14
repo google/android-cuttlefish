@@ -418,6 +418,10 @@ class CuttlefishConfig {
     // signaling server
     std::string webrtc_device_id() const;
 
+    // The group id the webrtc process should use to register with the
+    // signaling server
+    std::string group_id() const;
+
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
 
@@ -647,6 +651,7 @@ class CuttlefishConfig {
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
+    void set_group_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_wmediumd(bool start);
