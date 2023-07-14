@@ -709,8 +709,12 @@ std::string DefaultGuestImagePath(const std::string& file_name) {
 
 bool HostSupportsQemuCli() {
   static bool supported =
+#ifdef __linux__
       std::system(
           "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
+#else
+      true;
+#endif
   return supported;
 }
 
