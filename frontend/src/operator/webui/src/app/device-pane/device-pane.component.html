@@ -13,9 +13,9 @@
       <li *ngFor="let device of devices | async">
         <mat-slide-toggle
           color="primary"
-          [checked]="displaysService.isVisibleDevice(device)"
-          (change)="displaysService.toggleVisibility(device)"
-          >{{ device }}</mat-slide-toggle
+          [checked]="displaysService.isVisibleDevice(device.device_id)"
+          (change)="displaysService.toggleVisibility(device.device_id)"
+          >{{ device.device_id }}</mat-slide-toggle
         >
         <button mat-icon-button class="menu" title="menu">
           <mat-icon>more_vert</mat-icon>

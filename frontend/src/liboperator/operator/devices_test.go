@@ -156,3 +156,117 @@ func TestListDevices(t *testing.T) {
 		t.Error("Empty pool listed devices")
 	}
 }
+
+func MakeInfo(groupId string) map[string]interface{} {
+	return map[string]interface{}{
+		"group_id": groupId,
+	}
+}
+
+func TestListDevicesByGroup(t *testing.T) {
+	p := NewDevicePool()
+
+	foo_d1 := NewDevice(nil, 0, MakeInfo("foo"))
+	foo_d2 := NewDevice(nil, 0, MakeInfo("foo"))
+	bar_d1 := NewDevice(nil, 0, MakeInfo("bar"))
+	bar_d2 := NewDevice(nil, 0, MakeInfo("bar"))
+	bar_d3 := NewDevice(nil, 0, MakeInfo("bar"))
+
+	p.Register(foo_d1, "1")
+	p.Register(foo_d2, "2")
+	p.Register(bar_d1, "3")
+	p.Register(bar_d2, "4")
+	p.Register(bar_d3, "5")
+
+	if deviceCnt := len(p.GetDeviceInfoListByGroupId("foo")); deviceCnt != 2 {
+		t.Error("List of devices in group foo should have size of 2, but have ", deviceCnt)
+	}
+
+	if deviceCnt := len(p.GetDeviceInfoListByGroupId("bar")); deviceCnt != 3 {
+		t.Error("List of devices in group bar should have size of 3, but have ", deviceCnt)
+	}
+}
+
+func TestListDevicesEmpty(t *testing.T) {
+	p := NewDevicePool()
+	d := NewDevice(nil, 0, MakeInfo("foo"))
+	p.Register(d, "d")
+	p.Unregister("d")
+
+	if deviceCnt := len(p.GetDeviceInfoList()); deviceCnt != 0 {
+		t.Error("List of all devices should have size of 0, but have ", deviceCnt)
+	}
+
+	if deviceCnt := len(p.GetDeviceInfoListByGroupId("foo")); deviceCnt != 0 {
+		t.Error("List of devices in group foo should have size of 0, but have ", deviceCnt)
+	}
+}
+
+func TestGetGroupId(t *testing.T) {
+	info := MakeInfo("foo")
+	groupId := GetGroupId(info)
+
+	if groupId != "foo" {
+		t.Error("info should have group_id as foo")
+	}
+
+}
+
+func TestListGroups(t *testing.T) {
+	p := NewDevicePool()
+	d1 := NewDevice(nil, 0, MakeInfo("group1"))
+	d2 := NewDevice(nil, 0, MakeInfo("group2"))
+	d3 := NewDevice(nil, 0, MakeInfo("group2"))
+	if len(p.GroupIds()) != 0 {
+		t.Error("Empty pool listed groups")
+	}
+
+	p.Register(d1, "d1")
+	p.Register(d2, "d2")
+	p.Register(d3, "d3")
+
+	if len(p.devices) != 3 {
+		t.Error("Error listing after 3 device registrations - expected 3 but ", len(p.devices))
+	}
+
+	if len(p.groups) != 2 {
+		t.Error("Error listing after 3 device registrations - expected 2 but ", len(p.groups))
+	}
+
+	p.Unregister("d1")
+
+	if len(p.groups) != 1 {
+		t.Error("Error listing after 3 device registrations, 1 unregistration - expected 1 but ", len(p.groups))
+	}
+
+	p.Unregister(("d2"))
+	if len(p.groups) != 1 {
+		t.Error("Error listing after 3 device registrations, 2 unregistrations - expected 1 but ", len(p.groups))
+	}
+}
+
+func TestDefaultGroup(t *testing.T) {
+	p := NewDevicePool()
+	d1 := NewDevice(nil, 0, MakeInfo("foo"))
+	d2 := NewDevice(nil, 0, map[string]interface{}{})
+	d3 := NewDevice(nil, 0, "")
+	d4 := NewDevice(nil, 0, MakeInfo(""))
+
+	p.Register(d1, "d1")
+	p.Register(d2, "d2")
+	p.Register(d3, "d3")
+	p.Register(d4, "d4")
+
+	if len(p.devices) != 4 {
+		t.Error("Error listing after 4 device registrations - expected 4 but ", len(p.devices))
+	}
+
+	if defaultDeviceCount := len(p.groups[DEFAULT_GROUP_ID].deviceIds); defaultDeviceCount != 3 {
+		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
+	}
+
+	if defaultDeviceCount := len(p.GetDeviceInfoListByGroupId(DEFAULT_GROUP_ID)); defaultDeviceCount != 3 {
+		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
+	}
+
+}

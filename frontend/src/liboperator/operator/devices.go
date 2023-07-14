@@ -24,8 +24,9 @@ import (
 )
 
 type Device struct {
-	info interface{}
-	conn *JSONUnix
+	info    interface{}
+	groupId string
+	conn    *JSONUnix
 	// Reverse proxy to the client files
 	Proxy *httputil.ReverseProxy
 	// Synchronizes access to the client list and the client count
@@ -35,6 +36,17 @@ type Device struct {
 	clientCount int
 }
 
+type DeviceInfo struct {
+	DeviceId string `json:"device_id"`
+	GroupId  string `json:"group_id"`
+}
+
+type Group struct {
+	deviceIds []string
+}
+
+const DEFAULT_GROUP_ID = "default"
+
 func NewDevice(conn *JSONUnix, port int, info interface{}) *Device {
 	url, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	if err != nil {
@@ -43,7 +55,9 @@ func NewDevice(conn *JSONUnix, port int, info interface{}) *Device {
 		return nil
 	}
 	proxy := httputil.NewSingleHostReverseProxy(url)
-	return &Device{conn: conn, Proxy: proxy, info: info, clients: make(map[int]Client), clientCount: 0}
+
+	groupId := GetGroupId(info)
+	return &Device{conn: conn, Proxy: proxy, info: info, groupId: groupId, clients: make(map[int]Client), clientCount: 0}
 }
 
 // Sends a message to the device
@@ -93,12 +107,41 @@ func (d *Device) ToClient(id int, msg interface{}) error {
 type DevicePool struct {
 	devicesMtx sync.Mutex
 	devices    map[string]*Device
+	groups     map[string]*Group
 }
 
 func NewDevicePool() *DevicePool {
 	return &DevicePool{
 		devices: make(map[string]*Device),
+		groups:  make(map[string]*Group),
 	}
+}
+
+func GetGroupId(info interface{}) string {
+	deviceInfo, ok := info.(map[string]interface{})
+	if !ok {
+		return DEFAULT_GROUP_ID
+	}
+
+	groupId, ok := deviceInfo["group_id"].(string)
+	if !ok {
+		return DEFAULT_GROUP_ID
+	}
+
+	if len(groupId) == 0 {
+		return DEFAULT_GROUP_ID
+	}
+
+	return groupId
+}
+
+func GetGroup(p *DevicePool, groupId string) *Group {
+	_, ok := p.groups[groupId]
+	if !ok {
+		p.groups[groupId] = &Group{}
+	}
+
+	return p.groups[groupId]
 }
 
 // Register a new device, returns false if a device with that id already exists
@@ -110,6 +153,11 @@ func (p *DevicePool) Register(d *Device, id string) bool {
 		return false
 	}
 	p.devices[id] = d
+
+	groupId := GetGroupId(d.info)
+	group := GetGroup(p, groupId)
+	group.deviceIds = append(group.deviceIds, id)
+
 	return true
 }
 
@@ -117,6 +165,20 @@ func (p *DevicePool) Unregister(id string) {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	if d, ok := p.devices[id]; ok {
+		groupId := GetGroupId(d.info)
+		group := GetGroup(p, groupId)
+
+		for i, deviceId := range group.deviceIds {
+			if id == deviceId {
+				group.deviceIds = append(group.deviceIds[:i], group.deviceIds[(i+1):]...)
+				break
+			}
+		}
+
+		if len(group.deviceIds) == 0 {
+			delete(p.groups, groupId)
+		}
+
 		d.DisconnectClients()
 		delete(p.devices, id)
 	}
@@ -128,6 +190,17 @@ func (p *DevicePool) GetDevice(id string) *Device {
 	return p.devices[id]
 }
 
+// List the registered groups' ids
+func (p *DevicePool) GroupIds() []string {
+	p.devicesMtx.Lock()
+	defer p.devicesMtx.Unlock()
+	ret := make([]string, 0, len(p.groups))
+	for key := range p.groups {
+		ret = append(ret, key)
+	}
+	return ret
+}
+
 // List the registered devices' ids
 func (p *DevicePool) DeviceIds() []string {
 	p.devicesMtx.Lock()
@@ -135,6 +208,31 @@ func (p *DevicePool) DeviceIds() []string {
 	ret := make([]string, 0, len(p.devices))
 	for key := range p.devices {
 		ret = append(ret, key)
+	}
+	return ret
+}
+
+func (p *DevicePool) GetDeviceInfoList() []*DeviceInfo {
+	p.devicesMtx.Lock()
+	defer p.devicesMtx.Unlock()
+	ret := make([]*DeviceInfo, 0)
+	for id, device := range p.devices {
+		ret = append(ret, &DeviceInfo{DeviceId: id, GroupId: device.groupId})
+	}
+	return ret
+}
+
+func (p *DevicePool) GetDeviceInfoListByGroupId(groupId string) []*DeviceInfo {
+	p.devicesMtx.Lock()
+	defer p.devicesMtx.Unlock()
+	ret := make([]*DeviceInfo, 0)
+	group, ok := p.groups[groupId]
+	if !ok {
+		return ret
+	}
+
+	for _, deviceId := range group.deviceIds {
+		ret = append(ret, &DeviceInfo{DeviceId: deviceId, GroupId: groupId})
 	}
 	return ret
 }

@@ -7,7 +7,7 @@ import {DeviceService} from './device.service';
   providedIn: 'root',
 })
 export class DisplaysService {
-  private devices = this.deviceService.getDevices();
+  private devices = this.deviceService.getDevices(null);
 
   private visibleDeviceIds: string[] = [];
   private visibleDevicesChanged = new Subject<void>();
@@ -16,8 +16,8 @@ export class DisplaysService {
     this.devices,
     this.visibleDevicesChanged.pipe(mergeMap(() => this.devices))
   ).pipe(
-    map(deviceIds =>
-      deviceIds.map(deviceId => {
+    map(devices =>
+      devices.map(({device_id: deviceId}) => {
         return {id: deviceId, visible: this.isVisibleDevice(deviceId)};
       })
     )
