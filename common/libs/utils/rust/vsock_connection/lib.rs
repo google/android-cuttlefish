@@ -63,3 +63,6 @@ impl Default for VsockServerConnection {
         Self::new()
     }
 }
+
+unsafe impl Send for VsockServerConnection {}
+unsafe impl Sync for VsockServerConnection {}
