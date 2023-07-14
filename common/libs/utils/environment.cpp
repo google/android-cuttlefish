@@ -85,7 +85,7 @@ std::string HostArchStr() {
 
 Arch HostArch() {
   std::string arch_str = HostArchStr();
-  if (arch_str == "aarch64") {
+  if (arch_str == "aarch64" || arch_str == "arm64") {
     return Arch::Arm64;
   } else if (arch_str == "arm") {
     return Arch::Arm;

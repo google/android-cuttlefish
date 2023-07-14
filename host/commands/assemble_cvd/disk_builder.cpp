@@ -193,6 +193,9 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
 }
 
 Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
+#ifdef __APPLE__
+  return false;
+#else
   bool can_reuse_overlay = resume_if_possible_;
 
   CF_EXPECT(!overlay_path_.empty(), "Overlay path missing");
@@ -216,6 +219,7 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
   CreateQcowOverlay(crosvm_path_, composite_disk_path_, overlay_path_);
 
   return true;
+#endif
 }
 
 }  // namespace cuttlefish
