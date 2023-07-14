@@ -1,0 +1,2 @@
+# permit init to run logcat to send copy of logs over a serial port
+domain_trans(init, logcat_exec, logpersist)
