@@ -34,6 +34,9 @@ DISABLE_CAR_PRODUCT_VISUAL_OVERLAY := true
 PRODUCT_COPY_FILES += \
     packages/services/Car/car_product/car_ui_portrait/bootanimation/bootanimation.zip:system/media/bootanimation.zip
 
+# Disable shared system image checking
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false
+
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64_only/auto/aosp_cf.mk)
 
 PRODUCT_NAME := aosp_cf_x86_64_only_auto_portrait
