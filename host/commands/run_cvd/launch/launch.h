@@ -24,7 +24,6 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
-#include "host/commands/run_cvd/launch/wmediumd_server.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/custom_actions.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -72,7 +71,7 @@ MetricsServiceComponent();
 
 fruit::Component<fruit::Required<
     const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
-    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, WmediumdServer>>
+    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 OpenWrtComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
@@ -111,11 +110,6 @@ TombstoneReceiverComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 VehicleHalServerComponent();
-
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::EnvironmentSpecific,
-                                 LogTeeCreator, GrpcSocketCreator>>
-WmediumdServerComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>

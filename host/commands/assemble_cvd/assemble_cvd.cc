@@ -117,7 +117,8 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 #endif
 
 Result<void> CreateLegacySymlinks(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const CuttlefishConfig::EnvironmentSpecific& environment) {
   std::string log_files[] = {"kernel.log",
                              "launcher.log",
                              "logcat",
@@ -130,6 +131,19 @@ Result<void> CreateLegacySymlinks(
     auto log_target = "logs/" + log_file;  // Relative path
     if (symlink(log_target.c_str(), symlink_location.c_str()) != 0) {
       return CF_ERRNO("symlink(\"" << log_target << ", " << symlink_location
+                                   << ") failed");
+    }
+  }
+
+  // TODO(b/294157747) Remove hard-coded socket name when environment is able to
+  // launch without running instance.
+  std::string grpc_sockets[] = {"WmediumdServer.sock"};
+
+  for (const auto& socket_name : grpc_sockets) {
+    auto symlink_location = instance.PerInstanceGrpcSocketPath(socket_name);
+    auto socket_target = environment.PerEnvironmentGrpcSocketPath(socket_name);
+    if (symlink(socket_target.c_str(), symlink_location.c_str()) != 0) {
+      return CF_ERRNO("symlink(\"" << socket_target << ", " << symlink_location
                                    << ") failed");
     }
   }
@@ -157,7 +171,7 @@ Result<void> CreateLegacySymlinks(
   const auto mac80211_uds_name = "vhost_user_mac80211";
 
   const auto mac80211_uds_path =
-      instance.PerInstanceInternalUdsPath(mac80211_uds_name);
+      environment.PerEnvironmentUdsPath(mac80211_uds_name);
   const auto legacy_mac80211_uds_path =
       instance.PerInstanceInternalPath(mac80211_uds_name);
 
@@ -332,7 +346,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                                       defaultMode, defaultGroup));
 
       // TODO(schuffelen): Move this code somewhere better
-      CF_EXPECT(CreateLegacySymlinks(instance));
+      CF_EXPECT(CreateLegacySymlinks(instance, environment));
     }
     CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
   }

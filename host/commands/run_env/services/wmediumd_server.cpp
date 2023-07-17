@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wmediumd_server.h"
-
-#include "host/commands/run_cvd/launch/launch.h"
+#include "host/commands/run_env/services/wmediumd_server.h"
+#include "host/commands/run_env/services/services.h"
 
 #include <string>
 #include <unordered_set>
@@ -26,8 +25,8 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/launch/grpc_socket_creator.h"
-#include "host/commands/run_cvd/launch/log_tee_creator.h"
+#include "host/commands/run_env/services/env_grpc_socket_creator.h"
+#include "host/commands/run_env/services/env_log_tee_creator.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
@@ -71,7 +70,7 @@ class ValidateWmediumdService : public SetupFeature {
 
 WmediumdServer::WmediumdServer(
     const CuttlefishConfig::EnvironmentSpecific& environment,
-    LogTeeCreator& log_tee, GrpcSocketCreator& grpc_socket)
+    EnvLogTeeCreator& log_tee, EnvGrpcSocketCreator& grpc_socket)
     : environment_(environment), log_tee_(log_tee), grpc_socket_(grpc_socket) {}
 
 Result<std::vector<MonitorCommand>> WmediumdServer::Commands() {
@@ -131,10 +130,11 @@ Result<void> WmediumdServer::ResultSetup() {
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::EnvironmentSpecific,
-                                 LogTeeCreator, GrpcSocketCreator>>
+                                 EnvLogTeeCreator, EnvGrpcSocketCreator>>
 WmediumdServerComponent() {
   return fruit::createComponent()
       .addMultibinding<vm_manager::VmmDependencyCommand, WmediumdServer>()
+      .addMultibinding<StatusCheckCommandSource, WmediumdServer>()
       .addMultibinding<CommandSource, WmediumdServer>()
       .addMultibinding<SetupFeature, WmediumdServer>()
       .addMultibinding<SetupFeature, ValidateWmediumdService>();
