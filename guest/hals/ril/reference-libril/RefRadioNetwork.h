@@ -49,7 +49,11 @@ class RefRadioNetwork : public android::hardware::radio::compat::RadioNetwork {
     ::ndk::ScopedAStatus setN1ModeEnabled(int32_t serial, bool enable) override;
 
     ::ndk::ScopedAStatus setNullCipherAndIntegrityEnabled(int32_t serial, bool enabled) override;
+
     ::ndk::ScopedAStatus isNullCipherAndIntegrityEnabled(int32_t serial) override;
+
+    ::ndk::ScopedAStatus setSatellitePlmn(int32_t serial,
+                                          const std::vector<std::string>& plmnList) override;
 };
 
 }  // namespace cf::ril
