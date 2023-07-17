@@ -33,8 +33,8 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/disk/disk.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
+#include "host/commands/assemble_cvd/disk/disk.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/commands/assemble_cvd/vendor_dlkm_utils.h"
@@ -684,6 +684,7 @@ static fruit::Component<> DiskChangesComponent(
       .bindInstance(*fetcher)
       .bindInstance(*config)
       .bindInstance(*instance)
+      .install(CuttlefishKeyAvbComponent)
       .addMultibinding<SetupFeature, InitializeMetadataImage>()
       .install(KernelRamdiskRepackerComponent)
       .addMultibinding<SetupFeature, VbmetaEnforceMinimumSize>()
