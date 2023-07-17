@@ -15,8 +15,10 @@
 package operator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -26,8 +28,9 @@ import (
 	"strconv"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
-
 	"github.com/gorilla/mux"
+
+	"google.golang.org/grpc"
 )
 
 // Sets up a unix socket for devices to connect to and returns a function that listens on the
@@ -91,6 +94,9 @@ func CreateHttpHandlers(
 	router.HandleFunc("/devices/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
 		deviceInfo(w, r, pool)
 	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/env/call/{serviceName}/{methodName}", func(w http.ResponseWriter, r *http.Request) {
+		grpcCallUnaryMethod(w, r, pool)
+	}).Methods("POST")
 	router.HandleFunc("/devices/{deviceId}/openwrt{path:/.*}", func(w http.ResponseWriter, r *http.Request) {
 		openwrt(w, r, pool)
 	}).Methods("GET", "POST")
@@ -172,6 +178,52 @@ func deviceEndpoint(c *JSONUnix, pool *DevicePool, config apiv1.InfraConfig) {
 			ReplyError(c, fmt.Sprintln("Client disconnected: ", clientId))
 		}
 	}
+}
+
+func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	devId := vars["deviceId"]
+	dev := pool.GetDevice(devId)
+	if dev == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	request := CallUnaryMethodRequest{
+		ServiceName: vars["serviceName"],
+		MethodName: vars["methodName"],
+		TextFormattedProto: string(body),
+	}
+
+	devInfo := dev.info.(map[string]interface{})
+	serverPath, ok := devInfo["control_env_proxy_server_path"].(string)
+	if !ok {
+		http.Error(w, "ControlEnvProxyServer path not found", http.StatusNotFound)
+		return
+	}
+
+    conn, err := grpc.Dial("unix://" + serverPath, grpc.WithInsecure())
+    if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+    }
+    defer conn.Close()
+
+    client := NewControlEnvProxyServiceClient(conn)
+	reply, err := client.CallUnaryMethod(context.Background(), &request)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(reply.TextFormattedProto))
 }
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
