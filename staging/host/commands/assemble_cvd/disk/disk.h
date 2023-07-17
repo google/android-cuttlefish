@@ -19,6 +19,7 @@
 #include <fruit/fruit.h>
 
 #include "host/commands/assemble_cvd/boot_config.h"
+#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 
@@ -27,7 +28,8 @@ namespace cuttlefish {
 class KernelRamdiskRepacker : public SetupFeature {};
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 const Avb>,
                  KernelRamdiskRepacker>
 KernelRamdiskRepackerComponent();
 
