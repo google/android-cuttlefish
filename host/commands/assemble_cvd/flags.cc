@@ -165,6 +165,8 @@ DEFINE_int32(
     "with rootcanal_instance_num. Else, launch a new rootcanal instance");
 DEFINE_string(rootcanal_args, CF_DEFAULTS_ROOTCANAL_ARGS,
               "Space-separated list of rootcanal args. ");
+DEFINE_bool(enable_host_nfc, CF_DEFAULTS_ENABLE_HOST_NFC,
+            "Enable the NFC emulator in the host.");
 DEFINE_bool(enable_host_uwb, CF_DEFAULTS_ENABLE_HOST_UWB,
             "Enable Pica in the host.");
 DEFINE_int32(
@@ -989,6 +991,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
   tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
+
+  tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc);
 
   // These flags inform NetsimServer::ResultSetup which radios it owns.
   if (is_bt_netsim) {

@@ -22,6 +22,7 @@ cc_binary {
     srcs: [
         "boot_state_machine.cc",
         "launch/bluetooth_connector.cpp",
+        "launch/nfc_connector.cpp",
         "launch/uwb_connector.cpp",
         "launch/console_forwarder.cpp",
         "launch/control_env_proxy_server.cpp",

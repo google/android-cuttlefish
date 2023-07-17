@@ -154,6 +154,12 @@ class CuttlefishConfig {
   void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
   bool enable_host_bluetooth_connector() const;
 
+  void set_enable_host_nfc(bool enable_host_nfc);
+  bool enable_host_nfc() const;
+
+  void set_enable_host_nfc_connector(bool enable_host_nfc_connector);
+  bool enable_host_nfc_connector() const;
+
   void set_enable_wifi(const bool enable_wifi);
   bool enable_wifi() const;
 
