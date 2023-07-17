@@ -67,6 +67,7 @@ PRODUCT_PACKAGES += slim_excluded_hardware.prebuilt.xml
 endif
 
 $(call inherit-product, device/google/cuttlefish/shared/biometrics_face/device_vendor.mk)
+$(call inherit-product, device/google/cuttlefish/shared/biometrics_fingerprint/device_vendor.mk)
 BOARD_HAVE_BLUETOOTH := false
 $(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
