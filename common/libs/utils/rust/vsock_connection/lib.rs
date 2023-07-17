@@ -26,6 +26,8 @@ mod ffi {
         type VsockServerConnection;
         fn create_vsock_server_connection() -> UniquePtr<VsockServerConnection>;
         fn IsConnected(self: &VsockServerConnection) -> bool;
+        fn Connect(self: Pin<&mut VsockServerConnection>, port: u32, cid: u32) -> bool;
+        fn ServerShutdown(self: Pin<&mut VsockServerConnection>);
     }
 }
 
@@ -43,6 +45,16 @@ impl VsockServerConnection {
     /// Returns if the vsock server has an active connection or not.
     pub fn is_connected(&self) -> bool {
         self.instance.IsConnected()
+    }
+
+    /// Start connection using the provided port and cid.
+    pub fn connect(&mut self, port: u32, cid: u32) -> bool {
+        self.instance.pin_mut().Connect(port, cid)
+    }
+
+    /// Shutdown connection.
+    pub fn server_shutdown(&mut self) {
+        self.instance.pin_mut().ServerShutdown();
     }
 }
 
