@@ -1579,23 +1579,22 @@ static void requestDeviceIdentity(int request __unused, void *data __unused,
     int commas;
     int skip;
     int count = 4;
-
-    // Fixed values. TODO: Query modem
-    responseStr[0] ="358240051111110";
-    responseStr[1] =  "";
-    responseStr[2] = "77777777";
-    responseStr[3] = ""; // default empty for non-CDMA
+    char meid[14] = {0};
 
     err = at_send_command_numeric("AT+CGSN", &p_response);
     if (err < 0 || p_response->success == 0) {
         RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
         return;
-    } else {
-        if (TECH_BIT(sMdmInfo) == MDM_CDMA) {
-            responseStr[3] = p_response->p_intermediates->line;
-        } else {
-            responseStr[0] = p_response->p_intermediates->line;
-        }
+    }
+
+    responseStr[0] = p_response->p_intermediates->line;
+    responseStr[1] = "";
+    responseStr[2] = "77777777";
+    responseStr[3] = "";  // default empty for non-CDMA
+
+    if (TECH_BIT(sMdmInfo) == MDM_CDMA) {
+        strncpy(meid, responseStr[0], sizeof(meid));
+        responseStr[3] = meid;
     }
 
     RIL_onRequestComplete(t, RIL_E_SUCCESS, responseStr, count*sizeof(char*));
