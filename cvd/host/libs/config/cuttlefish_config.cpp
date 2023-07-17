@@ -300,6 +300,22 @@ bool CuttlefishConfig::enable_host_bluetooth_connector() const {
   return (*dictionary_)[kenableHostBluetoothConnector].asBool();
 }
 
+static constexpr char kenableHostNfc[] = "enable_host_nfc";
+void CuttlefishConfig::set_enable_host_nfc(bool enable_host_nfc) {
+  (*dictionary_)[kenableHostNfc] = enable_host_nfc;
+}
+bool CuttlefishConfig::enable_host_nfc() const {
+  return (*dictionary_)[kenableHostNfc].asBool();
+}
+
+static constexpr char kenableHostNfcConnector[] = "enable_host_nfc_connector";
+void CuttlefishConfig::set_enable_host_nfc_connector(bool enable_host_nfc) {
+  (*dictionary_)[kenableHostNfcConnector] = enable_host_nfc;
+}
+bool CuttlefishConfig::enable_host_nfc_connector() const {
+  return (*dictionary_)[kenableHostNfcConnector].asBool();
+}
+
 static constexpr char kenableWifi[] = "enable_wifi";
 void CuttlefishConfig::set_enable_wifi(bool enable_wifi) {
   (*dictionary_)[kenableWifi] = enable_wifi;
