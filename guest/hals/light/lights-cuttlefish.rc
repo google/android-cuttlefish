@@ -1,0 +1,5 @@
+service vendor.light-default /vendor/bin/hw/android.hardware.lights-service.cuttlefish
+    class hal
+    user nobody
+    group nobody
+    shutdown critical
