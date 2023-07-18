@@ -37,55 +37,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 # All components inherited here go to vendor image
 #
 LOCAL_PREFER_VENDOR_APEX := true
-#$(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
-
-# TODO: FIXME: Start workaround for phone/device_vendor.mk ####################
-PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
-SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
-
-$(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
-
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.software.sip.voip.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.sip.voip.xml \
-    frameworks/native/data/etc/handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/handheld_core_hardware.xml
-endif
-
-$(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
-$(call inherit-product, device/google/cuttlefish/shared/biometrics_face/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/biometrics_fingerprint/device_vendor.mk)
-BOARD_HAVE_BLUETOOTH := false
-$(call inherit-product, device/google/cuttlefish/shared/bluetooth/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/consumerir/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/gnss/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/graphics/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/identity/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/reboot_escrow/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/secure_element/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/sensors/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/swiftshader/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/telephony/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
-$(call inherit-product, device/google/cuttlefish/shared/device.mk)
-
-TARGET_PRODUCT_PROP := $(LOCAL_PATH)/../../shared/phone/product.prop
-
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
-
-endif
-
-# Runtime Resource Overlays
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.google.aosp_cf_phone.rros
-else
-PRODUCT_PACKAGES += cuttlefish_phone_overlay_frameworks_base_core
-endif
-
-TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/phone/android-info.txt
-# TODO: FIXME: Stop workaround for phone/device_vendor.mk #####################
+$(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
 # TODO: Nested virtualization support
 # $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
