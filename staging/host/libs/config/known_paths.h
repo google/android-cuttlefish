@@ -22,7 +22,6 @@ namespace cuttlefish {
 std::string AdbConnectorBinary();
 std::string ConfigServerBinary();
 std::string ConsoleForwarderBinary();
-std::string ControlEnvProxyServerBinary();
 std::string EchoServerBinary();
 std::string GnssGrpcProxyBinary();
 std::string KernelLogMonitorBinary();

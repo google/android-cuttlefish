@@ -32,10 +32,6 @@ std::string ConsoleForwarderBinary() {
   return HostBinaryPath("console_forwarder");
 }
 
-std::string ControlEnvProxyServerBinary() {
-  return HostBinaryPath("control_env_proxy_server");
-}
-
 std::string EchoServerBinary() { return HostBinaryPath("echo_server"); }
 
 std::string GnssGrpcProxyBinary() {
