@@ -7,7 +7,7 @@ import {DeviceService} from './device.service';
   providedIn: 'root',
 })
 export class DisplaysService {
-  private devices = this.deviceService.getDevices(null);
+  private devices = this.deviceService.getDevices();
 
   private visibleDeviceIds: string[] = [];
   private visibleDevicesChanged = new Subject<void>();

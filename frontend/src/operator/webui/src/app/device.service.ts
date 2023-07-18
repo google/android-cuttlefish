@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
-import {map, mergeMap, shareReplay} from 'rxjs/operators';
-import {Observable, Subject, merge} from 'rxjs';
+import {combineLatestWith, map, mergeMap, shareReplay} from 'rxjs/operators';
+import {Observable, Subject, BehaviorSubject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {DomSanitizer} from '@angular/platform-browser';
 import {DeviceInfo} from './device-info-interface';
@@ -10,16 +10,24 @@ import {DeviceItem} from './device-item.interface';
   providedIn: 'root',
 })
 export class DeviceService {
-  private refreshSubject = new Subject<void>();
+  private refreshSubject = new BehaviorSubject<void>(undefined);
+
+  private groupIdSubject = new Subject<string | null>();
+
+  private devices = this.groupIdSubject.pipe(
+    combineLatestWith(this.refreshSubject),
+    mergeMap(([groupId, _]) => {
+      if (groupId === null) {
+        return this.allDeviceFromServer;
+      }
+      return this.getDevicesByGroupIdFromServer(groupId);
+    }),
+    shareReplay(1)
+  );
 
   private allDeviceFromServer = this.httpClient
     .get<DeviceItem[]>('./devices')
     .pipe(map(this.sortDevices));
-
-  private allDevices = merge(
-    this.allDeviceFromServer,
-    this.refreshSubject.pipe(mergeMap(() => this.allDeviceFromServer))
-  ).pipe(shareReplay(1));
 
   private getDevicesByGroupIdFromServer(groupId: string) {
     return this.httpClient
@@ -42,18 +50,12 @@ export class DeviceService {
     this.refreshSubject.next();
   }
 
-  getDevices(groupId: string | null) {
-    if (groupId === null) {
-      return this.allDevices;
-    }
+  setGroupId(groupId: string | null) {
+    this.groupIdSubject.next(groupId);
+  }
 
-    const selectedDevicesFromServer =
-      this.getDevicesByGroupIdFromServer(groupId);
-
-    return merge(
-      selectedDevicesFromServer,
-      this.refreshSubject.pipe(mergeMap(() => selectedDevicesFromServer))
-    ).pipe(shareReplay(1));
+  getDevices() {
+    return this.devices;
   }
 
   getDeviceInfo(deviceId: string): Observable<DeviceInfo> {

@@ -1,9 +1,9 @@
 import {Component} from '@angular/core';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
-import {first, map, mergeMap} from 'rxjs/operators';
+import {filter, first, mergeMap} from 'rxjs/operators';
 import {GroupService} from '../group.service';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 
 @Component({
   selector: 'app-device-pane',
@@ -12,18 +12,26 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class DevicePaneComponent {
   groups = this.groupService.getGroups();
-  devices = this.activatedRoute.queryParams.pipe(
-    mergeMap(params => this.deviceService.getDevices(params['groupId'] ?? null))
-  );
+  devices = this.deviceService.getDevices();
 
   constructor(
     private deviceService: DeviceService,
     public displaysService: DisplaysService,
     private groupService: GroupService,
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        mergeMap(() => this.activatedRoute.queryParams)
+      )
+      .subscribe(params =>
+        this.deviceService.setGroupId(params['groupId'] ?? null)
+      );
+
     this.deviceService.refresh();
     this.groupService.refresh();
   }
