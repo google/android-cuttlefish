@@ -4,7 +4,7 @@
 // - protoc             v3.21.12
 // source: control_env_proxy.proto
 
-package operator
+package protobuf
 
 import (
 	context "context"
