@@ -29,7 +29,7 @@ import com.android.wmediumd.Wmediumd.SetPositionRequest;
 import com.android.wmediumd.Wmediumd.SetSnrRequest;
 import com.android.wmediumd.Wmediumd.StationInfo;
 
-import com.google.protobuf.TextFormat;
+import com.google.protobuf.util.JsonFormat;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,6 +50,9 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
     private static final String MESSAGE_OK = "Rpc succeeded with OK status\n";
 
     private ITestDevice testDevice;
+
+    private JsonFormat.Parser jsonParser;
+    private JsonFormat.Printer jsonPrinter;
 
     private int getRSSI() throws Exception {
         CommandResult wifiScanCommandResult = testDevice.executeShellV2Command("cmd wifi status");
@@ -110,13 +113,15 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
     }
 
     public ListStationsResponse listStations() throws Exception {
-        CommandResult result = runWmediumdCommand(10000, "ListStations", "");
+        CommandResult result = runWmediumdCommand(10000, "ListStations", "{}");
         CLog.i("stdout:%s", result.getStdout());
         CLog.i("stderr:%s", result.getStderr());
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
         Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
 
-        return TextFormat.parse(result.getStdout(), ListStationsResponse.class);
+        ListStationsResponse.Builder builder = ListStationsResponse.newBuilder();
+        jsonParser.merge(result.getStdout(), builder);
+        return builder.build();
     }
 
     private void setSnr(String macAddress1, String macAddress2, int snr) throws Exception {
@@ -126,7 +131,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
                         .setMacAddress2(macAddress2)
                         .setSnr(snr)
                         .build();
-        CommandResult result = runWmediumdCommand(10000, "SetSnr", request.toString());
+        CommandResult result = runWmediumdCommand(10000, "SetSnr", jsonPrinter.print(request));
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
         Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
@@ -139,7 +144,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
                         .setXPos(xPosition)
                         .setYPos(yPosition)
                         .build();
-        CommandResult result = runWmediumdCommand(10000, "SetPosition", request.toString());
+        CommandResult result = runWmediumdCommand(10000, "SetPosition", jsonPrinter.print(request));
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
         Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
@@ -147,7 +152,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
     private void setLci(String macAddress, String lci) throws Exception {
         SetLciRequest request =
                 SetLciRequest.newBuilder().setMacAddress(macAddress).setLci(lci).build();
-        CommandResult result = runWmediumdCommand(10000, "SetLci", request.toString());
+        CommandResult result = runWmediumdCommand(10000, "SetLci", jsonPrinter.print(request));
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
         Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
@@ -158,7 +163,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
                         .setMacAddress(macAddress)
                         .setCivicloc(civicloc)
                         .build();
-        CommandResult result = runWmediumdCommand(10000, "SetCivicloc", request.toString());
+        CommandResult result = runWmediumdCommand(10000, "SetCivicloc", jsonPrinter.print(request));
         Assert.assertEquals(CommandStatus.SUCCESS, result.getStatus());
         Assert.assertTrue(result.getStderr().contains(MESSAGE_OK));
     }
@@ -166,6 +171,8 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
     @Before
     public void setUp() throws Exception {
         this.testDevice = getDevice();
+        this.jsonParser = JsonFormat.parser();
+        this.jsonPrinter = JsonFormat.printer();
     }
 
     @Test(timeout = 60 * 1000)
