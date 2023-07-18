@@ -1,0 +1,18 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+rust_binary {
+    name: "android.hardware.lights-service.cuttlefish",
+    relative_install_path: "hw",
+    init_rc: ["lights-cuttlefish.rc"],
+    vintf_fragments: ["lights-cuttlefish.xml"],
+    vendor: true,
+    rustlibs: [
+        "liblogger",
+        "liblog_rust",
+        "libbinder_rs",
+        "android.hardware.light-V2-rust",
+    ],
+    srcs: [ "main.rs" ],
+}
