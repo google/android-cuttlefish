@@ -1,0 +1,2 @@
+# Suppress isolated_app warning while running stock webview-browser
+dontaudit isolated_app content_capture_service:service_manager find;
