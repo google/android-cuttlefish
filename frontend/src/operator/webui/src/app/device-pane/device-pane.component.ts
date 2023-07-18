@@ -4,7 +4,6 @@ import {DisplaysService} from '../displays.service';
 import {first, map, mergeMap} from 'rxjs/operators';
 import {GroupService} from '../group.service';
 import {ActivatedRoute} from '@angular/router';
-import {DeviceInfo} from '../device-info-interface';
 
 @Component({
   selector: 'app-device-pane',

@@ -3,11 +3,8 @@ import {map, mergeMap, shareReplay} from 'rxjs/operators';
 import {Observable, Subject, merge} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {DomSanitizer} from '@angular/platform-browser';
-
-interface DeviceInfo {
-  device_id: string;
-  group_id: string;
-}
+import {DeviceInfo} from './device-info-interface';
+import {DeviceItem} from './device-item.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +13,7 @@ export class DeviceService {
   private refreshSubject = new Subject<void>();
 
   private allDeviceFromServer = this.httpClient
-    .get<DeviceInfo[]>('./devices')
+    .get<DeviceItem[]>('./devices')
     .pipe(map(this.sortDevices));
 
   private allDevices = merge(
@@ -26,7 +23,7 @@ export class DeviceService {
 
   private getDevicesByGroupIdFromServer(groupId: string) {
     return this.httpClient
-      .get<DeviceInfo[]>(`./devices?groupId=${groupId}`)
+      .get<DeviceItem[]>(`./devices?groupId=${groupId}`)
       .pipe(map(this.sortDevices));
   }
 
@@ -35,8 +32,8 @@ export class DeviceService {
     private sanitizer: DomSanitizer
   ) {}
 
-  private sortDevices(devices: DeviceInfo[]) {
-    return devices.sort((a: DeviceInfo, b: DeviceInfo) =>
+  private sortDevices(devices: DeviceItem[]) {
+    return devices.sort((a: DeviceItem, b: DeviceItem) =>
       a['device_id'].localeCompare(b['device_id'], undefined, {numeric: true})
     );
   }
