@@ -44,7 +44,7 @@ constexpr char kCvdEnvHelpMessage[] =
     "    Usage: cvd [selector options] env call [service] [method] [request]\n"
     "      service           : gRPC service name\n"
     "      method            : method name in given service\n"
-    "      request           : Protobuffer with text format\n\n"
+    "      request           : Protobuffer with json format\n\n"
     "* \"cvd [selector_options] env\" can be replaced with:\n"
     "    \"cvd_internal_env [internal device name]\"\n";
 
@@ -90,6 +90,8 @@ Result<void> CvdEnvMain(int argc, char** argv) {
             "there is no instance of which name is "
                 << receiver << ". please check instance name by cvd fleet");
 
+  // TODO(265747873): Check if argument contains ControlEnvProxyService, not to
+  // use this service by cvd env CLI.
   auto command_output = CF_EXPECT(
       HandleCmds(receiver_instance->grpc_socket_path(), cmd, args, options));
 
