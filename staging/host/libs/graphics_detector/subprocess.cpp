@@ -148,7 +148,7 @@ SubprocessResult DoWithSubprocessCheck(const std::string& message,
   if (pid == 0) {
     prctl(PR_SET_NAME, "gfxDtctCanSegv");
     function();
-    std::exit(0);
+    _exit(0);
   }
 
   LOG(VERBOSE) << "Waiting for subprocess " << pid << " running " << message
