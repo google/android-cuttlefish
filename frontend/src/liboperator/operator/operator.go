@@ -198,7 +198,7 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 	request := CallUnaryMethodRequest{
 		ServiceName: vars["serviceName"],
 		MethodName: vars["methodName"],
-		TextFormattedProto: string(body),
+		JsonFormattedProto: string(body),
 	}
 
 	devInfo := dev.info.(map[string]interface{})
@@ -222,8 +222,7 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(reply.TextFormattedProto))
+	ReplyJSONOK(w, reply.JsonFormattedProto)
 }
 
 func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {

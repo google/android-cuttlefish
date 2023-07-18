@@ -25,9 +25,9 @@ service ControlEnvProxyService {
 message CallUnaryMethodRequest {
   string service_name = 1;
   string method_name = 2;
-  string text_formatted_proto = 3;
+  string json_formatted_proto = 3;
 }
 
 message CallUnaryMethodReply {
-  string text_formatted_proto = 1;
+  string json_formatted_proto = 1;
 }
