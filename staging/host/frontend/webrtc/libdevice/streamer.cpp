@@ -57,6 +57,8 @@ constexpr auto kAudioStreamsField = "audio_streams";
 constexpr auto kHardwareField = "hardware";
 constexpr auto kOpenwrtDeviceIdField = "openwrt_device_id";
 constexpr auto kOpenwrtAddrField = "openwrt_addr";
+constexpr auto kControlEnvProxyServerPathField =
+    "control_env_proxy_server_path";
 constexpr auto kControlPanelButtonCommand = "command";
 constexpr auto kControlPanelButtonTitle = "title";
 constexpr auto kControlPanelButtonIconName = "icon_name";
@@ -411,6 +413,8 @@ void Streamer::Impl::OnOpen() {
     device_info[kHardwareField] = hardware;
     device_info[kOpenwrtDeviceIdField] = config_.openwrt_device_id;
     device_info[kOpenwrtAddrField] = config_.openwrt_addr;
+    device_info[kControlEnvProxyServerPathField] =
+        config_.control_env_proxy_server_path;
     Json::Value custom_control_panel_buttons(Json::arrayValue);
     for (const auto& button : custom_control_panel_buttons_) {
       Json::Value button_entry;
