@@ -29,6 +29,10 @@ using grpc::InsecureChannelCredentials;
 namespace cuttlefish {
 namespace {
 
+constexpr char kDefaultOptionL[] = "-l=false";
+constexpr char kDefaultOptionJsonInput[] = "--json_input=true";
+constexpr char kDefaultOptionJsonOutput[] = "--json_output=true";
+
 bool PrintStream(std::stringstream* ss, const grpc::string& output) {
   (*ss) << output;
   return true;
@@ -43,39 +47,58 @@ class InsecureCliCredentials final : public grpc::testing::CliCredentials {
   const grpc::string GetCredentialUsage() const override { return ""; }
 };
 
-std::vector<char*> ConvertToCharVec(const std::vector<std::string>& str_vec) {
+std::vector<char*> CombineArgumentsAndOptions(
+    const std::vector<std::string>& arguments,
+    const std::vector<std::string>& options) {
   std::vector<char*> char_vec;
-  char_vec.reserve(str_vec.size());
-  for (const auto& str : str_vec) {
-    char_vec.push_back(const_cast<char*>(str.c_str()));
+  // Add 3 for default options
+  char_vec.reserve(arguments.size() + options.size() + 3);
+  for (const auto& arg : arguments) {
+    char_vec.push_back(const_cast<char*>(arg.c_str()));
+  }
+  // Grpc keeps the option value as global flag, so we should pass default
+  // option value. Default option value could be overwritten by the options
+  // given from parameter.
+  char_vec.push_back(const_cast<char*>(kDefaultOptionL));
+  char_vec.push_back(const_cast<char*>(kDefaultOptionJsonInput));
+  char_vec.push_back(const_cast<char*>(kDefaultOptionJsonOutput));
+  for (const auto& opt : options) {
+    char_vec.push_back(const_cast<char*>(opt.c_str()));
   }
   return char_vec;
 }
 
-void RunGrpcCommand(const std::vector<std::string>& arguments,
-                    std::stringstream& output_stream) {
-  int grpc_cli_argc = arguments.size();
-  auto new_arguments = ConvertToCharVec(arguments);
-  char** grpc_cli_argv = new_arguments.data();
+Result<void> RunGrpcCommand(const std::vector<std::string>& arguments,
+                            const std::vector<std::string>& options,
+                            std::stringstream& output_stream) {
+  auto combined_arguments = CombineArgumentsAndOptions(arguments, options);
+  int grpc_cli_argc = combined_arguments.size();
+  char** grpc_cli_argv = combined_arguments.data();
 
   grpc::testing::InitTest(&grpc_cli_argc, &grpc_cli_argv, true);
-  grpc::testing::GrpcToolMainLib(
-      grpc_cli_argc, (const char**)grpc_cli_argv, InsecureCliCredentials(),
-      std::bind(PrintStream, &output_stream, std::placeholders::_1));
+  CF_EXPECT(
+      grpc::testing::GrpcToolMainLib(
+          grpc_cli_argc, (const char**)grpc_cli_argv, InsecureCliCredentials(),
+          std::bind(PrintStream, &output_stream, std::placeholders::_1)) == 0,
+      "gRPC command failed");
+  return {};
 }
 
-std::string RunGrpcCommand(const std::vector<std::string>& arguments) {
+Result<std::string> RunGrpcCommand(const std::vector<std::string>& arguments,
+                                   const std::vector<std::string>& options) {
   std::stringstream output_stream;
-  RunGrpcCommand(arguments, output_stream);
+  CF_EXPECT(RunGrpcCommand(arguments, options, output_stream));
   return output_stream.str();
 }
 
-std::vector<std::string> GetServiceList(const std::string& server_address) {
+Result<std::vector<std::string>> GetServiceList(
+    const std::string& server_address) {
   std::vector<std::string> service_list;
   std::stringstream output_stream;
 
   std::vector<std::string> arguments{"grpc_cli", "ls", server_address};
-  RunGrpcCommand(arguments, output_stream);
+  std::vector<std::string> options;
+  CF_EXPECT(RunGrpcCommand(arguments, options, output_stream));
 
   std::string service_name;
   while (std::getline(output_stream, service_name)) {
@@ -93,7 +116,8 @@ Result<std::string> GetServerAddress(
     const std::string& service_name) {
   std::vector<std::string> candidates;
   for (const auto& server_address : server_address_list) {
-    for (auto& full_service_name : GetServiceList(server_address)) {
+    auto service_names = CF_EXPECT(GetServiceList(server_address));
+    for (auto& full_service_name : service_names) {
       if (android::base::EndsWith(full_service_name, service_name)) {
         candidates.emplace_back(server_address);
         break;
@@ -110,7 +134,8 @@ Result<std::string> GetServerAddress(
 Result<std::string> GetFullServiceName(const std::string& server_address,
                                        const std::string& service_name) {
   std::vector<std::string> candidates;
-  for (auto& full_service_name : GetServiceList(server_address)) {
+  auto service_names = CF_EXPECT(GetServiceList(server_address));
+  for (auto& full_service_name : service_names) {
     if (android::base::EndsWith(full_service_name, service_name)) {
       candidates.emplace_back(full_service_name);
     }
@@ -140,9 +165,10 @@ Result<std::string> GetFullTypeName(const std::string& server_address,
   //   (openwrtcontrolserver.OpenwrtIpaddrReply) {}
   const auto& full_method_name =
       CF_EXPECT(GetFullMethodName(server_address, service_name, method_name));
-  std::vector<std::string> grpc_arguments{"grpc_cli", "ls", "-l",
-                                          server_address, full_method_name};
-  auto grpc_result = RunGrpcCommand(grpc_arguments);
+  std::vector<std::string> arguments{"grpc_cli", "ls", server_address,
+                                     full_method_name};
+  std::vector<std::string> options{"-l"};
+  auto grpc_result = CF_EXPECT(RunGrpcCommand(arguments, options));
 
   std::vector<std::string> candidates;
   for (auto& full_type_name : android::base::Split(grpc_result, "()")) {
@@ -183,17 +209,12 @@ Result<std::string> HandleLsCmd(
           CF_EXPECT(GetFullServiceName(server_address, service_name));
       grpc_arguments.push_back(full_service_name);
     }
-    grpc_arguments.insert(grpc_arguments.end(), options.begin(), options.end());
-
-    command_output += RunGrpcCommand(grpc_arguments);
+    command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
   } else {
     // ls subcommand with no arguments
     for (const auto& server_address : server_address_list) {
       std::vector<std::string> grpc_arguments{"grpc_cli", "ls", server_address};
-      grpc_arguments.insert(grpc_arguments.end(), options.begin(),
-                            options.end());
-
-      command_output += RunGrpcCommand(grpc_arguments);
+      command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
     }
   }
 
@@ -221,9 +242,7 @@ Result<std::string> HandleTypeCmd(
       GetFullTypeName(server_address, service_name, method_name, type_name));
   grpc_arguments.push_back(full_type_name);
 
-  grpc_arguments.insert(grpc_arguments.end(), options.begin(), options.end());
-
-  command_output += RunGrpcCommand(grpc_arguments);
+  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
 
   return command_output;
 }
@@ -233,16 +252,16 @@ Result<std::string> HandleCallCmd(
     const std::vector<std::string>& args,
     const std::vector<std::string>& options) {
   CF_EXPECT(args.size() > 2,
-            "need to specify a service name, a method name, and text-formatted "
+            "need to specify a service name, a method name, and json-formatted "
             "proto");
   CF_EXPECT(args.size() < 4, "too many arguments");
   std::string command_output;
 
   std::vector<std::string> grpc_arguments{"grpc_cli", "call"};
-  // TODO(b/265384449): support the case without text-formatted proto.
+  // TODO(b/265384449): support calling streaming method.
   const auto& service_name = args[0];
   const auto& method_name = args[1];
-  const auto& proto_text_format = args[2];
+  const auto& json_format_proto = args[2];
 
   const auto& server_address =
       CF_EXPECT(GetServerAddress(server_address_list, service_name));
@@ -250,18 +269,16 @@ Result<std::string> HandleCallCmd(
   const auto& full_method_name =
       CF_EXPECT(GetFullMethodName(server_address, service_name, method_name));
   grpc_arguments.push_back(full_method_name);
-  grpc_arguments.push_back(proto_text_format);
+  grpc_arguments.push_back(json_format_proto);
 
-  grpc_arguments.insert(grpc_arguments.end(), options.begin(), options.end());
-
-  command_output += RunGrpcCommand(grpc_arguments);
+  command_output += CF_EXPECT(RunGrpcCommand(grpc_arguments, options));
 
   return command_output;
 }
 
 }  // namespace
 
-Result<std::string> HandleCmds(const std::string grpc_socket_path,
+Result<std::string> HandleCmds(const std::string& grpc_socket_path,
                                const std::string& cmd,
                                const std::vector<std::string>& args,
                                const std::vector<std::string>& options) {
