@@ -87,6 +87,7 @@ start() {
   eval $(set_config_expr ORCHESTRATOR_WEBUI_URL orchestrator_webui_url)
 
   ORCHESTRATOR_SOCKET_PATH="${RUN_DIR}"/operator \
+  ORCHESTRATOR_CVD_USER="_cvd-executor" \
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \
     --chuid _cutf-operator:cvdnetwork \

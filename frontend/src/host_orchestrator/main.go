@@ -56,9 +56,6 @@ func startHttpServer(port string) error {
 }
 
 func startHttpsServer(port string, certPath string, keyPath string) error {
-	if port == "" {
-		return nil
-	}
 	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", port))
 	return http.ListenAndServeTLS(fmt.Sprint(":", port),
 		certPath,
@@ -108,6 +105,7 @@ func main() {
 	webUIUrlStr := fromEnvOrDefault("ORCHESTRATOR_WEBUI_URL", DefaultWebUIUrl)
 	certPath := filepath.Join(tlsCertDir, "cert.pem")
 	keyPath := filepath.Join(tlsCertDir, "key.pem")
+	cvdUser := fromEnvOrDefault("ORCHESTRATOR_CVD_USER", "")
 
 	pool := operator.NewDevicePool()
 	polledSet := operator.NewPolledSet()
@@ -148,6 +146,7 @@ func main() {
 			return orchestrator.NewAndroidCIBuildAPI(http.DefaultClient, abURL, credentials)
 		},
 		UUIDGen: func() string { return uuid.New().String() },
+		CVDUser: cvdUser,
 	}
 	im := orchestrator.NewCVDToolInstanceManager(&opts)
 	debugStaticVars := debug.StaticVariables{
@@ -185,6 +184,9 @@ func main() {
 		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
 		func() error { return startHttpsServer(httpsPort, certPath, keyPath) },
 		func() error { return startHttpServer(httpPort) },
+	}
+	if httpsPort != "" {
+		starters = append(starters, func() error {return startHttpsServer(httpsPort, certPath, keyPath)})
 	}
 	start(starters)
 }

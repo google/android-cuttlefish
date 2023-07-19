@@ -38,6 +38,7 @@ import (
 )
 
 type ExecContext = func(ctx context.Context, name string, arg ...string) *exec.Cmd
+type CVDExecContext = func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd
 
 type Validator interface {
 	Validate() error
@@ -87,7 +88,7 @@ type BuildAPIFactory func(string) BuildAPI
 
 // Instance manager implementation based on execution of `cvd` tool commands.
 type CVDToolInstanceManager struct {
-	execContext              ExecContext
+	execContext              CVDExecContext
 	paths                    IMPaths
 	om                       OperationManager
 	userArtifactsDirResolver UserArtifactsDirResolver
@@ -111,11 +112,13 @@ type CVDToolInstanceManagerOpts struct {
 	HostValidator            Validator
 	BuildAPIFactory          BuildAPIFactory
 	UUIDGen                  func() string
+	CVDUser                  string
 }
 
 func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanceManager {
+	cvdExecContext := newCVDExecContext(opts.ExecContext, opts.CVDUser)
 	return &CVDToolInstanceManager{
-		execContext:              opts.ExecContext,
+		execContext:              cvdExecContext,
 		paths:                    opts.Paths,
 		om:                       opts.OperationManager,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
@@ -131,12 +134,35 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 		),
 		buildArtifactsFetcher: newArtifactsFetcherFactory(opts.ExecContext, opts.Paths.FetchCVDBin(), opts.BuildAPIFactory),
 		startCVDHandler: &startCVDHandler{
-			ExecContext: opts.ExecContext,
+			ExecContext: cvdExecContext,
 			CVDBin:      opts.Paths.CVDBin(),
 			Timeout:     opts.CVDStartTimeout,
 		},
 		buildAPIFactory: opts.BuildAPIFactory,
 		uuidGen:         opts.UUIDGen,
+	}
+}
+
+// Creates a CVD execution context from a regular execution context.
+// If a non-empty user name is provided the returned execution context executes commands as that user.
+func newCVDExecContext(execContext ExecContext, user string) CVDExecContext {
+	if user != "" {
+		return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
+			newArgs := []string{"-u", user}
+			if env != nil {
+				newArgs = append(newArgs, env...)
+			}
+			newArgs = append(newArgs, name)
+			newArgs = append(newArgs, arg...)
+			return execContext(ctx, "sudo", newArgs...)
+		}
+	}
+	return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
+		cmd := execContext(ctx, name, arg...)
+		if cmd != nil {
+			cmd.Env = env
+		}
+		return cmd
 	}
 }
 
@@ -628,7 +654,7 @@ const (
 )
 
 type startCVDHandler struct {
-	ExecContext ExecContext
+	ExecContext CVDExecContext
 	CVDBin      string
 	Timeout     time.Duration
 }
@@ -709,7 +735,6 @@ func fileExist(name string) (bool, error) {
 const CVDCommandDefaultTimeout = 30 * time.Second
 
 const (
-	cvdUser              = "_cvd-executor"
 	envVarAndroidHostOut = "ANDROID_HOST_OUT"
 	envVarHome           = "HOME"
 )
@@ -722,13 +747,13 @@ type cvdCommandOpts struct {
 }
 
 type cvdCommand struct {
-	execContext ExecContext
+	execContext CVDExecContext
 	cvdBin      string
 	args        []string
 	opts        cvdCommandOpts
 }
 
-func newCVDCommand(execContext ExecContext, cvdBin string, args []string, opts cvdCommandOpts) *cvdCommand {
+func newCVDCommand(execContext CVDExecContext, cvdBin string, args []string, opts cvdCommandOpts) *cvdCommand {
 	return &cvdCommand{
 		execContext: execContext,
 		cvdBin:      cvdBin,
@@ -766,7 +791,7 @@ func (c *cvdCommand) Run() error {
 	}
 	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
 	// so the cancel logic could be customized to continue sending the SIGINT signal.
-	cmd := buildCvdCommand(context.TODO(), c.execContext, c.opts.AndroidHostOut, c.opts.Home, c.cvdBin, c.args...)
+	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut, c.opts.Home), c.cvdBin, c.args...)
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = c.opts.Stdout
 	cmd.Stderr = stderr
@@ -801,7 +826,7 @@ func (c *cvdCommand) Run() error {
 }
 
 func (c *cvdCommand) startCVDServer() error {
-	cmd := buildCvdCommand(context.TODO(), c.execContext, "", "", c.cvdBin)
+	cmd := c.execContext(context.TODO(), cvdEnv("", ""), c.cvdBin)
 	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
 	// file descriptor to the null device (os.DevNull).
 	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
@@ -813,14 +838,12 @@ func (c *cvdCommand) startCVDServer() error {
 	return cmd.Run()
 }
 
-func buildCvdCommand(ctx context.Context, execContext ExecContext, androidHostOut string, home string, cvdBin string, args ...string) *exec.Cmd {
-	newArgs := []string{"-u", cvdUser, envVarHome + "=" + home}
+func cvdEnv(androidHostOut, home string) []string {
+	env := []string{envVarHome + "=" + home}
 	if androidHostOut != "" {
-		newArgs = append(newArgs, envVarAndroidHostOut+"="+androidHostOut)
+		env = append(env, envVarAndroidHostOut+"="+androidHostOut)
 	}
-	newArgs = append(newArgs, cvdBin)
-	newArgs = append(newArgs, args...)
-	return execContext(ctx, "sudo", newArgs...)
+	return env
 }
 
 func cmdOutputLogMessage(output string) string {
@@ -929,7 +952,7 @@ func (s cvdInstances) findByName(name string) (bool, cvdInstance) {
 	return false, cvdInstance{}
 }
 
-func runAcloudSetup(execContext ExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
+func runAcloudSetup(execContext CVDExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
 	run := func(cmd *exec.Cmd) {
 		var b bytes.Buffer
 		cmd.Stdout = &b
@@ -940,7 +963,7 @@ func runAcloudSetup(execContext ExecContext, artifactsRootDir, artifactsDir, run
 		}
 	}
 	// Creates symbolic link `acloud_link` which points to the passed device artifacts directory.
-	go run(execContext(context.TODO(), "sudo", "-u", cvdUser, "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
+	go run(execContext(context.TODO(), nil, "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
 }
 
 func SliceItoa(s []uint32) []string {
