@@ -42,6 +42,7 @@ func (AlwaysSucceedsValidator) Validate() error {
 }
 
 const fakeLatesGreenBuildID = "9551522"
+const fakeCVDUser = "fakecvduser"
 
 type fakeBuildAPI struct{}
 
@@ -175,7 +176,7 @@ func TestCreateCVDVerifyRootDirectoriesAreCreated(t *testing.T) {
 func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
-	goldenPrefixFmt := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes "+
+	goldenPrefixFmt := fmt.Sprintf("sudo -u fakecvduser HOME=%[1]s/runtimes "+
 		"ANDROID_HOST_OUT=%[1]s/artifacts/%%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s/artifacts/%%[1]s", dir)
 	tests := []struct {
@@ -299,6 +300,7 @@ func TestCreateCVDVerifyStartCVDCmdArgs(t *testing.T) {
 				HostValidator:    &AlwaysSucceedsValidator{},
 				BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
 				UUIDGen:          fakeUUIDGen,
+				CVDUser:          fakeCVDUser,
 			}
 			im := NewCVDToolInstanceManager(&opts)
 
@@ -330,7 +332,7 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 	defer orchtesting.RemoveDir(t, dir)
 	tarContent, _ := ioutil.ReadFile(getTestTarFilename())
 	ioutil.WriteFile(dir+"/"+CVDHostPackageName, tarContent, 0755)
-	expected := fmt.Sprintf("sudo -u _cvd-executor HOME=%[1]s/runtimes "+
+	expected := fmt.Sprintf("sudo -u fakecvduser HOME=%[1]s/runtimes "+
 		"ANDROID_HOST_OUT=%[1]s "+"%[1]s/cvd --group_name=cvd start --daemon --report_anonymous_usage_stats=y"+
 		" --base_instance_num=1 --system_image_dir=%[1]s", dir)
 	var usedCmdName string
@@ -355,6 +357,7 @@ func TestCreateCVDFromUserBuildVerifyStartCVDCmdArgs(t *testing.T) {
 		HostValidator:            &AlwaysSucceedsValidator{},
 		UserArtifactsDirResolver: &fakeUADirRes{dir},
 		BuildAPIFactory:          func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDUser:                  fakeCVDUser,
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	req := apiv1.CreateCVDRequest{
@@ -421,6 +424,7 @@ func TestCreateCVDFailsDueTimeout(t *testing.T) {
 		CVDStartTimeout:  testFakeBinaryDelayMs - (50 * time.Millisecond),
 		HostValidator:    &AlwaysSucceedsValidator{},
 		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDUser:          fakeCVDUser,
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
@@ -457,6 +461,7 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 		OperationManager: om,
 		HostValidator:    &AlwaysFailsValidator{},
 		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDUser:          fakeCVDUser,
 	}
 	im := NewCVDToolInstanceManager(&opts)
 	r := apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}}
@@ -572,6 +577,7 @@ func newCVDToolIm(execContext ExecContext,
 		OperationManager: om,
 		HostValidator:    &AlwaysSucceedsValidator{},
 		BuildAPIFactory:  func(_ string) BuildAPI { return &fakeBuildAPI{} },
+		CVDUser:          fakeCVDUser,
 	}
 	return NewCVDToolInstanceManager(&opts)
 }
