@@ -169,6 +169,8 @@
 
 // NFC default parameters
 #define CF_DEFAULTS_ENABLE_HOST_NFC true
+#define CF_DEFAULTS_CASIMIR_INSTANCE_NUM 0
+#define CF_DEFAULTS_CASIMIR_ARGS CF_DEFAULTS_DYNAMIC_STRING
 
 // Modem Simulator default parameters
 #define CF_DEFAULTS_ENABLE_MODEM_SIMULATOR true
