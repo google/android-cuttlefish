@@ -6,6 +6,7 @@ Build-Depends: config-package-dev,
                curl,
                debhelper-compat (= 12),
                golang (>= 2:1.13~) | golang-1.13,
+               libprotobuf-dev,
                protobuf-compiler,
 Standards-Version: 4.5.0
 
