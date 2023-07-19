@@ -112,6 +112,7 @@ cvd_host_tools = [
     "record_cvd",
     "restart_cvd",
     "root-canal",
+    "casimir",
     "snapshot_util_cvd",
     "run_cvd",
     "secure_env",

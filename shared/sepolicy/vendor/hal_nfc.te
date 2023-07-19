@@ -1,0 +1,1 @@
+allow hal_nfc_default nfc_device:chr_file { open read write };

@@ -27,8 +27,17 @@ rust_binary {
         "libandroid_logger",
         "liblog_rust",
         "libbinder_rs",
+        "libbinder_tokio_rs",
+        "libtokio",
+        "liblibc",
+        "libnix",
+        "libclap",
         "android.hardware.nfc-V1-rust"
     ],
+    proc_macros: [
+        "libasync_trait",
+    ],
+    features: ["rt"],
     required: ["libnfc-hal-cf.conf-default"],
     srcs: ["src/main.rs"],
 }

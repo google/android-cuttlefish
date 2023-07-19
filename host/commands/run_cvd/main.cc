@@ -153,6 +153,7 @@ fruit::Component<> runCvdComponent(
       .install(OpenwrtControlServerComponent)
       .install(PicaComponent)
       .install(RootCanalComponent)
+      .install(CasimirComponent)
       .install(NetsimServerComponent)
       .install(SecureEnvComponent)
       .install(VehicleHalServerComponent)

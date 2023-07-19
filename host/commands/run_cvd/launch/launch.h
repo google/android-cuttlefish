@@ -86,6 +86,11 @@ RootCanalComponent();
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+CasimirComponent();
+
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 PicaComponent();
 
 fruit::Component<fruit::Required<GrpcSocketCreator>> EchoServerComponent();

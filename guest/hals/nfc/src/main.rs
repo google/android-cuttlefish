@@ -14,16 +14,27 @@
 
 //! Cuttlefish's NFC HAL.
 
-use android_hardware_nfc::aidl::android::hardware::nfc::INfc::{BnNfc, INfc};
+use android_hardware_nfc::aidl::android::hardware::nfc::INfc::{BnNfc, INfcAsyncServer};
 use binder::{self, BinderFeatures, ProcessState};
+use binder_tokio::TokioRuntime;
+use clap::Parser;
 use log::{error, info, LevelFilter};
-use std::panic;
+use std::path::PathBuf;
+use std::{panic, process};
+use tokio::runtime::Runtime;
 
 mod nfc;
 
 use crate::nfc::NfcService;
 
 const LOG_TAG: &str = "CfNfc";
+
+#[derive(Parser)]
+struct Cli {
+    /// Virtio-console dev driver path
+    #[arg(long)]
+    virtio_dev_path: PathBuf,
+}
 
 fn main() {
     android_logger::init_once(
@@ -33,18 +44,30 @@ fn main() {
     // Redirect panic messages to logcat.
     panic::set_hook(Box::new(|panic_info| {
         error!("{}", panic_info);
+        process::exit(0); // Force panic in thread to quit.
     }));
 
-    // Start binder thread pool with default number of threads pool (15)
+    // Start binder thread pool with the minimum threads pool (= 1),
+    // because NFC APEX is the only user of the NFC HAL.
+    ProcessState::set_thread_pool_max_thread_count(0);
     ProcessState::start_thread_pool();
 
-    let nfc_service = NfcService::default();
-    let nfc_service_binder = BnNfc::new_binder(nfc_service, BinderFeatures::default());
+    // Prepare Tokio runtime with default (multi-threaded) configurations.
+    // We'll spawn I/O threads in AIDL calls, so Runtime can't create with current thread
+    // as other HALs do.
+    let runtime = Runtime::new().expect("Failed to initialize Tokio runtime");
+
+    // Initializes.
+    let cli = Cli::parse();
+    let nfc_service = NfcService::new(&cli.virtio_dev_path);
+    let nfc_service_binder =
+        BnNfc::new_async_binder(nfc_service, TokioRuntime(runtime), BinderFeatures::default());
 
     let service_name = format!("{}/default", NfcService::get_descriptor());
-    info!("Starting {service_name}");
+    info!("Starting {service_name} with {:?}", cli.virtio_dev_path);
     binder::add_service(&service_name, nfc_service_binder.as_binder())
         .expect("Failed to register service");
 
+    // Wait for binder thread to be completed.
     ProcessState::join_thread_pool()
 }

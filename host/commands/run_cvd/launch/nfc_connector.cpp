@@ -26,7 +26,6 @@
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/known_paths.h"
 
-constexpr const size_t kDataPort = 7100;
 constexpr const size_t kBufferSize = 1024;
 
 namespace cuttlefish {
@@ -43,8 +42,7 @@ class NfcConnector : public CommandSource {
     Command command(TcpConnectorBinary());
     command.AddParameter("-fifo_out=", fifos_[0]);
     command.AddParameter("-fifo_in=", fifos_[1]);
-    // TODO(jaewan): Get port from assemble_cvd
-    command.AddParameter("-data_port=", kDataPort);
+    command.AddParameter("-data_port=", config_.casimir_nci_port());
     command.AddParameter("-buffer_size=", kBufferSize);
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(command));
