@@ -5,8 +5,8 @@
 # orchestrator_http_port=
 #
 # The port on which the orchestrator server should listen on for HTTPS.
-# Defaults to 1443.
-# orchestrator_https_port=
+# The orchestrator won't server over HTTPS if the port is not set.
+orchestrator_https_port=1443
 #
 # The directory where the TLS certificate needed to establish the HTTPS
 # communication lives.

@@ -37,7 +37,6 @@ import (
 const (
 	DefaultSocketPath     = "/run/cuttlefish/operator"
 	DefaultHttpPort       = "1080"
-	DefaultHttpsPort      = "1443"
 	DefaultTLSCertDir     = "/etc/cuttlefish-common/host_orchestrator/cert"
 	DefaultStaticFilesDir = "static"    // relative path
 	DefaultInterceptDir   = "intercept" // relative path
@@ -57,6 +56,9 @@ func startHttpServer(port string) error {
 }
 
 func startHttpsServer(port string, certPath string, keyPath string) error {
+	if port == "" {
+		return nil
+	}
 	log.Println(fmt.Sprint("Host Orchestrator is listening at https://localhost:", port))
 	return http.ListenAndServeTLS(fmt.Sprint(":", port),
 		certPath,
@@ -101,7 +103,7 @@ func start(starters []func() error) {
 func main() {
 	socketPath := fromEnvOrDefault("ORCHESTRATOR_SOCKET_PATH", DefaultSocketPath)
 	httpPort := fromEnvOrDefault("ORCHESTRATOR_HTTP_PORT", DefaultHttpPort)
-	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", DefaultHttpsPort)
+	httpsPort := fromEnvOrDefault("ORCHESTRATOR_HTTPS_PORT", "")
 	tlsCertDir := fromEnvOrDefault("ORCHESTRATOR_TLS_CERT_DIR", DefaultTLSCertDir)
 	webUIUrlStr := fromEnvOrDefault("ORCHESTRATOR_WEBUI_URL", DefaultWebUIUrl)
 	certPath := filepath.Join(tlsCertDir, "cert.pem")
