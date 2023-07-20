@@ -30,7 +30,6 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
 
-	pb "github.com/google/android-cuttlefish/frontend/src/liboperator/protobuf"
 	"google.golang.org/grpc"
 )
 
@@ -201,7 +200,7 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
 		return
 	}
 
-	request := pb.CallUnaryMethodRequest{
+	request := CallUnaryMethodRequest{
 		ServiceName: vars["serviceName"],
 		MethodName: vars["methodName"],
 		JsonFormattedProto: string(body),
@@ -221,7 +220,7 @@ func grpcCallUnaryMethod(w http.ResponseWriter, r *http.Request, pool *DevicePoo
     }
     defer conn.Close()
 
-    client := pb.NewControlEnvProxyServiceClient(conn)
+    client := NewControlEnvProxyServiceClient(conn)
 	reply, err := client.CallUnaryMethod(context.Background(), &request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

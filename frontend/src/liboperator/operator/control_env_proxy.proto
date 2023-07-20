@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package controlenvproxyserver;
 
-option go_package = "liboperator/protobuf";
+option go_package = "liboperator/operator";
 
 service ControlEnvProxyService {
   rpc CallUnaryMethod (CallUnaryMethodRequest) returns (CallUnaryMethodReply) {}
