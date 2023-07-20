@@ -42,7 +42,7 @@ static bool CreateKey(
     TPM2B_PRIVATE* key_private_out, // out
     TpmObjectSlot* key_slot_out) { // out
   TPM2B_AUTH authValue = {};
-  auto rc = Esys_TR_SetAuth(*resource_manager.Esys(), parent_key, &authValue);
+  auto rc = Esys_TR_SetAuth(resource_manager.Esys(), parent_key, &authValue);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_TR_SetAuth failed with return code " << rc
                << " (" << Tss2_RC_Decode(rc) << ")";
@@ -90,16 +90,16 @@ static bool CreateKey(
   TPM2B_PRIVATE* key_private = nullptr;
   // TODO(schuffelen): Use Esys_Create when key_slot is NULL
   rc = Esys_CreateLoaded(
-      /* esysContext */ *resource_manager.Esys(),
-      /* primaryHandle */ parent_key,
-      /* shandle1 */ ESYS_TR_PASSWORD,
-      /* shandle2 */ ESYS_TR_NONE,
-      /* shandle3 */ ESYS_TR_NONE,
-      /* inSensitive */ &in_sensitive,
-      /* inPublic */ &public_template,
-      /* objectHandle */ &raw_handle,
-      /* outPrivate */ &key_private,
-      /* outPublic */ &key_public);
+    /* esysContext */ resource_manager.Esys(),
+    /* primaryHandle */ parent_key,
+    /* shandle1 */ ESYS_TR_PASSWORD,
+    /* shandle2 */ ESYS_TR_NONE,
+    /* shandle3 */ ESYS_TR_NONE,
+    /* inSensitive */ &in_sensitive,
+    /* inPublic */ &public_template,
+    /* objectHandle */ &raw_handle,
+    /* outPrivate */ &key_private,
+    /* outPublic */ &key_public);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_CreateLoaded failed with return code " << rc
                << " (" << Tss2_RC_Decode(rc) << ")";
@@ -113,7 +113,7 @@ static bool CreateKey(
   Esys_Free(key_public);
   Esys_Free(key_private);
   if (key_slot_out) {
-    rc = Esys_TR_SetAuth(*resource_manager.Esys(), raw_handle, &authValue);
+    rc = Esys_TR_SetAuth(resource_manager.Esys(), raw_handle, &authValue);
     if (rc != TSS2_RC_SUCCESS) {
       LOG(ERROR) << "Esys_TR_SetAuth failed with return code " << rc
                 << " (" << Tss2_RC_Decode(rc) << ")";
@@ -138,9 +138,15 @@ static TpmObjectSlot LoadKey(
     LOG(ERROR) << "No slots available";
     return {};
   }
-  auto rc = Esys_Load(*resource_manager.Esys(), parent_key, ESYS_TR_PASSWORD,
-                      ESYS_TR_NONE, ESYS_TR_NONE, key_private, key_public,
-                      &raw_handle);
+  auto rc = Esys_Load(
+      resource_manager.Esys(),
+      parent_key,
+      ESYS_TR_PASSWORD,
+      ESYS_TR_NONE,
+      ESYS_TR_NONE,
+      key_private,
+      key_public,
+      &raw_handle);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_Load failed with return code " << rc
                << " (" << Tss2_RC_Decode(rc) << ")";
@@ -197,7 +203,7 @@ uint8_t* EncryptedSerializable::Serialize(
 
   TPM2B_IV iv;
   iv.size = sizeof(iv.buffer);
-  auto rc = TpmRandomSource(resource_manager_)
+  auto rc = TpmRandomSource(resource_manager_.Esys())
                 .GenerateRandom(iv.buffer, sizeof(iv.buffer));
   if (rc != KM_ERROR_OK) {
     LOG(ERROR) << "Failed to get random data";
@@ -216,7 +222,7 @@ uint8_t* EncryptedSerializable::Serialize(
   }
   std::vector<uint8_t> encrypted(encrypted_size, 0);
   if (!TpmEncrypt(  //
-          *resource_manager_.Esys(), key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
+          resource_manager_.Esys(), key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
           iv, unencrypted.data(), encrypted.data(), encrypted_size)) {
     LOG(ERROR) << "Encryption failed";
     return buf;
@@ -299,7 +305,7 @@ bool EncryptedSerializable::Deserialize(
   }
   std::vector<uint8_t> decrypted_data(encrypted_size, 0);
   if (!TpmDecrypt(  //
-          *resource_manager_.Esys(), key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
+          resource_manager_.Esys(), key_slot->get(), TpmAuth(ESYS_TR_PASSWORD),
           iv, encrypted_data.data(), decrypted_data.data(), encrypted_size)) {
     LOG(ERROR) << "Failed to decrypt encrypted data";
     return false;

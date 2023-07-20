@@ -13,18 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/tpm_resource_manager.h"
-
-#include <mutex>
+#include "tpm_resource_manager.h"
 
 #include <android-base/logging.h>
-#include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
 
 namespace cuttlefish {
-
-EsysLock::EsysLock(ESYS_CONTEXT* esys, std::unique_lock<std::mutex> guard)
-    : esys_(esys), guard_(std::move(guard)) {}
 
 TpmResourceManager::ObjectSlot::ObjectSlot(TpmResourceManager* resource_manager)
     : ObjectSlot(resource_manager, ESYS_TR_NONE) {
@@ -71,8 +65,8 @@ TpmResourceManager::~TpmResourceManager() {
   }
 }
 
-EsysLock TpmResourceManager::Esys() {
-  return EsysLock(esys_, std::unique_lock<std::mutex>(mu_));
+ESYS_CONTEXT* TpmResourceManager::Esys() {
+  return esys_;
 }
 
 TpmObjectSlot TpmResourceManager::ReserveSlot() {
