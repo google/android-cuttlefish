@@ -26,7 +26,7 @@ BUILD_WEBUI := ./build-webui.sh
 override_dh_auto_build:
 	$(GOUTIL) . install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31
 	$(GOUTIL) . install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
-	$(PROTOCUTIL) $(LIBOPERATOR_SOURCE_DIR)/protobuf src
+	$(PROTOCUTIL) $(LIBOPERATOR_SOURCE_DIR)/operator src
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(BUILD_WEBUI)
