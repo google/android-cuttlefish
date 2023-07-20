@@ -45,6 +45,7 @@ cc_binary {
         "process_monitor_channel.cc",
         "server_loop.cpp",
         "server_loop_impl.cpp",
+        "server_loop_impl_record.cpp",
         "server_loop_impl_snapshot.cpp",
         "validate.cpp",
     ],
