@@ -17,8 +17,9 @@
 <!--
   Defines the audio configuration in a car, including
     - Audio zones
-    - Context to audio bus mappings
-    - Volume groups
+    - Zone configurations (in each audio zone)
+    - Volume groups (in each zone configuration)
+    - Context to audio bus mappings (in each volume group)
   in the car environment.
 -->
 <carAudioConfiguration version="3">
