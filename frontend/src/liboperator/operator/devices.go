@@ -124,18 +124,14 @@ func GetGroupId(info interface{}) string {
 	}
 
 	groupId, ok := deviceInfo["group_id"].(string)
-	if !ok {
-		return DEFAULT_GROUP_ID
-	}
-
-	if len(groupId) == 0 {
+	if !ok || len(groupId) == 0 {
 		return DEFAULT_GROUP_ID
 	}
 
 	return groupId
 }
 
-func GetGroup(p *DevicePool, groupId string) *Group {
+func CreateOrGetGroup(p *DevicePool, groupId string) *Group {
 	_, ok := p.groups[groupId]
 	if !ok {
 		p.groups[groupId] = &Group{}
@@ -155,7 +151,7 @@ func (p *DevicePool) Register(d *Device, id string) bool {
 	p.devices[id] = d
 
 	groupId := GetGroupId(d.info)
-	group := GetGroup(p, groupId)
+	group := CreateOrGetGroup(p, groupId)
 	group.deviceIds = append(group.deviceIds, id)
 
 	return true
@@ -166,7 +162,7 @@ func (p *DevicePool) Unregister(id string) {
 	defer p.devicesMtx.Unlock()
 	if d, ok := p.devices[id]; ok {
 		groupId := GetGroupId(d.info)
-		group := GetGroup(p, groupId)
+		group := CreateOrGetGroup(p, groupId)
 
 		for i, deviceId := range group.deviceIds {
 			if id == deviceId {
