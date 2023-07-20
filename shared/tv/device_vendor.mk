@@ -27,6 +27,10 @@ $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+# Inform the camera HAL that we only want an external camera loaded.
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.camera.config=external
+
 # Extend cuttlefish common sepolicy with tv-specific functionality
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/tv/sepolicy/vendor
 
@@ -35,6 +39,7 @@ ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
 endif
 
 PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.camera.external.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.external.xml \
     device/google/cuttlefish/shared/config/media_codecs_google_tv.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_tv.xml \
     frameworks/native/data/etc/android.hardware.hdmi.cec.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.hdmi.cec.xml \
     frameworks/native/data/etc/android.hardware.tv.tuner.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.tv.tuner.xml \

@@ -1,1 +1,2 @@
 vendor_internal_prop(vendor_camera_prop)
+vendor_restricted_prop(vendor_camera_config)
