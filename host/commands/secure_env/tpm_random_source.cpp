@@ -13,17 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/tpm_random_source.h"
+#include "tpm_random_source.h"
 
 #include <android-base/logging.h>
-#include "tpm_resource_manager.h"
 #include "tss2/tss2_esys.h"
 #include "tss2/tss2_rc.h"
 
 namespace cuttlefish {
 
-TpmRandomSource::TpmRandomSource(TpmResourceManager& resource_manager)
-    : resource_manager_(resource_manager) {}
+TpmRandomSource::TpmRandomSource(ESYS_CONTEXT* esys) : esys_(esys) {
+}
 
 keymaster_error_t TpmRandomSource::GenerateRandom(
     uint8_t* random, size_t requested_length) const {
@@ -33,9 +32,9 @@ keymaster_error_t TpmRandomSource::GenerateRandom(
   // TODO(b/158790549): Pipeline these calls.
   TPM2B_DIGEST* generated = nullptr;
   while (requested_length > sizeof(generated->buffer)) {
-    auto rc =
-        Esys_GetRandom(*resource_manager_.Esys(), ESYS_TR_NONE, ESYS_TR_NONE,
-                       ESYS_TR_NONE, sizeof(generated->buffer), &generated);
+    auto rc = Esys_GetRandom(esys_, ESYS_TR_NONE, ESYS_TR_NONE,
+                             ESYS_TR_NONE, sizeof(generated->buffer),
+                             &generated);
     if (rc != TSS2_RC_SUCCESS) {
       LOG(ERROR) << "Esys_GetRandom failed with " << rc << " ("
                  << Tss2_RC_Decode(rc) << ")";
@@ -47,9 +46,8 @@ keymaster_error_t TpmRandomSource::GenerateRandom(
     requested_length -= sizeof(generated->buffer);
     Esys_Free(generated);
   }
-  auto rc =
-      Esys_GetRandom(*resource_manager_.Esys(), ESYS_TR_NONE, ESYS_TR_NONE,
-                     ESYS_TR_NONE, requested_length, &generated);
+  auto rc = Esys_GetRandom(esys_, ESYS_TR_NONE, ESYS_TR_NONE,
+                           ESYS_TR_NONE, requested_length, &generated);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_GetRandom failed with " << rc << " ("
                 << Tss2_RC_Decode(rc) << ")";
@@ -77,8 +75,12 @@ keymaster_error_t TpmRandomSource::AddRngEntropy(
     in_data.size = MAX_STIR_RANDOM_BUFFER_SIZE;
     buffer += MAX_STIR_RANDOM_BUFFER_SIZE;
     size -= MAX_STIR_RANDOM_BUFFER_SIZE;
-    auto rc = Esys_StirRandom(*resource_manager_.Esys(), ESYS_TR_NONE,
-                              ESYS_TR_NONE, ESYS_TR_NONE, &in_data);
+    auto rc = Esys_StirRandom(
+        esys_,
+        ESYS_TR_NONE,
+        ESYS_TR_NONE,
+        ESYS_TR_NONE,
+        &in_data);
     if (rc != TSS2_RC_SUCCESS) {
       LOG(ERROR) << "Esys_StirRandom failed with " << rc << "("
                  << Tss2_RC_Decode(rc) << ")";
@@ -89,8 +91,12 @@ keymaster_error_t TpmRandomSource::AddRngEntropy(
     return KM_ERROR_OK;
   }
   memcpy(in_data.buffer, buffer, size);
-  auto rc = Esys_StirRandom(*resource_manager_.Esys(), ESYS_TR_NONE,
-                            ESYS_TR_NONE, ESYS_TR_NONE, &in_data);
+  auto rc = Esys_StirRandom(
+      esys_,
+      ESYS_TR_NONE,
+      ESYS_TR_NONE,
+      ESYS_TR_NONE,
+      &in_data);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_StirRandom failed with " << rc << "("
                 << Tss2_RC_Decode(rc) << ")";
