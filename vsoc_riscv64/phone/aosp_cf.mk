@@ -36,7 +36,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 #
 # All components inherited here go to vendor image
 #
-LOCAL_PREFER_VENDOR_APEX := true
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
 PRODUCT_ENFORCE_MAC80211_HWSIM := false
@@ -48,14 +47,6 @@ PRODUCT_ENFORCE_MAC80211_HWSIM := false
 # Special settings for the target
 #
 $(call inherit-product, device/google/cuttlefish/vsoc_riscv64/bootloader.mk)
-
-# Exclude features that are not available on AOSP devices.
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += com.google.aosp_cf_phone.hardware.core_permissions
-else
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
-endif
 
 # TODO(b/206676167): This property can be removed when renderscript is removed.
 # Prevents framework from attempting to load renderscript libraries, which are

@@ -179,15 +179,6 @@ PRODUCT_PACKAGES += \
     hidl_lazy_test_server \
     hidl_lazy_cb_test_server
 
-# Runtime Resource Overlays
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_PACKAGES += \
-    cuttlefish_overlay_connectivity \
-    cuttlefish_overlay_frameworks_base_core \
-    cuttlefish_overlay_settings_provider
-
-endif
-
 #
 # Satellite vendor service for CF
 #
@@ -212,20 +203,6 @@ DEVICE_MANIFEST_FILE += $(LOCAL_DEVICE_FCM_MANIFEST_FILE)
 # General files
 #
 
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/permissions/cuttlefish_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/cuttlefish_excluded_hardware.xml \
-    frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml \
-    frameworks/native/data/etc/android.hardware.ethernet.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.ethernet.xml \
-    frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
-    frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml \
-    frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
-    frameworks/native/data/etc/android.hardware.wifi.direct.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.direct.xml \
-    frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml \
-    frameworks/native/data/etc/android.software.ipsec_tunnels.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.ipsec_tunnels.xml \
-    frameworks/native/data/etc/android.software.verified_boot.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.verified_boot.xml
-
-endif
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cutf_cvm.rc \
     device/google/cuttlefish/shared/config/init.product.rc:$(TARGET_COPY_OUT_PRODUCT)/etc/init/init.rc \
@@ -249,17 +226,11 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
     frameworks/native/data/etc/android.software.credentials.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.credentials.xml \
 
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.google.cf.input.config
-else
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_0.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_0.idc \
-    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_1.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_1.idc \
-    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_2.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_2.idc \
-    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_3.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_3.idc \
-    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Rotary_0.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Rotary_0.idc \
 
-endif
+# Default permission to access services
+LOCAL_HARDWARE_PERMISSIONS_PRODUCT_PACKAGE ?= com.google.cf.hardware.core_permissions
+PRODUCT_PACKAGES += $(LOCAL_HARDWARE_PERMISSIONS_PRODUCT_PACKAGE)
 
 PRODUCT_PACKAGES += \
     fstab.cf.f2fs.hctr2 \
@@ -439,14 +410,7 @@ PRODUCT_COPY_FILES += \
 #
 # Power and PowerStats HALs
 #
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.android.hardware.power
-else
-PRODUCT_PACKAGES += \
-    android.hardware.power-service.example \
-    android.hardware.power.stats-service.example \
-
-endif
 
 #
 # Tetheroffload HAL
@@ -471,12 +435,7 @@ PRODUCT_PACKAGES += \
     com.android.hardware.usb
 
 # Vibrator HAL
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.android.hardware.vibrator
-else
-PRODUCT_PACKAGES += \
-    android.hardware.vibrator-service.example
-endif
 
 # BootControl HAL
 PRODUCT_PACKAGES += \
@@ -514,7 +473,6 @@ PRODUCT_PACKAGES += linker.recovery shell_and_utilities_recovery
 endif
 
 # wifi
-ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 # Add com.android.hardware.wifi for android.hardware.wifi-service
 PRODUCT_PACKAGES += com.android.hardware.wifi
 # Add com.google.cf.wifi for hostapd, wpa_supplicant, etc.
@@ -522,39 +480,6 @@ PRODUCT_PACKAGES += com.google.cf.wifi
 $(call add_soong_config_namespace, wpa_supplicant)
 $(call add_soong_config_var_value, wpa_supplicant, platform_version, $(PLATFORM_VERSION))
 $(call add_soong_config_var_value, wpa_supplicant, nl80211_driver, CONFIG_DRIVER_NL80211_QCA)
-
-else
-PRODUCT_PACKAGES += \
-    rename_netiface \
-    wpa_supplicant \
-    setup_wifi \
-    mac80211_create_radios \
-    hostapd \
-    android.hardware.wifi-service \
-    init.wifi
-PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/wpa_supplicant.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wpa_supplicant.rc
-
-# VirtWifi interface configuration
-ifeq ($(DEVICE_VIRTWIFI_PORT),)
-    DEVICE_VIRTWIFI_PORT := eth2
-endif
-PRODUCT_VENDOR_PROPERTIES += ro.vendor.virtwifi.port=${DEVICE_VIRTWIFI_PORT}
-
-# WLAN driver configuration files
-ifndef LOCAL_WPA_SUPPLICANT_OVERLAY
-LOCAL_WPA_SUPPLICANT_OVERLAY := $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf
-endif
-
-ifndef LOCAL_P2P_SUPPLICANT
-LOCAL_P2P_SUPPLICANT := $(LOCAL_PATH)/config/p2p_supplicant.conf
-endif
-
-PRODUCT_COPY_FILES += \
-    external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
-    $(LOCAL_WPA_SUPPLICANT_OVERLAY):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf \
-    $(LOCAL_P2P_SUPPLICANT):$(TARGET_COPY_OUT_VENDOR)/etc/wifi/p2p_supplicant.conf
-endif
 
 # Wifi Runtime Resource Overlay
 PRODUCT_PACKAGES += \

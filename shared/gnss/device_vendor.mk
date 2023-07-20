@@ -14,11 +14,6 @@
 # limitations under the License.
 #
 
-ifneq ($(LOCAL_PREFER_VENDOR_APEX),true)
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml
-endif
-
 LOCAL_GNSS_PRODUCT_PACKAGE ?= \
     android.hardware.gnss-service.example
 
