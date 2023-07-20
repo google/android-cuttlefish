@@ -1,10 +1,10 @@
-// Copyright (C) 2023 The Android Open Source Project
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// This file doesn't do anything. This file is for guiding how to use protobuf
+// and grpc in this repository.
+
 syntax = "proto3";
 
-package controlenvproxyserver;
+package wmediumdserver;
 
-option go_package = "liboperator/operator";
+option go_package = "proto_out/example";
 
-service ControlEnvProxyService {
-  rpc CallUnaryMethod (CallUnaryMethodRequest) returns (CallUnaryMethodReply) {}
+import "google/protobuf/empty.proto";
+
+service ExampleService {
+    rpc Example(google.protobuf.Empty) returns (ExampleResponse) {}
 }
 
-message CallUnaryMethodRequest {
-  string service_name = 1;
-  string method_name = 2;
-  string text_formatted_proto = 3;
-}
-
-message CallUnaryMethodReply {
-  string text_formatted_proto = 1;
+message ExampleResponse {
+    string response = 1;
 }
