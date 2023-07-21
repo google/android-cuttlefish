@@ -200,12 +200,14 @@ class WebRtcServer : public virtual CommandSource,
                       const CuttlefishConfig::InstanceSpecific& instance,
                       StreamerSockets& sockets,
                       KernelLogPipeProvider& log_pipe_provider,
-                      const CustomActionConfigProvider& custom_action_config))
+                      const CustomActionConfigProvider& custom_action_config,
+                      WebRtcRecorder& webrtc_recorder))
       : config_(config),
         instance_(instance),
         sockets_(sockets),
         log_pipe_provider_(log_pipe_provider),
-        custom_action_config_(custom_action_config) {}
+        custom_action_config_(custom_action_config),
+        webrtc_recorder_(webrtc_recorder) {}
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
     if (!Enabled() ||
@@ -243,21 +245,8 @@ class WebRtcServer : public virtual CommandSource,
       commands.emplace_back(std::move(sig_proxy));
     }
 
-    auto stopper = [host_socket = std::move(host_socket_)](Subprocess* proc) {
-      struct timeval timeout;
-      timeout.tv_sec = 3;
-      timeout.tv_usec = 0;
-      CHECK(host_socket->SetSockOpt(SOL_SOCKET, SO_RCVTIMEO, &timeout,
-                                    sizeof(timeout)) == 0)
-          << "Could not set receive timeout";
-
-      WriteAll(host_socket, "C");
-      char response[1];
-      int read_ret = host_socket->Read(response, sizeof(response));
-      if (read_ret != 0) {
-        LOG(ERROR) << "Failed to read response from webrtc";
-        return KillSubprocess(proc);
-      }
+    auto stopper = [webrtc_recorder = webrtc_recorder_](Subprocess* proc) {
+      webrtc_recorder.SendStopRecordingCommand();
       return KillSubprocess(proc) == StopperResult::kStopSuccess
                  ? StopperResult::kStopCrash
                  : StopperResult::kStopFailure;
@@ -279,7 +268,7 @@ class WebRtcServer : public virtual CommandSource,
     // issue is mitigated slightly by doing some retrying and backoff in the
     // webrtc process when connecting to the websocket, so it shouldn't be an
     // issue most of the time.
-    webrtc.AddParameter("--command_fd=", client_socket_);
+    webrtc.AddParameter("--command_fd=", webrtc_recorder_.GetClientSocket());
     webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
     webrtc.AddParameter("-client_dir=",
                         DefaultHostArtifactsPath("usr/share/webrtc/assets"));
@@ -303,13 +292,11 @@ class WebRtcServer : public virtual CommandSource,
   std::string Name() const override { return "WebRtcServer"; }
   std::unordered_set<SetupFeature*> Dependencies() const override {
     return {static_cast<SetupFeature*>(&sockets_),
-            static_cast<SetupFeature*>(&log_pipe_provider_)};
+            static_cast<SetupFeature*>(&log_pipe_provider_),
+            static_cast<SetupFeature*>(&webrtc_recorder_)};
   }
 
   Result<void> ResultSetup() override {
-    CF_EXPECT(SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &client_socket_,
-                                   &host_socket_),
-              client_socket_->StrError());
     if (config_.vm_manager() == vm_manager::CrosvmManager::name()) {
       switches_server_ =
           CreateUnixInputServer(instance_.switches_socket_path());
@@ -326,17 +313,17 @@ class WebRtcServer : public virtual CommandSource,
   StreamerSockets& sockets_;
   KernelLogPipeProvider& log_pipe_provider_;
   const CustomActionConfigProvider& custom_action_config_;
+  WebRtcRecorder& webrtc_recorder_;
   SharedFD kernel_log_events_pipe_;
-  SharedFD client_socket_;
-  SharedFD host_socket_;
   SharedFD switches_server_;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                                 const CuttlefishConfig::InstanceSpecific,
-                                 const CustomActionConfigProvider>>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                    const CuttlefishConfig::InstanceSpecific,
+                    const CustomActionConfigProvider, WebRtcRecorder>>
 launchStreamerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, WebRtcServer>()
