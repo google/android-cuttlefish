@@ -63,10 +63,12 @@ bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
 ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSecureEnvFiles::Type& secure_env_files)
+    AutoSecureEnvFiles::Type& secure_env_files,
+    WebRtcRecorder& webrtc_recorder)
     : config_(config),
       instance_(instance),
       secure_env_files_(secure_env_files),
+      webrtc_recorder_(webrtc_recorder),
       vm_name_to_control_sock_{InitializeVmToControlSockPath(instance)},
       device_status_{DeviceStatus::kUnknown} {}
 
