@@ -17,7 +17,7 @@
 
 #include <keymaster/random_source.h>
 
-#include "host/commands/secure_env/tpm_resource_manager.h"
+struct ESYS_CONTEXT;
 
 namespace cuttlefish {
 
@@ -28,16 +28,15 @@ namespace cuttlefish {
  */
 class TpmRandomSource : public keymaster::RandomSource {
 public:
- TpmRandomSource(TpmResourceManager& resource_manager);
- virtual ~TpmRandomSource() = default;
+  TpmRandomSource(ESYS_CONTEXT* esys);
+  virtual ~TpmRandomSource() = default;
 
- keymaster_error_t GenerateRandom(uint8_t* buffer,
-                                  size_t length) const override;
+  keymaster_error_t GenerateRandom(
+      uint8_t* buffer, size_t length) const override;
 
- keymaster_error_t AddRngEntropy(const uint8_t*, size_t) const;
-
+  keymaster_error_t AddRngEntropy(const uint8_t*, size_t) const;
 private:
- TpmResourceManager& resource_manager_;
+  ESYS_CONTEXT* esys_;
 };
 
 }  // namespace cuttlefish
