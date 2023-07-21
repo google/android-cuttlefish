@@ -27,6 +27,7 @@
 #include "host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "host/commands/run_cvd/launch/log_tee_creator.h"
 #include "host/commands/run_cvd/launch/secure_env_files.h"
+#include "host/commands/run_cvd/launch/webrtc_recorder.h"
 #include "host/commands/run_cvd/launch/wmediumd_server.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/custom_actions.h"
@@ -115,9 +116,11 @@ WmediumdServerComponent();
 Result<std::optional<MonitorCommand>> ModemSimulator(
     const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
-                                 const CuttlefishConfig::InstanceSpecific,
-                                 const CustomActionConfigProvider>>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                    const CuttlefishConfig::InstanceSpecific,
+                    const CustomActionConfigProvider, WebRtcRecorder>>
 launchStreamerComponent();
 
+fruit::Component<WebRtcRecorder> WebRtcRecorderComponent();
 }  // namespace cuttlefish
