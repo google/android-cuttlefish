@@ -16,6 +16,8 @@
 
 #include "host/commands/run_cvd/server_loop_impl.h"
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/command_util/runner/defs.h"
 #include "host/libs/command_util/util.h"
@@ -33,6 +35,9 @@ Result<void> ServerLoopImpl::HandleStartScreenRecording(
       extended_action.actions_case(),
       run_cvd::ExtendedLauncherAction::ActionsCase::kStartScreenRecording);
   LOG(INFO) << "Sending the request to start screen recording.";
+
+  CF_EXPECT(webrtc_recorder_.SendStartRecordingCommand(),
+            "Failed to send start recording command.");
   return {};
 }
 
@@ -45,6 +50,9 @@ Result<void> ServerLoopImpl::HandleStopScreenRecording(
       extended_action.actions_case(),
       run_cvd::ExtendedLauncherAction::ActionsCase::kStopScreenRecording);
   LOG(INFO) << "Sending the request to stop screen recording.";
+
+  CF_EXPECT(webrtc_recorder_.SendStopRecordingCommand(),
+            "Failed to send stop recording command.");
   return {};
 }
 
