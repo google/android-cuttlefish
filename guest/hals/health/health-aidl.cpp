@@ -69,7 +69,7 @@ void HealthImpl::UpdateHealthInfo(HealthInfo* health_info) {
   health_info->batteryPresent = true;
   health_info->batteryLevel = 85;
   health_info->batteryVoltageMillivolts = 3600;
-  health_info->batteryTemperatureTenthsCelsius = 350;
+  health_info->batteryTemperatureTenthsCelsius = 250;
   health_info->batteryCurrentMicroamps = 400000;
   health_info->batteryCycleCount = 32;
   health_info->batteryFullChargeUah = 4000000;
