@@ -19,6 +19,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -33,25 +34,30 @@ namespace cuttlefish {
 Result<void> ValidateTypo(const Json::Value& root,
                           const std::map<std::string, Json::ValueType>& map);
 
-Result<void> ValidateIntConfig(
-    const Json::Value& instances, const std::string& group,
-    const std::string& json_flag,
-    std::function<Result<void>(int)> validate_config);
-
-Result<void> ValidateIntConfigSubGroup(
-    const Json::Value& instances, const std::string& group,
-    const std::string& subgroup, const std::string& json_flag,
-    std::function<Result<void>(int)> validate_config);
-
-Result<void> ValidateStringConfig(
-    const Json::Value& instances, const std::string& group,
-    const std::string& json_flag,
-    std::function<Result<void>(const std::string&)> validate_config);
-
-Result<void> ValidateStringConfigSubGroup(
-    const Json::Value& instances, const std::string& group,
-    const std::string& subgroup, const std::string& json_flag,
-    std::function<Result<void>(const std::string&)> validate_config);
+template <typename T>
+Result<void> ValidateConfig(const Json::Value& instance,
+                            std::function<Result<void>(const T&)> validator,
+                            const std::vector<std::string>& selectors) {
+  const int size = selectors.size();
+  CF_EXPECT(size > 0, "No keys given for initializing config");
+  int i = 0;
+  const Json::Value* traverse = &instance;
+  for (const auto& selector : selectors) {
+    if (traverse->isMember(selector)) {
+      if (i == size - 1) {
+        T flag_value = (*traverse)[selector].as<T>();
+        CF_EXPECTF(validator(flag_value), "Invalid flag value \"{}\"",
+                   flag_value);
+      }
+    } else {
+      // field does not exist, no validation needed
+      break;
+    }
+    traverse = &(*traverse)[selector];
+    ++i;
+  }
+  return {};
+}
 
 template <typename T>
 Result<void> InitConfig(Json::Value& root, const T& default_value,
