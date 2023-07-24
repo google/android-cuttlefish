@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+set -x
+
+GOUTIL="./src/goutil"
+PROTOC_SRC_DIR="src/liboperator/protobuf"
+PROTOC_DST_DIR="src"
+
+export PATH="$PATH:/tmp/go/bin"
+
+$GOUTIL . install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31
+$GOUTIL . install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+protoc -I=$PROTOC_SRC_DIR --go_out $PROTOC_DST_DIR --go-grpc_out $PROTOC_DST_DIR $PROTOC_SRC_DIR/*.proto

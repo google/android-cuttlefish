@@ -1,6 +1,6 @@
 module github.com/google/android-cuttlefish/frontend/src/host_orchestrator
 
-go 1.19
+go 1.13
 
 replace github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-unpublished => ../liboperator
 
@@ -11,5 +11,3 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-multierror v1.1.1
 )
-
-require github.com/hashicorp/errwrap v1.0.0 // indirect
