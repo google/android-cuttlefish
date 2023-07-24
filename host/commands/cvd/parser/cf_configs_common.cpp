@@ -23,6 +23,8 @@
 #include <android-base/logging.h>
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 /**
@@ -227,39 +229,26 @@ void InitNullGroupConfig(Json::Value& instances, const std::string& group,
   }
 }
 
-// TODO(b/255384531) for using variadic functions
-
-std::string GenerateGflag(const Json::Value& instances,
-                          const std::string& gflag_name,
-                          const std::string& group,
-                          const std::string& json_flag) {
-  int size = instances.size();
+Result<std::string> GenerateGflag(const Json::Value& instances,
+                                  const std::string& gflag_name,
+                                  const std::vector<std::string>& selectors) {
   std::stringstream buff;
-  // Append Header
   buff << "--" << gflag_name << "=";
-  // Append values
+
+  int size = instances.size();
   for (int i = 0; i < size; i++) {
-    buff << instances[i][group][json_flag].asString();
+    const Json::Value* traversal = &instances[i];
+    for (const auto& selector : selectors) {
+      CF_EXPECTF(traversal->isMember(selector),
+                 "JSON selector \"{}\" does not exist when trying to create "
+                 "gflag \"{}\"",
+                 selector, gflag_name);
+      traversal = &(*traversal)[selector];
+    }
+    buff << traversal->asString();
     if (i != size - 1) {
       buff << ",";
     }
-  }
-  return buff.str();
-}
-
-std::string GenerateGflagSubGroup(const Json::Value& instances,
-                                  const std::string& gflag_name,
-                                  const std::string& group,
-                                  const std::string& subgroup,
-                                  const std::string& json_flag) {
-  int size = instances.size();
-  std::stringstream buff;
-  // Append Header
-  buff << "--" << gflag_name << "=";
-  // Append values
-  for (int i = 0; i < size; i++) {
-    buff << instances[i][group][subgroup][json_flag].asString();
-    if (i != size - 1){ buff << ",";}
   }
   return buff.str();
 }
