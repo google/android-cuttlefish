@@ -182,7 +182,6 @@ func main() {
 
 	starters := []func() error{
 		func() error { return operator.SetupDeviceEndpoint(pool, config, socketPath)() },
-		func() error { return startHttpsServer(httpsPort, certPath, keyPath) },
 		func() error { return startHttpServer(httpPort) },
 	}
 	if httpsPort != "" {
