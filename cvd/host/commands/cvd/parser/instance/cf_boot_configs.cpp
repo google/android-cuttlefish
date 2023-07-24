@@ -27,12 +27,15 @@
 namespace cuttlefish {
 
 void InitBootConfigs(Json::Value& instances) {
-  InitStringConfig(instances, "boot", "extra_bootconfig_args",
-                   CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS);
-  InitBoolConfig(instances, "boot", "enable_bootanimation",
-                 CF_DEFAULTS_ENABLE_BOOTANIMATION);
-  InitStringConfigSubGroup(instances, "boot", "kernel", "extra_kernel_cmdline",
-                           CF_DEFAULTS_EXTRA_KERNEL_CMDLINE);
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    InitConfig(instances[i], CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
+               {"boot", "extra_bootconfig_args"});
+    InitConfig(instances[i], CF_DEFAULTS_ENABLE_BOOTANIMATION,
+               {"boot", "enable_bootanimation"});
+    InitConfig(instances[i], CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
+               {"boot", "kernel", "extra_kernel_cmdline"});
+  }
 }
 
 Result<std::vector<std::string>> GenerateBootFlags(

@@ -28,8 +28,11 @@
 namespace cuttlefish {
 
 void InitDiskConfigs(Json::Value& instances) {
-  InitStringConfig(instances, "disk", "blank_data_image_mb",
-                   DEFAULT_BLANK_DATA_IMAGE_SIZE);
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    InitConfig(instances[i], DEFAULT_BLANK_DATA_IMAGE_SIZE,
+               {"disk", "blank_data_image_mb"});
+  }
 }
 
 Result<std::vector<std::string>> GenerateDiskFlags(

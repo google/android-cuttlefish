@@ -28,21 +28,27 @@
 namespace cuttlefish {
 namespace {
 
-void InitFetchInstanceConfigs(Json::Value& instances) {
-  InitNullGroupConfig(instances, "disk", "default_build");
-  InitNullGroupConfig(instances, "disk", "system_build");
-  InitNullGroupConfig(instances, "disk", "kernel_build");
-  InitNullGroupConfig(instances, "disk", "download_img_zip");
-  InitNullGroupConfig(instances, "disk", "download_target_files_zip");
+void InitFetchInstanceConfigs(Json::Value& instance) {
+  InitConfig(instance, Json::Value::nullSingleton(), {"disk", "default_build"});
+  InitConfig(instance, Json::Value::nullSingleton(), {"disk", "system_build"});
+  InitConfig(instance, Json::Value::nullSingleton(), {"disk", "kernel_build"});
+  InitConfig(instance, Json::Value::nullSingleton(),
+             {"disk", "download_img_zip"});
+  InitConfig(instance, Json::Value::nullSingleton(),
+             {"disk", "download_target_files_zip"});
 }
 
 void InitFetchCvdConfigs(Json::Value& root) {
-  InitNullConfig(root, "api_key");
-  InitNullConfig(root, "credential_source");
-  InitNullConfig(root, "wait_retry_period");
-  InitNullConfig(root, "external_dns_resolver");
-  InitNullConfig(root, "keep_downloaded_archives");
-  InitFetchInstanceConfigs(root["instances"]);
+  InitConfig(root, Json::Value::nullSingleton(), {"api_key"});
+  InitConfig(root, Json::Value::nullSingleton(), {"credential_source"});
+  InitConfig(root, Json::Value::nullSingleton(), {"wait_retry_period"});
+  InitConfig(root, Json::Value::nullSingleton(), {"external_dns_resolver"});
+  InitConfig(root, Json::Value::nullSingleton(), {"keep_downloaded_archives"});
+  Json::Value& instances = root["instances"];
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    InitFetchInstanceConfigs(instances[i]);
+  }
 }
 
 std::optional<std::string> OptString(const Json::Value& value) {

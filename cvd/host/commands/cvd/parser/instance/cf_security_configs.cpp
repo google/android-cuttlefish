@@ -26,30 +26,31 @@
 
 namespace cuttlefish {
 
-/*This function is created to cover the initiation use_random_serial flag
+/*
+This function is created to cover the initiation use_random_serial flag
 when the json value of serial_number equal "@random"
 */
-void InitRandomSerialNumber(Json::Value& instances) {
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    std::string serial_number_str =
-        instances[i]["security"]["serial_number"].asString();
-    if (serial_number_str == "@random") {
-      instances[i]["security"]["use_random_serial"] = true;
-    } else {
-      instances[i]["security"]["use_random_serial"] = false;
-    }
+void InitRandomSerialNumber(Json::Value& instance) {
+  std::string serial_number_str =
+      instance["security"]["serial_number"].asString();
+  if (serial_number_str == "@random") {
+    instance["security"]["use_random_serial"] = true;
+  } else {
+    instance["security"]["use_random_serial"] = false;
   }
 }
 
 void InitSecurityConfigs(Json::Value& instances) {
-  InitStringConfig(instances, "security", "serial_number",
-                   CF_DEFAULTS_SERIAL_NUMBER);
-  // This init should be called after the InitSecurityConfigs call, since it
-  // depends on  serial_number flag
-  InitRandomSerialNumber(instances);
-  InitBoolConfig(instances, "security", "guest_enforce_security",
-                 CF_DEFAULTS_GUEST_ENFORCE_SECURITY);
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    InitConfig(instances[i], CF_DEFAULTS_SERIAL_NUMBER,
+               {"security", "serial_number"});
+    // This init should be called after the InitSecurityConfigs call, since it
+    // depends on serial_number flag
+    InitRandomSerialNumber(instances[i]);
+    InitConfig(instances[i], CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
+               {"security", "guest_enforce_security"});
+  }
 }
 
 Result<std::vector<std::string>> GenerateSecurityFlags(

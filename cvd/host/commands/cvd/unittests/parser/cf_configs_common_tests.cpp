@@ -26,6 +26,123 @@
 
 namespace cuttlefish {
 
+TEST(CfConfigsCommonTests, InitConfigTopLevel) {
+  const char* raw_json = R""""(
+{
+  "instances" : [
+    {
+      "@import" : "phone",
+      "vm" : {
+        "memory_mb" : 8192,
+        "setupwizard_mode" : "OPTIONAL",
+        "cpus" : 4
+      },
+      "disk" : {
+        "default_build" : "git_master/cf_x86_64_phone-userdebug",
+        "download_img_zip" : true
+      }
+    }
+  ],
+  "wait_retry_period" : 20,
+  "keep_downloaded_archives" : false
+}
+  )"""";
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  EXPECT_FALSE(json_config.isMember("api_key"));
+
+  auto result =
+      InitConfig(json_config, Json::Value::nullSingleton(), {"api_key"});
+  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(json_config.isMember("api_key"));
+  EXPECT_TRUE(json_config["api_key"].isNull());
+}
+
+TEST(CfConfigsCommonTests, InitConfigInstanceLevel) {
+  const char* raw_json = R""""(
+{
+  "instances" : [
+    {
+      "@import" : "phone",
+      "vm" : {
+        "memory_mb" : 8192,
+        "setupwizard_mode" : "OPTIONAL",
+        "cpus" : 4
+      },
+      "disk" : {
+        "default_build" : "git_master/cf_x86_64_phone-userdebug",
+        "download_img_zip" : true
+      }
+    }
+  ],
+  "wait_retry_period" : 20,
+  "keep_downloaded_archives" : false
+}
+  )"""";
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  ASSERT_TRUE(json_config.isMember("instances"));
+  ASSERT_TRUE(json_config["instances"].isValidIndex(0));
+  ASSERT_TRUE(json_config["instances"][0].isMember("disk"));
+  EXPECT_FALSE(json_config["instances"][0]["disk"].isMember(
+      "download_target_files_zip"));
+
+  auto result =
+      InitConfig(json_config["instances"][0], Json::Value::nullSingleton(),
+                 {"disk", "download_target_files_zip"});
+  EXPECT_TRUE(result.ok());
+  EXPECT_TRUE(json_config["instances"][0]["disk"].isMember(
+      "download_target_files_zip"));
+  EXPECT_TRUE(json_config["instances"][0]["disk"]["download_target_files_zip"]
+                  .isNull());
+}
+
+TEST(CfConfigsCommonTests, InitConfigInstanceLevelMissingLevel) {
+  const char* raw_json = R""""(
+{
+  "instances" : [
+    {
+      "@import" : "phone",
+      "vm" : {
+        "memory_mb" : 8192,
+        "setupwizard_mode" : "OPTIONAL",
+        "cpus" : 4
+      }
+    }
+  ],
+  "wait_retry_period" : 20,
+  "keep_downloaded_archives" : false
+}
+  )"""";
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  ASSERT_TRUE(json_config.isMember("instances"));
+  ASSERT_TRUE(json_config["instances"].isValidIndex(0));
+  EXPECT_FALSE(json_config["instances"][0].isMember("disk"));
+
+  auto result =
+      InitConfig(json_config["instances"][0], Json::Value::nullSingleton(),
+                 {"disk", "download_target_files_zip"});
+  EXPECT_TRUE(result.ok());
+  ASSERT_TRUE(json_config["instances"][0].isMember("disk"));
+  EXPECT_TRUE(json_config["instances"][0]["disk"].isMember(
+      "download_target_files_zip"));
+  EXPECT_TRUE(json_config["instances"][0]["disk"]["download_target_files_zip"]
+                  .isNull());
+}
+
 TEST(CfConfigsCommonTests, GenerateGflagSingleInstance) {
   const char* raw_json = R""""(
 {
