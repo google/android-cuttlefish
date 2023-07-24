@@ -30,12 +30,13 @@
 
 namespace cuttlefish {
 
-void InitInstancesConfigs(Json::Value& root) {
-  InitVmConfigs(root);
-  InitDiskConfigs(root);
-  InitBootConfigs(root);
-  InitSecurityConfigs(root);
+Result<void> InitInstancesConfigs(Json::Value& root) {
+  CF_EXPECT(InitVmConfigs(root));
+  CF_EXPECT(InitDiskConfigs(root));
+  CF_EXPECT(InitBootConfigs(root));
+  CF_EXPECT(InitSecurityConfigs(root));
   InitGraphicsConfigs(root);
+  return {};
 }
 
 Result<std::vector<std::string>> GenerateInstancesFlags(
