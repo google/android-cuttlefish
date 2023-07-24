@@ -108,32 +108,6 @@ Result<void> ValidateStringConfigSubGroup(
   return {};
 }
 
-void InitIntConfig(Json::Value& instances, const std::string& group,
-                   const std::string& json_flag, int default_value) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(json_flag))) {
-      instances[i][group][json_flag] = default_value;
-    }
-  }
-}
-
-void InitIntConfigSubGroup(Json::Value& instances, const std::string& group,
-                           const std::string& subgroup,
-                           const std::string& json_flag, int default_value) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(subgroup)) ||
-        (!instances[i][group][subgroup].isMember(json_flag))) {
-      instances[i][group][subgroup][json_flag] = default_value;
-    }
-  }
-}
-
 void InitIntConfigSubGroupVector(Json::Value& instances,
                                  const std::string& group,
                                  const std::string& subgroup,
@@ -154,77 +128,6 @@ void InitIntConfigSubGroupVector(Json::Value& instances,
           instances[i][group][subgroup][j][json_flag] = default_value;
         }
       }
-    }
-  }
-}
-
-void InitStringConfig(Json::Value& instances, const std::string& group,
-                      const std::string& json_flag, const std::string& default_value) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(json_flag))) {
-      instances[i][group][json_flag] = default_value;
-    }
-  }
-}
-
-void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
-                              const std::string& subgroup,
-                              const std::string& json_flag,
-                              const std::string& default_value) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(subgroup)) ||
-        (!instances[i][group][subgroup].isMember(json_flag))) {
-      instances[i][group][subgroup][json_flag] = default_value;
-    }
-  }
-}
-
-void InitBoolConfig(Json::Value& instances, const std::string& group,
-                    const std::string& json_flag, const bool default_value) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(json_flag))) {
-      instances[i][group][json_flag] = default_value;
-    }
-  }
-}
-
-void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
-                            const std::string& subgroup,
-                            const std::string& json_flag,
-                            const bool default_value) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(subgroup)) ||
-        (!instances[i][group][subgroup].isMember(json_flag))) {
-      instances[i][group][subgroup][json_flag] = default_value;
-    }
-  }
-}
-
-void InitNullConfig(Json::Value& value, const std::string& json_flag) {
-  if (!value.isMember(json_flag)) {
-    value[json_flag] = Json::Value::nullSingleton();
-  }
-}
-
-void InitNullGroupConfig(Json::Value& instances, const std::string& group,
-                         const std::string& json_flag) {
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (!instances[i].isMember(group) ||
-        (!instances[i][group].isMember(json_flag))) {
-      instances[i][group][json_flag] = Json::Value::nullSingleton();
     }
   }
 }
