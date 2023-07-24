@@ -21,6 +21,7 @@
 #include <android-base/strings.h>
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
@@ -88,21 +89,24 @@ std::vector<std::string> GenerateCustomConfigsFlags(
   return result;
 }
 
-std::vector<std::string> GenerateVmFlags(const Json::Value& instances) {
+Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& instances) {
   std::vector<std::string> result;
-  result.emplace_back(GenerateGflag(instances, "cpus", "vm", "cpus"));
-  result.emplace_back(GenerateGflag(instances, "memory_mb", "vm", "memory_mb"));
   result.emplace_back(
-      GenerateGflag(instances, "use_sdcard", "vm", "use_sdcard"));
+      CF_EXPECT(GenerateGflag(instances, "cpus", {"vm", "cpus"})));
   result.emplace_back(
-      GenerateGflag(instances, "vm_manager", "vm", "vm_manager"));
+      CF_EXPECT(GenerateGflag(instances, "memory_mb", {"vm", "memory_mb"})));
   result.emplace_back(
-      GenerateGflag(instances, "setupwizard_mode", "vm", "setupwizard_mode"));
+      CF_EXPECT(GenerateGflag(instances, "use_sdcard", {"vm", "use_sdcard"})));
+  result.emplace_back(
+      CF_EXPECT(GenerateGflag(instances, "vm_manager", {"vm", "vm_manager"})));
+  result.emplace_back(CF_EXPECT(GenerateGflag(instances, "setupwizard_mode",
+                                              {"vm", "setupwizard_mode"})));
   if (!GENERATE_MVP_FLAGS_ONLY) {
-    result.emplace_back(GenerateGflag(instances, "uuid", "vm", "uuid"));
+    result.emplace_back(
+        CF_EXPECT(GenerateGflag(instances, "uuid", {"vm", "uuid"})));
   }
-  result.emplace_back(GenerateGflagSubGroup(instances, "enable_sandbox", "vm",
-                                            "crosvm", "enable_sandbox"));
+  result.emplace_back(CF_EXPECT(GenerateGflag(
+      instances, "enable_sandbox", {"vm", "crosvm", "enable_sandbox"})));
 
   result = MergeResults(result, GenerateCustomConfigsFlags(instances));
 

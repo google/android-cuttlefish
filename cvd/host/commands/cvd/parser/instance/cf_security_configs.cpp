@@ -20,6 +20,7 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
@@ -51,16 +52,18 @@ void InitSecurityConfigs(Json::Value& instances) {
                  CF_DEFAULTS_GUEST_ENFORCE_SECURITY);
 }
 
-std::vector<std::string> GenerateSecurityFlags(const Json::Value& instances) {
+Result<std::vector<std::string>> GenerateSecurityFlags(
+    const Json::Value& instances) {
   std::vector<std::string> result;
   if (!GENERATE_MVP_FLAGS_ONLY) {
-    result.emplace_back(
-        GenerateGflag(instances, "serial_number", "security", "serial_number"));
-    result.emplace_back(GenerateGflag(instances, "use_random_serial",
-                                      "security", "use_random_serial"));
+    result.emplace_back(CF_EXPECT(GenerateGflag(
+        instances, "serial_number", {"security", "serial_number"})));
+    result.emplace_back(CF_EXPECT(GenerateGflag(
+        instances, "use_random_serial", {"security", "use_random_serial"})));
   }
-  result.emplace_back(GenerateGflag(instances, "guest_enforce_security",
-                                    "security", "guest_enforce_security"));
+  result.emplace_back(
+      CF_EXPECT(GenerateGflag(instances, "guest_enforce_security",
+                              {"security", "guest_enforce_security"})));
   return result;
 }
 

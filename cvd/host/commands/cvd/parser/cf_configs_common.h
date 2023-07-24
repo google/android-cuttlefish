@@ -86,16 +86,9 @@ void InitNullConfig(Json::Value& value, const std::string& json_flag);
 void InitNullGroupConfig(Json::Value& instances, const std::string& group,
                          const std::string& json_flag);
 
-std::string GenerateGflag(const Json::Value& instances,
-                          const std::string& gflag_name,
-                          const std::string& group,
-                          const std::string& json_flag);
-
-std::string GenerateGflagSubGroup(const Json::Value& instances,
+Result<std::string> GenerateGflag(const Json::Value& instances,
                                   const std::string& gflag_name,
-                                  const std::string& group,
-                                  const std::string& subgroup,
-                                  const std::string& json_flag);
+                                  const std::vector<std::string>& selectors);
 
 std::vector<std::string> MergeResults(std::vector<std::string> first_list,
                                       std::vector<std::string> scond_list);
