@@ -21,5 +21,5 @@
 
 namespace cuttlefish {
 
-Result<void> ValidateStupWizardMode(const std::string &setupwizard_mode);
+Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode);
 }  // namespace cuttlefish
