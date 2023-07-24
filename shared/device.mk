@@ -554,10 +554,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     com.android.hardware.usb
 
-# USB Gadget
-PRODUCT_PACKAGES += \
-    android.hardware.usb.gadget-service.example
-
 # Vibrator HAL
 ifeq ($(LOCAL_PREFER_VENDOR_APEX),true)
 PRODUCT_PACKAGES += com.android.hardware.vibrator
