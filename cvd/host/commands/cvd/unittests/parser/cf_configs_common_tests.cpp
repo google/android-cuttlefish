@@ -26,6 +26,98 @@
 
 namespace cuttlefish {
 
+TEST(CfConfigsCommonTests, ValidateConfigValidationSuccess) {
+  const char* raw_json = R""""(
+{
+  "instances" : [
+    {
+      "vm" : {
+        "memory_mb" : 8192,
+        "setupwizard_mode" : "OPTIONAL",
+        "cpus" : 4
+      }
+    }
+  ]
+}
+  )"""";
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  ASSERT_TRUE(json_config.isMember("instances"));
+  ASSERT_TRUE(json_config["instances"].isValidIndex(0));
+  ASSERT_TRUE(json_config["instances"][0].isMember("vm"));
+
+  auto success_validator = std::function<Result<void>(const std::string&)>(
+      [](const std::string&) -> Result<void> { return {}; });
+  auto result = ValidateConfig(json_config["instances"][0], success_validator,
+                               {"vm", "cpus"});
+  EXPECT_TRUE(result.ok());
+}
+
+TEST(CfConfigsCommonTests, ValidateConfigValidationFailure) {
+  const char* raw_json = R""""(
+{
+  "instances" : [
+    {
+      "vm" : {
+        "memory_mb" : 8192,
+        "setupwizard_mode" : "OPTIONAL",
+        "cpus" : 4
+      }
+    }
+  ]
+}
+  )"""";
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  ASSERT_TRUE(json_config.isMember("instances"));
+  ASSERT_TRUE(json_config["instances"].isValidIndex(0));
+  ASSERT_TRUE(json_config["instances"][0].isMember("vm"));
+
+  auto error_validator = std::function<Result<void>(const std::string&)>(
+      [](const std::string&) -> Result<void> { return CF_ERR("placeholder"); });
+  auto result = ValidateConfig(json_config["instances"][0], error_validator,
+                               {"vm", "cpus"});
+  EXPECT_FALSE(result.ok());
+}
+
+TEST(CfConfigsCommonTests, ValidateConfigFieldDoesNotExist) {
+  const char* raw_json = R""""(
+{
+  "instances" : [
+    {
+      "vm" : {
+        "memory_mb" : 8192,
+        "setupwizard_mode" : "OPTIONAL",
+        "cpus" : 4
+      }
+    }
+  ]
+}
+  )"""";
+
+  Json::Value json_config;
+  std::string json_text(raw_json);
+  ASSERT_TRUE(ParseJsonString(json_text, json_config))
+      << "Invalid JSON string for test";
+
+  ASSERT_TRUE(json_config.isMember("instances"));
+  ASSERT_TRUE(json_config["instances"].isValidIndex(0));
+
+  auto success_validator = std::function<Result<void>(const std::string&)>(
+      [](const std::string&) -> Result<void> { return {}; });
+  auto result = ValidateConfig(json_config["instances"][0], success_validator,
+                               {"disk", "cpus"});
+  EXPECT_TRUE(result.ok());
+}
+
 TEST(CfConfigsCommonTests, InitConfigTopLevel) {
   const char* raw_json = R""""(
 {
