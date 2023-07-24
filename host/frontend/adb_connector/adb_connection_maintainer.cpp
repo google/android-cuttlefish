@@ -160,6 +160,10 @@ void WaitForAdbDisconnection(const std::string& address) {
   LOG(DEBUG) << "Watching for disconnect on " << address;
   while (true) {
     auto sock = SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
+    if (!sock->IsOpen()) {
+      LOG(ERROR) << "failed to open adb connection: " << sock->StrError();
+      break;
+    }
     if (!AdbSendMessage(sock, MakeTransportMessage(address))) {
       LOG(WARNING) << "transport message failed, response body: "
                    << RecvAdbResponse(sock);
