@@ -29,44 +29,43 @@
 
 namespace cuttlefish {
 
-void InitVmManagerConfig(Json::Value& instances) {
-  // Allocate and initialize with default values
-  int size = instances.size();
-  for (int i = 0; i < size; i++) {
-    if (instances[i].isMember("vm")) {
-      if (instances[i]["vm"].isMember("crosvm")) {
-        instances[i]["vm"]["vm_manager"] = "crosvm";
-      } else if (instances[i]["vm"].isMember("qemu")) {
-        instances[i]["vm"]["vm_manager"] = "qemu_cli";
-      } else if (instances[i]["vm"].isMember("gem5")) {
-        instances[i]["vm"]["vm_manager"] = "gem5";
-      } else {
-        // Set vm manager to default value (crosvm)
-        instances[i]["vm"]["vm_manager"] = "crosvm";
-      }
+void InitVmManagerConfig(Json::Value& instance) {
+  if (instance.isMember("vm")) {
+    if (instance["vm"].isMember("crosvm")) {
+      instance["vm"]["vm_manager"] = "crosvm";
+    } else if (instance["vm"].isMember("qemu")) {
+      instance["vm"]["vm_manager"] = "qemu_cli";
+    } else if (instance["vm"].isMember("gem5")) {
+      instance["vm"]["vm_manager"] = "gem5";
     } else {
-      // vm object doesn't exist , set the default vm manager to crosvm
-      instances[i]["vm"]["vm_manager"] = "crosvm";
+      // Set vm manager to default value (crosvm)
+      instance["vm"]["vm_manager"] = "crosvm";
     }
+  } else {
+    // vm object doesn't exist, set the default vm manager to crosvm
+    instance["vm"]["vm_manager"] = "crosvm";
   }
 }
 
 void InitVmConfigs(Json::Value& instances) {
-  InitIntConfig(instances, "vm", "cpus", CF_DEFAULTS_CPUS);
-  InitIntConfig(instances, "vm", "memory_mb", UI_DEFAULTS_MEMORY_MB);
-  InitBoolConfig(instances, "vm", "use_sdcard", CF_DEFAULTS_USE_SDCARD);
-  InitStringConfig(instances, "vm", "setupwizard_mode",
-                   CF_DEFAULTS_SETUPWIZARD_MODE);
-  InitStringConfig(instances, "vm", "uuid", CF_DEFAULTS_UUID);
-  InitVmManagerConfig(instances);
-  InitBoolConfigSubGroup(instances, "vm", "crosvm", "enable_sandbox",
-                         CF_DEFAULTS_ENABLE_SANDBOX);
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    InitConfig(instances[i], CF_DEFAULTS_CPUS, {"vm", "cpus"});
+    InitConfig(instances[i], UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"});
+    InitConfig(instances[i], CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"});
+    InitConfig(instances[i], CF_DEFAULTS_SETUPWIZARD_MODE,
+               {"vm", "setupwizard_mode"});
+    InitConfig(instances[i], CF_DEFAULTS_UUID, {"vm", "uuid"});
+    InitVmManagerConfig(instances[i]);
+    InitConfig(instances[i], CF_DEFAULTS_ENABLE_SANDBOX,
+               {"vm", "crosvm", "enable_sandbox"});
+  }
 }
 
 std::vector<std::string> GenerateCustomConfigsFlags(
     const Json::Value& instances) {
   std::vector<std::string> result;
-  int size = instances.size();
+  const int size = instances.size();
   for (int i = 0; i < size; i++) {
     if (instances[i].isMember("vm") &&
         instances[i]["vm"].isMember("custom_actions")) {

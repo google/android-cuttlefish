@@ -53,38 +53,32 @@ Result<void> ValidateStringConfigSubGroup(
     const std::string& subgroup, const std::string& json_flag,
     std::function<Result<void>(const std::string&)> validate_config);
 
-void InitIntConfig(Json::Value& instances, const std::string& group,
-                   const std::string& json_flag, int default_value);
-
-void InitIntConfigSubGroup(Json::Value& instances, const std::string& group,
-                           const std::string& subgroup,
-                           const std::string& json_flag, int default_value);
+template <typename T>
+Result<void> InitConfig(Json::Value& root, const T& default_value,
+                        const std::vector<std::string>& selectors) {
+  const int size = selectors.size();
+  CF_EXPECT(size > 0, "No keys given for initializing config");
+  int i = 0;
+  Json::Value* traverse = &root;
+  for (const auto& selector : selectors) {
+    if (!traverse->isMember(selector)) {
+      if (i == size - 1) {
+        (*traverse)[selector] = default_value;
+      } else {
+        (*traverse)[selector] = Json::Value();
+      }
+    }
+    traverse = &(*traverse)[selector];
+    ++i;
+  }
+  return {};
+}
 
 void InitIntConfigSubGroupVector(Json::Value& instances,
                                  const std::string& group,
                                  const std::string& subgroup,
                                  const std::string& json_flag,
                                  int default_value);
-
-void InitStringConfig(Json::Value& instances, const std::string& group,
-                      const std::string& json_flag, const std::string& default_value);
-
-void InitStringConfigSubGroup(Json::Value& instances, const std::string& group,
-                              const std::string& subgroup, const std::string& json_flag,
-                              const std::string& default_value);
-
-void InitBoolConfig(Json::Value& instances, const std::string& group,
-                    const std::string& json_flag, const bool default_value);
-
-void InitBoolConfigSubGroup(Json::Value& instances, const std::string& group,
-                            const std::string& subgroup,
-                            const std::string& json_flag,
-                            const bool default_value);
-
-void InitNullConfig(Json::Value& value, const std::string& json_flag);
-
-void InitNullGroupConfig(Json::Value& instances, const std::string& group,
-                         const std::string& json_flag);
 
 Result<std::string> GenerateGflag(const Json::Value& instances,
                                   const std::string& gflag_name,
