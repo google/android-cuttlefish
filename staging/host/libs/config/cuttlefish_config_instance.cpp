@@ -562,7 +562,7 @@ std::string CuttlefishConfig::InstanceSpecific::setupwizard_mode() const {
 }
 Result<void> CuttlefishConfig::MutableInstanceSpecific::set_setupwizard_mode(
     const std::string& mode) {
-  CF_EXPECT(ValidateStupWizardMode(mode),
+  CF_EXPECT(ValidateSetupWizardMode(mode),
             "setupwizard_mode flag has invalid value: " << mode);
   (*Dictionary())[kSetupWizardMode] = mode;
   return {};
