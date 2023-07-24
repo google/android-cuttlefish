@@ -24,6 +24,6 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-void InitSecurityConfigs(Json::Value& root);
+Result<void> InitSecurityConfigs(Json::Value& root);
 Result<std::vector<std::string>> GenerateSecurityFlags(const Json::Value& root);
 };  // namespace cuttlefish

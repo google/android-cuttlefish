@@ -47,19 +47,22 @@ void InitVmManagerConfig(Json::Value& instance) {
   }
 }
 
-void InitVmConfigs(Json::Value& instances) {
+Result<void> InitVmConfigs(Json::Value& instances) {
   const int size = instances.size();
   for (int i = 0; i < size; i++) {
-    InitConfig(instances[i], CF_DEFAULTS_CPUS, {"vm", "cpus"});
-    InitConfig(instances[i], UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"});
-    InitConfig(instances[i], CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"});
-    InitConfig(instances[i], CF_DEFAULTS_SETUPWIZARD_MODE,
-               {"vm", "setupwizard_mode"});
-    InitConfig(instances[i], CF_DEFAULTS_UUID, {"vm", "uuid"});
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_CPUS, {"vm", "cpus"}));
+    CF_EXPECT(
+        InitConfig(instances[i], UI_DEFAULTS_MEMORY_MB, {"vm", "memory_mb"}));
+    CF_EXPECT(
+        InitConfig(instances[i], CF_DEFAULTS_USE_SDCARD, {"vm", "use_sdcard"}));
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_SETUPWIZARD_MODE,
+                         {"vm", "setupwizard_mode"}));
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_UUID, {"vm", "uuid"}));
     InitVmManagerConfig(instances[i]);
-    InitConfig(instances[i], CF_DEFAULTS_ENABLE_SANDBOX,
-               {"vm", "crosvm", "enable_sandbox"});
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_ENABLE_SANDBOX,
+                         {"vm", "crosvm", "enable_sandbox"}));
   }
+  return {};
 }
 
 std::vector<std::string> GenerateCustomConfigsFlags(
