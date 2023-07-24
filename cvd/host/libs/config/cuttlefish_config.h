@@ -310,6 +310,8 @@ class CuttlefishConfig {
     std::string adb_ip_and_port() const;
     // Port number to connect to the camera hal on the guest
     int camera_server_port() const;
+    // Port number to connect to the lights hal on the guest
+    int lights_server_port() const;
 
     std::string adb_device_name() const;
     std::string gnss_file_path() const;
@@ -469,14 +471,6 @@ class CuttlefishConfig {
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
     bool use_pmem() const;
-    /* fmayle@ found out that when cuttlefish starts from the saved snapshot
-     * that was saved after ADBD start event, the socket_vsock_proxy must not
-     * wait for the AdbdStarted event.
-     *
-     * This instance-specific configuration tells the host sock_vsock_proxy
-     * not to wait for the adbd start event.
-     */
-    bool sock_vsock_proxy_wait_adbd_start() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -645,6 +639,7 @@ class CuttlefishConfig {
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
+    void set_lights_server_port(int lights_server_port);
     void set_adb_host_port(int adb_host_port);
     void set_modem_simulator_host_id(int modem_simulator_id);
     void set_adb_ip_and_port(const std::string& ip_port);
@@ -680,7 +675,6 @@ class CuttlefishConfig {
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
     void set_use_pmem(const bool use_pmem);
-    void set_sock_vsock_proxy_wait_adbd_start(const bool);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
