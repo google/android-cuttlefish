@@ -25,7 +25,7 @@
 
 namespace cuttlefish {
 
-void InitInstancesConfigs(Json::Value& root);
+Result<void> InitInstancesConfigs(Json::Value& root);
 Result<std::vector<std::string>> GenerateInstancesFlags(
     const Json::Value& root);
 

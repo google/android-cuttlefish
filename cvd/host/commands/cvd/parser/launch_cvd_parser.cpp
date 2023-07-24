@@ -58,18 +58,18 @@ Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   return result;
 }
 
-void InitCvdConfigs(Json::Value& root) {
+Result<void> InitCvdConfigs(Json::Value& root) {
   // Handle common flags
   if (!root.isMember("netsim_bt")) {
     root["netsim_bt"] = CF_DEFAULTS_NETSIM_BT;
   }
-  // Handle instances flags
-  InitInstancesConfigs(root["instances"]);
+  CF_EXPECT(InitInstancesConfigs(root["instances"]));
+  return {};
 }
 
 Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
   ExtractLaunchTemplates(root["instances"]);
-  InitCvdConfigs(root);
+  CF_EXPECT(InitCvdConfigs(root));
   return GenerateCfFlags(root);
 }
 

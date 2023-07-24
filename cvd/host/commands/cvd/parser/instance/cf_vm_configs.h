@@ -24,7 +24,7 @@
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-void InitVmConfigs(Json::Value& root);
+Result<void> InitVmConfigs(Json::Value& root);
 Result<std::vector<std::string>> GenerateVmFlags(const Json::Value& root);
 
 };  // namespace cuttlefish
