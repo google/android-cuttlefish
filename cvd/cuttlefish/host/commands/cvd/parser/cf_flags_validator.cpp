@@ -178,40 +178,43 @@ Result<void> ValidateBootConfigs(const Json::Value& root) {
 }
 
 // Validate the instances json parameters
-Result<void> ValidateInstancesConfigs(const Json::Value& root) {
-  int num_instances = root.size();
+Result<void> ValidateInstancesConfigs(const Json::Value& instances) {
+  int num_instances = instances.size();
   for (unsigned int i = 0; i < num_instances; i++) {
-    CF_EXPECT(ValidateTypo(root[i], kInstanceKeyMap), "vm ValidateTypo fail");
+    CF_EXPECT(ValidateTypo(instances[i], kInstanceKeyMap),
+              "vm ValidateTypo fail");
 
-    if (root[i].isMember("vm")) {
-      CF_EXPECT(ValidateVmConfigs(root[i]["vm"]), "ValidateVmConfigs fail");
+    if (instances[i].isMember("vm")) {
+      CF_EXPECT(ValidateVmConfigs(instances[i]["vm"]),
+                "ValidateVmConfigs fail");
     }
 
     // Validate @import flag values are supported or not
-    if (root[i].isMember("@import")) {
-      CF_EXPECT(kSupportedImportValues.count(root[i]["@import"].asString()) > 0,
-                "@Import flag values are not supported");
+    if (instances[i].isMember("@import")) {
+      CF_EXPECT(
+          kSupportedImportValues.count(instances[i]["@import"].asString()) > 0,
+          "@Import flag values are not supported");
     }
 
-    if (root[i].isMember("boot")) {
-      CF_EXPECT(ValidateBootConfigs(root[i]["boot"]),
+    if (instances[i].isMember("boot")) {
+      CF_EXPECT(ValidateBootConfigs(instances[i]["boot"]),
                 "ValidateBootConfigs fail");
     }
-    if (root[i].isMember("security")) {
-      CF_EXPECT(ValidateSecurityConfigs(root[i]["security"]),
+    if (instances[i].isMember("security")) {
+      CF_EXPECT(ValidateSecurityConfigs(instances[i]["security"]),
                 "ValidateSecurityConfigs fail");
     }
-    if (root[i].isMember("disk")) {
-      CF_EXPECT(ValidateDiskConfigs(root[i]["disk"]),
+    if (instances[i].isMember("disk")) {
+      CF_EXPECT(ValidateDiskConfigs(instances[i]["disk"]),
                 "ValidateDiskConfigs fail");
     }
-    if (root[i].isMember("graphics")) {
-      CF_EXPECT(ValidateGraphicsConfigs(root[i]["graphics"]),
+    if (instances[i].isMember("graphics")) {
+      CF_EXPECT(ValidateGraphicsConfigs(instances[i]["graphics"]),
                 "ValidateGraphicsConfigs fail");
     }
   }
-  CF_EXPECT(ValidateStringConfig(root, "vm", "setupwizard_mode",
-                                 ValidateStupWizardMode),
+  CF_EXPECT(ValidateStringConfig(instances, "vm", "setupwizard_mode",
+                                 ValidateSetupWizardMode),
             "Invalid value for setupwizard_mode flag");
 
   return {};
