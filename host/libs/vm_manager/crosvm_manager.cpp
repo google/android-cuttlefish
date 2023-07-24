@@ -175,6 +175,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
 
+  // Disable USB passthrough. It isn't needed for any key use cases and it is
+  // not compatible with crosvm suspend-resume support yet (b/266622743).
+  // TODO: Allow it to be turned back on using a flag.
+  crosvm_cmd.Cmd().AddParameter("--no-usb");
+
   crosvm_cmd.Cmd().AddParameter("--core-scheduling=false");
 
   if (instance.vhost_net()) {
