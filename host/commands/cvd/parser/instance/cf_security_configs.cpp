@@ -15,11 +15,13 @@
  */
 #include "host/commands/cvd/parser/instance/cf_security_configs.h"
 
-#include <android-base/logging.h>
+#include <string>
+#include <vector>
+
+#include <json/json.h>
 
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
