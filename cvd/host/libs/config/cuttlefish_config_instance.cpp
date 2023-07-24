@@ -159,6 +159,18 @@ void CuttlefishConfig::MutableInstanceSpecific::set_new_super_image(
     const std::string& super_image) {
   (*Dictionary())[kNewSuperImage] = super_image;
 }
+static constexpr char kMiscImage[] = "misc_image";
+std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
+  return (*Dictionary())[kMiscImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_misc_image(
+    const std::string& misc_image) {
+  (*Dictionary())[kMiscImage] = misc_image;
+}
+static constexpr char kNewMiscImage[] = "new_misc_image";
+std::string CuttlefishConfig::InstanceSpecific::new_misc_image() const {
+  return (*Dictionary())[kNewMiscImage].asString();
+}
 static constexpr char kMiscInfoTxt[] = "misc_info_txt";
 std::string CuttlefishConfig::InstanceSpecific::misc_info_txt() const {
   return (*Dictionary())[kMiscInfoTxt].asString();
@@ -166,6 +178,26 @@ std::string CuttlefishConfig::InstanceSpecific::misc_info_txt() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_misc_info_txt(
     const std::string& misc_info) {
   (*Dictionary())[kMiscInfoTxt] = misc_info;
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_misc_image(
+    const std::string& new_misc_image) {
+  (*Dictionary())[kNewMiscImage] = new_misc_image;
+}
+static constexpr char kMetadataImage[] = "metadata_image";
+std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
+  return (*Dictionary())[kMetadataImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_metadata_image(
+    const std::string& metadata_image) {
+  (*Dictionary())[kMetadataImage] = metadata_image;
+}
+static constexpr char kNewMetadataImage[] = "new_metadata_image";
+std::string CuttlefishConfig::InstanceSpecific::new_metadata_image() const {
+  return (*Dictionary())[kNewMetadataImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_new_metadata_image(
+    const std::string& new_metadata_image) {
+  (*Dictionary())[kNewMetadataImage] = new_metadata_image;
 }
 static constexpr char kVendorBootImage[] = "vendor_boot_image";
 std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image() const {
@@ -562,7 +594,7 @@ std::string CuttlefishConfig::InstanceSpecific::setupwizard_mode() const {
 }
 Result<void> CuttlefishConfig::MutableInstanceSpecific::set_setupwizard_mode(
     const std::string& mode) {
-  CF_EXPECT(ValidateStupWizardMode(mode),
+  CF_EXPECT(ValidateSetupWizardMode(mode),
             "setupwizard_mode flag has invalid value: " << mode);
   (*Dictionary())[kSetupWizardMode] = mode;
   return {};
@@ -1036,14 +1068,6 @@ std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath("launcher.log"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
-  return AbsolutePath(PerInstancePath("metadata.img"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
-  return AbsolutePath(PerInstancePath("misc.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
@@ -1374,15 +1398,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
 }
 std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
   return (*Dictionary())[kWebrtcDeviceId].asString();
-}
-
-static constexpr char kGroupId[] = "group_id";
-void CuttlefishConfig::MutableInstanceSpecific::set_group_id(
-    const std::string& id) {
-  (*Dictionary())[kGroupId] = id;
-}
-std::string CuttlefishConfig::InstanceSpecific::group_id() const {
-  return (*Dictionary())[kGroupId].asString();
 }
 
 static constexpr char kStartSigServer[] = "webrtc_start_sig_server";
