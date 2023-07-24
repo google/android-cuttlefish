@@ -1358,6 +1358,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int confi
   (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
+static constexpr char kLightsServerPort[] = "lights_server_port";
+int CuttlefishConfig::InstanceSpecific::lights_server_port() const {
+  return (*Dictionary())[kLightsServerPort].asInt();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_lights_server_port(int lights_server_port) {
+  (*Dictionary())[kLightsServerPort] = lights_server_port;
+}
+
 static constexpr char kCameraServerPort[] = "camera_server_port";
 int CuttlefishConfig::InstanceSpecific::camera_server_port() const {
   return (*Dictionary())[kCameraServerPort].asInt();
@@ -1469,17 +1477,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
 }
 bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
-}
-
-static constexpr char kSockVsockWaitAdbdStart[] =
-    "sock_vsock_proxy_wait_adbd_start";
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_sock_vsock_proxy_wait_adbd_start(const bool wait_adbd_start) {
-  (*Dictionary())[kSockVsockWaitAdbdStart] = wait_adbd_start;
-}
-bool CuttlefishConfig::InstanceSpecific::sock_vsock_proxy_wait_adbd_start()
-    const {
-  return (*Dictionary())[kSockVsockWaitAdbdStart].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
