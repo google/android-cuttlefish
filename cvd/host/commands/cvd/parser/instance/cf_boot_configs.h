@@ -15,9 +15,11 @@
  */
 
 #pragma once
-#include <json/json.h>
+
 #include <string>
 #include <vector>
+
+#include <json/json.h>
 
 namespace cuttlefish {
 void InitBootConfigs(Json::Value& root);
