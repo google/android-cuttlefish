@@ -34,10 +34,9 @@ namespace cuttlefish {
 
 class WmediumdServer : public vm_manager::VmmDependencyCommand {
  public:
-  INJECT(WmediumdServer(const CuttlefishConfig& config,
-                        const CuttlefishConfig::InstanceSpecific& instance,
-                        LogTeeCreator& log_tee,
-                        GrpcSocketCreator& grpc_socket));
+  INJECT(
+      WmediumdServer(const CuttlefishConfig::EnvironmentSpecific& environment,
+                     LogTeeCreator& log_tee, GrpcSocketCreator& grpc_socket));
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override;
@@ -52,8 +51,7 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
   std::unordered_set<SetupFeature*> Dependencies() const override;
   Result<void> ResultSetup() override;
 
-  const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::EnvironmentSpecific& environment_;
   LogTeeCreator& log_tee_;
   GrpcSocketCreator& grpc_socket_;
   std::string config_path_;

@@ -43,44 +43,41 @@ class ValidateWmediumdService : public SetupFeature {
  public:
   INJECT(ValidateWmediumdService(
       const CuttlefishConfig& config,
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+      const CuttlefishConfig::EnvironmentSpecific& environment))
+      : config_(config), environment_(environment) {}
   std::string Name() const override { return "ValidateWmediumdService"; }
   bool Enabled() const override {
-    return config_.virtio_mac80211_hwsim() && !instance_.start_wmediumd();
+    return config_.virtio_mac80211_hwsim() && !environment_.start_wmediumd();
   }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    if (!config_.wmediumd_api_server_socket().empty()) {
-      CF_EXPECT(WaitForUnixSocket(config_.wmediumd_api_server_socket(), 30));
+    if (!environment_.wmediumd_api_server_socket().empty()) {
+      CF_EXPECT(
+          WaitForUnixSocket(environment_.wmediumd_api_server_socket(), 30));
     }
-    CF_EXPECT(WaitForUnixSocket(config_.vhost_user_mac80211_hwsim(), 30));
+    CF_EXPECT(WaitForUnixSocket(environment_.vhost_user_mac80211_hwsim(), 30));
 
     return {};
   }
 
  private:
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::EnvironmentSpecific& environment_;
 };
 
 }  // namespace
 
 WmediumdServer::WmediumdServer(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, LogTeeCreator& log_tee,
-    GrpcSocketCreator& grpc_socket)
-    : config_(config),
-      instance_(instance),
-      log_tee_(log_tee),
-      grpc_socket_(grpc_socket) {}
+    const CuttlefishConfig::EnvironmentSpecific& environment,
+    LogTeeCreator& log_tee, GrpcSocketCreator& grpc_socket)
+    : environment_(environment), log_tee_(log_tee), grpc_socket_(grpc_socket) {}
 
 Result<std::vector<MonitorCommand>> WmediumdServer::Commands() {
   Command cmd(WmediumdBinary());
-  cmd.AddParameter("-u", config_.vhost_user_mac80211_hwsim());
-  cmd.AddParameter("-a", config_.wmediumd_api_server_socket());
+  cmd.AddParameter("-u", environment_.vhost_user_mac80211_hwsim());
+  cmd.AddParameter("-a", environment_.wmediumd_api_server_socket());
   cmd.AddParameter("-c", config_path_);
 
   cmd.AddParameter("--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(Name()));
@@ -93,14 +90,15 @@ Result<std::vector<MonitorCommand>> WmediumdServer::Commands() {
 
 std::string WmediumdServer::Name() const { return "WmediumdServer"; }
 
-bool WmediumdServer::Enabled() const { return instance_.start_wmediumd(); }
+bool WmediumdServer::Enabled() const { return environment_.start_wmediumd(); }
 
 Result<void> WmediumdServer::WaitForAvailability() const {
   if (Enabled()) {
-    if (!config_.wmediumd_api_server_socket().empty()) {
-      CF_EXPECT(WaitForUnixSocket(config_.wmediumd_api_server_socket(), 30));
+    if (!environment_.wmediumd_api_server_socket().empty()) {
+      CF_EXPECT(
+          WaitForUnixSocket(environment_.wmediumd_api_server_socket(), 30));
     }
-    CF_EXPECT(WaitForUnixSocket(config_.vhost_user_mac80211_hwsim(), 30));
+    CF_EXPECT(WaitForUnixSocket(environment_.vhost_user_mac80211_hwsim(), 30));
   }
 
   return {};
@@ -112,26 +110,27 @@ std::unordered_set<SetupFeature*> WmediumdServer::Dependencies() const {
 
 Result<void> WmediumdServer::ResultSetup() {
   // If wmediumd configuration is given, use it
-  if (!config_.wmediumd_config().empty()) {
-    config_path_ = config_.wmediumd_config();
+  if (!environment_.wmediumd_config().empty()) {
+    config_path_ = environment_.wmediumd_config();
     return {};
   }
   // Otherwise, generate wmediumd configuration using the current wifi mac
   // prefix before start
-  config_path_ = instance_.PerInstanceInternalPath("wmediumd.cfg");
+  config_path_ = environment_.PerEnvironmentPath("wmediumd.cfg");
   Command gen_config_cmd(WmediumdGenConfigBinary());
   gen_config_cmd.AddParameter("-o", config_path_);
-  gen_config_cmd.AddParameter("-p", instance_.wifi_mac_prefix());
+  gen_config_cmd.AddParameter("-p", environment_.wmediumd_mac_prefix());
 
   int success = gen_config_cmd.Start().Wait();
   CF_EXPECT(success == 0, "Unable to run " << gen_config_cmd.Executable()
                                            << ". Exited with status "
                                            << success);
+
   return {};
 }
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific,
+                                 const CuttlefishConfig::EnvironmentSpecific,
                                  LogTeeCreator, GrpcSocketCreator>>
 WmediumdServerComponent() {
   return fruit::createComponent()

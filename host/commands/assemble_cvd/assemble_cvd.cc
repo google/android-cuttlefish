@@ -269,8 +269,15 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    CF_EXPECT(CleanPriorFiles(preserving, config.assembly_dir(),
-                              config.instance_dirs()),
+    auto instance_dirs = config.instance_dirs();
+    auto environment_dirs = config.environment_dirs();
+    std::vector<std::string> clean_dirs;
+    clean_dirs.push_back(config.assembly_dir());
+    clean_dirs.insert(clean_dirs.end(), instance_dirs.begin(),
+                      instance_dirs.end());
+    clean_dirs.insert(clean_dirs.end(), environment_dirs.begin(),
+                      environment_dirs.end());
+    CF_EXPECT(CleanPriorFiles(preserving, clean_dirs),
               "Failed to clean prior files");
 
     auto defaultGroup = "cvdnetwork";
@@ -281,6 +288,23 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(EnsureDirectoryExists(config.instances_dir()));
     CF_EXPECT(EnsureDirectoryExists(config.instances_uds_dir(), defaultMode,
                                     defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(config.environments_dir(), defaultMode,
+                                    defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(config.environments_uds_dir(), defaultMode,
+                                    defaultGroup));
+
+    auto environment =
+        const_cast<const CuttlefishConfig&>(config).ForDefaultEnvironment();
+
+    CF_EXPECT(EnsureDirectoryExists(environment.environment_dir(), defaultMode,
+                                    defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(environment.environment_uds_dir(),
+                                    defaultMode, defaultGroup));
+    CF_EXPECT(EnsureDirectoryExists(environment.PerEnvironmentLogPath(""),
+                                    defaultMode, defaultGroup));
+    CF_EXPECT(
+        EnsureDirectoryExists(environment.PerEnvironmentGrpcSocketPath(""),
+                              defaultMode, defaultGroup));
 
     LOG(INFO) << "Path for instance UDS: " << config.instances_uds_dir();
 
