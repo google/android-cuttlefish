@@ -31,6 +31,8 @@ struct FetchCvdInstanceConfig {
   std::optional<std::string> default_build;
   std::optional<std::string> system_build;
   std::optional<std::string> kernel_build;
+  std::optional<std::string> download_img_zip;
+  std::optional<std::string> download_target_files_zip;
 };
 
 struct FetchCvdConfig {
