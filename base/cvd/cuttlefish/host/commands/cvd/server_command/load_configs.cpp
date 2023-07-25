@@ -148,6 +148,22 @@ void AddFetchCommandArgs(
   if (kernel_build_params) {
     command.add_args("--kernel_build=" + *kernel_build_params);
   }
+  std::optional<std::string> download_img_zip_params = JoinBySelectorOptional(
+      fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+        return instance_config.download_img_zip.value_or("");
+      });
+  if (download_img_zip_params) {
+    command.add_args("--download_img_zip=" + *download_img_zip_params);
+  }
+  std::optional<std::string> download_target_files_zip_params =
+      JoinBySelectorOptional(
+          fetch_instances, [](const FetchCvdInstanceConfig& instance_config) {
+            return instance_config.download_target_files_zip.value_or("");
+          });
+  if (download_target_files_zip_params) {
+    command.add_args("--download_target_files_zip=" +
+                     *download_target_files_zip_params);
+  }
 }
 
 }  // namespace
