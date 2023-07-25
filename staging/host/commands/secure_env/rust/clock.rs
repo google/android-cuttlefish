@@ -24,8 +24,8 @@ pub struct StdClock;
 impl crypto::MonotonicClock for StdClock {
     fn now(&self) -> crypto::MillisecondsSinceEpoch {
         let mut time = libc::timespec { tv_sec: 0, tv_nsec: 0 };
-        // Safety: `time` is a valid structure.
         let rc =
+        // Safety: `time` is a valid structure.
             unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut time as *mut libc::timespec) };
         if rc < 0 {
             log::warn!("failed to get time!");
