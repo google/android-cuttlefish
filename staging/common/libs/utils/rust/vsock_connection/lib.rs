@@ -17,6 +17,7 @@
 use cxx::SharedPtr;
 
 /// This module exposes the VsockServerConnection C++ class to Rust.
+#[allow(unsafe_op_in_unsafe_fn)]
 #[cxx::bridge(namespace = "cuttlefish")]
 mod ffi {
     unsafe extern "C++" {

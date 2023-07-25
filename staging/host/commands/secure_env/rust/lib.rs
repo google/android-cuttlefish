@@ -45,7 +45,16 @@ mod tpm;
 mod tests;
 
 /// Main routine for the KeyMint TA. Only returns if there is a fatal error.
-pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: *mut libc::c_void) {
+///
+/// # Safety
+///
+/// `fd_in` and `fd_out` must be valid and open file descriptors.
+pub unsafe fn ta_main(
+    fd_in: c_int,
+    fd_out: c_int,
+    security_level: SecurityLevel,
+    trm: *mut libc::c_void,
+) {
     log::set_logger(&AndroidCppLogger).unwrap();
     log::set_max_level(log::LevelFilter::Debug); // Filtering happens elsewhere
     info!(
@@ -53,8 +62,9 @@ pub fn ta_main(fd_in: c_int, fd_out: c_int, security_level: SecurityLevel, trm: 
         fd_in, fd_out, security_level,
     );
 
-    // Safety: the following calls rely on this code being the sole owner of the file descriptors.
+    // SAFETY: The caller guarantees that `fd_in` is valid and open.
     let mut infile = unsafe { std::fs::File::from_raw_fd(fd_in) };
+    // SAFETY: The caller guarantees that `fd_out` is valid and open.
     let mut outfile = unsafe { std::fs::File::from_raw_fd(fd_out) };
 
     let hw_info = HardwareInfo {
@@ -214,8 +224,8 @@ impl log::Log for AndroidCppLogger {
             .unwrap_or_else(|_| CString::new("(invalid tag)").unwrap());
         let msg = CString::new(format!("{}", record.args()))
             .unwrap_or_else(|_| CString::new("(invalid msg)").unwrap());
+        // SAFETY: All pointer arguments are generated from valid owned CString instances.
         unsafe {
-            // Safety: All pointer arguments are generated from valid owned CString instances
             secure_env_tpm::secure_env_log(
                 file.as_ptr(),
                 line,
