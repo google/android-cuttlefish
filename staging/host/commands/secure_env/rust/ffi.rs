@@ -22,8 +22,12 @@ use libc::c_int;
 use log::error;
 
 /// FFI wrapper around [`kmr_cf::ta_main`].
+///
+/// # Safety
+///
+/// `fd_in` and `fd_out` must be valid and open file descriptors.
 #[no_mangle]
-pub extern "C" fn kmr_ta_main(
+pub unsafe extern "C" fn kmr_ta_main(
     fd_in: c_int,
     fd_out: c_int,
     security_level: c_int,
@@ -38,5 +42,6 @@ pub extern "C" fn kmr_ta_main(
             SecurityLevel::Software
         }
     };
-    kmr_cf::ta_main(fd_in, fd_out, security_level, trm)
+    // SAFETY: The caller guarantees that `fd_in` and `fd_out` are valid and open.
+    unsafe { kmr_cf::ta_main(fd_in, fd_out, security_level, trm) }
 }
