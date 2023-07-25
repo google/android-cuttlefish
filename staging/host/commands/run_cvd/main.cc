@@ -16,6 +16,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <build/version.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <unistd.h>
@@ -66,6 +67,10 @@ class CuttlefishEnvironment : public DiagnosticInformation {
     return {
         "Launcher log: " + instance_.launcher_log_path(),
         "Instance configuration: " + config_path,
+        // TODO(rammuthiah)  replace this with a more thorough cvd host package
+        // version scheme. Currently this only reports the Build NUmber of run_cvd
+        // and it is possible for other host binaries to be from different versions.
+        "Launcher Build ID: " + android::build::GetBuildNumber(),
     };
   }
 
