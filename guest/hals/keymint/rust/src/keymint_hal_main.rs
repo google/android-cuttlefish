@@ -52,7 +52,10 @@ impl kmr_hal::SerializedChannel for FileChannel {
 
 /// Set 'raw' mode for the given file descriptor.
 fn set_terminal_raw(fd: libc::c_int) -> Result<(), HalServiceError> {
+    // SAFETY: All fields of termios are valid for zero bytes.
     let mut settings: libc::termios = unsafe { std::mem::zeroed() };
+    // SAFETY: The pointer is valid because it comes from a reference, and tcgetattr doesn't store
+    // it.
     let result = unsafe { libc::tcgetattr(fd, &mut settings) };
     if result < 0 {
         return Err(HalServiceError(format!(
@@ -62,6 +65,8 @@ fn set_terminal_raw(fd: libc::c_int) -> Result<(), HalServiceError> {
         )));
     }
 
+    // SAFETY: The pointers are valid because they come from references, and they are not stored
+    // beyond the function calls.
     let result = unsafe {
         libc::cfmakeraw(&mut settings);
         libc::tcsetattr(fd, libc::TCSANOW, &settings)
@@ -102,6 +107,7 @@ fn inner_main() -> Result<(), HalServiceError> {
 
     // Create a connection to the TA.
     let path = std::ffi::CString::new(DEVICE_FILE_NAME).unwrap();
+    // SAFETY: The path is a valid C string.
     let fd = unsafe { libc::open(path.as_ptr(), libc::O_RDWR) };
     if fd < 0 {
         return Err(HalServiceError(format!(
@@ -111,6 +117,8 @@ fn inner_main() -> Result<(), HalServiceError> {
         )));
     }
     set_terminal_raw(fd)?;
+    // SAFETY: The file descriptor is valid because `open` either returns a valid FD or -1, and we
+    // checked that it is not negative.
     let channel = Arc::new(Mutex::new(FileChannel(unsafe { std::fs::File::from_raw_fd(fd) })));
 
     let km_service = kmr_hal::keymint::Device::new_as_binder(channel.clone());
