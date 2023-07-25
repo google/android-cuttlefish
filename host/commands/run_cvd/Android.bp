@@ -82,11 +82,11 @@ cc_binary {
         },
         linux: {
             srcs: [
-              "launch/config_server.cpp",
-              "launch/tombstone_receiver.cpp",
-              "launch/modem.cpp",
-              "launch/open_wrt.cpp",
-              "launch/wmediumd_server.cpp",
+                "launch/config_server.cpp",
+                "launch/tombstone_receiver.cpp",
+                "launch/modem.cpp",
+                "launch/open_wrt.cpp",
+                "launch/wmediumd_server.cpp",
             ],
             shared_libs: [
                 "libnl",
