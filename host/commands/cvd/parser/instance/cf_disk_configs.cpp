@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "host/commands/cvd/parser/instance/cf_disk_configs.h"
 
-#include "host/commands/assemble_cvd/flags_defaults.h"
+#include <string>
+#include <vector>
+
+#include <json/json.h>
+
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 #define DEFAULT_BLANK_DATA_IMAGE_SIZE "unset"
 
