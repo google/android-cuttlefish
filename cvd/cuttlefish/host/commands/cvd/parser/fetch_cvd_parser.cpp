@@ -32,6 +32,8 @@ void InitFetchInstanceConfigs(Json::Value& instances) {
   InitNullGroupConfig(instances, "disk", "default_build");
   InitNullGroupConfig(instances, "disk", "system_build");
   InitNullGroupConfig(instances, "disk", "kernel_build");
+  InitNullGroupConfig(instances, "disk", "download_img_zip");
+  InitNullGroupConfig(instances, "disk", "download_target_files_zip");
 }
 
 void InitFetchCvdConfigs(Json::Value& root) {
@@ -61,7 +63,10 @@ FetchCvdInstanceConfig ParseFetchInstanceConfigs(const Json::Value& instance) {
   auto result = FetchCvdInstanceConfig{
       .default_build = OptString(instance["disk"]["default_build"]),
       .system_build = OptString(instance["disk"]["system_build"]),
-      .kernel_build = OptString(instance["disk"]["kernel_build"])};
+      .kernel_build = OptString(instance["disk"]["kernel_build"]),
+      .download_img_zip = OptString(instance["disk"]["download_img_zip"]),
+      .download_target_files_zip =
+          OptString(instance["disk"]["download_target_files_zip"])};
   result.should_fetch = ShouldFetch(
       {result.default_build, result.system_build, result.kernel_build});
   return result;
