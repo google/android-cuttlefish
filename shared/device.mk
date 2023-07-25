@@ -607,8 +607,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/pci.ids:$(TARGET_COPY_OUT_VENDOR)/pci.ids
 
-# Thread Network AIDL HAL
+# Thread Network AIDL HAL and simulation CLI
 PRODUCT_PACKAGES += \
-    android.hardware.threadnetwork-service.sim
+    android.hardware.threadnetwork-service.sim \
+    ot-cli-ftd
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.threadnetwork.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.threadnetwork.xml
