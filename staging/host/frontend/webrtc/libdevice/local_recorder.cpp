@@ -258,7 +258,7 @@ webrtc::EncodedImageCallback::Result LocalRecorder::Display::OnEncodedImage(
     const webrtc::CodecSpecificInfo* codec_specific_info) {
   uint64_t timestamp = encoded_image.Timestamp() / kRtpTicksPerNs;
 
-  std::lock_guard(impl_.mkv_mutex_);
+  std::lock_guard lock(impl_.mkv_mutex_);
 
   bool is_key =
       encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey;
