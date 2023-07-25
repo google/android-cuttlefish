@@ -61,6 +61,7 @@ cc_binary {
         "libprotobuf-cpp-full",
     ],
     static_libs: [
+        "libbuildversion",
         "libcuttlefish_command_util",
         "libcuttlefish_host_config",
         "libcuttlefish_host_config_adb",
@@ -99,4 +100,5 @@ cc_binary {
         "cuttlefish_libicuuc",
         "cvd_cc_defaults",
     ],
+    use_version_lib: true,
 }
