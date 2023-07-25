@@ -108,6 +108,8 @@ static std::map<std::string, Json::ValueType> kDiskKeyMap = {
     {"default_build", Json::ValueType::stringValue},
     {"system_build", Json::ValueType::stringValue},
     {"kernel_build", Json::ValueType::stringValue},
+    {"download_img_zip", Json::ValueType::booleanValue},
+    {"download_target_zip_files", Json::ValueType::booleanValue},
     {"blank_data_image_mb", Json::ValueType::uintValue},
 };
 
