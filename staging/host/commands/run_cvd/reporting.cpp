@@ -31,7 +31,7 @@ DiagnosticInformation::~DiagnosticInformation() = default;
 void DiagnosticInformation::PrintAll(
     const std::vector<DiagnosticInformation*>& infos) {
   LOG(INFO) << kGreenColor
-            << "The following files contain useful debugging information:"
+            << "The following lines contain useful debugging information:"
             << kResetColor;
   for (const auto& info : infos) {
     for (const auto& line : info->Diagnostics()) {
