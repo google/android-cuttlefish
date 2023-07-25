@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <android-base/logging.h>
+#include "host/commands/cvd/parser/instance/cf_vm_configs.h"
+
+#include <string>
+#include <vector>
+
 #include <android-base/strings.h>
+#include <json/json.h>
 
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
-#include "host/commands/cvd/parser/instance/cf_vm_configs.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 #define UI_DEFAULTS_MEMORY_MB 2048
 
