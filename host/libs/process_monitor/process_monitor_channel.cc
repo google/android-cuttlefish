@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/process_monitor_channel.h"
+#include "host/libs/process_monitor/process_monitor_channel.h"
 
 #include <string>
 
