@@ -442,6 +442,12 @@ bool BuildVbmetaImage(const std::string& image_path,
   return true;
 }
 
+std::vector<std::string> Dedup(std::vector<std::string>&& vec) {
+  std::sort(vec.begin(), vec.end());
+  vec.erase(unique(vec.begin(), vec.end()), vec.end());
+  return vec;
+}
+
 bool SplitRamdiskModules(const std::string& ramdisk_path,
                          const std::string& ramdisk_stage_dir,
                          const std::string& vendor_dlkm_build_dir,
@@ -461,7 +467,7 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   }
   LOG(INFO) << "modules.load location " << module_load_file;
   const auto module_list =
-      android::base::Tokenize(ReadFile(module_load_file), "\n");
+      Dedup(android::base::Tokenize(ReadFile(module_load_file), "\n"));
   const auto module_base_dir = cpp_dirname(module_load_file);
   const auto deps = LoadModuleDeps(module_base_dir + "/modules.dep");
   const auto ramdisk_modules =
@@ -477,6 +483,9 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
 
     const auto module_location =
         fmt::format("{}/{}", module_base_dir, module_path);
+    if (!FileExists(module_location)) {
+      continue;
+    }
     if (IsKernelModuleSigned(module_location)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
