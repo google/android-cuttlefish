@@ -135,25 +135,7 @@ Result<ArgToken> ArgumentsLexer::Process(const std::string& token) const {
 }
 
 Result<std::vector<ArgToken>> ArgumentsLexer::Tokenize(
-    const CvdProtobufArg& args) {
-  std::vector<std::string> args_vec;
-  args_vec.reserve(args.size());
-  for (const auto& arg : args) {
-    args_vec.emplace_back(arg);
-  }
-  auto arg_tokens = CF_EXPECT(Tokenize(args_vec));
-  return arg_tokens;
-}
-
-Result<std::vector<ArgToken>> ArgumentsLexer::Tokenize(
-    const std::string& args, const std::string delim) {
-  auto args_vec = android::base::Tokenize(args, delim);
-  auto arg_tokens = CF_EXPECT(Tokenize(args_vec));
-  return arg_tokens;
-}
-
-Result<std::vector<ArgToken>> ArgumentsLexer::Tokenize(
-    const std::vector<std::string>& args) {
+    const std::vector<std::string>& args) const {
   std::vector<ArgToken> tokenized;
   auto intersection =
       Intersection(flag_patterns_.value_patterns, flag_patterns_.bool_patterns);
@@ -183,7 +165,7 @@ Result<ArgumentsLexer::FlagValuePair> ArgumentsLexer::Separate(
 }
 
 Result<std::vector<std::string>> ArgumentsLexer::Preprocess(
-    const std::vector<std::string>& args) {
+    const std::vector<std::string>& args) const {
   std::vector<std::string> new_args;
   std::regex pattern("[\\-][\\-]?[^\\-]+.*=.*");
   for (const auto& arg : args) {
