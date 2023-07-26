@@ -40,7 +40,7 @@ TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
 TARGET_KERNEL_USE ?= mainline
 KERNEL_MODULES_PATH := device/google/cuttlefish_prebuilts/kernel/$(TARGET_KERNEL_USE)-$(TARGET_KERNEL_ARCH)
 TARGET_KERNEL_PATH := $(KERNEL_MODULES_PATH)/kernel-$(TARGET_KERNEL_USE)
-SYSTEM_DLKM_SRC ?= $(KERNEL_MODULES_PATH)
+SYSTEM_DLKM_SRC ?= $(KERNEL_MODULES_PATH)/system_dlkm
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 -include device/google/cuttlefish/shared/bluetooth/BoardConfig.mk
