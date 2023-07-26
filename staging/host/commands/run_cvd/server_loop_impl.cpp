@@ -32,13 +32,13 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/command_util/util.h"
 #include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/inject.h"
+#include "host/libs/process_monitor/process_monitor.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
