@@ -22,8 +22,12 @@ message ExtendedLauncherAction {
   oneof actions {
     Suspend suspend = 5;
     Resume resume = 6;
+    StartScreenRecording start_screen_recording = 7;
+    StopScreenRecording stop_screen_recording = 8;
   }
   string verbosity = 20;
 }
 message Suspend {}
 message Resume {}
+message StartScreenRecording {}
+message StopScreenRecording {}

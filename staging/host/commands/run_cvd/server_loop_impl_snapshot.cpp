@@ -45,25 +45,6 @@ ServerLoopImpl::InitializeVmToControlSockPath(
   };
 }
 
-Result<void> ServerLoopImpl::HandleExtended(
-    const LauncherActionInfo& action_info, const SharedFD& client) {
-  CF_EXPECT(action_info.action == LauncherAction::kExtended);
-  switch (action_info.type) {
-    case ExtendedActionType::kSuspend: {
-      LOG(DEBUG) << "Run_cvd received suspend request.";
-      CF_EXPECT(HandleSuspend(action_info.serialized_data, client));
-      return {};
-    }
-    case ExtendedActionType::kResume: {
-      LOG(DEBUG) << "Run_cvd received resume request.";
-      CF_EXPECT(HandleResume(action_info.serialized_data, client));
-      return {};
-    }
-    default:
-      return CF_ERR("Unsupported ExtendedActionType");
-  }
-}
-
 static std::string SubtoolPath(const std::string& subtool_name) {
   auto my_own_dir = android::base::GetExecutableDirectory();
   std::stringstream subtool_path_stream;
