@@ -25,7 +25,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/result.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/libs/command_util/util.h"
@@ -33,6 +32,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/feature.h"
 #include "host/libs/config/inject.h"
+#include "host/libs/process_monitor/process_monitor.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
