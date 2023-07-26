@@ -72,6 +72,8 @@ enum class ExtendedActionType : std::uint32_t {
   kUnused = 4,
   kSuspend = 5,
   kResume = 6,
+  kStartScreenRecording = 7,
+  kStopScreenRecording = 8,
   // TODO(kwstephenkim): extend the list of operations to cover snapshot
 };
 

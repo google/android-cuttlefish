@@ -62,6 +62,10 @@ class ServerLoopImpl : public ServerLoop,
                              const SharedFD& client);
   Result<void> HandleResume(const std::string& serialized_data,
                             const SharedFD& client);
+  Result<void> HandleStartScreenRecording(const std::string& serialized_data,
+                                          const SharedFD& client);
+  Result<void> HandleStopScreenRecording(const std::string& serialized_data,
+                                         const SharedFD& client);
 
   void HandleActionWithNoData(const LauncherAction action,
                               const SharedFD& client,
