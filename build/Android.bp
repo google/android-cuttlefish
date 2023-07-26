@@ -53,6 +53,7 @@ cvd_host_tools = [
     "allocd_client",
     "assemble_cvd",
     "avbtool",
+    "build_super_image",
     "tcp_connector",
     "common_crosvm",
     "config_server",
