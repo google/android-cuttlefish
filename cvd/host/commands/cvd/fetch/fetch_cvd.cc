@@ -597,6 +597,12 @@ Result<void> Fetch(BuildApi& build_api, const Builds& builds,
           CF_EXPECT(RenameFile(extracted_vbmeta_system.value(),
                                target_directories.root + "/vbmeta_system.img"));
         }
+        Result<std::string> extracted_init_boot = ExtractImage(
+            target_files, target_directories.root, "IMAGES/init_boot.img");
+        if (extracted_init_boot.ok()) {
+          CF_EXPECT(RenameFile(extracted_init_boot.value(),
+                               target_directories.root + "/init_boot.img"));
+        }
       }
     }
   }
