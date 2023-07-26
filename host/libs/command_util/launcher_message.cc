@@ -88,6 +88,8 @@ bool LauncherActionMessage::IsSupportedType(const ExtendedActionType type) {
       ExtendedActionType::kUnused,
       ExtendedActionType::kSuspend,
       ExtendedActionType::kResume,
+      ExtendedActionType::kStartScreenRecording,
+      ExtendedActionType::kStopScreenRecording,
   };
   return Contains(supported_action_types, type);
 }
