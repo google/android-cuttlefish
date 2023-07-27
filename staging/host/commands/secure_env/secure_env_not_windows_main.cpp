@@ -49,6 +49,7 @@
 #include "host/commands/secure_env/tpm_keymaster_context.h"
 #include "host/commands/secure_env/tpm_keymaster_enforcement.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
+#include "host/libs/config/known_paths.h"
 #include "host/libs/config/logging.h"
 
 DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
@@ -103,7 +104,7 @@ SharedFD DupFdFlag(gflags::int32 fd) {
     argv[i] = strdup(gflags::GetArgvs()[i].c_str());
     CHECK(argv[i] != nullptr) << "OOM";
   }
-  execv("/proc/self/exe", argv.data());
+  execv(SecureEnvBinary().c_str(), argv.data());
   char buf[128];
   LOG(FATAL) << "Exec failed, secure_env is out of sync with the guest: "
              << errno << "(" << strerror_r(errno, buf, sizeof(buf)) << ")";
@@ -258,6 +259,7 @@ int SecureEnvMain(int argc, char** argv) {
   // will receive any traffic from the guest.
 
   // Start the Rust reference implementation of KeyMint.
+#ifdef __linux__
   LOG(INFO) << "starting Rust KeyMint TA implementation in a thread";
 
   int keymint_in = FLAGS_keymint_fd_in;
@@ -266,6 +268,7 @@ int SecureEnvMain(int argc, char** argv) {
   threads.emplace_back([rm, keymint_in, keymint_out, security_level]() {
     kmr_ta_main(keymint_in, keymint_out, security_level, rm);
   });
+#endif
 
   // Start the C++ reference implementation of KeyMint.
   LOG(INFO) << "starting C++ KeyMint implementation in a thread with FDs in="
