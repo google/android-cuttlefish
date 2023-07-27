@@ -16,8 +16,13 @@ syntax = "proto3";
 
 package controlenvproxyserver;
 
+import "google/protobuf/empty.proto";
+
 service ControlEnvProxyService {
   rpc CallUnaryMethod (CallUnaryMethodRequest) returns (CallUnaryMethodReply) {}
+  rpc ListServices (google.protobuf.Empty) returns (ListServicesReply) {}
+  rpc ListMethods (ListMethodsRequest) returns (ListMethodsReply) {}
+  rpc ListReqResType (ListReqResTypeRequest) returns (ListReqResTypeReply) {}
 }
 
 message CallUnaryMethodRequest {
@@ -28,4 +33,26 @@ message CallUnaryMethodRequest {
 
 message CallUnaryMethodReply {
   string json_formatted_proto = 1;
+}
+
+message ListServicesReply {
+  repeated string services = 1;
+}
+
+message ListMethodsRequest {
+  string service_name = 1;
+}
+
+message ListMethodsReply {
+  repeated string methods = 1;
+}
+
+message ListReqResTypeRequest {
+  string service_name = 1;
+  string method_name = 2;
+}
+
+message ListReqResTypeReply {
+  string request_type_name = 1;
+  string response_type_name = 2;
 }
