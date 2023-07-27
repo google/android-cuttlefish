@@ -34,10 +34,8 @@ public:
 
   static std::unique_ptr<LocalRecorder> Create(const std::string& filename);
 
-  void AddDisplay(
-      size_t width,
-      size_t height,
-      std::shared_ptr<webrtc::VideoTrackSourceInterface> video);
+  void AddDisplay(const std::string& name, size_t width, size_t height,
+                  std::shared_ptr<webrtc::VideoTrackSourceInterface> video);
 
   void Stop();
 private:
