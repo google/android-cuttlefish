@@ -116,7 +116,11 @@ uint64_t TpmGatekeeper::GetMillisecondsSinceBoot() const {
   return GetTickCount64();
 #else
   struct timespec time;
+#ifdef __linux__
   int res = clock_gettime(CLOCK_BOOTTIME, &time);
+#else
+  int res = clock_gettime(CLOCK_MONOTONIC, &time);
+#endif
   if (res < 0) return 0;
   return (time.tv_sec * 1000) + (time.tv_nsec / 1000 / 1000);
 #endif
