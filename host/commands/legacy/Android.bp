@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,27 +17,56 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "cvd_internal_stop",
+cc_library_static {
+    name: "liblegacy_binaries_common",
     srcs: [
-        "main.cc",
+        "common.cpp",
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libcuttlefish_allocd_utils",
-        "libjsoncpp",
-    ],
-    static_libs: [
-        "libcuttlefish_command_util",
-        "libcuttlefish_host_config",
-        "libgflags",
     ],
     target: {
         darwin: {
             enabled: true,
         },
     },
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_binary {
+    name: "launch_cvd",
+    srcs: [
+        "launch_cvd.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+    static_libs: [
+        "liblegacy_binaries_common",
+    ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
+    defaults: ["cuttlefish_host"],
+}
+
+cc_binary {
+    name: "stop_cvd",
+    srcs: [
+        "stop_cvd.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+    static_libs: [
+        "liblegacy_binaries_common",
+    ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
+    defaults: ["cuttlefish_host"],
 }
