@@ -39,7 +39,6 @@ cc_defaults {
         "tpm2-tss2-tcti",
     ],
     static_libs: [
-        "libc++_static",
         "libscrypt_static",
         "ms-tpm-20-ref-lib",
     ],
@@ -57,6 +56,14 @@ cc_defaults {
                 "libcuttlefish_utils",
                 "libfruit",
             ],
+        },
+        linux: {
+            static_libs: [
+                "libc++_static",
+            ],
+        },
+        darwin: {
+            enabled: true,
         },
         windows: {
             cflags: [
@@ -98,7 +105,7 @@ common_libsecure_srcs = [
 // 2. Missing file utils
 // 3. Base64 isn't supported (need for software oemlock implementation)
 cc_library_host_static {
-    name: "libsecure_env_linux",
+    name: "libsecure_env_not_windows",
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",
         "device_tpm.cpp",
@@ -106,6 +113,11 @@ cc_library_host_static {
         "oemlock/oemlock_responder.cpp",
         "storage/insecure_json_storage.cpp",
     ],
+    target: {
+        darwin: {
+            enabled: true,
+        },
+    },
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
 }
 
@@ -117,7 +129,7 @@ rust_bindgen_host {
     wrapper_src: "tpm_ffi.h",
     vendor_available: true,
     static_libs: [
-        "libsecure_env_linux",
+        "libsecure_env_not_windows",
     ],
     defaults: [
         "cuttlefish_buildhost_only",
@@ -140,13 +152,18 @@ cc_binary_host {
                 "libsecure_env_win",
             ],
         },
-        linux: {
+        not_windows: {
             srcs: [
-                "secure_env_linux_main.cpp",
+                "secure_env_not_windows_main.cpp",
             ],
             static_libs: [
-                "libsecure_env_linux",
+                "libsecure_env_not_windows",
             ],
+        },
+        darwin: {
+            enabled: true,
+        },
+        linux: {
             shared_libs: [
                 "libkmr_cf_ffi",
             ],
@@ -189,7 +206,7 @@ cc_test_host {
         "encrypted_serializable_test.cpp",
     ],
     static_libs: [
-        "libsecure_env_linux",
+        "libsecure_env_not_windows",
     ],
     defaults: ["cuttlefish_buildhost_only", "secure_env_defaults"],
     test_options: {
