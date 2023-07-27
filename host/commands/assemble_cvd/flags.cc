@@ -1107,6 +1107,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   LOG(DEBUG) << "rootcanal_instance_num: " << rootcanal_instance_num;
   LOG(DEBUG) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
 
+  int netsim_instance_num = *instance_nums.begin() - 1;
+  tmp_config_obj.set_netsim_instance_num(netsim_instance_num);
+  LOG(DEBUG) << "netsim_instance_num: " << netsim_instance_num;
+
   // crosvm should create fifos for UWB
   auto pica_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_pica_instance_num > 0) {
