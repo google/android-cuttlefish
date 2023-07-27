@@ -42,7 +42,7 @@ $(call inherit-product, device/google/cuttlefish/shared/virgl/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 # Support mixing CF system onto previous versions of vendor
-PRODUCT_EXTRA_VNDK_VERSIONS := 30 31 33
+PRODUCT_EXTRA_VNDK_VERSIONS := 30 31 32 33
 
 TARGET_PRODUCT_PROP := $(LOCAL_PATH)/product.prop
 
