@@ -262,7 +262,7 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
           };
           std::shared_ptr<webrtc::VideoTrackSourceInterface> source_shared(
               source2.release(), deleter);
-          impl_->recorder_->AddDisplay(width, height, source_shared);
+          impl_->recorder_->AddDisplay(label, width, height, source_shared);
         }
 
         return std::shared_ptr<VideoSink>(
