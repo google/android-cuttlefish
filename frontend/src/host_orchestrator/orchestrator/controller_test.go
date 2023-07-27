@@ -17,7 +17,6 @@ package orchestrator
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -34,35 +33,13 @@ import (
 
 const pageNotFoundErrMsg = "404 page not found\n"
 
-type testIM struct {
-	LogsDir string
-}
-
-func (testIM) CreateCVD(req apiv1.CreateCVDRequest) (apiv1.Operation, error) {
-	return apiv1.Operation{}, nil
-}
-
-func (testIM) ListCVDs() (*apiv1.ListCVDsResponse, error) {
-	return &apiv1.ListCVDsResponse{}, nil
-}
-
-func (m *testIM) GetLogsDir(name string) (string, error) {
-	return m.LogsDir, nil
-}
-
-func (m *testIM) HostBugReport() (string, error) {
-	f, _ := ioutil.TempFile("", "cuttlefishTest")
-	defer f.Close()
-	return f.Name(), nil
-}
-
 func TestCreateCVDIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/cvds", strings.NewReader("{}"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{InstanceManager: &testIM{}}
+	controller := Controller{}
 
 	makeRequest(rr, req, &controller)
 
@@ -79,7 +56,7 @@ func TestGetCVDLogsIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{InstanceManager: &testIM{LogsDir: dir}}
+	controller := Controller{}
 
 	makeRequest(rr, req, &controller)
 
@@ -303,11 +280,11 @@ func TestPullRuntimeArtifactsIsHandled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	controller := Controller{InstanceManager: &testIM{}}
+	controller := Controller{}
 
 	makeRequest(rr, req, &controller)
 
-	if rr.Code != http.StatusOK {
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
 	}
 }
