@@ -25,6 +25,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <json/json.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
@@ -34,6 +35,12 @@
 using controlenvproxyserver::CallUnaryMethodReply;
 using controlenvproxyserver::CallUnaryMethodRequest;
 using controlenvproxyserver::ControlEnvProxyService;
+using controlenvproxyserver::ListMethodsReply;
+using controlenvproxyserver::ListMethodsRequest;
+using controlenvproxyserver::ListReqResTypeReply;
+using controlenvproxyserver::ListReqResTypeRequest;
+using controlenvproxyserver::ListServicesReply;
+using google::protobuf::Empty;
 using google::protobuf::RepeatedPtrField;
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -55,9 +62,87 @@ class ControlEnvProxyServiceImpl final
                                   request->json_formatted_proto()};
     auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "call", args);
     if (!TypeIsSuccess(result)) {
-      return Status(StatusCode::FAILED_PRECONDITION, "Call gRPC method failed");
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Calling gRPC method failed");
     }
     reply->set_json_formatted_proto(*result);
+
+    return Status::OK;
+  }
+
+  Status ListServices(ServerContext* context, const Empty* request,
+                      ListServicesReply* reply) override {
+    std::vector<std::string> args;
+    auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "ls", args);
+    if (!TypeIsSuccess(result)) {
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Listing gRPC services failed");
+    }
+
+    Json::Value value;
+    if (!reader.parse(*result, value)) {
+      return parsing_json_failure_status;
+    }
+    if (!value["services"].isArray()) {
+      return parsing_json_failure_status;
+    }
+    for (auto& service : value["services"]) {
+      if (!service.isString()) {
+        return parsing_json_failure_status;
+      }
+      reply->add_services(service.asString());
+    }
+
+    return Status::OK;
+  }
+
+  Status ListMethods(ServerContext* context, const ListMethodsRequest* request,
+                     ListMethodsReply* reply) override {
+    std::vector<std::string> args{request->service_name()};
+    auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "ls", args);
+    if (!TypeIsSuccess(result)) {
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Listing gRPC methods failed");
+    }
+
+    Json::Value value;
+    if (!reader.parse(*result, value)) {
+      return parsing_json_failure_status;
+    }
+    if (!value["methods"].isArray()) {
+      return parsing_json_failure_status;
+    }
+    for (auto& method : value["methods"]) {
+      if (!method.isString()) {
+        return parsing_json_failure_status;
+      }
+      reply->add_methods(method.asString());
+    }
+
+    return Status::OK;
+  }
+
+  Status ListReqResType(ServerContext* context,
+                        const ListReqResTypeRequest* request,
+                        ListReqResTypeReply* reply) override {
+    std::vector<std::string> args{request->service_name(),
+                                  request->method_name()};
+    auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "ls", args);
+    if (!TypeIsSuccess(result)) {
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Listing gRPC request and response message type failed");
+    }
+
+    Json::Value value;
+    if (!reader.parse(*result, value)) {
+      return parsing_json_failure_status;
+    }
+    if (!value["request_type"].isString() ||
+        !value["response_type"].isString()) {
+      return parsing_json_failure_status;
+    }
+    reply->set_request_type_name(value["request_type"].asString());
+    reply->set_response_type_name(value["response_type"].asString());
 
     return Status::OK;
   }
@@ -71,6 +156,10 @@ class ControlEnvProxyServiceImpl final
     }
     return vec;
   }
+
+  Json::Reader reader;
+  Status parsing_json_failure_status = Status(
+      StatusCode::FAILED_PRECONDITION, "Parsing result into json failed");
 };
 
 void RunServer() {
