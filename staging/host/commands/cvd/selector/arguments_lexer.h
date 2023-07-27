@@ -116,10 +116,8 @@ class ArgumentsLexer {
   using CvdProtobufArg = google::protobuf::RepeatedPtrField<std::string>;
 
  public:
-  Result<std::vector<ArgToken>> Tokenize(const std::vector<std::string>& args);
-  Result<std::vector<ArgToken>> Tokenize(const CvdProtobufArg& args);
-  Result<std::vector<ArgToken>> Tokenize(const std::string& args,
-                                         const std::string delim = " ");
+  Result<std::vector<ArgToken>> Tokenize(
+      const std::vector<std::string>& args) const;
 
  private:
   // Lexer factory function will internally generate this,
@@ -149,7 +147,7 @@ class ArgumentsLexer {
   //  e.g. --help=yes --> --help
   //       --help=faLSe --> --nohelp
   Result<std::vector<std::string>> Preprocess(
-      const std::vector<std::string>& args);
+      const std::vector<std::string>& args) const;
   Result<ArgToken> Process(const std::string& token) const;
 
   struct FlagValuePair {
