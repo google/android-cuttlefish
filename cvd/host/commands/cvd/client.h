@@ -50,6 +50,9 @@ class CvdClient {
   Result<void> HandleAcloud(
       const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env);
+  Result<void> HandleCvdCommand(
+      const std::vector<std::string>& args,
+      const std::unordered_map<std::string, std::string>& env);
   Result<cvd::Response> HandleCommand(
       const std::vector<std::string>& args,
       const std::unordered_map<std::string, std::string>& env,
