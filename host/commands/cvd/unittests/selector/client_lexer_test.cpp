@@ -15,8 +15,11 @@
 
 #include <iostream>
 
+#include <android-base/strings.h>
 #include <gtest/gtest.h>
 
+#include "common/libs/utils/result.h"
+#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/selector/arguments_lexer.h"
 #include "host/commands/cvd/unittests/selector/client_lexer_helper.h"
 
@@ -32,6 +35,12 @@ const LexerFlagsSpecification non_boolean_known_flags{
 const LexerFlagsSpecification both_known_flags{
     .known_boolean_flags = {"clean"}, .known_value_flags = {"group_name"}};
 
+Result<std::vector<ArgToken>> Tokenize(const ArgumentsLexer& lexer,
+                                       const std::string& args) {
+  auto args_vec = android::base::Tokenize(args, " ");
+  return CF_EXPECT(lexer.Tokenize(args_vec));
+}
+
 }  // namespace
 
 TEST_P(EmptyArgsLexTest, SuccessExpectedTest) {
@@ -41,10 +50,7 @@ TEST_P(EmptyArgsLexTest, SuccessExpectedTest) {
   if (!lexer) {
     GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
   }
-  auto tokenized_result = lexer->Tokenize(lex_input_);
-
-  ASSERT_TRUE(tokenized_result.ok()) << tokenized_result.error().Trace();
-  ASSERT_EQ(*tokenized_result, *expected_tokens_);
+  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -69,10 +75,7 @@ TEST_P(NonBooleanArgsTest, SuccessExpectedTest) {
   if (!lexer) {
     GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
   }
-  auto tokenized_result = lexer->Tokenize(lex_input_);
-
-  ASSERT_TRUE(tokenized_result.ok()) << tokenized_result.error().Trace();
-  ASSERT_EQ(*tokenized_result, *expected_tokens_);
+  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -107,10 +110,7 @@ TEST_P(BooleanArgsTest, SuccessExpectedTest) {
   if (!lexer) {
     GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
   }
-  auto tokenized_result = lexer->Tokenize(lex_input_);
-
-  ASSERT_TRUE(tokenized_result.ok()) << tokenized_result.error().Trace();
-  ASSERT_EQ(*tokenized_result, *expected_tokens_);
+  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -155,10 +155,7 @@ TEST_P(BothArgsTest, SuccessExpectedTest) {
   if (!lexer) {
     GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
   }
-  auto tokenized_result = lexer->Tokenize(lex_input_);
-
-  ASSERT_TRUE(tokenized_result.ok()) << tokenized_result.error().Trace();
-  ASSERT_EQ(*tokenized_result, *expected_tokens_);
+  EXPECT_THAT(Tokenize(*lexer, lex_input_), IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -187,15 +184,14 @@ TEST_P(BooleanBadArgsTest, FailureExpectedTest) {
   if (!lexer) {
     GTEST_SKIP() << "Memory allocation failed but it is not in the test scope.";
   }
-  auto tokenized_result = lexer->Tokenize(lex_input_);
+  auto tokenized_result = Tokenize(*lexer, lex_input_);
 
   if (!expected_tokens_) {
     ASSERT_FALSE(tokenized_result.ok())
         << "Lexing " << lex_input_ << " should have failed.";
     return;
   }
-  ASSERT_TRUE(tokenized_result.ok()) << tokenized_result.error().Trace();
-  ASSERT_EQ(*tokenized_result, *expected_tokens_);
+  EXPECT_THAT(tokenized_result, IsOkAndValue(*expected_tokens_));
 }
 
 INSTANTIATE_TEST_SUITE_P(
