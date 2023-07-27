@@ -43,9 +43,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
     const Json::Value& root) {
   std::vector<std::string> result = CF_EXPECT(GenerateVmFlags(root));
   result = MergeResults(result, CF_EXPECT(GenerateDiskFlags(root)));
-  if (!GENERATE_MVP_FLAGS_ONLY) {
-    result = MergeResults(result, CF_EXPECT(GenerateBootFlags(root)));
-  }
+  result = MergeResults(result, CF_EXPECT(GenerateBootFlags(root)));
   result = MergeResults(result, CF_EXPECT(GenerateSecurityFlags(root)));
   result = MergeResults(result, GenerateGraphicsFlags(root));
   result = MergeResults(result, GenerateMetricsFlags(root));
