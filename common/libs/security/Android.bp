@@ -45,6 +45,18 @@ cc_library {
                 "keymaster_channel_sharedfd.cpp",
             ],
         },
+        darwin: {
+            enabled: true,
+            shared_libs: [
+                "libcuttlefish_fs",
+            ],
+            srcs: [
+                "channel_sharedfd.cpp",
+                "confui_sign.cpp",
+                "gatekeeper_channel_sharedfd.cpp",
+                "keymaster_channel_sharedfd.cpp",
+            ],
+        },
         windows: {
             enabled: true,
             srcs: [
