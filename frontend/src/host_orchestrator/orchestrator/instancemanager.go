@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -29,8 +28,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
+
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -38,7 +38,6 @@ import (
 )
 
 type ExecContext = func(ctx context.Context, name string, arg ...string) *exec.Cmd
-type CVDExecContext = func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd
 
 type Validator interface {
 	Validate() error
@@ -88,7 +87,7 @@ type BuildAPIFactory func(string) BuildAPI
 
 // Instance manager implementation based on execution of `cvd` tool commands.
 type CVDToolInstanceManager struct {
-	execContext              CVDExecContext
+	execContext              cvd.CVDExecContext
 	paths                    IMPaths
 	om                       OperationManager
 	userArtifactsDirResolver UserArtifactsDirResolver
@@ -145,7 +144,7 @@ func NewCVDToolInstanceManager(opts *CVDToolInstanceManagerOpts) *CVDToolInstanc
 
 // Creates a CVD execution context from a regular execution context.
 // If a non-empty user name is provided the returned execution context executes commands as that user.
-func newCVDExecContext(execContext ExecContext, user string) CVDExecContext {
+func newCVDExecContext(execContext ExecContext, user string) cvd.CVDExecContext {
 	if user != "" {
 		return func(ctx context.Context, env []string, name string, arg ...string) *exec.Cmd {
 			newArgs := []string{"-u", user}
@@ -207,14 +206,14 @@ func (m *CVDToolInstanceManager) cvdFleet() ([]cvdInstance, error) {
 		return nil, err
 	}
 	stdout := &bytes.Buffer{}
-	cvdCmd := newCVDCommand(m.execContext, m.paths.CVDBin(), []string{"fleet"}, cvdCommandOpts{Stdout: stdout})
+	cvdCmd := cvd.NewCommand(m.execContext, m.paths.CVDBin(), []string{"fleet"}, cvd.CommandOpts{Stdout: stdout})
 	err := cvdCmd.Run()
 	if err != nil {
 		return nil, err
 	}
 	items := make([][]cvdInstance, 0)
 	if err := json.Unmarshal(stdout.Bytes(), &items); err != nil {
-		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cmdOutputLogMessage(stdout.String()))
+		log.Printf("Failed parsing `cvd fleet` ouput. Output: \n\n%s\n", cvd.OutputLogMessage(stdout.String()))
 		return nil, fmt.Errorf("failed parsing `cvd fleet` output: %w", err)
 	}
 	if len(items) == 0 {
@@ -267,10 +266,10 @@ func (m *CVDToolInstanceManager) HostBugReport() (string, error) {
 		return "", operator.NewNotFoundError("no artifacts found", nil)
 	}
 	output := "/tmp/bugreport" + m.uuidGen()
-	opts := cvdCommandOpts{
+	opts := cvd.CommandOpts{
 		Home: m.paths.RuntimesRootDir,
 	}
-	cvdCmd := newCVDCommand(m.execContext, m.paths.CVDBin(), []string{"host_bugreport", "--output=" + output}, opts)
+	cvdCmd := cvd.NewCommand(m.execContext, m.paths.CVDBin(), []string{"host_bugreport", "--output=" + output}, opts)
 	if err := cvdCmd.Run(); err != nil {
 		return "", err
 	}
@@ -303,8 +302,8 @@ func (m *CVDToolInstanceManager) launchCVDResult(req apiv1.CreateCVDRequest, op 
 	}
 	if err != nil {
 		var details string
-		var execError *cvdCommandExecErr
-		var timeoutErr *cvdCommandTimeoutErr
+		var execError *cvd.CommandExecErr
+		var timeoutErr *cvd.CommandTimeoutErr
 		if errors.As(err, &execError) {
 			details = execError.Error()
 			// Overwrite err with the unwrapped error as execution errors were already logged.
@@ -596,14 +595,14 @@ func (f *combinedArtifactFetcher) FetchCVD(outDir, buildID, target string, extra
 	}
 	out, err := fetchCmd.CombinedOutput()
 	if err != nil {
-		logCombinedStdoutStderr(fetchCmd, string(out))
+		cvd.LogCombinedStdoutStderr(fetchCmd, string(out))
 		return err
 	}
 	// TODO(b/286466643): Remove this hack once cuttlefish is capable of booting from read-only artifacts again.
 	chmodCmd := f.execContext(context.TODO(), "chmod", "-R", "g+rw", outDir)
 	chmodOut, err := chmodCmd.CombinedOutput()
 	if err != nil {
-		logCombinedStdoutStderr(chmodCmd, string(chmodOut))
+		cvd.LogCombinedStdoutStderr(chmodCmd, string(chmodOut))
 		return err
 	}
 	return nil
@@ -654,7 +653,7 @@ const (
 )
 
 type startCVDHandler struct {
-	ExecContext CVDExecContext
+	ExecContext cvd.CVDExecContext
 	CVDBin      string
 	Timeout     time.Duration
 }
@@ -691,12 +690,12 @@ func (h *startCVDHandler) Start(p startCVDParams) error {
 	if p.BootloaderDir != "" {
 		args = append(args, fmt.Sprintf("--bootloader=%s/u-boot.rom", p.BootloaderDir))
 	}
-	opts := cvdCommandOpts{
+	opts := cvd.CommandOpts{
 		AndroidHostOut: p.MainArtifactsDir,
 		Home:           p.RuntimeDir,
 		Timeout:        h.Timeout,
 	}
-	cvdCmd := newCVDCommand(h.ExecContext, h.CVDBin, args, opts)
+	cvdCmd := cvd.NewCommand(h.ExecContext, h.CVDBin, args, opts)
 	err := cvdCmd.Run()
 	if err != nil {
 		return fmt.Errorf("launch cvd stage failed: %w", err)
@@ -730,141 +729,6 @@ func fileExist(name string) (bool, error) {
 	} else {
 		return false, err
 	}
-}
-
-const CVDCommandDefaultTimeout = 30 * time.Second
-
-const (
-	envVarAndroidHostOut = "ANDROID_HOST_OUT"
-	envVarHome           = "HOME"
-)
-
-type cvdCommandOpts struct {
-	AndroidHostOut string
-	Home           string
-	Stdout         io.Writer
-	Timeout        time.Duration
-}
-
-type cvdCommand struct {
-	execContext CVDExecContext
-	cvdBin      string
-	args        []string
-	opts        cvdCommandOpts
-}
-
-func newCVDCommand(execContext CVDExecContext, cvdBin string, args []string, opts cvdCommandOpts) *cvdCommand {
-	return &cvdCommand{
-		execContext: execContext,
-		cvdBin:      cvdBin,
-		args:        args,
-		opts:        opts,
-	}
-}
-
-type cvdCommandExecErr struct {
-	args   []string
-	stderr string
-	err    error
-}
-
-func (e *cvdCommandExecErr) Error() string {
-	return fmt.Sprintf("cvd execution with args %q failed with stderr:\n%s",
-		strings.Join(e.args, " "),
-		e.stderr)
-}
-
-func (e *cvdCommandExecErr) Unwrap() error { return e.err }
-
-type cvdCommandTimeoutErr struct {
-	args []string
-}
-
-func (e *cvdCommandTimeoutErr) Error() string {
-	return fmt.Sprintf("cvd execution with args %q timed out", strings.Join(e.args, " "))
-}
-
-func (c *cvdCommand) Run() error {
-	// Makes sure cvd server daemon is running before executing the cvd command.
-	if err := c.startCVDServer(); err != nil {
-		return err
-	}
-	// TODO: Use `context.WithTimeout` if upgrading to go 1.19 as `exec.Cmd` adds the `Cancel` function field,
-	// so the cancel logic could be customized to continue sending the SIGINT signal.
-	cmd := c.execContext(context.TODO(), cvdEnv(c.opts.AndroidHostOut, c.opts.Home), c.cvdBin, c.args...)
-	stderr := &bytes.Buffer{}
-	cmd.Stdout = c.opts.Stdout
-	cmd.Stderr = stderr
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	var timedOut atomic.Value
-	timedOut.Store(false)
-	timeout := CVDCommandDefaultTimeout
-	if c.opts.Timeout != 0 {
-		timeout = c.opts.Timeout
-	}
-	go func() {
-		select {
-		case <-time.After(timeout):
-			// NOTE: Do not use SIGKILL to terminate cvd commands. cvd commands are run using
-			// `sudo` and contrary to SIGINT, SIGKILL is not relayed to child processes.
-			if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
-				log.Printf("error sending SIGINT signal %+v", err)
-			}
-			timedOut.Store(true)
-		}
-	}()
-	if err := cmd.Wait(); err != nil {
-		logStderr(cmd, stderr.String())
-		if timedOut.Load().(bool) {
-			return &cvdCommandTimeoutErr{c.args}
-		}
-		return &cvdCommandExecErr{c.args, stderr.String(), err}
-	}
-	return nil
-}
-
-func (c *cvdCommand) startCVDServer() error {
-	cmd := c.execContext(context.TODO(), cvdEnv("", ""), c.cvdBin)
-	// NOTE: Stdout and Stderr should be nil so Run connects the corresponding
-	// file descriptor to the null device (os.DevNull).
-	// Otherwhise, `Run` will never complete. Why? a pipe will be created to handle
-	// the data of the new process, this pipe will be passed over to `cvd_server`,
-	// which is a daemon, hence the pipe will never reach EOF and Run will never
-	// complete. Read more about it here: https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/os/exec/exec.go;l=108-111
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	return cmd.Run()
-}
-
-func cvdEnv(androidHostOut, home string) []string {
-	env := []string{envVarHome + "=" + home}
-	if androidHostOut != "" {
-		env = append(env, envVarAndroidHostOut+"="+androidHostOut)
-	}
-	return env
-}
-
-func cmdOutputLogMessage(output string) string {
-	const format = "############################################\n" +
-		"## BEGIN \n" +
-		"############################################\n" +
-		"\n%s\n\n" +
-		"############################################\n" +
-		"## END \n" +
-		"############################################\n"
-	return fmt.Sprintf(format, string(output))
-}
-
-func logStderr(cmd *exec.Cmd, val string) {
-	msg := "`%s`, stderr:\n%s"
-	log.Printf(msg, strings.Join(cmd.Args, " "), cmdOutputLogMessage(val))
-}
-
-func logCombinedStdoutStderr(cmd *exec.Cmd, val string) {
-	msg := "`%s`, combined stdout and stderr :\n%s"
-	log.Printf(msg, strings.Join(cmd.Args, " "), cmdOutputLogMessage(val))
 }
 
 // Validates whether the current host is valid to run CVDs.
@@ -952,7 +816,7 @@ func (s cvdInstances) findByName(name string) (bool, cvdInstance) {
 	return false, cvdInstance{}
 }
 
-func runAcloudSetup(execContext CVDExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
+func runAcloudSetup(execContext cvd.CVDExecContext, artifactsRootDir, artifactsDir, runtimeDir string) {
 	run := func(cmd *exec.Cmd) {
 		var b bytes.Buffer
 		cmd.Stdout = &b
