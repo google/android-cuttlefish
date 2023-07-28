@@ -23,6 +23,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 #include "host/commands/cvd/parser/cf_configs_instances.h"
@@ -47,27 +48,28 @@ std::string GenerateCommonGflag(const Json::Value& root,
   return buff.str();
 }
 
-std::vector<std::string> GenerateCfFlags(const Json::Value& root) {
+Result<std::vector<std::string>> GenerateCfFlags(const Json::Value& root) {
   std::vector<std::string> result;
   result.emplace_back(GenerateNumInstancesFlag(root));
   result.emplace_back(GenerateCommonGflag(root, "netsim_bt", "netsim_bt"));
 
-  result = MergeResults(result, GenerateInstancesFlags(root["instances"]));
+  result = MergeResults(result,
+                        CF_EXPECT(GenerateInstancesFlags(root["instances"])));
   return result;
 }
 
-void InitCvdConfigs(Json::Value& root) {
+Result<void> InitCvdConfigs(Json::Value& root) {
   // Handle common flags
   if (!root.isMember("netsim_bt")) {
     root["netsim_bt"] = CF_DEFAULTS_NETSIM_BT;
   }
-  // Handle instances flags
-  InitInstancesConfigs(root["instances"]);
+  CF_EXPECT(InitInstancesConfigs(root["instances"]));
+  return {};
 }
 
-std::vector<std::string> ParseLaunchCvdConfigs(Json::Value& root) {
+Result<std::vector<std::string>> ParseLaunchCvdConfigs(Json::Value& root) {
   ExtractLaunchTemplates(root["instances"]);
-  InitCvdConfigs(root);
+  CF_EXPECT(InitCvdConfigs(root));
   return GenerateCfFlags(root);
 }
 

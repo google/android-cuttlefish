@@ -23,26 +23,42 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
 namespace {
 
-void InitFetchInstanceConfigs(Json::Value& instances) {
-  InitNullGroupConfig(instances, "disk", "default_build");
-  InitNullGroupConfig(instances, "disk", "system_build");
-  InitNullGroupConfig(instances, "disk", "kernel_build");
-  InitNullGroupConfig(instances, "disk", "download_img_zip");
-  InitNullGroupConfig(instances, "disk", "download_target_files_zip");
+Result<void> InitFetchInstanceConfigs(Json::Value& instance) {
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "default_build"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "system_build"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "kernel_build"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "download_img_zip"}));
+  CF_EXPECT(InitConfig(instance, Json::Value::nullSingleton(),
+                       {"disk", "download_target_files_zip"}));
+  return {};
 }
 
-void InitFetchCvdConfigs(Json::Value& root) {
-  InitNullConfig(root, "api_key");
-  InitNullConfig(root, "credential_source");
-  InitNullConfig(root, "wait_retry_period");
-  InitNullConfig(root, "external_dns_resolver");
-  InitNullConfig(root, "keep_downloaded_archives");
-  InitFetchInstanceConfigs(root["instances"]);
+Result<void> InitFetchCvdConfigs(Json::Value& root) {
+  CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(), {"api_key"}));
+  CF_EXPECT(
+      InitConfig(root, Json::Value::nullSingleton(), {"credential_source"}));
+  CF_EXPECT(
+      InitConfig(root, Json::Value::nullSingleton(), {"wait_retry_period"}));
+  CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
+                       {"external_dns_resolver"}));
+  CF_EXPECT(InitConfig(root, Json::Value::nullSingleton(),
+                       {"keep_downloaded_archives"}));
+  Json::Value& instances = root["instances"];
+  const int size = instances.size();
+  for (int i = 0; i < size; i++) {
+    CF_EXPECT(InitFetchInstanceConfigs(instances[i]));
+  }
+  return {};
 }
 
 std::optional<std::string> OptString(const Json::Value& value) {
@@ -90,9 +106,9 @@ FetchCvdConfig GenerateFetchCvdFlags(const Json::Value& root) {
 
 }  // namespace
 
-FetchCvdConfig ParseFetchCvdConfigs(Json::Value& root) {
-  InitFetchCvdConfigs(root);
-  return GenerateFetchCvdFlags(root);
+Result<FetchCvdConfig> ParseFetchCvdConfigs(Json::Value& root) {
+  CF_EXPECT(InitFetchCvdConfigs(root));
+  return {GenerateFetchCvdFlags(root)};
 }
 
 }  // namespace cuttlefish

@@ -22,7 +22,6 @@
 #include <json/json.h>
 
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/result_matchers.h"
 #include "host/commands/cvd/unittests/parser/test_common.h"
 
 namespace cuttlefish {
@@ -55,8 +54,7 @@ TEST(CfConfigsCommonTests, ValidateConfigValidationSuccess) {
       [](const std::string&) -> Result<void> { return {}; });
   auto result = ValidateConfig(json_config["instances"][0], success_validator,
                                {"vm", "cpus"});
-
-  EXPECT_THAT(result, IsOk());
+  EXPECT_TRUE(result.ok());
 }
 
 TEST(CfConfigsCommonTests, ValidateConfigValidationFailure) {
@@ -87,8 +85,7 @@ TEST(CfConfigsCommonTests, ValidateConfigValidationFailure) {
       [](const std::string&) -> Result<void> { return CF_ERR("placeholder"); });
   auto result = ValidateConfig(json_config["instances"][0], error_validator,
                                {"vm", "cpus"});
-
-  EXPECT_THAT(result, IsError());
+  EXPECT_FALSE(result.ok());
 }
 
 TEST(CfConfigsCommonTests, ValidateConfigFieldDoesNotExist) {
@@ -118,8 +115,7 @@ TEST(CfConfigsCommonTests, ValidateConfigFieldDoesNotExist) {
       [](const std::string&) -> Result<void> { return {}; });
   auto result = ValidateConfig(json_config["instances"][0], success_validator,
                                {"disk", "cpus"});
-
-  EXPECT_THAT(result, IsOk());
+  EXPECT_TRUE(result.ok());
 }
 
 TEST(CfConfigsCommonTests, InitConfigTopLevel) {
@@ -153,8 +149,7 @@ TEST(CfConfigsCommonTests, InitConfigTopLevel) {
 
   auto result =
       InitConfig(json_config, Json::Value::nullSingleton(), {"api_key"});
-
-  EXPECT_THAT(result, IsOk());
+  EXPECT_TRUE(result.ok());
   EXPECT_TRUE(json_config.isMember("api_key"));
   EXPECT_TRUE(json_config["api_key"].isNull());
 }
@@ -195,8 +190,7 @@ TEST(CfConfigsCommonTests, InitConfigInstanceLevel) {
   auto result =
       InitConfig(json_config["instances"][0], Json::Value::nullSingleton(),
                  {"disk", "download_target_files_zip"});
-
-  EXPECT_THAT(result, IsOk());
+  EXPECT_TRUE(result.ok());
   EXPECT_TRUE(json_config["instances"][0]["disk"].isMember(
       "download_target_files_zip"));
   EXPECT_TRUE(json_config["instances"][0]["disk"]["download_target_files_zip"]
@@ -233,8 +227,7 @@ TEST(CfConfigsCommonTests, InitConfigInstanceLevelMissingLevel) {
   auto result =
       InitConfig(json_config["instances"][0], Json::Value::nullSingleton(),
                  {"disk", "download_target_files_zip"});
-
-  EXPECT_THAT(result, IsOk());
+  EXPECT_TRUE(result.ok());
   ASSERT_TRUE(json_config["instances"][0].isMember("disk"));
   EXPECT_TRUE(json_config["instances"][0]["disk"].isMember(
       "download_target_files_zip"));
@@ -271,7 +264,8 @@ TEST(CfConfigsCommonTests, GenerateGflagSingleInstance) {
   ASSERT_TRUE(json_config["instances"][0]["vm"].isMember("cpus"));
   auto result = GenerateGflag(json_config["instances"], "cpus", {"vm", "cpus"});
 
-  EXPECT_THAT(result, IsOkAndValue("--cpus=4"));
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(result.value(), "--cpus=4");
 }
 
 TEST(CfConfigsCommonTests, GenerateGflagMultiInstance) {
@@ -314,7 +308,8 @@ TEST(CfConfigsCommonTests, GenerateGflagMultiInstance) {
   ASSERT_TRUE(json_config["instances"][1]["vm"].isMember("cpus"));
   auto result = GenerateGflag(json_config["instances"], "cpus", {"vm", "cpus"});
 
-  EXPECT_THAT(result, IsOkAndValue("--cpus=4,2"));
+  EXPECT_TRUE(result.ok());
+  EXPECT_EQ(result.value(), "--cpus=4,2");
 }
 
 TEST(CfConfigsCommonTests, GenerateGflagMissingValue) {
@@ -345,122 +340,7 @@ TEST(CfConfigsCommonTests, GenerateGflagMissingValue) {
   auto result = GenerateGflag(json_config["instances"], "setupwizard_mode",
                               {"vm", "setupwizard_mode"});
 
-  EXPECT_THAT(result, IsError());
-}
-
-TEST(ValidateTests, ValidateArrayTypeSuccess) {
-  const char* raw_json = R""""(
-  [
-    "value1",
-    "value2",
-    "value3"
-  ]
-  )"""";
-  const auto validation_definition =
-      ConfigNode{.type = Json::ValueType::arrayValue,
-                 .children = {
-                     {kArrayValidationSentinel,
-                      ConfigNode{.type = Json::ValueType::stringValue}},
-                 }};
-
-  Json::Value json_config;
-  std::string json_text(raw_json);
-  ASSERT_TRUE(ParseJsonString(json_text, json_config))
-      << "Invalid JSON string for test";
-
-  auto result = Validate(json_config, validation_definition);
-  EXPECT_THAT(result, IsOk());
-}
-
-TEST(ValidateTests, ValidateArrayTypeFailure) {
-  const char* raw_json = R""""(
-  [
-    "value1",
-    "value2",
-    "value3"
-  ]
-  )"""";
-  const auto validation_definition =
-      ConfigNode{.type = Json::ValueType::arrayValue,
-                 .children = {
-                     {"foo", ConfigNode{.type = Json::ValueType::stringValue}},
-                 }};
-
-  Json::Value json_config;
-  std::string json_text(raw_json);
-  ASSERT_TRUE(ParseJsonString(json_text, json_config))
-      << "Invalid JSON string for test";
-
-  auto result = Validate(json_config, validation_definition);
-  EXPECT_THAT(result, IsError());
-}
-
-TEST(ValidateTests, ValidateObjectTypeSuccess) {
-  const char* raw_json = R""""(
-  {
-    "key" : "value",
-    "key2" : 1234,
-    "key3" : {
-      "key4" : true
-    }
-  }
-  )"""";
-  const auto validation_definition = ConfigNode{
-      .type = Json::ValueType::objectValue,
-      .children = {
-          {"key", ConfigNode{.type = Json::ValueType::stringValue}},
-          {"key2", ConfigNode{.type = Json::ValueType::uintValue}},
-          {"key3",
-           ConfigNode{
-               .type = Json::ValueType::objectValue,
-               .children =
-                   {
-                       {"key4",
-                        ConfigNode{.type = Json::ValueType::booleanValue}},
-                   }}},
-      }};
-
-  Json::Value json_config;
-  std::string json_text(raw_json);
-  ASSERT_TRUE(ParseJsonString(json_text, json_config))
-      << "Invalid JSON string for test";
-
-  auto result = Validate(json_config, validation_definition);
-  EXPECT_THAT(result, IsOk());
-}
-
-TEST(ValidateTests, ValidateObjectTypeFailure) {
-  const char* raw_json = R""""(
-  {
-    "key" : "value",
-    "key2" : 1234,
-    "key3" : {
-      "key4" : true
-    }
-  }
-  )"""";
-  const auto validation_definition = ConfigNode{
-      .type = Json::ValueType::objectValue,
-      .children = {
-          {"key", ConfigNode{.type = Json::ValueType::booleanValue}},
-          {"key2", ConfigNode{.type = Json::ValueType::uintValue}},
-          {"key3",
-           ConfigNode{
-               .type = Json::ValueType::objectValue,
-               .children =
-                   {
-                       {"key4",
-                        ConfigNode{.type = Json::ValueType::stringValue}},
-                   }}},
-      }};
-
-  Json::Value json_config;
-  std::string json_text(raw_json);
-  ASSERT_TRUE(ParseJsonString(json_text, json_config))
-      << "Invalid JSON string for test";
-
-  auto result = Validate(json_config, validation_definition);
-  EXPECT_THAT(result, IsError());
+  EXPECT_FALSE(result.ok());
 }
 
 }  // namespace cuttlefish
