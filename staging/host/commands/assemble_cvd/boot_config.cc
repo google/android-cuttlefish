@@ -28,6 +28,7 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/bootconfig_args.h"
@@ -156,8 +157,9 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     return ret;
   }
 
-  bool PrepareBootEnvImage(const std::string& image_path,
-                           const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
+  Result<void> PrepareBootEnvImage(
+      const std::string& image_path,
+      const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
     auto tmp_boot_env_image_path = image_path + ".tmp";
     auto uboot_env_path = instance_.PerInstancePath("mkenvimg_input");
     auto kernel_cmdline = android::base::Join(
@@ -166,14 +168,8 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     // args need to be passed in via the uboot env. This won't be an issue for
     // protect kvm which is running a kernel with bootconfig support.
     if (!instance_.bootconfig_supported()) {
-      auto bootconfig_args_result =
-          BootconfigArgsFromConfig(config_, instance_);
-      if (!bootconfig_args_result.ok()) {
-        LOG(ERROR) << "Unable to get bootconfig args from config: "
-                   << bootconfig_args_result.error().Message();
-        return false;
-      }
-      auto bootconfig_args = std::move(bootconfig_args_result.value());
+      auto bootconfig_args =
+          CF_EXPECT(BootconfigArgsFromConfig(config_, instance_));
 
       // "androidboot.hardware" kernel parameter has changed to "hardware" in
       // bootconfig and needs to be replaced before being used in the kernel
@@ -191,23 +187,13 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
       // rename them back to the old cmdline version
       bootconfig_args = ReplaceKernelBootArgs(bootconfig_args);
 
-      auto bootconfig_result =
-          BootconfigArgsString(bootconfig_args, " ");
-      if (!bootconfig_result.ok()) {
-        LOG(ERROR) << "Unable to get bootconfig args string from config: "
-                   << bootconfig_result.error().Message();
-        return false;
-      }
-
-      kernel_cmdline += " ";
-      kernel_cmdline += bootconfig_result.value();
+      kernel_cmdline +=
+          " " + CF_EXPECT(BootconfigArgsString(bootconfig_args, " "));
     }
 
-    if (!WriteEnvironment(instance_, flow, kernel_cmdline, uboot_env_path)) {
-      LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path
-                 << ".'";
-      return false;
-    }
+    CF_EXPECTF(
+        WriteEnvironment(instance_, flow, kernel_cmdline, uboot_env_path),
+        "Unable to write out plaintext env '{}'", uboot_env_path);
 
     auto mkimage_path = HostBinaryPath("mkenvimage_slim");
     Command cmd(mkimage_path);
@@ -216,11 +202,8 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     cmd.AddParameter("-input_path");
     cmd.AddParameter(uboot_env_path);
     int success = cmd.Start().Wait();
-    if (success != 0) {
-      LOG(ERROR) << "Unable to run mkenvimage_slim. Exited with status "
-                 << success;
-      return false;
-    }
+    CF_EXPECTF(success == 0,
+               "Unable to run mkenvimage_slim. Exited with status {}", success);
 
     const off_t boot_env_size_bytes = AlignToPowerOf2(
         MAX_AVB_METADATA_SIZE + 4096, PARTITION_SIZE_SHIFT);
@@ -240,24 +223,19 @@ class InitBootloaderEnvPartitionImpl : public InitBootloaderEnvPartition {
     boot_env_hash_footer_cmd.AddParameter("--algorithm");
     boot_env_hash_footer_cmd.AddParameter("SHA256_RSA4096");
     success = boot_env_hash_footer_cmd.Start().Wait();
-    if (success != 0) {
-      LOG(ERROR) << "Unable to run append hash footer. Exited with status "
-                 << success;
-      return false;
-    }
+    CF_EXPECTF(success == 0,
+               "Unable to append hash footer. Exited with status {}", success);
 
     if (!FileExists(image_path) ||
         ReadFile(image_path) != ReadFile(tmp_boot_env_image_path)) {
-      if (!RenameFile(tmp_boot_env_image_path, image_path).ok()) {
-        LOG(ERROR) << "Unable to delete the old env image.";
-        return false;
-      }
+      CF_EXPECT(RenameFile(tmp_boot_env_image_path, image_path),
+                "Unable to delete the old env image");
       LOG(DEBUG) << "Updated bootloader environment image.";
     } else {
       RemoveFile(tmp_boot_env_image_path);
     }
 
-    return true;
+    return {};
   }
 
   const CuttlefishConfig& config_;
