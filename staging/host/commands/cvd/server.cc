@@ -56,7 +56,6 @@
 #include "host/commands/cvd/server_command/generic.h"
 #include "host/commands/cvd/server_command/handler_proxy.h"
 #include "host/commands/cvd/server_command/load_configs.h"
-#include "host/commands/cvd/server_command/operation_to_bins_map.h"
 #include "host/commands/cvd/server_command/power.h"
 #include "host/commands/cvd/server_command/reset.h"
 #include "host/commands/cvd/server_command/start.h"
@@ -521,8 +520,7 @@ static fruit::Component<> ServerComponent(ServerLogger* server_logger) {
       .bindInstance(*server_logger)
       .install(BuildApiModule)
       .install(EpollLoopComponent)
-      .install(HostToolTargetManagerComponent)
-      .install(OperationToBinsMapComponent);
+      .install(HostToolTargetManagerComponent);
 }
 
 Result<int> CvdServerMain(ServerMainParam&& param) {

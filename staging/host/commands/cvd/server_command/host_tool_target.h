@@ -29,16 +29,12 @@ namespace cuttlefish {
 
 class HostToolTarget {
  public:
-  using OperationToBinsMap =
-      std::unordered_map<std::string, std::vector<std::string>>;
   struct FlagInfoRequest {
     std::string operation_;
     std::string flag_name_;
   };
   // artifacts_path: ANDROID_HOST_OUT, or so
-  static Result<HostToolTarget> Create(
-      const std::string& artifacts_path,
-      const OperationToBinsMap& supported_operations);
+  static Result<HostToolTarget> Create(const std::string& artifacts_path);
 
   bool IsDirty() const;
   Result<FlagInfo> GetFlagInfo(const FlagInfoRequest& request) const;
