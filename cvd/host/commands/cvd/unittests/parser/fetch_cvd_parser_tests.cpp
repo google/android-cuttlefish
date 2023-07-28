@@ -57,6 +57,17 @@ TEST(FetchCvdParserTests, SingleFetch) {
       "disk" : {
         "default_build" : "git_master/cf_x86_64_phone-userdebug",
         "download_img_zip" : true
+        "otatools" : "git_master/cf_x86_64_phone-userdebug",
+        "host_package" : "git_master/cf_x86_64_phone-userdebug"
+      },
+      "boot" : {
+        "build" : "git_master/cf_x86_64_phone-userdebug",
+        "kernel" : {
+          "build" : "git_master/cf_x86_64_phone-userdebug"
+        },
+        "bootloader" : {
+          "build" : "git_master/cf_x86_64_phone-userdebug"
+        }
       }
     }
   ],
@@ -88,6 +99,17 @@ TEST(FetchCvdParserTests, MultiFetch) {
       "disk" : {
         "default_build" : "git_master/cf_x86_64_phone-userdebug",
         "download_img_zip" : true
+        "otatools" : "git_master/cf_x86_64_phone-userdebug",
+        "host_package" : "git_master/cf_x86_64_phone-userdebug"
+      },
+      "boot" : {
+        "build" : "git_master/cf_x86_64_phone-userdebug",
+        "kernel" : {
+          "build" : "git_master/cf_x86_64_phone-userdebug"
+        },
+        "bootloader" : {
+          "build" : "git_master/cf_x86_64_phone-userdebug"
+        }
       }
     },
     {
