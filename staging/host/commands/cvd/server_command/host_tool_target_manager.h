@@ -27,7 +27,6 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/cvd/server_command/flags_collector.h"
 #include "host/commands/cvd/server_command/host_tool_target.h"
-#include "host/commands/cvd/server_command/operation_to_bins_map.h"
 
 namespace cuttlefish {
 
@@ -52,7 +51,6 @@ class HostToolTargetManager {
       const HostToolExecNameRequestForm& request) = 0;
 };
 
-fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
-HostToolTargetManagerComponent();
+fruit::Component<HostToolTargetManager> HostToolTargetManagerComponent();
 
 }  // namespace cuttlefish
