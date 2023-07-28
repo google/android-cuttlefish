@@ -24,7 +24,7 @@ namespace cuttlefish {
 
 class HostToolTargetManagerImpl : public HostToolTargetManager {
  public:
-  INJECT(HostToolTargetManagerImpl(const OperationToBinsMap&));
+  INJECT(HostToolTargetManagerImpl()) = default;
 
   Result<FlagInfo> ReadFlag(const HostToolFlagRequestForm& request) override;
   Result<std::string> ExecBaseName(
@@ -40,20 +40,15 @@ class HostToolTargetManagerImpl : public HostToolTargetManager {
   HostToolTargetMap host_target_table_;
   // predefined mapping from an operation to potential executable binary names
   // e.g. "start" -> {"cvd_internal_start", "launch_cvd"}
-  const OperationToBinsMap& op_to_possible_bins_map_;
   std::mutex table_mutex_;
 };
-
-HostToolTargetManagerImpl::HostToolTargetManagerImpl(
-    const OperationToBinsMap& op_to_bins_map)
-    : op_to_possible_bins_map_{op_to_bins_map} {}
 
 // use this only after acquiring the table_mutex_
 Result<void> HostToolTargetManagerImpl::EnsureExistence(
     const std::string& artifacts_path) {
   if (!Contains(host_target_table_, artifacts_path)) {
-    HostToolTarget new_host_tool_target = CF_EXPECT(
-        HostToolTarget::Create(artifacts_path, op_to_possible_bins_map_));
+    HostToolTarget new_host_tool_target =
+        CF_EXPECT(HostToolTarget::Create(artifacts_path));
     host_target_table_.emplace(artifacts_path, std::move(new_host_tool_target));
   }
   return {};
@@ -67,8 +62,8 @@ Result<void> HostToolTargetManagerImpl::UpdateOutdated(
     return {};
   }
   LOG(ERROR) << artifacts_path << " is new, so updating HostToolTarget";
-  HostToolTarget new_host_tool_target = CF_EXPECT(
-      HostToolTarget::Create(artifacts_path, op_to_possible_bins_map_));
+  HostToolTarget new_host_tool_target =
+      CF_EXPECT(HostToolTarget::Create(artifacts_path));
   host_target_table_.emplace(artifacts_path, std::move(new_host_tool_target));
   return {};
 }
@@ -100,8 +95,7 @@ Result<std::string> HostToolTargetManagerImpl::ExecBaseName(
   return base_name;
 }
 
-fruit::Component<fruit::Required<OperationToBinsMap>, HostToolTargetManager>
-HostToolTargetManagerComponent() {
+fruit::Component<HostToolTargetManager> HostToolTargetManagerComponent() {
   return fruit::createComponent()
       .bind<HostToolTargetManager, HostToolTargetManagerImpl>();
 }
