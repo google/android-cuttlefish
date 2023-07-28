@@ -25,25 +25,14 @@
 #include "host/commands/cvd/parser/cf_configs_common.h"
 
 namespace cuttlefish {
-namespace {
-
-bool ShouldUseRandomSerial(Json::Value& serial_number_value) {
-  return serial_number_value.asString() == "@random";
-}
-
-}  // namespace
 
 Result<void> InitSecurityConfigs(Json::Value& instances) {
   const int size = instances.size();
   for (int i = 0; i < size; i++) {
     CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_SERIAL_NUMBER,
                          {"security", "serial_number"}));
-    // This init should be called after "serial_number" is initialized due to
-    // the dependency on its value
-    CF_EXPECT(InitConfig(
-        instances[i],
-        ShouldUseRandomSerial(instances[i]["security"]["serial_number"]),
-        {"security", "use_random_serial"}));
+    CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_USE_RANDOM_SERIAL,
+                         {"security", "use_random_serial"}));
     CF_EXPECT(InitConfig(instances[i], CF_DEFAULTS_GUEST_ENFORCE_SECURITY,
                          {"security", "guest_enforce_security"}));
   }
