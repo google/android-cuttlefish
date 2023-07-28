@@ -60,8 +60,10 @@ TEST(FetchCvdParserTests, SingleFetch) {
       }
     }
   ],
-  "wait_retry_period" : 20,
-  "keep_downloaded_archives" : false
+  "fetch":{
+    "wait_retry_period" : 20,
+    "keep_downloaded_archives" : false
+  }
 }
   )"""";
   Json::Value json_config = GetTestJson(raw_json);
@@ -101,8 +103,10 @@ TEST(FetchCvdParserTests, MultiFetch) {
       }
     }
   ],
-  "wait_retry_period" : 20,
-  "keep_downloaded_archives" : false
+  "fetch":{
+    "wait_retry_period" : 20,
+    "keep_downloaded_archives" : false
+  }
 }
   )"""";
   Json::Value json_config = GetTestJson(raw_json);
