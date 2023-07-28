@@ -40,6 +40,8 @@ using controlenvproxyserver::ListMethodsRequest;
 using controlenvproxyserver::ListReqResTypeReply;
 using controlenvproxyserver::ListReqResTypeRequest;
 using controlenvproxyserver::ListServicesReply;
+using controlenvproxyserver::TypeInformationReply;
+using controlenvproxyserver::TypeInformationRequest;
 using google::protobuf::Empty;
 using google::protobuf::RepeatedPtrField;
 using grpc::Server;
@@ -143,6 +145,21 @@ class ControlEnvProxyServiceImpl final
     }
     reply->set_request_type_name(value["request_type"].asString());
     reply->set_response_type_name(value["response_type"].asString());
+
+    return Status::OK;
+  }
+
+  Status TypeInformation(ServerContext* context,
+                         const TypeInformationRequest* request,
+                         TypeInformationReply* reply) override {
+    std::vector<std::string> args{request->service_name(),
+                                  request->type_name()};
+    auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "type", args);
+    if (!TypeIsSuccess(result)) {
+      return Status(StatusCode::FAILED_PRECONDITION,
+                    "Calling gRPC method failed");
+    }
+    reply->set_text_formatted_type_info(*result);
 
     return Status::OK;
   }
