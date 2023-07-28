@@ -21,8 +21,10 @@
 
 #include <json/json.h>
 
+#include "common/libs/utils/result.h"
+
 namespace cuttlefish {
-void InitDiskConfigs(Json::Value& root);
-std::vector<std::string> GenerateDiskFlags(const Json::Value& root);
+Result<void> InitDiskConfigs(Json::Value& root);
+Result<std::vector<std::string>> GenerateDiskFlags(const Json::Value& root);
 
 };  // namespace cuttlefish
