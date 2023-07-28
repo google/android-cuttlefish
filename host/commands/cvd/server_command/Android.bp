@@ -39,7 +39,6 @@ cc_library_host_static {
         "handler_proxy.cpp",
         "help.cpp",
         "load_configs.cpp",
-        "operation_to_bins_map.cpp",
         "power.cpp",
         "reset.cpp",
         "restart.cpp",
